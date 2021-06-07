@@ -1,5 +1,5 @@
 alabaster==0.7.10
-alembic==0.9.6
+alembic==1.6.5
 amqp==2.5.0
 appdirs==1.4.3
 Babel==2.3.4
