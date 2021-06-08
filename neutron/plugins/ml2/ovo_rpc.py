@@ -58,6 +58,8 @@ class _ObjectChangeHandler(object):
             # TODO(boden): remove shim below once all events use payloads
             if resource in self._PAYLOAD_RESOURCES:
                 handler = self.handle_payload_event
+            if resource == resources.PORT and event == events.AFTER_CREATE:
+                handler = self.handle_payload_event
             registry.subscribe(handler, resource, event)
 
     def wait(self):
