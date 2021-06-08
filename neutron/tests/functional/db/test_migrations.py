@@ -344,12 +344,6 @@ class TestModelsMigrationsMysql(testlib_api.MySQLTestCaseMixin,
                                 testlib_api.SqlTestCaseLight,
                                 functional_base.BaseLoggingTestCase):
 
-    @test_base.skip_if_timeout("bug 1687027")
-    def test_forbid_offline_migrations_starting_newton(self):
-        super(TestModelsMigrationsMysql,
-              self).test_forbid_offline_migrations_starting_newton()
-
-    @test_base.skip_if_timeout("bug 1687027")
     def test_check_mysql_engine(self):
         engine = self.get_engine()
         cfg.CONF.set_override('connection', engine.url, group='database')
@@ -368,19 +362,6 @@ class TestModelsMigrationsMysql(testlib_api.MySQLTestCaseMixin,
                    table != 'alembic_version']
             self.assertEqual(0, len(res), "%s non InnoDB tables created" % res)
 
-    @test_base.skip_if_timeout("bug 1687027")
-    def test_upgrade_expand_branch(self):
-        super(TestModelsMigrationsMysql, self).test_upgrade_expand_branch()
-
-    @test_base.skip_if_timeout("bug 1687027")
-    def test_upgrade_contract_branch(self):
-        super(TestModelsMigrationsMysql, self).test_upgrade_contract_branch()
-
-    @test_base.skip_if_timeout("bug 1687027")
-    def test_branches(self):
-        super(TestModelsMigrationsMysql, self).test_branches()
-
-    @test_base.skip_if_timeout("bug 1687027")
     def test_models_sync(self):
         self.skipTest('bug 1929518')
         super(TestModelsMigrationsMysql, self).test_models_sync()
