@@ -272,7 +272,10 @@ class TestLegacyL3Agent(TestL3Agent):
         host_descriptions = [
             environment.HostDescription(l3_agent=True, dhcp_agent=True,
                                         l3_agent_extensions="fip_qos"),
-            environment.HostDescription()]
+            # None(obondarev): dhcp agent is added to workaround bug 1930401,
+            # to be removed in scope of proper bug fix:
+            # https://review.opendev.org/c/openstack/neutron/+/794994
+            environment.HostDescription(dhcp_agent=True)]
         env = environment.Environment(
             environment.EnvironmentDescription(
                 network_type='vlan', l2_pop=False,
