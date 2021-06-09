@@ -27,9 +27,26 @@
     voting: false
     vars:
       tox_envlist: integrated-network
+      devstack_localrc:
+        Q_ML2_TENANT_NETWORK_TYPE: vxlan
+        Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch,linuxbridge
+        Q_AGENT: openvswitch
       devstack_services:
         br-ex-tcpdump: true
         br-int-flows: true
+        # Neutron services
+        q-agt: true
+        q-dhcp: true
+        q-l3: true
+        q-meta: true
+        q-metering: true
+        q-svc: true
+        # OVN services
+        ovn-controller: false
+        ovn-northd: false
+        ovs-vswitchd: false
+        ovsdb-server: false
+        q-ovn-metadata-agent: false
         # Cinder services
         c-api: false
         c-bak: false
@@ -76,12 +93,21 @@
       subnode:
         devstack_plugins:
           neutron: https://opendev.org/openstack/neutron.git
+        devstack_localrc:
+          Q_ML2_TENANT_NETWORK_TYPE: vxlan
+          Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch,linuxbridge
+          Q_AGENT: openvswitch
         devstack_services:
           q-agt: true
           q-l3: true
           q-meta: true
           br-ex-tcpdump: true
           br-int-flows: true
+          # OVN services
+          ovn-controller: false
+          ovs-vswitchd: false
+          ovsdb-server: false
+          q-ovn-metadata-agent: false
           # Cinder services
           c-api: false
           c-bak: false
@@ -125,11 +151,28 @@
     irrelevant-files: *openvswitch-irrelevant-files
     vars:
       tox_envlist: integrated-network
+      devstack_localrc:
+        Q_ML2_TENANT_NETWORK_TYPE: vxlan
+        Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch,linuxbridge
+        Q_AGENT: openvswitch
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
         br-ex-tcpdump: true
         br-int-flows: true
+        # Neutron services
+        q-agt: true
+        q-dhcp: true
+        q-l3: true
+        q-meta: true
+        q-metering: true
+        q-svc: true
+        # OVN services
+        ovn-controller: false
+        ovn-northd: false
+        ovs-vswitchd: false
+        ovsdb-server: false
+        q-ovn-metadata-agent: false
         # Cinder services
         c-api: false
         c-bak: false
@@ -151,7 +194,17 @@
               debug_iptables_rules: True
     group-vars:
       subnode:
+        devstack_localrc:
+          Q_ML2_TENANT_NETWORK_TYPE: vxlan
+          Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch,linuxbridge
+          Q_AGENT: openvswitch
         devstack_services:
+          q-agt: true
+          # OVN services
+          ovn-controller: false
+          ovs-vswitchd: false
+          ovsdb-server: false
+          q-ovn-metadata-agent: false
           # Cinder services
           c-bak: false
           c-vol: false
@@ -169,9 +222,26 @@
     vars:
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
+      devstack_localrc:
+        Q_ML2_TENANT_NETWORK_TYPE: vxlan
+        Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch,linuxbridge
+        Q_AGENT: openvswitch
       devstack_services:
         br-ex-tcpdump: true
         br-int-flows: true
+        # Neutron services
+        q-agt: true
+        q-dhcp: true
+        q-l3: true
+        q-meta: true
+        q-metering: true
+        q-svc: true
+        # OVN services
+        ovn-controller: false
+        ovn-northd: false
+        ovs-vswitchd: false
+        ovsdb-server: false
+        q-ovn-metadata-agent: false
         # Cinder services
         c-api: false
         c-bak: false
@@ -190,7 +260,17 @@
               debug_iptables_rules: True
     group-vars:
       subnode:
+        devstack_localrc:
+          Q_ML2_TENANT_NETWORK_TYPE: vxlan
+          Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch,linuxbridge
+          Q_AGENT: openvswitch
         devstack_services:
+          q-agt: true
+          # OVN services
+          ovn-controller: false
+          ovs-vswitchd: false
+          ovsdb-server: false
+          q-ovn-metadata-agent: false
           # Cinder services
           c-bak: false
           c-vol: false
