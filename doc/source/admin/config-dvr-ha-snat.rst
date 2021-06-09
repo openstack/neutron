@@ -173,12 +173,6 @@ Keepalived VRRP health check
 Known limitations
 ~~~~~~~~~~~~~~~~~
 
-* Migrating a router from distributed only, HA only, or legacy to distributed
-  HA is not supported at this time. The router must be created as distributed
-  HA.
-  The reverse direction is also not supported. You cannot reconfigure a
-  distributed HA router to be only distributed, only HA, or legacy.
-
 * There are certain scenarios where l2pop and distributed HA routers do not
   interact in an expected manner. These situations are the same that affect HA
   only routers and l2pop.
