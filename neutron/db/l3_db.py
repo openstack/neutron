@@ -747,15 +747,15 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         prevent the port to be attach to the router.
         """
         try:
-            registry.notify(resources.ROUTER_INTERFACE,
-                            events.BEFORE_CREATE,
-                            self,
-                            context=context,
-                            router_db=router_db,
-                            port=port,
-                            interface_info=interface_info,
-                            router_id=router_db.id,
-                            network_id=port['network_id'])
+            metadata = {
+                'port': port, 'interface_info': interface_info,
+                'network_id': port['network_id']}
+            registry.publish(resources.ROUTER_INTERFACE,
+                             events.BEFORE_CREATE, self,
+                             payload=events.DBEventPayload(
+                                 context, states=(router_db,),
+                                 metadata=metadata,
+                                 resource_id=router_db.id))
         except exceptions.CallbackFailure as e:
             # raise the underlying exception
             reason = (_('cannot perform router interface attachment '
@@ -888,19 +888,20 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             gw_network_id = router.gw_port.network_id
             gw_ips = [x['ip_address'] for x in router.gw_port.fixed_ips]
 
-        registry.notify(resources.ROUTER_INTERFACE,
-                        events.AFTER_CREATE,
-                        self,
-                        context=context,
-                        network_id=gw_network_id,
-                        gateway_ips=gw_ips,
-                        cidrs=[x['cidr'] for x in subnets],
-                        subnets=subnets,
-                        port_id=port['id'],
-                        router_id=router_id,
-                        port=port,
-                        new_interface=new_router_intf,
-                        interface_info=interface_info)
+        cidrs = [x['cidr'] for x in subnets]
+        metadata = {'interface_info': interface_info,
+                    'new_interface': new_router_intf,
+                    'port': port,
+                    'subnets': subnets,
+                    'cidrs': cidrs,
+                    'gateway_ips': gw_ips,
+                    'network_id': gw_network_id}
+        registry.publish(resources.ROUTER_INTERFACE,
+                         events.AFTER_CREATE, self,
+                         payload=events.DBEventPayload(
+                             context, metadata=metadata,
+                             states=(router,),
+                             resource_id=router_id))
 
         return self._make_router_interface_info(
             router.id, port['tenant_id'], port['id'], port['network_id'],
@@ -1040,16 +1041,16 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             gw_network_id = router.gw_port.network_id
             gw_ips = [x['ip_address'] for x in router.gw_port.fixed_ips]
 
-        registry.notify(resources.ROUTER_INTERFACE,
-                        events.AFTER_DELETE,
-                        self,
-                        context=context,
-                        cidrs=[x['cidr'] for x in subnets],
-                        network_id=gw_network_id,
-                        gateway_ips=gw_ips,
-                        port=port,
-                        router_id=router_id,
-                        interface_info=interface_info)
+        cidrs = [x['cidr'] for x in subnets]
+        metadata = {'interface_info': interface_info,
+                    'port': port, 'gateway_ips': gw_ips,
+                    'network_id': gw_network_id, 'cidrs': cidrs}
+        registry.publish(resources.ROUTER_INTERFACE,
+                         events.AFTER_DELETE, self,
+                         payload=events.DBEventPayload(
+                             context, metadata=metadata,
+                             resource_id=router_id))
+
         return self._make_router_interface_info(router_id, port['tenant_id'],
                                                 port['id'], port['network_id'],
                                                 subnets[0]['id'],

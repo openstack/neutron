@@ -278,17 +278,18 @@ class DhcpAgentNotifyAPI(object):
                            {'admin_state_up': admin_state_up}, host)
 
     def _after_router_interface_created(self, resource, event, trigger,
-                                        **kwargs):
-        self._notify_agents(kwargs['context'], 'port_create_end',
-                            {'port': kwargs['port']},
-                            kwargs['port']['network_id'])
+                                        payload=None):
+        port = payload.metadata.get('port')
+        self._notify_agents(payload.context, 'port_create_end',
+                            {'port': port},
+                            port['network_id'])
 
     def _after_router_interface_deleted(self, resource, event, trigger,
-                                        **kwargs):
-        self._notify_agents(kwargs['context'], 'port_delete_end',
-                            {'port_id': kwargs['port']['id'],
-                             'fixed_ips': kwargs['port']['fixed_ips']},
-                            kwargs['port']['network_id'])
+                                        payload=None):
+        port = payload.metadata.get('port')
+        self._notify_agents(payload.context, 'port_delete_end',
+                            {'port_id': port['id']},
+                            port['network_id'])
 
     def _native_event_send_dhcp_notification_payload(
             self, resource, event, trigger, payload=None):
