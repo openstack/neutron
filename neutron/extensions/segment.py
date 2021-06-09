@@ -248,3 +248,7 @@ class SegmentPluginBase(object, metaclass=abc.ABCMeta):
     @classmethod
     def get_plugin_type(cls):
         return SEGMENTS
+
+    @classmethod
+    def is_loaded(cls):
+        return cls.get_plugin_type() in directory.get_plugins()

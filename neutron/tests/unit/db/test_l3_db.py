@@ -15,6 +15,7 @@
 
 from unittest import mock
 
+import ddt
 import netaddr
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
@@ -31,6 +32,7 @@ import testtools
 
 from neutron.db import l3_db
 from neutron.db.models import l3 as l3_models
+from neutron.extensions import segment as segment_ext
 from neutron.objects import base as base_obj
 from neutron.objects import network as network_obj
 from neutron.objects import ports as port_obj
@@ -40,6 +42,7 @@ from neutron.tests import base
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
 
+@ddt.ddt
 class TestL3_NAT_dbonly_mixin(
         test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
@@ -135,7 +138,8 @@ class TestL3_NAT_dbonly_mixin(
 
         ports = [{'network_id': 'net_id',
                   'id': 'port_id',
-                  'fixed_ips': [{'subnet_id': mock.sentinel.subnet_id}]}]
+                  'fixed_ips': [{'subnet_id': mock.sentinel.subnet_id}],
+                  'device_owner': 'compute:nova'}]
         with mock.patch.object(directory, 'get_plugin') as get_p:
             get_p().get_networks.return_value = [{'id': 'net_id', 'mtu': 1446}]
             self.db._populate_mtu_and_subnets_for_ports(mock.sentinel.context,
@@ -151,7 +155,73 @@ class TestL3_NAT_dbonly_mixin(
                                'mtu': 1446,
                                'network_id': 'net_id',
                                'subnets': [{k: subnet[k] for k in keys}],
-                               'address_scopes': address_scopes}], ports)
+                               'address_scopes': address_scopes,
+                               'device_owner': 'compute:nova'}], ports)
+
+    @ddt.unpack
+    @ddt.data({'plugin_loaded': False, 'seg1': None, 'seg2': None},
+              {'plugin_loaded': True, 'seg1': None, 'seg2': None},
+              {'plugin_loaded': True, 'seg1': 'seg1', 'seg2': 'seg2'})
+    @mock.patch.object(l3_db.L3_NAT_dbonly_mixin,
+                       '_get_subnets_by_network_list')
+    def test__populate_ports_for_subnets_gw_port(self, get_subnets_by_network,
+                                                 plugin_loaded, seg1, seg2):
+        subnets = [
+            {'id': uuidutils.generate_uuid(),
+             'cidr': '10.1.0.0/24',
+             'gateway_ip': mock.sentinel.gateway_ip,
+             'dns_nameservers': mock.sentinel.dns_nameservers,
+             'ipv6_ra_mode': mock.sentinel.ipv6_ra_mode,
+             'subnetpool_id': mock.sentinel.subnetpool_id,
+             'address_scope_id': mock.sentinel.address_scope_id,
+             'segment_id': seg1},
+            {'id': uuidutils.generate_uuid(),
+             'cidr': '10.2.0.0/24',
+             'gateway_ip': mock.sentinel.gateway_ip,
+             'dns_nameservers': mock.sentinel.dns_nameservers,
+             'ipv6_ra_mode': mock.sentinel.ipv6_ra_mode,
+             'subnetpool_id': mock.sentinel.subnetpool_id,
+             'address_scope_id': mock.sentinel.address_scope_id,
+             'segment_id': seg1},
+            {'id': uuidutils.generate_uuid(),
+             'cidr': '10.3.0.0/24',
+             'gateway_ip': mock.sentinel.gateway_ip,
+             'dns_nameservers': mock.sentinel.dns_nameservers,
+             'ipv6_ra_mode': mock.sentinel.ipv6_ra_mode,
+             'subnetpool_id': mock.sentinel.subnetpool_id,
+             'address_scope_id': mock.sentinel.address_scope_id,
+             'segment_id': seg2}]
+        get_subnets_by_network.return_value = {'net_id': subnets}
+
+        ports = [{'network_id': 'net_id',
+                  'id': 'port_id',
+                  'fixed_ips': [{'subnet_id': subnets[0]['id']}],
+                  'device_owner': n_const.DEVICE_OWNER_ROUTER_GW}]
+        with mock.patch.object(directory, 'get_plugin') as get_p, \
+                mock.patch.object(segment_ext.SegmentPluginBase,
+                                  'is_loaded', return_value=plugin_loaded):
+            get_p().get_networks.return_value = [{'id': 'net_id', 'mtu': 1446}]
+            self.db._populate_mtu_and_subnets_for_ports(mock.sentinel.context,
+                                                        ports)
+            keys = ('id', 'cidr', 'gateway_ip', 'ipv6_ra_mode',
+                    'subnetpool_id', 'dns_nameservers')
+            address_scopes = {4: mock.sentinel.address_scope_id, 6: None}
+            reference = {'fixed_ips': [{'subnet_id': subnets[0]['id'],
+                                        'prefixlen': 24}],
+                         'id': 'port_id',
+                         'mtu': 1446,
+                         'network_id': 'net_id',
+                         'subnets': [{k: subnets[0][k] for k in keys}],
+                         'address_scopes': address_scopes,
+                         'device_owner': n_const.DEVICE_OWNER_ROUTER_GW,
+                         'extra_subnets': [{k: subnets[1][k] for k in keys}]}
+            # If RPN plugin is not enabled or the network subnets do not have
+            # associated segments (that means this is not a RPN), all subnets
+            # should be passed in "subnets" + "extra_subnets".
+            if not plugin_loaded or subnets[0]['segment_id'] is None:
+                reference['extra_subnets'].append(
+                    {k: subnets[2][k] for k in keys})
+            self.assertEqual([reference], ports)
 
     def test__get_sync_floating_ips_no_query(self):
         """Basic test that no query is performed if no router ids are passed"""

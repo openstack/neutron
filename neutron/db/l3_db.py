@@ -51,6 +51,7 @@ from neutron.db import models_v2
 from neutron.db import standardattrdescription_db as st_attr
 from neutron.extensions import l3
 from neutron.extensions import qos_fip
+from neutron.extensions import segment as segment_ext
 from neutron.objects import base as base_obj
 from neutron.objects import port_forwarding
 from neutron.objects import ports as port_obj
@@ -1768,7 +1769,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         query = query.filter(models_v2.Subnet.network_id.in_(network_ids))
 
         fields = ['id', 'cidr', 'gateway_ip', 'dns_nameservers',
-                  'network_id', 'ipv6_ra_mode', 'subnetpool_id']
+                  'network_id', 'ipv6_ra_mode', 'subnetpool_id', 'segment_id']
 
         def make_subnet_dict_with_scope(row):
             subnet_db, address_scope_id = row
@@ -1798,6 +1799,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
         These ports already have fixed_ips populated.
         """
+        seg_plugin_loaded = segment_ext.SegmentPluginBase.is_loaded()
         network_ids = [p['network_id']
                        for p in self._each_port_having_fixed_ips(ports)]
 
@@ -1806,11 +1808,18 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             context, network_ids)
 
         for port in self._each_port_having_fixed_ips(ports):
-
+            is_gw = port['device_owner'] == constants.DEVICE_OWNER_ROUTER_GW
             port['subnets'] = []
             port['extra_subnets'] = []
             port['address_scopes'] = {constants.IP_VERSION_4: None,
                                       constants.IP_VERSION_6: None}
+
+            gw_port_segment = None
+            if is_gw and seg_plugin_loaded:
+                for subnet in subnets_by_network[port['network_id']]:
+                    if subnet['id'] == port['fixed_ips'][0]['subnet_id']:
+                        gw_port_segment = subnet['segment_id']
+                        break
 
             scopes = {}
             for subnet in subnets_by_network[port['network_id']]:
@@ -1835,8 +1844,16 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                         fixed_ip['prefixlen'] = prefixlen
                         break
                 else:
-                    # This subnet is not used by the port.
-                    port['extra_subnets'].append(subnet_info)
+                    # NOTE(ralonsoh): if this is the gateway port and is
+                    # connected to a router provider network, it will have L2
+                    # connectivity only to the subnets in the same segment.
+                    # The router will add only the onlink routes to those
+                    # subnet CIDRs.
+                    if is_gw and seg_plugin_loaded:
+                        if subnet['segment_id'] == gw_port_segment:
+                            port['extra_subnets'].append(subnet_info)
+                    else:
+                        port['extra_subnets'].append(subnet_info)
 
             port['address_scopes'].update(scopes)
             port['mtu'] = mtus_by_network.get(port['network_id'], 0)
