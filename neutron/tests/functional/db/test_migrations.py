@@ -363,16 +363,13 @@ class TestModelsMigrationsMysql(testlib_api.MySQLTestCaseMixin,
             self.assertEqual(0, len(res), "%s non InnoDB tables created" % res)
 
     def test_models_sync(self):
-        self.skipTest('bug 1929518')
         super(TestModelsMigrationsMysql, self).test_models_sync()
 
 
 class TestModelsMigrationsPsql(testlib_api.PostgreSQLTestCaseMixin,
                                _TestModelsMigrations,
                                testlib_api.SqlTestCaseLight):
-    def test_models_sync(self):
-        self.skipTest('bug 1929518')
-        super().test_models_sync()
+    pass
 
 
 class TestSanityCheck(testlib_api.SqlTestCaseLight):
