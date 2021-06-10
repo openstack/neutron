@@ -202,6 +202,7 @@ class OVSConfigFixture(ConfigFixture):
                 'integration_bridge': self._generate_integration_bridge(),
                 'bridge_mappings': '%s:%s' % (PHYSICAL_NETWORK_NAME, ext_dev),
                 'of_inactivity_probe': '0',
+                'ovsdb_debug': 'True',
             },
             'securitygroup': {
                 'firewall_driver': host_desc.firewall_driver,
