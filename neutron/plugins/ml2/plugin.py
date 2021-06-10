@@ -1415,8 +1415,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         if not attrs.get('status'):
             attrs['status'] = const.PORT_STATUS_DOWN
 
-        registry.notify(resources.PORT, events.BEFORE_CREATE, self,
-                        context=context, port=attrs)
+        registry.publish(resources.PORT, events.BEFORE_CREATE, self,
+                         payload=events.DBEventPayload(
+                             context,
+                             states=(attrs,)))
 
     def _create_port_db(self, context, port):
         attrs = port[port_def.RESOURCE_NAME]
@@ -1442,9 +1444,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     attrs.get(addr_apidef.ADDRESS_PAIRS)))
             self._process_port_create_extra_dhcp_opts(context, result,
                                                       dhcp_opts)
-            kwargs = {'context': context, 'port': result}
-            registry.notify(
-                resources.PORT, events.PRECOMMIT_CREATE, self, **kwargs)
+            registry.publish(resources.PORT, events.PRECOMMIT_CREATE, self,
+                             payload=events.DBEventPayload(
+                                 context,
+                                 resource_id=result['id'],
+                                 states=(result,)))
             self.mechanism_manager.create_port_precommit(mech_context)
             self._setup_dhcp_agent_provisioning_component(context, result)
 
@@ -1613,9 +1617,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 self._process_port_create_extra_dhcp_opts(context, port_dict,
                                                           dhcp_opts)
                 # send PRECOMMIT_CREATE notification
-                kwargs = {'context': context, 'port': db_port_obj}
-                registry.notify(
-                    resources.PORT, events.PRECOMMIT_CREATE, self, **kwargs)
+                registry.publish(resources.PORT, events.PRECOMMIT_CREATE, self,
+                                 payload=events.DBEventPayload(
+                                     context,
+                                     resource_id=db_port_obj['id'],
+                                     states=(db_port_obj,)))
+
                 self.mechanism_manager.create_port_precommit(mech_context)
 
                 # handle DHCP agent provisioning
