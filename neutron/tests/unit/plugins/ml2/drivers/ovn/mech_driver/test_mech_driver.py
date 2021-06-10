@@ -1977,6 +1977,56 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         expected_candidates = [ch0.name, ch2.name]
         self.assertEqual(sorted(expected_candidates), sorted(candidates))
 
+    def _test_should_post_fork_initialize(self, enabled, disabled):
+        for worker_class in enabled:
+            self.assertTrue(
+                self.mech_driver.should_post_fork_initialize(worker_class))
+        for worker_class in disabled:
+            self.assertFalse(
+                self.mech_driver.should_post_fork_initialize(worker_class))
+
+    def test_should_post_fork_initialize_default(self):
+        enabled = (mech_driver.neutron.wsgi.WorkerService,
+                   mech_driver.worker.MaintenanceWorker)
+        disabled = (mech_driver.neutron.service.AllServicesNeutronWorker,
+                    mech_driver.neutron.service.RpcWorker)
+        self._test_should_post_fork_initialize(enabled, disabled)
+
+    def test_should_post_fork_initialize__allservices_worker(self):
+        ovn_conf.cfg.CONF.set_override(
+            'additional_worker_classes_with_ovn_idl',
+            ['neutron.service.AllServicesNeutronWorker'],
+            group='ovn')
+        enabled = (mech_driver.neutron.wsgi.WorkerService,
+                   mech_driver.worker.MaintenanceWorker,
+                   mech_driver.neutron.service.AllServicesNeutronWorker)
+        disabled = (mech_driver.neutron.service.RpcWorker,)
+        self._test_should_post_fork_initialize(enabled, disabled)
+
+    def test_should_post_fork_initialize__rpc_workers(self):
+        ovn_conf.cfg.CONF.set_override(
+            'additional_worker_classes_with_ovn_idl',
+            ['RpcWorker'],
+            group='ovn')
+        enabled = (mech_driver.neutron.wsgi.WorkerService,
+                   mech_driver.worker.MaintenanceWorker,
+                   mech_driver.neutron.service.RpcWorker)
+        disabled = (mech_driver.neutron.service.AllServicesNeutronWorker,)
+        self._test_should_post_fork_initialize(enabled, disabled)
+
+    def test_should_post_fork_initialize__bad_config(self):
+        # test that `should_post_fork_initialize` works even with
+        # unknown alias in additional_worker_classes_with_ovn_idl
+        ovn_conf.cfg.CONF.set_override(
+            'additional_worker_classes_with_ovn_idl',
+            ['UnknownAlias'],
+            group='ovn')
+        enabled = (mech_driver.neutron.wsgi.WorkerService,
+                   mech_driver.worker.MaintenanceWorker)
+        disabled = (mech_driver.neutron.service.AllServicesNeutronWorker,
+                    mech_driver.neutron.service.RpcWorker)
+        self._test_should_post_fork_initialize(enabled, disabled)
+
 
 class OVNMechanismDriverTestCase(test_plugin.Ml2PluginV2TestCase):
     _mechanism_drivers = ['logger', 'ovn']

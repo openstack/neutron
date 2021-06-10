@@ -1,0 +1,7 @@
+---
+other:
+  - |
+    Added a new config option ``additional_worker_classes_with_ovn_idl``
+    to allow initialization of OVN IDL connections for additional worker
+    classes. Can be used for plugins or extensions that need IDL connections
+    for other worker classes than API and maintenance workers.
