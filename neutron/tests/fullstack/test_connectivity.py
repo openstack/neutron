@@ -20,6 +20,7 @@ from oslo_utils import uuidutils
 import testscenarios
 
 from neutron.common import utils as common_utils
+from neutron.tests import base as tests_base
 from neutron.tests.common import net_helpers
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import config
@@ -182,15 +183,10 @@ class TestConnectivitySameNetworkNoDhcp(BaseConnectivitySameNetworkTest):
         self._test_connectivity()
 
 
-class TestUninterruptedConnectivityOnL2AgentRestart(
+class _TestUninterruptedConnectivityOnL2AgentRestart(
         BaseConnectivitySameNetworkTest):
 
     num_hosts = 2
-
-    ovs_agent_scenario = [('OVS',
-                           {'l2_agent_type': constants.AGENT_TYPE_OVS})]
-    lb_agent_scenario = [('LB',
-                          {'l2_agent_type': constants.AGENT_TYPE_LINUXBRIDGE})]
 
     network_scenarios = [
         ('Flat network', {'network_type': 'flat',
@@ -200,13 +196,8 @@ class TestUninterruptedConnectivityOnL2AgentRestart(
         ('VXLAN', {'network_type': 'vxlan',
                    'l2_pop': False}),
     ]
-    scenarios = (
-        testscenarios.multiply_scenarios(ovs_agent_scenario,
-                                         network_scenarios) +
-        testscenarios.multiply_scenarios(lb_agent_scenario, network_scenarios)
-    )
 
-    def test_l2_agent_restart(self, agent_restart_timeout=20):
+    def _test_l2_agent_restart(self, agent_restart_timeout=20):
         # Environment preparation is effectively the same as connectivity test
         vms = self._prepare_vms_in_single_network()
         vms.ping_all()
@@ -221,3 +212,35 @@ class TestUninterruptedConnectivityOnL2AgentRestart(
         self._assert_ping_during_agents_restart(
             agents, ns0, [ip1], restart_timeout=agent_restart_timeout,
             ping_timeout=2, count=agent_restart_timeout)
+
+
+class TestUninterruptedConnectivityOnL2AgentRestartOvs(
+        _TestUninterruptedConnectivityOnL2AgentRestart):
+
+    scenario = [('OVS',
+                 {'l2_agent_type': constants.AGENT_TYPE_OVS})]
+
+    scenarios = (
+        testscenarios.multiply_scenarios(
+            scenario,
+            _TestUninterruptedConnectivityOnL2AgentRestart.network_scenarios))
+
+    def test_l2_agent_restart(self, agent_restart_timeout=20):
+        self._test_l2_agent_restart(agent_restart_timeout)
+
+
+class TestUninterruptedConnectivityOnL2AgentRestartLB(
+        _TestUninterruptedConnectivityOnL2AgentRestart):
+
+    scenario = [('LB',
+                 {'l2_agent_type': constants.AGENT_TYPE_LINUXBRIDGE})]
+
+    scenarios = (
+        testscenarios.multiply_scenarios(
+            scenario,
+            _TestUninterruptedConnectivityOnL2AgentRestart.network_scenarios)
+    )
+
+    @tests_base.unstable_test("bug 1928764")
+    def test_l2_agent_restart(self, agent_restart_timeout=20):
+        self._test_l2_agent_restart(agent_restart_timeout)
