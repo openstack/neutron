@@ -1719,6 +1719,12 @@ class TestNetworkCache(base.BaseTestCase):
         nc = dhcp_agent.NetworkCache()
         nc.add_to_deleted_ports(fake_port1.id)
         utils.wait_until_true(lambda: nc._deleted_ports == set(), timeout=7)
+        self.assertEqual([], self.nc._deleted_ports_ts)
+
+        # check the second iteration is ok too
+        nc.add_to_deleted_ports(fake_port2.id)
+        utils.wait_until_true(lambda: nc._deleted_ports == set(), timeout=7)
+        self.assertEqual([], self.nc._deleted_ports_ts)
 
 
 class FakePort1(object):
