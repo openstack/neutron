@@ -210,6 +210,9 @@
           c-vol: false
         devstack_local_conf:
           post-config:
+            $NEUTRON_CONF:
+              nova:
+                live_migration_events: True
             $NEUTRON_L3_CONF:
               agent:
                 debug_iptables_rules: True
