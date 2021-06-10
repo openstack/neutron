@@ -1693,16 +1693,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                 self.assertEqual(data['port']['fixed_ips'],
                                  res['port']['fixed_ips'])
 
-    def test_no_more_port_exception(self):
-        with self.subnet(cidr='10.0.0.0/31', enable_dhcp=False,
-                         gateway_ip=None) as subnet:
-            id = subnet['subnet']['network_id']
-            res = self._create_port(self.fmt, id)
-            data = self.deserialize(self.fmt, res)
-            msg = str(lib_exc.IpAddressGenerationFailure(net_id=id))
-            self.assertEqual(data['NeutronError']['message'], msg)
-            self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
-
     def test_create_ports_native_quotas(self):
         quota = 1
         cfg.CONF.set_override('quota_port', quota, group='QUOTAS')
@@ -5090,6 +5080,43 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                               subnet['subnet']['id'])
                 res = req.get_response(self.api)
                 self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
+
+    def test_create_subnet_allocation_pools_with_prefixlen_31(self):
+        with self.network() as network:
+            with self.subnet(network=network,
+                             enable_dhcp=False,
+                             gateway_ip='10.14.0.19',
+                             cidr='10.14.0.20/31'):
+                res = self._create_port(self.fmt, network['network']['id'])
+                self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
+                res = self._create_port(self.fmt, network['network']['id'])
+                self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
+
+    def test_update_subnet_allocation_pools_with_prefixlen_31(self):
+        with self.network() as network:
+            with self.subnet(network=network,
+                             enable_dhcp=False,
+                             gateway_ip='10.14.0.19',
+                             cidr='10.14.0.20/31') as subnet:
+                data = {'subnet': {'allocation_pools': [
+                    {'start': '10.14.0.20', 'end': '10.14.0.21'}]}}
+                req = self.new_update_request('subnets', data,
+                                              subnet['subnet']['id'])
+                res = req.get_response(self.api)
+                self.assertEqual(webob.exc.HTTPOk.code, res.status_int)
+                res = self._create_port(self.fmt, network['network']['id'])
+                self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
+                res = self._create_port(self.fmt, network['network']['id'])
+                self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
+
+    def test_create_subnet_allocation_pools_with_prefixlen_32(self):
+        with self.network() as network:
+            with self.subnet(network=network,
+                             enable_dhcp=False,
+                             gateway_ip='10.14.0.19',
+                             cidr='10.14.0.20/32'):
+                res = self._create_port(self.fmt, network['network']['id'])
+                self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
 
     def test_create_subnets_native_quotas(self):
         quota = 1

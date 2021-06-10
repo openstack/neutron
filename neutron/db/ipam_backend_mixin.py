@@ -310,9 +310,17 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         Finally, verify that each range fall within the subnet's CIDR.
         """
         subnet = netaddr.IPNetwork(subnet_cidr)
-        subnet_first_ip = netaddr.IPAddress(subnet.first + 1)
-        # last address is broadcast in v4
-        subnet_last_ip = netaddr.IPAddress(subnet.last - (subnet.version == 4))
+        if subnet.version == const.IP_VERSION_4:
+            if subnet.prefixlen <= 30:
+                subnet_first_ip = netaddr.IPAddress(subnet.first + 1)
+                # last address is broadcast in v4
+                subnet_last_ip = netaddr.IPAddress(subnet.last - 1)
+            else:
+                subnet_first_ip = netaddr.IPAddress(subnet.first)
+                subnet_last_ip = netaddr.IPAddress(subnet.last)
+        else:  # IPv6 case
+            subnet_first_ip = netaddr.IPAddress(subnet.first + 1)
+            subnet_last_ip = netaddr.IPAddress(subnet.last)
 
         LOG.debug("Performing IP validity checks on allocation pools")
         ip_sets = []

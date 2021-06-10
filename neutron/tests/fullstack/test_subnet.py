@@ -20,6 +20,7 @@ from oslo_utils import uuidutils
 from neutron.tests.common.exclusive_resources import ip_network
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
+from neutron.tests.fullstack.resources import machine
 
 
 class TestSubnet(base.BaseFullStackTestCase):
@@ -132,3 +133,32 @@ class TestSubnet(base.BaseFullStackTestCase):
         subnet = self._show_subnet(subnet['id'])
         self.assertEqual(subnet['subnet']['cidr'], str(subnets[2].cidr))
         self.assertEqual(subnet['subnet']['gateway_ip'], str(gateway_ip))
+
+    def test_subnet_with_prefixlen_31_connectivity(self):
+        network = self._create_network(self._project_id)
+        self.safe_client.create_subnet(
+            self._project_id, network['id'],
+            cidr='10.14.0.20/31',
+            gateway_ip='10.14.0.19',
+            name='subnet-test',
+            enable_dhcp=False)
+
+        vms = self._prepare_vms_in_net(self._project_id, network, False)
+        vms.ping_all()
+
+    def test_subnet_with_prefixlen_32_vm_spawn(self):
+        network = self._create_network(self._project_id)
+        self.safe_client.create_subnet(
+            self._project_id, network['id'],
+            cidr='10.14.0.20/32',
+            gateway_ip='10.14.0.19',
+            name='subnet-test',
+            enable_dhcp=False)
+
+        vm = self.useFixture(
+                machine.FakeFullstackMachine(
+                    self.environment.hosts[0],
+                    network['id'],
+                    self._project_id,
+                    self.safe_client))
+        vm.block_until_boot()
