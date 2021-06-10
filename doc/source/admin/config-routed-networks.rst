@@ -540,7 +540,7 @@ underlying network infrastructure, not managed by Neutron.
 
 Could be the case that the user needs to split the communication between
 several hosts. It is possible to create tenant networks and connect them using
-a router. To access to the router provider network, it should be connected
+a router. To access to the routed provider network, it should be connected
 as router gateway.
 
 .. code-block:: bash
@@ -554,14 +554,14 @@ as router gateway.
                 └─────────────────────┘
 
 The routed provider network, acting as router gateway, contains all subnets
-associated to the segments. In a deployment without router provided networks,
+associated to the segments. In a deployment without routed provided networks,
 the gateway port has L2 connectivity to all subnet CIDRs. In this case, the
 gateway port has only connectivity to the attached segment subnets and its
 L2 broadcast domains.
 
 The L3 agent will create, inside the router namespace, a default route in the
-gateway port fixed IP CIDR. For each other subnet no belonging to the port
-fixed IP address, a onlink route is created. These routes use the gateway port
+gateway port fixed IP CIDR. For each other subnet not belonging to the port's
+fixed IP address, an onlink route is created. These routes use the gateway port
 as routing device and allow to route any packet with destination on these
 CIDRs through this port.
 
