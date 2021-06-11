@@ -627,16 +627,18 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                              need_notify, update_binding_levels=True):
         port_id = orig_context.current['id']
         plugin_context = orig_context._plugin_context
+        port = orig_context.current
+        original_port = orig_context.current
         orig_binding = orig_context._binding
         new_binding = bind_context._binding
 
-        # TODO(yamahata): revise what to be passed or new resource
-        # like PORTBINDING should be introduced?
-        # It would be addressed during EventPayload conversion.
-        registry.notify(resources.PORT, events.BEFORE_UPDATE, self,
-                        context=plugin_context, port=orig_context.current,
-                        original_port=orig_context.current,
-                        orig_binding=orig_binding, new_binding=new_binding)
+        registry.publish(resources.PORT, events.BEFORE_UPDATE, self,
+                         payload=events.DBEventPayload(
+                             plugin_context,
+                             resource_id=port_id,
+                             metadata={'orig_binding': orig_binding,
+                                       'new_binding': new_binding},
+                             states=(original_port, port)))
 
         # After we've attempted to bind the port, we begin a
         # transaction, get the current port state, and decide whether
@@ -1697,9 +1699,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         need_port_update_notify = False
         bound_mech_contexts = []
         original_port = self.get_port(context, id)
-        registry.notify(resources.PORT, events.BEFORE_UPDATE, self,
-                        context=context, port=attrs,
-                        original_port=original_port)
+        registry.publish(resources.PORT, events.BEFORE_UPDATE, self,
+                         payload=events.DBEventPayload(
+                             context,
+                             resource_id=id,
+                             states=(original_port, attrs)))
         with db_api.CONTEXT_WRITER.using(context):
             port_db = self._get_port(context, id)
             binding = p_utils.get_port_binding_by_status_and_host(
@@ -2161,9 +2165,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 portbindings.HOST_ID: host,
                 'status': status
             }
-            registry.notify(resources.PORT, events.BEFORE_UPDATE, self,
-                            original_port=port,
-                            context=context, port=attr)
+            registry.publish(resources.PORT, events.BEFORE_UPDATE, self,
+                             payload=events.DBEventPayload(
+                                 context,
+                                 resource_id=port_id,
+                                 states=(port, attr,)))
         with db_api.CONTEXT_WRITER.using(context):
             context.session.add(port)  # bring port into writer session
             if (port.status != status and

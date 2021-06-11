@@ -1471,7 +1471,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         ctx = context.get_admin_context()
         b_update_events = []
         a_update_events = []
-        b_receiver = lambda *a, **k: b_update_events.append(k)
+        b_receiver = lambda r, e, t, payload: b_update_events.append(payload)
         a_receiver = lambda *a, **k: a_update_events.append(k['port'])
         registry.subscribe(b_receiver, resources.PORT,
                            events.BEFORE_UPDATE)
@@ -1483,20 +1483,24 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         # updating in the host should result in two AFTER_UPDATE events.
         # one to change the host_id, the second to commit a binding
         self.assertEqual(2, len(b_update_events))
-        self.assertEqual({'context': ctx,
-                          'port': {'binding:host_id': 'newhost'},
-                          'original_port': mock.ANY},
-                         b_update_events[0])
-        self.assertIn('orig_binding', b_update_events[1])
-        self.assertIn('new_binding', b_update_events[1])
-        self.assertDictContainsSubset({'context': ctx}, b_update_events[1])
+        # use dict for assertEqual because payload is object
+        expected_dict = {'context': ctx,
+                         'port': {'binding:host_id': 'newhost'},
+                         'original_port': mock.ANY}
+        actual_dict = {'context': b_update_events[0].context,
+                       'port': b_update_events[0].latest_state,
+                       'original_port': b_update_events[0].states[0]}
+        self.assertEqual(expected_dict, actual_dict)
+        self.assertIn('orig_binding', b_update_events[1].metadata)
+        self.assertIn('new_binding', b_update_events[1].metadata)
+        self.assertDictContainsSubset({'context': ctx}, actual_dict)
         self.assertDictContainsSubset({
             'admin_state_up': True,
             'binding:host_id': 'newhost',
             'binding:vif_type': 'unbound',
             'binding:vnic_type': u'normal',
             'status': 'DOWN'},
-            b_update_events[1]['port'])
+            b_update_events[1].latest_state)
         self.assertEqual('newhost', a_update_events[0]['binding:host_id'])
         self.assertEqual('unbound', a_update_events[0]['binding:vif_type'])
         self.assertEqual('newhost', a_update_events[1]['binding:host_id'])

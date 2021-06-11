@@ -1355,11 +1355,17 @@ class TestQosPluginDB(base.BaseQosTestCase):
         qos1_obj = self._make_qos_policy()
         kwargs = self._prepare_for_port_placement_allocation_change(
             qos1=qos1_obj, qos2=qos1_obj)
+        context = kwargs['context']
+        original_port = kwargs['original_port']
+        port = kwargs['port']
+
         with mock.patch.object(
                 self.qos_plugin,
                 '_change_placement_allocation') as mock_alloc_change:
             self.qos_plugin._check_port_for_placement_allocation_change(
-                'PORT', 'before_update', 'test_plugin', **kwargs)
+                'PORT', 'before_update', 'test_plugin',
+                payload=events.DBEventPayload(
+                    context, states=(original_port, port)))
         mock_alloc_change.assert_not_called()
 
     def test_check_port_for_placement_allocation_change(self):
@@ -1367,12 +1373,17 @@ class TestQosPluginDB(base.BaseQosTestCase):
         qos2_obj = self._make_qos_policy()
         kwargs = self._prepare_for_port_placement_allocation_change(
             qos1=qos1_obj, qos2=qos2_obj)
+        context = kwargs['context']
+        original_port = kwargs['original_port']
+        port = kwargs['port']
 
         with mock.patch.object(
                 self.qos_plugin,
                 '_change_placement_allocation') as mock_alloc_change:
             self.qos_plugin._check_port_for_placement_allocation_change(
-                'PORT', 'before_update', 'test_plugin', **kwargs)
+                'PORT', 'before_update', 'test_plugin',
+                payload=events.DBEventPayload(
+                    context, states=(original_port, port)))
         mock_alloc_change.assert_called_once_with(
             qos1_obj, qos2_obj, kwargs['original_port'])
 
@@ -1380,12 +1391,17 @@ class TestQosPluginDB(base.BaseQosTestCase):
         qos1_obj = self._make_qos_policy()
         kwargs = self._prepare_for_port_placement_allocation_change(
             qos1=qos1_obj, qos2=None)
+        context = kwargs['context']
+        original_port = kwargs['original_port']
+        port = kwargs['port']
 
         with mock.patch.object(
                 self.qos_plugin,
                 '_change_placement_allocation') as mock_alloc_change:
             self.qos_plugin._check_port_for_placement_allocation_change(
-                'PORT', 'before_update', 'test_plugin', **kwargs)
+                'PORT', 'before_update', 'test_plugin',
+                payload=events.DBEventPayload(
+                    context, states=(original_port, port)))
         mock_alloc_change.assert_called_once_with(
             qos1_obj, None, kwargs['original_port'])
 
@@ -1394,12 +1410,17 @@ class TestQosPluginDB(base.BaseQosTestCase):
         kwargs = self._prepare_for_port_placement_allocation_change(
             qos1=qos1_obj, qos2=None)
         kwargs['port'].pop('qos_policy_id')
+        context = kwargs['context']
+        original_port = kwargs['original_port']
+        port = kwargs['port']
 
         with mock.patch.object(
                 self.qos_plugin,
                 '_change_placement_allocation') as mock_alloc_change:
             self.qos_plugin._check_port_for_placement_allocation_change(
-                'PORT', 'before_update', 'test_plugin', **kwargs)
+                'PORT', 'before_update', 'test_plugin',
+                payload=events.DBEventPayload(
+                    context, states=(original_port, port)))
         mock_alloc_change.assert_not_called()
 
     def _prepare_port_for_placement_allocation(self, qos1, qos2=None,
