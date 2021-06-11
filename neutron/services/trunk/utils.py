@@ -14,6 +14,8 @@
 
 from neutron_lib.api import extensions
 from neutron_lib.plugins import directory
+from neutron_lib.utils import runtime
+from oslo_config import cfg
 
 from neutron.common import utils as common_utils
 
@@ -53,3 +55,15 @@ def is_driver_compatible(context, driver, interface, host_agent_types):
 
     # For an agent-based driver, both interface and agent compat is required.
     return is_interface_compatible and driver.agent_type in host_agent_types
+
+
+def is_trunk_service_loaded():
+    for service_plugins in cfg.CONF.service_plugins:
+        try:
+            klass = runtime.load_class_by_alias_or_classname(
+                'neutron.service_plugins', service_plugins)
+            if klass.__name__ == 'TrunkPlugin':
+                return True
+        except ImportError:
+            continue
+    return False
