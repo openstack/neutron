@@ -88,6 +88,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     az_def.ALIAS,
     portbindings.ALIAS,
     default_subnetpools.ALIAS,
+    dns.ALIAS,
     external_net.ALIAS,
     extra_dhcp_opt.ALIAS,
     filter_validation.ALIAS,
