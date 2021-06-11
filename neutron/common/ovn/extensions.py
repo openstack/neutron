@@ -84,6 +84,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     auto_allocated_topology.ALIAS,
     portbindings.ALIAS,
     default_subnetpools.ALIAS,
+    dns.ALIAS,
     external_net.ALIAS,
     extra_dhcp_opt.ALIAS,
     filter_validation.ALIAS,
