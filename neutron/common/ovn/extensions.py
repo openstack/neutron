@@ -82,6 +82,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     agent_def.ALIAS,
     allowedaddresspairs.ALIAS,
     auto_allocated_topology.ALIAS,
+    az_def.ALIAS,
     portbindings.ALIAS,
     default_subnetpools.ALIAS,
     external_net.ALIAS,
