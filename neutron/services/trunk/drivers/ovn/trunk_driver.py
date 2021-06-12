@@ -14,6 +14,7 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
+from neutron_lib import constants as n_consts
 from neutron_lib import context as n_context
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
@@ -71,6 +72,10 @@ class OVNTrunkHandler(object):
             # NOTE(flaviof): We expect binding's host to be set. Otherwise,
             # sub-port will not transition from DOWN to ACTIVE.
             db_port.device_owner = trunk_consts.TRUNK_SUBPORT_OWNER
+            # NOTE(ksambor):  When sub-port was created and event was process
+            # without binding profile this port will end forever in DOWN
+            # status so we need to switch it here
+            db_port.status = n_consts.PORT_STATUS_ACTIVE
             for binding in db_port.bindings:
                 binding.profile['parent_name'] = parent_port
                 binding.profile['tag'] = subport.segmentation_id
