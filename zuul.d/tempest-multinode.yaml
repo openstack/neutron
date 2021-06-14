@@ -120,6 +120,11 @@
       tox_envlist: integrated-network
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
+      devstack_local_conf:
+        post-config:
+          $NEUTRON_CONF:
+            nova:
+              live_migration_events: True
       devstack_services:
         br-ex-tcpdump: true
         br-int-flows: true
@@ -140,6 +145,11 @@
           # Cinder services
           c-bak: false
           c-vol: false
+        devstack_local_conf:
+          post-config:
+            $NEUTRON_CONF:
+              nova:
+                live_migration_events: True
 
 - job:
     name: neutron-tempest-slow-py3

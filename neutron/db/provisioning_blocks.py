@@ -138,8 +138,7 @@ def provisioning_complete(context, object_id, object_type, entity):
             context, standard_attr_id=standard_attr_id):
         LOG.debug("Provisioning complete for %(otype)s %(oid)s triggered by "
                   "entity %(entity)s.", log_dict)
-        registry.publish(object_type, PROVISIONING_COMPLETE,
-                         'neutron.db.provisioning_blocks',
+        registry.publish(object_type, PROVISIONING_COMPLETE, entity,
                          payload=events.DBEventPayload(
                              context, resource_id=object_id))
 

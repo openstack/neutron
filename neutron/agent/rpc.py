@@ -25,8 +25,10 @@ from neutron_lib.callbacks import resources as callback_resources
 from neutron_lib import constants
 from neutron_lib.plugins import utils
 from neutron_lib import rpc as lib_rpc
+from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
+from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
 
 from neutron.agent import resource_cache
@@ -328,8 +330,10 @@ class CacheBackedPluginApi(PluginApi):
         binding = utils.get_port_binding_by_status_and_host(
             port_obj.bindings, constants.ACTIVE, raise_if_not_found=True,
             port_id=port_obj.id)
-        if (port_obj.device_owner.startswith(
-                constants.DEVICE_OWNER_COMPUTE_PREFIX) and
+        migrating_to = migrating_to_host(port_obj.bindings)
+        if (not (migrating_to and cfg.CONF.nova.live_migration_events) and
+                port_obj.device_owner.startswith(
+                    constants.DEVICE_OWNER_COMPUTE_PREFIX) and
                 binding[pb_ext.HOST] != host):
             LOG.debug("Device %s has no active binding in this host",
                       port_obj)
@@ -365,7 +369,8 @@ class CacheBackedPluginApi(PluginApi):
             'profile': binding.profile,
             'vif_type': binding.vif_type,
             'vnic_type': binding.vnic_type,
-            'security_groups': list(port_obj.security_group_ids)
+            'security_groups': list(port_obj.security_group_ids),
+            'migrating_to': migrating_to,
         }
         LOG.debug("Returning: %s", entry)
         return entry
@@ -380,3 +385,30 @@ class CacheBackedPluginApi(PluginApi):
         rcache = resource_cache.RemoteResourceCache(self.RESOURCE_TYPES)
         rcache.start_watcher()
         self.remote_resource_cache = rcache
+
+
+# TODO(ralonsoh): move this method to neutron_lib.plugins.utils
+def migrating_to_host(bindings, host=None):
+    """Return the host the port is being migrated.
+
+    If the host is passed, the port binding profile with the "migrating_to",
+    that contains the host the port is being migrated, is compared to this
+    value. If no value is passed, this method will return if the port is
+    being migrated ("migrating_to" is present in any port binding profile).
+
+    The function returns None or the matching host.
+    """
+    for binding in (binding for binding in bindings if
+                    binding[pb_ext.STATUS] == constants.ACTIVE):
+        profile = binding.get('profile')
+        if not profile:
+            continue
+        profile = (jsonutils.loads(profile) if isinstance(profile, str) else
+                   profile)
+        migrating_to = profile.get('migrating_to')
+        if migrating_to:
+            if not host:  # Just know if the port is being migrated.
+                return migrating_to
+            if migrating_to == host:
+                return migrating_to
+    return None
