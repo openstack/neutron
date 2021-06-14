@@ -26,6 +26,8 @@ EXTRA_LOG_LEVEL_DEFAULTS = [
 VLOG_LEVELS = {'CRITICAL': vlog.CRITICAL, 'ERROR': vlog.ERROR, 'WARNING':
                vlog.WARN, 'INFO': vlog.INFO, 'DEBUG': vlog.DEBUG}
 
+MIGRATE_MODE = "migrate"
+
 ovn_opts = [
     cfg.StrOpt('ovn_nb_connection',
                default='tcp:127.0.0.1:6641',
@@ -85,7 +87,7 @@ ovn_opts = [
                       'to 60 seconds.')),
     cfg.StrOpt('neutron_sync_mode',
                default='log',
-               choices=('off', 'log', 'repair'),
+               choices=('off', 'log', 'repair', MIGRATE_MODE),
                help=_('The synchronization mode of OVN_Northbound OVSDB '
                       'with Neutron DB.\n'
                       'off - synchronization is off \n'
@@ -97,7 +99,11 @@ ovn_opts = [
                       'repair - during neutron-server startup, automatically'
                       ' create resources found in Neutron but not in OVN.'
                       ' Also remove resources from OVN'
-                      ' that are no longer in Neutron.')),
+                      ' that are no longer in Neutron.'
+                      '%(migrate)s - This mode is to OVS to OVN migration. It'
+                      ' will sync the DB just like repair mode but it will'
+                      ' additionally fix the Neutron DB resource from OVS to'
+                      ' OVN.') % {'migrate': MIGRATE_MODE}),
     cfg.BoolOpt('ovn_l3_mode',
                 default=True,
                 deprecated_for_removal=True,

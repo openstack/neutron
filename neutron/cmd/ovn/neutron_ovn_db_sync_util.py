@@ -24,6 +24,7 @@ from neutron.conf.agent import securitygroups_rpc
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron import manager
 from neutron import opts as neutron_options
+from neutron.plugins.ml2.drivers.ovn import db_migration
 from neutron.plugins.ml2.drivers.ovn.mech_driver import mech_driver
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
@@ -171,6 +172,11 @@ def main():
     logging.setup(conf, 'neutron_ovn_db_sync_util')
     LOG.info('Started Neutron OVN db sync')
     mode = ovn_conf.get_ovn_neutron_sync_mode()
+    # Migrate mode will run as repair mode in the synchronizer
+    migrate = False
+    if mode == ovn_conf.MIGRATE_MODE:
+        mode = ovn_db_sync.SYNC_MODE_REPAIR
+        migrate = True
     if mode not in [ovn_db_sync.SYNC_MODE_LOG, ovn_db_sync.SYNC_MODE_REPAIR]:
         LOG.error(
             'Invalid sync mode : ["%s"]. Should be "log" or "repair"', mode)
@@ -235,3 +241,8 @@ def main():
     LOG.info('Sync for Southbound db started with mode : %s', mode)
     sb_synchronizer.do_sync()
     LOG.info('Sync completed for Southbound db')
+
+    if migrate:
+        LOG.info("Migrating Neutron database from OVS to OVN")
+        db_migration.migrate_neutron_database_to_ovn(core_plugin)
+        LOG.info("Neutron database migration from OVS to OVN completed")
