@@ -299,6 +299,40 @@ rules = [
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
+    policy.DocumentedRuleDefault(
+        name='add_extraroutes',
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['system', 'project'],
+        description='Add extra route to a router',
+        operations=[
+            {
+                'method': 'PUT',
+                'path': '/routers/{id}/add_extraroutes',
+            },
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='add_extraroutes',
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since="Xena")
+    ),
+    policy.DocumentedRuleDefault(
+        name='remove_extraroutes',
+        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['system', 'project'],
+        description='Remove extra route from a router',
+        operations=[
+            {
+                'method': 'PUT',
+                'path': '/routers/{id}/remove_extraroutes',
+            },
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='remove_extraroutes',
+            check_str=base.RULE_ADMIN_OR_OWNER,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since="Xena")
+    ),
 ]
 
 
