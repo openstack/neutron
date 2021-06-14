@@ -11,12 +11,16 @@
 #    under the License.
 
 import contextlib
+import functools
+import socket
 import uuid
 
 from neutron_lib import exceptions as n_exc
 from neutron_lib.utils import helpers
 from oslo_log import log
 from oslo_utils import uuidutils
+from ovs import socket_util
+from ovs import stream
 from ovsdbapp.backend import ovs_idl
 from ovsdbapp.backend.ovs_idl import connection
 from ovsdbapp.backend.ovs_idl import idlutils
@@ -65,6 +69,45 @@ class OvnNbTransaction(idl_trans.Transaction):
         if not self.bump_nb_cfg:
             return
         self.api.nb_global.increment('nb_cfg')
+
+
+def add_keepalives(fn):
+    @functools.wraps(fn)
+    def _open(*args, **kwargs):
+        error, sock = fn(*args, **kwargs)
+        try:
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+        except socket.error as e:
+            sock.close()
+            return socket_util.get_exception_errno(e), None
+        return error, sock
+    return _open
+
+
+class NoProbesMixin:
+    @staticmethod
+    def needs_probes():
+        # If we are using keepalives, we can force probe_interval=0
+        return False
+
+
+class TCPStream(stream.TCPStream, NoProbesMixin):
+    @classmethod
+    @add_keepalives
+    def _open(cls, suffix, dscp):
+        return super()._open(suffix, dscp)
+
+
+class SSLStream(stream.SSLStream, NoProbesMixin):
+    @classmethod
+    @add_keepalives
+    def _open(cls, suffix, dscp):
+        return super()._open(suffix, dscp)
+
+
+# Overwriting globals in a library is clearly a good idea
+stream.Stream.register_method("tcp", TCPStream)
+stream.Stream.register_method("ssl", SSLStream)
 
 
 # This version of Backend doesn't use a class variable for ovsdb_connection
