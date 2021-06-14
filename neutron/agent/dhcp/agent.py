@@ -1048,11 +1048,12 @@ class NetworkCache(object):
         "self._deleted_ports" and "self._deleted_ports_ts".
         """
         timestamp_min = timeutils.utcnow_ts() - DELETED_PORT_MAX_AGE
-        idx = None
-        for idx, (ts, port_id) in enumerate(self._deleted_ports_ts):
+        idx = 0
+        for (ts, port_id) in self._deleted_ports_ts:
             if ts > timestamp_min:
                 break
             self._deleted_ports.remove(port_id)
+            idx += 1
 
         if idx:
             self._deleted_ports_ts = self._deleted_ports_ts[idx:]
