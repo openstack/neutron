@@ -587,7 +587,6 @@ class TestWalkMigrationsMysql(testlib_api.MySQLTestCaseMixin,
     # on slow nodes than 'psycopg2' and because of that this increased
     # timeout is required only when for testing with 'mysql' backend.
     @test_base.set_timeout(600)
-    @test_base.skip_if_timeout("bug 1687027")
     def test_walk_versions(self):
         super(TestWalkMigrationsMysql, self).test_walk_versions()
 
