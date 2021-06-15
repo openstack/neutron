@@ -315,9 +315,9 @@ To enable DSCP marking rule:
 .. code-block:: none
 
    "get_policy_dscp_marking_rule": "rule:regular_user",
-   "create_dscp_marking_rule": "rule:regular_user",
-   "delete_dscp_marking_rule": "rule:regular_user",
-   "update_dscp_marking_rule": "rule:regular_user",
+   "create_policy_dscp_marking_rule": "rule:regular_user",
+   "delete_policy_dscp_marking_rule": "rule:regular_user",
+   "update_policy_dscp_marking_rule": "rule:regular_user",
 
 To enable minimum bandwidth rule:
 
