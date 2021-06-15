@@ -263,7 +263,7 @@ class OVNClient(object):
                     const.DEVICE_OWNER_DISTRIBUTED,
                     const.DEVICE_OWNER_DHCP] and
                     not utils.is_neutron_dhcp_agent_port(port)):
-                port_type = 'localport'
+                port_type = ovn_const.LSP_TYPE_LOCALPORT
 
             if utils.is_port_external(port):
                 if self.is_external_ports_supported():
@@ -306,7 +306,7 @@ class OVNClient(object):
         # and will be ignored when mcast_snoop is False. We can revise
         # this once https://bugzilla.redhat.com/show_bug.cgi?id=1933990
         # (see comment #3) is fixed in Core OVN.
-        if port_type not in ('vtep', 'localport', 'router'):
+        if port_type not in ('vtep', ovn_const.LSP_TYPE_LOCALPORT, 'router'):
             options.update({ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true'})
 
         device_owner = port.get('device_owner', '')

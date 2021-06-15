@@ -421,7 +421,7 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
                    'type': "vtep"})
         lsp3 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'name': 'lsp3', 'options': {},
-                   'type': "localport"})
+                   'type': constants.LSP_TYPE_LOCALPORT})
         lsp4 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'name': 'lsp4', 'options': {},
                    'type': "router"})
