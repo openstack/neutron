@@ -14,6 +14,7 @@
 
 import hashlib
 import hmac
+import threading
 import urllib
 
 from neutron._i18n import _
@@ -46,7 +47,20 @@ class MetadataProxyHandler(object):
     def __init__(self, conf, chassis):
         self.conf = conf
         self.chassis = chassis
+        self._sb_idl = None
+        self._post_fork_event = threading.Event()
         self.subscribe()
+
+    @property
+    def sb_idl(self):
+        if not self._sb_idl:
+            self._post_fork_event.wait()
+
+        return self._sb_idl
+
+    @sb_idl.setter
+    def sb_idl(self, val):
+        self._sb_idl = val
 
     def subscribe(self):
         registry.subscribe(self.post_fork_initialize,
@@ -56,9 +70,13 @@ class MetadataProxyHandler(object):
     def post_fork_initialize(self, resource, event, trigger, payload=None):
         # We need to open a connection to OVN SouthBound database for
         # each worker so that we can process the metadata requests.
+        self._post_fork_event.clear()
         self.sb_idl = ovsdb.MetadataAgentOvnSbIdl(
             tables=('Port_Binding', 'Datapath_Binding', 'Chassis'),
             chassis=self.chassis).start()
+
+        # Now IDL connections can be safely used.
+        self._post_fork_event.set()
 
     @webob.dec.wsgify(RequestClass=webob.Request)
     def __call__(self, req):
