@@ -79,6 +79,7 @@ ACL_PRIORITY_DROP = 1001
 ACL_ACTION_DROP = 'drop'
 ACL_ACTION_REJECT = 'reject'
 ACL_ACTION_ALLOW_RELATED = 'allow-related'
+ACL_ACTION_ALLOW_STATELESS = 'allow-stateless'
 ACL_ACTION_ALLOW = 'allow'
 
 # When a OVN L3 gateway is created, it needs to be bound to a chassis. In

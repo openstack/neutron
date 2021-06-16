@@ -1133,7 +1133,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         for sg in self._list('security-groups')['security_groups']:
             for sgr in sg['security_group_rules']:
                 acl = acl_utils._add_sg_rule_acl_for_port_group(
-                    utils.ovn_port_group_name(sg['id']), sgr)
+                    utils.ovn_port_group_name(sg['id']), True, sgr)
                 db_acls.append(TestOvnNbSync._build_acl_for_pgs(**acl))
 
         for acl in acl_utils.add_acls_for_drop_port_group(

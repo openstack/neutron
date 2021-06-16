@@ -171,6 +171,14 @@ class Backend(ovs_idl.Backend):
         return self.is_table_present(table_name) and (
             col_name in self._tables[table_name].columns)
 
+    def is_col_supports_value(self, table_name, col_name, value):
+        if not self.is_col_present(table_name, col_name):
+            return False
+        enum = self._tables[table_name].columns[col_name].type.key.enum
+        if not enum:
+            return False
+        return value in {k.value for k in enum.values}
+
     def create_transaction(self, check_error=False, log_errors=True):
         return idl_trans.Transaction(
             self, self.ovsdb_connection, self.ovsdb_connection.timeout,
