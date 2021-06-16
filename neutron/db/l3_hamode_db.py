@@ -540,6 +540,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         for agent in self.get_l3_agents_hosting_routers(context, [router_id]):
             self.remove_router_from_l3_agent(context, agent['id'], router_id)
 
+    @db_api.CONTEXT_READER
     def get_ha_router_port_bindings(self, context, router_ids, host=None):
         if not router_ids:
             return []
