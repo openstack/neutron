@@ -28,7 +28,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 
-from neutron.common import utils as common_utils
 
 # Priorities - lower value is higher priority
 PRIORITY_NETWORK_CREATE = 0
@@ -174,8 +173,7 @@ class DhcpAgentNotifyAPI(object):
             num_ports = self.plugin.get_ports_count(
                 context, {'network_id': [network_id]})
             if not network:
-                admin_ctx = (context if context.is_admin else
-                             common_utils.get_elevated_context(context))
+                admin_ctx = context if context.is_admin else context.elevated()
                 network = self.plugin.get_network(admin_ctx, network_id)
             notification_required = (
                 num_ports > 0 and len(network['subnets']) >= 1)
@@ -224,8 +222,7 @@ class DhcpAgentNotifyAPI(object):
                 method == 'port_create_end' and
                 not self._is_reserved_dhcp_port(payload['port']))
             if schedule_required:
-                admin_ctx = (context if context.is_admin else
-                             common_utils.get_elevated_context(context))
+                admin_ctx = context if context.is_admin else context.elevated()
                 network = network or self.plugin.get_network(
                     admin_ctx, network_id)
                 if candidate_hosts:

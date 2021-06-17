@@ -102,7 +102,7 @@ class RequestTestCase(base.BaseTestCase):
         user_context = context.Context(
             'fake_user', 'fake_project', is_admin=False)
         self.assertFalse(user_context.is_admin)
-        admin_context = utils.get_elevated_context(user_context)
+        admin_context = user_context.elevated()
         self.assertFalse(user_context.is_admin)
         self.assertTrue(admin_context.is_admin)
         self.assertNotIn('admin', user_context.roles)

@@ -21,7 +21,6 @@ from neutron_lib import rpc as n_rpc
 from oslo_log import log as logging
 import oslo_messaging
 
-from neutron.common import utils as common_utils
 from neutron.db import agentschedulers_db
 
 LOG = logging.getLogger(__name__)
@@ -37,9 +36,7 @@ class MeteringAgentNotifyAPI(object):
 
     def _agent_notification(self, context, method, routers):
         """Notify l3 metering agents hosted by l3 agent hosts."""
-        adminContext = (
-            context if context.is_admin else
-            common_utils.get_elevated_context(context))
+        adminContext = context if context.is_admin else context.elevated()
         plugin = directory.get_plugin(plugin_constants.L3)
 
         l3_routers = {}

@@ -25,7 +25,6 @@ from oslo_log import log as logging
 import oslo_messaging
 
 from neutron.api.rpc.agentnotifiers import utils as ag_utils
-from neutron.common import utils as common_utils
 
 
 LOG = logging.getLogger(__name__)
@@ -56,9 +55,7 @@ class L3AgentNotifyAPI(object):
     def _agent_notification(self, context, method, router_ids, operation,
                             shuffle_agents):
         """Notify changed routers to hosting l3 agents."""
-        adminContext = (
-            context if context.is_admin else
-            common_utils.get_elevated_context(context))
+        adminContext = context if context.is_admin else context.elevated()
         plugin = directory.get_plugin(plugin_constants.L3)
         for router_id in router_ids:
             hosts = plugin.get_hosts_to_notify(adminContext, router_id)
@@ -95,9 +92,8 @@ class L3AgentNotifyAPI(object):
             return
         if extensions.is_extension_supported(
                 plugin, constants.L3_AGENT_SCHEDULER_EXT_ALIAS):
-            adminContext = (
-                context.is_admin and
-                context or common_utils.get_elevated_context(context))
+            adminContext = (context.is_admin and
+                            context or context.elevated())
             if schedule_routers:
                 plugin.schedule_routers(adminContext, router_ids)
             self._agent_notification(

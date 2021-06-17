@@ -205,7 +205,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         if not n_utils.is_dvr_serviced(deleted_port['device_owner']):
             return []
 
-        admin_context = n_utils.get_elevated_context(context)
+        admin_context = context.elevated()
         port_host = deleted_port[portbindings.HOST_ID]
         subnet_ids = [ip['subnet_id'] for ip in deleted_port['fixed_ips']]
         router_ids = self.get_dvr_routers_by_subnet_ids(admin_context,
@@ -280,7 +280,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                       'device_owner':
                       [n_const.DEVICE_OWNER_DVR_INTERFACE]}
         int_ports = self._core_plugin.get_ports(
-            n_utils.get_elevated_context(context), filters=filter_rtr)
+            context.elevated(), filters=filter_rtr)
         for port in int_ports:
             dvr_binding = (ml2_db.
                            get_distributed_port_binding_by_host(
@@ -304,8 +304,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         """Returns all hosts to send notification about router update"""
         hosts = super(L3_DVRsch_db_mixin, self).get_hosts_to_notify(
             context, router_id)
-        router = self.get_router(n_utils.get_elevated_context(context),
-                                 router_id)
+        router = self.get_router(context.elevated(), router_id)
         if router.get('distributed', False):
             dvr_hosts = self._get_dvr_hosts_for_router(context, router_id)
             dvr_hosts = set(dvr_hosts) - set(hosts)
@@ -399,8 +398,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         # TODO(slaweq): move this method to RouterPort OVO object
         subnet_ids = self.get_subnet_ids_on_router(context, router_id)
         RouterPort = l3_models.RouterPort
-        query = n_utils.get_elevated_context(context).session.query(
-            RouterPort.router_id)
+        query = context.elevated().session.query(RouterPort.router_id)
         query = query.join(models_v2.Port)
         query = query.join(
             models_v2.Subnet,

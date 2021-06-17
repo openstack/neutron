@@ -24,7 +24,6 @@ from sqlalchemy import exc as sql_exc
 from sqlalchemy.orm import session as se
 
 from neutron._i18n import _
-from neutron.common import utils as n_utils
 from neutron.conf import quota as quota_conf
 from neutron.db.quota import api as quota_api
 
@@ -350,7 +349,7 @@ class TrackedResource(BaseResource):
         # TODO(ralonsoh): declare the OVO class instead the DB model and use
         # ``NeutronDbObject.count`` with the needed filters and fields to
         # retrieve ("project_id").
-        admin_context = n_utils.get_elevated_context(context)
+        admin_context = context.elevated()
         with db_api.CONTEXT_READER.using(admin_context):
             query = admin_context.session.query(self._model_class.project_id)
             query = query.filter(self._model_class.project_id == project_id)

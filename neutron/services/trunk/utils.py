@@ -17,8 +17,6 @@ from neutron_lib.plugins import directory
 from neutron_lib.utils import runtime
 from oslo_config import cfg
 
-from neutron.common import utils as common_utils
-
 
 def get_agent_types_by_host(context, host):
     """Return the agent types registered on the host."""
@@ -26,8 +24,7 @@ def get_agent_types_by_host(context, host):
     core_plugin = directory.get_plugin()
     if extensions.is_extension_supported(core_plugin, 'agent'):
         agents = core_plugin.get_agents(
-            common_utils.get_elevated_context(context),
-            filters={'host': [host]})
+            context.elevated(), filters={'host': [host]})
         agent_types = [a['agent_type'] for a in agents]
     return agent_types
 

@@ -263,7 +263,7 @@ class L3Scheduler(object, metaclass=abc.ABCMeta):
     def create_ha_port_and_bind(self, plugin, context, router_id,
                                 tenant_id, agent, is_manual_scheduling=False):
         """Creates and binds a new HA port for this agent."""
-        ctxt = utils.get_elevated_context(context)
+        ctxt = context.elevated()
         router_db = plugin._get_router(ctxt, router_id)
         creator = functools.partial(self._add_port_from_net_and_ensure_vr_id,
                                     plugin, ctxt, router_db, tenant_id)
