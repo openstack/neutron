@@ -131,7 +131,7 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
             self.nb_api.lsp_add(
                 lswitch_name,
                 mdt_port_name,
-                type='localport',
+                type=ovn_const.LSP_TYPE_LOCALPORT,
                 addresses='AA:AA:AA:AA:AA:AA 192.168.122.123',
                 external_ids={
                     ovn_const.OVN_CIDRS_EXT_ID_KEY: '192.168.122.123/24'}))

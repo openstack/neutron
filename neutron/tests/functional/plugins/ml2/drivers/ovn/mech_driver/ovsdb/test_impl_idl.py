@@ -99,7 +99,8 @@ class TestSbApi(BaseOvnIdlTest):
         self.assertGreaterEqual(set(mapping.keys()),
                                 {c['name'] for c in self.data['chassis']})
 
-    def _add_switch_port(self, chassis_name, type='localport'):
+    def _add_switch_port(self, chassis_name,
+                         type=ovn_const.LSP_TYPE_LOCALPORT):
         sname, pname = (utils.get_rand_device_name(prefix=p)
                         for p in ('switch', 'port'))
         chassis = self.api.lookup('Chassis', chassis_name)

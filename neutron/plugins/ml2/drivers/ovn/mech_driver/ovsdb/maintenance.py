@@ -673,7 +673,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         cmds = []
         for port in self._nb_idl.lsp_list().execute(check_error=True):
             port_type = port.type.strip()
-            if port_type in ("vtep", "localport", "router"):
+            if port_type in ("vtep", ovn_const.LSP_TYPE_LOCALPORT, "router"):
                 continue
 
             options = port.options

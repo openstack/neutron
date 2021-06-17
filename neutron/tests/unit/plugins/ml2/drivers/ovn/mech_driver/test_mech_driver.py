@@ -3316,7 +3316,8 @@ class TestOVNMechanismDriverMetadataPort(test_plugin.Ml2PluginV2TestCase):
         with self.network():
             self.assertEqual(1, self.nb_ovn.create_lswitch_port.call_count)
             args, kwargs = self.nb_ovn.create_lswitch_port.call_args
-            self.assertEqual('localport', kwargs['type'])
+            self.assertEqual(ovn_const.LSP_TYPE_LOCALPORT,
+                             kwargs['type'])
 
     def test_metadata_port_not_created_if_exists(self):
         """Check that metadata port is not created if it already exists.
@@ -3349,7 +3350,8 @@ class TestOVNMechanismDriverMetadataPort(test_plugin.Ml2PluginV2TestCase):
                         self.assertEqual(
                             2, self.nb_ovn.set_lswitch_port.call_count)
                         args, kwargs = self.nb_ovn.set_lswitch_port.call_args
-                        self.assertEqual('localport', kwargs['type'])
+                        self.assertEqual(ovn_const.LSP_TYPE_LOCALPORT,
+                                         kwargs['type'])
                         self.assertEqual('10.0.0.2/24 20.0.0.2/24',
                                          kwargs['external_ids'].get(
                                              ovn_const.OVN_CIDRS_EXT_ID_KEY,
