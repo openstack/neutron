@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    `1926693 <https://bugs.launchpad.net/neutron/+bug/1926693>`_
+    The logic to detect the hypervisor hostname, which was introduced by
+    `change 69660 <https://review.opendev.org/c/openstack/neutron/+/696600>`_,
+    has been fixed and now returns the result consistent with libvirt.
