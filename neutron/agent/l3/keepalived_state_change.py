@@ -128,7 +128,8 @@ class MonitorDaemon(daemon.Daemon):
             # the URL doesn't matter.
             'http://127.0.0.1/',
             headers={'X-Neutron-Router-Id': self.router_id,
-                     'X-Neutron-State': state},
+                     'X-Neutron-State': state,
+                     'Connection': 'close'},
             connection_type=KeepalivedUnixDomainConnection)
 
         if resp.status != 200:
