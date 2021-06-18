@@ -17,17 +17,17 @@
       jobs:
         - neutron-functional-with-uwsgi
         - neutron-fullstack-with-uwsgi
-        - neutron-rally-task
-        - neutron-grenade-multinode
-        - neutron-grenade-dvr-multinode:
+        - neutron-ovs-rally-task
+        - neutron-ovs-grenade-multinode
+        - neutron-ovs-grenade-dvr-multinode:
             # TODO(slaweq): make that job voting when bug
             # https://bugs.launchpad.net/neutron/+bug/1920778
             # will be fixed
             voting: false
-        - neutron-tempest-multinode-full-py3
-        - neutron-tempest-dvr-ha-multinode-full
-        - neutron-tempest-slow-py3
-        - neutron-tempest-ipv6-only
+        - neutron-ovs-tempest-multinode-full
+        - neutron-ovs-tempest-dvr-ha-multinode-full
+        - neutron-ovs-tempest-slow
+        - neutron-ovn-tempest-ipv6-only
         - neutron-ovn-tempest-ovs-release
         - neutron-ovn-tempest-ovs-release-ipv6-only
         # TODO(slaweq): add this job again to the check queue when it will be
@@ -59,14 +59,14 @@
       jobs:
         - neutron-functional-with-uwsgi
         - neutron-fullstack-with-uwsgi
-        - neutron-tempest-multinode-full-py3
-        - neutron-grenade-multinode
+        - neutron-ovs-tempest-multinode-full
+        - neutron-ovs-grenade-multinode
         # TODO(slaweq): make that job gating when bug
         # https://bugs.launchpad.net/neutron/+bug/1920778
         # will be fixed
-        # - neutron-grenade-dvr-multinode
-        - neutron-tempest-slow-py3
-        - neutron-tempest-ipv6-only
+        # - neutron-ovs-grenade-dvr-multinode
+        - neutron-ovs-tempest-slow
+        - neutron-ovn-tempest-ipv6-only
         - neutron-ovn-tempest-ovs-release
         - neutron-ovn-tempest-ovs-release-ipv6-only
         - openstack-tox-py36:  # from openstack-python3-xena-jobs template
@@ -80,21 +80,21 @@
 
     experimental:
       jobs:
-        - neutron-grenade-ovn
-        - neutron-tempest-with-uwsgi-loki
+        - neutron-ovn-grenade-multinode
+        - neutron-ovn-tempest-with-uwsgi-loki
         - neutron-ovn-tempest-full-multinode-ovs-master
         - neutron-ovn-tempest-ovs-master
-        - neutron-tempest-with-neutron-lib-master
+        - neutron-ovn-tempest-with-neutron-lib-master
 
     periodic:
       jobs:
         - neutron-functional
         - neutron-fullstack
-        - neutron-tempest-postgres-full
-        - neutron-tempest-mariadb-full
-        - neutron-tempest-with-os-ken-master
+        - neutron-ovn-tempest-postgres-full
+        - neutron-ovn-tempest-mariadb-full
+        - neutron-ovn-tempest-with-os-ken-master
         - neutron-ovn-tempest-ovs-master-fedora
-        - neutron-tempest-with-neutron-lib-master
+        - neutron-ovn-tempest-with-neutron-lib-master
         - devstack-tobiko-faults-centos:
             voting: true
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa
@@ -112,5 +112,5 @@
         - neutron-ovn-tripleo-ci-centos-8-containers-multinode:
             vars: *consumer_vars
             dependencies: *consumer_deps
-        - neutron-tempest-plugin-scenario-linuxbridge-nftables
-        - neutron-tempest-plugin-scenario-openvswitch-iptables_hybrid-nftables
+        - neutron-linuxbridge-tempest-plugin-scenario-nftables
+        - neutron-ovs-tempest-plugin-scenario-iptables_hybrid-nftables

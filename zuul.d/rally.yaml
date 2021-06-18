@@ -1,5 +1,5 @@
 - job:
-    name: neutron-rally-task
+    name: neutron-ovs-rally-task
     parent: rally-task-neutron
     timeout: 10800
     vars:
