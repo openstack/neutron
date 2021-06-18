@@ -20,7 +20,7 @@ source $LIBDIR/octavia
 source $LIBDIR/loki
 
 # source the OVS/OVN compilation helper methods
-source $DEST/devstack/lib/neutron_plugins/ovs_source
+source $TOP_DIR/lib/neutron_plugins/ovs_source
 
 Q_BUILD_OVS_FROM_GIT=$(trueorfalse False Q_BUILD_OVS_FROM_GIT)
 
