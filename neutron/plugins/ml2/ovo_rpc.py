@@ -25,7 +25,6 @@ from neutron_lib import context as n_ctx
 from neutron_lib.db import api as db_api
 from oslo_log import log as logging
 
-from neutron._i18n import _
 from neutron.api.rpc.callbacks import events as rpc_events
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.objects import address_group
@@ -40,11 +39,6 @@ LOG = logging.getLogger(__name__)
 class _ObjectChangeHandler(object):
     MAX_IDLE_FOR = 1
     _TO_CLEAN = weakref.WeakSet()
-    _PAYLOAD_RESOURCES = (resources.NETWORK,
-                          resources.ADDRESS_GROUP,
-                          resources.SECURITY_GROUP_RULE,
-                          resources.SUBNET,
-                          resources.SECURITY_GROUP)
 
     def __init__(self, resource, object_class, resource_push_api):
         self._resource = resource
@@ -54,15 +48,8 @@ class _ObjectChangeHandler(object):
         self._semantic_warned = False
         for event in (events.AFTER_CREATE, events.AFTER_UPDATE,
                       events.AFTER_DELETE):
-            handler = self.handle_event
+            registry.subscribe(self.handle_event, resource, event)
 
-            # TODO(boden): remove shim below once all events use payloads
-            if resource in self._PAYLOAD_RESOURCES:
-                handler = self.handle_payload_event
-            if resource == resources.PORT and event in (events.AFTER_CREATE,
-                                                        events.AFTER_UPDATE):
-                handler = self.handle_payload_event
-            registry.subscribe(handler, resource, event)
         self._stop = threading.Event()
         self._worker = threading.Thread(
             target=self.dispatch_events,
@@ -98,8 +85,12 @@ class _ObjectChangeHandler(object):
             self._semantic_warned = True
         return True
 
-    def handle_payload_event(self, resource, event,
-                             trigger, payload=None):
+    def handle_event(self, resource, event, trigger, payload):
+        """Callback handler for resource change that pushes change to RPC.
+
+        We always retrieve the latest state and ignore what was in the
+        payload to ensure that we don't get any stale data.
+        """
         if self._is_session_semantic_violated(
                 payload.context, resource, event):
             return
@@ -107,20 +98,6 @@ class _ObjectChangeHandler(object):
         # we preserve the context so we can trace a receive on the agent back
         # to the server-side event that triggered it
         self._resources_to_push.put((resource_id, payload.context.to_dict()))
-
-    def handle_event(self, resource, event, trigger,
-                     context, *args, **kwargs):
-        """Callback handler for resource change that pushes change to RPC.
-
-        We always retrieve the latest state and ignore what was in the
-        payload to ensure that we don't get any stale data.
-        """
-        if self._is_session_semantic_violated(context, resource, event):
-            return
-        resource_id = self._extract_resource_id(kwargs)
-        # we preserve the context so we can trace a receive on the agent back
-        # to the server-side event that triggered it
-        self._resources_to_push.put((resource_id, context.to_dict()))
 
     def dispatch_events(self):
         # TODO(kevinbenton): now that we are batching these, convert to a
@@ -156,14 +133,6 @@ class _ObjectChangeHandler(object):
         LOG.debug('Thread %(name)s finished with %(msgs)s unsent messages',
                   {'name': self._worker.name,
                    'msgs': self._resources_to_push.unfinished_tasks})
-
-    def _extract_resource_id(self, callback_kwargs):
-        id_kwarg = '%s_id' % self._resource
-        if id_kwarg in callback_kwargs:
-            return callback_kwargs[id_kwarg]
-        if self._resource in callback_kwargs:
-            return callback_kwargs[self._resource]['id']
-        raise RuntimeError(_("Couldn't find resource ID in callback event"))
 
     @classmethod
     def clean_up(cls, *args, **kwargs):

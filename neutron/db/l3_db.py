@@ -1943,9 +1943,9 @@ class L3RpcNotifierMixin(object):
 
     @staticmethod
     @registry.receives(resources.PORT, [events.AFTER_DELETE])
-    def _notify_routers_callback(resource, event, trigger, **kwargs):
-        context = kwargs['context']
-        router_ids = kwargs['router_ids']
+    def _notify_routers_callback(resource, event, trigger, payload):
+        context = payload.context
+        router_ids = payload.metadata['router_ids']
         l3plugin = directory.get_plugin(plugin_constants.L3)
         if l3plugin:
             l3plugin.notify_routers_updated(context, router_ids)

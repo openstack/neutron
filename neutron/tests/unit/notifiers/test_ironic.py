@@ -133,9 +133,11 @@ class TestIronicNotifier(base.BaseTestCase):
                        autospec=True)
     def test_process_port_delete_event(self, mock_queue_event):
         port = get_fake_port()
+        original_port = None
         self.ironic_notifier.process_port_delete_event(
-            'fake_resource', 'fake_event', 'fake_trigger', original_port=None,
-            port=port, **{})
+            'fake_resource', 'fake_event', 'fake_trigger',
+            payload=events.DBEventPayload(
+                mock.Mock(), states=(original_port, port)))
         mock_queue_event.assert_called_with(
             self.ironic_notifier.batch_notifier,
             {'event': 'network.delete_port',
@@ -150,10 +152,12 @@ class TestIronicNotifier(base.BaseTestCase):
                        autospec=True)
     def test_process_port_event_empty_uuid_field(self, mock_queue_event):
         port = get_fake_port()
+        original_port = None
         port.update({'device_id': ''})
         self.ironic_notifier.process_port_delete_event(
-            'fake_resource', 'fake_event', 'fake_trigger', original_port=None,
-            port=port, **{})
+            'fake_resource', 'fake_event', 'fake_trigger',
+            payload=events.DBEventPayload(
+                mock.Mock(), states=(original_port, port)))
         mock_queue_event.assert_called_with(
             self.ironic_notifier.batch_notifier,
             {'event': 'network.delete_port',
@@ -166,9 +170,11 @@ class TestIronicNotifier(base.BaseTestCase):
     @mock.patch.object(eventlet, 'spawn_n', autospec=True)
     def test_queue_events(self, mock_spawn_n):
         port = get_fake_port()
+        original_port = None
         self.ironic_notifier.process_port_delete_event(
-            'fake_resource', 'fake_event', 'fake_trigger', original_port=None,
-            port=port, **{})
+            'fake_resource', 'fake_event', 'fake_trigger',
+            payload=events.DBEventPayload(
+                mock.Mock(), states=(original_port, port)))
 
         port = get_fake_port()
         port.update({'status': n_const.PORT_STATUS_ACTIVE})

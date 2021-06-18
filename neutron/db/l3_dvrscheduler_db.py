@@ -546,10 +546,11 @@ def _notify_l3_agent_new_port(resource, event, trigger, payload=None):
         l3plugin.update_arp_entry_for_dvr_service_port(context, port)
 
 
-def _notify_port_delete(event, resource, trigger, **kwargs):
-    context = kwargs['context']
-    port = kwargs['port']
-    get_related_hosts_info = kwargs.get("get_related_hosts_info", True)
+def _notify_port_delete(event, resource, trigger, payload):
+    context = payload.context
+    port = payload.latest_state
+    get_related_hosts_info = payload.metadata.get(
+                                 "get_related_hosts_info", True)
     l3plugin = directory.get_plugin(plugin_constants.L3)
     if port:
         port_host = port.get(portbindings.HOST_ID)
@@ -607,14 +608,13 @@ def _notify_l3_agent_port_update(resource, event, trigger, payload):
                 original_port,
                 get_related_hosts_info=False)
             if removed_routers:
-                removed_router_args = {
-                    'context': context,
-                    'port': original_port,
-                    'removed_routers': removed_routers,
-                    'get_related_hosts_info': False,
-                }
                 _notify_port_delete(
-                    event, resource, trigger, **removed_router_args)
+                    event, resource, trigger,
+                    payload=events.DBEventPayload(
+                        context,
+                        metadata={'removed_routers': removed_routers,
+                                  'get_related_hosts_info': False},
+                        states=(original_port,)))
 
             def _should_notify_on_fip_update():
                 if not fip_router_id:

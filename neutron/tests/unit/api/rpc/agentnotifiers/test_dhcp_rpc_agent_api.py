@@ -267,42 +267,7 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
 
     def test__native_notification_unsubscribes(self):
         self.assertFalse(self.notifier._unsubscribed_resources)
-        for res in (resources.PORT,):
-            self.notifier._unsubscribed_resources = []
-            kwargs = {res: {}}
-            if res == resources.PORT:
-                registry.publish(res, events.AFTER_CREATE, self,
-                                 payload=events.DBEventPayload(
-                                     mock.Mock(), states=({res: {}},)))
-            else:
-                registry.notify(res, events.AFTER_CREATE, self,
-                                context=mock.Mock(), **kwargs)
-            # don't unsubscribe until all three types are observed
-            self.assertEqual([], self.notifier._unsubscribed_resources)
-            if res == resources.PORT:
-                registry.publish(res, events.AFTER_UPDATE, self,
-                                 payload=events.DBEventPayload(
-                                     mock.Mock(), states=({},)))
-
-            else:
-                registry.notify(res, events.AFTER_UPDATE, self,
-                                context=mock.Mock(), **kwargs)
-
-            self.assertEqual([], self.notifier._unsubscribed_resources)
-            registry.notify(res, events.AFTER_DELETE, self,
-                            context=mock.Mock(), **kwargs)
-            self.assertEqual([res], self.notifier._unsubscribed_resources)
-            # after first time, no further unsubscribing should happen
-            if res == resources.PORT:
-                registry.publish(res, events.AFTER_CREATE, self,
-                                 payload=events.DBEventPayload(
-                                     mock.Mock(), states=({res: {}})))
-            else:
-                registry.notify(res, events.AFTER_CREATE, self,
-                                context=mock.Mock(), **kwargs)
-            self.assertEqual([res], self.notifier._unsubscribed_resources)
-
-        for res in (resources.NETWORK, resources.SUBNET):
+        for res in (resources.PORT, resources.NETWORK, resources.SUBNET):
             self.notifier._unsubscribed_resources = []
             registry.publish(res, events.AFTER_CREATE, self,
                              payload=events.DBEventPayload(mock.Mock()))

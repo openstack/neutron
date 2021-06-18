@@ -420,17 +420,12 @@ class NovaSegmentNotifier(object):
                          'routed network segment %(segment_id)s',
                          {'host': event.host, 'segment_id': segment_id})
 
-    @registry.receives(resources.PORT, [events.AFTER_CREATE])
-    def _notify_port_created(self, resource, event, trigger,
-                             payload=None):
-        # TODO(boden): refactor back into 1 method when all code is moved
-        # to event payloads
-        return self._notify_port_created_or_deleted(
-            resource, event, trigger, payload.context, payload.latest_state)
-
-    @registry.receives(resources.PORT, [events.AFTER_DELETE])
+    @registry.receives(resources.PORT, [events.AFTER_CREATE,
+                                        events.AFTER_DELETE])
     def _notify_port_created_or_deleted(self, resource, event, trigger,
-                                        context, port, **kwargs):
+                                        payload):
+        context = payload.context
+        port = payload.latest_state
         if not self._does_port_require_nova_inventory_update(port):
             return
         ipv4_subnets_number, segment_id = (

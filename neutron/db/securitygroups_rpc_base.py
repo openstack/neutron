@@ -42,11 +42,11 @@ class SecurityGroupServerNotifierRpcMixin(sg_db.SecurityGroupDbMixin):
     """Mixin class to add agent-based security group implementation."""
 
     @registry.receives(resources.PORT, [events.AFTER_CREATE,
-                                        events.AFTER_UPDATE])
-    def _notify_sg_on_port_after_create_and_update(
-            self, resource, event, trigger, payload):
-        # TODO(boden): refact back into single method when all callbacks are
-        # moved to payload style events
+                                        events.AFTER_UPDATE,
+                                        events.AFTER_DELETE])
+    def _notify_sg_on_port_change(self, resource, event, trigger, payload):
+        """Trigger notification to other SG members on port changes."""
+
         context = payload.context
         port = payload.latest_state
         if event == events.AFTER_UPDATE:
@@ -55,13 +55,6 @@ class SecurityGroupServerNotifierRpcMixin(sg_db.SecurityGroupDbMixin):
                 context, original_port, port)
         else:
             self.notify_security_groups_member_updated(context, port)
-
-    @registry.receives(resources.PORT, [events.AFTER_DELETE])
-    def notify_sg_on_port_change(self, resource, event, trigger, context,
-                                 port, *args, **kwargs):
-        """Trigger notification to other SG members on port changes."""
-
-        self.notify_security_groups_member_updated(context, port)
 
     def create_security_group_rule(self, context, security_group_rule):
         rule = super(SecurityGroupServerNotifierRpcMixin,

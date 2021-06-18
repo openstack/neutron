@@ -123,9 +123,9 @@ class Notifier(object):
 
     @registry.receives(resources.PORT, [events.AFTER_DELETE])
     def process_port_delete_event(self, resource, event, trigger,
-                                  original_port=None, port=None,
-                                  **kwargs):
+                                  payload):
         # We only want to notify about baremetal ports.
+        port = payload.latest_state
         if not (port[portbindings_def.VNIC_TYPE] ==
                 portbindings_def.VNIC_BAREMETAL):
             # TODO(TheJulia): Add the smartnic flag at some point...

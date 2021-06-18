@@ -1998,12 +1998,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _post_delete_port(self, context, port, router_ids,
                           bound_mech_contexts):
-        kwargs = {
-            'context': context,
-            'port': port,
-            'router_ids': router_ids,
-        }
-        registry.notify(resources.PORT, events.AFTER_DELETE, self, **kwargs)
+        registry.publish(resources.PORT, events.AFTER_DELETE, self,
+                         payload=events.DBEventPayload(
+                             context,
+                             metadata={'router_ids': router_ids},
+                             resource_id=port['id'],
+                             states=(port,)))
         try:
             # Note that DVR Interface ports will have bindings on
             # multiple hosts, and so will have multiple mech_contexts,

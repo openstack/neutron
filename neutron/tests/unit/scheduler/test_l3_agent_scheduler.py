@@ -1250,19 +1250,16 @@ class L3DvrSchedulerTestCase(L3SchedulerBaseMixin,
                 portbindings.HOST_ID: 'host1',
         }
 
-        kwargs = {
-            'context': self.adminContext,
-            'port': port,
-            'removed_routers': [
-                {'agent_id': 'foo_agent', 'router_id': 'foo_id'},
-            ],
-        }
         removed_routers = [{'agent_id': 'foo_agent',
                             'router_id': 'foo_id',
                             'host': 'foo_host'}]
         l3plugin.get_dvr_routers_to_remove.return_value = removed_routers
         l3_dvrscheduler_db._notify_port_delete(
-            'port', 'after_delete', plugin, **kwargs)
+            'port', 'after_delete', plugin,
+            payload=events.DBEventPayload(
+                self.adminContext,
+                metadata={'removed_routers': removed_routers},
+                states=(port,)))
         l3plugin.delete_arp_entry_for_dvr_service_port.\
             assert_called_once_with(
                 self.adminContext, mock.ANY)
