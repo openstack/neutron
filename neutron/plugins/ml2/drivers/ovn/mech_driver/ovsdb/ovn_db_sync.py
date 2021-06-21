@@ -859,16 +859,16 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         # TODO(mjozefcz): Remove constants.DEVICE_OWNER_DHCP
         # from get_ports in W-release.
         for net in self.core_plugin.get_networks(ctx):
-            dhcp_ports = self.core_plugin.get_ports(ctx, filters=dict(
-                network_id=[net['id']],
-                device_owner=[
-                    constants.DEVICE_OWNER_DISTRIBUTED,
-                    constants.DEVICE_OWNER_DHCP]))
-
-            for port in dhcp_ports:
-                # Do not touch the Neutron DHCP agents ports
-                if utils.is_neutron_dhcp_agent_port(port):
-                    dhcp_ports.remove(port)
+            # Get only DHCP ports that don't belong to agent, it should return
+            # only OVN metadata ports
+            dhcp_ports = [
+                p for p in self.core_plugin.get_ports(
+                    ctx, filters=dict(
+                        network_id=[net['id']],
+                        device_owner=[
+                            constants.DEVICE_OWNER_DISTRIBUTED,
+                            constants.DEVICE_OWNER_DHCP]))
+                if not utils.is_neutron_dhcp_agent_port(p)]
 
             if not dhcp_ports:
                 LOG.warning('Missing metadata port found in Neutron for '
