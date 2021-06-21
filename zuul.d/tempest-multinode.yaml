@@ -112,6 +112,8 @@
     timeout: 10800
     irrelevant-files: *irrelevant-files
     vars:
+      devstack_localrc:
+        USE_PYTHON3: true
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
@@ -130,6 +132,8 @@
         s-proxy: false
     group-vars:
       subnode:
+        devstack_localrc:
+          USE_PYTHON3: true
         devstack_services:
           # Cinder services
           c-bak: false
