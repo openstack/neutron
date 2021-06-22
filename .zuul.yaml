@@ -22,8 +22,10 @@
         - neutron-tempest-linuxbridge
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
-        - tempest-multinode-full-py3:
-            voting: false
+        - neutron-tempest-iptables_hybrid
+        - neutron-grenade
+        - tempest-full:
+            timeout: 10800
             # We don't run the job on things like neutron docs-only changes
             irrelevant-files: &tempest-irrelevant-files
               - ^(test-|)requirements.txt$
@@ -35,26 +37,12 @@
               - ^setup.cfg$
               - ^tools/.*$
               - ^tox.ini$
-        - neutron-tempest-dvr-ha-multinode-full
-        - neutron-tempest-iptables_hybrid
-        - neutron-grenade
-        - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
-            voting: false
-            irrelevant-files: *tempest-irrelevant-files
-        - tempest-full:
-            timeout: 10800
-            irrelevant-files: *tempest-irrelevant-files
         - tempest-full-py3:
             timeout: 10800
             irrelevant-files: *tempest-irrelevant-files
         - neutron-tempest-slow-py3
-        - networking-ovn-tempest-dsvm-ovs-release:
-            voting: false
-            irrelevant-files: *tempest-irrelevant-files
         - grenade-py3:
             irrelevant-files: *tempest-irrelevant-files
-        - openstacksdk-functional-devstack-networking:
-            voting: false
     gate:
       jobs:
         - neutron-functional
@@ -82,6 +70,18 @@
         - neutron-functional-with-uwsgi
         - neutron-fullstack-with-uwsgi
         - neutron-tempest-with-uwsgi
+        - neutron-tempest-dvr-ha-multinode-full
+        - tempest-multinode-full-py3:
+            voting: false
+            irrelevant-files: *tempest-irrelevant-files
+        - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
+            voting: false
+            irrelevant-files: *tempest-irrelevant-files
+        - networking-ovn-tempest-dsvm-ovs-release:
+            voting: false
+            irrelevant-files: *tempest-irrelevant-files
+        - openstacksdk-functional-devstack-networking:
+            voting: false
 
         # TODO(slaweq): we should consider to convert this job to "non-legacy"
         # one and move it to check queue, at least as non-voting
