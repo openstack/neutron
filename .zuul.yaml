@@ -23,9 +23,9 @@
         - neutron-tempest-linuxbridge
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
-        - tempest-multinode-full-py3:
-            voting: false
-            # We don't run the job on things like neutron docs-only changes
+        - neutron-tempest-iptables_hybrid
+        - neutron-grenade
+        - neutron-tempest-slow-py3:
             irrelevant-files: &tempest-irrelevant-files
               - ^(test-|)requirements.txt$
               - ^.*\.rst$
@@ -36,29 +36,11 @@
               - ^setup.cfg$
               - ^tools/.*$
               - ^tox.ini$
-        - neutron-tempest-dvr-ha-multinode-full
-        - neutron-tempest-iptables_hybrid
-        - neutron-grenade
-        - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
-            voting: false
-            irrelevant-files: *tempest-irrelevant-files
-        - neutron-tempest-slow-py3
         - networking-ovn-tempest-dsvm-ovs-release:
-            irrelevant-files: *tempest-irrelevant-files
-        - networking-midonet-tempest-aio-ml2-centos-7:
-            voting: false
             irrelevant-files: *tempest-irrelevant-files
         - grenade-py3:
             irrelevant-files: *tempest-irrelevant-files
         - neutron-tempest-ipv6-only
-        - openstacksdk-functional-devstack-networking:
-            voting: false
-        - neutron-functional-with-uwsgi:
-            voting: false
-        - neutron-fullstack-with-uwsgi:
-            voting: false
-        - neutron-tempest-with-uwsgi:
-            voting: false
     gate:
       jobs:
         - neutron-functional
@@ -80,7 +62,24 @@
         - neutron-tempest-postgres-full
     experimental:
       jobs:
-
+        - neutron-tempest-dvr-ha-multinode-full
+        - tempest-multinode-full-py3:
+            voting: false
+            irrelevant-files: *tempest-irrelevant-files
+        - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
+            irrelevant-files: *tempest-irrelevant-files
+            voting: false
+        - networking-midonet-tempest-aio-ml2-centos-7:
+            voting: false
+            irrelevant-files: *tempest-irrelevant-files
+        - openstacksdk-functional-devstack-networking:
+            voting: false
+        - neutron-functional-with-uwsgi:
+            voting: false
+        - neutron-fullstack-with-uwsgi:
+            voting: false
+        - neutron-tempest-with-uwsgi:
+            voting: false
         # TODO(slaweq): we should consider to convert this job to "non-legacy"
         # one and move it to check queue, at least as non-voting
         - legacy-grenade-dsvm-neutron-linuxbridge-multinode:
