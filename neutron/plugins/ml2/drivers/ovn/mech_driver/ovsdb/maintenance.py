@@ -681,7 +681,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
             options.update({ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true'})
             if port_type == ovn_const.LSP_TYPE_LOCALNET:
-                options.update({ovn_const.LSP_OPTIONS_MCAST_FLOOD: 'true'})
+                options.update({ovn_const.LSP_OPTIONS_MCAST_FLOOD: 'false'})
 
             cmds.append(self._nb_idl.lsp_set_options(port.name, **options))
 
