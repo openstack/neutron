@@ -378,7 +378,6 @@ class L3NATAgent(ha.AgentMixin,
             # edge router.
             if (self.conf.agent_mode == lib_const.L3_AGENT_MODE_DVR_SNAT and
                     router.get(lib_const.HA_INTERFACE_KEY) is not None):
-                kwargs['state_change_callback'] = self.enqueue_state_change
                 return dvr_edge_ha_router.DvrEdgeHaRouter(*args, **kwargs)
 
         if router.get('distributed'):
@@ -388,7 +387,6 @@ class L3NATAgent(ha.AgentMixin,
                 return dvr_local_router.DvrLocalRouter(*args, **kwargs)
 
         if router.get('ha'):
-            kwargs['state_change_callback'] = self.enqueue_state_change
             return ha_router.HaRouter(*args, **kwargs)
 
         return legacy_router.LegacyRouter(*args, **kwargs)
