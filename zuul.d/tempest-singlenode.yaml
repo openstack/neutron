@@ -479,3 +479,37 @@
     name: neutron-ovn-tempest-ovs-release
     description: Job testing for devstack/tempest testing Neutron with ovn driver and latest released OVN branch
     parent: neutron-ovn-base
+
+- job:
+    name: neutron-ovs-tempest-fips
+    parent: neutron-ovs-tempest-base
+    nodeset: devstack-single-node-centos-8-stream
+    description: |
+      Scenario testing for a FIPS enabled Centos 8 system
+    pre-run: playbooks/enable-fips.yaml
+    vars:
+      configure_swap_size: 4096
+      devstack_services:
+        br-ex-tcpdump: true
+        br-int-flows: true
+      devstack_local_conf:
+        test-config:
+          "$TEMPEST_CONFIG":
+            validation:
+              ssh_key_type: 'ecdsa'
+
+
+- job:
+    name: neutron-ovn-tempest-ovs-release-fips
+    parent: neutron-ovn-tempest-ovs-release
+    nodeset: devstack-single-node-centos-8-stream
+    description: |
+      Scenario testing for a FIPS enabled Centos 8 system
+    pre-run: playbooks/enable-fips.yaml
+    vars:
+      configure_swap_size: 4096
+      devstack_local_conf:
+        test-config:
+          "$TEMPEST_CONFIG":
+            validation:
+              ssh_key_type: 'ecdsa'
