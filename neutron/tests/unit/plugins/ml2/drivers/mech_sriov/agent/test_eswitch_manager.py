@@ -16,9 +16,11 @@
 import os
 from unittest import mock
 
+from neutron.agent import rpc as agent_rpc
 from neutron.plugins.ml2.drivers.mech_sriov.agent.common \
     import exceptions as exc
 from neutron.plugins.ml2.drivers.mech_sriov.agent import eswitch_manager as esm
+from neutron.plugins.ml2.drivers.mech_sriov.agent import pci_lib
 from neutron.tests import base
 
 
@@ -429,51 +431,38 @@ class TestEmbSwitch(base.BaseTestCase):
                         return_value=self.SCANNED_DEVICES):
             self.emb_switch = esm.EmbSwitch(self.DEV_NAME, exclude_devices)
 
-    @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
-                "eswitch_manager.PciOsWrapper.scan_vf_devices",
-                return_value=[(PCI_SLOT, 0)])
-    def test_get_assigned_devices_info(self, *args):
-        emb_switch = esm.EmbSwitch(self.DEV_NAME, ())
-        with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
-                        "PciDeviceIPWrapper.get_assigned_macs",
-                        return_value={0: self.ASSIGNED_MAC}),\
-                mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
-                           "eswitch_manager.PciOsWrapper.pf_device_exists",
-                           return_value=True), \
-                mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
-                           "eswitch_manager.PciOsWrapper."
-                           "is_assigned_vf_direct", return_value=True):
-            result = emb_switch.get_assigned_devices_info()
-            self.assertIn(self.ASSIGNED_MAC, list(result)[0])
-            self.assertIn(self.PCI_SLOT, list(result)[0])
+    def test_get_assigned_devices_info(self):
+        with mock.patch.object(pci_lib.PciDeviceIPWrapper, 'get_assigned_macs',
+                               return_value={0: self.ASSIGNED_MAC}), \
+                mock.patch.object(esm.PciOsWrapper, 'pf_device_exists',
+                                  return_value=True), \
+                mock.patch.object(esm.PciOsWrapper, 'is_assigned_vf_direct',
+                                  return_value=True):
+            result = self.emb_switch.get_assigned_devices_info()
+            device_info = agent_rpc.DeviceInfo(self.ASSIGNED_MAC,
+                                               self.PCI_SLOT)
+            self.assertEqual(1, len(result))
+            self.assertEqual(device_info, result[0])
 
-    @mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
-                "eswitch_manager.PciOsWrapper.scan_vf_devices",
-                return_value=SCANNED_DEVICES)
-    def test_get_assigned_devices_info_multiple_slots(self, *args):
-        emb_switch = esm.EmbSwitch(self.DEV_NAME, ())
-        with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."
-                        "PciDeviceIPWrapper.get_assigned_macs",
-                        return_value=self.VF_TO_MAC_MAPPING),\
-                mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
-                           "eswitch_manager.PciOsWrapper."
-                           "is_assigned_vf_direct", return_value=True):
-            devices_info = emb_switch.get_assigned_devices_info()
+    def test_get_assigned_devices_info_multiple_slots(self):
+        with mock.patch.object(pci_lib.PciDeviceIPWrapper, 'get_assigned_macs',
+                               return_value=self.VF_TO_MAC_MAPPING), \
+                mock.patch.object(esm.PciOsWrapper, 'pf_device_exists',
+                                  return_value=True), \
+                mock.patch.object(esm.PciOsWrapper, 'is_assigned_vf_direct',
+                                  return_value=True):
+            devices_info = self.emb_switch.get_assigned_devices_info()
             for device_info in devices_info:
-                mac = device_info[0]
-                pci_slot = device_info[1]
-                self.assertEqual(
-                    self.EXPECTED_MAC_TO_PCI[mac], pci_slot)
+                self.assertEqual(self.EXPECTED_MAC_TO_PCI[device_info.mac],
+                                 device_info.pci_slot)
 
     def test_get_assigned_devices_empty(self):
-        with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
-                        "eswitch_manager.PciOsWrapper.is_assigned_vf_direct",
-                        return_value=False), \
-                mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
-                           "eswitch_manager.PciOsWrapper."
-                           "is_assigned_vf_macvtap", return_value=False):
+        with mock.patch.object(esm.PciOsWrapper, 'is_assigned_vf_direct',
+                               return_value=False), \
+                mock.patch.object(esm.PciOsWrapper, 'is_assigned_vf_macvtap',
+                                  return_value=False):
             result = self.emb_switch.get_assigned_devices_info()
-            self.assertFalse(result)
+            self.assertEqual([], result)
 
     def test_get_device_state_ok(self):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent.pci_lib."

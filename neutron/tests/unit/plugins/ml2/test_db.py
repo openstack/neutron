@@ -280,16 +280,6 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
         port = ml2_db.get_port(self.ctx, port_id)
         self.assertIsNone(port)
 
-    def test_get_port_from_device_mac(self):
-        network_id = uuidutils.generate_uuid()
-        port_id = uuidutils.generate_uuid()
-        self._setup_neutron_network(network_id)
-        port = self._setup_neutron_port(network_id, port_id)
-
-        observed_port = ml2_db.get_port_from_device_mac(self.ctx,
-                                                        port['mac_address'])
-        self.assertEqual(port_id, observed_port.id)
-
     def test_generating_multiple_mac_addresses(self):
         mac_regex = "^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"
 

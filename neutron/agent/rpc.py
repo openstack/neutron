@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
 from datetime import datetime
 import itertools
 
@@ -38,6 +39,7 @@ from neutron import objects
 
 LOG = logging.getLogger(__name__)
 BINDING_DEACTIVATE = 'binding_deactivate'
+DeviceInfo = collections.namedtuple('DeviceInfo', 'mac pci_slot')
 
 
 def create_consumers(endpoints, prefix, topic_details, start_listening=True):
@@ -118,19 +120,26 @@ class PluginApi(object):
         1.7 - Support get_ports_by_vnic_type_and_host
         1.8 - Rename agent_restarted to refresh_tunnels in
               update_device_list to reflect its expanded purpose
+        1.9 - Support for device definition as DeviceInfo(mac, pci_info) for:
+              - get_device_details
+              - get_devices_details_list (indirectly, calls get_device_details)
+              - update_device_down
+              - update_device_up
+              - update_device_list (indirectly, called from update_device_down
+                and update_device_up)
     '''
 
     def __init__(self, topic):
-        target = oslo_messaging.Target(topic=topic, version='1.0')
+        target = oslo_messaging.Target(topic=topic, version='1.9')
         self.client = lib_rpc.get_client(target)
 
     def get_device_details(self, context, device, agent_id, host=None):
-        cctxt = self.client.prepare()
+        cctxt = self.client.prepare(version='1.9')
         return cctxt.call(context, 'get_device_details', device=device,
                           agent_id=agent_id, host=host)
 
     def get_devices_details_list(self, context, devices, agent_id, host=None):
-        cctxt = self.client.prepare(version='1.3')
+        cctxt = self.client.prepare(version='1.9')
         return cctxt.call(context, 'get_devices_details_list',
                           devices=devices, agent_id=agent_id, host=host)
 
@@ -155,18 +164,18 @@ class PluginApi(object):
                           agent_id=agent_id, host=host)
 
     def update_device_down(self, context, device, agent_id, host=None):
-        cctxt = self.client.prepare()
+        cctxt = self.client.prepare(version='1.9')
         return cctxt.call(context, 'update_device_down', device=device,
                           agent_id=agent_id, host=host)
 
     def update_device_up(self, context, device, agent_id, host=None):
-        cctxt = self.client.prepare()
+        cctxt = self.client.prepare(version='1.9')
         return cctxt.call(context, 'update_device_up', device=device,
                           agent_id=agent_id, host=host)
 
     def update_device_list(self, context, devices_up, devices_down,
                            agent_id, host, refresh_tunnels=False):
-        cctxt = self.client.prepare(version='1.8')
+        cctxt = self.client.prepare(version='1.9')
 
         ret_devices_up = []
         failed_devices_up = []

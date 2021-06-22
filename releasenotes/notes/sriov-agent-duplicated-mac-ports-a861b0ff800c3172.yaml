@@ -1,0 +1,20 @@
+---
+features:
+  - |
+    SR-IOV agent now can handle ports from different networks with the same
+    MAC addresses. This feature implies an upgrade in the agent and the server
+    RPC version (see ``neutron.plugins.ml2.rpc.RpcCallbacks`` version 1.9).
+    Some agent RPC methods have been updated to pass not only the device MAC
+    address but the PCI slot too. In case of having more than one port with
+    the same MAC address, the PCI slot will discriminate the requested port.
+upgrade:
+  - |
+    Both the server and the agent RPC versions have been bumped to 1.9; to
+    provide a smooth upgrade transition, the `Upgrade Procedure
+    <https://docs.openstack.org/operations-guide/ops-upgrades.html>`_ should
+    be followed, upgrading first the servers and then the agents.
+    The agent RPC methods returned values are not modified to keep
+    compatibility with other agents (Linux Bridge, Open vSwitch). The RPC
+    server side is capable of attending calls from agent API < 1.9, in order to
+    provide backwards compatibility. If the device PCI slot is not provided,
+    the behavior will be the previous one.

@@ -436,7 +436,8 @@ class RpcApiTestCase(base.BaseTestCase):
                            'get_device_details', rpc_method='call',
                            device='fake_device',
                            agent_id='fake_agent_id',
-                           host='fake_host')
+                           host='fake_host',
+                           version='1.9')
 
     def test_devices_details_list(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
@@ -444,7 +445,7 @@ class RpcApiTestCase(base.BaseTestCase):
                            'get_devices_details_list', rpc_method='call',
                            devices=['fake_device1', 'fake_device2'],
                            agent_id='fake_agent_id', host='fake_host',
-                           version='1.3')
+                           version='1.9')
 
     def test_update_device_down(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
@@ -452,7 +453,8 @@ class RpcApiTestCase(base.BaseTestCase):
                            'update_device_down', rpc_method='call',
                            device='fake_device',
                            agent_id='fake_agent_id',
-                           host='fake_host')
+                           host='fake_host',
+                           version='1.9')
 
     def test_tunnel_sync(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
@@ -469,7 +471,8 @@ class RpcApiTestCase(base.BaseTestCase):
                            'update_device_up', rpc_method='call',
                            device='fake_device',
                            agent_id='fake_agent_id',
-                           host='fake_host')
+                           host='fake_host',
+                           version='1.9')
 
     def test_update_device_list(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)
@@ -480,7 +483,7 @@ class RpcApiTestCase(base.BaseTestCase):
                            agent_id='fake_agent_id',
                            host='fake_host',
                            refresh_tunnels=False,
-                           version='1.8')
+                           version='1.9')
 
     def test_get_devices_details_list_and_failed_devices(self):
         rpcapi = agent_rpc.PluginApi(topics.PLUGIN)

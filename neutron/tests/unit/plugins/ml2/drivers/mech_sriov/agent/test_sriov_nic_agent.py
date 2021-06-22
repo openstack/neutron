@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import copy
 from unittest import mock
 
 from neutron_lib.api.definitions import portbindings
@@ -30,6 +31,30 @@ from neutron.tests import base
 
 DEVICE_MAC = '11:22:33:44:55:66'
 PCI_SLOT = "0000:06:00.1"
+DEV1 = agent_rpc.DeviceInfo('mac1', 'pci_slot1')
+DEV2 = agent_rpc.DeviceInfo('mac2', 'pci_slot2')
+DEV3 = agent_rpc.DeviceInfo('mac3', 'pci_slot3')
+DEV4 = agent_rpc.DeviceInfo('mac4', 'pci_slot4')
+RPC_DEV1 = {'device': DEV1.mac,
+            'port_id': 'port123',
+            'network_id': 'net123',
+            'admin_state_up': True,
+            'propagate_uplink_status': False,
+            'network_type': 'vlan',
+            'segmentation_id': 100,
+            'profile': {'pci_slot': DEV1.pci_slot},
+            'physical_network': 'physnet1',
+            'port_security_enabled': False}
+RPC_DEV2 = {'device': DEV2.mac,
+            'port_id': 'port321',
+            'network_id': 'net123',
+            'admin_state_up': True,
+            'propagate_uplink_status': False,
+            'network_type': 'vlan',
+            'segmentation_id': 100,
+            'profile': {'pci_slot': DEV2.pci_slot},
+            'physical_network': 'physnet1',
+            'port_security_enabled': False}
 
 
 class TestSriovAgent(base.BaseTestCase):
@@ -78,7 +103,7 @@ class TestSriovAgent(base.BaseTestCase):
 
     def test_treat_devices_removed_with_existed_device(self, *args):
         agent = sriov_nic_agent.SriovNicSwitchAgent({}, {}, 0, {}, {}, {})
-        devices = [(DEVICE_MAC, PCI_SLOT)]
+        devices = {agent_rpc.DeviceInfo(DEVICE_MAC, PCI_SLOT)}
         with mock.patch.object(agent.plugin_rpc,
                                "update_device_down") as fn_udd:
             fn_udd.return_value = {'device': DEVICE_MAC,
@@ -89,7 +114,7 @@ class TestSriovAgent(base.BaseTestCase):
 
     def test_treat_devices_removed_with_not_existed_device(self, *args):
         agent = sriov_nic_agent.SriovNicSwitchAgent({}, {}, 0, {}, {}, {})
-        devices = [(DEVICE_MAC, PCI_SLOT)]
+        devices = {agent_rpc.DeviceInfo(DEVICE_MAC, PCI_SLOT)}
         with mock.patch.object(agent.plugin_rpc,
                                "update_device_down") as fn_udd:
             fn_udd.return_value = {'device': DEVICE_MAC,
@@ -103,7 +128,7 @@ class TestSriovAgent(base.BaseTestCase):
 
     def test_treat_devices_removed_failed(self, *args):
         agent = sriov_nic_agent.SriovNicSwitchAgent({}, {}, 0, {}, {}, {})
-        devices = [(DEVICE_MAC, PCI_SLOT)]
+        devices = {agent_rpc.DeviceInfo(DEVICE_MAC, PCI_SLOT)}
         with mock.patch.object(agent.plugin_rpc,
                                "update_device_down") as fn_udd:
             fn_udd.side_effect = Exception()
@@ -134,51 +159,51 @@ class TestSriovAgent(base.BaseTestCase):
         self.mock_scan_devices(expected, mock_current, registered, updated)
 
     def test_scan_devices_no_changes(self):
-        registered = set(['1', '2'])
+        registered = {DEV1, DEV2}
         updated = set()
-        mock_current = set(['1', '2'])
-        expected = {'current': set(['1', '2']),
+        mock_current = {DEV1, DEV2}
+        expected = {'current': {DEV1, DEV2},
                     'updated': set(),
                     'added': set(),
                     'removed': set()}
         self.mock_scan_devices(expected, mock_current, registered, updated)
 
     def test_scan_devices_new_and_removed(self):
-        registered = set(['1', '2'])
+        registered = {DEV1, DEV2}
         updated = set()
-        mock_current = set(['2', '3'])
-        expected = {'current': set(['2', '3']),
+        mock_current = {DEV2, DEV3}
+        expected = {'current': {DEV2, DEV3},
                     'updated': set(),
-                    'added': set(['3']),
-                    'removed': set(['1'])}
+                    'added': {DEV3},
+                    'removed': {DEV1}}
         self.mock_scan_devices(expected, mock_current, registered, updated)
 
     def test_scan_devices_updated_and_removed(self):
-        registered = set(['1', '2'])
-        # '1' is in removed and updated tuple
-        updated = set(['1'])
-        mock_current = set(['2', '3'])
-        expected = {'current': set(['2', '3']),
+        registered = {DEV1, DEV2}
+        # 'DEV1' is in removed and updated tuple
+        updated = {DEV1}
+        mock_current = {DEV2, DEV3}
+        expected = {'current': {DEV2, DEV3},
                     'updated': set(),
-                    'added': set(['3']),
-                    'removed': set(['1'])}
+                    'added': {DEV3},
+                    'removed': {DEV1}}
         self.mock_scan_devices(expected, mock_current, registered, updated)
 
     def test_scan_devices_new_updates(self):
-        registered = set(['1'])
-        updated = set(['2'])
-        mock_current = set(['1', '2'])
-        expected = {'current': set(['1', '2']),
-                    'updated': set(['2']),
-                    'added': set(['2']),
+        registered = {DEV1}
+        updated = {DEV2}
+        mock_current = {DEV1, DEV2}
+        expected = {'current': {DEV1, DEV2},
+                    'updated': {DEV2},
+                    'added': {DEV2},
                     'removed': set()}
         self.mock_scan_devices(expected, mock_current, registered, updated)
 
     def test_scan_devices_updated_missing(self):
-        registered = set(['1'])
-        updated = set(['2'])
-        mock_current = set(['1'])
-        expected = {'current': set(['1']),
+        registered = {DEV1}
+        updated = {DEV2}
+        mock_current = {DEV1}
+        expected = {'current': {DEV1},
                     'updated': set(),
                     'added': set(),
                     'removed': set()}
@@ -187,9 +212,9 @@ class TestSriovAgent(base.BaseTestCase):
     def test_process_network_devices(self):
         agent = self.agent
         device_info = {'current': set(),
-                       'added': set(['mac3', 'mac4']),
-                       'updated': set(['mac2', 'mac3']),
-                       'removed': set(['mac1'])}
+                       'added': {DEV3, DEV4},
+                       'updated': {DEV2, DEV3},
+                       'removed': {DEV1}}
         agent.sg_agent.prepare_devices_filter = mock.Mock()
         agent.sg_agent.refresh_firewall = mock.Mock()
         agent.treat_devices_added_updated = mock.Mock(return_value=False)
@@ -197,226 +222,115 @@ class TestSriovAgent(base.BaseTestCase):
 
         agent.process_network_devices(device_info)
 
-        agent.sg_agent.prepare_devices_filter.assert_called_with(
-                set(['mac3', 'mac4']))
+        agent.sg_agent.prepare_devices_filter.assert_called_with({DEV3, DEV4})
         self.assertTrue(agent.sg_agent.refresh_firewall.called)
-        agent.treat_devices_added_updated.assert_called_with(set(['mac2',
-                                                                  'mac3',
-                                                                  'mac4']))
-        agent.treat_devices_removed.assert_called_with(set(['mac1']))
+        agent.treat_devices_added_updated.assert_called_with(
+            {DEV2, DEV3, DEV4})
+        agent.treat_devices_removed.assert_called_with({DEV1})
 
     def test_treat_devices_added_updated_sends_host(self):
         agent = self.agent
         host = 'host1'
         cfg.CONF.set_override('host', host)
         agent.plugin_rpc = mock.Mock()
-        MAC = 'aa:bb:cc:dd:ee:ff'
-        device_details = {'device': MAC,
-                          'port_id': 'port123',
-                          'network_id': 'net123',
-                          'admin_state_up': True,
-                          'propagate_uplink_status': True,
-                          'network_type': 'vlan',
-                          'segmentation_id': 100,
-                          'profile': {'pci_slot': '1:2:3.0'},
-                          'physical_network': 'physnet1',
-                          'port_security_enabled': False}
-        agent.plugin_rpc.get_devices_details_list.return_value = (
-                [device_details])
-        agent.treat_devices_added_updated([[MAC]])
+        agent.plugin_rpc.get_devices_details_list.return_value = [RPC_DEV1]
+        devices = {agent_rpc.DeviceInfo(DEV1.mac, DEV1.pci_slot)}
+        agent.treat_devices_added_updated(devices)
         agent.plugin_rpc.get_devices_details_list.assert_called_once_with(
-            mock.ANY, set([MAC]), mock.ANY, host)
+            agent.context, devices, agent.agent_id, host)
 
     def test_treat_devices_added_updated_and_removed(self):
         agent = self.agent
-        MAC1 = 'aa:bb:cc:dd:ee:ff'
-        SLOT1 = '1:2:3.0'
-        MAC2 = 'aa:bb:cc:dd:ee:fe'
-        SLOT2 = '1:3:3.0'
-        mac_pci_slot_device1 = (MAC1, SLOT1)
-        mac_pci_slot_device2 = (MAC2, SLOT2)
-        mock_device1_details = {'device': MAC1,
-                        'port_id': 'port123',
-                        'network_id': 'net123',
-                        'admin_state_up': True,
-                        'propagate_uplink_status': False,
-                        'network_type': 'vlan',
-                        'segmentation_id': 100,
-                        'profile': {'pci_slot': SLOT1},
-                        'physical_network': 'physnet1',
-                        'port_security_enabled': False}
-        mock_device2_details = {'device': MAC2,
-                        'port_id': 'port124',
-                        'network_id': 'net123',
-                        'admin_state_up': True,
-                        'propagate_uplink_status': False,
-                        'network_type': 'vlan',
-                        'segmentation_id': 100,
-                        'profile': {'pci_slot': SLOT2},
-                        'physical_network': 'physnet1',
-                        'port_security_enabled': False}
         agent.plugin_rpc = mock.Mock()
-        agent.plugin_rpc.get_devices_details_list.return_value = (
-                [mock_device1_details])
-        agent.treat_devices_added_updated(set([MAC1]))
-        self.assertEqual({'net123': [{'port_id': 'port123',
-                         'device': mac_pci_slot_device1}]},
+        agent.plugin_rpc.get_devices_details_list.return_value = [RPC_DEV1]
+        agent.treat_devices_added_updated({DEV1})
+        self.assertEqual({'net123': [{'port_id': 'port123', 'device': DEV1}]},
                          agent.network_ports)
-        agent.plugin_rpc.get_devices_details_list.return_value = (
-                [mock_device2_details])
+        agent.plugin_rpc.get_devices_details_list.return_value = [RPC_DEV2]
         # add the second device and check the network_ports dict
-        agent.treat_devices_added_updated(set([MAC2]))
-        self.assertEqual(
-                {'net123': [{'port_id': 'port123',
-                'device': mac_pci_slot_device1}, {'port_id': 'port124',
-                'device': mac_pci_slot_device2}]},
-                agent.network_ports)
-        with mock.patch.object(agent.plugin_rpc,
-                               "update_device_down"):
-            agent.treat_devices_removed([mac_pci_slot_device2])
+        agent.treat_devices_added_updated({DEV2})
+        self.assertEqual({'net123': [{'port_id': 'port123', 'device': DEV1},
+                                     {'port_id': 'port321', 'device': DEV2}]},
+                         agent.network_ports)
+        with mock.patch.object(agent.plugin_rpc, "update_device_down"):
+            agent.treat_devices_removed({DEV2})
         # remove the second device and check the network_ports dict
-        self.assertEqual({'net123': [{'port_id': 'port123',
-                         'device': mac_pci_slot_device1}]},
+        self.assertEqual({'net123': [{'port_id': 'port123', 'device': DEV1}]},
                          agent.network_ports)
 
     def test_treat_devices_added_updated_admin_state_up_true(self):
         agent = self.agent
-        mock_details = {'device': 'aa:bb:cc:dd:ee:ff',
-                        'port_id': 'port123',
-                        'network_id': 'net123',
-                        'admin_state_up': True,
-                        'propagate_uplink_status': False,
-                        'network_type': 'vlan',
-                        'segmentation_id': 100,
-                        'profile': {'pci_slot': '1:2:3.0'},
-                        'physical_network': 'physnet1',
-                        'port_security_enabled': False}
         agent.plugin_rpc = mock.Mock()
-        agent.plugin_rpc.get_devices_details_list.return_value = [mock_details]
+        agent.plugin_rpc.get_devices_details_list.return_value = [RPC_DEV1]
         agent.eswitch_mgr = mock.Mock()
         agent.eswitch_mgr.device_exists.return_value = True
         agent.set_device_state = mock.Mock()
         agent.set_device_spoofcheck = mock.Mock()
-        resync_needed = agent.treat_devices_added_updated(
-                                    set(['aa:bb:cc:dd:ee:ff']))
-
+        devices = {DEV1}
+        resync_needed = agent.treat_devices_added_updated(devices)
         self.assertFalse(resync_needed)
-        agent.eswitch_mgr.device_exists.assert_called_with('aa:bb:cc:dd:ee:ff',
-                                                          '1:2:3.0')
+        agent.eswitch_mgr.device_exists.assert_called_with(DEV1.mac,
+                                                           DEV1.pci_slot)
         agent.eswitch_mgr.set_device_state.assert_called_with(
-                                        'aa:bb:cc:dd:ee:ff',
-                                        '1:2:3.0',
-                                        True, False)
+            DEV1.mac, DEV1.pci_slot, True, False)
         agent.eswitch_mgr.set_device_spoofcheck.assert_called_with(
-                                        'aa:bb:cc:dd:ee:ff',
-                                        '1:2:3.0',
-                                        False)
+            DEV1.mac, DEV1.pci_slot, False)
         agent.plugin_rpc.update_device_list.assert_called_once_with(
-                mock.ANY,
-                set(['aa:bb:cc:dd:ee:ff']),
-                set(),
-                mock.ANY,
-                mock.ANY)
+            agent.context, devices, set(), agent.agent_id, agent.conf.host)
 
     def test_treat_devices_added_updated_multiple_admin_state_up_true(self):
         agent = self.agent
-        mock_details = [{'device': 'aa:bb:cc:dd:ee:ff',
-                         'port_id': 'port123',
-                         'network_id': 'net123',
-                         'admin_state_up': True,
-                         'propagate_uplink_status': False,
-                         'network_type': 'vlan',
-                         'segmentation_id': 100,
-                         'profile': {'pci_slot': '1:2:3.0'},
-                         'physical_network': 'physnet1',
-                         'port_security_enabled': False},
-                        {'device': '11:22:33:44:55:66',
-                         'port_id': 'port321',
-                         'network_id': 'net123',
-                         'admin_state_up': True,
-                         'propagate_uplink_status': False,
-                         'network_type': 'vlan',
-                         'segmentation_id': 100,
-                         'profile': {'pci_slot': '1:2:3.0'},
-                         'physical_network': 'physnet1',
-                         'port_security_enabled': False}]
+        mock_details = [RPC_DEV1, RPC_DEV2]
         agent.plugin_rpc = mock.Mock()
         agent.plugin_rpc.get_devices_details_list.return_value = mock_details
         agent.eswitch_mgr = mock.Mock()
         agent.eswitch_mgr.device_exists.return_value = True
         agent.set_device_state = mock.Mock()
         agent.set_device_spoofcheck = mock.Mock()
-        resync_needed = agent.treat_devices_added_updated(
-                                    set(['aa:bb:cc:dd:ee:ff',
-                                         '11:22:33:44:55:66']))
+        devices = {DEV1, DEV2}
+        resync_needed = agent.treat_devices_added_updated(devices)
         self.assertFalse(resync_needed)
-        calls = [mock.call('aa:bb:cc:dd:ee:ff', '1:2:3.0'),
-                 mock.call('11:22:33:44:55:66', '1:2:3.0')]
+        calls = [mock.call(DEV1.mac, DEV1.pci_slot),
+                 mock.call(DEV2.mac, DEV2.pci_slot)]
         agent.eswitch_mgr.device_exists.assert_has_calls(calls, any_order=True)
-        calls = [mock.call('aa:bb:cc:dd:ee:ff', '1:2:3.0', True, False),
-                 mock.call('11:22:33:44:55:66', '1:2:3.0', True, False)]
+        calls = [mock.call(DEV1.mac, DEV1.pci_slot, True, False),
+                 mock.call(DEV2.mac, DEV2.pci_slot, True, False)]
         agent.eswitch_mgr.set_device_state.assert_has_calls(calls,
                                                             any_order=True)
-        calls = [mock.call('aa:bb:cc:dd:ee:ff', '1:2:3.0', False),
-                 mock.call('11:22:33:44:55:66', '1:2:3.0', False)]
-        agent.eswitch_mgr.set_device_spoofcheck.assert_has_calls(calls,
-                                                                any_order=True)
+        calls = [mock.call(DEV1.mac, DEV1.pci_slot, False),
+                 mock.call(DEV2.mac, DEV2.pci_slot, False)]
+        agent.eswitch_mgr.set_device_spoofcheck.assert_has_calls(
+            calls, any_order=True)
         agent.plugin_rpc.update_device_list.assert_called_once_with(
-                mock.ANY,
-                set(['aa:bb:cc:dd:ee:ff', '11:22:33:44:55:66']),
-                set(),
-                mock.ANY,
-                mock.ANY)
+            agent.context, devices, set(), agent.agent_id, agent.conf.host)
 
     def test_treat_devices_added_updated_multiple_admin_states(self):
         agent = self.agent
-        mock_details = [{'device': 'aa:bb:cc:dd:ee:ff',
-                         'port_id': 'port123',
-                         'network_id': 'net123',
-                         'admin_state_up': True,
-                         'propagate_uplink_status': False,
-                         'network_type': 'vlan',
-                         'segmentation_id': 100,
-                         'profile': {'pci_slot': '1:2:3.0'},
-                         'physical_network': 'physnet1',
-                         'port_security_enabled': False},
-                        {'device': '11:22:33:44:55:66',
-                         'port_id': 'port321',
-                         'network_id': 'net123',
-                         'admin_state_up': False,
-                         'propagate_uplink_status': False,
-                         'network_type': 'vlan',
-                         'segmentation_id': 100,
-                         'profile': {'pci_slot': '1:2:3.0'},
-                         'physical_network': 'physnet1',
-                         'port_security_enabled': False}]
+        rpc_dev2 = copy.deepcopy(RPC_DEV2)
+        rpc_dev2['admin_state_up'] = False
+        mock_details = [RPC_DEV1, rpc_dev2]
         agent.plugin_rpc = mock.Mock()
         agent.plugin_rpc.get_devices_details_list.return_value = mock_details
         agent.eswitch_mgr = mock.Mock()
         agent.eswitch_mgr.device_exists.return_value = True
         agent.set_device_state = mock.Mock()
         agent.set_device_spoofcheck = mock.Mock()
-        resync_needed = agent.treat_devices_added_updated(
-                                    set(['aa:bb:cc:dd:ee:ff',
-                                         '11:22:33:44:55:66']))
+        devices = {DEV1, DEV2}
+        resync_needed = agent.treat_devices_added_updated(devices)
         self.assertFalse(resync_needed)
-        calls = [mock.call('aa:bb:cc:dd:ee:ff', '1:2:3.0'),
-                 mock.call('11:22:33:44:55:66', '1:2:3.0')]
+        calls = [mock.call(DEV1.mac, DEV1.pci_slot),
+                 mock.call(DEV2.mac, DEV2.pci_slot)]
         agent.eswitch_mgr.device_exists.assert_has_calls(calls, any_order=True)
-        calls = [mock.call('aa:bb:cc:dd:ee:ff', '1:2:3.0', True, False),
-                 mock.call('11:22:33:44:55:66', '1:2:3.0', False, False)]
+        calls = [mock.call(DEV1.mac, DEV1.pci_slot, True, False),
+                 mock.call(DEV2.mac, DEV2.pci_slot, False, False)]
         agent.eswitch_mgr.set_device_state.assert_has_calls(calls,
                                                             any_order=True)
-        calls = [mock.call('aa:bb:cc:dd:ee:ff', '1:2:3.0', False),
-                 mock.call('11:22:33:44:55:66', '1:2:3.0', False)]
-        agent.eswitch_mgr.set_device_spoofcheck.assert_has_calls(calls,
-                                                                any_order=True)
+        calls = [mock.call(DEV1.mac, DEV1.pci_slot, False),
+                 mock.call(DEV2.mac, DEV2.pci_slot, False)]
+        agent.eswitch_mgr.set_device_spoofcheck.assert_has_calls(
+            calls, any_order=True)
         agent.plugin_rpc.update_device_list.assert_called_once_with(
-                mock.ANY,
-                set(['aa:bb:cc:dd:ee:ff']),
-                set(['11:22:33:44:55:66']),
-                mock.ANY,
-                mock.ANY)
+            agent.context, {DEV1}, {DEV2}, agent.agent_id, agent.conf.host)
 
     def test_treat_device_ip_link_state_not_supported(self):
         agent = self.agent
@@ -426,8 +340,7 @@ class TestSriovAgent(base.BaseTestCase):
         agent.eswitch_mgr.set_device_state.side_effect = (
             priv_ip_lib.InterfaceOperationNotSupported())
 
-        self.assertTrue(agent.treat_device('aa:bb:cc:dd:ee:ff', '1:2:3:0',
-                                           admin_state_up=True))
+        self.assertTrue(agent.treat_device(DEV1, admin_state_up=True))
 
     def test_treat_device_set_device_state_exception(self):
         agent = self.agent
@@ -437,8 +350,7 @@ class TestSriovAgent(base.BaseTestCase):
         agent.eswitch_mgr.set_device_state.side_effect = (
             pyroute2.NetlinkError(22))
 
-        self.assertFalse(agent.treat_device('aa:bb:cc:dd:ee:ff', '1:2:3:0',
-                                           admin_state_up=True))
+        self.assertFalse(agent.treat_device(DEV1, admin_state_up=True))
 
     def test_treat_device_no_device_found(self):
         agent = self.agent
@@ -446,53 +358,32 @@ class TestSriovAgent(base.BaseTestCase):
         agent.eswitch_mgr = mock.Mock()
         agent.eswitch_mgr.device_exists.return_value = False
 
-        self.assertFalse(agent.treat_device('aa:bb:cc:dd:ee:ff', '1:2:3:0',
-                                            admin_state_up=True))
+        self.assertFalse(agent.treat_device(DEV1, admin_state_up=True))
 
     def test_treat_devices_added_updated_admin_state_up_false(self):
         agent = self.agent
-        mock_details = {'device': 'aa:bb:cc:dd:ee:ff',
-                        'port_id': 'port123',
-                        'network_id': 'net123',
-                        'admin_state_up': False,
-                        'propagate_uplink_status': False,
-                        'network_type': 'vlan',
-                        'segmentation_id': 100,
-                        'profile': {'pci_slot': '1:2:3.0'},
-                        'physical_network': 'physnet1'}
         agent.plugin_rpc = mock.Mock()
-        agent.plugin_rpc.get_devices_details_list.return_value = [mock_details]
+        rpc_dev1 = copy.deepcopy(RPC_DEV1)
+        rpc_dev1['admin_state_up'] = False
+        agent.plugin_rpc.get_devices_details_list.return_value = [rpc_dev1]
         agent.remove_port_binding = mock.Mock()
         agent.eswitch_mgr = mock.Mock()
         agent.eswitch_mgr.device_exists.return_value = True
-        resync_needed = agent.treat_devices_added_updated(
-                            set(['aa:bb:cc:dd:ee:ff']))
+        devices = {DEV1}
+        resync_needed = agent.treat_devices_added_updated(devices)
         self.assertFalse(resync_needed)
         agent.plugin_rpc.update_device_list.assert_called_once_with(
-                mock.ANY,
-                set(),
-                set(['aa:bb:cc:dd:ee:ff']),
-                mock.ANY,
-                mock.ANY)
+            agent.context, set(), devices, agent.agent_id, agent.conf.host)
 
     def test_treat_devices_added_updated_no_device_found(self):
         agent = self.agent
-        mock_details = {'device': 'aa:bb:cc:dd:ee:ff',
-                        'port_id': 'port123',
-                        'network_id': 'net123',
-                        'admin_state_up': True,
-                        'network_type': 'vlan',
-                        'segmentation_id': 100,
-                        'profile': {'pci_slot': '1:2:3.0'},
-                        'propagate_uplink_status': False,
-                        'physical_network': 'physnet1'}
         agent.plugin_rpc = mock.Mock()
-        agent.plugin_rpc.get_devices_details_list.return_value = [mock_details]
+        agent.plugin_rpc.get_devices_details_list.return_value = [RPC_DEV1]
         agent.remove_port_binding = mock.Mock()
         agent.eswitch_mgr = mock.Mock()
         agent.eswitch_mgr.device_exists.return_value = False
-        resync_needed = agent.treat_devices_added_updated(
-                            set(['aa:bb:cc:dd:ee:ff']))
+        devices = {DEV1}
+        resync_needed = agent.treat_devices_added_updated(devices)
         self.assertTrue(resync_needed)
         self.assertFalse(agent.plugin_rpc.update_device_up.called)
 
@@ -502,27 +393,20 @@ class TestSriovAgent(base.BaseTestCase):
 
         port_id1 = 'port_id1'
         port_id2 = 'port_id2'
-        mac_slot_1 = ('mac1', 'slot1')
-        mac_slot_2 = ('mac2', 'slot2')
 
-        self.agent.network_ports[network_id1] = [{'port_id': port_id1,
-            'device': mac_slot_1}, {'port_id': port_id2, 'device': mac_slot_2}]
+        self.agent._update_network_ports(network_id1, port_id1, DEV1)
+        self.agent._update_network_ports(network_id1, port_id2, DEV2)
 
-        self.agent._update_network_ports(network_id2, port_id1, mac_slot_1)
+        self.agent._update_network_ports(network_id2, port_id1, DEV1)
+        expected = {network_id1: [{'port_id': port_id2, 'device': DEV2}],
+                    network_id2: [{'port_id': port_id1, 'device': DEV1}]}
+        self.assertEqual(expected, dict(self.agent.network_ports))
 
-        self.assertEqual({network_id1: [{'port_id': port_id2,
-                         'device': mac_slot_2}], network_id2: [
-                         {'port_id': port_id1, 'device': mac_slot_1}]},
-                         self.agent.network_ports)
+        self.assertEqual(port_id1, self.agent._clean_network_ports(DEV1))
+        expected = {network_id1: [{'port_id': port_id2, 'device': DEV2}]}
+        self.assertEqual(expected, self.agent.network_ports)
 
-        cleaned_port_id = self.agent._clean_network_ports(mac_slot_1)
-        self.assertEqual(cleaned_port_id, port_id1)
-
-        self.assertEqual({network_id1: [{'port_id': port_id2,
-                                         'device': mac_slot_2}]},
-                        self.agent.network_ports)
-
-        cleaned_port_id = self.agent._clean_network_ports(mac_slot_2)
+        self.assertEqual(port_id2, self.agent._clean_network_ports(DEV2))
         self.assertEqual({}, self.agent.network_ports)
 
     def test_configurations_has_rp_bandwidth(self):
@@ -558,17 +442,12 @@ class TestSriovAgent(base.BaseTestCase):
                              rp_inv_defaults[inv_key])
 
     def test_process_activated_bindings(self):
-        # Create several devices which are pairs of (<mac_addr>, <pci_slot>)
-        dev_a = ('fa:16:3e:f8:ae:af', "0000:01:00.0")
-        dev_b = ('fa:16:3e:f8:ae:b0', "0000:02:00.0")
-        dev_c = ('fa:16:3e:f8:ae:b1', "0000:03:00.0")
-        # Create device_info
         fake_device_info = {
-            'current': set([dev_a, dev_b]),
-            'added': set([dev_c]),
+            'current': {DEV1, DEV2},
+            'added': {DEV3},
             'removed': set(),
             'updated': set()}
-        fake_activated_bindings = set([dev_a])
+        fake_activated_bindings = {DEV1}
         self.agent.process_activated_bindings(fake_device_info,
                                               fake_activated_bindings)
         self.assertLessEqual(fake_activated_bindings,
@@ -592,6 +471,7 @@ class TestSriovNicSwitchRpcCallbacks(base.BaseTestCase):
         sg_agent = object()
         self.sriov_rpc_callback = sriov_nic_agent.SriovNicSwitchRpcCallbacks(
             self.context, self.agent, sg_agent)
+        self.device_info = agent_rpc.DeviceInfo(DEVICE_MAC, PCI_SLOT)
 
     def _create_fake_port(self):
         return {'id': uuidutils.generate_uuid(),
@@ -606,8 +486,7 @@ class TestSriovNicSwitchRpcCallbacks(base.BaseTestCase):
         port = self._create_fake_port()
         kwargs = {'context': self.context, 'port': port}
         self.sriov_rpc_callback.port_update(**kwargs)
-        self.assertEqual(set([(DEVICE_MAC, PCI_SLOT)]),
-                         self.agent.updated_devices)
+        self.assertEqual({self.device_info}, self.agent.updated_devices)
 
     def test_port_update_with_vnic_physical_direct(self):
         port = self._create_fake_port()
@@ -618,7 +497,7 @@ class TestSriovNicSwitchRpcCallbacks(base.BaseTestCase):
 
     def test_port_update_without_pci_slot(self):
         port = self._create_fake_port()
-        port[portbindings.PROFILE] = None
+        port[portbindings.PROFILE] = {}
         kwargs = {'context': self.context, 'port': port}
         self.sriov_rpc_callback.port_update(**kwargs)
         self.assertEqual(set(), self.agent.updated_devices)
