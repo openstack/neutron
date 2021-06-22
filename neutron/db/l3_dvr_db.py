@@ -396,6 +396,7 @@ class DVRResourceOperationHandler(object):
         except n_exc.ObjectNotFound:
             pass
 
+    @db_api.CONTEXT_WRITER
     def delete_floatingip_agent_gateway_port(self, context, host_id,
                                              ext_net_id):
         """Function to delete FIP gateway port with given ext_net_id."""
