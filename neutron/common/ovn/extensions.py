@@ -18,6 +18,7 @@ from neutron_lib.api.definitions import auto_allocated_topology
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.definitions import default_subnetpools
 from neutron_lib.api.definitions import dns
+from neutron_lib.api.definitions import dns_domain_keywords
 from neutron_lib.api.definitions import expose_port_forwarding_in_fip
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import extra_dhcp_opt
@@ -74,6 +75,7 @@ ML2_SUPPORTED_API_EXTENSIONS_OVN_L3 = [
     sorting.ALIAS,
     project_id.ALIAS,
     dns.ALIAS,
+    dns_domain_keywords.ALIAS,
     agent_def.ALIAS,
     az_def.ALIAS,
     raz_def.ALIAS,

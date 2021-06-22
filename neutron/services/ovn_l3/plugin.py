@@ -13,6 +13,7 @@
 #
 
 from neutron_lib.api.definitions import dns as dns_apidef
+from neutron_lib.api.definitions import dns_domain_keywords
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
@@ -107,6 +108,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         if not api_extensions.is_extension_supported(
                 core_plugin, dns_apidef.ALIAS):
             aliases.remove(dns_apidef.ALIAS)
+            aliases.remove(dns_domain_keywords.ALIAS)
 
     @property
     def supported_extension_aliases(self):
