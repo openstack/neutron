@@ -23,9 +23,12 @@ from neutron.agent import dhcp_agent
 from neutron.cmd.sanity import checks
 from neutron.common import config
 from neutron.conf.agent import securitygroups_rpc
+from neutron.conf import common as common_config
 from neutron.conf.db import l3_hamode_db
 from neutron.conf.plugins.ml2 import config as ml2_conf
 from neutron.conf.plugins.ml2.drivers import linuxbridge as lb_conf
+from neutron.conf.plugins.ml2.drivers.mech_sriov import agent_common as \
+    sriov_conf
 from neutron.conf.plugins.ml2.drivers import ovs_conf
 
 
@@ -35,10 +38,12 @@ LOG = logging.getLogger(__name__)
 def setup_conf():
     ovs_conf.register_ovs_agent_opts(cfg.CONF)
     lb_conf.register_linuxbridge_opts(cfg.CONF)
+    sriov_conf.register_agent_sriov_nic_opts(cfg.CONF)
     ml2_conf.register_ml2_plugin_opts(cfg.CONF)
     securitygroups_rpc.register_securitygroups_opts(cfg.CONF)
     dhcp_agent.register_options(cfg.CONF)
     l3_hamode_db.register_db_l3_hamode_opts(cfg.CONF)
+    common_config.register_core_common_config_opts(cfg.CONF)
 
 
 class BoolOptCallback(cfg.BoolOpt):
