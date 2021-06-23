@@ -79,14 +79,92 @@ class TestLoadInterfaceDriver(base.BaseTestCase):
             utils.load_interface_driver(self.conf)
 
 
+class TestGetHypervisorHostname(base.BaseTestCase):
+
+    @mock.patch('socket.getaddrinfo')
+    @mock.patch('socket.gethostname')
+    def test_get_hypervisor_hostname_gethostname_fqdn(self, hostname_mock,
+                                                      addrinfo_mock):
+        hostname_mock.return_value = 'host.domain'
+        self.assertEqual(
+            'host.domain',
+            utils.get_hypervisor_hostname())
+        addrinfo_mock.assert_not_called()
+
+    @mock.patch('socket.getaddrinfo')
+    @mock.patch('socket.gethostname')
+    def test_get_hypervisor_hostname_gethostname_localhost(self, hostname_mock,
+                                                           addrinfo_mock):
+        hostname_mock.return_value = 'localhost'
+        self.assertEqual(
+            'localhost',
+            utils.get_hypervisor_hostname())
+        addrinfo_mock.assert_not_called()
+
+    @mock.patch('socket.getaddrinfo')
+    @mock.patch('socket.gethostname')
+    def test_get_hypervisor_hostname_getaddrinfo(self, hostname_mock,
+                                                 addrinfo_mock):
+        hostname_mock.return_value = 'host'
+        addrinfo_mock.return_value = [(None, None, None, 'host.domain', None)]
+        self.assertEqual(
+            'host.domain',
+            utils.get_hypervisor_hostname())
+        addrinfo_mock.assert_called_once_with(
+            host='host', port=None, family=socket.AF_UNSPEC,
+            flags=socket.AI_CANONNAME)
+
+    @mock.patch('socket.getaddrinfo')
+    @mock.patch('socket.gethostname')
+    def test_get_hypervisor_hostname_getaddrinfo_no_canonname(self,
+                                                              hostname_mock,
+                                                              addrinfo_mock):
+        hostname_mock.return_value = 'host'
+        addrinfo_mock.return_value = [(None, None, None, '', None)]
+        self.assertEqual(
+            'host',
+            utils.get_hypervisor_hostname())
+        addrinfo_mock.assert_called_once_with(
+            host='host', port=None, family=socket.AF_UNSPEC,
+            flags=socket.AI_CANONNAME)
+
+    @mock.patch('socket.getaddrinfo')
+    @mock.patch('socket.gethostname')
+    def test_get_hypervisor_hostname_getaddrinfo_localhost(self, hostname_mock,
+                                                           addrinfo_mock):
+        hostname_mock.return_value = 'host'
+        addrinfo_mock.return_value = [(None, None, None,
+                                       'localhost', None)]
+        self.assertEqual(
+            'host',
+            utils.get_hypervisor_hostname())
+        addrinfo_mock.assert_called_once_with(
+            host='host', port=None, family=socket.AF_UNSPEC,
+            flags=socket.AI_CANONNAME)
+
+    @mock.patch('socket.getaddrinfo')
+    @mock.patch('socket.gethostname')
+    def test_get_hypervisor_hostname_getaddrinfo_fail(self, hostname_mock,
+                                                      addrinfo_mock):
+        hostname_mock.return_value = 'host'
+        addrinfo_mock.side_effect = OSError
+        self.assertEqual(
+            'host',
+            utils.get_hypervisor_hostname())
+        addrinfo_mock.assert_called_once_with(
+            host='host', port=None, family=socket.AF_UNSPEC,
+            flags=socket.AI_CANONNAME)
+
+
 # TODO(bence romsics): rehome this to neutron_lib
 class TestDefaultRpHypervisors(base.BaseTestCase):
 
-    def test_defaults(self):
-        this_host = socket.gethostname()
+    @mock.patch.object(utils, 'get_hypervisor_hostname',
+                       return_value='thishost')
+    def test_defaults(self, hostname_mock):
 
         self.assertEqual(
-            {'eth0': this_host, 'eth1': this_host},
+            {'eth0': 'thishost', 'eth1': 'thishost'},
             utils.default_rp_hypervisors(
                 hypervisors={},
                 device_mappings={'physnet0': ['eth0', 'eth1']},
@@ -95,7 +173,7 @@ class TestDefaultRpHypervisors(base.BaseTestCase):
         )
 
         self.assertEqual(
-            {'eth0': 'thathost', 'eth1': this_host},
+            {'eth0': 'thathost', 'eth1': 'thishost'},
             utils.default_rp_hypervisors(
                 hypervisors={'eth0': 'thathost'},
                 device_mappings={'physnet0': ['eth0', 'eth1']},
