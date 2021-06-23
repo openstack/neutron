@@ -197,6 +197,13 @@ ovn_opts = [
                        'or by checking the output of the following command: \n'
                        'ovs-appctl -t ovs-vswitchd dpif/show-dp-features '
                        'br-int | grep "Check pkt length action".')),
+    cfg.ListOpt('additional_worker_classes_with_ovn_idl',
+                default=[],
+                help=_('Additional worker classes to enable OVN IDLs for.\n'
+                       'By default only the API and maintenance workers '
+                       'have access to the IDL connections. List additional '
+                       'worker classes here if necessary. You can use aliases '
+                       'from neutron.worker_classes.')),
 ]
 
 cfg.CONF.register_opts(ovn_opts, group='ovn')
@@ -304,3 +311,7 @@ def is_ovn_emit_need_to_frag_enabled():
 
 def is_igmp_snooping_enabled():
     return cfg.CONF.OVS.igmp_snooping_enable
+
+
+def additional_worker_classes_with_ovn_idl():
+    return cfg.CONF.ovn.additional_worker_classes_with_ovn_idl
