@@ -191,43 +191,6 @@ def add_sg_rule_acl_for_port_group(port_group, r, stateful, match):
     return acl
 
 
-def add_acl_dhcp(port, subnet, ovn_dhcp=True):
-    # Allow DHCP requests for OVN native DHCP service, while responses are
-    # allowed in ovn-northd.
-    # Allow both DHCP requests and responses to pass for other DHCP services.
-    # We do this even if DHCP isn't enabled for the subnet
-    acl_list = []
-    if not ovn_dhcp:
-        acl = {"lswitch": utils.ovn_name(port['network_id']),
-               "lport": port['id'],
-               "priority": ovn_const.ACL_PRIORITY_ALLOW,
-               "action": ovn_const.ACL_ACTION_ALLOW,
-               "log": False,
-               "name": [],
-               "severity": [],
-               "direction": 'to-lport',
-               "match": ('outport == "%s" && ip4 && ip4.src == %s && '
-                         'udp && udp.src == 67 && udp.dst == 68'
-                         ) % (port['id'], subnet['cidr']),
-               "external_ids": {'neutron:lport': port['id']}}
-        acl_list.append(acl)
-    acl = {"lswitch": utils.ovn_name(port['network_id']),
-           "lport": port['id'],
-           "priority": ovn_const.ACL_PRIORITY_ALLOW,
-           "action": ovn_const.ACL_ACTION_ALLOW,
-           "log": False,
-           "name": [],
-           "severity": [],
-           "direction": 'from-lport',
-           "match": ('inport == "%s" && ip4 && '
-                     'ip4.dst == {255.255.255.255, %s} && '
-                     'udp && udp.src == 68 && udp.dst == 67'
-                     ) % (port['id'], subnet['cidr']),
-           "external_ids": {'neutron:lport': port['id']}}
-    acl_list.append(acl)
-    return acl_list
-
-
 def _get_subnet_from_cache(plugin, admin_context, subnet_cache, subnet_id):
     if subnet_id in subnet_cache:
         return subnet_cache[subnet_id]
