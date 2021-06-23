@@ -130,6 +130,8 @@ The following Neutron API extensions are supported with OVN:
 +----------------------------------+-----------------------------+
 | Subnet Allocation                | subnet_allocation           |
 +----------------------------------+-----------------------------+
+| Subnet service types             | subnet-service-types        |
++----------------------------------+-----------------------------+
 | Tag support                      | standard-attr-tag           |
 +----------------------------------+-----------------------------+
 | Time Stamp Fields                | standard-attr-timestamp     |
