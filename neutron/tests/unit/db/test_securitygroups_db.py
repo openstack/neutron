@@ -124,8 +124,8 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
         with mock.patch.object(self.mixin, '_validate_security_group_rule'),\
                 mock.patch.object(self.mixin,
                                   '_check_for_duplicate_rules'),\
-                mock.patch.object(registry, "notify") as mock_notify:
-            mock_notify.side_effect = exceptions.CallbackFailure(Exception())
+                mock.patch.object(registry, "publish") as mock_publish:
+            mock_publish.side_effect = exceptions.CallbackFailure(Exception())
             with testtools.ExpectedException(
                     securitygroup.SecurityGroupConflict):
                 self.mixin.create_security_group_rule(
@@ -201,8 +201,8 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                 context, 'fake', [rule_dict])
 
     def test_delete_security_group_rule_in_use(self):
-        with mock.patch.object(registry, "notify") as mock_notify:
-            mock_notify.side_effect = exceptions.CallbackFailure(Exception())
+        with mock.patch.object(registry, "publish") as mock_publish:
+            mock_publish.side_effect = exceptions.CallbackFailure(Exception())
             with testtools.ExpectedException(
                     securitygroup.SecurityGroupRuleInUse):
                 self.mixin.delete_security_group_rule(self.ctx, mock.ANY)
@@ -415,34 +415,54 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
         sg_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
         fake_rule = FAKE_SECGROUP_RULE
         fake_rule['security_group_rule']['security_group_id'] = sg_dict['id']
-        with mock.patch.object(registry, "notify") as mock_notify, \
+        with mock.patch.object(registry, "publish") as mock_publish, \
                 mock.patch.object(self.mixin, '_get_security_group'):
-            mock_notify.assert_has_calls([mock.call('security_group_rule',
-                'precommit_create', mock.ANY, context=mock.ANY,
-                security_group_rule=self.mixin.create_security_group_rule(
-                    self.ctx, fake_rule))])
+            sg_rule = self.mixin.create_security_group_rule(self.ctx,
+                                                            fake_rule)
+            mock_publish.assert_has_calls([mock.call(
+                'security_group_rule',
+                'precommit_create', mock.ANY, payload=mock.ANY)])
+
+            payload = mock_publish.mock_calls[1][2]['payload']
+            self.assertEqual(sg_rule['id'], payload.resource_id)
+            self.assertEqual(sg_rule, payload.latest_state)
 
     def test_sg_rule_before_precommit_and_after_delete_event(self):
         sg_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
         fake_rule = FAKE_SECGROUP_RULE
         fake_rule['security_group_rule']['security_group_id'] = sg_dict['id']
-        with mock.patch.object(registry, "notify") as mock_notify, \
+        with mock.patch.object(registry, "publish") as mock_publish, \
                 mock.patch.object(self.mixin, '_get_security_group'):
             sg_rule_dict = self.mixin.create_security_group_rule(self.ctx,
-                   fake_rule)
+                                                                 fake_rule)
             self.mixin.delete_security_group_rule(self.ctx,
-                    sg_rule_dict['id'])
-            mock_notify.assert_has_calls([mock.call('security_group_rule',
-                'before_delete', mock.ANY, context=mock.ANY,
-                security_group_rule_id=sg_rule_dict['id'])])
-            mock_notify.assert_has_calls([mock.call('security_group_rule',
-                'precommit_delete', mock.ANY, context=mock.ANY,
-                security_group_id=sg_dict['id'],
-                security_group_rule_id=sg_rule_dict['id'])])
-            mock_notify.assert_has_calls([mock.call('security_group_rule',
-                'after_delete', mock.ANY, context=mock.ANY,
-                security_group_rule_id=sg_rule_dict['id'],
-                security_group_id=sg_dict['id'])])
+                                                  sg_rule_dict['id'])
+            mock_publish.assert_has_calls([mock.call('security_group_rule',
+                                                     'before_delete',
+                                                     mock.ANY,
+                                                     payload=mock.ANY)])
+            mock_publish.assert_has_calls([mock.call('security_group_rule',
+                                                    'precommit_delete',
+                                                     mock.ANY,
+                                                     payload=mock.ANY)])
+            mock_publish.assert_has_calls([mock.call('security_group_rule',
+                                                    'after_delete',
+                                                     mock.ANY,
+                                                     payload=mock.ANY)])
+
+            payload = mock_publish.mock_calls[1][2]['payload']
+            self.assertEqual(mock.ANY, payload.context)
+            self.assertEqual(sg_rule_dict, payload.latest_state)
+            self.assertEqual(sg_rule_dict['id'], payload.resource_id)
+
+            payload = mock_publish.mock_calls[2][2]['payload']
+            self.assertEqual(mock.ANY, payload.context)
+            self.assertEqual(sg_rule_dict, payload.latest_state)
+            self.assertEqual(sg_rule_dict['id'], payload.resource_id)
+
+            payload = mock_publish.mock_calls[3][2]['payload']
+            self.assertEqual(mock.ANY, payload.context)
+            self.assertEqual(sg_rule_dict['id'], payload.resource_id)
 
     def test_get_ip_proto_name_and_num(self):
         protocols = [constants.PROTO_NAME_UDP, str(constants.PROTO_NUM_TCP),

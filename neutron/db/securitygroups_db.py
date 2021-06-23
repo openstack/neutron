@@ -394,17 +394,24 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                     context, rule_dict, validate=False)
                 ret.append(res_rule_dict)
         for rdict in ret:
-            registry.notify(
-                resources.SECURITY_GROUP_RULE, events.AFTER_CREATE, self,
-                context=context, security_group_rule=rdict)
+            registry.publish(resources.SECURITY_GROUP_RULE,
+                             events.AFTER_CREATE,
+                             self,
+                             payload=events.DBEventPayload(
+                                 context,
+                                 resource_id=rdict['id'],
+                                 states=(rdict,)))
         return ret
 
     @db_api.retry_if_session_inactive()
     def create_security_group_rule(self, context, security_group_rule):
         res = self._create_security_group_rule(context, security_group_rule)
-        registry.notify(
-            resources.SECURITY_GROUP_RULE, events.AFTER_CREATE, self,
-            context=context, security_group_rule=res)
+        registry.publish(resources.SECURITY_GROUP_RULE, events.AFTER_CREATE,
+                         self, payload=events.DBEventPayload(
+                                   context,
+                                   resource_id=res['id'],
+                                   states=(res,)))
+
         return res
 
     def _create_security_group_rule(self, context, security_group_rule,
@@ -444,13 +451,14 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         if port_range_max is not None:
             args['port_range_max'] = port_range_max
 
-        kwargs = {
-            'context': context,
-            'security_group_rule': args
-        }
-        self._registry_notify(resources.SECURITY_GROUP_RULE,
-                              events.BEFORE_CREATE,
-                              exc_cls=ext_sg.SecurityGroupConflict, **kwargs)
+        self._registry_notify(
+            resources.SECURITY_GROUP_RULE,
+            events.BEFORE_CREATE,
+            exc_cls=ext_sg.SecurityGroupConflict,
+            payload=events.DBEventPayload(
+                context, resource_id=args['id'],
+                states=(args,)))
+
         with db_api.CONTEXT_WRITER.using(context):
             if validate:
                 self._check_for_duplicate_rules(context, sg_id,
@@ -463,11 +471,14 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             sg_rule = sg_obj.SecurityGroupRule.get_object(context,
                                                           id=sg_rule.id)
             res_rule_dict = self._make_security_group_rule_dict(sg_rule.db_obj)
-            kwargs['security_group_rule'] = res_rule_dict
             self._registry_notify(
                 resources.SECURITY_GROUP_RULE,
                 events.PRECOMMIT_CREATE,
-                exc_cls=ext_sg.SecurityGroupConflict, **kwargs)
+                exc_cls=ext_sg.SecurityGroupConflict,
+                payload=events.DBEventPayload(
+                    context, resource_id=res_rule_dict['id'],
+                    states=(res_rule_dict,)))
+
         return res_rule_dict
 
     def _get_ip_proto_number(self, protocol):
@@ -833,26 +844,32 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
 
     @db_api.retry_if_session_inactive()
     def delete_security_group_rule(self, context, id):
-        kwargs = {
-            'context': context,
-            'security_group_rule_id': id
-        }
         self._registry_notify(resources.SECURITY_GROUP_RULE,
-                              events.BEFORE_DELETE, id=id,
-                              exc_cls=ext_sg.SecurityGroupRuleInUse, **kwargs)
+                              events.BEFORE_DELETE,
+                              exc_cls=ext_sg.SecurityGroupRuleInUse,
+                              payload=events.DBEventPayload(
+                                  context, resource_id=id,))
 
         with db_api.CONTEXT_WRITER.using(context):
             sgr = self._get_security_group_rule(context, id)
-            kwargs['security_group_id'] = sgr['security_group_id']
-            self._registry_notify(resources.SECURITY_GROUP_RULE,
-                                  events.PRECOMMIT_DELETE,
-                                  exc_cls=ext_sg.SecurityGroupRuleInUse, id=id,
-                                  **kwargs)
+            self._registry_notify(
+                resources.SECURITY_GROUP_RULE,
+                events.PRECOMMIT_DELETE,
+                exc_cls=ext_sg.SecurityGroupRuleInUse,
+                payload=events.DBEventPayload(
+                    context,
+                    resource_id=id,
+                    metadata={'security_group_id': sgr['security_group_id']}))
             sgr.delete()
 
-        registry.notify(
-            resources.SECURITY_GROUP_RULE, events.AFTER_DELETE, self,
-            **kwargs)
+        registry.publish(
+            resources.SECURITY_GROUP_RULE,
+            events.AFTER_DELETE,
+            self,
+            payload=events.DBEventPayload(
+                context,
+                resource_id=id,
+                metadata={'security_group_id': sgr['security_group_id']}))
 
     @staticmethod
     @resource_extend.extends([port_def.COLLECTION_NAME])

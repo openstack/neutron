@@ -258,7 +258,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             rule = {'security_group_id': 'sg_id'}
             self.mech_driver._process_sg_rule_notification(
                 resources.SECURITY_GROUP_RULE, events.AFTER_CREATE, {},
-                security_group_rule=rule, context=self.context)
+                payload=events.DBEventPayload(
+                    self.context, states=(rule,)))
             has_same_rules.assert_not_called()
             ovn_acl_up.assert_called_once_with(
                 mock.ANY, mock.ANY, mock.ANY,
@@ -278,7 +279,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                     'remote_ip_prefix': '1.0.0.0/24'}
             self.mech_driver._process_sg_rule_notification(
                 resources.SECURITY_GROUP_RULE, events.AFTER_CREATE, {},
-                security_group_rule=rule, context=self.context)
+                payload=events.DBEventPayload(
+                    self.context, states=(rule,)))
             has_same_rules.assert_not_called()
             ovn_acl_up.assert_called_once_with(
                 mock.ANY, mock.ANY, mock.ANY,
@@ -296,7 +298,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                                   return_value=rule):
             self.mech_driver._process_sg_rule_notification(
                 resources.SECURITY_GROUP_RULE, events.BEFORE_DELETE, {},
-                security_group_rule=rule, context=self.context)
+                payload=events.DBEventPayload(
+                    self.context, states=(rule,)))
             ovn_acl_up.assert_called_once_with(
                 mock.ANY, mock.ANY, mock.ANY,
                 'sg_id', rule, is_add_acl=False, stateless_supported=False)

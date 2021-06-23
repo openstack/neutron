@@ -379,26 +379,30 @@ class OVNMechanismDriver(api.MechanismDriver):
         ovn_revision_numbers_db.bump_revision(
             kwargs['context'], security_group, ovn_const.TYPE_SECURITY_GROUPS)
 
-    def _create_sg_rule_precommit(self, resource, event, trigger, **kwargs):
-        sg_rule = kwargs.get('security_group_rule')
-        context = kwargs.get('context')
+    def _create_sg_rule_precommit(self, resource, event, trigger,
+                                  payload):
+        sg_rule = payload.latest_state
+        context = payload.context
         ovn_revision_numbers_db.create_initial_revision(
             context, sg_rule['id'], ovn_const.TYPE_SECURITY_GROUP_RULES,
             std_attr_id=sg_rule['standard_attr_id'])
 
     def _process_sg_rule_notification(
-            self, resource, event, trigger, **kwargs):
+            self, resource, event, trigger, payload):
+        context = payload.context
+        security_group_rule = payload.latest_state
+        security_group_rule_id = payload.resource_id
         if event == events.AFTER_CREATE:
             self._ovn_client.create_security_group_rule(
-                kwargs['context'], kwargs.get('security_group_rule'))
+                context, security_group_rule)
         elif event == events.BEFORE_DELETE:
             sg_rule = self._plugin.get_security_group_rule(
-                kwargs['context'], kwargs.get('security_group_rule_id'))
+                context, security_group_rule_id)
             if sg_rule.get('remote_ip_prefix') is not None:
                 if self._sg_has_rules_with_same_normalized_cidr(sg_rule):
                     return
             self._ovn_client.delete_security_group_rule(
-                kwargs['context'],
+                context,
                 sg_rule)
 
     def _sg_has_rules_with_same_normalized_cidr(self, sg_rule):
