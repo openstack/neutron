@@ -90,7 +90,7 @@ ovs_opts = [
     cfg.StrOpt('resource_provider_default_hypervisor',
                help=_("The default hypervisor name used to locate the parent "
                       "of the resource provider. If this option is not set, "
-                      "socket.gethostname() is used")),
+                      "canonical name is used")),
     cfg.DictOpt('resource_provider_inventory_defaults',
                 default={'allocation_ratio': 1.0,
                          'min_unit': 1,
