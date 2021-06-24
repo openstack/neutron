@@ -16,6 +16,7 @@
 import functools
 
 import netaddr
+from neutron_lib.api.definitions import external_net as extnet_def
 from neutron_lib.api.definitions import ip_allocation as ipalloc_apidef
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import portbindings as portbindings_def
@@ -737,11 +738,12 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     @db_api.retry_if_session_inactive()
     def _create_subnet_postcommit(self, context, result,
                                   network=None, ipam_subnet=None):
-        if not network:
+        # need to get db net obj with full subnet info either if no network
+        # is passed or if passed network is an external net dict from
+        # ml2 plugin (with only IDs in 'subnets')
+        if not network or network.get(extnet_def.EXTERNAL):
             network = self._get_network(context,
                                         result['network_id'])
-        if not ipam_subnet:
-            ipam_subnet = self.ipam.get_subnet(context, result['id'])
 
         if hasattr(network, 'external') and network.external:
             self._update_router_gw_ports(context,
@@ -750,6 +752,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         # If this subnet supports auto-addressing, then update any
         # internal ports on the network with addresses for this subnet.
         if ipv6_utils.is_auto_address_subnet(result):
+            if not ipam_subnet:
+                ipam_subnet = self.ipam.get_subnet(context, result['id'])
             updated_ports = self.ipam.add_auto_addrs_on_network_ports(
                 context, result, ipam_subnet)
             for port_id in updated_ports:

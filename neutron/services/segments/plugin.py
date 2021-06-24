@@ -658,8 +658,8 @@ class SegmentHostRoutes(object):
         # If there are other subnets on the network and subnet has segment_id
         # ensure host routes for all subnets are updated.
 
-        if (self._count_subnets(context, subnet['network_id']) > 1 and
-                subnet.get('segment_id')):
+        if (subnet.get('segment_id') and
+                self._count_subnets(context, subnet['network_id']) > 1):
             self._update_routed_network_host_routes(context,
                                                     subnet['network_id'])
 
