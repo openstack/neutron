@@ -2714,16 +2714,13 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         with self.port() as p:
             private_sub = {'subnet': {'id':
                                       p['port']['fixed_ips'][0]['subnet_id']}}
-            with self.floatingip_no_assoc(private_sub) as fip:
+            with self.floatingip_no_assoc(private_sub) as f:
                 port_id = p['port']['id']
                 ip_address = p['port']['fixed_ips'][0]['ip_address']
+                fip = f['floatingip']
                 with mock.patch.object(registry, 'publish') as publish:
-                    body = self._update('floatingips',
-                                        fip['floatingip']['id'],
+                    body = self._update('floatingips', fip['id'],
                                         {'floatingip': {'port_id': port_id}})
-                    fip_addr = fip['floatingip']['floating_ip_address']
-                    fip_network_id = fip['floatingip']['floating_network_id']
-                    fip_id = fip['floatingip']['id']
                     router_id = body['floatingip']['router_id']
                     body = self._show('routers', router_id)
                     publish.assert_any_call(
@@ -2734,34 +2731,44 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                         if event == events.AFTER_UPDATE:
                             break
                     payload = call_kwargs['payload']
-                    fip_dict = dict(
+                    previous = dict(
+                        fixed_ip_address=None,
+                        floating_ip_address=fip['floating_ip_address'],
+                        floating_network_id=fip['floating_network_id'],
+                        id=fip['id'],
+                        port_id=None,
+                        project_id=fip['project_id'],
+                        router_id=None,
+                        tenant_id=fip['tenant_id'])
+                    current = previous.copy()
+                    current.update(
                         fixed_ip_address=ip_address,
-                        fixed_port_id=port_id,
-                        floating_ip_address=fip_addr,
-                        floating_network_id=fip_network_id,
-                        last_known_router_id=None,
-                        floating_ip_id=fip_id,
-                        router_id=router_id,
-                        association_event=True)
-                    self.assertDictEqual(fip_dict, payload.latest_state)
+                        port_id=port_id,
+                        router_id=router_id)
+                    skip = ('description', 'dns_domain', 'dns_name',
+                            'port_details', 'qos_policy_id', 'revision_number',
+                            'status', 'standard_attr_id')
+                    for k in skip:
+                        payload.states[0].pop(k, None)
+                        payload.states[1].pop(k, None)
+                    self.assertDictEqual(previous, payload.states[0])
+                    self.assertDictEqual(current, payload.states[1])
+                    self.assertEqual(fip['id'], payload.resource_id)
                     self.assertTrue(payload.metadata['association_event'])
 
     def test_floatingip_disassociate_notification(self):
         with self.port() as p:
             private_sub = {'subnet': {'id':
                                       p['port']['fixed_ips'][0]['subnet_id']}}
-            with self.floatingip_no_assoc(private_sub) as fip:
+            with self.floatingip_no_assoc(private_sub) as f:
                 port_id = p['port']['id']
-                body = self._update('floatingips',
-                                    fip['floatingip']['id'],
+                ip_address = p['port']['fixed_ips'][0]['ip_address']
+                fip = f['floatingip']
+                body = self._update('floatingips', fip['id'],
                                     {'floatingip': {'port_id': port_id}})
                 with mock.patch.object(registry, 'publish') as publish:
-                    fip_addr = fip['floatingip']['floating_ip_address']
-                    fip_network_id = fip['floatingip']['floating_network_id']
-                    fip_id = fip['floatingip']['id']
                     router_id = body['floatingip']['router_id']
-                    self._update('floatingips',
-                                 fip['floatingip']['id'],
+                    self._update('floatingips', fip['id'],
                                  {'floatingip': {'port_id': None}})
                     publish.assert_any_call(
                         resources.FLOATING_IP, events.AFTER_UPDATE, mock.ANY,
@@ -2771,31 +2778,42 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                         if event == events.AFTER_UPDATE:
                             break
                     payload = call_kwargs['payload']
-                    fip_dict = dict(
+                    previous = dict(
+                        fixed_ip_address=ip_address,
+                        floating_ip_address=fip['floating_ip_address'],
+                        floating_network_id=fip['floating_network_id'],
+                        id=fip['id'],
+                        port_id=port_id,
+                        project_id=fip['project_id'],
+                        router_id=router_id,
+                        tenant_id=fip['tenant_id'])
+                    current = previous.copy()
+                    current.update(
                         fixed_ip_address=None,
-                        fixed_port_id=None,
-                        floating_ip_address=fip_addr,
-                        floating_network_id=fip_network_id,
-                        last_known_router_id=router_id,
-                        floating_ip_id=fip_id,
-                        router_id=None,
-                        association_event=False)
-                    self.assertDictEqual(fip_dict, payload.latest_state)
+                        port_id=None,
+                        router_id=None)
+                    skip = ('description', 'dns_domain', 'dns_name',
+                            'port_details', 'qos_policy_id', 'revision_number',
+                            'status', 'standard_attr_id')
+                    for k in skip:
+                        payload.states[0].pop(k, None)
+                        payload.states[1].pop(k, None)
+                    self.assertDictEqual(previous, payload.states[0])
+                    self.assertDictEqual(current, payload.states[1])
+                    self.assertEqual(fip['id'], payload.resource_id)
                     self.assertFalse(payload.metadata['association_event'])
 
     def test_floatingip_disassociate_notification_port_delete(self):
         with self.port() as p:
             private_sub = {'subnet': {'id':
                                       p['port']['fixed_ips'][0]['subnet_id']}}
-            with self.floatingip_no_assoc(private_sub) as fip:
+            with self.floatingip_no_assoc(private_sub) as f:
                 port_id = p['port']['id']
-                body = self._update('floatingips',
-                                    fip['floatingip']['id'],
+                ip_address = p['port']['fixed_ips'][0]['ip_address']
+                fip = f['floatingip']
+                body = self._update('floatingips', fip['id'],
                                     {'floatingip': {'port_id': port_id}})
                 with mock.patch.object(registry, 'publish') as publish:
-                    fip_id = fip['floatingip']['id']
-                    fip_address = fip['floatingip']['floating_ip_address']
-                    f_network_id = fip['floatingip']['floating_network_id']
                     router_id = body['floatingip']['router_id']
                     self._delete('ports', p['port']['id'])
                     publish.assert_any_call(
@@ -2806,16 +2824,29 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                         if event == events.AFTER_UPDATE:
                             break
                     payload = call_kwargs['payload']
-                    fip_dict = dict(
+                    previous = dict(
+                        fixed_ip_address=ip_address,
+                        floating_ip_address=fip['floating_ip_address'],
+                        floating_network_id=fip['floating_network_id'],
+                        id=fip['id'],
+                        port_id=port_id,
+                        project_id=fip['project_id'],
+                        router_id=router_id,
+                        tenant_id=fip['tenant_id'])
+                    current = previous.copy()
+                    current.update(
                         fixed_ip_address=None,
-                        fixed_port_id=None,
-                        router_id=None,
-                        floating_ip_address=fip_address,
-                        floating_network_id=f_network_id,
-                        floating_ip_id=fip_id,
-                        router_ids={router_id, },
-                        association_event=False)
-                    self.assertDictEqual(fip_dict, payload.latest_state)
+                        port_id=None,
+                        router_id=None)
+                    skip = ('description', 'dns_domain', 'dns_name',
+                            'port_details', 'qos_policy_id', 'revision_number',
+                            'status', 'standard_attr_id')
+                    for k in skip:
+                        payload.states[0].pop(k, None)
+                        payload.states[1].pop(k, None)
+                    self.assertDictEqual(previous, payload.states[0])
+                    self.assertDictEqual(current, payload.states[1])
+                    self.assertEqual(fip['id'], payload.resource_id)
                     self.assertFalse(payload.metadata['association_event'])
 
     def test_floatingip_association_on_unowned_router(self):
@@ -4082,20 +4113,22 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
                     if event == events.AFTER_DELETE:
                         break
                 payload = call_kwargs['payload']
-                fip_dict = dict(
-                    description=mock.ANY,
-                    dns_domain=mock.ANY, dns_name=mock.ANY,
-                    fixed_ip_address=f['floatingip']['fixed_ip_address'],
-                    floating_ip_address=f['floatingip']['floating_ip_address'],
-                    floating_network_id=f['floatingip']['floating_network_id'],
-                    id=f['floatingip']['id'],
-                    port_id=f['floatingip']['port_id'],
-                    project_id=f['floatingip']['project_id'],
-                    router_id=f['floatingip']['router_id'],
-                    status=f['floatingip']['status'],
-                    tenant_id=f['floatingip']['tenant_id'],
-                    standard_attr_id=mock.ANY)
-                self.assertDictEqual(fip_dict, payload.latest_state)
+                fip = f['floatingip']
+                previous = dict(
+                    fixed_ip_address=fip['fixed_ip_address'],
+                    floating_ip_address=fip['floating_ip_address'],
+                    floating_network_id=fip['floating_network_id'],
+                    id=fip['id'],
+                    port_id=fip['port_id'],
+                    project_id=fip['project_id'],
+                    router_id=fip['router_id'],
+                    tenant_id=fip['tenant_id'])
+                skip = ('description', 'dns_domain', 'dns_name',
+                        'port_details', 'qos_policy_id', 'revision_number',
+                        'status', 'standard_attr_id')
+                for k in skip:
+                    payload.states[0].pop(k, None)
+                self.assertDictEqual(previous, payload.states[0])
         finally:
             registry.unsubscribe(fake_method, resources.FLOATING_IP,
                                  events.AFTER_DELETE)

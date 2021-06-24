@@ -1323,16 +1323,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         floatingip_obj.last_known_router_id = previous_router_id
         if 'description' in fip:
             floatingip_obj.description = fip['description']
-        floating_ip_address = (str(floatingip_obj.floating_ip_address)
-                               if floatingip_obj.floating_ip_address else None)
-        return {'fixed_ip_address': internal_ip_address,
-                'fixed_port_id': port_id,
-                'router_id': router_id,
-                'last_known_router_id': previous_router_id,
-                'floating_ip_address': floating_ip_address,
-                'floating_network_id': floatingip_obj.floating_network_id,
-                'floating_ip_id': floatingip_obj.id,
-                'association_event': association_event}
+        return association_event
 
     def _is_ipv4_network(self, context, net_db):
         return any(s.ip_version == 4 for s in net_db.subnets)
@@ -1437,15 +1428,14 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         registry.publish(
             resources.FLOATING_IP, events.AFTER_CREATE, self,
             payload=events.DBEventPayload(
-                context, states=(assoc_result,),
+                context, states=(floatingip_dict,),
                 resource_id=floatingip_obj.id,
-                metadata={
-                    'association_event': assoc_result['association_event']}))
-        if assoc_result['association_event']:
+                metadata={'association_event': assoc_result}))
+        if assoc_result:
             LOG.info(FIP_ASSOC_MSG,
-                     {'fip_id': assoc_result['floating_ip_id'],
-                      'ext_ip': assoc_result['floating_ip_address'],
-                      'port_id': assoc_result['fixed_port_id'],
+                     {'fip_id': floatingip_obj.id,
+                      'ext_ip': str(floatingip_obj.floating_ip_address),
+                      'port_id': floatingip_obj.fixed_port_id,
                       'assoc': 'associated'})
 
         if self._is_dns_integration_supported:
@@ -1505,17 +1495,15 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         registry.publish(
             resources.FLOATING_IP, events.AFTER_UPDATE, self,
             payload=events.DBEventPayload(
-                context, states=(assoc_result,),
+                context, states=(old_floatingip, floatingip_dict),
                 resource_id=floatingip_obj.id,
-                metadata={
-                    'association_event': assoc_result['association_event']}))
-        if assoc_result['association_event'] is not None:
-            port_id = old_fixed_port_id or assoc_result['fixed_port_id']
-            assoc = ('associated' if assoc_result['association_event']
-                     else 'disassociated')
+                metadata={'association_event': assoc_result}))
+        if assoc_result is not None:
+            port_id = old_fixed_port_id or floatingip_obj.fixed_port_id
+            assoc = 'associated' if assoc_result else 'disassociated'
             LOG.info(FIP_ASSOC_MSG,
-                     {'fip_id': assoc_result['floating_ip_id'],
-                      'ext_ip': assoc_result['floating_ip_address'],
+                     {'fip_id': floatingip_obj.id,
+                      'ext_ip': str(floatingip_obj.floating_ip_address),
                       'port_id': port_id, 'assoc': assoc})
 
         if self._is_dns_integration_supported:
@@ -1684,12 +1672,21 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             floating_ip_objs = l3_obj.FloatingIP.get_objects(
                 context, fixed_port_id=port_id)
             router_ids = {fip.router_id for fip in floating_ip_objs}
-            old_fips = {fip.id: fip.to_dict() for fip in floating_ip_objs}
+            old_fips = {fip.id: self._make_floatingip_dict(fip)
+                        for fip in floating_ip_objs}
             values = {'fixed_port_id': None,
                       'fixed_ip_address': None,
                       'router_id': None}
             l3_obj.FloatingIP.update_objects(
                 context, values, fixed_port_id=port_id)
+            # NOTE(swroblew): to avoid querying DB for new FIPs state,
+            # update state of local FIP objects for _make_floatingip_dict call
+            for fip in floating_ip_objs:
+                fip.fixed_port_id = None
+                fip.fixed_ip_address = None
+                fip.router_id = None
+            new_fips = {fip.id: self._make_floatingip_dict(fip)
+                        for fip in floating_ip_objs}
             for fip in floating_ip_objs:
                 registry.publish(
                     resources.FLOATING_IP,
@@ -1702,33 +1699,21 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                         states=(old_fips[fip.id],
                                 {l3_apidef.FLOATINGIP: values})))
 
-        for fip in floating_ip_objs:
-            assoc_result = {
-                'fixed_ip_address': None,
-                'fixed_port_id': None,
-                'router_id': None,
-                'floating_ip_address': (
-                    str(fip.floating_ip_address)
-                    if fip.floating_ip_address else None),
-                'floating_network_id': fip.floating_network_id,
-                'floating_ip_id': fip.id,
-                'router_ids': router_ids,
-                'association_event': False,
-            }
+        for fip_id, fip in new_fips.items():
             # Process DNS record removal after committing the transaction
             if self._is_dns_integration_supported:
-                self._process_dns_floatingip_delete(context, fip.to_dict())
+                self._process_dns_floatingip_delete(context, fip)
             registry.publish(
                 resources.FLOATING_IP, events.AFTER_UPDATE, self,
                 payload=events.DBEventPayload(
-                    context, states=(assoc_result,),
-                    resource_id=fip.id,
+                    context, states=(old_fips[fip_id], fip),
+                    resource_id=fip_id,
                     metadata={'association_event': False}))
         for fip in old_fips.values():
             LOG.info(FIP_ASSOC_MSG,
                      {'fip_id': fip['id'],
-                      'ext_ip': fip['floating_ip_address'],
-                      'port_id': fip['fixed_port_id'],
+                      'ext_ip': str(fip['floating_ip_address']),
+                      'port_id': fip['port_id'],
                       'assoc': 'disassociated'})
         return router_ids
 
