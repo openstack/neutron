@@ -905,20 +905,15 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         if default_group:
             return default_group.security_group_id
 
-    @registry.receives(resources.PORT, [events.BEFORE_UPDATE])
-    def _ensure_default_security_group_handler_port(
-            self, resource, event, trigger, context, **kwargs):
-        project_id = kwargs['original_' + resource]['tenant_id']
-        if project_id:
-            self._ensure_default_security_group(context, project_id)
-
-    @registry.receives(resources.PORT, [events.BEFORE_CREATE])
+    @registry.receives(resources.PORT, [events.BEFORE_CREATE,
+                                        events.BEFORE_UPDATE])
     @registry.receives(resources.NETWORK, [events.BEFORE_CREATE])
-    def _ensure_default_security_group_handler_before_create(
-            self, resource, event, trigger, payload=None):
-
-        # TODO(boden): refactor into single callback method
-        project_id = payload.latest_state['tenant_id']
+    def _ensure_default_security_group_handler(self, resource, event, trigger,
+                                               payload):
+        if event == events.BEFORE_UPDATE:
+            project_id = payload.states[0]['tenant_id']
+        else:
+            project_id = payload.latest_state['tenant_id']
         if project_id:
             self._ensure_default_security_group(payload.context, project_id)
 

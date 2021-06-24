@@ -86,9 +86,6 @@ class QoSPlugin(qos.QoSPluginBase):
             self._validate_create_port_callback,
             callbacks_resources.PORT,
             callbacks_events.PRECOMMIT_CREATE)
-        # TODO(lajoskatona): PORT BEFORE_UPDATE is a notify, so
-        # "old style" kwargs instead of payload object, let's change it
-        # to notify and payload.
         callbacks_registry.subscribe(
             self._check_port_for_placement_allocation_change,
             callbacks_resources.PORT,
@@ -254,13 +251,14 @@ class QoSPlugin(qos.QoSPluginBase):
         self.validate_policy_for_port(context, policy, port)
 
     def _check_port_for_placement_allocation_change(self, resource, event,
-                                                    trigger, **kwargs):
-        context = kwargs['context']
-        orig_port = kwargs['original_port']
+                                                    trigger, payload):
+        context = payload.context
+        orig_port = payload.states[0]
+        port = payload.latest_state
         original_policy_id = orig_port.get(qos_consts.QOS_POLICY_ID)
-        if qos_consts.QOS_POLICY_ID not in kwargs['port']:
+        if qos_consts.QOS_POLICY_ID not in port:
             return
-        policy_id = kwargs['port'].get(qos_consts.QOS_POLICY_ID)
+        policy_id = port.get(qos_consts.QOS_POLICY_ID)
 
         if policy_id == original_policy_id:
             return
