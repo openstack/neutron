@@ -327,25 +327,11 @@ class RootHelperProcess(subprocess.Popen):
             if utils.pid_invoked_with_cmdline(child_pid, self.cmd):
                 return True
 
-        try:
-            common_utils.wait_until_true(child_is_running, timeout)
-        except common_utils.WaitTimeout:
-            # If there is an error, the stderr and stdout pipes usually have
-            # information returned by the command executed. If not, timeout
-            # the pipe communication quickly.
-            stdout = stderr = ''
-            try:
-                stdout, stderr = self.communicate(timeout=0.5)
-            except subprocess.TimeoutExpired:
-                pass
-            msg = ("Process %(cmd)s hasn't been spawned in %(seconds)d "
-                   "seconds. Return code: %(ret_code)s, stdout: %(stdout)s, "
-                   "stderr: %(stderr)s" %
-                   {'cmd': self.cmd, 'seconds': timeout,
-                    'ret_code': self.returncode, 'stdout': stdout,
-                    'stderr': stderr})
-            raise RuntimeError(msg)
-
+        common_utils.wait_until_true(
+            child_is_running,
+            timeout,
+            exception=RuntimeError("Process %s hasn't been spawned "
+                                   "in %d seconds" % (self.cmd, timeout)))
         self.child_pid = utils.get_root_helper_child_pid(
             self.pid, self.cmd, run_as_root=True)
 
