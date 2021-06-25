@@ -500,10 +500,13 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             # cleanup if a network-owned port snuck in without failing
             for subnet in subnets:
                 self._delete_subnet(context, subnet)
-                # TODO(ralonsoh): use payloads
-                registry.notify(resources.SUBNET, events.AFTER_DELETE,
-                                self, context=context, subnet=subnet.to_dict(),
-                                for_net_delete=True)
+                registry.publish(
+                    resources.SUBNET, events.AFTER_DELETE, self,
+                    payload=events.DBEventPayload(
+                        context,
+                        resource_id=subnet['id'],
+                        metadata={'for_net_delete': True},
+                        states=(subnet.to_dict(),)))
             with db_api.CONTEXT_WRITER.using(context):
                 network_db = self._get_network(context, id)
                 network = self._make_network_dict(network_db, context=context)
@@ -942,10 +945,12 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             if gateway_ip:
                 self.ipam.validate_gw_out_of_pools(gateway_ip, pools)
 
-        kwargs = {'context': context, 'original_subnet': orig,
-                  'request': s}
-        registry.notify(resources.SUBNET, events.BEFORE_UPDATE,
-                        self, **kwargs)
+        registry.publish(
+            resources.SUBNET, events.BEFORE_UPDATE, self,
+            payload=events.DBEventPayload(
+                context,
+                resource_id=id,
+                states=(orig, s,)))
 
         with db_api.CONTEXT_WRITER.using(context):
             subnet, changes = self.ipam.update_db_subnet(
@@ -996,10 +1001,13 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             if routers:
                 self.l3_rpc_notifier.routers_updated(context, routers)
 
-        kwargs = {'context': context, 'subnet': result,
-                  'original_subnet': orig}
-        registry.notify(resources.SUBNET, events.AFTER_UPDATE, self,
-                        **kwargs)
+        registry.publish(
+            resources.SUBNET, events.AFTER_UPDATE, self,
+            payload=events.DBEventPayload(
+                context,
+                resource_id=result['id'],
+                states=(orig, result,)))
+
         return result
 
     def _subnet_get_user_allocation(self, context, subnet_id):
@@ -1053,15 +1061,21 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 payload=events.DBEventPayload(context, resource_id=subnet.id))
             self._remove_subnet_ip_allocations_from_ports(context, subnet)
             self._delete_subnet(context, subnet)
-        registry.notify(resources.SUBNET, events.AFTER_DELETE,
-                        self, context=context, subnet=subnet.to_dict())
+        registry.publish(
+            resources.SUBNET, events.AFTER_DELETE, self,
+            payload=events.DBEventPayload(
+                context,
+                resource_id=id,
+                states=(subnet.to_dict(),)))
 
     def _delete_subnet(self, context, subnet):
         with db_api.exc_to_retry(sql_exc.IntegrityError), \
                 db_api.CONTEXT_WRITER.using(context):
-            registry.notify(resources.SUBNET, events.PRECOMMIT_DELETE,
-                            self, context=context, subnet_id=subnet.id,
-                            subnet_obj=subnet)
+            registry.publish(
+                resources.SUBNET, events.PRECOMMIT_DELETE, self,
+                payload=events.DBEventPayload(context,
+                                              resource_id=subnet.id,
+                                              states=(subnet,)))
             subnet.delete()
             # Delete related ipam subnet manually,
             # since there is no FK relationship

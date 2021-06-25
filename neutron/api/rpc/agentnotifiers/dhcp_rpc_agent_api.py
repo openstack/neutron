@@ -114,7 +114,7 @@ class DhcpAgentNotifyAPI(object):
             callback = self._native_event_send_dhcp_notification
 
             # TODO(boden): remove shim below once all events use payloads
-            if resource == resources.NETWORK:
+            if resource in [resources.NETWORK, resources.SUBNET]:
                 callback = self._native_event_send_dhcp_notification_payload
             if resource == resources.PORT:
                 registry.subscribe(

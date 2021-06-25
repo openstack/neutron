@@ -1267,8 +1267,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _before_create_subnet(self, context, subnet):
         subnet_data = subnet[subnet_def.RESOURCE_NAME]
-        registry.notify(resources.SUBNET, events.BEFORE_CREATE, self,
-                        context=context, subnet=subnet_data)
+        registry.publish(
+            resources.SUBNET, events.BEFORE_CREATE, self,
+            payload=events.DBEventPayload(context,
+                                          states=(subnet_data,)))
 
     def _create_subnet_db(self, context, subnet):
         with db_api.CONTEXT_WRITER.using(context):
@@ -1299,8 +1301,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         # add network to subnet dict to save a DB call on dhcp notification
         result['network'] = mech_context.network.current
-        kwargs = {'context': context, 'subnet': result}
-        registry.notify(resources.SUBNET, events.AFTER_CREATE, self, **kwargs)
+        registry.publish(
+            resources.SUBNET, events.AFTER_CREATE, self,
+            payload=events.DBEventPayload(context,
+                                          resource_id=result['id'],
+                                          states=(result,)))
         try:
             self.mechanism_manager.create_subnet_postcommit(mech_context)
         except ml2_exc.MechanismDriverError:
@@ -1351,8 +1356,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     # handler deleting a subresource of the subnet.
     @registry.receives(resources.SUBNET, [events.PRECOMMIT_DELETE], priority=0)
     def _subnet_delete_precommit_handler(self, rtype, event, trigger,
-                                         context, subnet_id, **kwargs):
-        subnet_obj = (kwargs.get('subnet_obj') or
+                                         payload=None):
+        context = payload.context
+        subnet_id = payload.resource_id
+        subnet_obj = (payload.latest_state or
                       self._get_subnet_object(context, subnet_id))
         subnet = self._make_subnet_dict(subnet_obj, context=context)
         mech_context = driver_context.SubnetContext(self, context,
@@ -1364,7 +1371,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     @registry.receives(resources.SUBNET, [events.AFTER_DELETE])
     def _subnet_delete_after_delete_handler(self, rtype, event, trigger,
-                                            context, subnet, **kwargs):
+                                            payload):
+        context = payload.context
         try:
             self.mechanism_manager.delete_subnet_postcommit(
                 context._mech_context)

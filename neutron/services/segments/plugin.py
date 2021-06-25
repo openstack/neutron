@@ -225,8 +225,9 @@ class NovaSegmentNotifier(object):
                 segment_host_mappings=segment_host_mappings))
 
     @registry.receives(resources.SUBNET, [events.AFTER_CREATE])
-    def _notify_subnet_created(self, resource, event, trigger, context,
-                               subnet, **kwargs):
+    def _notify_subnet_created(self, resource, event, trigger, payload):
+        context = payload.context
+        subnet = payload.latest_state
         segment_id = subnet.get('segment_id')
         if not segment_id or subnet['ip_version'] != constants.IP_VERSION_4:
             return
@@ -304,8 +305,10 @@ class NovaSegmentNotifier(object):
         return total, reserved
 
     @registry.receives(resources.SUBNET, [events.AFTER_UPDATE])
-    def _notify_subnet_updated(self, resource, event, trigger, context,
-                               subnet, original_subnet, **kwargs):
+    def _notify_subnet_updated(self, resource, event, trigger, payload):
+        context = payload.context
+        original_subnet = payload.states[0]
+        subnet = payload.latest_state
         segment_id = subnet.get('segment_id')
         original_segment_id = original_subnet.get('segment_id')
         if not segment_id or subnet['ip_version'] != constants.IP_VERSION_4:
@@ -341,9 +344,10 @@ class NovaSegmentNotifier(object):
                 segment_host_mappings=segment_host_mappings))
 
     @registry.receives(resources.SUBNET, [events.AFTER_DELETE])
-    def _notify_subnet_deleted(self, resource, event, trigger, context,
-                               subnet, **kwargs):
-        if kwargs.get(db.FOR_NET_DELETE):
+    def _notify_subnet_deleted(self, resource, event, trigger, payload):
+        context = payload.context
+        subnet = payload.latest_state
+        if payload.metadata.get(db.FOR_NET_DELETE):
             return  # skip segment RP update if it is going to be deleted
 
         segment_id = subnet.get('segment_id')
@@ -613,8 +617,10 @@ class SegmentHostRoutes(object):
                                          'host_routes': calc_host_routes}})
 
     @registry.receives(resources.SUBNET, [events.BEFORE_CREATE])
-    def host_routes_before_create(self, resource, event, trigger, context,
-                                  subnet, **kwargs):
+    def host_routes_before_create(self, resource, event, trigger,
+                                  payload):
+        context = payload.context
+        subnet = payload.latest_state
         segment_id = subnet.get('segment_id')
         gateway_ip = subnet.get('gateway_ip')
         if validators.is_attr_set(subnet.get('host_routes')):
@@ -635,9 +641,11 @@ class SegmentHostRoutes(object):
                 subnet['host_routes'] = calc_host_routes
 
     @registry.receives(resources.SUBNET, [events.BEFORE_UPDATE])
-    def host_routes_before_update(self, resource, event, trigger, **kwargs):
-        context = kwargs['context']
-        subnet, original_subnet = kwargs['request'], kwargs['original_subnet']
+    def host_routes_before_update(self, resource, event, trigger,
+                                  payload):
+        context = payload.context
+        original_subnet = payload.states[0]
+        subnet = payload.latest_state
         orig_segment_id = original_subnet.get('segment_id')
         segment_id = subnet.get('segment_id', orig_segment_id)
         orig_gateway_ip = original_subnet.get('gateway_ip')
@@ -659,9 +667,10 @@ class SegmentHostRoutes(object):
                 subnet['host_routes'] = calc_host_routes
 
     @registry.receives(resources.SUBNET, [events.AFTER_CREATE])
-    def host_routes_after_create(self, resource, event, trigger, **kwargs):
-        context = kwargs['context']
-        subnet = kwargs['subnet']
+    def host_routes_after_create(self, resource, event, trigger,
+                                 payload):
+        context = payload.context
+        subnet = payload.latest_state
         # If there are other subnets on the network and subnet has segment_id
         # ensure host routes for all subnets are updated.
 
@@ -671,11 +680,13 @@ class SegmentHostRoutes(object):
                                                     subnet['network_id'])
 
     @registry.receives(resources.SUBNET, [events.AFTER_DELETE])
-    def host_routes_after_delete(self, resource, event, trigger, context,
-                                 subnet, **kwargs):
+    def host_routes_after_delete(self, resource, event, trigger,
+                                 payload):
         # If this is a routed network, remove any routes to this subnet on
         # this networks remaining subnets.
-        if kwargs.get(db.FOR_NET_DELETE):
+        context = payload.context
+        subnet = payload.latest_state
+        if payload.metadata.get(db.FOR_NET_DELETE):
             return  # skip subnet update if the network is going to be deleted
 
         if subnet.get('segment_id'):

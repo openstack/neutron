@@ -1930,13 +1930,13 @@ class L3RpcNotifierMixin(object):
 
     @staticmethod
     @registry.receives(resources.SUBNET, [events.AFTER_UPDATE])
-    def _notify_subnet_gateway_ip_update(resource, event, trigger, **kwargs):
+    def _notify_subnet_gateway_ip_update(resource, event, trigger, payload):
         l3plugin = directory.get_plugin(plugin_constants.L3)
         if not l3plugin:
             return
-        context = kwargs['context']
-        orig = kwargs['original_subnet']
-        updated = kwargs['subnet']
+        context = payload.context
+        orig = payload.states[0]
+        updated = payload.latest_state
         if orig['gateway_ip'] == updated['gateway_ip']:
             return
         network_id = updated['network_id']

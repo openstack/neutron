@@ -267,7 +267,7 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
 
     def test__native_notification_unsubscribes(self):
         self.assertFalse(self.notifier._unsubscribed_resources)
-        for res in (resources.PORT, resources.SUBNET):
+        for res in (resources.PORT,):
             self.notifier._unsubscribed_resources = []
             kwargs = {res: {}}
             if res == resources.PORT:
@@ -295,7 +295,7 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
                                 context=mock.Mock(), **kwargs)
             self.assertEqual([res], self.notifier._unsubscribed_resources)
 
-        for res in [resources.NETWORK]:
+        for res in (resources.NETWORK, resources.SUBNET):
             self.notifier._unsubscribed_resources = []
             registry.publish(res, events.AFTER_CREATE, self,
                              payload=events.DBEventPayload(mock.Mock()))

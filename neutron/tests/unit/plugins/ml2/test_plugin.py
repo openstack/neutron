@@ -709,11 +709,11 @@ class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,
         with self.subnet() as s:
             before_create.assert_called_once_with(
                 resources.SUBNET, events.BEFORE_CREATE, mock.ANY,
-                context=mock.ANY, subnet=mock.ANY)
-            kwargs = before_create.mock_calls[0][2]
-            self.assertEqual(s['subnet']['cidr'], kwargs['subnet']['cidr'])
+                payload=mock.ANY)
+            payload = before_create.mock_calls[0][2]['payload']
+            self.assertEqual(s['subnet']['cidr'], payload.latest_state['cidr'])
             self.assertEqual(s['subnet']['network_id'],
-                             kwargs['subnet']['network_id'])
+                             payload.latest_state['network_id'])
 
     def test_subnet_after_create_callback(self):
         after_create = mock.Mock()
@@ -721,9 +721,9 @@ class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,
         with self.subnet() as s:
             after_create.assert_called_once_with(
                 resources.SUBNET, events.AFTER_CREATE, mock.ANY,
-                context=mock.ANY, subnet=mock.ANY)
-            kwargs = after_create.mock_calls[0][2]
-            self.assertEqual(s['subnet']['id'], kwargs['subnet']['id'])
+                payload=mock.ANY)
+            payload = after_create.mock_calls[0][2]['payload']
+            self.assertEqual(s['subnet']['id'], payload.resource_id)
 
     def test_port_create_subnetnotfound(self):
         with self.network() as n:
@@ -779,12 +779,11 @@ class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,
             self.deserialize(self.fmt, req.get_response(self.api))
             after_update.assert_called_once_with(
                 resources.SUBNET, events.AFTER_UPDATE, mock.ANY,
-                context=mock.ANY, subnet=mock.ANY,
-                original_subnet=mock.ANY)
-            kwargs = after_update.mock_calls[0][2]
+                payload=mock.ANY)
+            payload = after_update.mock_calls[0][2]['payload']
             self.assertEqual(s['subnet']['name'],
-                             kwargs['original_subnet']['name'])
-            self.assertEqual('updated', kwargs['subnet']['name'])
+                             payload.states[0]['name'])
+            self.assertEqual('updated', payload.latest_state['name'])
 
     def test_subnet_after_delete_callback(self):
         after_delete = mock.Mock()
@@ -794,9 +793,9 @@ class TestMl2SubnetsV2(test_plugin.TestSubnetsV2,
             req.get_response(self.api)
             after_delete.assert_called_once_with(
                 resources.SUBNET, events.AFTER_DELETE, mock.ANY,
-                context=mock.ANY, subnet=mock.ANY)
-            kwargs = after_delete.mock_calls[0][2]
-            self.assertEqual(s['subnet']['id'], kwargs['subnet']['id'])
+                payload=mock.ANY)
+            payload = after_delete.mock_calls[0][2]['payload']
+            self.assertEqual(s['subnet']['id'], payload.latest_state['id'])
 
     def test_delete_subnet_race_with_dhcp_port_creation(self):
         with self.network() as network:
