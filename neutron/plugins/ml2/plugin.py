@@ -1318,11 +1318,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @registry.receives(resources.SUBNET, [events.PRECOMMIT_DELETE], priority=0)
     def _subnet_delete_precommit_handler(self, rtype, event, trigger,
                                          context, subnet_id, **kwargs):
-        subnet_obj = self._get_subnet_object(context, subnet_id)
+        subnet_obj = (kwargs.get('subnet_obj') or
+                      self._get_subnet_object(context, subnet_id))
         subnet = self._make_subnet_dict(subnet_obj, context=context)
-        network = self.get_network(context, subnet['network_id'])
         mech_context = driver_context.SubnetContext(self, context,
-                                                    subnet, network)
+                                                    subnet, network=None)
         # TODO(kevinbenton): move this mech context into something like
         # a 'delete context' so it's not polluting the real context object
         setattr(context, '_mech_context', mech_context)
