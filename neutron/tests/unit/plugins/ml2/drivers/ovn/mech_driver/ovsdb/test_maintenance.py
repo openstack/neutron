@@ -429,6 +429,6 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         # and type "" or localnet)
         expected_calls = [
             mock.call('lsp1', mcast_flood_reports='true'),
-            mock.call('lsp5', mcast_flood_reports='true', mcast_flood='true')]
+            mock.call('lsp5', mcast_flood_reports='true', mcast_flood='false')]
 
         nb_idl.lsp_set_options.assert_has_calls(expected_calls)
