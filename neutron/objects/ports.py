@@ -605,6 +605,14 @@ class Port(base.NeutronDbObject):
         return [port_binding['port_id'] for port_binding in query.all()]
 
     @classmethod
+    def get_ports_by_host(cls, context, host):
+        query = context.session.query(models_v2.Port.id).join(
+            ml2_models.PortBinding)
+        query = query.filter(
+            ml2_models.PortBinding.host == host)
+        return [port_id[0] for port_id in query.all()]
+
+    @classmethod
     def get_ports_by_binding_type_and_host(cls, context,
                                            binding_type, host):
         query = context.session.query(models_v2.Port).join(

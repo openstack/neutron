@@ -269,6 +269,9 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                          payload=events.DBEventPayload(
                              context, states=(agent,), resource_id=id))
         agent.delete()
+        registry.publish(resources.AGENT, events.AFTER_DELETE, self,
+                         payload=events.DBEventPayload(
+                             context, states=(agent,), resource_id=id))
 
     @db_api.retry_if_session_inactive()
     def update_agent(self, context, id, agent):
