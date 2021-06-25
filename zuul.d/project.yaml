@@ -92,7 +92,7 @@
         - neutron-fullstack
         - neutron-ovn-tempest-postgres-full
         - neutron-ovn-tempest-mariadb-full
-        - neutron-ovn-tempest-with-os-ken-master
+        - neutron-ovs-tempest-with-os-ken-master
         - neutron-ovn-tempest-ovs-master-fedora
         - neutron-ovn-tempest-with-neutron-lib-master
         - devstack-tobiko-faults-centos:
