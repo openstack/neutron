@@ -11,6 +11,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import address_group
 from neutron_lib.api.definitions import address_scope
 from neutron_lib.api.definitions import agent as agent_def
 from neutron_lib.api.definitions import allowedaddresspairs
@@ -81,6 +82,7 @@ ML2_SUPPORTED_API_EXTENSIONS_OVN_L3 = [
     raz_def.ALIAS,
 ]
 ML2_SUPPORTED_API_EXTENSIONS = [
+    address_group.ALIAS,
     address_scope.ALIAS,
     agent_def.ALIAS,
     allowedaddresspairs.ALIAS,
