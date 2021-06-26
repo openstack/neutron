@@ -113,7 +113,7 @@
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
-        tls-proxy: false
+        tls-proxy: true
         tempest: true
         neutron-dns: true
         neutron-qos: true
@@ -496,7 +496,7 @@
         etcd: false
         br-ex-tcpdump: true
         br-int-flows: true
-        tls-proxy: false
+        tls-proxy: true
         # Cinder services
         c-api: false
         c-bak: false
