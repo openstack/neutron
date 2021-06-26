@@ -210,7 +210,8 @@ class TunnelTest(object):
             mock.call.set_secure_mode(),
             mock.call.setup_controllers(mock.ANY),
             mock.call.set_igmp_snooping_state(igmp_snooping),
-            mock.call.setup_default_table(),
+            mock.call.setup_default_table(enable_openflow_dhcp=False,
+                                          enable_dhcpv6=False),
         ]
 
         self.mock_map_tun_bridge_expected = [
@@ -314,11 +315,13 @@ class TunnelTest(object):
         cfg.CONF.set_override('tunnel_types', ['gre'], 'AGENT')
         cfg.CONF.set_override('veth_mtu', self.VETH_MTU, 'AGENT')
         cfg.CONF.set_override('minimize_polling', False, 'AGENT')
+        cfg.CONF.set_override('enable_ipv6', False, 'DHCP')
 
         for k, v in config_opts_agent.items():
             cfg.CONF.set_override(k, v, 'AGENT')
 
         ext_mgr = mock.Mock()
+        ext_mgr.names = mock.Mock(return_value=[])
         agent = self.mod_agent.OVSNeutronAgent(
             bridge_classes, ext_mgr, cfg.CONF)
         mock.patch.object(agent.ovs.ovsdb, 'idl_monitor').start()

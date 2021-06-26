@@ -158,6 +158,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         agent_conf = self.conf.AGENT
         ovs_conf = self.conf.OVS
 
+        self.enable_openflow_dhcp = 'dhcp' in self.ext_manager.names()
+
         self.fullsync = False
         # init bridge classes with configured datapath type.
         self.br_int_cls, self.br_phys_cls, self.br_tun_cls = (
@@ -284,7 +286,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
         agent_api = ovs_ext_api.OVSAgentExtensionAPI(self.int_br,
                                                      self.tun_br,
-                                                     self.phys_brs)
+                                                     self.phys_brs,
+                                                     self.plugin_rpc)
         self.ext_manager.initialize(
             self.connection, constants.EXTENSION_DRIVER_TYPE, agent_api)
 
@@ -1354,7 +1357,10 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             # while flows are missing.
             self.int_br.delete_port(self.conf.OVS.int_peer_patch_port)
             self.int_br.uninstall_flows(cookie=ovs_lib.COOKIE_ANY)
-        self.int_br.setup_default_table()
+
+        self.int_br.setup_default_table(
+            enable_openflow_dhcp=self.enable_openflow_dhcp,
+            enable_dhcpv6=self.conf.DHCP.enable_ipv6)
 
     def setup_ancillary_bridges(self, integ_br, tun_br):
         '''Setup ancillary bridges - for example br-ex.'''
