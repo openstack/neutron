@@ -546,6 +546,8 @@ class L3NATAgent(ha.AgentMixin,
         except Exception:
             with excutils.save_and_reraise_exception():
                 self.router_info[router_id] = ri
+        LOG.debug("Router info %s delete action done, "
+                  "and it was removed from cache.", router_id)
 
         registry.notify(resources.ROUTER, events.AFTER_DELETE, self, router=ri)
 
@@ -610,8 +612,12 @@ class L3NATAgent(ha.AgentMixin,
             raise l3_exc.RouterNotCompatibleWithAgent(router_id=router['id'])
 
         if router['id'] not in self.router_info:
+            LOG.debug("Router %s info not in cache, "
+                      "will do the router add action.", router['id'])
             self._process_added_router(router)
         else:
+            LOG.debug("Router %s info in cache, "
+                      "will do the router update action.", router['id'])
             self._process_updated_router(router)
 
     def _process_added_router(self, router):
@@ -738,7 +744,7 @@ class L3NATAgent(ha.AgentMixin,
                     # processing queue (like events from fullsync) in order to
                     # prevent deleted router re-creation
                     rp.fetched_and_processed(update.timestamp)
-                LOG.info("Finished a router update for %s, update_id %s. "
+                LOG.info("Finished a router delete for %s, update_id %s. "
                          "Time elapsed: %.3f",
                          update.id, update.update_id,
                          update.time_elapsed_since_start)

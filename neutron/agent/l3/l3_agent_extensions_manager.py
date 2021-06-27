@@ -46,6 +46,8 @@ class L3AgentExtensionsManager(agent_ext_manager.AgentExtensionsManager):
                     "implement method add_router",
                     {'name': extension.name}
                 )
+        LOG.debug("L3 agent extension(s) finished router %s "
+                  "add action.", data['id'])
 
     def update_router(self, context, data):
         """Notify all agent extensions to update router."""
@@ -58,6 +60,8 @@ class L3AgentExtensionsManager(agent_ext_manager.AgentExtensionsManager):
                     "implement method update_router",
                     {'name': extension.name}
                 )
+        LOG.debug("L3 agent extension(s) finished router %s "
+                  "update action.", data['id'])
 
     def delete_router(self, context, data):
         """Notify all agent extensions to delete router."""
@@ -70,6 +74,8 @@ class L3AgentExtensionsManager(agent_ext_manager.AgentExtensionsManager):
                     "implement method delete_router",
                     {'name': extension.name}
                 )
+        LOG.debug("L3 agent extension(s) finished router %s "
+                  "delete action.", data['id'])
 
     def ha_state_change(self, context, data):
         """Notify all agent extensions for HA router state change."""
