@@ -40,7 +40,8 @@ class _ObjectChangeHandler(object):
     _PAYLOAD_RESOURCES = (resources.NETWORK,
                           resources.ADDRESS_GROUP,
                           resources.SECURITY_GROUP_RULE,
-                          resources.SUBNET)
+                          resources.SUBNET,
+                          resources.SECURITY_GROUP)
 
     def __init__(self, resource, object_class, resource_push_api):
         self._resource = resource

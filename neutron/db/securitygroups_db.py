@@ -87,11 +87,6 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         a given tenant if it does not exist.
         """
         s = security_group['security_group']
-        kwargs = {
-            'context': context,
-            'security_group': s,
-            'is_default': default_sg,
-        }
         self._registry_notify(resources.SECURITY_GROUP, events.BEFORE_CREATE,
                               exc_cls=ext_sg.SecurityGroupConflict,
                               payload=events.DBEventPayload(
@@ -148,14 +143,22 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             # fetch sg from db to load the sg rules with sg model.
             sg = sg_obj.SecurityGroup.get_object(context, id=sg.id)
             secgroup_dict = self._make_security_group_dict(sg)
-            kwargs['security_group'] = secgroup_dict
             self._registry_notify(resources.SECURITY_GROUP,
                                   events.PRECOMMIT_CREATE,
                                   exc_cls=ext_sg.SecurityGroupConflict,
-                                  **kwargs)
+                                  payload=events.DBEventPayload(
+                                      context,
+                                      resource_id=sg.id,
+                                      metadata={'is_default': default_sg},
+                                      states=(secgroup_dict,)))
 
-        registry.notify(resources.SECURITY_GROUP, events.AFTER_CREATE, self,
-                        **kwargs)
+        registry.publish(resources.SECURITY_GROUP, events.AFTER_CREATE,
+                         self, payload=events.DBEventPayload(
+                             context,
+                             resource_id=secgroup_dict['id'],
+                             metadata={'is_default': default_sg},
+                             states=(secgroup_dict,)))
+
         return secgroup_dict
 
     @db_api.retry_if_session_inactive()
@@ -248,11 +251,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
 
             if sg['name'] == 'default' and not context.is_admin:
                 raise ext_sg.SecurityGroupCannotRemoveDefault()
-        kwargs = {
-            'context': context,
-            'security_group_id': id,
-            'security_group': sg,
-        }
+
         self._registry_notify(resources.SECURITY_GROUP,
                               events.BEFORE_DELETE,
                               exc_cls=ext_sg.SecurityGroupInUse, id=id,
@@ -267,18 +266,24 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             # deleted
             ports = self._get_port_security_group_bindings(context, filters)
             sg = self._get_security_group(context, id)
-            kwargs['security_group_rule_ids'] = [r['id'] for r in sg.rules]
-            kwargs['security_group'] = self._make_security_group_dict(sg)
+            sgr_ids = [r['id'] for r in sg.rules]
+            sec_group = self._make_security_group_dict(sg)
             self._registry_notify(resources.SECURITY_GROUP,
                                   events.PRECOMMIT_DELETE,
-                                  exc_cls=ext_sg.SecurityGroupInUse, id=id,
-                                  **kwargs)
+                                  exc_cls=ext_sg.SecurityGroupInUse,
+                                  payload=events.DBEventPayload(
+                                      context, resource_id=id,
+                                      states=(sec_group,),
+                                      metadata={
+                                          'security_group_rule_ids': sgr_ids
+                                      }))
             sg.delete()
 
-        kwargs.pop('security_group')
-        kwargs['name'] = sg['name']
-        registry.notify(resources.SECURITY_GROUP, events.AFTER_DELETE,
-                        self, **kwargs)
+        registry.publish(resources.SECURITY_GROUP, events.AFTER_DELETE,
+                         self, payload=events.DBEventPayload(
+                             context, resource_id=id, states=(sec_group,),
+                             metadata={'security_group_rule_ids': sgr_ids,
+                                       'name': sg['name']}))
 
     @db_api.retry_if_session_inactive()
     def update_security_group(self, context, id, security_group):
@@ -294,34 +299,34 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                     if ports:
                         raise ext_sg.SecurityGroupInUse(id=id)
 
-        kwargs = {
-            'context': context,
-            'security_group_id': id,
-            'security_group': s,
-        }
         self._registry_notify(resources.SECURITY_GROUP, events.BEFORE_UPDATE,
-                              exc_cls=ext_sg.SecurityGroupConflict, **kwargs)
+                              exc_cls=ext_sg.SecurityGroupConflict,
+                              payload=events.DBEventPayload(
+                                  context, resource_id=id, states=(s,)))
 
         with db_api.CONTEXT_WRITER.using(context):
             sg = self._get_security_group(context, id)
             if sg.name == 'default' and 'name' in s:
                 raise ext_sg.SecurityGroupCannotUpdateDefault()
             sg_dict = self._make_security_group_dict(sg)
-            kwargs['original_security_group'] = sg_dict
+            original_security_group = sg_dict
             sg.update_fields(s)
             sg.update()
             sg_dict = self._make_security_group_dict(sg)
-            kwargs['security_group'] = sg_dict
             self._registry_notify(
                     resources.SECURITY_GROUP,
                     events.PRECOMMIT_UPDATE,
                     exc_cls=ext_sg.SecurityGroupConflict,
                     payload=events.DBEventPayload(
                         context, request_body=s,
-                        states=(kwargs['original_security_group'],),
+                        states=(original_security_group,),
                         resource_id=id, desired_state=sg_dict))
-        registry.notify(resources.SECURITY_GROUP, events.AFTER_UPDATE, self,
-                        **kwargs)
+        registry.publish(resources.SECURITY_GROUP, events.AFTER_UPDATE, self,
+                         payload=events.DBEventPayload(
+                             context, request_body=s,
+                             states=(original_security_group, sg_dict),
+                             resource_id=id))
+
         return sg_dict
 
     def _make_security_group_dict(self, security_group, fields=None):

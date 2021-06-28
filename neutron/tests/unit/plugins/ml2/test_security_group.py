@@ -149,8 +149,8 @@ class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,
             or_mock.assert_called_once_with(mock.ANY)
 
     def test_security_groups_created_outside_transaction(self):
-        def record_after_state(r, e, t, context, *args, **kwargs):
-            self.was_active = context.session.is_active
+        def record_after_state(r, e, t, payload=None):
+            self.was_active = payload.context.session.is_active
 
         registry.subscribe(record_after_state, resources.SECURITY_GROUP,
                            events.AFTER_CREATE)

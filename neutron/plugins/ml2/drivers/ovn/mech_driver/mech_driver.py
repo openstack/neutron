@@ -374,29 +374,34 @@ class OVNMechanismDriver(api.MechanismDriver):
             ovn_nb_api.idl.neutron_pg_drop_event.wait()
 
     def _create_security_group_precommit(self, resource, event, trigger,
-                                         **kwargs):
+                                         payload):
+        context = payload.context
+        security_group = payload.latest_state
         ovn_revision_numbers_db.create_initial_revision(
-            kwargs['context'], kwargs['security_group']['id'],
+            context, security_group['id'],
             ovn_const.TYPE_SECURITY_GROUPS,
-            std_attr_id=kwargs['security_group']['standard_attr_id'])
+            std_attr_id=security_group['standard_attr_id'])
 
-    def _create_security_group(self, resource, event, trigger,
-                               security_group, **kwargs):
-        self._ovn_client.create_security_group(kwargs['context'],
+    def _create_security_group(self, resource, event, trigger, payload):
+        context = payload.context
+        security_group = payload.latest_state
+        self._ovn_client.create_security_group(context,
                                                security_group)
 
-    def _delete_security_group(self, resource, event, trigger,
-                               security_group_id, **kwargs):
-        self._ovn_client.delete_security_group(kwargs['context'],
+    def _delete_security_group(self, resource, event, trigger, payload):
+        context = payload.context
+        security_group_id = payload.resource_id
+        self._ovn_client.delete_security_group(context,
                                                security_group_id)
 
-    def _update_security_group(self, resource, event, trigger,
-                               security_group, **kwargs):
+    def _update_security_group(self, resource, event, trigger, payload):
         # OVN doesn't care about updates to security groups, only if they
         # exist or not. We are bumping the revision number here so it
         # doesn't show as inconsistent to the maintenance periodic task
+        context = payload.context
+        security_group = payload.latest_state
         ovn_revision_numbers_db.bump_revision(
-            kwargs['context'], security_group, ovn_const.TYPE_SECURITY_GROUPS)
+            context, security_group, ovn_const.TYPE_SECURITY_GROUPS)
 
     def _create_sg_rule_precommit(self, resource, event, trigger,
                                   payload):
