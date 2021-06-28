@@ -247,8 +247,8 @@
     irrelevant-files: *tempest-db-irrelevant-files
 
 - job:
-    name: neutron-ovn-tempest-with-os-ken-master
-    parent: tempest-integrated-networking
+    name: neutron-ovs-tempest-with-os-ken-master
+    parent: neutron-ovs-tempest-base
     timeout: 10800
     required-projects:
       - openstack/neutron
