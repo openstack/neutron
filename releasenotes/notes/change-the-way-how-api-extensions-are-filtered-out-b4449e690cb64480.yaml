@@ -1,0 +1,13 @@
+---
+upgrade:
+  - |
+    The way the ML2 plugin filters out API extensions which are not supported
+    by loaded mechanism drivers has changed.
+    Before, the API extension was on the list if at least one of the mechanism drivers
+    supported it, but now the extension needs to be supported by all the mechanism
+    drivers. If at least one of them filters it out, it will be removed from
+    the final list of enabled API extensions.
+    Currently, only the OVN mechanism driver is filtering out some of the ML2
+    API extensions, thus if that mechanism driver is loaded in Neutron with any other
+    mechanism driver, the list of the enabled API extensions may be smaller than it
+    was before.
