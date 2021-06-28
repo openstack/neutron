@@ -1,5 +1,5 @@
 - job:
-    name: neutron-grenade-multinode
+    name: neutron-ovs-grenade-multinode
     parent: grenade-multinode
     required-projects:
       - openstack/grenade
@@ -53,8 +53,14 @@
               agent:
                 debug_iptables_rules: True
 
+# TODO(ralonsoh): remove this duplicated definition when "devstack" and
+# "tempest" adopt the new name.
 - job:
-    name: neutron-grenade-dvr-multinode
+    name: neutron-grenade-multinode
+    parent: neutron-ovs-grenade-multinode
+
+- job:
+    name: neutron-ovs-grenade-dvr-multinode
     parent: grenade-multinode
     pre-run: playbooks/dvr-multinode-scenario-pre-run.yaml
     roles:
@@ -143,7 +149,7 @@
                 debug_iptables_rules: True
 
 - job:
-    name: neutron-grenade-ovn
+    name: neutron-ovn-grenade-multinode
     parent: grenade-multinode
     timeout: 9000
     irrelevant-files:

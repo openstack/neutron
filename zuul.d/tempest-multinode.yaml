@@ -1,5 +1,5 @@
 - job:
-    name: neutron-tempest-dvr-ha-multinode-full
+    name: neutron-ovs-tempest-dvr-ha-multinode-full
     parent: tempest-multinode-full-py3
     timeout: 10800
     roles:
@@ -144,8 +144,14 @@
                 availability_zone: nova
                 debug_iptables_rules: True
 
+# TODO(ralonsoh): remove this duplicated definition when "devstack",
+# "tempest" and "nova" adopt the new name.
 - job:
-    name: neutron-tempest-multinode-full-py3
+    name: neutron-tempest-dvr-ha-multinode-full
+    parent: neutron-ovs-tempest-dvr-ha-multinode-full
+
+- job:
+    name: neutron-ovs-tempest-multinode-full
     parent: tempest-multinode-full-py3
     timeout: 10800
     irrelevant-files: *openvswitch-irrelevant-files
@@ -218,7 +224,7 @@
                 debug_iptables_rules: True
 
 - job:
-    name: neutron-tempest-slow-py3
+    name: neutron-ovs-tempest-slow
     parent: tempest-slow-py3
     timeout: 10800
     irrelevant-files: *openvswitch-irrelevant-files

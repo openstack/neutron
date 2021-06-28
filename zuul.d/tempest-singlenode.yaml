@@ -47,7 +47,7 @@
               debug_iptables_rules: True
 
 - job:
-    name: neutron-ovs-base
+    name: neutron-ovs-tempest-base
     description: Base job for tempest to test Neutron with ML2/OVS driver
     parent: neutron-tempest-base
     vars:
@@ -72,8 +72,8 @@
       - ^neutron/plugins/ml2/drivers/ovn/.*$
 
 - job:
-    name: neutron-tempest-dvr
-    parent: neutron-ovs-base
+    name: neutron-ovs-tempest-dvr
+    parent: neutron-ovs-tempest-base
     vars:
       devstack_localrc:
         Q_DVR_MODE: dvr_snat
@@ -81,8 +81,14 @@
         br-ex-tcpdump: true
         br-int-flows: true
 
+# TODO(ralonsoh): remove this duplicated definition when "devstack",
+# "tempest" and "nova" adopt the new name.
 - job:
-    name: neutron-tempest-linuxbridge
+    name: neutron-tempest-dvr
+    parent: neutron-ovs-tempest-dvr
+
+- job:
+    name: neutron-linuxbridge-tempest
     parent: neutron-tempest-base
     vars:
       devstack_localrc:
@@ -106,9 +112,15 @@
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
       - ^neutron/plugins/ml2/drivers/ovn/.*$
 
+# TODO(ralonsoh): remove this duplicated definition when "devstack" and "nova"
+# adopt the new name.
 - job:
-    name: neutron-tempest-iptables_hybrid
-    parent: neutron-ovs-base
+    name: neutron-tempest-linuxbridge
+    parent: neutron-linuxbridge-tempest
+
+- job:
+    name: neutron-ovs-tempest-iptables_hybrid
+    parent: neutron-ovs-tempest-base
     vars:
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
@@ -157,8 +169,14 @@
               image_is_advanced: true
               available_type_drivers: flat,geneve,vlan,gre,local,vxlan
 
+# TODO(ralonsoh): remove this duplicated definition when "nova" adopts the
+# new name.
 - job:
-    name: neutron-tempest-postgres-full
+    name: neutron-tempest-iptables_hybrid
+    parent: neutron-ovs-tempest-iptables_hybrid
+
+- job:
+    name: neutron-ovn-tempest-postgres-full
     parent: tempest-integrated-networking
     timeout: 10800
     required-projects:
@@ -198,7 +216,7 @@
       - ^neutron/plugins/ml2/drivers/.*$
 
 - job:
-    name: neutron-tempest-mariadb-full
+    name: neutron-ovn-tempest-mariadb-full
     parent: tempest-integrated-networking
     timeout: 10800
     required-projects:
@@ -229,7 +247,7 @@
     irrelevant-files: *tempest-db-irrelevant-files
 
 - job:
-    name: neutron-tempest-with-os-ken-master
+    name: neutron-ovn-tempest-with-os-ken-master
     parent: tempest-integrated-networking
     timeout: 10800
     required-projects:
@@ -270,7 +288,7 @@
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
 
 - job:
-    name: neutron-tempest-with-neutron-lib-master
+    name: neutron-ovn-tempest-with-neutron-lib-master
     parent: tempest-integrated-networking
     timeout: 10800
     required-projects:
@@ -296,7 +314,7 @@
         s-proxy: false
 
 - job:
-    name: neutron-tempest-with-uwsgi
+    name: neutron-ovn-tempest-with-uwsgi
     parent: tempest-integrated-networking
     description: Run neutron Tempest tests with uwsgi
     timeout: 10800
@@ -337,7 +355,7 @@
       - ^vagrant/.*$
 
 - job:
-    name: neutron-tempest-with-uwsgi-loki
+    name: neutron-ovn-tempest-with-uwsgi-loki
     parent: neutron-tempest-with-uwsgi
     timeout: 10800
     vars:
@@ -454,7 +472,7 @@
       - ^neutron/scheduler/.*$
 
 - job:
-    name: neutron-tempest-ipv6-only
+    name: neutron-ovn-tempest-ipv6-only
     parent: tempest-ipv6-only
     timeout: 10800
     vars:
