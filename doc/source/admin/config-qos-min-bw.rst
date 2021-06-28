@@ -125,6 +125,14 @@ Limitations
   treats physnet0 and Physnet0 as the same physnet. It is advised not to use
   physnet names that are only differ by case.
 
+* There are hardware platforms (e.g.: Cavium ThunderX) where it's possible
+  to have virtual functions which are network devices that are not associated
+  to a physical function. As bandwidth resources are tracked per physical
+  function, for such hardware the placement enforcement of the QoS minimum
+  bandwidth rules cannot be supported. Creating a server with ports using such
+  QoS policy targeting such hardware backend will result in a ``NoValidHost``
+  error during scheduling.
+
 Placement pre-requisites
 ------------------------
 
