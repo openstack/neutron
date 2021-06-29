@@ -593,7 +593,10 @@ class L3NATAgent(ha.AgentMixin,
 
     def network_update(self, context, **kwargs):
         network_id = kwargs['network']['id']
+        LOG.debug("Got network %s update", network_id)
         for ri in self.router_info.values():
+            LOG.debug("Checking if router %s is plugged to the network %s",
+                      ri, network_id)
             ports = list(ri.internal_ports)
             if ri.ex_gw_port:
                 ports.append(ri.ex_gw_port)
