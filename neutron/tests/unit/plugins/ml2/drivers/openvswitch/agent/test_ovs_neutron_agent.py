@@ -2566,6 +2566,35 @@ class TestOvsNeutronAgent(object):
         self.assertIn(n_const.RP_BANDWIDTHS,
                       self.agent.agent_state['configurations'])
 
+    def test_configurations_has_rp_pp_without_direction(self):
+        self.assertIn(n_const.RP_PP_WITHOUT_DIRECTION,
+                      self.agent.agent_state['configurations'])
+
+    def test_configurations_has_rp_pp_with_direction(self):
+        self.assertIn(n_const.RP_PP_WITH_DIRECTION,
+                      self.agent.agent_state['configurations'])
+
+    def test_configurations_has_rp_pp_default_inventory(self):
+        self.assertIn(n_const.RP_PP_INVENTORY_DEFAULTS,
+                      self.agent.agent_state['configurations'])
+        rp_inv_defaults = \
+            self.agent.agent_state['configurations'][
+                n_const.RP_INVENTORY_DEFAULTS]
+        self.assertListEqual(
+            sorted(['reserved', 'min_unit', 'allocation_ratio', 'step_size']),
+            sorted(list(rp_inv_defaults)))
+        self.assertEqual(1.0, rp_inv_defaults['allocation_ratio'])
+        self.assertEqual(1, rp_inv_defaults['min_unit'])
+        self.assertEqual(1, rp_inv_defaults['step_size'])
+        self.assertEqual(0, rp_inv_defaults['reserved'])
+
+    def test__validate_rp_pkt_processing_cfg(self):
+        cfg.CONF.set_override(n_const.RP_PP_WITHOUT_DIRECTION,
+                              [':0'], 'OVS')
+        cfg.CONF.set_override(n_const.RP_PP_WITH_DIRECTION,
+                              [':0:0'], 'OVS')
+        self.assertRaises(ValueError, self._make_agent)
+
     def test_configurations_has_rp_default_inventory(self):
         self.assertIn(n_const.RP_INVENTORY_DEFAULTS,
                       self.agent.agent_state['configurations'])

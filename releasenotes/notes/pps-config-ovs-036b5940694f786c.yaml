@@ -1,0 +1,15 @@
+---
+features:
+  - |
+    New configuration options for neutron-ovs-agent under section ``[ovs]``:
+    ``resource_provider_packet_processing_without_direction``,
+    ``resource_provider_packet_processing_with_direction`` and
+    ``resource_provider_packet_processing_inventory_defaults``.
+    ``resource_provider_packet_processing_without_direction`` controls the
+    minimum packet rate the OVS backend can guarantee in kilo (1000) packet per
+    second.
+    ``resource_provider_packet_processing_with_direction`` is similar to the
+    first option, but used in case the OVS backend has hardware offload
+    capabilities. The last option can be used to tune the other fields
+    (``allocation_ratio``, ``min_unit``, ``max_unit``, ``reserved``,
+    ``step_size``) of resource provider inventories.
