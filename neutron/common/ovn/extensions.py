@@ -43,6 +43,7 @@ from neutron_lib.api.definitions import port_numa_affinity_policy
 from neutron_lib.api.definitions import port_resource_request
 from neutron_lib.api.definitions import port_security
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import portbindings_extended as pbe_ext
 from neutron_lib.api.definitions import project_id
 from neutron_lib.api.definitions import provider_net
 from neutron_lib.api.definitions import qos
@@ -90,6 +91,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     auto_allocated_topology.ALIAS,
     az_def.ALIAS,
     portbindings.ALIAS,
+    pbe_ext.ALIAS,
     default_subnetpools.ALIAS,
     dns.ALIAS,
     external_net.ALIAS,

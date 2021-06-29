@@ -108,6 +108,8 @@ The following Neutron API extensions are supported with OVN:
 +----------------------------------+-----------------------------+
 | Port Binding                     | binding                     |
 +----------------------------------+-----------------------------+
+| Port Bindings Extended           | binding-extended            |
++----------------------------------+-----------------------------+
 | Port Forwarding                  | port_forwarding             |
 +----------------------------------+-----------------------------+
 | Port MAC address Regenerate      | port-mac-address-regenerate |
