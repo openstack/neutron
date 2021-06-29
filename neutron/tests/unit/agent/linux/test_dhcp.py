@@ -1071,6 +1071,7 @@ class TestConfBase(base.BaseTestCase):
         self.conf.register_opts(base_config.core_opts)
         self.conf.register_opts(dhcp_config.DHCP_OPTS)
         self.conf.register_opts(dhcp_config.DNSMASQ_OPTS)
+        self.conf.register_opts(config.DHCP_PROTOCOL_OPTS)
         config.register_external_process_opts(self.conf)
         config.register_interface_driver_opts_helper(self.conf)
 

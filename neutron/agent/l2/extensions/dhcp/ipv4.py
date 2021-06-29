@@ -93,16 +93,16 @@ class DHCPIPv4Responder(dhcp_base.DHCPResponderBase):
                         value=struct.pack(
                             '!i', cfg.CONF.dhcp_lease_duration)))
 
-        if cfg.CONF.DHCP.renewal_time > 0:
+        if cfg.CONF.DHCP.dhcp_renewal_time > 0:
             option_list.append(
                 dhcp.option(tag=dhcp.DHCP_RENEWAL_TIME_OPT,
                             value=struct.pack(
-                                '!I', cfg.CONF.DHCP.renewal_time)))
-        if cfg.CONF.DHCP.rebinding_time > 0:
+                                '!I', cfg.CONF.DHCP.dhcp_renewal_time)))
+        if cfg.CONF.DHCP.dhcp_rebinding_time > 0:
             option_list.append(
                 dhcp.option(tag=dhcp.DHCP_REBINDING_TIME_OPT,
                             value=struct.pack(
-                                '!I', cfg.CONF.DHCP.rebinding_time)))
+                                '!I', cfg.CONF.DHCP.dhcp_rebinding_time)))
 
         option_list.append(
             dhcp.option(tag=dhcp.DHCP_SUBNET_MASK_OPT,

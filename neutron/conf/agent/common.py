@@ -163,6 +163,16 @@ AVAILABILITY_ZONE_OPTS = [
 ]
 
 
+DHCP_PROTOCOL_OPTS = [
+    cfg.IntOpt('dhcp_renewal_time', default=0,
+               help=_("DHCP renewal time T1 (in seconds). If set to 0, it "
+                      "will default to half of the lease time.")),
+    cfg.IntOpt('dhcp_rebinding_time', default=0,
+               help=_("DHCP rebinding time T2 (in seconds). If set to 0, it "
+                      "will default to 7/8 of the lease time.")),
+]
+
+
 def get_log_args(conf, log_file_name, **kwargs):
     cmd_args = []
     if conf.debug:

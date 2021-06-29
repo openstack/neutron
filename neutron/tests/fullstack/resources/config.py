@@ -261,8 +261,8 @@ class OVSConfigFixture(ConfigFixture):
             self.config.update({
                 'dhcp': {
                     'enable_ipv6': 'True',
-                    'renewal_time': '0',
-                    'rebinding_time': '0'}
+                    'dhcp_renewal_time': '0',
+                    'dhcp_rebinding_time': '0'}
             })
 
     def _setUp(self):
