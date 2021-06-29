@@ -35,6 +35,7 @@ from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.objects import agent as agent_obj
 from neutron.objects import l3agent as rb_obj
+from neutron.objects import ports as port_obj
 from neutron.objects import router as router_obj
 from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_l3
@@ -553,6 +554,115 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             self._setup_test_create_floatingip(
                 fip, floatingip, router))
         self.assertFalse(create_fip.called)
+
+    def test_get_ext_nets_by_host(self):
+        ports = [mock.Mock(id=_uuid()) for _ in range(3)]
+        fips = [mock.Mock(fixed_port_id=p.id, floating_network_id=_uuid())
+                for p in ports]
+        expected_ext_nets = set([fip.floating_network_id for fip in fips])
+        with mock.patch.object(
+            port_obj.Port, 'get_ports_by_host',
+            return_value=[p.id for p in ports]
+        ) as get_ports_by_host, mock.patch.object(
+            self.mixin, '_get_floatingips_by_port_id', return_value=fips
+        ) as get_floatingips_by_port_id:
+            self.assertEqual(
+                expected_ext_nets,
+                self.mixin._get_ext_nets_by_host(self.ctx, 'host'))
+            get_ports_by_host.assert_called_once_with(self.ctx, 'host')
+            get_floatingips_by_port_id.assert_has_calls(
+                [mock.call(self.ctx, p.id) for p in ports])
+
+    def _test_create_fip_agent_gw_ports(self, agent_type, agent_mode=None):
+        agent = {
+            'id': _uuid(),
+            'host': 'host',
+            'agent_type': agent_type,
+            'configurations': {'agent_mode': agent_mode}}
+        payload = events.DBEventPayload(
+            self.ctx, states=(agent,), resource_id=agent['id'])
+
+        ext_nets = ['ext-net-1', 'ext-net-2']
+        with mock.patch.object(
+            self.mixin,
+            'create_fip_agent_gw_port_if_not_exists'
+        ) as create_fip_gw, mock.patch.object(
+            self.mixin, "_get_ext_nets_by_host",
+            return_value=ext_nets
+        ) as get_ext_nets_by_host:
+
+            registry.publish(resources.AGENT, events.AFTER_CREATE, mock.Mock(),
+                             payload=payload)
+
+            if agent_type == 'L3 agent' and agent_mode in ['dvr', 'dvr_snat']:
+                get_ext_nets_by_host.assert_called_once_with(
+                    mock.ANY, 'host')
+                create_fip_gw.assert_has_calls(
+                    [mock.call(mock.ANY, ext_net, 'host') for
+                        ext_net in ext_nets])
+            else:
+                get_ext_nets_by_host.assert_not_called()
+                create_fip_gw.assert_not_called()
+
+    def test_create_fip_agent_gw_ports(self):
+        self._test_create_fip_agent_gw_ports(
+            agent_type='L3 agent', agent_mode='dvr')
+        self._test_create_fip_agent_gw_ports(
+            agent_type='L3 agent', agent_mode='dvr_snat')
+
+    def test_create_fip_agent_gw_ports_dvr_no_external_agent(self):
+        self._test_create_fip_agent_gw_ports(
+            agent_type='L3 agent', agent_mode='dvr_no_external')
+
+    def test_create_fip_agent_gw_ports_non_dvr_agent(self):
+        self._test_create_fip_agent_gw_ports(
+            agent_type='L3 agent', agent_mode='legacy')
+
+    def test_create_fip_agent_gw_ports_deleted_non_l3_agent(self):
+        self._test_create_fip_agent_gw_ports('Other agent type')
+
+    def _test_delete_fip_agent_gw_ports(self, agent_type, agent_mode=None):
+        agent = agent_obj.Agent(
+            self.ctx, id=_uuid(), agent_type=agent_type,
+            configurations={"agent_mode": agent_mode})
+        payload = events.DBEventPayload(
+            self.ctx, states=(agent,), resource_id=agent.id)
+
+        gw_port = {'id': _uuid(), 'network_id': _uuid()}
+        with mock.patch.object(
+            self.mixin, '_get_agent_gw_ports',
+            return_value=[gw_port]
+        ) as get_agent_gw_ports, mock.patch.object(
+            self.core_plugin, 'delete_port'
+        ) as delete_port:
+            registry.publish(resources.AGENT, events.AFTER_DELETE, mock.Mock(),
+                             payload=payload)
+
+            if agent_type == 'L3 agent' and agent_mode in ['dvr', 'dvr_snat']:
+                get_agent_gw_ports.assert_called_once_with(payload.context,
+                                                           agent['id'])
+                delete_port.assert_called_once_with(payload.context,
+                                                    gw_port['id'])
+            else:
+                get_agent_gw_ports.assert_not_called()
+                delete_port.assert_not_called()
+
+    def test_delete_fip_agent_gw_ports(self):
+        self._test_delete_fip_agent_gw_ports(
+            agent_type='L3 agent', agent_mode='dvr')
+        self._test_delete_fip_agent_gw_ports(
+            agent_type='L3 agent', agent_mode='dvr_snat')
+
+    def test_delete_fip_agent_gw_ports_dvr_no_external_agent(self):
+        self._test_delete_fip_agent_gw_ports(
+            agent_type='L3 agent', agent_mode='dvr_no_external')
+
+    def test_delete_fip_agent_gw_ports_non_dvr_agent(self):
+        self._test_delete_fip_agent_gw_ports(
+            agent_type='L3 agent', agent_mode='legacy')
+
+    def test_delete_fip_agent_gw_ports_deleted_non_l3_agent(self):
+        self._test_delete_fip_agent_gw_ports('Other agent type')
 
     def test_update_router_gw_info_external_network_change(self):
         router_dict = {'name': 'test_router', 'admin_state_up': True,
