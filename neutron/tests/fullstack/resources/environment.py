@@ -41,7 +41,8 @@ class EnvironmentDescription(object):
                  debug_iptables=False, log=False, report_bandwidths=False,
                  has_placement=False, placement_port=None,
                  dhcp_scheduler_class=None, ml2_extension_drivers=None,
-                 api_workers=1):
+                 api_workers=1,
+                 enable_traditional_dhcp=True):
         self.network_type = network_type
         self.l2_pop = l2_pop
         self.qos = qos
@@ -64,6 +65,7 @@ class EnvironmentDescription(object):
             self.service_plugins += ',log'
         self.ml2_extension_drivers = ml2_extension_drivers
         self.api_workers = api_workers
+        self.enable_traditional_dhcp = enable_traditional_dhcp
 
     @property
     def tunneling_enabled(self):

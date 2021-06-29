@@ -45,13 +45,21 @@ class FakeFullstackMachinesList(list):
         for vm_1, vm_2 in itertools.permutations(self, 2):
             vm_1.block_until_ping(vm_2.ip)
 
+    def ping6_all(self):
+        # Generate an iterable of all unique pairs. For example:
+        # itertools.permutations(range(3), 2) results in:
+        # ((0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1))
+        for vm_1, vm_2 in itertools.permutations(self, 2):
+            vm_1.block_until_ping(vm_2.ipv6)
+
 
 class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
     NO_RESOLV_CONF_DHCLIENT_SCRIPT_PATH = (
         spawn.find_executable(FULLSTACK_DHCLIENT_SCRIPT))
 
     def __init__(self, host, network_id, tenant_id, safe_client,
-                 neutron_port=None, bridge_name=None, use_dhcp=False):
+                 neutron_port=None, bridge_name=None, use_dhcp=False,
+                 use_dhcp6=False):
         super(FakeFullstackMachine, self).__init__()
         self.host = host
         self.tenant_id = tenant_id
@@ -61,6 +69,7 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
         self.bridge_name = bridge_name
         self.use_dhcp = use_dhcp
         self.dhclient_async = None
+        self.use_dhcp6 = use_dhcp6
 
     def _setUp(self):
         super(FakeFullstackMachine, self)._setUp()
@@ -115,6 +124,9 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
             # v6Address/default_route is auto-configured.
             self._ipv6 = fixed_ip['ip_address']
             self.gateway_ipv6 = subnet['subnet']['gateway_ip']
+            if self.use_dhcp6:
+                self._configure_ipaddress_via_dhcp(
+                    version=constants.IP_VERSION_6)
         else:
             self._ip = fixed_ip['ip_address']
             prefixlen = netaddr.IPNetwork(subnet['subnet']['cidr']).prefixlen
@@ -134,12 +146,13 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
             if gateway_ip in net:
                 net_helpers.set_namespace_gateway(self.port, self.gateway_ip)
 
-    def _configure_ipaddress_via_dhcp(self):
-        self._start_async_dhclient()
+    def _configure_ipaddress_via_dhcp(self, version=constants.IP_VERSION_4):
+        self._start_async_dhclient(version)
         self.addCleanup(self._stop_async_dhclient)
 
-    def _start_async_dhclient(self):
-        cmd = ["dhclient", '-sf', self.NO_RESOLV_CONF_DHCLIENT_SCRIPT_PATH,
+    def _start_async_dhclient(self, version=constants.IP_VERSION_4):
+        cmd = ["dhclient", '-%s' % version,
+               '-sf', self.NO_RESOLV_CONF_DHCLIENT_SCRIPT_PATH,
                '--no-pid', '-d', self.port.name]
         self.dhclient_async = async_process.AsyncProcess(
             cmd, run_as_root=True, respawn_interval=5,
