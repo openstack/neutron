@@ -141,7 +141,14 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                                             reservation.reservation_id)
 
             # fetch sg from db to load the sg rules with sg model.
-            sg = sg_obj.SecurityGroup.get_object(context, id=sg.id)
+            # NOTE(slaweq): With new system/project scopes it may happen that
+            # project admin will try to list security groups for different
+            # project and during that call Neutron will ensure that default
+            # security group is created. In such case elevated context needs to
+            # be used here otherwise, SG will not be found and error 500 will
+            # be returned through the API
+            get_context = context.elevated() if default_sg else context
+            sg = sg_obj.SecurityGroup.get_object(get_context, id=sg.id)
             secgroup_dict = self._make_security_group_dict(sg)
             self._registry_notify(resources.SECURITY_GROUP,
                                   events.PRECOMMIT_CREATE,
