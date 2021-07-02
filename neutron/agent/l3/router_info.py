@@ -589,7 +589,10 @@ class RouterInfo(BaseRouterInfo):
                       self.router_id)
             self.radvd.disable()
 
-    def internal_network_updated(self, interface_name, ip_cidrs, mtu):
+    def internal_network_updated(self, port):
+        interface_name = self.get_internal_device_name(port['id'])
+        ip_cidrs = common_utils.fixed_ip_cidrs(port['fixed_ips'])
+        mtu = port['mtu']
         self.driver.set_mtu(interface_name, mtu, namespace=self.ns_name,
                             prefix=INTERNAL_DEV_PREFIX)
         self.driver.init_router_port(
@@ -648,12 +651,8 @@ class RouterInfo(BaseRouterInfo):
         updated_cidrs = []
         for p in updated_ports:
             self._update_internal_ports_cache(p)
-            interface_name = self.get_internal_device_name(p['id'])
-            ip_cidrs = common_utils.fixed_ip_cidrs(p['fixed_ips'])
-            LOG.debug("updating internal network for port %s", p)
-            updated_cidrs += ip_cidrs
-            self.internal_network_updated(
-                interface_name, ip_cidrs, p['mtu'])
+            updated_cidrs += common_utils.fixed_ip_cidrs(p['fixed_ips'])
+            self.internal_network_updated(p)
             enable_ra = enable_ra or self._port_has_ipv6_subnet(p)
 
         # Check if there is any pd prefix update
