@@ -335,6 +335,19 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                                            'add',
                                            device=device,
                                            device_exists=device_exists)
+
+        # subnet_ports does not have snat port if the port is still unbound
+        # by the time this function is called. So ensure to add arp entry
+        # for snat port if port details are updated in router info.
+        for p in self.get_snat_interfaces():
+            for fixed_ip in p['fixed_ips']:
+                if fixed_ip['subnet_id'] == subnet_id:
+                    self._update_arp_entry(fixed_ip['ip_address'],
+                                           p['mac_address'],
+                                           subnet_id,
+                                           'add',
+                                           device=device,
+                                           device_exists=device_exists)
         self._process_arp_cache_for_internal_port(subnet_id)
 
     @staticmethod
