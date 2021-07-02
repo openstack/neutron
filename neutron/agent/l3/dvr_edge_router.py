@@ -129,6 +129,23 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
             lib_constants.SNAT_INT_DEV_PREFIX,
             mtu=sn_port.get('mtu'))
 
+    def internal_network_updated(self, port):
+        super(DvrEdgeRouter, self).internal_network_updated(port)
+
+        if not port:
+            return
+        if not self._is_this_snat_host():
+            return
+
+        sn_port = self.get_snat_port_for_internal_port(port)
+        if not sn_port:
+            return
+
+        ns_name = dvr_snat_ns.SnatNamespace.get_snat_ns_name(self.router['id'])
+        interface_name = self._get_snat_int_device_name(sn_port['id'])
+        self.driver.set_mtu(interface_name, port['mtu'], namespace=ns_name,
+                            prefix=lib_constants.SNAT_INT_DEV_PREFIX)
+
     def _dvr_internal_network_removed(self, port):
         super(DvrEdgeRouter, self)._dvr_internal_network_removed(port)
 
