@@ -1,0 +1,70 @@
+#
+# Sample DevStack local.conf for Neutron ML2 OVS in compute node.
+#
+# This sample file is intended to be used for your typical DevStack environment
+# that's running all of OpenStack on a single host.  This can also be used as
+# the first host of a multi-host test environment.
+#
+
+[[local|localrc]]
+
+DATABASE_PASSWORD=password
+RABBIT_PASSWORD=password
+SERVICE_PASSWORD=password
+SERVICE_TOKEN=password
+ADMIN_PASSWORD=password
+
+Q_AGENT=openvswitch
+NEUTRON_AGENT=$Q_AGENT
+
+# If your stack get failed with error: "Could not determine host ip address.
+# See local.conf for suggestions on setting HOST_IP." Try to uncomment
+# this line to set the proper host IP.
+#HOST_IP=<CHANGE_TO_YOUR_HOST_IP>
+
+# Set the controller's IP
+SERVICE_HOST=<TO_YOUER_CONTROLLER_IP>
+MYSQL_HOST=$SERVICE_HOST
+RABBIT_HOST=$SERVICE_HOST
+Q_HOST=$SERVICE_HOST
+GLANCE_HOSTPORT=$SERVICE_HOST:9292
+
+VNCSERVER_PROXYCLIENT_ADDRESS=$HOST_IP
+VNCSERVER_LISTEN=0.0.0.0
+
+NOVNCPROXY_URL=${NOVNCPROXY_URL:-"http://$HOST_IP:6080/vnc_auto.html"}
+XVPVNCPROXY_URL=${XVPVNCPROXY_URL:-"http://$HOST_IP:6081/console"}
+
+# Enable Compute and network services
+ENABLED_SERVICES=n-cpu,n-novnc,neutron,q-agt,q-l3,q-meta,q-dhcp
+# Enable network services only for network node
+#ENABLED_SERVICES=neutron,q-agt,q-l3,q-meta,q-dhcp
+
+[[post-config|/$Q_PLUGIN_CONF_FILE]]
+[ovs]
+local_ip=<CHANGE_TO_YOUR_LOCAL_IP>
+
+[agent]
+tunnel_types=vxlan
+# You can add more config options here for neutron-openvswith-agent, for instance
+# you can uncomment the followings settings to enable related functions.
+#l2_population=True
+#arp_responder=True
+#enable_distributed_routing=True
+# Uncomment the following to enable distributed DHCP for openvswitch agent
+# for your compute node.
+#extensions = dhcp
+
+[[post-config|$Q_L3_CONF_FILE]]
+[DEFAULT]
+debug = False
+verbose = True
+
+# You can add more config options here for neutron-l3-agent, for instance
+# you can uncomment the followings to enable dvr L3 agent mode.
+# You can also set agent mode to legacy or dvr_snat for your network node.
+#agent_mode=dvr
+
+# Uncomment the followings to anable fip_qos agent extension for L3 agent.
+#[agent]
+#extensions = fip_qos
