@@ -39,6 +39,21 @@ class NeutronKeystoneContext(base.ConfigurableMiddleware):
         return self.application
 
 
+class NoauthFakeProjectId(base.ConfigurableMiddleware):
+    """Add fake project_id for noauth auth_strategy."""
+
+    @webob.dec.wsgify
+    def __call__(self, req):
+        ctx = context.Context.from_environ(req.environ)
+        if not ctx.project_id:
+            # Inject project_id
+            ctx.project_id = 'fake_project_id'
+            # Inject the context with the admin flag set
+            req.environ['neutron.context'] = ctx.elevated()
+
+        return self.application
+
+
 def pipeline_factory(loader, global_conf, **local_conf):
     """Create a paste pipeline based on the 'auth_strategy' config option."""
     pipeline = local_conf[cfg.CONF.auth_strategy]
