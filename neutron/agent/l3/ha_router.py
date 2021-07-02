@@ -362,7 +362,10 @@ class HaRouter(router.RouterInfo):
         if device.addr.list(to=to):
             super(HaRouter, self).remove_floating_ip(device, ip_cidr)
 
-    def internal_network_updated(self, interface_name, ip_cidrs, mtu):
+    def internal_network_updated(self, port):
+        interface_name = self.get_internal_device_name(port['id'])
+        ip_cidrs = common_utils.fixed_ip_cidrs(port['fixed_ips'])
+        mtu = port['mtu']
         self.driver.set_mtu(interface_name, mtu, namespace=self.ns_name,
                             prefix=router.INTERNAL_DEV_PREFIX)
         self._clear_vips(interface_name)

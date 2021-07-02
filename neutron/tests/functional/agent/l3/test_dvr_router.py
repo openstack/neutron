@@ -2256,3 +2256,69 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         actual_routes = [{key: route[key] for key in expected_route[0].keys()}
                          for route in updated_route]
         self.assertIn(expected_route[0], actual_routes)
+
+    def _test_router_interface_mtu_update(self, ha):
+        original_mtu = 1450
+        router_info = self.generate_dvr_router_info(
+            enable_ha=ha, enable_snat=True)
+        router_info['_interfaces'][0]['mtu'] = original_mtu
+        router_info['gw_port']['mtu'] = original_mtu
+        router_info[lib_constants.SNAT_ROUTER_INTF_KEY][0]['mtu'] = (
+            original_mtu)
+
+        router = self.manage_router(self.agent, router_info)
+        if ha:
+            utils.wait_until_true(lambda: router.ha_state == 'primary')
+            # Keepalived notifies of a state transition when it starts,
+            # not when it ends. Thus, we have to wait until keepalived finishes
+            # configuring everything. We verify this by waiting until the last
+            # device has an IP address.
+            device = router.router[lib_constants.INTERFACE_KEY][-1]
+            device_exists = functools.partial(
+                self.device_exists_with_ips_and_mac,
+                device,
+                router.get_internal_device_name,
+                router.ns_name)
+            utils.wait_until_true(device_exists)
+
+        interface_name = router.get_internal_device_name(
+            router_info['_interfaces'][0]['id'])
+        gw_interface_name = router.get_external_device_name(
+            router_info['gw_port']['id'])
+        snat_internal_port = router_info[lib_constants.SNAT_ROUTER_INTF_KEY]
+        snat_interface_name = router._get_snat_int_device_name(
+            snat_internal_port[0]['id'])
+        snat_namespace = dvr_snat_ns.SnatNamespace.get_snat_ns_name(
+            router_info['id'])
+
+        self.assertEqual(
+            original_mtu,
+            ip_lib.IPDevice(interface_name, router.ns_name).link.mtu)
+        self.assertEqual(
+            original_mtu,
+            ip_lib.IPDevice(gw_interface_name, snat_namespace).link.mtu)
+        self.assertEqual(
+            original_mtu,
+            ip_lib.IPDevice(snat_interface_name, snat_namespace).link.mtu)
+
+        updated_mtu = original_mtu + 1
+        router_info_copy = copy.deepcopy(router_info)
+        router_info_copy['_interfaces'][0]['mtu'] = updated_mtu
+        router_info_copy['gw_port']['mtu'] = updated_mtu
+        router_info_copy[lib_constants.SNAT_ROUTER_INTF_KEY][0]['mtu'] = (
+            updated_mtu)
+
+        self.agent._process_updated_router(router_info_copy)
+
+        self.assertEqual(
+            updated_mtu,
+            ip_lib.IPDevice(interface_name, router.ns_name).link.mtu)
+        self.assertEqual(
+            updated_mtu,
+            ip_lib.IPDevice(gw_interface_name, snat_namespace).link.mtu)
+        self.assertEqual(
+            updated_mtu,
+            ip_lib.IPDevice(snat_interface_name, snat_namespace).link.mtu)
+
+    def test_dvr_router_interface_mtu_update(self):
+        self._test_router_interface_mtu_update(ha=False)
