@@ -48,6 +48,7 @@ from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_hash_ring_db
 from neutron.db import ovn_revision_numbers_db
 from neutron.db import provisioning_blocks
+from neutron.extensions import securitygroup as ext_sg
 from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent as n_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
@@ -398,8 +399,12 @@ class OVNMechanismDriver(api.MechanismDriver):
             self._ovn_client.create_security_group_rule(
                 kwargs['context'], kwargs.get('security_group_rule'))
         elif event == events.BEFORE_DELETE:
-            sg_rule = self._plugin.get_security_group_rule(
-                kwargs['context'], kwargs.get('security_group_rule_id'))
+            try:
+                sg_rule = self._plugin.get_security_group_rule(
+                    kwargs['context'], kwargs.get('security_group_rule_id'))
+            except ext_sg.SecurityGroupRuleNotFound:
+                return
+
             if sg_rule.get('remote_ip_prefix') is not None:
                 if self._sg_has_rules_with_same_normalized_cidr(sg_rule):
                     return
