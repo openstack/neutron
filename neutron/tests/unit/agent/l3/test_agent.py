@@ -1271,6 +1271,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             router[lib_constants.INTERFACE_KEY][0])
         ri.router['distributed'] = True
         ri.router['_snat_router_interfaces'] = [{
+            'mac_address': 'fa:16:3e:80:8d:80',
             'fixed_ips': [{'subnet_id': subnet_id,
                            'ip_address': '1.2.3.4'}]}]
         ri.router['gw_port_host'] = None
