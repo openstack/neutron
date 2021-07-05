@@ -25,7 +25,6 @@ from neutron_lib.api.definitions import stateful_security_group as stateful_sg
 from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_log import log as logging
-import oslo_messaging
 
 from neutron.agent import firewall
 from neutron.common import _constants as common_constants
@@ -130,26 +129,6 @@ class SecurityGroupAgentRpc(object):
         # Stores devices for which firewall should be refreshed when
         # deferred refresh is enabled.
         self.devices_to_refilter = set()
-        self._use_enhanced_rpc = None
-
-    @property
-    def use_enhanced_rpc(self):
-        if self._use_enhanced_rpc is None:
-            self._use_enhanced_rpc = (
-                self._check_enhanced_rpc_is_supported_by_server())
-        return self._use_enhanced_rpc
-
-    def _check_enhanced_rpc_is_supported_by_server(self):
-        try:
-            self.plugin_rpc.security_group_info_for_devices(
-                self.context, devices=[])
-        except oslo_messaging.UnsupportedVersion:
-            LOG.warning('security_group_info_for_devices rpc call not '
-                        'supported by the server, falling back to old '
-                        'security_group_rules_for_devices which scales '
-                        'worse.')
-            return False
-        return True
 
     def skip_if_noopfirewall_or_firewall_disabled(func):
         @functools.wraps(func)
@@ -177,27 +156,22 @@ class SecurityGroupAgentRpc(object):
     @_port_filter_lock
     def _apply_port_filter(self, device_ids, update_filter=False):
         step = common_constants.AGENT_RES_PROCESSING_STEP
-        if self.use_enhanced_rpc:
-            devices = {}
-            security_groups = {}
-            security_group_member_ips = {}
-            for i in range(0, len(device_ids), step):
-                devices_info = self.plugin_rpc.security_group_info_for_devices(
-                    self.context, list(device_ids)[i:i + step])
-                devices.update(devices_info['devices'])
-                security_groups.update(devices_info['security_groups'])
-                security_group_member_ips.update(devices_info['sg_member_ips'])
-        else:
-            devices = self.plugin_rpc.security_group_rules_for_devices(
-                self.context, list(device_ids))
+        devices = {}
+        security_groups = {}
+        security_group_member_ips = {}
+        for i in range(0, len(device_ids), step):
+            devices_info = self.plugin_rpc.security_group_info_for_devices(
+                self.context, list(device_ids)[i:i + step])
+            devices.update(devices_info['devices'])
+            security_groups.update(devices_info['security_groups'])
+            security_group_member_ips.update(devices_info['sg_member_ips'])
         trusted_devices = self._get_trusted_devices(device_ids, devices)
 
         with self.firewall.defer_apply():
-            if self.use_enhanced_rpc:
-                LOG.debug("Update security group information for ports %s",
-                          devices.keys())
-                self._update_security_group_info(
-                    security_groups, security_group_member_ips)
+            LOG.debug("Update security group information for ports %s",
+                      devices.keys())
+            self._update_security_group_info(
+                security_groups, security_group_member_ips)
             for device in devices.values():
                 if update_filter:
                     LOG.debug("Update port filter for %s", device['device'])
@@ -243,8 +217,7 @@ class SecurityGroupAgentRpc(object):
             if sec_grp_set & set(device.get(attribute, [])):
                 devices.append(device['device'])
         if devices:
-            if self.use_enhanced_rpc:
-                self.firewall.security_group_updated(action_type, sec_grp_set)
+            self.firewall.security_group_updated(action_type, sec_grp_set)
             if self.defer_refresh_firewall:
                 LOG.debug("Adding %s devices to the list of devices "
                           "for which firewall needs to be refreshed",
@@ -315,7 +288,7 @@ class SecurityGroupAgentRpc(object):
             LOG.debug("Preparing device filters for %d new devices",
                       len(new_devices))
             self.prepare_devices_filter(new_devices)
-        if self.use_enhanced_rpc and updated_devices:
+        if updated_devices:
             self.firewall.security_group_updated('sg_member', [],
                                                  updated_devices)
         # If a device is both in new and updated devices
