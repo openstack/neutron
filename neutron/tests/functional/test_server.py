@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import multiprocessing
 import os
 import signal
 import socket
@@ -39,8 +40,8 @@ CONF = cfg.CONF
 
 # Those messages will be written to temporary file each time
 # start/reset methods are called.
-FAKE_START_MSG = b"start"
-FAKE_RESET_MSG = b"reset"
+FAKE_START_MSG = 'start'
+FAKE_RESET_MSG = 'reset'
 
 TARGET_PLUGIN = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 
@@ -50,7 +51,7 @@ class TestNeutronServer(base.BaseLoggingTestCase):
         super(TestNeutronServer, self).setUp()
         self.service_pid = None
         self.workers = None
-        self.temp_file = self.get_temp_file_path("test_server.tmp")
+        self._mp_queue = multiprocessing.Queue()
         self.health_checker = self._check_active
         self.pipein, self.pipeout = os.pipe()
         self.addCleanup(self._destroy_workers)
@@ -131,12 +132,10 @@ class TestNeutronServer(base.BaseLoggingTestCase):
         return True
 
     def _fake_start(self):
-        with open(self.temp_file, 'ab') as f:
-            f.write(FAKE_START_MSG)
+        self._mp_queue.put(FAKE_START_MSG)
 
     def _fake_reset(self):
-        with open(self.temp_file, 'ab') as f:
-            f.write(FAKE_RESET_MSG)
+        self._mp_queue.put(FAKE_RESET_MSG)
 
     def _test_restart_service_on_sighup(self, service, workers=1):
         """Test that a service correctly (re)starts on receiving SIGHUP.
@@ -158,38 +157,27 @@ class TestNeutronServer(base.BaseLoggingTestCase):
         # Wait for temp file to be created and its size reaching the expected
         # value
         expected_size = len(expected_msg)
+        ret_msg = ''
 
-        def is_temp_file_ok():
-            LOG.debug("Checking file %s", self.temp_file)
-            if not os.path.isfile(self.temp_file):
-                LOG.debug("File %s not exists.", self.temp_file)
-                return False
-            temp_file_size = os.stat(self.temp_file).st_size
-            LOG.debug("Size of file %s is %s. Expected size: %s",
-                      self.temp_file, temp_file_size, expected_size)
-            return temp_file_size == expected_size
+        def is_ret_buffer_ok():
+            nonlocal ret_msg
+            LOG.debug('Checking returned buffer size')
+            while not self._mp_queue.empty():
+                ret_msg += self._mp_queue.get()
+            LOG.debug('Size of buffer is %s. Expected size: %s',
+                      len(ret_msg), expected_size)
+            return len(ret_msg) == expected_size
 
         try:
-            utils.wait_until_true(is_temp_file_ok, timeout=5, sleep=1)
+            utils.wait_until_true(is_ret_buffer_ok, timeout=5, sleep=1)
         except utils.WaitTimeout:
-            if not os.path.isfile(self.temp_file):
-                raise RuntimeError(
-                    "Timed out waiting for file %(filename)s to be created" %
-                    {'filename': self.temp_file})
-            else:
-                raise RuntimeError(
-                    "Expected size for file %(filename)s: %(size)s, current "
-                    "size: %(current_size)s" %
-                    {'filename': self.temp_file,
-                     'size': expected_size,
-                     'current_size': os.stat(self.temp_file).st_size})
+            raise RuntimeError('Expected buffer size: %s, current size: %s' %
+                               (len(ret_msg), expected_size))
 
         # Verify that start has been called twice for each worker (one for
         # initial start, and the second one on SIGHUP after children were
         # terminated).
-        with open(self.temp_file, 'rb') as f:
-            res = f.readline()
-            self.assertEqual(expected_msg, res)
+        self.assertEqual(expected_msg, ret_msg)
 
 
 class TestWsgiServer(TestNeutronServer):
