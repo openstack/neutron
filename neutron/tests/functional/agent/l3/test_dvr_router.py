@@ -2246,7 +2246,7 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
 
         router = self.manage_router(self.agent, router_info)
         if ha:
-            utils.wait_until_true(lambda: router.ha_state == 'primary')
+            utils.wait_until_true(lambda: router.ha_state == 'master')
             # Keepalived notifies of a state transition when it starts,
             # not when it ends. Thus, we have to wait until keepalived finishes
             # configuring everything. We verify this by waiting until the last
@@ -2300,3 +2300,6 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
 
     def test_dvr_router_interface_mtu_update(self):
         self._test_router_interface_mtu_update(ha=False)
+
+    def test_dvr_ha_router_interface_mtu_update(self):
+        self._test_router_interface_mtu_update(ha=True)
