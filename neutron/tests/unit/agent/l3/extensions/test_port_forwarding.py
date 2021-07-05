@@ -281,6 +281,38 @@ class FipPortForwardingExtensionTestCase(PortForwardingExtensionBaseTestCase):
                 lib_const.FLOATINGIP_STATUS_DOWN}
         mock_send_fip_status.assert_called_once_with(mock.ANY, fip_status)
 
+    @mock.patch.object(pf.PortForwardingAgentExtension,
+                       '_sending_port_forwarding_fip_status')
+    @mock.patch.object(iptables_manager.IptablesTable, 'add_rule')
+    @mock.patch.object(iptables_manager.IptablesTable, 'add_chain')
+    @mock.patch.object(l3router.RouterInfo, 'add_floating_ip')
+    def test_add_delete_router(self, mock_add_fip,
+                               mock_add_chain, mock_add_rule,
+                               mock_send_fip_status):
+        # simulate the router add and already there is a port forwarding
+        # resource association.
+        mock_add_fip.return_value = lib_const.FLOATINGIP_STATUS_ACTIVE
+        self.fip_pf_ext.add_router(self.context, self.router)
+        self._assert_called_iptables_process(
+            mock_add_chain, mock_add_rule, mock_add_fip, mock_send_fip_status,
+            target_obj=self.portforwarding1)
+
+        router_fip_ids = self.fip_pf_ext.mapping.router_fip_mapping.get(
+            self.router['id'])
+        self.assertIsNotNone(router_fip_ids)
+        for fip_id in router_fip_ids:
+            pf_ids = self.fip_pf_ext.mapping.fip_port_forwarding.get(fip_id)
+            self.assertIsNotNone(pf_ids)
+            for pf_id in pf_ids:
+                pf = self.fip_pf_ext.mapping.managed_port_forwardings.get(
+                    pf_id)
+                self.assertIsNotNone(pf)
+
+        self.fip_pf_ext.delete_router(self.context, self.router['id'])
+
+        self.assertIsNone(
+            self.fip_pf_ext.mapping.router_fip_mapping.get(self.router['id']))
+
     def test_check_if_need_process_no_snat_ns(self):
         ex_gw_port = {'id': _uuid()}
         router_id = _uuid()
