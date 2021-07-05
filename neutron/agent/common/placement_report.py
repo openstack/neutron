@@ -170,6 +170,26 @@ class PlacementState(object):
         rps.extend(device_rps)
         return rps
 
+    def _deferred_update_agent_rp_traits(self, traits_):
+        agent_rp_traits = []
+
+        if not traits_:
+            return agent_rp_traits
+
+        # Remove hypervisor duplicates to avoid calling placement API multiple
+        # times for the same hypervisor.
+        hypervisors = set(h['name'] for h in self._hypervisor_rps.values())
+        for hypervisor in hypervisors:
+            agent_rp_uuid = place_utils.agent_resource_provider_uuid(
+                self._driver_uuid_namespace, hypervisor)
+            agent_rp_traits.append(
+                DeferredCall(
+                    self._client.update_resource_provider_traits,
+                    resource_provider_uuid=agent_rp_uuid,
+                    traits=traits_))
+
+        return agent_rp_traits
+
     def deferred_update_resource_provider_traits(self):
         rp_traits = []
 
@@ -194,6 +214,8 @@ class PlacementState(object):
                     self._client.update_resource_provider_traits,
                     resource_provider_uuid=rp_uuid,
                     traits=traits))
+
+        rp_traits += self._deferred_update_agent_rp_traits(vnic_type_traits)
 
         return rp_traits
 
