@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from oslo_policy import policy as base_policy
+from oslo_utils import uuidutils
 
 from neutron import policy
 from neutron.tests.unit.conf.policies import base
@@ -728,3 +729,132 @@ class ProjectReaderTests(ProjectMemberTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'remove_router_interface', self.alt_target)
+
+
+class ExtrarouteAPITestCase(base.PolicyBaseTestCase):
+
+    def setUp(self):
+        super(ExtrarouteAPITestCase, self).setUp()
+        self.router = {
+            'id': uuidutils.generate_uuid(),
+            'project_id': self.project_id}
+
+        self.target = {
+            'project_id': self.project_id,
+            'router_id': self.router['id'],
+            'ext_parent_router_id': self.router['id']}
+        self.alt_target = {
+            'project_id': self.alt_project_id,
+            'router_id': self.router['id'],
+            'ext_parent_router_id': self.router['id']}
+
+
+class SystemAdminExtrarouteTests(ExtrarouteAPITestCase):
+
+    def setUp(self):
+        super(SystemAdminExtrarouteTests, self).setUp()
+        self.context = self.system_admin_ctx
+
+    def test_add_extraroute(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'add_extraroutes', self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'add_extraroutes', self.alt_target))
+
+    def test_remove_extraroute(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'remove_extraroutes', self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'remove_extraroutes', self.alt_target))
+
+
+class SystemMemberExtrarouteTests(SystemAdminExtrarouteTests):
+
+    def setUp(self):
+        super(SystemMemberExtrarouteTests, self).setUp()
+        self.context = self.system_member_ctx
+
+    def test_add_extraroute(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'add_extraroutes', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'add_extraroutes', self.alt_target)
+
+    def test_remove_extraroute(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'remove_extraroutes', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'remove_extraroutes', self.alt_target)
+
+
+class SystemReaderExtrarouteTests(SystemMemberExtrarouteTests):
+
+    def setUp(self):
+        super(SystemReaderExtrarouteTests, self).setUp()
+        self.context = self.system_reader_ctx
+
+
+class ProjectAdminExtrarouteTests(ExtrarouteAPITestCase):
+
+    def setUp(self):
+        super(ProjectAdminExtrarouteTests, self).setUp()
+        self.context = self.project_admin_ctx
+
+    def test_add_extraroute(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'add_extraroutes', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'remove_extraroutes', self.alt_target)
+
+    def test_remove_extraroute(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'remove_extraroutes', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'remove_extraroutes', self.alt_target)
+
+
+class ProjectMemberExtrarouteTests(ProjectAdminExtrarouteTests):
+
+    def setUp(self):
+        super(ProjectMemberExtrarouteTests, self).setUp()
+        self.context = self.project_member_ctx
+
+
+class ProjectReaderExtrarouteTests(ProjectMemberExtrarouteTests):
+
+    def setUp(self):
+        super(ProjectReaderExtrarouteTests, self).setUp()
+        self.context = self.project_reader_ctx
+
+    def test_add_extraroute(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'add_extraroutes', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'add_extraroutes', self.alt_target)
+
+    def test_remove_extraroute(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'remove_extraroutes', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'remove_extraroutes', self.alt_target)
