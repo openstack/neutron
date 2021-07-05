@@ -2382,3 +2382,6 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
 
     def test_dvr_router_interface_mtu_update(self):
         self._test_router_interface_mtu_update(ha=False)
+
+    def test_dvr_ha_router_interface_mtu_update(self):
+        self._test_router_interface_mtu_update(ha=True)
