@@ -23,11 +23,11 @@ from neutron_lib import exceptions as lib_exc
 from neutron_lib.exceptions import placement as pl_exc
 from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.objects import utils as obj_utils
-from neutron_lib.placement import constants as pl_constants
 from neutron_lib.plugins import constants as plugins_constants
 from neutron_lib.plugins import directory
 from neutron_lib.services.qos import constants as qos_consts
 from neutron_lib.utils import net as net_utils
+import os_resource_classes as orc
 from oslo_config import cfg
 from oslo_utils import uuidutils
 import webob.exc
@@ -158,7 +158,7 @@ class TestQosPlugin(base.BaseQosTestCase):
             port['resource_request']['required']
         )
         self.assertEqual(
-            {pl_constants.CLASS_NET_BW_EGRESS_KBPS: 10},
+            {orc.NET_BW_EGR_KILOBIT_PER_SEC: 10},
             port['resource_request']['resources'],
         )
 
@@ -179,8 +179,8 @@ class TestQosPlugin(base.BaseQosTestCase):
         )
         self.assertEqual(
             {
-                pl_constants.CLASS_NET_BW_EGRESS_KBPS: 10,
-                pl_constants.CLASS_NET_BW_INGRESS_KBPS: 20
+                orc.NET_BW_EGR_KILOBIT_PER_SEC: 10,
+                orc.NET_BW_IGR_KILOBIT_PER_SEC: 20
             },
             port['resource_request']['resources'],
         )
@@ -213,7 +213,7 @@ class TestQosPlugin(base.BaseQosTestCase):
             port['resource_request']['required']
         )
         self.assertEqual(
-            {pl_constants.CLASS_NET_BW_EGRESS_KBPS: 10},
+            {orc.NET_BW_EGR_KILOBIT_PER_SEC: 10},
             port['resource_request']['resources'],
         )
 

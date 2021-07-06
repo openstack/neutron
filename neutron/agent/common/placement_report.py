@@ -13,8 +13,8 @@
 # limitations under the License.
 
 from neutron_lib import constants as nlib_const
-from neutron_lib.placement import constants as place_const
 from neutron_lib.placement import utils as place_utils
+import os_resource_classes as orc
 from oslo_log import log as logging
 
 LOG = logging.getLogger(__name__)
@@ -209,9 +209,9 @@ class PlacementState(object):
             inventories = {}
             for direction, rp_class in (
                     (nlib_const.EGRESS_DIRECTION,
-                     place_const.CLASS_NET_BW_EGRESS_KBPS),
+                     orc.NET_BW_EGR_KILOBIT_PER_SEC),
                     (nlib_const.INGRESS_DIRECTION,
-                     place_const.CLASS_NET_BW_INGRESS_KBPS)):
+                     orc.NET_BW_IGR_KILOBIT_PER_SEC)):
                 if bw_values[direction] is not None:
                     inventory = dict(self._rp_inventory_defaults)
                     inventory['total'] = bw_values[direction]

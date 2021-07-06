@@ -34,9 +34,9 @@ from neutron_lib.db import resource_extend
 from neutron_lib import exceptions as lib_exc
 from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.placement import client as pl_client
-from neutron_lib.placement import constants as pl_constants
 from neutron_lib.placement import utils as pl_utils
 from neutron_lib.services.qos import constants as qos_consts
+import os_resource_classes as orc
 from oslo_config import cfg
 from oslo_log import log as logging
 
@@ -151,9 +151,9 @@ class QoSPlugin(qos.QoSPluginBase):
         # NOTE(ralonsoh): we should move this translation dict to n-lib.
         rule_direction_class = {
             nl_constants.INGRESS_DIRECTION:
-                pl_constants.CLASS_NET_BW_INGRESS_KBPS,
+                orc.NET_BW_IGR_KILOBIT_PER_SEC,
             nl_constants.EGRESS_DIRECTION:
-                pl_constants.CLASS_NET_BW_EGRESS_KBPS
+                orc.NET_BW_EGR_KILOBIT_PER_SEC
         }
         for rule in min_bw_rules:
             resources[rule_direction_class[rule.direction]] = rule.min_kbps
@@ -285,9 +285,9 @@ class QoSPlugin(qos.QoSPluginBase):
                 # TODO(lajoskatona): move this to neutron-lib, see similar
                 # dict @l125.
                 if d_dir == 'egress':
-                    drctn = pl_constants.CLASS_NET_BW_EGRESS_KBPS
+                    drctn = orc.NET_BW_EGR_KILOBIT_PER_SEC
                 else:
-                    drctn = pl_constants.CLASS_NET_BW_INGRESS_KBPS
+                    drctn = orc.NET_BW_IGR_KILOBIT_PER_SEC
                 return {drctn: diff}
         return {}
 
