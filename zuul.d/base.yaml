@@ -28,6 +28,7 @@
       - ^rally-jobs/.*$
       - ^zuul.d/(?!(project)).*\.yaml
     vars:
+      Q_BUILD_OVS_FROM_GIT: True
       OVN_BRANCH: v21.06.0
       OVS_BRANCH: v2.16.0
       devstack_services:
@@ -50,6 +51,7 @@
     parent: neutron-functional
     vars:
       tox_envlist: dsvm-fullstack-gate
+      Q_BUILD_OVS_FROM_GIT: False
       zuul_copy_output:
         # We need to copy directory with logs to have it in job artifacts also,
         # /opt/stack/logs is default logs directory defined in neutron's

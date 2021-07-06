@@ -62,8 +62,8 @@ NEUTRON_DIR=${NEUTRON_DIR:=$REPO_BASE/$PROJECT_NAME}
 INSTALL_MYSQL_ONLY=${INSTALL_MYSQL_ONLY:-False}
 # The gate should automatically install dependencies.
 INSTALL_BASE_DEPENDENCIES=${INSTALL_BASE_DEPENDENCIES:-$IS_GATE}
-BUILD_OVS_FROM_SOURCE=${BUILD_OVS_FROM_SOURCE:-True}
 OVN_BRANCH=${OVN_BRANCH:-master}
+Q_BUILD_OVS_FROM_GIT=${Q_BUILD_OVS_FROM_GIT:-True}
 OVS_BRANCH=${OVS_BRANCH:-master}
 
 
@@ -100,7 +100,7 @@ function _install_base_deps {
     echo_summary "Installing base dependencies"
 
     INSTALL_TESTONLY_PACKAGES=True
-    if [[ "$BUILD_OVS_FROM_SOURCE" == "True" ]]; then
+    if [[ "$Q_BUILD_OVS_FROM_GIT" == "True" ]]; then
         PACKAGES=$(get_packages general,neutron,q-agt,q-l3)
         # Do not install 'python-' prefixed packages other than
         # python-dev*.  Neutron's functional testing relies on deployment
