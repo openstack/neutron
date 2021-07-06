@@ -576,7 +576,7 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
                     self.assertEqual(1, subnets_pool_a_count)
                     self.assertEqual(1, subnets_pool_b_count)
 
-    def test_block_update_subnetpool_network_affinity(self):
+    def test_block_update_address_scope_network_affinity(self):
         with self.address_scope(constants.IP_VERSION_4,
                                 name='scope-a') as scope_a,\
             self.address_scope(constants.IP_VERSION_4,
@@ -618,13 +618,22 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
                         ip_version=constants.IP_VERSION_4,
                         tenant_id=scope_a['tenant_id'])
 
+                    api = self._api_for_resource('subnetpools')
+                    # Attempt to update subnetpool_b's prefixes and avoid
+                    # failure.
+                    data = {'subnetpool': {'prefixes': ['10.20.0.0/16',
+                                                        '10.100.0.0/24']}}
+                    req = self.new_update_request('subnetpools', data,
+                                                  subnetpool_b['id'])
+                    res = req.get_response(api)
+                    self.assertEqual(webob.exc.HTTPOk.code,
+                                     res.status_int)
                     # Attempt to update subnetpool_b's address scope and
                     # assert failure.
                     data = {'subnetpool': {'address_scope_id':
                                            scope_b['id']}}
                     req = self.new_update_request('subnetpools', data,
                                                   subnetpool_b['id'])
-                    api = self._api_for_resource('subnetpools')
                     res = req.get_response(api)
                     self.assertEqual(webob.exc.HTTPBadRequest.code,
                                      res.status_int)
