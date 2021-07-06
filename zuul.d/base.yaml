@@ -27,7 +27,7 @@
       - ^roles/.*$
       - ^rally-jobs/.*$
     vars:
-      BUILD_OVS_FROM_SOURCE: True
+      Q_BUILD_OVS_FROM_GIT: True
       INSTALL_OVN: True
       OVN_BRANCH: v21.06.0
       OVS_BRANCH: v2.16.0
@@ -51,7 +51,7 @@
     parent: neutron-functional
     vars:
       tox_envlist: dsvm-fullstack-gate
-      BUILD_OVS_FROM_SOURCE: False
+      Q_BUILD_OVS_FROM_GIT: False
       INSTALL_OVN: False
       zuul_copy_output:
         # We need to copy directory with logs to have it in job artifacts also,
