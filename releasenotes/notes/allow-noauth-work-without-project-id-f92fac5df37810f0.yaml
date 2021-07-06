@@ -1,0 +1,7 @@
+---
+features:
+  - When ``noauth`` auth_strategy is used, neutron no longer requires
+    a resource creation request to include a dummy 'project_id' in
+    request body. A default project_id ``fake_project_id`` would be
+    populated automatically in that case and would make the use of
+    ``noauth`` usage simpler.
