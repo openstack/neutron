@@ -92,7 +92,7 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
                 self.neutron_port['id'], hybrid_plug)).port
 
         for fixed_ip in self.neutron_port['fixed_ips']:
-            self._configure_ipaddress(fixed_ip)
+            self._configure_ipaddress(self.neutron_port['id'], fixed_ip)
 
     def bind_port_if_needed(self):
         if self.neutron_port[pbs.VIF_TYPE] == pbs.VIF_TYPE_UNBOUND:
@@ -116,7 +116,7 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
 
         return new_bridge
 
-    def _configure_ipaddress(self, fixed_ip):
+    def _configure_ipaddress(self, port_id, fixed_ip):
         subnet_id = fixed_ip['subnet_id']
         subnet = self.safe_client.client.show_subnet(subnet_id)
         if (netaddr.IPAddress(fixed_ip['ip_address']).version ==
@@ -126,6 +126,7 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
             self.gateway_ipv6 = subnet['subnet']['gateway_ip']
             if self.use_dhcp6:
                 self._configure_ipaddress_via_dhcp(
+                    port_id,
                     version=constants.IP_VERSION_6)
         else:
             self._ip = fixed_ip['ip_address']
@@ -134,7 +135,7 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
             self.gateway_ip = subnet['subnet']['gateway_ip']
 
             if self.use_dhcp:
-                self._configure_ipaddress_via_dhcp()
+                self._configure_ipaddress_via_dhcp(port_id)
             else:
                 self._configure_static_ipaddress()
 
@@ -146,12 +147,16 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
             if gateway_ip in net:
                 net_helpers.set_namespace_gateway(self.port, self.gateway_ip)
 
-    def _configure_ipaddress_via_dhcp(self, version=constants.IP_VERSION_4):
-        self._start_async_dhclient(version)
+    def _configure_ipaddress_via_dhcp(self, port_id,
+                                      version=constants.IP_VERSION_4):
+        self._start_async_dhclient(port_id, version)
         self.addCleanup(self._stop_async_dhclient)
 
-    def _start_async_dhclient(self, version=constants.IP_VERSION_4):
+    def _start_async_dhclient(self, port_id, version=constants.IP_VERSION_4):
         cmd = ["dhclient", '-%s' % version,
+               '-lf',
+               '%s/%s.lease' % (self.host.neutron_config.temp_dir,
+                                port_id),
                '-sf', self.NO_RESOLV_CONF_DHCLIENT_SCRIPT_PATH,
                '--no-pid', '-d', self.port.name]
         self.dhclient_async = async_process.AsyncProcess(
