@@ -1078,7 +1078,7 @@ class OVNClient(object):
         for gw_info in gateways:
             if ovn_gw_subnets and gw_info.subnet_id not in ovn_gw_subnets:
                 return True
-            if gw_info.ip_version == 6:
+            if gw_info.ip_version == const.IP_VERSION_6:
                 continue
             for snat in ovn_snats:
                 if snat.external_ip != gw_info.router_ip:
@@ -1122,7 +1122,7 @@ class OVNClient(object):
         for fixed_ip in port['fixed_ips']:
             subnet_id = fixed_ip['subnet_id']
             subnet = self._plugin.get_subnet(context, subnet_id)
-            if subnet['ip_version'] != 4:
+            if subnet['ip_version'] != const.IP_VERSION_4:
                 continue
             cidr = subnet['cidr']
         return cidr
@@ -1419,7 +1419,7 @@ class OVNClient(object):
                         if 'subnet_id' in router_interface:
                             if subnet['id'] != router_interface['subnet_id']:
                                 continue
-                    if subnet['ip_version'] == 4:
+                    if subnet['ip_version'] == const.IP_VERSION_4:
                         cidr = subnet['cidr']
 
                 if utils.is_snat_enabled(router) and cidr:
@@ -1528,7 +1528,7 @@ class OVNClient(object):
                     subnet = self._plugin.get_subnet(context, sid)
                 except n_exc.SubnetNotFound:
                     continue
-                if subnet['ip_version'] == 4:
+                if subnet['ip_version'] == const.IP_VERSION_4:
                     cidr = subnet['cidr']
                     break
 
@@ -1751,7 +1751,7 @@ class OVNClient(object):
         return dhcp_options
 
     def _process_global_dhcp_opts(self, options, ip_version):
-        if ip_version == 4:
+        if ip_version == const.IP_VERSION_4:
             global_options = ovn_conf.get_global_dhcpv4_opts()
         else:
             global_options = ovn_conf.get_global_dhcpv6_opts()
@@ -1836,7 +1836,7 @@ class OVNClient(object):
 
             options['classless_static_route'] = '{' + ', '.join(routes) + '}'
 
-        self._process_global_dhcp_opts(options, ip_version=4)
+        self._process_global_dhcp_opts(options, ip_version=const.IP_VERSION_4)
 
         return options
 
@@ -1855,7 +1855,8 @@ class OVNClient(object):
         if subnet.get('ipv6_address_mode') == const.DHCPV6_STATELESS:
             dhcpv6_opts[ovn_const.DHCPV6_STATELESS_OPT] = 'true'
 
-        self._process_global_dhcp_opts(dhcpv6_opts, ip_version=6)
+        self._process_global_dhcp_opts(dhcpv6_opts,
+                                       ip_version=const.IP_VERSION_6)
 
         return dhcpv6_opts
 
@@ -1958,7 +1959,7 @@ class OVNClient(object):
 
     def create_subnet(self, context, subnet, network):
         if subnet['enable_dhcp']:
-            if subnet['ip_version'] == 4:
+            if subnet['ip_version'] == const.IP_VERSION_4:
                 self.update_metadata_port(context, network['id'],
                                           subnet_id=subnet['id'])
             self._add_subnet_dhcp_options(subnet, network)
@@ -2130,7 +2131,7 @@ class OVNClient(object):
 
         # Retrieve all subnets in this network
         subnets = self._plugin.get_subnets(context, filters=dict(
-            network_id=[network_id], ip_version=[4]))
+            network_id=[network_id], ip_version=[const.IP_VERSION_4]))
 
         subnet_ids = set(s['id'] for s in subnets)
 
