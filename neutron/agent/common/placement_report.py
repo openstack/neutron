@@ -81,6 +81,8 @@ class PlacementState(object):
     def __init__(self,
                  rp_bandwidths,
                  rp_inventory_defaults,
+                 rp_pkt_processing,
+                 rp_pkt_processing_inventory_defaults,
                  driver_uuid_namespace,
                  agent_type,
                  hypervisor_rps,
@@ -89,6 +91,8 @@ class PlacementState(object):
                  client):
         self._rp_bandwidths = rp_bandwidths
         self._rp_inventory_defaults = rp_inventory_defaults
+        self._rp_pp = rp_pkt_processing
+        self._rp_pp_inventory_defaults = rp_pkt_processing_inventory_defaults
         self._driver_uuid_namespace = driver_uuid_namespace
         self._agent_type = agent_type
         self._hypervisor_rps = hypervisor_rps
@@ -219,7 +223,36 @@ class PlacementState(object):
 
         return rp_traits
 
-    def deferred_update_resource_provider_inventories(self):
+    def _deferred_update_rp_pp_inventory(self):
+        agent_rp_inventories = []
+
+        for hypervisor, pp_values in self._rp_pp.items():
+            agent_rp_uuid = place_utils.agent_resource_provider_uuid(
+                self._driver_uuid_namespace, hypervisor)
+
+            inventories = {}
+            for direction, rp_class in (
+                    (nlib_const.EGRESS_DIRECTION,
+                     orc.NET_PACKET_RATE_EGR_KILOPACKET_PER_SEC),
+                    (nlib_const.INGRESS_DIRECTION,
+                     orc.NET_PACKET_RATE_IGR_KILOPACKET_PER_SEC),
+                    (nlib_const.ANY_DIRECTION,
+                     orc.NET_PACKET_RATE_KILOPACKET_PER_SEC)):
+                if pp_values.get(direction):
+                    inventory = dict(self._rp_pp_inventory_defaults)
+                    inventory['total'] = pp_values[direction]
+                    inventories[rp_class] = inventory
+
+            if inventories:
+                agent_rp_inventories.append(
+                    DeferredCall(
+                        self._client.update_resource_provider_inventories,
+                        resource_provider_uuid=agent_rp_uuid,
+                        inventories=inventories))
+
+        return agent_rp_inventories
+
+    def _deferred_update_rp_bw_inventory(self):
         rp_inventories = []
 
         for device, bw_values in self._rp_bandwidths.items():
@@ -234,7 +267,7 @@ class PlacementState(object):
                      orc.NET_BW_EGR_KILOBIT_PER_SEC),
                     (nlib_const.INGRESS_DIRECTION,
                      orc.NET_BW_IGR_KILOBIT_PER_SEC)):
-                if bw_values[direction] is not None:
+                if bw_values.get(direction):
                     inventory = dict(self._rp_inventory_defaults)
                     inventory['total'] = bw_values[direction]
                     inventories[rp_class] = inventory
@@ -247,6 +280,15 @@ class PlacementState(object):
                         inventories=inventories))
 
         return rp_inventories
+
+    def deferred_update_resource_provider_inventories(self):
+        bw_inventory = self._deferred_update_rp_bw_inventory()
+        pp_inventory = self._deferred_update_rp_pp_inventory()
+
+        inventories = []
+        inventories.extend(bw_inventory)
+        inventories.extend(pp_inventory)
+        return inventories
 
     def deferred_sync(self):
         state = []

@@ -1,0 +1,13 @@
+---
+features:
+  - |
+    Report packet processing capacity on the OVS agent resource provider as
+    the new ``NET_PACKET_RATE_KILOPACKET_PER_SEC``,
+    ``NET_PACKET_RATE_EGR_KILOPACKET_PER_SEC`` or
+    ``NET_PACKET_RATE_IGR_KILOPACKET_PER_SEC`` resource inventory. This is
+    similar to how the bandwidth resource is reported today. The former
+    is used for non-hardware-offloaded OVS deployments, where packets
+    processed from both ingress and egress directions are handled by the same
+    set of CPU cores. Remaining inventories are used for hardware-offloaded
+    OVS, where the incoming and outgoing packets are handled by independent
+    hardware resources.
