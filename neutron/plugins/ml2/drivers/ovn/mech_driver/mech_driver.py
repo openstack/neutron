@@ -295,6 +295,8 @@ class OVNMechanismDriver(api.MechanismDriver):
         """
         idl = ovsdb_monitor.OvnInitPGNbIdl.from_server(
             ovn_conf.get_ovn_nb_connection(), self.nb_schema_helper, self)
+        # Only one server should try to create the port group
+        idl.set_lock('pg_drop_creation')
         with ovsdb_monitor.short_living_ovsdb_api(
                 impl_idl_ovn.OvsdbNbOvnIdl, idl) as pre_ovn_nb_api:
             try:
@@ -309,15 +311,18 @@ class OVNMechanismDriver(api.MechanismDriver):
                 # removed when the python-ovs bug is resolved.
                 pass
             except RuntimeError as re:
-                if pre_ovn_nb_api.get_port_group(
-                        ovn_const.OVN_DROP_PORT_GROUP_NAME):
-                    LOG.debug(
-                        "Port Group %(port_group)s already exists, "
-                        "ignoring RuntimeError %(error)s", {
-                            'port_group': ovn_const.OVN_DROP_PORT_GROUP_NAME,
-                            'error': re})
-                else:
-                    raise
+                # If we don't get the lock, and the port group didn't exist
+                # when we tried to create it, it might still have been
+                # created by another server and we just haven't gotten the
+                # update yet.
+                LOG.info("Waiting for Port Group %(pg)s to be created",
+                         {'pg': ovn_const.OVN_DROP_PORT_GROUP_NAME})
+                if not idl.neutron_pg_drop_event.wait():
+                    LOG.error("Port Group %(pg)s was not created in time",
+                              {'pg': ovn_const.OVN_DROP_PORT_GROUP_NAME})
+                    raise re
+                LOG.info("Porg Group %(pg)s was created by another server",
+                         {'pg': ovn_const.OVN_DROP_PORT_GROUP_NAME})
 
     @staticmethod
     def should_post_fork_initialize(worker_class):
@@ -357,7 +362,6 @@ class OVNMechanismDriver(api.MechanismDriver):
             return
 
         self._post_fork_event.clear()
-        self._wait_for_pg_drop_event()
         self._ovn_client_inst = None
 
         if worker_class == neutron.wsgi.WorkerService:
@@ -404,23 +408,6 @@ class OVNMechanismDriver(api.MechanismDriver):
                 maintenance.DBInconsistenciesPeriodics(self._ovn_client))
             self._maintenance_thread.start()
             LOG.info("Maintenance task thread has started")
-
-    def _wait_for_pg_drop_event(self):
-        """Wait for event that occurs when neutron_pg_drop Port Group exists.
-
-        The method creates a short living connection to the Northbound
-        database. It waits for CREATE event caused by the Port Group.
-        Such event occurs when:
-            1) The Port Group doesn't exist and is created by other process.
-            2) The Port Group already exists and event is emitted when DB copy
-               is available to the IDL.
-        """
-        idl = ovsdb_monitor.OvnInitPGNbIdl.from_server(
-            ovn_conf.get_ovn_nb_connection(), self.nb_schema_helper, self,
-            pg_only=True)
-        with ovsdb_monitor.short_living_ovsdb_api(
-                impl_idl_ovn.OvsdbNbOvnIdl, idl) as ovn_nb_api:
-            ovn_nb_api.idl.neutron_pg_drop_event.wait()
 
     def _create_security_group_precommit(self, resource, event, trigger,
                                          **kwargs):
