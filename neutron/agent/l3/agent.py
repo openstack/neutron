@@ -78,6 +78,7 @@ DELETE_RELATED_ROUTER = 2
 ADD_UPDATE_ROUTER = 3
 ADD_UPDATE_RELATED_ROUTER = 4
 PD_UPDATE = 5
+UPDATE_NETWORK = 6
 
 RELATED_ACTION_MAP = {DELETE_ROUTER: DELETE_RELATED_ROUTER,
                       ADD_UPDATE_ROUTER: ADD_UPDATE_RELATED_ROUTER}
@@ -501,16 +502,26 @@ class L3NATAgent(ha.AgentMixin,
         network_id = kwargs['network']['id']
         LOG.debug("Got network %s update", network_id)
         for ri in self.router_info.values():
-            LOG.debug("Checking if router %s is plugged to the network %s",
-                      ri, network_id)
-            ports = list(ri.internal_ports)
-            if ri.ex_gw_port:
-                ports.append(ri.ex_gw_port)
-            port_belongs = lambda p: p['network_id'] == network_id
-            if any(port_belongs(p) for p in ports):
-                update = queue.ResourceUpdate(
-                    ri.router_id, PRIORITY_SYNC_ROUTERS_TASK)
-                self._resync_router(update)
+            update = queue.ResourceUpdate(ri.router_id,
+                                          PRIORITY_RPC,
+                                          action=UPDATE_NETWORK,
+                                          resource=network_id)
+            self._queue.add(update)
+
+    def _process_network_update(self, router_id, network_id):
+        ri = self.router_info.get(router_id)
+        if not ri:
+            return
+        LOG.debug("Checking if router %s is plugged to the network %s",
+                  ri, network_id)
+        ports = list(ri.internal_ports)
+        if ri.ex_gw_port:
+            ports.append(ri.ex_gw_port)
+        port_belongs = lambda p: p['network_id'] == network_id
+        if any(port_belongs(p) for p in ports):
+            update = queue.ResourceUpdate(
+                ri.router_id, PRIORITY_SYNC_ROUTERS_TASK)
+            self._resync_router(update)
 
     def _process_router_if_compatible(self, router):
         if (self.conf.external_network_bridge and
@@ -611,69 +622,83 @@ class L3NATAgent(ha.AgentMixin,
         router_update.resource = None  # Force the agent to resync the router
         self._queue.add(router_update)
 
-    def _process_router_update(self):
+    def _process_update(self):
+
         for rp, update in self._queue.each_update_to_next_resource():
-            LOG.info("Starting router update for %s, action %s, priority %s, "
+            LOG.info("Starting processing update %s, action %s, priority %s, "
                      "update_id %s. Wait time elapsed: %.3f",
                      update.id, update.action, update.priority,
                      update.update_id,
                      update.time_elapsed_since_create)
-            if update.action == PD_UPDATE:
-                self.pd.process_prefix_update()
-                LOG.info("Finished a router update for %s IPv6 PD, "
-                         "update_id. %s. Time elapsed: %.3f",
-                         update.id, update.update_id,
-                         update.time_elapsed_since_start)
-                continue
+            if update.action == UPDATE_NETWORK:
+                self._process_network_update(
+                    router_id=update.id,
+                    network_id=update.resource)
+            else:
+                self._process_router_update(rp, update)
 
-            routers = [update.resource] if update.resource else []
+    def _process_router_update(self, rp, update):
+        LOG.info("Starting router update for %s, action %s, priority %s, "
+                 "update_id %s. Wait time elapsed: %.3f",
+                 update.id, update.action, update.priority,
+                 update.update_id,
+                 update.time_elapsed_since_create)
+        if update.action == PD_UPDATE:
+            self.pd.process_prefix_update()
+            LOG.info("Finished a router update for %s IPv6 PD, "
+                     "update_id. %s. Time elapsed: %.3f",
+                     update.id, update.update_id,
+                     update.time_elapsed_since_start)
+            return
 
-            not_delete_no_routers = (update.action != DELETE_ROUTER and
-                                     not routers)
-            related_action = update.action in (DELETE_RELATED_ROUTER,
-                                               ADD_UPDATE_RELATED_ROUTER)
-            if not_delete_no_routers or related_action:
-                try:
-                    update.timestamp = timeutils.utcnow()
-                    routers = self.plugin_rpc.get_routers(self.context,
-                                                          [update.id])
-                except Exception:
-                    msg = "Failed to fetch router information for '%s'"
-                    LOG.exception(msg, update.id)
-                    self._resync_router(update)
-                    continue
+        routers = [update.resource] if update.resource else []
 
-                # For a related action, verify the router is still hosted here,
-                # since it could have just been deleted and we don't want to
-                # add it back.
-                if related_action:
-                    routers = [r for r in routers if r['id'] == update.id]
-
-            if not routers:
-                removed = self._safe_router_removed(update.id)
-                if not removed:
-                    self._resync_router(update)
-                else:
-                    # need to update timestamp of removed router in case
-                    # there are older events for the same router in the
-                    # processing queue (like events from fullsync) in order to
-                    # prevent deleted router re-creation
-                    rp.fetched_and_processed(update.timestamp)
-                LOG.info("Finished a router update for %s, update_id %s. "
-                         "Time elapsed: %.3f",
-                         update.id, update.update_id,
-                         update.time_elapsed_since_start)
-                continue
-
-            if not self._process_routers_if_compatible(routers, update):
+        not_delete_no_routers = (update.action != DELETE_ROUTER and
+                                 not routers)
+        related_action = update.action in (DELETE_RELATED_ROUTER,
+                                           ADD_UPDATE_RELATED_ROUTER)
+        if not_delete_no_routers or related_action:
+            try:
+                update.timestamp = timeutils.utcnow()
+                routers = self.plugin_rpc.get_routers(self.context,
+                                                      [update.id])
+            except Exception:
+                msg = "Failed to fetch router information for '%s'"
+                LOG.exception(msg, update.id)
                 self._resync_router(update)
-                continue
+                return
 
-            rp.fetched_and_processed(update.timestamp)
-            LOG.info("Finished a router update for %s, update_id %s. "
+            # For a related action, verify the router is still hosted here,
+            # since it could have just been deleted and we don't want to
+            # add it back.
+            if related_action:
+                routers = [r for r in routers if r['id'] == update.id]
+
+        if not routers:
+            removed = self._safe_router_removed(update.id)
+            if not removed:
+                self._resync_router(update)
+            else:
+                # need to update timestamp of removed router in case
+                # there are older events for the same router in the
+                # processing queue (like events from fullsync) in order to
+                # prevent deleted router re-creation
+                rp.fetched_and_processed(update.timestamp)
+            LOG.info("Finished a router delete for %s, update_id %s. "
                      "Time elapsed: %.3f",
                      update.id, update.update_id,
                      update.time_elapsed_since_start)
+            return
+
+        if not self._process_routers_if_compatible(routers, update):
+            self._resync_router(update)
+            return
+
+        rp.fetched_and_processed(update.timestamp)
+        LOG.info("Finished a router update for %s, update_id %s. "
+                 "Time elapsed: %.3f",
+                 update.id, update.update_id,
+                 update.time_elapsed_since_start)
 
     def _process_routers_if_compatible(self, routers, update):
         process_result = True
@@ -722,7 +747,7 @@ class L3NATAgent(ha.AgentMixin,
     def _process_routers_loop(self):
         LOG.debug("Starting _process_routers_loop")
         while True:
-            self._pool.spawn_n(self._process_router_update)
+            self._pool.spawn_n(self._process_update)
 
     # NOTE(kevinbenton): this is set to 1 second because the actual interval
     # is controlled by a FixedIntervalLoopingCall in neutron/service.py that
