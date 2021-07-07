@@ -456,7 +456,7 @@ def _filter_by_subnet(context, fixed_ips):
         # single get_objects call instead
         subnet = subnet_obj.Subnet.get_object(
             context, id=ip['subnet_id'])
-        if subnet.get('dns_publish_fixed_ip'):
+        if subnet and subnet.get('dns_publish_fixed_ip'):
             filter_fixed_ips = True
             subnet_filtered.append(str(ip['ip_address']))
     if filter_fixed_ips:
