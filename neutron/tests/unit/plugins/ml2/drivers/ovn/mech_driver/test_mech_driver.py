@@ -148,23 +148,29 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
     def test__create_neutron_pg_drop_created_meanwhile(
             self, m_ovsdb_api_con, m_from_server):
         m_ovsdb_api = m_ovsdb_api_con.return_value.__enter__.return_value
-        m_ovsdb_api.get_port_group.side_effect = [None, 'foo']
+        m_ovsdb_api.get_port_group.return_value = None
         m_ovsdb_api.transaction.return_value.__exit__.side_effect = (
             RuntimeError())
-        self.mech_driver._create_neutron_pg_drop()
-        self.assertEqual(2, m_ovsdb_api.get_port_group.call_count)
+        idl = m_from_server.return_value
+        idl.neutron_pg_drop_event.wait.return_value = True
+        result = self.mech_driver._create_neutron_pg_drop()
+        idl.neutron_pg_drop_event.wait.assert_called_once()
+        # If sommething else creates the port group, just return
+        self.assertIsNone(result)
 
     @mock.patch.object(ovsdb_monitor.OvnInitPGNbIdl, 'from_server')
     @mock.patch.object(ovsdb_monitor, 'short_living_ovsdb_api')
     def test__create_neutron_pg_drop_error(
             self, m_ovsdb_api_con, m_from_server):
         m_ovsdb_api = m_ovsdb_api_con.return_value.__enter__.return_value
-        m_ovsdb_api.get_port_group.side_effect = [None, None]
+        m_ovsdb_api.get_port_group.return_value = None
         m_ovsdb_api.transaction.return_value.__exit__.side_effect = (
             RuntimeError())
+        idl = m_from_server.return_value
+        idl.neutron_pg_drop_event.wait.return_value = False
         self.assertRaises(RuntimeError,
                           self.mech_driver._create_neutron_pg_drop)
-        self.assertEqual(2, m_ovsdb_api.get_port_group.call_count)
+        idl.neutron_pg_drop_event.wait.assert_called_once()
 
     def test__get_max_tunid_no_key_set(self):
         self.mech_driver._nb_ovn.nb_global.options.get.return_value = None

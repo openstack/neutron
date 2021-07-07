@@ -749,9 +749,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         if uuidutils.is_uuid_like(pg_name):
             pg_name = utils.ovn_port_group_name(pg_name)
         try:
-            for pg in self._tables['Port_Group'].rows.values():
-                if pg.name == pg_name:
-                    return pg
+            return self.lookup('Port_Group', pg_name, default=None)
         except KeyError:
             # TODO(dalvarez): This except block is added for backwards compat
             # with old OVN schemas (<=2.9) where Port Groups are not present.
