@@ -2266,11 +2266,11 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent._create_router = mock.Mock(return_value=ri)
         agent._fetch_external_net_id = mock.Mock(
             return_value=router['external_gateway_info']['network_id'])
-        agent._process_router_update()
+        agent._process_update()
         log_exception.assert_has_calls(calls)
 
         ri.initialize.side_effect = None
-        agent._process_router_update()
+        agent._process_update()
         self.assertTrue(ri.delete.called)
         self.assertEqual(2, ri.initialize.call_count)
         self.assertEqual(2, agent._create_router.call_count)
@@ -2577,6 +2577,17 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertFalse(agent._queue.add.called)
 
     def test_network_update(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent.router_info = {
+            _uuid(): mock.Mock(),
+            _uuid(): mock.Mock()}
+        network_id = _uuid()
+        agent._queue = mock.Mock()
+        network = {'id': network_id}
+        agent.network_update(None, network=network)
+        self.assertEqual(2, agent._queue.add.call_count)
+
+    def test__process_network_update(self):
         router = l3_test_common.prepare_router_data(num_internal_ports=2)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent._process_added_router(router)
@@ -2585,9 +2596,26 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         internal_ports = ri.router.get(lib_constants.INTERFACE_KEY, [])
         network_id = internal_ports[0]['network_id']
         agent._queue = mock.Mock()
-        network = {'id': network_id}
-        agent.network_update(None, network=network)
+        agent._process_network_update(ri.router_id, network_id)
         self.assertEqual(1, agent._queue.add.call_count)
+
+    def test__process_network_update_no_router_info_found(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        network_id = _uuid()
+        agent._queue = mock.Mock()
+        agent._process_network_update(_uuid(), network_id)
+        agent._queue.add.assert_not_called()
+
+    def test__process_network_update_not_connected_to_router(self):
+        router = l3_test_common.prepare_router_data(num_internal_ports=2)
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        agent._process_added_router(router)
+        ri = l3router.RouterInfo(agent, router['id'],
+                                 router, **self.ri_kwargs)
+        network_id = _uuid()
+        agent._queue = mock.Mock()
+        agent._process_network_update(ri.router_id, network_id)
+        agent._queue.add.assert_not_called()
 
     def test_create_router_namespace(self):
         self.mock_ip.ensure_namespace.return_value = self.mock_ip
@@ -2720,7 +2748,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         update.resource = None
         agent._queue.each_update_to_next_resource.side_effect = [
             [(None, update)]]
-        agent._process_router_update()
+        agent._process_update()
         self.assertFalse(agent.fullsync)
         self.assertEqual(ext_net_call,
                          agent._process_router_if_compatible.called)
@@ -2747,13 +2775,13 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             resource=router,
             timestamp=timeutils.utcnow())
         agent._queue.add(update)
-        agent._process_router_update()
+        agent._process_update()
 
         # The update contained the router object, get_routers won't be called
         self.assertFalse(agent.plugin_rpc.get_routers.called)
 
         # The update failed, assert that get_routers was called
-        agent._process_router_update()
+        agent._process_update()
         self.assertTrue(agent.plugin_rpc.get_routers.called)
 
     def test_process_routers_update_rpc_timeout_on_get_ext_net(self):
@@ -2777,7 +2805,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent.plugin_rpc.get_routers.side_effect = (
             Exception("Failed to get router info"))
         # start test
-        agent._process_router_update()
+        agent._process_update()
         router_info.delete.assert_not_called()
         self.assertFalse(router_info.delete.called)
         self.assertTrue(agent.router_info)
@@ -2800,7 +2828,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent._safe_router_removed = mock.Mock()
         if error:
             agent._safe_router_removed.return_value = False
-        agent._process_router_update()
+        agent._process_update()
         if error:
             self.assertFalse(router_processor.fetched_and_processed.called)
             agent._resync_router.assert_called_with(update)
