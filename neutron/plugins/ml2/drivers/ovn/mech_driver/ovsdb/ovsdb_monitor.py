@@ -515,24 +515,6 @@ class OvnIdl(BaseOvnIdl):
         super(OvnIdl, self).__init__(remote, schema)
         self.driver = driver
         self.notify_handler = OvnDbNotifyHandler(driver)
-        # ovsdb lock name to acquire.
-        # This event lock is used to handle the notify events sent by idl.Idl
-        # idl.Idl will call notify function for the "update" rpc method it
-        # receives from the ovsdb-server.
-        # This event lock is required for the following reasons
-        #  - If there are multiple neutron servers running, OvnWorkers of
-        #    these neutron servers would receive the notify events from
-        #    idl.Idl
-        #
-        #  - we do not want all the neutron servers to handle these events
-        #
-        #  - only the neutron server which has the lock will handle the
-        #    notify events.
-        #
-        #  - In case the neutron server which owns this lock goes down,
-        #    ovsdb server would assign the lock to one of the other neutron
-        #    servers.
-        self.event_lock_name = "neutron_ovn_event_lock"
 
     def notify(self, event, row, updates=None):
         # Do not handle the notification if the event lock is requested,
