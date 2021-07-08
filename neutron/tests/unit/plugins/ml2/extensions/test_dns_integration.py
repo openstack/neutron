@@ -477,7 +477,8 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
             'subnet_id': uuidutils.generate_uuid(),
             'ip_address': fake_ip
         }]
-        filtered_ips = dns_integration._filter_by_subnet(self.context, fake_fixed_ips)
+        filtered_ips = dns_integration._filter_by_subnet(self.context,
+                                                         fake_fixed_ips)
         self.assertEqual(filtered_ips, [fake_ip])
 
     def test_dns_driver_loaded_after_server_restart(self, *mocks):
