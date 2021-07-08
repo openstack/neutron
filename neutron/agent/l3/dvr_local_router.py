@@ -365,12 +365,18 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                                            device=device,
                                            device_exists=device_exists)
                 for allowed_address_pair in p.get('allowed_address_pairs', []):
-                    self._update_arp_entry(allowed_address_pair['ip_address'],
-                                           allowed_address_pair['mac_address'],
-                                           subnet_id,
-                                           'add',
-                                           device=device,
-                                           device_exists=device_exists)
+                    if ('/' not in str(allowed_address_pair['ip_address']) or
+                            common_utils.is_cidr_host(
+                                allowed_address_pair['ip_address'])):
+                        ip_address = common_utils.cidr_to_ip(
+                            allowed_address_pair['ip_address'])
+                        self._update_arp_entry(
+                            ip_address,
+                            allowed_address_pair['mac_address'],
+                            subnet_id,
+                            'add',
+                            device=device,
+                            device_exists=device_exists)
 
         # subnet_ports does not have snat port if the port is still unbound
         # by the time this function is called. So ensure to add arp entry
