@@ -1005,13 +1005,18 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         # cache is properly populated.
         self.agent.conf.agent_mode = 'dvr_snat'
         router_info = self.generate_dvr_router_info(enable_snat=True)
-        expected_neighbors = ['35.4.1.10', '10.0.0.10']
+        expected_neighbors = ['35.4.1.10', '10.0.0.10', '10.200.0.3']
+        allowed_address_net = netaddr.IPNetwork('10.100.0.0/30')
         port_data = {
             'fixed_ips': [{'ip_address': expected_neighbors[0]}],
             'mac_address': 'fa:3e:aa:bb:cc:dd',
             'device_owner': DEVICE_OWNER_COMPUTE,
             'allowed_address_pairs': [
                 {'ip_address': expected_neighbors[1],
+                 'mac_address': 'fa:3e:aa:bb:cc:dd'},
+                {'ip_address': '10.200.0.3/32',
+                 'mac_address': 'fa:3e:aa:bb:cc:dd'},
+                {'ip_address': str(allowed_address_net),
                  'mac_address': 'fa:3e:aa:bb:cc:dd'}]
         }
         self.agent.plugin_rpc.get_ports_by_subnet.return_value = [port_data]
@@ -1019,11 +1024,18 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         internal_device = router1.get_internal_device_name(
             router_info['_interfaces'][0]['id'])
         for expected_neighbor in expected_neighbors:
-            neighbor = ip_lib.dump_neigh_entries(4, internal_device,
-                                                 router1.ns_name,
-                                                 dst=expected_neighbor)
+            neighbor = ip_lib.dump_neigh_entries(
+                lib_constants.IP_VERSION_4, internal_device,
+                router1.ns_name,
+                dst=expected_neighbor)
             self.assertNotEqual([], neighbor)
             self.assertEqual(expected_neighbor, neighbor[0]['dst'])
+        for not_expected_neighbor in allowed_address_net:
+            neighbor = ip_lib.dump_neigh_entries(
+                lib_constants.IP_VERSION_4, internal_device,
+                router1.ns_name,
+                dst=str(not_expected_neighbor))
+            self.assertEqual([], neighbor)
 
     def _assert_rfp_fpr_mtu(self, router, expected_mtu=1500):
         dev_mtu = self.get_device_mtu(
