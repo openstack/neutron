@@ -57,6 +57,7 @@ class TestMetadataProxyHandler(base.BaseTestCase):
         self.log = self.log_p.start()
         self.handler = agent.MetadataProxyHandler(self.fake_conf, 'chassis1')
         self.handler.sb_idl = mock.Mock()
+        self.handler._post_fork_event.set()
 
     def test_call(self):
         req = mock.Mock()
