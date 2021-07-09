@@ -85,8 +85,18 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
                 routes=routes,
                 reason=_('the nexthop is used by router'))
 
-    def _validate_routes(self, context,
-                         router_id, routes):
+    def _validate_routes(self, context, router_id, routes, cidrs=None,
+                         ip_addresses=None):
+        """Validate a router routes with its interface subnets CIDRs and IPs
+
+        If any route cannot reach any subnet CIDR from any interface or the
+        route nethop match any interface IP address, this route is invalid.
+        :param context: Neutron request context
+        :param router_id: router ID
+        :param routes: router routes (list of dictionaries)
+        :param cidrs: (optional) list of CIDRs (strings)
+        :param ip_addresses: (optional) list of IP addresses (strings)
+        """
         if len(routes) > cfg.CONF.max_routes:
             raise xroute_exc.RoutesExhausted(
                 router_id=router_id,
@@ -94,17 +104,20 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
 
         context = context.elevated()
         filters = {'device_id': [router_id]}
-        ports = self._core_plugin.get_ports(context, filters)
-        cidrs = []
-        ips = []
-        for port in ports:
-            for ip in port['fixed_ips']:
-                cidrs.append(self._core_plugin.get_subnet(
-                    context, ip['subnet_id'])['cidr'])
-                ips.append(ip['ip_address'])
+
+        cidrs = cidrs or []
+        ip_addresses = ip_addresses or []
+        if not (cidrs or ip_addresses):
+            ports = self._core_plugin.get_ports(context, filters)
+            for port in ports:
+                for ip in port['fixed_ips']:
+                    cidrs.append(self._core_plugin.get_subnet(
+                        context, ip['subnet_id'])['cidr'])
+                    ip_addresses.append(ip['ip_address'])
+
         for route in routes:
             self._validate_routes_nexthop(
-                cidrs, ips, routes, route['nexthop'])
+                cidrs, ip_addresses, routes, route['nexthop'])
 
     def _update_extra_routes(self, context, router, routes):
         self._validate_routes(context, router['id'], routes)

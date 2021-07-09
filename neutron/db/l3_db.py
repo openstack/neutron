@@ -341,24 +341,48 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 )
                 router_port.create()
 
-    def _validate_gw_info(self, context, gw_port, info, ext_ips):
+    def _validate_gw_info(self, context, info, ext_ips, router):
         network_id = info['network_id'] if info else None
+        gw_subnets = []
         if network_id:
             network_db = self._core_plugin._get_network(context, network_id)
             if not network_db.external:
                 msg = _("Network %s is not an external network") % network_id
                 raise n_exc.BadRequest(resource='router', msg=msg)
-            if ext_ips:
-                subnets = self._core_plugin.get_subnets_by_network(context,
-                                                                   network_id)
-                for s in subnets:
-                    if not s['gateway_ip']:
+
+            gw_subnets = network_db.subnets
+            for ext_ip in ext_ips:
+                for subnet in network_db.subnets:
+                    if not subnet.gateway_ip:
                         continue
-                    for ext_ip in ext_ips:
-                        if ext_ip.get('ip_address') == s['gateway_ip']:
-                            msg = _("External IP %s is the same as the "
-                                    "gateway IP") % ext_ip.get('ip_address')
-                            raise n_exc.BadRequest(resource='router', msg=msg)
+                    if ext_ip.get('ip_address') == subnet.gateway_ip:
+                        msg = _("External IP %s is the same as the "
+                                "gateway IP") % ext_ip.get('ip_address')
+                        raise n_exc.BadRequest(resource='router', msg=msg)
+
+        method_validate_routes = getattr(self, '_validate_routes', None)
+        if not method_validate_routes or not router.route_list:
+            return network_id
+
+        cidrs = []
+        ip_addresses = []
+        # All attached ports but the GW port, if exists, that will change
+        # because the GW information is being updated.
+        attached_ports = [rp.port for rp in router.attached_ports if
+                          rp.port.id != router.gw_port_id]
+        for port in attached_ports:
+            for ip in port.fixed_ips:
+                cidrs.append(self._core_plugin.get_subnet(
+                    context.elevated(), ip.subnet_id)['cidr'])
+                ip_addresses.append(ip.ip_address)
+
+        # NOTE(ralonsoh): the GW port is not updated yet and the its IP address
+        # won't be added to "ip_addresses", only the subnet CIDRs.
+        for gw_subnet in gw_subnets:
+            cidrs.append(gw_subnet.cidr)
+
+        method_validate_routes(context, router.id, router.route_list,
+                               cidrs=cidrs, ip_addresses=ip_addresses)
         return network_id
 
     # NOTE(yamamoto): This method is an override point for plugins
@@ -470,10 +494,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
     def _update_router_gw_info(self, context, router_id, info, router=None):
         router = router or self._get_router(context, router_id)
         gw_port = router.gw_port
-        ext_ips = info.get('external_fixed_ips') if info else []
+        ext_ips = info.get('external_fixed_ips', []) if info else []
         ext_ip_change = self._check_for_external_ip_change(
             context, gw_port, ext_ips)
-        network_id = self._validate_gw_info(context, gw_port, info, ext_ips)
+        network_id = self._validate_gw_info(context, info, ext_ips, router)
         if gw_port and ext_ip_change and gw_port['network_id'] == network_id:
             self._update_current_gw_port(context, router_id, router,
                                          ext_ips)
