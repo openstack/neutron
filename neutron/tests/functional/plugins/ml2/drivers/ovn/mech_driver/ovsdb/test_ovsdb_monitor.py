@@ -21,6 +21,7 @@ from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils as n_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_hash_ring_db as db_hash_ring
+from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
 from neutron.tests.functional import base
 from neutron.tests.functional.resources.ovsdb import fixtures
@@ -284,6 +285,38 @@ class TestNBDbMonitorOverTcp(TestNBDbMonitor):
 class TestNBDbMonitorOverSsl(TestNBDbMonitor):
     def get_ovsdb_server_protocol(self):
         return 'ssl'
+
+
+class TestAgentMonitor(base.TestOVNFunctionalBase):
+    FAKE_CHASSIS_HOST = 'fake-chassis-host'
+
+    def setUp(self):
+        super(TestAgentMonitor, self).setUp()
+        self.l3_plugin = directory.get_plugin(plugin_constants.L3)
+        self.mock_ovsdb_idl = mock.Mock()
+        self.handler = self.sb_api.idl.notify_handler
+        self.mock_ovsdb_idl = mock.Mock()
+        self.chassis_name = self.add_fake_chassis(self.FAKE_CHASSIS_HOST,
+                external_ids={'ovn-cms-options': 'enable-chassis-as-gw'})
+
+    def test_network_agent_present(self):
+        chassis_row = self.sb_api.db_find(
+            'Chassis', ('name', '=', self.chassis_name)).execute(
+            check_error=True)
+        self.assertTrue(chassis_row)
+        self.assertEqual(neutron_agent.ControllerGatewayAgent,
+                type(neutron_agent.AgentCache()[self.chassis_name]))
+
+    def test_agent_change_controller(self):
+        self.assertEqual(neutron_agent.ControllerGatewayAgent,
+                type(neutron_agent.AgentCache()[self.chassis_name]))
+        self.sb_api.db_set('Chassis', self.chassis_name, ('external_ids',
+                {'ovn-cms-options': ''})).execute(check_error=True)
+        n_utils.wait_until_true(lambda:
+                neutron_agent.AgentCache()[self.chassis_name].
+                chassis.external_ids['ovn-cms-options'] == '')
+        self.assertEqual(neutron_agent.ControllerAgent,
+                type(neutron_agent.AgentCache()[self.chassis_name]))
 
 
 class TestOvnIdlProbeInterval(base.TestOVNFunctionalBase):
