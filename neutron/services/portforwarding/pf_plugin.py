@@ -178,8 +178,16 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
         if exist_pf_resources:
             raise pf_exc.FipInUseByPortForwarding(id=floatingip_id)
 
-    @registry.receives(resources.PORT, [events.AFTER_UPDATE,
-                                        events.PRECOMMIT_DELETE])
+    @registry.receives(resources.PORT, [events.AFTER_UPDATE])
+    def _process_updated_port_request(self, resource, event, trigger,
+                                      payload):
+        # TODO(isabek): refactor back into 1 method when all code is moved
+        # to event payloads
+        return self._process_port_request(resource, event, trigger,
+                                          payload.context,
+                                          port=payload.latest_state)
+
+    @registry.receives(resources.PORT, [events.PRECOMMIT_DELETE])
     @db_api.retry_if_session_inactive()
     def _process_port_request(self, resource, event, trigger, context,
                               **kwargs):

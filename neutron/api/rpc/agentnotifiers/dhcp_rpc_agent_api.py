@@ -120,9 +120,12 @@ class DhcpAgentNotifyAPI(object):
                 registry.subscribe(
                     self._native_event_send_dhcp_notification_payload,
                     resource, events.AFTER_CREATE)
+                registry.subscribe(
+                    self._native_event_send_dhcp_notification_payload,
+                    resource, events.AFTER_UPDATE)
             else:
                 registry.subscribe(callback, resource, events.AFTER_CREATE)
-            registry.subscribe(callback, resource, events.AFTER_UPDATE)
+                registry.subscribe(callback, resource, events.AFTER_UPDATE)
             registry.subscribe(callback, resource, events.AFTER_DELETE)
 
     @property

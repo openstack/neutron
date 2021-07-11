@@ -509,13 +509,13 @@ def _remove_data_from_external_dns_service(context, dns_driver, dns_domain,
                        "ips": ', '.join(records)})
 
 
-def _update_port_in_external_dns_service(resource, event, trigger, **kwargs):
+def _update_port_in_external_dns_service(resource, event, trigger, payload):
     dns_driver = _get_dns_driver()
     if not dns_driver:
         return
-    context = kwargs['context']
-    updated_port = kwargs['port']
-    original_port = kwargs.get('original_port')
+    context = payload.context
+    updated_port = payload.latest_state
+    original_port = payload.states[0]
     if not original_port:
         return
     original_ips = _filter_by_subnet(context, original_port['fixed_ips'])

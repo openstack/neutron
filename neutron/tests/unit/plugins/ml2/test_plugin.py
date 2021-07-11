@@ -1088,8 +1088,9 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
 
     def test_port_after_update_outside_transaction(self):
         self.tx_open = True
-        receive = lambda *a, **k: setattr(self, 'tx_open',
-                                          k['context'].session.is_active)
+        receive = lambda r, e, t, payload: \
+            setattr(self, 'tx_open', payload.context.session.is_active)
+
         with self.port() as p:
             registry.subscribe(receive, resources.PORT, events.AFTER_UPDATE)
             self._update('ports', p['port']['id'],
@@ -1470,7 +1471,9 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         b_update_events = []
         a_update_events = []
         b_receiver = lambda r, e, t, payload: b_update_events.append(payload)
-        a_receiver = lambda *a, **k: a_update_events.append(k['port'])
+        a_receiver = lambda r, e, t, payload: \
+            a_update_events.append(payload.latest_state)
+
         registry.subscribe(b_receiver, resources.PORT,
                            events.BEFORE_UPDATE)
         registry.subscribe(a_receiver, resources.PORT,
@@ -1743,7 +1746,9 @@ class TestMl2PortsV2WithRevisionPlugin(Ml2PluginV2TestCase):
                        **host_arg) as port:
             port = plugin.get_port(ctx, port['port']['id'])
             updated_ports = []
-            receiver = lambda *a, **k: updated_ports.append(k['port'])
+            receiver = lambda r, e, t, payload: \
+                updated_ports.append(payload.latest_state)
+
             registry.subscribe(receiver, resources.PORT,
                                events.AFTER_UPDATE)
             plugin.update_port_status(
@@ -1755,7 +1760,8 @@ class TestMl2PortsV2WithRevisionPlugin(Ml2PluginV2TestCase):
     def test_bind_port_bumps_revision(self):
         updated_ports = []
         created_ports = []
-        ureceiver = lambda *a, **k: updated_ports.append(k['port'])
+        ureceiver = lambda r, e, t, payload: \
+            updated_ports.append(payload.latest_state)
 
         def creceiver(r, e, t, payload=None):
             created_ports.append(payload.latest_state)

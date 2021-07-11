@@ -452,15 +452,15 @@ class TrunkPlugin(service_base.ServicePluginBase):
     # AFTER_UPDATE to be problematic for setting trunk status when a
     # a parent port becomes unbound.
     @registry.receives(resources.PORT, [events.AFTER_UPDATE])
-    def _trigger_trunk_status_change(self, resource, event, trigger, **kwargs):
-        updated_port = kwargs['port']
+    def _trigger_trunk_status_change(self, resource, event, trigger, payload):
+        updated_port = payload.latest_state
         trunk_details = updated_port.get('trunk_details')
         # If no trunk_details, the port is not the parent of a trunk.
         if not trunk_details:
             return
 
-        context = kwargs['context']
-        original_port = kwargs['original_port']
+        context = payload.context
+        original_port = payload.states[0]
         orig_vif_type = original_port.get(portbindings.VIF_TYPE)
         new_vif_type = updated_port.get(portbindings.VIF_TYPE)
         vif_type_changed = orig_vif_type != new_vif_type

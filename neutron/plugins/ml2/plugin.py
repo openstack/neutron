@@ -768,14 +768,14 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # just finished, whether that transaction committed new
             # results or discovered concurrent port state changes.
             # Also, Trigger notification for successful binding commit.
-            kwargs = {
-                'context': plugin_context,
-                'port': self._make_port_dict(port_db),  # ensure latest state
-                'mac_address_updated': False,
-                'original_port': oport,
-            }
-            registry.notify(resources.PORT, events.AFTER_UPDATE,
-                            self, **kwargs)
+            context = plugin_context
+            port = self._make_port_dict(port_db)  # ensure latest state
+            registry.publish(resources.PORT, events.AFTER_UPDATE, self,
+                             payload=events.DBEventPayload(
+                                 context,
+                                 resource_id=port['id'],
+                                 metadata={'mac_address_updated': False},
+                                 states=(oport, port,)))
             self.mechanism_manager.update_port_postcommit(cur_context)
             need_notify = True
             try_again = False
@@ -1807,13 +1807,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 bound_mech_contexts.append(mech_context)
 
         # Notifications must be sent after the above transaction is complete
-        kwargs = {
-            'context': context,
-            'port': updated_port,
-            'mac_address_updated': mac_address_updated,
-            'original_port': original_port,
-        }
-        registry.notify(resources.PORT, events.AFTER_UPDATE, self, **kwargs)
+        metadata = {'mac_address_updated': mac_address_updated}
+        registry.publish(resources.PORT, events.AFTER_UPDATE, self,
+                         payload=events.DBEventPayload(
+                             context,
+                             resource_id=id,
+                             metadata=metadata,
+                             states=(original_port, updated_port,)))
 
         # Note that DVR Interface ports will have bindings on
         # multiple hosts, and so will have multiple mech_contexts,
@@ -2229,10 +2229,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         if updated:
             self.mechanism_manager.update_port_postcommit(mech_context)
-            kwargs = {'context': context, 'port': mech_context.current,
-                      'original_port': original_port}
-            registry.notify(resources.PORT, events.AFTER_UPDATE, self,
-                            **kwargs)
+            port = mech_context.current
+            registry.publish(resources.PORT, events.AFTER_UPDATE, self,
+                             payload=events.DBEventPayload(
+                                 context,
+                                 resource_id=port['id'],
+                                 states=(original_port, port,)))
 
         if port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE:
             db.delete_distributed_port_binding_if_stale(context, binding)

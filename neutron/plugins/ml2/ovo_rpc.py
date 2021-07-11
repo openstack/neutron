@@ -59,7 +59,8 @@ class _ObjectChangeHandler(object):
             # TODO(boden): remove shim below once all events use payloads
             if resource in self._PAYLOAD_RESOURCES:
                 handler = self.handle_payload_event
-            if resource == resources.PORT and event == events.AFTER_CREATE:
+            if resource == resources.PORT and event in (events.AFTER_CREATE,
+                                                        events.AFTER_UPDATE):
                 handler = self.handle_payload_event
             registry.subscribe(handler, resource, event)
         self._stop = threading.Event()

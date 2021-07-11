@@ -82,8 +82,9 @@ class Notifier(object):
 
     @registry.receives(resources.PORT, [events.AFTER_UPDATE])
     def process_port_update_event(self, resource, event, trigger,
-                                  original_port=None, port=None,
-                                  **kwargs):
+                                  payload):
+        original_port = payload.states[0]
+        port = payload.latest_state
         # We only want to notify about baremetal ports.
         if not (port[portbindings_def.VNIC_TYPE] ==
                 portbindings_def.VNIC_BAREMETAL):
