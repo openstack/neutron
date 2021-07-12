@@ -79,6 +79,13 @@ def build_resource_info(plural_mappings, resource_map, which_service,
     for collection_name in resource_map:
         resource_name = plural_mappings[collection_name]
         params = resource_map.get(collection_name, {})
+        # If SUB_RESOURCE_ATTRIBUTE_MAP was passed in as a resource_map, we
+        # need special handling for it. SUB_RESOURCE_ATTRIBUTE_MAP must have
+        # a 'parent' and 'parameters' keys. 'parameters' key is going to
+        # contain sub-resources that are being extended.
+        parent = params.get('parent')
+        params = params['parameters'] if params.get('parameters') else params
+
         if translate_name:
             collection_name = collection_name.replace('_', '-')
         if register_quota:
@@ -89,12 +96,14 @@ def build_resource_info(plural_mappings, resource_map, which_service,
             member_actions=member_actions,
             allow_bulk=allow_bulk,
             allow_pagination=True,
-            allow_sorting=True)
+            allow_sorting=True,
+            parent=parent)
         resource = extensions.ResourceExtension(
             collection_name,
             controller,
             path_prefix=path_prefix,
             member_actions=member_actions,
-            attr_map=params)
+            attr_map=params,
+            parent=parent)
         resources.append(resource)
     return resources

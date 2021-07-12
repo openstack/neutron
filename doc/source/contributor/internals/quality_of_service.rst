@@ -151,6 +151,8 @@ From database point of view, following objects are defined in schema:
   bits for egress traffic.
 * QosMinimumBandwidthRule: defines the rule that creates a minimum bandwidth
   constraint.
+* QosMinimumPacketRateRule: defines the rule that creates a minimum packet rate
+  constraint.
 
 All database models are defined under:
 
@@ -176,6 +178,9 @@ For QoS, the following neutron objects are implemented:
   characterized by a min_kbps parameter. This rule has also a direction
   parameter to set the traffic direction, from the instance point of view. The
   only direction now implemented is egress.
+* QosMinimumPacketRateRule: defines the minimum assured packet rate rule type,
+  characterized by a min_kpps parameter. This rule has also a direction
+  parameter to set the traffic direction, from the instance point of view.
 
 Those are defined in:
 

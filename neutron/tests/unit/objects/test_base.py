@@ -511,6 +511,8 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
     common_types.EtherTypeEnumField: tools.get_random_ether_type,
     common_types.FloatingIPStatusEnumField: tools.get_random_floatingip_status,
     common_types.FlowDirectionEnumField: tools.get_random_flow_direction,
+    common_types.FlowDirectionAndAnyEnumField:
+        tools.get_random_flow_direction_or_any,
     common_types.HARouterEnumField: tools.get_random_ha_states,
     common_types.IpamAllocationStatusEnumField: tools.get_random_ipam_status,
     common_types.IPNetworkField: lib_test_tools.get_random_ip_network,

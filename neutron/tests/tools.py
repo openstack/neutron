@@ -233,6 +233,10 @@ def get_random_flow_direction():
     return random.choice(constants.VALID_DIRECTIONS)
 
 
+def get_random_flow_direction_or_any():
+    return random.choice(constants.VALID_DIRECTIONS_AND_ANY)
+
+
 def get_random_ha_states():
     return random.choice(constants.VALID_HA_STATES)
 

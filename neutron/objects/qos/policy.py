@@ -67,7 +67,8 @@ class QosPolicy(rbac_db.NeutronRbacObject):
     # Version 1.7: Added floating IP bindings
     # Version 1.8: Added router gateway QoS policy bindings
     # Version 1.9: Added QosPacketRateLimitRule
-    VERSION = '1.9'
+    # Version 1.10: Added QosMinimumPacketRateRule
+    VERSION = '1.10'
 
     # required by RbacNeutronMetaclass
     rbac_db_cls = QosPolicyRBAC
@@ -391,6 +392,8 @@ class QosPolicy(rbac_db.NeutronRbacObject):
         ]
         if _target_version >= (1, 9):
             names.append(rule_obj_impl.QosPacketRateLimitRule.obj_name())
+        if _target_version >= (1, 10):
+            names.append(rule_obj_impl.QosMinimumPacketRuleRule.obj_name())
         if 'rules' in primitive and names:
             primitive['rules'] = filter_rules(names, primitive['rules'])
 

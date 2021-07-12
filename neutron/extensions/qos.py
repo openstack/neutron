@@ -88,6 +88,7 @@ class QoSPluginBase(service_base.ServicePluginBase, metaclass=abc.ABCMeta):
         'bandwidth_limit': rule_object.QosBandwidthLimitRule,
         'dscp_marking': rule_object.QosDscpMarkingRule,
         'minimum_bandwidth': rule_object.QosMinimumBandwidthRule,
+        'minimum_packet_rate': rule_object.QosMinimumPacketRateRule,
         'packet_rate_limit': rule_object.QosPacketRateLimitRule,
     }
 

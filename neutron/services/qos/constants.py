@@ -19,6 +19,7 @@ from neutron_lib.services.qos import constants as qos_consts
 # to neutron-lib after neutron has the new rule.
 # Add qos rule packet rate limit
 RULE_TYPE_PACKET_RATE_LIMIT = 'packet_rate_limit'
+RULE_TYPE_MINIMUM_PACKET_RATE = 'minimum_packet_rate'
 # NOTE(przszc): Ensure that there are no duplicates in the list. Order of the
 # items in the list must be stable, as QosRuleType OVO hash value depends on
 # it.
@@ -26,5 +27,7 @@ RULE_TYPE_PACKET_RATE_LIMIT = 'packet_rate_limit'
 # from the list below.
 VALID_RULE_TYPES = (qos_consts.VALID_RULE_TYPES +
     ([RULE_TYPE_PACKET_RATE_LIMIT] if RULE_TYPE_PACKET_RATE_LIMIT not in
+        qos_consts.VALID_RULE_TYPES else []) +
+    ([RULE_TYPE_MINIMUM_PACKET_RATE] if RULE_TYPE_MINIMUM_PACKET_RATE not in
         qos_consts.VALID_RULE_TYPES else [])
 )

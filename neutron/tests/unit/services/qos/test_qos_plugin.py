@@ -103,7 +103,12 @@ class TestQosPlugin(base.BaseQosTestCase):
             'packet_rate_limit_rule': {
                 'id': uuidutils.generate_uuid(),
                 'max_kpps': 20,
-                'max_burst_kpps': 130}}
+                'max_burst_kpps': 130},
+            'minimum_packet_rate_rule': {
+                'id': uuidutils.generate_uuid(),
+                'min_kpps': 10,
+                'direction': 'any'},
+        }
 
         self.policy = policy_object.QosPolicy(
             self.ctxt, **self.policy_data['policy'])
@@ -114,11 +119,14 @@ class TestQosPlugin(base.BaseQosTestCase):
         self.dscp_rule = rule_object.QosDscpMarkingRule(
             self.ctxt, **self.rule_data['dscp_marking_rule'])
 
-        self.min_rule = rule_object.QosMinimumBandwidthRule(
+        self.min_bw_rule = rule_object.QosMinimumBandwidthRule(
             self.ctxt, **self.rule_data['minimum_bandwidth_rule'])
 
         self.pps_rule = rule_object.QosPacketRateLimitRule(
             self.ctxt, **self.rule_data['packet_rate_limit_rule'])
+
+        self.min_pps_rule = rule_object.QosMinimumPacketRateRule(
+            self.ctxt, **self.rule_data['minimum_packet_rate_rule'])
 
     def _validate_driver_params(self, method_name, ctxt):
         call_args = self.qos_plugin.driver_manager.call.call_args[0]
@@ -158,8 +166,8 @@ class TestQosPlugin(base.BaseQosTestCase):
                 port_res, self.port)
 
     def test__extend_port_resource_request_min_bw_rule(self):
-        self.min_rule.direction = lib_constants.EGRESS_DIRECTION
-        port = self._create_and_extend_port([self.min_rule])
+        self.min_bw_rule.direction = lib_constants.EGRESS_DIRECTION
+        port = self._create_and_extend_port([self.min_bw_rule])
 
         self.assertEqual(
             ['CUSTOM_PHYSNET_PUBLIC', 'CUSTOM_VNIC_TYPE_NORMAL'],
@@ -171,16 +179,17 @@ class TestQosPlugin(base.BaseQosTestCase):
         )
 
     def test__extend_port_resource_request_mixed_rules(self):
-        self.min_rule.direction = lib_constants.EGRESS_DIRECTION
+        self.min_bw_rule.direction = lib_constants.EGRESS_DIRECTION
 
-        min_rule_ingress_data = {
+        min_bw_rule_ingress_data = {
             'id': uuidutils.generate_uuid(),
             'min_kbps': 20,
             'direction': lib_constants.INGRESS_DIRECTION}
-        min_rule_ingress = rule_object.QosMinimumBandwidthRule(
-            self.ctxt, **min_rule_ingress_data)
+        min_bw_rule_ingress = rule_object.QosMinimumBandwidthRule(
+            self.ctxt, **min_bw_rule_ingress_data)
 
-        port = self._create_and_extend_port([self.min_rule, min_rule_ingress])
+        port = self._create_and_extend_port(
+            [self.min_bw_rule, min_bw_rule_ingress])
         self.assertEqual(
             ['CUSTOM_PHYSNET_PUBLIC', 'CUSTOM_VNIC_TYPE_NORMAL'],
             port['resource_request']['required']
@@ -199,9 +208,9 @@ class TestQosPlugin(base.BaseQosTestCase):
         self.assertIsNone(port.get('resource_request'))
 
     def test__extend_port_resource_request_non_provider_net(self):
-        self.min_rule.direction = lib_constants.EGRESS_DIRECTION
+        self.min_bw_rule.direction = lib_constants.EGRESS_DIRECTION
 
-        port = self._create_and_extend_port([self.min_rule],
+        port = self._create_and_extend_port([self.min_bw_rule],
                                             physical_network=None)
         self.assertIsNone(port.get('resource_request'))
 
@@ -211,10 +220,10 @@ class TestQosPlugin(base.BaseQosTestCase):
         self.assertIsNone(port.get('resource_request'))
 
     def test__extend_port_resource_request_inherited_policy(self):
-        self.min_rule.direction = lib_constants.EGRESS_DIRECTION
-        self.min_rule.qos_policy_id = self.policy.id
+        self.min_bw_rule.direction = lib_constants.EGRESS_DIRECTION
+        self.min_bw_rule.qos_policy_id = self.policy.id
 
-        port = self._create_and_extend_port([self.min_rule],
+        port = self._create_and_extend_port([self.min_bw_rule],
                                             has_net_qos_policy=True)
         self.assertEqual(
             ['CUSTOM_PHYSNET_PUBLIC', 'CUSTOM_VNIC_TYPE_NORMAL'],
@@ -413,7 +422,7 @@ class TestQosPlugin(base.BaseQosTestCase):
 
     def test_create_min_bw_rule_on_bound_port(self):
         policy = self._get_policy()
-        policy.rules = [self.min_rule]
+        policy.rules = [self.min_bw_rule]
         segment = network_object.NetworkSegment(
             physical_network='fake physnet')
         net = network_object.Network(
@@ -441,7 +450,7 @@ class TestQosPlugin(base.BaseQosTestCase):
 
     def test_create_min_bw_rule_on_unbound_port(self):
         policy = self._get_policy()
-        policy.rules = [self.min_rule]
+        policy.rules = [self.min_bw_rule]
         segment = network_object.NetworkSegment(
             physical_network='fake physnet')
         net = network_object.Network(
@@ -574,9 +583,12 @@ class TestQosPlugin(base.BaseQosTestCase):
         mock_manager.attach_mock(mock_qos_rule_create, 'create')
         mock_manager.attach_mock(self.qos_plugin.driver_manager, 'driver')
         mock_manager.reset_mock()
-        with mock.patch(
-                'neutron.objects.qos.qos_policy_validator'
-                '.check_bandwidth_rule_conflict', return_value=None):
+        with mock.patch('neutron.objects.qos.qos_policy_validator'
+                        '.check_bandwidth_rule_conflict',
+                        return_value=None), \
+                mock.patch(
+                    'neutron.objects.qos.qos_policy_validator'
+                    '.check_min_pps_rule_conflict', return_value=None):
             self.qos_plugin.create_policy_bandwidth_limit_rule(
                 self.ctxt, self.policy.id, self.rule_data)
             self._validate_driver_params('update_policy', self.ctxt)
@@ -603,7 +615,7 @@ class TestQosPlugin(base.BaseQosTestCase):
 
     def test_create_policy_rule_check_rule_max_more_than_min(self):
         _policy = self._get_policy()
-        setattr(_policy, "rules", [self.min_rule])
+        setattr(_policy, "rules", [self.min_bw_rule])
         with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
                         return_value=_policy) as mock_qos_get_obj:
             self.qos_plugin.create_policy_bandwidth_limit_rule(
@@ -615,7 +627,7 @@ class TestQosPlugin(base.BaseQosTestCase):
     def test_create_policy_rule_check_rule_bwlimit_less_than_minbw(self):
         _policy = self._get_policy()
         self.rule_data['bandwidth_limit_rule']['max_kbps'] = 1
-        setattr(_policy, "rules", [self.min_rule])
+        setattr(_policy, "rules", [self.min_bw_rule])
         with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
                         return_value=_policy) as mock_qos_get_obj:
             self.assertRaises(qos_exc.QoSRuleParameterConflict,
@@ -690,13 +702,13 @@ class TestQosPlugin(base.BaseQosTestCase):
             self.mock_qos_load_attr.assert_called_once_with('rules')
             self._validate_driver_params('update_policy', self.ctxt)
 
-        rules = [self.rule, self.min_rule]
+        rules = [self.rule, self.min_bw_rule]
         setattr(_policy, "rules", rules)
         self.mock_qos_load_attr.reset_mock()
         with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
                         return_value=_policy):
             self.qos_plugin.update_policy_minimum_bandwidth_rule(
-                self.ctxt, self.min_rule.id,
+                self.ctxt, self.min_bw_rule.id,
                 self.policy.id, self.rule_data)
             self.mock_qos_load_attr.assert_called_once_with('rules')
             self._validate_driver_params('update_policy', self.ctxt)
@@ -716,16 +728,17 @@ class TestQosPlugin(base.BaseQosTestCase):
             self.assertRaises(
                 qos_exc.QoSRuleParameterConflict,
                 self.qos_plugin.update_policy_minimum_bandwidth_rule,
-                self.ctxt, self.min_rule.id,
+                self.ctxt, self.min_bw_rule.id,
                 self.policy.id, self.rule_data)
 
     def test_update_policy_rule_check_rule_minbw_gr_than_bwlimit(self):
         _policy = self._get_policy()
-        setattr(_policy, "rules", [self.min_rule])
+        setattr(_policy, "rules", [self.min_bw_rule])
         with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
                         return_value=_policy):
             self.qos_plugin.update_policy_minimum_bandwidth_rule(
-                self.ctxt, self.min_rule.id, self.policy.id, self.rule_data)
+                self.ctxt, self.min_bw_rule.id, self.policy.id,
+                self.rule_data)
             self.mock_qos_load_attr.assert_called_once_with('rules')
             self._validate_driver_params('update_policy', self.ctxt)
         self.rule_data['bandwidth_limit_rule']['max_kbps'] = 1
@@ -1259,6 +1272,314 @@ class TestQosPlugin(base.BaseQosTestCase):
             lib_exc.NotAuthorized,
             self.qos_plugin.get_rule_type,
             self.ctxt, qos_constants.RULE_TYPE_PACKET_RATE_LIMIT)
+
+    def test_create_min_pps_rule_on_bound_port(self):
+        _policy = self._get_policy()
+        setattr(_policy, "rules", [self.min_pps_rule])
+        segment = network_object.NetworkSegment(
+            physical_network='fake physnet')
+        net = network_object.Network(
+            self.ctxt,
+            segments=[segment])
+        port = ports_object.Port(
+            self.ctxt,
+            id=uuidutils.generate_uuid(),
+            network_id=uuidutils.generate_uuid(),
+            device_owner='compute:fake-zone')
+        with mock.patch(
+                'neutron.objects.qos.policy.QosPolicy.get_object',
+                return_value=_policy), \
+            mock.patch(
+                'neutron.objects.network.Network.get_object',
+                return_value=net), \
+            mock.patch.object(
+                self.qos_plugin,
+                '_get_ports_with_policy',
+                return_value=[port]):
+            self.assertRaises(
+                NotImplementedError,
+                self.qos_plugin.create_policy_minimum_packet_rate_rule,
+                self.ctxt, _policy.id, self.rule_data)
+
+    def test_create_min_pps_rule_on_unbound_port(self):
+        _policy = self._get_policy()
+        setattr(_policy, "rules", [self.min_pps_rule])
+        segment = network_object.NetworkSegment(
+            physical_network='fake physnet')
+        net = network_object.Network(
+            self.ctxt,
+            segments=[segment])
+        port = ports_object.Port(
+            self.ctxt,
+            id=uuidutils.generate_uuid(),
+            network_id=uuidutils.generate_uuid(),
+            device_owner='')
+        with mock.patch(
+                'neutron.objects.qos.policy.QosPolicy.get_object',
+                return_value=_policy), \
+            mock.patch(
+                'neutron.objects.network.Network.get_object',
+                return_value=net), \
+            mock.patch.object(
+                self.qos_plugin,
+                '_get_ports_with_policy',
+                return_value=[port]):
+            try:
+                self.qos_plugin.create_policy_minimum_packet_rate_rule(
+                    self.ctxt, _policy.id, self.rule_data)
+            except NotImplementedError:
+                self.fail()
+
+    def test_create_policy_rule_check_rule_min_pps_direction_conflict(self):
+        _policy = self._get_policy()
+        self.rule_data['minimum_packet_rate_rule']['direction'] = 'any'
+        setattr(_policy, "rules", [self.min_pps_rule])
+        rules = [
+            {
+                'minimum_packet_rate_rule': {
+                    'id': uuidutils.generate_uuid(),
+                    'min_kpps': 10,
+                    'direction': 'ingress'
+                }
+            },
+            {
+                'minimum_packet_rate_rule': {
+                    'id': uuidutils.generate_uuid(),
+                    'min_kpps': 10,
+                    'direction': 'egress'
+                }
+            },
+        ]
+        for new_rule_data in rules:
+            with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                            return_value=_policy) as mock_qos_get_obj:
+                self.assertRaises(qos_exc.QoSRuleParameterConflict,
+                    self.qos_plugin.create_policy_minimum_packet_rate_rule,
+                    self.ctxt, self.policy.id, new_rule_data)
+                mock_qos_get_obj.assert_called_once_with(self.ctxt,
+                                                         id=_policy.id)
+
+        for rule_data in rules:
+            min_pps_rule = rule_object.QosMinimumPacketRateRule(
+                self.ctxt, **rule_data['minimum_packet_rate_rule'])
+            setattr(_policy, "rules", [min_pps_rule])
+            with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                            return_value=_policy) as mock_qos_get_obj:
+                self.assertRaises(qos_exc.QoSRuleParameterConflict,
+                    self.qos_plugin.create_policy_minimum_packet_rate_rule,
+                    self.ctxt, self.policy.id, self.rule_data)
+                mock_qos_get_obj.assert_called_once_with(self.ctxt,
+                                                         id=_policy.id)
+
+    def test_create_policy_min_pps_rule(self):
+        _policy = self._get_policy()
+        setattr(_policy, "rules", [self.min_pps_rule])
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=_policy):
+            self.qos_plugin.create_policy_minimum_packet_rate_rule(
+                self.ctxt, self.policy.id, self.rule_data)
+            self._validate_driver_params('update_policy', self.ctxt)
+
+    def test_create_policy_min_pps_rule_duplicates(self):
+        _policy = self._get_policy()
+        setattr(_policy, "rules", [self.min_pps_rule])
+        new_rule_data = {
+            'minimum_packet_rate_rule': {
+                'id': uuidutils.generate_uuid(),
+                'min_kpps': 1234,
+                'direction': self.min_pps_rule.direction,
+            },
+        }
+
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=_policy) as mock_qos_get_obj:
+            self.assertRaises(
+                qos_exc.QoSRulesConflict,
+                self.qos_plugin.create_policy_minimum_packet_rate_rule,
+                self.ctxt, _policy.id, new_rule_data)
+            mock_qos_get_obj.assert_called_once_with(self.ctxt, id=_policy.id)
+
+    def test_create_policy_min_pps_rule_for_nonexistent_policy(self):
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=None):
+            self.assertRaises(
+                qos_exc.QosPolicyNotFound,
+                self.qos_plugin.create_policy_minimum_packet_rate_rule,
+                self.ctxt, self.policy.id, self.rule_data)
+
+    def test_update_policy_min_pps_rule(self):
+        _policy = self._get_policy()
+        setattr(_policy, "rules", [self.min_pps_rule])
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=_policy):
+            self.qos_plugin.update_policy_minimum_packet_rate_rule(
+                self.ctxt, self.min_pps_rule.id, self.policy.id,
+                self.rule_data)
+            self._validate_driver_params('update_policy', self.ctxt)
+
+    def test_update_policy_rule_check_rule_min_pps_direction_conflict(self):
+        _policy = self._get_policy()
+        rules_data = [
+            {
+                'minimum_packet_rate_rule': {
+                    'id': uuidutils.generate_uuid(),
+                    'min_kpps': 10,
+                    'direction': 'ingress'
+                }
+            },
+            {
+                'minimum_packet_rate_rule': {
+                    'id': uuidutils.generate_uuid(),
+                    'min_kpps': 10,
+                    'direction': 'egress'
+                }
+            },
+        ]
+
+        self.rule_data['minimum_packet_rate_rule']['direction'] = 'any'
+        for rule_data in rules_data:
+            rules = [
+                rule_object.QosMinimumPacketRateRule(
+                    self.ctxt, **rules_data[0]['minimum_packet_rate_rule']),
+                rule_object.QosMinimumPacketRateRule(
+                    self.ctxt, **rules_data[1]['minimum_packet_rate_rule']),
+            ]
+            setattr(_policy, 'rules', rules)
+            with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                            return_value=_policy) as mock_qos_get_obj:
+                self.assertRaises(qos_exc.QoSRuleParameterConflict,
+                    self.qos_plugin.update_policy_minimum_packet_rate_rule,
+                    self.ctxt, rule_data['minimum_packet_rate_rule']['id'],
+                    self.policy.id, self.rule_data)
+                mock_qos_get_obj.assert_called_once_with(self.ctxt,
+                                                         id=_policy.id)
+
+    def test_update_policy_min_pps_rule_bad_policy(self):
+        _policy = self._get_policy()
+        setattr(_policy, "rules", [])
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=_policy):
+            self.assertRaises(
+                qos_exc.QosRuleNotFound,
+                self.qos_plugin.update_policy_minimum_packet_rate_rule,
+                self.ctxt, self.min_pps_rule.id, self.policy.id,
+                self.rule_data)
+
+    def test_update_policy_min_pps_rule_for_nonexistent_policy(self):
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=None):
+            self.assertRaises(
+                qos_exc.QosPolicyNotFound,
+                self.qos_plugin.update_policy_minimum_packet_rate_rule,
+                self.ctxt, self.min_pps_rule.id, self.policy.id,
+                self.rule_data)
+
+    def test_delete_policy_min_pps_rule(self):
+        _policy = self._get_policy()
+        setattr(_policy, "rules", [self.min_pps_rule])
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=_policy):
+            self.qos_plugin.delete_policy_minimum_packet_rate_rule(
+                self.ctxt, self.min_pps_rule.id, self.policy.id)
+            self._validate_driver_params('update_policy', self.ctxt)
+
+    def test_delete_policy_min_pps_rule_bad_policy(self):
+        _policy = self._get_policy()
+        setattr(_policy, "rules", [])
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=_policy):
+            self.assertRaises(
+                qos_exc.QosRuleNotFound,
+                self.qos_plugin.delete_policy_minimum_packet_rate_rule,
+                self.ctxt, self.min_pps_rule.id, _policy.id)
+
+    def test_delete_policy_min_pps_rule_for_nonexistent_policy(self):
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=None):
+            self.assertRaises(
+                qos_exc.QosPolicyNotFound,
+                self.qos_plugin.delete_policy_minimum_packet_rate_rule,
+                self.ctxt, self.min_pps_rule.id, self.policy.id)
+
+    def test_get_policy_min_pps_rule(self):
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=self.policy):
+            with mock.patch('neutron.objects.qos.rule.'
+                            'QosMinimumPacketRateRule.'
+                            'get_object') as get_object_mock:
+                self.qos_plugin.get_policy_minimum_packet_rate_rule(
+                    self.ctxt, self.min_pps_rule.id, self.policy.id)
+                get_object_mock.assert_called_once_with(
+                    self.ctxt, id=self.min_pps_rule.id)
+
+    def test_get_policy_min_pps_rules_for_policy(self):
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=self.policy):
+            with mock.patch('neutron.objects.qos.rule.'
+                            'QosMinimumPacketRateRule.'
+                            'get_objects') as get_objects_mock:
+                self.qos_plugin.get_policy_minimum_packet_rate_rules(
+                    self.ctxt, self.policy.id)
+                get_objects_mock.assert_called_once_with(
+                    self.ctxt, _pager=mock.ANY, qos_policy_id=self.policy.id)
+
+    def test_get_policy_min_pps_rules_for_policy_with_filters(self):
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=self.policy):
+            with mock.patch('neutron.objects.qos.rule.'
+                            'QosMinimumPacketRateRule.'
+                            'get_objects') as get_objects_mock:
+                filters = {'filter': 'filter_id'}
+                self.qos_plugin.get_policy_minimum_packet_rate_rules(
+                    self.ctxt, self.policy.id, filters=filters)
+                get_objects_mock.assert_called_once_with(
+                    self.ctxt, _pager=mock.ANY,
+                    qos_policy_id=self.policy.id,
+                    filter='filter_id')
+
+    def test_get_policy_min_pps_rule_for_nonexistent_policy(self):
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=None):
+            self.assertRaises(
+                qos_exc.QosPolicyNotFound,
+                self.qos_plugin.get_policy_minimum_packet_rate_rule,
+                self.ctxt, self.min_pps_rule.id, self.policy.id)
+
+    def test_get_policy_min_pps_rules_for_nonexistent_policy(self):
+        with mock.patch('neutron.objects.qos.policy.QosPolicy.get_object',
+                        return_value=None):
+            self.assertRaises(
+                qos_exc.QosPolicyNotFound,
+                self.qos_plugin.get_policy_minimum_packet_rate_rules,
+                self.ctxt, self.policy.id)
+
+    def test_get_min_pps_rule_type(self):
+        admin_ctxt = context.get_admin_context()
+        drivers_details = [{
+            'name': 'fake-driver',
+            'supported_parameters': [{
+                'parameter_name': 'min_kpps',
+                'parameter_type': lib_constants.VALUES_TYPE_RANGE,
+                'parameter_range': {'start': 0, 'end': 100}
+            }]
+        }]
+        with mock.patch.object(
+            qos_plugin.QoSPlugin, "supported_rule_type_details",
+            return_value=drivers_details
+        ):
+            rule_type_details = self.qos_plugin.get_rule_type(
+                admin_ctxt, qos_constants.RULE_TYPE_MINIMUM_PACKET_RATE)
+            self.assertEqual(
+                qos_constants.RULE_TYPE_MINIMUM_PACKET_RATE,
+                rule_type_details['type'])
+            self.assertEqual(
+                drivers_details, rule_type_details['drivers'])
+
+    def test_get_min_pps_rule_type_as_user(self):
+        self.assertRaises(
+            lib_exc.NotAuthorized,
+            self.qos_plugin.get_rule_type,
+            self.ctxt, qos_constants.RULE_TYPE_MINIMUM_PACKET_RATE)
 
 
 class QoSRuleAliasTestExtensionManager(object):

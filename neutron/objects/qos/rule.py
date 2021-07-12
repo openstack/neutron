@@ -52,11 +52,12 @@ class QosRule(base.NeutronDbObject, metaclass=abc.ABCMeta):
     #         1.2: Added QosMinimumBandwidthRule
     #         1.3: Added direction for BandwidthLimitRule
     #         1.4: Added PacketRateLimitRule
+    #         1.5: Added QosMinimumPacketRateRule
     #
     # NOTE(mangelajo): versions need to be handled from the top QosRule object
     #                  because it's the only reference QosPolicy can make
     #                  to them via obj_relationships version map
-    VERSION = '1.4'
+    VERSION = '1.5'
 
     fields = {
         'id': common_types.UUIDField(),
@@ -186,3 +187,18 @@ class QosPacketRateLimitRule(QosRule):
     duplicates_compare_fields = ['direction']
 
     rule_type = qos_constants.RULE_TYPE_PACKET_RATE_LIMIT
+
+
+@base.NeutronObjectRegistry.register
+class QosMinimumPacketRateRule(QosRule):
+
+    db_model = qos_db_model.QosMinimumPacketRateRule
+
+    fields = {
+        'min_kpps': obj_fields.IntegerField(nullable=False),
+        'direction': common_types.FlowDirectionAndAnyEnumField(),
+    }
+
+    duplicates_compare_fields = ['direction']
+
+    rule_type = qos_constants.RULE_TYPE_MINIMUM_PACKET_RATE
