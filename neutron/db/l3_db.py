@@ -1517,11 +1517,12 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     @registry.receives(resources.PORT, [events.PRECOMMIT_DELETE])
     def _precommit_delete_port_callback(
-            self, resource, event, trigger, **kwargs):
-        if (kwargs['port']['device_owner'] ==
+            self, resource, event, trigger, payload):
+        port = payload.latest_state
+        if (port['device_owner'] ==
                 constants.DEVICE_OWNER_FLOATINGIP):
-            registry.notify(resources.FLOATING_IP, events.PRECOMMIT_DELETE,
-                            self, **kwargs)
+            registry.publish(resources.FLOATING_IP, events.PRECOMMIT_DELETE,
+                            self, payload)
 
     def _delete_floatingip(self, context, id):
         floatingip = self._get_floatingip(context, id)

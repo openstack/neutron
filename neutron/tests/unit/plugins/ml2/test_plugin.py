@@ -2086,26 +2086,17 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
         if floating_ip:
             router_ids.add(ns_to_delete['router_id'])
 
-        with self.port() as port,\
-                mock.patch.object(registry, 'notify') as notify, \
+        with self.port() as port, \
                 mock.patch.object(registry, 'publish') as publish, \
                 mock.patch.object(self.l3plugin,
                                   'disassociate_floatingips',
                                   return_value=router_ids):
             port_id = port['port']['id']
             self.plugin.delete_port(self.context, port_id)
-            self.assertEqual(1, notify.call_count)
-            self.assertEqual(2, publish.call_count)
+            self.assertEqual(3, publish.call_count)
             # needed for a full match in the assertion below
             port['port']['extra_dhcp_opts'] = []
             port['port']['standard_attr_id'] = mock.ANY
-
-            expected = [mock.call(resources.PORT, events.PRECOMMIT_DELETE,
-                                  mock.ANY, network=mock.ANY, bind=mock.ANY,
-                                  port=port['port'], port_db=mock.ANY,
-                                  context=self.context, levels=mock.ANY,
-                                  id=mock.ANY, bindings=mock.ANY)]
-            notify.assert_has_calls(expected)
 
             expected = [mock.call(resources.PORT, events.BEFORE_DELETE,
                                   mock.ANY, payload=mock.ANY)]
@@ -2115,11 +2106,22 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
             self.assertEqual(port_id, payload.resource_id)
             self.assertTrue(payload.metadata['port_check'])
 
-            expected = [mock.call(resources.PORT, events.AFTER_DELETE,
+            expected = [mock.call(resources.PORT, events.PRECOMMIT_DELETE,
                                   mock.ANY, payload=mock.ANY)]
             publish.assert_has_calls(expected)
 
             payload = publish.call_args_list[1][1]['payload']
+            self.assertEqual(port_id, payload.resource_id)
+            self.assertEqual(port['port'], payload.latest_state)
+            self.assertTrue(payload.metadata['network'])
+            self.assertTrue(payload.metadata['port_db'])
+            self.assertTrue(payload.metadata['bindings'])
+
+            expected = [mock.call(resources.PORT, events.AFTER_DELETE,
+                                  mock.ANY, payload=mock.ANY)]
+            publish.assert_has_calls(expected)
+
+            payload = publish.call_args_list[2][1]['payload']
             self.assertEqual(port_id, payload.resource_id)
 
     def test_delete_port_with_floatingip_notifies_l3_plugin(self):
@@ -2130,14 +2132,21 @@ class TestMl2DvrPortsV2(TestMl2PortsV2):
         with self.port(device_owner='network:floatingip') as port:
             try:
                 registry.subscribe(fake_method, resources.FLOATING_IP,
-                               events.PRECOMMIT_DELETE)
+                                   events.PRECOMMIT_DELETE)
                 port_id = port['port']['id']
                 self.plugin.delete_port(self.context, port_id)
                 fake_method.assert_called_once_with(
                     resources.FLOATING_IP, events.PRECOMMIT_DELETE, mock.ANY,
-                    bind=mock.ANY, bindings=mock.ANY, context=mock.ANY,
-                    id=mock.ANY, levels=mock.ANY, network=mock.ANY,
-                    port=mock.ANY, port_db=mock.ANY)
+                    payload=mock.ANY)
+                payload = fake_method.call_args_list[0][1]['payload']
+                self.assertEqual(port_id, payload.resource_id)
+                port_dict = payload.latest_state
+                port_dict.pop('standard_attr_id')
+                self.assertEqual(port['port'], port_dict)
+                self.assertTrue(payload.metadata['network'])
+                self.assertTrue(payload.metadata['port_db'])
+                self.assertTrue(payload.metadata['bindings'])
+
             finally:
                 registry.unsubscribe(fake_method, resources.FLOATING_IP,
                                      events.PRECOMMIT_DELETE)
