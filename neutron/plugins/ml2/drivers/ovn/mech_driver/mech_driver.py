@@ -224,6 +224,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         atexit.register(self._clean_hash_ring)
         signal.signal(signal.SIGTERM, self._clean_hash_ring)
         self._create_neutron_pg_drop()
+        self._set_inactivity_probe()
 
     def _create_neutron_pg_drop(self):
         """Create neutron_pg_drop Port Group.
@@ -259,6 +260,28 @@ class OVNMechanismDriver(api.MechanismDriver):
                             'error': re})
                 else:
                     raise
+
+    def _set_inactivity_probe(self):
+        """Set 'connection.inactivity_probe' in NB and SB databases"""
+        inactivity_probe = ovn_conf.get_ovn_ovsdb_probe_interval()
+        dbs = [(ovn_conf.get_ovn_nb_connection(), 'OVN_Northbound',
+                impl_idl_ovn.OvsdbNbOvnIdl),
+               (ovn_conf.get_ovn_sb_connection(), 'OVN_Southbound',
+                impl_idl_ovn.OvsdbSbOvnIdl)]
+        for connection, schema, klass in dbs:
+            target = ovn_utils.connection_config_to_target_string(connection)
+            if not target:
+                continue
+
+            idl = ovsdb_monitor.BaseOvnIdl.from_server(connection, schema)
+            with ovsdb_monitor.short_living_ovsdb_api(klass, idl) as idl_api:
+                conn = idlutils.row_by_value(idl_api, 'Connection', 'target',
+                                             target, None)
+                if conn:
+                    idl_api.db_set(
+                        'Connection', target,
+                        ('inactivity_probe', int(inactivity_probe))).execute(
+                        check_error=True)
 
     @staticmethod
     def should_post_fork_initialize(worker_class):
