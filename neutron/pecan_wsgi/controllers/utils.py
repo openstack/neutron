@@ -14,11 +14,9 @@
 #    under the License.
 
 from collections import defaultdict
-import copy
 import functools
 
 from neutron_lib.api import attributes
-from neutron_lib import constants
 from neutron_lib.db import api as db_api
 from oslo_log import log as logging
 from oslo_utils import excutils
@@ -64,15 +62,6 @@ def _protect_original_resources(f):
             if not orig:
                 # this is the first call so we just take the whole reference
                 ctx['protected_resources'] = ctx['resources']
-            # TODO(blogan): Once bug 157751 is fixed and released in
-            # neutron-lib this memo will no longer be needed.  This is just
-            # quick way to not depend on a release of neutron-lib.
-            # The version that has that bug fix will need to be updated in
-            # neutron-lib.
-            memo = {id(constants.ATTR_NOT_SPECIFIED):
-                    constants.ATTR_NOT_SPECIFIED}
-            ctx['resources'] = copy.deepcopy(ctx['protected_resources'],
-                                             memo=memo)
         return f(*args, **kwargs)
     return wrapped
 
