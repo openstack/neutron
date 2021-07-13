@@ -227,7 +227,7 @@ class IpLibTestCase(base.BaseTestCase):
                 self.assertEqual(errno.EINVAL, e.errno)
 
     def _clean(self, client_mode):
-        priv_lib.privileged.default.client_mode = client_mode
+        priv_lib.privileged.link_cmd.client_mode = client_mode
 
     def test_get_link_vfs(self):
         # NOTE(ralonsoh): there should be a functional test checking this
@@ -249,7 +249,7 @@ class IpLibTestCase(base.BaseTestCase):
         value.setvalue({'attrs': [('IFLA_NUM_VF', 3),
                                   ('IFLA_VFINFO_LIST', vfinfo_list)]})
         client_mode = priv_lib.privileged.default.client_mode
-        priv_lib.privileged.default.client_mode = False
+        priv_lib.privileged.link_cmd.client_mode = False
         self.addCleanup(self._clean, client_mode)
         with mock.patch.object(priv_lib, '_run_iproute_link') as mock_iplink:
             mock_iplink.return_value = [value]
