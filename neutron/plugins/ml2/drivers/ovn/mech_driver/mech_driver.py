@@ -57,6 +57,7 @@ from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import worker
+from neutron import service
 from neutron.services.logapi.drivers.ovn import driver as log_driver
 from neutron.services.qos.drivers.ovn import driver as qos_driver
 from neutron.services.segments import db as segment_service_db
@@ -283,7 +284,8 @@ class OVNMechanismDriver(api.MechanismDriver):
     @staticmethod
     def should_post_fork_initialize(worker_class):
         return worker_class in (neutron.wsgi.WorkerService,
-                                worker.MaintenanceWorker)
+                                worker.MaintenanceWorker,
+                                service.RpcWorker)
 
     def post_fork_initialize(self, resource, event, trigger, payload=None):
         # Initialize API/Maintenance workers with OVN IDL connections
