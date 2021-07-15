@@ -1,4 +1,4 @@
-.. _ovn_devstack:
+.. _ml2_ovn_devstack:
 
 =========================
 Testing OVN with DevStack
