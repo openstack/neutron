@@ -33,7 +33,6 @@ from neutron_lib import context as n_context
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
-from neutron_lib.utils import runtime
 from oslo_config import cfg
 from oslo_db import exception as os_db_exc
 from oslo_log import log
@@ -277,26 +276,8 @@ class OVNMechanismDriver(api.MechanismDriver):
 
     @staticmethod
     def should_post_fork_initialize(worker_class):
-        # By default only API and maintenace workers need to initialize
-        # the OVN IDL connections
-        if worker_class in (neutron.wsgi.WorkerService,
-                            worker.MaintenanceWorker):
-            return True
-
-        # Configuration may allow other worker types to use IDL connections.
-        # Look for a match in additional_worker_classes_with_ovn_idl,
-        # gracefully skipping unknown classes in the config list.
-        for worker_type in ovn_conf.additional_worker_classes_with_ovn_idl():
-            try:
-                additional_class = runtime.load_class_by_alias_or_classname(
-                    'neutron.worker_classes', worker_type)
-                if worker_class == additional_class:
-                    return True
-            except ImportError:
-                # ignore unknown additional worker class
-                pass
-
-        return False
+        return worker_class in (neutron.wsgi.WorkerService,
+                                worker.MaintenanceWorker)
 
     def post_fork_initialize(self, resource, event, trigger, payload=None):
         # Initialize API/Maintenance workers with OVN IDL connections
