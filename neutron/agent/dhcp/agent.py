@@ -537,30 +537,9 @@ class DhcpAgent(manager.Manager):
     # Use the update handler for the subnet create event.
     subnet_create_end = subnet_update_end
 
-    def _get_network_lock_id(self, payload):
-        """Determine which lock to hold when servicing an RPC event"""
-        # TODO(alegacy): in a future release this function can be removed and
-        # uses of it can be replaced with payload['network_id'].  It exists
-        # only to satisfy backwards compatibility between older servers and
-        # newer agents.  Once the 'network_id' attribute is guaranteed to be
-        # sent by the server on all *_delete_end events then it can be removed.
-        if 'network_id' in payload:
-            return payload['network_id']
-        elif 'subnet_id' in payload:
-            subnet_id = payload['subnet_id']
-            network = self.cache.get_network_by_subnet_id(subnet_id)
-            return network.id if network else None
-        elif 'port_id' in payload:
-            port_id = payload['port_id']
-            port = self.cache.get_port_by_id(port_id)
-            return port.network_id if port else None
-
     def subnet_delete_end(self, context, payload):
         """Handle the subnet.delete.end notification event."""
-        network_id = self._get_network_lock_id(payload)
-        if not network_id:
-            return
-        update = DHCPResourceUpdate(network_id,
+        update = DHCPResourceUpdate(payload['network_id'],
                                     payload.get('priority', DEFAULT_PRIORITY),
                                     action='_subnet_delete',
                                     resource=payload, obj_type='subnet')
@@ -569,9 +548,6 @@ class DhcpAgent(manager.Manager):
     @_wait_if_syncing
     @log_helpers.log_method_call
     def _subnet_delete(self, payload):
-        network_id = self._get_network_lock_id(payload)
-        if not network_id:
-            return
         subnet_id = payload['subnet_id']
         network = self.cache.get_network_by_subnet_id(subnet_id)
         if not network:
@@ -711,10 +687,7 @@ class DhcpAgent(manager.Manager):
 
     def port_delete_end(self, context, payload):
         """Handle the port.delete.end notification event."""
-        network_id = self._get_network_lock_id(payload)
-        if not network_id:
-            return
-        update = DHCPResourceUpdate(network_id,
+        update = DHCPResourceUpdate(payload['network_id'],
                                     payload.get('priority', DEFAULT_PRIORITY),
                                     action='_port_delete',
                                     resource=payload, obj_type='port')
@@ -723,9 +696,6 @@ class DhcpAgent(manager.Manager):
     @_wait_if_syncing
     @log_helpers.log_method_call
     def _port_delete(self, payload):
-        network_id = self._get_network_lock_id(payload)
-        if not network_id:
-            return
         port_id = payload['port_id']
         port = self.cache.get_port_by_id(port_id)
         self.cache.add_to_deleted_ports(port_id)
