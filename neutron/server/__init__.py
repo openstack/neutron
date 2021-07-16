@@ -73,6 +73,9 @@ def boot_server(server_func):
 
 
 def get_application():
+    if os.environ.get('PYTHONWARNINGS') == 'ignore:Unverified HTTPS request':
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     _init_configuration()
     profiler.setup('neutron-server', cfg.CONF.host)
     return config.load_paste_app('neutron')
