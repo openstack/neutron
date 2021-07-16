@@ -54,7 +54,7 @@ neutron-lib==2.12.0
 openstacksdk==0.31.2
 os-client-config==1.28.0
 os-ken==2.0.0
-os-resource-classes==0.2.0
+os-resource-classes==1.1.0
 os-service-types==1.7.0
 os-vif==1.15.1
 osc-lib==1.8.0
