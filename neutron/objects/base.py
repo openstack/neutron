@@ -12,6 +12,7 @@
 
 import abc
 import collections
+from collections import abc as collections_abc
 import copy
 import functools
 import itertools
@@ -282,7 +283,7 @@ class NeutronObject(obj_base.VersionedObject,
 
     @classmethod
     def _update_objects(cls, objects, values):
-        if not isinstance(objects, collections.Sequence):
+        if not isinstance(objects, collections_abc.Sequence):
             objects = (objects, )
 
         for obj in objects:
