@@ -187,20 +187,71 @@ class RouterInfo(BaseRouterInfo):
     def update_routing_table(self, operation, route):
         self._update_routing_table(operation, route, self.ns_name)
 
+    def update_routing_table_ecmp(self, route_list):
+        multipath = [dict(via=route['nexthop'])
+                     for route in route_list]
+        try:
+            ip_lib.add_ip_route(self.ns_name, route_list[0]['destination'],
+                                via=multipath)
+        except (RuntimeError, OSError, pyroute2_exc.NetlinkError):
+            pass
+
+    def check_and_remove_ecmp_route(self, old_routes, remove_route):
+        route_list = []
+        for route in old_routes:
+            if route['destination'] == remove_route['destination']:
+                route_list.append(route)
+        # An ECMP route is composed of multiple routes with the same
+        # destination address, and two scenarios should be considered
+        # when removing a nexthop address from an ECMP route.
+        # a. The original ECMP route has only two nexthops, deleting
+        #    one of them will make it a normal route.
+        # b. The original ECMP route has more than two nexthops,
+        #    delete one of the nexthops, it is still an ECMP route.
+        if len(route_list) == 2:
+            for r in route_list:
+                if r['nexthop'] != remove_route['nexthop']:
+                    self.update_routing_table('replace', r)
+            return True
+
+        if len(route_list) > 2:
+            route_list.remove(remove_route)
+            self.update_routing_table_ecmp(route_list)
+            return True
+
+        return False
+
+    def check_and_add_ecmp_route(self, old_routes, new_route):
+        route_list = []
+        for route in old_routes:
+            if route['destination'] == new_route['destination']:
+                route_list.append(route)
+
+        if route_list:
+            route_list.append(new_route)
+            self.update_routing_table_ecmp(route_list)
+            return True
+
+        return False
+
     def routes_updated(self, old_routes, new_routes):
         adds, removes = helpers.diff_list_of_dict(old_routes,
                                                   new_routes)
-        for route in adds:
-            LOG.debug("Added route entry is '%s'", route)
-            # remove replaced route from deleted route
-            for del_route in removes:
-                if route['destination'] == del_route['destination']:
-                    removes.remove(del_route)
-            # replace success even if there is no existing route
-            self.update_routing_table('replace', route)
         for route in removes:
-            LOG.debug("Removed route entry is '%s'", route)
-            self.update_routing_table('delete', route)
+            # Judge if modifying an ECMP route or not, if not,
+            # just delete it, if it is, replace it
+            # update old_routes after modify
+            if not self.check_and_remove_ecmp_route(old_routes, route):
+                LOG.debug("Removed route entry is '%s'", route)
+                self.update_routing_table('delete', route)
+            old_routes.remove(route)
+
+        for route in adds:
+            if not self.check_and_add_ecmp_route(old_routes, route):
+                LOG.debug("Added route entry is '%s'", route)
+                # replace success even if there is no existing route
+                self.update_routing_table('replace', route)
+            old_routes.append(route)
 
     def get_floating_ips(self):
         """Filter Floating IPs to be hosted on this agent."""

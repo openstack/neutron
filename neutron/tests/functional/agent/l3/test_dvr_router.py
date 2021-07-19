@@ -2185,3 +2185,74 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
                                 in fip_agent_gw_port['extra_subnets'])
         routes_cidr = set(route['cidr'] for route in routes)
         self.assertEqual(extra_subnet_cidr, routes_cidr)
+
+    def test_dvr_router_update_ecmp_routes(self):
+        self.agent.conf.agent_mode = 'dvr'
+        router_info = self.generate_dvr_router_info()
+        print(router_info)
+        router1 = self.manage_router(self.agent, router_info)
+        router1.router['routes'] = [{'destination': '20.0.10.10/32',
+                                     'nexthop': '35.4.0.11'},
+                                    {'destination': '20.0.10.10/32',
+                                     'nexthop': '35.4.0.22'},
+                                    {'destination': '20.0.10.10/32',
+                                     'nexthop': '35.4.0.33'}]
+        self.agent._process_updated_router(router1.router)
+
+        updated_route = ip_lib.list_ip_routes(
+            router1.ns_name,
+            ip_version=lib_constants.IP_VERSION_4,)
+        expected_route = [{'cidr': '20.0.10.10/32',
+                           'table': 'main',
+                           'via': [{'via': '35.4.0.11'},
+                                   {'via': '35.4.0.22'},
+                                   {'via': '35.4.0.33'}]
+                           }]
+        actual_routes = [{key: route[key] for key in expected_route[0].keys()}
+                         for route in updated_route]
+        for entry in actual_routes:
+            if entry['via']:
+                if isinstance(entry['via'], (list, tuple)):
+                    via_list = [{'via': hop['via']}
+                                for hop in entry['via']]
+                    entry['via'] = sorted(via_list, key=lambda i: i['via'])
+        self.assertIn(expected_route[0], actual_routes)
+
+        # delete one route
+        router1.router['routes'] = [{'destination': '20.0.10.10/32',
+                                     'nexthop': '35.4.0.11'},
+                                    {'destination': '20.0.10.10/32',
+                                     'nexthop': '35.4.0.22'}]
+        self.agent._process_updated_router(router1.router)
+        updated_route = ip_lib.list_ip_routes(
+            router1.ns_name,
+            ip_version=lib_constants.IP_VERSION_4, )
+        expected_route = [{'cidr': '20.0.10.10/32',
+                           'table': 'main',
+                           'via': [{'via': '35.4.0.11'},
+                                   {'via': '35.4.0.22'}]
+                           }]
+        actual_routes = [{key: route[key] for key in expected_route[0].keys()}
+                         for route in updated_route]
+        for entry in actual_routes:
+            if entry['via']:
+                if isinstance(entry['via'], (list, tuple)):
+                    via_list = [{'via': hop['via']}
+                                for hop in entry['via']]
+                    entry['via'] = sorted(via_list, key=lambda i: i['via'])
+        self.assertIn(expected_route[0], actual_routes)
+
+        # delete one route again
+        router1.router['routes'] = [{'destination': '20.0.10.10/32',
+                                     'nexthop': '35.4.0.11'}]
+        self.agent._process_updated_router(router1.router)
+        updated_route = ip_lib.list_ip_routes(
+            router1.ns_name,
+            ip_version=lib_constants.IP_VERSION_4, )
+        expected_route = [{'cidr': '20.0.10.10/32',
+                           'table': 'main',
+                           'via': '35.4.0.11'
+                           }]
+        actual_routes = [{key: route[key] for key in expected_route[0].keys()}
+                         for route in updated_route]
+        self.assertIn(expected_route[0], actual_routes)
