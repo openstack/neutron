@@ -629,11 +629,16 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             grtr.return_value = router_db
             vmp.return_value = 'my-host'
             mvmp.return_value = 'my-future-host'
-            registry.notify(resources.FLOATING_IP, events.AFTER_UPDATE, self,
-                            context=mock.Mock(), router_id=router_db['id'],
-                            fixed_port_id=port['id'], floating_ip_id=fip['id'],
-                            floating_network_id=fip['floating_network_id'],
-                            fixed_ip_address='1.2.3.4', association_event=True)
+            registry.publish(
+                resources.FLOATING_IP, events.AFTER_CREATE, self,
+                payload=events.DBEventPayload(
+                    context=mock.Mock(), states=(dict(
+                        router_id=router_db['id'], fixed_port_id=port['id'],
+                        floating_ip_id=fip['id'],
+                        floating_network_id=fip['floating_network_id'],
+                        fixed_ip_address='1.2.3.4'),),
+                    resource_id=fip['id'],
+                    metadata=dict(association_event=True)))
             return c_fip
 
     def test_create_floatingip_agent_gw_port_with_dvr_router(self):

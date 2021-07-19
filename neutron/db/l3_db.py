@@ -187,8 +187,6 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                         "deleting.", port_id)
             self._core_plugin.delete_port(
                 context, port_id, l3_port_check=False)
-            registry.notify(resources.FLOATING_IP, events.AFTER_DELETE,
-                            self, context=context, **fips[0])
 
     def _get_dead_floating_port_candidates(self, context):
         filters = {'device_id': ['PENDING'],
@@ -1334,7 +1332,6 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 'floating_ip_address': floating_ip_address,
                 'floating_network_id': floatingip_obj.floating_network_id,
                 'floating_ip_id': floatingip_obj.id,
-                'context': context,
                 'association_event': association_event}
 
     def _is_ipv4_network(self, context, net_db):
@@ -1437,10 +1434,13 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             context.elevated(), external_port['id'],
             {'port': {'device_id': fip_id,
                       'project_id': fip['tenant_id']}})
-        registry.notify(resources.FLOATING_IP,
-                        events.AFTER_UPDATE,
-                        self._update_fip_assoc,
-                        **assoc_result)
+        registry.publish(
+            resources.FLOATING_IP, events.AFTER_CREATE, self,
+            payload=events.DBEventPayload(
+                context, states=(assoc_result,),
+                resource_id=floatingip_obj.id,
+                metadata={
+                    'association_event': assoc_result['association_event']}))
         if assoc_result['association_event']:
             LOG.info(FIP_ASSOC_MSG,
                      {'fip_id': assoc_result['floating_ip_id'],
@@ -1502,10 +1502,13 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                  desired_state=floatingip_db,
                                  states=(old_floatingip, floatingip)))
 
-        registry.notify(resources.FLOATING_IP,
-                        events.AFTER_UPDATE,
-                        self._update_fip_assoc,
-                        **assoc_result)
+        registry.publish(
+            resources.FLOATING_IP, events.AFTER_UPDATE, self,
+            payload=events.DBEventPayload(
+                context, states=(assoc_result,),
+                resource_id=floatingip_obj.id,
+                metadata={
+                    'association_event': assoc_result['association_event']}))
         if assoc_result['association_event'] is not None:
             port_id = old_fixed_port_id or assoc_result['fixed_port_id']
             assoc = ('associated' if assoc_result['association_event']
@@ -1563,8 +1566,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         self._core_plugin.delete_port(context.elevated(),
                                       floatingip.floating_port_id,
                                       l3_port_check=False)
-        registry.notify(resources.FLOATING_IP, events.AFTER_DELETE,
-                        self, context=context, **floatingip_dict)
+        registry.publish(
+            resources.FLOATING_IP, events.AFTER_DELETE, self,
+            payload=events.DBEventPayload(
+                context, states=(floatingip_dict,),
+                resource_id=id))
         if floatingip.fixed_port_id:
             LOG.info(FIP_ASSOC_MSG,
                      {'fip_id': floatingip.id,
@@ -1701,18 +1707,23 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 'fixed_ip_address': None,
                 'fixed_port_id': None,
                 'router_id': None,
-                'floating_ip_address': fip.floating_ip_address,
+                'floating_ip_address': (
+                    str(fip.floating_ip_address)
+                    if fip.floating_ip_address else None),
                 'floating_network_id': fip.floating_network_id,
                 'floating_ip_id': fip.id,
-                'context': context,
                 'router_ids': router_ids,
                 'association_event': False,
             }
             # Process DNS record removal after committing the transaction
             if self._is_dns_integration_supported:
                 self._process_dns_floatingip_delete(context, fip.to_dict())
-            registry.notify(resources.FLOATING_IP, events.AFTER_UPDATE, self,
-                            **assoc_result)
+            registry.publish(
+                resources.FLOATING_IP, events.AFTER_UPDATE, self,
+                payload=events.DBEventPayload(
+                    context, states=(assoc_result,),
+                    resource_id=fip.id,
+                    metadata={'association_event': False}))
         for fip in old_fips.values():
             LOG.info(FIP_ASSOC_MSG,
                      {'fip_id': fip['id'],
