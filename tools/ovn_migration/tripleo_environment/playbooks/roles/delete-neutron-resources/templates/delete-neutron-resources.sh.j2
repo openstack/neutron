@@ -26,4 +26,7 @@ do
     openstack network delete $i
 done
 
+# Delete DVR gateway ports
+openstack port delete $(openstack port list --device-owner "network:floatingip_agent_gateway" -c id -f value)
+
 exit 0
