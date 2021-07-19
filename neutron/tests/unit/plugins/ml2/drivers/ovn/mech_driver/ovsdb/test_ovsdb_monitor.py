@@ -365,7 +365,7 @@ class TestPortBindingChassisUpdateEvent(base.BaseTestCase):
         pbtable = fakes.FakeOvsdbTable.create_one_ovsdb_table(
             attrs={'name': 'Port_Binding'})
         ovsdb_row = fakes.FakeOvsdbRow.create_one_ovsdb_row
-        self.driver._nb_ovn.lookup.return_value = ovsdb_row(attrs={'up': True})
+        self.driver.nb_ovn.lookup.return_value = ovsdb_row(attrs={'up': True})
         self._test_event(
             self.event.ROW_UPDATE,
             ovsdb_row(attrs={'_table': pbtable, 'chassis': 'one',
@@ -611,7 +611,7 @@ class TestChassisEvent(base.BaseTestCase):
     def setUp(self):
         super(TestChassisEvent, self).setUp()
         self.driver = mock.Mock()
-        self.nb_ovn = self.driver._nb_ovn
+        self.nb_ovn = self.driver.nb_ovn
         self.driver._ovn_client.is_external_ports_supported.return_value = True
         self.event = ovsdb_monitor.ChassisEvent(self.driver)
         self.is_gw_ch_mock = mock.patch.object(

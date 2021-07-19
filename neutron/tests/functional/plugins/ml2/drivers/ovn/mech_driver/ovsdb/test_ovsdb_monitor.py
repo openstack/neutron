@@ -146,7 +146,7 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         """
         net_name = 'network1'
         row_event = WaitForDataPathBindingCreateEvent(net_name)
-        self.mech_driver._sb_ovn.idl.notify_handler.watch_event(row_event)
+        self.mech_driver.sb_ovn.idl.notify_handler.watch_event(row_event)
         self._make_network(self.fmt, net_name, True)
         self.assertTrue(row_event.wait())
         dp = self.sb_api.db_find(
@@ -158,7 +158,7 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
 
         # Ensure that the MAC_Binding entry gets deleted after creating a FIP
         row_event = WaitForMACBindingDeleteEvent(macb_id)
-        self.mech_driver._sb_ovn.idl.notify_handler.watch_event(row_event)
+        self.mech_driver.sb_ovn.idl.notify_handler.watch_event(row_event)
         fip = self._create_fip(port, '100.0.0.21')
         self.assertTrue(row_event.wait())
 
@@ -170,7 +170,7 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
 
         # Ensure that the MAC_Binding entry gets deleted after deleting the FIP
         row_event = WaitForMACBindingDeleteEvent(macb_id)
-        self.mech_driver._sb_ovn.idl.notify_handler.watch_event(row_event)
+        self.mech_driver.sb_ovn.idl.notify_handler.watch_event(row_event)
         self.l3_plugin.delete_floatingip(self.context, fip['id'])
         self.assertTrue(row_event.wait())
 
@@ -205,8 +205,8 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         self._test_port_binding_and_status(port['id'], 'unbind', 'DOWN')
 
     def _create_workers(self, row_event, worker_num):
-        self.mech_driver._nb_ovn.idl.notify_handler.watch_event(row_event)
-        worker_list = [self.mech_driver._nb_ovn]
+        self.mech_driver.nb_ovn.idl.notify_handler.watch_event(row_event)
+        worker_list = [self.mech_driver.nb_ovn]
 
         # Create 10 fake workers
         for _ in range(worker_num):

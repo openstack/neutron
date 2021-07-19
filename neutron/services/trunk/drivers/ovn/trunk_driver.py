@@ -44,7 +44,7 @@ class OVNTrunkHandler(object):
         self.plugin_driver = plugin_driver
 
     def _set_sub_ports(self, parent_port, subports):
-        txn = self.plugin_driver._nb_ovn.transaction
+        txn = self.plugin_driver.nb_ovn.transaction
         context = n_context.get_admin_context()
         for port in subports:
             with db_api.CONTEXT_WRITER.using(context), (
@@ -52,7 +52,7 @@ class OVNTrunkHandler(object):
                 self._set_binding_profile(context, port, parent_port, ovn_txn)
 
     def _unset_sub_ports(self, subports):
-        txn = self.plugin_driver._nb_ovn.transaction
+        txn = self.plugin_driver.nb_ovn.transaction
         context = n_context.get_admin_context()
         for port in subports:
             with db_api.CONTEXT_WRITER.using(context), (
@@ -91,7 +91,7 @@ class OVNTrunkHandler(object):
             LOG.debug("Port not found while trying to set "
                       "binding_profile: %s", subport.port_id)
             return
-        ovn_txn.add(self.plugin_driver._nb_ovn.set_lswitch_port(
+        ovn_txn.add(self.plugin_driver.nb_ovn.set_lswitch_port(
                     lport_name=subport.port_id,
                     parent_name=parent_port,
                     tag=subport.segmentation_id))
@@ -125,7 +125,7 @@ class OVNTrunkHandler(object):
             LOG.debug("Port not found while trying to unset "
                       "binding_profile: %s", subport.port_id)
             return
-        ovn_txn.add(self.plugin_driver._nb_ovn.set_lswitch_port(
+        ovn_txn.add(self.plugin_driver.nb_ovn.set_lswitch_port(
                     lport_name=subport.port_id,
                     parent_name=[],
                     up=False,
