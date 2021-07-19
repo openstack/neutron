@@ -837,11 +837,11 @@ class OVSBridge(BaseOVS):
     def _update_ingress_bw_limit_for_port(
             self, port_name, max_bw_in_bits, max_burst_in_bits):
         qos_other_config = {
-            'max-rate': str(max_bw_in_bits)
+            'max-rate': str(int(max_bw_in_bits))
         }
         queue_other_config = {
-            'max-rate': str(max_bw_in_bits),
-            'burst': str(max_burst_in_bits),
+            'max-rate': str(int(max_bw_in_bits)),
+            'burst': str(int(max_burst_in_bits)),
         }
         qos = self.find_qos(port_name)
         queue = self.find_queue(port_name, QOS_DEFAULT_QUEUE)
@@ -865,8 +865,8 @@ class OVSBridge(BaseOVS):
             self, port_name, max_bw_in_bits, max_burst_in_bits):
         # cir and cbs should be set in bytes instead of bits
         qos_other_config = {
-            'cir': str(max_bw_in_bits / 8),
-            'cbs': str(max_burst_in_bits / 8)
+            'cir': str(max_bw_in_bits // 8),
+            'cbs': str(max_burst_in_bits // 8)
         }
         qos = self.find_qos(port_name)
         qos_uuid = qos['_uuid'] if qos else None
