@@ -50,7 +50,10 @@ class LinuxbridgeCleanupTest(base.BaseSudoTestCase):
             },
             'privsep': {
                 'helper_command': ' '.join(['sudo', '-E', privsep_helper]),
-            }
+            },
+            'privsep_link': {
+                'helper_command': ' '.join(['sudo', '-E', privsep_helper]),
+            },
         })
 
         config.update({'VXLAN': {'enable_vxlan': 'False'}})
