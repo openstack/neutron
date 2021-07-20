@@ -38,6 +38,7 @@ OPTS = [
                       "with DVR.  This mode must be used for an L3 agent "
                       "running on a centralized node (or in single-host "
                       "deployments, e.g. devstack). "
+                      "dvr_snat mode is not supported on a compute host. "
                       "'dvr_no_external' - this mode enables only East/West "
                       "DVR routing functionality for a L3 agent that runs on "
                       "a compute host, the North/South functionality such "
