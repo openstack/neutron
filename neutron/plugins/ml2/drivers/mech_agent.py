@@ -42,8 +42,7 @@ class AgentMechanismDriverBase(api.MechanismDriver, metaclass=abc.ABCMeta):
     __init__(), and must implement try_to_bind_segment_for_agent().
     """
 
-    def __init__(self, agent_type,
-                 supported_vnic_types=[portbindings.VNIC_NORMAL]):
+    def __init__(self, agent_type, supported_vnic_types):
         """Initialize base class for specific L2 agent type.
 
         :param agent_type: Constant identifying agent type in agents_db
@@ -144,9 +143,12 @@ class AgentMechanismDriverBase(api.MechanismDriver, metaclass=abc.ABCMeta):
 
         :param vnic_types: The supported_vnic_types list
         :param prohibit_list: The prohibit_list as in vnic_type_prohibit_list
-        :return The prohibited vnic_types
+        :return The supported vnic_types minus those ones present in
+                prohibit_list
         """
         if not prohibit_list:
+            LOG.info("%s's supported_vnic_types: %s", self.agent_type,
+                     vnic_types)
             return vnic_types
 
         # Not valid values in the prohibit_list:
@@ -166,6 +168,9 @@ class AgentMechanismDriverBase(api.MechanismDriver, metaclass=abc.ABCMeta):
         if len(supported_vnic_types) < 1:
             raise ValueError(_("All possible vnic_types were prohibited for "
                                "%s mechanism driver!") % self.agent_type)
+
+        LOG.info("%s's supported_vnic_types: %s", self.agent_type,
+                 supported_vnic_types)
         return supported_vnic_types
 
     def _possible_agents_for_port(self, context):
@@ -254,16 +259,22 @@ class SimpleAgentMechanismDriverBase(AgentMechanismDriverBase,
     """
 
     def __init__(self, agent_type, vif_type, vif_details,
-                 supported_vnic_types=[portbindings.VNIC_NORMAL]):
+                 supported_vnic_types=None, vnic_type_prohibit_list=None):
         """Initialize base class for specific L2 agent type.
 
         :param agent_type: Constant identifying agent type in agents_db
         :param vif_type: Value for binding:vif_type when bound
         :param vif_details: Dictionary with details for VIF driver when bound
         :param supported_vnic_types: The binding:vnic_type values we can bind
+        :param vnic_type_prohibit_list: VNIC types administratively prohibited
+                                        by the mechanism driver
         """
+        supported_vnic_types = (supported_vnic_types or
+                                [portbindings.VNIC_NORMAL])
         super(SimpleAgentMechanismDriverBase, self).__init__(
             agent_type, supported_vnic_types)
+        self.supported_vnic_types = self.prohibit_list_supported_vnic_types(
+            self.supported_vnic_types, vnic_type_prohibit_list)
         self.vif_type = vif_type
         self.vif_details = {portbindings.VIF_DETAILS_CONNECTIVITY:
                             portbindings.CONNECTIVITY_LEGACY}

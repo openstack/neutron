@@ -64,24 +64,18 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         # We are using OVS mechanism driver because the openvswitch (>=2.8.0)
         # support hardware offload via tc and that allow us to manage the VF by
         # OpenFlow control plane using representor net-device.
+        supported_vnic_types = [portbindings.VNIC_NORMAL,
+                                portbindings.VNIC_DIRECT,
+                                portbindings.VNIC_SMARTNIC,
+                                portbindings.VNIC_VHOST_VDPA,
+                                ]
+        prohibit_list = cfg.CONF.OVS_DRIVER.vnic_type_prohibit_list
         super(OpenvswitchMechanismDriver, self).__init__(
             constants.AGENT_TYPE_OVS,
             portbindings.VIF_TYPE_OVS,
-            vif_details)
-
-        # TODO(lajoskatona): move this prohibition to
-        # SimpleAgentMechanismDriverBase. By that, prohibition and validation
-        # of the vnic_types would be available for all mechanism drivers.
-        self.supported_vnic_types = self.prohibit_list_supported_vnic_types(
-            vnic_types=[portbindings.VNIC_NORMAL,
-                        portbindings.VNIC_DIRECT,
-                        portbindings.VNIC_SMARTNIC,
-                        portbindings.VNIC_VHOST_VDPA,
-                        ],
-            prohibit_list=cfg.CONF.OVS_DRIVER.vnic_type_prohibit_list
-        )
-        LOG.info("%s's supported_vnic_types: %s",
-                 self.agent_type, self.supported_vnic_types)
+            vif_details,
+            supported_vnic_types=supported_vnic_types,
+            vnic_type_prohibit_list=prohibit_list)
 
         ovs_qos_driver.register()
         log_driver.register()
