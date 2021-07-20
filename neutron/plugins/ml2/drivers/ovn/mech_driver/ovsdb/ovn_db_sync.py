@@ -297,7 +297,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                 for acla in neutron_acls:
                     LOG.warning('ACL found in Neutron but not in '
                                 'OVN DB for port group %s', acla['port_group'])
-                    txn.add(self.ovn_api.pg_acl_add(**acla))
+                    txn.add(self.ovn_api.pg_acl_add(**acla, may_exist=True))
 
             with self.ovn_api.transaction(check_error=True) as txn:
                 for aclr in ovn_acls:
