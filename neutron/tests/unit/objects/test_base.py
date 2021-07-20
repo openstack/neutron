@@ -11,6 +11,7 @@
 #    under the License.
 
 import collections
+from collections import abc
 import copy
 import itertools
 import random
@@ -672,7 +673,7 @@ class _BaseObjectTestCase(object):
                     objs or self.objs):
                 val = v() if callable(v) else v
                 db_obj_key = obj.fields_need_translation.get(k, k)
-                if isinstance(val, collections.Mapping):
+                if isinstance(val, abc.Mapping):
                     self.update_obj_fields(
                         val, db_obj[db_obj_key], fields[k], obj[k])
                 else:
