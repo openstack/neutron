@@ -297,3 +297,8 @@ CMS_OPT_AVAILABILITY_ZONES = 'availability-zones'
 
 # OVN vlan transparency option
 VLAN_PASSTHRU = 'vlan-passthru'
+
+# OVN Placement API; used for minimum bandwidth scheduling allocation.
+RP_BANDWIDTHS = 'resource_provider_bandwidths'
+RP_INVENTORY_DEFAULTS = 'resource_provider_inventory_defaults'
+RP_HYPERVISORS = 'resource_provider_hypervisors'
