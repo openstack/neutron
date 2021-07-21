@@ -79,6 +79,8 @@ Below is a summary of those jobs.
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-tempest-slow-py3                      |tempest slow tests                |   3.6   |   2   | openvswitch | openvswitch     | legacy   | False | False  | True       | Yes         |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-ovn-tempest-slow                      |tempest slow tests                |   3.6   |   2   | ovn         | ovn             | ---      | False | False  | True       | Yes         |
+    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-tempest-ipv6-only                     |tempest smoke + IPv6 tests        |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | Yes         |
     |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
     |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
@@ -128,8 +130,6 @@ Currently we have in that queue jobs like listed below.
     |(non-voting)                                  |tempest.scenario                  |         |       |             |                 |          |       |        |            |             |
     |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
     |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-ovn-tempest-slow                      |tempest slow tests                |   3.6   |   2   | ovn         | ovn             | ---      | False | False  | True       | No          |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-ovn-tempest-multinode-ovs-master      |Various tempest api, scenario     |   3.6   |   2   | ovn         | ovn             | ---      | False | False  | True       | No          |
     |                                              |and neutron_tempest_plugi tests   |         |       |             |                 |          |       |        |            |             |
