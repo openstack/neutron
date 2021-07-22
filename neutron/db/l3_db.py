@@ -1413,10 +1413,14 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             if self._is_fip_qos_supported:
                 self._process_extra_fip_qos_create(context, fip_id, fip)
 
-            registry.notify(resources.FLOATING_IP, events.PRECOMMIT_CREATE,
-                            self, context=context, floatingip=fip,
-                            floatingip_id=fip_id,
-                            floatingip_db=floatingip_obj.db_obj)
+            registry.publish(resources.FLOATING_IP,
+                             events.PRECOMMIT_CREATE,
+                             self,
+                             payload=events.DBEventPayload(
+                                 context,
+                                 resource_id=fip_id,
+                                 desired_state=floatingip_obj.db_obj,
+                                 states=(fip,)))
 
         self._core_plugin.update_port(
             context.elevated(), external_port['id'],
@@ -1478,13 +1482,14 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             floatingip_obj = l3_obj.FloatingIP.get_object(
                 context, id=floatingip_obj.id)
             floatingip_db = floatingip_obj.db_obj
-            registry.notify(resources.FLOATING_IP,
-                            events.PRECOMMIT_UPDATE,
-                            self,
-                            floatingip=floatingip,
-                            floatingip_db=floatingip_db,
-                            old_floatingip=old_floatingip,
-                            **assoc_result)
+
+            registry.publish(resources.FLOATING_IP,
+                             events.PRECOMMIT_UPDATE,
+                             self,
+                             payload=events.DBEventPayload(
+                                 context,
+                                 desired_state=floatingip_db,
+                                 states=(old_floatingip, floatingip)))
 
         registry.notify(resources.FLOATING_IP,
                         events.AFTER_UPDATE,
@@ -1669,12 +1674,16 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             l3_obj.FloatingIP.update_objects(
                 context, values, fixed_port_id=port_id)
             for fip in floating_ip_objs:
-                registry.notify(resources.FLOATING_IP, events.PRECOMMIT_UPDATE,
-                                self, context=context,
-                                floatingip={l3_apidef.FLOATINGIP: values},
-                                floatingip_db=fip,
-                                old_floatingip=old_fips[fip.id],
-                                router_ids=router_ids)
+                registry.publish(
+                    resources.FLOATING_IP,
+                    events.PRECOMMIT_UPDATE,
+                    self,
+                    payload=events.DBEventPayload(
+                        context,
+                        desired_state=fip,
+                        metadata={'router_ids': router_ids},
+                        states=(old_fips[fip.id],
+                                {l3_apidef.FLOATINGIP: values})))
 
         for fip in floating_ip_objs:
             assoc_result = {

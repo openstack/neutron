@@ -4005,9 +4005,9 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
             with self.floatingip_with_assoc() as f:
                 fake_method.assert_called_once_with(
                     resources.FLOATING_IP, events.PRECOMMIT_CREATE, mock.ANY,
-                    context=mock.ANY, floatingip=mock.ANY,
-                    floatingip_id=f['floatingip']['id'],
-                    floatingip_db=mock.ANY)
+                    payload=mock.ANY)
+                payload = fake_method.call_args_list[0][1]['payload']
+                self.assertEqual(f['floatingip']['id'], payload.resource_id)
         finally:
             registry.unsubscribe(fake_method, resources.FLOATING_IP,
                                  events.PRECOMMIT_CREATE)
