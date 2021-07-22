@@ -500,11 +500,6 @@ class BaseOvnIdl(Ml2OvnIdlBase):
 
 
 class BaseOvnSbIdl(Ml2OvnIdlBase):
-
-    def __init__(self, remote, schema):
-        self.notify_handler = row_event.RowEventHandler()
-        super().__init__(remote, schema)
-
     @classmethod
     def from_server(cls, connection_string, helper):
         helper.register_table('Chassis')

@@ -42,8 +42,6 @@ from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import models  # noqa
 from neutron import manager
 from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent
-from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions import \
-    placement as ovn_client_placement
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import worker
 from neutron.plugins.ml2.drivers import type_geneve  # noqa
 from neutron import service  # noqa
@@ -169,7 +167,7 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         self.temp_dir = self.useFixture(fixtures.TempDir()).path
         self._start_ovsdb_server()
 
-    def setUp(self, maintenance_worker=False, service_plugins=None):
+    def setUp(self, maintenance_worker=False):
         ml2_config.cfg.CONF.set_override('extension_drivers',
                                      self._extension_drivers,
                                      group='ml2')
@@ -186,7 +184,6 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
 
         self.addCleanup(exts.PluginAwareExtensionManager.clear_instance)
         self.ovsdb_server_mgr = None
-        self._service_plugins = service_plugins
         super(TestOVNFunctionalBase, self).setUp()
         self.test_log_dir = os.path.join(DEFAULT_LOG_DIR, self.id())
         base.setup_test_logging(
@@ -220,13 +217,9 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         self._start_idls()
         self._start_ovn_northd()
         self.addCleanup(self._reset_agent_cache_singleton)
-        self.addCleanup(self._reset_ovn_client_placement_extension)
 
     def _reset_agent_cache_singleton(self):
         neutron_agent.AgentCache._instance = None
-
-    def _reset_ovn_client_placement_extension(self):
-        ovn_client_placement.OVNClientPlacementExtension._instance = None
 
     def _get_install_share_path(self):
         lookup_paths = set()
@@ -257,10 +250,8 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
 
     def get_additional_service_plugins(self):
         p = super(TestOVNFunctionalBase, self).get_additional_service_plugins()
-        p.update({'revision_plugin_name': 'revisions',
-                  'segments': 'neutron.services.segments.plugin.Plugin'})
-        if self._service_plugins:
-            p.update(self._service_plugins)
+        p.update({'revision_plugin_name': 'revisions'})
+        p.update({'segments': 'neutron.services.segments.plugin.Plugin'})
         return p
 
     @property
