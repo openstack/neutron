@@ -559,10 +559,19 @@ class TestDvrRouterOperations(base.BaseTestCase):
         ri = dvr_router.DvrLocalRouter(HOSTNAME, **self.ri_kwargs)
         ports = ri.router.get(lib_constants.INTERFACE_KEY, [])
         subnet_id = l3_test_common.get_subnet_id(ports[0])
+        subnet = {
+            'id': subnet_id,
+            'cidr': '1.2.3.0/24'
+        }
         ri.router['_snat_router_interfaces'] = [{
             'mac_address': 'fa:16:3e:80:8d:80',
-            'fixed_ips': [{'subnet_id': subnet_id,
-                           'ip_address': '1.2.3.10'}]}]
+            'fixed_ips': [
+                {'subnet_id': subnet_id,
+                 'ip_address': '1.2.3.10'},
+                {'subnet_id': _uuid(),
+                 'ip_address': '2001:db8::1'}
+            ]
+        }]
 
         test_ports = [{'mac_address': '00:11:22:33:44:55',
                        'device_owner': lib_constants.DEVICE_OWNER_DHCP,
@@ -591,7 +600,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
                                 'cidr': '1.2.3.0/24'}]
         with mock.patch.object(ri,
                                '_process_arp_cache_for_internal_port') as parp:
-            ri._set_subnet_arp_info(subnet_id)
+            ri._set_subnet_arp_info(subnet)
         self.assertEqual(1, parp.call_count)
         self.mock_ip_dev.neigh.add.assert_has_calls([
             mock.call('1.2.3.4', '00:11:22:33:44:55'),
@@ -600,7 +609,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
 
         # Test negative case
         router['distributed'] = False
-        ri._set_subnet_arp_info(subnet_id)
+        ri._set_subnet_arp_info(subnet)
         self.mock_ip_dev.neigh.add.never_called()
 
     def test_add_arp_entry(self):

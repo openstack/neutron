@@ -681,7 +681,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             ri._add_interface_route_to_fip_ns = mock.Mock()
             ri.internal_network_added(port)
             self.assertEqual(2, ri._internal_network_added.call_count)
-            ri._set_subnet_arp_info.assert_called_once_with(subnet_id)
+            ri._set_subnet_arp_info.assert_called_once_with({'id': subnet_id})
             ri._internal_network_added.assert_called_with(
                 dvr_snat_ns.SnatNamespace.get_snat_ns_name(ri.router['id']),
                 sn_port['network_id'],
