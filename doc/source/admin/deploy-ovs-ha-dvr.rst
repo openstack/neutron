@@ -106,6 +106,11 @@ Network node
       [DEFAULT]
       agent_mode = dvr_snat
 
+.. note::
+
+   ``agent_mode = dvr_snat`` is not supported on compute nodes.
+   For discussion please see: `bug #1934666 <https://bugs.launchpad.net/neutron/+bug/1934666>`_
+
 
 #. Restart the following services:
 
