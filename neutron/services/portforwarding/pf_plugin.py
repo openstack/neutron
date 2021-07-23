@@ -147,8 +147,16 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
         if l3_dvr_db.is_distributed_router(router):
             raise pf_exc.PortHasPortForwarding(port_id=port_id)
 
-    @registry.receives(resources.FLOATING_IP, [events.PRECOMMIT_UPDATE,
-                                               events.PRECOMMIT_DELETE])
+    @registry.receives(resources.FLOATING_IP, [events.PRECOMMIT_DELETE])
+    def _check_floatingip_request_precommit_delete(
+            self, resource, event, trigger, payload):
+        # TODO(isabek): refactor back into 1 method when FIP code is moved
+        # to event payloads
+        return self._check_floatingip_request(resource, event, trigger,
+                                              payload.context,
+                                              port=payload.latest_state)
+
+    @registry.receives(resources.FLOATING_IP, [events.PRECOMMIT_UPDATE])
     def _check_floatingip_request(self, resource, event, trigger, context,
                                   **kwargs):
         # We only support the "free" floatingip to be associated with
@@ -178,23 +186,20 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
         if exist_pf_resources:
             raise pf_exc.FipInUseByPortForwarding(id=floatingip_id)
 
-    @registry.receives(resources.PORT, [events.AFTER_UPDATE])
-    def _process_updated_port_request(self, resource, event, trigger,
+    @registry.receives(resources.PORT, [events.AFTER_UPDATE,
+                                        events.PRECOMMIT_DELETE])
+    def _process_port_request_handler(self, resource, event, trigger,
                                       payload):
-        # TODO(isabek): refactor back into 1 method when all code is moved
-        # to event payloads
-        return self._process_port_request(resource, event, trigger,
-                                          payload.context,
-                                          port=payload.latest_state)
 
-    @registry.receives(resources.PORT, [events.PRECOMMIT_DELETE])
+        return self._process_port_request(event, payload.context,
+                                          payload.latest_state)
+
     @db_api.retry_if_session_inactive()
-    def _process_port_request(self, resource, event, trigger, context,
-                              **kwargs):
+    def _process_port_request(self, event, context, port):
         # Deleting floatingip will receive port resource with precommit_delete
         # event, so just return, then check the request in
         # _check_floatingip_request callback.
-        if kwargs['port']['device_owner'].startswith(
+        if port['device_owner'].startswith(
                 lib_consts.DEVICE_OWNER_FLOATINGIP):
             return
 
@@ -204,8 +209,8 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
         # port forwarding resources need to be deleted for port's AFTER_UPDATE
         # event. Or get all affected ip addresses for port's PRECOMMIT_DELETE
         # event.
-        port_id = kwargs['port']['id']
-        update_fixed_ips = kwargs['port']['fixed_ips']
+        port_id = port['id']
+        update_fixed_ips = port['fixed_ips']
         update_ip_set = set()
         for update_fixed_ip in update_fixed_ips:
             if (netaddr.IPNetwork(update_fixed_ip.get('ip_address')).version ==

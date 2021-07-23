@@ -1953,34 +1953,39 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
             network = self.get_network(context, port['network_id'])
             bound_mech_contexts = []
-            kwargs = {
-                'context': context,
-                'id': id,
-                'network': network,
-                'port': port,
-                'port_db': port_db,
-                'bindings': binding,
-            }
             device_owner = port['device_owner']
+            metadata = {'network': network,
+                        'port_db': port_db,
+                        'bindings': binding}
             if device_owner == const.DEVICE_OWNER_DVR_INTERFACE:
                 bindings = db.get_distributed_port_bindings(context,
                                                             id)
                 for bind in bindings:
                     levels = db.get_binding_level_objs(context, id, bind.host)
-                    kwargs['bind'] = bind
-                    kwargs['levels'] = levels
-                    registry.notify(resources.PORT, events.PRECOMMIT_DELETE,
-                                    self, **kwargs)
+                    metadata['bind'] = bind
+                    metadata['levels'] = levels
+                    registry.publish(resources.PORT,
+                                     events.PRECOMMIT_DELETE,
+                                     self,
+                                     payload=events.DBEventPayload(
+                                         context,
+                                         resource_id=id,
+                                         metadata=metadata,
+                                         states=(port,)))
                     mech_context = driver_context.PortContext(
                         self, context, port, network, bind, levels)
                     self.mechanism_manager.delete_port_precommit(mech_context)
                     bound_mech_contexts.append(mech_context)
             else:
                 levels = db.get_binding_level_objs(context, id, binding.host)
-                kwargs['bind'] = None
-                kwargs['levels'] = levels
-                registry.notify(resources.PORT, events.PRECOMMIT_DELETE,
-                                self, **kwargs)
+                metadata['bind'] = None
+                metadata['levels'] = levels
+                registry.publish(resources.PORT, events.PRECOMMIT_DELETE, self,
+                                 payload=events.DBEventPayload(
+                                     context,
+                                     resource_id=id,
+                                     metadata=metadata,
+                                     states=(port,)))
                 mech_context = driver_context.PortContext(
                     self, context, port, network, binding, levels)
                 self.mechanism_manager.delete_port_precommit(mech_context)
