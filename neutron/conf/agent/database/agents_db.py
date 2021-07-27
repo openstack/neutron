@@ -13,6 +13,7 @@
 from oslo_config import cfg
 
 from neutron._i18n import _
+from neutron.common import _constants
 
 AGENT_OPTS = [
     cfg.IntOpt('agent_down_time', default=75,
@@ -41,6 +42,12 @@ AGENT_OPTS = [
                        "enable_new_agents=False. In the case, user's "
                        "resources will not be scheduled automatically to the "
                        "agent until admin changes admin_state_up to True.")),
+    cfg.IntOpt("rpc_resources_processing_step",
+               default=_constants.RPC_RES_PROCESSING_STEP, min=1,
+               help=_("Number of resources for neutron to divide "
+                      "the large RPC call data sets. It can be reduced "
+                      "if RPC timeout occurred. The best value can be "
+                      "determined empirically in your environment."))
 ]
 
 

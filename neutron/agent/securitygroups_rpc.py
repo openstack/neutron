@@ -27,7 +27,6 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron.agent import firewall
-from neutron.common import _constants as common_constants
 from neutron.conf.agent import securitygroups_rpc as sc_cfg
 
 
@@ -155,7 +154,7 @@ class SecurityGroupAgentRpc(object):
 
     @_port_filter_lock
     def _apply_port_filter(self, device_ids, update_filter=False):
-        step = common_constants.AGENT_RES_PROCESSING_STEP
+        step = cfg.CONF.rpc_resources_processing_step
         devices = {}
         security_groups = {}
         security_group_member_ips = {}

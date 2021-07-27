@@ -34,7 +34,6 @@ from oslo_utils import uuidutils
 
 from neutron.agent import resource_cache
 from neutron.api.rpc.callbacks import resources
-from neutron.common import _constants as n_const
 from neutron import objects
 
 LOG = logging.getLogger(__name__)
@@ -182,7 +181,7 @@ class PluginApi(object):
         ret_devices_down = []
         failed_devices_down = []
 
-        step = n_const.RPC_RES_PROCESSING_STEP
+        step = cfg.CONF.rpc_resources_processing_step
         devices_up = list(devices_up)
         devices_down = list(devices_down)
         for i in range(0, max(len(devices_up), len(devices_down)), step):
