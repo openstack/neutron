@@ -18,9 +18,6 @@ pymysql
 git+https://github.com/sapcc/openstack-watcher-middleware.git#egg=watcher-middleware
 git+https://github.com/sapcc/openstack-audit-middleware.git@master#egg=audit-middleware
 
-# Pathced libs
--e git+https://github.com/sapcc/neutron-lib@stable/ussuri-m3#egg=neutron-lib
-
 # Networking Drivers
 -e git+https://github.com/sapcc/asr1k-neutron-l3@stable/ussuri-m3#egg=asr1k-neutron-l3
 -e git+https://github.com/sapcc/networking-aci.git@stable/ussuri-m3#egg=networking_aci[acicobra]
