@@ -284,9 +284,10 @@ class DbBasePluginCommon(object):
             raise exceptions.SubnetPoolNotFound(subnetpool_id=id)
         return subnetpool
 
-    def _get_port(self, context, id):
+    def _get_port(self, context, id, lazy_fields=None):
         try:
-            port = model_query.get_by_id(context, models_v2.Port, id)
+            port = model_query.get_by_id(context, models_v2.Port, id,
+                                         lazy_fields=lazy_fields)
         except exc.NoResultFound:
             raise exceptions.PortNotFound(port_id=id)
         return port
