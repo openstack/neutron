@@ -20,6 +20,7 @@ import mock
 from neutron_lib import constants as const
 from oslo_config import cfg
 from ovsdbapp.backend.ovs_idl import idlutils
+import testtools
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
@@ -231,6 +232,7 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         }
         self._test_add_tunnel_port(attrs)
 
+    @testtools.skip('bug/1938262')
     def test_add_tunnel_port_ipv6(self):
         attrs = {
             'remote_ip': '2001:db8:200::1',

@@ -21,6 +21,7 @@ from neutron_lib.services.qos import constants as qos_constants
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import event
 import six
+import testtools
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
@@ -471,6 +472,7 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
                          self.ovs.db_get_val('Controller', self.br_name,
                                              'inactivity_probe'))
 
+    @testtools.skip('bug/1938262')
     def test_add_gre_tunnel_port(self):
         ipv4_tunnel_port = "test-ipv4-port"
         ipv6_tunnel_port = "test-ipv6-port"
