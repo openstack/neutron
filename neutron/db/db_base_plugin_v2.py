@@ -16,6 +16,7 @@
 import functools
 
 import netaddr
+from neutron_lib.api import converters
 from neutron_lib.api.definitions import external_net as extnet_def
 from neutron_lib.api.definitions import ip_allocation as ipalloc_apidef
 from neutron_lib.api.definitions import port as port_def
@@ -1477,7 +1478,9 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 context, current_owner, current_device_id,
                 db_port['tenant_id'])
 
-        if new_mac and new_mac != db_port['mac_address']:
+        if (new_mac and
+                new_mac != converters.convert_to_sanitized_mac_address(
+                    db_port['mac_address'])):
             self._check_mac_addr_update(context, db_port,
                                         new_mac, current_owner)
 
@@ -1570,9 +1573,10 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         if vif_type is not None:
             query = query.filter(Port.port_bindings.any(vif_type=vif_type))
         if mac_address:
-            lowered_macs = [x.lower() for x in mac_address]
-            query = query.filter(func.lower(Port.mac_address).in_(
-                                                    lowered_macs))
+            sanitized_macs = [converters.convert_to_sanitized_mac_address(x)
+                              for x in mac_address]
+            query = query.filter(
+                func.lower(Port.mac_address).in_(sanitized_macs))
         if ip_addresses:
             query = query.filter(
                 Port.fixed_ips.any(IPAllocation.ip_address.in_(ip_addresses)))

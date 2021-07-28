@@ -18,6 +18,7 @@ import math
 import struct
 
 import netaddr
+from neutron_lib.api import converters
 from os_ken.lib import addrconv
 from os_ken.lib.packet import dhcp
 from os_ken.lib.packet import dhcp6
@@ -47,7 +48,8 @@ class DHCPResponderBase(base_oskenapp.BaseNeutronAgentOSKenApp):
         self.version = version
         self.name = "DHCP%sResponder" % version
 
-        self.hw_addr = cfg.CONF.base_mac
+        self.hw_addr = converters.convert_to_sanitized_mac_address(
+            cfg.CONF.base_mac)
         self.register_packet_in_handler(self._packet_in_handler)
 
     def _packet_in_handler(self, event):
