@@ -278,7 +278,8 @@ class DhcpAgentNotifyAPI(object):
                                         payload=None):
         port = payload.metadata.get('port')
         self._notify_agents(payload.context, 'port_delete_end',
-                            {'port_id': port['id']},
+                            {'port_id': port['id'],
+                             'network_id': port['network_id']},
                             port['network_id'])
 
     def _native_event_send_dhcp_notification(self, resource, event, trigger,
