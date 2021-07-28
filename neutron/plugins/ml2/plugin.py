@@ -1075,12 +1075,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 vlt = vlan_apidef.get_vlan_transparent(net_data)
                 net_db['vlan_transparent'] = vlt
                 result['vlan_transparent'] = vlt
-
-            if az_def.AZ_HINTS in net_data:
-                self.validate_availability_zones(context, 'network',
-                                                 net_data[az_def.AZ_HINTS])
-                az_hints = az_validator.convert_az_list_to_string(
-                                                net_data[az_def.AZ_HINTS])
+            az_hints = utils.get_az_hints(net_data)
+            if az_hints:
+                self.validate_availability_zones(context, 'network', az_hints)
+                az_hints = az_validator.convert_az_list_to_string(az_hints)
                 net_db[az_def.AZ_HINTS] = az_hints
                 result[az_def.AZ_HINTS] = az_hints
             registry.publish(resources.NETWORK, events.PRECOMMIT_CREATE, self,

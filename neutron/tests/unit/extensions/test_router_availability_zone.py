@@ -15,6 +15,7 @@ from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import router_availability_zone
 from neutron_lib import constants as lib_const
 from neutron_lib.plugins import constants
+from oslo_config import cfg
 
 from neutron.db.availability_zone import router as router_az_db
 from neutron.db import l3_agentschedulers_db
@@ -88,3 +89,18 @@ class TestAZRouterCase(test_az.AZTestCommon, test_l3.L3NatTestCaseMixin):
         res = self._create_router(self.fmt, 'tenant_id',
                                   availability_zone_hints=['nova4'])
         self.assertEqual(404, res.status_int)
+
+    def test_create_router_with_default_azs_not_existing(self):
+        self._register_azs()
+        cfg.CONF.set_default('default_availability_zones', ['nova4'])
+        res = self._create_router(self.fmt, 'tenant_id')
+        self.assertEqual(404, res.status_int)
+
+    def test_create_router_with_default_azs_existing_az(self):
+        self._register_azs()
+        az_hints = ['nova2', 'nova3']
+        cfg.CONF.set_default('default_availability_zones', az_hints)
+        with self.router() as router:
+            res = self._show('routers', router['router']['id'])
+            self.assertCountEqual(az_hints,
+                                  res['router']['availability_zone_hints'])

@@ -34,6 +34,7 @@ import uuid
 import eventlet
 from eventlet.green import subprocess
 import netaddr
+from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib import constants as n_const
 from neutron_lib.db import api as db_api
 from neutron_lib.services.trunk import constants as trunk_constants
@@ -982,3 +983,9 @@ def get_sql_random_method(sql_dialect_name):
     # https://dev.mysql.com/doc/refman/8.0/en/mathematical-functions.html
     elif sql_dialect_name == mysql_dialect.name:
         return sql_func.rand
+
+
+def get_az_hints(resource):
+    """Return the availability zone hints from a given resource."""
+    return (resource.get(az_def.AZ_HINTS) or
+            cfg.CONF.default_availability_zones)

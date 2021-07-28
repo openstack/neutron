@@ -21,6 +21,7 @@ from neutron_lib.db import resource_extend
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
 
+from neutron.common import utils
 from neutron.db import l3_attrs_db
 
 
@@ -44,8 +45,9 @@ class RouterAvailabilityZoneMixin(l3_attrs_db.ExtraAttributesMixin):
         context = payload.context
         router = payload.latest_state
         router_db = payload.metadata['router_db']
-        if az_def.AZ_HINTS in router:
+        az_hints = utils.get_az_hints(router)
+        if az_hints:
             self.validate_availability_zones(context, 'router',
-                                             router[az_def.AZ_HINTS])
+                                             az_hints)
             self.set_extra_attr_value(context, router_db, az_def.AZ_HINTS,
-                                      router[az_def.AZ_HINTS])
+                                      az_hints)

@@ -39,6 +39,7 @@ from ovsdbapp.backend.ovs_idl import idlutils
 from neutron.common.ovn import acl as ovn_acl
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
+from neutron.common import utils as common_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.db import segments_db
@@ -1147,7 +1148,7 @@ class OVNClient(object):
             ovn_const.OVN_REV_NUM_EXT_ID_KEY: str(utils.get_revision_number(
                 router, ovn_const.TYPE_ROUTERS)),
             ovn_const.OVN_ROUTER_AZ_HINTS_EXT_ID_KEY:
-                ','.join(utils.get_az_hints(router))}
+                ','.join(common_utils.get_az_hints(router))}
 
     def create_router(self, context, router, add_external_gateway=True):
         """Create a logical router."""
@@ -1369,7 +1370,8 @@ class OVNClient(object):
                                                 port['network_id'])
             physnet = self._get_physnet(port_net)
             candidates = self.get_candidates_for_scheduling(
-                physnet, availability_zone_hints=utils.get_az_hints(router))
+                physnet, availability_zone_hints=common_utils.get_az_hints(
+                    router))
             selected_chassis = self._ovn_scheduler.select(
                 self._nb_idl, self._sb_idl, lrouter_port_name,
                 candidates=candidates)

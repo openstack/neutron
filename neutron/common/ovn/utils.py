@@ -16,7 +16,6 @@ import os
 import re
 
 import netaddr
-from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
 from neutron_lib.api.definitions import l3
@@ -511,11 +510,6 @@ def get_port_id_from_gwc_row(row):
     :returns: String containing router port_id.
     """
     return constants.RE_PORT_FROM_GWC.search(row.name).group(2)
-
-
-def get_az_hints(resource):
-    """Return the availability zone hints from a given resource."""
-    return (resource.get(az_def.AZ_HINTS) or CONF.default_availability_zones)
 
 
 def get_chassis_availability_zones(chassis):

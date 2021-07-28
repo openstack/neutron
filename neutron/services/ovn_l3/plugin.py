@@ -31,6 +31,7 @@ from oslo_utils import excutils
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import extensions
 from neutron.common.ovn import utils
+from neutron.common import utils as common_utils
 from neutron.db.availability_zone import router as router_az_db
 from neutron.db import dns_db
 from neutron.db import extraroute_db
@@ -360,7 +361,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         lrp = self._ovn.get_lrouter_port(lrp_name)
         router = self.get_router(
             context, lrp.external_ids[ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY])
-        az_hints = utils.get_az_hints(router)
+        az_hints = common_utils.get_az_hints(router)
         return az_hints
 
     def schedule_unhosted_gateways(self, event_from_chassis=None):

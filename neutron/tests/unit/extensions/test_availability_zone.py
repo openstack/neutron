@@ -16,6 +16,7 @@ from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.definitions import availability_zone_filter as azf_def
 from neutron_lib import context
 from neutron_lib.exceptions import availability_zone as az_exc
+from oslo_config import cfg
 
 from neutron.db import agents_db
 from neutron.db import db_base_plugin_v2
@@ -170,3 +171,18 @@ class TestAZNetworkCase(AZTestCommon):
         res = self._create_network(self.fmt, 'net', True,
                                    availability_zone_hints=['nova3'])
         self.assertEqual(404, res.status_int)
+
+    def test_create_network_with_default_azs_not_existing(self):
+        self._register_azs()
+        cfg.CONF.set_default('default_availability_zones', ['nova4'])
+        res = self._create_network(self.fmt, 'net', True)
+        self.assertEqual(404, res.status_int)
+
+    def test_create_network_with_default_azs_existing_az(self):
+        self._register_azs()
+        az_hints = ['nova1', 'nova2']
+        cfg.CONF.set_default('default_availability_zones', az_hints)
+        with self.network() as net:
+            res = self._show('networks', net['network']['id'])
+            self.assertCountEqual(az_hints,
+                                  res['network']['availability_zone_hints'])

@@ -19,7 +19,6 @@ import functools
 import itertools
 import random
 
-from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib import constants as lib_const
 from neutron_lib.db import api as lib_db_api
 from neutron_lib.exceptions import l3 as l3_exc
@@ -367,8 +366,7 @@ class AZLeastRoutersScheduler(LeastRoutersScheduler):
        according to router's az_hints.
     """
     def _get_az_hints(self, router):
-        return (router.get(az_def.AZ_HINTS) or
-                cfg.CONF.default_availability_zones)
+        return utils.get_az_hints(router)
 
     def _get_routers_can_schedule(self, plugin, context, routers, l3_agent):
         """Overwrite L3Scheduler's method to filter by availability zone."""
