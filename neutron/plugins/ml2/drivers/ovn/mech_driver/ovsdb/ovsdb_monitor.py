@@ -445,12 +445,12 @@ class FIPAddDeleteEvent(row_event.RowEvent):
 
 class NeutronPgDropPortGroupCreated(row_event.WaitEvent):
     """WaitEvent for neutron_pg_drop Create event."""
-    def __init__(self):
+    def __init__(self, timeout=None):
         table = 'Port_Group'
         events = (self.ROW_CREATE,)
         conditions = (('name', '=', ovn_const.OVN_DROP_PORT_GROUP_NAME),)
         super(NeutronPgDropPortGroupCreated, self).__init__(
-            events, table, conditions)
+            events, table, conditions, timeout=timeout)
         self.event_name = 'PortGroupCreated'
 
 
@@ -693,8 +693,14 @@ class OvnInitPGNbIdl(OvnIdl):
         self.cond_change(
             'Port_Group',
             [['name', '==', ovn_const.OVN_DROP_PORT_GROUP_NAME]])
-        self.neutron_pg_drop_event = NeutronPgDropPortGroupCreated()
+        self.neutron_pg_drop_event = NeutronPgDropPortGroupCreated(
+                timeout=ovn_conf.get_ovn_ovsdb_timeout())
         self.notify_handler.watch_event(self.neutron_pg_drop_event)
+
+    def notify(self, event, row, updates=None):
+        # Go ahead and process events even if the lock is contended so we can
+        # know that some other server has created the drop group
+        self.notify_handler.notify(event, row, updates)
 
     @classmethod
     def from_server(cls, connection_string, helper, driver, pg_only=False):
