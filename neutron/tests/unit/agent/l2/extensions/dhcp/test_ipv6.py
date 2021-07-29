@@ -95,7 +95,10 @@ class DHCPIPv6ResponderTestCase(dhcp_test_base.DHCPResponderBaseTestCase):
 
         expect_ident = (
             b'\x00\x01\x00\x01\x00\x00\x00\x01\x00\x01\x02\x03\x04\x05')
-        time.time = mock.Mock(return_value=ONE_SEC_AFTER_2000)
+        time_p = mock.patch.object(time, 'time',
+                                   return_value=ONE_SEC_AFTER_2000)
+        time_p.start()
+        self.addCleanup(time_p.stop)
         client_ident = client_ident = (
             self.dhcp6_responer.get_dhcpv6_client_ident(
                 self.port_info['mac_address'], []))
@@ -164,7 +167,10 @@ class DHCPIPv6ResponderTestCase(dhcp_test_base.DHCPResponderBaseTestCase):
             option_list=option_list,
             options_len=0)
 
-        time.time = mock.Mock(return_value=ONE_SEC_AFTER_2000)
+        time_p = mock.patch.object(time, 'time',
+                                   return_value=ONE_SEC_AFTER_2000)
+        time_p.start()
+        self.addCleanup(time_p.stop)
         packet_in = self._create_test_dhcp6_packet(zero_time=zero_time)
         pkt_dhcp = packet_in.get_protocol(dhcp6.dhcp6)
         dhcp_req_state = dhcp_ipv6.DHCPV6_TYPE_MAP.get(pkt_dhcp.msg_type)
@@ -192,7 +198,10 @@ class DHCPIPv6ResponderTestCase(dhcp_test_base.DHCPResponderBaseTestCase):
         mac = '00:01:02:03:04:05'
         packet_in = self._create_test_dhcp6_packet()
         header_dhcp = packet_in.get_protocol(dhcp6.dhcp6)
-        time.time = mock.Mock(return_value=ONE_SEC_AFTER_2000)
+        time_p = mock.patch.object(time, 'time',
+                                   return_value=ONE_SEC_AFTER_2000)
+        time_p.start()
+        self.addCleanup(time_p.stop)
         dhcp_options = self.dhcp6_responer.get_reply_dhcp_options(
             mac, message="all addresses still on link",
             req_options=header_dhcp.options.option_list)

@@ -2217,6 +2217,33 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             self.assertFalse(agent.alive, "Agent of type %s alive=%s" %
                              (agent.agent_type, agent.alive))
 
+    def test_agent_with_nb_cfg_timestamp_timeout(self):
+        nb_cfg = 3
+        chassis_private = self._add_chassis(nb_cfg)
+
+        self.mech_driver.nb_ovn.nb_global.nb_cfg = nb_cfg + 2
+        updated_at = (timeutils.utcnow_ts() - cfg.CONF.agent_down_time - 1
+                      ) * 1000
+        chassis_private.nb_cfg_timestamp = updated_at
+        agent_type = ovn_const.OVN_CONTROLLER_AGENT
+        agent = self._add_chassis_agent(nb_cfg, agent_type,
+                                        chassis_private)
+        self.assertFalse(agent.alive, "Agent of type %s alive=%s" %
+                         (agent.agent_type, agent.alive))
+
+    def test_agent_with_nb_cfg_timestamp_not_timeout(self):
+        nb_cfg = 3
+        chassis_private = self._add_chassis(nb_cfg)
+
+        self.mech_driver.nb_ovn.nb_global.nb_cfg = nb_cfg + 2
+        updated_at = timeutils.utcnow_ts() * 1000
+        chassis_private.nb_cfg_timestamp = updated_at
+        agent_type = ovn_const.OVN_CONTROLLER_AGENT
+        agent = self._add_chassis_agent(nb_cfg, agent_type,
+                                        chassis_private)
+        self.assertTrue(agent.alive, "Agent of type %s alive=%s" % (
+            agent.agent_type, agent.alive))
+
     def _test__update_dnat_entry_if_needed(self, up=True):
         ovn_conf.cfg.CONF.set_override(
             'enable_distributed_floating_ip', True, group='ovn')
