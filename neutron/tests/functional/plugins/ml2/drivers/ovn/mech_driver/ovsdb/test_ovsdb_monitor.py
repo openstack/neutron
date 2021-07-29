@@ -11,7 +11,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-
+import datetime
 import functools
 from unittest import mock
 
@@ -22,6 +22,7 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_concurrency import processutils
+from oslo_utils import timeutils
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import event
 from ovsdbapp.backend.ovs_idl import idlutils
@@ -460,6 +461,21 @@ class TestAgentMonitor(base.TestOVNFunctionalBase):
                 chassis.external_ids['ovn-cms-options'] == '')
         self.assertEqual(neutron_agent.ControllerAgent,
                 type(neutron_agent.AgentCache()[self.chassis_name]))
+
+    def test_agent_updated_at_use_nb_cfg_timestamp(self):
+        if not self.sb_api.is_table_present('Chassis_Private'):
+            self.skipTest('Ovn sb not support Chassis_Private')
+        timestamp = timeutils.utcnow_ts()
+        nb_cfg_timestamp = timestamp * 1000
+        updated_at = datetime.datetime.fromtimestamp(
+            timestamp, datetime.timezone.utc)
+        self.sb_api.db_set('Chassis_Private', self.chassis_name, (
+            'nb_cfg_timestamp', nb_cfg_timestamp)).execute(check_error=True)
+        n_utils.wait_until_true(lambda:
+                neutron_agent.AgentCache()[self.chassis_name].
+                chassis_private.nb_cfg_timestamp == nb_cfg_timestamp)
+        agent = neutron_agent.AgentCache()[self.chassis_name]
+        self.assertEqual(updated_at, agent.updated_at)
 
 
 class TestOvnIdlProbeInterval(base.TestOVNFunctionalBase):

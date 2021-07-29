@@ -2056,9 +2056,11 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                            updated_at=None):
         updated_at = updated_at or timeutils.utcnow(with_timezone=True)
         chassis_private = chassis_private or self._add_chassis(nb_cfg)
-        chassis_private.external_ids = {
-            ovn_const.OVN_LIVENESS_CHECK_EXT_ID_KEY:
-                datetime.datetime.isoformat(updated_at)}
+
+        if hasattr(chassis_private, 'nb_cfg_timestamp') and isinstance(
+                chassis_private.nb_cfg_timestamp, mock.Mock):
+            del chassis_private.nb_cfg_timestamp
+        chassis_private.external_ids = {}
         if agent_type == ovn_const.OVN_METADATA_AGENT:
             chassis_private.external_ids.update({
                 ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY: nb_cfg,
@@ -2114,6 +2116,35 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                                             chassis_private, updated_at)
             self.assertFalse(agent.alive, "Agent of type %s alive=%s" %
                              (agent.agent_type, agent.alive))
+
+    def test_agent_with_nb_cfg_timestamp_timeout(self):
+        nb_cfg = 3
+        chassis_private = self._add_chassis(nb_cfg)
+
+        self.mech_driver.nb_ovn.nb_global.nb_cfg = nb_cfg + 2
+        updated_at = (timeutils.utcnow_ts() - cfg.CONF.agent_down_time - 1
+                      ) * 1000
+        chassis_private.nb_cfg_timestamp = updated_at
+        agent_type = ovn_const.OVN_CONTROLLER_AGENT
+        updated_at = (timeutils.utcnow(with_timezone=True) -
+                      datetime.timedelta(minutes=10))
+        agent = self._add_chassis_agent(nb_cfg, agent_type, chassis_private,
+                                        updated_at=updated_at)
+        self.assertFalse(agent.alive, "Agent of type %s alive=%s" %
+                         (agent.agent_type, agent.alive))
+
+    def test_agent_with_nb_cfg_timestamp_not_timeout(self):
+        nb_cfg = 3
+        chassis_private = self._add_chassis(nb_cfg)
+
+        self.mech_driver.nb_ovn.nb_global.nb_cfg = nb_cfg + 2
+        updated_at = timeutils.utcnow_ts() * 1000
+        chassis_private.nb_cfg_timestamp = updated_at
+        agent_type = ovn_const.OVN_CONTROLLER_AGENT
+        agent = self._add_chassis_agent(nb_cfg, agent_type,
+                                        chassis_private)
+        self.assertTrue(agent.alive, "Agent of type %s alive=%s" % (
+            agent.agent_type, agent.alive))
 
     def _test__update_dnat_entry_if_needed(self, up=True):
         ovn_conf.cfg.CONF.set_override(
