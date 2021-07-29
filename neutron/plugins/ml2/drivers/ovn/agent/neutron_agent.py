@@ -13,6 +13,7 @@
 #
 
 import abc
+import datetime
 
 from oslo_config import cfg
 from oslo_utils import timeutils
@@ -43,7 +44,21 @@ class NeutronAgent(abc.ABC):
 
     def update(self, chassis_private, updated_at=None, clear_down=False):
         self.chassis_private = chassis_private
-        self.updated_at = updated_at or timeutils.utcnow(with_timezone=True)
+        if not updated_at:
+            # When use the Chassis_Private table for agents health check,
+            # chassis_private has attribute nb_cfg_timestamp.
+            # nb_cfg_timestamp: the timestamp when ovn-controller finishes
+            # processing the change corresponding to nb_cfg(
+            # https://www.ovn.org/support/dist-docs/ovn-sb.5.html).
+            # it can better reflect the status of chassis.
+            # nb_cfg_timestamp is milliseconds, need to convert to datetime.
+            if hasattr(chassis_private, 'nb_cfg_timestamp'):
+                updated_at = datetime.datetime.fromtimestamp(
+                    chassis_private.nb_cfg_timestamp / 1000,
+                    datetime.timezone.utc)
+            else:
+                updated_at = timeutils.utcnow(with_timezone=True)
+        self.updated_at = updated_at
         if clear_down:
             self.set_down = False
 
