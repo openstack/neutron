@@ -82,7 +82,7 @@ Option name / code  OVN value
 ==================  =============
 dns-server          dns_server
 domain-search       domain_search
-ia-addr             ip_addr
+ia-addr             ia_addr
 server-id           server_id
 2                   server_id
 5                   ia_addr
