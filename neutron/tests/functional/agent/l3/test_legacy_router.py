@@ -66,11 +66,11 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
 
         expected_calls = [
             mock.call('router', 'before_create', self.agent, payload=mock.ANY),
-            mock.call('router', 'after_create', self.agent, router=router),
+            mock.call('router', 'after_create', self.agent, payload=mock.ANY),
             mock.call('router', 'before_update', self.agent, payload=mock.ANY),
-            mock.call('router', 'after_update', self.agent, router=router),
+            mock.call('router', 'after_update', self.agent, payload=mock.ANY),
             mock.call('router', 'before_delete', self.agent, payload=mock.ANY),
-            mock.call('router', 'after_delete', self.agent, router=router)]
+            mock.call('router', 'after_delete', self.agent, payload=mock.ANY)]
         event_handler.assert_has_calls(expected_calls)
 
     def test_agent_notifications_for_router_events(self):

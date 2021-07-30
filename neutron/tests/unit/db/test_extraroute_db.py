@@ -69,8 +69,8 @@ class TestExtraRouteDb(testlib_api.SqlTestCase):
             with mock.patch.object(self._plugin, '_validate_routes'):
                 updated_router = self._plugin.update_router(ctx, router_id,
                                                             update_request)
-            mock_cb.assert_called_with('router', events.PRECOMMIT_UPDATE,
-                                       self._plugin, payload=mock.ANY)
+            mock_cb.assert_any_call('router', events.PRECOMMIT_UPDATE,
+                                    self._plugin, payload=mock.ANY)
         self.assertCountEqual(updated_router['routes'], routes)
         got_router = self._plugin.get_router(ctx, router_id)
         self.assertCountEqual(got_router['routes'], routes)

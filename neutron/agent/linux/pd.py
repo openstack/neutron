@@ -353,8 +353,8 @@ class PrefixDelegation(object):
 
 
 @runtime.synchronized("l3-agent-pd")
-def remove_router(resource, event, l3_agent, **kwargs):
-    router_id = kwargs['router'].router_id
+def remove_router(resource, event, l3_agent, payload):
+    router_id = payload.resource_id
     router = l3_agent.pd.routers.get(router_id)
     l3_agent.pd.delete_router_pd(router)
     del l3_agent.pd.routers[router_id]['subnets']
@@ -384,8 +384,8 @@ def add_router(resource, event, l3_agent, payload):
 
 
 @runtime.synchronized("l3-agent-pd")
-def update_router(resource, event, l3_agent, **kwargs):
-    updated_router = kwargs['router']
+def update_router(resource, event, l3_agent, payload):
+    updated_router = payload.latest_state
     router = l3_agent.pd.routers.get(updated_router.router_id)
     if not router:
         LOG.exception("Router to be updated is not in internal routers "

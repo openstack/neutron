@@ -32,7 +32,11 @@ class TestPrefixDelegation(tests_base.DietTestCase):
         router_id = 1
         l3_agent.pd.routers = {router_id:
                                pd.get_router_entry(None, True)}
-        pd.remove_router(None, None, l3_agent, router=FakeRouter(router_id))
+        pd.remove_router(None, None, l3_agent,
+                         payload=events.DBEventPayload(
+                             mock.ANY,
+                             resource_id=router_id,
+                             states=(FakeRouter(router_id),)))
         self.assertTrue(l3_agent.pd.delete_router_pd.called)
         self.assertEqual({}, l3_agent.pd.routers)
 
@@ -46,7 +50,11 @@ class TestPrefixDelegation(tests_base.DietTestCase):
 
         # clear namespace name, update entry
         pd_router['ns_name'] = None
-        pd.update_router(None, None, l3_agent, router=router)
+        pd.update_router(None, None, l3_agent,
+                         payload=events.DBEventPayload(
+                             mock.ANY,
+                             resource_id=router.router_id,
+                             states=(router,)))
         pd_router = l3_agent.pd.routers.get(router.router_id)
         self.assertEqual(ns_name, pd_router.get('ns_name'))
 
@@ -99,7 +107,12 @@ class TestPrefixDelegation(tests_base.DietTestCase):
         router.router_id = '1'
 
         with mock.patch.object(pd.LOG, 'exception') as log:
-            pd.update_router(None, None, l3_agent, router=router)
+            pd.update_router(None, None, l3_agent,
+                             payload=events.DBEventPayload(
+                                 mock.ANY,
+                                 resource_id=router.router_id,
+                                 states=(router,)))
+
             self.assertTrue(log.called)
 
     def test_remove_stale_ri_ifname(self):

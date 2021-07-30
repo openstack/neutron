@@ -280,10 +280,14 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                                     delete, update_gw,
                                                     transaction=False)
         new_router = self._make_router_dict(router_db)
-        registry.notify(resources.ROUTER, events.AFTER_CREATE, self,
-                        context=context, router_id=router_db.id,
-                        router=new_router, request_attrs=r,
-                        router_db=router_db)
+
+        registry.publish(resources.ROUTER, events.AFTER_CREATE, self,
+                         payload=events.DBEventPayload(
+                             context,
+                             resource_id=router_db.id,
+                             metadata={'request_attrs': r,
+                                       'router_db': router_db},
+                             states=(new_router,)))
         return new_router
 
     def _update_router_db(self, context, router_id, data):
@@ -309,9 +313,14 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             self._update_router_gw_info(context, id, gw_info)
         router_db = self._update_router_db(context, id, r)
         updated = self._make_router_dict(router_db)
-        registry.notify(resources.ROUTER, events.AFTER_UPDATE, self,
-                        context=context, router_id=id, old_router=original,
-                        router=updated, request_attrs=r, router_db=router_db)
+
+        registry.publish(resources.ROUTER, events.AFTER_UPDATE, self,
+                         payload=events.DBEventPayload(
+                             context,
+                             resource_id=id,
+                             metadata={'request_attrs': r,
+                                       'router_db': router_db},
+                             states=(original, updated)))
         return updated
 
     def _create_router_gw_port(self, context, router, network_id, ext_ips):
@@ -582,8 +591,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             context.session.flush()
             context.session.delete(router)
 
-        registry.notify(resources.ROUTER, events.AFTER_DELETE, self,
-                        context=context, router_id=id, original=original)
+        registry.publish(resources.ROUTER, events.AFTER_DELETE, self,
+                         payload=events.DBEventPayload(
+                             context, resource_id=id,
+                             states=(original,)))
 
     @db_api.retry_if_session_inactive()
     def get_router(self, context, id, fields=None):

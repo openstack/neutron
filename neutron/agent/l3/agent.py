@@ -553,7 +553,11 @@ class L3NATAgent(ha.AgentMixin,
         LOG.debug("Router info %s delete action done, "
                   "and it was removed from cache.", router_id)
 
-        registry.notify(resources.ROUTER, events.AFTER_DELETE, self, router=ri)
+        registry.publish(resources.ROUTER, events.AFTER_DELETE, self,
+                         payload=events.DBEventPayload(
+                             self.context,
+                             resource_id=router_id,
+                             states=(ri,)))
 
     def init_extension_manager(self, connection):
         l3_ext_manager.register_opts(self.conf)
@@ -642,7 +646,13 @@ class L3NATAgent(ha.AgentMixin,
         ri = self.router_info[router['id']]
         ri.router = router
         ri.process()
-        registry.notify(resources.ROUTER, events.AFTER_CREATE, self, router=ri)
+
+        registry.publish(resources.ROUTER, events.AFTER_CREATE, self,
+                         payload=events.DBEventPayload(
+                             self.context,
+                             resource_id=router['id'],
+                             states=(ri,)))
+
         self.l3_ext_manager.add_router(self.context, router)
 
     def _process_updated_router(self, router):
@@ -698,8 +708,11 @@ class L3NATAgent(ha.AgentMixin,
                                  states=(ri,)))
 
             ri.process()
-            registry.notify(
-                resources.ROUTER, events.AFTER_UPDATE, self, router=ri)
+            registry.publish(resources.ROUTER, events.AFTER_UPDATE, self,
+                             payload=events.DBEventPayload(
+                                 self.context,
+                                 resource_id=router['id'],
+                                 states=(None, ri)))
             self.l3_ext_manager.update_router(self.context, router)
 
     def _resync_router(self, router_update,
