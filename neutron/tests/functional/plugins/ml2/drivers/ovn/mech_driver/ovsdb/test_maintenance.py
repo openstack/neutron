@@ -990,7 +990,7 @@ class TestMaintenance(_TestMaintenanceHelper):
         p1 = self._create_port('testp1', net1['id'])
         p1_ip = p1['fixed_ips'][0]['ip_address']
 
-        with mock.patch('neutron_lib.callbacks.registry.notify') as m_notify:
+        with mock.patch('neutron_lib.callbacks.registry.publish') as m_publish:
             # > Create
             fip_pf_args = {
                 pf_def.EXTERNAL_PORT: 2222,
@@ -1000,7 +1000,7 @@ class TestMaintenance(_TestMaintenanceHelper):
                 pf_def.INTERNAL_IP_ADDRESS: p1_ip}
             pf_obj = self.pf_plugin.create_floatingip_port_forwarding(
                 self.context, fip_id, **fip_attrs(fip_pf_args))
-            m_notify.assert_called_once()
+            m_publish.assert_called_once()
 
             # Assert load balancer for port forwarding was not created
             self.assertFalse(self._find_pf_lb(router_id, fip_id))
@@ -1015,10 +1015,10 @@ class TestMaintenance(_TestMaintenanceHelper):
             fip_pf_args = {pf_def.EXTERNAL_PORT: 5353,
                            pf_def.INTERNAL_PORT: 53,
                            pf_def.PROTOCOL: 'udp'}
-            m_notify.reset_mock()
+            m_publish.reset_mock()
             self.pf_plugin.update_floatingip_port_forwarding(
                 self.context, pf_obj['id'], fip_id, **fip_attrs(fip_pf_args))
-            m_notify.assert_called_once()
+            m_publish.assert_called_once()
 
             # Assert load balancer for port forwarding is stale
             _verify_lb(self, 'tcp', 2222, 22)
@@ -1030,10 +1030,10 @@ class TestMaintenance(_TestMaintenanceHelper):
             _verify_lb(self, 'udp', 5353, 53)
 
             # > Delete
-            m_notify.reset_mock()
+            m_publish.reset_mock()
             self.pf_plugin.delete_floatingip_port_forwarding(
                 self.context, pf_obj['id'], fip_id)
-            m_notify.assert_called_once()
+            m_publish.assert_called_once()
 
             # Assert load balancer for port forwarding is stale
             _verify_lb(self, 'udp', 5353, 53)
