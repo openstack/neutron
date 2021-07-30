@@ -12,6 +12,8 @@
 
 from unittest import mock
 
+from neutron_lib.callbacks import events
+
 from neutron.agent.l3 import dvr_edge_router
 from neutron.agent.l3 import dvr_local_router
 from neutron.agent.l3 import legacy_router
@@ -36,7 +38,9 @@ class TestPrefixDelegation(tests_base.DietTestCase):
 
     def _test_add_update_pd(self, l3_agent, router, ns_name):
         # add entry
-        pd.add_router(None, None, l3_agent, router=router)
+        pd.add_router(None, None, l3_agent,
+                      payload=events.DBEventPayload(
+                          mock.ANY, states=(router,)))
         pd_router = l3_agent.pd.routers.get(router.router_id)
         self.assertEqual(ns_name, pd_router.get('ns_name'))
 

@@ -353,9 +353,13 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
     @registry.receives(resources.ROUTER, [events.BEFORE_CREATE],
                        priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
+    def _before_router_create_handler(self, resource, event, trigger,
+                                      payload):
+        return self._before_router_create(event, payload.context,
+                                          payload.latest_state)
+
     @db_api.retry_if_session_inactive()
-    def _before_router_create(self, resource, event, trigger,
-                              context, router, **kwargs):
+    def _before_router_create(self, event, context, router):
         """Event handler to create HA resources before router creation."""
         if not self._is_ha(router):
             return
@@ -367,9 +371,11 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_CREATE],
                        priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
-    def _precommit_router_create(self, resource, event, trigger, context,
-                                 router, router_db, **kwargs):
+    def _precommit_router_create(self, resource, event, trigger, payload):
         """Event handler to set ha flag and status on creation."""
+        context = payload.context
+        router = payload.latest_state
+        router_db = payload.metadata['router_db']
         is_ha = self._is_ha(router)
         router['ha'] = is_ha
         self.set_extra_attr_value(context, router_db, 'ha', is_ha)
@@ -510,9 +516,10 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_DELETE],
                        priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
-    def _release_router_vr_id(self, resource, event, trigger, context,
-                              router_db, **kwargs):
+    def _release_router_vr_id(self, resource, event, trigger, payload):
         """Event handler for removal of VRID during router delete."""
+        context = payload.context
+        router_db = payload.latest_state
         if router_db.extra_attributes.ha:
             ha_network = self.get_ha_network(context,
                                              router_db.tenant_id)

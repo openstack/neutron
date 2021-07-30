@@ -59,7 +59,11 @@ class TestDriverController(testlib_api.SqlTestCase):
         router_id = uuidutils.generate_uuid()
         router = dict(id=router_id, flavor_id=flavor_id)
         self.dc._set_router_provider('router', 'PRECOMMIT_CREATE', self,
-                                     self.ctx, router, router_db)
+                                     payload=events.DBEventPayload(
+                                         self.ctx,
+                                         resource_id=router_id,
+                                         metadata={'router_db': router_db},
+                                         states=(router,)))
         self.assertTrue(self.dc.uses_scheduler(self.ctx, router_id))
         self.dc.drivers['dvrha'].use_integrated_agent_scheduler = False
         self.assertFalse(self.dc.uses_scheduler(self.ctx, router_id))
@@ -72,7 +76,11 @@ class TestDriverController(testlib_api.SqlTestCase):
         r2 = uuidutils.generate_uuid()
         router = dict(id=r1, flavor_id=flavor_id)
         self.dc._set_router_provider('router', 'PRECOMMIT_CREATE', self,
-                                     self.ctx, router, router_db)
+                                     payload=events.DBEventPayload(
+                                         self.ctx,
+                                         resource_id=r1,
+                                         metadata={'router_db': router_db},
+                                         states=(router,)))
         self.assertTrue(self.dc.drivers['dvrha'].owns_router(self.ctx, r1))
         self.assertFalse(self.dc.drivers['dvr'].owns_router(self.ctx, r1))
         self.assertFalse(self.dc.drivers['dvr'].owns_router(self.ctx, r2))
@@ -86,7 +94,11 @@ class TestDriverController(testlib_api.SqlTestCase):
         router_id = uuidutils.generate_uuid()
         router = dict(id=router_id, flavor_id=flavor_id)
         self.dc._set_router_provider('router', 'PRECOMMIT_CREATE', self,
-                                     self.ctx, router, router_db)
+                                     payload=events.DBEventPayload(
+                                         self.ctx,
+                                         resource_id=router_id,
+                                         metadata={'router_db': router_db},
+                                         states=(router,)))
         mock_cb.assert_called_with(resources.ROUTER_CONTROLLER,
             events.PRECOMMIT_ADD_ASSOCIATION, mock.ANY,
             payload=mock.ANY)
@@ -190,7 +202,12 @@ class TestDriverController(testlib_api.SqlTestCase):
         ]
         for driver, body in cases:
             self.dc._set_router_provider('router', 'PRECOMMIT_CREATE', self,
-                                         self.ctx, body, mock.Mock())
+                                         payload=events.DBEventPayload(
+                                             self.ctx,
+                                             resource_id=body['id'],
+                                             metadata={
+                                                 'router_db': mock.Mock()},
+                                             states=(body,)))
             mock_cb.assert_called_with(
                 resources.ROUTER_CONTROLLER,
                 events.PRECOMMIT_ADD_ASSOCIATION, mock.ANY,
@@ -206,7 +223,11 @@ class TestDriverController(testlib_api.SqlTestCase):
         router_id1 = uuidutils.generate_uuid()
         body = dict(id=router_id1, distributed=True, ha=True)
         self.dc._set_router_provider('router', 'PRECOMMIT_CREATE', self,
-                                     self.ctx, body, mock.Mock())
+                                     payload=events.DBEventPayload(
+                                         self.ctx,
+                                         resource_id=router_id1,
+                                         metadata={'router_db': mock.Mock()},
+                                         states=(body,)))
         mock_cb.assert_called_with(resources.ROUTER_CONTROLLER,
             events.PRECOMMIT_ADD_ASSOCIATION, mock.ANY,
             payload=mock.ANY)
@@ -219,7 +240,9 @@ class TestDriverController(testlib_api.SqlTestCase):
                          self.dc.get_provider_for_router(self.ctx,
                                                          body['id']))
         self.dc._clear_router_provider('router', 'PRECOMMIT_DELETE', self,
-                                       self.ctx, body['id'])
+                                       payload=events.DBEventPayload(
+                                           self.ctx,
+                                           resource_id=body['id']))
         mock_cb.assert_called_with(resources.ROUTER_CONTROLLER,
             events.PRECOMMIT_DELETE_ASSOCIATIONS, mock.ANY,
             payload=mock.ANY)

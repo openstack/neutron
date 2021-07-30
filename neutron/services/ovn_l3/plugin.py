@@ -151,8 +151,11 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         return ("L3 Router Service Plugin for basic L3 forwarding"
                 " using OVN")
 
-    def create_router_precommit(self, resource, event, trigger, context,
-                                router, router_id, router_db):
+    def create_router_precommit(self, resource, event, trigger, payload):
+        context = payload.context
+        router_id = payload.resource_id
+        router_db = payload.metadata['router_db']
+
         db_rev.create_initial_revision(
             context, router_id, ovn_const.TYPE_ROUTERS,
             std_attr_id=router_db.standard_attr.id)

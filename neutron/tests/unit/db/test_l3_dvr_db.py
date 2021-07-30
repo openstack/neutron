@@ -1235,12 +1235,16 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def _test__validate_router_migration_notify_advanced_services(self):
         router = {'name': 'foo_router', 'admin_state_up': False}
         router_db = self._create_router(router)
-        with mock.patch.object(l3_dvr_db.registry, 'notify') as mock_notify:
+        with mock.patch.object(l3_dvr_db.registry, 'publish') as mock_publish:
             self.mixin._validate_router_migration(
                 self.ctx, router_db, {'distributed': True})
-            kwargs = {'context': self.ctx, 'router': router_db}
-            mock_notify.assert_called_once_with(
-                'router', 'before_update', self.mixin, **kwargs)
+            mock_publish.assert_called_once_with(
+                'router', 'before_update', self.mixin,
+                payload=mock.ANY)
+
+            payload = mock_publish.call_args_list[0][1]['payload']
+            self.assertEqual(self.ctx, payload.context)
+            self.assertEqual(router_db, payload.latest_state)
 
     def _assert_mock_called_with_router(self, mock_fn, router_id):
         router = mock_fn.call_args[1].get('router_db')

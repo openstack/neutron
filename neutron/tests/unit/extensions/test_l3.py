@@ -4044,7 +4044,8 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
                                  events.AFTER_DELETE)
 
     def test_router_create_precommit_event(self):
-        nset = lambda *a, **k: setattr(k['router_db'], 'name', 'hello')
+        nset = lambda r, e, t, payload: \
+            setattr(payload.metadata['router_db'], 'name', 'hello')
         registry.subscribe(nset, resources.ROUTER, events.PRECOMMIT_CREATE)
         with self.router() as r:
             self.assertEqual('hello', r['router']['name'])
@@ -4089,7 +4090,8 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
 
     def test_router_delete_precommit_event(self):
         deleted = []
-        auditor = lambda *a, **k: deleted.append(k['router_id'])
+        auditor = lambda r, e, t, payload: \
+            deleted.append(payload.resource_id)
         registry.subscribe(auditor, resources.ROUTER, events.PRECOMMIT_DELETE)
         with self.router() as r:
             self._delete('routers', r['router']['id'])

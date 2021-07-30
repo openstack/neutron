@@ -369,8 +369,8 @@ def get_router_entry(ns_name, primary):
 
 
 @runtime.synchronized("l3-agent-pd")
-def add_router(resource, event, l3_agent, **kwargs):
-    added_router = kwargs['router']
+def add_router(resource, event, l3_agent, payload):
+    added_router = payload.latest_state
     router = l3_agent.pd.routers.get(added_router.router_id)
     gw_ns_name = added_router.get_gw_ns_name()
     primary = added_router.is_router_primary()

@@ -40,8 +40,10 @@ class RouterAvailabilityZoneMixin(l3_attrs_db.ExtraAttributesMixin):
             l3_plugin.get_router_availability_zones(router_db))
 
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_CREATE])
-    def _process_az_request(self, resource, event, trigger, context,
-                            router, router_db, **kwargs):
+    def _process_az_request(self, resource, event, trigger, payload):
+        context = payload.context
+        router = payload.latest_state
+        router_db = payload.metadata['router_db']
         if az_def.AZ_HINTS in router:
             self.validate_availability_zones(context, 'router',
                                              router[az_def.AZ_HINTS])

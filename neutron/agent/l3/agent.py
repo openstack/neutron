@@ -482,8 +482,11 @@ class L3NATAgent(ha.AgentMixin,
 
     def _router_added(self, router_id, router):
         ri = self._create_router(router_id, router)
-        registry.notify(resources.ROUTER, events.BEFORE_CREATE,
-                        self, router=ri)
+        registry.publish(resources.ROUTER, events.BEFORE_CREATE, self,
+                         payload=events.DBEventPayload(
+                             self.context,
+                             resource_id=router_id,
+                             states=(ri,)))
 
         self.router_info[router_id] = ri
 
@@ -688,8 +691,12 @@ class L3NATAgent(ha.AgentMixin,
                 self.check_ha_state_for_router(
                     router['id'], router.get(lib_const.HA_ROUTER_STATE_KEY))
             ri.router = router
-            registry.notify(resources.ROUTER, events.BEFORE_UPDATE,
-                            self, router=ri)
+            registry.publish(resources.ROUTER, events.BEFORE_UPDATE, self,
+                             payload=events.DBEventPayload(
+                                 self.context,
+                                 resource_id=router['id'],
+                                 states=(ri,)))
+
             ri.process()
             registry.notify(
                 resources.ROUTER, events.AFTER_UPDATE, self, router=ri)
