@@ -159,7 +159,7 @@ SUPPORTED_DHCP_OPTS_MAPPING = {
     6: {'server-id': 'server_id',
         'dns-server': 'dns_server',
         'domain-search': 'domain_search',
-        'ia-addr': 'ip_addr',
+        'ia-addr': 'ia_addr',
         '2': 'server_id',
         '5': 'ia_addr',
         '24': 'domain_search',
