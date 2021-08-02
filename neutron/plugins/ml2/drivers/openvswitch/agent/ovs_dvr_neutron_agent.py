@@ -638,9 +638,10 @@ class OVSDVRNeutronAgent(object):
                      "%(ofport)s, rebinding.",
                      {'vif': port.vif_id, 'ofport': port.ofport})
             self.unbind_port_from_dvr(port, local_vlan_map)
-            if port.ofport in (ovs_lib.INVALID_OFPORT,
-                               ovs_lib.UNASSIGNED_OFPORT):
-                return
+
+        if port.ofport in (ovs_lib.INVALID_OFPORT,
+                           ovs_lib.UNASSIGNED_OFPORT):
+            return
 
         if device_owner == n_const.DEVICE_OWNER_DVR_INTERFACE:
             self._bind_distributed_router_interface_port(port,
