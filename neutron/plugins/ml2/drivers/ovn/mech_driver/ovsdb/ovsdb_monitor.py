@@ -646,9 +646,9 @@ class Ml2OvnIdlBase(connection.OvsdbIdl):
 
 
 class BaseOvnIdl(Ml2OvnIdlBase):
-    def __init__(self, remote, schema):
+    def __init__(self, remote, schema, **kwargs):
         self.notify_handler = row_event.RowEventHandler()
-        super(BaseOvnIdl, self).__init__(remote, schema)
+        super(BaseOvnIdl, self).__init__(remote, schema, **kwargs)
 
     @classmethod
     def from_server(cls, connection_string, helper):
@@ -666,13 +666,18 @@ class BaseOvnSbIdl(Ml2OvnIdlBase):
         helper.register_table('Encap')
         helper.register_table('Port_Binding')
         helper.register_table('Datapath_Binding')
-        return cls(connection_string, helper)
+        # Used by MaintenanceWorker which can use ovsdb locking
+        try:
+            return cls(connection_string, helper, leader_only=True)
+        except TypeError:
+            # TODO(twilson) We can remove this when we require ovs>=2.12.0
+            return cls(connection_string, helper)
 
 
 class OvnIdl(BaseOvnIdl):
 
-    def __init__(self, driver, remote, schema):
-        super(OvnIdl, self).__init__(remote, schema)
+    def __init__(self, driver, remote, schema, **kwargs):
+        super(OvnIdl, self).__init__(remote, schema, **kwargs)
         self.driver = driver
         self.notify_handler = OvnDbNotifyHandler(driver)
 
@@ -690,8 +695,8 @@ class OvnIdl(BaseOvnIdl):
 
 class OvnIdlDistributedLock(BaseOvnIdl):
 
-    def __init__(self, driver, remote, schema):
-        super(OvnIdlDistributedLock, self).__init__(remote, schema)
+    def __init__(self, driver, remote, schema, **kwargs):
+        super(OvnIdlDistributedLock, self).__init__(remote, schema, **kwargs)
         self.driver = driver
         self.notify_handler = OvnDbNotifyHandler(driver)
         self._node_uuid = self.driver.node_uuid
@@ -777,8 +782,8 @@ class OvnNbIdl(OvnIdlDistributedLock):
 
 class OvnSbIdl(OvnIdlDistributedLock):
 
-    def __init__(self, driver, remote, schema):
-        super(OvnSbIdl, self).__init__(driver, remote, schema)
+    def __init__(self, driver, remote, schema, **kwargs):
+        super(OvnSbIdl, self).__init__(driver, remote, schema, **kwargs)
 
         self._pb_create_up_event = PortBindingCreateUpEvent(driver)
         self._pb_create_down_event = PortBindingCreateDownEvent(driver)
@@ -806,7 +811,11 @@ class OvnSbIdl(OvnIdlDistributedLock):
         helper.register_table('Datapath_Binding')
         helper.register_table('Connection')
         helper.register_columns('SB_Global', ['external_ids'])
-        return cls(driver, connection_string, helper)
+        try:
+            return cls(driver, connection_string, helper, leader_only=False)
+        except TypeError:
+            # TODO(twilson) We can remove this when we require ovs>=2.12.0
+            return cls(driver, connection_string, helper)
 
     def post_connect(self):
         """Watch Chassis events.
