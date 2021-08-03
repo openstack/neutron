@@ -88,9 +88,7 @@ The following are the current Neutron Lieutenants.
 |                        +---------------------------+----------------------+
 |                        | YAMAMOTO Takashi          | yamamoto             |
 +------------------------+---------------------------+----------------------+
-| L3                     | Brian Haley               | haleyb               |
-|                        +---------------------------+----------------------+
-|                        | Miguel Lavalle            | mlavalle             |
+| L3                     | Miguel Lavalle            | mlavalle             |
 |                        +---------------------------+----------------------+
 |                        | Yulong Liu                | liuyulong            |
 +------------------------+---------------------------+----------------------+
@@ -137,9 +135,7 @@ updating the core review team for the sub-project's repositories.
 +-------------------------+-----------------------------+-------------------+
 | networking-sfc          | Dharmendra Kushwaha         | dkushwaha         |
 +-------------------------+-----------------------------+-------------------+
-| ovn-octavia-provider    | Brian Haley                 | haleyb            |
-|                         +-----------------------------+-------------------+
-|                         | Flavio Fernandes            | flaviof           |
+| ovn-octavia-provider    | None                        | N/A               |
 +-------------------------+-----------------------------+-------------------+
 
 Existing Core Reviewers
