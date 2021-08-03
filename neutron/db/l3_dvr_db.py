@@ -101,9 +101,11 @@ class DVRResourceOperationHandler(object):
 
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_CREATE],
                        priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
-    def _set_distributed_flag(self, resource, event, trigger, context,
-                              router, router_db, **kwargs):
+    def _set_distributed_flag(self, resource, event, trigger, payload):
         """Event handler to set distributed flag on creation."""
+        context = payload.context
+        router = payload.latest_state
+        router_db = payload.metadata['router_db']
         dist = is_distributed_router(router)
         router['distributed'] = dist
         self.l3plugin.set_extra_attr_value(context, router_db, 'distributed',
@@ -148,9 +150,12 @@ class DVRResourceOperationHandler(object):
         # Notify advanced services of the imminent state transition
         # for the router.
         try:
-            kwargs = {'context': context, 'router': router_db}
-            registry.notify(
-                resources.ROUTER, events.BEFORE_UPDATE, self, **kwargs)
+            registry.publish(
+                resources.ROUTER, events.BEFORE_UPDATE, self,
+                payload=events.DBEventPayload(
+                    context,
+                    resource_id=router_db['id'],
+                    states=(old_router, router_db,)))
         except exceptions.CallbackFailure as e:
             # NOTE(armax): preserve old check's behavior
             if len(e.errors) == 1:

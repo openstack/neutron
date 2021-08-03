@@ -229,8 +229,13 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         """Create the DB object."""
         router.setdefault('id', uuidutils.generate_uuid())
         router['tenant_id'] = tenant_id
-        registry.notify(resources.ROUTER, events.BEFORE_CREATE,
-                        self, context=context, router=router)
+
+        registry.publish(resources.ROUTER, events.BEFORE_CREATE, self,
+                         payload=events.DBEventPayload(
+                             context,
+                             resource_id=router['id'],
+                             states=(router,)))
+
         with db_api.CONTEXT_WRITER.using(context):
             # pre-generate id so it will be available when
             # configuring external gw port
@@ -242,9 +247,13 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 status=constants.ACTIVE,
                 description=router.get('description'))
             context.session.add(router_db)
-            registry.notify(resources.ROUTER, events.PRECOMMIT_CREATE,
-                            self, context=context, router=router,
-                            router_id=router['id'], router_db=router_db)
+
+            registry.publish(resources.ROUTER, events.PRECOMMIT_CREATE, self,
+                             payload=events.DBEventPayload(
+                                 context,
+                                 resource_id=router['id'],
+                                 metadata={'router_db': router_db},
+                                 states=(router,)))
             return router_db
 
     def _update_gw_for_create_router(self, context, gw_info, router_id):
@@ -562,9 +571,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                               l3_port_check=False)
 
             router = self._get_router(context, id)
-            registry.notify(resources.ROUTER, events.PRECOMMIT_DELETE,
-                            self, context=context, router_db=router,
-                            router_id=id)
+            registry.publish(resources.ROUTER, events.PRECOMMIT_DELETE, self,
+                             payload=events.DBEventPayload(
+                                 context,
+                                 resource_id=id,
+                                 states=(router,)))
             # we bump the revision even though we are about to delete to throw
             # staledataerror if something stuck in with a new interface
             router.bump_revision()

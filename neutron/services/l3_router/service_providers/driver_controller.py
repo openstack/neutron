@@ -67,27 +67,31 @@ class DriverController(object):
 
     @registry.receives(resources.ROUTER, [events.BEFORE_CREATE],
                        priority_group.PRIORITY_ROUTER_CONTROLLER)
-    def _check_router_request(self, resource, event, trigger, context,
-                              router, **kwargs):
+    def _check_router_request(self, resource, event, trigger, payload):
         """Validates that API request is sane (flags compat with flavor)."""
+        context = payload.context
+        router = payload.latest_state
         drv = self._get_provider_for_create(context, router)
         _ensure_driver_supports_request(drv, router)
 
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_CREATE],
                        priority_group.PRIORITY_ROUTER_CONTROLLER)
-    def _set_router_provider(self, resource, event, trigger, context, router,
-                             router_db, **kwargs):
+    def _set_router_provider(self, resource, event, trigger, payload):
         """Associates a router with a service provider.
 
         Association is done by flavor_id if it's specified, otherwise it will
         fallback to determining which loaded driver supports the ha/distributed
         attributes associated with the router.
         """
+        context = payload.context
+        router = payload.latest_state
+        router_db = payload.metadata['router_db']
+        router_id = payload.resource_id
         if _flavor_specified(router):
             router_db.flavor_id = router['flavor_id']
         drv = self._get_provider_for_create(context, router)
         self._stm.add_resource_association(context, plugin_constants.L3,
-                                           drv.name, router['id'])
+                                           drv.name, router_id)
         registry.publish(
             resources.ROUTER_CONTROLLER, events.PRECOMMIT_ADD_ASSOCIATION,
             trigger, payload=events.DBEventPayload(
@@ -97,9 +101,10 @@ class DriverController(object):
 
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_DELETE],
                        priority_group.PRIORITY_ROUTER_CONTROLLER)
-    def _clear_router_provider(self, resource, event, trigger, context,
-                               router_id, **kwargs):
+    def _clear_router_provider(self, resource, event, trigger, payload):
         """Remove the association between a router and a service provider."""
+        context = payload.context
+        router_id = payload.resource_id
         drv = self.get_provider_for_router(context, router_id)
         registry.publish(
             resources.ROUTER_CONTROLLER, events.PRECOMMIT_DELETE_ASSOCIATIONS,
