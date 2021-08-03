@@ -44,6 +44,7 @@ from neutron.objects import agent
 from neutron.objects import base
 from neutron.objects.db import api as obj_db_api
 from neutron.objects import flavor
+from neutron.objects import local_ip
 from neutron.objects import network as net_obj
 from neutron.objects.port.extensions import port_device_profile
 from neutron.objects.port.extensions import port_numa_affinity_policy
@@ -1658,6 +1659,23 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
             self.context, **ag_fields)
         _address_group.create()
         return _address_group.id
+
+    def _create_test_local_ip_id(self, **lip_attrs):
+        return self._create_test_local_ip(**lip_attrs)['id']
+
+    def _create_test_local_ip(self, **lip_attrs):
+        if 'network_id' not in lip_attrs:
+            lip_attrs['network_id'] = self._create_test_network_id()
+        if 'local_port_id' not in lip_attrs:
+            lip_attrs['local_port_id'] = self._create_test_port_id()
+        if 'local_ip_address' not in lip_attrs:
+            lip_attrs['local_ip_address'] = '10.10.10.10'
+        if 'ip_mode' not in lip_attrs:
+            lip_attrs['ip_mode'] = 'translate'
+
+        lip = local_ip.LocalIP(self.context, **lip_attrs)
+        lip.create()
+        return lip
 
     def _create_test_agent_id(self):
         attrs = self.get_random_object_fields(obj_cls=agent.Agent)
