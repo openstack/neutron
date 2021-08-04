@@ -66,7 +66,8 @@ class QosPolicy(rbac_db.NeutronRbacObject):
     # Version 1.6: Added "is_default" field
     # Version 1.7: Added floating IP bindings
     # Version 1.8: Added router gateway QoS policy bindings
-    VERSION = '1.8'
+    # Version 1.9: Added QosPacketRateLimitRule
+    VERSION = '1.9'
 
     # required by RbacNeutronMetaclass
     rbac_db_cls = QosPolicyRBAC
@@ -376,10 +377,22 @@ class QosPolicy(rbac_db.NeutronRbacObject):
         return set(bound_tenants)
 
     def obj_make_compatible(self, primitive, target_version):
+        def filter_rules(obj_names, rules):
+            return [rule for rule in rules if
+                    rule['versioned_object.name'] in obj_names]
         _target_version = versionutils.convert_version_to_tuple(target_version)
         if _target_version < (1, 8):
             raise exception.IncompatibleObjectVersion(
                 objver=target_version, objname=self.__class__.__name__)
+        names = [
+            rule_obj_impl.QosBandwidthLimitRule.obj_name(),
+            rule_obj_impl.QosDscpMarkingRule.obj_name(),
+            rule_obj_impl.QosMinimumBandwidthRule.obj_name(),
+        ]
+        if _target_version >= (1, 9):
+            names.append(rule_obj_impl.QosPacketRateLimitRule.obj_name())
+        if 'rules' in primitive and names:
+            primitive['rules'] = filter_rules(names, primitive['rules'])
 
 
 @base_db.NeutronObjectRegistry.register

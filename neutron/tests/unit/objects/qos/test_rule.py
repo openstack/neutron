@@ -18,6 +18,7 @@ from oslo_versionedobjects import exception
 
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
+from neutron.services.qos import constants as qos_constants
 from neutron.tests import base as neutron_test_base
 from neutron.tests.unit.objects import test_base
 from neutron.tests.unit import testlib_api
@@ -234,6 +235,54 @@ class QosMinimumBandwidthRuleDbObjectTestCase(test_base.BaseDbObjectTestCase,
 
     def setUp(self):
         super(QosMinimumBandwidthRuleDbObjectTestCase, self).setUp()
+        # Prepare policy to be able to insert a rule
+        for obj in self.db_objs:
+            generated_qos_policy_id = obj['qos_policy_id']
+            policy_obj = policy.QosPolicy(self.context,
+                                          id=generated_qos_policy_id,
+                                          project_id=uuidutils.generate_uuid())
+            policy_obj.create()
+
+
+class QosPacketRateLimitRuleObjectTestCase(test_base.BaseObjectIfaceTestCase):
+
+    _test_class = rule.QosPacketRateLimitRule
+
+    def test_to_dict_returns_type(self):
+        obj = rule.QosPacketRateLimitRule(self.context, **self.db_objs[0])
+        dict_ = obj.to_dict()
+        self.assertEqual(qos_constants.RULE_TYPE_PACKET_RATE_LIMIT,
+                         dict_['type'])
+
+    def test_duplicate_rules(self):
+        policy_id = uuidutils.generate_uuid()
+        ingress_rule_1 = rule.QosPacketRateLimitRule(
+            self.context, qos_policy_id=policy_id,
+            max_kpps=2000, max_burst=800,
+            direction=constants.INGRESS_DIRECTION)
+        ingress_rule_2 = rule.QosPacketRateLimitRule(
+            self.context, qos_policy_id=policy_id,
+            max_kpps=3000, max_burst=200,
+            direction=constants.INGRESS_DIRECTION)
+        egress_rule = rule.QosPacketRateLimitRule(
+            self.context, qos_policy_id=policy_id,
+            max_kpps=1000, max_burst=500,
+            direction=constants.EGRESS_DIRECTION)
+        dscp_rule = rule.QosDscpMarkingRule(
+            self.context, qos_policy_id=policy_id, dscp_mark=16)
+        self.assertTrue(ingress_rule_1.duplicates(ingress_rule_2))
+        self.assertFalse(ingress_rule_1.duplicates(egress_rule))
+        self.assertFalse(ingress_rule_1.duplicates(dscp_rule))
+
+
+class QosPacketRateLimitRuleDbObjectTestCase(test_base.BaseDbObjectTestCase,
+                                             testlib_api.SqlTestCase):
+
+    _test_class = rule.QosPacketRateLimitRule
+
+    def setUp(self):
+        super(QosPacketRateLimitRuleDbObjectTestCase, self).setUp()
+
         # Prepare policy to be able to insert a rule
         for obj in self.db_objs:
             generated_qos_policy_id = obj['qos_policy_id']

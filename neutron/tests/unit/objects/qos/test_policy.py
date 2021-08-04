@@ -13,6 +13,7 @@
 import random
 from unittest import mock
 
+from neutron_lib import constants as lib_consts
 from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_utils import uuidutils
@@ -24,6 +25,7 @@ from neutron.objects import ports as port_obj
 from neutron.objects.qos import binding
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
+from neutron.services.qos import constants as q_consts
 from neutron.tests.unit.objects import test_base
 from neutron.tests.unit import testlib_api
 
@@ -32,6 +34,7 @@ RULE_OBJ_CLS = {
     qos_consts.RULE_TYPE_BANDWIDTH_LIMIT: rule.QosBandwidthLimitRule,
     qos_consts.RULE_TYPE_DSCP_MARKING: rule.QosDscpMarkingRule,
     qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH: rule.QosMinimumBandwidthRule,
+    q_consts.RULE_TYPE_PACKET_RATE_LIMIT: rule.QosPacketRateLimitRule,
 }
 
 
@@ -173,7 +176,10 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
                         for rule_type in rule_type):
             rule_fields = self.get_random_object_fields(obj_cls=obj_cls)
             rule_fields['qos_policy_id'] = policy_obj.id
-            if (obj_cls.rule_type == qos_consts.RULE_TYPE_BANDWIDTH_LIMIT and
+            if (obj_cls.rule_type in [
+                        qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
+                        qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH,
+                        q_consts.RULE_TYPE_PACKET_RATE_LIMIT] and
                     bwlimit_direction is not None):
                 rule_fields['direction'] = bwlimit_direction
             rule_obj = obj_cls(self.context, **rule_fields)
@@ -183,6 +189,11 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         if reload_rules:
             policy_obj.obj_load_attr('rules')
         return policy_obj, rules
+
+    @staticmethod
+    def _policy_through_version(obj, version):
+        primitive = obj.obj_to_primitive(target_version=version)
+        return policy.QosPolicy.clean_obj_from_primitive(primitive)
 
     def test_attach_network_get_network_policy(self):
 
@@ -455,6 +466,20 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         policy_obj = self._create_test_policy()
         self.assertRaises(exception.IncompatibleObjectVersion,
                           policy_obj.obj_to_primitive, '1.7')
+
+    def test_object_version_degradation_less_than_1_9(self):
+        policy_obj, rule_objs = self._create_test_policy_with_rules(
+            [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
+             qos_consts.RULE_TYPE_DSCP_MARKING,
+             qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH,
+             q_consts.RULE_TYPE_PACKET_RATE_LIMIT], reload_rules=True,
+            bwlimit_direction=lib_consts.INGRESS_DIRECTION)
+        policy_obj_v1_8 = self._policy_through_version(policy_obj, '1.8')
+
+        self.assertIn(rule_objs[0], policy_obj_v1_8.rules)
+        self.assertIn(rule_objs[1], policy_obj_v1_8.rules)
+        self.assertIn(rule_objs[2], policy_obj_v1_8.rules)
+        self.assertNotIn(rule_objs[3], policy_obj_v1_8.rules)
 
     @mock.patch.object(policy.QosPolicy, 'unset_default')
     def test_filter_by_shared(self, *mocks):

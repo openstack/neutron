@@ -22,6 +22,7 @@ from neutron_lib.api.definitions import qos_bw_limit_direction
 from neutron_lib.api.definitions import qos_bw_minimum_ingress
 from neutron_lib.api.definitions import qos_default
 from neutron_lib.api.definitions import qos_port_network_policy
+from neutron_lib.api.definitions import qos_pps_rule
 from neutron_lib.api.definitions import qos_rule_type_details
 from neutron_lib.api.definitions import qos_rules_alias
 from neutron_lib.callbacks import events as callbacks_events
@@ -64,14 +65,17 @@ class QoSPlugin(qos.QoSPluginBase):
     service parameters over ports and networks.
 
     """
-    supported_extension_aliases = [qos_apidef.ALIAS,
-                                   qos_bw_limit_direction.ALIAS,
-                                   qos_default.ALIAS,
-                                   qos_rule_type_details.ALIAS,
-                                   port_resource_request.ALIAS,
-                                   qos_bw_minimum_ingress.ALIAS,
-                                   qos_rules_alias.ALIAS,
-                                   qos_port_network_policy.ALIAS]
+    supported_extension_aliases = [
+        qos_apidef.ALIAS,
+        qos_bw_limit_direction.ALIAS,
+        qos_default.ALIAS,
+        qos_rule_type_details.ALIAS,
+        port_resource_request.ALIAS,
+        qos_bw_minimum_ingress.ALIAS,
+        qos_rules_alias.ALIAS,
+        qos_port_network_policy.ALIAS,
+        qos_pps_rule.ALIAS,
+    ]
 
     __native_pagination_support = True
     __native_sorting_support = True
