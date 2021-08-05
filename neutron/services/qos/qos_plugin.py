@@ -13,9 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import types
+import uuid
+
 from keystoneauth1 import exceptions as ks_exc
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import port_resource_request
+from neutron_lib.api.definitions import port_resource_request_groups
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import qos as qos_apidef
 from neutron_lib.api.definitions import qos_bw_limit_direction
@@ -34,6 +38,7 @@ from neutron_lib import context
 from neutron_lib.db import api as db_api
 from neutron_lib.db import resource_extend
 from neutron_lib import exceptions as lib_exc
+from neutron_lib.exceptions import placement as place_exc
 from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.placement import client as pl_client
 from neutron_lib.placement import utils as pl_utils
@@ -44,6 +49,7 @@ from oslo_log import log as logging
 
 from neutron._i18n import _
 from neutron.db import db_base_plugin_common
+from neutron.exceptions import qos as neutron_qos_exc
 from neutron.extensions import qos
 from neutron.objects import base as base_obj
 from neutron.objects import network as network_object
@@ -57,6 +63,53 @@ from neutron.services.qos.drivers import manager
 
 
 LOG = logging.getLogger(__name__)
+
+
+# TODO(przszc): Move this function to n-lib
+def update_qos_allocation(self, consumer_uuid, alloc_diff):
+    """Update allocation for QoS minimum bandwidth consumer
+
+    :param consumer_uuid: The uuid of the consumer, in case of bound port
+                            owned by a VM, the VM uuid.
+    :param alloc_diff: A dict which contains RP UUIDs as keys and
+                        corresponding fields to update for the allocation
+                        under the given resource provider.
+    """
+    for i in range(pl_client.GENERATION_CONFLICT_RETRIES):
+        body = self.list_allocations(consumer_uuid)
+        if not body['allocations']:
+            raise place_exc.PlacementAllocationRemoved(consumer=consumer_uuid)
+        # Count new values based on the diff in alloc_diff
+        for rp_uuid, diff in alloc_diff.items():
+            if rp_uuid not in body['allocations']:
+                raise place_exc.PlacementAllocationRpNotExists(
+                    resource_provider=rp_uuid, consumer=consumer_uuid)
+            for drctn, value in diff.items():
+                orig_value = (body['allocations'][rp_uuid][
+                    'resources'].get(drctn, 0))
+                new_value = orig_value + value
+                if new_value > 0:
+                    body['allocations'][rp_uuid]['resources'][
+                        drctn] = new_value
+                else:
+                    # Remove the resource class if the new value is 0
+                    resources = body['allocations'][rp_uuid]['resources']
+                    resources.pop(drctn, None)
+
+        # Remove RPs without any resources
+        body['allocations'] = {
+            rp: alloc for rp, alloc in body['allocations'].items()
+            if alloc.get('resources')}
+        try:
+            # Update allocations has no return body, but leave the loop
+            return self.update_allocation(consumer_uuid, body)
+        except ks_exc.Conflict as e:
+            resp = e.response.json()
+            if resp['errors'][0]['code'] == 'placement.concurrent_update':
+                continue
+            raise
+    raise place_exc.PlacementAllocationGenerationConflict(
+        consumer=consumer_uuid)
 
 
 @resource_extend.has_resource_extenders
@@ -73,6 +126,7 @@ class QoSPlugin(qos.QoSPluginBase):
         qos_default.ALIAS,
         qos_rule_type_details.ALIAS,
         port_resource_request.ALIAS,
+        port_resource_request_groups.ALIAS,
         qos_bw_minimum_ingress.ALIAS,
         qos_rules_alias.ALIAS,
         qos_port_network_policy.ALIAS,
@@ -88,6 +142,8 @@ class QoSPlugin(qos.QoSPluginBase):
         super(QoSPlugin, self).__init__()
         self.driver_manager = manager.QosServiceDriverManager()
         self._placement_client = pl_client.PlacementAPIClient(cfg.CONF)
+        self._placement_client.update_qos_allocation = types.MethodType(
+            update_qos_allocation, self._placement_client)
 
         callbacks_registry.subscribe(
             self._validate_create_port_callback,
@@ -131,29 +187,42 @@ class QoSPlugin(qos.QoSPluginBase):
             port_res['resource_request'] = {
                 'qos_id': qos_id,
                 'network_id': port_db.network_id,
-                'vnic_type': port_res[portbindings.VNIC_TYPE]}
+                'vnic_type': port_res[portbindings.VNIC_TYPE],
+                'port_id': port_db.id,
+            }
             return port_res
 
-        min_bw_rules = rule_object.QosMinimumBandwidthRule.get_objects(
-            context.get_admin_context(), qos_policy_id=qos_id)
-        resources = QoSPlugin._get_resources(min_bw_rules)
-        if not resources:
-            return port_res
+        min_bw_request_group = QoSPlugin._get_min_bw_request_group(
+            qos_id, port_db.id, port_res[portbindings.VNIC_TYPE],
+            port_db.network_id)
+        min_pps_request_group = QoSPlugin._get_min_pps_request_group(
+                qos_id, port_db.id, port_res[portbindings.VNIC_TYPE])
 
-        segments = network_object.NetworkSegment.get_objects(
-            context.get_admin_context(), network_id=port_db.network_id)
-        traits = QoSPlugin._get_traits(port_res[portbindings.VNIC_TYPE],
-                                       segments)
-        if not traits:
-            return port_res
-
-        port_res['resource_request'] = {
-            'required': traits,
-            'resources': resources}
+        port_res['resource_request'] = (
+            QoSPlugin._get_resource_request(min_bw_request_group,
+                min_pps_request_group))
         return port_res
 
     @staticmethod
-    def _get_resources(min_bw_rules):
+    def _get_resource_request(min_bw_request_group, min_pps_request_group):
+        resource_request = None
+        request_groups = []
+
+        if min_bw_request_group:
+            request_groups += [min_bw_request_group]
+
+        if min_pps_request_group:
+            request_groups += [min_pps_request_group]
+
+        if request_groups:
+            resource_request = {
+                'request_groups': request_groups,
+                'same_subtree': [rg['id'] for rg in request_groups],
+            }
+        return resource_request
+
+    @staticmethod
+    def _get_min_bw_resources(min_bw_rules):
         resources = {}
         # NOTE(ralonsoh): we should move this translation dict to n-lib.
         rule_direction_class = {
@@ -167,7 +236,63 @@ class QoSPlugin(qos.QoSPluginBase):
         return resources
 
     @staticmethod
-    def _get_traits(vnic_type, segments):
+    def _get_min_bw_request_group(qos_policy_id, port_id, vnic_type,
+                                  network_id, min_bw_rules=None,
+                                  segments=None):
+        request_group = {}
+        if not min_bw_rules:
+            min_bw_rules = rule_object.QosMinimumBandwidthRule.get_objects(
+                context.get_admin_context(), qos_policy_id=qos_policy_id)
+        min_bw_resources = QoSPlugin._get_min_bw_resources(min_bw_rules)
+        if not segments:
+            segments = network_object.NetworkSegment.get_objects(
+                context.get_admin_context(), network_id=network_id)
+        min_bw_traits = QoSPlugin._get_min_bw_traits(vnic_type, segments)
+        if min_bw_resources and min_bw_traits:
+            request_group.update({
+                'id': str(pl_utils.resource_request_group_uuid(
+                    uuid.UUID(port_id), min_bw_rules)),
+                'required': min_bw_traits,
+                'resources': min_bw_resources,
+            })
+        return request_group
+
+    @staticmethod
+    def _get_min_pps_request_group(qos_policy_id, port_id, vnic_type,
+                                   min_pps_rules=None):
+        request_group = {}
+        if not min_pps_rules:
+            min_pps_rules = rule_object.QosMinimumPacketRateRule.get_objects(
+                context.get_admin_context(),
+                qos_policy_id=qos_policy_id)
+        min_pps_resources = QoSPlugin._get_min_pps_resources(min_pps_rules)
+        min_pps_traits = [pl_utils.vnic_type_trait(vnic_type)]
+        if min_pps_resources and min_pps_traits:
+            request_group.update({
+                'id': str(pl_utils.resource_request_group_uuid(
+                    uuid.UUID(port_id), min_pps_rules)),
+                'required': min_pps_traits,
+                'resources': min_pps_resources,
+            })
+        return request_group
+
+    @staticmethod
+    def _get_min_pps_resources(min_pps_rules):
+        resources = {}
+        rule_direction_class = {
+            nl_constants.INGRESS_DIRECTION:
+                orc.NET_PACKET_RATE_IGR_KILOPACKET_PER_SEC,
+            nl_constants.EGRESS_DIRECTION:
+                orc.NET_PACKET_RATE_EGR_KILOPACKET_PER_SEC,
+            nl_constants.ANY_DIRECTION:
+                orc.NET_PACKET_RATE_KILOPACKET_PER_SEC,
+        }
+        for rule in min_pps_rules:
+            resources[rule_direction_class[rule.direction]] = rule.min_kpps
+        return resources
+
+    @staticmethod
+    def _get_min_bw_traits(vnic_type, segments):
         # TODO(lajoskatona): Change to handle all segments when any traits
         # support will be available. See Placement spec:
         # https://review.opendev.org/565730
@@ -189,6 +314,7 @@ class QoSPlugin(qos.QoSPluginBase):
     def _extend_port_resource_request_bulk(ports_res, noop):
         """Add resource request to a list of ports."""
         min_bw_rules = dict()
+        min_pps_rules = dict()
         net_segments = dict()
 
         for port_res in ports_res:
@@ -201,15 +327,12 @@ class QoSPlugin(qos.QoSPluginBase):
 
             net_id = port_res['resource_request'].pop('network_id')
             vnic_type = port_res['resource_request'].pop('vnic_type')
+            port_id = port_res['resource_request'].pop('port_id')
 
             if qos_id not in min_bw_rules:
                 rules = rule_object.QosMinimumBandwidthRule.get_objects(
                     context.get_admin_context(), qos_policy_id=qos_id)
                 min_bw_rules[qos_id] = rules
-
-            resources = QoSPlugin._get_resources(min_bw_rules[qos_id])
-            if not resources:
-                continue
 
             if net_id not in net_segments:
                 segments = network_object.NetworkSegment.get_objects(
@@ -217,13 +340,20 @@ class QoSPlugin(qos.QoSPluginBase):
                     network_id=net_id)
                 net_segments[net_id] = segments
 
-            traits = QoSPlugin._get_traits(vnic_type, net_segments[net_id])
-            if not traits:
-                continue
+            min_bw_request_group = QoSPlugin._get_min_bw_request_group(
+                qos_id, port_id, vnic_type, net_id,
+                min_bw_rules[qos_id], net_segments[net_id])
 
-            port_res['resource_request'] = {
-                'required': traits,
-                'resources': resources}
+            if qos_id not in min_pps_rules:
+                rules = rule_object.QosMinimumPacketRateRule.get_objects(
+                    context.get_admin_context(), qos_policy_id=qos_id)
+                min_pps_rules[qos_id] = rules
+            min_pps_request_group = QoSPlugin._get_min_pps_request_group(
+                qos_id, port_id, vnic_type, min_pps_rules[qos_id])
+
+            port_res['resource_request'] = (
+                QoSPlugin._get_resource_request(min_bw_request_group,
+                    min_pps_request_group))
 
         return ports_res
 
@@ -278,62 +408,213 @@ class QoSPlugin(qos.QoSPluginBase):
             policy = policy_object.QosPolicy.get_object(
                 context.elevated(), id=policy_id)
             self._change_placement_allocation(original_policy, policy,
-                                              orig_port)
+                                              orig_port, port)
 
-    def _prepare_allocation_needs(self, original_rule, desired_rule):
-        if (isinstance(desired_rule, rule_object.QosMinimumBandwidthRule) or
-                isinstance(desired_rule, dict)):
-            o_dir = original_rule.get('direction')
-            o_minkbps = original_rule.get('min_kbps')
-            d_minkbps = desired_rule.get('min_kbps')
-            d_dir = desired_rule.get('direction')
-            if o_dir == d_dir and o_minkbps != d_minkbps:
-                diff = d_minkbps - o_minkbps
-                # TODO(lajoskatona): move this to neutron-lib, see similar
-                # dict @l125.
-                if d_dir == 'egress':
-                    drctn = orc.NET_BW_EGR_KILOBIT_PER_SEC
-                else:
-                    drctn = orc.NET_BW_IGR_KILOBIT_PER_SEC
-                return {drctn: diff}
+    def _translate_rule_for_placement(self, rule):
+        dir = rule.get('direction')
+        if isinstance(rule, rule_object.QosMinimumBandwidthRule):
+            value = rule.get('min_kbps')
+            # TODO(lajoskatona): move this to neutron-lib, see similar
+            # dict @l125.
+            if dir == 'egress':
+                drctn = orc.NET_BW_EGR_KILOBIT_PER_SEC
+            else:
+                drctn = orc.NET_BW_IGR_KILOBIT_PER_SEC
+            return {drctn: value}
+        elif isinstance(rule, rule_object.QosMinimumPacketRateRule):
+            value = rule.get('min_kpps')
+            # TODO(przszc): move this to neutron-lib, see similar
+            # dict @l268.
+            rule_direction_class = {
+                nl_constants.INGRESS_DIRECTION:
+                    orc.NET_PACKET_RATE_IGR_KILOPACKET_PER_SEC,
+                nl_constants.EGRESS_DIRECTION:
+                    orc.NET_PACKET_RATE_EGR_KILOPACKET_PER_SEC,
+                nl_constants.ANY_DIRECTION:
+                    orc.NET_PACKET_RATE_KILOPACKET_PER_SEC,
+            }
+            return {rule_direction_class[dir]: value}
         return {}
 
+    def _prepare_allocation_needs(self, original_port, rule_type_to_rp_map,
+                                  original_rules, desired_rules):
+        alloc_diff = {}
+        for rule in original_rules:
+            translated_rule = self._translate_rule_for_placement(rule)
+            # NOTE(przszc): Updating Placement resource allocation relies on
+            # calculating a difference between current allocation and desired
+            # one. If we want to release resources we need to get a negative
+            # value of the original allocation.
+            translated_rule = {rc: v * -1 for rc, v in translated_rule.items()}
+            rp_uuid = rule_type_to_rp_map.get(rule.rule_type)
+            if not rp_uuid:
+                LOG.warning(
+                    "Port %s has no RP responsible for allocating %s resource "
+                    "class. Only dataplane enforcement will happen for %s "
+                    "rule!", original_port['id'],
+                    ''.join(translated_rule.keys()), rule.rule_type)
+                continue
+            if rp_uuid not in alloc_diff:
+                alloc_diff[rp_uuid] = translated_rule
+            else:
+                alloc_diff[rp_uuid].update(translated_rule)
+
+        for rule in desired_rules:
+            translated_rule = self._translate_rule_for_placement(rule)
+            rp_uuid = rule_type_to_rp_map.get(rule.rule_type)
+            if not rp_uuid:
+                LOG.warning(
+                    "Port %s has no RP responsible for allocating %s resource "
+                    "class. Only dataplane enforcement will happen for %s "
+                    "rule!", original_port['id'],
+                    ''.join(translated_rule.keys()), rule.rule_type)
+                continue
+            for rc, value in translated_rule.items():
+                if (rc == orc.NET_PACKET_RATE_KILOPACKET_PER_SEC and
+                        (orc.NET_PACKET_RATE_IGR_KILOPACKET_PER_SEC in
+                            alloc_diff[rp_uuid] or
+                        orc.NET_PACKET_RATE_EGR_KILOPACKET_PER_SEC in
+                            alloc_diff[rp_uuid]) or
+                        (rc in (orc.NET_PACKET_RATE_IGR_KILOPACKET_PER_SEC,
+                            orc.NET_PACKET_RATE_EGR_KILOPACKET_PER_SEC) and
+                        orc.NET_PACKET_RATE_KILOPACKET_PER_SEC in
+                            alloc_diff[rp_uuid])):
+                    raise NotImplementedError(_(
+                        'Changing from direction-less QoS minimum packet rate '
+                        'rule to a direction-oriented minimum packet rate rule'
+                        ', or vice versa, is not supported.'))
+                new_value = alloc_diff[rp_uuid].get(rc, 0) + value
+                if new_value == 0:
+                    alloc_diff[rp_uuid].pop(rc, None)
+                else:
+                    alloc_diff[rp_uuid][rc] = new_value
+
+        alloc_diff = {rp: diff for rp, diff in alloc_diff.items() if diff}
+        return alloc_diff
+
+    def _get_updated_port_allocation(self, original_port, original_rules,
+                                     desired_rules):
+        # NOTE(przszc): Port's binding:profile.allocation attribute can contain
+        # multiple RPs and we need to figure out which RP is responsible for
+        # providing resources for particular resource class. We could use
+        # Placement API to get RP's inventory, but it would require superfluous
+        # API calls. Another option is to calculate resource request group
+        # UUIDs and check if they match the ones in allocation attribute and
+        # create a lookup table. Since we are updating allocation attribute we
+        # have to calculate resource request group UUIDs anyways, so creating a
+        # lookup table seems like a better solution.
+        rule_type_to_rp_map = {}
+        updated_allocation = {}
+
+        allocation = original_port['binding:profile']['allocation']
+
+        for group_uuid, rp in allocation.items():
+            for rule_type in [qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH,
+                              qos_constants.RULE_TYPE_MINIMUM_PACKET_RATE]:
+                o_filtered_rules = [r for r in original_rules
+                                    if r.rule_type == rule_type]
+                d_filtered_rules = [r for r in desired_rules
+                                    if r.rule_type == rule_type]
+                o_group_uuid = str(
+                    pl_utils.resource_request_group_uuid(
+                        uuid.UUID(original_port['id']), o_filtered_rules))
+                if group_uuid == o_group_uuid:
+                    rule_type_to_rp_map[rule_type] = rp
+                    # NOTE(przszc): Original QoS policy can have more rule
+                    # types than desired QoS policy. We should add RP to
+                    # allocation only if there are rules with this type in
+                    # desired QoS policy.
+                    if d_filtered_rules:
+                        d_group_uuid = str(
+                            pl_utils.resource_request_group_uuid(
+                                uuid.UUID(original_port['id']),
+                                d_filtered_rules))
+                        updated_allocation[d_group_uuid] = rp
+                    break
+
+        return updated_allocation, rule_type_to_rp_map
+
     def _change_placement_allocation(self, original_policy, desired_policy,
-                                     orig_port):
+                                     orig_port, port):
         alloc_diff = {}
         original_rules = []
-        rp_uuid = orig_port['binding:profile'].get('allocation')
+        desired_rules = []
         device_id = orig_port['device_id']
         if original_policy:
             original_rules = original_policy.get('rules')
         if desired_policy:
             desired_rules = desired_policy.get('rules')
-        else:
-            desired_rules = [{'direction': 'egress', 'min_kbps': 0},
-                             {'direction': 'ingress', 'min_kbps': 0}]
 
-        any_rules_minbw = any(
-            [isinstance(r, rule_object.QosMinimumBandwidthRule)
-             for r in desired_rules])
-        if (not original_rules and any_rules_minbw) or not rp_uuid:
-            LOG.warning("There was no QoS policy with minimum_bandwidth rule "
-                        "attached to the port %s, there is no allocation "
-                        "record in placement for it, only the dataplane "
-                        "enforcement will happen!", orig_port['id'])
+        # Filter out rules that can't have resources allocated in Placement
+        original_rules = [r for r in original_rules
+            if (isinstance(r, (rule_object.QosMinimumBandwidthRule,
+                               rule_object.QosMinimumPacketRateRule)))]
+        desired_rules = [r for r in desired_rules
+            if (isinstance(r, (rule_object.QosMinimumBandwidthRule,
+                               rule_object.QosMinimumPacketRateRule)))]
+        if not original_rules and not desired_rules:
             return
-        for o_rule in original_rules:
-            if isinstance(o_rule, rule_object.QosMinimumBandwidthRule):
-                for d_rule in desired_rules:
-                    alloc_diff.update(
-                        self._prepare_allocation_needs(o_rule, d_rule))
+
+        o_rule_types = set(r.rule_type for r in original_rules)
+        d_rule_types = set(r.rule_type for r in desired_rules)
+        allocation = orig_port['binding:profile'].get('allocation')
+        if (not original_rules and desired_rules) or not allocation:
+            LOG.warning("There was no QoS policy with minimum_bandwidth or "
+                        "minimum_packet_rate rule attached to the port %s, "
+                        "there is no allocation record in placement for it, "
+                        "only the dataplane enforcement will happen!",
+                        orig_port['id'])
+            return
+
+        new_rule_types = d_rule_types.difference(o_rule_types)
+        if new_rule_types:
+            # NOTE(przszc): Port's resource_request and
+            # binding:profile.allocation attributes depend on associated
+            # QoS policy. resource_request is calculated on the fly, but
+            # allocation attribute needs to be updated whenever QoS policy
+            # changes. Since desired QoS policy has more rule types than the
+            # original QoS policy, Neutron doesn't know which RP is responsible
+            # for allocating those resources. That would require scheduling in
+            # Nova. However, some users do not use Placement enforcement and
+            # are interested only in dataplane enforcement. It means that we
+            # cannot raise an exception without breaking legacy behavior.
+            # Only rules that have resources allocated in Placement are going
+            # to be included in port's binding:profile.allocation.
+            LOG.warning(
+                "There was no QoS policy with %s rules attached to the port "
+                "%s, there is no allocation record in placement for it, only "
+                "the dataplane enforcement will happen for those rules!",
+                ','.join(new_rule_types), orig_port['id'])
+            desired_rules = [
+                r for r in desired_rules if r.rule_type not in new_rule_types]
+
+        # NOTE(przszc): Get updated allocation but do not assign it to the
+        # port yet. We don't know if Placement API call is going to succeed.
+        updated_allocation, rule_type_to_rp_map = (
+            self._get_updated_port_allocation(orig_port, original_rules,
+                desired_rules))
+        alloc_diff = self._prepare_allocation_needs(orig_port,
+                                                    rule_type_to_rp_map,
+                                                    original_rules,
+                                                    desired_rules)
         if alloc_diff:
             try:
-                self._placement_client.update_qos_minbw_allocation(
-                    consumer_uuid=device_id, minbw_alloc_diff=alloc_diff,
-                    rp_uuid=rp_uuid)
+                self._placement_client.update_qos_allocation(
+                    consumer_uuid=device_id, alloc_diff=alloc_diff)
             except ks_exc.Conflict:
-                raise qos_exc.QosPlacementAllocationConflict(
-                    consumer=device_id, rp=rp_uuid)
+                raise neutron_qos_exc.QosPlacementAllocationUpdateConflict(
+                    alloc_diff=alloc_diff, consumer=device_id)
+
+        # NOTE(przszc): Upon successful allocation update in Placement we can
+        # proceed with updating port's binding:profile.allocation attribute.
+        # Keep in mind that updating port state this way is possible only
+        # because DBEventPayload's payload attributes are not copied -
+        # subscribers obtain a direct reference to event payload objects.
+        # If that changes, line below won't have any effect.
+        #
+        # Subscribers should *NOT* modify event payload objects, but this is
+        # the only way we can avoid inconsistency in port's attributes.
+        port['binding:profile'] = {'allocation': updated_allocation}
 
     def _validate_update_port_callback(self, resource, event, trigger,
                                        payload=None):

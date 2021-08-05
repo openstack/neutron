@@ -171,7 +171,7 @@ class OpenvswitchMechanismHybridPlugTestCase(OpenvswitchMechanismBaseTestCase):
 
 class OpenvswitchMechanismGenericTestCase(OpenvswitchMechanismBaseTestCase,
                                           base.AgentMechanismGenericTestCase):
-    def test_driver_responsible_for_ports_allocation(self):
+    def test_driver_responsible_for_ports_allocation_min_bw(self):
         agents = [
             {'agent_type': constants.AGENT_TYPE_OVS,
              'configurations': {'resource_provider_bandwidths': {'eth0': {}}},
@@ -179,8 +179,77 @@ class OpenvswitchMechanismGenericTestCase(OpenvswitchMechanismBaseTestCase,
              'host': 'host'}
         ]
         segments = []
+
         # uuid -v5 87ee7d5c-73bb-11e8-9008-c4d987b2a692 host:eth0
-        profile = {'allocation': '13cc0ed9-e802-5eaa-b4c7-3441855e31f2'}
+        fake_min_bw_rp = '13cc0ed9-e802-5eaa-b4c7-3441855e31f2'
+        fake_allocation = {
+            'fake_min_bw_resource_request_group': fake_min_bw_rp,
+        }
+        profile = {'allocation': fake_allocation}
+
+        port_ctx = base.FakePortContext(
+            self.AGENT_TYPE,
+            agents,
+            segments,
+            vnic_type=portbindings.VNIC_NORMAL,
+            profile=profile)
+        with mock.patch.object(self.driver, '_possible_agents_for_port',
+                               return_value=agents):
+            self.assertTrue(
+                self.driver.responsible_for_ports_allocation(port_ctx))
+
+    def test_driver_responsible_for_ports_allocation_min_pps(self):
+        agents = [
+            {'agent_type': constants.AGENT_TYPE_OVS,
+             'configurations': {
+                 'resource_provider_packet_processing_with_direction': {
+                     'host': {}}},
+             'id': '1',
+             'host': 'host'}
+        ]
+        segments = []
+
+        # uuid -v5 87ee7d5c-73bb-11e8-9008-c4d987b2a692 host
+        fake_min_pps_rp = '791f63f0-1a1a-5c38-8972-5e43014fd58b'
+        fake_allocation = {
+            'fake_min_pps_resource_request_group': fake_min_pps_rp,
+        }
+        profile = {'allocation': fake_allocation}
+
+        port_ctx = base.FakePortContext(
+            self.AGENT_TYPE,
+            agents,
+            segments,
+            vnic_type=portbindings.VNIC_NORMAL,
+            profile=profile)
+        with mock.patch.object(self.driver, '_possible_agents_for_port',
+                               return_value=agents):
+            self.assertTrue(
+                self.driver.responsible_for_ports_allocation(port_ctx))
+
+    def test_driver_responsible_for_ports_allocation_min_pps_and_min_bw(self):
+        agents = [{
+            'agent_type': constants.AGENT_TYPE_OVS,
+            'configurations': {
+                'resource_provider_packet_processing_without_direction': {
+                    'host': {}
+                },
+                'resource_provider_bandwidths': {'eth0': {}}
+            },
+            'id': '1',
+            'host': 'host'
+        }]
+        segments = []
+
+        # uuid -v5 87ee7d5c-73bb-11e8-9008-c4d987b2a692 host
+        fake_min_pps_rp = '791f63f0-1a1a-5c38-8972-5e43014fd58b'
+        # uuid -v5 87ee7d5c-73bb-11e8-9008-c4d987b2a692 host:eth0
+        fake_min_bw_rp = '13cc0ed9-e802-5eaa-b4c7-3441855e31f2'
+        fake_allocation = {
+            'fake_min_pps_resource_request_group': fake_min_pps_rp,
+            'fake_min_bw_resource_request_group': fake_min_bw_rp,
+        }
+        profile = {'allocation': fake_allocation}
 
         port_ctx = base.FakePortContext(
             self.AGENT_TYPE,

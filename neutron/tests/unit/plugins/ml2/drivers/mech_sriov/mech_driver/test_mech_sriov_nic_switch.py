@@ -97,7 +97,9 @@ class SriovSwitchMechGenericTestCase(SriovNicSwitchMechanismBaseTestCase,
         ]
         segments = []
         # uuid -v5 87f1895c-73bb-11e8-9008-c4d987b2a692 host:eth0
-        profile = {'allocation': '5762cf50-781b-5f01-8ebc-0cce8c9e74cd'}
+        profile = {'allocation':
+            {'fake_request_group_uuid':
+                '5762cf50-781b-5f01-8ebc-0cce8c9e74cd'}}
 
         port_ctx = base.FakePortContext(
             self.AGENT_TYPE,
