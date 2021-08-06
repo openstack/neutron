@@ -480,21 +480,21 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
 
     @registry.receives(resources.SEGMENT_HOST_MAPPING, [events.AFTER_CREATE])
     def auto_schedule_new_network_segments(self, resource, event, trigger,
-                                           payload=None):
+                                           context, host, current_segment_ids,
+                                           **kwargs):
         if not cfg.CONF.network_auto_schedule:
             return
         segment_plugin = directory.get_plugin('segments')
         dhcp_notifier = self.agent_notifiers.get(constants.AGENT_TYPE_DHCP)
-        segment_ids = payload.metadata.get('current_segment_ids')
         segments = segment_plugin.get_segments(
-            payload.context, filters={'id': segment_ids})
+            context, filters={'id': current_segment_ids})
         subnets = subnet_obj.Subnet.get_objects(
-            payload.context, segment_id=segment_ids)
+            context, segment_id=current_segment_ids)
         network_ids = {s.network_id for s in subnets}
         for network_id in network_ids:
             for segment in segments:
                 self._schedule_network(
-                    payload.context, network_id, dhcp_notifier,
+                    context, network_id, dhcp_notifier,
                     candidate_hosts=segment['hosts'])
 
 
