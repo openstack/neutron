@@ -208,9 +208,11 @@ the second security group. Ports have following attributes:
  Port 3
    - patch bridge port (e.g. patch-tun) in OVS bridge
 
-|table_0| contains a low priority rule to continue packets processing in
-|table_60| aka TRANSIENT table. |table_0| is left for use to other
-features that take precedence over firewall, e.g. DVR. The only requirement is
+|table_0| - |table_59| contain some low priority rules to continue packets
+processing in |table_60| aka TRANSIENT table. |table_0| - |table_59| is
+left for use to other features that take precedence over firewall, e.g.
+DVR, ARP poison/spoofing prevention, MAC spoof filtering and packet rate
+limitation etc. The only requirement is
 that after such a feature is done with its processing, it needs to pass packets
 for processing to the TRANSIENT table. This TRANSIENT table distinguishes the
 ingress traffic from the egress traffic and loads into ``register 5`` a value
@@ -592,6 +594,7 @@ switched to the OVS driver.
   not work if one tries to replace openvswitch firewall with iptables.
 
 .. |table_0| replace:: ``table 0`` (LOCAL_SWITCHING)
+.. |table_59| replace:: ``table 59`` (PACKET_RATE_LIMIT)
 .. |table_60| replace:: ``table 60`` (TRANSIENT)
 .. |table_71| replace:: ``table 71`` (BASE_EGRESS)
 .. |table_72| replace:: ``table 72`` (RULES_EGRESS)

@@ -53,7 +53,7 @@ class OVSDVRInterfaceMixin(object):
         ]
         instructions = [
             ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, actions),
-            ofpp.OFPInstructionGotoTable(table_id=constants.TRANSIENT_TABLE)]
+            ofpp.OFPInstructionGotoTable(table_id=constants.PACKET_RATE_LIMIT)]
 
         self.install_instructions(table_id=constants.LOCAL_SWITCHING,
                                   priority=99,
