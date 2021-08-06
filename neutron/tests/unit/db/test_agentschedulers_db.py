@@ -1563,10 +1563,10 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
 
     def _test_auto_schedule_new_network_segments(self, subnet_on_segment):
         ctx = mock.Mock()
-        payload = events.DBEventPayload(
-            ctx,
-            metadata={'host': 'HOST A',
-                      'current_segment_ids': set(['segment-1'])})
+        notify_kwargs = {
+            'context': ctx,
+            'host': 'HOST A',
+            'current_segment_ids': set(['segment-1'])}
         segments_plugin = mock.Mock()
         segments_plugin.get_segments.return_value = [
             {'id': 'segment-1', 'hosts': ['HOST A']}]
@@ -1586,8 +1586,8 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
             dhcp_mixin.agent_notifiers[constants.AGENT_TYPE_DHCP] = (
                 dhcp_notifier)
             dhcp_mixin.auto_schedule_new_network_segments(
-                resources.SEGMENT_HOST_MAPPING, events.AFTER_CREATE,
-                ctx, payload)
+                resources.SEGMENT_HOST_MAPPING, events.AFTER_CREATE, None,
+                **notify_kwargs)
             if subnet_on_segment:
                 schedule_network.assert_called_once_with(
                     ctx, subnet_on_segment.network_id,
