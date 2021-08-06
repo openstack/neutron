@@ -1293,7 +1293,7 @@ class OVNClient(object):
                     cms_bmaps.append(chassis)
                 else:
                     bmaps.append(chassis)
-        candidates = cms_bmaps or bmaps
+        candidates = cms_bmaps or bmaps or cms
 
         # Filter for availability zones
         if availability_zone_hints:
@@ -1307,7 +1307,7 @@ class OVNClient(object):
         if not cms_bmaps:
             LOG.debug("No eligible chassis with external connectivity"
                       " through ovn-cms-options for %s", physnet)
-        LOG.debug("Chassis candidates with external connectivity: %s",
+        LOG.debug("Chassis candidates for scheduling gateway router ports: %s",
                   candidates)
         return candidates
 
