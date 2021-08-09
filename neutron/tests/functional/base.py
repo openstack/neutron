@@ -266,10 +266,12 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
             return
         ovn_nb_db = self.ovsdb_server_mgr.get_ovsdb_connection_path('nb')
         ovn_sb_db = self.ovsdb_server_mgr.get_ovsdb_connection_path('sb')
+        LOG.debug("Starting OVN northd")
         self.ovn_northd_mgr = self.useFixture(
             process.OvnNorthd(self.temp_dir,
                               ovn_nb_db, ovn_sb_db,
                               protocol=self._ovsdb_protocol))
+        LOG.debug("OVN northd started: %r", self.ovn_northd_mgr)
 
     def _start_ovsdb_server(self):
         # Start 2 ovsdb-servers one each for OVN NB DB and OVN SB DB
@@ -280,6 +282,8 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
             process.OvsdbServer(self.temp_dir, install_share_path,
                                 ovn_nb_db=True, ovn_sb_db=True,
                                 protocol=self._ovsdb_protocol))
+        LOG.debug("OVSDB server manager instantiated: %r",
+                  self.ovsdb_server_mgr)
         set_cfg = cfg.CONF.set_override
         set_cfg('ovn_nb_connection',
                 self.ovsdb_server_mgr.get_ovsdb_connection_path(), 'ovn')
