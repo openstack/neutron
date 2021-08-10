@@ -209,11 +209,12 @@ class DVRResourceOperationHandler(object):
     @registry.receives(resources.ROUTER, [events.AFTER_UPDATE],
                        priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
     def _delete_distributed_port_bindings_after_change(self, resource, event,
-                                                       trigger, context,
-                                                       router_id, router,
-                                                       request_attrs,
-                                                       router_db, **kwargs):
-        old_router = kwargs['old_router']
+                                                       trigger, payload):
+        context = payload.context
+        router = payload.latest_state
+        router_db = payload.metadata['router_db']
+        old_router = payload.states[0] if (len(payload.states) > 1) else None
+
         if (old_router and old_router['distributed'] and not
                 router['distributed']):
             self._core_plugin.delete_distributed_port_bindings_by_router_id(
@@ -222,12 +223,15 @@ class DVRResourceOperationHandler(object):
     @registry.receives(resources.ROUTER, [events.AFTER_UPDATE],
                        priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
     def _delete_snat_interfaces_after_change(self, resource, event, trigger,
-                                             context, router_id, router,
-                                             request_attrs, router_db,
-                                             **kwargs):
+                                             payload):
+        context = payload.context
+        router = payload.latest_state
+        router_db = payload.metadata['router_db']
+
         if (router.get(l3_apidef.EXTERNAL_GW_INFO) and
                 not router['distributed']):
-            old_router = kwargs['old_router']
+            old_router = (payload.states[0] if (len(payload.states) > 1)
+                          else None)
             if old_router and old_router['distributed']:
                 self.delete_csnat_router_interface_ports(
                     context.elevated(), router_db)
@@ -236,9 +240,11 @@ class DVRResourceOperationHandler(object):
                        [events.AFTER_CREATE, events.AFTER_UPDATE],
                        priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
     def _create_snat_interfaces_after_change(self, resource, event, trigger,
-                                             context, router_id, router,
-                                             request_attrs, router_db,
-                                             **kwargs):
+                                             payload):
+        context = payload.context
+        router = payload.latest_state
+        router_db = payload.metadata['router_db']
+
         if (not router.get(l3_apidef.EXTERNAL_GW_INFO) or
                 not router['distributed']):
             # we don't care if it's not distributed or not attached to an
@@ -247,7 +253,8 @@ class DVRResourceOperationHandler(object):
         if event == events.AFTER_UPDATE:
             # after an update, we check to see if it was a migration or a
             # gateway attachment
-            old_router = kwargs['old_router']
+            old_router = (payload.states[0] if (len(payload.states) > 1)
+                          else None)
             do_create = (not old_router['distributed'] or
                          not old_router.get(l3_apidef.EXTERNAL_GW_INFO))
             if not do_create:

@@ -305,8 +305,8 @@ class MetadataDriver(object):
             default_cmd_callback=callback)
 
 
-def after_router_added(resource, event, l3_agent, **kwargs):
-    router = kwargs['router']
+def after_router_added(resource, event, l3_agent, payload):
+    router = payload.latest_state
     proxy = l3_agent.metadata_driver
     apply_metadata_nat_rules(router, proxy)
     if not isinstance(router, ha_router.HaRouter):
@@ -322,8 +322,8 @@ def after_router_added(resource, event, l3_agent, **kwargs):
             **spawn_kwargs)
 
 
-def after_router_updated(resource, event, l3_agent, **kwargs):
-    router = kwargs['router']
+def after_router_updated(resource, event, l3_agent, payload):
+    router = payload.latest_state
     proxy = l3_agent.metadata_driver
     if (not proxy.monitors.get(router.router_id) and
             not isinstance(router, ha_router.HaRouter)):

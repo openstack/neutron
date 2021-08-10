@@ -393,8 +393,11 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
     @registry.receives(resources.ROUTER, [events.AFTER_CREATE],
                        priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
-    def _after_router_create(self, resource, event, trigger, context,
-                             router_id, router, router_db, **kwargs):
+    def _after_router_create(self, resource, event, trigger, payload):
+        context = payload.context
+        router_id = payload.resource_id
+        router = payload.latest_state
+        router_db = payload.metadata['router_db']
         if not router['ha']:
             return
         try:
@@ -460,10 +463,14 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
     @registry.receives(resources.ROUTER, [events.AFTER_UPDATE],
                        priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
-    def _reconfigure_ha_resources(self, resource, event, trigger, context,
-                                  router_id, old_router, router, router_db,
-                                  **kwargs):
+    def _reconfigure_ha_resources(self, resource, event, trigger, payload):
         """Event handler to react to changes after HA flag has been updated."""
+        context = payload.context
+        router_id = payload.resource_id
+        old_router = payload.states[0] if (len(payload.states) > 1) else None
+        router = payload.latest_state
+        router_db = payload.metadata['router_db']
+
         ha_changed = old_router['ha'] != router['ha']
         if not ha_changed:
             return
@@ -529,9 +536,16 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
     @registry.receives(resources.ROUTER, [events.AFTER_DELETE],
                        priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
+    def _cleanup_ha_network_handler(self, resource, event, trigger, payload):
+
+        return self._cleanup_ha_network(event,
+                                        payload.context,
+                                        payload.resource_id,
+                                        payload.latest_state)
+
     @db_api.retry_if_session_inactive()
-    def _cleanup_ha_network(self, resource, event, trigger, context,
-                            router_id, original, **kwargs):
+    def _cleanup_ha_network(self, event, context,
+                            router_id, original):
         """Event handler to attempt HA network deletion after router delete."""
         if not original['ha']:
             return

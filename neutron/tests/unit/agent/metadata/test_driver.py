@@ -109,7 +109,12 @@ class TestMetadataDriverProcess(base.BaseTestCase):
             agent.router_info[router_id] = ri
             agent._process_updated_router(router)
             f.assert_called_once_with(
-                'router', 'after_update', agent, router=ri)
+                'router', 'after_update', agent,
+                payload=mock.ANY)
+
+            payload = f.call_args_list[0][1]['payload']
+            self.assertEqual(ri, payload.latest_state)
+            self.assertEqual(router_id, payload.resource_id)
 
     def test_after_router_updated_should_not_call_add_metadata_rules(self):
         with mock.patch.object(iptables_manager.IptablesTable,
