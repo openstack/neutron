@@ -1,5 +1,6 @@
 # Copyright (C) 2014,2015 VA Linux Systems Japan K.K.
 # Copyright (C) 2014,2015 YAMAMOTO Takashi <yamamoto at valinux co jp>
+# Copyright (c) 2021-2022 Chinaunicom
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -432,6 +433,96 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
                           priority=10,
                           match=match,
                           dest_table_id=constants.ARP_SPOOF_TABLE)
+
+    def list_meter_features(self):
+        (dp, _ofp, ofpp) = self._get_dp()
+        req = ofpp.OFPMeterFeaturesStatsRequest(dp, 0)
+
+        rep = self._send_msg(req, reply_cls=ofpp.OFPMeterFeaturesStatsReply)
+
+        features = []
+        for stat in rep.body:
+            features.append({"max_meter": stat.max_meter,
+                             "band_types": stat.band_types,
+                             "capabilities": stat.capabilities,
+                             "max_bands": stat.max_bands,
+                             "max_color": stat.max_color})
+        return features
+
+    def create_meter(self, meter_id, rate, burst=0):
+        (dp, ofp, ofpp) = self._get_dp()
+
+        bands = [
+            ofpp.OFPMeterBandDrop(rate=rate, burst_size=burst)]
+        req = ofpp.OFPMeterMod(datapath=dp, command=ofp.OFPMC_ADD,
+                               flags=ofp.OFPMF_PKTPS, meter_id=meter_id,
+                               bands=bands)
+        self._send_msg(req)
+
+    def delete_meter(self, meter_id):
+        (dp, ofp, ofpp) = self._get_dp()
+
+        req = ofpp.OFPMeterMod(datapath=dp, command=ofp.OFPMC_DELETE,
+                               flags=ofp.OFPMF_PKTPS, meter_id=meter_id)
+        self._send_msg(req)
+
+    def update_meter(self, meter_id, rate, burst=0):
+        (dp, ofp, ofpp) = self._get_dp()
+
+        bands = [
+            ofpp.OFPMeterBandDrop(rate=rate, burst_size=burst)]
+        req = ofpp.OFPMeterMod(datapath=dp, command=ofp.OFPMC_MODIFY,
+                               flags=ofp.OFPMF_PKTPS, meter_id=meter_id,
+                               bands=bands)
+        self._send_msg(req)
+
+    def apply_meter_to_port(self, meter_id, direction, mac,
+                            in_port=None, local_vlan=None):
+        """Add meter flows to port.
+
+        Ingress: match dst MAC and local_vlan ID
+        Egress: match src MAC and OF in_port
+        """
+        (_dp, ofp, ofpp) = self._get_dp()
+
+        if direction == lib_consts.EGRESS_DIRECTION and in_port:
+            match = ofpp.OFPMatch(in_port=in_port, eth_src=mac)
+        elif direction == lib_consts.INGRESS_DIRECTION and local_vlan:
+            vlan_vid = local_vlan | ofp.OFPVID_PRESENT
+            match = ofpp.OFPMatch(vlan_vid=vlan_vid, eth_dst=mac)
+        else:
+            LOG.warning("Invalid inputs to add meter flows to port.")
+            return
+
+        instructions = [
+            ofpp.OFPInstructionMeter(meter_id, type_=ofp.OFPIT_METER),
+            ofpp.OFPInstructionGotoTable(table_id=constants.TRANSIENT_TABLE)]
+
+        self.install_instructions(table_id=constants.PACKET_RATE_LIMIT,
+                                  priority=100,
+                                  instructions=instructions,
+                                  match=match)
+
+    def remove_meter_from_port(self, direction, mac,
+                               in_port=None, local_vlan=None):
+        """Remove meter flows from port.
+
+        Ingress: match dst MAC and local_vlan ID
+        Egress: match src MAC and OF in_port
+        """
+        (_dp, ofp, ofpp) = self._get_dp()
+
+        if direction == lib_consts.EGRESS_DIRECTION and in_port:
+            match = ofpp.OFPMatch(in_port=in_port, eth_src=mac)
+        elif direction == lib_consts.INGRESS_DIRECTION and local_vlan:
+            vlan_vid = local_vlan | ofp.OFPVID_PRESENT
+            match = ofpp.OFPMatch(vlan_vid=vlan_vid, eth_dst=mac)
+        else:
+            LOG.warning("Invalid inputs to remove meter flows from port.")
+            return
+
+        self.uninstall_flows(table_id=constants.PACKET_RATE_LIMIT,
+                             match=match)
 
     def delete_arp_spoofing_protection(self, port):
         (_dp, ofp, ofpp) = self._get_dp()

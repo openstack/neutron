@@ -669,6 +669,122 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
     def test_delete_dvr_dst_mac_for_flat(self):
         self._test_delete_dvr_dst_mac_for_arp(network_type='flat')
 
+    def test_list_meter_features(self):
+        (dp, ofp, ofpp) = self._get_dp()
+        self.br.list_meter_features()
+        self.assertIn(
+            call._send_msg(ofpp.OFPMeterFeaturesStatsRequest(dp, 0),
+                           reply_cls=ofpp.OFPMeterFeaturesStatsReply),
+            self.mock.mock_calls)
+
+    def test_create_meter(self):
+        meter_id = 1
+        rate = 2
+        burst = 0
+        (dp, ofp, ofpp) = self._get_dp()
+        self.br.create_meter(meter_id, rate)
+
+        bands = [
+            ofpp.OFPMeterBandDrop(rate=rate, burst_size=burst)]
+        req = ofpp.OFPMeterMod(datapath=dp, command=ofp.OFPMC_ADD,
+                               flags=ofp.OFPMF_PKTPS, meter_id=meter_id,
+                               bands=bands)
+
+        expected = [call._send_msg(req)]
+        self.assertEqual(expected, self.mock.mock_calls)
+
+    def test_delete_meter(self):
+        meter_id = 1
+        (dp, ofp, ofpp) = self._get_dp()
+        self.br.delete_meter(meter_id)
+
+        req = ofpp.OFPMeterMod(datapath=dp, command=ofp.OFPMC_DELETE,
+                               flags=ofp.OFPMF_PKTPS, meter_id=meter_id)
+        expected = [call._send_msg(req)]
+        self.assertEqual(expected, self.mock.mock_calls)
+
+    def test_update_meter(self):
+        meter_id = 1
+        rate = 2
+        burst = 0
+        (dp, ofp, ofpp) = self._get_dp()
+        self.br.update_meter(meter_id, rate)
+
+        bands = [
+            ofpp.OFPMeterBandDrop(rate=rate, burst_size=burst)]
+        req = ofpp.OFPMeterMod(datapath=dp, command=ofp.OFPMC_MODIFY,
+                               flags=ofp.OFPMF_PKTPS, meter_id=meter_id,
+                               bands=bands)
+        expected = [call._send_msg(req)]
+        self.assertEqual(expected, self.mock.mock_calls)
+
+    def _test_apply_meter_to_port(self, direction, mac,
+                            in_port=None, local_vlan=None):
+        meter_id = 1
+        (dp, ofp, ofpp) = self._get_dp()
+        self.br.apply_meter_to_port(meter_id, direction, mac,
+                                    in_port, local_vlan)
+
+        if direction == p_const.EGRESS_DIRECTION and in_port:
+            match = ofpp.OFPMatch(in_port=in_port, eth_src=mac)
+        elif direction == p_const.INGRESS_DIRECTION and local_vlan:
+            vlan_vid = local_vlan | ofp.OFPVID_PRESENT
+            match = ofpp.OFPMatch(vlan_vid=vlan_vid, eth_dst=mac)
+
+        instructions = [
+            ofpp.OFPInstructionMeter(meter_id, type_=ofp.OFPIT_METER),
+            ofpp.OFPInstructionGotoTable(table_id=constants.TRANSIENT_TABLE)]
+
+        expected = [
+            call._send_msg(ofpp.OFPFlowMod(dp,
+                cookie=self.stamp,
+                instructions=instructions,
+                match=match,
+                priority=100,
+                table_id=constants.PACKET_RATE_LIMIT),
+                active_bundle=None)
+        ]
+        self.assertEqual(expected, self.mock.mock_calls)
+
+    def test_apply_meter_to_port_egress(self):
+        self._test_apply_meter_to_port(p_const.EGRESS_DIRECTION,
+                                       mac="00:02:b3:13:fe:3e",
+                                       in_port=1)
+
+    def test_apply_meter_to_port_ingress(self):
+        self._test_apply_meter_to_port(p_const.INGRESS_DIRECTION,
+                                       mac="00:02:b3:13:fe:3e",
+                                       local_vlan=1)
+
+    def _test_remove_meter_from_port(self, direction, mac,
+                               in_port=None, local_vlan=None):
+        (_dp, ofp, ofpp) = self._get_dp()
+        self.br.remove_meter_from_port(direction,
+                                       mac, in_port, local_vlan)
+
+        if direction == p_const.EGRESS_DIRECTION and in_port:
+            match = ofpp.OFPMatch(in_port=in_port, eth_src=mac)
+        elif direction == p_const.INGRESS_DIRECTION and local_vlan:
+            vlan_vid = local_vlan | ofp.OFPVID_PRESENT
+            match = ofpp.OFPMatch(vlan_vid=vlan_vid, eth_dst=mac)
+
+        expected = [
+            call.uninstall_flows(
+                    table_id=constants.PACKET_RATE_LIMIT,
+                    match=match)
+        ]
+        self.assertEqual(expected, self.mock.mock_calls)
+
+    def test_remove_meter_from_port_egress(self):
+        self._test_remove_meter_from_port(p_const.EGRESS_DIRECTION,
+                                          mac="00:02:b3:13:fe:3e",
+                                          in_port=1)
+
+    def test_remove_meter_from_port_ingress(self):
+        self._test_remove_meter_from_port(p_const.INGRESS_DIRECTION,
+                                          mac="00:02:b3:13:fe:3e",
+                                          local_vlan=1)
+
     def test_install_dscp_marking_rule(self):
         test_port = 8888
         test_mark = 38

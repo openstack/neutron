@@ -43,6 +43,9 @@ from neutron.common import utils as common_utils
 from neutron.conf.agent import ovs_conf
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants
+from neutron.plugins.ml2.drivers.openvswitch.agent.common \
+    import exceptions as ovs_exc
+
 
 UINT64_BITMASK = (1 << 64) - 1
 
@@ -1196,6 +1199,47 @@ class OVSBridge(BaseOVS):
         elif not isinstance(port_type, list):
             port_type = [port_type]
         return [port['name'] for port in ports if port['type'] in port_type]
+
+    def get_port_tag_by_name(self, port_name):
+        # At the very beginning of port processing, the port tag
+        # may not set to ovsdb Port. But, we set the tag to
+        # other_config.
+        return self.get_value_from_other_config(port_name, 'tag', int)
+
+    def get_value_from_other_config(self, port_name,
+                                    key, value_type=None):
+        try:
+            other_config = self.db_get_val(
+                'Port', port_name, 'other_config') or {}
+            value = other_config.get(key)
+            if value is not None:
+                if value_type:
+                    return value_type(value)
+                return value
+        except (TypeError, ValueError):
+            raise ovs_exc.OVSDBPortError(port=port_name)
+
+    def set_value_to_other_config(self, port_name, key, value):
+        other_config = self.db_get_val(
+            'Port', port_name, 'other_config')
+        if isinstance(other_config, dict):
+            other_config[key] = str(value)
+            # set_db_attribute does not work
+            with self.ovsdb.transaction() as txn:
+                txn.add(
+                    self.ovsdb.db_set('Port', port_name,
+                                      ('other_config', other_config)))
+
+    def remove_value_from_other_config(self, port_name, key):
+        other_config = self.db_get_val(
+            'Port', port_name, 'other_config')
+        if isinstance(other_config, dict):
+            other_config.pop(key, None)
+            # set_db_attribute does not work
+            with self.ovsdb.transaction() as txn:
+                txn.add(self.ovsdb.db_clear('Port', port_name, "other_config"))
+                txn.add(self.ovsdb.db_set('Port', port_name,
+                                          ('other_config', other_config)))
 
     def __enter__(self):
         self.create()
