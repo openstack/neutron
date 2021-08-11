@@ -16,7 +16,10 @@
 import abc
 
 from neutron_lib.db import api as db_api
+from oslo_db import exception as db_exc
 import six
+
+from neutron.common import utils as n_utils
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -26,6 +29,7 @@ class BaseResourceFilter(object):
     def filter_agents(self, plugin, context, resource):
         """Return the agents that can host the resource."""
 
+    @n_utils.skip_exceptions(db_exc.DBError)
     def bind(self, context, agents, resource_id, force_scheduling=False):
         """Bind the resource to the agents."""
         with db_api.CONTEXT_WRITER.using(context):

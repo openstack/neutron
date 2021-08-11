@@ -927,3 +927,25 @@ class SingletonDecorator(object):
         if self._instance is None:
             self._instance = self._klass(*args, **kwargs)
         return self._instance
+
+
+def skip_exceptions(exceptions):
+    """Decorator to catch and hide any provided exception in the argument"""
+
+    # NOTE(ralonsoh): could be rehomed to neutron-lib.
+    if not isinstance(exceptions, list):
+        exceptions = [exceptions]
+
+    def decorator(function):
+        @functools.wraps(function)
+        def wrapper(*args, **kwargs):
+            try:
+                return function(*args, **kwargs)
+            except Exception as exc:
+                with excutils.save_and_reraise_exception() as ctx:
+                    if issubclass(type(exc), tuple(exceptions)):
+                        LOG.info('Skipped exception %s when calling method %s',
+                                 ctx.value.__repr__(), function.__repr__())
+                        ctx.reraise = False
+        return wrapper
+    return decorator
