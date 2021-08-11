@@ -145,7 +145,7 @@ class OVSFirewallLoggingDriver(log_ext.LoggingDriver):
         self.log_ports = collections.defaultdict(dict)
         self.cookies_table = set()
         self.cookie_ids_to_delete = set()
-        self.conj_id_map = ovsfw.ConjIdMap()
+        self.conj_id_map = ovsfw.ConjIdMap(self.int_br.br)
 
     def initialize(self, resource_rpc, **kwargs):
         self.resource_rpc = resource_rpc
