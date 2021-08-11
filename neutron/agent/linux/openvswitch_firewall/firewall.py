@@ -16,6 +16,8 @@
 import collections
 import contextlib
 import copy
+import itertools
+import re
 
 import eventlet
 import netaddr
@@ -41,6 +43,7 @@ from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
         as ovs_consts
 
 LOG = logging.getLogger(__name__)
+CONJ_ID_REGEX = re.compile(r"conj_id=(\d+),")
 
 
 def _replace_register(flow_params, register_number, register_value):
@@ -262,33 +265,75 @@ class SGPortMap(object):
 class ConjIdMap(object):
     """Handle conjunction ID allocations and deallocations."""
 
-    def __new__(cls):
+    CONJ_ID_BLOCK_SIZE = 8
+    MAX_CONJ_ID = 2 ** 32 - 8
+
+    def __new__(cls, int_br):
         if not hasattr(cls, '_instance'):
             cls._instance = super(ConjIdMap, cls).__new__(cls)
         return cls._instance
 
-    def __init__(self):
+    def __init__(self, int_br):
         self.id_map = collections.defaultdict(self._conj_id_factory)
         # Stores the set of conjuntion IDs used for each unique tuple
         # (sg_id, remote_id, direction, ethertype). Each tuple
         # can have up to 8 conjuntion IDs (see ConjIPFlowManager.add()).
         self.id_map_group = collections.defaultdict(set)
         self.id_free = collections.deque()
-        self.max_id = 0
+        self._max_id = self._init_max_id(int_br)
+
+    def _init_max_id(self, int_br):
+        """Read the maximum conjunction ID number in the integration bridge
+
+        This method will dump all integration bridge flows, parse them and
+        return the maximum conjunction ID number. By default, "int_br" is a
+        ``OVSAgentBridge`` instance, using "os-ken" library to access to the OF
+        rules.
+        If not, "int_br" will default to a ``OVSBridge`` instance. The CLI
+        command "ovs-ofctl" will be used instead.
+
+        :param int_br: ``OVSAgentBridge`` or ``OVSBridge`` instance.
+        :returns: The maximum conjunction ID number in the integration bridge
+        """
+        conj_id_max = 0
+        try:
+            for flow in itertools.chain(
+                    *[int_br.dump_flows(table)
+                      for table in ovs_consts.OVS_FIREWALL_TABLES]):
+                conj_id_max = max(conj_id_max, flow.match.get('conj_id', 0))
+        except AttributeError:  # br_int is a ``OVSBridge`` instance.
+            flows_iter = itertools.chain(
+                *[int_br.dump_flows_for_table(table)
+                  for table in ovs_consts.OVS_FIREWALL_TABLES])
+            conj_ids = CONJ_ID_REGEX.findall(" | ".join(flows_iter))
+            try:
+                conj_id_max = max([int(conj_id) for conj_id in conj_ids])
+            except ValueError:
+                conj_id_max = 0
+
+        max_id = conj_id_max - conj_id_max % self.CONJ_ID_BLOCK_SIZE
+        return self._next_max_id(max_id)
+
+    def _next_max_id(self, max_id):
+        max_id += self.CONJ_ID_BLOCK_SIZE
+        if max_id >= self.MAX_CONJ_ID:
+            max_id = 0
+        return max_id
 
     def _conj_id_factory(self):
         # If there is any freed ID, use one.
         if self.id_free:
             return self.id_free.popleft()
         # Allocate new one. It must be divisible by 8. (See the next function.)
-        self.max_id += 8
-        return self.max_id
+        self._max_id = self._next_max_id(self._max_id)
+        return self._max_id
 
     def get_conj_id(self, sg_id, remote_id, direction, ethertype):
         """Return a conjunction ID specified by the arguments.
-        Allocate one if necessary.  The returned ID is divisible by 8,
-        as there are 4 priority levels (see rules.flow_priority_offset)
-        and 2 conjunction IDs are needed per priority.
+        Allocate one if necessary.  The returned ID is divisible by 8
+        (CONJ_ID_BLOCK_SIZE), as there are 4 priority levels
+        (see rules.flow_priority_offset) and 2 conjunction IDs are needed per
+        priority.
         """
         if direction not in [lib_const.EGRESS_DIRECTION,
                              lib_const.INGRESS_DIRECTION]:
@@ -337,7 +382,7 @@ class ConjIPFlowManager(object):
     """
 
     def __init__(self, driver):
-        self.conj_id_map = ConjIdMap()
+        self.conj_id_map = ConjIdMap(driver.int_br.br)
         self.driver = driver
         # The following two are dict of dicts and are indexed like:
         #     self.x[vlan_tag][(direction, ethertype)]

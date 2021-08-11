@@ -102,6 +102,12 @@ class FakeOVSPort(object):
 class TestOVSFirewallLoggingDriver(base.BaseTestCase):
     def setUp(self):
         super(TestOVSFirewallLoggingDriver, self).setUp()
+        mock_int_br = mock.Mock()
+        mock_int_br.br.dump_flows.return_value = []
+        self._mock_initialize_bridge = mock.patch.object(
+            ovsfw_log.OVSFirewallLoggingDriver, 'initialize_bridge',
+            return_value=mock_int_br)
+        self.mock_initialize_bridge = self._mock_initialize_bridge.start()
         self.log_driver = ovsfw_log.OVSFirewallLoggingDriver(mock.Mock())
         resource_rpc_mock = mock.patch.object(
             agent_rpc, 'LoggingApiStub', autospec=True).start()
@@ -132,10 +138,12 @@ class TestOVSFirewallLoggingDriver(base.BaseTestCase):
         return self.mock_bridge.br.get_vif_port_by_id.return_value.vif_mac
 
     def test_initialize_bridge(self):
+        self._mock_initialize_bridge.stop()
         br = self.log_driver.initialize_bridge(self.mock_bridge)
         self.assertEqual(self.mock_bridge.deferred.return_value, br)
 
     def test_set_controller_rate_limit(self):
+        self._mock_initialize_bridge.stop()
         set_log_driver_config(100, 25)
         self.log_driver.initialize_bridge(self.mock_bridge)
         expected_calls = [mock.call.set_controller_rate_limit(100),
