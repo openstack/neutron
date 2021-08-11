@@ -19,6 +19,7 @@ from neutron_lib.callbacks import registry as callbacks_registry
 from neutron_lib.callbacks import resources as callbacks_resources
 from neutron_lib import constants
 from neutron_lib.utils import helpers
+from os_ken.ofproto import ofproto_v1_3_parser
 from oslo_config import cfg
 import testtools
 
@@ -37,6 +38,36 @@ from neutron.tests import base
 
 TESTING_VLAN_TAG = 1
 TESTING_SEGMENT = 1000
+MATCH_1 = ofproto_v1_3_parser.OFPMatch(
+    _ordered_fields=[('conj_id', 100), ('eth_type', 2048), ('reg5', 12),
+                     ('ct_state', (2, 14))])
+MATCH_2 = ofproto_v1_3_parser.OFPMatch(
+    _ordered_fields=[('conj_id', 200), ('eth_type', 2048), ('reg5', 12),
+                     ('ct_state', (2, 14))])
+MATCH_3 = ofproto_v1_3_parser.OFPMatch(
+    _ordered_fields=[('reg5', 13), ('ct_state', (10, 14)), ('ct_zone', 1),
+                     ('ct_mark', 0)])
+MATCH_4 = ofproto_v1_3_parser.OFPMatch(
+    _ordered_fields=[('eth_type', 34525), ('ip_proto', 58),
+                     ('icmpv6_type', 136), ('reg5', 11)])
+INIT_OF_RULES = [
+    mock.Mock(match=MATCH_1),
+    mock.Mock(match=MATCH_2),
+    mock.Mock(match=MATCH_3),
+    mock.Mock(match=MATCH_4),
+]
+INIT_OF_RULES_VSCTL = [
+    'priority=40,ct_state=+est,ip,reg5=0xd actions=ct(commit,zone=NXM_NX_REG6['
+    '0..15],exec(load:0x1->NXM_NX_CT_MARK[]))',
+    'priority=70,conj_id=100,ct_state=+est-rel-rpl,ip,reg5=0xc actions=load:0x'
+    'f0->NXM_NX_REG7[],output:12',
+    'priority=70,conj_id=200,ct_state=+est-rel-rpl,ipv6,reg5=0xc actions=load:'
+    '0xf8->NXM_NX_REG7[],output:12',
+    'priority=73,ct_state=+est-rel-rpl,ip,reg6=0x1,nw_src=10.10.0.42 actions=c'
+    'onjunction(118,1/2)',
+    'priority=70,ct_state=+est-rel-rpl,ip,reg6=0x1,nw_src=10.10.0.61 actions=c'
+    'onjunction(120,1/2)'
+]
 
 
 def create_ofport(port_dict, network_type=None,
@@ -272,7 +303,11 @@ class TestSGPortMap(base.BaseTestCase):
 class TestConjIdMap(base.BaseTestCase):
     def setUp(self):
         super(TestConjIdMap, self).setUp()
-        self.conj_id_map = ovsfw.ConjIdMap()
+        self.mock_int_br = mock.Mock()
+        self.dump_flows_ret = [[]] * len(ovs_consts.OVS_FIREWALL_TABLES)
+        self.dump_flows_ret[0] = INIT_OF_RULES
+        self.mock_int_br.dump_flows.side_effect = self.dump_flows_ret
+        self.conj_id_map = ovsfw.ConjIdMap(self.mock_int_br)
 
     def test_get_conj_id(self):
         allocated = []
@@ -293,6 +328,7 @@ class TestConjIdMap(base.BaseTestCase):
                           constants.IPv6)
 
     def test_delete_sg(self):
+        self.conj_id_map._max_id = 0
         test_data = [
             # conj_id: 8
             ('sg1', 'sg1', constants.INGRESS_DIRECTION, constants.IPv6, 0),
@@ -338,11 +374,43 @@ class TestConjIdMap(base.BaseTestCase):
             reallocated.add(self.conj_id_map.get_conj_id(*conj_id_tuple))
         self.assertEqual(reallocated, conj_id_segment)
 
+    def test__init_max_id_os_ken(self):
+        self.mock_int_br.dump_flows.side_effect = self.dump_flows_ret
+        self.assertEqual(208, self.conj_id_map._init_max_id(self.mock_int_br))
+
+        match = ofproto_v1_3_parser.OFPMatch(
+            _ordered_fields=[('conj_id', 237), ('eth_type', 2048),
+                             ('reg5', 12), ('ct_state', (2, 14))])
+        new_rule = mock.Mock(match=match)
+        self.dump_flows_ret[0] = INIT_OF_RULES + [new_rule]
+        self.mock_int_br.dump_flows.side_effect = self.dump_flows_ret
+        self.assertEqual(240, self.conj_id_map._init_max_id(self.mock_int_br))
+
+    def test__init_max_id_vsctl(self):
+        self.mock_int_br.dump_flows.side_effect = AttributeError()
+        dump_flows_ret = [[]] * len(ovs_consts.OVS_FIREWALL_TABLES)
+        dump_flows_ret[0] = INIT_OF_RULES_VSCTL
+        self.mock_int_br.dump_flows_for_table.side_effect = dump_flows_ret
+
+        self.assertEqual(208, self.conj_id_map._init_max_id(self.mock_int_br))
+
+        new_rule = ('priority=70,conj_id=237,ct_state=+est-rel-rpl,ipv6,reg5=0'
+                    'xc actions=load:0xf8->NXM_NX_REG7[],output:12')
+        dump_flows_ret[0] = INIT_OF_RULES_VSCTL + [new_rule]
+        self.mock_int_br.dump_flows_for_table.side_effect = dump_flows_ret
+        self.assertEqual(240, self.conj_id_map._init_max_id(self.mock_int_br))
+
+    def test__next_max_id(self):
+        self.assertEqual(8, self.conj_id_map._next_max_id(0))
+        self.assertEqual(0, self.conj_id_map._next_max_id(
+            self.conj_id_map.MAX_CONJ_ID - 1))
+
 
 class TestConjIPFlowManager(base.BaseTestCase):
     def setUp(self):
         super(TestConjIPFlowManager, self).setUp()
         self.driver = mock.Mock()
+        self.driver.int_br.br.dump_flows.return_value = INIT_OF_RULES
         self.manager = ovsfw.ConjIPFlowManager(self.driver)
         self.vlan_tag = 100
         self.conj_id = 16
@@ -1164,6 +1232,8 @@ class TestCookieContext(base.BaseTestCase):
             ovsfw.OVSFirewallDriver, 'initialize_bridge',
             return_value=bridge.deferred(
                 full_ordered=True, use_bundle=True)).start()
+        mock.patch.object(ovsfw.ConjIdMap, '_init_max_id',
+                          return_value=0).start()
 
         securitygroups_rpc.register_securitygroups_opts()
         self.firewall = ovsfw.OVSFirewallDriver(bridge)
