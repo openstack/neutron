@@ -14,6 +14,9 @@
 #    under the License.
 
 from neutron_lib.api.definitions import logging
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib.db import api as db_api
 from neutron_lib.services.logapi import constants as log_const
 
@@ -21,6 +24,7 @@ from neutron.db import db_base_plugin_common
 from neutron.extensions import logging as log_ext
 from neutron.objects import base as base_obj
 from neutron.objects.logapi import logging_resource as log_object
+from neutron.services.logapi.common import db_api as log_db_api
 from neutron.services.logapi.common import exceptions as log_exc
 from neutron.services.logapi.common import validators
 from neutron.services.logapi.drivers import manager as driver_mgr
@@ -39,11 +43,22 @@ class LoggingPlugin(log_ext.LoggingPluginBase):
         super(LoggingPlugin, self).__init__()
         self.driver_manager = driver_mgr.LoggingServiceDriverManager()
         self.validator_mgr = validators.ResourceValidateRequest.get_instance()
+        registry.subscribe(
+            self._clean_security_group_logs,
+            resources.SECURITY_GROUP, events.AFTER_DELETE)
 
     @property
     def supported_logging_types(self):
         # supported_logging_types are be dynamically loaded from log_drivers
         return self.driver_manager.supported_logging_types
+
+    def _clean_security_group_logs(self, resource, event, trigger, payload):
+        context = payload.context.elevated()
+        sg_id = payload.resource_id
+        with db_api.CONTEXT_WRITER.using(context):
+            sg_logs = log_db_api.get_logs_bound_sg(context, sg_id)
+            for log in sg_logs:
+                self.delete_log(context, log['id'])
 
     @db_base_plugin_common.filter_fields
     @db_base_plugin_common.convert_result_to_dict
