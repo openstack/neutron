@@ -99,7 +99,8 @@ class LoggingDBApiTestCase(test_sg.SecurityGroupDBTestCase):
         with mock.patch.object(log_object.Log, 'get_objects',
                                return_value=[log]):
             self.assertEqual(
-                [log], db_api.get_logs_bound_sg(self.context, self.sg_id))
+                [log], db_api.get_logs_bound_sg(
+                    self.context, self.sg_id, project_id=self.tenant_id))
 
             # Test get log objects with required resource type
             calls = [mock.call(self.context, project_id=self.tenant_id,
@@ -120,7 +121,8 @@ class LoggingDBApiTestCase(test_sg.SecurityGroupDBTestCase):
             with mock.patch.object(log_object.Log, 'get_objects',
                                    return_value=[log]):
                 self.assertEqual(
-                    [], db_api.get_logs_bound_sg(self.context, self.sg_id))
+                    [], db_api.get_logs_bound_sg(
+                        self.context, self.sg_id, project_id=self.tenant_id))
 
                 # Test get log objects with required resource type
                 calls = [mock.call(self.context, project_id=self.tenant_id,

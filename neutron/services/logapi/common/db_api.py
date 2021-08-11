@@ -180,15 +180,17 @@ def get_logs_bound_port(context, port_id):
     return [log for log in logs if is_bound(log)]
 
 
-def get_logs_bound_sg(context, sg_id):
+def get_logs_bound_sg(context, sg_id, project_id=None):
     """Return a list of log_resources bound to a security group"""
 
-    project_id = context.tenant_id
+    kwargs = {
+        'resource_type': constants.SECURITY_GROUP,
+        'enabled': True}
+    if project_id:
+        kwargs['project_id'] = project_id
+
     log_objs = log_object.Log.get_objects(
-        context,
-        project_id=project_id,
-        resource_type=constants.SECURITY_GROUP,
-        enabled=True)
+        context, **kwargs)
 
     log_resources = []
     for log_obj in log_objs:
