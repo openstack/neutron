@@ -603,3 +603,25 @@ class SingletonDecoratorTestCase(base.BaseTestCase):
         instance_2 = _TestSingletonClass()
         self.assertEqual(instance_1.__hash__(), instance_2.__hash__())
         self.assertEqual('value1', instance_2.variable)
+
+
+class SkipDecoratorTestCase(base.BaseTestCase):
+
+    def test_skip_exception(self):
+        @utils.skip_exceptions(AttributeError)
+        def raise_attribute_error_single_exception():
+            raise AttributeError()
+
+        @utils.skip_exceptions([AttributeError, IndexError])
+        def raise_attribute_error_exception_list():
+            raise AttributeError()
+
+        raise_attribute_error_single_exception()
+        raise_attribute_error_exception_list()
+
+    def test_skip_exception_fail(self):
+        @utils.skip_exceptions(IndexError)
+        def raise_attribute_error():
+            raise AttributeError()
+
+        self.assertRaises(AttributeError, raise_attribute_error)
