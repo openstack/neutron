@@ -141,6 +141,8 @@ class AgentMixin(object):
         :param state: ['primary', 'backup']
         """
         if not self._update_transition_state(router_id, state):
+            LOG.debug("Enqueueing router's %s state change to %s",
+                      router_id, state)
             eventlet.spawn_n(self._enqueue_state_change, router_id, state)
             eventlet.sleep(0)
 
@@ -148,10 +150,14 @@ class AgentMixin(object):
         # NOTE(ralonsoh): move 'primary' and 'backup' constants to n-lib
         if state == 'primary':
             eventlet.sleep(self.conf.ha_vrrp_advert_int)
-        if self._update_transition_state(router_id) != state:
+        transition_state = self._update_transition_state(router_id)
+        if transition_state != state:
             # If the current "transition state" is not the initial "state" sent
             # to update the router, that means the actual router state is the
             # same as the "transition state" (e.g.: backup-->primary-->backup).
+            LOG.debug("Current transition state of router %s: %s; "
+                      "Initial state was: %s",
+                      router_id, transition_state, state)
             return
 
         ri = self._get_router_info(router_id)
