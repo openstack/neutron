@@ -147,29 +147,22 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
         if l3_dvr_db.is_distributed_router(router):
             raise pf_exc.PortHasPortForwarding(port_id=port_id)
 
-    @registry.receives(resources.FLOATING_IP, [events.PRECOMMIT_DELETE])
-    def _check_floatingip_request_precommit_delete(
-            self, resource, event, trigger, payload):
-        # TODO(isabek): refactor back into 1 method when FIP code is moved
-        # to event payloads
-        return self._check_floatingip_request(resource, event, trigger,
-                                              payload.context,
-                                              port=payload.latest_state)
-
-    @registry.receives(resources.FLOATING_IP, [events.PRECOMMIT_UPDATE])
-    def _check_floatingip_request(self, resource, event, trigger, context,
-                                  **kwargs):
+    @registry.receives(resources.FLOATING_IP, [events.PRECOMMIT_UPDATE,
+                                               events.PRECOMMIT_DELETE])
+    def _check_floatingip_request(self, resource, event, trigger, payload):
         # We only support the "free" floatingip to be associated with
         # port forwarding resources. And in the PUT request of floatingip,
         # the request body must contain a "port_id" field which is not
         # allowed in port forwarding functionality.
+        context = payload.context
         floatingip_id = None
         if event == events.PRECOMMIT_UPDATE:
-            fip_db = kwargs.get('floatingip_db')
+            floatingip = payload.states[-1]
+            fip_db = payload.desired_state
             floatingip_id = fip_db.id
             # Here the key-value must contain a floatingip param, and the value
             # must a dict with key 'floatingip'.
-            if not kwargs['floatingip']['floatingip'].get('port_id'):
+            if not floatingip['floatingip'].get('port_id'):
                 # Only care about the associate floatingip cases.
                 # The port_id field is a must-option. But if a floatingip
                 # disassociate a internal port, the port_id should be null.
@@ -177,7 +170,8 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                           'request does not contain port_id.', floatingip_id)
                 return
         elif event == events.PRECOMMIT_DELETE:
-            floatingip_id = kwargs.get('port').get('device_id')
+            port = payload.states[-1]
+            floatingip_id = port.get('device_id')
         if not floatingip_id:
             return
 

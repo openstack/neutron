@@ -250,8 +250,11 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                     context, router_id, interface_info)
         return router_interface_info
 
-    def create_floatingip_precommit(self, resource, event, trigger, context,
-                                    floatingip, floatingip_id, floatingip_db):
+    def create_floatingip_precommit(self, resource, event, trigger, payload):
+        context = payload.context
+        floatingip_id = payload.resource_id
+        floatingip_db = payload.desired_state
+
         db_rev.create_initial_revision(
             context, floatingip_id, ovn_const.TYPE_FLOATINGIPS,
             std_attr_id=floatingip_db.standard_attr.id)
