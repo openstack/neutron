@@ -63,16 +63,13 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         return self._create_bulk('security_group', context,
                                  security_groups)
 
-    def _registry_notify(self, res, event, id=None, exc_cls=None, **kwargs):
+    def _registry_publish(self, res, event, id=None, exc_cls=None,
+                          payload=None):
         # NOTE(armax): a callback exception here will prevent the request
         # from being processed. This is a hook point for backend's validation;
         # we raise to propagate the reason for the failure.
         try:
-            if 'payload' in kwargs:
-                # TODO(boden): remove shim once all callbacks use payloads
-                registry.publish(res, event, self, payload=kwargs['payload'])
-            else:
-                registry.notify(res, event, self, **kwargs)
+            registry.publish(res, event, self, payload=payload)
         except exceptions.CallbackFailure as e:
             if exc_cls:
                 reason = (_('cannot perform %(event)s due to %(reason)s') %
@@ -87,12 +84,13 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         a given tenant if it does not exist.
         """
         s = security_group['security_group']
-        self._registry_notify(resources.SECURITY_GROUP, events.BEFORE_CREATE,
-                              exc_cls=ext_sg.SecurityGroupConflict,
-                              payload=events.DBEventPayload(
-                                  context, metadata={'is_default': default_sg},
-                                  request_body=security_group,
-                                  desired_state=s))
+        self._registry_publish(resources.SECURITY_GROUP, events.BEFORE_CREATE,
+                               exc_cls=ext_sg.SecurityGroupConflict,
+                               payload=events.DBEventPayload(
+                                   context,
+                                   metadata={'is_default': default_sg},
+                                   request_body=security_group,
+                                   desired_state=s))
 
         tenant_id = s['tenant_id']
         stateful = s.get('stateful', True)
@@ -151,14 +149,14 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             get_context = context.elevated() if default_sg else context
             sg = sg_obj.SecurityGroup.get_object(get_context, id=sg.id)
             secgroup_dict = self._make_security_group_dict(sg)
-            self._registry_notify(resources.SECURITY_GROUP,
-                                  events.PRECOMMIT_CREATE,
-                                  exc_cls=ext_sg.SecurityGroupConflict,
-                                  payload=events.DBEventPayload(
-                                      context,
-                                      resource_id=sg.id,
-                                      metadata={'is_default': default_sg},
-                                      states=(secgroup_dict,)))
+            self._registry_publish(resources.SECURITY_GROUP,
+                                   events.PRECOMMIT_CREATE,
+                                   exc_cls=ext_sg.SecurityGroupConflict,
+                                   payload=events.DBEventPayload(
+                                       context,
+                                       resource_id=sg.id,
+                                       metadata={'is_default': default_sg},
+                                       states=(secgroup_dict,)))
 
         registry.publish(resources.SECURITY_GROUP, events.AFTER_CREATE,
                          self, payload=events.DBEventPayload(
@@ -260,11 +258,11 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             if sg['name'] == 'default' and not context.is_admin:
                 raise ext_sg.SecurityGroupCannotRemoveDefault()
 
-        self._registry_notify(resources.SECURITY_GROUP,
-                              events.BEFORE_DELETE,
-                              exc_cls=ext_sg.SecurityGroupInUse, id=id,
-                              payload=events.DBEventPayload(
-                                  context, states=(sg,), resource_id=id))
+        self._registry_publish(resources.SECURITY_GROUP,
+                               events.BEFORE_DELETE,
+                               exc_cls=ext_sg.SecurityGroupInUse, id=id,
+                               payload=events.DBEventPayload(
+                                   context, states=(sg,), resource_id=id))
 
         with db_api.CONTEXT_WRITER.using(context):
             # pass security_group_rule_ids to ensure
@@ -276,15 +274,15 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             sg = self._get_security_group(context, id)
             sgr_ids = [r['id'] for r in sg.rules]
             sec_group = self._make_security_group_dict(sg)
-            self._registry_notify(resources.SECURITY_GROUP,
-                                  events.PRECOMMIT_DELETE,
-                                  exc_cls=ext_sg.SecurityGroupInUse,
-                                  payload=events.DBEventPayload(
-                                      context, resource_id=id,
-                                      states=(sec_group,),
-                                      metadata={
-                                          'security_group_rule_ids': sgr_ids
-                                      }))
+            self._registry_publish(resources.SECURITY_GROUP,
+                                   events.PRECOMMIT_DELETE,
+                                   exc_cls=ext_sg.SecurityGroupInUse,
+                                   payload=events.DBEventPayload(
+                                       context, resource_id=id,
+                                       states=(sec_group,),
+                                       metadata={
+                                           'security_group_rule_ids': sgr_ids
+                                       }))
             sg.delete()
 
         registry.publish(resources.SECURITY_GROUP, events.AFTER_DELETE,
@@ -307,10 +305,10 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                     if ports:
                         raise ext_sg.SecurityGroupInUse(id=id)
 
-        self._registry_notify(resources.SECURITY_GROUP, events.BEFORE_UPDATE,
-                              exc_cls=ext_sg.SecurityGroupConflict,
-                              payload=events.DBEventPayload(
-                                  context, resource_id=id, states=(s,)))
+        self._registry_publish(resources.SECURITY_GROUP, events.BEFORE_UPDATE,
+                               exc_cls=ext_sg.SecurityGroupConflict,
+                               payload=events.DBEventPayload(
+                                   context, resource_id=id, states=(s,)))
 
         with db_api.CONTEXT_WRITER.using(context):
             sg = self._get_security_group(context, id)
@@ -321,7 +319,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             sg.update_fields(s)
             sg.update()
             sg_dict = self._make_security_group_dict(sg)
-            self._registry_notify(
+            self._registry_publish(
                     resources.SECURITY_GROUP,
                     events.PRECOMMIT_UPDATE,
                     exc_cls=ext_sg.SecurityGroupConflict,
@@ -464,7 +462,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         if port_range_max is not None:
             args['port_range_max'] = port_range_max
 
-        self._registry_notify(
+        self._registry_publish(
             resources.SECURITY_GROUP_RULE,
             events.BEFORE_CREATE,
             exc_cls=ext_sg.SecurityGroupConflict,
@@ -484,7 +482,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             sg_rule = sg_obj.SecurityGroupRule.get_object(context,
                                                           id=sg_rule.id)
             res_rule_dict = self._make_security_group_rule_dict(sg_rule.db_obj)
-            self._registry_notify(
+            self._registry_publish(
                 resources.SECURITY_GROUP_RULE,
                 events.PRECOMMIT_CREATE,
                 exc_cls=ext_sg.SecurityGroupConflict,
@@ -857,15 +855,15 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
 
     @db_api.retry_if_session_inactive()
     def delete_security_group_rule(self, context, id):
-        self._registry_notify(resources.SECURITY_GROUP_RULE,
-                              events.BEFORE_DELETE,
-                              exc_cls=ext_sg.SecurityGroupRuleInUse,
-                              payload=events.DBEventPayload(
-                                  context, resource_id=id,))
+        self._registry_publish(resources.SECURITY_GROUP_RULE,
+                               events.BEFORE_DELETE,
+                               exc_cls=ext_sg.SecurityGroupRuleInUse,
+                               payload=events.DBEventPayload(
+                                   context, resource_id=id,))
 
         with db_api.CONTEXT_WRITER.using(context):
             sgr = self._get_security_group_rule(context, id)
-            self._registry_notify(
+            self._registry_publish(
                 resources.SECURITY_GROUP_RULE,
                 events.PRECOMMIT_DELETE,
                 exc_cls=ext_sg.SecurityGroupRuleInUse,
