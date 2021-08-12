@@ -15,6 +15,7 @@
 from neutron_lib.api.definitions import portbindings as pb_api
 from neutron_lib import context as n_context
 from neutron_lib.db import api as db_api
+from neutron_lib import exceptions
 
 from neutron.db.models.plugins.ml2 import geneveallocation
 from neutron.db.models.plugins.ml2 import vxlanallocation
@@ -66,7 +67,13 @@ def migrate_neutron_database_to_ovn(plugin):
                 pass
         if vif_details != pb.vif_details:
             pb.vif_details = vif_details
-            pb.update()
+            try:
+                pb.update()
+            except exceptions.ObjectNotFound:
+                # When Neutron server is running, it could happen that
+                # for example gateway port has been rescheduled to a
+                # different gateway chassis.
+                pass
 
     for trunk in trunk_obj.Trunk.get_objects(ctx):
         for subport in trunk.sub_ports:

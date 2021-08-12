@@ -12,10 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from unittest import mock
+
 from neutron_lib.api.definitions import portbindings as pb
 from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib import context as n_context
 from neutron_lib.db import api as db_api
+from neutron_lib import exceptions
 from oslo_utils import uuidutils
 
 from neutron.db.models.plugins.ml2 import geneveallocation
@@ -156,3 +159,25 @@ class TestMigrateNeutronDatabaseToOvn(
         self._create_ml2_ovs_test_resources(vif_details_list)
         db_migration.migrate_neutron_database_to_ovn(self.mech_driver._plugin)
         self._validate_resources_after_migration(expected_vif_details)
+
+    def test_db_migration_with_pb_not_found(self):
+        vif_details_list = [
+            {pb.CAP_PORT_FILTER: "true",
+             pb.OVS_HYBRID_PLUG: "true",
+             pb.VIF_DETAILS_BRIDGE_NAME: "foo",
+             pb.VIF_DETAILS_CONNECTIVITY: "l2"},
+            {pb.CAP_PORT_FILTER: "true",
+             pb.VIF_DETAILS_BRIDGE_NAME: "foo"},
+            {"foo": "bar"},
+            {},
+        ]
+
+        self._create_ml2_ovs_test_resources(vif_details_list)
+        with mock.patch.object(
+                port_obj.PortBinding, 'update',
+                side_effect=exceptions.ObjectNotFound(id='foo')):
+            with mock.patch.object(trunk_obj.Trunk, 'get_objects',
+                                   return_value=[]):
+                db_migration.migrate_neutron_database_to_ovn(
+                    self.mech_driver._plugin)
+        self._validate_resources_after_migration(vif_details_list)
