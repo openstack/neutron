@@ -19,6 +19,7 @@ import re
 from neutron_lib import constants as n_const
 from oslo_concurrency import lockutils
 from oslo_log import log
+from oslo_utils import netutils
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import event as row_event
 from ovsdbapp.backend.ovs_idl import vlog
@@ -390,7 +391,8 @@ class MetadataAgent(object):
             return
 
         iptables_mgr = iptables_manager.IptablesManager(
-            use_ipv6=True, nat=False, namespace=namespace, external_lock=False)
+            use_ipv6=netutils.is_ipv6_enabled(), nat=False,
+            namespace=namespace, external_lock=False)
         rule = '-p tcp -m tcp -j CHECKSUM --checksum-fill'
         iptables_mgr.ipv4['mangle'].add_rule('POSTROUTING', rule, wrap=False)
         iptables_mgr.apply()
