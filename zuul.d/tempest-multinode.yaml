@@ -24,7 +24,6 @@
       - ^neutron/plugins/ml2/drivers/macvtap/.*$
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
       - ^neutron/plugins/ml2/drivers/ovn/.*$
-    voting: false
     vars:
       tox_envlist: integrated-network
       devstack_localrc:
