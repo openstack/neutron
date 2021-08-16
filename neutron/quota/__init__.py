@@ -12,139 +12,21 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-"""Quotas for instances, volumes, and floating ips."""
-
-import sys
-
 from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
-from oslo_log import versionutils
 from oslo_utils import importutils
-import webob
 
-from neutron._i18n import _
 from neutron.conf import quota
-from neutron.db.quota import api as quota_api
 from neutron.quota import resource_registry
 
 LOG = logging.getLogger(__name__)
 QUOTA_DB_MODULE = quota.QUOTA_DB_MODULE
 QUOTA_DB_DRIVER = quota.QUOTA_DB_DRIVER
-QUOTA_CONF_DRIVER = quota.QUOTA_CONF_DRIVER
 
 
 # Register the configuration options
 quota.register_quota_opts(quota.core_quota_opts)
-
-
-class ConfDriver(object):
-    """Configuration driver.
-
-    Driver to perform necessary checks to enforce quotas and obtain
-    quota information. The default driver utilizes the default values
-    in neutron.conf.
-    """
-
-    def _get_quotas(self, context, resources):
-        """Get quotas.
-
-        A helper method which retrieves the quotas for the specific
-        resources identified by keys, and which apply to the current
-        context.
-
-        :param context: The request context, for access checks.
-        :param resources: A dictionary of the registered resources.
-        """
-
-        quotas = {}
-        for resource in resources.values():
-            quotas[resource.name] = resource.default
-        return quotas
-
-    def limit_check(self, context, tenant_id,
-                    resources, values):
-        """Check simple quota limits.
-
-        For limits--those quotas for which there is no usage
-        synchronization function--this method checks that a set of
-        proposed values are permitted by the limit restriction.
-
-        If any of the proposed values is over the defined quota, an
-        OverQuota exception will be raised with the sorted list of the
-        resources which are too high.  Otherwise, the method returns
-        nothing.
-
-        :param context: The request context, for access checks.
-        :param tenant_id: The tenant_id to check quota.
-        :param resources: A dictionary of the registered resources.
-        :param values: A dictionary of the values to check against the
-                       quota.
-        """
-        # Ensure no value is less than zero
-        unders = [key for key, val in values.items() if val < 0]
-        if unders:
-            raise exceptions.InvalidQuotaValue(unders=sorted(unders))
-
-        # Get the applicable quotas
-        quotas = self._get_quotas(context, resources)
-
-        # Check the quotas and construct a list of the resources that
-        # would be put over limit by the desired values
-        overs = [key for key, val in values.items()
-                 if quotas[key] >= 0 and quotas[key] < val]
-        if overs:
-            raise exceptions.OverQuota(overs=sorted(overs), quotas=quotas,
-                                       usages={})
-
-    @staticmethod
-    def get_tenant_quotas(context, resources, tenant_id):
-        quotas = {}
-        sub_resources = dict((k, v) for k, v in resources.items())
-        for resource in sub_resources.values():
-            quotas[resource.name] = resource.default
-        return quotas
-
-    @staticmethod
-    def get_all_quotas(context, resources):
-        return []
-
-    @staticmethod
-    def delete_tenant_quota(context, tenant_id):
-        msg = _('Access to this resource was denied.')
-        raise webob.exc.HTTPForbidden(msg)
-
-    @staticmethod
-    def update_quota_limit(context, tenant_id, resource, limit):
-        msg = _('Access to this resource was denied.')
-        raise webob.exc.HTTPForbidden(msg)
-
-    def make_reservation(self, context, tenant_id, resources, deltas, plugin):
-        """This driver does not support reservations.
-
-        This routine is provided for backward compatibility purposes with
-        the API controllers which have now been adapted to make reservations
-        rather than counting resources and checking limits - as this
-        routine ultimately does.
-        """
-        for resource in deltas.keys():
-            count = QUOTAS.count(context, resource, plugin, tenant_id)
-            total_use = deltas.get(resource, 0) + count
-            deltas[resource] = total_use
-
-        self.limit_check(
-            context,
-            tenant_id,
-            resource_registry.get_all_resources(),
-            deltas)
-        # return a fake reservation - the REST controller expects it
-        return quota_api.ReservationInfo('fake', None, None, None)
-
-    def commit_reservation(self, context, reservation_id):
-        """This is a noop as this driver does not support reservations."""
-
-    def cancel_reservation(self, context, reservation_id):
-        """This is a noop as this driver does not support reservations."""
 
 
 class QuotaEngine(object):
@@ -167,20 +49,8 @@ class QuotaEngine(object):
         if self._driver is None:
             _driver_class = (self._driver_class or
                              cfg.CONF.QUOTAS.quota_driver)
-            if (_driver_class == QUOTA_DB_DRIVER and
-                    QUOTA_DB_MODULE not in sys.modules):
-                # If quotas table is not loaded, force config quota driver.
-                _driver_class = QUOTA_CONF_DRIVER
-                LOG.info("ConfDriver is used as quota_driver because the "
-                         "loaded plugin does not support 'quotas' table.")
             if isinstance(_driver_class, str):
                 _driver_class = importutils.import_object(_driver_class)
-            if isinstance(_driver_class, ConfDriver):
-                versionutils.report_deprecated_feature(
-                    LOG, ("The quota driver neutron.quota.ConfDriver is "
-                          "deprecated as of Liberty. "
-                          "neutron.db.quota.driver.DbQuotaDriver should "
-                          "be used in its place"))
             self._driver = _driver_class
             LOG.info('Loaded quota_driver: %s.', _driver_class)
         return self._driver

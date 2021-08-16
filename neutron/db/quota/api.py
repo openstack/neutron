@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import abc
 import collections
 import datetime
 
@@ -237,3 +238,170 @@ def get_reservations_for_resources(context, tenant_id, resources,
 @db_api.CONTEXT_WRITER
 def remove_expired_reservations(context, tenant_id=None):
     return quota_obj.Reservation.delete_expired(context, utcnow(), tenant_id)
+
+
+class QuotaDriverAPI(object, metaclass=abc.ABCMeta):
+
+    @staticmethod
+    @abc.abstractmethod
+    def get_default_quotas(context, resources, project_id):
+        """Given a list of resources, retrieve the default quotas set for
+        a tenant.
+
+        :param context: The request context, for access checks.
+        :param resources: A dictionary of the registered resource keys.
+        :param project_id: The ID of the project to return default quotas for.
+        :return: dict from resource name to dict of name and limit
+        """
+
+    @staticmethod
+    @abc.abstractmethod
+    def get_tenant_quotas(context, resources, project_id):
+        """Retrieve the quotas for the given list of resources and project
+
+        :param context: The request context, for access checks.
+        :param resources: A dictionary of the registered resource keys.
+        :param project_id: The ID of the project to return quotas for.
+        :return: dict from resource name to dict of name and limit
+        """
+
+    @staticmethod
+    @abc.abstractmethod
+    def get_detailed_tenant_quotas(context, resources, project_id):
+        """Retrieve detailed quotas for the given list of resources and project
+
+        :param context: The request context, for access checks.
+        :param resources: A dictionary of the registered resource keys.
+        :param project_id: The ID of the project to return quotas for.
+        :return dict: mapping resource name in dict to its corresponding limit
+                      used and reserved. Reserved currently returns default
+                      value of 0
+        """
+
+    @staticmethod
+    @abc.abstractmethod
+    def delete_tenant_quota(context, project_id):
+        """Delete the quota entries for a given project_id.
+
+        After deletion, this tenant will use default quota values in conf.
+        Raise a "not found" error if the quota for the given tenant was
+        never defined.
+
+        :param context: The request context, for access checks.
+        :param project_id: The ID of the project to return quotas for.
+        """
+
+    @staticmethod
+    @abc.abstractmethod
+    def get_all_quotas(context, resources):
+        """Given a list of resources, retrieve the quotas for the all tenants.
+
+        :param context: The request context, for access checks.
+        :param resources: A dictionary of the registered resource keys.
+        :return: quotas list of dict of project_id:, resourcekey1:
+                 resourcekey2: ...
+        """
+
+    @staticmethod
+    @abc.abstractmethod
+    def update_quota_limit(context, project_id, resource, limit):
+        """Update the quota limit for a resource in a project
+
+        :param context: The request context, for access checks.
+        :param project_id: The ID of the project to update the quota.
+        :param resource: the resource to update the quota.
+        :param limit: new resource quota limit.
+        """
+
+    @staticmethod
+    @abc.abstractmethod
+    def make_reservation(context, project_id, resources, deltas, plugin):
+        """Make multiple resource reservations for a given project
+
+        :param context: The request context, for access checks.
+        :param resources: A dictionary of the registered resource keys.
+        :param project_id: The ID of the project to make the reservations for.
+        :return: ``ReservationInfo`` object.
+        """
+
+    @staticmethod
+    @abc.abstractmethod
+    def commit_reservation(context, reservation_id):
+        """Commit a reservation register
+
+        :param context: The request context, for access checks.
+        :param reservation_id: ID of the reservation register to commit.
+        """
+
+    @staticmethod
+    @abc.abstractmethod
+    def cancel_reservation(context, reservation_id):
+        """Cancel a reservation register
+
+        :param context: The request context, for access checks.
+        :param reservation_id: ID of the reservation register to cancel.
+        """
+
+    @staticmethod
+    @abc.abstractmethod
+    def limit_check(context, project_id, resources, values):
+        """Check simple quota limits.
+
+        For limits--those quotas for which there is no usage
+        synchronization function--this method checks that a set of
+        proposed values are permitted by the limit restriction.
+
+        If any of the proposed values is over the defined quota, an
+        OverQuota exception will be raised with the sorted list of the
+        resources which are too high.  Otherwise, the method returns
+        nothing.
+
+        :param context: The request context, for access checks.
+        :param project_id: The ID of the project to make the reservations for.
+        :param resources: A dictionary of the registered resource.
+        :param values: A dictionary of the values to check against the
+                       quota.
+        """
+
+
+class NullQuotaDriver(QuotaDriverAPI):
+
+    @staticmethod
+    def get_default_quotas(context, resources, project_id):
+        pass
+
+    @staticmethod
+    def get_tenant_quotas(context, resources, project_id):
+        pass
+
+    @staticmethod
+    def get_detailed_tenant_quotas(context, resources, project_id):
+        pass
+
+    @staticmethod
+    def delete_tenant_quota(context, project_id):
+        pass
+
+    @staticmethod
+    def get_all_quotas(context, resources):
+        pass
+
+    @staticmethod
+    def update_quota_limit(context, project_id, resource, limit):
+        pass
+
+    @staticmethod
+    def make_reservation(context, project_id, resources, deltas, plugin):
+        pass
+
+    @staticmethod
+    def commit_reservation(context, reservation_id):
+        pass
+
+    @staticmethod
+    def cancel_reservation(context, reservation_id):
+        pass
+
+    @staticmethod
+    def limit_check(context, project_id, resources, values):
+        pass

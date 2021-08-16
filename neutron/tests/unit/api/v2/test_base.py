@@ -42,7 +42,6 @@ from neutron.api.v2 import base as v2_base
 from neutron.api.v2 import router
 from neutron import policy
 from neutron import quota
-from neutron.quota import resource_registry
 from neutron.tests import base
 from neutron.tests import tools
 from neutron.tests.unit import dummy_plugin
@@ -50,6 +49,7 @@ from neutron.tests.unit import testlib_api
 
 
 EXTDIR = os.path.join(base.ROOTDIR, 'unit/extensions')
+NULL_QUOTA_DRIVER = 'neutron.db.quota.api.NullQuotaDriver'
 
 _uuid = uuidutils.generate_uuid
 
@@ -98,7 +98,7 @@ class APIv2TestBase(base.BaseTestCase):
         self.api = webtest.TestApp(api)
 
         quota.QUOTAS._driver = None
-        cfg.CONF.set_override('quota_driver', 'neutron.quota.ConfDriver',
+        cfg.CONF.set_override('quota_driver', quota.QUOTA_DB_DRIVER,
                               group='QUOTAS')
 
         # APIRouter initialization resets policy module, re-initializing it
@@ -1302,6 +1302,9 @@ class NotificationTest(APIv2TestBase):
     def setUp(self):
         super(NotificationTest, self).setUp()
         fake_notifier.reset()
+        quota.QUOTAS._driver = None
+        cfg.CONF.set_override('quota_driver', NULL_QUOTA_DRIVER,
+                              group='QUOTAS')
 
     def _resource_op_notifier(self, opname, resource, expected_errors=False):
         initial_input = {resource: {'name': 'myname'}}
@@ -1354,9 +1357,10 @@ class NotificationTest(APIv2TestBase):
 class RegistryNotificationTest(APIv2TestBase):
 
     def setUp(self):
-        # This test does not have database support so tracking cannot be used
-        cfg.CONF.set_override('track_quota_usage', False, group='QUOTAS')
         super(RegistryNotificationTest, self).setUp()
+        quota.QUOTAS._driver = None
+        cfg.CONF.set_override('quota_driver', NULL_QUOTA_DRIVER,
+                              group='QUOTAS')
 
     def _test_registry_notify(self, opname, resource, initial_input=None):
         instance = self.plugin.return_value
@@ -1400,69 +1404,28 @@ class RegistryNotificationTest(APIv2TestBase):
 
 
 class QuotaTest(APIv2TestBase):
+    """This class checks the quota enforcement API, regardless of the driver"""
 
-    def setUp(self):
-        # This test does not have database support so tracking cannot be used
-        cfg.CONF.set_override('track_quota_usage', False, group='QUOTAS')
-        super(QuotaTest, self).setUp()
-        # Use mock to let the API use a different QuotaEngine instance for
-        # unit test in this class. This will ensure resource are registered
-        # again and instantiated with neutron.quota.resource.CountableResource
-        replacement_registry = resource_registry.ResourceRegistry()
-        registry_patcher = mock.patch('neutron.quota.resource_registry.'
-                                      'ResourceRegistry.get_instance')
-        mock_registry = registry_patcher.start().return_value
-        mock_registry.get_resource = replacement_registry.get_resource
-        mock_registry.resources = replacement_registry.resources
-        # Register a resource
-        replacement_registry.register_resource_by_name('network')
-
-    def test_create_network_quota(self):
-        cfg.CONF.set_override('quota_network', 1, group='QUOTAS')
+    def test_create_network_quota_exceeded(self):
         initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid()}}
-        full_input = {'network': {'admin_state_up': True, 'subnets': []}}
-        full_input['network'].update(initial_input['network'])
-
-        instance = self.plugin.return_value
-        instance.get_networks_count.return_value = 1
-        res = self.api.post_json(
-            _get_path('networks'), initial_input, expect_errors=True)
-        instance.get_networks_count.assert_called_with(mock.ANY,
-                                                       filters=mock.ANY)
-        self.assertIn("Quota exceeded for resources",
-                      res.json['NeutronError']['message'])
-
-    def test_create_network_quota_no_counts(self):
-        cfg.CONF.set_override('quota_network', 1, group='QUOTAS')
-        initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid()}}
-        full_input = {'network': {'admin_state_up': True, 'subnets': []}}
-        full_input['network'].update(initial_input['network'])
-
-        instance = self.plugin.return_value
-        instance.get_networks_count.side_effect = (
-            NotImplementedError())
-        instance.get_networks.return_value = ["foo"]
-        res = self.api.post_json(
-            _get_path('networks'), initial_input, expect_errors=True)
-        instance.get_networks_count.assert_called_with(mock.ANY,
-                                                       filters=mock.ANY)
+        with mock.patch.object(quota.QUOTAS, 'make_reservation',
+                               side_effect=n_exc.OverQuota(overs='network')):
+            res = self.api.post_json(
+                _get_path('networks'), initial_input, expect_errors=True)
         self.assertIn("Quota exceeded for resources",
                       res.json['NeutronError']['message'])
 
     def test_create_network_quota_without_limit(self):
-        cfg.CONF.set_override('quota_network', -1, group='QUOTAS')
         initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid()}}
-        instance = self.plugin.return_value
-        instance.get_networks_count.return_value = 3
-        res = self.api.post_json(
-            _get_path('networks'), initial_input)
+        with mock.patch.object(quota.QUOTAS, 'make_reservation'), \
+                mock.patch.object(quota.QUOTAS, 'commit_reservation'):
+            res = self.api.post_json(
+                _get_path('networks'), initial_input)
         self.assertEqual(exc.HTTPCreated.code, res.status_int)
 
 
 class ExtensionTestCase(base.BaseTestCase):
     def setUp(self):
-        # This test does not have database support so tracking cannot be used
-        cfg.CONF.set_override('track_quota_usage', False, group='QUOTAS')
         super(ExtensionTestCase, self).setUp()
         plugin = 'neutron.neutron_plugin_base_v2.NeutronPluginBaseV2'
         # Ensure existing ExtensionManager is not used
@@ -1487,7 +1450,7 @@ class ExtensionTestCase(base.BaseTestCase):
         self.api = webtest.TestApp(api)
 
         quota.QUOTAS._driver = None
-        cfg.CONF.set_override('quota_driver', 'neutron.quota.ConfDriver',
+        cfg.CONF.set_override('quota_driver', NULL_QUOTA_DRIVER,
                               group='QUOTAS')
 
     def test_extended_create(self):

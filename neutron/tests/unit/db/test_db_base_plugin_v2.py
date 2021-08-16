@@ -63,6 +63,8 @@ from neutron.ipam import exceptions as ipam_exc
 from neutron.objects import network as network_obj
 from neutron.objects import router as l3_obj
 from neutron import policy
+from neutron import quota
+from neutron.quota import resource_registry
 from neutron.tests import base
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit import testlib_api
@@ -104,17 +106,26 @@ def _get_create_db_method(resource):
         return 'create_%s' % resource
 
 
+def _set_temporary_quota(resource, default_value):
+    quota_name = uuidutils.generate_uuid(dashed=False)
+    opt = cfg.IntOpt(quota_name, default=default_value)
+    cfg.CONF.register_opt(opt, group='QUOTAS')
+    resources = resource_registry.ResourceRegistry.get_instance().resources
+    resources[resource].flag = quota_name
+
+
 class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     fmt = 'json'
     resource_prefix_map = {}
     block_dhcp_notifier = True
+    quota_db_driver = quota_conf.QUOTA_DB_DRIVER
 
     def setUp(self, plugin=None, service_plugins=None,
               ext_mgr=None):
+        quota.QUOTAS._driver = None
         quota_conf.register_quota_opts(quota_conf.core_quota_opts, cfg.CONF)
-        cfg.CONF.set_override(
-            'quota_driver', 'neutron.db.quota.driver.DbQuotaDriver',
-            group=quota_conf.QUOTAS_CFG_GROUP)
+        cfg.CONF.set_override('quota_driver', self.quota_db_driver,
+                              group=quota_conf.QUOTAS_CFG_GROUP)
         super(NeutronDbPluginV2TestCase, self).setUp()
         cfg.CONF.set_override('notify_nova_on_port_status_changes', False)
         cfg.CONF.set_override('allow_overlapping_ips', True)
@@ -146,6 +157,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         cfg.CONF.set_override('base_mac', "12:34:56:78:00:00")
         cfg.CONF.set_override('max_dns_nameservers', 2)
         cfg.CONF.set_override('max_subnet_host_routes', 2)
+        resource_registry.ResourceRegistry._instance = None
         self.api = router.APIRouter()
         # Set the default status
         self.net_create_status = 'ACTIVE'
@@ -1694,8 +1706,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                  res['port']['fixed_ips'])
 
     def test_create_ports_native_quotas(self):
-        quota = 1
-        cfg.CONF.set_override('quota_port', quota, group='QUOTAS')
+        self._tenant_id = uuidutils.generate_uuid()
+        _set_temporary_quota('port', 1)
         with self.network() as network:
             res = self._create_port(self.fmt, network['network']['id'])
             self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
@@ -1706,7 +1718,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         if self._skip_native_bulk:
             self.skipTest("Plugin does not support native bulk port create")
         quota = 4
-        cfg.CONF.set_override('quota_port', quota, group='QUOTAS')
+        _set_temporary_quota('port', quota)
+        self._tenant_id = uuidutils.generate_uuid()
         with self.network() as network:
             res = self._create_port_bulk(self.fmt, quota + 1,
                                          network['network']['id'],
@@ -2861,7 +2874,8 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
 
     def test_create_networks_native_quotas(self):
         quota = 1
-        cfg.CONF.set_override('quota_network', quota, group='QUOTAS')
+        _set_temporary_quota('network', quota)
+        self._tenant_id = uuidutils.generate_uuid()
         res = self._create_network(fmt=self.fmt, name='net',
                                    admin_state_up=True)
         self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
@@ -2873,7 +2887,8 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
         if self._skip_native_bulk:
             self.skipTest("Plugin does not support native bulk network create")
         quota = 4
-        cfg.CONF.set_override('quota_network', quota, group='QUOTAS')
+        _set_temporary_quota('network', quota)
+        self._tenant_id = uuidutils.generate_uuid()
         res = self._create_network_bulk(self.fmt, quota + 1, 'test', True)
         self._validate_behavior_on_bulk_failure(
             res, 'networks',
@@ -2883,7 +2898,8 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
         if self._skip_native_bulk:
             self.skipTest("Plugin does not support native bulk network create")
         quota = 2
-        cfg.CONF.set_override('quota_network', quota, group='QUOTAS')
+        _set_temporary_quota('network', quota)
+        self._tenant_id = uuidutils.generate_uuid()
         networks = [{'network': {'name': 'n1',
                                  'tenant_id': self._tenant_id}},
                     {'network': {'name': 'n2',
@@ -2900,7 +2916,8 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
         if self._skip_native_bulk:
             self.skipTest("Plugin does not support native bulk network create")
         quota = 2
-        cfg.CONF.set_override('quota_network', quota, group='QUOTAS')
+        _set_temporary_quota('network', quota)
+        self._tenant_id = uuidutils.generate_uuid()
         networks = [{'network': {'name': 'n1',
                                  'tenant_id': self._tenant_id}},
                     {'network': {'name': 'n2',
@@ -5120,7 +5137,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
     def test_create_subnets_native_quotas(self):
         quota = 1
-        cfg.CONF.set_override('quota_subnet', quota, group='QUOTAS')
+        _set_temporary_quota('subnet', quota)
+        self._tenant_id = uuidutils.generate_uuid()
         with self.network() as network:
             res = self._create_subnet(
                 self.fmt, network['network']['id'], '10.0.0.0/24',
@@ -5135,7 +5153,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         if self._skip_native_bulk:
             self.skipTest("Plugin does not support native bulk subnet create")
         quota = 4
-        cfg.CONF.set_override('quota_subnet', quota, group='QUOTAS')
+        _set_temporary_quota('subnet', quota)
+        self._tenant_id = uuidutils.generate_uuid()
         with self.network() as network:
             res = self._create_subnet_bulk(self.fmt, quota + 1,
                                            network['network']['id'],

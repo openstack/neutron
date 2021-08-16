@@ -1032,7 +1032,8 @@ class ExtensionExtendedAttributeTestCase(base.BaseTestCase):
         self.agentscheduler_dbMinxin = directory.get_plugin()
 
         quota.QUOTAS._driver = None
-        cfg.CONF.set_override('quota_driver', 'neutron.quota.ConfDriver',
+        cfg.CONF.set_override('quota_driver',
+                              'neutron.db.quota.api.NullQuotaDriver',
                               group='QUOTAS')
 
     def _do_request(self, method, path, data=None, params=None, action=None):

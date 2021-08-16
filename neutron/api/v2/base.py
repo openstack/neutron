@@ -489,7 +489,8 @@ class Controller(object):
                     tenant,
                     {self._resource: delta},
                     self._plugin)
-                reservations.append(reservation)
+                if reservation:
+                    reservations.append(reservation)
         except exceptions.QuotaResourceUnknown as e:
             # We don't want to quota this resource
             LOG.debug(e)

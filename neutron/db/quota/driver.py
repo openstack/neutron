@@ -27,7 +27,7 @@ from neutron.quota import resource as res
 LOG = log.getLogger(__name__)
 
 
-class DbQuotaDriver(object):
+class DbQuotaDriver(quota_api.QuotaDriverAPI):
     """Driver to perform necessary checks to enforce quotas and obtain quota
     information.
 
