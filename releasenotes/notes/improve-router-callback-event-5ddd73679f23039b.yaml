@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Add ``request_body`` field to router callback event payloads. The field
+    record the origin request body from user.
+  - |
+    Add ``BEFORE_UPDATE`` callback event for router gateway.

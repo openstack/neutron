@@ -16,6 +16,7 @@ from unittest import mock
 
 from neutron_lib.api.definitions import dvr as dvr_apidef
 from neutron_lib.api.definitions import external_net as extnet_apidef
+from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import l3_ext_ha_mode
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import portbindings
@@ -1093,8 +1094,11 @@ class L3HAModeDbTestCase(L3HATestFramework):
         interface_info = {'subnet_id': subnet['id']}
 
         router = self._create_router()
+        gw_info = {'network_id': ext_net}
+        request_body = {
+            l3_apidef.EXTERNAL_GW_INFO: gw_info}
         self.plugin._update_router_gw_info(self.admin_ctx, router['id'],
-                                           {'network_id': ext_net})
+                                           gw_info, request_body)
         self.plugin.add_router_interface(self.admin_ctx,
                                          router['id'],
                                          interface_info)
@@ -1119,8 +1123,11 @@ class L3HAModeDbTestCase(L3HATestFramework):
         interface_info = {'subnet_id': subnet['id']}
 
         router = self._create_router()
+        gw_info = {'network_id': ext_net}
+        request_body = {
+            l3_apidef.EXTERNAL_GW_INFO: gw_info}
         self.plugin._update_router_gw_info(self.admin_ctx, router['id'],
-                                           {'network_id': ext_net})
+                                           gw_info, request_body)
         iface = self.plugin.add_router_interface(self.admin_ctx,
                                                  router['id'],
                                                  interface_info)
@@ -1177,8 +1184,11 @@ class L3HAModeDbTestCase(L3HATestFramework):
                                      int_net)
         interface_info = {'subnet_id': subnet['id']}
         router = self._create_router(ha=True, distributed=True)
+        gw_info = {'network_id': ext_net}
+        request_body = {
+            l3_apidef.EXTERNAL_GW_INFO: gw_info}
         self.plugin._update_router_gw_info(self.admin_ctx, router['id'],
-                                           {'network_id': ext_net})
+                                           gw_info, request_body)
         self.plugin.add_router_interface(self.admin_ctx,
                                          router['id'],
                                          interface_info)
@@ -1310,8 +1320,11 @@ class L3HAModeDbTestCase(L3HATestFramework):
         interface_info = {'subnet_id': subnet['id']}
 
         router = self._create_router()
+        gw_info = {'network_id': ext_net}
+        request_body = {
+            l3_apidef.EXTERNAL_GW_INFO: gw_info}
         self.plugin._update_router_gw_info(self.admin_ctx, router['id'],
-                                           {'network_id': ext_net})
+                                           gw_info, request_body)
         self.plugin.add_router_interface(self.admin_ctx,
                                          router['id'],
                                          interface_info)

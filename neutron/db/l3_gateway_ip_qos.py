@@ -60,11 +60,12 @@ class L3_gw_ip_qos_dbonly_mixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
         policy = policy_object.QosPolicy.get_policy_obj(context, policy_id)
         policy.detach_router(router_id)
 
-    def _update_router_gw_info(self, context, router_id, info, router=None):
+    def _update_router_gw_info(self, context, router_id, info,
+                               request_body, router=None):
         # Calls superclass, pass router db object for avoiding re-loading
         router = super(L3_gw_ip_qos_dbonly_mixin,
                        self)._update_router_gw_info(
-            context, router_id, info, router)
+            context, router_id, info, request_body, router)
 
         with db_api.CONTEXT_WRITER.using(context):
             if self._is_gw_ip_qos_supported and router.gw_port:
