@@ -2717,7 +2717,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             with self.floatingip_no_assoc(private_sub) as fip:
                 port_id = p['port']['id']
                 ip_address = p['port']['fixed_ips'][0]['ip_address']
-                with mock.patch.object(registry, 'notify') as notify:
+                with mock.patch.object(registry, 'publish') as publish:
                     body = self._update('floatingips',
                                         fip['floatingip']['id'],
                                         {'floatingip': {'port_id': port_id}})
@@ -2726,18 +2726,25 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                     fip_id = fip['floatingip']['id']
                     router_id = body['floatingip']['router_id']
                     body = self._show('routers', router_id)
-                    notify.assert_any_call(resources.FLOATING_IP,
-                                           events.AFTER_UPDATE,
-                                           mock.ANY,
-                                           context=mock.ANY,
-                                           fixed_ip_address=ip_address,
-                                           fixed_port_id=port_id,
-                                           floating_ip_address=fip_addr,
-                                           floating_network_id=fip_network_id,
-                                           last_known_router_id=None,
-                                           floating_ip_id=fip_id,
-                                           router_id=router_id,
-                                           association_event=True)
+                    publish.assert_any_call(
+                        resources.FLOATING_IP, events.AFTER_UPDATE, mock.ANY,
+                        payload=mock.ANY)
+                    for _, call_args, call_kwargs in publish.mock_calls:
+                        resource, event, trigger = call_args
+                        if event == events.AFTER_UPDATE:
+                            break
+                    payload = call_kwargs['payload']
+                    fip_dict = dict(
+                        fixed_ip_address=ip_address,
+                        fixed_port_id=port_id,
+                        floating_ip_address=fip_addr,
+                        floating_network_id=fip_network_id,
+                        last_known_router_id=None,
+                        floating_ip_id=fip_id,
+                        router_id=router_id,
+                        association_event=True)
+                    self.assertDictEqual(fip_dict, payload.latest_state)
+                    self.assertTrue(payload.metadata['association_event'])
 
     def test_floatingip_disassociate_notification(self):
         with self.port() as p:
@@ -2748,7 +2755,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                 body = self._update('floatingips',
                                     fip['floatingip']['id'],
                                     {'floatingip': {'port_id': port_id}})
-                with mock.patch.object(registry, 'notify') as notify:
+                with mock.patch.object(registry, 'publish') as publish:
                     fip_addr = fip['floatingip']['floating_ip_address']
                     fip_network_id = fip['floatingip']['floating_network_id']
                     fip_id = fip['floatingip']['id']
@@ -2756,18 +2763,60 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                     self._update('floatingips',
                                  fip['floatingip']['id'],
                                  {'floatingip': {'port_id': None}})
-                    notify.assert_any_call(resources.FLOATING_IP,
-                                           events.AFTER_UPDATE,
-                                           mock.ANY,
-                                           context=mock.ANY,
-                                           fixed_ip_address=None,
-                                           fixed_port_id=None,
-                                           floating_ip_address=fip_addr,
-                                           floating_network_id=fip_network_id,
-                                           last_known_router_id=router_id,
-                                           floating_ip_id=fip_id,
-                                           router_id=None,
-                                           association_event=False)
+                    publish.assert_any_call(
+                        resources.FLOATING_IP, events.AFTER_UPDATE, mock.ANY,
+                        payload=mock.ANY)
+                    for _, call_args, call_kwargs in publish.mock_calls:
+                        resource, event, trigger = call_args
+                        if event == events.AFTER_UPDATE:
+                            break
+                    payload = call_kwargs['payload']
+                    fip_dict = dict(
+                        fixed_ip_address=None,
+                        fixed_port_id=None,
+                        floating_ip_address=fip_addr,
+                        floating_network_id=fip_network_id,
+                        last_known_router_id=router_id,
+                        floating_ip_id=fip_id,
+                        router_id=None,
+                        association_event=False)
+                    self.assertDictEqual(fip_dict, payload.latest_state)
+                    self.assertFalse(payload.metadata['association_event'])
+
+    def test_floatingip_disassociate_notification_port_delete(self):
+        with self.port() as p:
+            private_sub = {'subnet': {'id':
+                                      p['port']['fixed_ips'][0]['subnet_id']}}
+            with self.floatingip_no_assoc(private_sub) as fip:
+                port_id = p['port']['id']
+                body = self._update('floatingips',
+                                    fip['floatingip']['id'],
+                                    {'floatingip': {'port_id': port_id}})
+                with mock.patch.object(registry, 'publish') as publish:
+                    fip_id = fip['floatingip']['id']
+                    fip_address = fip['floatingip']['floating_ip_address']
+                    f_network_id = fip['floatingip']['floating_network_id']
+                    router_id = body['floatingip']['router_id']
+                    self._delete('ports', p['port']['id'])
+                    publish.assert_any_call(
+                        resources.FLOATING_IP, events.AFTER_UPDATE, mock.ANY,
+                        payload=mock.ANY)
+                    for _, call_args, call_kwargs in publish.mock_calls:
+                        resource, event, trigger = call_args
+                        if event == events.AFTER_UPDATE:
+                            break
+                    payload = call_kwargs['payload']
+                    fip_dict = dict(
+                        fixed_ip_address=None,
+                        fixed_port_id=None,
+                        router_id=None,
+                        floating_ip_address=fip_address,
+                        floating_network_id=f_network_id,
+                        floating_ip_id=fip_id,
+                        router_ids={router_id, },
+                        association_event=False)
+                    self.assertDictEqual(fip_dict, payload.latest_state)
+                    self.assertFalse(payload.metadata['association_event'])
 
     def test_floatingip_association_on_unowned_router(self):
         # create a router owned by one tenant and associate the FIP with a
@@ -4028,7 +4077,14 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
                 self._delete('floatingips', f['floatingip']['id'])
                 fake_method.assert_called_once_with(
                     resources.FLOATING_IP, events.AFTER_DELETE, mock.ANY,
-                    context=mock.ANY, description=mock.ANY,
+                    payload=mock.ANY)
+                for _, call_args, call_kwargs in fake_method.mock_calls:
+                    resource, event, trigger = call_args
+                    if event == events.AFTER_DELETE:
+                        break
+                payload = call_kwargs['payload']
+                fip_dict = dict(
+                    description=mock.ANY,
                     dns_domain=mock.ANY, dns_name=mock.ANY,
                     fixed_ip_address=f['floatingip']['fixed_ip_address'],
                     floating_ip_address=f['floatingip']['floating_ip_address'],
@@ -4040,6 +4096,7 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
                     status=f['floatingip']['status'],
                     tenant_id=f['floatingip']['tenant_id'],
                     standard_attr_id=mock.ANY)
+                self.assertDictEqual(fip_dict, payload.latest_state)
         finally:
             registry.unsubscribe(fake_method, resources.FLOATING_IP,
                                  events.AFTER_DELETE)

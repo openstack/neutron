@@ -447,24 +447,24 @@ class DVRResourceOperationHandler(object):
                 models_v2.Port.admin_state_up == True)  # noqa
         return query.all()
 
-    @registry.receives(resources.FLOATING_IP, [events.AFTER_UPDATE])
-    def _create_dvr_floating_gw_port(self, resource, event, trigger, context,
-                                     router_id, fixed_port_id, floating_ip_id,
-                                     floating_network_id, fixed_ip_address,
-                                     association_event, **kwargs):
+    @registry.receives(resources.FLOATING_IP, [events.AFTER_CREATE,
+                                               events.AFTER_UPDATE])
+    def _create_dvr_floating_gw_port(self, rtype, event, trigger, payload):
         """Create floating agent gw port for DVR.
 
         Floating IP Agent gateway port will be created when a
         floatingIP association happens.
         """
-        if association_event and router_id:
+        fip = payload.latest_state
+        context = payload.context
+        if payload.metadata['association_event'] and fip['router_id']:
             admin_ctx = context.elevated()
-            router_dict = self.get_router(admin_ctx, router_id)
+            router_dict = self.get_router(admin_ctx, fip['router_id'])
             # Check if distributed router and then create the
             # FloatingIP agent gateway port
             if router_dict.get('distributed'):
-                hostid = self._get_dvr_service_port_hostid(context,
-                                                           fixed_port_id)
+                hostid = self._get_dvr_service_port_hostid(
+                    context, fip['fixed_port_id'])
                 if hostid:
                     # FIXME (Swami): This FIP Agent Gateway port should be
                     # created only once and there should not be a duplicate
@@ -473,7 +473,7 @@ class DVRResourceOperationHandler(object):
                     # existing flow.
                     fip_agent_port = (
                         self.create_fip_agent_gw_port_if_not_exists(
-                            admin_ctx, floating_network_id, hostid))
+                            admin_ctx, fip['floating_network_id'], hostid))
                     LOG.debug("FIP Agent gateway port: %s", fip_agent_port)
                 else:
                     # If not hostid check if the fixed ip provided has to
@@ -481,7 +481,7 @@ class DVRResourceOperationHandler(object):
                     # port. Get the port_dict, inherit the service port host
                     # and device owner(if it does not exist).
                     port = self._core_plugin.get_port(
-                        admin_ctx, fixed_port_id)
+                        admin_ctx, fip['fixed_port_id'])
                     allowed_device_owners = (
                         n_utils.get_dvr_allowed_address_pair_device_owners())
                     # NOTE: We just need to deal with ports that do not
@@ -493,7 +493,7 @@ class DVRResourceOperationHandler(object):
                         addr_pair_active_service_port_list = (
                             self._get_ports_for_allowed_address_pair_ip(
                                 admin_ctx, port['network_id'],
-                                fixed_ip_address))
+                                fip['fixed_ip_address']))
                         if not addr_pair_active_service_port_list:
                             return
                         self._inherit_service_port_and_arp_update(
