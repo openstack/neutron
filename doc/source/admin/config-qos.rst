@@ -84,12 +84,20 @@ traffic directions (from the VM point of view).
 
 .. table:: **Neutron backends, supported directions and enforcement types for Minimum Packet Rate rule**
 
-    ============================  ====================  ====================  ==============  =====
-     Enforcement type \ Backend    Open vSwitch          SR-IOV                Linux Bridge    OVN
-    ============================  ====================  ====================  ==============  =====
-     Dataplane                     -                     -                    -               -
-     Placement                     -                     -                    -               -
-    ============================  ====================  ====================  ==============  =====
+    ============================  ==========================  ====================  ==============  =====
+     Enforcement type \ Backend    Open vSwitch                SR-IOV                Linux Bridge    OVN
+    ============================  ==========================  ====================  ==============  =====
+     Dataplane                     -                           -                     -               -
+     Placement                     Any(1)/Egress/Ingress (2)   -                     -               -
+    ============================  ==========================  ====================  ==============  =====
+
+.. note::
+
+    (1) Minimum packet rate rule supports ``any`` direction that can be used
+        with non-hardware-offloaded OVS deployments, where packets processed
+        from both ingress and egress directions are handled by the same set of
+        CPU cores.
+    (2) Since Yoga.
 
 For an ml2 plug-in, the list of supported QoS rule types and parameters is
 defined as a common subset of rules supported by all active mechanism drivers.

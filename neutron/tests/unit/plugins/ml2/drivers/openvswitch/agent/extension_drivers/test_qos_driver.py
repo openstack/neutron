@@ -260,3 +260,35 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
             self.qos_driver.update_minimum_bandwidth(port, rule)
             mock_delete_minimum_bandwidth_queue.assert_called_once_with(
                 'port_id', ['port1', 'port2'], 'ofport', 1500)
+
+    # TODO(przszc): Update tests when dataplane enforcement is implemented for
+    # minimum packet rate rule
+    def test_create_minimum_packet_rate(self):
+        try:
+            port = {'port_id': 'p_id'}
+            rule = mock.MagicMock(id='rule_id')
+            self.qos_driver.create_minimum_packet_rate(port, rule)
+        except Exception:
+            self.fail('create_minimum_packet_rate failed')
+
+    def test_update_minimum_packet_rate(self):
+        try:
+            port = {'port_id': 'p_id'}
+            rule = mock.MagicMock(id='rule_id')
+            self.qos_driver.update_minimum_packet_rate(port, rule)
+        except Exception:
+            self.fail('update_minimum_packet_rate failed')
+
+    def test_delete_minimum_packet_rate(self):
+        try:
+            port = {'port_id': 'p_id'}
+            self.qos_driver.delete_minimum_packet_rate(port)
+        except Exception:
+            self.fail('delete_minimum_packet_rate failed')
+
+    def test_delete_minimum_packet_rate_ingress(self):
+        try:
+            port = {'port_id': 'p_id'}
+            self.qos_driver.delete_minimum_packet_rate_ingress(port)
+        except Exception:
+            self.fail('delete_minimum_packet_rate_ingress failed')

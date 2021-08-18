@@ -21,6 +21,7 @@ from neutron_lib.services.qos import constants as qos_consts
 from oslo_log import log as logging
 
 from neutron.objects import network as network_object
+from neutron.services.qos import constants as neutron_qos_consts
 
 
 LOG = logging.getLogger(__name__)
@@ -43,7 +44,13 @@ SUPPORTED_RULES = {
         qos_consts.MIN_KBPS: {
             'type:range': [0, db_consts.DB_INTEGER_MAX_VALUE]},
         qos_consts.DIRECTION: {'type:values': constants.VALID_DIRECTIONS}
-    }
+    },
+    neutron_qos_consts.RULE_TYPE_MINIMUM_PACKET_RATE: {
+        qos_consts.MIN_KPPS: {
+            'type:range': [0, db_consts.DB_INTEGER_MAX_VALUE]},
+        qos_consts.DIRECTION: {
+            'type:values': constants.VALID_DIRECTIONS_AND_ANY},
+    },
 }
 
 

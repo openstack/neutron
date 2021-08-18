@@ -214,3 +214,22 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
             return
         LOG.debug("Minimum bandwidth rule for ingress direction was deleted "
                   "for port %s", port['port_id'])
+
+    # NOTE(przszc): Even though dataplane enforcement is not yet implemented
+    # for minimum packet rate rule, we need dummy methods to support placement
+    # enforcement.
+    def create_minimum_packet_rate(self, port, rule):
+        LOG.debug("Minimum packet rate rule was created for port %s and "
+                  "rule %s.", port['port_id'], rule.id)
+
+    def update_minimum_packet_rate(self, port, rule):
+        LOG.debug("Minimum packet rate rule was updated for port %s and "
+                  "rule %s.", port['port_id'], rule.id)
+
+    def delete_minimum_packet_rate(self, port):
+        LOG.debug("Minimum packet rate rule was deleted for port %s",
+                  port['port_id'])
+
+    def delete_minimum_packet_rate_ingress(self, port):
+        LOG.debug("Minimum packet rate rule for ingress direction was deleted "
+                  "for port %s", port['port_id'])
