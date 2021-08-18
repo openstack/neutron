@@ -418,6 +418,34 @@ class L3HATestCase(framework.L3AgentTestFramework):
             updated_mtu,
             ip_lib.IPDevice(gw_interface_name, router.ns_name).link.mtu)
 
+    def test_ha_router_update_ecmp_routes(self):
+        dest_cidr = '8.8.8.0/24'
+        nexthop1 = '19.4.4.4'
+        nexthop2 = '19.4.4.5'
+        router_info = self.generate_router_info(enable_ha=True)
+
+        router = self.manage_router(self.agent, router_info)
+
+        router.router['routes'] = [
+            {'destination': dest_cidr, 'nexthop': nexthop1},
+            {'destination': dest_cidr, 'nexthop': nexthop2}]
+        self.agent._process_updated_router(router.router)
+
+        config = router.keepalived_manager.config.get_config_str()
+        self.assertIn(dest_cidr, config)
+        self.assertIn(nexthop1, config)
+        self.assertIn(nexthop2, config)
+
+        # Delete one route
+        router.router['routes'] = [
+            {'destination': dest_cidr, 'nexthop': nexthop1}]
+        self.agent._process_updated_router(router.router)
+
+        config = router.keepalived_manager.config.get_config_str()
+        self.assertIn(dest_cidr, config)
+        self.assertIn(nexthop1, config)
+        self.assertNotIn(nexthop2, config)
+
 
 class L3HATestFailover(framework.L3AgentTestFramework):
 
