@@ -70,7 +70,7 @@ class Reservation(base.NeutronDbObject):
                 self.obj_reset_changes(['resource_deltas'])
 
     @classmethod
-    def delete_expired(cls, context, now, project_id):
+    def delete_expired(cls, context, expiring_time, project_id):
         resv_query = context.session.query(models.Reservation)
         if project_id:
             project_expr = (models.Reservation.project_id == project_id)
@@ -80,7 +80,7 @@ class Reservation(base.NeutronDbObject):
         # object/db/api.py once comparison operations are
         # supported
         resv_query = resv_query.filter(sa.and_(
-            project_expr, models.Reservation.expiration < now))
+            project_expr, models.Reservation.expiration < expiring_time))
         return resv_query.delete()
 
     @classmethod
