@@ -46,7 +46,6 @@ from neutron.extensions import floating_ip_port_forwarding as fip_pf
 from neutron.objects import base as base_obj
 from neutron.objects import port_forwarding as pf
 from neutron.objects import router as l3_obj
-from neutron.services.portforwarding import callbacks
 from neutron.services.portforwarding.common import exceptions as pf_exc
 from neutron.services.portforwarding import constants as pf_consts
 
@@ -264,11 +263,12 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
         if self._rpc_notifications_required:
             self.push_api.push(context, remove_port_forwarding_list,
                                rpc_events.DELETED)
-        registry_notify_payload = [
-            callbacks.PortForwardingPayload(context, original_pf=pf_obj) for
-            pf_obj in remove_port_forwarding_list]
-        registry.notify(pf_consts.PORT_FORWARDING, events.AFTER_DELETE, self,
-                        payload=registry_notify_payload)
+        for pf_obj in remove_port_forwarding_list:
+            payload = events.DBEventPayload(context, states=(pf_obj,))
+            registry.publish(pf_consts.PORT_FORWARDING,
+                             events.AFTER_DELETE,
+                             self,
+                             payload=payload)
 
     def _get_internal_ip_subnet(self, request_ip, fixed_ips):
         request_ip = netaddr.IPNetwork(request_ip)
@@ -390,10 +390,10 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                 raise lib_exc.BadRequest(resource=apidef.RESOURCE_NAME,
                                          msg=message)
 
-        registry.notify(pf_consts.PORT_FORWARDING, events.AFTER_CREATE,
-                        self,
-                        payload=[callbacks.PortForwardingPayload(context,
-                            current_pf=pf_obj)])
+        registry.publish(pf_consts.PORT_FORWARDING, events.AFTER_CREATE,
+                         self,
+                         payload=events.DBEventPayload(context,
+                                                       states=(pf_obj,)))
 
         if self._rpc_notifications_required:
             self.push_api.push(context, [pf_obj], rpc_events.CREATED)
@@ -450,9 +450,11 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                                      msg=message)
         if self._rpc_notifications_required:
             self.push_api.push(context, [pf_obj], rpc_events.UPDATED)
-        registry.notify(pf_consts.PORT_FORWARDING, events.AFTER_UPDATE, self,
-                        payload=[callbacks.PortForwardingPayload(context,
-                            current_pf=pf_obj, original_pf=original_pf_obj)])
+        registry.publish(pf_consts.PORT_FORWARDING, events.AFTER_UPDATE,
+                         self,
+                         payload=events.DBEventPayload(
+                             context,
+                             states=(original_pf_obj, pf_obj)))
         return pf_obj
 
     def _check_router_match(self, context, fip_obj, router_id, pf_dict):
@@ -594,9 +596,10 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
             pf_obj.delete()
         if self._rpc_notifications_required:
             self.push_api.push(context, [pf_obj], rpc_events.DELETED)
-        registry.notify(pf_consts.PORT_FORWARDING, events.AFTER_DELETE, self,
-                        payload=[callbacks.PortForwardingPayload(
-                            context, original_pf=pf_obj)])
+        registry.publish(pf_consts.PORT_FORWARDING, events.AFTER_DELETE,
+                         self,
+                         payload=events.DBEventPayload(context,
+                                                       states=(pf_obj,)))
 
     def sync_port_forwarding_fip(self, context, routers):
         if not routers:

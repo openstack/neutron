@@ -135,15 +135,8 @@ class OVNPortForwarding(object):
 
     def _get_fip_objs(self, context, payload):
         floatingip_ids = set()
-        # Note on floatingip_id from payload: depending on the event that
-        # generated the payload provided, expect pf_payload.current_pf (in
-        # DELETE events) or pf_payload.original_pf (CREATE events) to be None.
-        # To be agnostic of what event this is, simply build a set from both.
-        for pf_payload in payload:
-            if pf_payload.current_pf:
-                floatingip_ids.add(pf_payload.current_pf.floatingip_id)
-            if pf_payload.original_pf:
-                floatingip_ids.add(pf_payload.original_pf.floatingip_id)
+        for fip in payload.states:
+            floatingip_ids.add(fip.floatingip_id)
         return {fip_id: self._l3_plugin.get_floatingip(context, fip_id)
                 for fip_id in floatingip_ids}
 
@@ -176,30 +169,28 @@ class OVNPortForwarding(object):
     def _handle_notification(self, _resource, event_type, _pf_plugin, payload):
         if not payload:
             return
-        context = payload[0].context
+        context = payload.context
         ovn_nb = self._l3_plugin._ovn
         with ovn_nb.transaction(check_error=True) as ovn_txn:
             if event_type == events.AFTER_CREATE:
-                for pf_payload in payload:
-                    self._handler.port_forwarding_created(ovn_txn, ovn_nb,
-                        pf_payload.current_pf)
-                    self._l3_plugin.update_floatingip_status(
-                        context, pf_payload.current_pf.floatingip_id,
+                self._handler.port_forwarding_created(ovn_txn, ovn_nb,
+                                                      payload.latest_state)
+                self._l3_plugin.update_floatingip_status(
+                        context, payload.latest_state.floatingip_id,
                         const.FLOATINGIP_STATUS_ACTIVE)
             elif event_type == events.AFTER_UPDATE:
-                for pf_payload in payload:
-                    self._handler.port_forwarding_updated(ovn_txn, ovn_nb,
-                        pf_payload.current_pf, pf_payload.original_pf)
+                self._handler.port_forwarding_updated(
+                    ovn_txn, ovn_nb,
+                    payload.latest_state, payload.states[0])
             elif event_type == events.AFTER_DELETE:
-                for pf_payload in payload:
-                    pfs = _pf_plugin.get_floatingip_port_forwardings(
-                        context, pf_payload.original_pf.floatingip_id)
-                    self._handler.port_forwarding_deleted(ovn_txn, ovn_nb,
-                        pf_payload.original_pf)
-                    if not pfs:
-                        self._l3_plugin.update_floatingip_status(
-                            context, pf_payload.original_pf.floatingip_id,
-                            const.FLOATINGIP_STATUS_DOWN)
+                pfs = _pf_plugin.get_floatingip_port_forwardings(
+                          context, payload.states[0].floatingip_id)
+                self._handler.port_forwarding_deleted(ovn_txn, ovn_nb,
+                                                      payload.states[0])
+                if not pfs:
+                    self._l3_plugin.update_floatingip_status(
+                        context, payload.states[0].floatingip_id,
+                        const.FLOATINGIP_STATUS_DOWN)
 
             # Collect the revision numbers of all floating ips visited and
             # update the corresponding load balancer entries affected.

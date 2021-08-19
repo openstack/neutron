@@ -108,14 +108,14 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
         get_objects_mock.assert_called_once_with(
             self.ctxt, _pager=mock.ANY, floatingip_id=None)
 
-    @mock.patch.object(registry, 'notify')
+    @mock.patch.object(registry, 'publish')
     @mock.patch.object(resources_rpc.ResourcesPushRpcApi, 'push')
     @mock.patch.object(port_forwarding.PortForwarding, 'get_object')
     @mock.patch.object(port_forwarding.PortForwarding, 'get_objects')
     @mock.patch.object(router.FloatingIP, 'get_object')
     def test_delete_floatingip_port_forwarding(
             self, fip_get_object_mock, pf_get_objects_mock,
-            pf_get_object_mock, push_api_mock, registry_notify_mock):
+            pf_get_object_mock, push_api_mock, mock_registry_publish):
 
         # After delete, not empty resource list
         pf_get_objects_mock.return_value = [mock.Mock(id='pf_id'),
@@ -129,7 +129,7 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
         pf_obj.delete.assert_called()
         push_api_mock.assert_called_once_with(
             self.ctxt, mock.ANY, rpc_events.DELETED)
-        registry_notify_mock.assert_called_once_with(
+        mock_registry_publish.assert_called_once_with(
             pf_consts.PORT_FORWARDING,
             events.AFTER_DELETE, self.pf_plugin, payload=mock.ANY)
 
@@ -137,7 +137,7 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
         pf_get_objects_mock.reset_mock()
         pf_get_object_mock.reset_mock()
         push_api_mock.reset_mock()
-        registry_notify_mock.reset_mock()
+        mock_registry_publish.reset_mock()
         pf_obj = mock.Mock(id='need_to_delete_pf_id', floatingip_id='fip_id')
         fip_obj = mock.Mock(id='fip_id')
         fip_get_object_mock.return_value = fip_obj
@@ -155,7 +155,7 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
         fip_obj.update.assert_called()
         push_api_mock.assert_called_once_with(
             self.ctxt, mock.ANY, rpc_events.DELETED)
-        registry_notify_mock.assert_called_once_with(
+        mock_registry_publish.assert_called_once_with(
             pf_consts.PORT_FORWARDING,
             events.AFTER_DELETE, self.pf_plugin, payload=mock.ANY)
 
@@ -170,11 +170,11 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
 
     @mock.patch.object(port_forwarding.PortForwarding, 'get_objects')
     @mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2, 'get_port')
-    @mock.patch.object(registry, 'notify')
+    @mock.patch.object(registry, 'publish')
     @mock.patch.object(resources_rpc.ResourcesPushRpcApi, 'push')
     @mock.patch.object(port_forwarding.PortForwarding, 'get_object')
     def test_update_floatingip_port_forwarding(
-            self, mock_pf_get_object, mock_rpc_push, mock_registry_notify,
+            self, mock_pf_get_object, mock_rpc_push, mock_registry_publish,
             mock_get_port, mock_pf_get_objects):
         pf_input = {
             'port_forwarding':
@@ -196,7 +196,7 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
         self.assertTrue(pf_obj.update)
         mock_rpc_push.assert_called_once_with(
             self.ctxt, mock.ANY, rpc_events.UPDATED)
-        mock_registry_notify.assert_called_once_with(
+        mock_registry_publish.assert_called_once_with(
             pf_consts.PORT_FORWARDING,
             events.AFTER_UPDATE, self.pf_plugin, payload=mock.ANY)
 
@@ -293,7 +293,7 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
     @mock.patch.object(pf_plugin.PortForwardingPlugin,
                        '_check_port_has_binding_floating_ip')
     @mock.patch.object(obj_base.NeutronDbObject, 'update_objects')
-    @mock.patch.object(registry, 'notify')
+    @mock.patch.object(registry, 'publish')
     @mock.patch.object(resources_rpc.ResourcesPushRpcApi, 'push')
     @mock.patch.object(pf_plugin.PortForwardingPlugin, '_check_router_match')
     @mock.patch.object(pf_plugin.PortForwardingPlugin,
@@ -303,7 +303,7 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
     @mock.patch('neutron.objects.port_forwarding.PortForwarding')
     def test_create_floatingip_port_forwarding(
             self, mock_port_forwarding, mock_fip_get_object, mock_find_router,
-            mock_check_router_match, mock_push_api, mock_registry_notify,
+            mock_check_router_match, mock_push_api, mock_registry_publish,
             mock_update_objects, mock_check_bind_fip):
         # Update fip
         pf_input = {
@@ -326,7 +326,7 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
         self.assertTrue(pf_obj.create.called)
         mock_push_api.assert_called_once_with(
             self.ctxt, mock.ANY, rpc_events.CREATED)
-        mock_registry_notify.assert_called_once_with(
+        mock_registry_publish.assert_called_once_with(
             pf_consts.PORT_FORWARDING,
             events.AFTER_CREATE, self.pf_plugin, payload=mock.ANY)
 
@@ -336,7 +336,7 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
         mock_port_forwarding.reset_mock()
         mock_update_objects.reset_mock()
         mock_push_api.reset_mock()
-        mock_registry_notify.reset_mock()
+        mock_registry_publish.reset_mock()
         mock_port_forwarding.return_value = pf_obj
         fip_obj.router_id = 'router_id'
         fip_obj.fixed_port_id = ''
@@ -348,7 +348,7 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
         self.assertFalse(mock_update_objects.called)
         mock_push_api.assert_called_once_with(
             self.ctxt, mock.ANY, rpc_events.CREATED)
-        mock_registry_notify.assert_called_once_with(
+        mock_registry_publish.assert_called_once_with(
             pf_consts.PORT_FORWARDING,
             events.AFTER_CREATE, self.pf_plugin, payload=mock.ANY)
 

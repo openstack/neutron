@@ -52,19 +52,22 @@ class TestOVNPortForwardingBase(base.BaseTestCase):
 
     def _fake_pf_payload_entry(self, curr_pf_id, orig_pf_id=None, **kwargs):
         mock_pf_payload = mock.Mock()
-        fake_pf_obj = self._fake_pf_obj(**kwargs)
+        states = []
         if 'context' not in kwargs:
             mock_pf_payload.context = self.context
-        if curr_pf_id:
-            mock_pf_payload.current_pf = fake_pf_obj
-            mock_pf_payload.current_pf.floatingip_id = curr_pf_id
-        else:
-            mock_pf_payload.current_pf = None
         if orig_pf_id:
-            mock_pf_payload.original_pf = fake_pf_obj
-            mock_pf_payload.original_pf.floatingip_id = orig_pf_id
+            fake_pf_obj = self._fake_pf_obj(**kwargs)
+            fake_pf_obj.floatingip_id = orig_pf_id
+            states.append(fake_pf_obj)
+        if curr_pf_id:
+            fake_pf_obj = self._fake_pf_obj(**kwargs)
+            mock_pf_payload.latest_state = fake_pf_obj
+            mock_pf_payload.latest_state.floatingip_id = curr_pf_id
+            states.append(fake_pf_obj)
         else:
-            mock_pf_payload.original_pf = None
+            mock_pf_payload.latest_state = None
+
+        mock_pf_payload.states = states
         return mock_pf_payload
 
 
@@ -223,13 +226,10 @@ class TestOVNPortForwarding(TestOVNPortForwardingBase):
                              pf_objs[index].router_id)
 
     def test_get_fip_objs(self):
-        pf_payload = [self._fake_pf_payload_entry(1),
-                      self._fake_pf_payload_entry(2),
-                      self._fake_pf_payload_entry(None, 1),
-                      self._fake_pf_payload_entry(1, 3)]
+        payload = self._fake_pf_payload_entry(1, 2)
         self.l3_plugin.get_floatingip = lambda _, fip_id: fip_id * 10
-        fip_objs = self._ovn_pf._get_fip_objs(self.context, pf_payload)
-        self.assertEqual({3: 30, 2: 20, 1: 10}, fip_objs)
+        fip_objs = self._ovn_pf._get_fip_objs(self.context, payload)
+        self.assertEqual({1: 10, 2: 20}, fip_objs)
 
     def _handle_notification_common(self, event_type, payload=None,
                                     fip_objs=None):
@@ -237,6 +237,7 @@ class TestOVNPortForwarding(TestOVNPortForwardingBase):
             payload = []
         if not fip_objs:
             fip_objs = {}
+        self.fake_db_rev.reset_mock()
         with mock.patch.object(self._ovn_pf, '_get_fip_objs',
                                return_value=fip_objs) as mock_get_fip_objs:
             self._ovn_pf._handle_notification(None, event_type,
@@ -256,59 +257,70 @@ class TestOVNPortForwarding(TestOVNPortForwardingBase):
     def test_handle_notification_noop(self):
         self._handle_notification_common(events.AFTER_CREATE)
         weird_event_type = 666
-        fake_payload = [self._fake_pf_payload_entry(None)]
+        fake_payload = self._fake_pf_payload_entry(None)
         self._handle_notification_common(weird_event_type, fake_payload)
 
     def test_handle_notification_basic(self):
         fake_payload_entry = self._fake_pf_payload_entry(1)
         self._handle_notification_common(events.AFTER_CREATE,
-                                         [fake_payload_entry])
+                                         fake_payload_entry)
         self.handler.port_forwarding_created.assert_called_once_with(
-            mock.ANY, self.l3_plugin._ovn, fake_payload_entry.current_pf)
+            mock.ANY, self.l3_plugin._ovn, fake_payload_entry.latest_state)
 
     def test_handle_notification_create(self):
         fip_objs = {1: {'description': 'one'},
                     3: {'description': 'three', 'revision_number': '321'}}
-        fake_payload = [self._fake_pf_payload_entry(id) for id in range(1, 4)]
-        self._handle_notification_common(events.AFTER_CREATE, fake_payload,
-                                         fip_objs)
-        calls = [mock.call(mock.ANY, self.l3_plugin._ovn, entry.current_pf)
-                 for entry in fake_payload]
-        self.handler.port_forwarding_created.assert_has_calls(calls)
-        update_calls = [mock.call(
-            self.context, entry.current_pf.floatingip_id,
-            const.FLOATINGIP_STATUS_ACTIVE) for entry in fake_payload]
-        self.l3_plugin.update_floatingip_status.assert_has_calls(update_calls)
+        for id in range(1, 4):
+            fake_payload = self._fake_pf_payload_entry(id)
+            self._handle_notification_common(events.AFTER_CREATE,
+                                             fake_payload,
+                                             fip_objs)
+            calls = [mock.call(mock.ANY, self.l3_plugin._ovn,
+                               fake_payload.latest_state)]
+            self.handler.port_forwarding_created.assert_has_calls(calls)
+            update_calls = [mock.call(
+                self.context, fake_payload.latest_state.floatingip_id,
+                const.FLOATINGIP_STATUS_ACTIVE)]
+            self.l3_plugin.update_floatingip_status.assert_has_calls(
+                update_calls)
 
     def test_handle_notification_update(self):
         fip_objs = {100: {'description': 'hundred'}, 101: {}}
-        fake_payload = [self._fake_pf_payload_entry(100, 100),
-                        self._fake_pf_payload_entry(101, 101)]
+        fake_payload = self._fake_pf_payload_entry(100, 100)
         self._handle_notification_common(events.AFTER_UPDATE, fake_payload,
                                          fip_objs)
-        calls = [mock.call(mock.ANY, self.l3_plugin._ovn, entry.current_pf,
-                           entry.original_pf) for entry in fake_payload]
+        calls = [mock.call(mock.ANY, self.l3_plugin._ovn,
+                           fake_payload.latest_state,
+                           fake_payload.states[0])]
+        self.handler.port_forwarding_updated.assert_has_calls(calls)
+
+        fake_payload = self._fake_pf_payload_entry(101, 101)
+        self._handle_notification_common(events.AFTER_UPDATE, fake_payload,
+                                         fip_objs)
+        calls = [mock.call(mock.ANY, self.l3_plugin._ovn,
+                           fake_payload.latest_state,
+                           fake_payload.states[0])]
         self.handler.port_forwarding_updated.assert_has_calls(calls)
 
     def test_handle_notification_delete(self):
         fip_objs = {1: {'description': 'one'},
                     2: {'description': 'two', 'revision_number': '222'}}
-        fake_payload = [self._fake_pf_payload_entry(None, id)
-                        for id in range(1, 4)]
-        with mock.patch.object(
-                self.pf_plugin, 'get_floatingip_port_forwardings',
-                return_value=[]):
-            self._handle_notification_common(
-                events.AFTER_DELETE, fake_payload, fip_objs)
-            calls = [mock.call(
-                mock.ANY, self.l3_plugin._ovn, entry.original_pf)
-                     for entry in fake_payload]
-            self.handler.port_forwarding_deleted.assert_has_calls(calls)
-            update_calls = [mock.call(
-                self.context, entry.original_pf.floatingip_id,
-                const.FLOATINGIP_STATUS_DOWN) for entry in fake_payload]
-            self.l3_plugin.update_floatingip_status.assert_has_calls(
-                update_calls)
+        for id in range(1, 4):
+            fake_payload = self._fake_pf_payload_entry(None, id)
+
+            with mock.patch.object(
+                    self.pf_plugin, 'get_floatingip_port_forwardings',
+                    return_value=[]):
+                self._handle_notification_common(events.AFTER_DELETE,
+                                                 fake_payload, fip_objs)
+                calls = [mock.call(
+                    mock.ANY, self.l3_plugin._ovn, fake_payload.states[0])]
+                self.handler.port_forwarding_deleted.assert_has_calls(calls)
+                update_calls = [mock.call(
+                    self.context, fake_payload.states[0].floatingip_id,
+                    const.FLOATINGIP_STATUS_DOWN)]
+                self.l3_plugin.update_floatingip_status.assert_has_calls(
+                    update_calls)
 
     def test_maintenance_create_or_update(self):
         pf_objs = [self._fake_pf_obj()]
