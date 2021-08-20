@@ -54,6 +54,7 @@ from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import maintenance
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import worker
 from neutron import service
 from neutron.services.qos.drivers.ovn import driver as qos_driver
@@ -222,6 +223,33 @@ class OVNMechanismDriver(api.MechanismDriver):
         """Pre-initialize the ML2/OVN driver."""
         atexit.register(self._clean_hash_ring)
         signal.signal(signal.SIGTERM, self._clean_hash_ring)
+        self._create_neutron_pg_drop()
+
+    def _create_neutron_pg_drop(self):
+        """Create neutron_pg_drop Port Group.
+
+        The method creates a short living connection to the Northbound
+        database. Because of multiple controllers can attempt to create the
+        Port Group at the same time the transaction can fail and raise
+        RuntimeError. In such case, we make sure the Port Group was created,
+        otherwise the error is something else and it's raised to the caller.
+        """
+        idl = ovsdb_monitor.OvnInitPGNbIdl.from_server(
+            ovn_conf.get_ovn_nb_connection(), 'OVN_Northbound', self)
+        with ovsdb_monitor.short_living_ovsdb_api(
+                impl_idl_ovn.OvsdbNbOvnIdl, idl) as pre_ovn_nb_api:
+            try:
+                create_default_drop_port_group(pre_ovn_nb_api)
+            except RuntimeError as re:
+                if pre_ovn_nb_api.get_port_group(
+                        ovn_const.OVN_DROP_PORT_GROUP_NAME):
+                    LOG.debug(
+                        "Port Group %(port_group)s already exists, "
+                        "ignoring RuntimeError %(error)s", {
+                            'port_group': ovn_const.OVN_DROP_PORT_GROUP_NAME,
+                            'error': re})
+                else:
+                    raise
 
     @staticmethod
     def should_post_fork_initialize(worker_class):
@@ -236,6 +264,7 @@ class OVNMechanismDriver(api.MechanismDriver):
             return
 
         self._post_fork_event.clear()
+        self._wait_for_pg_drop_event()
         self._ovn_client_inst = None
 
         if worker_class == neutron.wsgi.WorkerService:
@@ -292,6 +321,23 @@ class OVNMechanismDriver(api.MechanismDriver):
                 maintenance.HashRingHealthCheckPeriodics(
                     self.hash_ring_group))
             self._maintenance_thread.start()
+
+    def _wait_for_pg_drop_event(self):
+        """Wait for event that occurs when neutron_pg_drop Port Group exists.
+
+        The method creates a short living connection to the Northbound
+        database. It waits for CREATE event caused by the Port Group.
+        Such event occurs when:
+            1) The Port Group doesn't exist and is created by other process.
+            2) The Port Group already exists and event is emitted when DB copy
+               is available to the IDL.
+        """
+        idl = ovsdb_monitor.OvnInitPGNbIdl.from_server(
+            ovn_conf.get_ovn_nb_connection(), 'OVN_Northbound', self,
+            pg_only=True)
+        with ovsdb_monitor.short_living_ovsdb_api(
+                impl_idl_ovn.OvsdbNbOvnIdl, idl) as ovn_nb_api:
+            ovn_nb_api.idl.neutron_pg_drop_event.wait()
 
     def _create_security_group_precommit(self, resource, event, trigger,
                                          **kwargs):
@@ -1231,3 +1277,25 @@ def get_availability_zones(cls, context, _driver, filters=None, fields=None,
                            sorts=None, limit=None, marker=None,
                            page_reverse=False):
     return list(_driver.list_availability_zones(context, filters).values())
+
+
+def create_default_drop_port_group(nb_idl):
+    pg_name = ovn_const.OVN_DROP_PORT_GROUP_NAME
+    if nb_idl.get_port_group(pg_name):
+        LOG.debug("Port Group %s already exists", pg_name)
+        return
+    with nb_idl.transaction(check_error=True) as txn:
+        # If drop Port Group doesn't exist yet, create it.
+        txn.add(nb_idl.pg_add(pg_name, acls=[], may_exist=True))
+        # Add ACLs to this Port Group so that all traffic is dropped.
+        acls = ovn_acl.add_acls_for_drop_port_group(pg_name)
+        for acl in acls:
+            txn.add(nb_idl.pg_acl_add(may_exist=True, **acl))
+
+        ports_with_pg = set()
+        for pg in nb_idl.get_port_groups().values():
+            ports_with_pg.update(pg['ports'])
+
+        if ports_with_pg:
+            # Add the ports to the default Port Group
+            txn.add(nb_idl.pg_add_ports(pg_name, list(ports_with_pg)))

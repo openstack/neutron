@@ -26,6 +26,7 @@ from ovs import poller
 from ovs.stream import Stream
 from ovsdbapp.backend.ovs_idl import connection
 from ovsdbapp.backend.ovs_idl import idlutils
+import testtools
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import hash_ring_manager
@@ -606,3 +607,32 @@ class TestChassisEvent(base.BaseTestCase):
         # after it became a Gateway chassis
         self._test_handle_ha_chassis_group_changes_create(
             self.event.ROW_UPDATE)
+
+
+class TestShortLivingOvsdbApi(base.BaseTestCase):
+    def test_context(self):
+        api_class = mock.Mock()
+        idl = mock.Mock()
+        with ovsdb_monitor.short_living_ovsdb_api(api_class, idl) as api:
+            self.assertEqual(api_class.return_value, api)
+        api.ovsdb_connection.stop.assert_called_once_with()
+
+    def test_context_error(self):
+        api_class = mock.Mock()
+        idl = mock.Mock()
+        exc = RuntimeError()
+        try:
+            with ovsdb_monitor.short_living_ovsdb_api(api_class, idl) as api:
+                self.assertEqual(api_class.return_value, api)
+                raise exc
+        except RuntimeError as re:
+            self.assertIs(exc, re)
+        api.ovsdb_connection.stop.assert_called_once_with()
+
+    def test_api_class_error(self):
+        api_class = mock.Mock(side_effect=RuntimeError())
+        idl = mock.Mock()
+        with testtools.ExpectedException(RuntimeError):
+            with ovsdb_monitor.short_living_ovsdb_api(api_class, idl):
+                # Make sure it never enter the api context
+                raise Exception("API class instantiated but it should not")
