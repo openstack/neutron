@@ -1,0 +1,6 @@
+---
+security:
+  - |
+    Fix `bug 1939733 <https://bugs.launchpad.net/neutron/+bug/1939733>`_ by
+    dropping from the dhcp extra option values everything what is after first
+    newline (``\n``) character before passing them to the dnsmasq.
