@@ -1155,10 +1155,11 @@ class Dnsmasq(DhcpLocalProcess):
             else:
                 option = 'option6:%s' % option
         if extra_tag:
-            tags = ('tag:' + tag, extra_tag[:-1], '%s' % option)
+            tags = ['tag:' + tag, extra_tag[:-1], '%s' % option]
         else:
-            tags = ('tag:' + tag, '%s' % option)
-        return ','.join(tags + args)
+            tags = ['tag:' + tag, '%s' % option]
+
+        return ','.join(tags + [v.split("\n", 1)[0] for v in args])
 
     @staticmethod
     def _convert_to_literal_addrs(ip_version, ips):
