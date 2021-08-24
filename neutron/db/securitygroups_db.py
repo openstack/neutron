@@ -147,7 +147,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
 
             # fetch sg from db to load the sg rules with sg model.
             sg = sg_obj.SecurityGroup.get_object(context, id=sg.id)
-            secgroup_dict = self._make_security_group_dict(sg)
+            secgroup_dict = self._make_security_group_dict(context, sg)
             kwargs['security_group'] = secgroup_dict
             self._registry_notify(resources.SECURITY_GROUP,
                                   events.PRECOMMIT_CREATE,
@@ -183,7 +183,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             context, _pager=pager, validate_filters=False,
             fields=fields, **filters)
 
-        return [self._make_security_group_dict(obj, fields) for obj in sg_objs]
+        return [self._make_security_group_dict(context, obj, fields)
+                for obj in sg_objs]
 
     @db_api.retry_if_session_inactive()
     def get_security_groups_count(self, context, filters=None):
@@ -202,10 +203,10 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
 
         try:
             with db_api.CONTEXT_READER.using(context):
-                ret = self._make_security_group_dict(self._get_security_group(
-                                                     context, id,
-                                                     fields=fields),
-                                                     fields)
+                ret = self._make_security_group_dict(
+                    context,
+                    self._get_security_group(context, id, fields=fields),
+                    fields)
                 if (fields is None or len(fields) == 0 or
                    'security_group_rules' in fields):
                     rules = self.get_security_group_rules(
@@ -268,7 +269,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             ports = self._get_port_security_group_bindings(context, filters)
             sg = self._get_security_group(context, id)
             kwargs['security_group_rule_ids'] = [r['id'] for r in sg.rules]
-            kwargs['security_group'] = self._make_security_group_dict(sg)
+            kwargs['security_group'] = self._make_security_group_dict(
+                context, sg)
             self._registry_notify(resources.SECURITY_GROUP,
                                   events.PRECOMMIT_DELETE,
                                   exc_cls=ext_sg.SecurityGroupInUse, id=id,
@@ -306,11 +308,11 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             sg = self._get_security_group(context, id)
             if sg.name == 'default' and 'name' in s:
                 raise ext_sg.SecurityGroupCannotUpdateDefault()
-            sg_dict = self._make_security_group_dict(sg)
+            sg_dict = self._make_security_group_dict(context, sg)
             kwargs['original_security_group'] = sg_dict
             sg.update_fields(s)
             sg.update()
-            sg_dict = self._make_security_group_dict(sg)
+            sg_dict = self._make_security_group_dict(context, sg)
             kwargs['security_group'] = sg_dict
             self._registry_notify(
                     resources.SECURITY_GROUP,
@@ -324,11 +326,13 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                         **kwargs)
         return sg_dict
 
-    def _make_security_group_dict(self, security_group, fields=None):
+    def _make_security_group_dict(self, context, security_group, fields=None):
         res = {'id': security_group['id'],
                'name': security_group['name'],
                'stateful': security_group['stateful'],
                'tenant_id': security_group['tenant_id'],
+               'shared': sg_obj.SecurityGroup.is_accessible(
+                   context, security_group),
                'description': security_group['description']}
         if security_group.rules:
             res['security_group_rules'] = [
@@ -337,6 +341,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             ]
         else:
             res['security_group_rules'] = []
+        if fields and 'shared' not in fields:
+            fields.append('shared')
         resource_extend.apply_funcs(ext_sg.SECURITYGROUPS, res,
                                     security_group.db_obj)
         return db_utils.resource_fields(res, fields)

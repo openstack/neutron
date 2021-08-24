@@ -234,6 +234,13 @@ RESOURCE_ATTRIBUTE_MAP = {
                       'validate': {
                           'type:string': db_const.PROJECT_ID_FIELD_SIZE},
                       'is_visible': True, 'is_filter': True},
+        const.SHARED: {'allow_post': False,
+                       'allow_put': False,
+                       'convert_to': converters.convert_to_boolean,
+                       'is_visible': True,
+                       'is_filter': True,
+                       'is_sort_key': True,
+                       'enforce_policy': True},
         SECURITYGROUPRULES: {'allow_post': False, 'allow_put': False,
                              'is_visible': True},
     },
