@@ -101,7 +101,7 @@ class TestAuxiliaryFunctions(base.DietTestCase):
                         'TrackedResource.resync') as mock_resync:
             self.registry.set_tracked_resource('meh', test_quota.MehModel)
             self.registry.register_resource_by_name('meh')
-            resource_registry.resync_resource(mock.ANY, 'meh', 'tenant_id')
+            resource_registry.resync_resource(mock.ANY, 'meh', 'project_id')
             self.assertEqual(0, mock_resync.call_count)
 
     def test_resync_tracked_resource(self):
@@ -109,14 +109,14 @@ class TestAuxiliaryFunctions(base.DietTestCase):
                         'TrackedResource.resync') as mock_resync:
             self.registry.set_tracked_resource('meh', test_quota.MehModel)
             self.registry.register_resource_by_name('meh')
-            resource_registry.resync_resource(mock.ANY, 'meh', 'tenant_id')
-            mock_resync.assert_called_once_with(mock.ANY, 'tenant_id')
+            resource_registry.resync_resource(mock.ANY, 'meh', 'project_id')
+            mock_resync.assert_called_once_with(mock.ANY, 'project_id')
 
     def test_resync_non_tracked_resource(self):
         with mock.patch('neutron.quota.resource.'
                         'TrackedResource.resync') as mock_resync:
             self.registry.register_resource_by_name('meh')
-            resource_registry.resync_resource(mock.ANY, 'meh', 'tenant_id')
+            resource_registry.resync_resource(mock.ANY, 'meh', 'project_id')
             self.assertEqual(0, mock_resync.call_count)
 
     def test_set_resources_dirty_invoked_with_tracking_disabled(self):
@@ -132,7 +132,7 @@ class TestAuxiliaryFunctions(base.DietTestCase):
             self.assertEqual(0, mock_mark_dirty.call_count)
 
     def test_set_resources_dirty_no_dirty_resource(self):
-        ctx = context.Context('user_id', 'tenant_id',
+        ctx = context.Context('user_id', 'project_id',
                               is_admin=False, is_advsvc=False)
         with mock.patch('neutron.quota.resource.'
                         'TrackedResource.mark_dirty') as mock_mark_dirty:
@@ -140,12 +140,12 @@ class TestAuxiliaryFunctions(base.DietTestCase):
             self.registry.register_resource_by_name('meh')
             res = self.registry.get_resource('meh')
             # This ensures dirty is false
-            res._dirty_tenants.clear()
+            res._dirty_projects.clear()
             resource_registry.set_resources_dirty(ctx)
             self.assertEqual(0, mock_mark_dirty.call_count)
 
     def test_set_resources_dirty_no_tracked_resource(self):
-        ctx = context.Context('user_id', 'tenant_id',
+        ctx = context.Context('user_id', 'project_id',
                               is_admin=False, is_advsvc=False)
         with mock.patch('neutron.quota.resource.'
                         'TrackedResource.mark_dirty') as mock_mark_dirty:
@@ -154,7 +154,7 @@ class TestAuxiliaryFunctions(base.DietTestCase):
             self.assertEqual(0, mock_mark_dirty.call_count)
 
     def test_set_resources_dirty(self):
-        ctx = context.Context('user_id', 'tenant_id',
+        ctx = context.Context('user_id', 'project_id',
                               is_admin=False, is_advsvc=False)
         with mock.patch('neutron.quota.resource.'
                         'TrackedResource.mark_dirty') as mock_mark_dirty:
@@ -163,6 +163,6 @@ class TestAuxiliaryFunctions(base.DietTestCase):
             self.registry.resources['meh']._track_resource_events = True
             res = self.registry.get_resource('meh')
             # This ensures dirty is true
-            res._dirty_tenants.add('tenant_id')
+            res._dirty_projects.add('project_id')
             resource_registry.set_resources_dirty(ctx)
             mock_mark_dirty.assert_called_once_with(ctx)

@@ -1051,7 +1051,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def _create_network_db(self, context, network):
         net_data = network[net_def.RESOURCE_NAME]
-        tenant_id = net_data['tenant_id']
+        # TODO(ralonsoh): "tenant_id" reference should be removed.
+        tenant_id = net_data.get('project_id') or net_data['tenant_id']
         with db_api.CONTEXT_WRITER.using(context):
             net_db = self.create_network_db(context, network)
             net_data['id'] = net_db.id

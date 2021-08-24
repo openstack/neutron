@@ -245,7 +245,7 @@ The process of making a reservation is fairly straightforward:
    on every requested resource, and then retrieving the amount of reserved
    resources.
  * Fetch current quota limits for requested resources, by invoking the
-   _get_tenant_quotas method.
+   _get_project_quotas method.
  * Fetch expired reservations for selected resources. This amount will be
    subtracted from resource usage. As in most cases there won't be any
    expired reservation, this approach actually requires less DB operations than

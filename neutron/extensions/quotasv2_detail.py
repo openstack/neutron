@@ -46,17 +46,17 @@ EXTENDED_ATTRIBUTES_2_0 = {
 
 class DetailQuotaSetsController(quotasv2.QuotaSetsController):
 
-    def _get_detailed_quotas(self, request, tenant_id):
-        return self._driver.get_detailed_tenant_quotas(
+    def _get_detailed_quotas(self, request, project_id):
+        return self._driver.get_detailed_project_quotas(
             request.context,
-            resource_registry.get_all_resources(), tenant_id)
+            resource_registry.get_all_resources(), project_id)
 
     def details(self, request, id):
         if id != request.context.project_id:
             # Check if admin
             if not request.context.is_admin:
-                reason = _("Only admin is authorized to access quotas for"
-                           " another tenant")
+                reason = _("Only admin is authorized to access quotas for "
+                           "another project")
                 raise n_exc.AdminRequired(reason=reason)
         return {self._resource_name:
                 self._get_detailed_quotas(request, id)}
@@ -95,7 +95,8 @@ class Quotasv2_detail(api_extensions.ExtensionDescriptor):
             RESOURCE_COLLECTION,
             controller,
             member_actions={'details': 'GET'},
-            collection_actions={'tenant': 'GET'})]
+            collection_actions={'tenant': 'GET',
+                                'project': 'GET'})]
 
     def get_extended_resources(self, version):
         return EXTENDED_ATTRIBUTES_2_0 if version == "2.0" else {}

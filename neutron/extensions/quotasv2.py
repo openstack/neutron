@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import warnings
+
 from neutron_lib.api import converters
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib.api import faults
@@ -74,20 +76,20 @@ class QuotaSetsController(wsgi.Controller):
                 'is_visible': True}
         self._update_extended_attributes = False
 
-    def _get_quotas(self, request, tenant_id):
-        return self._driver.get_tenant_quotas(
+    def _get_quotas(self, request, project_id):
+        return self._driver.get_project_quotas(
             request.context,
             resource_registry.get_all_resources(),
-            tenant_id)
+            project_id)
 
     def default(self, request, id):
         context = request.context
-        if id != context.tenant_id:
+        if id != context.project_id:
             validate_policy(context, "get_quota")
         return {self._resource_name: self._driver.get_default_quotas(
                    context=context,
                    resources=resource_registry.get_all_resources(),
-                   tenant_id=id)}
+                   project_id=id)}
 
     def create(self, request, body=None):
         msg = _('POST requests are not supported on this resource.')
@@ -101,20 +103,31 @@ class QuotaSetsController(wsgi.Controller):
                     context, resource_registry.get_all_resources())}
 
     def tenant(self, request):
-        """Retrieve the tenant info in context."""
+        """Retrieve the project info in context."""
+        warnings.warn(
+            '"tenant" Quota API method is deprecated, use "project" instead')
+        return self._project(request, 'tenant')
+
+    def project(self, request):
+        """Retrieve the project info in context."""
+        return self._project(request, 'project')
+
+    @staticmethod
+    def _project(request, key):
+        """Retrieve the project info in context."""
         context = request.context
-        if not context.tenant_id:
+        if not context.project_id:
             raise exceptions.QuotaMissingTenant()
-        return {'tenant': {'tenant_id': context.tenant_id}}
+        return {key: {key + '_id': context.project_id}}
 
     def show(self, request, id):
-        if id != request.context.tenant_id:
+        if id != request.context.project_id:
             validate_policy(request.context, "get_quota")
         return {self._resource_name: self._get_quotas(request, id)}
 
     def delete(self, request, id):
         validate_policy(request.context, "delete_quota")
-        self._driver.delete_tenant_quota(request.context, id)
+        self._driver.delete_project_quota(request.context, id)
 
     def update(self, request, id, body=None):
         validate_policy(request.context, "update_quota")
@@ -152,7 +165,7 @@ class Quotasv2(api_extensions.ExtensionDescriptor):
     def get_description(cls):
         description = 'Expose functions for quotas management'
         if cfg.CONF.QUOTAS.quota_driver == DB_QUOTA_DRIVER:
-            description += ' per tenant'
+            description += ' per project'
         return description
 
     @classmethod
@@ -169,7 +182,8 @@ class Quotasv2(api_extensions.ExtensionDescriptor):
             Quotasv2.get_alias(),
             controller,
             member_actions={DEFAULT_QUOTAS_ACTION: 'GET'},
-            collection_actions={'tenant': 'GET'})]
+            collection_actions={'tenant': 'GET',
+                                'project': 'GET'})]
 
     def get_extended_resources(self, version):
         if version == "2.0":

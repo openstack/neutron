@@ -45,7 +45,7 @@ class DbQuotaNoLockDriver(quota_driver.DbQuotaDriver):
         resources_over_limit = []
         with db_api.CONTEXT_WRITER.using(context):
             # Filter out unlimited resources.
-            limits = self.get_tenant_quotas(context, resources, project_id)
+            limits = self.get_project_quotas(context, resources, project_id)
             unlimited_resources = set([resource for (resource, limit) in
                                        limits.items() if limit < 0])
             requested_resources = (set(deltas.keys()) - unlimited_resources)
@@ -54,7 +54,7 @@ class DbQuotaNoLockDriver(quota_driver.DbQuotaDriver):
             # operation is fast and by calling it before making any
             # reservation, we ensure the freshness of the reservations.
             quota_api.remove_expired_reservations(
-                context, tenant_id=project_id,
+                context, project_id=project_id,
                 timeout=quota_api.RESERVATION_EXPIRATION_TIMEOUT)
 
             # Count the number of (1) used and (2) reserved resources for this
