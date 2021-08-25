@@ -38,12 +38,12 @@ class ServerSideRpcBackendTest(base.BaseTestCase):
 
         calls = [mock.call(
                     *tools.get_subscribe_args(
-                        test_obj.process_trunk_payload_event,
+                        test_obj.process_event,
                         resources.TRUNK,
                         events.AFTER_CREATE)),
                  mock.call(
                     *tools.get_subscribe_args(
-                        test_obj.process_trunk_payload_event,
+                        test_obj.process_event,
                         resources.TRUNK,
                         events.AFTER_DELETE)),
                  mock.call(
@@ -64,13 +64,13 @@ class ServerSideRpcBackendTest(base.BaseTestCase):
         test_obj._stub = mock_stub = mock.Mock()
         trunk_plugin = mock.Mock()
 
-        test_obj.process_trunk_payload_event(
+        test_obj.process_event(
             resources.TRUNK, events.AFTER_CREATE, trunk_plugin,
             events.DBEventPayload("context",
                                   resource_id="id",
                                   states=("current_trunk",)))
 
-        test_obj.process_trunk_payload_event(
+        test_obj.process_event(
             resources.TRUNK, events.AFTER_DELETE, trunk_plugin,
             events.DBEventPayload("context",
                                   resource_id="id",
