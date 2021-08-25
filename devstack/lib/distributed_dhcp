@@ -1,0 +1,4 @@
+function configure_ovs_distributed_dhcp {
+    plugin_agent_add_l2_agent_extension "dhcp"
+    iniset $NEUTRON_CONF DEFAULT enable_traditional_dhcp False
+}

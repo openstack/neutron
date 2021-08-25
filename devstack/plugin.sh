@@ -1,5 +1,6 @@
 LIBDIR=$DEST/neutron/devstack/lib
 
+source $LIBDIR/distributed_dhcp
 source $LIBDIR/dns
 source $LIBDIR/flavors
 source $LIBDIR/l2_agent
@@ -78,6 +79,11 @@ if [[ "$1" == "stack" ]]; then
             fi
             if is_service_enabled neutron-network-segment-range; then
                 configure_network_segment_range
+            fi
+            if is_service_enabled q-distributed-dhcp neutron-distributed-dhcp; then
+                if [ $Q_AGENT = openvswitch ]; then
+                    configure_ovs_distributed_dhcp
+                fi
             fi
             if is_service_enabled q-agt neutron-agent; then
                 configure_l2_agent
