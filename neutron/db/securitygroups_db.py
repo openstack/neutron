@@ -881,8 +881,11 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                                        security_groups else [])
 
     def _get_default_sg_id(self, context, tenant_id):
+        # NOTE(slaweq): With new system/project scopes it may happen that
+        # project admin will try to find default SG for different
+        # project. In such case elevated context needs to be used.
         default_group = sg_obj.DefaultSecurityGroup.get_object(
-            context,
+            context.elevated(),
             project_id=tenant_id,
         )
         if default_group:
