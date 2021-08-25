@@ -101,6 +101,8 @@ class HaRouter(router.RouterInfo):
         if (not self.keepalived_manager.check_processes() and
                 os.path.exists(self.ha_state_path) and
                 self.ha_state == 'primary'):
+            LOG.debug("Setting ha_state of router %s to: backup",
+                      self.router_id)
             self.ha_state = 'backup'
 
     @property
@@ -115,8 +117,9 @@ class HaRouter(router.RouterInfo):
                 ha_state = f.read()
                 ha_state = 'primary' if ha_state == 'master' else ha_state
                 self._ha_state = ha_state
-        except (OSError, IOError):
-            LOG.debug('Error while reading HA state for %s', self.router_id)
+        except (OSError, IOError) as error:
+            LOG.debug('Error while reading HA state for %s: %s',
+                      self.router_id, error)
         return self._ha_state or 'unknown'
 
     @ha_state.setter
@@ -125,9 +128,9 @@ class HaRouter(router.RouterInfo):
         try:
             with open(self.ha_state_path, 'w') as f:
                 f.write(new_state)
-        except (OSError, IOError):
-            LOG.error('Error while writing HA state for %s',
-                      self.router_id)
+        except (OSError, IOError) as error:
+            LOG.error('Error while writing HA state for %s: %s',
+                      self.router_id, error)
 
     @property
     def ha_namespace(self):
