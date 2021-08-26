@@ -60,7 +60,7 @@ class TestLocalVlanManager(base.BaseTestCase):
         self.vlan_manager.add(1, None, None, None, None)
         new_vlan_manager = vlanmanager.LocalVlanManager()
         self.assertIs(new_vlan_manager, self.vlan_manager)
-        self.assertItemsEqual(new_vlan_manager.mapping,
+        self.assertCountEqual(new_vlan_manager.mapping,
                               self.vlan_manager.mapping)
 
     def test_in_operator_on_key(self):
@@ -74,7 +74,7 @@ class TestLocalVlanManager(base.BaseTestCase):
             self.vlan_manager.add(val, val, val, val, val)
             created_vlans.append(self.vlan_manager.get(val))
 
-        self.assertItemsEqual(created_vlans, list(self.vlan_manager))
+        self.assertCountEqual(created_vlans, list(self.vlan_manager))
 
     def test_get_net_uuid_existing(self):
         port_id = 'port-id'

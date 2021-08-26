@@ -86,7 +86,7 @@ class RemoteResourceCacheTestCase(base.BaseTestCase):
         self._pullmock.bulk_pull.assert_called_once_with(
             mock.ANY, 'goose', filter_kwargs={'id': (67, )})
 
-        self.assertItemsEqual(
+        self.assertCountEqual(
             resources, [rec['updated'] for rec in received_kw])
 
     def test_bulk_pull_doesnt_wipe_out_newer_data(self):
@@ -106,9 +106,9 @@ class RemoteResourceCacheTestCase(base.BaseTestCase):
             self.rcache.record_resource_update(self.ctx, 'goose', goose)
         is_large = {'size': ('large', )}
         is_small = {'size': ('small', )}
-        self.assertItemsEqual([geese[0], geese[2]],
+        self.assertCountEqual([geese[0], geese[2]],
                               self.rcache.get_resources('goose', is_large))
-        self.assertItemsEqual([geese[3]],
+        self.assertCountEqual([geese[3]],
                               self.rcache.get_resources('goose', is_small))
 
     def test_match_resources_with_func(self):
@@ -117,7 +117,7 @@ class RemoteResourceCacheTestCase(base.BaseTestCase):
         for goose in geese:
             self.rcache.record_resource_update(self.ctx, 'goose', goose)
         has_large = lambda o: 'large' in o.size
-        self.assertItemsEqual([geese[0], geese[2]],
+        self.assertCountEqual([geese[0], geese[2]],
                               self.rcache.match_resources_with_func('goose',
                                                                     has_large))
 

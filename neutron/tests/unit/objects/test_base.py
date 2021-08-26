@@ -844,7 +844,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                 obj_db_api, 'get_objects',
                 side_effect=self.fake_get_objects) as get_objects_mock:
             objs = self._test_class.get_objects(self.context)
-            self.assertItemsEqual(
+            self.assertCountEqual(
                 [get_obj_persistent_fields(obj) for obj in self.objs],
                 [get_obj_persistent_fields(obj) for obj in objs])
         get_objects_mock.assert_any_call(
@@ -908,7 +908,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             objs = self._test_class.get_objects(self.context,
                                                 validate_filters=False,
                                                 unknown_filter='value')
-            self.assertItemsEqual(
+            self.assertCountEqual(
                 [get_obj_persistent_fields(obj) for obj in self.objs],
                 [get_obj_persistent_fields(obj) for obj in objs])
 
@@ -919,7 +919,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                 obj_db_api, 'get_values',
                 side_effect=self.fake_get_values) as get_values_mock:
             values = self._test_class.get_values(self.context, field)
-            self.assertItemsEqual(
+            self.assertCountEqual(
                 [getattr(obj, field) for obj in self.objs], values)
         get_values_mock.assert_any_call(
             self._test_class, self.context, db_field
@@ -940,7 +940,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             values = self._test_class.get_values(self.context, field,
                                                  validate_filters=False,
                                                  unknown_filter='value')
-            self.assertItemsEqual(
+            self.assertCountEqual(
                 [getattr(obj, field) for obj in self.objs], values)
 
     def test_get_values_mixed_field(self):
@@ -1084,7 +1084,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                           fake_field='xxx')
 
     def _check_equal(self, expected, observed):
-        self.assertItemsEqual(get_obj_persistent_fields(expected),
+        self.assertCountEqual(get_obj_persistent_fields(expected),
                               get_obj_persistent_fields(observed))
 
     def test_count_validate_filters_false(self):
@@ -1856,7 +1856,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
             else:
                 filters = {field: obj[field]}
             new = self._test_class.get_objects(self.context, **filters)
-            self.assertItemsEqual(
+            self.assertCountEqual(
                 [obj._get_composite_keys()],
                 [obj_._get_composite_keys() for obj_ in new],
                 'Filtering by %s failed.' % field)

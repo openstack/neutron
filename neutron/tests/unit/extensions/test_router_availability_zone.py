@@ -63,7 +63,7 @@ class TestAZRouterCase(test_az.AZTestCommon, test_l3.L3NatTestCaseMixin):
         az_hints = ['nova2']
         with self.router(availability_zone_hints=az_hints) as router:
             res = self._show('routers', router['router']['id'])
-            self.assertItemsEqual(az_hints,
+            self.assertCountEqual(az_hints,
                                   res['router']['availability_zone_hints'])
 
     def test_create_router_with_azs(self):
@@ -71,7 +71,7 @@ class TestAZRouterCase(test_az.AZTestCommon, test_l3.L3NatTestCaseMixin):
         az_hints = ['nova2', 'nova3']
         with self.router(availability_zone_hints=az_hints) as router:
             res = self._show('routers', router['router']['id'])
-            self.assertItemsEqual(az_hints,
+            self.assertCountEqual(az_hints,
                                   res['router']['availability_zone_hints'])
 
     def test_create_router_without_az(self):

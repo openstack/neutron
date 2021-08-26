@@ -58,7 +58,7 @@ class TestNBDbResources(base.TestOVNFunctionalBase):
                 'cidr': row.cidr, 'external_ids': ext_ids,
                 'options': row.options})
 
-        self.assertItemsEqual(expected_dhcp_options_rows,
+        self.assertCountEqual(expected_dhcp_options_rows,
                               observed_dhcp_options_rows)
 
     def _verify_dhcp_option_row_for_port(self, port_id,
@@ -824,7 +824,7 @@ class TestPortSecurity(base.TestOVNFunctionalBase):
 
     def _verify_port_acls(self, port_id, expected_acls):
         port_acls = self._get_port_related_acls(port_id)
-        self.assertItemsEqual(expected_acls, port_acls)
+        self.assertCountEqual(expected_acls, port_acls)
 
     def test_port_security_port_group(self):
         n1 = self._make_network(self.fmt, 'n1', True)
@@ -915,7 +915,7 @@ class TestDNSRecords(base.TestOVNFunctionalBase):
             observed_dns_records.append(
                 {'external_ids': dns_row.external_ids,
                  'records': dns_row.records})
-        self.assertItemsEqual(expected_dns_records, observed_dns_records)
+        self.assertCountEqual(expected_dns_records, observed_dns_records)
 
     def _validate_ls_dns_records(self, lswitch_name, expected_dns_records):
         ls = idlutils.row_by_value(self.nb_api.idl,
@@ -925,7 +925,7 @@ class TestDNSRecords(base.TestOVNFunctionalBase):
             observed_dns_records.append(
                 {'external_ids': dns_row.external_ids,
                  'records': dns_row.records})
-        self.assertItemsEqual(expected_dns_records, observed_dns_records)
+        self.assertCountEqual(expected_dns_records, observed_dns_records)
 
     def setUp(self):
         ovn_config.cfg.CONF.set_override('dns_domain', 'ovn.test')

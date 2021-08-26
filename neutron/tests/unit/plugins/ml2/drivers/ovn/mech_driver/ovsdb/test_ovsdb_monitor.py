@@ -113,20 +113,20 @@ class TestOvnDbNotifyHandler(base.BaseTestCase):
         ovn_event = mock.Mock()
         unknown_event = mock.Mock()
 
-        self.assertItemsEqual(set(), self.watched_events)
+        self.assertCountEqual(set(), self.watched_events)
 
         expected_events.add(networking_event)
         self.handler.watch_event(networking_event)
-        self.assertItemsEqual(expected_events, self.watched_events)
+        self.assertCountEqual(expected_events, self.watched_events)
 
         expected_events.add(ovn_event)
         self.handler.watch_events([ovn_event])
-        self.assertItemsEqual(expected_events, self.watched_events)
+        self.assertCountEqual(expected_events, self.watched_events)
 
         self.handler.unwatch_events([networking_event, ovn_event])
         self.handler.unwatch_event(unknown_event)
         self.handler.unwatch_events([unknown_event])
-        self.assertItemsEqual(set(), self.watched_events)
+        self.assertCountEqual(set(), self.watched_events)
 
     def test_shutdown(self):
         self.handler.shutdown()

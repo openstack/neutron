@@ -329,7 +329,7 @@ class TestPortRuleMasking(base.BaseTestCase):
     def compare_port_ranges_results(self, port_min, port_max):
         observed = utils.port_rule_masking(port_min, port_max)
         expected = _port_rule_masking(port_min, port_max)
-        self.assertItemsEqual(expected, observed)
+        self.assertCountEqual(expected, observed)
 
     def test_port_rule_masking_random_ranges(self):
         # calling randint a bunch of times is really slow
