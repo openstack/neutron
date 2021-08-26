@@ -202,18 +202,18 @@ class TcFiltersTestCase(functional_base.BaseSudoTestCase):
         self.mac_vxlan = []
         self.ip = ['10.100.0.1/24', '10.100.0.2/24']
         self.ip_vxlan = ['10.200.0.1/24', '10.200.0.2/24']
-        for i in range(len(self.ns)):
-            priv_ip_lib.create_netns(self.ns[i])
-            self.addCleanup(self._remove_ns, self.ns[i])
-            ip_wrapper = ip_lib.IPWrapper(self.ns[i])
+        for i, ns in enumerate(self.ns):
+            priv_ip_lib.create_netns(ns)
+            self.addCleanup(self._remove_ns, ns)
+            ip_wrapper = ip_lib.IPWrapper(ns)
             if i == 0:
                 ip_wrapper.add_veth(self.device[0], self.device[1], self.ns[1])
             ip_wrapper.add_vxlan(self.device_vxlan[i], self.vxlan_id,
                                  dev=self.device[i])
-            ip_device = ip_lib.IPDevice(self.device[i], self.ns[i])
+            ip_device = ip_lib.IPDevice(self.device[i], ns)
             ip_device.link.set_up()
             ip_device.addr.add(self.ip[i])
-            ip_device_vxlan = ip_lib.IPDevice(self.device_vxlan[i], self.ns[i])
+            ip_device_vxlan = ip_lib.IPDevice(self.device_vxlan[i], ns)
             self.mac_vxlan.append(ip_device_vxlan.link.address)
             ip_device_vxlan.link.set_up()
             ip_device_vxlan.addr.add(self.ip_vxlan[i])

@@ -769,12 +769,12 @@ class TestMl2HostSegmentMappingOVS(HostSegmentMappingTestCase):
         physical_networks = ['phys_net1', 'phys_net2']
         networks = []
         segments = []
-        for i in range(len(physical_networks)):
+        for i, phy_net in enumerate(physical_networks):
             with self.network() as network:
                 networks.append(network['network'])
             segments.append(self._test_create_segment(
                 network_id=networks[i]['id'],
-                physical_network=physical_networks[i],
+                physical_network=phy_net,
                 segmentation_id=200,
                 network_type=constants.TYPE_VLAN)['segment'])
         self._register_agent(host, mappings={physical_networks[0]: 'br-eth-1',

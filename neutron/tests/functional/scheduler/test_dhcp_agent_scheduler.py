@@ -382,8 +382,8 @@ class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
                 name='network-%s' % i)
             for i in range(self.network_count)
         ]
-        for i in range(len(self._networks)):
-            self._networks[i].create()
+        for net in self._networks:
+            net.create()
         network_ids = [net.id for net in self._networks]
 
         # pre schedule the networks to the agents defined in
