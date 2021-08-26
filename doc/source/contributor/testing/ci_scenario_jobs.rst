@@ -68,24 +68,26 @@ Below is a summary of those jobs.
     |                                              |tempest.api.compute.servers.\     |         |       |             |                 |          |       |        |            |             |
     |                                              |    test_multiple_create          |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-tempest-multinode-full-py3            |tempest.api (without slow tests)  |   3.6   |   2   | openvswitch | openvswitch     | legacy   | False | False  | True       | Yes         |
+    |neutron-ovs-tempest-multinode-full            |tempest.api (without slow tests)  |   3.6   |   2   | openvswitch | openvswitch     | legacy   | False | False  | True       | Yes         |
     |                                              |tempest.scenario                  |         |       |             |                 |          |       |        |            |             |
     |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
     |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-tempest-dvr-ha-multinode-full         |tempest.api (without slow tests)  |   3.6   |   3   | openvswitch | openvswitch     | dvr      | True  | True   | True       | No          |
+    |neutron-ovs-tempest-dvr-ha-multinode-full     |tempest.api (without slow tests)  |   3.6   |   3   | openvswitch | openvswitch     | dvr      | True  | True   | True       | No          |
     |(non-voting)                                  |tempest.scenario                  |         |       |             |                 | dvr_snat |       |        |            |             |
     |                                              |                                  |         |       |             |                 | dvr_snat |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-tempest-slow-py3                      |tempest slow tests                |   3.6   |   2   | openvswitch | openvswitch     | legacy   | False | False  | True       | Yes         |
+    |neutron-ovs-tempest-slow                      |tempest slow tests                |   3.6   |   2   | openvswitch | openvswitch     | legacy   | False | False  | True       | Yes         |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-ovn-tempest-slow                      |tempest slow tests                |   3.6   |   2   | ovn         | ovn             | ---      | False | False  | True       | Yes         |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-tempest-ipv6-only                     |tempest smoke + IPv6 tests        |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | Yes         |
+    |neutron-ovn-tempest-ipv6-only                 |tempest smoke + IPv6 tests        |   3.6   |   1   | ovn         | ovn             | ---   | False | False  | True       | Yes         |
     |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
     |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-ovn-tempest-ovs-release               |Various tempest api, scenario     |   3.6   |   1   | ovn         | ovn             | ---      | False | False  | True       | Yes         |
+    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-ovn-tempest-ovs-release-ipv6-only     | tempest smoke + IPv6 tests       |   3.6   |   1   | ovn         | ovn             | ---      | False | False  | True       | Yes         |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
 
 Grenade jobs running in Neutron CI
@@ -96,15 +98,15 @@ Each of those jobs runs on slightly different configuration of Neutron services.
 Below is summary of those jobs.
 ::
 
-    +--------------------------------+---------+-------+-------------+-------------+----------+-------+--------+------------+-------------+
-    | Job name                       | python  | nodes | L2 agent    | firewall    | L3 agent | L3 HA | L3 DVR | enable_dvr | Run in gate |
-    |                                | version |       |             | driver      | mode     |       |        |            | queue       |
-    +================================+=========+=======+=============+=============+==========+=======+========+============+=============+
-    | neutron-grenade-multinode      |   3.6   |   2   | openvswitch | openvswitch | legacy   | False | False  | True       | Yes         |
-    +--------------------------------+---------+-------+-------------+-------------+----------+-------+--------+------------+-------------+
-    | neutron-grenade-dvr-multinode  |   3.6   |   2   | openvswitch | openvswitch | dvr      | False | False  | True       | Yes         |
-    |                                |         |       |             |             | dvr_snat |       |        |            |             |
-    +--------------------------------+---------+-------+-------------+-------------+----------+-------+--------+------------+-------------+
+    +------------------------------------+---------+-------+-------------+-------------+----------+-------+--------+------------+-------------+
+    | Job name                           | python  | nodes | L2 agent    | firewall    | L3 agent | L3 HA | L3 DVR | enable_dvr | Run in gate |
+    |                                    | version |       |             | driver      | mode     |       |        |            | queue       |
+    +====================================+=========+=======+=============+=============+==========+=======+========+============+=============+
+    | neutron-ovs-grenade-multinode      |   3.6   |   2   | openvswitch | openvswitch | legacy   | False | False  | True       | Yes         |
+    +------------------------------------+---------+-------+-------------+-------------+----------+-------+--------+------------+-------------+
+    | neutron-ovs-grenade-dvr-multinode  |   3.6   |   2   | openvswitch | openvswitch | dvr      | False | False  | True       | Yes         |
+    |                                    |         |       |             |             | dvr_snat |       |        |            |             |
+    +------------------------------------+---------+-------+-------------+-------------+----------+-------+--------+------------+-------------+
 
 Tempest jobs running in Neutron experimental CI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -121,12 +123,18 @@ Currently we have in that queue jobs like listed below.
     | Job name                                     | Run tests                        | python  | nodes | L2 agent    | firewall        | L3 agent | L3 HA | L3 DVR | enable_dvr | Run in gate |
     |                                              |                                  | version |       |             | driver          | mode     |       |        |            | queue       |
     +==============================================+==================================+=========+=======+=============+=================+==========+=======+========+============+=============+
-    |neutron-tempest-with-neutron-lib-master       |tempest.api (without slow tests)  |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | No          |
-    |                                              |tempest.scenario                  |         |       |             |                 |          |       |        |            |             |
+    |neutron-ovn-tempest-with-uwsgi-loki           |tempest.api (without slow tests)  |   3.6   |   1   | ovn         | ovn             | ---      | ---   | ---    | ---        | No          |
+    |(non-voting)                                  |tempest.scenario                  |         |       |             |                 |          |       |        |            |             |
     |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
     |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-ovs-tempest-with-neutron-lib-master   |tempest.api (without slow tests)  |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | No          |
+    |neutron-ovn-tempest-full-multinode-ovs-master |Various tempest api, scenario     |   3.6   |   2   | ovn         | ovn             | ---      | ---   | ---    | ---        | No          |
+    |                                              |and neutron_tempest_plugi tests   |         |       |             |                 |          |       |        |            |             |
+    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-ovn-tempest-ovs-master                |Various tempest api, scenario     |   3.6   |   1   | ovn         | ovn             | ---      | ---   | ---    | ---        | No          |
+    |                                              |and neutron_tempest_plugi tests   |         |       |             |                 |          |       |        |            |             |
+    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-ovn-tempest-with-neutron-lib-master   |tempest.api (without slow tests)  |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | No          |
     |                                              |tempest.scenario                  |         |       |             |                 |          |       |        |            |             |
     |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
     |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
@@ -136,9 +144,6 @@ Currently we have in that queue jobs like listed below.
     |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
     |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-ovn-tempest-multinode-ovs-master      |Various tempest api, scenario     |   3.6   |   2   | ovn         | ovn             | ---      | False | False  | True       | No          |
-    |                                              |and neutron_tempest_plugi tests   |         |       |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
 
 And we also have Grenade jobs in the experimental queue.
 ::
@@ -147,7 +152,7 @@ And we also have Grenade jobs in the experimental queue.
     | Job name                       | python  | nodes | L2 agent    | firewall    | L3 agent | L3 HA | L3 DVR | enable_dvr | Run in gate |
     |                                | version |       |             | driver      | mode     |       |        |            | queue       |
     +================================+=========+=======+=============+=============+==========+=======+========+============+=============+
-    | neutron-grenade-ovn            |   3.6   |   2   | OVN         | ---         | ---      | ---   | ---    | False      | no          |
+    | neutron-ovn-grenade-multinode  |   3.6   |   2   | OVN         | ---         | ---      | ---   | ---    | False      | no          |
     | (non-voting)                   |         |       |             |             |          |       |        |            |             |
     +--------------------------------+---------+-------+-------------+-------------+----------+-------+--------+------------+-------------+
 
