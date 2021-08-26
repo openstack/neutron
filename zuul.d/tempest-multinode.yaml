@@ -172,6 +172,8 @@
         q-meta: true
         q-metering: true
         q-svc: true
+        neutron-placement: true
+        neutron-qos: true
         # OVN services
         ovn-controller: false
         ovn-northd: false
@@ -197,6 +199,14 @@
           $NEUTRON_L3_CONF:
             agent:
               debug_iptables_rules: True
+          "/$NEUTRON_CORE_PLUGIN_CONF":
+            ovs:
+              bridge_mappings: public:br-ex
+              resource_provider_bandwidths: br-ex:1000000:1000000
+        test-config:
+          $TEMPEST_CONFIG:
+            network-feature-enabled:
+              qos_placement_physnet: public
     group-vars:
       subnode:
         devstack_localrc:
@@ -221,6 +231,10 @@
             $NEUTRON_L3_CONF:
               agent:
                 debug_iptables_rules: True
+            "/$NEUTRON_CORE_PLUGIN_CONF":
+              ovs:
+                bridge_mappings: public:br-ex
+                resource_provider_bandwidths: br-ex:1000000:1000000
 
 - job:
     name: neutron-ovs-tempest-slow
