@@ -317,6 +317,24 @@ class QuotaExtensionDbTestCase(QuotaExtensionTestCase):
         quota = self.deserialize(res)
         self.assertEqual(100, quota['quota']['extra1'])
 
+    @mock.patch.object(driver_nolock.DbQuotaNoLockDriver, 'get_resource_usage')
+    def test_update_quotas_check_limit(self, mock_get_resource_usage):
+        tenant_id = 'tenant_id1'
+        env = {'neutron.context': context.Context('', tenant_id,
+                                                  is_admin=True)}
+        quotas = {'quota': {'network': 100, 'check_limit': False}}
+        res = self.api.put(_get_path('quotas', id=tenant_id, fmt=self.fmt),
+                           self.serialize(quotas), extra_environ=env,
+                           expect_errors=False)
+        self.assertEqual(200, res.status_int)
+
+        quotas = {'quota': {'network': 50, 'check_limit': True}}
+        mock_get_resource_usage.return_value = 51
+        res = self.api.put(_get_path('quotas', id=tenant_id, fmt=self.fmt),
+                           self.serialize(quotas), extra_environ=env,
+                           expect_errors=True)
+        self.assertEqual(400, res.status_int)
+
     def test_delete_quotas_with_admin(self):
         project_id = 'project_id1'
         env = {'neutron.context': context.Context('', project_id + '2',

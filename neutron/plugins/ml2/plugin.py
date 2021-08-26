@@ -46,6 +46,7 @@ from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import portbindings_extended as pbe_ext
 from neutron_lib.api.definitions import provider_net
+from neutron_lib.api.definitions import quota_check_limit
 from neutron_lib.api.definitions import rbac_address_groups as rbac_ag_apidef
 from neutron_lib.api.definitions import rbac_address_scope
 from neutron_lib.api.definitions import rbac_security_groups as rbac_sg_apidef
@@ -227,6 +228,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     addrgrp_def.ALIAS,
                                     pnap_def.ALIAS,
                                     pdp_def.ALIAS,
+                                    quota_check_limit.ALIAS,
                                     ]
 
     # List of agent types for which all binding_failed ports should try to be
