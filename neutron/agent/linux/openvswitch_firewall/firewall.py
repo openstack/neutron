@@ -406,7 +406,7 @@ class ConjIPFlowManager(object):
 
     def _update_flows_for_vlan_subr(self, direction, ethertype, vlan_tag,
                                     flow_state, addr_to_conj,
-                                    conj_id_to_remove):
+                                    conj_id_to_remove, ofport):
         """Do the actual flow updates for given direction and ethertype."""
         conj_id_to_remove = conj_id_to_remove or []
         # Delete any current flow related to any deleted IP address, before
@@ -450,9 +450,9 @@ class ConjIPFlowManager(object):
                 continue
             for flow in rules.create_flows_for_ip_address(
                     addr, direction, ethertype, vlan_tag, conj_ids):
-                self.driver._add_flow(**flow)
+                self.driver._add_flow(flow_group_id=ofport, **flow)
 
-    def update_flows_for_vlan(self, vlan_tag, conj_id_to_remove=None):
+    def update_flows_for_vlan(self, vlan_tag, ofport, conj_id_to_remove=None):
         """Install action=conjunction(conj_id, 1/2) flows,
         which depend on IP addresses of remote_group_id or
         remote_address_group_id.
@@ -466,7 +466,7 @@ class ConjIPFlowManager(object):
             self._update_flows_for_vlan_subr(
                 direction, ethertype, vlan_tag,
                 self.flow_state[vlan_tag][(direction, ethertype)],
-                addr_to_conj, conj_id_to_remove)
+                addr_to_conj, conj_id_to_remove, ofport)
             self.flow_state[vlan_tag][(direction, ethertype)] = addr_to_conj
 
     def add(self, vlan_tag, sg_id, remote_id, direction, ethertype,
@@ -522,7 +522,7 @@ class ConjIPFlowManager(object):
                         update = True
 
             if update:
-                self.update_flows_for_vlan(vlan_tag,
+                self.update_flows_for_vlan(vlan_tag, None,
                                            conj_id_to_remove=conj_id_to_remove)
 
 
@@ -595,7 +595,18 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         for f in rules.create_accept_flows(flow):
             self._add_flow(**f)
 
-    def _add_flow(self, **kwargs):
+    def _add_flow(self, flow_group_id=None, **kwargs):
+        """Add a new flow.
+
+        Most of the port related flows will have the parameters "reg_port" or
+        "in_port". If no "flow_group_id" is defined, "in_port" or "reg_port"
+        will be used instead (those parameters store the port "ofport"). The
+        flow group ID will be used to commit all flows related to a port in
+        the same transaction (for deferred OVS bridge implementation only).
+        """
+        flow_group_id = (flow_group_id or
+                         kwargs.get('in_port') or
+                         kwargs.get('reg_port'))
         dl_type = kwargs.get('dl_type')
         create_reg_numbers(kwargs)
         if isinstance(dl_type, int):
@@ -603,7 +614,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         if self._update_cookie:
             kwargs['cookie'] = self._update_cookie
         if self._deferred:
-            self.int_br.add_flow(**kwargs)
+            self.int_br.add_flow(flow_group_id=flow_group_id, **kwargs)
         else:
             self.int_br.br.add_flow(**kwargs)
 
@@ -889,6 +900,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             actions += 'strip_vlan,resubmit(,{:d})'.format(
                     ovs_consts.BASE_INGRESS_TABLE)
             self._add_flow(
+                flow_group_id=ofport,
                 table=ovs_consts.TRANSIENT_TABLE,
                 priority=90,
                 dl_dst=mac,
@@ -900,6 +912,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             actions += 'resubmit(,{:d})'.format(
                     ovs_consts.BASE_INGRESS_TABLE)
             self._add_flow(
+                flow_group_id=ofport,
                 table=ovs_consts.TRANSIENT_TABLE,
                 priority=90,
                 dl_dst=mac,
@@ -944,6 +957,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 port.vlan_tag, port.network_type)
 
             self._add_flow(
+                flow_group_id=port.ofport,
                 table=ovs_consts.TRANSIENT_TABLE,
                 priority=90,
                 dl_dst=mac_addr,
@@ -1198,6 +1212,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         # and if not, accept it
         for mac_addr in port.all_allowed_macs:
             self._add_flow(
+                flow_group_id=port.ofport,
                 table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
                 priority=100,
                 dl_dst=mac_addr,
@@ -1240,6 +1255,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
         # Prevent flood for accepted egress traffic
         self._add_flow(
+            flow_group_id=dst_port,
             table=ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE,
             priority=12,
             dl_dst=mac,
@@ -1272,6 +1288,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
             if patch_ofport is not ovs_lib.INVALID_OFPORT:
                 self._add_flow(
+                    flow_group_id=dst_port,
                     table=ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE,
                     priority=10,
                     dl_src=mac,
@@ -1296,6 +1313,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
     def _initialize_tracked_egress(self, port):
         # Drop invalid packets
         self._add_flow(
+            flow_group_id=port.ofport,
             table=ovs_consts.RULES_EGRESS_TABLE,
             priority=50,
             ct_state=ovsfw_consts.OF_STATE_INVALID,
@@ -1411,6 +1429,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
     def _initialize_tracked_ingress(self, port):
         # Drop invalid packets
         self._add_flow(
+            flow_group_id=port.ofport,
             table=ovs_consts.RULES_INGRESS_TABLE,
             priority=50,
             ct_state=ovsfw_consts.OF_STATE_INVALID,
@@ -1557,7 +1576,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
         self._add_non_ip_conj_flows(port)
 
-        self.conj_ip_manager.update_flows_for_vlan(port.vlan_tag)
+        self.conj_ip_manager.update_flows_for_vlan(port.vlan_tag,
+                                                   port.ofport)
 
     def _create_rules_generator_for_port(self, port):
         for sec_group in port.sec_groups:

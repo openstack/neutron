@@ -16,7 +16,6 @@
 import collections
 import functools
 import itertools
-import operator
 import random
 import time
 import uuid
@@ -77,6 +76,9 @@ CTRL_BURST_LIMIT_MIN = 25
 
 # TODO(slaweq): move this to neutron_lib.constants
 TYPE_GRE_IP6 = 'ip6gre'
+
+ActionFlowTuple = collections.namedtuple('ActionFlowTuple',
+                                         ['action', 'flow', 'flow_group_id'])
 
 
 def _ovsdb_result_pending(result):
@@ -251,6 +253,7 @@ class OVSBridge(BaseOVS):
         self.initial_protocols = {
             constants.OPENFLOW10, constants.OPENFLOW13, constants.OPENFLOW14}
         self.initial_protocols.add(self._highest_protocol_needed)
+        self._flows_per_port = cfg.CONF.OVS.openflow_processed_per_port
 
     @property
     def default_cookie(self):
@@ -468,7 +471,22 @@ class OVSBridge(BaseOVS):
                           self.br_name)
             raise RuntimeError(_('No datapath_id on bridge %s') % self.br_name)
 
-    def do_action_flows(self, action, kwargs_list, use_bundle=False):
+    def do_action_flows_by_group_id(self, action, flows_by_group_id,
+                                    use_bundle=False):
+        if self._flows_per_port:
+            # Group flow actions per port.
+            for flow_group_id, flows in flows_by_group_id.items():
+                self.do_action_flows(action, flows, use_bundle=use_bundle,
+                                     flow_group_id=flow_group_id)
+        else:
+            # Group all actions in one single list without any group ID
+            # reference.
+            flows = [item for _list in flows_by_group_id.values()
+                     for item in _list]
+            self.do_action_flows(action, flows, use_bundle=use_bundle)
+
+    def do_action_flows(self, action, kwargs_list, use_bundle=False,
+                        flow_group_id=None):
         # we can't mix strict and non-strict, so we'll use the first kw
         # and check against other kw being different
         strict = kwargs_list[0].get('strict', False)
@@ -515,7 +533,15 @@ class OVSBridge(BaseOVS):
             if use_bundle:
                 extra_param.append('--bundle')
 
-            step = common_constants.AGENT_RES_PROCESSING_STEP
+            if flow_group_id:
+                # NOTE(ralonsoh): all flows belonging to a port will be written
+                # atomically in the same command.
+                step = len(flow_strs)
+            else:
+                # No group ID defined (flows are not grouped per port). Use the
+                # default batch step value "openflow_number_processing_step".
+                step = common_constants.AGENT_RES_PROCESSING_STEP
+
             for i in range(0, len(flow_strs), step):
                 self.run_ofctl('%s-flows' % action, extra_param + ['-'],
                                '\n'.join(flow_strs[i:i + step]))
@@ -1243,14 +1269,15 @@ class DeferredOVSBridge(object):
             return getattr(self.br, name)
         raise AttributeError(name)
 
-    def add_flow(self, **kwargs):
-        self.action_flow_tuples.append(('add', kwargs))
+    def add_flow(self, flow_group_id=None, **kwargs):
+        self.action_flow_tuples.append(
+            ActionFlowTuple('add', kwargs, flow_group_id))
 
     def mod_flow(self, **kwargs):
-        self.action_flow_tuples.append(('mod', kwargs))
+        self.action_flow_tuples.append(ActionFlowTuple('mod', kwargs, None))
 
     def delete_flows(self, **kwargs):
-        self.action_flow_tuples.append(('del', kwargs))
+        self.action_flow_tuples.append(ActionFlowTuple('del', kwargs, None))
 
     def apply_flows(self):
         action_flow_tuples = self.action_flow_tuples
@@ -1259,14 +1286,16 @@ class DeferredOVSBridge(object):
             return
 
         if not self.full_ordered:
-            action_flow_tuples.sort(key=lambda af: self.weights[af[0]])
+            action_flow_tuples.sort(key=lambda flow: self.weights[flow.action])
 
-        grouped = itertools.groupby(action_flow_tuples,
-                                    key=operator.itemgetter(0))
-        itemgetter_1 = operator.itemgetter(1)
-        for action, action_flow_list in grouped:
-            flows = list(map(itemgetter_1, action_flow_list))
-            self.br.do_action_flows(action, flows, self.use_bundle)
+        flows_by_action = itertools.groupby(action_flow_tuples,
+                                            key=lambda af: af.action)
+        for action, flows in flows_by_action:
+            flows_by_group_id = collections.defaultdict(list)
+            for flow in flows:
+                flows_by_group_id[flow.flow_group_id].append(flow.flow)
+            self.br.do_action_flows_by_group_id(action, flows_by_group_id,
+                                                self.use_bundle)
 
     def __enter__(self):
         return self
