@@ -407,3 +407,34 @@ class TestNetworkIPAvailabilityAPI(
                             avails_list, net_v6_2, 2, cidr_ipv6_net.size - 1)
                     self._validate_from_availabilities(
                             avails_list, net_v4_2, 2, 253)
+
+    def test_usages_query_limit(self):
+        with self.network() as net1, self.network() as net2, \
+                self.network() as net3, self.network() as net4:
+            networks = (net1, net2, net3, net4)
+            for idx in range(1, len(networks) + 1):
+                params = 'limit=%s' % idx
+                request = self.new_list_request(API_RESOURCE, params=params)
+                response = self.deserialize(self.fmt,
+                                            request.get_response(self.ext_api))
+                self.assertEqual(idx, len(response[IP_AVAILS_KEY]))
+
+    def test_usages_query_sorting(self):
+        with self.network() as net1, self.network() as net2, \
+                self.network() as net3, self.network() as net4:
+            networks = (net1, net2, net3, net4)
+            network_ids = sorted([net['network']['id'] for net in networks])
+
+            params = 'sort_key=network_id;sort_dir=asc'
+            request = self.new_list_request(API_RESOURCE, params=params)
+            response = self.deserialize(self.fmt,
+                                        request.get_response(self.ext_api))
+            res = [net['network_id'] for net in response[IP_AVAILS_KEY]]
+            self.assertEqual(network_ids, res)
+
+            params = 'sort_key=network_id;sort_dir=desc'
+            request = self.new_list_request(API_RESOURCE, params=params)
+            response = self.deserialize(self.fmt,
+                                        request.get_response(self.ext_api))
+            res = [net['network_id'] for net in response[IP_AVAILS_KEY]]
+            self.assertEqual(list(reversed(network_ids)), res)

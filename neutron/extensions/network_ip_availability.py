@@ -34,7 +34,10 @@ class Network_ip_availability(api_extensions.APIExtensionDescriptor):
             apidef.RESOURCE_PLURAL,
             apidef.RESOURCE_NAME,
             plugin.NetworkIPAvailabilityPlugin.get_instance(),
-            resource_attributes)
+            resource_attributes,
+            allow_pagination=True,
+            allow_sorting=True,
+        )
         return [extensions.ResourceExtension(apidef.COLLECTION_NAME,
                                              controller,
                                              attr_map=resource_attributes)]
