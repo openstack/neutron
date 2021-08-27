@@ -12,12 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from debtcollector import moves
 from oslo_config import cfg
 from ovsdbapp.backend.ovs_idl import command
 from ovsdbapp.backend.ovs_idl import connection
 from ovsdbapp.backend.ovs_idl import idlutils
-from ovsdbapp.backend.ovs_idl import transaction
 from ovsdbapp.backend.ovs_idl import vlog
 from ovsdbapp.schema.open_vswitch import impl_idl
 
@@ -26,18 +24,6 @@ from neutron.common import utils
 from neutron.conf.agent import ovs_conf
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 
-NeutronOVSDBTransaction = moves.moved_class(
-    impl_idl.OvsVsctlTransaction,
-    'NeutronOVSDBTransaction',
-    __name__)
-
-VswitchdInterfaceAddException = moves.moved_class(
-    impl_idl.VswitchdInterfaceAddException,
-    'VswitchdInterfaceAddException',
-    __name__)
-
-Transaction = moves.moved_class(transaction.Transaction,
-                                'Transaction', __name__)
 
 ovs_conf.register_ovs_agent_opts()
 _connection = None
