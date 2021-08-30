@@ -17,6 +17,7 @@ pymysql
 # 3rd party middleware
 git+https://github.com/sapcc/openstack-watcher-middleware.git#egg=watcher-middleware
 git+https://github.com/sapcc/openstack-audit-middleware.git@master#egg=audit-middleware
+git+https://github.com/sapcc/openstack-manhole-middleware.git@main#egg=manhole-middleware
 
 # Networking Drivers
 -e git+https://github.com/sapcc/asr1k-neutron-l3@stable/ussuri-m3#egg=asr1k-neutron-l3
