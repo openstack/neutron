@@ -59,10 +59,14 @@ class TestSecurityGroupRuleCallback(base.BaseTestCase):
         fake_register()
         self.driver_manager.register_driver(FAKE_DRIVER)
 
-        registry.notify(
-            resources.SECURITY_GROUP_RULE, events.AFTER_CREATE, mock.ANY)
+        registry.publish(
+            resources.SECURITY_GROUP_RULE, events.AFTER_CREATE, mock.ANY,
+            payload=events.DBEventPayload(mock.ANY, states=(mock.ANY,)))
         mock_sg_cb.assert_called_once_with(
-            resources.SECURITY_GROUP_RULE, events.AFTER_CREATE, mock.ANY)
+            resources.SECURITY_GROUP_RULE, events.AFTER_CREATE, mock.ANY,
+            payload=mock.ANY)
         mock_sg_cb.reset_mock()
-        registry.notify('fake_resource', events.AFTER_DELETE, mock.ANY)
+        registry.publish('fake_resource', events.AFTER_DELETE, mock.ANY,
+                         payload=events.DBEventPayload(mock.ANY,
+                                                       states=(mock.ANY,)))
         mock_sg_cb.assert_not_called()

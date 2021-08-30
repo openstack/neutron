@@ -281,17 +281,19 @@ class SecurityGroupServerAPIShim(sg_rpc_base.SecurityGroupInfoAPIMixin):
         return set([rule.security_group_id for rule in
                     self.rcache.get_resources('SecurityGroupRule', filters)])
 
-    def _add_child_sg_rules(self, rtype, event, trigger, context, updated,
-                            **kwargs):
+    def _add_child_sg_rules(self, rtype, event, trigger, payload):
         # whenever we receive a full security group, add all child rules
         # because the server won't emit events for the individual rules on
         # creation.
+        context = payload.context
+        updated = payload.latest_state
         for rule in updated.rules:
             self.rcache.record_resource_update(context, 'SecurityGroupRule',
                                                rule)
 
-    def _clear_child_sg_rules(self, rtype, event, trigger, context, existing,
-                              **kwargs):
+    def _clear_child_sg_rules(self, rtype, event, trigger, payload):
+        context = payload.context
+        existing = payload.states[0]
         if not existing:
             return
         # the server can delete an entire security group without notifying
@@ -302,28 +304,30 @@ class SecurityGroupServerAPIShim(sg_rpc_base.SecurityGroupInfoAPIMixin):
             self.rcache.record_resource_delete(context, 'SecurityGroupRule',
                                                rule.id)
 
-    def _handle_sg_rule_delete(self, rtype, event, trigger, context, existing,
-                               **kwargs):
+    def _handle_sg_rule_delete(self, rtype, event, trigger, payload):
+        existing = payload.states[0]
         if not existing:
             return
         sg_id = existing.security_group_id
         self._sg_agent.security_groups_rule_updated([sg_id])
 
-    def _handle_sg_rule_update(self, rtype, event, trigger, context, existing,
-                               updated, **kwargs):
+    def _handle_sg_rule_update(self, rtype, event, trigger, payload):
+        updated = payload.latest_state
         sg_id = updated.security_group_id
         self._sg_agent.security_groups_rule_updated([sg_id])
 
-    def _handle_sg_member_delete(self, rtype, event, trigger, context,
-                                 existing, **kwargs):
+    def _handle_sg_member_delete(self, rtype, event, trigger, payload):
         # received on port delete
+        existing = payload.states[0]
         sgs = set(existing.security_group_ids) if existing else set()
         if sgs:
             self._sg_agent.security_groups_member_updated(sgs)
 
-    def _handle_sg_member_update(self, rtype, event, trigger, context,
-                                 existing, updated, changed_fields, **kwargs):
+    def _handle_sg_member_update(self, rtype, event, trigger, payload):
         # received on port update
+        existing = payload.states[0]
+        updated = payload.latest_state
+        changed_fields = payload.metadata['changed_fields']
         sgs = set(existing.security_group_ids) if existing else set()
         if not changed_fields.intersection({'security_group_ids', 'fixed_ips',
                                             'allowed_address_pairs'}):
@@ -333,8 +337,8 @@ class SecurityGroupServerAPIShim(sg_rpc_base.SecurityGroupInfoAPIMixin):
         if sgs:
             self._sg_agent.security_groups_member_updated(sgs)
 
-    def _handle_address_group_event(self, rtype, event, trigger, context,
-                                    resource_id, **kwargs):
+    def _handle_address_group_event(self, rtype, event, trigger, payload):
+        resource_id = payload.resource_id
         if event == events.AFTER_UPDATE:
             self._sg_agent.address_group_updated(resource_id)
         else:

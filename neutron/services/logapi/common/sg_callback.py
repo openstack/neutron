@@ -21,13 +21,13 @@ from neutron.services.logapi.drivers import manager
 
 class SecurityGroupRuleCallBack(manager.ResourceCallBackBase):
 
-    def handle_event(self, resource, event, trigger, **kwargs):
-        context = kwargs.get("context")
-        sg_rule = kwargs.get('security_group_rule')
+    def handle_event(self, resource, event, trigger, payload):
+        context = payload.context
+        sg_rule = payload.latest_state
         if sg_rule:
             sg_id = sg_rule.get('security_group_id')
         else:
-            sg_id = kwargs.get('security_group_id')
+            sg_id = payload.resource_id
 
         log_resources = db_api.get_logs_bound_sg(context, sg_id)
         if log_resources:

@@ -238,17 +238,18 @@ class CacheBackedPluginApi(PluginApi):
             for r in (resources.PORT, resources.NETWORK):
                 registry.subscribe(self._legacy_notifier, r, e)
 
-    def _legacy_notifier(self, rtype, event, trigger, context, resource_id,
-                         **kwargs):
+    def _legacy_notifier(self, rtype, event, trigger, payload):
         """Checks if legacy interface is expecting calls for resource.
 
         looks for port_update, network_delete, etc and calls them with
         the payloads the handlers are expecting (an ID).
         """
+        context = payload.context
+        resource_id = payload.resource_id
         rtype = rtype.lower()  # all legacy handlers don't camelcase
-        agent_restarted = kwargs.pop("agent_restarted", None)
+        agent_restarted = payload.metadata.pop("agent_restarted", None)
         method, host_with_activation, host_with_deactivation = (
-            self._get_method_host(rtype, event, **kwargs))
+            self._get_method_host(rtype, event, payload))
         if not hasattr(self._legacy_interface, method):
             # TODO(kevinbenton): once these notifications are stable, emit
             # a deprecation warning for legacy handlers
@@ -268,7 +269,7 @@ class CacheBackedPluginApi(PluginApi):
                 payload["agent_restarted"] = agent_restarted
             getattr(self._legacy_interface, method)(context, **payload)
 
-    def _get_method_host(self, rtype, event, **kwargs):
+    def _get_method_host(self, rtype, event, payload):
         """Constructs the name of method to be called in the legacy interface.
 
         If the event received is a port update that contains a binding
@@ -288,20 +289,21 @@ class CacheBackedPluginApi(PluginApi):
         # A port update was received. Find out if it is a binding activation
         # where a previous binding was deactivated
         BINDINGS = pb_ext.COLLECTION_NAME
-        if BINDINGS in kwargs.get('changed_fields', set()):
+        changed_fields = payload.metadata['changed_fields']
+        if BINDINGS in changed_fields:
             existing_active_binding = (
                 utils.get_port_binding_by_status_and_host(
-                    getattr(kwargs['existing'], 'bindings', []),
+                    getattr(payload.states[0], 'bindings', []),
                     constants.ACTIVE))
             updated_active_binding = (
                 utils.get_port_binding_by_status_and_host(
-                    getattr(kwargs['updated'], 'bindings', []),
+                    getattr(payload.latest_state, 'bindings', []),
                     constants.ACTIVE))
             if (existing_active_binding and updated_active_binding and
                     existing_active_binding.host !=
                     updated_active_binding.host):
                 if (utils.get_port_binding_by_status_and_host(
-                        getattr(kwargs['updated'], 'bindings', []),
+                        getattr(payload.latest_state, 'bindings', []),
                         constants.INACTIVE,
                         host=existing_active_binding.host)):
                     method = BINDING_DEACTIVATE
