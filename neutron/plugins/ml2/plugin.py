@@ -1592,6 +1592,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                  process_extensions=False)
                 port_dict[portbindings.HOST_ID] = pdata.get(
                     portbindings.HOST_ID)
+                port_dict[portbindings.VNIC_TYPE] = pdata.get(
+                    portbindings.VNIC_TYPE)
+                port_dict[portbindings.PROFILE] = pdata.get(
+                    portbindings.PROFILE)
 
                 # Activities immediately post-port-creation
                 self.extension_manager.process_create_port(context, pdata,

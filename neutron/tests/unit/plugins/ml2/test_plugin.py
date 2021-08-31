@@ -1388,6 +1388,26 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             else:
                 self.assertTrue('ports' in ports)
 
+    def test_create_ports_bulk_with_portbinding_attrs(self):
+        ctx = context.get_admin_context()
+        with self.network() as net:
+            overrides = {0: {portbindings.HOST_ID: 'host1',
+                             portbindings.VNIC_TYPE: 'direct',
+                             portbindings.PROFILE: {'foo': 'foo'}},
+                         1: {portbindings.HOST_ID: 'host2',
+                             portbindings.VNIC_TYPE: 'macvtap',
+                             portbindings.PROFILE: {'bar': 'bar'}}}
+            res = self._create_port_bulk(self.fmt, 2, net['network']['id'],
+                                         'test', True, context=ctx,
+                                         override=overrides)
+            ports = self.deserialize(self.fmt, res)['ports']
+            self.assertCountEqual(['direct', 'macvtap'],
+                                  [p[portbindings.VNIC_TYPE] for p in ports])
+            self.assertCountEqual([{'foo': 'foo'}, {'bar': 'bar'}],
+                                  [p[portbindings.PROFILE] for p in ports])
+            self.assertCountEqual(['host1', 'host2'],
+                                  [p[portbindings.HOST_ID] for p in ports])
+
     def test_create_ports_bulk_with_sec_grp_member_provider_update(self):
         ctx = context.get_admin_context()
         plugin = directory.get_plugin()
