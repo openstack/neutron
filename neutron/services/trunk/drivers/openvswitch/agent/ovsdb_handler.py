@@ -131,8 +131,9 @@ class OVSDBHandler(object):
 
     @registry.receives(ovs_agent_constants.OVSDB_RESOURCE, [events.AFTER_READ])
     def process_trunk_port_events(
-            self, resource, event, trigger, ovsdb_events):
+            self, resource, event, trigger, payload):
         """Process added and removed port events coming from OVSDB monitor."""
+        ovsdb_events = payload.latest_state
         for port_event in ovsdb_events['added']:
             port_name = port_event['name']
             if is_trunk_bridge(port_name):

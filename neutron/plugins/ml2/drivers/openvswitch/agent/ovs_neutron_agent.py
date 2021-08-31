@@ -2460,11 +2460,12 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                           failed_devices,
                                           failed_ancillary_devices,
                                           updated_ports_copy))
-            registry.notify(
-                constants.OVSDB_RESOURCE,
-                callback_events.AFTER_READ,
-                self,
-                ovsdb_events=events)
+            registry.publish(constants.OVSDB_RESOURCE,
+                             callback_events.AFTER_READ,
+                             self,
+                             payload=callback_events.EventPayload(
+                                 context=None,
+                                 states=(events,)))
 
         return (port_info, ancillary_port_info, consecutive_resyncs,
                 ports_not_ready_yet)
