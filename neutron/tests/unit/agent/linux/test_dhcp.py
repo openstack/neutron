@@ -230,6 +230,9 @@ class FakeV6PortExtraOpt(object):
         self.extra_dhcp_opts = [
             DhcpOpt(opt_name='dns-server',
                     opt_value='ffea:3ba5:a17a:4ba3::100',
+                    ip_version=constants.IP_VERSION_6),
+            DhcpOpt(opt_name='malicious-option',
+                    opt_value='aaa\nbbb.ccc\n',
                     ip_version=constants.IP_VERSION_6)]
 
 
@@ -2910,7 +2913,9 @@ class TestDnsmasq(TestBase):
         exp_opt_data = ('tag:subnet-eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee,'
                         'option6:domain-search,openstacklocal\n'
                         'tag:port-hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh,'
-                        'option6:dns-server,ffea:3ba5:a17a:4ba3::100').lstrip()
+                        'option6:dns-server,ffea:3ba5:a17a:4ba3::100\n'
+                        'tag:port-hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh,'
+                        'option6:malicious-option,aaa').lstrip()
         dm = self._get_dnsmasq(FakeV6NetworkStatelessDHCP())
         dm._output_hosts_file()
         dm._output_opts_file()
