@@ -66,7 +66,7 @@ The following manufacturers are known to work:
 
 For information on **Mellanox SR-IOV Ethernet ConnectX cards**, see:
 
-- `Mellanox: How To Configure SR-IOV VFs on ConnectX-4 or newer <https://community.mellanox.com/s/article/howto-configure-sr-iov-for-connectx-4-connectx-5-with-kvm--ethernet-x>`_.
+- `Mellanox: How To Configure SR-IOV VFs on ConnectX-4 or newer <https://community.mellanox.com/s/article/HowTo-Configure-SR-IOV-for-ConnectX-4-ConnectX-5-ConnectX-6-with-KVM-Ethernet>`_.
 - `Mellanox: How To Configure SR-IOV VFs on ConnectX-3/ConnectX-3 Pro <https://community.mellanox.com/docs/DOC-1484>`_.
 
 For information on **QLogic SR-IOV Ethernet cards**, see:
