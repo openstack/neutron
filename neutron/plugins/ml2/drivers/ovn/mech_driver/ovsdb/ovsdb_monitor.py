@@ -708,9 +708,11 @@ class OvnInitPGNbIdl(OvnIdl):
 
     def __init__(self, driver, remote, schema):
         super(OvnInitPGNbIdl, self).__init__(driver, remote, schema)
-        self.cond_change(
-            'Port_Group',
-            [['name', '==', ovn_const.OVN_DROP_PORT_GROUP_NAME]])
+        # self.cond_change() doesn't work here because we are setting the
+        # condition *before an initial monitor request is made* so there is
+        # no previous session whose condition we wish to change
+        self.tables['Port_Group'].condition = [
+            ['name', '==', ovn_const.OVN_DROP_PORT_GROUP_NAME]]
         self.neutron_pg_drop_event = NeutronPgDropPortGroupCreated()
         self.notify_handler.watch_event(self.neutron_pg_drop_event)
 
