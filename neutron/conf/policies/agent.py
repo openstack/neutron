@@ -107,7 +107,7 @@ rules = [
         ],
         scope_types=['system'],
         deprecated_rule=policy.DeprecatedRule(
-            name='get_dhcp-networs',
+            name='get_dhcp-networks',
             check_str=base.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATION_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
@@ -124,7 +124,7 @@ rules = [
         ],
         scope_types=['system'],
         deprecated_rule=policy.DeprecatedRule(
-            name='delete_dhcp-networ',
+            name='delete_dhcp-network',
             check_str=base.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATION_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
