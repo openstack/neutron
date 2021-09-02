@@ -57,7 +57,7 @@ class ResourceCallBackBase(object):
                       events.AFTER_DELETE):
             registry.subscribe(self.handle_event, resource, event)
 
-    def handle_event(self, resource, event, trigger, **kwargs):
+    def handle_event(self, resource, event, trigger, payload):
         """Handle resource callback event"""
         pass
 

@@ -191,11 +191,13 @@ class RemoteResourceCache(object):
         else:
             LOG.debug("Received new resource %s: %s", rtype, resource)
         # local notification for agent internals to subscribe to
-        registry.notify(rtype, events.AFTER_UPDATE, self,
-                        context=context, changed_fields=changed_fields,
-                        existing=existing, updated=resource,
-                        resource_id=resource.id,
-                        agent_restarted=agent_restarted)
+        registry.publish(rtype, events.AFTER_UPDATE, self,
+                         payload=events.DBEventPayload(
+                             context,
+                             metadata={'changed_fields': changed_fields,
+                                       'agent_restarted': agent_restarted},
+                             resource_id=resource.id,
+                             states=(existing, resource)))
 
     def record_resource_delete(self, context, rtype, resource_id):
         # deletions are final, record them so we never
@@ -209,8 +211,11 @@ class RemoteResourceCache(object):
         self._deleted_ids_by_type[rtype].add(resource_id)
         existing = self._type_cache(rtype).pop(resource_id, None)
         # local notification for agent internals to subscribe to
-        registry.notify(rtype, events.AFTER_DELETE, self, context=context,
-                        existing=existing, resource_id=resource_id)
+        registry.publish(rtype, events.AFTER_DELETE, self,
+                         payload=events.DBEventPayload(
+                             context,
+                             resource_id=resource_id,
+                             states=(existing,)))
 
     def _get_changed_fields(self, old, new):
         """Returns changed fields excluding update time and revision."""

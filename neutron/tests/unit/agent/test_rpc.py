@@ -219,8 +219,10 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
 
     def test__legacy_notifier_resource_delete(self):
         self._api._legacy_notifier(resources.PORT, events.AFTER_DELETE, self,
-                                   mock.ANY, resource_id=self._port_id,
-                                   existing=self._port)
+                                   payload=events.DBEventPayload(
+                                       mock.ANY,
+                                       resource_id=self._port_id,
+                                       states=(self._port,)))
         self._api._legacy_interface.port_update.assert_not_called()
         self._api._legacy_interface.port_delete.assert_called_once_with(
             mock.ANY, port={'id': self._port_id}, port_id=self._port_id)
@@ -229,9 +231,14 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
     def test__legacy_notifier_resource_update(self):
         updated_port = ports.Port(id=self._port_id, name='updated_port')
         self._api._legacy_notifier(resources.PORT, events.AFTER_UPDATE, self,
-                                   mock.ANY, changed_fields=set(['name']),
-                                   resource_id=self._port_id,
-                                   existing=self._port, updated=updated_port)
+                                   payload=events.DBEventPayload(
+                                       mock.ANY,
+                                       metadata={
+                                           'changed_fields': set(['name'])
+                                       },
+                                       resource_id=self._port_id,
+                                       states=(self._port, updated_port)))
+
         self._api._legacy_interface.port_delete.assert_not_called()
         self._api._legacy_interface.port_update.assert_called_once_with(
             mock.ANY, port={'id': self._port_id}, port_id=self._port_id)
@@ -246,11 +253,16 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
                       ports.PortBinding(port_id=self._port_id,
                                         host='host1',
                                         status=constants.INACTIVE)])
-        self._api._legacy_notifier(resources.PORT, events.AFTER_UPDATE, self,
-                                   mock.ANY,
-                                   changed_fields=set(['name', 'bindings']),
-                                   resource_id=self._port_id,
-                                   existing=self._port, updated=updated_port)
+        self._api._legacy_notifier(
+            resources.PORT, events.AFTER_UPDATE, self,
+            payload=events.DBEventPayload(
+                mock.ANY,
+                metadata={
+                    'changed_fields': set(['name', 'bindings'])
+                },
+                resource_id=self._port_id,
+                states=(self._port, updated_port)))
+
         self._api._legacy_interface.port_update.assert_not_called()
         self._api._legacy_interface.port_delete.assert_not_called()
 
@@ -267,27 +279,40 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
             bindings=[ports.PortBinding(port_id=self._port_id,
                                         host='host2',
                                         status=constants.ACTIVE)])
-        self._api._legacy_notifier(resources.PORT, events.AFTER_UPDATE, self,
-                                   mock.ANY,
-                                   changed_fields=set(['name', 'bindings']),
-                                   resource_id=self._port_id,
-                                   existing=self._port, updated=updated_port)
+        self._api._legacy_notifier(
+            resources.PORT, events.AFTER_UPDATE, self,
+            payload=events.DBEventPayload(
+                mock.ANY,
+                metadata={
+                    'changed_fields': set(['name', 'bindings'])
+                },
+                resource_id=self._port_id,
+                states=(self._port, updated_port)))
+
         self._api._legacy_interface.port_update.assert_called_once_with(
             mock.ANY, port={'id': self._port_id}, port_id=self._port_id)
         self._api._legacy_interface.port_delete.assert_not_called()
         self._api._legacy_interface.binding_deactivate.assert_not_called()
 
     def test__legacy_notifier_existing_or_updated_is_none(self):
-        self._api._legacy_notifier(resources.PORT, events.AFTER_UPDATE,
-                                   self, mock.ANY,
-                                   changed_fields=set(['name', 'bindings']),
-                                   resource_id=self._port_id,
-                                   existing=None, updated=None)
-        self._api._legacy_notifier(resources.PORT, events.AFTER_UPDATE, self,
-                                   mock.ANY,
-                                   changed_fields=set(['name', 'bindings']),
-                                   resource_id=self._port_id,
-                                   existing=self._port, updated=None)
+        self._api._legacy_notifier(
+            resources.PORT, events.AFTER_UPDATE, self,
+            payload=events.DBEventPayload(
+                mock.ANY,
+                metadata={
+                    'changed_fields': set(['name', 'bindings'])
+                },
+                resource_id=self._port_id,
+                states=(None, None)))
+        self._api._legacy_notifier(
+            resources.PORT, events.AFTER_UPDATE, self,
+            payload=events.DBEventPayload(
+                mock.ANY,
+                metadata={
+                    'changed_fields': set(['name', 'bindings'])
+                },
+                resource_id=self._port_id,
+                states=(self._port, None)))
         call = mock.call(mock.ANY, port={'id': self._port_id},
                          port_id=self._port_id)
         self._api._legacy_interface.port_update.assert_has_calls([call, call])

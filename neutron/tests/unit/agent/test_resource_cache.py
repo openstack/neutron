@@ -58,7 +58,8 @@ class RemoteResourceCacheTestCase(base.BaseTestCase):
     def test__flood_cache_for_query_pulls_once(self):
         resources = [OVOLikeThing(66), OVOLikeThing(67)]
         received_kw = []
-        receiver = lambda *a, **k: received_kw.append(k)
+        receiver = lambda r, e, t, payload: \
+            received_kw.append(payload)
         registry.subscribe(receiver, 'goose', events.AFTER_UPDATE)
 
         self._pullmock.bulk_pull.side_effect = [
@@ -87,7 +88,7 @@ class RemoteResourceCacheTestCase(base.BaseTestCase):
             mock.ANY, 'goose', filter_kwargs={'id': (67, )})
 
         self.assertCountEqual(
-            resources, [rec['updated'] for rec in received_kw])
+            resources, [rec.latest_state for rec in received_kw])
 
     def test_bulk_pull_doesnt_wipe_out_newer_data(self):
         self.rcache.record_resource_update(
@@ -137,12 +138,13 @@ class RemoteResourceCacheTestCase(base.BaseTestCase):
 
     def test_record_resource_update(self):
         received_kw = []
-        receiver = lambda *a, **k: received_kw.append(k)
+        receiver = lambda r, e, t, payload: \
+            received_kw.append(payload)
         registry.subscribe(receiver, 'goose', events.AFTER_UPDATE)
         self.rcache.record_resource_update(self.ctx, 'goose',
                                            OVOLikeThing(3, size='large'))
         self.assertEqual(1, len(received_kw))
-        self.assertIsNone(received_kw[0]['existing'])
+        self.assertIsNone(received_kw[0].states[0])
         # another update with no changed fields results in no callback
         self.rcache.record_resource_update(self.ctx, 'goose',
                                            OVOLikeThing(3, size='large',
@@ -152,29 +154,32 @@ class RemoteResourceCacheTestCase(base.BaseTestCase):
                                            OVOLikeThing(3, size='small',
                                                         revision_number=101))
         self.assertEqual(2, len(received_kw))
-        self.assertEqual('large', received_kw[1]['existing'].size)
-        self.assertEqual('small', received_kw[1]['updated'].size)
-        self.assertEqual(set(['size']), received_kw[1]['changed_fields'])
+        self.assertEqual('large', received_kw[1].states[0].size)
+        self.assertEqual('small', received_kw[1].latest_state.size)
+        self.assertEqual(set(['size']),
+                         received_kw[1].metadata['changed_fields'])
 
     def test_record_resource_delete(self):
         received_kw = []
-        receiver = lambda *a, **k: received_kw.append(k)
+        receiver = lambda r, e, t, payload: \
+            received_kw.append(payload)
         registry.subscribe(receiver, 'goose', events.AFTER_DELETE)
         self.rcache.record_resource_update(self.ctx, 'goose',
                                            OVOLikeThing(3, size='large'))
         self.rcache.record_resource_delete(self.ctx, 'goose', 3)
         self.assertEqual(1, len(received_kw))
-        self.assertEqual(3, received_kw[0]['existing'].id)
-        self.assertEqual(3, received_kw[0]['resource_id'])
+        self.assertEqual(3, received_kw[0].states[0].id)
+        self.assertEqual(3, received_kw[0].resource_id)
         # deletes of non-existing cache items are still honored
         self.rcache.record_resource_delete(self.ctx, 'goose', 4)
         self.assertEqual(2, len(received_kw))
-        self.assertIsNone(received_kw[1]['existing'])
-        self.assertEqual(4, received_kw[1]['resource_id'])
+        self.assertIsNone(received_kw[1].states[0])
+        self.assertEqual(4, received_kw[1].resource_id)
 
     def test_record_resource_delete_ignores_dups(self):
         received_kw = []
-        receiver = lambda *a, **k: received_kw.append(k)
+        receiver = lambda r, e, t, payload: \
+            received_kw.append(payload)
         registry.subscribe(receiver, 'goose', events.AFTER_DELETE)
         self.rcache.record_resource_delete(self.ctx, 'goose', 3)
         self.assertEqual(1, len(received_kw))
