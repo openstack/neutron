@@ -17,8 +17,13 @@ import collections
 import datetime
 
 from neutron_lib.db import api as db_api
+from oslo_db import exception as db_exc
 
+from neutron.common import utils
 from neutron.objects import quota as quota_obj
+
+
+RESERVATION_EXPIRATION_TIMEOUT = 20  # seconds
 
 
 # Wrapper for utcnow - needed for mocking it in unit tests
@@ -197,7 +202,7 @@ def get_reservation(context, reservation_id):
                                 for delta in reserv_obj.resource_deltas))
 
 
-@db_api.retry_if_session_inactive()
+@utils.skip_exceptions(db_exc.DBError)
 @db_api.CONTEXT_WRITER
 def remove_reservation(context, reservation_id, set_dirty=False):
     reservation = quota_obj.Reservation.get_object(context, id=reservation_id)
@@ -236,8 +241,12 @@ def get_reservations_for_resources(context, tenant_id, resources,
 
 @db_api.retry_if_session_inactive()
 @db_api.CONTEXT_WRITER
-def remove_expired_reservations(context, tenant_id=None):
-    return quota_obj.Reservation.delete_expired(context, utcnow(), tenant_id)
+def remove_expired_reservations(context, tenant_id=None, timeout=None):
+    expiring_time = utcnow()
+    if timeout:
+        expiring_time -= datetime.timedelta(seconds=timeout)
+    return quota_obj.Reservation.delete_expired(context, expiring_time,
+                                                tenant_id)
 
 
 class QuotaDriverAPI(object, metaclass=abc.ABCMeta):

@@ -53,8 +53,9 @@ class DbQuotaNoLockDriver(quota_driver.DbQuotaDriver):
             # Delete expired reservations before counting valid ones. This
             # operation is fast and by calling it before making any
             # reservation, we ensure the freshness of the reservations.
-            quota_api.remove_expired_reservations(context,
-                                                  tenant_id=project_id)
+            quota_api.remove_expired_reservations(
+                context, tenant_id=project_id,
+                timeout=quota_api.RESERVATION_EXPIRATION_TIMEOUT)
 
             # Count the number of (1) used and (2) reserved resources for this
             # project_id. If any resource limit is exceeded, raise exception.
