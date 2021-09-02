@@ -174,9 +174,8 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
         if not floatingip_id:
             return
 
-        exist_pf_resources = pf.PortForwarding.get_objects(
-            context, floatingip_id=floatingip_id)
-        if exist_pf_resources:
+        if pf.PortForwarding.objects_exist(context,
+                                           floatingip_id=floatingip_id):
             raise pf_exc.FipInUseByPortForwarding(id=floatingip_id)
 
     @registry.receives(resources.PORT, [events.AFTER_UPDATE,
