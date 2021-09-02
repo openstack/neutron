@@ -361,8 +361,7 @@ def sort_ips_by_version(addresses):
 
 
 def is_lsp_router_port(port):
-    return port.get('device_owner') in [const.DEVICE_OWNER_ROUTER_INTF,
-                                        const.DEVICE_OWNER_ROUTER_GW]
+    return port.get('device_owner') in const.ROUTER_PORT_OWNERS
 
 
 def get_lrouter_ext_gw_static_route(ovn_router):
