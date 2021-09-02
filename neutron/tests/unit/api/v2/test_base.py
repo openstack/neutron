@@ -1362,12 +1362,12 @@ class RegistryNotificationTest(APIv2TestBase):
         cfg.CONF.set_override('quota_driver', NULL_QUOTA_DRIVER,
                               group='QUOTAS')
 
-    def _test_registry_notify(self, opname, resource, initial_input=None):
+    def _test_registry_publish(self, opname, resource, initial_input=None):
         instance = self.plugin.return_value
         instance.get_networks.return_value = initial_input
         instance.get_networks_count.return_value = 0
         expected_code = exc.HTTPCreated.code
-        with mock.patch.object(registry, 'publish') as notify:
+        with mock.patch.object(registry, 'publish') as publish:
             if opname == 'create':
                 res = self.api.post_json(
                     _get_path('networks'),
@@ -1380,27 +1380,27 @@ class RegistryNotificationTest(APIv2TestBase):
             if opname == 'delete':
                 res = self.api.delete(_get_path('networks', id=_uuid()))
                 expected_code = exc.HTTPNoContent.code
-            self.assertTrue(notify.called)
+            self.assertTrue(publish.called)
         self.assertEqual(expected_code, res.status_int)
 
-    def test_network_create_registry_notify(self):
+    def test_network_create_registry_publish(self):
         input = {'network': {'name': 'net',
                              'tenant_id': _uuid()}}
-        self._test_registry_notify('create', 'network', input)
+        self._test_registry_publish('create', 'network', input)
 
-    def test_network_delete_registry_notify(self):
-        self._test_registry_notify('delete', 'network')
+    def test_network_delete_registry_publish(self):
+        self._test_registry_publish('delete', 'network')
 
-    def test_network_update_registry_notify(self):
+    def test_network_update_registry_publish(self):
         input = {'network': {'name': 'net'}}
-        self._test_registry_notify('update', 'network', input)
+        self._test_registry_publish('update', 'network', input)
 
-    def test_networks_create_bulk_registry_notify(self):
+    def test_networks_create_bulk_registry_publish(self):
         input = {'networks': [{'name': 'net1',
                                'tenant_id': _uuid()},
                               {'name': 'net2',
                                'tenant_id': _uuid()}]}
-        self._test_registry_notify('create', 'network', input)
+        self._test_registry_publish('create', 'network', input)
 
 
 class QuotaTest(APIv2TestBase):
