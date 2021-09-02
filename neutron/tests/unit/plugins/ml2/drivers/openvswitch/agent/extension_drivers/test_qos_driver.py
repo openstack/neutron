@@ -51,11 +51,20 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
                          {'phys1': ovs_bridge.OVSAgentBridge(
                              'br-phys1', os_ken_app=os_ken_app)})
         self.qos_driver.consume_api(self.agent_api)
+        mock.patch.object(
+            qos_driver.MeterRuleManager, '_init_max_meter_id').start()
         self.qos_driver.initialize()
         self.qos_driver.br_int = mock.Mock()
         self.qos_driver.br_int.get_dp = mock.Mock(return_value=(mock.Mock(),
                                                                 mock.Mock(),
                                                                 mock.Mock()))
+        self.qos_driver.meter_cache.br_int = self.qos_driver.br_int
+        self.qos_driver.meter_cache.max_meter = 65535
+        self.qos_driver.br_int.list_meter_features = mock.Mock(
+            return_value=[{"max_meter": 65535,
+                           "band_types": 2,
+                           "capabilities": 15,
+                           "max_bands": 8}])
         self.qos_driver.br_int.get_egress_bw_limit_for_port = mock.Mock(
             return_value=(1000, 10))
         self.get_egress = self.qos_driver.br_int.get_egress_bw_limit_for_port
@@ -68,12 +77,28 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
             self.qos_driver.br_int.create_egress_bw_limit_for_port)
         self.update_ingress = (
             self.qos_driver.br_int.update_ingress_bw_limit_for_port)
+
+        self.apply_meter_to_port = (
+            self.qos_driver.br_int.apply_meter_to_port)
+        self.remove_meter_from_port = (
+            self.qos_driver.br_int.remove_meter_from_port)
+        self.delete_meter = (
+            self.qos_driver.br_int.delete_meter)
+        self.create_meter = (
+            self.qos_driver.br_int.create_meter)
+        self.update_meter = (
+            self.qos_driver.br_int.update_meter)
+
         self.rules = [
             self._create_bw_limit_rule_obj(constants.EGRESS_DIRECTION),
             self._create_bw_limit_rule_obj(constants.INGRESS_DIRECTION),
+            self._create_pps_limit_rule_obj(constants.EGRESS_DIRECTION),
+            self._create_pps_limit_rule_obj(constants.INGRESS_DIRECTION),
             self._create_dscp_marking_rule_obj()]
         self.qos_policy = self._create_qos_policy_obj(self.rules)
         self.port = self._create_fake_port(self.qos_policy.id)
+        self.qos_driver.br_int.get_port_tag_by_name = mock.Mock(
+            return_value=1)
 
     def _create_bw_limit_rule_obj(self, direction):
         rule_obj = rule.QosBandwidthLimitRule()
@@ -88,6 +113,15 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         rule_obj = rule.QosDscpMarkingRule()
         rule_obj.id = uuidutils.generate_uuid()
         rule_obj.dscp_mark = 32
+        rule_obj.obj_reset_changes()
+        return rule_obj
+
+    def _create_pps_limit_rule_obj(self, direction):
+        rule_obj = rule.QosPacketRateLimitRule()
+        rule_obj.id = uuidutils.generate_uuid()
+        rule_obj.max_kpps = 2000
+        rule_obj.max_burst_kpps = 200
+        rule_obj.direction = direction
         rule_obj.obj_reset_changes()
         return rule_obj
 
@@ -108,17 +142,24 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
     def _create_fake_port(self, policy_id):
         self.port_name = 'fakeport'
 
+        port_id = uuidutils.generate_uuid()
+
         class FakeVifPort(object):
             port_name = self.port_name
             ofport = 111
+            vif_id = port_id
+            vif_mac = "aa:bb:cc:dd:ee:ff"
 
         return {'vif_port': FakeVifPort(),
                 'qos_policy_id': policy_id,
                 'qos_network_policy_id': None,
-                'port_id': uuidutils.generate_uuid(),
+                'port_id': port_id,
                 'device_owner': uuidutils.generate_uuid()}
 
     def test_create_new_rules(self):
+        self.qos_driver.br_int.get_value_from_other_config = mock.Mock()
+        self.qos_driver.br_int.set_value_to_other_config = mock.Mock()
+
         self.qos_driver.br_int.get_egress_bw_limit_for_port = mock.Mock(
             return_value=(None, None))
         self.qos_driver.create(self.port, self.qos_policy)
@@ -131,6 +172,19 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
             self.port_name, self.rules[1].max_kbps,
             self.rules[1].max_burst_kbps)
         self._assert_dscp_rule_create_updated()
+
+        self.create_meter.assert_has_calls(
+            [mock.call(mock.ANY, self.rules[2].max_kpps * 1000,
+             burst=self.rules[2].max_burst_kpps * 1000),
+             mock.call(mock.ANY, self.rules[3].max_kpps * 1000,
+             burst=self.rules[3].max_burst_kpps * 1000)])
+        self.apply_meter_to_port.assert_has_calls(
+            [mock.call(mock.ANY, constants.EGRESS_DIRECTION,
+                       "aa:bb:cc:dd:ee:ff",
+                       in_port=111),
+             mock.call(mock.ANY, constants.INGRESS_DIRECTION,
+                       "aa:bb:cc:dd:ee:ff",
+                       local_vlan=1)])
 
     def test_create_existing_rules(self):
         self.qos_driver.create(self.port, self.qos_policy)
@@ -149,11 +203,23 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         self.create_egress.assert_not_called()
         self.update_ingress.assert_not_called()
 
+        self.create_meter.assert_not_called()
+        self.apply_meter_to_port.assert_not_called()
+
     def _test_delete_rules(self, qos_policy):
         self.qos_driver.create(self.port, qos_policy)
         self.qos_driver.delete(self.port, qos_policy)
         self.delete_egress.assert_called_once_with(self.port_name)
         self.delete_ingress.assert_called_once_with(self.port_name)
+
+        self.assertEqual(2, self.delete_meter.call_count)
+        self.remove_meter_from_port.assert_has_calls(
+            [mock.call(constants.EGRESS_DIRECTION,
+                       "aa:bb:cc:dd:ee:ff",
+                       in_port=111),
+             mock.call(constants.INGRESS_DIRECTION,
+                       "aa:bb:cc:dd:ee:ff",
+                       local_vlan=1)])
 
     def _test_delete_rules_no_policy(self):
         self.qos_driver.delete(self.port)
@@ -172,6 +238,10 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         self.qos_driver.delete(port, self.qos_policy)
         self.delete_egress.assert_not_called()
         self.delete_ingress.assert_not_called()
+        self.delete_meter.assert_not_called()
+
+        self.delete_meter.assert_not_called()
+        self.remove_meter_from_port.assert_not_called()
 
     def _assert_rules_create_updated(self):
         self.create_egress.assert_called_once_with(
@@ -180,6 +250,19 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         self.update_ingress.assert_called_once_with(
             self.port_name, self.rules[1].max_kbps,
             self.rules[1].max_burst_kbps)
+
+        self.create_meter.assert_has_calls(
+            [mock.call(mock.ANY, self.rules[2].max_kpps * 1000,
+             burst=self.rules[2].max_burst_kpps * 1000),
+             mock.call(mock.ANY, self.rules[3].max_kpps * 1000,
+             burst=self.rules[3].max_burst_kpps * 1000)])
+        self.apply_meter_to_port.assert_has_calls(
+            [mock.call(mock.ANY, constants.EGRESS_DIRECTION,
+                       "aa:bb:cc:dd:ee:ff",
+                       in_port=111),
+             mock.call(mock.ANY, constants.INGRESS_DIRECTION,
+                       "aa:bb:cc:dd:ee:ff",
+                       local_vlan=1)])
 
     def _assert_dscp_rule_create_updated(self):
         # Assert install_instructions is the last call
