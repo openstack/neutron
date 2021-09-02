@@ -65,14 +65,14 @@ class TestUtils(base.BaseTestCase):
     def test_get_chassis_availability_zones_no_azs(self):
         chassis = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
             'external_ids': {'ovn-cms-options': 'enable-chassis-as-gw'}})
-        self.assertEqual([], utils.get_chassis_availability_zones(chassis))
+        self.assertEqual(set(), utils.get_chassis_availability_zones(chassis))
 
     def test_get_chassis_availability_zones_one_az(self):
         chassis = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
             'external_ids': {'ovn-cms-options':
                              'enable-chassis-as-gw,availability-zones=az0'}})
         self.assertEqual(
-            ['az0'], utils.get_chassis_availability_zones(chassis))
+            {'az0'}, utils.get_chassis_availability_zones(chassis))
 
     def test_get_chassis_availability_zones_multiple_az(self):
         chassis = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
@@ -80,7 +80,7 @@ class TestUtils(base.BaseTestCase):
                 'ovn-cms-options':
                 'enable-chassis-as-gw,availability-zones=az0:az1 :az2:: :'}})
         self.assertEqual(
-            ['az0', 'az1', 'az2'],
+            {'az0', 'az1', 'az2'},
             utils.get_chassis_availability_zones(chassis))
 
     def test_get_chassis_availability_zones_malformed(self):
@@ -88,7 +88,7 @@ class TestUtils(base.BaseTestCase):
             'external_ids': {'ovn-cms-options':
                              'enable-chassis-as-gw,availability-zones:az0'}})
         self.assertEqual(
-            [], utils.get_chassis_availability_zones(chassis))
+            set(), utils.get_chassis_availability_zones(chassis))
 
     def test_is_security_groups_enabled(self):
         self.assertTrue(utils.is_security_groups_enabled(
@@ -140,6 +140,57 @@ class TestUtils(base.BaseTestCase):
                 for lb in tc.input]
             rc = utils.parse_ovn_lb_port_forwarding(tc_lbs)
             self.assertEqual(rc, tc.output, tc.description)
+
+    def test_get_chassis_in_azs(self):
+        ch0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
+            'name': 'ch0',
+            'external_ids': {
+                'ovn-cms-options':
+                'enable-chassis-as-gw,availability-zones=az0:az1:az2'}})
+        ch1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
+            'name': 'ch1',
+            'external_ids': {
+                'ovn-cms-options': 'enable-chassis-as-gw'}})
+        ch2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
+            'name': 'ch2',
+            'external_ids': {
+                'ovn-cms-options':
+                'enable-chassis-as-gw,availability-zones=az1:az5'}})
+
+        chassis_list = [ch0, ch1, ch2]
+        self.assertEqual(
+            {'ch0', 'ch2'},
+            utils.get_chassis_in_azs(chassis_list, ['az1', 'az5']))
+        self.assertEqual(
+            {'ch0'},
+            utils.get_chassis_in_azs(chassis_list, ['az2', 'az6']))
+        self.assertEqual(
+            set(),
+            utils.get_chassis_in_azs(chassis_list, ['az6']))
+
+    def test_get_gateway_chassis_without_azs(self):
+        ch0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
+            'name': 'ch0',
+            'external_ids': {
+                'ovn-cms-options':
+                'enable-chassis-as-gw,availability-zones=az0:az1:az2'}})
+        ch1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
+            'name': 'ch1',
+            'external_ids': {
+                'ovn-cms-options': 'enable-chassis-as-gw'}})
+        ch2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
+            'name': 'ch2',
+            'external_ids': {
+                'ovn-cms-options':
+                'enable-chassis-as-gw,availability-zones=az1:az5'}})
+        ch3 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
+            'name': 'ch3',
+            'external_ids': {}})
+
+        chassis_list = [ch0, ch1, ch2, ch3]
+        self.assertEqual(
+            {'ch1'},
+            utils.get_gateway_chassis_without_azs(chassis_list))
 
 
 class TestGateWayChassisValidity(base.BaseTestCase):

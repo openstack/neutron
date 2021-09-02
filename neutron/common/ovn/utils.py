@@ -59,7 +59,7 @@ def ovn_name(id):
     # is a UUID. If so then there will be no matches.
     # We prefix the UUID to enable us to use the Neutron UUID when
     # updating, deleting etc.
-    return 'neutron-%s' % id
+    return "%s%s" % (constants.OVN_NAME_PREFIX, id)
 
 
 def ovn_lrouter_port_name(id):
@@ -513,7 +513,7 @@ def get_port_id_from_gwc_row(row):
 
 def get_chassis_availability_zones(chassis):
     """Return a list of availability zones from a given OVN Chassis."""
-    azs = []
+    azs = set()
     if not chassis:
         return azs
 
@@ -522,9 +522,40 @@ def get_chassis_availability_zones(chassis):
         if not opt.startswith(opt_key):
             continue
         values = opt.split('=')[1]
-        azs = [az.strip() for az in values.split(':') if az.strip()]
+        azs = {az.strip() for az in values.split(':') if az.strip()}
         break
     return azs
+
+
+def get_chassis_in_azs(chassis_list, az_list):
+    """Return a set of Chassis that belongs to the AZs.
+
+    Given a list of Chassis and a list of availability zones (AZs),
+    return a set of Chassis that belongs to one or more AZs.
+
+    :param chassis_list: A list of Chassis objects
+    :param az_list: A list of availability zones
+    :returns: A set of Chassis names
+    """
+    chassis = set()
+    for ch in chassis_list:
+        chassis_azs = get_chassis_availability_zones(ch)
+        if chassis_azs.intersection(az_list):
+            chassis.add(ch.name)
+    return chassis
+
+
+def get_gateway_chassis_without_azs(chassis_list):
+    """Return a set of Chassis that does not belong to any AZs.
+
+    Filter a list of Chassis and return only the Chassis that does not
+    belong to any availability zones.
+
+    :param chassis_list: A list of Chassis objects
+    :returns: A set of Chassis names
+    """
+    return {ch.name for ch in chassis_list if is_gateway_chassis(ch) and not
+            get_chassis_availability_zones(ch)}
 
 
 def parse_ovn_lb_port_forwarding(ovn_rtr_lb_pfs):

@@ -74,6 +74,39 @@ class ChassisEvent(row_event.RowEvent):
         super(ChassisEvent, self).__init__(events, table, None)
         self.event_name = 'ChassisEvent'
 
+    def _get_ha_chassis_groups_within_azs(self, az_hints):
+        """Find all HA Chassis groups that are within the given AZs.
+
+        :param az_hints: A list of availability zones hints
+        :returns: A set with the HA Chassis Groups objects
+        """
+        ha_chassis_list = []
+        for hcg in self.driver.nb_ovn.db_list_rows(
+                'HA_Chassis_Group').execute(check_error=True):
+            if not hcg.name.startswith(ovn_const.OVN_NAME_PREFIX):
+                continue
+            # The filter() is to get rid of the empty string in
+            # the list that is returned because of split()
+            azs = {az for az in
+                   hcg.external_ids.get(
+                       ovn_const.OVN_AZ_HINTS_EXT_ID_KEY, '').split(',') if az}
+            # Find which Ha Chassis Group that is included in the
+            # Availability Zone hints
+            if az_hints.intersection(azs):
+                ha_chassis_list.append(hcg)
+            # If the Availability Zone hints is empty return a list
+            # of HA Chassis Groups that does not belong to any AZ
+            elif not az_hints and not azs:
+                ha_chassis_list.append(hcg)
+        return ha_chassis_list
+
+    def _get_min_priority_in_hcg(self, ha_chassis_group):
+        """Find the next lowest priority number within a HA Chassis Group."""
+        min_priority = min(
+            [ch.priority for ch in ha_chassis_group.ha_chassis],
+            default=ovn_const.HA_CHASSIS_GROUP_HIGHEST_PRIORITY)
+        return min_priority - 1
+
     def handle_ha_chassis_group_changes(self, event, row, old):
         """Handle HA Chassis Group changes.
 
@@ -88,9 +121,31 @@ class ChassisEvent(row_event.RowEvent):
         if not is_gw_chassis and event == self.ROW_CREATE:
             return
 
+        azs = utils.get_chassis_availability_zones(row)
+
         if event == self.ROW_UPDATE:
             is_old_gw = utils.is_gateway_chassis(old)
             if is_gw_chassis and is_old_gw:
+                old_azs = utils.get_chassis_availability_zones(old)
+                # If there are no differences in the AZs, return
+                if azs == old_azs:
+                    return
+                # Find out the HA Chassis Groups that were affected by
+                # the update (to add and/or remove the updated Chassis)
+                ha_ch_add = self._get_ha_chassis_groups_within_azs(
+                    azs - old_azs)
+                ha_ch_del = self._get_ha_chassis_groups_within_azs(
+                    old_azs - azs)
+                with self.driver.nb_ovn.transaction(check_error=True) as txn:
+                    for hcg in ha_ch_add:
+                        min_priority = self._get_min_priority_in_hcg(hcg)
+                        txn.add(
+                            self.driver.nb_ovn.ha_chassis_group_add_chassis(
+                                hcg.name, row.name, priority=min_priority))
+                    for hcg in ha_ch_del:
+                        txn.add(
+                            self.driver.nb_ovn.ha_chassis_group_del_chassis(
+                                hcg.name, row.name, if_exists=True))
                 return
             elif not is_gw_chassis and is_old_gw:
                 # Chassis is not a gateway anymore, treat it as deletion
@@ -100,24 +155,19 @@ class ChassisEvent(row_event.RowEvent):
                 event = self.ROW_CREATE
 
         if event == self.ROW_CREATE:
-            default_group = self.driver.nb_ovn.ha_chassis_group_get(
-                ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME).execute(
-                check_error=True)
-
-            # Find what's the lowest priority number current in the group
-            # and add the new chassis as the new lowest
-            min_priority = min(
-                [ch.priority for ch in default_group.ha_chassis],
-                default=ovn_const.HA_CHASSIS_GROUP_HIGHEST_PRIORITY)
-
-            self.driver.nb_ovn.ha_chassis_group_add_chassis(
-                ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME, row.name,
-                priority=min_priority - 1).execute(check_error=True)
+            ha_chassis_list = self._get_ha_chassis_groups_within_azs(azs)
+            with self.driver.nb_ovn.transaction(check_error=True) as txn:
+                for hcg in ha_chassis_list:
+                    min_priority = self._get_min_priority_in_hcg(hcg)
+                    txn.add(self.driver.nb_ovn.ha_chassis_group_add_chassis(
+                        hcg.name, row.name, priority=min_priority))
 
         elif event == self.ROW_DELETE:
-            self.driver.nb_ovn.ha_chassis_group_del_chassis(
-                ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME,
-                row.name, if_exists=True).execute(check_error=True)
+            ha_chassis_list = self._get_ha_chassis_groups_within_azs(azs)
+            with self.driver.nb_ovn.transaction(check_error=True) as txn:
+                for hcg in ha_chassis_list:
+                    txn.add(self.driver.nb_ovn.ha_chassis_group_del_chassis(
+                        hcg.name, row.name, if_exists=True))
 
     def match_fn(self, event, row, old):
         if event != self.ROW_UPDATE:
@@ -125,12 +175,19 @@ class ChassisEvent(row_event.RowEvent):
         # NOTE(lucasgomes): If the external_ids column wasn't updated
         # (meaning, Chassis "gateway" status didn't change) just returns
         if not hasattr(old, 'external_ids') and event == self.ROW_UPDATE:
-            return
+            return False
         if (old.external_ids.get('ovn-bridge-mappings') !=
                 row.external_ids.get('ovn-bridge-mappings')):
             return True
-        f = utils.is_gateway_chassis
-        return f(old) != f(row)
+        # Check if either the Gateway status or Availability Zones has
+        # changed in the Chassis
+        is_gw = utils.is_gateway_chassis(row)
+        is_gw_old = utils.is_gateway_chassis(old)
+        azs = utils.get_chassis_availability_zones(row)
+        old_azs = utils.get_chassis_availability_zones(old)
+        if is_gw != is_gw_old or azs != old_azs:
+            return True
+        return False
 
     def run(self, event, row, old):
         host = row.hostname

@@ -610,7 +610,7 @@ class TestChassisEvent(base.BaseTestCase):
 
     def setUp(self):
         super(TestChassisEvent, self).setUp()
-        self.driver = mock.Mock()
+        self.driver = mock.MagicMock()
         self.nb_ovn = self.driver.nb_ovn
         self.driver._ovn_client.is_external_ports_supported.return_value = True
         self.event = ovsdb_monitor.ChassisEvent(self.driver)
@@ -627,44 +627,76 @@ class TestChassisEvent(base.BaseTestCase):
         self.assertFalse(self.nb_ovn.ha_chassis_group_del_chassis.called)
 
     def _test_handle_ha_chassis_group_changes_create(self, event):
+        # Chassis
+        ext_ids = {
+            'ovn-cms-options': 'enable-chassis-as-gw,availability-zones=az-0'}
         row = fakes.FakeOvsdbTable.create_one_ovsdb_table(
-            attrs={'name': 'SpongeBob'})
+            attrs={'name': 'SpongeBob', 'external_ids': ext_ids})
+        # HA Chassis
         ch0 = fakes.FakeOvsdbTable.create_one_ovsdb_table(
             attrs={'priority': 10})
         ch1 = fakes.FakeOvsdbTable.create_one_ovsdb_table(
             attrs={'priority': 9})
-        default_grp = fakes.FakeOvsdbTable.create_one_ovsdb_table(
-            attrs={'ha_chassis': [ch0, ch1]})
-        self.nb_ovn.ha_chassis_group_get.return_value.execute.return_value = (
-            default_grp)
+        ch2 = fakes.FakeOvsdbTable.create_one_ovsdb_table(
+            attrs={'priority': 10})
+        # HA Chassis Groups
+        ha_ch_grp0 = fakes.FakeOvsdbTable.create_one_ovsdb_table(
+            attrs={'ha_chassis': [ch0, ch1], 'name': 'neutron-ha-ch-grp0',
+                   'external_ids': {
+                        ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: 'az-0,az-1'}})
+        ha_ch_grp1 = fakes.FakeOvsdbTable.create_one_ovsdb_table(
+            attrs={'ha_chassis': [ch2], 'name': 'neutron-ha-ch-grp1',
+                   'external_ids': {
+                        ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: 'az-2'}})
+
+        self.nb_ovn.db_list_rows.return_value.execute.return_value = [
+            ha_ch_grp0, ha_ch_grp1]
         self.event.handle_ha_chassis_group_changes(event, row, mock.Mock())
-        # Assert the new chassis has been added to the default
-        # group with the lowest priority
+        # Assert the new chassis has been added to "neutron-ha-ch-grp0"
+        # HA Chassis Group with the lowest priority
         self.nb_ovn.ha_chassis_group_add_chassis.assert_called_once_with(
-            ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME, 'SpongeBob', priority=8)
+            'neutron-ha-ch-grp0', 'SpongeBob', priority=8)
 
     def test_handle_ha_chassis_group_changes_create(self):
         self._test_handle_ha_chassis_group_changes_create(
             self.event.ROW_CREATE)
 
     def _test_handle_ha_chassis_group_changes_delete(self, event):
+        # Chassis
+        ext_ids = {
+            'ovn-cms-options': 'enable-chassis-as-gw,availability-zones=az-0'}
         row = fakes.FakeOvsdbTable.create_one_ovsdb_table(
-            attrs={'name': 'SpongeBob'})
+            attrs={'name': 'SpongeBob', 'external_ids': ext_ids})
+        # HA Chassis
+        ha_ch = fakes.FakeOvsdbTable.create_one_ovsdb_table(
+            attrs={'priority': 10})
+        # HA Chassis Group
+        ha_ch_grp = fakes.FakeOvsdbTable.create_one_ovsdb_table(
+            attrs={'ha_chassis': [ha_ch], 'name': 'neutron-ha-ch-grp',
+                   'external_ids': {
+                        ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: 'az-0'}})
+        self.nb_ovn.db_list_rows.return_value.execute.return_value = [
+            ha_ch_grp]
+
         self.event.handle_ha_chassis_group_changes(event, row, mock.Mock())
         # Assert chassis was removed from the default group
         self.nb_ovn.ha_chassis_group_del_chassis.assert_called_once_with(
-            ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME, 'SpongeBob',
-            if_exists=True)
+            'neutron-ha-ch-grp', 'SpongeBob', if_exists=True)
 
     def test_handle_ha_chassis_group_changes_delete(self):
         self._test_handle_ha_chassis_group_changes_delete(
             self.event.ROW_DELETE)
 
-    def test_handle_ha_chassis_group_changes_update_still_gw(self):
+    def test_handle_ha_chassis_group_changes_update_no_changes(self):
         # Assert nothing was done because the update didn't
-        # change the gateway chassis status
+        # change the gateway chassis status or the availability zones
+        ext_ids = {
+            'ovn-cms-options': 'enable-chassis-as-gw,availability-zones=az-0'}
+        new = fakes.FakeOvsdbTable.create_one_ovsdb_table(
+            attrs={'name': 'SpongeBob', 'external_ids': ext_ids})
+        old = new
         self.assertIsNone(self.event.handle_ha_chassis_group_changes(
-            self.event.ROW_UPDATE, mock.Mock(), mock.Mock()))
+            self.event.ROW_UPDATE, new, old))
         self.assertFalse(self.nb_ovn.ha_chassis_group_add_chassis.called)
         self.assertFalse(self.nb_ovn.ha_chassis_group_del_chassis.called)
 
