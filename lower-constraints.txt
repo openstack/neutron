@@ -50,7 +50,7 @@ msgpack-python==0.4.0
 munch==2.1.0
 netaddr==0.7.18
 netifaces==0.10.4
-neutron-lib==2.12.0
+neutron-lib==2.13.0
 openstacksdk==0.31.2
 os-client-config==1.28.0
 os-ken==2.0.0
