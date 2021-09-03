@@ -1238,8 +1238,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                           payload=None):
         context = payload.context
         network_id = payload.resource_id
-        network = payload.latest_state if payload.states else \
-            self.get_network(context, network_id)
+        if payload.states:
+            network = payload.latest_state
+            self.type_manager.extend_network_dict_provider(context, network)
+        else:
+            network = self.get_network(context, network_id)
+
         mech_context = driver_context.NetworkContext(self,
                                                      context,
                                                      network)
