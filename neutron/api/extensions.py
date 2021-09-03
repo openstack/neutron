@@ -197,8 +197,13 @@ class ExtensionMiddleware(base.ConfigurableMiddleware):
             controller = req_controllers[request_ext.key]
             controller.add_handler(request_ext.handler)
 
+        # NOTE(slaweq): It seems that using singleton=True in conjunction
+        # with eventlet monkey patching of the threading library doesn't work
+        # well and there is memory leak. See
+        # https://bugs.launchpad.net/neutron/+bug/1942179 for details
         self._router = routes.middleware.RoutesMiddleware(self._dispatch,
-                                                          mapper)
+                                                          mapper,
+                                                          singleton=False)
         super(ExtensionMiddleware, self).__init__(application)
 
     @classmethod
