@@ -1185,8 +1185,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                        priority=0)
     def _network_delete_precommit_handler(self, rtype, event, trigger,
                                           context, network_id, **kwargs):
-        network = (kwargs.get('network') or
-                   self.get_network(context, network_id))
+        if 'network' in kwargs:
+            network = kwargs['network']
+            self.type_manager.extend_network_dict_provider(context, network)
+        else:
+            network = self.get_network(context, network_id)
+
         mech_context = driver_context.NetworkContext(self,
                                                      context,
                                                      network)
