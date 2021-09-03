@@ -215,7 +215,8 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
             binding_levels=[ports.PortBindingLevel(port_id=self._port_id,
                                                    host='host1',
                                                    level=0,
-                                                   segment=self._segment)])
+                                                   segment=self._segment)],
+            status='ACTIVE')
 
     def test__legacy_notifier_resource_delete(self):
         self._api._legacy_notifier(resources.PORT, events.AFTER_DELETE, self,
