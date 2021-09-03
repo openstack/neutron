@@ -1,0 +1,10 @@
+---
+features:
+  - |
+    Adds support for Network Availability Zones to the OVN driver. When
+    Network AZ is used, OVN's "external" ports will now be scheduled
+    onto nodes belonging to the AZs specified in the network that the
+    port belongs to. This feature also removes the limitation where all
+    "external" ports were part of to a single HA Chassis Group (meaning
+    they would all be bond to a single host) now the "external" ports
+    will be better distributed across different hosts.
