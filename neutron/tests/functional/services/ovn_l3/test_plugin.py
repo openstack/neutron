@@ -448,7 +448,7 @@ class TestRouter(base.TestOVNFunctionalBase):
                 'address_mode': ovn_utils.get_ovn_ipv6_address_mode(
                     address_mode),
                 'send_periodic': 'true',
-                'mtu': '1450'}
+                'mtu': '1442'}
         else:
             expected_ra_configs = {}
         self._validate_router_ipv6_ra_configs(lrp_name, expected_ra_configs)

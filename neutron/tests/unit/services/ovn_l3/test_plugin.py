@@ -58,9 +58,12 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
     def setUp(self):
         mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
                    'impl_idl_ovn.Backend.schema_helper').start()
+        cfg.CONF.set_override('max_header_size', 38, group='ml2_type_geneve')
         super(TestOVNL3RouterPlugin, self).setUp()
         revision_plugin.RevisionPlugin()
-        network_attrs = {external_net.EXTERNAL: True, 'mtu': 1500}
+        # MTU needs to be 1442 instead of 1500 because GENEVE headers size
+        # must be at least 38 when using OVN
+        network_attrs = {external_net.EXTERNAL: True, 'mtu': 1442}
         self.fake_network = \
             fake_resources.FakeNetwork.create_one_network(
                 attrs=network_attrs).info()

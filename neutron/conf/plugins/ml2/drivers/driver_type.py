@@ -41,15 +41,18 @@ geneve_opts = [
                 default=[],
                 help=_("Comma-separated list of <vni_min>:<vni_max> tuples "
                        "enumerating ranges of Geneve VNI IDs that are "
-                       "available for tenant network allocation")),
+                       "available for tenant network allocation. "
+                       "Note OVN does not use the actual values.")),
     cfg.IntOpt('max_header_size',
                default=p_const.GENEVE_ENCAP_MIN_OVERHEAD,
-               help=_("Geneve encapsulation header size is dynamic, this "
-                      "value is used to calculate the maximum MTU "
-                      "for the driver. "
-                      "The default size for this field is 30, which is the "
-                      "size of the Geneve header without any additional "
-                      "option headers.")),
+               help=_("The maximum allowed Geneve encapsulation header size "
+                      "(in bytes). "
+                      "Geneve header is extensible, this value is used to "
+                      "calculate the maximum MTU for Geneve-based networks. "
+                      "The default is 30, which is the size of the Geneve "
+                      "header without any additional option headers. "
+                      "Note the default is not enough for OVN which "
+                      "requires at least 38.")),
 ]
 
 vxlan_opts = [

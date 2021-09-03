@@ -760,13 +760,14 @@ class TestNBDbResources(base.TestOVNFunctionalBase):
         # is not configured as domain_name.
         # Parameter taken from configuration
         # should be set instead.
+        mtu = str(1480 - cfg.CONF.ml2_type_geneve.max_header_size)
         expected_dhcp_options_rows = {
             'cidr': '10.0.0.0/24',
             'external_ids': {'subnet_id': subnet['id']},
             'options': {'dns_server': '{10.10.10.10}',
                         'domain_name': '"%s"' % cfg.CONF.dns_domain,
                         'lease_time': '43200',
-                        'mtu': '1450',
+                        'mtu': mtu,
                         'router': '10.0.0.1',
                         'server_id': '10.0.0.1',
                         'server_mac': dhcp_mac}}
@@ -781,13 +782,14 @@ class TestNBDbResources(base.TestOVNFunctionalBase):
         p = self._make_port(self.fmt, n1['network']['id'],
                             fixed_ips=[{'subnet_id': subnet['id']}])
         dhcp_mac = self._get_subnet_dhcp_mac(subnet)
+        mtu = str(1480 - cfg.CONF.ml2_type_geneve.max_header_size)
         # Make sure that domain_name is not included.
         expected_dhcp_options_rows = {
             'cidr': '10.0.0.0/24',
             'external_ids': {'subnet_id': subnet['id']},
             'options': {'dns_server': '{10.10.10.10}',
                         'lease_time': '43200',
-                        'mtu': '1450',
+                        'mtu': mtu,
                         'router': '10.0.0.1',
                         'server_id': '10.0.0.1',
                         'server_mac': dhcp_mac}}

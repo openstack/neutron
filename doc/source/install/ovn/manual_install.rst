@@ -192,7 +192,14 @@ primary node. See the :doc:`/ovn/faq/index` for more information.
         network segments. However, OVN ignores the actual values. Thus, the ID
         range only determines the quantity of Geneve networks in the
         environment. For example, a range of ``5001:6000`` defines a maximum
-        of 1000 Geneve networks.
+        of 1000 Geneve networks. On the other hand, these values are still
+        relevant in Neutron context so ``1:1000`` and ``5001:6000`` are *not*
+        simply interchangeable.
+
+      .. warning::
+
+        The default for ``max_header_size``, ``30``, is too low for OVN.
+        OVN requires at least ``38``.
 
    * Optionally, enable support for VLAN provider and self-service
      networks on one or more physical networks. If you specify only

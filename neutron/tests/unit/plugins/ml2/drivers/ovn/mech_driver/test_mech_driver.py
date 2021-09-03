@@ -93,6 +93,9 @@ class TestOVNMechanismDriverBase(MechDriverSetupBase,
         cfg.CONF.set_override('vni_ranges',
                               ['1:65536'],
                               group='ml2_type_geneve')
+        # ensure viable minimum is set for OVN's Geneve
+        cfg.CONF.set_override('max_header_size', 38,
+                              group='ml2_type_geneve')
         ovn_conf.cfg.CONF.set_override('ovn_metadata_enabled', False,
                                        group='ovn')
         ovn_conf.cfg.CONF.set_override('dns_servers', ['8.8.8.8'],
@@ -2113,6 +2116,9 @@ class OVNMechanismDriverTestCase(MechDriverSetupBase,
         cfg.CONF.set_override('vni_ranges',
                               ['1:65536'],
                               group='ml2_type_geneve')
+        # ensure viable minimum is set for OVN's Geneve
+        cfg.CONF.set_override('max_header_size', 38,
+                              group='ml2_type_geneve')
         ovn_conf.cfg.CONF.set_override('dns_servers', ['8.8.8.8'], group='ovn')
         mock.patch.object(impl_idl_ovn.Backend, 'schema_helper').start()
         super(OVNMechanismDriverTestCase, self).setUp()
@@ -2258,6 +2264,8 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
     _mechanism_drivers = ['logger', 'ovn']
 
     def setUp(self):
+        cfg.CONF.set_override('max_header_size', 38,
+                              group='ml2_type_geneve')
         mock.patch.object(impl_idl_ovn.Backend, 'schema_helper').start()
         super(TestOVNMechanismDriverSegment, self).setUp()
         p = mock.patch.object(ovn_utils, 'get_revision_number', return_value=1)
@@ -2278,11 +2286,12 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
             network_id=network['id'], physical_network='phys_net1',
             segmentation_id=200, network_type='vlan')['segment']
 
-        # As geneve networks mtu shouldn't be more than 1450, update it
-        data = {'network': {'mtu': 1450}}
+        # As geneve networks mtu shouldn't be more than 1442 considering the
+        # Geneve max_header_size for OVN must be at least 38), update it
+        data = {'network': {'mtu': 1442}}
         req = self.new_update_request('networks', data, network['id'])
         res = self.deserialize(self.fmt, req.get_response(self.api))
-        self.assertEqual(1450, res['network']['mtu'])
+        self.assertEqual(1442, res['network']['mtu'])
 
         self._test_create_segment(
             network_id=network['id'],
@@ -3052,6 +3061,9 @@ class TestOVNMechanismDriverSecurityGroup(MechDriverSetupBase,
         cfg.CONF.set_override('mechanism_drivers',
                               ['logger', 'ovn'],
                               'ml2')
+        # ensure viable minimum is set for OVN's Geneve
+        cfg.CONF.set_override('max_header_size', 38,
+                              group='ml2_type_geneve')
         cfg.CONF.set_override('dns_servers', ['8.8.8.8'], group='ovn')
         mock.patch.object(impl_idl_ovn.Backend, 'schema_helper').start()
         super(TestOVNMechanismDriverSecurityGroup, self).setUp()
@@ -3363,10 +3375,13 @@ class TestOVNMechanismDriverMetadataPort(MechDriverSetupBase,
 
     def setUp(self):
         mock.patch.object(impl_idl_ovn.Backend, 'schema_helper').start()
+        cfg.CONF.set_override('max_header_size', 38,
+                              group='ml2_type_geneve')
         super(TestOVNMechanismDriverMetadataPort, self).setUp()
         self.nb_ovn = self.mech_driver.nb_ovn
         self.sb_ovn = self.mech_driver.sb_ovn
         self.ctx = context.get_admin_context()
+        # ensure viable minimum is set for OVN's Geneve
         ovn_conf.cfg.CONF.set_override('ovn_metadata_enabled', True,
                                        group='ovn')
         p = mock.patch.object(ovn_utils, 'get_revision_number', return_value=1)

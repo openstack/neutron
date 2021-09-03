@@ -66,6 +66,7 @@ import neutron.wsgi
 
 
 LOG = log.getLogger(__name__)
+OVN_MIN_GENEVE_MAX_HEADER_SIZE = 38
 
 
 class OVNPortUpdateError(n_exc.BadRequest):
@@ -118,6 +119,13 @@ class OVNMechanismDriver(api.MechanismDriver):
         self._post_fork_event = threading.Event()
         if cfg.CONF.SECURITYGROUP.firewall_driver:
             LOG.warning('Firewall driver configuration is ignored')
+        if (cfg.CONF.ml2_type_geneve.max_header_size <
+                OVN_MIN_GENEVE_MAX_HEADER_SIZE):
+            LOG.critical('Geneve max_header_size set too low for OVN '
+                         '(%d vs %d)',
+                      cfg.CONF.ml2_type_geneve.max_header_size,
+                      OVN_MIN_GENEVE_MAX_HEADER_SIZE)
+            raise SystemExit(1)
         self._setup_vif_port_bindings()
         if impl_idl_ovn.OvsdbSbOvnIdl.schema_has_table('Chassis_Private'):
             self.agent_chassis_table = 'Chassis_Private'
