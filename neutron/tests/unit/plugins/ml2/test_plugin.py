@@ -1486,7 +1486,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             # check that notifier was still triggered
             self.assertTrue(notify.call_counts)
 
-    def test_registry_notify_before_after_port_binding(self):
+    def test_registry_publish_before_after_port_binding(self):
         plugin = directory.get_plugin()
         ctx = context.get_admin_context()
         b_update_events = []
