@@ -65,6 +65,7 @@
       - ^neutron/plugins/ml2/drivers/macvtap/.*$
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
       - ^neutron/plugins/ml2/drivers/ovn/.*$
+      - ^neutron_lib/tests/unit/.*$
 
 - job:
     name: neutron-fullstack-with-uwsgi
