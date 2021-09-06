@@ -1515,14 +1515,14 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         self.assertEqual(expected_dict, actual_dict)
         self.assertIn('orig_binding', b_update_events[1].metadata)
         self.assertIn('new_binding', b_update_events[1].metadata)
-        self.assertDictContainsSubset({'context': ctx}, actual_dict)
-        self.assertDictContainsSubset({
+        self.assertLessEqual({'context': ctx}.items(), actual_dict.items())
+        self.assertLessEqual({
             'admin_state_up': True,
             'binding:host_id': 'newhost',
             'binding:vif_type': 'unbound',
             'binding:vnic_type': u'normal',
-            'status': 'DOWN'},
-            b_update_events[1].latest_state)
+            'status': 'DOWN'}.items(),
+            b_update_events[1].latest_state.items())
         self.assertEqual('newhost', a_update_events[0]['binding:host_id'])
         self.assertEqual('unbound', a_update_events[0]['binding:vif_type'])
         self.assertEqual('newhost', a_update_events[1]['binding:host_id'])
