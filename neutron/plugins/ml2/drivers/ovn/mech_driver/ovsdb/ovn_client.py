@@ -266,14 +266,8 @@ class OVNClient(object):
                         options[ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY] = (
                             ','.join(parents))
 
-            # Only adjust the OVN type if the port is not owned by Neutron
-            # DHCP agents.
-            # TODO(mjozefcz): Remove const.DEVICE_OWNER_DHCP
-            # from get_ports in W-release.
-            if (port['device_owner'] in [
-                    const.DEVICE_OWNER_DISTRIBUTED,
-                    const.DEVICE_OWNER_DHCP] and
-                    not utils.is_neutron_dhcp_agent_port(port)):
+            # Metadata port.
+            if port['device_owner'] == const.DEVICE_OWNER_DISTRIBUTED:
                 port_type = ovn_const.LSP_TYPE_LOCALPORT
 
             if utils.is_port_external(port):
@@ -2152,35 +2146,20 @@ class OVNClient(object):
 
     @staticmethod
     def is_metadata_port(port):
-        # TODO(ralonsoh): This method is implemented in order to be backported
-        # to stable releases; this is why a "const.DEVICE_OWNER_DHCP" port
-        # could be a metadata port.
-        return (port['device_owner'] == const.DEVICE_OWNER_DISTRIBUTED or
-                (port['device_owner'] == const.DEVICE_OWNER_DHCP and
-                 not utils.is_neutron_dhcp_agent_port(port)))
+        return port['device_owner'] == const.DEVICE_OWNER_DISTRIBUTED
 
     def _find_metadata_port(self, context, network_id):
         if not ovn_conf.is_ovn_metadata_enabled():
             return
 
-        # TODO(mjozefcz): Remove const.DEVICE_OWNER_DHCP
-        # from get_ports in W-release.
-        ports = self._plugin.get_ports(context, filters=dict(
-            network_id=[network_id],
-            device_owner=[
-                const.DEVICE_OWNER_DHCP,
-                const.DEVICE_OWNER_DISTRIBUTED]))
-        # TODO(mjozefcz): Remove this compatibility code in W release.
-        # First look for const.DEVICE_OWNER_DISTRIBUTED and then for
-        # const.DEVICE_OWNER_DHCP.
-        for port in ports:
-            if port['device_owner'] == const.DEVICE_OWNER_DISTRIBUTED:
-                return port
-        # Metadata ports are DHCP ports not belonging to the Neutron
-        # DHCP agents
-        for port in ports:
-            if not utils.is_neutron_dhcp_agent_port(port):
-                return port
+        ports = self._plugin.get_ports(
+            context, filters=dict(
+                network_id=[network_id],
+                device_owner=[const.DEVICE_OWNER_DISTRIBUTED]),
+            limit=1)
+
+        if ports:
+            return ports[0]
 
     def _find_metadata_port_ip(self, context, subnet):
         metadata_port = self._find_metadata_port(context, subnet['network_id'])
