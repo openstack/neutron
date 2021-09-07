@@ -561,7 +561,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
                 'external_ids': ext_ids, 'uuid': row.uuid}
 
     def get_subnet_dhcp_options(self, subnet_id, with_ports=False):
-        subnet = None
+        subnet = {}
         ports = []
         for row in self._tables['DHCP_Options'].rows.values():
             external_ids = getattr(row, 'external_ids', {})
