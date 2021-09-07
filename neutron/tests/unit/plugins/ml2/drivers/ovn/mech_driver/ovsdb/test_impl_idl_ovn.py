@@ -693,10 +693,10 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
             'ports': []}, subnet_options)
         subnet_options = self.nb_ovn_idl.get_subnet_dhcp_options(
             'subnet-id-11-0-2-0')['subnet']
-        self.assertIsNone(subnet_options)
+        self.assertEqual({}, subnet_options)
         subnet_options = self.nb_ovn_idl.get_subnet_dhcp_options(
             'port-id-30-0-1-0')['subnet']
-        self.assertIsNone(subnet_options)
+        self.assertEqual({}, subnet_options)
 
     def test_get_subnet_dhcp_options_with_ports(self):
         # Test empty
