@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    Introduced config option for RPC agent step size customization:
+    rpc_resources_processing_step - Number of resources for neutron to divide
+    the large RPC call data sets. It can be reduced if RPC timeout occurred.
+    Default value equals 20. The best value can be determined empirically in
+    your environment.
