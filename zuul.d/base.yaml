@@ -81,6 +81,12 @@
       zuul_work_dir: src/opendev.org/openstack/neutron
 
 - job:
+    name: neutron-fullstack-with-uwsgi-with-neutron-lib-master
+    parent: neutron-fullstack-with-uwsgi
+    required-projects:
+      - openstack/neutron-lib
+
+- job:
     name: neutron-functional-with-uwsgi
     parent: neutron-functional
     vars:
@@ -92,6 +98,12 @@
       # in base neutron-functional job as that is being used by neutron
       # stadium projects where they need to use stadium project as working dir.
       zuul_work_dir: src/opendev.org/openstack/neutron
+
+- job:
+    name: neutron-functional-with-uwsgi-with-neutron-lib-master
+    parent: neutron-functional-with-uwsgi
+    required-projects:
+      - openstack/neutron-lib
 
 - job:
     name: neutron-linuxbridge-tempest-plugin-scenario-nftables

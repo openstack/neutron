@@ -81,6 +81,9 @@
         - neutron-ovn-tempest-full-multinode-ovs-master
         - neutron-ovn-tempest-ovs-master
         - neutron-ovn-tempest-with-neutron-lib-master
+        - neutron-ovs-tempest-with-neutron-lib-master
+        - neutron-fullstack-with-uwsgi-with-neutron-lib-master
+        - neutron-functional-with-uwsgi-with-neutron-lib-master
 
     periodic:
       jobs:
