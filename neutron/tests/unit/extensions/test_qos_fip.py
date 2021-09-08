@@ -350,8 +350,6 @@ class FloatingIPQoSDBIntTestCase(test_l3.L3BaseForIntTests,
                                       'QoSPlugin'}
 
         extraroute_db.register_db_extraroute_opts()
-        # for these tests we need to enable overlapping ips
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         cfg.CONF.set_default('max_routes', 3)
 
         ext_mgr = FloatingIPQoSTestExtensionManager()
@@ -379,8 +377,6 @@ class FloatingIPQoSDBSepTestCase(test_l3.L3BaseForSepTests,
                                       'QoSPlugin'}
 
         extraroute_db.register_db_extraroute_opts()
-        # for these tests we need to enable overlapping ips
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         cfg.CONF.set_default('max_routes', 3)
 
         ext_mgr = FloatingIPQoSTestExtensionManager()

@@ -104,8 +104,6 @@ class FloatingIPPortDetailsDBIntTestCase(test_l3.L3BaseForIntTests,
         if not plugin:
             plugin = ('neutron.tests.unit.extensions.test_fip_port_details.'
                       'TestFloatingIPPortDetailsIntPlugin')
-        # for these tests we need to enable overlapping ips
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         cfg.CONF.set_default('max_routes', 3)
         ext_mgr = FloatingIPPortDetailsTestExtensionManager()
         super(test_l3.L3BaseForIntTests, self).setUp(
@@ -126,8 +124,6 @@ class FloatingIPPortDetailsDBSepTestCase(test_l3.L3BaseForSepTests,
                      'TestFloatingIPPortDetailsL3NatServicePlugin')
         service_plugins = {'l3_plugin_name': l3_plugin}
 
-        # for these tests we need to enable overlapping ips
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         cfg.CONF.set_default('max_routes', 3)
         ext_mgr = FloatingIPPortDetailsTestExtensionManager()
         super(test_l3.L3BaseForSepTests, self).setUp(

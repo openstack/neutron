@@ -195,8 +195,6 @@ class GatewayIPQoSDBIntTestCase(test_l3.L3BaseForIntTests,
         service_plugins = {'qos': 'neutron.services.qos.qos_plugin.QoSPlugin'}
 
         extraroute_db.register_db_extraroute_opts()
-        # for these tests we need to enable overlapping ips
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         cfg.CONF.set_default('max_routes', 3)
 
         ext_mgr = GatewayIPQoSTestExtensionManager()
@@ -222,8 +220,6 @@ class GatewayIPQoSDBSepTestCase(test_l3.L3BaseForSepTests,
                            'qos': 'neutron.services.qos.qos_plugin.QoSPlugin'}
 
         extraroute_db.register_db_extraroute_opts()
-        # for these tests we need to enable overlapping ips
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         cfg.CONF.set_default('max_routes', 3)
 
         ext_mgr = GatewayIPQoSTestExtensionManager()

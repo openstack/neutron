@@ -508,8 +508,6 @@ class ExtraRouteDBIntTestCase(test_l3.L3NatDBIntTestCase,
         if not plugin:
             plugin = ('neutron.tests.unit.extensions.test_extraroute.'
                       'TestExtraRouteIntPlugin')
-        # for these tests we need to enable overlapping ips
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         cfg.CONF.set_default('max_routes', 3)
         ext_mgr = ExtraRouteTestExtensionManager()
         super(test_l3.L3BaseForIntTests, self).setUp(plugin=plugin,
@@ -527,8 +525,6 @@ class ExtraRouteDBSepTestCase(test_l3.L3NatDBSepTestCase,
                      'TestExtraRouteL3NatServicePlugin')
         service_plugins = {'l3_plugin_name': l3_plugin}
 
-        # for these tests we need to enable overlapping ips
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         cfg.CONF.set_default('max_routes', 3)
         ext_mgr = ExtraRouteTestExtensionManager()
         super(test_l3.L3BaseForSepTests, self).setUp(

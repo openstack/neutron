@@ -128,7 +128,6 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                               group=quota_conf.QUOTAS_CFG_GROUP)
         super(NeutronDbPluginV2TestCase, self).setUp()
         cfg.CONF.set_override('notify_nova_on_port_status_changes', False)
-        cfg.CONF.set_override('allow_overlapping_ips', True)
         # Make sure at each test according extensions for the plugin is loaded
         extensions.PluginAwareExtensionManager._instance = None
         # Save the attributes map in case the plugin will alter it
@@ -1235,16 +1234,12 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                     res, 'ports', webob.exc.HTTPServerError.code)
 
     def test_list_ports(self):
-        # for this test we need to enable overlapping ips
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         with self.port() as v1, self.port() as v2, self.port() as v3:
             ports = (v1, v2, v3)
             self._test_list_resources('port', ports)
 
     def _test_list_ports_filtered_by_fixed_ip(self, **kwargs):
 
-        # for this test we need to enable overlapping ips
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         with self.port() as port1, self.port():
             fixed_ips = port1['port']['fixed_ips'][0]
             query_params = """
@@ -1307,7 +1302,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
     def test_list_ports_with_sort_native(self):
         if self._skip_native_sorting:
             self.skipTest("Skip test for not implemented sorting feature")
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         with self.port(admin_state_up='True',
                        mac_address='00:00:00:00:00:01') as port1,\
                 self.port(admin_state_up='False',
@@ -1323,7 +1317,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             'neutron.api.v2.base.Controller._get_sorting_helper',
             new=_fake_get_sorting_helper)
         helper_patcher.start()
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         with self.port(admin_state_up='True',
                        mac_address='00:00:00:00:00:01') as port1,\
                 self.port(admin_state_up='False',
@@ -1337,7 +1330,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
     def test_list_ports_with_pagination_native(self):
         if self._skip_native_pagination:
             self.skipTest("Skip test for not implemented pagination feature")
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         with self.port(mac_address='00:00:00:00:00:01') as port1,\
                 self.port(mac_address='00:00:00:00:00:02') as port2,\
                 self.port(mac_address='00:00:00:00:00:03') as port3:
@@ -1350,7 +1342,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             'neutron.api.v2.base.Controller._get_pagination_helper',
             new=_fake_get_pagination_helper)
         helper_patcher.start()
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         with self.port(mac_address='00:00:00:00:00:01') as port1,\
                 self.port(mac_address='00:00:00:00:00:02') as port2,\
                 self.port(mac_address='00:00:00:00:00:03') as port3:
@@ -1361,7 +1352,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
     def test_list_ports_with_pagination_reverse_native(self):
         if self._skip_native_pagination:
             self.skipTest("Skip test for not implemented pagination feature")
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         with self.port(mac_address='00:00:00:00:00:01') as port1,\
                 self.port(mac_address='00:00:00:00:00:02') as port2,\
                 self.port(mac_address='00:00:00:00:00:03') as port3:
@@ -1375,7 +1365,6 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             'neutron.api.v2.base.Controller._get_pagination_helper',
             new=_fake_get_pagination_helper)
         helper_patcher.start()
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         with self.port(mac_address='00:00:00:00:00:01') as port1,\
                 self.port(mac_address='00:00:00:00:00:02') as port2,\
                 self.port(mac_address='00:00:00:00:00:03') as port3:
@@ -3431,7 +3420,6 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     def test_create_2_subnets_overlapping_cidr_allowed_returns_200(self):
         cidr_1 = '10.0.0.0/23'
         cidr_2 = '10.0.0.0/24'
-        cfg.CONF.set_override('allow_overlapping_ips', True)
 
         with self.subnet(cidr=cidr_1), self.subnet(cidr=cidr_2):
             pass
