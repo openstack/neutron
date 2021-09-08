@@ -284,6 +284,26 @@ This process can be repeated any number of times to share a security-group
 with an arbitrary number of projects.
 
 
+Creating an instance which uses a security group shared through RBAC, but only
+specifying the network ID when calling Nova will not work currently. In such
+cases Nova will check if the given security group exists in Neutron before it
+creates a port in the given network. The problem with that is that Nova asks
+only for the security groups filtered by the project_id thus it will not get
+the shared security group back from the Neutron API. See `bug 1942615
+<https://bugs.launchpad.net/neutron/+bug/1942615>`__ for details.
+To workaround the issue, the user needs to create a port in Neutron first, and
+then pass that port to Nova:
+
+.. code-block:: console
+
+   $ openstack port create --network net1 --security-group
+   5ba835b7-22b0-4be6-bdbe-e0722d1b5f24 shared-sg-port
+
+   $ openstack server create --image cirros-0.5.1-x86_64-disk --flavor m1.tiny
+   --port shared-sg-port vm-with-shared-sg
+
+
+
 Sharing an address scope with specific projects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
