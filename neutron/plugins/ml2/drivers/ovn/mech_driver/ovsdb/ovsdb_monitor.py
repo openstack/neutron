@@ -334,6 +334,24 @@ class ChassisAgentWriteEvent(ChassisAgentEvent):
                                     clear_down=event == self.ROW_CREATE)
 
 
+class ChassisAgentTypeChangeEvent(ChassisEvent):
+    """Chassis Agent class change event"""
+    GLOBAL = True
+    events = (BaseEvent.ROW_UPDATE,)
+
+    def match_fn(self, event, row, old=None):
+        if not getattr(old, 'external_ids', False):
+            return False
+        agent_type_change = n_agent.NeutronAgent.chassis_from_private(
+                row).external_ids.get('ovn-cms-options', []) != (
+                        old.external_ids.get('ovn-cms-options', []))
+        return agent_type_change
+
+    def run(self, event, row, old):
+        n_agent.AgentCache().update(ovn_const.OVN_CONTROLLER_AGENT, row,
+                                    clear_down=event == self.ROW_CREATE)
+
+
 class ChassisMetadataAgentWriteEvent(ChassisAgentEvent):
     events = (BaseEvent.ROW_CREATE, BaseEvent.ROW_UPDATE)
 
@@ -705,6 +723,7 @@ class OvnSbIdl(OvnIdlDistributedLock):
             ChassisAgentDeleteEvent(self.driver),
             ChassisAgentDownEvent(self.driver),
             ChassisAgentWriteEvent(self.driver),
+            ChassisAgentTypeChangeEvent(self.driver),
             ChassisMetadataAgentWriteEvent(self.driver)])
 
     @classmethod
