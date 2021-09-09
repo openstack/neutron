@@ -1590,8 +1590,12 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         primary, backup = self._get_primary_and_backup_routers(
             router1, router2, check_external_device=False)
 
+        utils.wait_until_true(lambda: primary.ha_state == 'primary')
+        utils.wait_until_true(lambda: backup.ha_state == 'backup')
+
         self._assert_ip_addresses_in_dvr_ha_snat_namespace_with_fip(primary)
         self._assert_no_ip_addresses_in_dvr_ha_snat_namespace_with_fip(backup)
+
         self.fail_ha_router(primary)
 
         utils.wait_until_true(lambda: backup.ha_state == 'primary')
@@ -1615,6 +1619,9 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
 
         primary, backup = self._get_primary_and_backup_routers(
             router1, router2, check_external_device=False)
+
+        utils.wait_until_true(lambda: primary.ha_state == 'primary')
+        utils.wait_until_true(lambda: backup.ha_state == 'backup')
 
         self._assert_ip_addresses_in_dvr_ha_snat_namespace(primary)
         self._assert_no_ip_addresses_in_dvr_ha_snat_namespace(backup)
