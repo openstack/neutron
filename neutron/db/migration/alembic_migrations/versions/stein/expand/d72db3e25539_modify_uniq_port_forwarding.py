@@ -23,7 +23,6 @@ Create Date: 2018-10-12 19:51:11.981394
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.engine import reflection
 
 from neutron.db import migration
 
@@ -35,7 +34,7 @@ TABLE_NAME = 'portforwardings'
 
 
 def upgrade():
-    inspector = reflection.Inspector.from_engine(op.get_bind())
+    inspector = sa.inspect(op.get_bind())
     foreign_keys = inspector.get_foreign_keys(TABLE_NAME)
     migration.remove_foreign_keys(TABLE_NAME, foreign_keys)
 

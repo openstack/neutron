@@ -175,8 +175,7 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
     # Remove some difference that are not mistakes just specific of
     # dialects, etc
     def remove_unrelated_errors(self, element):
-        insp = sqlalchemy.engine.reflection.Inspector.from_engine(
-            self.get_engine())
+        insp = sqlalchemy.inspect(self.get_engine())
         dialect = self.get_engine().dialect.name
         if isinstance(element, tuple):
             if dialect == 'mysql' and element[0] == 'remove_index':
@@ -351,7 +350,7 @@ class TestModelsMigrationsMysql(testlib_api.MySQLTestCaseMixin,
             self.alembic_config.attributes['connection'] = connection
             migration.do_alembic_command(self.alembic_config, 'upgrade',
                                          'heads')
-            insp = sqlalchemy.engine.reflection.Inspector.from_engine(engine)
+            insp = sqlalchemy.inspect(engine)
             # Test that table creation on MySQL only builds InnoDB tables
             tables = insp.get_table_names()
             self.assertGreater(len(tables), 0,

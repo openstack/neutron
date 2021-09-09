@@ -18,7 +18,6 @@ import functools
 from alembic import context
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.engine import reflection
 
 from neutron._i18n import _
 
@@ -84,8 +83,7 @@ def schema_has_table(table_name):
 
     This method cannot be executed in offline mode.
     """
-    bind = op.get_bind()
-    insp = sa.engine.reflection.Inspector.from_engine(bind)
+    insp = sa.inspect(op.get_bind())
     return table_name in insp.get_table_names()
 
 
@@ -95,8 +93,7 @@ def schema_has_column(table_name, column_name):
 
     This method cannot be executed in offline mode.
     """
-    bind = op.get_bind()
-    insp = sa.engine.reflection.Inspector.from_engine(bind)
+    insp = sa.inspect(op.get_bind())
     # first check that the table exists
     if not schema_has_table(table_name):
         return
@@ -218,7 +215,7 @@ def create_table_if_not_exist_psql(table_name, values):
 
 
 def get_unique_constraints_map(table):
-    inspector = reflection.Inspector.from_engine(op.get_bind())
+    inspector = sa.inspect(op.get_bind())
     return {
         tuple(sorted(cons['column_names'])): cons['name']
         for cons in inspector.get_unique_constraints(table)
@@ -262,7 +259,7 @@ def create_foreign_keys(table, foreign_keys):
 @contextlib.contextmanager
 def remove_fks_from_table(table, remove_unique_constraints=False):
     try:
-        inspector = reflection.Inspector.from_engine(op.get_bind())
+        inspector = sa.inspect(op.get_bind())
         foreign_keys = inspector.get_foreign_keys(table)
         remove_foreign_keys(table, foreign_keys)
         if remove_unique_constraints:
@@ -273,7 +270,7 @@ def remove_fks_from_table(table, remove_unique_constraints=False):
 
 
 def pk_on_alembic_version_table():
-    inspector = reflection.Inspector.from_engine(op.get_bind())
+    inspector = sa.inspect(op.get_bind())
     pk = inspector.get_pk_constraint('alembic_version')
     if not pk['constrained_columns']:
         op.create_primary_key(op.f('pk_alembic_version'),

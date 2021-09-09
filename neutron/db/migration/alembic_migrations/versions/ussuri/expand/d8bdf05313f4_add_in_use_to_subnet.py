@@ -15,7 +15,6 @@
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.engine import reflection
 
 from neutron.db import migration
 
@@ -40,7 +39,7 @@ COLUMN_IN_USE = 'in_use'
 
 
 def upgrade():
-    inspector = reflection.Inspector.from_engine(op.get_bind())
+    inspector = sa.inspect(op.get_bind())
     # NOTE(ralonsoh): bug #1865891 is present in stable releases. Although is
     # not possible to backport a patch implementing a DB change [1], we are
     # planning to migrate this patch to a stable branch in a private

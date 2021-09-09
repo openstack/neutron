@@ -47,7 +47,7 @@ class DuplicateQuotas(exceptions.Conflict):
 
 
 def get_duplicate_quotas(connection):
-    insp = sa.engine.reflection.Inspector.from_engine(connection)
+    insp = sa.inspect(connection)
     if 'quotas' not in insp.get_table_names():
         return []
     session = sa.orm.Session(bind=connection.connect())

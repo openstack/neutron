@@ -15,7 +15,6 @@
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.engine import reflection
 
 
 """ovn backend
@@ -35,7 +34,7 @@ OVN_HASH_RING = 'ovn_hash_ring'
 
 
 def upgrade():
-    inspector = reflection.Inspector.from_engine(op.get_bind())
+    inspector = sa.inspect(op.get_bind())
     table_names = inspector.get_table_names()
     if OVN_REVISION_NUMBERS in table_names and OVN_HASH_RING in table_names:
         op.alter_column(OVN_REVISION_NUMBERS, 'revision_number',

@@ -11,7 +11,7 @@
 #    under the License.
 
 from alembic import op
-from sqlalchemy.engine import reflection
+import sqlalchemy
 
 """Rename ml2_network_segments table
 
@@ -45,7 +45,7 @@ def upgrade():
 
 
 def delete_foreign_key_constraint():
-    inspector = reflection.Inspector.from_engine(op.get_bind())
+    inspector = sqlalchemy.inspect(op.get_bind())
     fk_constraints = inspector.get_foreign_keys(TABLE_NAME)
     for fk in fk_constraints:
         if fk['referred_table'] == OLD_REFERRED_TABLE_NAME:
