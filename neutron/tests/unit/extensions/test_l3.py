@@ -2036,7 +2036,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
         with self.router() as r:
             with self.network() as n:
                 self._set_net_external(n['network']['id'])
-                with mock.patch.object(registry, 'publish') as notify:
+                with mock.patch.object(registry, 'publish') as publish:
                     errors = [
                         exceptions.NotificationError(
                             'foo_callback_id',
@@ -2049,16 +2049,16 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                             raise exceptions.CallbackFailure(
                                 errors=errors)
                         return mock.DEFAULT
-                    notify.side_effect = failing_publish
+                    publish.side_effect = failing_publish
                     self._add_external_gateway_to_router(
                         r['router']['id'], n['network']['id'],
                         expected_code=exc.HTTPBadRequest.code)
-                    notify.assert_any_call(
+                    publish.assert_any_call(
                         resources.ROUTER_GATEWAY,
                         events.BEFORE_CREATE,
                         mock.ANY, payload=mock.ANY)
                     # Find the call and look at the payload
-                    calls = [call for call in notify.mock_calls
+                    calls = [call for call in publish.mock_calls
                         if call[1][0] == resources.ROUTER_GATEWAY and
                         call[1][1] == events.BEFORE_CREATE]
                     self.assertEqual(1, len(calls))
@@ -2073,7 +2073,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             with self.network() as n:
                 with self.subnet(network=n) as s:
                     self._set_net_external(n['network']['id'])
-                    with mock.patch.object(registry, 'publish') as notify:
+                    with mock.patch.object(registry, 'publish') as publish:
                         res = self._add_external_gateway_to_router(
                             r['router']['id'], n['network']['id'],
                             ext_ips=[{'subnet_id': s['subnet']['id'],
@@ -2085,9 +2085,9 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                         resources.ROUTER_GATEWAY,
                                         events.AFTER_CREATE, mock.ANY,
                                         payload=mock.ANY)]
-                        notify.assert_has_calls(expected)
+                        publish.assert_has_calls(expected)
                         # Find the call and look at the payload
-                        calls = [call for call in notify.mock_calls
+                        calls = [call for call in publish.mock_calls
                             if call[1][0] == resources.ROUTER_GATEWAY and
                             call[1][1] == events.AFTER_CREATE]
                         self.assertEqual(1, len(calls))
@@ -2112,7 +2112,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
     def test_router_remove_interface_callback_failure_returns_409(self):
         with self.router() as r,\
                 self.subnet() as s,\
-                mock.patch.object(registry, 'publish') as notify:
+                mock.patch.object(registry, 'publish') as publish:
             errors = [
                 exceptions.NotificationError(
                     'foo_callback_id', n_exc.InUse()),
@@ -2124,7 +2124,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
 
             # we fail the first time, but not the second, when
             # the clean-up takes place
-            notify.side_effect = [
+            publish.side_effect = [
                 exceptions.CallbackFailure(errors=errors), None
             ]
             self._router_interface_action(
@@ -2137,7 +2137,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
     def test_router_clear_gateway_callback_failure_returns_409(self):
         with self.router() as r,\
                 self.subnet() as s,\
-                mock.patch.object(registry, 'publish') as notify:
+                mock.patch.object(registry, 'publish') as publish:
             errors = [
                 exceptions.NotificationError(
                     'foo_callback_id', n_exc.InUse()),
@@ -2147,7 +2147,7 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             self._add_external_gateway_to_router(
                     r['router']['id'],
                     s['subnet']['network_id'])
-            notify.side_effect = exceptions.CallbackFailure(errors=errors)
+            publish.side_effect = exceptions.CallbackFailure(errors=errors)
             self._remove_external_gateway_from_router(
                 r['router']['id'],
                 s['subnet']['network_id'],

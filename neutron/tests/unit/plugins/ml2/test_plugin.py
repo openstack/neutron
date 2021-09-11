@@ -1472,7 +1472,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                 mock.patch.object(
                     l3plugin,
                     'disassociate_floatingips') as disassociate_floatingips,\
-                mock.patch.object(registry, 'notify') as notify:
+                mock.patch.object(registry, 'publish') as publish:
 
             port_id = port['port']['id']
             plugin.delete_port(ctx, port_id)
@@ -1484,7 +1484,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             ])
 
             # check that notifier was still triggered
-            self.assertTrue(notify.call_counts)
+            self.assertTrue(publish.call_counts)
 
     def test_registry_publish_before_after_port_binding(self):
         plugin = directory.get_plugin()

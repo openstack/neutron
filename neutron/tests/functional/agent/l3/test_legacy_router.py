@@ -114,7 +114,7 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
         mock.patch.object(router_info.RouterInfo, 'process').start()
         self.agent.l3_ext_manager = mock.Mock()
         mock.patch.object(router_info.RouterInfo, 'delete').start()
-        mock.patch.object(registry, 'notify').start()
+        mock.patch.object(registry, 'publish').start()
 
         router_info_1 = self.generate_router_info(False)
         r1 = self.manage_router(self.agent, router_info_1)
