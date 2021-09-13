@@ -13,12 +13,12 @@
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
+from neutron_lib.db import standard_attr
 import sqlalchemy as sa
 from sqlalchemy import orm
 
 from neutron.db.models import l3agent as rb_model
 from neutron.db import models_v2
-from neutron.db import standard_attr
 
 
 class RouterPort(model_base.BASEV2):

@@ -11,9 +11,8 @@
 #    under the License.
 
 from neutron_lib.db import model_base
+from neutron_lib.db import standard_attr
 import sqlalchemy as sa
-
-from neutron.db import standard_attr
 
 
 class ProvisioningBlock(model_base.BASEV2):

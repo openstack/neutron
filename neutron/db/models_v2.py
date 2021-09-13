@@ -20,13 +20,13 @@ from neutron_lib.api.definitions import subnetpool as subnetpool_def
 from neutron_lib import constants
 from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
+from neutron_lib.db import standard_attr
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy import sql
 
 from neutron.db.network_dhcp_agent_binding import models as ndab_model
 from neutron.db import rbac_db_models
-from neutron.db import standard_attr
 
 
 # NOTE(ralonsoh): move to neutron_lib.db.model_base

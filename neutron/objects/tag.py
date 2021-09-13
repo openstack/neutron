@@ -13,12 +13,12 @@
 import functools
 
 from neutron_lib.db import model_query
+from neutron_lib.db import standard_attr
 from sqlalchemy.orm import aliased
 
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db.models import tag as tag_model
-from neutron.db import standard_attr
 from neutron.objects import base
 
 
