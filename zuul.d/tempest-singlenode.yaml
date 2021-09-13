@@ -496,38 +496,6 @@
     irrelevant-files: *openvswitch-irrelevant-files
 
 - job:
-    name: neutron-ovn-tempest-ovs-master-fedora
-    description: Job testing for devstack/tempest testing Neutron with ovn driver and OVN master branch and Fedora
-    parent: neutron-ovn-base
-    nodeset: devstack-single-node-fedora-latest
-    vars:
-      zuul_copy_output:
-        '{{ devstack_base_dir }}/data/ovs': 'logs'
-        '{{ devstack_base_dir }}/data/ovn': 'logs'
-        '{{ devstack_log_dir }}/ovsdb-server-nb.log': 'logs'
-        '{{ devstack_log_dir }}/ovsdb-server-sb.log': 'logs'
-      devstack_localrc:
-        OVN_BUILD_FROM_SOURCE: True
-        OVN_BRANCH: master
-        OVS_BRANCH: master
-      devstack_services:
-        etcd: false
-        br-ex-tcpdump: true
-        br-int-flows: true
-        tls-proxy: true
-        # Cinder services
-        c-api: false
-        c-bak: false
-        c-sch: false
-        c-vol: false
-        cinder: false
-        # Swift services
-        s-account: false
-        s-container: false
-        s-object: false
-        s-proxy: false
-
-- job:
     name: neutron-ovn-tempest-ovs-ipv6-only-base
     description: Base job for devstack/tempest to test Neutron with ovn driver in an IPv6-only deployment
     parent: devstack-tempest-ipv6
@@ -559,3 +527,15 @@
         OVN_BUILD_FROM_SOURCE: True
         OVN_BRANCH: master
         OVS_BRANCH: master
+
+- job:
+    name: neutron-ovn-tempest-ovs-master-fedora
+    description: Job testing for devstack/tempest testing Neutron with ovn driver and OVN master branch and Fedora
+    parent: neutron-ovn-tempest-ovs-master
+    nodeset: devstack-single-node-fedora-latest
+    vars:
+      zuul_copy_output:
+        '{{ devstack_base_dir }}/data/ovs': 'logs'
+        '{{ devstack_base_dir }}/data/ovn': 'logs'
+        '{{ devstack_log_dir }}/ovsdb-server-nb.log': 'logs'
+        '{{ devstack_log_dir }}/ovsdb-server-sb.log': 'logs'
