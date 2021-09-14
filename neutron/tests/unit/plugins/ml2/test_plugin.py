@@ -55,6 +55,7 @@ from neutron.db import segments_db
 from neutron.objects import base as base_obj
 from neutron.objects import ports as port_obj
 from neutron.objects import router as l3_obj
+from neutron.plugins.ml2.common import constants as ml2_consts
 from neutron.plugins.ml2.common import exceptions as ml2_exc
 from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2 import driver_context
@@ -1206,7 +1207,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         self._add_fake_dhcp_agent()
         with mock.patch.object(provisioning_blocks,
                                'add_provisioning_component') as ap:
-            with self.port():
+            with self.port(device_owner="fake:test"):
                 self.assertTrue(ap.called)
 
     def test_dhcp_provisioning_blocks_skipped_on_create_with_no_dhcp(self):
@@ -1222,7 +1223,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         ctx = context.get_admin_context()
         plugin = directory.get_plugin()
         self._add_fake_dhcp_agent()
-        with self.port() as port:
+        with self.port(device_owner="fake:test") as port:
             with mock.patch.object(provisioning_blocks,
                                    'add_provisioning_component') as ap:
                 port['port'].update(update_dict)
@@ -1241,8 +1242,33 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
     def test_dhcp_provisioning_blocks_removed_without_dhcp_agents(self):
         with mock.patch.object(provisioning_blocks,
                                'remove_provisioning_component') as cp:
-            with self.port():
+            with self.port(device_owner="fake:test"):
                 self.assertTrue(cp.called)
+
+    def _test_no_dhcp_provisioning_blocks_removed_empty_device_owner(
+            self, device_owner):
+        with mock.patch.object(provisioning_blocks,
+                               'remove_provisioning_component') as cp:
+            with self.port(device_owner=device_owner):
+                self.assertFalse(cp.called)
+
+    def _test_no_dhcp_provisioning_blocks_added_empty_device_owner(
+            self, device_owner):
+        with mock.patch.object(provisioning_blocks,
+                               'add_provisioning_component') as cp:
+            with self.port(device_owner=device_owner):
+                self.assertFalse(cp.called)
+
+    def test_no_dhcp_provisioning_blocks_removed_for_empty_or_service_port(
+            self):
+        for device_owner in ml2_consts.NO_PBLOCKS_TYPES:
+            self._test_no_dhcp_provisioning_blocks_removed_empty_device_owner(
+                device_owner)
+
+    def test_no_dhcp_provisioning_blocks_added_for_empty_or_service_port(self):
+        for device_owner in ml2_consts.NO_PBLOCKS_TYPES:
+            self._test_no_dhcp_provisioning_blocks_added_empty_device_owner(
+                device_owner)
 
     def test_create_update_get_port_same_fixed_ips_order(self):
         ctx = context.get_admin_context()
