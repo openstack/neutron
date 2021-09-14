@@ -926,14 +926,29 @@ class OVNMechanismDriver(api.MechanismDriver):
         # cannot be found.
         chassis_physnets = []
         try:
+            # The PortContext host property contains special handling that
+            # we need to take into account, thus passing both the port Dict
+            # and the PortContext instance so that the helper can decide
+            # which to use.
+            bind_host = self._ovn_client.determine_bind_host(
+                port,
+                port_context=context)
             datapath_type, iface_types, chassis_physnets = (
-                self.sb_ovn.get_chassis_data_for_ml2_bind_port(context.host))
+                self.sb_ovn.get_chassis_data_for_ml2_bind_port(bind_host))
             iface_types = iface_types.split(',') if iface_types else []
         except RuntimeError:
             LOG.debug('Refusing to bind port %(port_id)s due to '
                       'no OVN chassis for host: %(host)s',
-                      {'port_id': port['id'], 'host': context.host})
+                      {'port_id': port['id'], 'host': bind_host})
             return
+        except n_exc.InvalidInput as e:
+            # The port binding profile is validated both on port creation and
+            # update.  The new rules apply to a VNIC type previously not
+            # consumed by the OVN mechanism driver, so this should never
+            # happen.
+            LOG.error('Validation of binding profile unexpectedly failed '
+                      'while attempting to bind port %s', port['id'])
+            raise e
 
         for segment_to_bind in context.segments_to_bind:
             network_type = segment_to_bind['network_type']
@@ -944,7 +959,7 @@ class OVNMechanismDriver(api.MechanismDriver):
                       'segmentation ID %(segmentation_id)s, '
                       'physical network %(physical_network)s',
                       {'port_id': port['id'],
-                       'host': context.host,
+                       'host': bind_host,
                        'network_type': network_type,
                        'segmentation_id': segmentation_id,
                        'physical_network': physical_network})
@@ -967,7 +982,7 @@ class OVNMechanismDriver(api.MechanismDriver):
                          '%(chassis_physnets)s not supporting '
                          'physical network: %(physical_network)s',
                          {'port_id': port['id'],
-                          'host': context.host,
+                          'host': bind_host,
                           'chassis_physnets': chassis_physnets,
                           'physical_network': physical_network})
             else:

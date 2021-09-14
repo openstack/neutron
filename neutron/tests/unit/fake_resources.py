@@ -181,6 +181,7 @@ class FakeOvsdbSbOvnIdl(object):
         self.chassis_list = mock.MagicMock()
         self.is_table_present = mock.Mock()
         self.is_table_present.return_value = False
+        self.get_chassis_by_card_serial_from_cms_options = mock.Mock()
 
 
 class FakeOvsdbTransaction(object):
@@ -835,7 +836,8 @@ class FakeChassis(object):
     @staticmethod
     def create(attrs=None, az_list=None, chassis_as_gw=False,
                bridge_mappings=None, rp_bandwidths=None,
-               rp_inventory_defaults=None, rp_hypervisors=None):
+               rp_inventory_defaults=None, rp_hypervisors=None,
+               card_serial_number=None):
         cms_opts = []
         if az_list:
             cms_opts.append("%s=%s" % (ovn_const.CMS_OPT_AVAILABILITY_ZONES,
@@ -863,6 +865,10 @@ class FakeChassis(object):
         elif rp_hypervisors == '':  # Test wrongly defined parameter
             cms_opts.append('%s=' % ovn_const.RP_HYPERVISORS)
 
+        if card_serial_number:
+            cms_opts.append('%s=%s' % (ovn_const.CMS_OPT_CARD_SERIAL_NUMBER,
+                                       card_serial_number))
+
         external_ids = {}
         if cms_opts:
             external_ids[ovn_const.OVN_CMS_OPTIONS] = ','.join(cms_opts)
@@ -870,7 +876,7 @@ class FakeChassis(object):
         if bridge_mappings:
             external_ids['ovn-bridge-mappings'] = ','.join(bridge_mappings)
 
-        attrs = {
+        chassis_attrs = {
             'encaps': [],
             'external_ids': external_ids,
             'hostname': '',
@@ -881,5 +887,5 @@ class FakeChassis(object):
             'vtep_logical_switches': []}
 
         # Overwrite default attributes.
-        attrs.update(attrs)
-        return type('Chassis', (object, ), attrs)
+        chassis_attrs.update(attrs or {})
+        return type('Chassis', (object, ), chassis_attrs)

@@ -1246,6 +1246,36 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             portbindings.VIF_TYPE_OVS,
             self.mech_driver.vif_details[portbindings.VIF_TYPE_OVS])
 
+    def _test_bind_port_remote_managed(self, fake_segments):
+        fake_serial = 'fake-serial'
+        fake_port = fakes.FakePort.create_one_port(
+            attrs={'binding:vnic_type': 'remote-managed',
+                   'binding:profile': {
+                       'pci_vendor_info': 'fake-pci-vendor-info',
+                       'pci_slot': 'fake-pci-slot',
+                       'physical_network': fake_segments[0][
+                           'physical_network'],
+                       'card_serial_number': fake_serial,
+                       'pf_mac_address': '00:53:00:00:00:42',
+                       'vf_num': 42}}).info()
+        fake_smartnic_dpu = 'fake-smartnic-dpu'
+        ch_smartnic_dpu = fakes.FakeChassis.create(
+            attrs={'hostname': fake_smartnic_dpu},
+            card_serial_number=fake_serial)
+
+        self.sb_ovn.get_chassis_by_card_serial_from_cms_options.\
+            return_value = ch_smartnic_dpu
+        fake_host = 'host'
+        fake_port_context = fakes.FakePortContext(
+            fake_port, fake_host, fake_segments)
+        self.mech_driver.bind_port(fake_port_context)
+        self.sb_ovn.get_chassis_data_for_ml2_bind_port.assert_called_once_with(
+            fake_smartnic_dpu)
+        fake_port_context.set_binding.assert_called_once_with(
+            fake_segments[0]['id'],
+            portbindings.VIF_TYPE_OVS,
+            self.mech_driver.vif_details[portbindings.VIF_TYPE_OVS])
+
     def test_bind_port_vdpa(self):
         segment_attrs = {'network_type': 'geneve',
                          'physical_network': None,
@@ -1283,6 +1313,24 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         fake_segments = \
             [fakes.FakeSegment.create_one_segment(attrs=segment_attrs).info()]
         self._test_bind_port_sriov(fake_segments)
+
+    def test_bind_remote_managed_port_geneve(self):
+        """Test binding a REMOTE_MANAGED port to a geneve segment."""
+        segment_attrs = {'network_type': 'geneve',
+                         'physical_network': None,
+                         'segmentation_id': 1023}
+        fake_segments = \
+            [fakes.FakeSegment.create_one_segment(attrs=segment_attrs).info()]
+        self._test_bind_port_remote_managed(fake_segments)
+
+    def test_bind_remote_managed_port_vlan(self):
+        """Test binding a REMOTE_MANAGED port to a geneve segment."""
+        segment_attrs = {'network_type': 'vlan',
+                         'physical_network': 'fake-physnet',
+                         'segmentation_id': 42}
+        fake_segments = \
+            [fakes.FakeSegment.create_one_segment(attrs=segment_attrs).info()]
+        self._test_bind_port_remote_managed(fake_segments)
 
     def test_bind_port_vlan(self):
         segment_attrs = {'network_type': 'vlan',
@@ -3431,9 +3479,10 @@ class TestOVNMechanismDriverSecurityGroup(MechDriverSetupBase,
             _, kwargs = self.mech_driver.nb_ovn.create_lswitch_port.call_args
             self.assertEqual(
                 1, self.mech_driver.nb_ovn.create_lswitch_port.call_count)
-            self.assertEqual(ovn_const.LSP_TYPE_EXTERNAL, kwargs['type'])
-            self.assertEqual(fake_grp, kwargs['ha_chassis_group'])
-            sync_mock.assert_called_once_with(mock.ANY, net_id, mock.ANY)
+            if vnic_type in ovn_const.EXTERNAL_PORT_TYPES:
+                self.assertEqual(ovn_const.LSP_TYPE_EXTERNAL, kwargs['type'])
+                self.assertEqual(fake_grp, kwargs['ha_chassis_group'])
+                sync_mock.assert_called_once_with(mock.ANY, net_id, mock.ANY)
 
     def test_create_port_with_vnic_direct(self):
         self._test_create_port_with_vnic_type(portbindings.VNIC_DIRECT)
@@ -3445,6 +3494,14 @@ class TestOVNMechanismDriverSecurityGroup(MechDriverSetupBase,
     def test_create_port_with_vnic_macvtap(self):
         self._test_create_port_with_vnic_type(
             portbindings.VNIC_MACVTAP)
+
+    def test_create_port_with_vnic_remote_managed(self):
+        self._test_create_port_with_vnic_type(
+            portbindings.VNIC_REMOTE_MANAGED)
+        # Confirm LSP options are not populated when there is no binding
+        # profile yet.
+        _, kwargs = self.mech_driver.nb_ovn.create_lswitch_port.call_args
+        self.assertNotIn('vif-plug-type', kwargs['options'])
 
     def test_update_port_with_sgs(self):
         with self.network() as n, self.subnet(n):
@@ -3802,8 +3859,10 @@ class TestOVNVVirtualPort(OVNMechanismDriverTestCase):
             self.fmt, {'network': self.net},
             '10.0.0.1', '10.0.0.0/24')['subnet']
 
+    @mock.patch.object(ovn_client.OVNClient, 'determine_bind_host')
     @mock.patch.object(ovn_client.OVNClient, 'get_virtual_port_parents')
-    def test_create_port_with_virtual_type_and_options(self, mock_get_parents):
+    def test_create_port_with_virtual_type_and_options(
+            self, mock_get_parents, mock_determine_bind_host):
         fake_parents = ['parent-0', 'parent-1']
         mock_get_parents.return_value = fake_parents
         port = {'id': 'virt-port',

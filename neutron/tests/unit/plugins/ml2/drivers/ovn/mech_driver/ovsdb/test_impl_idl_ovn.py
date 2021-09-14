@@ -792,3 +792,61 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         lb_row = self._find_ovsdb_fake_row(self.lb_table, 'name', 'lb_2')
         lb = self.nb_ovn_idl.get_floatingip_in_nat_or_lb(fip_id)
         self.assertEqual(lb['_uuid'], lb_row.uuid)
+
+
+class TestSBImplIdlOvnBase(TestDBImplIdlOvn):
+
+    fake_set = {
+        'chassis': [
+            {
+                'hostname': 'fake-smartnic-dpu-chassis.fqdn',
+                'external_ids': {
+                    ovn_const.OVN_CMS_OPTIONS: (
+                        'firstoption,'
+                        'card-serial-number=fake-serial,'
+                        'thirdoption'),
+                },
+            },
+        ],
+    }
+    fake_associations = {}
+
+    def setUp(self):
+        super(TestSBImplIdlOvnBase, self).setUp()
+
+        self.chassis_table = fakes.FakeOvsdbTable.create_one_ovsdb_table()
+
+        self._tables = {}
+        self._tables['Chassis'] = self.chassis_table
+
+        with mock.patch.object(impl_idl_ovn.OvsdbSbOvnIdl, 'from_worker',
+                               return_value=mock.Mock()):
+            with mock.patch.object(ovs_idl.Backend, 'autocreate_indices',
+                                   create=True):
+                impl_idl_ovn.OvsdbSbOvnIdl.ovsdb_connection = None
+                self.sb_ovn_idl = impl_idl_ovn.OvsdbSbOvnIdl(mock.MagicMock())
+
+        self.sb_ovn_idl.idl.tables = self._tables
+
+    def _load_sb_db(self):
+        # Load Chassis
+        fake_chassis = TestSBImplIdlOvnBase.fake_set['chassis']
+        self._load_ovsdb_fake_rows(self.chassis_table, fake_chassis)
+
+
+class TestSBImplIdlOvnGetChassisByCardSerialFromCMSOptions(
+        TestSBImplIdlOvnBase):
+
+    def test_chassis_not_found(self):
+        self._load_sb_db()
+        self.assertRaises(
+            RuntimeError,
+            self.sb_ovn_idl.get_chassis_by_card_serial_from_cms_options,
+            'non-existent')
+
+    def test_chassis_found(self):
+        self._load_sb_db()
+        self.assertEqual(
+            'fake-smartnic-dpu-chassis.fqdn',
+            self.sb_ovn_idl.get_chassis_by_card_serial_from_cms_options(
+                'fake-serial').hostname)

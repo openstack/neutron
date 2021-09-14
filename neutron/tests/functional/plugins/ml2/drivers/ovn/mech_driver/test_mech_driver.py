@@ -61,6 +61,9 @@ class TestPortBinding(base.TestOVNFunctionalBase):
         self.ovs_host = 'ovs-host'
         self.dpdk_host = 'dpdk-host'
         self.invalid_dpdk_host = 'invalid-host'
+        self.insecure_host = 'insecure-host'
+        self.smartnic_dpu_host = 'smartnic-dpu-host'
+        self.smartnic_dpu_serial = 'fake-smartnic-dpu-serial'
         self.add_fake_chassis(self.ovs_host)
         self.add_fake_chassis(
             self.dpdk_host,
@@ -71,32 +74,39 @@ class TestPortBinding(base.TestOVNFunctionalBase):
             self.invalid_dpdk_host,
             external_ids={'datapath-type': 'netdev',
                           'iface-types': 'dummy,dummy-internal,geneve,vxlan'})
+        self.add_fake_chassis(
+            self.smartnic_dpu_host,
+            external_ids={ovn_const.OVN_CMS_OPTIONS: '{}={}'.format(
+                ovn_const.CMS_OPT_CARD_SERIAL_NUMBER,
+                self.smartnic_dpu_serial)})
         self.n1 = self._make_network(self.fmt, 'n1', True)
         res = self._create_subnet(self.fmt, self.n1['network']['id'],
                                   '10.0.0.0/24')
         self.deserialize(self.fmt, res)
 
-    def _create_or_update_port(self, port_id=None, hostname=None):
+    def _create_or_update_port(self, port_id=None, hostname=None,
+                               vnic_type=None, binding_profile=None):
+
+        port_data = {'port': {}}
+        if hostname:
+            port_data['port']['device_id'] = uuidutils.generate_uuid()
+            port_data['port']['device_owner'] = 'compute:None'
+            port_data['port']['binding:host_id'] = hostname
+        if vnic_type:
+            port_data['port'][portbindings.VNIC_TYPE] = vnic_type
+        if binding_profile:
+            port_data['port'][portbindings.PROFILE] = binding_profile
 
         if port_id is None:
-            port_data = {
-                'port': {'network_id': self.n1['network']['id'],
-                         'tenant_id': self._tenant_id}}
-
-            if hostname:
-                port_data['port']['device_id'] = uuidutils.generate_uuid()
-                port_data['port']['device_owner'] = 'compute:None'
-                port_data['port']['binding:host_id'] = hostname
+            port_data['port'].update({
+                'network_id': self.n1['network']['id'],
+                'tenant_id': self._tenant_id})
 
             port_req = self.new_create_request('ports', port_data, self.fmt)
             port_res = port_req.get_response(self.api)
             p = self.deserialize(self.fmt, port_res)
             port_id = p['port']['id']
         else:
-            port_data = {
-                'port': {'device_id': uuidutils.generate_uuid(),
-                         'device_owner': 'compute:None',
-                         'binding:host_id': hostname}}
             port_req = self.new_update_request('ports', port_data, port_id,
                                                self.fmt)
             port_res = port_req.get_response(self.api)
@@ -104,15 +114,31 @@ class TestPortBinding(base.TestOVNFunctionalBase):
 
         return port_id
 
-    def _verify_vif_details(self, port_id, expected_host_name,
-                            expected_vif_type, expected_vif_details):
+    def _port_show(self, port_id):
         port_req = self.new_show_request('ports', port_id)
         port_res = port_req.get_response(self.api)
-        p = self.deserialize(self.fmt, port_res)
+        return self.deserialize(self.fmt, port_res)
+
+    def _verify_vif_details(self, port_id, expected_host_name,
+                            expected_vif_type, expected_vif_details):
+        p = self._port_show(port_id)
         self.assertEqual(expected_host_name, p['port']['binding:host_id'])
         self.assertEqual(expected_vif_type, p['port']['binding:vif_type'])
         self.assertEqual(expected_vif_details,
                          p['port']['binding:vif_details'])
+
+    def _find_port_row(self, port_id):
+        cmd = self.nb_api.db_find_rows(
+            'Logical_Switch_Port', ('name', '=', port_id))
+        rows = cmd.execute(check_error=True)
+        return rows[0] if rows else None
+
+    def _verify_lsp_details(self, port_id, lsp_options):
+        ovn_lsp = self._find_port_row(port_id)
+        for key, value in lsp_options.items():
+            self.assertEqual(
+                value,
+                ovn_lsp.options[key])
 
     def test_port_binding_create_port(self):
         port_id = self._create_or_update_port(hostname=self.ovs_host)
@@ -129,6 +155,38 @@ class TestPortBinding(base.TestOVNFunctionalBase):
         port_id = self._create_or_update_port(hostname=self.invalid_dpdk_host)
         self._verify_vif_details(port_id, self.invalid_dpdk_host, 'ovs',
                                  OVS_VIF_DETAILS)
+
+    def test_port_binding_create_remote_managed_port(self):
+        pci_vendor_info = 'fake-pci-vendor-info'
+        pci_slot = 'fake-pci-slot'
+        physical_network = None
+        pf_mac_address = 'fake-pf-mac'
+        vf_num = 42
+        port_id = self._create_or_update_port(
+            hostname=self.insecure_host,
+            vnic_type=portbindings.VNIC_REMOTE_MANAGED,
+            binding_profile={
+                ovn_const.VIF_DETAILS_PCI_VENDOR_INFO: pci_vendor_info,
+                ovn_const.VIF_DETAILS_PCI_SLOT: pci_slot,
+                ovn_const.VIF_DETAILS_PHYSICAL_NETWORK: physical_network,
+                ovn_const.VIF_DETAILS_CARD_SERIAL_NUMBER: (
+                    self.smartnic_dpu_serial),
+                ovn_const.VIF_DETAILS_PF_MAC_ADDRESS: pf_mac_address,
+                ovn_const.VIF_DETAILS_VF_NUM: vf_num,
+            })
+
+        self._verify_vif_details(port_id, self.insecure_host, 'ovs',
+                                 OVS_VIF_DETAILS)
+        self._verify_lsp_details(port_id, {
+            ovn_const.LSP_OPTIONS_REQUESTED_CHASSIS_KEY: (
+                self.smartnic_dpu_host),
+            ovn_const.LSP_OPTIONS_VIF_PLUG_TYPE_KEY: 'representor',
+            ovn_const.LSP_OPTIONS_VIF_PLUG_MTU_REQUEST_KEY: str(
+                self.n1['network']['mtu']),
+            ovn_const.LSP_OPTIONS_VIF_PLUG_REPRESENTOR_PF_MAC_KEY: (
+                pf_mac_address),
+            ovn_const.LSP_OPTIONS_VIF_PLUG_REPRESENTOR_VF_NUM_KEY: str(vf_num),
+        })
 
     def test_port_binding_update_port(self):
         port_id = self._create_or_update_port()
@@ -150,6 +208,42 @@ class TestPortBinding(base.TestOVNFunctionalBase):
                                               hostname=self.invalid_dpdk_host)
         self._verify_vif_details(port_id, self.invalid_dpdk_host, 'ovs',
                                  OVS_VIF_DETAILS)
+
+    def test_port_binding_update_remote_managed_port(self):
+        port_id = self._create_or_update_port(
+            vnic_type=portbindings.VNIC_REMOTE_MANAGED)
+        self._verify_vif_details(port_id, '', 'unbound', {})
+
+        pci_vendor_info = 'fake-pci-vendor-info'
+        pci_slot = 'fake-pci-slot'
+        physical_network = None
+        pf_mac_address = 'fake-pf-mac'
+        vf_num = 42
+        port_id = self._create_or_update_port(
+            port_id=port_id,
+            hostname=self.insecure_host,
+            vnic_type=portbindings.VNIC_REMOTE_MANAGED,
+            binding_profile={
+                ovn_const.VIF_DETAILS_PCI_VENDOR_INFO: pci_vendor_info,
+                ovn_const.VIF_DETAILS_PCI_SLOT: pci_slot,
+                ovn_const.VIF_DETAILS_PHYSICAL_NETWORK: physical_network,
+                ovn_const.VIF_DETAILS_CARD_SERIAL_NUMBER: (
+                    self.smartnic_dpu_serial),
+                ovn_const.VIF_DETAILS_PF_MAC_ADDRESS: pf_mac_address,
+                ovn_const.VIF_DETAILS_VF_NUM: vf_num,
+            })
+        self._verify_vif_details(port_id, self.insecure_host, 'ovs',
+                                 OVS_VIF_DETAILS)
+        self._verify_lsp_details(port_id, {
+            ovn_const.LSP_OPTIONS_REQUESTED_CHASSIS_KEY: (
+                self.smartnic_dpu_host),
+            ovn_const.LSP_OPTIONS_VIF_PLUG_TYPE_KEY: 'representor',
+            ovn_const.LSP_OPTIONS_VIF_PLUG_MTU_REQUEST_KEY: str(
+                self.n1['network']['mtu']),
+            ovn_const.LSP_OPTIONS_VIF_PLUG_REPRESENTOR_PF_MAC_KEY: (
+                pf_mac_address),
+            ovn_const.LSP_OPTIONS_VIF_PLUG_REPRESENTOR_VF_NUM_KEY: str(vf_num),
+        })
 
 
 class TestPortBindingOverTcp(TestPortBinding):
