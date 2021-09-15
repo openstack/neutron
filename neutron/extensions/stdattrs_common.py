@@ -15,7 +15,7 @@
 
 import itertools
 
-from neutron.db import standard_attr
+from neutron_lib.db import standard_attr
 
 
 def stdattrs_extended_resources(attributes):

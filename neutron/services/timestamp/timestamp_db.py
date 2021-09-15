@@ -15,11 +15,11 @@
 from neutron_lib.db import api as db_api
 from neutron_lib.db import model_query
 from neutron_lib.db import resource_extend
+from neutron_lib.db import standard_attr
 from neutron_lib import exceptions as n_exc
 from oslo_utils import timeutils
 from sqlalchemy.orm import session as se
 
-from neutron.db import standard_attr
 
 CHANGED_SINCE = 'changed_since'
 TIME_FORMAT_WHOLE_SECONDS = '%Y-%m-%dT%H:%M:%S'

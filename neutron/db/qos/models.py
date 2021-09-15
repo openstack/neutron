@@ -16,12 +16,12 @@
 from neutron_lib import constants
 from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
+from neutron_lib.db import standard_attr
 import sqlalchemy as sa
 
 from neutron.db.models import l3
 from neutron.db import models_v2
 from neutron.db import rbac_db_models
-from neutron.db import standard_attr
 
 
 class QosPolicy(standard_attr.HasStandardAttributes, model_base.BASEV2,

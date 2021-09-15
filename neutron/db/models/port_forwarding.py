@@ -14,12 +14,12 @@
 #    under the License.
 
 from neutron_lib.db import model_base
+from neutron_lib.db import standard_attr
 import sqlalchemy as sa
 from sqlalchemy import orm
 
 from neutron.db.models import l3
 from neutron.db import models_v2
-from neutron.db import standard_attr
 from neutron_lib.api.definitions import fip_pf_description as apidef
 from neutron_lib.db import constants as db_const
 

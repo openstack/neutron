@@ -15,9 +15,8 @@
 
 from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
+from neutron_lib.db import standard_attr
 import sqlalchemy as sa
-
-from neutron.db import standard_attr
 
 
 class Log(standard_attr.HasStandardAttributes, model_base.BASEV2,

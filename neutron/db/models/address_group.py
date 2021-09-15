@@ -13,11 +13,11 @@
 from neutron_lib.api.definitions import address_group as ag
 from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
+from neutron_lib.db import standard_attr
 import sqlalchemy as sa
 from sqlalchemy import orm
 
 from neutron.db import rbac_db_models
-from neutron.db import standard_attr
 
 
 class AddressAssociation(model_base.BASEV2):

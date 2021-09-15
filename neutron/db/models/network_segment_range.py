@@ -16,9 +16,8 @@ from neutron_lib.api.definitions import network_segment_range as range_apidef
 from neutron_lib import constants
 from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
+from neutron_lib.db import standard_attr
 import sqlalchemy as sa
-
-from neutron.db import standard_attr
 
 
 class NetworkSegmentRange(standard_attr.HasStandardAttributes,

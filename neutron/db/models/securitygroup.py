@@ -14,13 +14,13 @@
 
 from neutron_lib.db import constants as db_const
 from neutron_lib.db import model_base
+from neutron_lib.db import standard_attr
 import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy import sql
 
 from neutron.db import models_v2
 from neutron.db import rbac_db_models
-from neutron.db import standard_attr
 from neutron.extensions import securitygroup as sg
 
 

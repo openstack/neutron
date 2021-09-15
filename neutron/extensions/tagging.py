@@ -18,6 +18,7 @@ from neutron_lib.api.definitions import port
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib.api import faults
 from neutron_lib.api import validators
+from neutron_lib.db import standard_attr
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
 from neutron_lib import rpc as n_rpc
@@ -27,7 +28,6 @@ import webob.exc
 from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import resource as api_resource
-from neutron.db import standard_attr
 
 
 TAG = 'tag'

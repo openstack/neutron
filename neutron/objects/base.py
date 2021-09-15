@@ -18,6 +18,7 @@ import functools
 import itertools
 
 from neutron_lib.db import api as db_api
+from neutron_lib.db import standard_attr
 from neutron_lib import exceptions as n_exc
 from neutron_lib.objects import exceptions as o_exc
 from neutron_lib.objects.extensions import standardattributes
@@ -34,7 +35,6 @@ from sqlalchemy import orm
 from sqlalchemy.orm import query as sqla_query
 
 from neutron._i18n import _
-from neutron.db import standard_attr
 from neutron.objects.db import api as obj_db_api
 
 

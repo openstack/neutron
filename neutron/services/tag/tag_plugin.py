@@ -15,12 +15,12 @@
 from neutron_lib.db import api as db_api
 from neutron_lib.db import model_query
 from neutron_lib.db import resource_extend
+from neutron_lib.db import standard_attr
 from neutron_lib.objects import exceptions as obj_exc
 from neutron_lib.plugins import directory
 from oslo_log import helpers as log_helpers
 from sqlalchemy.orm import exc
 
-from neutron.db import standard_attr
 from neutron.extensions import tagging
 from neutron.objects import tag as tag_obj
 

@@ -14,6 +14,7 @@
 from neutron_lib.api.definitions import revisionifmatch
 from neutron_lib.db import api as db_api
 from neutron_lib.db import resource_extend
+from neutron_lib.db import standard_attr
 from neutron_lib.services import base as service_base
 from oslo_log import log as logging
 import sqlalchemy
@@ -22,7 +23,6 @@ from sqlalchemy.orm import session as se
 import webob.exc
 
 from neutron._i18n import _
-from neutron.db import standard_attr
 
 LOG = logging.getLogger(__name__)
 

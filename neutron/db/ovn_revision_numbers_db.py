@@ -16,6 +16,7 @@
 import datetime
 
 from neutron_lib.db import api as db_api
+from neutron_lib.db import standard_attr
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_log import log
@@ -28,7 +29,6 @@ from neutron.db.models import l3  # noqa
 from neutron.db.models import ovn as ovn_models
 from neutron.db.models import securitygroup  # noqa
 from neutron.db import models_v2  # noqa
-from neutron.db import standard_attr
 
 LOG = log.getLogger(__name__)
 CONF = cfg.CONF

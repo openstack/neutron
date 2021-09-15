@@ -13,8 +13,7 @@
 #    under the License.
 
 from neutron_lib.db import resource_extend
-
-from neutron.db import standard_attr
+from neutron_lib.db import standard_attr
 
 
 @resource_extend.has_resource_extenders
