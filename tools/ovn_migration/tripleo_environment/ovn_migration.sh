@@ -219,6 +219,7 @@ function check_stack {
 
 oc_check_public_network() {
 
+    [ "$VALIDATE_MIGRATION" != "True" ] && return 0
     source $OVERCLOUDRC_FILE
     openstack network show $PUBLIC_NETWORK_NAME 1>/dev/null || {
         echo "ERROR: PUBLIC_NETWORK_NAME=${PUBLIC_NETWORK_NAME} can't be accessed by the"
