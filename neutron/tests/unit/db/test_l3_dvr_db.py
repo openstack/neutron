@@ -633,7 +633,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 resources.FLOATING_IP, events.AFTER_CREATE, self,
                 payload=events.DBEventPayload(
                     context=mock.Mock(), states=(dict(
-                        router_id=router_db['id'], fixed_port_id=port['id'],
+                        router_id=router_db['id'], port_id=port['id'],
                         fixed_ip_address='1.2.3.4', id=fip['id'],
                         floating_network_id=fip['floating_network_id']),),
                     resource_id=fip['id'],
