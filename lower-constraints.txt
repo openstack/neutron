@@ -13,7 +13,7 @@ contextlib2==0.4.0
 coverage==4.0
 ddt==1.0.1
 debtcollector==1.19.0
-decorator==3.4.0
+decorator==4.1.0
 deprecation==1.0
 doc8==0.8.1
 docutils==0.11
@@ -42,7 +42,7 @@ kombu==4.6.1
 linecache2==1.0.0
 logilab-common==1.4.1
 logutils==0.3.5
-Mako==0.4.0
+Mako==1.0.7
 MarkupSafe==1.1.1
 monotonic==0.6;python_version<'3.3'
 mox3==0.20.0
