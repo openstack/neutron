@@ -14,8 +14,6 @@
 
 import copy
 
-import eventlet
-
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import trunk as trunk_apidef
@@ -474,59 +472,3 @@ class TrunkPlugin(service_base.ServicePluginBase):
             self.update_trunk(
                 context, trunk_id,
                 {'trunk': {'status': constants.TRUNK_DOWN_STATUS}})
-
-    @registry.receives(resources.SUBPORTS,
-                       [events.AFTER_CREATE, events.AFTER_DELETE])
-    @registry.receives(resources.TRUNK,
-                       [events.AFTER_CREATE, events.AFTER_DELETE])
-    def _update_device_attributes(self, resource, event, triggers, payload):
-        device_id = ''
-        device_owner = ''
-        host_id = None
-        if event == events.AFTER_CREATE:
-            device_id = payload.resource_id
-            device_owner = constants.TRUNK_SUBPORT_OWNER
-            if resource == resources.TRUNK:
-                subports = payload.states[0].sub_ports
-            elif resource == resources.SUBPORTS:
-                if len(payload.states) < 2:
-                    LOG.debug("Invalid payload format for '%(resource)s' "
-                              "'%(event)s' scenario. Current Trunk data "
-                              "is missing",
-                              {'resource': resources.TRUNK,
-                               'event': events.AFTER_CREATE})
-                    return
-                subports = payload.metadata['subports']
-                parent_port = directory.get_plugin().get_port(
-                    context.get_admin_context(),
-                    payload.states[1]['port_id'])
-                host_id = parent_port['binding:host_id']
-        elif event == events.AFTER_DELETE:
-            host_id = ''
-            if resource == resources.TRUNK:
-                subports = payload.states[0].sub_ports
-            elif resource == resources.SUBPORTS:
-                subports = payload.metadata['subports']
-        eventlet.spawn_n(self._update_subports, context.get_admin_context(),
-                         subports, device_id, device_owner, host_id)
-
-    def _update_subports(self, context, subports, device_id, device_owner,
-                         host_id):
-        port_data = (
-            {'port': {'device_id': device_id, 'device_owner': device_owner}})
-        if host_id is not None:
-            port_data['port']['binding:host_id'] = host_id
-        core_plugin = directory.get_plugin()
-        for subport in subports:
-            try:
-                core_plugin.update_port(context, subport.port_id, port_data)
-            except Exception as e:
-                LOG.error("Unable to update device_id = '%(device_id)s'"
-                          "and device_owner='%(device_owner)s'"
-                          "and host_id='%(host_id)'"
-                          "for port=%(port_id)s: %(reason)s",
-                          {'device_id': device_id,
-                           'device_owner': device_owner,
-                           'host_id': host_id,
-                           'port_id': subport.port_id,
-                           'reason': e})
