@@ -47,9 +47,9 @@ class RBACColumns(model_base.HasId, model_base.HasProject):
     # also be a wildcard '*' to indicate all tenants or it may be a role if
     # neutron gets better integration with keystone
     target_tenant = sa.Column(sa.String(db_const.PROJECT_ID_FIELD_SIZE),
-                              nullable=False)
+                              nullable=False, index=True)
 
-    action = sa.Column(sa.String(255), nullable=False)
+    action = sa.Column(sa.String(255), nullable=False, index=True)
 
     @property
     @abc.abstractmethod
