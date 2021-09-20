@@ -36,6 +36,7 @@ from eventlet.green import subprocess
 import netaddr
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib import constants as n_const
+from neutron_lib import context as n_context
 from neutron_lib.db import api as db_api
 from neutron_lib.services.trunk import constants as trunk_constants
 from neutron_lib.utils import helpers
@@ -675,15 +676,22 @@ def transaction_guard(f):
     If you receive this error, you must alter your code to handle the fact that
     the thing you are calling can have side effects so using transactions to
     undo on failures is not possible.
+
+    This method can be called from a class method or a static method. "inner"
+    should consider if "self" is passed or not. The next mandatory parameter is
+    the context ``neutron_lib.context.Context``.
     """
     @functools.wraps(f)
-    def inner(self, context, *args, **kwargs):
+    def inner(*args, **kwargs):
+        context = (args[0] if issubclass(type(args[0]),
+                                         n_context.ContextBaseWithSession) else
+                   args[1])
         # FIXME(kevinbenton): get rid of all uses of this flag
         if (context.session.is_active and
                 getattr(context, 'GUARD_TRANSACTION', True)):
             raise RuntimeError(_("Method %s cannot be called within a "
                                  "transaction.") % f)
-        return f(self, context, *args, **kwargs)
+        return f(*args, **kwargs)
     return inner
 
 

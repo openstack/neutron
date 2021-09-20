@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    Added two new API methods to ``QuotaDriverAPI`` class.
+    ``get_resource_usage`` returns the current resource usage.
+    ``quota_limit_check`` checks the current resource usage of several
+    resources against a set of deltas (a dictionary of resource names
+    and resource counters).

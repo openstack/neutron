@@ -2246,10 +2246,8 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
         cfg.CONF.set_override(
             'enable_security_group', self.ENABLE_SG,
             group='SECURITYGROUP')
-        make_res = mock.patch.object(quota.QuotaEngine, 'make_reservation')
-        self.mock_quota_make_res = make_res.start()
-        commit_res = mock.patch.object(quota.QuotaEngine, 'commit_reservation')
-        self.mock_quota_commit_res = commit_res.start()
+        quota_check = mock.patch.object(quota.QuotaEngine, 'quota_limit_check')
+        self.mock_quota_check = quota_check.start()
         super(TestMl2PortBinding, self).setUp()
 
     def _check_port_binding_profile(self, port, profile=None):
@@ -2970,10 +2968,8 @@ class TestMl2PortSecurity(Ml2PluginV2TestCase):
         cfg.CONF.set_override('enable_security_group',
                               False,
                               group='SECURITYGROUP')
-        make_res = mock.patch.object(quota.QuotaEngine, 'make_reservation')
-        self.mock_quota_make_res = make_res.start()
-        commit_res = mock.patch.object(quota.QuotaEngine, 'commit_reservation')
-        self.mock_quota_commit_res = commit_res.start()
+        quota_check = mock.patch.object(quota.QuotaEngine, 'quota_limit_check')
+        self.mock_quota_check = quota_check.start()
         super(TestMl2PortSecurity, self).setUp()
 
     def test_port_update_without_security_groups(self):
