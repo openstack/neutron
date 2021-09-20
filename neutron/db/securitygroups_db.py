@@ -106,9 +106,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         with db_api.CONTEXT_WRITER.using(context):
             delta = len(ext_sg.sg_supported_ethertypes)
             delta = delta * 2 if default_sg else delta
-            reservation = quota.QUOTAS.make_reservation(
-                context, tenant_id, {'security_group_rule': delta},
-                self)
+            quota.QUOTAS.quota_limit_check(context, tenant_id,
+                                           security_group_rule=delta)
 
             sg = sg_obj.SecurityGroup(
                 context, id=s.get('id') or uuidutils.generate_uuid(),
@@ -134,10 +133,6 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                 egress_rule.create()
                 sg.rules.append(egress_rule)
             sg.obj_reset_changes(['rules'])
-
-            if reservation:
-                quota.QUOTAS.commit_reservation(context,
-                                                reservation.reservation_id)
 
             # fetch sg from db to load the sg rules with sg model.
             # NOTE(slaweq): With new system/project scopes it may happen that

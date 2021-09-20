@@ -98,7 +98,7 @@ class BaseResource(object, metaclass=abc.ABCMeta):
         value = getattr(cfg.CONF.QUOTAS,
                         self.flag,
                         cfg.CONF.QUOTAS.default_quota)
-        return max(value, -1)
+        return max(value, quota_api.UNLIMITED_QUOTA)
 
     @property
     @abc.abstractmethod

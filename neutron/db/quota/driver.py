@@ -308,3 +308,36 @@ class DbQuotaDriver(quota_api.QuotaDriverAPI):
         overs = [key for key, val in values.items() if 0 <= quotas[key] < val]
         if overs:
             raise exceptions.OverQuota(overs=sorted(overs))
+
+    @staticmethod
+    def get_resource_usage(context, project_id, resources, resource_name):
+        tracked_resource = resources.get(resource_name)
+        if not tracked_resource:
+            return
+
+        return tracked_resource.count(context, None, project_id,
+                                      resync_usage=False)
+
+    def quota_limit_check(self, context, project_id, resources, deltas):
+        # Ensure no value is less than zero
+        unders = [key for key, val in deltas.items() if val < 0]
+        if unders:
+            raise exceptions.InvalidQuotaValue(unders=sorted(unders))
+
+        current_limits = self.get_tenant_quotas(context, resources, project_id)
+        overs = set()
+        for resource_name, delta in deltas.items():
+            resource_limit = current_limits.get(resource_name)
+            if resource_limit in (None, quota_api.UNLIMITED_QUOTA):
+                continue
+
+            resource_usage = self.get_resource_usage(context, project_id,
+                                                     resources, resource_name)
+            if resource_usage is None:
+                continue
+
+            if resource_usage + delta > resource_limit:
+                overs.add(resource_name)
+
+        if overs:
+            raise exceptions.OverQuota(overs=sorted(overs))

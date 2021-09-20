@@ -45,10 +45,8 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
         self.subnet_1_id = uuidutils.generate_uuid()
         self.subnet_2_id = uuidutils.generate_uuid()
         self.port_id = uuidutils.generate_uuid()
-        make_res = mock.patch.object(quota.QuotaEngine, 'make_reservation')
-        self.mock_quota_make_res = make_res.start()
-        commit_res = mock.patch.object(quota.QuotaEngine, 'commit_reservation')
-        self.mock_quota_commit_res = commit_res.start()
+        quota_check = mock.patch.object(quota.QuotaEngine, 'quota_limit_check')
+        self.mock_quota_check = quota_check.start()
 
     def _create_network(self, tenant_id, network_id, shared, external=False):
         network = {'tenant_id': tenant_id,

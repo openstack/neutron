@@ -19,10 +19,12 @@ import datetime
 from neutron_lib.db import api as db_api
 from oslo_db import exception as db_exc
 
+from neutron.common import utils
 from neutron.objects import quota as quota_obj
 
 
 RESERVATION_EXPIRATION_TIMEOUT = 20  # seconds
+UNLIMITED_QUOTA = -1
 
 
 # Wrapper for utcnow - needed for mocking it in unit tests
@@ -201,24 +203,22 @@ def get_reservation(context, reservation_id):
                                 for delta in reserv_obj.resource_deltas))
 
 
+@utils.transaction_guard
+@utils.skip_exceptions(db_exc.DBError)
 @db_api.CONTEXT_WRITER
 def remove_reservation(context, reservation_id, set_dirty=False):
-    try:
-        reservation = quota_obj.Reservation.get_object(context,
-                                                       id=reservation_id)
-        if not reservation:
-            # TODO(salv-orlando): Raise here and then handle the exception?
-            return
-        tenant_id = reservation.project_id
-        resources = [delta.resource for delta in reservation.resource_deltas]
-        reservation.delete()
-        if set_dirty:
-            # quota_usage for all resource involved in this reservation must
-            # be marked as dirty
-            set_resources_quota_usage_dirty(context, resources, tenant_id)
-        return 1
-    except db_exc.DBError:
-        context.session.rollback()
+    reservation = quota_obj.Reservation.get_object(context, id=reservation_id)
+    if not reservation:
+        # TODO(salv-orlando): Raise here and then handle the exception?
+        return
+    tenant_id = reservation.project_id
+    resources = [delta.resource for delta in reservation.resource_deltas]
+    reservation.delete()
+    if set_dirty:
+        # quota_usage for all resource involved in this reservation must
+        # be marked as dirty
+        set_resources_quota_usage_dirty(context, resources, tenant_id)
+    return 1
 
 
 @db_api.retry_if_session_inactive()
@@ -374,6 +374,37 @@ class QuotaDriverAPI(object, metaclass=abc.ABCMeta):
                        quota.
         """
 
+    @staticmethod
+    @abc.abstractmethod
+    def get_resource_usage(context, project_id, resources, resource_name):
+        """Return the resource current usage
+
+        :param context: The request context, for access checks.
+        :param project_id: The ID of the project to make the reservations for.
+        :param resources: A dictionary of the registered resources.
+        :param resource_name: The name of the resource to retrieve the usage.
+        :return: The current resource usage.
+        """
+
+    @staticmethod
+    @abc.abstractmethod
+    def quota_limit_check(context, project_id, resources, deltas):
+        """Check the current resource usage against a set of deltas.
+
+        This method will check if the provided resource deltas could be
+        assigned depending on the current resource usage and the quota limits.
+        If the resource deltas plus the resource usage fit under the quota
+        limit, the method will pass. If not, a ``OverQuota`` will be raised.
+
+        :param context: The request context, for access checks.
+        :param project_id: The ID of the project to make the reservations for.
+        :param resources: A dictionary of the registered resource.
+        :param deltas: A dictionary of the values to check against the
+                       quota limits.
+        :return: None if passed; ``OverQuota`` if quota limits are exceeded,
+                 ``InvalidQuotaValue`` if delta values are invalid.
+        """
+
 
 class NullQuotaDriver(QuotaDriverAPI):
 
@@ -415,4 +446,12 @@ class NullQuotaDriver(QuotaDriverAPI):
 
     @staticmethod
     def limit_check(context, project_id, resources, values):
+        pass
+
+    @staticmethod
+    def get_resource_usage(context, project_id, resources, resource_name):
+        pass
+
+    @staticmethod
+    def quota_limit_check(context, project_id, resources, deltas):
         pass

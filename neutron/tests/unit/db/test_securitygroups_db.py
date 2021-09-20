@@ -74,10 +74,8 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
         self.setup_coreplugin(core_plugin=DB_PLUGIN_KLASS)
         self.ctx = context.get_admin_context()
         self.mixin = SecurityGroupDbMixinImpl()
-        make_res = mock.patch.object(quota.QuotaEngine, 'make_reservation')
-        self.mock_quota_make_res = make_res.start()
-        commit_res = mock.patch.object(quota.QuotaEngine, 'commit_reservation')
-        self.mock_quota_commit_res = commit_res.start()
+        quota_check = mock.patch.object(quota.QuotaEngine, 'quota_limit_check')
+        self.mock_quota_check = quota_check.start()
         is_ext_supported = mock.patch(
             'neutron_lib.api.extensions.is_extension_supported')
         self.is_ext_supported = is_ext_supported.start()
