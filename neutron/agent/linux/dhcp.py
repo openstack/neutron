@@ -1307,6 +1307,7 @@ class Dnsmasq(DhcpLocalProcess):
     def _format_option(self, ip_version, tag, option, *args):
         """Format DHCP option by option name or code."""
         option = str(option)
+        option = option.split("\n", 1)[0]
         pattern = "(tag:(.*),)?(.*)$"
         matches = re.match(pattern, option)
         extra_tag = matches.groups()[0]
