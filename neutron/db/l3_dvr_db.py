@@ -464,7 +464,7 @@ class DVRResourceOperationHandler(object):
             # FloatingIP agent gateway port
             if router_dict.get('distributed'):
                 hostid = self._get_dvr_service_port_hostid(
-                    context, fip['fixed_port_id'])
+                    context, fip['port_id'])
                 if hostid:
                     # FIXME (Swami): This FIP Agent Gateway port should be
                     # created only once and there should not be a duplicate
@@ -481,7 +481,7 @@ class DVRResourceOperationHandler(object):
                     # port. Get the port_dict, inherit the service port host
                     # and device owner(if it does not exist).
                     port = self._core_plugin.get_port(
-                        admin_ctx, fip['fixed_port_id'])
+                        admin_ctx, fip['port_id'])
                     allowed_device_owners = (
                         n_utils.get_dvr_allowed_address_pair_device_owners())
                     # NOTE: We just need to deal with ports that do not
