@@ -413,3 +413,6 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
     def del_fake_chassis(self, chassis, if_exists=True):
         self.sb_api.chassis_del(
             chassis, if_exists=if_exists).execute(check_error=True)
+        if self.sb_api.is_table_present('Chassis_Private'):
+            self.sb_api.db_destroy(
+                'Chassis_Private', chassis).execute(check_error=True)
