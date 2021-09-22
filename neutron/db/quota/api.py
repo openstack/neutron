@@ -19,7 +19,6 @@ import datetime
 from neutron_lib.db import api as db_api
 from oslo_db import exception as db_exc
 
-from neutron.common import utils
 from neutron.objects import quota as quota_obj
 
 
@@ -202,21 +201,24 @@ def get_reservation(context, reservation_id):
                                 for delta in reserv_obj.resource_deltas))
 
 
-@utils.skip_exceptions(db_exc.DBError)
 @db_api.CONTEXT_WRITER
 def remove_reservation(context, reservation_id, set_dirty=False):
-    reservation = quota_obj.Reservation.get_object(context, id=reservation_id)
-    if not reservation:
-        # TODO(salv-orlando): Raise here and then handle the exception?
-        return
-    tenant_id = reservation.project_id
-    resources = [delta.resource for delta in reservation.resource_deltas]
-    reservation.delete()
-    if set_dirty:
-        # quota_usage for all resource involved in this reservation must
-        # be marked as dirty
-        set_resources_quota_usage_dirty(context, resources, tenant_id)
-    return 1
+    try:
+        reservation = quota_obj.Reservation.get_object(context,
+                                                       id=reservation_id)
+        if not reservation:
+            # TODO(salv-orlando): Raise here and then handle the exception?
+            return
+        tenant_id = reservation.project_id
+        resources = [delta.resource for delta in reservation.resource_deltas]
+        reservation.delete()
+        if set_dirty:
+            # quota_usage for all resource involved in this reservation must
+            # be marked as dirty
+            set_resources_quota_usage_dirty(context, resources, tenant_id)
+        return 1
+    except db_exc.DBError:
+        context.session.rollback()
 
 
 @db_api.retry_if_session_inactive()
