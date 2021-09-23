@@ -1,0 +1,6 @@
+---
+other:
+  - |
+    OVN driver now uses stateless NAT for floating IP implementation. This allows
+    to avoid hitting conntrack, potentially improving performance and also allowing
+    to offload NAT rules to hardware.
