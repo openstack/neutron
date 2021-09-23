@@ -536,11 +536,8 @@ class HaRouter(router.RouterInfo):
         if ex_gw_port_id:
             interface_name = self.get_external_device_name(ex_gw_port_id)
             ns_name = self.get_gw_ns_name()
-            if (not self.driver.set_link_status(
-                    interface_name, namespace=ns_name, link_up=link_up) and
-                    link_up):
-                LOG.error('Gateway interface for router %s was not set up; '
-                          'router will not work properly', self.router_id)
+            self.driver.set_link_status(interface_name, ns_name,
+                                        link_up=link_up)
             if link_up and set_gw:
                 preserve_ips = self.get_router_preserve_ips()
                 self._external_gateway_settings(ex_gw_port, interface_name,
