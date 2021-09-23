@@ -36,6 +36,7 @@ USSURI = 'ussuri'
 VICTORIA = 'victoria'
 WALLABY = 'wallaby'
 XENA = 'xena'
+YOGA = 'yoga'
 
 NEUTRON_MILESTONES = [
     # earlier milestones were not tagged
@@ -51,6 +52,7 @@ NEUTRON_MILESTONES = [
     USSURI,
     VICTORIA,
     WALLABY,
+    XENA,
     # Do not add the milestone until the end of the release
 ]
 

@@ -27,9 +27,14 @@ import sqlalchemy as sa
 
 from neutron_lib import constants
 
+from neutron.db import migration
+
 # revision identifiers, used by Alembic.
 revision = '1bb3393de75d'
 down_revision = '8df53b0d2c0e'
+
+# milestone identifier, used by neutron-db-manage
+neutron_milestone = [migration.XENA]
 
 direction_enum = sa.Enum(
     constants.EGRESS_DIRECTION, constants.INGRESS_DIRECTION,
