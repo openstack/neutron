@@ -2547,6 +2547,40 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         self.nb_ovn.ha_chassis_group_add_chassis.assert_has_calls(
             expected_calls, any_order=True)
 
+    def test_update_network_segmentation_id(self):
+        new_vlan_tag = 123
+        net_arg = {pnet.NETWORK_TYPE: 'vlan',
+                   pnet.PHYSICAL_NETWORK: 'physnet1',
+                   pnet.SEGMENTATION_ID: '1'}
+        net = self._make_network(self.fmt, 'net1', True,
+                                 arg_list=(pnet.NETWORK_TYPE,
+                                           pnet.PHYSICAL_NETWORK,
+                                           pnet.SEGMENTATION_ID,),
+                                 **net_arg)['network']
+        # Make sure the network was created with 1 VLAN segment
+        segments = segments_db.get_network_segments(self.context, net['id'])
+        segment = segments[0]
+        self.assertEqual(len(segments), 1)
+        self.assertEqual(segment['segmentation_id'], 1)
+
+        # Issue an update to the network changing the segmentation_id
+        data = {'network': {pnet.SEGMENTATION_ID: new_vlan_tag}}
+        req = self.new_update_request('networks', data, net['id'])
+        res = self.deserialize(self.fmt, req.get_response(self.api))
+        self.assertEqual(new_vlan_tag, res['network'][pnet.SEGMENTATION_ID])
+
+        # Assert the tag was changed in the Neutron database
+        segments = segments_db.get_network_segments(self.context, net['id'])
+        segment = segments[0]
+        self.assertEqual(len(segments), 1)
+        self.assertEqual(segment['segmentation_id'], new_vlan_tag)
+
+        # Assert the tag was changed in the OVN database
+        expected_call = mock.call(
+            lport_name=ovn_utils.ovn_provnet_port_name(segment['id']),
+            tag=new_vlan_tag, if_exists=True)
+        self.nb_ovn.set_lswitch_port.assert_has_calls([expected_call])
+
 
 class OVNMechanismDriverTestCase(MechDriverSetupBase,
                                  test_plugin.Ml2PluginV2TestCase):
@@ -2891,6 +2925,10 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
                          segment_id=self.seg_2['id']) as subnet:
             self.sub_2 = subnet
 
+    # TODO(lucasagomes): This test should use <mock>.assert_has_calls()
+    # to validate if the method was called with the correct values instead
+    # of peeking at call_args_list otherwise every time there's a new
+    # call to the mocked method the indexes will change
     def test_create_segments_subnet_metadata_ip_allocation(self):
         self._test_segments_helper()
         ovn_nb_api = self.mech_driver.nb_ovn
@@ -2899,34 +2937,34 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
         # created subnet.
         self.assertIn(
             '10.0.1.2',
-            ovn_nb_api.set_lswitch_port.call_args_list[0][1]['addresses'][0])
+            ovn_nb_api.set_lswitch_port.call_args_list[2][1]['addresses'][0])
 
         # Assert that the second subnet address also has been allocated for
         # metadata port.
         self.assertIn(
             '10.0.2.2',
-            ovn_nb_api.set_lswitch_port.call_args_list[1][1]['addresses'][0])
+            ovn_nb_api.set_lswitch_port.call_args_list[6][1]['addresses'][0])
         # Assert also that the first subnet address is in this update
         self.assertIn(
             '10.0.1.2',
-            ovn_nb_api.set_lswitch_port.call_args_list[1][1]['addresses'][0])
+            ovn_nb_api.set_lswitch_port.call_args_list[6][1]['addresses'][0])
         self.assertEqual(
-            ovn_nb_api.set_lswitch_port.call_count, 2)
+            ovn_nb_api.set_lswitch_port.call_count, 7)
 
         # Make sure both updates where on same metadata port
         args_list = ovn_nb_api.set_lswitch_port.call_args_list
         self.assertEqual(
             'ovnmeta-%s' % self.net['network']['id'],
-            args_list[1][1]['external_ids']['neutron:device_id'])
+            args_list[6][1]['external_ids']['neutron:device_id'])
         self.assertEqual(
-            args_list[1][1]['external_ids']['neutron:device_id'],
-            args_list[0][1]['external_ids']['neutron:device_id'])
+            args_list[6][1]['external_ids']['neutron:device_id'],
+            args_list[2][1]['external_ids']['neutron:device_id'])
         self.assertEqual(
-            args_list[1][1]['external_ids']['neutron:device_owner'],
-            args_list[0][1]['external_ids']['neutron:device_owner'])
+            args_list[6][1]['external_ids']['neutron:device_owner'],
+            args_list[2][1]['external_ids']['neutron:device_owner'])
         self.assertEqual(
             const.DEVICE_OWNER_DISTRIBUTED,
-            args_list[1][1]['external_ids']['neutron:device_owner'])
+            args_list[6][1]['external_ids']['neutron:device_owner'])
 
     def test_create_segments_mixed_allocation_prohibited(self):
         self._test_segments_helper()
