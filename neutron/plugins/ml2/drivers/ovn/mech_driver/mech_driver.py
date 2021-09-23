@@ -188,6 +188,16 @@ class OVNMechanismDriver(api.MechanismDriver):
     def sb_ovn(self, val):
         self._sb_ovn = val
 
+    def get_supported_vif_types(self):
+        vif_types = set()
+        for ch in self.sb_ovn.chassis_list().execute(check_error=True):
+            dp_type = ch.external_ids.get('datapath-type', '')
+            if dp_type == ovn_const.CHASSIS_DATAPATH_NETDEV:
+                vif_types.add(portbindings.VIF_TYPE_VHOST_USER)
+            else:
+                vif_types.add(portbindings.VIF_TYPE_OVS)
+        return list(vif_types)
+
     def check_vlan_transparency(self, context):
         """OVN driver vlan transparency support."""
         vlan_transparency_network_types = [
@@ -221,6 +231,10 @@ class OVNMechanismDriver(api.MechanismDriver):
 
     def supported_extensions(self, extensions):
         return set(ovn_extensions.ML2_SUPPORTED_API_EXTENSIONS) & extensions
+
+    @staticmethod
+    def provider_network_attribute_updates_supported():
+        return [provider_net.SEGMENTATION_ID]
 
     def subscribe(self):
         registry.subscribe(self.pre_fork_initialize,
