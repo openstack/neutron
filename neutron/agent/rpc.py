@@ -353,6 +353,7 @@ class CacheBackedPluginApi(PluginApi):
             'port_id': port_obj.id,
             'mac_address': mac_addr,
             'admin_state_up': port_obj.admin_state_up,
+            'status': port_obj.status,
             'network_type': segment.network_type,
             'segmentation_id': segment.segmentation_id,
             'physical_network': segment.physical_network,
