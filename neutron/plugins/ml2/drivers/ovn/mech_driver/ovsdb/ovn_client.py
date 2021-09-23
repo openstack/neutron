@@ -1775,6 +1775,15 @@ class OVNClient(object):
                     self.set_gateway_mtu(n_context.get_admin_context(),
                                          network, txn)
 
+            # Update the segment tags, if any
+            segments = segments_db.get_network_segments(context, network['id'])
+            for segment in segments:
+                tag = segment.get(segment_def.SEGMENTATION_ID)
+                tag = [] if tag is None else tag
+                lport_name = utils.ovn_provnet_port_name(segment['id'])
+                txn.add(self._nb_idl.set_lswitch_port(lport_name=lport_name,
+                                                      tag=tag, if_exists=True))
+
             self._qos_driver.update_network(txn, network, original_network)
 
         if check_rev_cmd.result == ovn_const.TXN_COMMITTED:

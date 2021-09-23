@@ -890,16 +890,26 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         vif_types = [portbindings.VIF_TYPE_UNBOUND,
                      portbindings.VIF_TYPE_BINDING_FAILED]
         for mech_driver in self.mechanism_manager.ordered_mech_drivers:
-            if (isinstance(mech_driver.obj,
-                           mech_agent.AgentMechanismDriverBase) and
-                    provider_net.SEGMENTATION_ID in mech_driver.obj.
+            if (provider_net.SEGMENTATION_ID in mech_driver.obj.
                     provider_network_attribute_updates_supported()):
-                agent_type = mech_driver.obj.agent_type
-                agents = self.get_agents(
-                    context, filters={'agent_type': [agent_type]})
-                for agent in agents:
-                    vif_types.append(
-                        mech_driver.obj.get_supported_vif_type(agent))
+                if isinstance(mech_driver.obj,
+                        mech_agent.AgentMechanismDriverBase):
+                    agent_type = mech_driver.obj.agent_type
+                    agents = self.get_agents(
+                        context, filters={'agent_type': [agent_type]})
+                    for agent in agents:
+                        vif_types.append(
+                            mech_driver.obj.get_supported_vif_type(agent))
+                else:
+                    # For non-AgentMechanismDriverBase drivers such as OVN
+                    # which inherits from MechanismDriver
+                    # TODO(lucasagomes): Perhaps we should
+                    # include get_supported_vif_types() as part of the
+                    # MechanismDriver's api in neutron-lib and remove this
+                    # check in the future ?
+                    if getattr(mech_driver.obj, 'get_supported_vif_types'):
+                        vif_types.extend(
+                            mech_driver.obj.get_supported_vif_types())
 
         if ports_obj.Port.check_network_ports_by_binding_types(
                 context, network['id'], vif_types, negative_search=True):
