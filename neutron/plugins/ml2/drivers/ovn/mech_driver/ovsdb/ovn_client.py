@@ -113,6 +113,10 @@ class OVNClient(object):
         return self._nb_idl.is_col_supports_value('ACL', 'action',
                                                   'allow-stateless')
 
+    # TODO(ihrachys) remove when min OVN version >= 20.03
+    def is_stateless_nat_supported(self):
+        return self._nb_idl.is_col_present('NAT', 'options')
+
     def _get_allowed_addresses_from_port(self, port):
         if not port.get(psec.PORTSECURITY):
             return [], []
@@ -734,6 +738,8 @@ class OVNClient(object):
                    'external_ip': floatingip['floating_ip_address'],
                    'logical_port': floatingip['port_id'],
                    'external_ids': ext_ids}
+        if self.is_stateless_nat_supported():
+            columns['options'] = {'stateless': 'true'}
 
         if ovn_conf.is_ovn_distributed_floating_ip():
             if self._nb_idl.lsp_get_up(floatingip['port_id']).execute():

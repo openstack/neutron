@@ -103,6 +103,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         self.sync_port_dns_records(ctx)
         self.sync_acls(ctx)
         self.sync_routers_and_rports(ctx)
+        self.migrate_to_stateless_fips(ctx)
 
     def _create_port_in_ovn(self, ctx, port):
         # Remove any old ACLs for the port to avoid creating duplicate ACLs.
@@ -1187,6 +1188,15 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                 for sg in port['security_groups']:
                     txn.add(self.ovn_api.pg_add_ports(
                         utils.ovn_port_group_name(sg), port['id']))
+
+    def migrate_to_stateless_fips(self, ctx):
+        # This routine will set options:stateless=true for all dnat_and_snats
+        # that belong to neutron fips.
+        with self.ovn_api.transaction(check_error=True) as txn:
+            for nat in self.ovn_api.get_all_stateful_fip_nats():
+                txn.add(self.ovn_api.db_set(
+                    'NAT', nat['_uuid'],
+                    ('options', {'stateless': 'true'})))
 
     def migrate_to_port_groups(self, ctx):
         # This routine is responsible for migrating the current Security

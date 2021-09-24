@@ -277,6 +277,29 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
     # The migration will run just once per neutron-server instance. If the lock
     # is held by some other neutron-server instance in the cloud, we'll attempt
     # to perform the migration every 10 seconds until completed.
+    # TODO(ihrachys): Remove the migration to stateless fips at some point.
+    @periodics.periodic(spacing=10, run_immediately=True)
+    @rerun_on_schema_updates
+    def migrate_to_stateless_fips(self):
+        """Perform the migration from stateful to stateless Floating IPs. """
+        if not self._ovn_client.is_stateless_nat_supported():
+            raise periodics.NeverAgain()
+
+        # Only the worker holding a valid lock within OVSDB will perform the
+        # migration.
+        if not self.has_lock:
+            return
+
+        admin_context = n_context.get_admin_context()
+        nb_sync = ovn_db_sync.OvnNbSynchronizer(
+            self._ovn_client._plugin, self._nb_idl, self._ovn_client._sb_idl,
+            None, None)
+        nb_sync.migrate_to_stateless_fips(admin_context)
+        raise periodics.NeverAgain()
+
+    # The migration will run just once per neutron-server instance. If the lock
+    # is held by some other neutron-server instance in the cloud, we'll attempt
+    # to perform the migration every 10 seconds until completed.
     # TODO(jlibosva): Remove the migration to port groups at some point. It's
     # been around since Queens release so it is good to drop this soon.
     @periodics.periodic(spacing=10, run_immediately=True)
