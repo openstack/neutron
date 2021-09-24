@@ -6,7 +6,6 @@
     templates:
       - neutron-tempest-plugin-jobs
       - openstack-cover-jobs
-      - openstack-lower-constraints-jobs
       - openstack-python3-xena-jobs
       - openstack-python3-xena-jobs-arm64
       - publish-openstack-docs-pti
@@ -47,8 +46,6 @@
             timeout: 3600
         - openstack-tox-py38:  # from openstack-python3-xena-jobs template
             timeout: 3600
-        - openstack-tox-lower-constraints:  # from openstack-tox-lower-constraints template
-            timeout: 3600
         - openstack-tox-cover:  # from openstack-cover-jobs template
             timeout: 4800
         - neutron-ovn-tempest-slow
@@ -67,8 +64,6 @@
         - neutron-ovn-tempest-ovs-release
         - neutron-ovn-tempest-ovs-release-ipv6-only
         - openstack-tox-py36:  # from openstack-python3-xena-jobs template
-            timeout: 3600
-        - openstack-tox-lower-constraints:  # from openstack-tox-lower-constraints template
             timeout: 3600
         - neutron-ovn-tempest-slow
         #- neutron-ovn-rally-task
