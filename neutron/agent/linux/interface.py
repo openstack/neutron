@@ -322,19 +322,13 @@ class LinuxInterfaceDriver(object, metaclass=abc.ABCMeta):
 
     def set_link_status(self, device_name, namespace=None, link_up=True):
         ns_dev = ip_lib.IPWrapper(namespace=namespace).device(device_name)
-        try:
-            utils.wait_until_true(ns_dev.exists, timeout=3)
-        except utils.WaitTimeout:
-            LOG.debug('Device %s may have been deleted concurrently',
-                      device_name)
-            return False
-
+        if not ns_dev.exists():
+            LOG.debug("Device %s may concurrently be deleted.", device_name)
+            return
         if link_up:
             ns_dev.link.set_up()
         else:
             ns_dev.link.set_down()
-
-        return True
 
 
 class NullDriver(LinuxInterfaceDriver):
