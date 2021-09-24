@@ -29,6 +29,7 @@ from neutron.db.models import agent as agent_model
 from neutron.db.models.plugins.ml2 import vlanallocation
 from neutron.db.models import segment
 from neutron.db import models_v2
+from neutron.objects import ports as port_obj
 
 
 OVN_ALEMBIC_TABLE_NAME = "ovn_alembic_version"
@@ -106,6 +107,12 @@ def get_duplicate_network_segment_count():
     return query.count()
 
 
+def port_binding_profiles():
+    ctx = context.get_admin_context()
+    return [port_binding.profile
+            for port_binding in port_obj.PortBinding.get_objects(ctx)]
+
+
 class CoreChecks(base.BaseChecks):
 
     def get_checks(self):
@@ -127,6 +134,8 @@ class CoreChecks(base.BaseChecks):
              self.port_mac_address_sanity),
             (_('NetworkSegments unique constraint check'),
              self.networksegments_unique_constraint_check),
+            (_('Port Binding profile sanity check'),
+             self.port_binding_profile_sanity),
         ]
 
     @staticmethod
@@ -365,3 +374,31 @@ class CoreChecks(base.BaseChecks):
             upgradecheck.Code.SUCCESS,
             _("No networksegments sharing the same network_id, network_type "
               "and physical_network found."))
+
+    @staticmethod
+    def port_binding_profile_sanity(checker):
+        """Checks that "ml2_port_bindings.profile" uses the new format
+
+        All allocation information should be stored in the following format:
+        {'allocation': {'<group_uuid>': '<rp_uuid>'}}.
+        """
+        if not cfg.CONF.database.connection:
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _("Database connection string is not set. Check for "
+                  "ml2_port_bindings.profile sanity can't be done."))
+
+        for profile in port_binding_profiles():
+            allocation = profile.get('allocation')
+            if (allocation and not isinstance(allocation, dict)):
+                return upgradecheck.Result(
+                    upgradecheck.Code.FAILURE,
+                    _("ml2_port_bindings.profile rows are not correctly "
+                      "formated in the database. The script "
+                      "neutron-sanitize-port-binding-profile-allocation "
+                      "should be executed"))
+
+        return upgradecheck.Result(
+            upgradecheck.Code.SUCCESS,
+            _("All ml2_port_bindings.profile rows are correctly formated in "
+              "the database."))
