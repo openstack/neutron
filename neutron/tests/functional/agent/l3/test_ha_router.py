@@ -295,6 +295,7 @@ class L3HATestCase(framework.L3AgentTestFramework):
     def test_delete_external_gateway_on_standby_router(self):
         router_info = self.generate_router_info(enable_ha=True)
         router = self.manage_router(self.agent, router_info)
+        common_utils.wait_until_true(lambda: router.ha_state == 'primary')
 
         self.fail_ha_router(router)
         common_utils.wait_until_true(lambda: router.ha_state == 'backup')
@@ -433,6 +434,11 @@ class L3HATestFailover(framework.L3AgentTestFramework):
         self._assert_ipv6_forwarding(primary_router, True, True)
         self._assert_ipv6_accept_ra(backup_router, False)
         self._assert_ipv6_forwarding(backup_router, False, False)
+
+        common_utils.wait_until_true(
+            lambda: primary_router.ha_state == 'primary')
+        common_utils.wait_until_true(
+            lambda: backup_router.ha_state == 'backup')
 
         self.fail_ha_router(router1)
 
