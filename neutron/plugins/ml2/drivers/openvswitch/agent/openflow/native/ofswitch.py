@@ -22,6 +22,7 @@ import eventlet
 import netaddr
 from neutron_lib import exceptions
 import os_ken.app.ofctl.api as ofctl_api
+from os_ken.app.ofctl import exception as ofctl_exc
 import os_ken.exception as os_ken_exc
 from os_ken.lib import ofctl_string
 from os_ken.ofproto import ofproto_parser
@@ -29,6 +30,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import timeutils
+import tenacity
 
 from neutron._i18n import _
 from neutron.agent.common import ovs_lib
@@ -79,6 +81,15 @@ class OpenFlowSwitchMixin(object):
                 raise RuntimeError(m)
         return dp
 
+    @staticmethod
+    @tenacity.retry(
+        retry=tenacity.retry_if_exception_type(ofctl_exc.InvalidDatapath),
+        wait=tenacity.wait_exponential(multiplier=0.02, max=1),
+        stop=tenacity.stop_after_delay(5),
+        reraise=True)
+    def _send_msg_retry(app, msg, reply_cls, reply_multi):
+        return ofctl_api.send_msg(app, msg, reply_cls, reply_multi)
+
     def _send_msg(self, msg, reply_cls=None, reply_multi=False,
                   active_bundle=None):
         timeout_sec = cfg.CONF.OVS.of_request_timeout
@@ -88,7 +99,8 @@ class OpenFlowSwitchMixin(object):
             msg = ofpp.ONFBundleAddMsg(dp, active_bundle['id'],
                                        active_bundle['bundle_flags'], msg, [])
         try:
-            result = ofctl_api.send_msg(self._app, msg, reply_cls, reply_multi)
+            result = self._send_msg_retry(self._app, msg, reply_cls,
+                                          reply_multi)
         except os_ken_exc.OSKenException as e:
             m = _("ofctl request %(request)s error %(error)s") % {
                 "request": msg,
