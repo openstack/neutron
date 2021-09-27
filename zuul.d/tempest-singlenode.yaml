@@ -247,73 +247,6 @@
     irrelevant-files: *tempest-db-irrelevant-files
 
 - job:
-    name: neutron-ovs-tempest-with-os-ken-master
-    parent: neutron-ovs-tempest-base
-    timeout: 10800
-    required-projects:
-      - openstack/neutron
-      - openstack/tempest
-      - openstack/os-ken
-    vars:
-      devstack_plugins:
-        neutron: https://opendev.org/openstack/neutron.git
-      devstack_services:
-        br-ex-tcpdump: true
-        br-int-flows: true
-        # Cinder services
-        c-api: false
-        c-bak: false
-        c-sch: false
-        c-vol: false
-        cinder: false
-        # Swift services
-        s-account: false
-        s-container: false
-        s-object: false
-        s-proxy: false
-    irrelevant-files:
-      - ^(test-|)requirements.txt$
-      - ^.*\.rst$
-      - ^doc/.*$
-      - ^neutron/locale/.*$
-      - ^neutron/tests/unit/.*$
-      - ^releasenotes/.*$
-      - ^setup.cfg$
-      - ^tools/.*$
-      - ^tox.ini$
-      - ^vagrant/.*$
-      - ^neutron/agent/windows/.*$
-      - ^neutron/plugins/ml2/drivers/linuxbridge/.*$
-      - ^neutron/plugins/ml2/drivers/macvtap/.*$
-      - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
-
-- job:
-    name: neutron-ovn-tempest-with-neutron-lib-master
-    parent: tempest-integrated-networking
-    timeout: 10800
-    required-projects:
-      - openstack/neutron
-      - openstack/tempest
-      - openstack/neutron-lib
-    vars:
-      devstack_plugins:
-        neutron: https://opendev.org/openstack/neutron.git
-      devstack_services:
-        br-ex-tcpdump: true
-        br-int-flows: true
-        # Cinder services
-        c-api: false
-        c-bak: false
-        c-sch: false
-        c-vol: false
-        cinder: false
-        # Swift services
-        s-account: false
-        s-container: false
-        s-object: false
-        s-proxy: false
-
-- job:
     name: neutron-ovn-tempest-with-uwsgi
     parent: tempest-integrated-networking
     description: Run neutron Tempest tests with uwsgi
@@ -517,25 +450,3 @@
     name: neutron-ovn-tempest-ovs-release
     description: Job testing for devstack/tempest testing Neutron with ovn driver and latest released OVN branch
     parent: neutron-ovn-base
-
-- job:
-    name: neutron-ovn-tempest-ovs-master
-    description: Job testing for devstack/tempest testing Neutron with ovn driver and OVN master branch
-    parent: neutron-ovn-base
-    vars:
-      devstack_localrc:
-        OVN_BUILD_FROM_SOURCE: True
-        OVN_BRANCH: master
-        OVS_BRANCH: master
-
-- job:
-    name: neutron-ovn-tempest-ovs-master-fedora
-    description: Job testing for devstack/tempest testing Neutron with ovn driver and OVN master branch and Fedora
-    parent: neutron-ovn-tempest-ovs-master
-    nodeset: devstack-single-node-fedora-latest
-    vars:
-      zuul_copy_output:
-        '{{ devstack_base_dir }}/data/ovs': 'logs'
-        '{{ devstack_base_dir }}/data/ovn': 'logs'
-        '{{ devstack_log_dir }}/ovsdb-server-nb.log': 'logs'
-        '{{ devstack_log_dir }}/ovsdb-server-sb.log': 'logs'

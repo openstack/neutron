@@ -2,7 +2,6 @@
     name: neutron-centos-8-tripleo-standalone
     parent: tripleo-ci-base-standalone-centos-8
     voting: false
-    branches: ^master$
     vars:
       featureset: '052'
       featureset_override:
@@ -37,7 +36,6 @@
 - job:
     name: neutron-ovn-tripleo-ci-centos-8-containers-multinode
     parent: tripleo-ci-centos-8-containers-multinode
-    branches: ^master$
     vars:
       nodes: 1ctlr
       featureset: '010'

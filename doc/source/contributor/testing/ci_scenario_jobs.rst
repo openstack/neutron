@@ -121,18 +121,10 @@ Currently we have in that queue jobs like listed below.
     | Job name                                     | Run tests                        | python  | nodes | L2 agent    | firewall        | L3 agent | L3 HA | L3 DVR | enable_dvr | Run in gate |
     |                                              |                                  | version |       |             | driver          | mode     |       |        |            | queue       |
     +==============================================+==================================+=========+=======+=============+=================+==========+=======+========+============+=============+
-    |neutron-tempest-with-neutron-lib-master       |tempest.api (without slow tests)  |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | No          |
-    |                                              |tempest.scenario                  |         |       |             |                 |          |       |        |            |             |
-    |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
-    |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-tempest-with-uwsgi-loki               |tempest.api (without slow tests)  |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | No          |
     |(non-voting)                                  |tempest.scenario                  |         |       |             |                 |          |       |        |            |             |
     |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
     |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-ovn-tempest-multinode-ovs-master      |Various tempest api, scenario     |   3.6   |   2   | ovn         | ovn             | ---      | False | False  | True       | No          |
-    |                                              |and neutron_tempest_plugi tests   |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
 
 And we also have Grenade jobs in the experimental queue.
