@@ -10,9 +10,10 @@ at [1]_.
 
 * QoS DSCP support
 
-  Currently ML2/OVS supports QoS DSCP tagging and egress bandwidth limiting.
-  Those are basic QoS features that while integrated in the OVS/OVN C core
-  are not integrated (or fully tested) in the neutron OVN mechanism driver.
+  Currently the Neutron L3-agent supports floating IP and gateway IP bandwidth
+  limiting based on Linux TC. OVN L3 plugin supports floating IP bandwidth
+  limiting based on the OVN's QoS rules.
+  Neutron OVN backend does not yet support bandwidth limiting for gateway IP.
 
 * QoS for Layer 3 IPs
 
