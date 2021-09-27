@@ -239,7 +239,7 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
 
         # make sure all events are processed
         while not self.agent._queue._queue.empty():
-            self.agent._process_router_update()
+            self.agent._process_update()
 
         for r in routers_to_keep:
             self.assertIn(r['id'], self.agent.router_info)
