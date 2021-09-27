@@ -11,7 +11,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-
+import copy
 from unittest import mock
 
 from neutron_lib.api.definitions import portbindings
@@ -23,6 +23,7 @@ from oslo_utils import uuidutils
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import dvr_edge_ha_router as dvr_edge_ha_rtr
 from neutron.agent.l3 import dvr_edge_router as dvr_edge_rtr
+from neutron.agent.l3 import dvr_fip_ns
 from neutron.agent.l3 import dvr_local_router as dvr_router
 from neutron.agent.l3 import link_local_allocator as lla
 from neutron.agent.l3 import router_info
@@ -39,6 +40,9 @@ from neutron.tests.common import l3_test_common
 _uuid = uuidutils.generate_uuid
 FIP_PRI = 32768
 HOSTNAME = 'myhost'
+FIP_RULE_PRIO_LIST = [['fip_1', 'fixed_ip_1', 'prio_1'],
+                      ['fip_2', 'fixed_ip_2', 'prio_2'],
+                      ['fip_3', 'fixed_ip_3', 'prio_3']]
 
 
 class TestDvrRouterOperations(base.BaseTestCase):
@@ -117,6 +121,10 @@ class TestDvrRouterOperations(base.BaseTestCase):
             'oslo_service.loopingcall.FixedIntervalLoopingCall')
         self.looping_call_p.start()
 
+        self.mock_load_fip_p = mock.patch.object(dvr_router.DvrLocalRouter,
+                                                 '_load_used_fip_information')
+        self.mock_load_fip = self.mock_load_fip_p.start()
+
         subnet_id_1 = _uuid()
         subnet_id_2 = _uuid()
         self.snat_ports = [{'subnets': [{'cidr': '152.2.0.0/16',
@@ -155,9 +163,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
         kwargs['router'] = router
         kwargs['agent_conf'] = self.conf
         kwargs['interface_driver'] = mock.Mock()
-        with mock.patch.object(dvr_router.DvrLocalRouter,
-                               'load_used_fip_information'):
-            return dvr_router.DvrLocalRouter(HOSTNAME, **kwargs)
+        return dvr_router.DvrLocalRouter(HOSTNAME, **kwargs)
 
     def _set_ri_kwargs(self, agent, router_id, router):
         self.ri_kwargs['agent'] = agent
@@ -225,32 +231,40 @@ class TestDvrRouterOperations(base.BaseTestCase):
             self.assertTrue(
                 ri.fip_ns.create_rtr_2_fip_link.called)
 
-    def test_load_used_fip_information(self):
-        router = mock.MagicMock()
-        with mock.patch.object(dvr_router.DvrLocalRouter,
-                               'get_floating_ips') as mock_get_floating_ips:
-            with mock.patch.object(dvr_router.DvrLocalRouter,
-                                   'get_ex_gw_port') as mock_ext_port:
-                mock_ext_port.return_value = {'network_id': _uuid()}
-                fip = {'id': _uuid(),
-                       'host': HOSTNAME,
-                       'floating_ip_address': '15.1.2.3',
-                       'fixed_ip_address': '192.168.0.1',
-                       'floating_network_id': _uuid(),
-                       'port_id': _uuid()}
-                fip_ns = mock.MagicMock()
-                fip_ns.lookup_rule_priority.return_value = 1234
-                mock_get_floating_ips.return_value = [fip]
-                mock_agent = mock.MagicMock()
-                mock_agent.get_fip_ns.return_value = fip_ns
-                kwargs = {'agent': mock_agent,
-                          'router_id': _uuid(),
-                          'router': mock.Mock(),
-                          'agent_conf': self.conf,
-                          'interface_driver': mock.Mock()}
-                router = dvr_router.DvrLocalRouter(HOSTNAME, **kwargs)
-                self.assertEqual({'15.1.2.3': ('192.168.0.1', 1234)},
-                                 router.floating_ips_dict)
+    @mock.patch.object(ip_lib, 'add_ip_rule')
+    def test__load_used_fip_information(self, mock_add_ip_rule):
+        # This test will simulate how "DvrLocalRouter" reloads the FIP
+        # information from both the FipNamespace._rule_priorities state file
+        # and the namespace "ip rule" list.
+        router = self._create_router()
+        self.mock_load_fip_p.stop()
+        fip_ns = router.agent.get_fip_ns('net_id')
+
+        # To simulate a partially populated FipNamespace._rule_priorities
+        # state file, we load all FIPs but last.
+        fip_rule_prio_list = copy.deepcopy(FIP_RULE_PRIO_LIST)
+        for idx, (fip, _, _) in enumerate(FIP_RULE_PRIO_LIST[:-1]):
+            prio = fip_ns.allocate_rule_priority(fip)
+            fip_rule_prio_list[idx][2] = prio
+
+        fips = [{'floating_ip_address': fip, 'fixed_ip_address': fixed_ip} for
+                fip, fixed_ip, _ in fip_rule_prio_list]
+        with mock.patch.object(dvr_fip_ns.FipNamespace,
+                               'allocate_rule_priority',
+                               return_value=fip_rule_prio_list[-1][2]), \
+                mock.patch.object(router, '_cleanup_unused_fip_ip_rules'), \
+                mock.patch.object(router, 'get_floating_ips',
+                                  return_value=fips):
+            router._load_used_fip_information()
+
+        mock_add_ip_rule.assert_called_once_with(
+            router.ns_name, fip_rule_prio_list[2][1],
+            table=dvr_fip_ns.FIP_RT_TBL, priority=fip_rule_prio_list[-1][2])
+        self.assertEqual(3, len(router.floating_ips_dict))
+        ret = [[fip, fixed_ip, prio] for fip, (fixed_ip, prio) in
+               router.floating_ips_dict.items()]
+        self.assertEqual(sorted(ret, key=lambda ret: ret[0]),
+                         fip_rule_prio_list)
 
     def test_get_floating_ips_dvr(self):
         router = mock.MagicMock()
