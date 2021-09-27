@@ -17,6 +17,7 @@ import contextlib
 import copy
 from unittest import mock
 
+from neutron_lib.api.definitions import rbac_security_groups as rbac_sg_def
 from neutron_lib.api.definitions import security_groups_remote_address_group \
     as sgag_def
 from neutron_lib.api import validators
@@ -35,6 +36,8 @@ from neutron.db import address_group_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import securitygroups_db
 from neutron.extensions import address_group as ext_ag
+from neutron.extensions import security_groups_shared_filtering_lib \
+    as sg_shared_filter_def
 from neutron.extensions import securitygroup as ext_sg
 from neutron.extensions import standardattrdescription
 from neutron.tests import base
@@ -68,6 +71,9 @@ class SecurityGroupTestExtensionManager(object):
         # update with the remote address group api definition
         ext_sg.Securitygroup().update_attributes_map(
             sgag_def.RESOURCE_ATTRIBUTE_MAP)
+        # update with the shared field api definition
+        ext_sg.Securitygroup().update_attributes_map(
+            sg_shared_filter_def.RESOURCE_ATTRIBUTE_MAP)
         return (ext_sg.Securitygroup.get_resources() +
                 ext_ag.Address_group().get_resources())
 
@@ -225,7 +231,9 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
     __native_pagination_support = True
     __native_sorting_support = True
 
-    supported_extension_aliases = ["security-group"]
+    supported_extension_aliases = [
+        "security-group", sgag_def.ALIAS,
+        rbac_sg_def.ALIAS, sg_shared_filter_def.ALIAS]
 
     def create_port(self, context, port):
         tenant_id = port['port']['tenant_id']
@@ -289,7 +297,8 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
     def test_create_security_group(self):
         name = 'webservers'
         description = 'my webservers'
-        keys = [('name', name,), ('description', description)]
+        keys = [('name', name,), ('description', description),
+                ('shared', False)]
         with self.security_group(name, description) as security_group:
             for k, v, in keys:
                 self.assertEqual(v, security_group['security_group'][k])
@@ -497,6 +506,20 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             self._test_list_resources('security-group',
                                       security_groups,
                                       query_params='description=sg')
+
+    def test_list_security_groups_with_shared_filter_true(self):
+        with self.security_group(name='sg1', description='sg'):
+            security_groups = ()
+            self._test_list_resources('security-group',
+                                      security_groups,
+                                      query_params='name=sg1&shared=True')
+
+    def test_list_security_groups_with_shared_filter_false(self):
+        with self.security_group(name='sg1', description='sg') as sg1:
+            security_groups = (sg1, )
+            self._test_list_resources('security-group',
+                                      security_groups,
+                                      query_params='name=sg1&shared=False')
 
     def test_list_security_groups_with_sort(self):
         with self.security_group(name='sg1', description='sg') as sg1,\

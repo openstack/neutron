@@ -28,6 +28,8 @@ from oslo_log import log as logging
 
 from neutron.agent import firewall
 from neutron.conf.agent import securitygroups_rpc as sc_cfg
+from neutron.extensions import security_groups_shared_filtering_lib \
+    as sg_shared_filtering
 
 
 LOG = logging.getLogger(__name__)
@@ -53,6 +55,7 @@ def disable_security_group_extension_by_config(aliases):
         _disable_extension(stateful_sg.ALIAS, aliases)
         _disable_extension(sgag_def.ALIAS, aliases)
         _disable_extension(security_groups_normalized_cidr.ALIAS, aliases)
+        _disable_extension(sg_shared_filtering.ALIAS, aliases)
         LOG.info('Disabled allowed-address-pairs extension.')
         _disable_extension('allowed-address-pairs', aliases)
         LOG.info('Disabled address-group extension.')

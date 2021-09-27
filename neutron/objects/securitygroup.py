@@ -40,7 +40,8 @@ class SecurityGroup(rbac_db.NeutronRbacObject):
     # Version 1.2: Added stateful support
     # Version 1.3: Added support for remote_address_group_id in rules
     # Version 1.4: Added support for normalized_cidr in rules
-    VERSION = '1.4'
+    # Version 1.5: Make the shared field nullable
+    VERSION = '1.5'
 
     # required by RbacNeutronMetaclass
     rbac_db_cls = SecurityGroupRBAC
@@ -50,7 +51,7 @@ class SecurityGroup(rbac_db.NeutronRbacObject):
         'id': common_types.UUIDField(),
         'name': obj_fields.StringField(nullable=True),
         'project_id': obj_fields.StringField(nullable=True),
-        'shared': obj_fields.BooleanField(default=False),
+        'shared': obj_fields.BooleanField(nullable=True),
         'stateful': obj_fields.BooleanField(default=True),
         'is_default': obj_fields.BooleanField(default=False),
         'rules': obj_fields.ListOfObjectsField(
