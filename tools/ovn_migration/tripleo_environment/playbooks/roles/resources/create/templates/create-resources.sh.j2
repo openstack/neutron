@@ -8,12 +8,12 @@ image_name={{ image_name }}
 openstack image show $image_name
 if [ "$?" != "0" ]
 then
-    if [ ! -f cirros-0.4.0-x86_64-disk.img ]
+    if [ ! -f cirros-0.5.2-x86_64-disk.img ]
     then
-        curl -Lo cirros-0.4.0-x86_64-disk.img https://github.com/cirros-dev/cirros/releases/download/0.4.0/cirros-0.4.0-x86_64-disk.img
+        curl -Lo cirros-0.5.2-x86_64-disk.img https://github.com/cirros-dev/cirros/releases/download/0.5.2/cirros-0.5.2-x86_64-disk.img
     fi
 
-    openstack image create "cirros-ovn-migration-{{ resource_suffix }}"  --file cirros-0.4.0-x86_64-disk.img \
+    openstack image create "cirros-ovn-migration-{{ resource_suffix }}"  --file cirros-0.5.2-x86_64-disk.img \
 --disk-format qcow2 --container-format bare --public
     image_name="cirros-ovn-migration-{{ resource_suffix }}"
 fi
