@@ -95,8 +95,8 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
         with mock.patch.object(self.mixin,
                                '_get_port_security_group_bindings'),\
                 mock.patch.object(self.mixin, '_get_security_group'),\
-                mock.patch.object(registry, "notify") as mock_notify:
-            mock_notify.side_effect = exceptions.CallbackFailure(Exception())
+                mock.patch.object(registry, "publish") as mock_publish:
+            mock_publish.side_effect = exceptions.CallbackFailure(Exception())
             with testtools.ExpectedException(securitygroup.SecurityGroupInUse):
                 self.mixin.delete_security_group(self.ctx, mock.ANY)
 
@@ -106,8 +106,8 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
         FAKE_SECGROUP['security_group']['stateful'] = not sg_dict['stateful']
         with mock.patch.object(self.mixin,
                                '_get_port_security_group_bindings'), \
-                mock.patch.object(registry, "notify") as mock_notify:
-            mock_notify.side_effect = exceptions.CallbackFailure(Exception())
+                mock.patch.object(registry, "publish") as mock_publish:
+            mock_publish.side_effect = exceptions.CallbackFailure(Exception())
             with testtools.ExpectedException(securitygroup.SecurityGroupInUse):
                 self.mixin.update_security_group(self.ctx, sg_dict['id'],
                                                  FAKE_SECGROUP)
