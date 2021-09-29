@@ -30,7 +30,7 @@ from neutron.db.quota import api as quota_api
 LOG = log.getLogger(__name__)
 
 
-def _count_resource(context, collection_name, tenant_id):
+def _count_resource(context, collection_name, project_id):
     count_getter_name = "get_%s_count" % collection_name
     getter_name = "get_%s" % collection_name
 
@@ -45,12 +45,12 @@ def _count_resource(context, collection_name, tenant_id):
         try:
             obj_count_getter = getattr(plugins[pname], count_getter_name)
             return obj_count_getter(
-                context, filters={'tenant_id': [tenant_id]})
+                context, filters={'project_id': [project_id]})
         except (NotImplementedError, AttributeError):
             try:
                 obj_getter = getattr(plugins[pname], getter_name)
                 obj_list = obj_getter(
-                    context, filters={'tenant_id': [tenant_id]})
+                    context, filters={'project_id': [project_id]})
                 return len(obj_list) if obj_list else 0
             except (NotImplementedError, AttributeError):
                 pass
@@ -172,7 +172,7 @@ class TrackedResource(BaseResource):
         usage data are employed when performing quota checks.
 
         This class operates under the assumption that the model class
-        describing the resource has a tenant identifier attribute.
+        describing the resource has a project identifier attribute.
 
         :param name: The name of the resource, i.e., "networks".
         :param model_class: The sqlalchemy model class of the resource for
@@ -191,11 +191,11 @@ class TrackedResource(BaseResource):
         super(TrackedResource, self).__init__(
             name, flag=flag, plural_name=plural_name)
         # Register events for addition/removal of records in the model class
-        # As tenant_id is immutable for all Neutron objects there is no need
+        # As project_id is immutable for all Neutron objects there is no need
         # to register a listener for update events
         self._model_class = model_class
-        self._dirty_tenants = set()
-        self._out_of_sync_tenants = set()
+        self._dirty_projects = set()
+        self._out_of_sync_projects = set()
         # NOTE(ralonsoh): "DbQuotaNoLockDriver" driver does not need to track
         # the DB events or resync the resource quota usage.
         if cfg.CONF.QUOTAS.quota_driver == quota_conf.QUOTA_DB_DRIVER:
@@ -207,78 +207,78 @@ class TrackedResource(BaseResource):
     def dirty(self):
         if not self._track_resource_events:
             return
-        return self._dirty_tenants
+        return self._dirty_projects
 
     def mark_dirty(self, context):
-        if not self._dirty_tenants or not self._track_resource_events:
+        if not self._dirty_projects or not self._track_resource_events:
             return
         with db_api.CONTEXT_WRITER.using(context):
             # It is not necessary to protect this operation with a lock.
             # Indeed when this method is called the request has been processed
             # and therefore all resources created or deleted.
-            # dirty_tenants will contain all the tenants for which the
-            # resource count is changed. The list might contain also tenants
+            # dirty_projects will contain all the projects for which the
+            # resource count is changed. The list might contain also projects
             # for which resource count was altered in other requests, but this
             # won't be harmful.
-            dirty_tenants_snap = self._dirty_tenants.copy()
-            for tenant_id in dirty_tenants_snap:
-                quota_api.set_quota_usage_dirty(context, self.name, tenant_id)
-        self._out_of_sync_tenants |= dirty_tenants_snap
-        self._dirty_tenants -= dirty_tenants_snap
+            dirty_projects_snap = self._dirty_projects.copy()
+            for project_id in dirty_projects_snap:
+                quota_api.set_quota_usage_dirty(context, self.name, project_id)
+        self._out_of_sync_projects |= dirty_projects_snap
+        self._dirty_projects -= dirty_projects_snap
 
     def _db_event_handler(self, mapper, _conn, target):
         try:
-            tenant_id = target['tenant_id']
+            project_id = target['project_id']
         except AttributeError:
             with excutils.save_and_reraise_exception():
-                LOG.error("Model class %s does not have a tenant_id "
+                LOG.error("Model class %s does not have a project_id "
                           "attribute", target)
-        self._dirty_tenants.add(tenant_id)
+        self._dirty_projects.add(project_id)
 
     # Retry the operation if a duplicate entry exception is raised. This
     # can happen is two or more workers are trying to create a resource of a
-    # give kind for the same tenant concurrently. Retrying the operation will
+    # give kind for the same project concurrently. Retrying the operation will
     # ensure that an UPDATE statement is emitted rather than an INSERT one
     @db_api.retry_if_session_inactive()
-    def _set_quota_usage(self, context, tenant_id, in_use):
+    def _set_quota_usage(self, context, project_id, in_use):
         return quota_api.set_quota_usage(
-            context, self.name, tenant_id, in_use=in_use)
+            context, self.name, project_id, in_use=in_use)
 
-    def _resync(self, context, tenant_id, in_use):
+    def _resync(self, context, project_id, in_use):
         # Update quota usage
-        usage_info = self._set_quota_usage(context, tenant_id, in_use)
+        usage_info = self._set_quota_usage(context, project_id, in_use)
 
-        self._dirty_tenants.discard(tenant_id)
-        self._out_of_sync_tenants.discard(tenant_id)
-        LOG.debug(("Unset dirty status for tenant:%(tenant_id)s on "
+        self._dirty_projects.discard(project_id)
+        self._out_of_sync_projects.discard(project_id)
+        LOG.debug(("Unset dirty status for project:%(project_id)s on "
                    "resource:%(resource)s"),
-                  {'tenant_id': tenant_id, 'resource': self.name})
+                  {'project_id': project_id, 'resource': self.name})
         return usage_info
 
-    def resync(self, context, tenant_id):
-        if (tenant_id not in self._out_of_sync_tenants or
+    def resync(self, context, project_id):
+        if (project_id not in self._out_of_sync_projects or
                 not self._track_resource_events):
             return
-        LOG.debug(("Synchronizing usage tracker for tenant:%(tenant_id)s on "
+        LOG.debug(("Synchronizing usage tracker for project:%(project_id)s on "
                    "resource:%(resource)s"),
-                  {'tenant_id': tenant_id, 'resource': self.name})
+                  {'project_id': project_id, 'resource': self.name})
         in_use = context.session.query(
-            self._model_class.tenant_id).filter_by(
-            tenant_id=tenant_id).count()
+            self._model_class.project_id).filter_by(
+            project_id=project_id).count()
         # Update quota usage
-        return self._resync(context, tenant_id, in_use)
+        return self._resync(context, project_id, in_use)
 
-    def count_used(self, context, tenant_id, resync_usage=True):
+    def count_used(self, context, project_id, resync_usage=True):
         """Returns the current usage count for the resource.
 
         :param context: The request context.
-        :param tenant_id: The ID of the tenant
+        :param project_id: The ID of the project
         :param resync_usage: Default value is set to True. Syncs
             with in_use usage.
         """
         # Load current usage data, setting a row-level lock on the DB
-        usage_info = quota_api.get_quota_usage_by_resource_and_tenant(
-            context, self.name, tenant_id)
+        usage_info = quota_api.get_quota_usage_by_resource_and_project(
+            context, self.name, project_id)
 
         # If dirty or missing, calculate actual resource usage querying
         # the database and set/create usage info data
@@ -286,27 +286,28 @@ class TrackedResource(BaseResource):
         # assumption is generally valid, but if the database is tampered with,
         # or if data migrations do not take care of usage counters, the
         # assumption will not hold anymore
-        if (tenant_id in self._dirty_tenants or
+        if (project_id in self._dirty_projects or
                 not usage_info or usage_info.dirty):
-            LOG.debug(("Usage tracker for resource:%(resource)s and tenant:"
-                       "%(tenant_id)s is out of sync, need to count used "
+            LOG.debug(("Usage tracker for resource:%(resource)s and project:"
+                       "%(project_id)s is out of sync, need to count used "
                        "quota"), {'resource': self.name,
-                                  'tenant_id': tenant_id})
+                                  'project_id': project_id})
             in_use = context.session.query(
-                self._model_class.tenant_id).filter_by(
-                tenant_id=tenant_id).count()
+                self._model_class.project_id).filter_by(
+                project_id=project_id).count()
 
             # Update quota usage, if requested (by default do not do that, as
             # typically one counts before adding a record, and that would mark
             # the usage counter as dirty again)
             if resync_usage:
-                usage_info = self._resync(context, tenant_id, in_use)
+                usage_info = self._resync(context, project_id, in_use)
             else:
                 resource = usage_info.resource if usage_info else self.name
-                tenant_id = usage_info.tenant_id if usage_info else tenant_id
+                project_id = (usage_info.project_id if usage_info else
+                              project_id)
                 dirty = usage_info.dirty if usage_info else True
                 usage_info = quota_api.QuotaUsageInfo(
-                    resource, tenant_id, in_use, dirty)
+                    resource, project_id, in_use, dirty)
 
             LOG.debug(("Quota usage for %(resource)s was recalculated. "
                        "Used quota:%(used)d."),
@@ -314,16 +315,16 @@ class TrackedResource(BaseResource):
                        'used': usage_info.used})
         return usage_info.used
 
-    def count_reserved(self, context, tenant_id):
+    def count_reserved(self, context, project_id):
         """Return the current reservation count for the resource."""
         # NOTE(princenana) Current implementation of reservations
         # is ephemeral and returns the default value
         reservations = quota_api.get_reservations_for_resources(
-            context, tenant_id, [self.name])
+            context, project_id, [self.name])
         reserved = reservations.get(self.name, 0)
         return reserved
 
-    def count(self, context, _plugin, tenant_id, resync_usage=True,
+    def count(self, context, _plugin, project_id, resync_usage=True,
               count_db_registers=False):
         """Return the count of the resource.
 
@@ -332,11 +333,11 @@ class TrackedResource(BaseResource):
         CountableResource instances.
         """
         if count_db_registers:
-            count = self._count_db_registers(context, tenant_id)
+            count = self._count_db_registers(context, project_id)
         else:
-            count = self.count_used(context, tenant_id, resync_usage)
+            count = self.count_used(context, project_id, resync_usage)
 
-        return count + self.count_reserved(context, tenant_id)
+        return count + self.count_reserved(context, project_id)
 
     def _count_db_registers(self, context, project_id):
         """Return the existing resources (self._model_class) in a project.

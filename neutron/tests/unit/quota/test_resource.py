@@ -75,22 +75,22 @@ class TestResource(base.DietTestCase):
 
 class TestTrackedResource(testlib_api.SqlTestCase):
 
-    def _add_data(self, tenant_id=None):
+    def _add_data(self, project_id=None):
         session = db_api.get_writer_session()
         with session.begin():
-            tenant_id = tenant_id or self.tenant_id
+            project_id = project_id or self.project_id
             session.add(test_quota.MehModel(
                 meh='meh_%s' % uuidutils.generate_uuid(),
-                tenant_id=tenant_id))
+                project_id=project_id))
             session.add(test_quota.MehModel(
                 meh='meh_%s' % uuidutils.generate_uuid(),
-                tenant_id=tenant_id))
+                project_id=project_id))
 
     def _delete_data(self):
         session = db_api.get_writer_session()
         with session.begin():
             query = session.query(test_quota.MehModel).filter_by(
-                tenant_id=self.tenant_id)
+                project_id=self.project_id)
             for item in query:
                 session.delete(item)
 
@@ -98,7 +98,7 @@ class TestTrackedResource(testlib_api.SqlTestCase):
         session = db_api.get_writer_session()
         with session.begin():
             query = session.query(test_quota.MehModel).filter_by(
-                tenant_id=self.tenant_id)
+                project_id=self.project_id)
             for item in query:
                 item['meh'] = 'meh-%s' % item['meh']
                 session.add(item)
@@ -109,9 +109,9 @@ class TestTrackedResource(testlib_api.SqlTestCase):
         self.setup_coreplugin(DB_PLUGIN_KLASS)
         self.resource = 'meh'
         self.other_resource = 'othermeh'
-        self.tenant_id = 'meh'
+        self.project_id = 'meh'
         self.context = context.Context(
-            user_id='', tenant_id=self.tenant_id, is_admin=False)
+            user_id='', project_id=self.project_id, is_admin=False)
 
     def _create_resource(self):
         res = resource.TrackedResource(
@@ -133,7 +133,7 @@ class TestTrackedResource(testlib_api.SqlTestCase):
 
     def test_count_first_call_with_dirty_false(self):
         quota_api.set_quota_usage(
-            self.context, self.resource, self.tenant_id, in_use=1)
+            self.context, self.resource, self.project_id, in_use=1)
         res = self._create_resource()
         self._add_data()
         # explicitly set dirty flag to False
@@ -141,17 +141,17 @@ class TestTrackedResource(testlib_api.SqlTestCase):
             self.context, self.resource, dirty=False)
         # Expect correct count to be returned anyway since the first call to
         # count() always resyncs with the db
-        self.assertEqual(2, res.count(self.context, None, self.tenant_id))
+        self.assertEqual(2, res.count(self.context, None, self.project_id))
 
     def test_count_reserved(self):
         res = self._create_resource()
-        quota_api.create_reservation(self.context, self.tenant_id,
+        quota_api.create_reservation(self.context, self.project_id,
                                      {res.name: 1})
-        self.assertEqual(1, res.count_reserved(self.context, self.tenant_id))
+        self.assertEqual(1, res.count_reserved(self.context, self.project_id))
 
     def test_count_used_first_call_with_dirty_false(self):
         quota_api.set_quota_usage(
-            self.context, self.resource, self.tenant_id, in_use=1)
+            self.context, self.resource, self.project_id, in_use=1)
         res = self._create_resource()
         self._add_data()
         # explicitly set dirty flag to False
@@ -160,18 +160,18 @@ class TestTrackedResource(testlib_api.SqlTestCase):
         # Expect correct count_used to be returned
         # anyway since the first call to
         # count_used() always resyncs with the db
-        self.assertEqual(2, res.count_used(self.context, self.tenant_id))
+        self.assertEqual(2, res.count_used(self.context, self.project_id))
 
     def _test_count(self):
         res = self._create_resource()
         quota_api.set_quota_usage(
-            self.context, res.name, self.tenant_id, in_use=0)
+            self.context, res.name, self.project_id, in_use=0)
         self._add_data()
         return res
 
     def test_count_with_dirty_false(self):
         res = self._test_count()
-        res.count(self.context, None, self.tenant_id)
+        res.count(self.context, None, self.project_id)
         # At this stage count has been invoked, and the dirty flag should be
         # false. Another invocation of count should not query the model class
         set_quota = 'neutron.db.quota.api.set_quota_usage'
@@ -179,11 +179,11 @@ class TestTrackedResource(testlib_api.SqlTestCase):
             self.assertEqual(0, mock_set_quota.call_count)
             self.assertEqual(2, res.count(self.context,
                                           None,
-                                          self.tenant_id))
+                                          self.project_id))
 
     def test_count_used_with_dirty_false(self):
         res = self._test_count()
-        res.count_used(self.context, self.tenant_id)
+        res.count_used(self.context, self.project_id)
         # At this stage count_used has been invoked,
         # and the dirty flag should be false. Another invocation
         # of count_used should not query the model class
@@ -191,7 +191,7 @@ class TestTrackedResource(testlib_api.SqlTestCase):
         with mock.patch(set_quota) as mock_set_quota:
             self.assertEqual(0, mock_set_quota.call_count)
             self.assertEqual(2, res.count_used(self.context,
-                                               self.tenant_id))
+                                               self.project_id))
 
     def test_count_with_dirty_true_resync(self):
         res = self._test_count()
@@ -199,7 +199,7 @@ class TestTrackedResource(testlib_api.SqlTestCase):
         # set_quota_usage has been invoked with the correct parameters
         self.assertEqual(2, res.count(self.context,
                                       None,
-                                      self.tenant_id,
+                                      self.project_id,
                                       resync_usage=True))
 
     def test_count_used_with_dirty_true_resync(self):
@@ -207,7 +207,7 @@ class TestTrackedResource(testlib_api.SqlTestCase):
         # Expect correct count_used to be returned, which also implies
         # set_quota_usage has been invoked with the correct parameters
         self.assertEqual(2, res.count_used(self.context,
-                                           self.tenant_id,
+                                           self.project_id,
                                            resync_usage=True))
 
     def test_count_with_dirty_true_resync_calls_set_quota_usage(self):
@@ -216,11 +216,11 @@ class TestTrackedResource(testlib_api.SqlTestCase):
         with mock.patch(set_quota_usage) as mock_set_quota_usage:
             quota_api.set_quota_usage_dirty(self.context,
                                             self.resource,
-                                            self.tenant_id)
-            res.count(self.context, None, self.tenant_id,
+                                            self.project_id)
+            res.count(self.context, None, self.project_id,
                       resync_usage=True)
             mock_set_quota_usage.assert_called_once_with(
-                self.context, self.resource, self.tenant_id, in_use=2)
+                self.context, self.resource, self.project_id, in_use=2)
 
     def test_count_used_with_dirty_true_resync_calls_set_quota_usage(self):
         res = self._test_count()
@@ -228,25 +228,25 @@ class TestTrackedResource(testlib_api.SqlTestCase):
         with mock.patch(set_quota_usage) as mock_set_quota_usage:
             quota_api.set_quota_usage_dirty(self.context,
                                             self.resource,
-                                            self.tenant_id)
-            res.count_used(self.context, self.tenant_id,
+                                            self.project_id)
+            res.count_used(self.context, self.project_id,
                            resync_usage=True)
             mock_set_quota_usage.assert_called_once_with(
-                self.context, self.resource, self.tenant_id, in_use=2)
+                self.context, self.resource, self.project_id, in_use=2)
 
     def test_count_with_dirty_true_no_usage_info(self):
         res = self._create_resource()
         self._add_data()
         # Invoke count without having usage info in DB - Expect correct
         # count to be returned
-        self.assertEqual(2, res.count(self.context, None, self.tenant_id))
+        self.assertEqual(2, res.count(self.context, None, self.project_id))
 
     def test_count_used_with_dirty_true_no_usage_info(self):
         res = self._create_resource()
         self._add_data()
         # Invoke count_used without having usage info in DB - Expect correct
         # count_used to be returned
-        self.assertEqual(2, res.count_used(self.context, self.tenant_id))
+        self.assertEqual(2, res.count_used(self.context, self.project_id))
 
     def test_count_with_dirty_true_no_usage_info_calls_set_quota_usage(self):
         res = self._create_resource()
@@ -255,10 +255,10 @@ class TestTrackedResource(testlib_api.SqlTestCase):
         with mock.patch(set_quota_usage) as mock_set_quota_usage:
             quota_api.set_quota_usage_dirty(self.context,
                                             self.resource,
-                                            self.tenant_id)
-            res.count(self.context, None, self.tenant_id, resync_usage=True)
+                                            self.project_id)
+            res.count(self.context, None, self.project_id, resync_usage=True)
             mock_set_quota_usage.assert_called_once_with(
-                self.context, self.resource, self.tenant_id, in_use=2)
+                self.context, self.resource, self.project_id, in_use=2)
 
     def test_count_used_with_dirty_true_no_usage_info_calls_set_quota_usage(
                                                                      self):
@@ -268,44 +268,44 @@ class TestTrackedResource(testlib_api.SqlTestCase):
         with mock.patch(set_quota_usage) as mock_set_quota_usage:
             quota_api.set_quota_usage_dirty(self.context,
                                             self.resource,
-                                            self.tenant_id)
-            res.count_used(self.context, self.tenant_id, resync_usage=True)
+                                            self.project_id)
+            res.count_used(self.context, self.project_id, resync_usage=True)
             mock_set_quota_usage.assert_called_once_with(
-                self.context, self.resource, self.tenant_id, in_use=2)
+                self.context, self.resource, self.project_id, in_use=2)
 
     def test_add_delete_data_triggers_event(self):
         res = self._create_resource()
         other_res = self._create_other_resource()
-        # Validate dirty tenants since mock does not work well with SQLAlchemy
+        # Validate dirty projects since mock does not work well with SQLAlchemy
         # event handlers.
         self._add_data()
         self._add_data('someone_else')
-        self.assertEqual(2, len(res._dirty_tenants))
+        self.assertEqual(2, len(res._dirty_projects))
         # Also, the dirty flag should not be set for other resources
-        self.assertEqual(0, len(other_res._dirty_tenants))
-        self.assertIn(self.tenant_id, res._dirty_tenants)
-        self.assertIn('someone_else', res._dirty_tenants)
+        self.assertEqual(0, len(other_res._dirty_projects))
+        self.assertIn(self.project_id, res._dirty_projects)
+        self.assertIn('someone_else', res._dirty_projects)
 
     def test_delete_data_triggers_event(self):
         res = self._create_resource()
         self._add_data()
         self._add_data('someone_else')
-        # Artificially clear _dirty_tenants
-        res._dirty_tenants.clear()
+        # Artificially clear _dirty_projects
+        res._dirty_projects.clear()
         self._delete_data()
         # We did not delete "someone_else", so expect only a single dirty
-        # tenant
-        self.assertEqual(1, len(res._dirty_tenants))
-        self.assertIn(self.tenant_id, res._dirty_tenants)
+        # project
+        self.assertEqual(1, len(res._dirty_projects))
+        self.assertIn(self.project_id, res._dirty_projects)
 
     def test_update_does_not_trigger_event(self):
         res = self._create_resource()
         self._add_data()
         self._add_data('someone_else')
-        # Artificially clear _dirty_tenants
-        res._dirty_tenants.clear()
+        # Artificially clear _dirty_projects
+        res._dirty_projects.clear()
         self._update_data()
-        self.assertEqual(0, len(res._dirty_tenants))
+        self.assertEqual(0, len(res._dirty_projects))
 
     def test_mark_dirty(self):
         res = self._create_resource()
@@ -316,11 +316,11 @@ class TestTrackedResource(testlib_api.SqlTestCase):
             res.mark_dirty(self.context)
             self.assertEqual(2, mock_set_quota_usage.call_count)
             mock_set_quota_usage.assert_any_call(
-                self.context, self.resource, self.tenant_id)
+                self.context, self.resource, self.project_id)
             mock_set_quota_usage.assert_any_call(
                 self.context, self.resource, 'someone_else')
 
-    def test_mark_dirty_no_dirty_tenant(self):
+    def test_mark_dirty_no_dirty_project(self):
         res = self._create_resource()
         set_quota_usage = 'neutron.db.quota.api.set_quota_usage_dirty'
         with mock.patch(set_quota_usage) as mock_set_quota_usage:
@@ -331,14 +331,14 @@ class TestTrackedResource(testlib_api.SqlTestCase):
         res = self._create_resource()
         self._add_data()
         res.mark_dirty(self.context)
-        # self.tenant_id now is out of sync
+        # self.project_id now is out of sync
         set_quota_usage = 'neutron.db.quota.api.set_quota_usage'
         with mock.patch(set_quota_usage) as mock_set_quota_usage:
-            res.resync(self.context, self.tenant_id)
+            res.resync(self.context, self.project_id)
             # and now it should be in sync
-            self.assertNotIn(self.tenant_id, res._out_of_sync_tenants)
+            self.assertNotIn(self.project_id, res._out_of_sync_projects)
             mock_set_quota_usage.assert_called_once_with(
-                self.context, self.resource, self.tenant_id, in_use=2)
+                self.context, self.resource, self.project_id, in_use=2)
 
 
 class Test_CountResource(base.BaseTestCase):
@@ -355,15 +355,15 @@ class Test_CountResource(base.BaseTestCase):
 
         context = mock.Mock()
         collection_name = 'floatingips'
-        tenant_id = 'fakeid'
+        project_id = 'fakeid'
         self.assertRaises(
             NotImplementedError,
-            resource._count_resource, context, collection_name, tenant_id)
+            resource._count_resource, context, collection_name, project_id)
 
         for plugin in plugins.values():
             for func in (plugin.get_floatingips_count, plugin.get_floatingips):
                 func.assert_called_with(
-                    context, filters={'tenant_id': [tenant_id]})
+                    context, filters={'project_id': [project_id]})
 
     def test_core_plugin_checked_first(self):
         plugin1 = mock.Mock()
@@ -378,6 +378,6 @@ class Test_CountResource(base.BaseTestCase):
 
         context = mock.Mock()
         collection_name = 'floatingips'
-        tenant_id = 'fakeid'
+        project_id = 'fakeid'
         self.assertEqual(
-            10, resource._count_resource(context, collection_name, tenant_id))
+            10, resource._count_resource(context, collection_name, project_id))

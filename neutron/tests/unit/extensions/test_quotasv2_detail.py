@@ -67,9 +67,9 @@ class DetailQuotaExtensionDbTestCase(DetailQuotaExtensionTestCase):
     fmt = 'json'
 
     def test_show_detail_quotas(self):
-        tenant_id = 'tenant_id1'
-        env = {'neutron.context': context.Context('', tenant_id)}
-        res = self.api.get(_get_path('quotas', id=tenant_id,
+        project_id = 'project_id1'
+        env = {'neutron.context': context.Context('', project_id)}
+        res = self.api.get(_get_path('quotas', id=project_id,
                                      fmt=self.fmt,
                                      endpoint=DEFAULT_QUOTAS_ACTION),
                            extra_environ=env)
@@ -95,10 +95,10 @@ class DetailQuotaExtensionDbTestCase(DetailQuotaExtensionTestCase):
             'quota_network', -10, group='QUOTAS')
         cfg.CONF.set_override(
             'quota_subnet', -50, group='QUOTAS')
-        tenant_id = 'tenant_id1'
-        env = {'neutron.context': context.Context('', tenant_id,
+        project_id = 'project_id1'
+        env = {'neutron.context': context.Context('', project_id,
                                                   is_admin=True)}
-        res = self.api.get(_get_path('quotas', id=tenant_id,
+        res = self.api.get(_get_path('quotas', id=project_id,
                                      fmt=self.fmt,
                                      endpoint=DEFAULT_QUOTAS_ACTION),
                            extra_environ=env)
@@ -118,10 +118,10 @@ class DetailQuotaExtensionDbTestCase(DetailQuotaExtensionTestCase):
                          quota['quota']['port']['limit'])
 
     def test_show_detail_quotas_with_admin(self):
-        tenant_id = 'tenant_id1'
-        env = {'neutron.context': context.Context('', tenant_id + '2',
+        project_id = 'project_id1'
+        env = {'neutron.context': context.Context('', project_id + '2',
                                                   is_admin=True)}
-        res = self.api.get(_get_path('quotas', id=tenant_id,
+        res = self.api.get(_get_path('quotas', id=project_id,
                                      fmt=self.fmt,
                                      endpoint=DEFAULT_QUOTAS_ACTION),
                            extra_environ=env)
@@ -141,10 +141,10 @@ class DetailQuotaExtensionDbTestCase(DetailQuotaExtensionTestCase):
                          quota['quota']['port']['limit'])
 
     def test_detail_quotas_without_admin_forbidden_returns_403(self):
-        tenant_id = 'tenant_id1'
-        env = {'neutron.context': context.Context('', tenant_id + '2',
+        project_id = 'project_id1'
+        env = {'neutron.context': context.Context('', project_id + '2',
                                                   is_admin=False)}
-        res = self.api.get(_get_path('quotas', id=tenant_id,
+        res = self.api.get(_get_path('quotas', id=project_id,
                                      fmt=self.fmt,
                                      endpoint=DEFAULT_QUOTAS_ACTION),
                            extra_environ=env, expect_errors=True)

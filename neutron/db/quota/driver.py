@@ -35,139 +35,142 @@ class DbQuotaDriver(quota_api.QuotaDriverAPI):
     """
 
     @staticmethod
-    def get_default_quotas(context, resources, tenant_id):
+    def get_default_quotas(context, resources, project_id):
         """Given a list of resources, retrieve the default quotas set for
-        a tenant.
+        a project.
 
         :param context: The request context, for access checks.
         :param resources: A dictionary of the registered resource keys.
-        :param tenant_id: The ID of the tenant to return default quotas for.
+        :param project_id: The ID of the project to return default quotas for.
         :return: dict from resource name to dict of name and limit
         """
-        # Currently the tenant_id parameter is unused, since all tenants
+        # Currently the project_id parameter is unused, since all projects
         # share the same default values. This may change in the future so
-        # we include tenant-id to remain backwards compatible.
+        # we include project ID to remain backwards compatible.
         return dict((key, resource.default)
                     for key, resource in resources.items())
 
     @staticmethod
     @db_api.retry_if_session_inactive()
-    def get_tenant_quotas(context, resources, tenant_id):
+    def get_project_quotas(context, resources, project_id):
         """Given a list of resources, retrieve the quotas for the given
-        tenant. If no limits are found for the specified tenant, the operation
-        returns the default limits.
+        project. If no limits are found for the specified project, the
+        operation returns the default limits.
 
         :param context: The request context, for access checks.
         :param resources: A dictionary of the registered resource keys.
-        :param tenant_id: The ID of the tenant to return quotas for.
+        :param project_id: The ID of the project to return quotas for.
         :return: dict from resource name to dict of name and limit
         """
 
         # init with defaults
-        tenant_quota = dict((key, resource.default)
+        project_quota = dict((key, resource.default)
                             for key, resource in resources.items())
 
-        # update with tenant specific limits
-        quota_objs = quota_obj.Quota.get_objects(context, project_id=tenant_id)
+        # update with project specific limits
+        quota_objs = quota_obj.Quota.get_objects(context,
+                                                 project_id=project_id)
         for item in quota_objs:
-            tenant_quota[item['resource']] = item['limit']
+            project_quota[item['resource']] = item['limit']
 
-        return tenant_quota
+        return project_quota
 
     @staticmethod
     @db_api.retry_if_session_inactive()
-    def get_detailed_tenant_quotas(context, resources, tenant_id):
-        """Given a list of resources and a sepecific tenant, retrieve
+    def get_detailed_project_quotas(context, resources, project_id):
+        """Given a list of resources and a specific project, retrieve
         the detailed quotas (limit, used, reserved).
         :param context: The request context, for access checks.
         :param resources: A dictionary of the registered resource keys.
+        :param project_id: The ID of the project to return quotas for.
         :return dict: mapping resource name in dict to its corresponding limit
             used and reserved. Reserved currently returns default value of 0
         """
         res_reserve_info = quota_api.get_reservations_for_resources(
-            context, tenant_id, resources.keys())
-        tenant_quota_ext = {}
+            context, project_id, resources.keys())
+        project_quota_ext = {}
         for key, resource in resources.items():
             if isinstance(resource, res.TrackedResource):
-                used = resource.count_used(context, tenant_id,
+                used = resource.count_used(context, project_id,
                                            resync_usage=False)
             else:
                 # NOTE(ihrachys) .count won't use the plugin we pass, but we
                 # pass it regardless to keep the quota driver API intact
                 plugins = directory.get_plugins()
                 plugin = plugins.get(key, plugins[constants.CORE])
-                used = resource.count(context, plugin, tenant_id)
+                used = resource.count(context, plugin, project_id)
 
-            tenant_quota_ext[key] = {
+            project_quota_ext[key] = {
                 'limit': resource.default,
                 'used': used,
                 'reserved': res_reserve_info.get(key, 0),
             }
-        # update with specific tenant limits
-        quota_objs = quota_obj.Quota.get_objects(context, project_id=tenant_id)
+        # update with specific project limits
+        quota_objs = quota_obj.Quota.get_objects(context,
+                                                 project_id=project_id)
         for item in quota_objs:
-            tenant_quota_ext[item['resource']]['limit'] = item['limit']
-        return tenant_quota_ext
+            project_quota_ext[item['resource']]['limit'] = item['limit']
+        return project_quota_ext
 
     @staticmethod
     @db_api.retry_if_session_inactive()
-    def delete_tenant_quota(context, tenant_id):
-        """Delete the quota entries for a given tenant_id.
+    def delete_project_quota(context, project_id):
+        """Delete the quota entries for a given project_id.
 
-        After deletion, this tenant will use default quota values in conf.
-        Raise a "not found" error if the quota for the given tenant was
+        After deletion, this project will use default quota values in conf.
+        Raise a "not found" error if the quota for the given project was
         never defined.
         """
-        if quota_obj.Quota.delete_objects(context, project_id=tenant_id) < 1:
+        if quota_obj.Quota.delete_objects(context, project_id=project_id) < 1:
             # No record deleted means the quota was not found
-            raise exceptions.TenantQuotaNotFound(tenant_id=tenant_id)
+            raise exceptions.TenantQuotaNotFound(tenant_id=project_id)
 
     @staticmethod
     @db_api.retry_if_session_inactive()
     def get_all_quotas(context, resources):
-        """Given a list of resources, retrieve the quotas for the all tenants.
+        """Given a list of resources, retrieve the quotas for the all projects.
 
         :param context: The request context, for access checks.
         :param resources: A dictionary of the registered resource keys.
-        :return: quotas list of dict of tenant_id:, resourcekey1:
+        :return: quotas list of dict of project_id:, resourcekey1:
         resourcekey2: ...
         """
-        tenant_default = dict((key, resource.default)
+        project_default = dict((key, resource.default)
                               for key, resource in resources.items())
 
-        all_tenant_quotas = {}
+        all_project_quotas = {}
 
         for quota in quota_obj.Quota.get_objects(context):
-            tenant_id = quota['project_id']
+            project_id = quota['project_id']
 
             # avoid setdefault() because only want to copy when actually
             # required
-            tenant_quota = all_tenant_quotas.get(tenant_id)
-            if tenant_quota is None:
-                tenant_quota = tenant_default.copy()
-                tenant_quota['tenant_id'] = tenant_id
-                attributes.populate_project_info(tenant_quota)
-                all_tenant_quotas[tenant_id] = tenant_quota
+            project_quota = all_project_quotas.get(project_id)
+            if project_quota is None:
+                project_quota = project_default.copy()
+                project_quota['project_id'] = project_id
+                attributes.populate_project_info(project_quota)
+                all_project_quotas[project_id] = project_quota
 
-            tenant_quota[quota['resource']] = quota['limit']
+            project_quota[quota['resource']] = quota['limit']
 
         # Convert values to a list to as caller expect an indexable iterable,
         # where python3's dict_values does not support indexing
-        return list(all_tenant_quotas.values())
+        return list(all_project_quotas.values())
 
     @staticmethod
     @db_api.retry_if_session_inactive()
-    def update_quota_limit(context, tenant_id, resource, limit):
-        tenant_quotas = quota_obj.Quota.get_objects(
-            context, project_id=tenant_id, resource=resource)
-        if tenant_quotas:
-            tenant_quotas[0].limit = limit
-            tenant_quotas[0].update()
+    def update_quota_limit(context, project_id, resource, limit):
+        project_quotas = quota_obj.Quota.get_objects(
+            context, project_id=project_id, resource=resource)
+        if project_quotas:
+            project_quotas[0].limit = limit
+            project_quotas[0].update()
         else:
-            quota_obj.Quota(context, project_id=tenant_id, resource=resource,
+            quota_obj.Quota(context, project_id=project_id, resource=resource,
                             limit=limit).create()
 
-    def _get_quotas(self, context, tenant_id, resources):
+    def _get_quotas(self, context, project_id, resources):
         """Retrieves the quotas for specific resources.
 
         A helper method which retrieves the quotas for the specific
@@ -175,24 +178,23 @@ class DbQuotaDriver(quota_api.QuotaDriverAPI):
         context.
 
         :param context: The request context, for access checks.
-        :param tenant_id: the tenant_id to check quota.
+        :param project_id: the project ID to check quota.
         :param resources: A dictionary of the registered resources.
         """
         # Grab and return the quotas (without usages)
-        quotas = DbQuotaDriver.get_tenant_quotas(
-            context, resources, tenant_id)
+        quotas = DbQuotaDriver.get_project_quotas(
+            context, resources, project_id)
 
         return dict((k, v) for k, v in quotas.items())
 
-    def _handle_expired_reservations(self, context, tenant_id):
-        LOG.debug("Deleting expired reservations for tenant:%s", tenant_id)
+    def _handle_expired_reservations(self, context, project_id):
+        LOG.debug("Deleting expired reservations for project: %s", project_id)
         # Delete expired reservations (we don't want them to accrue
         # in the database)
-        quota_api.remove_expired_reservations(
-            context, tenant_id=tenant_id)
+        quota_api.remove_expired_reservations(context, project_id=project_id)
 
     @db_api.retry_if_session_inactive()
-    def make_reservation(self, context, tenant_id, resources, deltas, plugin):
+    def make_reservation(self, context, project_id, resources, deltas, plugin):
         # Lock current reservation table
         # NOTE(salv-orlando): This routine uses DB write locks.
         # These locks are acquired by the count() method invoked on resources.
@@ -207,11 +209,11 @@ class DbQuotaDriver(quota_api.QuotaDriverAPI):
         # to a single node will be available.
         requested_resources = deltas.keys()
         with db_api.CONTEXT_WRITER.using(context):
-            # get_tenant_quotes needs in input a dictionary mapping resource
+            # "get_project_quotas" needs in input a dictionary mapping resource
             # name to BaseResosurce instances so that the default quota can be
             # retrieved
-            current_limits = self.get_tenant_quotas(
-                context, resources, tenant_id)
+            current_limits = self.get_project_quotas(
+                context, resources, project_id)
             unlimited_resources = set([resource for (resource, limit) in
                                        current_limits.items() if limit < 0])
             # Do not even bother counting resources and calculating headroom
@@ -230,13 +232,13 @@ class DbQuotaDriver(quota_api.QuotaDriverAPI):
             # instances
             current_usages = dict(
                 (resource, resources[resource].count(
-                    context, plugin, tenant_id, resync_usage=False)) for
+                    context, plugin, project_id, resync_usage=False)) for
                 resource in requested_resources)
             # Adjust for expired reservations. Apparently it is cheaper than
             # querying every time for active reservations and counting overall
             # quantity of resources reserved
             expired_deltas = quota_api.get_reservations_for_resources(
-                context, tenant_id, requested_resources, expired=True)
+                context, project_id, requested_resources, expired=True)
             # Verify that the request can be accepted with current limits
             resources_over_limit = []
             for resource in requested_resources:
@@ -254,14 +256,14 @@ class DbQuotaDriver(quota_api.QuotaDriverAPI):
                 if res_headroom < deltas[resource]:
                     resources_over_limit.append(resource)
                 if expired_reservations:
-                    self._handle_expired_reservations(context, tenant_id)
+                    self._handle_expired_reservations(context, project_id)
 
             if resources_over_limit:
                 raise exceptions.OverQuota(overs=sorted(resources_over_limit))
             # Success, store the reservation
             # TODO(salv-orlando): Make expiration time configurable
             return quota_api.create_reservation(
-                context, tenant_id, deltas)
+                context, project_id, deltas)
 
     def commit_reservation(self, context, reservation_id):
         # Do not mark resource usage as dirty. If a reservation is committed,
@@ -276,7 +278,7 @@ class DbQuotaDriver(quota_api.QuotaDriverAPI):
         quota_api.remove_reservation(context, reservation_id,
                                      set_dirty=True)
 
-    def limit_check(self, context, tenant_id, resources, values):
+    def limit_check(self, context, project_id, resources, values):
         """Check simple quota limits.
 
         For limits--those quotas for which there is no usage
@@ -289,7 +291,7 @@ class DbQuotaDriver(quota_api.QuotaDriverAPI):
         nothing.
 
         :param context: The request context, for access checks.
-        :param tenant_id: The tenant_id to check the quota.
+        :param project_id: The project ID to check the quota.
         :param resources: A dictionary of the registered resources.
         :param values: A dictionary of the values to check against the
                        quota.
@@ -301,7 +303,7 @@ class DbQuotaDriver(quota_api.QuotaDriverAPI):
             raise exceptions.InvalidQuotaValue(unders=sorted(unders))
 
         # Get the applicable quotas
-        quotas = self._get_quotas(context, tenant_id, resources)
+        quotas = self._get_quotas(context, project_id, resources)
 
         # Check the quotas and construct a list of the resources that
         # would be put over limit by the desired values

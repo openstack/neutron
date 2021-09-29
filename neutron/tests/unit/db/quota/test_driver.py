@@ -28,7 +28,7 @@ from neutron.tests.unit import testlib_api
 DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 
 
-def _count_resource(context, resource, tenant_id):
+def _count_resource(context, resource, project_id):
     """A fake counting function to determine current used counts"""
     if resource[-1] == 's':
         resource = resource[:-1]
@@ -97,7 +97,8 @@ class TestDbQuotaDriver(testlib_api.SqlTestCase,
         defaults = {RESOURCE: TestResource(RESOURCE, 4)}
 
         self.plugin.update_quota_limit(self.context, PROJECT, RESOURCE, 2)
-        quotas = self.plugin.get_tenant_quotas(self.context, defaults, PROJECT)
+        quotas = self.plugin.get_project_quotas(self.context, defaults,
+                                                PROJECT)
         self.assertEqual(2, quotas[RESOURCE])
 
     def test_update_quota_limit(self):
@@ -105,15 +106,17 @@ class TestDbQuotaDriver(testlib_api.SqlTestCase,
 
         self.plugin.update_quota_limit(self.context, PROJECT, RESOURCE, 2)
         self.plugin.update_quota_limit(self.context, PROJECT, RESOURCE, 3)
-        quotas = self.plugin.get_tenant_quotas(self.context, defaults, PROJECT)
+        quotas = self.plugin.get_project_quotas(self.context, defaults,
+                                                PROJECT)
         self.assertEqual(3, quotas[RESOURCE])
 
-    def test_delete_tenant_quota_restores_default_limit(self):
+    def test_delete_project_quota_restores_default_limit(self):
         defaults = {RESOURCE: TestResource(RESOURCE, 4)}
 
         self.plugin.update_quota_limit(self.context, PROJECT, RESOURCE, 2)
-        self.plugin.delete_tenant_quota(self.context, PROJECT)
-        quotas = self.plugin.get_tenant_quotas(self.context, defaults, PROJECT)
+        self.plugin.delete_project_quota(self.context, PROJECT)
+        quotas = self.plugin.get_project_quotas(self.context, defaults,
+                                                PROJECT)
         self.assertEqual(4, quotas[RESOURCE])
 
     def test_get_default_quotas(self):
@@ -123,20 +126,20 @@ class TestDbQuotaDriver(testlib_api.SqlTestCase,
         quotas = self.plugin.get_default_quotas(user_ctx, defaults, PROJECT)
         self.assertEqual(4, quotas[RESOURCE])
 
-    def test_get_tenant_quotas(self):
+    def test_get_project_quotas(self):
         user_ctx = context.Context(user_id=PROJECT, tenant_id=PROJECT)
         self.plugin.update_quota_limit(self.context, PROJECT, RESOURCE, 2)
-        quotas = self.plugin.get_tenant_quotas(user_ctx, {}, PROJECT)
+        quotas = self.plugin.get_project_quotas(user_ctx, {}, PROJECT)
         self.assertEqual(2, quotas[RESOURCE])
 
-    def test_get_tenant_quotas_different_tenant(self):
+    def test_get_project_quotas_different_project(self):
         user_ctx = context.Context(user_id=PROJECT,
                                    tenant_id='another_project')
         self.plugin.update_quota_limit(self.context, PROJECT, RESOURCE, 2)
         # It is appropriate to use assertFalse here as the expected return
         # value is an empty dict (the defaults passed in the statement below
         # after the request context)
-        self.assertFalse(self.plugin.get_tenant_quotas(user_ctx, {}, PROJECT))
+        self.assertFalse(self.plugin.get_project_quotas(user_ctx, {}, PROJECT))
 
     def test_get_all_quotas(self):
         project_1 = 'prj_test_1'
@@ -151,14 +154,14 @@ class TestDbQuotaDriver(testlib_api.SqlTestCase,
         self.plugin.update_quota_limit(self.context, project_2, resource_2, 9)
         quotas = self.plugin.get_all_quotas(self.context, resources)
 
-        # Expect two tenants' quotas
+        # Expect two projects' quotas
         self.assertEqual(2, len(quotas))
-        # But not quotas for the same tenant twice
-        self.assertNotEqual(quotas[0]['tenant_id'], quotas[1]['tenant_id'])
+        # But not quotas for the same project twice
+        self.assertNotEqual(quotas[0]['project_id'], quotas[1]['project_id'])
 
         # Check the expected limits. The quotas can be in any order.
         for quota in quotas:
-            project = quota['tenant_id']
+            project = quota['project_id']
             self.assertIn(project, (project_1, project_2))
             if project == project_1:
                 expected_limit_r1 = 7
@@ -208,15 +211,15 @@ class TestDbQuotaDriver(testlib_api.SqlTestCase,
         self.plugin.update_quota_limit(self.context, PROJECT, resource_name, 2)
         reservation = quota_driver.make_reservation(
             self.context,
-            self.context.tenant_id,
+            self.context.project_id,
             resources,
             deltas,
             self.plugin)
         self.assertIn(resource_name, reservation.deltas)
         self.assertEqual(deltas[resource_name],
                          reservation.deltas[resource_name])
-        self.assertEqual(self.context.tenant_id,
-                         reservation.tenant_id)
+        self.assertEqual(self.context.project_id,
+                         reservation.project_id)
 
     def test_make_reservation_single_resource(self):
         quota_driver = driver.DbQuotaDriver()
@@ -237,7 +240,7 @@ class TestDbQuotaDriver(testlib_api.SqlTestCase,
         self.plugin.update_quota_limit(self.context, PROJECT, ALT_RESOURCE, 2)
         reservation = quota_driver.make_reservation(
             self.context,
-            self.context.tenant_id,
+            self.context.project_id,
             resources,
             deltas,
             self.plugin)
@@ -245,8 +248,8 @@ class TestDbQuotaDriver(testlib_api.SqlTestCase,
         self.assertIn(ALT_RESOURCE, reservation.deltas)
         self.assertEqual(1, reservation.deltas[RESOURCE])
         self.assertEqual(2, reservation.deltas[ALT_RESOURCE])
-        self.assertEqual(self.context.tenant_id,
-                         reservation.tenant_id)
+        self.assertEqual(self.context.project_id,
+                         reservation.project_id)
 
     def test_make_reservation_over_quota_fails(self):
         quota_driver = driver.DbQuotaDriver()
@@ -257,12 +260,12 @@ class TestDbQuotaDriver(testlib_api.SqlTestCase,
         self.assertRaises(exceptions.OverQuota,
                           quota_driver.make_reservation,
                           self.context,
-                          self.context.tenant_id,
+                          self.context.project_id,
                           resources,
                           deltas,
                           self.plugin)
 
-    def test_get_detailed_tenant_quotas_resource(self):
+    def test_get_detailed_project_quotas_resource(self):
         res = {RESOURCE: TestTrackedResource(RESOURCE, test_quota.MehModel)}
 
         self.plugin.update_quota_limit(self.context, PROJECT, RESOURCE, 6)
@@ -270,13 +273,13 @@ class TestDbQuotaDriver(testlib_api.SqlTestCase,
         quota_driver.make_reservation(self.context, PROJECT, res,
                                       {RESOURCE: 1}, self.plugin)
         quota_api.set_quota_usage(self.context, RESOURCE, PROJECT, 2)
-        detailed_quota = self.plugin.get_detailed_tenant_quotas(self.context,
-                                                                res, PROJECT)
+        detailed_quota = self.plugin.get_detailed_project_quotas(
+            self.context, res, PROJECT)
         self.assertEqual(6, detailed_quota[RESOURCE]['limit'])
         self.assertEqual(2, detailed_quota[RESOURCE]['used'])
         self.assertEqual(1, detailed_quota[RESOURCE]['reserved'])
 
-    def test_get_detailed_tenant_quotas_multiple_resource(self):
+    def test_get_detailed_project_quotas_multiple_resource(self):
         project_1 = 'prj_test_1'
         resource_1 = 'res_test_1'
         resource_2 = 'res_test_2'
@@ -295,9 +298,8 @@ class TestDbQuotaDriver(testlib_api.SqlTestCase,
 
         quota_api.set_quota_usage(self.context, resource_1, project_1, 2)
         quota_api.set_quota_usage(self.context, resource_2, project_1, 3)
-        detailed_quota = self.plugin.get_detailed_tenant_quotas(self.context,
-                                                                resources,
-                                                                project_1)
+        detailed_quota = self.plugin.get_detailed_project_quotas(
+            self.context, resources, project_1)
 
         self.assertEqual(6, detailed_quota[resource_1]['limit'])
         self.assertEqual(1, detailed_quota[resource_1]['reserved'])

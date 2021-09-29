@@ -31,28 +31,28 @@ def utcnow():
 
 
 class QuotaUsageInfo(collections.namedtuple(
-        'QuotaUsageInfo', ['resource', 'tenant_id', 'used', 'dirty'])):
+        'QuotaUsageInfo', ['resource', 'project_id', 'used', 'dirty'])):
     """Information about resource quota usage."""
 
 
 class ReservationInfo(collections.namedtuple(
-    'ReservationInfo', ['reservation_id', 'tenant_id',
+    'ReservationInfo', ['reservation_id', 'project_id',
                         'expiration', 'deltas'])):
     """Information about a resource reservation."""
 
 
 @db_api.retry_if_session_inactive()
-def get_quota_usage_by_resource_and_tenant(context, resource, tenant_id):
-    """Return usage info for a given resource and tenant.
+def get_quota_usage_by_resource_and_project(context, resource, project_id):
+    """Return usage info for a given resource and project.
 
     :param context: Request context
     :param resource: Name of the resource
-    :param tenant_id: Tenant identifier
+    :param project_id: Project identifier
     :returns: a QuotaUsageInfo instance
     """
 
     result = quota_obj.QuotaUsage.get_object_dirty_protected(
-        context, resource=resource, project_id=tenant_id)
+        context, resource=resource, project_id=project_id)
     if not result:
         return
     return QuotaUsageInfo(result.resource, result.project_id, result.in_use,
@@ -69,23 +69,22 @@ def get_quota_usage_by_resource(context, resource):
 
 
 @db_api.retry_if_session_inactive()
-def get_quota_usage_by_tenant_id(context, tenant_id):
-    objs = quota_obj.QuotaUsage.get_objects(context, project_id=tenant_id)
+def get_quota_usage_by_project_id(context, project_id):
+    objs = quota_obj.QuotaUsage.get_objects(context, project_id=project_id)
     return [QuotaUsageInfo(item.resource,
-                           tenant_id,
+                           project_id,
                            item.in_use,
                            item.dirty) for item in objs]
 
 
 @db_api.retry_if_session_inactive()
-def set_quota_usage(context, resource, tenant_id,
-                    in_use=None, delta=False):
+def set_quota_usage(context, resource, project_id, in_use=None, delta=False):
     """Set resource quota usage.
 
     :param context: instance of neutron context with db session
     :param resource: name of the resource for which usage is being set
-    :param tenant_id: identifier of the tenant for which quota usage is
-                      being set
+    :param project_id: identifier of the project for which quota usage is
+                       being set
     :param in_use: integer specifying the new quantity of used resources,
                    or a delta to apply to current used resource
     :param delta: Specifies whether in_use is an absolute number
@@ -93,11 +92,11 @@ def set_quota_usage(context, resource, tenant_id,
     """
     with db_api.CONTEXT_WRITER.using(context):
         usage_data = quota_obj.QuotaUsage.get_object(
-            context, resource=resource, project_id=tenant_id)
+            context, resource=resource, project_id=project_id)
         if not usage_data:
             # Must create entry
             usage_data = quota_obj.QuotaUsage(
-                context, resource=resource, project_id=tenant_id)
+                context, resource=resource, project_id=project_id)
             usage_data.create()
         # Perform explicit comparison with None as 0 is a valid value
         if in_use is not None:
@@ -113,16 +112,16 @@ def set_quota_usage(context, resource, tenant_id,
 
 @db_api.retry_if_session_inactive()
 @db_api.CONTEXT_WRITER
-def set_quota_usage_dirty(context, resource, tenant_id, dirty=True):
-    """Set quota usage dirty bit for a given resource and tenant.
+def set_quota_usage_dirty(context, resource, project_id, dirty=True):
+    """Set quota usage dirty bit for a given resource and project.
 
     :param resource: a resource for which quota usage if tracked
-    :param tenant_id: tenant identifier
+    :param project_id: project identifier
     :param dirty: the desired value for the dirty bit (defaults to True)
     :returns: 1 if the quota usage data were updated, 0 otherwise.
     """
     obj = quota_obj.QuotaUsage.get_object(
-        context, resource=resource, project_id=tenant_id)
+        context, resource=resource, project_id=project_id)
     if obj:
         obj.dirty = dirty
         obj.update()
@@ -132,16 +131,17 @@ def set_quota_usage_dirty(context, resource, tenant_id, dirty=True):
 
 @db_api.retry_if_session_inactive()
 @db_api.CONTEXT_WRITER
-def set_resources_quota_usage_dirty(context, resources, tenant_id, dirty=True):
-    """Set quota usage dirty bit for a given tenant and multiple resources.
+def set_resources_quota_usage_dirty(context, resources, project_id,
+                                    dirty=True):
+    """Set quota usage dirty bit for a given project and multiple resources.
 
     :param resources: list of resource for which the dirty bit is going
                       to be set
-    :param tenant_id: tenant identifier
+    :param project_id: project identifier
     :param dirty: the desired value for the dirty bit (defaults to True)
     :returns: the number of records for which the bit was actually set.
     """
-    filters = {'project_id': tenant_id}
+    filters = {'project_id': project_id}
     if resources:
         filters['resource'] = resources
     objs = quota_obj.QuotaUsage.get_objects(context, **filters)
@@ -154,10 +154,10 @@ def set_resources_quota_usage_dirty(context, resources, tenant_id, dirty=True):
 @db_api.retry_if_session_inactive()
 @db_api.CONTEXT_WRITER
 def set_all_quota_usage_dirty(context, resource, dirty=True):
-    """Set the dirty bit on quota usage for all tenants.
+    """Set the dirty bit on quota usage for all projects.
 
     :param resource: the resource for which the dirty bit should be set
-    :returns: the number of tenants for which the dirty bit was
+    :returns: the number of projects for which the dirty bit was
               actually updated
     """
     # TODO(manjeets) consider squashing this method with
@@ -170,7 +170,7 @@ def set_all_quota_usage_dirty(context, resource, dirty=True):
 
 
 @db_api.retry_if_session_inactive()
-def create_reservation(context, tenant_id, deltas, expiration=None):
+def create_reservation(context, project_id, deltas, expiration=None):
     # This method is usually called from within another transaction.
     # Consider using begin_nested
     expiration = expiration or (utcnow() + datetime.timedelta(0, 120))
@@ -179,7 +179,7 @@ def create_reservation(context, tenant_id, deltas, expiration=None):
         delta_objs.append(quota_obj.ResourceDelta(
             context, resource=resource, amount=delta))
     reserv_obj = quota_obj.Reservation(
-        context, project_id=tenant_id, expiration=expiration,
+        context, project_id=project_id, expiration=expiration,
         resource_deltas=delta_objs)
     reserv_obj.create()
     return ReservationInfo(reserv_obj['id'],
@@ -223,12 +223,12 @@ def remove_reservation(context, reservation_id, set_dirty=False):
 
 @db_api.retry_if_session_inactive()
 @db_api.CONTEXT_READER
-def get_reservations_for_resources(context, tenant_id, resources,
+def get_reservations_for_resources(context, project_id, resources,
                                    expired=False):
     """Retrieve total amount of reservations for specified resources.
 
     :param context: Neutron context with db session
-    :param tenant_id: Tenant identifier
+    :param project_id: Project identifier
     :param resources: Resources for which reserved amounts should be fetched
     :param expired: False to fetch active reservations, True to fetch expired
                     reservations (defaults to False)
@@ -238,17 +238,17 @@ def get_reservations_for_resources(context, tenant_id, resources,
     # can be mocked easily where as datetime is built in type
     # mock.path does not allow mocking built in types.
     return quota_obj.Reservation.get_total_reservations_map(
-        context, utcnow(), tenant_id, resources, expired)
+        context, utcnow(), project_id, resources, expired)
 
 
 @db_api.retry_if_session_inactive()
 @db_api.CONTEXT_WRITER
-def remove_expired_reservations(context, tenant_id=None, timeout=None):
+def remove_expired_reservations(context, project_id=None, timeout=None):
     expiring_time = utcnow()
     if timeout:
         expiring_time -= datetime.timedelta(seconds=timeout)
     return quota_obj.Reservation.delete_expired(context, expiring_time,
-                                                tenant_id)
+                                                project_id)
 
 
 class QuotaDriverAPI(object, metaclass=abc.ABCMeta):
@@ -257,7 +257,7 @@ class QuotaDriverAPI(object, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def get_default_quotas(context, resources, project_id):
         """Given a list of resources, retrieve the default quotas set for
-        a tenant.
+        a project.
 
         :param context: The request context, for access checks.
         :param resources: A dictionary of the registered resource keys.
@@ -267,7 +267,7 @@ class QuotaDriverAPI(object, metaclass=abc.ABCMeta):
 
     @staticmethod
     @abc.abstractmethod
-    def get_tenant_quotas(context, resources, project_id):
+    def get_project_quotas(context, resources, project_id):
         """Retrieve the quotas for the given list of resources and project
 
         :param context: The request context, for access checks.
@@ -278,7 +278,7 @@ class QuotaDriverAPI(object, metaclass=abc.ABCMeta):
 
     @staticmethod
     @abc.abstractmethod
-    def get_detailed_tenant_quotas(context, resources, project_id):
+    def get_detailed_project_quotas(context, resources, project_id):
         """Retrieve detailed quotas for the given list of resources and project
 
         :param context: The request context, for access checks.
@@ -291,11 +291,11 @@ class QuotaDriverAPI(object, metaclass=abc.ABCMeta):
 
     @staticmethod
     @abc.abstractmethod
-    def delete_tenant_quota(context, project_id):
+    def delete_project_quota(context, project_id):
         """Delete the quota entries for a given project_id.
 
-        After deletion, this tenant will use default quota values in conf.
-        Raise a "not found" error if the quota for the given tenant was
+        After deletion, this project will use default quota values in conf.
+        Raise a "not found" error if the quota for the given project was
         never defined.
 
         :param context: The request context, for access checks.
@@ -382,15 +382,15 @@ class NullQuotaDriver(QuotaDriverAPI):
         pass
 
     @staticmethod
-    def get_tenant_quotas(context, resources, project_id):
+    def get_project_quotas(context, resources, project_id):
         pass
 
     @staticmethod
-    def get_detailed_tenant_quotas(context, resources, project_id):
+    def get_detailed_project_quotas(context, resources, project_id):
         pass
 
     @staticmethod
-    def delete_tenant_quota(context, project_id):
+    def delete_project_quota(context, project_id):
         pass
 
     @staticmethod

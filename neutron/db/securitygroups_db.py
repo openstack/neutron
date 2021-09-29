@@ -924,10 +924,10 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
     @registry.receives(resources.NETWORK, [events.BEFORE_CREATE])
     def _ensure_default_security_group_handler(self, resource, event, trigger,
                                                payload):
-        if event == events.BEFORE_UPDATE:
-            project_id = payload.states[0]['tenant_id']
-        else:
-            project_id = payload.latest_state['tenant_id']
+        _state = (payload.states[0] if event == events.BEFORE_UPDATE else
+                  payload.latest_state)
+        # TODO(ralonsoh): "tenant_id" reference should be removed.
+        project_id = _state.get('project_id') or _state['tenant_id']
         if project_id:
             self._ensure_default_security_group(payload.context, project_id)
 
@@ -993,7 +993,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             return
         port_sg = port.get(ext_sg.SECURITYGROUPS)
         if port_sg is None or not validators.is_attr_set(port_sg):
-            port_project = port.get('tenant_id')
+            # TODO(ralonsoh): "tenant_id" reference should be removed.
+            port_project = port.get('project_id') or port.get('tenant_id')
             default_sg = self._ensure_default_security_group(context,
                                                              port_project)
             if default_sg:

@@ -192,7 +192,7 @@ class TestQuotasController(test_functional.PecanFunctionalTest):
     def test_index_admin(self):
         # NOTE(salv-orlando): The quota controller has an hardcoded check for
         # admin-ness for this operation, which is supposed to return quotas for
-        # all tenants. Such check is "vestigial" from the home-grown WSGI and
+        # all projects. Such check is "vestigial" from the home-grown WSGI and
         # shall be removed
         response = self.app.get('%s.json' % self.base_url,
                                 headers={'X-Project-Id': 'admin',
@@ -213,7 +213,7 @@ class TestQuotasController(test_functional.PecanFunctionalTest):
         self._verify_default_limits(json_body)
 
     def test_get(self):
-        # It is not ok to access another tenant's limits
+        # It is not ok to access another project's limits
         url = '%s/foo.json' % self.base_url
         response = self.app.get(url, expect_errors=True)
         self.assertEqual(403, response.status_int)
@@ -269,7 +269,7 @@ class TestQuotasController(test_functional.PecanFunctionalTest):
         json_body = jsonutils.loads(response.body)
         found = False
         for qs in json_body['quotas']:
-            if qs['tenant_id'] == 'foo':
+            if qs['project_id'] == 'foo':
                 found = True
         self.assertTrue(found)
 
@@ -283,7 +283,7 @@ class TestQuotasController(test_functional.PecanFunctionalTest):
         self.assertEqual(200, response.status_int)
         json_body = jsonutils.loads(response.body)
         for qs in json_body['quotas']:
-            self.assertNotEqual('foo', qs['tenant_id'])
+            self.assertNotEqual('foo', qs['project_id'])
 
     def test_quotas_get_defaults(self):
         response = self.app.get('%s/foo/default.json' % self.base_url,
@@ -294,13 +294,14 @@ class TestQuotasController(test_functional.PecanFunctionalTest):
         json_body = jsonutils.loads(response.body)
         self._verify_default_limits(json_body)
 
-    def test_get_tenant_info(self):
-        response = self.app.get('%s/tenant.json' % self.base_url,
-                                headers={'X-Project-Id': 'admin',
-                                         'X-Roles': 'admin'})
-        self.assertEqual(200, response.status_int)
-        json_body = jsonutils.loads(response.body)
-        self.assertEqual('admin', json_body['tenant']['tenant_id'])
+    def test_get_project_info(self):
+        for key in ('project', 'tenant'):
+            response = self.app.get('%s/%s.json' % (self.base_url, key),
+                                    headers={'X-Project-Id': 'admin',
+                                             'X-Roles': 'admin'})
+            self.assertEqual(200, response.status_int)
+            json_body = jsonutils.loads(response.body)
+            self.assertEqual('admin', json_body[key][key + '_id'])
 
 
 class TestResourceController(TestRootController):
@@ -318,11 +319,11 @@ class TestResourceController(TestRootController):
     def _gen_port(self):
         network_id = self.plugin.create_network(context.get_admin_context(), {
             'network':
-            {'name': 'pecannet', 'tenant_id': 'tenid', 'shared': False,
+            {'name': 'pecannet', 'project_id': 'tenid', 'shared': False,
              'admin_state_up': True, 'status': 'ACTIVE'}})['id']
         self.port = self.plugin.create_port(context.get_admin_context(), {
             'port':
-            {'tenant_id': 'tenid', 'network_id': network_id,
+            {'project_id': 'tenid', 'network_id': network_id,
              'fixed_ips': n_const.ATTR_NOT_SPECIFIED,
              'mac_address': '00:11:22:33:44:55',
              'admin_state_up': True, 'device_id': 'FF',
@@ -364,7 +365,7 @@ class TestResourceController(TestRootController):
         self._test_get_collection_with_fields_selector(fields=[])
 
     def test_project_id_in_mandatory_fields(self):
-        # ports only specifies that tenant_id is mandatory, but project_id
+        # ports only specifies that project_id is mandatory, but project_id
         # should still be passed to the plugin.
         mock_get = mock.patch.object(self.plugin, 'get_ports',
                                      return_value=[]).start()
@@ -384,10 +385,10 @@ class TestResourceController(TestRootController):
         # Explicitly require an attribute which is also 'required_by_policy'.
         # The attribute should not be stripped while generating the response
         item_resp = self.app.get(
-            '/v2.0/ports/%s.json?fields=id&fields=tenant_id' % self.port['id'],
-            headers={'X-Project-Id': 'tenid'})
+            '/v2.0/ports/%s.json?fields=id&fields=project_id' %
+            self.port['id'], headers={'X-Project-Id': 'tenid'})
         self.assertEqual(200, item_resp.status_int)
-        self._check_item(['id', 'tenant_id'],
+        self._check_item(['id', 'project_id'],
                          jsonutils.loads(item_resp.body)['port'])
 
     def test_duped_and_empty_fields_stripped(self):
@@ -406,7 +407,7 @@ class TestResourceController(TestRootController):
             '/v2.0/ports.json',
             params={'port': {'network_id': self.port['network_id'],
                              'admin_state_up': True,
-                             'tenant_id': 'tenid'}},
+                             'project_id': 'tenid'}},
             headers={'X-Project-Id': 'tenid'})
         self.assertEqual(response.status_int, 201)
 
@@ -426,7 +427,7 @@ class TestResourceController(TestRootController):
                 '/v2.0/ports.json',
                 params={'port': {'network_id': self.port['network_id'],
                                  'admin_state_up': True,
-                                 'tenant_id': 'tenid'}},
+                                 'project_id': 'tenid'}},
                 headers={'X-Project-Id': 'tenid'})
             self.assertEqual(201, response.status_int)
 
@@ -439,7 +440,7 @@ class TestResourceController(TestRootController):
         self.assertEqual(1, len(json_body))
         self.assertIn('port', json_body)
         self.assertEqual('test', json_body['port']['name'])
-        self.assertEqual('tenid', json_body['port']['tenant_id'])
+        self.assertEqual('tenid', json_body['port']['project_id'])
 
     def test_delete(self):
         response = self.app.delete('/v2.0/ports/%s.json' % self.port['id'],
@@ -487,10 +488,10 @@ class TestResourceController(TestRootController):
             '/v2.0/ports.json',
             params={'ports': [{'network_id': self.port['network_id'],
                              'admin_state_up': True,
-                             'tenant_id': 'tenid'},
+                             'project_id': 'tenid'},
                              {'network_id': self.port['network_id'],
                               'admin_state_up': True,
-                              'tenant_id': 'tenid'}]
+                              'project_id': 'tenid'}]
                     },
             headers={'X-Project-Id': 'tenid'})
         self.assertEqual(201, response.status_int)
@@ -518,11 +519,11 @@ class TestResourceController(TestRootController):
                 params={'ports': [{'network_id': self.port['network_id'],
                                  'admin_state_up': True,
                                  'security_groups': [sg_id],
-                                 'tenant_id': 'tenid'},
+                                 'project_id': 'tenid'},
                                  {'network_id': self.port['network_id'],
                                   'admin_state_up': True,
                                  'security_groups': [sg_id],
-                                  'tenant_id': 'tenid'}]
+                                  'project_id': 'tenid'}]
                         },
                 headers={'X-Project-Id': 'tenid'})
         self.assertEqual(201, port_response.status_int)
@@ -539,10 +540,10 @@ class TestResourceController(TestRootController):
             '/v2.0/ports.json',
             params={'ports': [{'network_id': self.port['network_id'],
                              'admin_state_up': True,
-                             'tenant_id': 'tenid'},
+                             'project_id': 'tenid'},
                              {'network_id': self.port['network_id'],
                               'admin_state_up': True,
-                              'tenant_id': 'tenid'}]
+                              'project_id': 'tenid'}]
                     },
             headers={'X-Project-Id': 'tenid'})
         self.assertEqual(response.status_int, 201)
@@ -556,13 +557,13 @@ class TestResourceController(TestRootController):
             '/v2.0/ports.json',
             params={'ports': [{'network_id': self.port['network_id'],
                              'admin_state_up': True,
-                             'tenant_id': 'tenid'},
+                             'project_id': 'tenid'},
                              {'network_id': self.port['network_id'],
                               'admin_state_up': True,
-                              'tenant_id': 'tenid'},
+                              'project_id': 'tenid'},
                              {'network_id': 'bad_net_id',
                               'admin_state_up': True,
-                              'tenant_id': 'tenid'}]
+                              'project_id': 'tenid'}]
                     },
             headers={'X-Project-Id': 'tenid'},
             expect_errors=True)
@@ -579,7 +580,7 @@ class TestResourceController(TestRootController):
             '/v2.0/ports.json',
             params={'ports': [{'network_id': self.port['network_id'],
                                'admin_state_up': True,
-                               'tenant_id': 'tenid'}]
+                               'project_id': 'tenid'}]
                     },
             headers={'X-Project-Id': 'tenid'})
         self.assertEqual(response.status_int, 201)
@@ -598,13 +599,15 @@ class TestPaginationAndSorting(test_functional.PecanFunctionalTest):
         self.addCleanup(policy.reset)
         self.plugin = directory.get_plugin()
         self.ctx = context.get_admin_context()
+        self._project_id = 'project_id1'
         self._create_networks(self.RESOURCE_COUNT)
         self.networks = self._get_collection()['networks']
 
     def _create_networks(self, count=1):
         network_ids = []
         for index in range(count):
-            network = {'name': 'pecannet-%d' % index, 'tenant_id': 'tenid',
+            network = {'name': 'pecannet-%d' % index,
+                       'project_id': self._project_id,
                        'shared': False, 'admin_state_up': True,
                        'status': 'ACTIVE'}
             network_id = self.plugin.create_network(
@@ -632,7 +635,8 @@ class TestPaginationAndSorting(test_functional.PecanFunctionalTest):
         url = '/v2.0/%s.json' % collection
         if query_params:
             url = '%s?%s' % (url, '&'.join(query_params))
-        list_resp = self.app.get(url, headers={'X-Project-Id': 'tenid'})
+        list_resp = self.app.get(url,
+                                 headers={'X-Project-Id': self._project_id})
         self.assertEqual(200, list_resp.status_int)
         return list_resp.json
 
@@ -735,9 +739,9 @@ class TestRequestProcessing(TestRootController):
 
     def test_context_set_in_request(self):
         self.app.get('/v2.0/ports.json',
-                     headers={'X-Project-Id': 'tenant_id'})
-        self.assertEqual('tenant_id',
-                         self.captured_context['neutron_context'].tenant_id)
+                     headers={'X-Project-Id': 'project_id'})
+        self.assertEqual('project_id',
+                         self.captured_context['neutron_context'].project_id)
 
     def test_core_resource_identified(self):
         self.app.get('/v2.0/ports.json')
@@ -1169,4 +1173,3 @@ class TestExcludeAttributePolicy(test_functional.PecanFunctionalTest):
         json_body = jsonutils.loads(response.body)
         self.assertEqual(response.status_int, 200)
         self.assertEqual('tenid', json_body['network']['project_id'])
-        self.assertEqual('tenid', json_body['network']['tenant_id'])
