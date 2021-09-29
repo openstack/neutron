@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import time
 from unittest import mock
 
 from neutron_lib.api.definitions import portbindings
@@ -24,8 +23,6 @@ from neutron_lib.plugins import directory
 from neutron_lib.services.trunk import constants
 import testtools
 
-from neutron.common import utils
-from neutron.objects import ports
 from neutron.objects import trunk as trunk_objects
 from neutron.services.trunk import drivers
 from neutron.services.trunk import exceptions as trunk_exc
@@ -372,127 +369,6 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
         current_trunk = self._get_trunk_obj(trunk.id)
         self.assertEqual(final_trunk_status, current_trunk.status)
         return trunk, current_trunk
-
-    def test__update_device_attributes_trunk_create(self):
-        with self.port() as parent, self.port() as childport:
-            subport = create_subport_dict(childport['port']['id'])
-            trunk = self._create_test_trunk(parent)
-            self.trunk_plugin.add_subports(
-                self.context, trunk['id'], {'sub_ports': [subport]})
-            trunk_obj = self._get_trunk_obj(trunk['id'])
-            trunk_obj.status = constants.TRUNK_ACTIVE_STATUS
-            trunk_obj.update()
-            payload = events.DBEventPayload(
-                self.context, resource_id=trunk_obj.id, states=(trunk_obj,))
-            self.trunk_plugin._update_device_attributes(
-                resources.TRUNK, events.AFTER_CREATE, None, payload)
-            utils.wait_until_true(
-                lambda: ports.Port.get_object(
-                    self.context,
-                    id=[childport['port']['id']]
-                ).device_owner == constants.TRUNK_SUBPORT_OWNER,
-                timeout=5)
-            subport_obj = ports.Port.get_object(self.context,
-                                                id=[childport['port']['id']])
-            self.assertEqual(subport_obj.device_owner,
-                             constants.TRUNK_SUBPORT_OWNER)
-            self.assertEqual(subport_obj.device_id, trunk['id'])
-
-    def test__update_device_attributes_trunk_delete(self):
-        with self.port() as parent, self.port() as childport:
-            subport = create_subport_dict(childport['port']['id'])
-            trunk = self._create_test_trunk(parent)
-            self.trunk_plugin.add_subports(
-                self.context, trunk['id'], {'sub_ports': [subport]})
-            trunk_obj = self._get_trunk_obj(trunk['id'])
-            trunk_obj.status = constants.TRUNK_ACTIVE_STATUS
-            trunk_obj.update()
-            payload = events.DBEventPayload(
-                self.context, resource_id=trunk_obj.id, states=(trunk_obj,))
-            self.trunk_plugin._update_device_attributes(
-                resources.TRUNK, events.AFTER_DELETE, None, payload)
-            time.sleep(0.1)
-            utils.wait_until_true(
-                lambda: ports.Port.get_object(
-                    self.context,
-                    id=[childport['port']['id']]
-                ).device_owner == '',
-                timeout=5)
-            subport_obj = ports.Port.get_object(self.context,
-                                                id=[childport['port']['id']])
-            self.assertEqual('', subport_obj.device_owner)
-            self.assertEqual('', subport_obj.device_id)
-
-    def test__update_device_attributes_subport_create(self):
-        with self.port() as parent, self.port() as childport:
-            subport = create_subport_dict(childport['port']['id'])
-            trunk = self._create_test_trunk(parent)
-            parent['port']['binding:host_id'] = 'host'
-            core_plugin = directory.get_plugin()
-            core_plugin.update_port(self.context, parent['port']['id'], parent)
-            self.trunk_plugin.add_subports(
-                self.context, trunk['id'], {'sub_ports': [subport]})
-            trunk_obj = self._get_trunk_obj(trunk['id'])
-            trunk_obj.status = constants.TRUNK_ACTIVE_STATUS
-            trunk_obj.update()
-
-            utils.wait_until_true(
-                lambda: ports.Port.get_object(
-                    self.context,
-                    id=[childport['port']['id']]
-                ).device_owner == constants.TRUNK_SUBPORT_OWNER,
-                timeout=5)
-            subport_obj = ports.Port.get_object(self.context,
-                                                id=[childport['port']['id']])
-
-            self.assertEqual(subport_obj.device_owner,
-                             constants.TRUNK_SUBPORT_OWNER)
-            self.assertEqual(subport_obj.device_id, trunk['id'])
-            self.assertEqual('host', subport_obj.bindings[0]['host'])
-
-    def test__update_device_attributes_subport_delete(self):
-        with self.port() as parent, self.port() as childport:
-            subport = create_subport_dict(childport['port']['id'])
-            trunk = self._create_test_trunk(parent)
-            parent['port']['binding:host_id'] = 'host'
-            core_plugin = directory.get_plugin()
-            core_plugin.update_port(self.context, parent['port']['id'], parent)
-            self.trunk_plugin.add_subports(
-                self.context, trunk['id'], {'sub_ports': [subport]})
-            trunk_obj = self._get_trunk_obj(trunk['id'])
-            trunk_obj.status = constants.TRUNK_ACTIVE_STATUS
-            trunk_obj.update()
-            utils.wait_until_true(
-                lambda: ports.Port.get_object(
-                    self.context,
-                    id=[childport['port']['id']]
-                ).device_owner == constants.TRUNK_SUBPORT_OWNER,
-                timeout=5)
-            subport_obj = ports.Port.get_object(self.context,
-                                                id=[childport['port']['id']])
-            self.assertEqual(constants.TRUNK_SUBPORT_OWNER,
-                             subport_obj.device_owner)
-            self.assertEqual(subport_obj.device_id, trunk['id'])
-            self.assertEqual('host', subport_obj.bindings[0]['host'])
-            payload = events.DBEventPayload(
-                self.context,
-                resource_id=trunk_obj.id,
-                states=(None, trunk_obj,),
-                metadata={'subports': trunk_obj.sub_ports})
-            self.trunk_plugin._update_device_attributes(
-                resources.SUBPORTS, events.AFTER_DELETE, None, payload)
-            time.sleep(0.1)
-            utils.wait_until_true(
-                lambda: ports.Port.get_object(
-                    self.context,
-                    id=[childport['port']['id']]
-                ).device_owner == '',
-                timeout=5)
-            subport_obj = ports.Port.get_object(self.context,
-                                                id=[childport['port']['id']])
-            self.assertEqual('', subport_obj.device_owner)
-            self.assertEqual('', subport_obj.device_id)
-            self.assertEqual('', subport_obj.bindings[0]['host'])
 
 
 class TrunkPluginCompatDriversTestCase(test_plugin.Ml2PluginV2TestCase):
