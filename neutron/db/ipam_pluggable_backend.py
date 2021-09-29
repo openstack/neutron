@@ -545,7 +545,8 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                     p.get(portbindings.HOST_ID),
                     p.get('device_owner'),
                     fixed_configured,
-                    p.get('fixed_ips'))
+                    p.get('fixed_ips'),
+                    distributed_service=self._is_distributed_service(p))
                 if subnet['id'] not in [s['id'] for s in subnet_candidates]:
                     continue
 
