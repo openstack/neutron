@@ -48,7 +48,7 @@ class LocalIPTestBase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
         req = self.new_create_request('local-ips', local_ip)
         neutron_context = context.Context(
-            '', kwargs.get('project_id', self._tenant_id))
+            '', kwargs.get('project_id', self._tenant_id), is_admin=True)
         req.environ['neutron.context'] = neutron_context
         res = req.get_response(self.ext_api)
         if res.status_int >= webob.exc.HTTPClientError.code:
