@@ -14,7 +14,7 @@
 #
 
 from alembic import op
-from sqlalchemy.engine import reflection
+import sqlalchemy
 
 from neutron.db import migration
 
@@ -35,7 +35,7 @@ TABLE_NAME = 'flavorserviceprofilebindings'
 
 
 def upgrade():
-    inspector = reflection.Inspector.from_engine(op.get_bind())
+    inspector = sqlalchemy.inspect(op.get_bind())
     fk_constraints = inspector.get_foreign_keys(TABLE_NAME)
     for fk in fk_constraints:
         fk['options']['ondelete'] = 'CASCADE'

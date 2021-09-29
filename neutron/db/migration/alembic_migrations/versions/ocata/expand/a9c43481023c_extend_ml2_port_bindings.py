@@ -16,7 +16,6 @@
 from alembic import op
 from neutron_lib import constants
 import sqlalchemy as sa
-from sqlalchemy.engine.reflection import Inspector as insp
 
 from neutron.db import migration
 
@@ -51,7 +50,7 @@ def upgrade():
         op.execute("ALTER TABLE ml2_port_bindings DROP PRIMARY KEY,"
                    "ADD PRIMARY KEY(port_id, host);")
     else:
-        inspector = insp.from_engine(bind)
+        inspector = sa.inspect(bind)
         pk_constraint = inspector.get_pk_constraint(ML2_PORT_BINDING)
         op.drop_constraint(pk_constraint.get('name'), ML2_PORT_BINDING,
                            type_='primary')

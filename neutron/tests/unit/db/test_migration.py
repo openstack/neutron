@@ -81,15 +81,14 @@ class TestDbMigration(base.BaseTestCase):
         self.mock_alembic_is_offline = mock.patch(
             'alembic.context.is_offline_mode', return_value=False).start()
         self.mock_alembic_is_offline.return_value = False
-        self.mock_sa_inspector = mock.patch(
-            'sqlalchemy.engine.reflection.Inspector').start()
+        self.mock_sa_inspector = mock.patch('sqlalchemy.inspect').start()
 
     def _prepare_mocked_sqlalchemy_inspector(self):
         mock_inspector = mock.MagicMock()
         mock_inspector.get_table_names.return_value = ['foo', 'bar']
         mock_inspector.get_columns.return_value = [{'name': 'foo_column'},
                                                    {'name': 'bar_column'}]
-        self.mock_sa_inspector.from_engine.return_value = mock_inspector
+        self.mock_sa_inspector.return_value = mock_inspector
 
     def test_schema_has_table(self):
         self._prepare_mocked_sqlalchemy_inspector()

@@ -60,7 +60,7 @@ def check_sanity(connection):
 
 
 def get_duplicate_l3_ha_port_bindings(connection):
-    insp = sa.engine.reflection.Inspector.from_engine(connection)
+    insp = sa.inspect(connection)
     if 'ha_router_agent_port_bindings' not in insp.get_table_names():
         return {}
     session = sa.orm.Session(bind=connection.connect())
