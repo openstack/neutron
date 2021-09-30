@@ -34,7 +34,8 @@ class QosRuleType(base.NeutronObject):
     # Version 1.2: Added QosMinimumBandwidthRule
     # Version 1.3: Added drivers field
     # Version 1.4: Added QosPacketRateLimitRule
-    VERSION = '1.4'
+    # Version 1.5: Added QosMinimumPacketRateRule
+    VERSION = '1.5'
 
     fields = {
         'type': RuleTypeField(),

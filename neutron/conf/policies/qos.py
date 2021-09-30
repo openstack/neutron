@@ -344,6 +344,61 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
+        name='get_policy_minimum_packet_rate_rule',
+        check_str=base.SYSTEM_OR_PROJECT_READER,
+        scope_types=['system', 'project'],
+        description='Get a QoS minimum packet rate rule',
+        operations=[
+            {
+                'method': 'GET',
+                'path': '/qos/policies/{policy_id}/minimum_packet_rate_rules',
+            },
+            {
+                'method': 'GET',
+                'path': ('/qos/policies/{policy_id}/'
+                         'minimum_packet_rate_rules/{rule_id}'),
+            },
+        ],
+    ),
+    policy.DocumentedRuleDefault(
+        name='create_policy_minimum_packet_rate_rule',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Create a QoS minimum packet rate rule',
+        operations=[
+            {
+                'method': 'POST',
+                'path': '/qos/policies/{policy_id}/minimum_packet_rate_rules',
+            },
+        ],
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_policy_minimum_packet_rate_rule',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Update a QoS minimum packet rate rule',
+        operations=[
+            {
+                'method': 'PUT',
+                'path': ('/qos/policies/{policy_id}/'
+                         'minimum_packet_rate_rules/{rule_id}'),
+            },
+        ],
+    ),
+    policy.DocumentedRuleDefault(
+        name='delete_policy_minimum_packet_rate_rule',
+        check_str=base.SYSTEM_ADMIN,
+        scope_types=['system'],
+        description='Delete a QoS minimum packet rate rule',
+        operations=[
+            {
+                'method': 'DELETE',
+                'path': ('/qos/policies/{policy_id}/'
+                         'minimum_packet_rate_rules/{rule_id}'),
+            },
+        ],
+    ),
+    policy.DocumentedRuleDefault(
         name='get_alias_bandwidth_limit_rule',
         check_str='rule:get_policy_bandwidth_limit_rule',
         description='Get a QoS bandwidth limit rule through alias',

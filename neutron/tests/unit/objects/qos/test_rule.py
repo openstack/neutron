@@ -290,3 +290,54 @@ class QosPacketRateLimitRuleDbObjectTestCase(test_base.BaseDbObjectTestCase,
                                           id=generated_qos_policy_id,
                                           project_id=uuidutils.generate_uuid())
             policy_obj.create()
+
+
+class QosMinimumPacketRateRuleObjectTestCase(
+        test_base.BaseObjectIfaceTestCase):
+
+    _test_class = rule.QosMinimumPacketRateRule
+
+    def test_to_dict_returns_type(self):
+        obj = rule.QosMinimumPacketRateRule(self.context, **self.db_objs[0])
+        dict_ = obj.to_dict()
+        self.assertEqual(qos_constants.RULE_TYPE_MINIMUM_PACKET_RATE,
+                         dict_['type'])
+
+    def test_duplicate_rules(self):
+        policy_id = uuidutils.generate_uuid()
+        ingress_rule_1 = rule.QosMinimumPacketRateRule(
+            self.context, qos_policy_id=policy_id,
+            min_kpps=1000, direction=constants.INGRESS_DIRECTION)
+        ingress_rule_2 = rule.QosMinimumPacketRateRule(
+            self.context, qos_policy_id=policy_id,
+            min_kpps=2000, direction=constants.INGRESS_DIRECTION)
+        egress_rule = rule.QosMinimumPacketRateRule(
+            self.context, qos_policy_id=policy_id,
+            min_kpps=1000, direction=constants.EGRESS_DIRECTION)
+        directionless_rule = rule.QosMinimumPacketRateRule(
+            self.context, qos_policy_id=policy_id,
+            min_kpps=1000, direction=constants.ANY_DIRECTION)
+        min_bw_rule = rule.QosMinimumBandwidthRule(
+            self.context, qos_policy_id=policy_id,
+            min_kbps=1000, direction=constants.INGRESS_DIRECTION)
+        self.assertTrue(ingress_rule_1.duplicates(ingress_rule_2))
+        self.assertFalse(ingress_rule_1.duplicates(egress_rule))
+        self.assertFalse(ingress_rule_1.duplicates(directionless_rule))
+        self.assertFalse(ingress_rule_1.duplicates(min_bw_rule))
+
+
+class QosMinimumPacketRateRuleDbObjectTestCase(test_base.BaseDbObjectTestCase,
+                                               testlib_api.SqlTestCase):
+
+    _test_class = rule.QosMinimumPacketRateRule
+
+    def setUp(self):
+        super(QosMinimumPacketRateRuleDbObjectTestCase, self).setUp()
+        # Prepare policy to be able to insert a rule
+        for obj in self.db_objs:
+            generated_qos_policy_id = obj['qos_policy_id']
+            policy_obj = policy.QosPolicy(
+                self.context,
+                id=generated_qos_policy_id,
+                project_id=uuidutils.generate_uuid())
+            policy_obj.create()

@@ -35,6 +35,7 @@ RULE_OBJ_CLS = {
     qos_consts.RULE_TYPE_DSCP_MARKING: rule.QosDscpMarkingRule,
     qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH: rule.QosMinimumBandwidthRule,
     q_consts.RULE_TYPE_PACKET_RATE_LIMIT: rule.QosPacketRateLimitRule,
+    q_consts.RULE_TYPE_MINIMUM_PACKET_RATE: rule.QosMinimumPacketRateRule,
 }
 
 
@@ -101,6 +102,10 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
             self.get_random_db_fields(rule.QosMinimumBandwidthRule)
             for _ in range(3)]
 
+        self.db_qos_minimum_packet_rate_rules = [
+            self.get_random_db_fields(rule.QosMinimumPacketRateRule)
+            for _ in range(3)]
+
         self.model_map.update({
             self._test_class.db_model: self.db_objs,
             binding.QosPolicyPortBinding.db_model: [],
@@ -108,7 +113,9 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
             rule.QosBandwidthLimitRule.db_model: self.db_qos_bandwidth_rules,
             rule.QosDscpMarkingRule.db_model: self.db_qos_dscp_rules,
             rule.QosMinimumBandwidthRule.db_model:
-                self.db_qos_minimum_bandwidth_rules})
+                self.db_qos_minimum_bandwidth_rules,
+            rule.QosMinimumPacketRateRule:
+                self.db_qos_minimum_packet_rate_rules})
 
     # TODO(ihrachys): stop overriding those test cases, instead base test cases
     # should be expanded if there are missing bits there to support QoS objects
@@ -179,7 +186,8 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
             if (obj_cls.rule_type in [
                         qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
                         qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH,
-                        q_consts.RULE_TYPE_PACKET_RATE_LIMIT] and
+                        q_consts.RULE_TYPE_PACKET_RATE_LIMIT,
+                        q_consts.RULE_TYPE_MINIMUM_PACKET_RATE] and
                     bwlimit_direction is not None):
                 rule_fields['direction'] = bwlimit_direction
             rule_obj = obj_cls(self.context, **rule_fields)
@@ -480,6 +488,22 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         self.assertIn(rule_objs[1], policy_obj_v1_8.rules)
         self.assertIn(rule_objs[2], policy_obj_v1_8.rules)
         self.assertNotIn(rule_objs[3], policy_obj_v1_8.rules)
+
+    def test_object_version_degradation_less_than_1_10(self):
+        policy_obj, rule_objs = self._create_test_policy_with_rules(
+            [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
+             qos_consts.RULE_TYPE_DSCP_MARKING,
+             qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH,
+             q_consts.RULE_TYPE_PACKET_RATE_LIMIT,
+             q_consts.RULE_TYPE_MINIMUM_PACKET_RATE], reload_rules=True,
+            bwlimit_direction=lib_consts.INGRESS_DIRECTION)
+        policy_obj_v1_9 = self._policy_through_version(policy_obj, '1.9')
+
+        self.assertIn(rule_objs[0], policy_obj_v1_9.rules)
+        self.assertIn(rule_objs[1], policy_obj_v1_9.rules)
+        self.assertIn(rule_objs[2], policy_obj_v1_9.rules)
+        self.assertIn(rule_objs[3], policy_obj_v1_9.rules)
+        self.assertNotIn(rule_objs[4], policy_obj_v1_9.rules)
 
     @mock.patch.object(policy.QosPolicy, 'unset_default')
     def test_filter_by_shared(self, *mocks):

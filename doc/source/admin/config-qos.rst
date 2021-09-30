@@ -38,24 +38,28 @@ QoS supported rule types are now available as ``VALID_RULE_TYPES`` in `QoS rule 
 
 * minimum_bandwidth: Minimum bandwidth constraints on certain types of traffic.
 
+* minimum_packet_rate: Minimum packet rate constraints on certain types of traffic.
+
 
 Any QoS driver can claim support for some QoS rule types
 by providing a driver property called
 ``supported_rules``, the QoS driver manager will recalculate rule types
-dynamically that the QoS driver supports.
+dynamically that the QoS driver supports. In the most simple case, the
+property can be represented by a simple Python list defined on the class.
 
 The following table shows the Networking back ends, QoS supported rules, and
 traffic directions (from the VM point of view).
 
 .. table:: **Networking back ends, supported rules, and traffic direction**
 
-    ====================  =======================  =======================  ===================  ===================
-     Rule \\ back end      Open vSwitch             SR-IOV                   Linux bridge         OVN
-    ====================  =======================  =======================  ===================  ===================
-     Bandwidth limit       Egress \\ Ingress        Egress (1)               Egress \\ Ingress    Egress \\ Ingress
-     Minimum bandwidth     Egress \\ Ingress (2)    Egress \\ Ingress (2)    -                    -
-     DSCP marking          Egress                   -                        Egress               Egress
-    ====================  =======================  =======================  ===================  ===================
+    ====================  =============================  =======================  ===================  ===================
+     Rule \\ back end      Open vSwitch                  SR-IOV                   Linux bridge         OVN
+    ====================  =============================  =======================  ===================  ===================
+     Bandwidth limit       Egress \\ Ingress             Egress (1)               Egress \\ Ingress    Egress \\ Ingress
+     Minimum bandwidth     Egress \\ Ingress (2)         Egress \\ Ingress (2)    -                    -
+     Minimum packet rate   -                             -                        -                    -
+     DSCP marking          Egress                        -                        Egress               Egress
+    ====================  =============================  =======================  ===================  ===================
 
 .. note::
 
@@ -78,8 +82,14 @@ traffic directions (from the VM point of view).
     (1) Since Newton
     (2) Since Stein
 
-In the most simple case, the property can be represented by a simple Python
-list defined on the class.
+.. table:: **Neutron backends, supported directions and enforcement types for Minimum Packet Rate rule**
+
+    ============================  ====================  ====================  ==============  =====
+     Enforcement type \ Backend    Open vSwitch          SR-IOV                Linux Bridge    OVN
+    ============================  ====================  ====================  ==============  =====
+     Dataplane                     -                     -                    -               -
+     Placement                     -                     -                    -               -
+    ============================  ====================  ====================  ==============  =====
 
 For an ml2 plug-in, the list of supported QoS rule types and parameters is
 defined as a common subset of rules supported by all active mechanism drivers.
@@ -327,6 +337,15 @@ To enable minimum bandwidth rule:
     "create_policy_minimum_bandwidth_rule": "rule:regular_user",
     "delete_policy_minimum_bandwidth_rule": "rule:regular_user",
     "update_policy_minimum_bandwidth_rule": "rule:regular_user",
+
+To enable minimum packet rate rule:
+
+.. code-block:: none
+
+    "get_policy_minimum_packet_rate_rule": "rule:regular_user",
+    "create_policy_minimum_packet_rate_rule": "rule:regular_user",
+    "delete_policy_minimum_packet_rate_rule": "rule:regular_user",
+    "update_policy_minimum_packet_rate_rule": "rule:regular_user",
 
 User workflow
 ~~~~~~~~~~~~~

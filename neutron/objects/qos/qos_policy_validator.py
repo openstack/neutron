@@ -13,8 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants as n_consts
 from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.services.qos import constants as qos_consts
+
+from neutron.services.qos import constants as qos_constants
 
 
 def check_bandwidth_rule_conflict(policy, rule_data):
@@ -65,3 +68,33 @@ def check_rules_conflict(policy, rule_obj):
                 new_rule_type=rule_obj.rule_type,
                 rule_id=rule.id,
                 policy_id=policy.id)
+
+
+def check_min_pps_rule_conflict(policy, rule_obj):
+    """Implementation of the QoS Rule checker.
+
+    This function checks if the new QoS minimum packet rate rule to be
+    associated with the policy doesn't conflict with the existing rules.
+    Raises an exception if conflict is identified.
+    """
+    if (getattr(rule_obj, "rule_type", None) !=
+            qos_constants.RULE_TYPE_MINIMUM_PACKET_RATE):
+        return
+    for rule in policy.rules:
+        if rule.rule_type == qos_constants.RULE_TYPE_MINIMUM_PACKET_RATE:
+            # Just like in check_rules_conflict(), we need to avoid raising
+            # exception when compared rules have got same ID.
+            if rule.id == getattr(rule_obj, "id", None):
+                continue
+            # Check if we are mixing directionless and direction-oriented QoS
+            # minimum packet rate rules
+            if getattr(rule_obj, "direction", None) and (
+                     (rule_obj.direction == n_consts.ANY_DIRECTION and
+                      rule.direction in n_consts.VALID_DIRECTIONS) or
+                     (rule_obj.direction in n_consts.VALID_DIRECTIONS and
+                      rule.direction == n_consts.ANY_DIRECTION)):
+                raise qos_exc.QoSRuleParameterConflict(
+                    rule_value=rule_obj.direction,
+                    policy_id=policy["id"],
+                    existing_rule=rule.rule_type,
+                    existing_value=rule.direction)

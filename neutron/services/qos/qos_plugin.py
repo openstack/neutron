@@ -22,6 +22,7 @@ from neutron_lib.api.definitions import qos_bw_limit_direction
 from neutron_lib.api.definitions import qos_bw_minimum_ingress
 from neutron_lib.api.definitions import qos_default
 from neutron_lib.api.definitions import qos_port_network_policy
+from neutron_lib.api.definitions import qos_pps_minimum_rule
 from neutron_lib.api.definitions import qos_pps_rule
 from neutron_lib.api.definitions import qos_rule_type_details
 from neutron_lib.api.definitions import qos_rules_alias
@@ -51,6 +52,7 @@ from neutron.objects.qos import policy as policy_object
 from neutron.objects.qos import qos_policy_validator as checker
 from neutron.objects.qos import rule as rule_object
 from neutron.objects.qos import rule_type as rule_type_object
+from neutron.services.qos import constants as qos_constants
 from neutron.services.qos.drivers import manager
 
 
@@ -75,6 +77,7 @@ class QoSPlugin(qos.QoSPluginBase):
         qos_rules_alias.ALIAS,
         qos_port_network_policy.ALIAS,
         qos_pps_rule.ALIAS,
+        qos_pps_minimum_rule.ALIAS,
     ]
 
     __native_pagination_support = True
@@ -410,7 +413,7 @@ class QoSPlugin(qos.QoSPluginBase):
                 raise qos_exc.QosRuleNotSupportedByNetwork(
                     rule_type=rule.rule_type, network_id=network_id)
 
-    def reject_min_bw_rule_updates(self, context, policy):
+    def reject_rule_update_for_bound_port(self, context, policy):
         ports = self._get_ports_with_policy(context, policy)
         for port in ports:
             # NOTE(bence romsics): In some cases the presence of
@@ -582,12 +585,15 @@ class QoSPlugin(qos.QoSPluginBase):
             policy = policy_object.QosPolicy.get_policy_obj(context, policy_id)
             checker.check_bandwidth_rule_conflict(policy, rule_data)
             rule = rule_cls(context, qos_policy_id=policy_id, **rule_data)
+            checker.check_min_pps_rule_conflict(policy, rule)
             checker.check_rules_conflict(policy, rule)
             rule.create()
             policy.obj_load_attr('rules')
             self.validate_policy(context, policy)
-            if rule.rule_type == qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH:
-                self.reject_min_bw_rule_updates(context, policy)
+            if rule.rule_type in (
+                    qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH,
+                    qos_constants.RULE_TYPE_MINIMUM_PACKET_RATE):
+                self.reject_rule_update_for_bound_port(context, policy)
             self.driver_manager.call(qos_consts.UPDATE_POLICY_PRECOMMIT,
                                      context, policy)
 
@@ -623,12 +629,15 @@ class QoSPlugin(qos.QoSPluginBase):
             checker.check_bandwidth_rule_conflict(policy, rule_data)
             rule = policy.get_rule_by_id(rule_id)
             rule.update_fields(rule_data, reset_changes=True)
+            checker.check_min_pps_rule_conflict(policy, rule)
             checker.check_rules_conflict(policy, rule)
             rule.update()
             policy.obj_load_attr('rules')
             self.validate_policy(context, policy)
-            if rule.rule_type == qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH:
-                self.reject_min_bw_rule_updates(context, policy)
+            if rule.rule_type in (
+                    qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH,
+                    qos_constants.RULE_TYPE_MINIMUM_PACKET_RATE):
+                self.reject_rule_update_for_bound_port(context, policy)
             self.driver_manager.call(qos_consts.UPDATE_POLICY_PRECOMMIT,
                                      context, policy)
 
@@ -687,8 +696,10 @@ class QoSPlugin(qos.QoSPluginBase):
             rule = policy.get_rule_by_id(rule_id)
             rule.delete()
             policy.obj_load_attr('rules')
-            if rule.rule_type == qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH:
-                self.reject_min_bw_rule_updates(context, policy)
+            if rule.rule_type in (
+                    qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH,
+                    qos_constants.RULE_TYPE_MINIMUM_PACKET_RATE):
+                self.reject_rule_update_for_bound_port(context, policy)
             self.driver_manager.call(qos_consts.UPDATE_POLICY_PRECOMMIT,
                                      context, policy)
 

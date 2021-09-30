@@ -1002,3 +1002,172 @@ class ProjectReaderQosMinimumBandwidthRuleTests(
     def setUp(self):
         super(ProjectReaderQosMinimumBandwidthRuleTests, self).setUp()
         self.context = self.project_reader_ctx
+
+
+class SystemAdminQosMinimumPacketRateRuleTests(QosRulesAPITestCase):
+
+    def setUp(self):
+        super(SystemAdminQosMinimumPacketRateRuleTests, self).setUp()
+        self.context = self.system_admin_ctx
+
+    def test_get_policy_minimum_packet_rate_rule(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_policy_minimum_packet_rate_rule',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_policy_minimum_packet_rate_rule',
+                           self.alt_target))
+
+    def test_create_policy_minimum_packet_rate_rule(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_policy_minimum_packet_rate_rule',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_policy_minimum_packet_rate_rule',
+                           self.alt_target))
+
+    def test_update_policy_minimum_packet_rate_rule(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_policy_minimum_packet_rate_rule',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_policy_minimum_packet_rate_rule',
+                           self.alt_target))
+
+    def test_delete_policy_minimum_packet_rate_rule(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'delete_policy_minimum_packet_rate_rule',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'delete_policy_minimum_packet_rate_rule',
+                           self.alt_target))
+
+
+class SystemMemberQosMinimumPacketRateRuleTests(
+        SystemAdminQosMinimumPacketRateRuleTests):
+
+    def setUp(self):
+        super(SystemMemberQosMinimumPacketRateRuleTests, self).setUp()
+        self.context = self.system_member_ctx
+
+    def test_create_policy_minimum_packet_rate_rule(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_policy_minimum_packet_rate_rule',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_policy_minimum_packet_rate_rule',
+            self.alt_target)
+
+    def test_update_policy_minimum_packet_rate_rule(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_policy_minimum_packet_rate_rule',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_policy_minimum_packet_rate_rule',
+            self.alt_target)
+
+    def test_delete_policy_minimum_packet_rate_rule(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_policy_minimum_packet_rate_rule',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_policy_minimum_packet_rate_rule',
+            self.alt_target)
+
+
+class SystemReaderQosMinimumPacketRateRuleTests(
+        SystemMemberQosMinimumPacketRateRuleTests):
+
+    def setUp(self):
+        super(SystemReaderQosMinimumPacketRateRuleTests, self).setUp()
+        self.context = self.system_reader_ctx
+
+
+class ProjectAdminQosMinimumPacketRateRuleTests(QosRulesAPITestCase):
+
+    def setUp(self):
+        super(ProjectAdminQosMinimumPacketRateRuleTests, self).setUp()
+        self.context = self.project_admin_ctx
+
+    def test_get_policy_minimum_packet_rate_rule(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_policy_minimum_packet_rate_rule',
+                           self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_policy_minimum_packet_rate_rule',
+            self.alt_target)
+
+    def test_create_policy_minimum_packet_rate_rule(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_policy_minimum_packet_rate_rule',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_policy_minimum_packet_rate_rule',
+            self.alt_target)
+
+    def test_update_policy_minimum_packet_rate_rule(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_policy_minimum_packet_rate_rule',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_policy_minimum_packet_rate_rule',
+            self.alt_target)
+
+    def test_delete_policy_minimum_packet_rate_rule(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_policy_minimum_packet_rate_rule',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_policy_minimum_packet_rate_rule',
+            self.alt_target)
+
+
+class ProjectMemberQosMinimumPacketRateRuleTests(
+        ProjectAdminQosMinimumPacketRateRuleTests):
+
+    def setUp(self):
+        super(ProjectMemberQosMinimumPacketRateRuleTests, self).setUp()
+        self.context = self.project_member_ctx
+
+
+class ProjectReaderQosMinimumPacketRateRuleTests(
+        ProjectMemberQosMinimumPacketRateRuleTests):
+
+    def setUp(self):
+        super(ProjectReaderQosMinimumPacketRateRuleTests, self).setUp()
+        self.context = self.project_reader_ctx
