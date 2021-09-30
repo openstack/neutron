@@ -88,6 +88,35 @@ ovs_opts = [
                        "the resource_provider_default_hypervisor config "
                        "option value as known by the nova-compute managing "
                        "that hypervisor.")),
+    cfg.ListOpt('resource_provider_packet_processing_without_direction',
+                default=[],
+                help=_("Comma-separated list of "
+                       "<hypervisor>:<packet_rate> tuples, defining the "
+                       "minimum packet rate the OVS backend can guarantee in "
+                       "kilo (1000) packet per second. The hypervisor name is "
+                       "used to locate the parent of the resource provider "
+                       "tree. Only needs to be set in the rare case when the "
+                       "hypervisor name is different from the DEFAULT.host "
+                       "config option value as known by the nova-compute "
+                       "managing that hypervisor or if multiple hypervisors "
+                       "are served by the same OVS backend. The default is :0 "
+                       "which means no packet processing capacity is "
+                       "guaranteed on the hypervisor named according to "
+                       "DEFAULT.host.")),
+    cfg.ListOpt('resource_provider_packet_processing_with_direction',
+                default=[],
+                help=_("Similar to the "
+                       "resource_provider_packet_processing_without_direction "
+                       "but used in case the OVS backend has hardware offload "
+                       "capabilities. In this case the format is "
+                       "<hypervisor>:<egress_pkt_rate>:<ingress_pkt_rate> "
+                       "which allows defining packet processing capacity per "
+                       "traffic direction. The direction is meant from the VM "
+                       "perspective. Note that the "
+                       "resource_provider_packet_processing_without_direction "
+                       "and the "
+                       "resource_provider_packet_processing_with_direction "
+                       "are mutually exclusive options.")),
     cfg.StrOpt('resource_provider_default_hypervisor',
                help=_("The default hypervisor name used to locate the parent "
                       "of the resource provider. If this option is not set, "
@@ -99,6 +128,20 @@ ovs_opts = [
                          'reserved': 0},
                 help=_("Key:value pairs to specify defaults used "
                        "while reporting resource provider inventories. "
+                       "Possible keys with their types: "
+                       "allocation_ratio:float, "
+                       "max_unit:int, min_unit:int, "
+                       "reserved:int, step_size:int, "
+                       "See also: "
+                       "https://docs.openstack.org/api-ref/placement/"
+                       "#update-resource-provider-inventories")),
+    cfg.DictOpt('resource_provider_packet_processing_inventory_defaults',
+                default={'allocation_ratio': 1.0,
+                         'min_unit': 1,
+                         'step_size': 1,
+                         'reserved': 0},
+                help=_("Key:value pairs to specify defaults used "
+                       "while reporting packet rate inventories. "
                        "Possible keys with their types: "
                        "allocation_ratio:float, "
                        "max_unit:int, min_unit:int, "

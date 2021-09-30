@@ -216,12 +216,30 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             ovs_conf.bridge_mappings)
         self.rp_bandwidths = place_utils.parse_rp_bandwidths(
             ovs_conf.resource_provider_bandwidths)
+        self.rp_pp_without_direction = (
+            place_utils.parse_rp_pp_without_direction(
+                ovs_conf.resource_provider_packet_processing_without_direction,
+                self.host))
+        self.rp_pp_with_direction = place_utils.parse_rp_pp_with_direction(
+            ovs_conf.resource_provider_packet_processing_with_direction,
+            self.host)
+        self._validate_rp_pkt_processing_cfg()
 
         br_set = set(self.bridge_mappings.values())
         n_utils.validate_rp_bandwidth(self.rp_bandwidths,
                                       br_set)
         self.rp_inventory_defaults = place_utils.parse_rp_inventory_defaults(
             ovs_conf.resource_provider_inventory_defaults)
+        # At the moment the format of
+        # resource_provider_packet_processing_inventory_defaults is exactly
+        # the same as resource_provider_inventory_defaults, so we can simply
+        # use parse_rp_inventory_defaults() to parse it. However, if at some
+        # point the formats become different, we'll have to add a dedicated
+        # function to parse this option.
+        self.rp_pp_inventory_defaults = (
+            place_utils.parse_rp_inventory_defaults(
+                ovs_conf.resource_provider_packet_processing_inventory_defaults
+            ))
         self.rp_hypervisors = utils.default_rp_hypervisors(
             ovs_conf.resource_provider_hypervisors,
             {k: [v] for k, v in self.bridge_mappings.items()},
@@ -326,6 +344,12 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                n_const.RP_BANDWIDTHS: self.rp_bandwidths,
                                n_const.RP_INVENTORY_DEFAULTS:
                                    self.rp_inventory_defaults,
+                               n_const.RP_PP_WITHOUT_DIRECTION:
+                                   self.rp_pp_without_direction,
+                               n_const.RP_PP_WITH_DIRECTION:
+                                   self.rp_pp_with_direction,
+                               n_const.RP_PP_INVENTORY_DEFAULTS:
+                                   self.rp_pp_inventory_defaults,
                                'resource_provider_hypervisors':
                                self.rp_hypervisors,
                                'integration_bridge':
@@ -2776,6 +2800,13 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         port_network = self.plugin_rpc.get_network_details(self.context,
                 network_id, self.agent_id, self.conf.host)
         return port_network['mtu']
+
+    def _validate_rp_pkt_processing_cfg(self):
+        if self.rp_pp_with_direction and self.rp_pp_without_direction:
+            raise ValueError(_(
+                '%s and %s configuration options are mutually exclusive.') %
+                (n_const.RP_PP_WITHOUT_DIRECTION,
+                 n_const.RP_PP_WITH_DIRECTION))
 
 
 def validate_local_ip(local_ip):
