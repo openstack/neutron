@@ -37,11 +37,11 @@ from neutron.tests.functional import base
 class MetadataAgentHealthEvent(event.WaitEvent):
     event_name = 'MetadataAgentHealthEvent'
 
-    def __init__(self, chassis, sb_cfg, timeout=5):
+    def __init__(self, chassis, sb_cfg, table, timeout=5):
         self.chassis = chassis
         self.sb_cfg = sb_cfg
         super(MetadataAgentHealthEvent, self).__init__(
-            (self.ROW_UPDATE,), 'Chassis', (('name', '=', self.chassis),),
+            (self.ROW_UPDATE,), table, (('name', '=', self.chassis),),
             timeout=timeout)
 
     def matches(self, event, row, old=None):
@@ -70,6 +70,12 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
             '_get_ovn_bridge',
             return_value=self.OVN_BRIDGE).start()
         self.agent = self._start_metadata_agent()
+
+    @property
+    def agent_chassis_table(self):
+        if self.agent.has_chassis_private:
+            return 'Chassis_Private'
+        return 'Chassis'
 
     def _start_metadata_agent(self):
         conf = self.useFixture(fixture_config.Config()).conf
@@ -102,7 +108,8 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
 
     def test_metadata_agent_healthcheck(self):
         chassis_row = self.sb_api.db_find(
-            'Chassis', ('name', '=', self.chassis_name)).execute(
+            self.agent_chassis_table,
+            ('name', '=', self.chassis_name)).execute(
             check_error=True)[0]
 
         # Assert that, prior to creating a resource the metadata agent
@@ -116,7 +123,8 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
         # this event, Metadata agent will update the external_ids on its
         # Chassis row to signal that it's healthy.
 
-        row_event = MetadataAgentHealthEvent(self.chassis_name, 1)
+        row_event = MetadataAgentHealthEvent(self.chassis_name, 1,
+                                             self.agent_chassis_table)
         self.handler.watch_event(row_event)
         self.new_list_request('agents').get_response(self.api)
 
@@ -256,7 +264,8 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
 
     def test_agent_registration_at_chassis_create_event(self):
         def check_for_metadata():
-            chassis = self.sb_api.lookup('Chassis', self.chassis_name)
+            chassis = self.sb_api.lookup(
+                self.agent_chassis_table, self.chassis_name)
             return ovn_const.OVN_AGENT_METADATA_ID_KEY in chassis.external_ids
 
         exc = Exception('Chassis not created, %s is not in chassis '
@@ -291,23 +300,25 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
         self.assertEqual(other_chassis, other_name)
 
         event = MetadataAgentHealthEvent(chassis=other_name, sb_cfg=-1,
+                                         table=self.agent_chassis_table,
                                          timeout=0)
         # Use the agent's sb_idl to watch for the event since it has condition
         self.agent.sb_idl.idl.notify_handler.watch_event(event)
         # Use the test sb_api to set other_chassis values since shouldn't exist
         # on agent's sb_idl
         self.sb_api.db_set(
-            'Chassis', other_chassis,
+            self.agent_chassis_table, other_chassis,
             ('external_ids', {'test': 'value'})).execute(check_error=True)
 
-        event2 = MetadataAgentHealthEvent(chassis=self.chassis_name, sb_cfg=-1)
+        event2 = MetadataAgentHealthEvent(chassis=self.chassis_name, sb_cfg=-1,
+                                          table=self.agent_chassis_table)
         self.agent.sb_idl.idl.notify_handler.watch_event(event2)
         # Use the test's sb_api again to send a command so we can see if it
         # completes and short-circuit the need to wait for a timeout to pass
         # the test. If we get the result to this, we would have gotten the
         # previous result as well.
         self.sb_api.db_set(
-            'Chassis', self.chassis_name,
+            self.agent_chassis_table, self.chassis_name,
             ('external_ids', {'test': 'value'})).execute(check_error=True)
         self.assertTrue(event2.wait())
         self.assertFalse(event.wait())
