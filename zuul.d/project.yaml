@@ -73,9 +73,6 @@
       jobs:
         - neutron-ovn-grenade-multinode
         - neutron-ovn-tempest-with-uwsgi-loki
-        - neutron-ovn-tempest-full-multinode-ovs-master
-        - neutron-ovn-tempest-ovs-master
-        - neutron-ovn-tempest-with-neutron-lib-master
 
     periodic:
       jobs:
@@ -83,9 +80,6 @@
         - neutron-fullstack
         - neutron-ovn-tempest-postgres-full
         - neutron-ovn-tempest-mariadb-full
-        - neutron-ovs-tempest-with-os-ken-master
-        - neutron-ovn-tempest-ovs-master-fedora
-        - neutron-ovn-tempest-with-neutron-lib-master
         - devstack-tobiko-faults-centos:
             voting: true
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa
