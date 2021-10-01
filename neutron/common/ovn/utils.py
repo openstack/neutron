@@ -609,3 +609,23 @@ def is_port_external(port):
 
     return (vnic_type in constants.EXTERNAL_PORT_TYPES and
             constants.PORT_CAP_SWITCHDEV not in capabilities)
+
+
+def connection_config_to_target_string(connection_config):
+    """Converts the Neutron NB/SB connection parameter to the OVN target string
+
+    :param connection_config: Neutron OVN config parameter for the OVN NB or SB
+                              database. See "ovn_sb_connection" or
+                              "ovn_nb_connection" params.
+    :returns: (String) OVN NB/SB ``connection.target`` column value.
+    """
+    regex = re.compile(r'^(?P<proto>\w+)\:((?P<ip>.+)\:(?P<port>\d+)|'
+                       r'(?P<file>[\w\/\.]+))')
+    m = regex.match(connection_config)
+    if m:
+        _dict = m.groupdict()
+        if _dict['ip'] and _dict['port']:
+            return ('p' + _dict['proto'] + ':' + _dict['port'] + ':' +
+                    _dict['ip'])
+        elif _dict['file']:
+            return 'p' + _dict['proto'] + ':' + _dict['file']
