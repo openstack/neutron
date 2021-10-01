@@ -91,6 +91,10 @@ In the new stable branch, you should make sure that:
 #. Grafana dashboards for stable branches should be updated to point to the
    latest releases;
    https://review.opendev.org/c/openstack/project-config/+/757102
+#. Check API extensions list in devstack:
+   https://review.opendev.org/c/openstack/devstack/+/811485
+   (Full list of QA related release checks can be found here:
+   https://wiki.openstack.org/wiki/QA/releases#Projects_with_only_Branches
 
 Note that some of those steps are covered by the OpenStack release team and its
 release bot.
