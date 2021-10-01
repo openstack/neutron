@@ -524,19 +524,22 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                 msg = 'PID file %s is not present.' % pid_file
             self.fail(msg)
 
-    def _assert_snat_chains(self, router):
-        self.assertFalse(router.iptables_manager.is_chain_empty(
-            'nat', 'snat'))
-        self.assertFalse(router.iptables_manager.is_chain_empty(
-            'nat', 'POSTROUTING'))
+    def _assert_snat_chains(self, router, enable_gw=True):
+        check = self.assertFalse if enable_gw else self.assertTrue
+        check(router.iptables_manager.is_chain_empty('nat', 'snat'))
+        check(router.iptables_manager.is_chain_empty('nat', 'POSTROUTING'))
 
-    def _assert_floating_ip_chains(self, router, snat_bound_fip=False):
+    def _assert_floating_ip_chains(self, router, snat_bound_fip=False,
+                                   enable_gw=True):
         if snat_bound_fip:
-            self.assertFalse(router.snat_iptables_manager.is_chain_empty(
-                'nat', 'float-snat'))
+            if enable_gw:
+                self.assertFalse(router.snat_iptables_manager.is_chain_empty(
+                    'nat', 'float-snat'))
+            else:
+                self.assertIsNone(router.snat_iptables_manager)
 
-        self.assertFalse(router.iptables_manager.is_chain_empty(
-            'nat', 'float-snat'))
+        check = self.assertFalse if enable_gw else self.assertTrue
+        check(router.iptables_manager.is_chain_empty('nat', 'float-snat'))
 
     def _assert_iptables_rules_converged(self, router):
         # if your code is failing on this line, it means you are not generating
@@ -563,7 +566,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             self.assertTrue(self.device_exists_with_ips_and_mac(
                 device, router.get_internal_device_name, router.ns_name))
 
-    def _assert_extra_routes(self, router, namespace=None):
+    def _assert_extra_routes(self, router, namespace=None, enable_gw=True):
         if namespace is None:
             namespace = router.ns_name
         routes = ip_lib.list_ip_routes(namespace, constants.IP_VERSION_4)
@@ -571,17 +574,24 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                    'destination': route['cidr']} for route in routes]
 
         for extra_route in router.router['routes']:
-            self.assertIn(extra_route, routes)
+            check = self.assertIn if enable_gw else self.assertNotIn
+            check(extra_route, routes)
 
     def _assert_onlink_subnet_routes(
-            self, router, ip_versions, namespace=None):
+            self, router, ip_versions, namespace=None, enable_gw=True):
         ns_name = namespace or router.ns_name
         routes = []
         for ip_version in ip_versions:
             _routes = ip_lib.list_ip_routes(ns_name, ip_version)
             routes.extend(_routes)
         routes = set(route['cidr'] for route in routes)
-        extra_subnets = router.get_ex_gw_port()['extra_subnets']
+        ex_gw_port = router.get_ex_gw_port()
+        if not ex_gw_port:
+            if not enable_gw:
+                return
+            self.fail('GW port is enabled but not present in the router')
+
+        extra_subnets = ex_gw_port['extra_subnets']
         for extra_subnet in (route['cidr'] for route in extra_subnets):
             self.assertIn(extra_subnet, routes)
 

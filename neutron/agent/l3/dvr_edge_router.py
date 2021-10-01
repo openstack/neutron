@@ -398,7 +398,10 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
 
     def process_floating_ip_nat_rules(self):
         if self._is_this_snat_host():
-            self.process_floating_ip_nat_rules_for_centralized_floatingip()
+            if not self.snat_iptables_manager:
+                LOG.debug("DVR router: no snat rules to be handled")
+            else:
+                self.process_floating_ip_nat_rules_for_centralized_floatingip()
 
         # Cover mixed dvr_snat and compute node, aka a dvr_snat node has both
         # centralized and distributed floating IPs.
