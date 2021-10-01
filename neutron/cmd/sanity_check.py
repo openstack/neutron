@@ -303,6 +303,14 @@ def check_min_tx_rate_support():
     return result
 
 
+def check_ovn_nb_db_schema_port_group_support():
+    result = checks.ovn_nb_db_schema_port_group_supported()
+    if not result:
+        LOG.warning('OVN NB DB schema does not support Port_Group. This '
+                    'support was added in DB schema version 5.11.')
+    return result
+
+
 # Define CLI opts to test specific features, with a callback for the test
 OPTS = [
     BoolOptCallback('ovs_vxlan', check_ovs_vxlan, default=False,
@@ -367,6 +375,10 @@ OPTS = [
                     help=_('Check if the configured SR-IOV NICs support '
                            'the "ip-link vf min_tx_rate" parameter.'),
                     default=False),
+    BoolOptCallback('ovn_nb_db_schema_port_group_support',
+                    check_ovn_nb_db_schema_port_group_support,
+                    help=_('Check OVN NB DB schema support Port_Group'),
+                    default=False),
 ]
 
 
@@ -413,6 +425,8 @@ def enable_tests_from_config():
         cfg.CONF.set_default('bridge_firewalling', True)
     if cfg.CONF.SRIOV_NIC.physical_device_mappings:
         cfg.CONF.set_default('check_min_tx_rate_support', True)
+    if 'ovn' in cfg.CONF.ml2.mechanism_drivers:
+        cfg.CONF.set_default('ovn_nb_db_schema_port_group_support', True)
 
 
 def all_tests_passed():

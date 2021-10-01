@@ -1,0 +1,7 @@
+---
+other:
+  - |
+    It is assumed now that OVN supports Northbound table ``Port_Group`` by
+    default. This table was added in the DB schema version 5.11. A sanity check
+    is included if OVN is defined in ``ml2.mechanism_drivers`` configuration
+    option.
