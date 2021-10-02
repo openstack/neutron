@@ -498,12 +498,11 @@ class Controller(object):
         def notify(create_result):
             # Ensure usage trackers for all resources affected by this API
             # operation are marked as dirty
-            with db_api.CONTEXT_WRITER.using(request.context):
-                # Commit the reservation(s)
-                for reservation in reservations:
-                    quota.QUOTAS.commit_reservation(
-                        request.context, reservation.reservation_id)
-                resource_registry.set_resources_dirty(request.context)
+            # Commit the reservation(s)
+            for reservation in reservations:
+                quota.QUOTAS.commit_reservation(
+                    request.context, reservation.reservation_id)
+            resource_registry.set_resources_dirty(request.context)
 
             notifier_method = self._resource + '.create.end'
             self._notifier.info(request.context,

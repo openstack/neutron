@@ -60,12 +60,8 @@ class DbQuotaNoLockDriver(quota_driver.DbQuotaDriver):
             # Count the number of (1) used and (2) reserved resources for this
             # project_id. If any resource limit is exceeded, raise exception.
             for resource_name in requested_resources:
-                tracked_resource = resources.get(resource_name)
-                if not tracked_resource:
-                    continue
-
-                used_and_reserved = tracked_resource.count(
-                    context, None, project_id, count_db_registers=True)
+                used_and_reserved = self.get_resource_usage(
+                    context, project_id, resources, resource_name)
                 resource_num = deltas[resource_name]
                 if limits[resource_name] < (used_and_reserved + resource_num):
                     resources_over_limit.append(resource_name)
@@ -77,3 +73,11 @@ class DbQuotaNoLockDriver(quota_driver.DbQuotaDriver):
 
     def cancel_reservation(self, context, reservation_id):
         quota_api.remove_reservation(context, reservation_id, set_dirty=False)
+
+    @staticmethod
+    def get_resource_usage(context, project_id, resources, resource_name):
+        tracked_resource = resources.get(resource_name)
+        if not tracked_resource:
+            return
+        return tracked_resource.count(context, None, project_id,
+                                      count_db_registers=True)

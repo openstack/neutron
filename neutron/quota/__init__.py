@@ -145,5 +145,9 @@ class QuotaEngine(object):
         return self.get_driver().limit_check(
             context, tenant_id, resource_registry.get_all_resources(), values)
 
+    def quota_limit_check(self, context, project_id, **deltas):
+        return self.get_driver().quota_limit_check(
+            context, project_id, resource_registry.get_all_resources(), deltas)
+
 
 QUOTAS = QuotaEngine.get_instance()

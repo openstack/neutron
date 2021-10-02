@@ -77,9 +77,9 @@ class QuotaEnforcementHook(hooks.PecanHook):
         reservations = state.request.context.get('reservations') or []
         if not reservations and state.request.method != 'DELETE':
             return
-        with db_api.CONTEXT_WRITER.using(neutron_context):
-            # Commit the reservation(s)
-            for reservation in reservations:
-                quota.QUOTAS.commit_reservation(
-                    neutron_context, reservation.reservation_id)
-            resource_registry.set_resources_dirty(neutron_context)
+
+        # Commit the reservation(s)
+        for reservation in reservations:
+            quota.QUOTAS.commit_reservation(
+                neutron_context, reservation.reservation_id)
+        resource_registry.set_resources_dirty(neutron_context)
