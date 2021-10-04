@@ -226,7 +226,7 @@ class FakeV6PortExtraOpt(object):
             DhcpOpt(opt_name='dns-server',
                     opt_value='ffea:3ba5:a17a:4ba3::100',
                     ip_version=6),
-            DhcpOpt(opt_name='malicious-option',
+            DhcpOpt(opt_name='malicious-option\nwith-new-line',
                     opt_value='aaa\nbbb.ccc\n',
                     ip_version=6)]
 
