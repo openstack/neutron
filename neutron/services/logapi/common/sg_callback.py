@@ -30,7 +30,7 @@ class SecurityGroupRuleCallBack(manager.ResourceCallBackBase):
             sg_id = payload.resource_id
 
         log_resources = db_api.get_logs_bound_sg(
-            context, sg_id, project_id=context.project_id)
+            context, sg_id=sg_id, project_id=context.project_id)
         if log_resources:
             self.resource_push_api(
                 log_const.RESOURCE_UPDATE, context, log_resources)
