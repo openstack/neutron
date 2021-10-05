@@ -1199,6 +1199,17 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             if cur_tag != lvm.vlan:
                 self.int_br.set_db_attribute(
                     "Port", port.port_name, "tag", lvm.vlan)
+                # When changing the port's tag from DEAD_VLAN_TAG to
+                # something else, also delete the previously dead port's
+                # push DEAD_VLAN_TAG flow which we installed from
+                # ovs_lib.OVSBridge.replace_port().
+                if (cur_tag == constants.DEAD_VLAN_TAG and port.ofport != -1):
+                    self.int_br.delete_flows(
+                        cookie=ovs_lib.COOKIE_ANY,
+                        table=constants.LOCAL_SWITCHING,
+                        priority=constants.OPENFLOW_MAX_PRIORITY - 1,
+                        in_port=port.ofport,
+                        strict=True)
 
             # update plugin about port status
             # FIXME(salv-orlando): Failures while updating device status

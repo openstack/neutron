@@ -372,6 +372,23 @@ class OVSBridge(BaseOVS):
                 txn.add(self.ovsdb.db_set('Interface', port_name,
                                           *interface_attr_tuples))
 
+        # NOTE(bence romsics): We are after the ovsdb transaction therefore
+        # there's still a short time window between the port created and
+        # the flow added in which the dead vlan tag is not pushed onto the
+        # frames arriving at these ports and because of that those frames may
+        # get through. However before the transaction we cannot create the
+        # flow because we don't have the ofport. And I'm not aware of a
+        # combined ovsdb+openflow transaction to do it inside the transaction.
+        if (self.br_name == cfg.CONF.OVS.integration_bridge):
+            self.add_flow(
+                table=constants.LOCAL_SWITCHING,
+                priority=constants.OPENFLOW_MAX_PRIORITY - 1,
+                in_port=self.get_port_ofport(port_name),
+                actions='mod_vlan_vid:{:d},'
+                        'resubmit(,{:d})'.format(
+                            constants.DEAD_VLAN_TAG,
+                            constants.LOCAL_SWITCHING))
+
     def delete_port(self, port_name):
         self.ovsdb.del_port(port_name, self.br_name).execute()
 
