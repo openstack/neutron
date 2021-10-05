@@ -51,15 +51,18 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
 
     def setup_default_table(self, enable_openflow_dhcp=False,
                             enable_dhcpv6=False):
+        (_dp, ofp, ofpp) = self._get_dp()
         self.setup_canary_table()
         self.install_goto(dest_table_id=constants.TRANSIENT_TABLE)
         self.install_normal(table_id=constants.TRANSIENT_TABLE, priority=3)
         self.init_dhcp(enable_openflow_dhcp=enable_openflow_dhcp,
                        enable_dhcpv6=enable_dhcpv6)
         self.install_drop(table_id=constants.ARP_SPOOF_TABLE)
-        self.install_drop(table_id=constants.LOCAL_SWITCHING,
-                          priority=constants.OPENFLOW_MAX_PRIORITY,
-                          vlan_vid=constants.DEAD_VLAN_TAG)
+        self.install_drop(
+            table_id=constants.LOCAL_SWITCHING,
+            priority=constants.OPENFLOW_MAX_PRIORITY,
+            vlan_vid=ofp.OFPVID_PRESENT | constants.DEAD_VLAN_TAG,
+        )
         # When openflow firewall is not enabled, we use this table to
         # deal with all egress flow.
         self.install_normal(table_id=constants.TRANSIENT_EGRESS_TABLE,
