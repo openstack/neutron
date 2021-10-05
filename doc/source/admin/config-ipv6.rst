@@ -84,7 +84,7 @@ ipv6_ra_mode and ipv6_address_mode combinations
 
    * - ipv6 ra mode
      - ipv6 address mode
-     - radvd A,M,O
+     - neutron-generated advertisements (radvd) A,M,O
      - External Router A,M,O
      - Description
    * - *N/S*
@@ -170,6 +170,10 @@ ipv6_ra_mode and ipv6_address_mode combinations
      -
      -
      - *Invalid combination.*
+
+*A - Autonomous Address Configuration Flag,*
+*M - Managed Address Configuration Flag,*
+*O - Other Configuration Flag*
 
 Project network considerations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -264,8 +268,8 @@ router with an radvd agent to send Router Advertisements. The list below
 captures the values set for the address configuration flags in the Router
 Advertisement messages in this scenario.
 
-* Auto Configuration Flag = 1
-* Managed Configuration Flag = 0
+* Autonomous Address Configuration Flag = 1
+* Managed Address Configuration Flag = 0
 * Other Configuration Flag = 0
 
 New or existing neutron networks that contain a SLAAC enabled IPv6 subnet will
@@ -311,8 +315,8 @@ Advertisement messages in this scenario. Similarly, setting DHCPv6-stateless for
 ``ipv6_address_mode`` configures neutron DHCP implementation to provide
 the additional network information.
 
-* Auto Configuration Flag = 1
-* Managed Configuration Flag = 0
+* Autonomous Address Configuration Flag = 1
+* Managed Address Configuration Flag = 0
 * Other Configuration Flag = 1
 
 Setting DHCPv6-stateful for ``ipv6_ra_mode`` configures the neutron
@@ -322,8 +326,8 @@ Advertisements messages in this scenario. Similarly, setting DHCPv6-stateful for
 ``ipv6_address_mode`` configures neutron DHCP implementation to provide
 addresses and additional network information through DHCPv6.
 
-* Auto Configuration Flag = 0
-* Managed Configuration Flag = 1
+* Autonomous Address Configuration Flag = 0
+* Managed Address Configuration Flag = 1
 * Other Configuration Flag = 1
 
 .. note::
