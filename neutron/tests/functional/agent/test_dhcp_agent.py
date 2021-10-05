@@ -85,6 +85,9 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
 
         self.conf.set_override('check_child_processes_interval', 1, 'AGENT')
 
+        mock.patch('neutron.agent.common.ovs_lib.'
+                   'OVSBridge._set_port_dead').start()
+
     def network_dict_for_dhcp(self, dhcp_enabled=True,
                               ip_version=lib_const.IP_VERSION_4,
                               prefix_override=None):
