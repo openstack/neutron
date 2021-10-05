@@ -30,6 +30,7 @@ from neutron.services.logapi.common import validators
 from neutron.services.logapi.drivers import manager as driver_mgr
 
 
+@registry.has_registry_receivers
 class LoggingPlugin(log_ext.LoggingPluginBase):
     """Implementation of the Neutron logging api plugin."""
 
@@ -43,22 +44,29 @@ class LoggingPlugin(log_ext.LoggingPluginBase):
         super(LoggingPlugin, self).__init__()
         self.driver_manager = driver_mgr.LoggingServiceDriverManager()
         self.validator_mgr = validators.ResourceValidateRequest.get_instance()
-        registry.subscribe(
-            self._clean_security_group_logs,
-            resources.SECURITY_GROUP, events.AFTER_DELETE)
 
     @property
     def supported_logging_types(self):
         # supported_logging_types are be dynamically loaded from log_drivers
         return self.driver_manager.supported_logging_types
 
-    def _clean_security_group_logs(self, resource, event, trigger, payload):
-        context = payload.context.elevated()
-        sg_id = payload.resource_id
+    def _clean_logs(self, context, sg_id=None, port_id=None):
         with db_api.CONTEXT_WRITER.using(context):
-            sg_logs = log_db_api.get_logs_bound_sg(context, sg_id)
+            sg_logs = log_db_api.get_logs_bound_sg(
+                context, sg_id=sg_id, port_id=port_id, exclusive=True)
             for log in sg_logs:
                 self.delete_log(context, log['id'])
+
+    @registry.receives(resources.SECURITY_GROUP, [events.AFTER_DELETE])
+    def _clean_logs_by_resource_id(self, resource, event, trigger, payload):
+        # log.resource_id == SG
+        self._clean_logs(payload.context.elevated(), sg_id=payload.resource_id)
+
+    @registry.receives(resources.PORT, [events.AFTER_DELETE])
+    def _clean_logs_by_target_id(self, resource, event, trigger, payload):
+        # log.target_id == port
+        self._clean_logs(payload.context.elevated(),
+                         port_id=payload.resource_id)
 
     @db_base_plugin_common.filter_fields
     @db_base_plugin_common.convert_result_to_dict
