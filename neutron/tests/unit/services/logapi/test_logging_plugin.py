@@ -15,8 +15,6 @@
 
 from unittest import mock
 
-from neutron_lib.callbacks import events
-from neutron_lib.callbacks import resources
 from neutron_lib import context
 from neutron_lib.plugins import constants as plugin_const
 from neutron_lib.plugins import directory
@@ -27,7 +25,6 @@ from neutron import manager
 from neutron.objects.logapi import logging_resource as log_object
 from neutron.objects import ports
 from neutron.objects import securitygroup as sg_object
-from neutron.services.logapi.common import db_api as log_db_api
 from neutron.services.logapi.common import exceptions as log_exc
 from neutron.services.logapi.common import sg_validate
 from neutron.tests.unit.services.logapi import base
@@ -70,25 +67,6 @@ class TestLoggingPlugin(base.BaseLogTestCase):
                        'LoggingServiceDriverManager.supported_logging_types',
                        new_callable=log_types).start()
         self.ctxt = context.Context('admin', 'fake_tenant')
-
-    def test__clean_security_group_logs(self):
-        logs = [
-            {'id': uuidutils.generate_uuid()},
-            {'id': uuidutils.generate_uuid()}]
-        sg_id = uuidutils.generate_uuid()
-        expected_delete_calls = [
-            mock.call(mock.ANY, log['id']) for log in logs]
-        with mock.patch.object(log_db_api, 'get_logs_bound_sg',
-                               return_value=logs) as mock_get_logs, \
-                mock.patch.object(
-                    self.log_plugin, 'delete_log') as mock_delete_log:
-            payload = mock.Mock(
-                context=self.ctxt, resource_id=sg_id)
-            self.log_plugin._clean_security_group_logs(
-                resources.SECURITY_GROUP, events.AFTER_DELETE, None, payload)
-            mock_get_logs.assert_called_once_with(
-                mock.ANY, sg_id)
-            mock_delete_log.assert_has_calls(expected_delete_calls)
 
     def test_get_logs(self):
         with mock.patch.object(log_object.Log, 'get_objects')\
