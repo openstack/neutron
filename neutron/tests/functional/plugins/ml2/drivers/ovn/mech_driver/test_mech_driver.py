@@ -23,9 +23,11 @@ from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import event
 from ovsdbapp.tests.functional import base as ovs_base
 
+from neutron.agent.linux import utils as linux_utils
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.common import utils as n_utils
+from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.plugins.ml2.drivers.ovn.mech_driver import mech_driver
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
@@ -814,3 +816,56 @@ class TestAgentApi(base.TestOVNFunctionalBase):
             self.plugin.delete_agent(self.context, agent_id)
             self.assertRaises(agent_exc.AgentNotFound, self.plugin.get_agent,
                               self.context, agent_id)
+
+
+class ConnectionInactivityProbeSetEvent(event.WaitEvent):
+    """Wait for a Connection (NB/SB) to have the inactivity probe set"""
+
+    ONETIME = False
+
+    def __init__(self, target, inactivity_probe):
+        table = 'Connection'
+        events = (self.ROW_UPDATE,)
+        super().__init__(events, table, None)
+        self.event_name = "ConnectionEvent"
+        self.target = target
+        self.inactivity_probe = inactivity_probe
+
+    def match_fn(self, event, row, old):
+        return row.target in self.target
+
+    def run(self, event, row, old):
+        if (row.inactivity_probe and
+                row.inactivity_probe[0] == self.inactivity_probe):
+            self.event.set()
+
+
+class TestSetInactivityProbe(base.TestOVNFunctionalBase):
+
+    def setUp(self):
+        super().setUp()
+        self.dbs = [(ovn_conf.get_ovn_nb_connection(), 'ptcp:1000:1.2.3.4'),
+                    (ovn_conf.get_ovn_sb_connection(), 'ptcp:1001:1.2.3.4')]
+        linux_utils.execute(
+            ['ovn-nbctl', '--db=%s' % self.dbs[0][0],
+             'set-connection', self.dbs[0][1]], run_as_root=True,
+            privsep_exec=True)
+        linux_utils.execute(
+            ['ovn-sbctl', '--db=%s' % self.dbs[1][0],
+             'set-connection', self.dbs[1][1]], run_as_root=True,
+            privsep_exec=True)
+
+    def test_1(self):
+        mock.patch.object(ovn_conf, 'get_ovn_ovsdb_probe_interval',
+                          return_value='2500').start()
+        nb_connection = ConnectionInactivityProbeSetEvent(self.dbs[0][1], 2500)
+        sb_connection = ConnectionInactivityProbeSetEvent(self.dbs[1][1], 2500)
+        self.nb_api.idl.notify_handler.watch_event(nb_connection)
+        self.sb_api.idl.notify_handler.watch_event(sb_connection)
+        with mock.patch.object(utils, 'connection_config_to_target_string') \
+                as mock_target:
+            mock_target.side_effect = [self.dbs[0][1], self.dbs[1][1]]
+            self.mech_driver._set_inactivity_probe()
+
+        self.assertTrue(nb_connection.wait())
+        self.assertTrue(sb_connection.wait())
