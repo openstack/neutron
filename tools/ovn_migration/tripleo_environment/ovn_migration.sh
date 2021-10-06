@@ -53,27 +53,45 @@ check_for_necessary_files() {
     if [ ! -e $OVERCLOUD_OVN_DEPLOY_SCRIPT ]; then
         echo "overcloud deploy migration script :" \
              "$OVERCLOUD_OVN_DEPLOY_SCRIPT is not present. Please" \
-             "make sure you generate that file before running this"
+             "make sure you create that file before running this script."
         exit 1
     fi
 
-    cat $OVERCLOUD_OVN_DEPLOY_SCRIPT  | grep  neutron-ovn >/dev/null
-    if [ "$?" == "1" ]; then
-        echo "OVN t-h-t environment file seems to be missing in \
-$OVERCLOUD_OVN_DEPLOY_SCRIPT. Please check the $OVERCLOUD_OVN_DEPLOY_SCRIPT \
-file again."
-        exit 1
+    grep -q -- '--answers-file'  $OVERCLOUD_OVN_DEPLOY_SCRIPT || grep -q -- '--environment-directory'  $OVERCLOUD_OVN_DEPLOY_SCRIPT
+    answers_templates_check=$?
+
+    grep -q -- 'neutron-ovn' $OVERCLOUD_OVN_DEPLOY_SCRIPT
+    if [[ $? -eq 1 ]]; then
+        if [[ $answers_templates_check -eq 0 ]]; then
+            echo -e "\nWARNING!!! You are using an answers-file or a templates directory" \
+                    " ( --answers-file/--environment-directory) " \
+                    "\nYou MUST make sure the proper OVN files are included in the templates called by your deploy script"
+        else
+            echo -e "OVN t-h-t environment file(s) seems to be missing in " \
+                "$OVERCLOUD_OVN_DEPLOY_SCRIPT. Please check the $OVERCLOUD_OVN_DEPLOY_SCRIPT" \
+                "file again."
+            exit 1
+        fi
     fi
 
-    cat $OVERCLOUD_OVN_DEPLOY_SCRIPT | grep \$HOME/ovn-extras.yaml >/dev/null
+    grep -q \$HOME/ovn-extras.yaml $OVERCLOUD_OVN_DEPLOY_SCRIPT
     check1=$?
-    cat $OVERCLOUD_OVN_DEPLOY_SCRIPT | grep $HOME/ovn-extras.yaml >/dev/null
+    grep -q $HOME/ovn-extras.yaml $OVERCLOUD_OVN_DEPLOY_SCRIPT
     check2=$?
 
-    if [[ "$check1" == "1" && "$check2" == "1" ]]; then
-        echo "ovn-extras.yaml file is missing in "\
-             "$OVERCLOUD_OVN_DEPLOY_SCRIPT. Please add it "\
-             "as \" -e \$HOME/ovn-extras.yaml\""
+    if [[ $check1 -eq 1 && $check2 -eq 1 ]]; then
+        # specific case of --answers-file/--environment-directory
+        if [[ $answers_templates_check -eq 0 ]]; then
+            echo -e "\nWARNING!!! You are using an answers-file or a templates directory" \
+                 " ( --answers-file/--environment-directory) " \
+                 "\nYou MUST add ovn-extras.yaml to your new set of templates for OVN-based deploys." \
+                 "\n  e.g: add \" -e \$HOME/ovn-extras.yaml \" to the deploy command in $OVERCLOUD_OVN_DEPLOY_SCRIPT" \
+                 "\nOnce OVN migration is finished, ovn-extras.yaml can then be safely removed from your OVN templates."
+        else
+            echo "ovn-extras.yaml file is missing in "\
+                 "$OVERCLOUD_OVN_DEPLOY_SCRIPT. Please add it "\
+                 "as \" -e \$HOME/ovn-extras.yaml\""
+        fi
         exit 1
     fi
 }
