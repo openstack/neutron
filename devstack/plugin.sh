@@ -11,7 +11,6 @@ source $LIBDIR/ml2
 source $LIBDIR/network_segment_range
 source $LIBDIR/qos
 source $LIBDIR/segments
-source $LIBDIR/trunk
 source $LIBDIR/placement
 source $LIBDIR/log
 source $LIBDIR/fip_port_forwarding
@@ -57,9 +56,6 @@ if [[ "$1" == "stack" ]]; then
             fi
             if is_service_enabled q-qos neutron-qos; then
                 configure_qos
-            fi
-            if is_service_enabled q-trunk neutron-trunk; then
-                configure_trunk_extension
             fi
             if is_service_enabled q-placement neutron-placement; then
                 configure_placement_extension
