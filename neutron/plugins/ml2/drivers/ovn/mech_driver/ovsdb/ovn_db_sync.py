@@ -31,6 +31,8 @@ from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron import manager
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions import qos \
+    as ovn_qos
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.services.segments import db as segments_db
 
@@ -104,6 +106,8 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         self.sync_acls(ctx)
         self.sync_routers_and_rports(ctx)
         self.migrate_to_stateless_fips(ctx)
+        self.sync_port_qos_policies(ctx)
+        self.sync_fip_qos_policies(ctx)
 
     def _create_port_in_ovn(self, ctx, port):
         # Remove any old ACLs for the port to avoid creating duplicate ACLs.
@@ -1216,6 +1220,36 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         self._delete_acls_from_lswitches(ctx)
 
         LOG.debug('Port Groups Migration task finished')
+
+    def sync_port_qos_policies(self, ctx):
+        """Sync port QoS policies.
+
+        This method reads the port QoS policy assigned or the one inherited
+        from the network. Does not apply to "network" owned ports.
+        """
+        LOG.debug('Port QoS policies migration task started')
+        ovn_qos_ext = ovn_qos.OVNClientQosExtension(nb_idl=self.ovn_api)
+        with db_api.CONTEXT_READER.using(ctx), \
+                self.ovn_api.transaction(check_error=True) as txn:
+            for port in self.core_plugin.get_ports(ctx):
+                if not ovn_qos_ext.port_effective_qos_policy_id(port)[0]:
+                    continue
+                ovn_qos_ext.create_port(txn, port)
+
+        LOG.debug('Port QoS policies migration task finished')
+
+    def sync_fip_qos_policies(self, ctx):
+        """Sync floating IP QoS policies."""
+        LOG.debug('Floating IP QoS policies migration task started')
+        ovn_qos_ext = ovn_qos.OVNClientQosExtension(nb_idl=self.ovn_api)
+        with db_api.CONTEXT_READER.using(ctx), \
+                self.ovn_api.transaction(check_error=True) as txn:
+            for fip in self.l3_plugin.get_floatingips(ctx):
+                if not fip.get('qos_policy_id'):
+                    continue
+                ovn_qos_ext.create_floatingip(txn, fip)
+
+        LOG.debug('Floating IP QoS policies migration task finished')
 
 
 class OvnSbSynchronizer(OvnDbSynchronizer):

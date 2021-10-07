@@ -75,7 +75,8 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         self.txn = _Context()
         mock_driver = mock.Mock()
         mock_driver._nb_idl.transaction.return_value = self.txn
-        self.qos_driver = qos_extension.OVNClientQosExtension(mock_driver)
+        self.qos_driver = qos_extension.OVNClientQosExtension(
+            driver=mock_driver)
         self._mock_rules = mock.patch.object(self.qos_driver,
                                              '_update_port_qos_rules')
         self.mock_rules = self._mock_rules.start()
@@ -246,28 +247,28 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
     def test__port_effective_qos_policy_id(self):
         port = {'qos_policy_id': 'qos1'}
         self.assertEqual(('qos1', 'port'),
-                         self.qos_driver._port_effective_qos_policy_id(port))
+                         self.qos_driver.port_effective_qos_policy_id(port))
 
         port = {'qos_network_policy_id': 'qos1'}
         self.assertEqual(('qos1', 'network'),
-                         self.qos_driver._port_effective_qos_policy_id(port))
+                         self.qos_driver.port_effective_qos_policy_id(port))
 
         port = {'qos_policy_id': 'qos_port',
                 'qos_network_policy_id': 'qos_network'}
         self.assertEqual(('qos_port', 'port'),
-                         self.qos_driver._port_effective_qos_policy_id(port))
+                         self.qos_driver.port_effective_qos_policy_id(port))
 
         port = {}
         self.assertEqual((None, None),
-                         self.qos_driver._port_effective_qos_policy_id(port))
+                         self.qos_driver.port_effective_qos_policy_id(port))
 
         port = {'qos_policy_id': None, 'qos_network_policy_id': None}
         self.assertEqual((None, None),
-                         self.qos_driver._port_effective_qos_policy_id(port))
+                         self.qos_driver.port_effective_qos_policy_id(port))
 
         port = {'qos_policy_id': 'qos1', 'device_owner': 'neutron:port'}
         self.assertEqual((None, None),
-                         self.qos_driver._port_effective_qos_policy_id(port))
+                         self.qos_driver.port_effective_qos_policy_id(port))
 
     def test_update_port(self):
         port = self.ports[0]
@@ -512,6 +513,11 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         mock_update_fip.assert_called_once_with(self.txn, fip)
 
     def test_update_floatingip(self):
+        # NOTE(ralonsoh): this rule will always apply:
+        # - If the FIP is being deleted, "qos_del_ext_ids" is called;
+        #   "qos_add" and "qos_del" won't.
+        # - If the FIP is added or updated, "qos_del_ext_ids" won't be called
+        #   and "qos_add" or "qos_del" will, depending on the rule directions.
         nb_idl = self.qos_driver._driver._nb_idl
         fip = self.fips[0]
         original_fip = self.fips[1]
@@ -521,6 +527,7 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         self.qos_driver.update_floatingip(txn, fip)
         nb_idl.qos_del_ext_ids.assert_called_once()
         nb_idl.qos_add.assert_not_called()
+        nb_idl.qos_del.assert_not_called()
         nb_idl.reset_mock()
 
         # Attach a port and a router, not QoS policy
@@ -530,14 +537,19 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         self.qos_driver.update_floatingip(txn, fip)
         nb_idl.qos_del_ext_ids.assert_called_once()
         nb_idl.qos_add.assert_not_called()
+        nb_idl.qos_del.assert_not_called()
         nb_idl.reset_mock()
 
         # Add a QoS policy
         fip.qos_policy_id = self.qos_policies[0].id
         fip.update()
         self.qos_driver.update_floatingip(txn, fip)
-        nb_idl.qos_del_ext_ids.assert_called_once()
+        nb_idl.qos_del_ext_ids.assert_not_called()
+        # QoS DSCP rule has only egress direction, ingress one is deleted.
+        # Check "OVNClientQosExtension.update_floatingip" and how the OVN QoS
+        # rules are added (if there is a rule in this direction) or deleted.
         nb_idl.qos_add.assert_called_once()
+        nb_idl.qos_del.assert_called_once()
         nb_idl.reset_mock()
 
         # Remove QoS
@@ -548,14 +560,16 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         self.qos_driver.update_floatingip(txn, fip)
         nb_idl.qos_del_ext_ids.assert_called_once()
         nb_idl.qos_add.assert_not_called()
+        nb_idl.qos_del.assert_not_called()
         nb_idl.reset_mock()
 
         # Add network QoS policy
         fip.qos_network_policy_id = self.qos_policies[0].id
         fip.update()
         self.qos_driver.update_floatingip(txn, fip)
-        nb_idl.qos_del_ext_ids.assert_called_once()
+        nb_idl.qos_del_ext_ids.assert_not_called()
         nb_idl.qos_add.assert_called_once()
+        nb_idl.qos_del.assert_called_once()
         nb_idl.reset_mock()
 
         # Add again another QoS policy
@@ -564,8 +578,9 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         original_fip.qos_policy_id = None
         original_fip.update()
         self.qos_driver.update_floatingip(txn, fip)
-        nb_idl.qos_del_ext_ids.assert_called_once()
+        nb_idl.qos_del_ext_ids.assert_not_called()
         nb_idl.qos_add.assert_called_once()
+        nb_idl.qos_del.assert_called_once()
         nb_idl.reset_mock()
 
         # Detach the port and the router
@@ -579,6 +594,7 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         self.qos_driver.update_floatingip(txn, fip)
         nb_idl.qos_del_ext_ids.assert_called_once()
         nb_idl.qos_add.assert_not_called()
+        nb_idl.qos_del.assert_not_called()
         nb_idl.reset_mock()
 
         # Force reset (delete any QoS)
@@ -587,3 +603,4 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         self.qos_driver.update_floatingip(txn, fip_dict)
         nb_idl.qos_del_ext_ids.assert_called_once()
         nb_idl.qos_add.assert_not_called()
+        nb_idl.qos_del.assert_not_called()

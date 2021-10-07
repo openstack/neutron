@@ -34,12 +34,19 @@ OVN_QOS_DEFAULT_RULE_PRIORITY = 2002
 class OVNClientQosExtension(object):
     """OVN client QoS extension"""
 
-    def __init__(self, driver):
+    def __init__(self, driver=None, nb_idl=None):
         LOG.info('Starting OVNClientQosExtension')
         super(OVNClientQosExtension, self).__init__()
         self._driver = driver
+        self._nb_idl = nb_idl
         self._plugin_property = None
         self._plugin_l3_property = None
+
+    @property
+    def nb_idl(self):
+        if not self._nb_idl:
+            self._nb_idl = self._driver._nb_idl
+        return self._nb_idl
 
     @property
     def _plugin(self):
@@ -177,7 +184,8 @@ class OVNClientQosExtension(object):
 
         return ovn_qos_rule
 
-    def _port_effective_qos_policy_id(self, port):
+    @staticmethod
+    def port_effective_qos_policy_id(port):
         """Return port effective QoS policy
 
         If the port does not have any QoS policy reference or is a network
@@ -193,30 +201,43 @@ class OVNClientQosExtension(object):
         else:
             return port['qos_network_policy_id'], 'network'
 
-    def _update_port_qos_rules(self, txn, port_id, network_id, qos_policy_id,
-                               qos_rules):
-        # NOTE(ralonsoh): we don't use the transaction context because the
-        # QoS policy could belong to another user (network QoS policy).
-        admin_context = n_context.get_admin_context()
-
+    def _delete_port_qos_rules(self, txn, port_id, network_id):
         # Generate generic deletion rules for both directions. In case of
         # creating deletion rules, the rule content is irrelevant.
         for ovn_rule in [self._ovn_qos_rule(direction, {}, port_id,
                                             network_id, delete=True)
                          for direction in constants.VALID_DIRECTIONS]:
-            txn.add(self._driver._nb_idl.qos_del(**ovn_rule))
+            txn.add(self.nb_idl.qos_del(**ovn_rule))
 
-        if not qos_policy_id:
-            return  # If no QoS policy is defined, there are no QoS rules.
+    def _add_port_qos_rules(self, txn, port_id, network_id, qos_policy_id,
+                            qos_rules):
+        # NOTE(ralonsoh): we don't use the transaction context because the
+        # QoS policy could belong to another user (network QoS policy).
+        admin_context = n_context.get_admin_context()
 
         # TODO(ralonsoh): for update_network and update_policy operations,
         # the QoS rules can be retrieved only once.
         qos_rules = qos_rules or self._qos_rules(admin_context, qos_policy_id)
         for direction, rules in qos_rules.items():
+            # "delete=not rule": that means, when we don't have rules, we
+            # generate a "ovn_rule" to be used as input in a "qos_del" method.
             ovn_rule = self._ovn_qos_rule(direction, rules, port_id,
-                                          network_id)
-            if ovn_rule:
-                txn.add(self._driver._nb_idl.qos_add(**ovn_rule))
+                                          network_id, delete=not rules)
+            if rules:
+                # NOTE(ralonsoh): with "may_exist=True", the "qos_add" will
+                # create the QoS OVN rule or update the existing one.
+                txn.add(self.nb_idl.qos_add(**ovn_rule, may_exist=True))
+            else:
+                # Delete, if exists, the QoS rule in this direction.
+                txn.add(self.nb_idl.qos_del(**ovn_rule, if_exists=True))
+
+    def _update_port_qos_rules(self, txn, port_id, network_id, qos_policy_id,
+                               qos_rules):
+        if not qos_policy_id:
+            self._delete_port_qos_rules(txn, port_id, network_id)
+        else:
+            self._add_port_qos_rules(txn, port_id, network_id, qos_policy_id,
+                                     qos_rules)
 
     def create_port(self, txn, port):
         self.update_port(txn, port, None, reset=True)
@@ -239,9 +260,9 @@ class OVNClientQosExtension(object):
             return
 
         qos_policy_id = (None if delete else
-                         self._port_effective_qos_policy_id(port)[0])
+                         self.port_effective_qos_policy_id(port)[0])
         if not reset and not delete:
-            original_qos_policy_id = self._port_effective_qos_policy_id(
+            original_qos_policy_id = self.port_effective_qos_policy_id(
                 original_port)[0]
             if qos_policy_id == original_qos_policy_id:
                 return  # No QoS policy change
@@ -288,6 +309,13 @@ class OVNClientQosExtension(object):
 
         return updated_port_ids, updated_fip_ids
 
+    def _delete_fip_qos_rules(self, txn, fip_id, network_id):
+        if network_id:
+            lswitch_name = utils.ovn_name(network_id)
+            txn.add(self.nb_idl.qos_del_ext_ids(
+                lswitch_name,
+                {ovn_const.OVN_FIP_EXT_ID_KEY: fip_id}))
+
     def create_floatingip(self, txn, floatingip):
         self.update_floatingip(txn, floatingip)
 
@@ -295,20 +323,17 @@ class OVNClientQosExtension(object):
         router_id = floatingip.get('router_id')
         qos_policy_id = (floatingip.get('qos_policy_id') or
                          floatingip.get('qos_network_policy_id'))
-        if floatingip['floating_network_id']:
-            lswitch_name = utils.ovn_name(floatingip['floating_network_id'])
-            txn.add(self._driver._nb_idl.qos_del_ext_ids(
-                lswitch_name,
-                {ovn_const.OVN_FIP_EXT_ID_KEY: floatingip['id']}))
 
         if not (router_id and qos_policy_id):
-            return
+            return self._delete_fip_qos_rules(
+                txn, floatingip['id'], floatingip['floating_network_id'])
 
         admin_context = n_context.get_admin_context()
         router_db = self._plugin_l3._get_router(admin_context, router_id)
         gw_port_id = router_db.get('gw_port_id')
         if not gw_port_id:
-            return
+            return self._delete_fip_qos_rules(
+                txn, floatingip['id'], floatingip['floating_network_id'])
 
         if ovn_conf.is_ovn_distributed_floating_ip():
             # DVR, floating IP GW is in the same compute node as private port.
@@ -319,13 +344,20 @@ class OVNClientQosExtension(object):
 
         qos_rules = self._qos_rules(admin_context, qos_policy_id)
         for direction, rules in qos_rules.items():
+            # "delete=not rule": that means, when we don't have rules, we
+            # generate a "ovn_rule" to be used as input in a "qos_del" method.
             ovn_rule = self._ovn_qos_rule(
                 direction, rules, gw_port_id,
                 floatingip['floating_network_id'], fip_id=floatingip['id'],
                 ip_address=floatingip['floating_ip_address'],
-                resident_port=resident_port)
-            if ovn_rule:
-                txn.add(self._driver._nb_idl.qos_add(**ovn_rule))
+                resident_port=resident_port, delete=not rules)
+            if rules:
+                # NOTE(ralonsoh): with "may_exist=True", the "qos_add" will
+                # create the QoS OVN rule or update the existing one.
+                txn.add(self.nb_idl.qos_add(**ovn_rule, may_exist=True))
+            else:
+                # Delete, if exists, the QoS rule in this direction.
+                txn.add(self.nb_idl.qos_del(**ovn_rule, if_exists=True))
 
     def delete_floatingip(self, txn, floatingip):
         self.update_floatingip(txn, floatingip)
@@ -343,7 +375,7 @@ class OVNClientQosExtension(object):
         # TODO(ralonsoh): we need to benchmark this transaction in systems with
         # a huge amount of ports. This can take a while and could block other
         # operations.
-        with self._driver._nb_idl.transaction(check_error=True) as txn:
+        with self.nb_idl.transaction(check_error=True) as txn:
             for network_id in bound_networks:
                 network = {'qos_policy_id': policy.id, 'id': network_id}
                 port_ids, fip_ids = self.update_network(
