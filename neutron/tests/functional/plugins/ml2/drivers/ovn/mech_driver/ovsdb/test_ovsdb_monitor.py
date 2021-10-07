@@ -15,6 +15,7 @@
 from unittest import mock
 
 import fixtures as og_fixtures
+from oslo_concurrency import processutils
 from oslo_utils import uuidutils
 
 from neutron.common.ovn import constants as ovn_const
@@ -31,17 +32,6 @@ from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from ovsdbapp.backend.ovs_idl import event
 from ovsdbapp.backend.ovs_idl import idlutils
-
-
-class WaitForMACBindingDeleteEvent(event.WaitEvent):
-    event_name = 'WaitForMACBindingDeleteEvent'
-
-    def __init__(self, entry):
-        table = 'MAC_Binding'
-        events = (self.ROW_DELETE,)
-        conditions = (('_uuid', '=', entry),)
-        super(WaitForMACBindingDeleteEvent, self).__init__(
-            events, table, conditions, timeout=15)
 
 
 class WaitForDataPathBindingCreateEvent(event.WaitEvent):
@@ -132,6 +122,22 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
                 'port_id': port['id']}})
         return r1_f2
 
+    def _check_mac_binding_exists(self, macb_id):
+        cmd = ['ovsdb-client', 'transact',
+               self.mech_driver.sb_ovn.connection_string]
+
+        if self._ovsdb_protocol == 'ssl':
+            cmd += ['-p', self.ovsdb_server_mgr.private_key, '-c',
+                    self.ovsdb_server_mgr.certificate, '-C',
+                    self.ovsdb_server_mgr.ca_cert]
+
+        cmd += ['["OVN_Southbound", {"op": "select", "table": "MAC_Binding", '
+                '"where": [["_uuid", "==", ["uuid", "%s"]]]}]' % macb_id]
+
+        out, _ = processutils.execute(*cmd,
+                                      log_errors=False)
+        return str(macb_id) in out
+
     def test_floatingip_mac_bindings(self):
         """Check that MAC_Binding entries are cleared on FIP add/removal
 
@@ -146,6 +152,8 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         * Check that the MAC_Binding entry gets deleted.
         """
         net_name = 'network1'
+        self.mech_driver.sb_ovn.idl.update_tables(
+            ['MAC_Binding'], self.mech_driver.sb_schema_helper.schema_json)
         row_event = WaitForDataPathBindingCreateEvent(net_name)
         self.mech_driver.sb_ovn.idl.notify_handler.watch_event(row_event)
         self._make_network(self.fmt, net_name, True)
@@ -158,22 +166,21 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         port = self.create_port()
 
         # Ensure that the MAC_Binding entry gets deleted after creating a FIP
-        row_event = WaitForMACBindingDeleteEvent(macb_id)
-        self.mech_driver.sb_ovn.idl.notify_handler.watch_event(row_event)
         fip = self._create_fip(port, '100.0.0.21')
-        self.assertTrue(row_event.wait())
+        n_utils.wait_until_true(
+            lambda: not self._check_mac_binding_exists(macb_id),
+            timeout=15, sleep=1)
 
         # Now that the FIP is created, add a new MAC_Binding entry with the
         # same IP address
-
         macb_id = self.sb_api.db_create('MAC_Binding', datapath=dp[0]['_uuid'],
                                         ip='100.0.0.21').execute()
 
         # Ensure that the MAC_Binding entry gets deleted after deleting the FIP
-        row_event = WaitForMACBindingDeleteEvent(macb_id)
-        self.mech_driver.sb_ovn.idl.notify_handler.watch_event(row_event)
         self.l3_plugin.delete_floatingip(self.context, fip['id'])
-        self.assertTrue(row_event.wait())
+        n_utils.wait_until_true(
+            lambda: not self._check_mac_binding_exists(macb_id),
+            timeout=15, sleep=1)
 
     def _test_port_binding_and_status(self, port_id, action, status):
         # This function binds or unbinds port to chassis and
