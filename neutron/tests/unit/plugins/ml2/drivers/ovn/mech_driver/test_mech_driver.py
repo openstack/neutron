@@ -14,6 +14,7 @@
 
 import copy
 import datetime
+import shlex
 from unittest import mock
 import uuid
 
@@ -32,6 +33,7 @@ from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
 from neutron_lib.tests import tools
 from neutron_lib.utils import net as n_net
+from oslo_concurrency import processutils
 from oslo_config import cfg
 from oslo_db import exception as os_db_exc
 from oslo_serialization import jsonutils
@@ -130,6 +132,29 @@ class TestOVNMechanismDriverBase(MechDriverSetupBase,
         p = mock.patch.object(ovn_revision_numbers_db, 'bump_revision')
         p.start()
         self.addCleanup(p.stop)
+
+    def test_delete_mac_binding_entries(self):
+        self.config(group='ovn', ovn_sb_private_key=None)
+        expected = ('ovsdb-client transact tcp:127.0.0.1:6642 '
+                   '\'["OVN_Southbound", {"op": "delete", "table": '
+                   '"MAC_Binding", "where": [["ip", "==", "1.1.1.1"]]}]\'')
+        with mock.patch.object(processutils, 'execute') as mock_execute:
+            self.mech_driver.delete_mac_binding_entries('1.1.1.1')
+            mock_execute.assert_called_once_with(*shlex.split(expected),
+                    log_errors=processutils.LOG_FINAL_ERROR)
+
+    def test_delete_mac_binding_entries_ssl(self):
+        self.config(group='ovn', ovn_sb_private_key='pk')
+        self.config(group='ovn', ovn_sb_certificate='cert')
+        self.config(group='ovn', ovn_sb_ca_cert='ca')
+        expected = ('ovsdb-client transact tcp:127.0.0.1:6642 '
+                   '-p pk -c cert -C ca '
+                   '\'["OVN_Southbound", {"op": "delete", "table": '
+                   '"MAC_Binding", "where": [["ip", "==", "1.1.1.1"]]}]\'')
+        with mock.patch.object(processutils, 'execute') as mock_execute:
+            self.mech_driver.delete_mac_binding_entries('1.1.1.1')
+            mock_execute.assert_called_once_with(*shlex.split(expected),
+                    log_errors=processutils.LOG_FINAL_ERROR)
 
 
 class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
