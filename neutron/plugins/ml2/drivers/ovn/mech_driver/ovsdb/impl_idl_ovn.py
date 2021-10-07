@@ -34,6 +34,7 @@ from neutron._i18n import _
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import exceptions as ovn_exc
 from neutron.common.ovn import utils
+from neutron.common import utils as n_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as cfg
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import commands as cmd
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
@@ -138,6 +139,10 @@ class Backend(ovs_idl.Backend):
 
     _tables = tables
 
+    @n_utils.classproperty
+    def connection_string(cls):
+        raise NotImplementedError()
+
     def is_table_present(self, table_name):
         return table_name in self._tables
 
@@ -197,6 +202,10 @@ def get_ovn_idls(driver, trigger):
 class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
     def __init__(self, connection):
         super(OvsdbNbOvnIdl, self).__init__(connection)
+
+    @n_utils.classproperty
+    def connection_string(cls):
+        return cfg.get_ovn_nb_connection()
 
     @classmethod
     def from_worker(cls, worker_class, driver=None):
@@ -767,6 +776,10 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
 class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
     def __init__(self, connection):
         super(OvsdbSbOvnIdl, self).__init__(connection)
+
+    @n_utils.classproperty
+    def connection_string(cls):
+        return cfg.get_ovn_sb_connection()
 
     @classmethod
     def from_worker(cls, worker_class, driver=None):
