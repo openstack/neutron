@@ -15,7 +15,9 @@
 import mock
 
 import fixtures as og_fixtures
+from oslo_concurrency import processutils
 from oslo_config import cfg
+from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
 
 from neutron.common.ovn import constants as ovn_const
@@ -30,17 +32,6 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from ovsdbapp.backend.ovs_idl import event
-
-
-class WaitForMACBindingDeleteEvent(event.WaitEvent):
-    event_name = 'WaitForMACBindingDeleteEvent'
-
-    def __init__(self, entry):
-        table = 'MAC_Binding'
-        events = (self.ROW_DELETE,)
-        conditions = (('_uuid', '=', entry),)
-        super(WaitForMACBindingDeleteEvent, self).__init__(
-            events, table, conditions, timeout=15)
 
 
 class WaitForDataPathBindingCreateEvent(event.WaitEvent):
@@ -127,6 +118,40 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
                 'port_id': port['id']}})
         return r1_f2
 
+    def _check_mac_binding_exists(self, macb_id):
+        cmd = ['ovsdb-client', 'transact',
+               self.mech_driver.sb_ovn.connection_string]
+
+        if self._ovsdb_protocol == 'ssl':
+            cmd += ['-p', self.ovsdb_server_mgr.private_key, '-c',
+                    self.ovsdb_server_mgr.certificate, '-C',
+                    self.ovsdb_server_mgr.ca_cert]
+
+        cmd += ['["OVN_Southbound", {"op": "select", "table": "MAC_Binding", '
+                '"where": [["_uuid", "==", ["uuid", "%s"]]]}]' % macb_id]
+
+        out, _ = processutils.execute(*cmd,
+                                      log_errors=False)
+        return str(macb_id) in out
+
+    def _add_mac_binding_row(self, ip, datapath):
+        cmd = ['ovsdb-client', 'transact',
+               self.mech_driver.sb_ovn.connection_string]
+
+        if self._ovsdb_protocol == 'ssl':
+            cmd += ['-p', self.ovsdb_server_mgr.private_key, '-c',
+                    self.ovsdb_server_mgr.certificate, '-C',
+                    self.ovsdb_server_mgr.ca_cert]
+
+        cmd += ['["OVN_Southbound", {"op": "insert", "table": "MAC_Binding", '
+                '"row": {"ip": "%s", "datapath": '
+                '["uuid", "%s"]}}]' % (ip, datapath)]
+
+        out, _ = processutils.execute(*cmd,
+                                      log_errors=False)
+        out_parsed = jsonutils.loads(out)
+        return out_parsed[0]['uuid'][1]
+
     def test_floatingip_mac_bindings(self):
         """Check that MAC_Binding entries are cleared on FIP add/removal
 
@@ -148,27 +173,26 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         dp = self.sb_api.db_find(
             'Datapath_Binding',
             ('external_ids', '=', {'name2': net_name})).execute()
-        macb_id = self.sb_api.db_create('MAC_Binding', datapath=dp[0]['_uuid'],
-                                        ip='100.0.0.21').execute()
+        macb_id = self._add_mac_binding_row(
+            ip='100.0.0.21', datapath=dp[0]['_uuid'])
         port = self.create_port()
 
         # Ensure that the MAC_Binding entry gets deleted after creating a FIP
-        row_event = WaitForMACBindingDeleteEvent(macb_id)
-        self.mech_driver._sb_ovn.idl.notify_handler.watch_event(row_event)
         fip = self._create_fip(port, '100.0.0.21')
-        self.assertTrue(row_event.wait())
+        n_utils.wait_until_true(
+            lambda: not self._check_mac_binding_exists(macb_id),
+            timeout=15, sleep=1)
 
         # Now that the FIP is created, add a new MAC_Binding entry with the
         # same IP address
-
-        macb_id = self.sb_api.db_create('MAC_Binding', datapath=dp[0]['_uuid'],
-                                        ip='100.0.0.21').execute()
+        macb_id = self._add_mac_binding_row(
+            ip='100.0.0.21', datapath=dp[0]['_uuid'])
 
         # Ensure that the MAC_Binding entry gets deleted after deleting the FIP
-        row_event = WaitForMACBindingDeleteEvent(macb_id)
-        self.mech_driver._sb_ovn.idl.notify_handler.watch_event(row_event)
         self.l3_plugin.delete_floatingip(self.context, fip['id'])
-        self.assertTrue(row_event.wait())
+        n_utils.wait_until_true(
+            lambda: not self._check_mac_binding_exists(macb_id),
+            timeout=15, sleep=1)
 
     def _test_port_binding_and_status(self, port_id, action, status):
         # This function binds or unbinds port to chassis and
