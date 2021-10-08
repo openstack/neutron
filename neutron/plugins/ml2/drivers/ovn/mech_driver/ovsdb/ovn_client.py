@@ -2180,12 +2180,15 @@ class OVNClient(object):
         This function will allocate an IP address for the metadata port of
         the given network in all its IPv4 subnets or the given subnet.
         """
-        def update_metadata_port_fixed_ips(metadata_port, subnet_ids):
+        def update_metadata_port_fixed_ips(metadata_port, add_subnet_ids,
+                                           del_subnet_ids):
             wanted_fixed_ips = [
                 {'subnet_id': fixed_ip['subnet_id'],
                  'ip_address': fixed_ip['ip_address']} for fixed_ip in
-                metadata_port['fixed_ips']]
-            wanted_fixed_ips.extend({'subnet_id': s_id} for s_id in subnet_ids)
+                metadata_port['fixed_ips'] if
+                fixed_ip['subnet_id'] not in del_subnet_ids]
+            wanted_fixed_ips.extend({'subnet_id': s_id} for s_id in
+                                    add_subnet_ids)
             port = {'id': metadata_port['id'],
                     'port': {'network_id': network_id,
                              'fixed_ips': wanted_fixed_ips}}
@@ -2210,12 +2213,13 @@ class OVNClient(object):
         # metadata port.
         if subnet_id:
             if subnet_id not in port_subnet_ids:
-                update_metadata_port_fixed_ips(metadata_port, [subnet_id])
+                update_metadata_port_fixed_ips(metadata_port, [subnet_id], [])
             return
 
         # Retrieve all subnets in this network
         subnets = self._plugin.get_subnets(context, filters=dict(
-            network_id=[network_id], ip_version=[const.IP_VERSION_4]))
+            network_id=[network_id], ip_version=[const.IP_VERSION_4],
+            enable_dhcp=[True]))
 
         subnet_ids = set(s['id'] for s in subnets)
 
@@ -2223,7 +2227,8 @@ class OVNClient(object):
         # allocate one.
         if subnet_ids != port_subnet_ids:
             update_metadata_port_fixed_ips(metadata_port,
-                                           subnet_ids - port_subnet_ids)
+                                           subnet_ids - port_subnet_ids,
+                                           port_subnet_ids - subnet_ids)
 
     def get_parent_port(self, port_id):
         return self._nb_idl.get_parent_port(port_id)
