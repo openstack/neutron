@@ -120,7 +120,8 @@ class OVNMechanismDriver(api.MechanismDriver):
         self._post_fork_event = threading.Event()
         if cfg.CONF.SECURITYGROUP.firewall_driver:
             LOG.warning('Firewall driver configuration is ignored')
-        if (cfg.CONF.ml2_type_geneve.max_header_size <
+        if (const.TYPE_GENEVE in cfg.CONF.ml2.type_drivers and
+                cfg.CONF.ml2_type_geneve.max_header_size <
                 OVN_MIN_GENEVE_MAX_HEADER_SIZE):
             LOG.critical('Geneve max_header_size set too low for OVN '
                          '(%d vs %d)',
