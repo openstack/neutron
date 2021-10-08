@@ -69,7 +69,8 @@ class TestL3Agent(base.BaseFullStackTestCase):
     def _boot_fake_vm_in_network(self, host, tenant_id, network_id, wait=True):
         vm = self.useFixture(
             machine.FakeFullstackMachine(
-                host, network_id, tenant_id, self.safe_client, use_dhcp=True))
+                host, network_id, tenant_id, self.safe_client,
+                use_dhcp=self.use_dhcp))
         if wait:
             vm.block_until_boot()
         return vm
@@ -268,9 +269,15 @@ class TestL3Agent(base.BaseFullStackTestCase):
 
 class TestLegacyL3Agent(TestL3Agent):
 
+    # NOTE(slaweq): don't use dhcp agents due to the oslo.privsep bug
+    # https://review.opendev.org/c/openstack/neutron/+/794994
+    # When it will be fixed DHCP can be used here again.
+    use_dhcp = False
+
     def setUp(self):
         host_descriptions = [
-            environment.HostDescription(l3_agent=True, dhcp_agent=True,
+            environment.HostDescription(l3_agent=True,
+                                        dhcp_agent=self.use_dhcp,
                                         l3_agent_extensions="fip_qos"),
             # None(obondarev): dhcp agent is added to workaround bug 1930401,
             # to be removed in scope of proper bug fix:
@@ -416,9 +423,15 @@ class TestLegacyL3Agent(TestL3Agent):
 
 class TestHAL3Agent(TestL3Agent):
 
+    # NOTE(slaweq): don't use dhcp agents due to the oslo.privsep bug
+    # https://review.opendev.org/c/openstack/neutron/+/794994
+    # When it will be fixed DHCP can be used here again.
+    use_dhcp = False
+
     def setUp(self):
         host_descriptions = [
-            environment.HostDescription(l3_agent=True, dhcp_agent=True,
+            environment.HostDescription(l3_agent=True,
+                                        dhcp_agent=self.use_dhcp,
                                         l3_agent_extensions="fip_qos")
             for _ in range(2)]
         env = environment.Environment(
