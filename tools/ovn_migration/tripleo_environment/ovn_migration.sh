@@ -113,6 +113,7 @@ gathering = smart
 fact_caching = jsonfile
 fact_caching_connection = ./ansible_facts_cache
 fact_caching_timeout = 0
+log_path = $HOME/ovn_migration_ansible.log
 
 #roles_path = roles:...
 
