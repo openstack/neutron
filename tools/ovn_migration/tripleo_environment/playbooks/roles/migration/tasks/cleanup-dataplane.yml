@@ -1,21 +1,13 @@
 ---
-- name: Quickly disable neutron router and dhcp interfaces
+- name: Cleanup neutron router and dhcp interfaces
   shell: |
-    for p in `ovs-vsctl show | egrep 'qr-|ha-|qg-|rfp-' | grep Interface | awk '{print $2}'`
-    do
-      # p will be having quotes. Eg. "hr-xxxx". So strip the quotes
-      p=`echo $p | sed -e 's/"//g'`
-      ovs-vsctl clear Interface $p external-ids
-      ovs-vsctl set Interface $p admin-state=down
-    done
+    ovs-vsctl list interface | awk '/name[ ]*: qr-|ha-|qg-|rfp-/ { print $3 }' | xargs -n1 ovs-vsctl del-port
 
     # dhcp tap ports cannot be easily distinguished from ovsfw ports, so we
     # list them from within the qdhcp namespaces
-
     for netns in `ip netns  | awk '{ print $1 }' | grep qdhcp-`; do
       for dhcp_port in `ip netns exec $netns ip -o link show | awk -F': ' '{print $2}' | grep tap`; do
-        ovs-vsctl clear Interface $dhcp_port external-ids
-        ovs-vsctl set Interface $dhcp_port admin-state=down
+        ovs-vsctl del-port $dhcp_port
       done
     done
 
