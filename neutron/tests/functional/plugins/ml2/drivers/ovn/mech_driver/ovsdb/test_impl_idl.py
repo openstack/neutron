@@ -158,8 +158,10 @@ class TestSbApi(BaseOvnIdlTest):
         chassis, switch, port, binding = self._add_switch_port(
             self.data['chassis'][0]['name'])
         self.api.lsp_bind(port.name, chassis.name).execute(check_error=True)
+        network_id = binding.datapath.external_ids['name'].replace(
+            'neutron-', '')
         self.assertEqual(
-            (chassis.name, str(binding.datapath.uuid)),
+            (chassis.name, network_id),
             self.api.get_logical_port_chassis_and_datapath(port.name))
 
 
