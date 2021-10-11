@@ -503,11 +503,11 @@
         '{{ devstack_log_dir }}/ovsdb-server-sb.log': 'logs'
       devstack_localrc:
         OVN_BUILD_FROM_SOURCE: True
-        OVN_BRANCH: master
+        OVN_BRANCH: main
         OVS_BRANCH: master
     group-vars:
       subnode:
         devstack_localrc:
           OVN_BUILD_FROM_SOURCE: True
-          OVN_BRANCH: master
+          OVN_BRANCH: main
           OVS_BRANCH: master

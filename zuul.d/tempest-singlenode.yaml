@@ -525,7 +525,7 @@
     vars:
       devstack_localrc:
         OVN_BUILD_FROM_SOURCE: True
-        OVN_BRANCH: master
+        OVN_BRANCH: main
         OVS_BRANCH: master
 
 - job:
