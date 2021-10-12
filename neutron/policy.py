@@ -206,6 +206,10 @@ def _build_match_rule(action, target, pluralized):
        (e.g.: create_router:external_gateway_info:network_id)
     """
     match_rule = policy.RuleCheck('rule', action)
+    registered_rule = _ENFORCER.registered_rules.get(action)
+    if registered_rule and registered_rule.scope_types:
+        match_rule.scope_types = registered_rule.scope_types
+
     resource, enforce_attr_based_check = get_resource_and_action(
         action, pluralized)
     if enforce_attr_based_check:
