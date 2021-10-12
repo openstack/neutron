@@ -448,3 +448,31 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
             mock.call('lsp5', mcast_flood_reports='true', mcast_flood='false')]
 
         nb_idl.lsp_set_options.assert_has_calls(expected_calls)
+
+    def test_check_router_mac_binding_options(self):
+        nb_idl = self.fake_ovn_client._nb_idl
+        lr0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'lr0',
+                   'options': {'always_learn_from_arp_request': 'false',
+                               'dynamic_neigh_routers': 'true'}})
+        lr1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'lr1', 'options': {}})
+        lr2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'lr2', 'options': {}})
+        nb_idl.lr_list.return_value.execute.return_value = [lr0, lr1, lr2]
+
+        # Invoke the periodic method, it meant to run only once at startup
+        # so NeverAgain will be raised at the end
+        self.assertRaises(periodics.NeverAgain,
+                          self.periodic.check_router_mac_binding_options)
+
+        # Assert lr1 and lr2 had their options updated since the values
+        # were not set
+        expected_calls = [
+            mock.call('lr1',
+                      options={'always_learn_from_arp_request': 'false',
+                               'dynamic_neigh_routers': 'true'}),
+            mock.call('lr2',
+                      options={'always_learn_from_arp_request': 'false',
+                               'dynamic_neigh_routers': 'true'})]
+        nb_idl.update_lrouter.assert_has_calls(expected_calls)

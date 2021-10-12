@@ -14,6 +14,7 @@
 #    under the License.
 
 import abc
+import copy
 import inspect
 import threading
 
@@ -682,6 +683,31 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                 for cmd in cmds:
                     txn.add(cmd)
 
+        raise periodics.NeverAgain()
+
+    # TODO(lucasagomes): Remove this in the Z cycle
+    # A static spacing value is used here, but this method will only run
+    # once per lock due to the use of periodics.NeverAgain().
+    @periodics.periodic(spacing=600, run_immediately=True)
+    def check_router_mac_binding_options(self):
+        if not self.has_lock:
+            return
+
+        cmds = []
+        for router in self._nb_idl.lr_list().execute(check_error=True):
+            if (router.options.get('always_learn_from_arp_request') and
+                    router.options.get('dynamic_neigh_routers')):
+                continue
+
+            opts = copy.deepcopy(router.options)
+            opts.update({'always_learn_from_arp_request': 'false',
+                         'dynamic_neigh_routers': 'true'})
+            cmds.append(self._nb_idl.update_lrouter(router.name, options=opts))
+
+        if cmds:
+            with self._nb_idl.transaction(check_error=True) as txn:
+                for cmd in cmds:
+                    txn.add(cmd)
         raise periodics.NeverAgain()
 
 
