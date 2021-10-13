@@ -29,6 +29,7 @@ from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import idlutils
+from ovsdbapp import exceptions as ovs_exceptions
 
 import debtcollector
 import tenacity
@@ -136,6 +137,18 @@ class BaseOVS(object):
     def ovsdb_timeout(self):
         return self.ovsdb.ovsdb_connection.timeout
 
+    def _execute(self, cmd, check_error=False, log_errors=True):
+        try:
+            return cmd.execute(check_error=True, log_errors=False)
+        except Exception as e:
+            if log_errors:
+                (LOG.warning
+                 if (isinstance(e, ovs_exceptions.OvsdbAppException) and
+                     not check_error)
+                 else LOG.exception)("Error while querying OVSDB: %s", e)
+            if check_error:
+                raise
+
     def add_bridge(self, bridge_name,
                    datapath_type=constants.OVS_DATAPATH_SYSTEM):
         br = OVSBridge(bridge_name, datapath_type=datapath_type)
@@ -160,12 +173,14 @@ class BaseOVS(object):
 
     def get_bridge_external_bridge_id(self, bridge, check_error=False,
                                       log_errors=True):
-        return self.ovsdb.br_get_external_id(bridge, 'bridge-id').execute(
+        return self._execute(
+            self.ovsdb.br_get_external_id(bridge, 'bridge-id'),
             check_error=check_error, log_errors=log_errors)
 
     def set_db_attribute(self, table_name, record, column, value,
                          check_error=False, log_errors=True):
-        self.ovsdb.db_set(table_name, record, (column, value)).execute(
+        self._execute(
+            self.ovsdb.db_set(table_name, record, (column, value)),
             check_error=check_error, log_errors=log_errors)
 
     def clear_db_attribute(self, table_name, record, column):
@@ -173,7 +188,8 @@ class BaseOVS(object):
 
     def db_get_val(self, table, record, column, check_error=False,
                    log_errors=True):
-        return self.ovsdb.db_get(table, record, column).execute(
+        return self._execute(
+            self.ovsdb.db_get(table, record, column),
             check_error=check_error, log_errors=log_errors)
 
     @property
