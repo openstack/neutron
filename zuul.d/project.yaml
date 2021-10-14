@@ -74,7 +74,7 @@
         - neutron-ovn-tempest-mariadb-full
         - neutron-ovn-tempest-ovs-release
         - neutron-ovn-tempest-ovs-release-ipv6-only
-        - devstack-tobiko-faults-centos:
+        - devstack-tobiko-neutron:
             voting: true
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa
         - openstacksdk-functional-devstack-networking
