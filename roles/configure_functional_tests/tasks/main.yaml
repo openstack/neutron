@@ -16,10 +16,24 @@
         OVS_BRANCH={{ OVS_BRANCH }}
         OVN_BRANCH={{ OVN_BRANCH }}
         Q_BUILD_OVS_FROM_GIT={{ Q_BUILD_OVS_FROM_GIT }}
+        # This is DB USER used in e.g. pgsql db
+        DATABASE_USER=openstack_citest
 
         source $DEVSTACK_PATH/functions
         source $DEVSTACK_PATH/lib/neutron_plugins/ovn_agent
         source $NEUTRON_DIR/tools/configure_for_func_testing.sh
 
+        if is_fedora; then
+            # NOTE(slqweq) Running functional job e.g. on Centos requires to
+            # have repo with rabbitmq-server and some other packages available
+            install_package centos-release-openstack-victoria
+            install_package iproute-tc haproxy keepalived
+
+            # NOTE(slaweq) On Fedora/CentOS systems make sure that SELinux is
+            # not in enforcing mode
+            sudo setenforce 0
+        fi
+
         configure_host_for_func_testing
+
     executable: /bin/bash

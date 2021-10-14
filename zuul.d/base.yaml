@@ -107,6 +107,32 @@
       zuul_work_dir: src/opendev.org/openstack/neutron
 
 - job:
+    name: neutron-functional-with-uwsgi-fips
+    parent: neutron-functional-with-uwsgi
+    nodeset: devstack-single-node-centos-8-stream
+    description: |
+      Functional testing for a FIPS enabled Centos 8 system
+    pre-run: playbooks/enable-fips.yaml
+    vars:
+      configure_swap_size: 4096
+      devstack_localrc:
+        ISCSI_CHAP_ALGORITHMS: SHA3-256,SHA256
+        Q_BUILD_OVS_FROM_GIT: true
+
+- job:
+    name: neutron-fullstack-with-uwsgi-fips
+    parent: neutron-fullstack-with-uwsgi
+    nodeset: devstack-single-node-centos-8-stream
+    description: |
+      Functional testing for a FIPS enabled Centos 8 system
+    pre-run: playbooks/enable-fips.yaml
+    vars:
+      configure_swap_size: 4096
+      devstack_localrc:
+        ISCSI_CHAP_ALGORITHMS: SHA3-256,SHA256
+        Q_BUILD_OVS_FROM_GIT: true
+
+- job:
     name: neutron-linuxbridge-tempest-plugin-scenario-nftables
     parent: neutron-tempest-plugin-scenario-linuxbridge
     pre-run: playbooks/install_nftables.yaml
