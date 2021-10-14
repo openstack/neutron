@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Support for the extensions ``dns_domain_ports`` and ``subnet_dns_publish_fixed_ip``
+    belonging to the DNS integration is now properly announced by the OVN driver.
+    See bug `1947127 <https://bugs.launchpad.net/neutron/+bug/1947127>`_

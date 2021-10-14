@@ -18,6 +18,7 @@ from neutron_lib.api.definitions import auto_allocated_topology
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.definitions import default_subnetpools
 from neutron_lib.api.definitions import dns
+from neutron_lib.api.definitions import dns_domain_ports
 from neutron_lib.api.definitions import expose_port_forwarding_in_fip
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import extra_dhcp_opt
@@ -53,6 +54,7 @@ from neutron_lib.api.definitions import security_groups_normalized_cidr
 from neutron_lib.api.definitions import security_groups_remote_address_group
 from neutron_lib.api.definitions import segment as seg_def
 from neutron_lib.api.definitions import sorting
+from neutron_lib.api.definitions import subnet_dns_publish_fixed_ip
 from neutron_lib.api.definitions import trunk
 from neutron_lib.api.definitions import vlantransparent
 from neutron_lib import constants
@@ -73,6 +75,8 @@ ML2_SUPPORTED_API_EXTENSIONS_OVN_L3 = [
     sorting.ALIAS,
     project_id.ALIAS,
     dns.ALIAS,
+    dns_domain_ports.ALIAS,
+    subnet_dns_publish_fixed_ip.ALIAS,
     agent_def.ALIAS,
     az_def.ALIAS,
     raz_def.ALIAS,
