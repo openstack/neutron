@@ -20,6 +20,8 @@ set -e
 # directly or allow the gate_hook to import.
 IS_GATE=${IS_GATE:-False}
 USE_CONSTRAINT_ENV=${USE_CONSTRAINT_ENV:-True}
+MYSQL_USER=${MYSQL_USER:-root}
+DATABASE_USER=${DATABASE_USER:-${MYSQL_USER}}
 
 
 if [[ "$IS_GATE" != "True" ]] && [[ "$#" -lt 1 ]]; then
@@ -153,8 +155,8 @@ function _install_databases {
         return 0
     fi
 
-    MYSQL_PASSWORD=${MYSQL_PASSWORD:-stackdb}
-    DATABASE_PASSWORD=${DATABASE_PASSWORD:-stackdb}
+    MYSQL_PASSWORD=${MYSQL_PASSWORD:-openstack_citest}
+    DATABASE_PASSWORD=${DATABASE_PASSWORD:-openstack_citest}
 
     source $DEVSTACK_PATH/lib/database
 
@@ -176,18 +178,16 @@ function _install_databases {
 
     cat << EOF > $tmp_dir/mysql.sql
 CREATE DATABASE openstack_citest;
-CREATE USER 'openstack_citest'@'localhost' IDENTIFIED BY 'openstack_citest';
-CREATE USER 'openstack_citest' IDENTIFIED BY 'openstack_citest';
-GRANT ALL PRIVILEGES ON *.* TO 'openstack_citest'@'localhost';
-GRANT ALL PRIVILEGES ON *.* TO 'openstack_citest';
+CREATE USER '${DATABASE_USER}'@'localhost' IDENTIFIED BY '${MYSQL_PASSWORD}';
+GRANT ALL PRIVILEGES ON *.* TO '${DATABASE_USER}'@'localhost';
 FLUSH PRIVILEGES;
 EOF
     /usr/bin/mysql -u root -p"$MYSQL_PASSWORD" < $tmp_dir/mysql.sql
 
     if [[ "$install_pg" == "True" ]]; then
         cat << EOF > $tmp_dir/postgresql.sql
-CREATE USER openstack_citest WITH CREATEDB LOGIN PASSWORD 'openstack_citest';
-CREATE DATABASE openstack_citest WITH OWNER openstack_citest;
+CREATE USER ${DATABASE_USER} WITH CREATEDB LOGIN PASSWORD ${DATABASE_PASSWORD};
+CREATE DATABASE ${DATABASE_USER} WITH OWNER ${DATABASE_USER};
 EOF
 
         # User/group postgres needs to be given access to tmp_dir
