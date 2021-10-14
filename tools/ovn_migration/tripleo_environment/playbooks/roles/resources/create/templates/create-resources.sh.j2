@@ -4,7 +4,10 @@ set -x
 
 source {{ overcloudrc }}
 
+server_user_name={{ server_user_name }}
+flavor_name={{ flavor_name }}
 image_name={{ image_name }}
+
 openstack image show $image_name
 if [ "$?" != "0" ]
 then
@@ -18,8 +21,12 @@ then
     image_name="cirros-ovn-migration-{{ resource_suffix }}"
 fi
 
-
-openstack flavor create ovn-migration-{{ resource_suffix }} --ram 1024 --disk 1 --vcpus 1
+openstack flavor show $flavor_name
+if [ "$?" != "0" ]
+then
+    openstack flavor create ovn-migration-{{ resource_suffix }} --ram 1024 --disk 1 --vcpus 1
+    flavor_name="ovn-migration-{{ resource_suffix }}"
+fi
 
 openstack keypair create ovn-migration-{{ resource_suffix }} --private-key {{ ovn_migration_temp_dir }}/ovn_migration_ssh_key
 
@@ -43,7 +50,7 @@ openstack router add subnet ovn-migration-router-{{ resource_suffix }} ovn-migra
 
 openstack port create --network ovn-migration-net-{{ resource_suffix }} --security-group ovn-migration-sg-{{ resource_suffix }} ovn-migration-server-port-{{ resource_suffix }}
 
-openstack server create --flavor ovn-migration-{{ resource_suffix }} --image $image_name \
+openstack server create --flavor $flavor_name --image $image_name \
 --key-name ovn-migration-{{ resource_suffix }} \
 --nic port-id=ovn-migration-server-port-{{ resource_suffix }} ovn-migration-server-{{ resource_suffix }}
 
@@ -120,7 +127,7 @@ do
 done
 
 ssh -i {{ ovn_migration_temp_dir }}/ovn_migration_ssh_key -o StrictHostKeyChecking=no \
--o UserKnownHostsFile=/dev/null  cirros@$server_ip date
+-o UserKnownHostsFile=/dev/null  $server_user_name@$server_ip date
 
 rc=$?
 
