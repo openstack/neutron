@@ -71,6 +71,8 @@
 
     experimental:
       jobs:
+        - neutron-functional-with-uwsgi-fips
+        - neutron-fullstack-with-uwsgi-fips
         - neutron-grenade-ovn
         - neutron-tempest-with-uwsgi-loki
 
