@@ -144,13 +144,15 @@ class TestMigrateNeutronDatabaseToOvn(
             {pb.CAP_PORT_FILTER: "true",
              pb.OVS_HYBRID_PLUG: "true",
              pb.VIF_DETAILS_BRIDGE_NAME: "foo",
-             pb.VIF_DETAILS_CONNECTIVITY: "l2"},
+             pb.VIF_DETAILS_CONNECTIVITY: pb.CONNECTIVITY_L2},
             {pb.CAP_PORT_FILTER: "true",
              pb.VIF_DETAILS_BRIDGE_NAME: "foo"},
             {"foo": "bar"},
             {},
         ]
         expected_vif_details = [
+            {pb.CAP_PORT_FILTER: "true",
+             pb.VIF_DETAILS_CONNECTIVITY: pb.CONNECTIVITY_L2},
             {pb.CAP_PORT_FILTER: "true"},
             {"foo": "bar"},
             {},
