@@ -16,12 +16,17 @@ from neutron_lib.api.definitions import portbindings as pb_api
 from neutron_lib import context as n_context
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions
+from oslo_log import log as logging
+from sqlalchemy.orm import exc as sqla_exc
 
 from neutron.db.models.plugins.ml2 import geneveallocation
 from neutron.db.models.plugins.ml2 import vxlanallocation
 from neutron.objects import network as network_obj
 from neutron.objects import ports as port_obj
 from neutron.objects import trunk as trunk_obj
+
+
+LOG = logging.getLogger(__name__)
 
 VIF_DETAILS_TO_REMOVE = (
     pb_api.OVS_HYBRID_PLUG,
@@ -54,37 +59,72 @@ def migrate_neutron_database_to_ovn(plugin):
                 vxlanallocation.VxlanAllocation.vxlan_vni ==
                 segment.segmentation_id).update({"allocated": False})
 
-        port_bindings = port_obj.PortBinding.get_objects(
+    # Update ``PortBinding`` objects.
+    pb_updated = set([])
+    pb_missed = set([])
+    while True:
+        pb_current = port_obj.PortBinding.get_port_id_and_host(
             ctx, vif_type='ovs', vnic_type='normal', status='ACTIVE')
-        for pb in port_bindings:
-            if not pb.vif_details:
-                continue
-            vif_details = pb.vif_details.copy()
-            for detail in VIF_DETAILS_TO_REMOVE:
-                try:
-                    del vif_details[detail]
-                except KeyError:
-                    pass
-            if vif_details != pb.vif_details:
+        diff = set(pb_current).difference(pb_updated)
+        if not diff:
+            break
+
+        for port_id, host in diff:
+            with db_api.CONTEXT_WRITER.using(ctx):
+                pb = port_obj.PortBinding.get_object(ctx, port_id=port_id,
+                                                     host=host)
+                if not pb or not pb.vif_details:
+                    continue
+
+                vif_details = pb.vif_details.copy()
+                for detail in VIF_DETAILS_TO_REMOVE:
+                    try:
+                        del vif_details[detail]
+                    except KeyError:
+                        pass
+                if vif_details == pb.vif_details:
+                    continue
+
                 pb.vif_details = vif_details
                 try:
                     pb.update()
-                except exceptions.ObjectNotFound:
-                    # When Neutron server is running, it could happen that
-                    # for example gateway port has been rescheduled to a
-                    # different gateway chassis.
-                    pass
+                except (exceptions.ObjectNotFound, sqla_exc.StaleDataError):
+                    # The PortBinding register has been already modified.
+                    pb_missed.add(port_id)
 
-        for trunk in trunk_obj.Trunk.get_objects(ctx):
-            for subport in trunk.sub_ports:
-                pbs = port_obj.PortBinding.get_objects(
-                    ctx, port_id=subport.port_id)
-                for pb in pbs:
-                    profile = {}
-                    if pb.profile:
-                        profile = pb.profile.copy()
-                    profile['parent_name'] = trunk.port_id
-                    profile['tag'] = subport.segmentation_id
-                    if profile != pb.profile:
+        pb_updated.update(diff)
+
+    if pb_missed:
+        LOG.warning('The following ports did not update their port binding '
+                    'records: %s', ', '.join(pb_missed))
+
+    # Update ``Trunk`` objects.
+    trunk_updated = set([])
+    while True:
+        trunk_current = trunk_obj.Trunk.get_trunk_ids(ctx)
+        diff = set(trunk_current).difference(trunk_updated)
+        if not diff:
+            break
+
+        for trunk_id in diff:
+            with db_api.CONTEXT_WRITER.using(ctx):
+                trunk = trunk_obj.Trunk.get_object(ctx, id=trunk_id)
+                if not trunk:
+                    continue
+
+                for subport in trunk.sub_ports:
+                    pbs = port_obj.PortBinding.get_objects(
+                        ctx, port_id=subport.port_id)
+                    for pb in pbs:
+                        profile = {}
+                        if pb.profile:
+                            profile = pb.profile.copy()
+                        profile['parent_name'] = trunk.port_id
+                        profile['tag'] = subport.segmentation_id
+                        if profile == pb.profile:
+                            continue
+
                         pb.profile = profile
                         pb.update()
+
+        trunk_updated.update(diff)

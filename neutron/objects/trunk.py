@@ -131,3 +131,15 @@ class Trunk(base.NeutronDbObject):
         _dict = super(Trunk, self).to_dict()
         resource_extend.apply_funcs(trunk_def.TRUNKS, _dict, self.db_obj)
         return _dict
+
+    @classmethod
+    def get_trunk_ids(cls, context):
+        """Returns only the trunk IDs.
+
+        This method returns only the primary key ID, reducing the query
+        complexity and increasing the retrieval speed.
+        This query does not check the "Trunk" owner or RBACs.
+        """
+        with cls.db_context_reader(context):
+            return [_id[0] for _id in
+                    context.session.query(cls.db_model.id).all()]
