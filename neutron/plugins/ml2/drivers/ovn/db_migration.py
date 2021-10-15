@@ -31,8 +31,7 @@ LOG = logging.getLogger(__name__)
 
 VIF_DETAILS_TO_REMOVE = (
     pb_api.OVS_HYBRID_PLUG,
-    pb_api.VIF_DETAILS_BRIDGE_NAME,
-    pb_api.VIF_DETAILS_CONNECTIVITY)
+    pb_api.VIF_DETAILS_BRIDGE_NAME)
 
 
 def migrate_neutron_database_to_ovn(plugin):
