@@ -34,6 +34,7 @@ from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import availability_zone as az_exc
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
+from oslo_concurrency import processutils
 from oslo_config import cfg
 from oslo_db import exception as os_db_exc
 from oslo_log import log
@@ -1099,10 +1100,18 @@ class OVNMechanismDriver(api.MechanismDriver):
 
     def delete_mac_binding_entries(self, external_ip):
         """Delete all MAC_Binding entries associated to this IP address"""
-        mac_binds = self.sb_ovn.db_find_rows(
-            'MAC_Binding', ('ip', '=', external_ip)).execute() or []
-        for entry in mac_binds:
-            self.sb_ovn.db_destroy('MAC_Binding', entry.uuid).execute()
+        cmd = ['ovsdb-client', 'transact', ovn_conf.get_ovn_sb_connection()]
+
+        if ovn_conf.get_ovn_sb_private_key():
+            cmd += ['-p', ovn_conf.get_ovn_sb_private_key(), '-c',
+                    ovn_conf.get_ovn_sb_certificate(), '-C',
+                    ovn_conf.get_ovn_sb_ca_cert()]
+
+        cmd += ['["OVN_Southbound", {"op": "delete", "table": "MAC_Binding", '
+                '"where": [["ip", "==", "%s"]]}]' % external_ip]
+
+        return processutils.execute(*cmd,
+                                    log_errors=processutils.LOG_FINAL_ERROR)
 
     def update_segment_host_mapping(self, host, phy_nets):
         """Update SegmentHostMapping in DB"""
