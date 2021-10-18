@@ -314,6 +314,12 @@
         s-proxy: false
 
 - job:
+    name: neutron-ovs-tempest-with-neutron-lib-master
+    parent: neutron-ovs-tempest-base
+    required-projects:
+      - openstack/neutron-lib
+
+- job:
     name: neutron-ovn-tempest-with-uwsgi
     parent: tempest-integrated-networking
     description: Run neutron Tempest tests with uwsgi
