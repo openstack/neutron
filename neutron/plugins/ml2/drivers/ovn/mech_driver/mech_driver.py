@@ -362,6 +362,8 @@ class OVNMechanismDriver(api.MechanismDriver):
                                 get_availability_zones)
         self.patch_plugin_choose("validate_availability_zones",
                                  validate_availability_zones)
+        self.patch_plugin_choose("get_network_availability_zones",
+                                 get_network_availability_zones)
 
         # Now IDL connections can be safely used.
         self._post_fork_event.set()
@@ -1312,3 +1314,13 @@ def validate_availability_zones(cls, context, resource_type,
     if diff:
         raise az_exc.AvailabilityZoneNotFound(
             availability_zone=', '.join(diff))
+
+
+def get_network_availability_zones(cls, network, _driver):
+    lswitch = _driver._nb_ovn.get_lswitch(network['id'])
+    if not lswitch:
+        return []
+
+    return [az.strip() for az in lswitch.external_ids.get(
+        ovn_const.OVN_AZ_HINTS_EXT_ID_KEY, '').split(',')
+            if az.strip()]
