@@ -201,3 +201,13 @@ class TestChecks(base.BaseTestCase):
                 mock_port_mac_addresses.return_value = mac_addresses
                 result = checks.CoreChecks.port_mac_address_sanity(mock.ANY)
                 self.assertEqual(returned_code, result.code)
+
+    def test_networksegments_unique_constraint_check(self):
+        cases = ([0, Code.SUCCESS], [1, Code.WARNING])
+        with mock.patch.object(
+                checks, 'get_duplicate_network_segment_count') as mock_count:
+            for count, returned_code in cases:
+                mock_count.return_value = count
+                result = checks.CoreChecks.\
+                    networksegments_unique_constraint_check(mock.ANY)
+                self.assertEqual(returned_code, result.code)

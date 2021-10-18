@@ -20,12 +20,14 @@ from oslo_config import cfg
 from oslo_serialization import jsonutils
 from oslo_upgradecheck import common_checks
 from oslo_upgradecheck import upgradecheck
+from sqlalchemy import func
 from sqlalchemy import or_
 
 from neutron._i18n import _
 from neutron.cmd.upgrade_checks import base
 from neutron.db.models import agent as agent_model
 from neutron.db.models.plugins.ml2 import vlanallocation
+from neutron.db.models import segment
 from neutron.db import models_v2
 
 
@@ -90,6 +92,20 @@ def port_mac_addresses():
             ctx.session.query(models_v2.Port.mac_address).all()]
 
 
+def get_duplicate_network_segment_count():
+    ctx = context.get_admin_context()
+    query = ctx.session.query(segment.NetworkSegment.network_id)
+    # for a unique constraint it's always NULL != NULL --> we filter them out
+    query = query.filter(segment.NetworkSegment.physical_network.isnot(None))
+    query = query.group_by(
+        segment.NetworkSegment.network_id,
+        segment.NetworkSegment.network_type,
+        segment.NetworkSegment.physical_network
+    )
+    query = query.having(func.count() > 1)
+    return query.count()
+
+
 class CoreChecks(base.BaseChecks):
 
     def get_checks(self):
@@ -109,6 +125,8 @@ class CoreChecks(base.BaseChecks):
              (common_checks.check_policy_json, {'conf': cfg.CONF})),
             (_('Port MAC address sanity check'),
              self.port_mac_address_sanity),
+            (_('NetworkSegments unique constraint check'),
+             self.networksegments_unique_constraint_check),
         ]
 
     @staticmethod
@@ -319,3 +337,31 @@ class CoreChecks(base.BaseChecks):
             upgradecheck.Code.SUCCESS,
             _("All port MAC addresses are correctly formated in the "
               "database."))
+
+    @staticmethod
+    def networksegments_unique_constraint_check(checker):
+        """Checks that there are no duplicate networksegments
+
+        No two networksegments should never share the same network_id,
+        network_type and physical_network. Two NULL values are not regarded
+        as equal for a unique constraint, so networksegments with NULL as
+        physical_network are ignored by this check.
+        """
+        if not cfg.CONF.database.connection:
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _("Database connection string is not set. Check for port MAC "
+                  "sanity can't be done."))
+
+        count = get_duplicate_network_segment_count()
+        if count:
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _("There are %d instances of networksegments sharing the same "
+                  "combination of network_id, network_type and "
+                  "physical_network.") % count)
+
+        return upgradecheck.Result(
+            upgradecheck.Code.SUCCESS,
+            _("No networksegments sharing the same network_id, network_type "
+              "and physical_network found."))

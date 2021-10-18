@@ -53,6 +53,16 @@ class NetworkSegment(standard_attr.HasStandardAttributes,
                                                    cascade='delete'))
     api_collections = [segment.SEGMENTS]
 
+    __table_args__ = (
+        sa.UniqueConstraint(
+            network_id,
+            network_type,
+            physical_network,
+            name='uniq_networksegment0network_id0'
+                 'network_type0physical_network'),
+        model_base.BASEV2.__table_args__
+    )
+
 
 class SegmentHostMapping(model_base.BASEV2):
 

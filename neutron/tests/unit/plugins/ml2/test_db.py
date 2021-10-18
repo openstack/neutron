@@ -113,7 +113,7 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
                     api.PHYSICAL_NETWORK: 'physnet1',
                     api.SEGMENTATION_ID: 1},
                     {api.NETWORK_TYPE: 'vlan',
-                     api.PHYSICAL_NETWORK: 'physnet1',
+                     api.PHYSICAL_NETWORK: 'physnet2',
                      api.SEGMENTATION_ID: 2}]
         self._create_segments(segments)
 
@@ -124,13 +124,13 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
                       api.PHYSICAL_NETWORK: 'physnet1',
                       api.SEGMENTATION_ID: 1},
                      {api.NETWORK_TYPE: 'vlan',
-                      api.PHYSICAL_NETWORK: 'physnet1',
+                      api.PHYSICAL_NETWORK: 'physnet2',
                       api.SEGMENTATION_ID: 2}]
         segments2 = [{api.NETWORK_TYPE: 'vlan',
                       api.PHYSICAL_NETWORK: 'physnet1',
                       api.SEGMENTATION_ID: 3},
                      {api.NETWORK_TYPE: 'vlan',
-                      api.PHYSICAL_NETWORK: 'physnet1',
+                      api.PHYSICAL_NETWORK: 'physnet2',
                       api.SEGMENTATION_ID: 4}]
         net1segs = self._create_segments(segments1, network_id=net_id1)
         net2segs = self._create_segments(segments2, network_id=net_id2)

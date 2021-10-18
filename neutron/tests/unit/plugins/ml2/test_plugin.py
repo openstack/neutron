@@ -150,13 +150,17 @@ class Ml2PluginV2TestCase(test_plugin.NeutronDbPluginV2TestCase):
                               self._mechanism_drivers,
                               group='ml2')
         self.physnet = 'physnet1'
+        self.physnet2 = 'physnet2'
+        self.physnet3 = 'physnet3'
         self.vlan_range = '1:100'
         self.vlan_range2 = '200:300'
-        self.physnet2 = 'physnet2'
+        self.vlan_range3 = '400:500'
         self.phys_vrange = ':'.join([self.physnet, self.vlan_range])
         self.phys2_vrange = ':'.join([self.physnet2, self.vlan_range2])
+        self.phys3_vrange = ':'.join([self.physnet3, self.vlan_range3])
         cfg.CONF.set_override('network_vlan_ranges',
-                              [self.phys_vrange, self.phys2_vrange],
+                              [self.phys_vrange, self.phys2_vrange,
+                               self.phys3_vrange],
                               group='ml2_type_vlan')
         self.setup_parent()
         self.driver = directory.get_plugin()
@@ -223,7 +227,7 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
         self.mp_nets = [{'name': 'net4',
                          mpnet_apidef.SEGMENTS:
                              [{pnet.NETWORK_TYPE: 'vlan',
-                               pnet.PHYSICAL_NETWORK: 'physnet2',
+                               pnet.PHYSICAL_NETWORK: 'physnet3',
                                pnet.SEGMENTATION_ID: 1},
                               {pnet.NETWORK_TYPE: 'vlan',
                                pnet.PHYSICAL_NETWORK: 'physnet2',
@@ -481,7 +485,7 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
                      pnet.PHYSICAL_NETWORK: 'physnet1',
                      pnet.SEGMENTATION_ID: 1},
                     {pnet.NETWORK_TYPE: 'vlan',
-                     pnet.PHYSICAL_NETWORK: 'physnet1',
+                     pnet.PHYSICAL_NETWORK: 'physnet2',
                      pnet.SEGMENTATION_ID: 2}]
         with self.network(**{'arg_list': (mpnet_apidef.SEGMENTS, ),
                              mpnet_apidef.SEGMENTS: segments}) as net:
@@ -2677,6 +2681,61 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         dynamic_segmentation2_id = dynamic_segment2[driver_api.SEGMENTATION_ID]
         self.assertNotEqual(dynamic_segmentation_id, dynamic_segmentation2_id)
 
+    def test_allocate_dynamic_segments_race_condition(self):
+        # create same segment two times, make sure the same segment comes back
+        physnet_name = 'physnet1'
+        segment = {driver_api.NETWORK_TYPE: 'vlan',
+                   driver_api.PHYSICAL_NETWORK: physnet_name}
+
+        data = {'network': {'name': 'net1',
+                            'tenant_id': 'tenant_one'}}
+        network_req = self.new_create_request('networks', data)
+        network = self.deserialize(self.fmt,
+                                   network_req.get_response(self.api))
+        segment = {driver_api.NETWORK_TYPE: 'vlan',
+                   driver_api.PHYSICAL_NETWORK: physnet_name}
+        network_id = network['network']['id']
+
+        # create first segment
+        seg1 = self.driver.type_manager.allocate_dynamic_segment(
+            self.context, network_id, segment)
+
+        # create same segment but make sure it is not found on first try
+        # thus simulating a race condition between two creates
+        orig_get_dynamic_segment = segments_db.get_dynamic_segment
+
+        def return_none_on_first_call(*args, **kwargs):
+            if not return_none_on_first_call.called:
+                return_none_on_first_call.called = True
+                return
+            return orig_get_dynamic_segment(*args, **kwargs)
+        return_none_on_first_call.called = False
+
+        with mock.patch('neutron.db.segments_db.get_dynamic_segment',
+                        wraps=return_none_on_first_call):
+            seg2 = self.driver.type_manager.allocate_dynamic_segment(
+                self.context, network_id, segment)
+
+        self.assertEqual('vlan', seg1[driver_api.NETWORK_TYPE])
+        self.assertEqual(physnet_name,
+                         seg1[driver_api.PHYSICAL_NETWORK])
+
+        # make sure we got the same segment
+        self.assertEqual(seg1[driver_api.PHYSICAL_NETWORK],
+                         seg2[driver_api.PHYSICAL_NETWORK])
+        self.assertEqual(seg1[driver_api.ID],
+                         seg2[driver_api.ID])
+        self.assertEqual(seg1[driver_api.SEGMENTATION_ID],
+                         seg2[driver_api.SEGMENTATION_ID])
+
+        # make sure that there is only one vlan allocated to our segment
+        vlan_typedriver = self.driver.type_manager.drivers['vlan']
+        seg_obj = vlan_typedriver.obj.segmentation_obj
+        all_allocs = seg_obj.get_objects(self.context)
+        allocs = [obj for obj in all_allocs
+                  if obj.allocated and obj.physical_network == physnet_name]
+        self.assertEqual(1, len(allocs))
+
     def test_allocate_release_dynamic_segment(self):
         data = {'network': {'name': 'net1',
                             'tenant_id': 'tenant_one'}}
@@ -2787,7 +2846,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
                               pnet.PHYSICAL_NETWORK: 'physnet1',
                               pnet.SEGMENTATION_ID: 1},
                              {pnet.NETWORK_TYPE: 'vlan',
-                              pnet.PHYSICAL_NETWORK: 'physnet1',
+                              pnet.PHYSICAL_NETWORK: 'physnet2',
                               pnet.SEGMENTATION_ID: 2}],
                             'tenant_id': 'tenant_one'}}
         network_req = self.new_create_request('networks', data)
@@ -2841,7 +2900,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         res = network_req.get_response(self.api)
         self.assertEqual(400, res.status_int)
 
-    def test_create_network_duplicate_partial_segments(self):
+    def test_create_network_duplicate_partial_segments_fail(self):
         data = {'network': {'name': 'net1',
                             mpnet_apidef.SEGMENTS:
                             [{pnet.NETWORK_TYPE: 'vlan',
@@ -2849,9 +2908,11 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
                              {pnet.NETWORK_TYPE: 'vlan',
                               pnet.PHYSICAL_NETWORK: 'physnet1'}],
                             'tenant_id': 'tenant_one'}}
+        retry_fixture = fixture.DBRetryErrorsFixture(max_retries=2)
+        retry_fixture.setUp()
         network_req = self.new_create_request('networks', data)
         res = network_req.get_response(self.api)
-        self.assertEqual(201, res.status_int)
+        self.assertEqual(409, res.status_int)
 
     def test_release_network_segments(self):
         data = {'network': {'name': 'net1',
@@ -3488,10 +3549,10 @@ class TestML2Segments(Ml2PluginV2TestCase):
                 driver_api.PHYSICAL_NETWORK: self.physnet,
                 driver_api.SEGMENTATION_ID: 1000}
         seg2 = {driver_api.NETWORK_TYPE: 'vlan',
-                driver_api.PHYSICAL_NETWORK: self.physnet,
+                driver_api.PHYSICAL_NETWORK: self.physnet2,
                 driver_api.SEGMENTATION_ID: 1001}
         seg3 = {driver_api.NETWORK_TYPE: 'vlan',
-                driver_api.PHYSICAL_NETWORK: self.physnet,
+                driver_api.PHYSICAL_NETWORK: self.physnet3,
                 driver_api.SEGMENTATION_ID: 1002}
         with self.network() as network:
             network = network['network']

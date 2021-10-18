@@ -340,6 +340,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
             LOG.error("Failed to release segment '%s' because "
                       "network type is not supported.", segment)
 
+    @db_api.retry_if_session_inactive()
     def allocate_dynamic_segment(self, context, network_id, segment):
         """Allocate a dynamic segment using a partial or full segment dict."""
         dynamic_segment = segments_db.get_dynamic_segment(
@@ -349,31 +350,35 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         if dynamic_segment:
             return dynamic_segment
 
-        driver = self.drivers.get(segment.get(api.NETWORK_TYPE))
-        if isinstance(driver.obj, api.TypeDriver):
-            dynamic_segment = driver.obj.reserve_provider_segment(
-                context.session, segment)
-        else:
-            dynamic_segment = driver.obj.reserve_provider_segment(
-                context, segment)
-        segments_db.add_network_segment(context, network_id, dynamic_segment,
-                                        is_dynamic=True)
+        with db_api.CONTEXT_WRITER.using(context):
+            driver = self.drivers.get(segment.get(api.NETWORK_TYPE))
+            if isinstance(driver.obj, api.TypeDriver):
+                dynamic_segment = driver.obj.reserve_provider_segment(
+                    context.session, segment)
+            else:
+                dynamic_segment = driver.obj.reserve_provider_segment(
+                    context, segment)
+            segments_db.add_network_segment(context, network_id,
+                                            dynamic_segment,
+                                            is_dynamic=True)
         return dynamic_segment
 
+    @db_api.retry_if_session_inactive()
     def release_dynamic_segment(self, context, segment_id):
         """Delete a dynamic segment."""
         segment = segments_db.get_segment_by_id(context, segment_id)
         if segment:
-            driver = self.drivers.get(segment.get(api.NETWORK_TYPE))
-            if driver:
-                if isinstance(driver.obj, api.TypeDriver):
-                    driver.obj.release_segment(context.session, segment)
+            with db_api.CONTEXT_WRITER.using(context):
+                driver = self.drivers.get(segment.get(api.NETWORK_TYPE))
+                if driver:
+                    if isinstance(driver.obj, api.TypeDriver):
+                        driver.obj.release_segment(context.session, segment)
+                    else:
+                        driver.obj.release_segment(context, segment)
+                    segments_db.delete_network_segment(context, segment_id)
                 else:
-                    driver.obj.release_segment(context, segment)
-                segments_db.delete_network_segment(context, segment_id)
-            else:
-                LOG.error("Failed to release segment '%s' because "
-                          "network type is not supported.", segment)
+                    LOG.error("Failed to release segment '%s' because "
+                              "network type is not supported.", segment)
         else:
             LOG.debug("No segment found with id %(segment_id)s", segment_id)
 
