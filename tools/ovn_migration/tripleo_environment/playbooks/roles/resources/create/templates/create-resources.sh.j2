@@ -35,17 +35,17 @@ neutron net-update ovn-migration-net-{{ resource_suffix }} --mtu 1442
 
 openstack subnet create  --network ovn-migration-net-{{ resource_suffix }}  --subnet-range 172.168.199.0/24 ovn-migration-subnet-{{ resource_suffix }}
 
-openstack port create --network ovn-migration-net-{{ resource_suffix }} --security-group ovn-migration-sg-{{ resource_suffix }} ovn-migration-server-port-{{ resource_suffix }}
-
-openstack server create --flavor ovn-migration-{{ resource_suffix }} --image $image_name \
---key-name ovn-migration-{{ resource_suffix }} \
---nic port-id=ovn-migration-server-port-{{ resource_suffix }} ovn-migration-server-{{ resource_suffix }}
-
 openstack router create ovn-migration-router-{{ resource_suffix }}
 
 openstack router set --external-gateway {{ public_network_name }} ovn-migration-router-{{ resource_suffix }}
 
 openstack router add subnet ovn-migration-router-{{ resource_suffix }} ovn-migration-subnet-{{ resource_suffix }}
+
+openstack port create --network ovn-migration-net-{{ resource_suffix }} --security-group ovn-migration-sg-{{ resource_suffix }} ovn-migration-server-port-{{ resource_suffix }}
+
+openstack server create --flavor ovn-migration-{{ resource_suffix }} --image $image_name \
+--key-name ovn-migration-{{ resource_suffix }} \
+--nic port-id=ovn-migration-server-port-{{ resource_suffix }} ovn-migration-server-{{ resource_suffix }}
 
 server_ip=`openstack floating ip create --port ovn-migration-server-port-{{ resource_suffix }} \
 {{ public_network_name }} -c floating_ip_address | grep floating_ip_address \
