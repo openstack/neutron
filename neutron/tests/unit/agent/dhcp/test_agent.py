@@ -1245,7 +1245,8 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                                         subnets=[fake_subnet1, fake_subnet3],
                                         ports=[fake_port1]))
 
-        payload = dict(subnet_id=fake_subnet1.id, priority=FAKE_PRIORITY)
+        payload = {'subnet_id': fake_subnet1.id, 'priority': FAKE_PRIORITY,
+                   'network_id': fake_network.id}
         self.cache.get_network_by_subnet_id.return_value = prev_state
         self.cache.get_network_by_id.return_value = prev_state
         self.plugin.get_network_info.return_value = fake_network
@@ -1254,8 +1255,6 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.dhcp._process_resource_update()
 
         self.cache.assert_has_calls([
-            mock.call.get_network_by_subnet_id(
-                'bbbbbbbb-bbbb-bbbb-bbbbbbbbbbbb'),
             mock.call.get_network_by_subnet_id(
                 'bbbbbbbb-bbbb-bbbb-bbbbbbbbbbbb'),
             mock.call.get_network_by_id('12345678-1234-5678-1234567890ab'),
@@ -1415,7 +1414,8 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             [mock.call.call_driver('reload_allocations', fake_network)])
 
     def test_port_delete_end_no_network_id(self):
-        payload = dict(port_id=fake_port2.id, priority=FAKE_PRIORITY)
+        payload = {'port_id': fake_port2.id, 'priority': FAKE_PRIORITY,
+                   'network_id': fake_network.id}
         self.cache.get_network_by_id.return_value = fake_network
         self.cache.get_port_by_id.return_value = fake_port2
 
@@ -1425,7 +1425,6 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             self.dhcp._process_resource_update()
             self.cache.assert_has_calls(
                 [mock.call.get_port_by_id(fake_port2.id),
-                 mock.call.get_port_by_id(fake_port2.id),
                  mock.call.add_to_deleted_ports(fake_port2.id),
                  mock.call.get_network_by_id(fake_network.id),
                  mock.call.remove_port(fake_port2)])
