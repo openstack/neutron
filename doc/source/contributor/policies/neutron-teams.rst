@@ -139,7 +139,7 @@ updating the core review team for the sub-project's repositories.
 +-------------------------+-----------------------------+-------------------+
 | ovsdbapp                | Terry Wilson                | otherwiseguy      |
 +-------------------------+-----------------------------+-------------------+
-| os-ken                  | None                        | N/A               |
+| os-ken                  | Rodolfo Alonso              | ralonsoh          |
 +-------------------------+-----------------------------+-------------------+
 
 Existing Core Reviewers
