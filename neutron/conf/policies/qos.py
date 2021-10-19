@@ -556,6 +556,39 @@ rules = [
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
+    policy.DocumentedRuleDefault(
+        name='get_alias_minimum_packet_rate_rule',
+        check_str='rule:get_policy_minimum_packet_rate_rule',
+        description='Get a QoS minimum packet rate rule through alias',
+        operations=[
+            {
+                'method': 'GET',
+                'path': '/qos/alias_minimum_packet_rate_rules/{rule_id}/',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_alias_minimum_packet_rate_rule',
+        check_str='rule:update_policy_minimum_packet_rate_rule',
+        description='Update a QoS minimum packet rate rule through alias',
+        operations=[
+            {
+                'method': 'PUT',
+                'path': '/qos/alias_minimum_packet_rate_rules/{rule_id}/',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        name='delete_alias_minimum_packet_rate_rule',
+        check_str='rule:delete_policy_minimum_packet_rate_rule',
+        description='Delete a QoS minimum packet rate rule through alias',
+        operations=[
+            {
+                'method': 'DELETE',
+                'path': '/qos/alias_minimum_packet_rate_rules/{rule_id}/',
+            },
+        ]
+    ),
 ]
 
 

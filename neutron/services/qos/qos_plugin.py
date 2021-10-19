@@ -28,6 +28,7 @@ from neutron_lib.api.definitions import qos_bw_minimum_ingress
 from neutron_lib.api.definitions import qos_default
 from neutron_lib.api.definitions import qos_port_network_policy
 from neutron_lib.api.definitions import qos_pps_minimum_rule
+from neutron_lib.api.definitions import qos_pps_minimum_rule_alias
 from neutron_lib.api.definitions import qos_pps_rule
 from neutron_lib.api.definitions import qos_rule_type_details
 from neutron_lib.api.definitions import qos_rules_alias
@@ -132,6 +133,7 @@ class QoSPlugin(qos.QoSPluginBase):
         qos_port_network_policy.ALIAS,
         qos_pps_rule.ALIAS,
         qos_pps_minimum_rule.ALIAS,
+        qos_pps_minimum_rule_alias.ALIAS,
     ]
 
     __native_pagination_support = True
