@@ -543,7 +543,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                         ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: ''}
         self.l3_inst._ovn.create_lrouter.assert_called_once_with(
             'neutron-router-id', external_ids=external_ids,
-            enabled=True, options={})
+            enabled=True, options={'always_learn_from_arp_request': 'false',
+                                   'dynamic_neigh_routers': 'true'})
         self.l3_inst._ovn.add_lrouter_port.assert_called_once_with(
             **self.fake_ext_gw_port_assert)
         expected_calls = [

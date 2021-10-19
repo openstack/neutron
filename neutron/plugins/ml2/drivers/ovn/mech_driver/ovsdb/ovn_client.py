@@ -1223,11 +1223,13 @@ class OVNClient(object):
         enabled = router.get('admin_state_up')
         lrouter_name = utils.ovn_name(router['id'])
         added_gw_port = None
+        options = {'always_learn_from_arp_request': 'false',
+                   'dynamic_neigh_routers': 'true'}
         with self._nb_idl.transaction(check_error=True) as txn:
             txn.add(self._nb_idl.create_lrouter(lrouter_name,
                                                 external_ids=external_ids,
                                                 enabled=enabled,
-                                                options={}))
+                                                options=options))
             # TODO(lucasagomes): add_external_gateway is being only used
             # by the ovn_db_sync.py script, remove it after the database
             # synchronization work
