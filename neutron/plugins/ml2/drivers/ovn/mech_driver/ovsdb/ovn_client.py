@@ -564,6 +564,16 @@ class OVNClient(object):
             else:
                 dhcpv6_options = [port_info.dhcpv6_options['uuid']]
 
+            if self.is_metadata_port(port):
+                context = n_context.get_admin_context()
+                network = self._plugin.get_network(context, port['network_id'])
+                subnet_ids = set(_ip['subnet_id'] for _ip in port['fixed_ips'])
+                for subnet_id in subnet_ids:
+                    subnet = self._plugin.get_subnet(context, subnet_id)
+                    if not subnet['enable_dhcp']:
+                        continue
+                    self._update_subnet_dhcp_options(subnet, network, txn)
+
             # NOTE(mjozefcz): Do not set addresses if the port is not
             # bound, has no device_owner and it is OVN LB VIP port.
             # For more details check related bug #1789686.
@@ -2045,10 +2055,14 @@ class OVNClient(object):
 
     def create_subnet(self, context, subnet, network):
         if subnet['enable_dhcp']:
+            mport_updated = False
             if subnet['ip_version'] == const.IP_VERSION_4:
-                self.update_metadata_port(context, network['id'],
-                                          subnet_id=subnet['id'])
-            self._add_subnet_dhcp_options(subnet, network)
+                mport_updated = self.update_metadata_port(
+                    context, network['id'], subnet=subnet)
+            if subnet['ip_version'] == const.IP_VERSION_6 or not mport_updated:
+                # NOTE(ralonsoh): if IPv4 but the metadata port has not been
+                # updated, the DHPC options register has not been created.
+                self._add_subnet_dhcp_options(subnet, network)
         db_rev.bump_revision(context, subnet, ovn_const.TYPE_SUBNETS)
 
     def _modify_subnet_dhcp_options(self, subnet, ovn_subnet, network, txn):
@@ -2064,8 +2078,7 @@ class OVNClient(object):
             subnet['id'])['subnet']
 
         if subnet['enable_dhcp'] or ovn_subnet:
-            self.update_metadata_port(context, network['id'],
-                                      subnet_id=subnet['id'])
+            self.update_metadata_port(context, network['id'], subnet=subnet)
 
         check_rev_cmd = self._nb_idl.check_revision_number(
             subnet['id'], subnet, ovn_const.TYPE_SUBNETS)
@@ -2133,6 +2146,15 @@ class OVNClient(object):
         db_rev.delete_revision(
             context, rule['id'], ovn_const.TYPE_SECURITY_GROUP_RULES)
 
+    @staticmethod
+    def is_metadata_port(port):
+        # TODO(ralonsoh): This method is implemented in order to be backported
+        # to stable releases; this is why a "const.DEVICE_OWNER_DHCP" port
+        # could be a metadata port.
+        return (port['device_owner'] == const.DEVICE_OWNER_DISTRIBUTED or
+                (port['device_owner'] == const.DEVICE_OWNER_DHCP and
+                 not utils.is_neutron_dhcp_agent_port(port)))
+
     def _find_metadata_port(self, context, network_id):
         if not ovn_conf.is_ovn_metadata_enabled():
             return
@@ -2176,11 +2198,13 @@ class OVNClient(object):
                 # TODO(boden): rehome create_port into neutron-lib
                 p_utils.create_port(self._plugin, context, port)
 
-    def update_metadata_port(self, context, network_id, subnet_id=None):
+    def update_metadata_port(self, context, network_id, subnet=None):
         """Update metadata port.
 
         This function will allocate an IP address for the metadata port of
-        the given network in all its IPv4 subnets or the given subnet.
+        the given network in all its IPv4 subnets or the given subnet. Returns
+        "True" if the metadata port has been updated and "False" if OVN
+        metadata is disabled or the metadata port does not exist.
         """
         def update_metadata_port_fixed_ips(metadata_port, add_subnet_ids,
                                            del_subnet_ids):
@@ -2198,14 +2222,14 @@ class OVNClient(object):
                                      metadata_port['id'], port)
 
         if not ovn_conf.is_ovn_metadata_enabled():
-            return
+            return False
 
         # Retrieve the metadata port of this network
         metadata_port = self._find_metadata_port(context, network_id)
         if not metadata_port:
             LOG.error("Metadata port couldn't be found for network %s",
                       network_id)
-            return
+            return False
 
         port_subnet_ids = set(ip['subnet_id'] for ip in
                               metadata_port['fixed_ips'])
@@ -2213,10 +2237,14 @@ class OVNClient(object):
         # If this method is called from "create_subnet" or "update_subnet",
         # only the fixed IP address from this subnet should be updated in the
         # metadata port.
-        if subnet_id:
-            if subnet_id not in port_subnet_ids:
-                update_metadata_port_fixed_ips(metadata_port, [subnet_id], [])
-            return
+        if subnet and subnet['id']:
+            if subnet['enable_dhcp'] and subnet['id'] not in port_subnet_ids:
+                update_metadata_port_fixed_ips(metadata_port,
+                                               [subnet['id']], [])
+            elif not subnet['enable_dhcp'] and subnet['id'] in port_subnet_ids:
+                update_metadata_port_fixed_ips(metadata_port,
+                                               [], [subnet['id']])
+            return True
 
         # Retrieve all subnets in this network
         subnets = self._plugin.get_subnets(context, filters=dict(
@@ -2231,6 +2259,8 @@ class OVNClient(object):
             update_metadata_port_fixed_ips(metadata_port,
                                            subnet_ids - port_subnet_ids,
                                            port_subnet_ids - subnet_ids)
+
+        return True
 
     def get_parent_port(self, port_id):
         return self._nb_idl.get_parent_port(port_id)
