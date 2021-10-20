@@ -504,7 +504,6 @@ class TestQosPlugin(base.BaseQosTestCase):
         tenant_policy = {
             'policy': {'id': policy_id,
                        'project_id': project_id,
-                       'tenant_id': project_id,
                        'name': 'test-policy',
                        'description': 'Test policy description',
                        'shared': True,
