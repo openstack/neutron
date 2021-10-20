@@ -18,6 +18,7 @@ from neutron_lib.api.definitions import agent_resources_synced
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
+from neutron_lib import constants as n_const
 from neutron_lib.placement import client as place_client
 from neutron_lib.plugins import directory
 from neutron_lib.services import base as service_base
@@ -130,6 +131,17 @@ class PlacementReportPlugin(service_base.ServicePluginBase):
                 'resource_provider_bandwidths'],
             rp_inventory_defaults=configurations[
                 'resource_provider_inventory_defaults'],
+            # RP_PP_WITHOUT_DIRECTION and RP_PP_WITH_DIRECTION are mutually
+            # exclusive options. Use the one that was provided or fallback to
+            # an empty dict.
+            rp_pkt_processing=(
+                configurations[n_const.RP_PP_WITHOUT_DIRECTION]
+                if configurations.get(
+                    n_const.RP_PP_WITHOUT_DIRECTION)
+                else configurations.get(
+                    n_const.RP_PP_WITH_DIRECTION, {})),
+            rp_pkt_processing_inventory_defaults=configurations.get(
+                n_const.RP_PP_INVENTORY_DEFAULTS, {}),
             driver_uuid_namespace=uuid_ns,
             agent_type=agent['agent_type'],
             hypervisor_rps=hypervisor_rps,
