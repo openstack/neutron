@@ -76,7 +76,7 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
         self.metering_loop.start(interval=measure_interval)
         self.host = host
 
-        self.label_tenant_id = {}
+        self.label_project_id = {}
         self.routers = {}
         self.metering_infos = {}
         self.metering_labels = {}
@@ -123,7 +123,7 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
             self.set_project_id_for_granular_traffic_data(data, key)
         else:
             data['label_id'] = key
-            data['tenant_id'] = self.label_tenant_id.get(key)
+            data['project_id'] = self.label_project_id.get(key)
 
         LOG.debug("Metering notification created [%s] with info data [%s], "
                   "key[%s], and metering_labels configured [%s]. ", data, info,
@@ -150,7 +150,7 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
             if is_label_shared:
                 self.configure_project_id_shared_labels(data, other_ids[:-1])
             else:
-                data['project_id'] = self.label_tenant_id.get(actual_label_id)
+                data['project_id'] = self.label_project_id.get(actual_label_id)
         elif driver.BASE_PROJECT_TRAFFIC_COUNTER_KEY in key:
             data['project_id'] = key.split(
                 driver.BASE_PROJECT_TRAFFIC_COUNTER_KEY)[1]
@@ -177,7 +177,7 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
     def configure_project_id_based_on_router(self, data, router_id):
         if router_id in self.routers:
             router = self.routers[router_id]
-            data['project_id'] = router['tenant_id']
+            data['project_id'] = router['project_id']
         else:
             LOG.warning("Could not find router with ID [%s].", router_id)
 
@@ -208,13 +208,13 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
         return info
 
     def _add_metering_infos(self):
-        self.label_tenant_id = {}
+        self.label_project_id = {}
         for router in self.routers.values():
-            tenant_id = router['tenant_id']
+            project_id = router['project_id']
             labels = router.get(constants.METERING_LABEL_KEY, [])
             for label in labels:
                 label_id = label['id']
-                self.label_tenant_id[label_id] = tenant_id
+                self.label_project_id[label_id] = project_id
 
         LOG.debug("Retrieving traffic counters for routers [%s].",
                   self.routers)

@@ -64,9 +64,9 @@ class MeteringAbstractDriver(object, metaclass=abc.ABCMeta):
             router_id, BASE_ROUTER_TRAFFIC_COUNTER_KEY)
 
     @staticmethod
-    def get_project_traffic_counter_key(tenant_id):
+    def get_project_traffic_counter_key(project_id):
         return MeteringAbstractDriver._concat_base_key_with_id(
-            tenant_id, BASE_PROJECT_TRAFFIC_COUNTER_KEY)
+            project_id, BASE_PROJECT_TRAFFIC_COUNTER_KEY)
 
     @staticmethod
     def get_label_traffic_counter_key(label_id):
