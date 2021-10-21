@@ -61,6 +61,7 @@ from neutron.conf.agent import common as agent_config
 from neutron.conf.agent.l3 import config as l3_config
 from neutron.conf.agent.l3 import ha as ha_conf
 from neutron.conf import common as base_config
+from neutron.privileged.agent.linux import utils as priv_utils
 from neutron.tests import base
 from neutron.tests.common import l3_test_common
 from neutron.tests.unit.agent.linux.test_utils import FakeUser
@@ -101,6 +102,8 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
         self.list_network_namespaces_p = mock.patch(
             'neutron.agent.linux.ip_lib.list_network_namespaces')
         self.list_network_namespaces = self.list_network_namespaces_p.start()
+        self.path_exists_p = mock.patch.object(priv_utils, 'path_exists')
+        self.path_exists = self.path_exists_p.start()
 
         self.ensure_dir = mock.patch(
             'oslo_utils.fileutils.ensure_tree').start()
