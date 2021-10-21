@@ -14,6 +14,7 @@
 #    under the License.
 
 import errno
+from os import path
 import re
 import threading
 import time
@@ -37,6 +38,7 @@ from neutron._i18n import _
 from neutron.agent.common import utils
 from neutron.common import utils as common_utils
 from neutron.privileged.agent.linux import ip_lib as privileged
+from neutron.privileged.agent.linux import utils as priv_utils
 
 LOG = logging.getLogger(__name__)
 
@@ -921,9 +923,16 @@ def network_namespace_exists(namespace, try_is_ready=False, **kwargs):
                          is ready to be operated.
     :param kwargs: Callers add any filters they use as kwargs
     """
+    if not namespace:
+        return False
+
     if not try_is_ready:
-        output = list_network_namespaces(**kwargs)
-        return namespace in output
+        nspath = kwargs.get('nspath') or netns.NETNS_RUN_DIR
+        nspath += '/' + namespace
+        if cfg.CONF.AGENT.use_helper_for_ns_read:
+            return priv_utils.path_exists(nspath)
+        else:
+            return path.exists(nspath)
 
     try:
         privileged.open_namespace(namespace)
