@@ -484,17 +484,21 @@ class L3NATAgent(ha.AgentMixin,
             ri.initialize(self.process_monitor)
         except Exception:
             with excutils.save_and_reraise_exception():
-                del self.router_info[router_id]
                 LOG.exception('Error while initializing router %s',
                               router_id)
-                self.namespaces_manager.ensure_router_cleanup(router_id)
-                try:
-                    ri.delete()
-                except Exception:
-                    LOG.exception('Error while deleting router %s',
-                                  router_id)
+                self._cleanup_failed_router(router_id, delete_router_info=True)
 
         self._resize_process_pool()
+
+    def _cleanup_failed_router(self, router_id, delete_router_info):
+        ri = self.router_info.pop(router_id)
+        self.namespaces_manager.ensure_router_cleanup(router_id)
+        try:
+            if delete_router_info:
+                ri.delete()
+        except Exception:
+            LOG.exception('Error while deleting router %s',
+                          router_id)
 
     def _safe_router_removed(self, router_id):
         """Try to delete a router and return True if successful."""
@@ -624,8 +628,22 @@ class L3NATAgent(ha.AgentMixin,
         self._router_added(router['id'], router)
         ri = self.router_info[router['id']]
         ri.router = router
-        ri.process()
+        try:
+            ri.process()
+        except Exception:
+            with excutils.save_and_reraise_exception():
+                LOG.exception('Error while processing router %s',
+                              router['id'])
+                # NOTE(slaweq): deleting of the router info in the
+                # _cleanup_failed_router is avoided as in case of error,
+                # processing of the router will be retried on next call and
+                # that may lead to some race conditions e.g. with
+                # configuration of the DVR router's FIP gateway
+                self._cleanup_failed_router(router['id'],
+                                            delete_router_info=False)
+
         registry.notify(resources.ROUTER, events.AFTER_CREATE, self, router=ri)
+
         self.l3_ext_manager.add_router(self.context, router)
 
     def _process_updated_router(self, router):
