@@ -2736,6 +2736,23 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_disable_metadata_proxy_spawn(self):
         self._configure_metadata_proxy(enableflag=False)
 
+    def test__process_router_added_router_not_in_cache_after_failure(self):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        router_id = _uuid()
+        router = {'id': router_id}
+        ri_mock = mock.Mock()
+
+        class TestRouterProcessingException(Exception):
+            pass
+
+        with mock.patch.object(agent, "_router_added"), \
+                mock.patch.dict(agent.router_info, {router_id: ri_mock}):
+            ri_mock.process.side_effect = TestRouterProcessingException()
+            self.assertRaises(
+                TestRouterProcessingException,
+                agent._process_added_router, router)
+            self.assertNotIn(router_id, agent.router_info)
+
     def _test_process_routers_update_rpc_timeout(self, ext_net_call=False,
                                                  ext_net_call_failed=False):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
