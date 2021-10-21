@@ -41,13 +41,17 @@ class NeutronAgent(abc.ABC):
         if clear_down:
             self.set_down = False
 
-    @property
-    def chassis(self):
+    @staticmethod
+    def chassis_from_private(chassis_private):
         try:
-            return self.chassis_private.chassis[0]
+            return chassis_private.chassis[0]
         except (AttributeError, IndexError):
             # No Chassis_Private support, just use Chassis
-            return self.chassis_private
+            return chassis_private
+
+    @property
+    def chassis(self):
+        return self.chassis_from_private(self.chassis_private)
 
     def as_dict(self):
         return {
@@ -113,8 +117,9 @@ class ControllerAgent(NeutronAgent):
 
     @staticmethod  # it is by default, but this makes pep8 happy
     def __new__(cls, chassis_private, driver, updated_at=None):
+        external_ids = cls.chassis_from_private(chassis_private).external_ids
         if ('enable-chassis-as-gw' in
-                chassis_private.external_ids.get('ovn-cms-options', [])):
+                external_ids.get('ovn-cms-options', [])):
             cls = ControllerGatewayAgent
         return super().__new__(cls)
 
