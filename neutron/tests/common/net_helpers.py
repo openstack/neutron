@@ -651,8 +651,8 @@ class VethFixture(fixtures.Fixture):
     def destroy(self):
         for port in self.ports:
             ip_wrapper = ip_lib.IPWrapper(port.namespace)
-            if (ip_wrapper.netns.exists(port.namespace) or
-                    port.namespace is None):
+            if (port.namespace is None or
+                    ip_wrapper.netns.exists(port.namespace)):
                 try:
                     ip_wrapper.del_veth(port.name)
                     break
