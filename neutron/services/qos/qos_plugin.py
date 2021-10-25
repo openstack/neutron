@@ -396,10 +396,13 @@ class QoSPlugin(qos.QoSPluginBase):
         context = payload.context
         orig_port = payload.states[0]
         port = payload.latest_state
-        original_policy_id = orig_port.get(qos_consts.QOS_POLICY_ID)
-        if qos_consts.QOS_POLICY_ID not in port:
+        original_policy_id = (orig_port.get(qos_consts.QOS_POLICY_ID) or
+            orig_port.get(qos_consts.QOS_NETWORK_POLICY_ID))
+        if (qos_consts.QOS_POLICY_ID not in port and
+                qos_consts.QOS_NETWORK_POLICY_ID not in port):
             return
-        policy_id = port.get(qos_consts.QOS_POLICY_ID)
+        policy_id = (port.get(qos_consts.QOS_POLICY_ID) or
+            port.get(qos_consts.QOS_NETWORK_POLICY_ID))
 
         if policy_id == original_policy_id:
             return

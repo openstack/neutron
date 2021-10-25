@@ -768,6 +768,7 @@ class TestQosPlugin(base.BaseQosTestCase):
         tenant_policy = {
             'policy': {'id': policy_id,
                        'project_id': project_id,
+                       'tenant_id': project_id,
                        'name': 'test-policy',
                        'description': 'Test policy description',
                        'shared': True,
@@ -2040,7 +2041,7 @@ class TestQosPluginDB(base.BaseQosTestCase):
         return qos_rule
 
     def _make_port(self, network_id, qos_policy_id=None, port_id=None,
-                   device_owner=None):
+                   qos_network_policy_id=None, device_owner=None):
         port_id = port_id if port_id else uuidutils.generate_uuid()
         base_mac = ['aa', 'bb', 'cc', 'dd', 'ee', 'ff']
         mac = netaddr.EUI(next(net_utils.random_mac_generator(base_mac)))
@@ -2048,7 +2049,8 @@ class TestQosPluginDB(base.BaseQosTestCase):
         port = ports_object.Port(
             self.context, network_id=network_id, device_owner=device_owner,
             project_id=self.project_id, admin_state_up=True, status='DOWN',
-            device_id='2', qos_policy_id=qos_policy_id, mac_address=mac,
+            device_id='2', qos_policy_id=qos_policy_id,
+            qos_network_policy_id=qos_network_policy_id, mac_address=mac,
             id=port_id)
         port.create()
         return port
@@ -2133,11 +2135,14 @@ class TestQosPluginDB(base.BaseQosTestCase):
     def test_validate_create_port_callback_no_policy(self):
         self._test_validate_create_port_callback()
 
-    def _prepare_for_port_placement_allocation_change(self, qos1, qos2):
+    def _prepare_for_port_placement_allocation_change(self, qos1, qos2,
+                                                      qos_network_policy=None):
         qos1_id = qos1.id if qos1 else None
         qos2_id = qos2.id if qos2 else None
+        qos_network_policy_id = (
+            qos_network_policy.id if qos_network_policy else None)
 
-        network = self._make_network()
+        network = self._make_network(qos_policy_id=qos_network_policy_id)
         port = self._make_port(
             network.id, qos_policy_id=qos1_id, port_id=TestQosPluginDB.PORT_ID)
 
@@ -2145,7 +2150,8 @@ class TestQosPluginDB(base.BaseQosTestCase):
                 "original_port": {
                       "id": port.id,
                       "device_owner": "compute:uu:id",
-                      "qos_policy_id": qos1_id},
+                      "qos_policy_id": qos1_id,
+                      "qos_network_policy_id": qos_network_policy_id},
                 "port": {"id": port.id, "qos_policy_id": qos2_id}}
 
     def test_check_port_for_placement_allocation_change_no_qos_change(self):
@@ -2219,6 +2225,26 @@ class TestQosPluginDB(base.BaseQosTestCase):
                 payload=events.DBEventPayload(
                     context, states=(original_port, port)))
         mock_alloc_change.assert_not_called()
+
+    def test_check_port_for_placement_allocation_change_qos_network_policy(
+            self):
+        qos_network = self._make_qos_policy()
+        desired_qos = self._make_qos_policy()
+        kwargs = self._prepare_for_port_placement_allocation_change(
+            qos1=None, qos2=desired_qos, qos_network_policy=qos_network)
+        context = kwargs['context']
+        original_port = kwargs['original_port']
+        port = kwargs['port']
+
+        with mock.patch.object(
+                self.qos_plugin,
+                '_change_placement_allocation') as mock_alloc_change:
+            self.qos_plugin._check_port_for_placement_allocation_change(
+                'PORT', 'before_update', 'test_plugin',
+                payload=events.DBEventPayload(
+                    context, states=(original_port, port)))
+        mock_alloc_change.assert_called_once_with(
+            qos_network, desired_qos, kwargs['original_port'], port)
 
     def test_check_network_for_placement_allocation_change_no_qos_change(self):
         qos1 = self._make_qos_policy()
@@ -2395,26 +2421,28 @@ class TestQosPluginDB(base.BaseQosTestCase):
 
     def _prepare_port_for_placement_allocation(self, original_qos,
                                                desired_qos=None,
+                                               qos_network_policy=None,
                                                original_min_kbps=None,
                                                desired_min_kbps=None,
                                                original_min_kpps=None,
                                                desired_min_kpps=None,
                                                is_sriov=False):
         kwargs = self._prepare_for_port_placement_allocation_change(
-            original_qos, desired_qos)
+            original_qos, desired_qos, qos_network_policy=qos_network_policy)
         orig_port = kwargs['original_port']
-        original_qos.rules = []
+        qos = original_qos or qos_network_policy
+        qos.rules = []
         allocation = {}
         if original_min_kbps:
-            original_qos.rules += [self._make_qos_minbw_rule(
-                original_qos.id, min_kbps=original_min_kbps,
+            qos.rules += [self._make_qos_minbw_rule(
+                qos.id, min_kbps=original_min_kbps,
                 rule_id=TestQosPluginDB.QOS_MIN_BW_RULE_ID)]
             allocation.update(
                 {TestQosPluginDB.MIN_BW_REQUEST_GROUP_UUID:
                     TestQosPluginDB.MIN_BW_RP})
         if original_min_kpps:
-            original_qos.rules += [self._make_qos_minpps_rule(
-                original_qos.id, min_kpps=original_min_kpps,
+            qos.rules += [self._make_qos_minpps_rule(
+                qos.id, min_kpps=original_min_kpps,
                 rule_id=TestQosPluginDB.QOS_MIN_PPS_RULE_ID)]
             allocation.update(
                 {TestQosPluginDB.MIN_PPS_REQUEST_GROUP_UUID:
@@ -2728,3 +2756,17 @@ class TestQosPluginDB(base.BaseQosTestCase):
                 pl_exc.PlacementAllocationGenerationConflict,
                 self.qos_plugin._change_placement_allocation,
                 qos1, qos2, orig_port, port)
+
+    def test_change_placement_allocation_qos_network_policy(self):
+        qos_network = self._make_qos_policy()
+        desired_qos = self._make_qos_policy()
+        orig_port, port = self._prepare_port_for_placement_allocation(
+            None, desired_qos, qos_network_policy=qos_network,
+            original_min_kbps=1000, desired_min_kbps=2000)
+        with mock.patch.object(self.qos_plugin._placement_client,
+                'update_qos_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(
+                qos_network, desired_qos, orig_port, port)
+        mock_update_qos_alloc.assert_called_once_with(
+            consumer_uuid='uu:id',
+            alloc_diff={self.MIN_BW_RP: {'NET_BW_IGR_KILOBIT_PER_SEC': 1000}})
