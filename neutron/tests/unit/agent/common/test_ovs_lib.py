@@ -207,6 +207,29 @@ class OVS_Lib_Test(base.BaseTestCase):
         return self.execute.assert_called_once_with(
             cmd, run_as_root=True, privsep_exec=True, **kwargs)
 
+    def test_add_protocols_all_already_set(self):
+        self.br = ovs_lib.OVSBridge(self.BR_NAME)
+        with mock.patch.object(self.br, 'db_get_val') as db_get_val, \
+                mock.patch.object(self.br.ovsdb, 'db_add') as db_add:
+            db_get_val.return_value = [p_const.OPENFLOW10,
+                                       p_const.OPENFLOW13]
+            self.br.add_protocols(p_const.OPENFLOW10, p_const.OPENFLOW13)
+            db_get_val.assert_called_once_with(
+                'Bridge', self.BR_NAME, 'protocols')
+            db_add.assert_not_called()
+
+    def test_add_protocols_some_already_set(self):
+        self.br = ovs_lib.OVSBridge(self.BR_NAME)
+        with mock.patch.object(self.br, 'db_get_val') as db_get_val, \
+                mock.patch.object(self.br.ovsdb, 'db_add') as db_add:
+            db_get_val.return_value = [p_const.OPENFLOW10]
+            self.br.add_protocols(p_const.OPENFLOW10, p_const.OPENFLOW13)
+            db_get_val.assert_called_once_with(
+                'Bridge', self.BR_NAME, 'protocols')
+            db_add.assert_has_calls([
+                mock.call('Bridge', self.BR_NAME,
+                          'protocols', p_const.OPENFLOW13)])
+
     def test_add_flow_timeout_set(self):
         flow_dict = collections.OrderedDict([
             ('cookie', 1234),
