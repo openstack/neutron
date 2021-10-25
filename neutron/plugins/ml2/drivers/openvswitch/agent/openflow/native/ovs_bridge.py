@@ -69,15 +69,19 @@ class OVSAgentBridge(ofswitch.OpenFlowSwitchMixin,
                     self._cached_dpid = new_dpid
 
     def setup_controllers(self, conf):
-        controllers = [
+        controller = (
             "tcp:%(address)s:%(port)s" % {
                 "address": conf.OVS.of_listen_address,
                 "port": conf.OVS.of_listen_port,
             }
-        ]
-        self.add_protocols(ovs_consts.OPENFLOW13)
-        self.set_controller(controllers)
+        )
+        existing_controllers = self.get_controller()
+        if controller not in existing_controllers:
+            LOG.debug("Setting controller %s for bridge %s.",
+                      controller, self.br_name)
+            self.set_controller([controller])
 
+        self.add_protocols(ovs_consts.OPENFLOW13)
         # NOTE(ivc): Force "out-of-band" controller connection mode (see
         # "In-Band Control" [1]).
         #
