@@ -75,6 +75,11 @@ class AgentRPCPluginApi(base.BaseTestCase):
 
 
 class AgentPluginReportState(base.BaseTestCase):
+    def test_plugin_report_state_timeout_report_interval(self):
+        cfg.CONF.set_override('report_interval', 15, 'AGENT')
+        reportStateAPI = rpc.PluginReportStateAPI('test')
+        self.assertEqual(reportStateAPI.timeout, 15)
+
     def test_plugin_report_state_use_call(self):
         topic = 'test'
         reportStateAPI = rpc.PluginReportStateAPI(topic)
