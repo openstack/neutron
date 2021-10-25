@@ -561,6 +561,5 @@ class TestHAL3Agent(TestL3Agent):
     def test_external_subnet_changed(self):
         self._test_external_subnet_changed()
 
-    @tests_base.unstable_test("bug 1946186")
     def test_router_fip_qos_after_admin_state_down_up(self):
         self._router_fip_qos_after_admin_state_down_up(ha=True)
