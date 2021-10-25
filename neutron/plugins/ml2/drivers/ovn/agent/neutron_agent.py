@@ -140,9 +140,22 @@ class ControllerAgent(NeutronAgent):
         return self.chassis_private.external_ids.get(
             ovn_const.OVN_AGENT_DESC_KEY, '')
 
+    def update(self, chassis_private, updated_at=None, clear_down=False):
+        super().update(chassis_private, updated_at, clear_down)
+        external_ids = self.chassis_from_private(chassis_private).external_ids
+        if 'enable-chassis-as-gw' in external_ids.get('ovn-cms-options', []):
+            self.__class__ = ControllerGatewayAgent
+
 
 class ControllerGatewayAgent(ControllerAgent):
     agent_type = ovn_const.OVN_CONTROLLER_GW_AGENT
+
+    def update(self, chassis_private, updated_at=None, clear_down=False):
+        super().update(chassis_private, updated_at, clear_down)
+        external_ids = self.chassis_from_private(chassis_private).external_ids
+        if ('enable-chassis-as-gw' not in
+                external_ids.get('ovn-cms-options', [])):
+            self.__class__ = ControllerAgent
 
 
 class MetadataAgent(NeutronAgent):
