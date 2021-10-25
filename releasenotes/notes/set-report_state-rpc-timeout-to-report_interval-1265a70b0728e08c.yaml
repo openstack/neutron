@@ -1,0 +1,5 @@
+---
+fixes:
+  - |
+    The agent reporting state to the server now uses a RPC timeout set to
+    the report_interval configuration option value. See `1948676 <https://bugs.launchpad.net/neutron/+bug/1948676>`_.
