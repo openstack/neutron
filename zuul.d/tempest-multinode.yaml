@@ -237,72 +237,6 @@
                 resource_provider_bandwidths: br-ex:1000000:1000000
 
 - job:
-    name: neutron-ovs-tempest-slow
-    parent: tempest-slow-py3
-    timeout: 10800
-    irrelevant-files: *openvswitch-irrelevant-files
-    vars:
-      devstack_plugins:
-        neutron: https://opendev.org/openstack/neutron.git
-      devstack_localrc:
-        Q_ML2_TENANT_NETWORK_TYPE: vxlan
-        Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch,linuxbridge
-        Q_AGENT: openvswitch
-      devstack_services:
-        br-ex-tcpdump: true
-        br-int-flows: true
-        # Neutron services
-        q-agt: true
-        q-dhcp: true
-        q-l3: true
-        q-meta: true
-        q-metering: true
-        q-svc: true
-        # OVN services
-        ovn-controller: false
-        ovn-northd: false
-        ovs-vswitchd: false
-        ovsdb-server: false
-        q-ovn-metadata-agent: false
-        # Cinder services
-        c-api: false
-        c-bak: false
-        c-sch: false
-        c-vol: false
-        cinder: false
-        # Swift services
-        s-account: false
-        s-container: false
-        s-object: false
-        s-proxy: false
-      devstack_local_conf:
-        post-config:
-          $NEUTRON_L3_CONF:
-            agent:
-              debug_iptables_rules: True
-    group-vars:
-      subnode:
-        devstack_localrc:
-          Q_ML2_TENANT_NETWORK_TYPE: vxlan
-          Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch,linuxbridge
-          Q_AGENT: openvswitch
-        devstack_services:
-          q-agt: true
-          # OVN services
-          ovn-controller: false
-          ovs-vswitchd: false
-          ovsdb-server: false
-          q-ovn-metadata-agent: false
-          # Cinder services
-          c-bak: false
-          c-vol: false
-        devstack_local_conf:
-          post-config:
-            $NEUTRON_L3_CONF:
-              agent:
-                debug_iptables_rules: True
-
-- job:
     name: neutron-ovn-multinode-base
     description: Base multinode job for devstack/tempest to test Neutron with ovn driver.
     abstract: true
@@ -312,7 +246,7 @@
       - openstack/neutron
       - openstack/neutron-tempest-plugin
       - openstack/tempest
-    irrelevant-files:
+    irrelevant-files: &ovn-irrelevant-files
       - ^(test-|)requirements.txt$
       - ^releasenotes/.*$
       - ^doc/.*$
@@ -441,20 +375,3 @@
           OVN_DBS_LOG_LEVEL: dbg
           USE_PYTHON3: True
           ENABLE_TLS: True
-
-
-- job:
-    name: neutron-ovn-tempest-slow
-    parent: neutron-ovn-multinode-base
-    vars:
-      tox_envlist: slow-serial
-      tempest_test_regex: ""
-      # TODO(slaweq): remove tests from
-      # tempest.scenario.test_network_v6.TestGettingAddress module from
-      # prohibit list when bug https://bugs.launchpad.net/neutron/+bug/1863577
-      # will be fixed
-      # TODO(ralonsoh): "test_update_router_admin_state" excluded until bug
-      # https://bugs.launchpad.net/neutron/+bug/1890445 is fixed.
-      tempest_exclude_regex: "\
-          (^tempest.scenario.test_network_v6.TestGettingAddress)|\
-          (^tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_update_router_admin_state)"

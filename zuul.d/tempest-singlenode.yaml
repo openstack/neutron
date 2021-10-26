@@ -404,6 +404,7 @@
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
       - ^neutron/scheduler/.*$
 
+# TODO(slaweq): move this to be multinode job when it will be possible in Zuul
 - job:
     name: neutron-ovn-tempest-ipv6-only
     parent: tempest-ipv6-only
@@ -426,7 +427,7 @@
         s-container: false
         s-object: false
         s-proxy: false
-    irrelevant-files: *openvswitch-irrelevant-files
+    irrelevant-files: *ovn-irrelevant-files
 
 - job:
     name: neutron-ovn-tempest-ovs-ipv6-only-base
