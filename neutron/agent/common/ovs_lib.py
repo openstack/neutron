@@ -246,6 +246,10 @@ class OVSBridge(BaseOVS):
     def set_controller(self, controllers):
         self.ovsdb.set_controller(self.br_name,
                                   controllers).execute(check_error=True)
+        # TODO(ralonsoh): this is a workaround for LP#1948642. When a new
+        # controller is added, os-ken ``OfctlService`` needs to receive the
+        # update event and register this new datapath.
+        time.sleep(1)
 
     def del_controller(self):
         self.ovsdb.del_controller(self.br_name).execute(check_error=True)
@@ -271,6 +275,12 @@ class OVSBridge(BaseOVS):
             self.ovsdb.db_add(
                 'Bridge', self.br_name,
                 'protocols', *diff).execute(check_error=True)
+            # TODO(ralonsoh): this is a workaround for LP#1948642. When the OF
+            # protocols are changed, the OF controller is restarted. This
+            # sleep will provide time to os-ken ``OfctlService`` to receive
+            # the update events of the restarted controllers and set them as
+            # enabled.
+            time.sleep(1)
 
     def use_at_least_protocol(self, protocol):
         """Calls to ovs-ofctl will use a protocol version >= 'protocol'"""
