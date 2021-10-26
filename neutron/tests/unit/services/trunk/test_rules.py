@@ -239,7 +239,7 @@ class TrunkPortValidatorTestCase(test_plugin.Ml2PluginV2TestCase):
     def test_validate_port_parent_in_use_by_trunk(self):
         with self.port() as trunk_parent:
             trunk = {'port_id': trunk_parent['port']['id'],
-                     'tenant_id': 'test_tenant',
+                     'project_id': 'test_tenant',
                      'sub_ports': []}
             self.trunk_plugin.create_trunk(
                 self.context, {trunk_api.ALIAS: trunk})
@@ -252,7 +252,7 @@ class TrunkPortValidatorTestCase(test_plugin.Ml2PluginV2TestCase):
         with self.port() as trunk_parent,\
                  self.port() as subport:
             trunk = {'port_id': trunk_parent['port']['id'],
-                     'tenant_id': 'test_tenant',
+                     'project_id': 'test_tenant',
                      'sub_ports': [{'port_id': subport['port']['id'],
                                     'segmentation_type': 'vlan',
                                     'segmentation_id': 2}]}

@@ -245,7 +245,7 @@ class TrunkPlugin(service_base.ServicePluginBase):
                                         id=uuidutils.generate_uuid(),
                                         name=trunk.get('name', ""),
                                         description=trunk_description,
-                                        project_id=trunk['tenant_id'],
+                                        project_id=trunk['project_id'],
                                         port_id=trunk['port_id'],
                                         status=constants.TRUNK_DOWN_STATUS,
                                         sub_ports=sub_ports)

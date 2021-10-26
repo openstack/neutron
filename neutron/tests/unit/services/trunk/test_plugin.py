@@ -58,7 +58,7 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
     def _create_test_trunk(self, port, subports=None):
         subports = subports if subports else []
         trunk = {'port_id': port['port']['id'],
-                 'tenant_id': 'test_tenant',
+                 'project_id': 'test_tenant',
                  'sub_ports': subports}
         response = (
             self.trunk_plugin.create_trunk(self.context, {'trunk': trunk}))

@@ -31,7 +31,7 @@ class TestTrunkServicePlugin(ml2_test_base.ML2TestFramework):
         with self.port() as port:
             trunk_port_id = port['port']['id']
             trunk_req = {'port_id': trunk_port_id,
-                         'tenant_id': 'test_tenant',
+                         'project_id': 'test_tenant',
                          'sub_ports': []}
             trunk_res = self.trunk_plugin.create_trunk(self.context,
                                                        {'trunk': trunk_req})

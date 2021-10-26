@@ -442,14 +442,12 @@ class QoSPlugin(qos.QoSPluginBase):
 
         :returns: a QosPolicy object
         """
-        # NOTE(dasm): body 'policy' contains both tenant_id and project_id
-        # but only latter needs to be used to create QosPolicy object.
-        # We need to remove redundant keyword.
-        # This cannot be done in other place of stacktrace, because neutron
-        # needs to be backward compatible.
-        tenant_id = policy['policy'].pop('tenant_id', None)
+        # TODO(ralonsoh): "project_id" check and "tenant_id" removal will be
+        # unnecessary once we fully migrate to keystone V3.
         if not policy['policy'].get('project_id'):
-            policy['policy']['project_id'] = tenant_id
+            raise lib_exc.BadRequest(resource='QoS policy',
+                                     msg='Must have "policy_id"')
+        policy['policy'].pop('tenant_id', None)
         policy_obj = policy_object.QosPolicy(context, **policy['policy'])
         with db_api.CONTEXT_WRITER.using(context):
             policy_obj.create()
