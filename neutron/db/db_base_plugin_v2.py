@@ -563,8 +563,9 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
     @db_api.retry_if_session_inactive()
     def get_networks_count(self, context, filters=None):
-        return model_query.get_collection_count(context, models_v2.Network,
-                                                filters=filters)
+        return model_query.get_collection_count(
+            context, models_v2.Network, filters=filters,
+            query_field=models_v2.Network.id.key)
 
     @db_api.retry_if_session_inactive()
     def create_subnet_bulk(self, context, subnets):

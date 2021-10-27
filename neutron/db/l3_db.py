@@ -615,8 +615,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
     @db_api.retry_if_session_inactive()
     def get_routers_count(self, context, filters=None):
-        return model_query.get_collection_count(context, l3_models.Router,
-                                                filters=filters)
+        return model_query.get_collection_count(
+            context, l3_models.Router, filters=filters,
+            query_field=l3_models.Router.id.key)
 
     def _check_for_dup_router_subnets(self, context, router,
                                       network_id, new_subnets):
