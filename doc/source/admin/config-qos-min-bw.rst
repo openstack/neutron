@@ -133,6 +133,12 @@ Limitations
   QoS policy targeting such hardware backend will result in a ``NoValidHost``
   error during scheduling.
 
+* When QoS is used with a trunk, Placement enforcement is applied only to the
+  trunk's parent port. Subports are not going to have Placement allocation.
+  As a workaround, parent port's QoS policy should take into account subports
+  needs and request enough minimum bandwidth resources to accommodate every
+  port in the trunk.
+
 Placement pre-requisites
 ------------------------
 
