@@ -100,7 +100,8 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
                          payload=events.DBEventPayload(
                              context,
                              resource_id=address_group_id,
-                             states=(original_address_group, ag_dict,)))
+                             states=(original_address_group,
+                                     ag_dict['address_group'],)))
         return ag_dict
 
     def remove_addresses(self, context, address_group_id, addresses):
@@ -120,7 +121,8 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
                          payload=events.DBEventPayload(
                              context,
                              resource_id=address_group_id,
-                             states=(original_address_group, ag_dict,)))
+                             states=(original_address_group,
+                                     ag_dict['address_group'],)))
         return ag_dict
 
     def create_address_group(self, context, address_group):
