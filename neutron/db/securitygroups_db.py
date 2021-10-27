@@ -970,7 +970,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             g.id for g in sg_objs
             if (context.is_admin or not tenant_id or
                 g.tenant_id == tenant_id or
-                sg_obj.SecurityGroup.is_shared_with_tenant(
+                sg_obj.SecurityGroup.is_shared_with_project(
                     context, g.id, tenant_id))
         )
 

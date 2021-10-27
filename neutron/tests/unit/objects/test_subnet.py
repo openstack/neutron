@@ -138,10 +138,10 @@ class SubnetObjectIfaceTestCase(obj_test_base.BaseObjectIfaceTestCase):
         # which is not allowed in 'Iface' test classes.
         mock.patch.object(
             rbac_db.RbacNeutronDbObjectMixin,
-            'is_shared_with_tenant', return_value=False).start()
+            'is_shared_with_project', return_value=False).start()
         mock.patch.object(
             rbac_db.RbacNeutronDbObjectMixin,
-            'get_shared_with_tenant').start()
+            'get_shared_with_project').start()
 
 
 class SubnetDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
@@ -192,7 +192,7 @@ class SubnetDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
 
         obj = self._make_object(subnet_data)
         # check if shared will be load by 'obj_load_attr' and using extra query
-        # by RbacNeutronDbObjectMixin get_shared_with_tenant
+        # by RbacNeutronDbObjectMixin get_shared_with_project
         self.assertTrue(obj.shared)
         obj.create()
         # here the shared should be load by is_network_shared

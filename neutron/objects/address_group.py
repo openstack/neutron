@@ -63,10 +63,10 @@ class AddressGroup(rbac_db.NeutronRbacObject):
             primitive.pop('shared', None)
 
     @classmethod
-    def get_bound_tenant_ids(cls, context, obj_id):
+    def get_bound_project_ids(cls, context, obj_id):
         ag_objs = securitygroup.SecurityGroupRule.get_objects(
             context, remote_address_group_id=[obj_id])
-        return {ag.tenant_id for ag in ag_objs}
+        return {ag.project_id for ag in ag_objs}
 
 
 @base.NeutronObjectRegistry.register

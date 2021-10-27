@@ -387,6 +387,8 @@ class FakeNeutronObjectWithProjectId(base.NeutronDbObject):
         'field2': common_types.UUIDField(),
     }
 
+    fields_no_update = ['id', 'project_id']
+
 
 @base.NeutronObjectRegistry.register_if(False)
 class FakeNeutronObject(base.NeutronObject):
@@ -750,10 +752,10 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
             if getattr(self._test_class.rbac_db_cls, 'db_model', None):
                 mock.patch.object(
                     rbac_db.RbacNeutronDbObjectMixin,
-                    'is_shared_with_tenant', return_value=False).start()
+                    'is_shared_with_project', return_value=False).start()
                 mock.patch.object(
                     rbac_db.RbacNeutronDbObjectMixin,
-                    'get_shared_with_tenant', return_value=False).start()
+                    'get_shared_with_project', return_value=False).start()
 
     def fake_get_object(self, context, model, **kwargs):
         objs = self.model_map[model]
@@ -1189,6 +1191,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         dict_ = obj.to_dict()
 
         self.assertNotIn('project_id', dict_)
+        # TODO(ralonsoh): remove once bp/keystone-v3 migration finishes.
         self.assertNotIn('tenant_id', dict_)
 
     def test_fields_no_update(self):
@@ -1196,13 +1199,13 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         for field in self._test_class.fields_no_update:
             self.assertTrue(hasattr(obj, field))
 
-    def test_get_tenant_id(self):
+    def test_get_project_id(self):
         if not hasattr(self._test_class, 'project_id'):
             self.skipTest(
                 'Test class %r has no project_id field' % self._test_class)
         obj = self._test_class(self.context, **self.obj_fields[0])
         project_id = self.obj_fields[0]['project_id']
-        self.assertEqual(project_id, obj.tenant_id)
+        self.assertEqual(project_id, obj.project_id)
 
     # Adding delete_objects mock because some objects are using delete_objects
     # while calling update(), Port for example
@@ -1407,22 +1410,22 @@ class BaseObjectIfaceWithProjectIdTestCase(BaseObjectIfaceTestCase):
 
     _test_class = FakeNeutronObjectWithProjectId
 
-    def test_update_fields_using_tenant_id(self):
+    def test_update_fields_using_project_id(self):
         obj = self._test_class(self.context, **self.obj_fields[0])
         obj.obj_reset_changes()
 
-        tenant_id = obj['tenant_id']
+        project_id = obj['project_id']
         new_obj_fields = dict()
-        new_obj_fields['tenant_id'] = uuidutils.generate_uuid()
+        new_obj_fields['project_id'] = uuidutils.generate_uuid()
         new_obj_fields['field2'] = uuidutils.generate_uuid()
 
         obj.update_fields(new_obj_fields)
         self.assertEqual(set(['field2']), obj.obj_what_changed())
-        self.assertEqual(tenant_id, obj.project_id)
+        self.assertEqual(project_id, obj.project_id)
 
-    def test_tenant_id_filter_added_when_project_id_present(self):
+    def test_project_id_filter_added_when_project_id_present(self):
         self._test_class.get_objects(
-            self.context, tenant_id=self.obj_fields[0]['project_id'])
+            self.context, project_id=self.obj_fields[0]['project_id'])
 
 
 class BaseDbObjectMultipleForeignKeysTestCase(_BaseObjectTestCase,

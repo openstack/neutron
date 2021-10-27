@@ -326,7 +326,7 @@ class Network(rbac_db.NeutronRbacObject):
             self.obj_reset_changes(['qos_policy_id'])
 
     @classmethod
-    def get_bound_tenant_ids(cls, context, policy_id):
+    def get_bound_project_ids(cls, context, policy_id):
         # TODO(ihrachys): provide actual implementation
         return set()
 

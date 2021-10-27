@@ -27,6 +27,7 @@ class RBACBaseObject(base.NeutronDbObject, metaclass=abc.ABCMeta):
 
     VERSION = '1.0'
 
+    # TODO(ralonsoh): move 'target_tenant' to 'target_project'.
     fields = {
         'id': common_types.UUIDField(),
         'project_id': obj_fields.StringField(),
