@@ -654,7 +654,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                     txn.add(cmd)
         raise periodics.NeverAgain()
 
-    # TODO(lucasagomes): Remove this in the Y cycle
+    # TODO(lucasagomes): Remove this in the Z cycle
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
     @periodics.periodic(spacing=600, run_immediately=True)
@@ -669,13 +669,16 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                 continue
 
             options = port.options
-            if ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS in options:
+            if port_type == ovn_const.LSP_TYPE_LOCALNET:
+                mcast_flood_value = options.get(
+                    ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS)
+                if mcast_flood_value == 'false':
+                    continue
+                options.update({ovn_const.LSP_OPTIONS_MCAST_FLOOD: 'false'})
+            elif ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS in options:
                 continue
 
             options.update({ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true'})
-            if port_type == ovn_const.LSP_TYPE_LOCALNET:
-                options.update({ovn_const.LSP_OPTIONS_MCAST_FLOOD: 'false'})
-
             cmds.append(self._nb_idl.lsp_set_options(port.name, **options))
 
         if cmds:
