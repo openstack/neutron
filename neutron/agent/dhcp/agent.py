@@ -85,15 +85,6 @@ class DHCPResourceUpdate(queue.ResourceUpdate):
 
     def __lt__(self, other):
         if other.obj_type == self.obj_type == 'port':
-            # NOTE(ralonsoh): both resources should have "fixed_ips"
-            # information. That key was added to the deleted ports in this
-            # patch but this code runs in the Neutron API (server). Both the
-            # server and the DHCP agent should be updated.
-            # This check could be removed in Y release.
-            if ('fixed_ips' not in self.resource or
-                    'fixed_ips' not in other.resource):
-                return super().__lt__(other)
-
             self_ips = set(str(fixed_ip['ip_address']) for
                            fixed_ip in self.resource['fixed_ips'])
             other_ips = set(str(fixed_ip['ip_address']) for
@@ -409,18 +400,13 @@ class DhcpAgent(manager.Manager):
         if not network.admin_state_up:
             return
 
-        for subnet in network.subnets:
-            # TODO(isabek): in Y release below 'if' can be removed
-            # because only dhcp enbaled subnets are returned from server
-            if subnet.enable_dhcp:
-                if self.call_driver('enable', network):
-                    self.update_isolated_metadata_proxy(network)
-                    self.cache.put(network)
-                    # After enabling dhcp for network, mark all existing
-                    # ports as ready. So that the status of ports which are
-                    # created before enabling dhcp can be updated.
-                    self.dhcp_ready_ports |= {p.id for p in network.ports}
-                break
+        if len(network.subnets) and self.call_driver('enable', network):
+            self.update_isolated_metadata_proxy(network)
+            self.cache.put(network)
+            # After enabling dhcp for network, mark all existing
+            # ports as ready. So that the status of ports which are
+            # created before enabling dhcp can be updated.
+            self.dhcp_ready_ports |= {p.id for p in network.ports}
 
         self._resize_process_pool()
 

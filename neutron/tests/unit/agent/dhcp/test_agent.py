@@ -2410,13 +2410,6 @@ class TestDHCPResourceUpdate(base.BaseTestCase):
             'id2', 6, timestamp=self.date2, obj_type='network')
         self.assertLess(update1, update2)
 
-    def test__lt__port_no_fixed_ips(self):
-        update1 = dhcp_agent.DHCPResourceUpdate(
-            'id1', 5, timestamp=self.date1, resource={}, obj_type='port')
-        update2 = dhcp_agent.DHCPResourceUpdate(
-            'id2', 6, timestamp=self.date2, resource={}, obj_type='port')
-        self.assertLess(update1, update2)
-
     def test__lt__port_fixed_ips_not_matching(self):
         resource1 = {'fixed_ips': [
             {'subnet_id': 'subnet1', 'ip_address': '10.0.0.1'}]}
