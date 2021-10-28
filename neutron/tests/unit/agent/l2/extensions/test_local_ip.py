@@ -18,6 +18,7 @@ from unittest import mock
 from neutron_lib.callbacks import events as lib_events
 from neutron_lib.callbacks import registry as lib_registry
 from neutron_lib import context
+from os_ken.lib.packet import ether_types
 from oslo_utils import uuidutils
 
 from neutron.agent.l2.extensions import local_ip as local_ip_ext
@@ -36,25 +37,25 @@ class LocalIPAgentExtensionTestCase(base.BaseTestCase):
         self.context = context.get_admin_context_without_session()
         self.local_ip_ext = local_ip_ext.LocalIPAgentExtension()
 
-        self.int_br = mock.Mock()
-        self.tun_br = mock.Mock()
         self.plugin_rpc = mock.Mock()
         self.agent_api = ovs_ext_api.OVSAgentExtensionAPI(
-            self.int_br,
-            self.tun_br,
+            int_br=mock.Mock(),
+            tun_br=mock.Mock(),
             phys_brs=None,
             plugin_rpc=self.plugin_rpc)
         self.local_ip_ext.consume_api(self.agent_api)
         with mock.patch.object(
                 self.local_ip_ext, '_pull_all_local_ip_associations'):
             self.local_ip_ext.initialize(mock.Mock(), 'ovs')
+        self.int_br = self.local_ip_ext.int_br
 
     def _generate_test_lip_associations(self, count=2):
         return [lip_obj.LocalIPAssociation(
             fixed_port_id=uuidutils.generate_uuid(),
             local_ip_id=uuidutils.generate_uuid(),
-            local_ip=lip_obj.LocalIP()) for _ in range(count)
-        ]
+            fixed_ip='10.0.0.10',
+            local_ip=lip_obj.LocalIP(
+                local_ip_address='172.16.0.10')) for _ in range(count)]
 
     def test_pulling_lip_associations_on_init(self):
         res_rpc = mock.Mock()
@@ -124,16 +125,22 @@ class LocalIPAgentExtensionTestCase(base.BaseTestCase):
     def test_handle_port(self):
         lip_assocs = self.test_handle_updated_notification()
         for assoc in lip_assocs:
-            port = {'port_id': assoc.fixed_port_id}
-            self.local_ip_ext.handle_port(self.context, port)
-            self.assertEqual({}, self.local_ip_ext.local_ip_updates[
-                'added'][assoc.fixed_port_id])
+            with mock.patch.object(self.local_ip_ext,
+                                   'add_local_ip_flows') as add_lip_flows:
+                port = {'port_id': assoc.fixed_port_id, 'local_vlan': 1}
+                self.local_ip_ext.handle_port(self.context, port)
+                self.assertEqual({}, self.local_ip_ext.local_ip_updates[
+                    'added'][assoc.fixed_port_id])
+                add_lip_flows.assert_called_once_with(port, assoc)
         self.test_handle_deleted_notification(lip_assocs)
         for assoc in lip_assocs:
-            port = {'port_id': assoc.fixed_port_id}
-            self.local_ip_ext.handle_port(self.context, port)
-            self.assertEqual({}, self.local_ip_ext.local_ip_updates[
-                'deleted'][assoc.fixed_port_id])
+            with mock.patch.object(self.local_ip_ext,
+                                   'delete_local_ip_flows') as del_lip_flows:
+                port = {'port_id': assoc.fixed_port_id, 'local_vlan': 1}
+                self.local_ip_ext.handle_port(self.context, port)
+                self.assertEqual({}, self.local_ip_ext.local_ip_updates[
+                    'deleted'][assoc.fixed_port_id])
+                del_lip_flows.assert_called_once_with(port, assoc)
 
     def test_delete_port(self):
         lip_assocs = self.test_handle_updated_notification()
@@ -143,3 +150,126 @@ class LocalIPAgentExtensionTestCase(base.BaseTestCase):
 
         self.assertEqual({}, self.local_ip_ext.local_ip_updates['added'])
         self.assertEqual({}, self.local_ip_ext.local_ip_updates['added'])
+
+    def test_add_local_ip_flows(self):
+        assoc = self._generate_test_lip_associations(1)[0]
+        port = {'port_id': assoc.fixed_port_id,
+                'mac_address': 'fa:16:3e:11:22:33',
+                'local_vlan': 1234}
+        with mock.patch.object(self.local_ip_ext,
+                               'setup_local_ip_translation') as set_lip_trans:
+            self.local_ip_ext.add_local_ip_flows(port, assoc)
+            set_lip_trans.assert_called_once_with(
+                vlan=port['local_vlan'],
+                local_ip=str(assoc.local_ip.local_ip_address),
+                dest_ip=str(assoc.fixed_ip),
+                mac=port['mac_address']
+            )
+            self.int_br.install_arp_responder.assert_called_once_with(
+                vlan=port['local_vlan'],
+                ip=str(assoc.local_ip.local_ip_address),
+                mac=port['mac_address'], table_id=31)
+            self.int_br.install_garp_blocker.assert_called_once_with(
+                vlan=port['local_vlan'],
+                ip=str(assoc.local_ip.local_ip_address))
+            self.int_br.install_garp_blocker_exception.assert_called_once_with(
+                vlan=port['local_vlan'],
+                ip=str(assoc.local_ip.local_ip_address),
+                except_ip=str(assoc.fixed_ip))
+
+    def test_delete_local_ip_flows(self):
+        assoc = self._generate_test_lip_associations(1)[0]
+        port = {'port_id': assoc.fixed_port_id,
+                'mac_address': 'fa:16:3e:11:22:33',
+                'local_vlan': 1234}
+        with mock.patch.object(self.local_ip_ext,
+                               'delete_local_ip_translation') as del_lip_trans:
+            self.local_ip_ext.delete_local_ip_flows(port, assoc)
+            del_lip_trans.assert_called_once_with(
+                vlan=port['local_vlan'],
+                local_ip=str(assoc.local_ip.local_ip_address),
+                dest_ip=str(assoc.fixed_ip),
+                mac=port['mac_address']
+            )
+            self.int_br.delete_arp_responder.assert_called_once_with(
+                vlan=port['local_vlan'],
+                ip=str(assoc.local_ip.local_ip_address),
+                table_id=31)
+            self.int_br.delete_garp_blocker.assert_called_once_with(
+                vlan=port['local_vlan'],
+                ip=str(assoc.local_ip.local_ip_address))
+            self.int_br.delete_garp_blocker_exception.assert_called_once_with(
+                vlan=port['local_vlan'],
+                ip=str(assoc.local_ip.local_ip_address),
+                except_ip=str(assoc.fixed_ip))
+
+    def test_setup_local_ip_translation(self):
+        vlan = 1234
+        local_ip = '172.0.0.10'
+        dest_ip = '10.0.0.10'
+        mac = 'fa:16:3e:11:22:33'
+        self.local_ip_ext.setup_local_ip_translation(
+            vlan, local_ip, dest_ip, mac)
+
+        expected_calls = [
+            mock.call(
+                table=31,
+                priority=10,
+                nw_dst=local_ip,
+                reg6=vlan,
+                dl_type="0x{:04x}".format(ether_types.ETH_TYPE_IP),
+                actions='mod_dl_dst:{:s},'
+                        'ct(commit,table={:d},zone={:d},nat(dst={:s}))'.format(
+                    mac, 60, vlan, dest_ip)),
+            mock.call(
+                table=31,
+                priority=11,
+                nw_src=dest_ip,
+                nw_dst=local_ip,
+                reg6=vlan,
+                dl_type="0x{:04x}".format(ether_types.ETH_TYPE_IP),
+                actions='resubmit(,{:d})'.format(60)),
+            mock.call(
+                table=31,
+                priority=10,
+                dl_src=mac,
+                nw_src=dest_ip,
+                reg6=vlan,
+                ct_state="-trk",
+                dl_type="0x{:04x}".format(ether_types.ETH_TYPE_IP),
+                actions='ct(table={:d},zone={:d},nat'.format(60, vlan))
+        ]
+        self.assertEqual(expected_calls, self.int_br.add_flow.mock_calls)
+
+    def test_delete_local_ip_translation(self):
+        vlan = 1234
+        local_ip = '172.0.0.10'
+        dest_ip = '10.0.0.10'
+        mac = 'fa:16:3e:11:22:33'
+        self.local_ip_ext.delete_local_ip_translation(
+            vlan, local_ip, dest_ip, mac)
+
+        expected_calls = [
+            mock.call(
+                table_id=31,
+                priority=10,
+                ipv4_dst=local_ip,
+                reg6=vlan,
+                eth_type=ether_types.ETH_TYPE_IP),
+            mock.call(
+                table_id=31,
+                priority=11,
+                ipv4_src=dest_ip,
+                ipv4_dst=local_ip,
+                reg6=vlan,
+                eth_type=ether_types.ETH_TYPE_IP),
+            mock.call(
+                table_id=31,
+                priority=10,
+                eth_src=mac,
+                ipv4_src=dest_ip,
+                reg6=vlan,
+                eth_type=ether_types.ETH_TYPE_IP)
+        ]
+        self.assertEqual(
+            expected_calls, self.int_br.uninstall_flows.mock_calls)

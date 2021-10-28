@@ -16,16 +16,21 @@
 import collections
 import sys
 
+import netaddr
 from neutron_lib.agent import l2_extension
 from neutron_lib.callbacks import events as lib_events
 from neutron_lib.callbacks import registry as lib_registry
 from neutron_lib import context as lib_ctx
+from os_ken.lib.packet import ether_types
+from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron.api.rpc.callbacks.consumer import registry
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
+from neutron.plugins.ml2.drivers.openvswitch.agent import (
+    ovs_neutron_agent as ovs_agent)
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
      constants as ovs_constants)
 
@@ -41,9 +46,15 @@ class LocalIPAgentExtension(l2_extension.L2AgentExtension):
                       'currently uses %(driver_type)s',
                       {'driver_type': driver_type})
             sys.exit(1)
+        if (cfg.CONF.SECURITYGROUP.enable_security_group and
+                cfg.CONF.SECURITYGROUP.firewall_driver == 'openvswitch'):
+            LOG.error('Local IP extension is not supported together with '
+                      'openvswitch firewall')
+            sys.exit(1)
 
         self.resource_rpc = resources_rpc.ResourcesPullRpcApi()
         self._register_rpc_consumers(connection)
+        self.int_br = self.agent_api.request_int_br()
 
         self.local_ip_updates = {
             'added': collections.defaultdict(dict),
@@ -61,8 +72,8 @@ class LocalIPAgentExtension(l2_extension.L2AgentExtension):
             port_id = assoc.fixed_port_id
             lip_id = assoc.local_ip_id
             self.local_ip_updates['added'][port_id][lip_id] = assoc
-            # No need to notify "port updated" here as on restart agent
-            # handles all ports anyway
+            # Notify agent about port update to handle Local IP flows
+            self._notify_port_updated(context, port_id)
 
     def consume_api(self, agent_api):
         """Allows an extension to gain access to resources internal to the
@@ -115,14 +126,25 @@ class LocalIPAgentExtension(l2_extension.L2AgentExtension):
         """
         port_id = port['port_id']
         local_ip_updates = self._pop_local_ip_updates_for_port(port_id)
+
+        # if port doesn't yet have local vlan - issue port updated
+        # notification to handle it on next agent loop, when port
+        # should have it
+        if ((local_ip_updates['added'] or local_ip_updates['deleted']) and
+                not port.get('local_vlan')):
+            LOG.debug("Port %s has no local VLAN assigned yet. "
+                      "Skipping Local IP handling till next iteration.")
+            self._notify_port_updated(context, port['port_id'])
+            return
+
         for assoc in local_ip_updates['added'].values():
             LOG.info("Local IP added for port %s: %s",
                      port_id, assoc.local_ip)
-            # TBD
+            self.add_local_ip_flows(port, assoc)
         for assoc in local_ip_updates['deleted'].values():
             LOG.info("Local IP deleted from port %s: %s",
                      port_id, assoc.local_ip)
-            # TBD
+            self.delete_local_ip_flows(port, assoc)
 
     def _pop_local_ip_updates_for_port(self, port_id):
         return {
@@ -130,6 +152,96 @@ class LocalIPAgentExtension(l2_extension.L2AgentExtension):
             'deleted': self.local_ip_updates['deleted'].pop(port_id, {})
         }
 
+    def add_local_ip_flows(self, port, assoc):
+        local_ip_address = str(assoc.local_ip.local_ip_address)
+        dest_mac = str(netaddr.EUI(port['mac_address'],
+                                   dialect=ovs_agent._mac_mydialect))
+        dest_ip = str(assoc.fixed_ip)
+        vlan = port['local_vlan']
+        self.setup_local_ip_translation(
+            vlan=vlan, local_ip=local_ip_address,
+            dest_ip=dest_ip, mac=port['mac_address'])
+        self.int_br.install_arp_responder(
+            vlan=vlan, ip=local_ip_address, mac=dest_mac,
+            table_id=ovs_constants.LOCAL_IP_TABLE)
+        self.int_br.install_garp_blocker(
+            vlan=vlan, ip=local_ip_address)
+        self.int_br.install_garp_blocker_exception(
+            vlan=vlan, ip=local_ip_address, except_ip=dest_ip)
+
+    def delete_local_ip_flows(self, port, assoc):
+        local_ip_address = str(assoc.local_ip.local_ip_address)
+        dest_ip = str(assoc.fixed_ip)
+        vlan = port['local_vlan']
+        self.delete_local_ip_translation(
+            vlan=vlan, local_ip=local_ip_address,
+            dest_ip=dest_ip, mac=port['mac_address'])
+        self.int_br.delete_arp_responder(
+            vlan=vlan, ip=local_ip_address,
+            table_id=ovs_constants.LOCAL_IP_TABLE)
+        self.int_br.delete_garp_blocker(
+            vlan=vlan, ip=local_ip_address)
+        self.int_br.delete_garp_blocker_exception(
+            vlan=vlan, ip=local_ip_address, except_ip=dest_ip)
+
     def delete_port(self, context, port):
         self.local_ip_updates['added'].pop(port['port_id'], None)
         self.local_ip_updates['deleted'].pop(port['port_id'], None)
+
+    def setup_local_ip_translation(self, vlan, local_ip, dest_ip, mac):
+        self.int_br.add_flow(
+            table=ovs_constants.LOCAL_IP_TABLE,
+            priority=10,
+            nw_dst=local_ip,
+            reg6=vlan,
+            dl_type="0x{:04x}".format(ether_types.ETH_TYPE_IP),
+            actions='mod_dl_dst:{:s},'
+                    'ct(commit,table={:d},zone={:d},nat(dst={:s}))'.format(
+                mac, ovs_constants.TRANSIENT_TABLE, vlan, dest_ip)
+        )
+        # avoid NAT to self and let VM with local IP access "true" IP owner
+        self.int_br.add_flow(
+            table=ovs_constants.LOCAL_IP_TABLE,
+            priority=11,
+            nw_src=dest_ip,
+            nw_dst=local_ip,
+            reg6=vlan,
+            dl_type="0x{:04x}".format(ether_types.ETH_TYPE_IP),
+            actions='resubmit(,{:d})'.format(ovs_constants.TRANSIENT_TABLE)
+        )
+        self.int_br.add_flow(
+            table=ovs_constants.LOCAL_IP_TABLE,
+            priority=10,
+            dl_src=mac,
+            nw_src=dest_ip,
+            reg6=vlan,
+            ct_state="-trk",
+            dl_type="0x{:04x}".format(ether_types.ETH_TYPE_IP),
+            actions='ct(table={:d},zone={:d},nat'.format(
+                ovs_constants.TRANSIENT_TABLE, vlan)
+        )
+
+    def delete_local_ip_translation(self, vlan, local_ip, dest_ip, mac):
+        self.int_br.uninstall_flows(
+            table_id=ovs_constants.LOCAL_IP_TABLE,
+            priority=10,
+            ipv4_dst=local_ip,
+            reg6=vlan,
+            eth_type=ether_types.ETH_TYPE_IP
+        )
+        self.int_br.uninstall_flows(
+            table_id=ovs_constants.LOCAL_IP_TABLE,
+            priority=11,
+            ipv4_src=dest_ip,
+            ipv4_dst=local_ip,
+            reg6=vlan,
+            eth_type=ether_types.ETH_TYPE_IP
+        )
+        self.int_br.uninstall_flows(
+            table_id=ovs_constants.LOCAL_IP_TABLE,
+            priority=10,
+            eth_src=mac,
+            ipv4_src=dest_ip,
+            reg6=vlan,
+            eth_type=ether_types.ETH_TYPE_IP
+        )

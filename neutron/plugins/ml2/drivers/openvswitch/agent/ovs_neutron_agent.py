@@ -159,6 +159,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         ovs_conf = self.conf.OVS
 
         self.enable_openflow_dhcp = 'dhcp' in self.ext_manager.names()
+        self.enable_local_ips = 'local_ip' in self.ext_manager.names()
 
         self.fullsync = False
         # init bridge classes with configured datapath type.
@@ -701,6 +702,12 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             if port_id in port_set:
                 lvm = self.vlan_manager.get(network_id)
                 return lvm.vlan
+
+    def _get_net_local_vlan_or_none(self, net_id):
+        try:
+            return self.vlan_manager.get(net_id).vlan
+        except vlanmanager.MappingNotFound:
+            return None
 
     def _deferred_delete_direct_flows(self, ports):
         if not self.direct_for_non_openflow_firewall:
@@ -1967,6 +1974,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 LOG.info("Port %(device)s updated. Details: %(details)s",
                          {'device': device, 'details': details})
                 details['vif_port'] = port
+                details['local_vlan'] = self._get_net_local_vlan_or_none(
+                    details['network_id'])
                 need_binding = self.treat_vif_port(port, details['port_id'],
                                                    details['network_id'],
                                                    details['network_type'],
@@ -2182,10 +2191,21 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 dest_table_id=constants.TRANSIENT_EGRESS_TABLE)
 
     def process_install_ports_egress_flows(self, ports):
-        if self.direct_for_non_openflow_firewall:
-            with self.int_br.deferred(full_ordered=True,
-                                      use_bundle=True) as int_br:
-                for port in ports:
+        with self.int_br.deferred(full_ordered=True,
+                                  use_bundle=True) as int_br:
+            for port in ports:
+                if self.enable_local_ips and port['device_owner'].startswith(
+                        n_const.DEVICE_OWNER_COMPUTE_PREFIX):
+                    try:
+                        lvm = self.vlan_manager.get(port['network_id'])
+                        self.int_br.setup_local_egress_flows(
+                            port['vif_port'].ofport, lvm.vlan)
+                    except Exception as err:
+                        LOG.warning("Failed to install egress flows "
+                                    "for port %s, error: %s",
+                                    port['port_id'], err)
+
+                if self.direct_for_non_openflow_firewall:
                     try:
                         self.install_accepted_egress_direct_flow(port, int_br)
                     except Exception as err:

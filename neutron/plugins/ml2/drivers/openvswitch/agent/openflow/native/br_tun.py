@@ -15,7 +15,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from os_ken.lib.packet import arp
 from os_ken.lib.packet import ether_types
 
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
@@ -203,28 +202,6 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
         return ofpp.OFPMatch(vlan_vid=vlan | ofp.OFPVID_PRESENT,
                              eth_type=ether_types.ETH_TYPE_ARP,
                              arp_tpa=ip)
-
-    def install_arp_responder(self, vlan, ip, mac):
-        (dp, ofp, ofpp) = self._get_dp()
-        match = self._arp_responder_match(ofp, ofpp, vlan, ip)
-        actions = [ofpp.OFPActionSetField(arp_op=arp.ARP_REPLY),
-                   ofpp.NXActionRegMove(src_field='arp_sha',
-                                        dst_field='arp_tha',
-                                        n_bits=48),
-                   ofpp.NXActionRegMove(src_field='arp_spa',
-                                        dst_field='arp_tpa',
-                                        n_bits=32),
-                   ofpp.OFPActionSetField(arp_sha=mac),
-                   ofpp.OFPActionSetField(arp_spa=ip),
-                   ofpp.NXActionRegMove(src_field='eth_src',
-                                        dst_field='eth_dst',
-                                        n_bits=48),
-                   ofpp.OFPActionSetField(eth_src=mac),
-                   ofpp.OFPActionOutput(ofp.OFPP_IN_PORT, 0)]
-        self.install_apply_actions(table_id=constants.ARP_RESPONDER,
-                                   priority=1,
-                                   match=match,
-                                   actions=actions)
 
     def delete_arp_responder(self, vlan, ip):
         (_dp, ofp, ofpp) = self._get_dp()

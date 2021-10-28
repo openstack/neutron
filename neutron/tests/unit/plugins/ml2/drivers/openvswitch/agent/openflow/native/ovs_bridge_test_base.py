@@ -157,6 +157,55 @@ class OVSBridgeTestBase(ovs_test_base.OVSOSKenTestBase):
                     add_protocols.assert_called_once_with(
                         constants.OPENFLOW10, constants.OPENFLOW13)
 
+    def test_install_arp_responder(self):
+        vlan = 3333
+        ip = '192.0.2.1'
+        mac = '08:60:6e:7f:74:e7'
+        self.br.install_arp_responder(vlan=vlan, ip=ip, mac=mac)
+        (dp, ofp, ofpp) = self._get_dp()
+        expected = [
+            call._send_msg(ofpp.OFPFlowMod(dp,
+                cookie=self.stamp,
+                instructions=[
+                    ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, [
+                        ofpp.OFPActionSetField(arp_op=2),
+                        ofpp.NXActionRegMove(
+                            dst_field='arp_tha',
+                            n_bits=48,
+                            src_field='arp_sha'),
+                        ofpp.NXActionRegMove(
+                            dst_field='arp_tpa',
+                            n_bits=32,
+                            src_field='arp_spa'),
+                        ofpp.OFPActionSetField(arp_sha=mac),
+                        ofpp.OFPActionSetField(arp_spa=ip),
+                        ofpp.NXActionRegMove(src_field='eth_src',
+                                             dst_field='eth_dst',
+                                             n_bits=48),
+                        ofpp.OFPActionSetField(eth_src=mac),
+                        ofpp.OFPActionOutput(ofp.OFPP_IN_PORT, 0),
+                    ]),
+                ],
+                match=self.br._arp_responder_match(ofp, ofpp, vlan, ip),
+                priority=1,
+                table_id=21),
+                           active_bundle=None),
+        ]
+        self.assertEqual(expected, self.mock.mock_calls)
+
+    def test_delete_arp_responder(self):
+        vlan = 3333
+        ip = '192.0.2.1'
+        self.br.delete_arp_responder(vlan=vlan, ip=ip)
+        (dp, ofp, ofpp) = self._get_dp()
+        expected = [
+            call.uninstall_flows(
+                table_id=21,
+                priority=1,
+                match=self.br._arp_responder_match(ofp, ofpp, vlan, ip))
+        ]
+        self.assertEqual(expected, self.mock.mock_calls)
+
 
 class OVSDVRProcessTestMixin(object):
     def test_install_dvr_process_ipv4(self):

@@ -127,6 +127,24 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                 priority=3,
                 table_id=constants.TRANSIENT_EGRESS_TABLE),
                            active_bundle=None),
+            call._send_msg(ofpp.OFPFlowMod(
+                dp, cookie=self.stamp,
+                instructions=[
+                    ofpp.OFPInstructionGotoTable(table_id=60),
+                ],
+                match=ofpp.OFPMatch(),
+                priority=0,
+                table_id=30),
+                           active_bundle=None),
+            call._send_msg(ofpp.OFPFlowMod(
+                dp, cookie=self.stamp,
+                instructions=[
+                    ofpp.OFPInstructionGotoTable(table_id=60),
+                ],
+                match=ofpp.OFPMatch(),
+                priority=0,
+                table_id=31),
+                           active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
@@ -669,5 +687,105 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                                                    in_port=8888, reg2=0),
                                priority=65535, table_id=0),
                            active_bundle=None)
+        ]
+        self.assertEqual(expected, self.mock.mock_calls)
+
+    def test_setup_local_egress_flows(self):
+        in_port = 10
+        vlan = 3333
+        self.br.setup_local_egress_flows(in_port=in_port, vlan=vlan)
+
+        (dp, ofp, ofpp) = self._get_dp()
+        expected = [
+            call._send_msg(ofpp.OFPFlowMod(dp, cookie=self.stamp,
+                               instructions=[
+                                   ofpp.OFPInstructionGotoTable(table_id=30)],
+                               match=ofpp.OFPMatch(in_port=in_port),
+                               priority=8,
+                               table_id=0),
+                           active_bundle=None),
+            call._send_msg(ofpp.OFPFlowMod(dp, cookie=self.stamp,
+                               instructions=[ofpp.OFPInstructionActions(
+                                   ofp.OFPIT_APPLY_ACTIONS,
+                                   [ofpp.OFPActionSetField(reg6=vlan),
+                                    ofpp.NXActionResubmitTable(in_port=in_port,
+                                                               table_id=31)])],
+                               match=ofpp.OFPMatch(in_port=in_port),
+                               priority=10, table_id=30),
+                           active_bundle=None)
+        ]
+        self.assertEqual(expected, self.mock.mock_calls)
+
+    def test_install_garp_blocker(self):
+        vlan = 2222
+        ip = '192.0.0.10'
+        self.br.install_garp_blocker(vlan, ip)
+
+        (dp, ofp, ofpp) = self._get_dp()
+        expected = [
+            call._send_msg(ofpp.OFPFlowMod(dp, cookie=self.stamp,
+                               instructions=[],
+                               match=ofpp.OFPMatch(
+                                   vlan_vid=vlan | ofp.OFPVID_PRESENT,
+                                   eth_type=self.ether_types.ETH_TYPE_ARP,
+                                   arp_spa=ip),
+                               priority=10,
+                               table_id=0),
+                           active_bundle=None)]
+        self.assertEqual(expected, self.mock.mock_calls)
+
+    def test_delete_garp_blocker(self):
+        vlan = 2222
+        ip = '192.0.0.10'
+        self.br.delete_garp_blocker(vlan, ip)
+
+        (dp, ofp, ofpp) = self._get_dp()
+        expected = [
+            call.uninstall_flows(
+                table_id=0,
+                priority=10,
+                match=ofpp.OFPMatch(
+                    vlan_vid=vlan | ofp.OFPVID_PRESENT,
+                    eth_type=self.ether_types.ETH_TYPE_ARP,
+                    arp_spa=ip))
+        ]
+        self.assertEqual(expected, self.mock.mock_calls)
+
+    def test_install_garp_blocker_exception(self):
+        vlan = 2222
+        ip = '192.0.0.10'
+        except_ip = '192.0.0.20'
+        self.br.install_garp_blocker_exception(vlan, ip, except_ip)
+
+        (dp, ofp, ofpp) = self._get_dp()
+        expected = [
+            call._send_msg(ofpp.OFPFlowMod(dp, cookie=self.stamp,
+                               instructions=[
+                                   ofpp.OFPInstructionGotoTable(table_id=60)],
+                               match=ofpp.OFPMatch(
+                                   vlan_vid=vlan | ofp.OFPVID_PRESENT,
+                                   eth_type=self.ether_types.ETH_TYPE_ARP,
+                                   arp_spa=ip, arp_tpa=except_ip),
+                               priority=11,
+                               table_id=0),
+                           active_bundle=None)
+        ]
+        self.assertEqual(expected, self.mock.mock_calls)
+
+    def test_delete_garp_blocker_exception(self):
+        vlan = 2222
+        ip = '192.0.0.10'
+        except_ip = '192.0.0.20'
+        self.br.delete_garp_blocker_exception(vlan, ip, except_ip)
+
+        (dp, ofp, ofpp) = self._get_dp()
+        expected = [
+            call.uninstall_flows(
+                table_id=0,
+                priority=11,
+                match=ofpp.OFPMatch(
+                    vlan_vid=vlan | ofp.OFPVID_PRESENT,
+                    eth_type=self.ether_types.ETH_TYPE_ARP,
+                    arp_spa=ip, arp_tpa=except_ip))
         ]
         self.assertEqual(expected, self.mock.mock_calls)
