@@ -621,7 +621,7 @@ Use the :command:`openstack network rbac show` command to see the details:
 
 The output shows that the entry allows the action ``access_as_shared``
 on object ``84a7e627-573b-49da-af66-c9a65244f3ce`` of type ``network``
-to target_tenant ``*``, which is a wildcard that represents all projects.
+to target_project ``*``, which is a wildcard that represents all projects.
 
 Currently, the ``shared`` flag is just a mapping to the underlying
 RBAC policies for a network. Setting the flag to ``True`` on a network

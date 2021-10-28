@@ -14,27 +14,33 @@
 # limitations under the License.
 
 from oslo_policy import policy as base_policy
+import testscenarios
 
 from neutron import policy
 from neutron.tests.unit.conf.policies import base
 
 
-class RbacAPITestCase(base.PolicyBaseTestCase):
+class RbacAPITestCase(testscenarios.WithScenarios, base.PolicyBaseTestCase):
+
+    scenarios = [
+        ('target_tenant', {'_target_label': 'target_tenant'}),
+        ('target_project', {'_target_label': 'target_project'})
+    ]
 
     def setUp(self):
         super(RbacAPITestCase, self).setUp()
         self.target = {
             'project_id': self.project_id,
-            'target_tenant': 'other-project'}
+            self._target_label: 'other-project'}
         self.alt_target = {
             'project_id': self.alt_project_id,
-            'target_tenant': 'other-project'}
+            self._target_label: 'other-project'}
         self.wildcard_target = {
             'project_id': self.project_id,
-            'target_tenant': '*'}
+            self._target_label: '*'}
         self.wildcard_alt_target = {
             'project_id': self.alt_project_id,
-            'target_tenant': '*'}
+            self._target_label: '*'}
 
 
 class SystemAdminTests(RbacAPITestCase):

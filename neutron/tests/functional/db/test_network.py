@@ -97,7 +97,7 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
         else:
             action = 'access_as_shared'
         rbac = network_obj.NetworkRBAC.get_object(
-            self.cxt, object_id=network_id, action=action, target_tenant='*')
+            self.cxt, object_id=network_id, action=action, target_project='*')
         if is_none:
             self.assertIsNone(rbac)
         else:

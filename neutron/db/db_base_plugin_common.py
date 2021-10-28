@@ -345,7 +345,7 @@ class DbBasePluginCommon(object):
         matches = ('*',) + ((context.tenant_id,) if context else ())
         for entry in rbac_entries:
             if (entry.action == 'access_as_shared' and
-                    entry.target_tenant in matches):
+                    entry.target_project in matches):
                 return True
         return False
 

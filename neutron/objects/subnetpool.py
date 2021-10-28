@@ -33,7 +33,8 @@ from neutron.objects import subnet
 @base.NeutronObjectRegistry.register
 class SubnetPoolRBAC(rbac.RBACBaseObject):
     # Version 1.0: Initial version
-    VERSION = '1.0'
+    # Version 1.1: Changed 'target_tenant' to 'target_project'
+    VERSION = '1.1'
 
     db_model = rbac_db_models.SubnetPoolRBAC
 
@@ -127,8 +128,8 @@ class SubnetPool(rbac_db.NeutronRbacObject):
         # Ensure that target project has access to AS
         shared_to_target_project_or_to_all = (
             sa.and_(
-                rbac_as_model.target_tenant.in_(
-                    ["*", policy['target_tenant']]
+                rbac_as_model.target_project.in_(
+                    ["*", policy['target_project']]
                 ),
                 rbac_as_model.object_id == db_obj["address_scope_id"]
             )

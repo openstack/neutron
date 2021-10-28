@@ -21,6 +21,7 @@ from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
 import sqlalchemy as sa
 from sqlalchemy.ext import declarative
+from sqlalchemy import orm
 from sqlalchemy.orm import validates
 
 from neutron._i18n import _
@@ -43,11 +44,11 @@ class RBACColumns(model_base.HasId, model_base.HasProject):
     RBAC types.
     """
 
-    # the target_tenant is the subject that the policy will affect. this may
+    # the target_project is the subject that the policy will affect. this may
     # also be a wildcard '*' to indicate all tenants or it may be a role if
     # neutron gets better integration with keystone
-    target_tenant = sa.Column(sa.String(db_const.PROJECT_ID_FIELD_SIZE),
-                              nullable=False, index=True)
+    target_project = sa.Column(sa.String(db_const.PROJECT_ID_FIELD_SIZE),
+                               nullable=False, index=True)
 
     action = sa.Column(sa.String(255), nullable=False, index=True)
 
@@ -61,7 +62,7 @@ class RBACColumns(model_base.HasId, model_base.HasProject):
     @declarative.declared_attr
     def __table_args__(cls):
         return (
-            sa.UniqueConstraint('target_tenant', 'object_id', 'action'),
+            sa.UniqueConstraint('target_project', 'object_id', 'action'),
             model_base.BASEV2.__table_args__
         )
 
@@ -79,6 +80,20 @@ class RBACColumns(model_base.HasId, model_base.HasProject):
         # object table needs to override this to return an interable
         # with the valid actions rbac entries
         pass
+
+    def get_target_tenant(self):
+        return self.target_project
+
+    def set_target_tenant(self, value):
+        self.target_project = value
+
+    # TODO(ralonsoh): remove once the neutron-lib code is modified and the
+    # minimum required version of this library set.
+    @declarative.declared_attr
+    def target_tenant(cls):
+        return orm.synonym(
+            'target_project',
+            descriptor=property(cls.get_target_tenant, cls.set_target_tenant))
 
 
 def get_type_model_map():
