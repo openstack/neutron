@@ -83,14 +83,14 @@ class PluginReportStateAPI(object):
         target = oslo_messaging.Target(topic=topic, version='1.2',
                                        namespace=constants.RPC_NAMESPACE_STATE)
         self.client = lib_rpc.get_client(target)
+        self.timeout = cfg.CONF.AGENT.report_interval
 
     def has_alive_neutron_server(self, context, **kwargs):
         cctxt = self.client.prepare()
         return cctxt.call(context, 'has_alive_neutron_server', **kwargs)
 
     def report_state(self, context, agent_state, use_call=False):
-        cctxt = self.client.prepare(
-            timeout=lib_rpc.TRANSPORT.conf.rpc_response_timeout)
+        cctxt = self.client.prepare(timeout=self.timeout)
         # add unique identifier to a report
         # that can be logged on server side.
         # This create visible correspondence between events on
