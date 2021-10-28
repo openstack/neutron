@@ -29,8 +29,11 @@ class PolicyBaseTestCase(tests_base.BaseTestCase):
         # That tests are testing only new default policies.
         cfg.CONF.set_override(
             'enforce_new_defaults', True, group='oslo_policy')
+        # TODO(slaweq): Remove that override once fix
+        # https://review.opendev.org/c/openstack/oslo.policy/+/804980 will be
+        # merged and released in oslo_policy
         cfg.CONF.set_override(
-            'enforce_scope', True, group='oslo_policy')
+            'enforce_scope', False, group='oslo_policy')
         super(PolicyBaseTestCase, self).setUp()
         self.project_id = uuidutils.generate_uuid()
         self.system_user_id = uuidutils.generate_uuid()
