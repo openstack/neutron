@@ -50,7 +50,8 @@ class SRIOVNICSwitchDriver(base.DriverBase):
             name='sriovnicswitch',
             vif_types=[portbindings.VIF_TYPE_HW_VEB],
             vnic_types=[portbindings.VNIC_DIRECT,
-                        portbindings.VNIC_MACVTAP],
+                        portbindings.VNIC_MACVTAP,
+                        portbindings.VNIC_DIRECT_PHYSICAL],
             supported_rules=SUPPORTED_RULES,
             requires_rpc_notifications=True)
 

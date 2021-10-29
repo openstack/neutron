@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Neutron now supports the placement enforcement for the guaranteed minimum
+    bandwidth QoS rule type with direct-phyisical vnic_type as well. The data
+    plane enforcement of such rule and vnic_type combination is still not
+    supported.
