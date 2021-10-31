@@ -32,6 +32,7 @@ from oslo_config import cfg
 from oslo_utils import uuidutils
 import webob.exc
 
+from neutron.exceptions import qos as neutron_qos_exc
 from neutron.extensions import qos_rules_alias
 from neutron import manager
 from neutron.objects import network as network_object
@@ -135,8 +136,10 @@ class TestQosPlugin(base.BaseQosTestCase):
         self.assertEqual(call_args[1], ctxt)
         self.assertIsInstance(call_args[2], policy_object.QosPolicy)
 
-    def _create_and_extend_port(self, bw_rules, physical_network='public',
-                                has_qos_policy=True, has_net_qos_policy=False):
+    def _create_and_extend_port(self, min_bw_rules, min_pps_rules=None,
+                                physical_network='public',
+                                has_qos_policy=True, has_net_qos_policy=False,
+                                request_groups_uuids=None):
         network_id = uuidutils.generate_uuid()
 
         self.port_data = {
@@ -155,83 +158,345 @@ class TestQosPlugin(base.BaseQosTestCase):
         port_res = {"binding:vnic_type": "normal"}
         segment_mock = mock.MagicMock(network_id=network_id,
                                       physical_network=physical_network)
+        min_pps_rules = min_pps_rules if min_pps_rules else []
 
         with mock.patch('neutron.objects.network.NetworkSegment.get_objects',
                         return_value=[segment_mock]), \
                 mock.patch(
                     'neutron.objects.qos.rule.QosMinimumBandwidthRule.'
                     'get_objects',
-                    return_value=bw_rules):
+                    return_value=min_bw_rules), \
+                mock.patch(
+                    'neutron.objects.qos.rule.QosMinimumPacketRateRule.'
+                    'get_objects',
+                    return_value=min_pps_rules), \
+                mock.patch(
+                    'uuid.uuid5',
+                    return_value='fake_uuid',
+                    side_effect=request_groups_uuids):
             return qos_plugin.QoSPlugin._extend_port_resource_request(
                 port_res, self.port)
+
+    def _create_and_extend_ports(self, min_bw_rules, min_pps_rules=None,
+                                 physical_network='public',
+                                 request_groups_uuids=None):
+        network_id = uuidutils.generate_uuid()
+
+        ports_res = [
+            {
+                "resource_request": {
+                    "port_id": uuidutils.generate_uuid(),
+                    "qos_id": self.policy.id,
+                    "network_id": network_id,
+                    "vnic_type": "normal",
+
+                }
+            },
+            {
+                "resource_request": {
+                    "port_id": uuidutils.generate_uuid(),
+                    "qos_id": self.policy.id,
+                    "network_id": network_id,
+                    "vnic_type": "normal",
+                }
+            },
+        ]
+        segment_mock = mock.MagicMock(network_id=network_id,
+                                      physical_network=physical_network)
+        min_pps_rules = min_pps_rules if min_pps_rules else []
+
+        with mock.patch('neutron.objects.network.NetworkSegment.get_objects',
+                        return_value=[segment_mock]), \
+                mock.patch(
+                    'neutron.objects.qos.rule.QosMinimumBandwidthRule.'
+                    'get_objects',
+                    return_value=min_bw_rules), \
+                mock.patch(
+                    'neutron.objects.qos.rule.QosMinimumPacketRateRule.'
+                    'get_objects',
+                    return_value=min_pps_rules), \
+                mock.patch(
+                    'uuid.uuid5',
+                    return_value='fake_uuid',
+                    side_effect=request_groups_uuids):
+            return qos_plugin.QoSPlugin._extend_port_resource_request_bulk(
+                ports_res, None)
 
     def test__extend_port_resource_request_min_bw_rule(self):
         self.min_bw_rule.direction = lib_constants.EGRESS_DIRECTION
         port = self._create_and_extend_port([self.min_bw_rule])
 
         self.assertEqual(
+            1,
+            len(port['resource_request']['request_groups'])
+        )
+        self.assertEqual(
+            'fake_uuid',
+            port['resource_request']['request_groups'][0]['id']
+        )
+        self.assertEqual(
             ['CUSTOM_PHYSNET_PUBLIC', 'CUSTOM_VNIC_TYPE_NORMAL'],
-            port['resource_request']['required']
+            port['resource_request']['request_groups'][0]['required']
         )
         self.assertEqual(
             {orc.NET_BW_EGR_KILOBIT_PER_SEC: 10},
-            port['resource_request']['resources'],
+            port['resource_request']['request_groups'][0]['resources'],
+        )
+        self.assertEqual(
+            ['fake_uuid'],
+            port['resource_request']['same_subtree'],
         )
 
-    def test__extend_port_resource_request_mixed_rules(self):
-        self.min_bw_rule.direction = lib_constants.EGRESS_DIRECTION
+    def test__extend_port_resource_request_min_pps_rule(self):
+        port = self._create_and_extend_port([], [self.min_pps_rule])
 
+        self.assertEqual(
+            1,
+            len(port['resource_request']['request_groups'])
+        )
+        self.assertEqual(
+            'fake_uuid',
+            port['resource_request']['request_groups'][0]['id']
+        )
+        self.assertEqual(
+            ['CUSTOM_VNIC_TYPE_NORMAL'],
+            port['resource_request']['request_groups'][0]['required']
+        )
+        self.assertEqual(
+            {orc.NET_PACKET_RATE_KILOPACKET_PER_SEC: 10},
+            port['resource_request']['request_groups'][0]['resources'],
+        )
+        self.assertEqual(
+            ['fake_uuid'],
+            port['resource_request']['same_subtree'],
+        )
+
+    def test__extend_port_resource_request_min_bw_and_pps_rule(self):
+        self.min_bw_rule.direction = lib_constants.EGRESS_DIRECTION
+        self.min_pps_rule.direction = lib_constants.EGRESS_DIRECTION
+        request_groups_uuids = ['fake_uuid0', 'fake_uuid1']
         min_bw_rule_ingress_data = {
             'id': uuidutils.generate_uuid(),
             'min_kbps': 20,
             'direction': lib_constants.INGRESS_DIRECTION}
+        min_pps_rule_ingress_data = {
+            'id': uuidutils.generate_uuid(),
+            'min_kpps': 20,
+            'direction': lib_constants.INGRESS_DIRECTION}
         min_bw_rule_ingress = rule_object.QosMinimumBandwidthRule(
             self.ctxt, **min_bw_rule_ingress_data)
-
+        min_pps_rule_ingress = rule_object.QosMinimumPacketRateRule(
+            self.ctxt, **min_pps_rule_ingress_data)
         port = self._create_and_extend_port(
-            [self.min_bw_rule, min_bw_rule_ingress])
+            [self.min_bw_rule, min_bw_rule_ingress],
+            [self.min_pps_rule, min_pps_rule_ingress],
+            request_groups_uuids=request_groups_uuids)
+
         self.assertEqual(
-            ['CUSTOM_PHYSNET_PUBLIC', 'CUSTOM_VNIC_TYPE_NORMAL'],
-            port['resource_request']['required']
+            2,
+            len(port['resource_request']['request_groups'])
+        )
+        self.assertIn(
+            {
+                'id': 'fake_uuid0',
+                'required':
+                    ['CUSTOM_PHYSNET_PUBLIC', 'CUSTOM_VNIC_TYPE_NORMAL'],
+                'resources': {
+                    orc.NET_BW_EGR_KILOBIT_PER_SEC: 10,
+                    orc.NET_BW_IGR_KILOBIT_PER_SEC: 20},
+            },
+            port['resource_request']['request_groups']
+        )
+        self.assertIn(
+            {
+                'id': 'fake_uuid1',
+                'required': ['CUSTOM_VNIC_TYPE_NORMAL'],
+                'resources': {
+                    orc.NET_PACKET_RATE_EGR_KILOPACKET_PER_SEC: 10,
+                    orc.NET_PACKET_RATE_IGR_KILOPACKET_PER_SEC: 20,
+                },
+            },
+            port['resource_request']['request_groups']
         )
         self.assertEqual(
-            {
-                orc.NET_BW_EGR_KILOBIT_PER_SEC: 10,
-                orc.NET_BW_IGR_KILOBIT_PER_SEC: 20
-            },
-            port['resource_request']['resources'],
+            ['fake_uuid0', 'fake_uuid1'],
+            port['resource_request']['same_subtree'],
         )
 
-    def test__extend_port_resource_request_non_min_bw_rule(self):
-        port = self._create_and_extend_port([])
+    def test__extend_port_resource_request_non_min_bw_or_min_pps_rule(self):
+        port = self._create_and_extend_port([], [])
 
         self.assertIsNone(port.get('resource_request'))
 
-    def test__extend_port_resource_request_non_provider_net(self):
+    def test__extend_port_resource_request_min_bw_non_provider_net(self):
         self.min_bw_rule.direction = lib_constants.EGRESS_DIRECTION
 
         port = self._create_and_extend_port([self.min_bw_rule],
                                             physical_network=None)
         self.assertIsNone(port.get('resource_request'))
 
+    def test__extend_port_resource_request_mix_rules_non_provider_net(self):
+        self.min_bw_rule.direction = lib_constants.EGRESS_DIRECTION
+
+        port = self._create_and_extend_port([self.min_bw_rule],
+                                            [self.min_pps_rule],
+                                            physical_network=None)
+        self.assertEqual(
+            1,
+            len(port['resource_request']['request_groups'])
+        )
+        self.assertEqual(
+            'fake_uuid',
+            port['resource_request']['request_groups'][0]['id']
+        )
+        self.assertEqual(
+            ['CUSTOM_VNIC_TYPE_NORMAL'],
+            port['resource_request']['request_groups'][0]['required']
+        )
+        self.assertEqual(
+            {orc.NET_PACKET_RATE_KILOPACKET_PER_SEC: 10},
+            port['resource_request']['request_groups'][0]['resources'],
+        )
+        self.assertEqual(
+            ['fake_uuid'],
+            port['resource_request']['same_subtree'],
+        )
+
+    def test__extend_port_resource_request_bulk_min_bw_rule(self):
+        self.min_bw_rule.direction = lib_constants.EGRESS_DIRECTION
+        ports = self._create_and_extend_ports([self.min_bw_rule])
+
+        for port in ports:
+            self.assertEqual(
+                1,
+                len(port['resource_request']['request_groups'])
+            )
+            self.assertEqual(
+                'fake_uuid',
+                port['resource_request']['request_groups'][0]['id']
+            )
+            self.assertEqual(
+                ['CUSTOM_PHYSNET_PUBLIC', 'CUSTOM_VNIC_TYPE_NORMAL'],
+                port['resource_request']['request_groups'][0]['required']
+            )
+            self.assertEqual(
+                {orc.NET_BW_EGR_KILOBIT_PER_SEC: 10},
+                port['resource_request']['request_groups'][0]['resources'],
+            )
+            self.assertEqual(
+                ['fake_uuid'],
+                port['resource_request']['same_subtree'],
+            )
+
+    def test__extend_port_resource_request_bulk_min_pps_rule(self):
+        ports = self._create_and_extend_ports([], [self.min_pps_rule])
+
+        for port in ports:
+            self.assertEqual(
+                1,
+                len(port['resource_request']['request_groups'])
+            )
+            self.assertEqual(
+                'fake_uuid',
+                port['resource_request']['request_groups'][0]['id']
+            )
+            self.assertEqual(
+                ['CUSTOM_VNIC_TYPE_NORMAL'],
+                port['resource_request']['request_groups'][0]['required']
+            )
+            self.assertEqual(
+                {orc.NET_PACKET_RATE_KILOPACKET_PER_SEC: 10},
+                port['resource_request']['request_groups'][0]['resources'],
+            )
+            self.assertEqual(
+                ['fake_uuid'],
+                port['resource_request']['same_subtree'],
+            )
+
+    def test__extend_port_resource_request_bulk_min_bw_and_pps_rule(self):
+        self.min_bw_rule.direction = lib_constants.EGRESS_DIRECTION
+        self.min_pps_rule.direction = lib_constants.EGRESS_DIRECTION
+        request_groups_uuids = ['fake_uuid0', 'fake_uuid1'] * 2
+        min_bw_rule_ingress_data = {
+            'id': uuidutils.generate_uuid(),
+            'min_kbps': 20,
+            'direction': lib_constants.INGRESS_DIRECTION}
+        min_pps_rule_ingress_data = {
+            'id': uuidutils.generate_uuid(),
+            'min_kpps': 20,
+            'direction': lib_constants.INGRESS_DIRECTION}
+        min_bw_rule_ingress = rule_object.QosMinimumBandwidthRule(
+            self.ctxt, **min_bw_rule_ingress_data)
+        min_pps_rule_ingress = rule_object.QosMinimumPacketRateRule(
+            self.ctxt, **min_pps_rule_ingress_data)
+        ports = self._create_and_extend_ports(
+            [self.min_bw_rule, min_bw_rule_ingress],
+            [self.min_pps_rule, min_pps_rule_ingress],
+            request_groups_uuids=request_groups_uuids)
+
+        for port in ports:
+            self.assertEqual(
+                2,
+                len(port['resource_request']['request_groups'])
+            )
+            self.assertIn(
+                {
+                    'id': 'fake_uuid0',
+                    'required':
+                        ['CUSTOM_PHYSNET_PUBLIC', 'CUSTOM_VNIC_TYPE_NORMAL'],
+                    'resources': {
+                        orc.NET_BW_EGR_KILOBIT_PER_SEC: 10,
+                        orc.NET_BW_IGR_KILOBIT_PER_SEC: 20},
+                },
+                port['resource_request']['request_groups']
+            )
+            self.assertIn(
+                {
+                    'id': 'fake_uuid1',
+                    'required': ['CUSTOM_VNIC_TYPE_NORMAL'],
+                    'resources': {
+                        orc.NET_PACKET_RATE_EGR_KILOPACKET_PER_SEC: 10,
+                        orc.NET_PACKET_RATE_IGR_KILOPACKET_PER_SEC: 20,
+                    },
+                },
+                port['resource_request']['request_groups']
+            )
+            self.assertEqual(
+                ['fake_uuid0', 'fake_uuid1'],
+                port['resource_request']['same_subtree'],
+            )
+
     def test__extend_port_resource_request_no_qos_policy(self):
         port = self._create_and_extend_port([], physical_network='public',
                                             has_qos_policy=False)
         self.assertIsNone(port.get('resource_request'))
 
-    def test__extend_port_resource_request_inherited_policy(self):
+    def test__extend_port_resource_request_min_bw_inherited_policy(
+            self):
         self.min_bw_rule.direction = lib_constants.EGRESS_DIRECTION
         self.min_bw_rule.qos_policy_id = self.policy.id
 
         port = self._create_and_extend_port([self.min_bw_rule],
                                             has_net_qos_policy=True)
         self.assertEqual(
+            1,
+            len(port['resource_request']['request_groups'])
+        )
+        self.assertEqual(
+            'fake_uuid',
+            port['resource_request']['request_groups'][0]['id']
+        )
+        self.assertEqual(
             ['CUSTOM_PHYSNET_PUBLIC', 'CUSTOM_VNIC_TYPE_NORMAL'],
-            port['resource_request']['required']
+            port['resource_request']['request_groups'][0]['required']
         )
         self.assertEqual(
             {orc.NET_BW_EGR_KILOBIT_PER_SEC: 10},
-            port['resource_request']['resources'],
+            port['resource_request']['request_groups'][0]['resources'],
+        )
+        self.assertEqual(
+            ['fake_uuid'],
+            port['resource_request']['same_subtree'],
         )
 
     def test_get_ports_with_policy(self):
@@ -1720,6 +1985,20 @@ class TestQoSRuleAlias(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
 class TestQosPluginDB(base.BaseQosTestCase):
 
+    PORT_ID = 'f02f160e-1612-11ec-b2b8-bf60ab98186c'
+
+    QOS_MIN_BW_RULE_ID = '8bf8eb46-160e-11ec-8024-9f96be32099d'
+    # uuid -v5 f02f160e-1612-11ec-b2b8-bf60ab98186c
+    # 8bf8eb46-160e-11ec-8024-9f96be32099d
+    MIN_BW_REQUEST_GROUP_UUID = 'c8bc1b27-59a1-5135-aa33-aeecad6093f4'
+    MIN_BW_RP = 'd7bea120-1626-11ec-9148-c32debfcf0f6'
+
+    QOS_MIN_PPS_RULE_ID = '6ac5db7e-1626-11ec-8c7f-0b70dbb8a8eb'
+    # uuid -v5 f02f160e-1612-11ec-b2b8-bf60ab98186c
+    # 6ac5db7e-1626-11ec-8c7f-0b70dbb8a8eb
+    MIN_PPS_REQUEST_GROUP_UUID = '995008f4-f120-547a-b051-428b89076067'
+    MIN_PPS_RP = 'e16161f4-1626-11ec-a5a2-1fc9396e27cc'
+
     def setUp(self):
         super(TestQosPluginDB, self).setUp()
         self.setup_coreplugin(load_plugins=False)
@@ -1742,20 +2021,34 @@ class TestQosPluginDB(base.BaseQosTestCase):
         return qos_policy
 
     def _make_qos_minbw_rule(self, policy_id, direction='ingress',
-                             min_kbps=1000):
+                             min_kbps=1000, rule_id=None):
+        rule_id = rule_id if rule_id else uuidutils.generate_uuid()
         qos_rule = rule_object.QosMinimumBandwidthRule(
             self.context, project_id=self.project_id,
-            qos_policy_id=policy_id, direction=direction, min_kbps=min_kbps)
+            qos_policy_id=policy_id, direction=direction, min_kbps=min_kbps,
+            id=rule_id)
         qos_rule.create()
         return qos_rule
 
-    def _make_port(self, network_id, qos_policy_id=None):
+    def _make_qos_minpps_rule(self, policy_id, direction='ingress',
+                              min_kpps=1000, rule_id=None):
+        rule_id = rule_id if rule_id else uuidutils.generate_uuid()
+        qos_rule = rule_object.QosMinimumPacketRateRule(
+            self.context, project_id=self.project_id,
+            qos_policy_id=policy_id, direction=direction, min_kpps=min_kpps,
+            id=rule_id)
+        qos_rule.create()
+        return qos_rule
+
+    def _make_port(self, network_id, qos_policy_id=None, port_id=None):
+        port_id = port_id if port_id else uuidutils.generate_uuid()
         base_mac = ['aa', 'bb', 'cc', 'dd', 'ee', 'ff']
         mac = netaddr.EUI(next(net_utils.random_mac_generator(base_mac)))
         port = ports_object.Port(
             self.context, network_id=network_id, device_owner='3',
             project_id=self.project_id, admin_state_up=True, status='DOWN',
-            device_id='2', qos_policy_id=qos_policy_id, mac_address=mac)
+            device_id='2', qos_policy_id=qos_policy_id, mac_address=mac,
+            id=port_id)
         port.create()
         return port
 
@@ -1844,7 +2137,8 @@ class TestQosPluginDB(base.BaseQosTestCase):
         qos2_id = qos2.id if qos2 else None
 
         network = self._make_network()
-        port = self._make_port(network.id, qos_policy_id=qos1_id)
+        port = self._make_port(
+            network.id, qos_policy_id=qos1_id, port_id=TestQosPluginDB.PORT_ID)
 
         return {"context": self.context,
                 "original_port": {
@@ -1887,7 +2181,7 @@ class TestQosPluginDB(base.BaseQosTestCase):
                 payload=events.DBEventPayload(
                     context, states=(original_port, port)))
         mock_alloc_change.assert_called_once_with(
-            qos1_obj, qos2_obj, kwargs['original_port'])
+            qos1_obj, qos2_obj, kwargs['original_port'], port)
 
     def test_check_port_for_placement_allocation_change_no_new_policy(self):
         qos1_obj = self._make_qos_policy()
@@ -1905,7 +2199,7 @@ class TestQosPluginDB(base.BaseQosTestCase):
                 payload=events.DBEventPayload(
                     context, states=(original_port, port)))
         mock_alloc_change.assert_called_once_with(
-            qos1_obj, None, kwargs['original_port'])
+            qos1_obj, None, kwargs['original_port'], port)
 
     def test_check_port_for_placement_allocation_change_no_qos_update(self):
         qos1_obj = self._make_qos_policy()
@@ -1925,40 +2219,183 @@ class TestQosPluginDB(base.BaseQosTestCase):
                     context, states=(original_port, port)))
         mock_alloc_change.assert_not_called()
 
-    def _prepare_port_for_placement_allocation(self, qos1, qos2=None,
-                                               min_kbps1=1000, min_kbps2=2000):
-        rule1_obj = self._make_qos_minbw_rule(qos1.id, min_kbps=min_kbps1)
-        qos1.rules = [rule1_obj]
-        if qos2:
-            rule2_obj = self._make_qos_minbw_rule(qos2.id, min_kbps=min_kbps2)
-            qos2.rules = [rule2_obj]
-        orig_port = {'binding:profile': {'allocation': 'rp:uu:id'},
-                     'device_id': 'uu:id'}
-        return orig_port
+    def _prepare_port_for_placement_allocation(self, original_qos,
+                                               desired_qos=None,
+                                               original_min_kbps=None,
+                                               desired_min_kbps=None,
+                                               original_min_kpps=None,
+                                               desired_min_kpps=None):
+        kwargs = self._prepare_for_port_placement_allocation_change(
+            original_qos, desired_qos)
+        orig_port = kwargs['original_port']
+        original_qos.rules = []
+        allocation = {}
+        if original_min_kbps:
+            original_qos.rules += [self._make_qos_minbw_rule(
+                original_qos.id, min_kbps=original_min_kbps,
+                rule_id=TestQosPluginDB.QOS_MIN_BW_RULE_ID)]
+            allocation.update(
+                {TestQosPluginDB.MIN_BW_REQUEST_GROUP_UUID:
+                    TestQosPluginDB.MIN_BW_RP})
+        if original_min_kpps:
+            original_qos.rules += [self._make_qos_minpps_rule(
+                original_qos.id, min_kpps=original_min_kpps,
+                rule_id=TestQosPluginDB.QOS_MIN_PPS_RULE_ID)]
+            allocation.update(
+                {TestQosPluginDB.MIN_PPS_REQUEST_GROUP_UUID:
+                    TestQosPluginDB.MIN_PPS_RP})
+        if desired_qos:
+            desired_qos.rules = []
+            if desired_min_kbps:
+                desired_qos.rules += [self._make_qos_minbw_rule(
+                    desired_qos.id, min_kbps=desired_min_kbps)]
+            if desired_min_kpps:
+                desired_qos.rules += [self._make_qos_minpps_rule(
+                    desired_qos.id, min_kpps=desired_min_kpps)]
+        orig_port.update(
+            {'binding:profile':
+                {'allocation': allocation},
+            'device_id': 'uu:id'})
+        return orig_port, kwargs['port']
 
     def test_change_placement_allocation_increase(self):
         qos1 = self._make_qos_policy()
         qos2 = self._make_qos_policy()
-        port = self._prepare_port_for_placement_allocation(qos1, qos2)
+        orig_port, port = self._prepare_port_for_placement_allocation(
+            qos1, qos2, original_min_kbps=1000, desired_min_kbps=2000)
         with mock.patch.object(self.qos_plugin._placement_client,
-                'update_qos_minbw_allocation') as mock_update_qos_alloc:
-            self.qos_plugin._change_placement_allocation(qos1, qos2, port)
+                'update_qos_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(
+                qos1, qos2, orig_port, port)
         mock_update_qos_alloc.assert_called_once_with(
             consumer_uuid='uu:id',
-            minbw_alloc_diff={'NET_BW_IGR_KILOBIT_PER_SEC': 1000},
-            rp_uuid='rp:uu:id')
+            alloc_diff={self.MIN_BW_RP: {'NET_BW_IGR_KILOBIT_PER_SEC': 1000}})
 
-    def test_test_change_placement_allocation_decrease(self):
+    def test_change_placement_allocation_increase_min_pps(self):
         qos1 = self._make_qos_policy()
         qos2 = self._make_qos_policy()
-        port = self._prepare_port_for_placement_allocation(qos2, qos1)
+        orig_port, port = self._prepare_port_for_placement_allocation(
+            qos1, qos2, original_min_kpps=1000, desired_min_kpps=2000)
         with mock.patch.object(self.qos_plugin._placement_client,
-                'update_qos_minbw_allocation') as mock_update_qos_alloc:
-            self.qos_plugin._change_placement_allocation(qos1, qos2, port)
+                'update_qos_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(
+                qos1, qos2, orig_port, port)
         mock_update_qos_alloc.assert_called_once_with(
             consumer_uuid='uu:id',
-            minbw_alloc_diff={'NET_BW_IGR_KILOBIT_PER_SEC': -1000},
-            rp_uuid='rp:uu:id')
+            alloc_diff={self.MIN_PPS_RP: {
+                'NET_PACKET_RATE_IGR_KILOPACKET_PER_SEC': 1000}})
+
+    def test_change_placement_allocation_increase_min_pps_and_min_bw(self):
+        qos1 = self._make_qos_policy()
+        qos2 = self._make_qos_policy()
+        orig_port, port = self._prepare_port_for_placement_allocation(
+            qos1, qos2, original_min_kbps=1000, desired_min_kbps=2000,
+            original_min_kpps=500, desired_min_kpps=1000)
+        with mock.patch.object(self.qos_plugin._placement_client,
+                'update_qos_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(
+                qos1, qos2, orig_port, port)
+        mock_update_qos_alloc.assert_called_once_with(
+            consumer_uuid='uu:id',
+            alloc_diff={
+                self.MIN_PPS_RP: {
+                    'NET_PACKET_RATE_IGR_KILOPACKET_PER_SEC': 500},
+                self.MIN_BW_RP: {'NET_BW_IGR_KILOBIT_PER_SEC': 1000}})
+
+    def test_change_placement_allocation_change_direction_min_pps_and_min_bw(
+            self):
+        qos1 = self._make_qos_policy()
+        qos2 = self._make_qos_policy()
+        orig_port, port = self._prepare_port_for_placement_allocation(
+            qos1, qos2, original_min_kbps=1000, desired_min_kbps=2000,
+            original_min_kpps=500, desired_min_kpps=1000)
+        for rule in qos2.rules:
+            rule.direction = 'egress'
+        with mock.patch.object(self.qos_plugin._placement_client,
+                'update_qos_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(
+                qos1, qos2, orig_port, port)
+        mock_update_qos_alloc.assert_called_once_with(
+            consumer_uuid='uu:id',
+            alloc_diff={
+                self.MIN_PPS_RP: {
+                    'NET_PACKET_RATE_IGR_KILOPACKET_PER_SEC': -500,
+                    'NET_PACKET_RATE_EGR_KILOPACKET_PER_SEC': 1000},
+                self.MIN_BW_RP: {
+                    'NET_BW_IGR_KILOBIT_PER_SEC': -1000,
+                    'NET_BW_EGR_KILOBIT_PER_SEC': 2000}})
+
+    def test_change_placement_allocation_change_dir_min_pps_ingress_to_any(
+            self):
+        qos1 = self._make_qos_policy()
+        qos2 = self._make_qos_policy()
+        orig_port, port = self._prepare_port_for_placement_allocation(
+            qos1, qos2, original_min_kpps=1000, desired_min_kpps=1000)
+        for rule in qos2.rules:
+            rule.direction = 'any'
+        with mock.patch.object(self.qos_plugin._placement_client,
+                'update_qos_allocation') as mock_update_qos_alloc:
+            self.assertRaises(NotImplementedError,
+                self.qos_plugin._change_placement_allocation, qos1, qos2,
+                orig_port, port)
+        mock_update_qos_alloc.assert_not_called()
+
+    def test_change_placement_allocation_min_bw_dataplane_enforcement(self):
+        qos1 = self._make_qos_policy()
+        qos2 = self._make_qos_policy()
+        orig_port, port = self._prepare_port_for_placement_allocation(
+            qos1, qos2, desired_min_kbps=1000)
+        with mock.patch.object(self.qos_plugin._placement_client,
+                'update_qos_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(qos1, qos2, orig_port,
+                port)
+        mock_update_qos_alloc.assert_not_called()
+
+    def test_change_placement_allocation_min_bw_dataplane_enforcement_with_pps(
+            self):
+        qos1 = self._make_qos_policy()
+        qos2 = self._make_qos_policy()
+        orig_port, port = self._prepare_port_for_placement_allocation(
+            qos1, qos2, desired_min_kbps=1000, original_min_kpps=500,
+            desired_min_kpps=1000)
+        with mock.patch.object(self.qos_plugin._placement_client,
+                'update_qos_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(qos1, qos2, orig_port,
+                port)
+        mock_update_qos_alloc.assert_called_once_with(
+            consumer_uuid='uu:id',
+            alloc_diff={
+                self.MIN_PPS_RP: {
+                    'NET_PACKET_RATE_IGR_KILOPACKET_PER_SEC': 500}})
+
+    def test_change_placement_allocation_decrease(self):
+        original_qos = self._make_qos_policy()
+        desired_qos = self._make_qos_policy()
+        orig_port, port = self._prepare_port_for_placement_allocation(
+            original_qos, desired_qos, original_min_kbps=2000,
+            desired_min_kbps=1000)
+        with mock.patch.object(self.qos_plugin._placement_client,
+                'update_qos_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(
+                original_qos, desired_qos, orig_port, port)
+        mock_update_qos_alloc.assert_called_once_with(
+            consumer_uuid='uu:id',
+            alloc_diff={self.MIN_BW_RP: {'NET_BW_IGR_KILOBIT_PER_SEC': -1000}})
+
+    def test_change_placement_allocation_decrease_min_pps(self):
+        original_qos = self._make_qos_policy()
+        desired_qos = self._make_qos_policy()
+        orig_port, port = self._prepare_port_for_placement_allocation(
+            original_qos, desired_qos, original_min_kpps=2000,
+            desired_min_kpps=1000)
+        with mock.patch.object(self.qos_plugin._placement_client,
+                'update_qos_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(
+                original_qos, desired_qos, orig_port, port)
+        mock_update_qos_alloc.assert_called_once_with(
+            consumer_uuid='uu:id',
+            alloc_diff={self.MIN_PPS_RP: {
+                'NET_PACKET_RATE_IGR_KILOPACKET_PER_SEC': -1000}})
 
     def test_change_placement_allocation_no_original_qos(self):
         qos1 = None
@@ -1966,10 +2403,11 @@ class TestQosPluginDB(base.BaseQosTestCase):
         rule2_obj = self._make_qos_minbw_rule(qos2.id, min_kbps=1000)
         qos2.rules = [rule2_obj]
         orig_port = {'id': 'u:u', 'device_id': 'i:d', 'binding:profile': {}}
+        port = {}
         with mock.patch.object(self.qos_plugin._placement_client,
-                'update_qos_minbw_allocation') as mock_update_qos_alloc:
-            self.qos_plugin._change_placement_allocation(
-                qos1, qos2, orig_port)
+                'update_qos_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(qos1, qos2, orig_port,
+                port)
         mock_update_qos_alloc.assert_not_called()
 
     def test_change_placement_allocation_no_original_allocation(self):
@@ -1980,22 +2418,27 @@ class TestQosPluginDB(base.BaseQosTestCase):
         rule2_obj = self._make_qos_minbw_rule(qos2.id, min_kbps=1000)
         qos2.rules = [rule2_obj]
         orig_port = {'id': 'u:u', 'device_id': 'i:d', 'binding:profile': {}}
+        port = {}
         with mock.patch.object(self.qos_plugin._placement_client,
-                'update_qos_minbw_allocation') as mock_update_qos_alloc:
-            self.qos_plugin._change_placement_allocation(
-                qos1, qos2, orig_port)
+                'update_qos_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(qos1, qos2, orig_port,
+                port)
         mock_update_qos_alloc.assert_not_called()
 
     def test_change_placement_allocation_new_policy_empty(self):
         qos1 = self._make_qos_policy()
-        port = self._prepare_port_for_placement_allocation(qos1)
+        orig_port, port = self._prepare_port_for_placement_allocation(qos1,
+            original_min_kbps=1000, original_min_kpps=2000)
         with mock.patch.object(self.qos_plugin._placement_client,
-                'update_qos_minbw_allocation') as mock_update_qos_alloc:
-            self.qos_plugin._change_placement_allocation(qos1, None, port)
+                'update_qos_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(
+                qos1, None, orig_port, port)
         mock_update_qos_alloc.assert_called_once_with(
             consumer_uuid='uu:id',
-            minbw_alloc_diff={'NET_BW_IGR_KILOBIT_PER_SEC': -1000},
-            rp_uuid='rp:uu:id')
+            alloc_diff={
+                self.MIN_BW_RP: {'NET_BW_IGR_KILOBIT_PER_SEC': -1000},
+                self.MIN_PPS_RP: {
+                    'NET_PACKET_RATE_IGR_KILOPACKET_PER_SEC': -2000}})
 
     def test_change_placement_allocation_no_min_bw(self):
         qos1 = self._make_qos_policy()
@@ -2004,24 +2447,32 @@ class TestQosPluginDB(base.BaseQosTestCase):
         bw_limit_rule2 = rule_object.QosDscpMarkingRule(dscp_mark=18)
         qos1.rules = [bw_limit_rule1]
         qos2.rules = [bw_limit_rule2]
-        port = {'binding:profile': {'allocation': 'rp:uu:id'},
-                'device_id': 'uu:id'}
+        orig_port = {
+            'binding:profile': {'allocation': {
+                self.MIN_BW_REQUEST_GROUP_UUID: self.MIN_BW_RP}},
+            'device_id': 'uu:id',
+            'id': '9416c220-160a-11ec-ba3d-474633eb825c',
+        }
+        port = {}
 
         with mock.patch.object(self.qos_plugin._placement_client,
-                'update_qos_minbw_allocation') as mock_update_qos_alloc:
-            self.qos_plugin._change_placement_allocation(qos1, None, port)
+                'update_qos_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(
+                qos1, None, orig_port, port)
         mock_update_qos_alloc.assert_not_called()
 
     def test_change_placement_allocation_old_rule_not_min_bw(self):
         qos1 = self._make_qos_policy()
         qos2 = self._make_qos_policy()
         bw_limit_rule = rule_object.QosDscpMarkingRule(dscp_mark=16)
-        port = self._prepare_port_for_placement_allocation(qos1, qos2)
+        orig_port, port = self._prepare_port_for_placement_allocation(
+            qos1, qos2, desired_min_kbps=2000)
         qos1.rules = [bw_limit_rule]
 
         with mock.patch.object(self.qos_plugin._placement_client,
-                'update_qos_minbw_allocation') as mock_update_qos_alloc:
-            self.qos_plugin._change_placement_allocation(qos1, qos2, port)
+                'update_qos_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(qos1, qos2, orig_port,
+                port)
         mock_update_qos_alloc.assert_not_called()
 
     def test_change_placement_allocation_new_rule_not_min_bw(self):
@@ -2029,47 +2480,55 @@ class TestQosPluginDB(base.BaseQosTestCase):
         qos2 = self._make_qos_policy()
         bw_limit_rule = rule_object.QosDscpMarkingRule(dscp_mark=16)
         qos2.rules = [bw_limit_rule]
-        port = self._prepare_port_for_placement_allocation(qos1)
+        orig_port, port = self._prepare_port_for_placement_allocation(qos1,
+            original_min_kbps=1000)
 
         with mock.patch.object(self.qos_plugin._placement_client,
-                'update_qos_minbw_allocation') as mock_update_qos_alloc:
-            self.qos_plugin._change_placement_allocation(qos1, qos2, port)
-        mock_update_qos_alloc.assert_not_called()
+                'update_qos_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(
+                qos1, qos2, orig_port, port)
+        mock_update_qos_alloc.assert_called_once_with(
+            consumer_uuid='uu:id',
+            alloc_diff={self.MIN_BW_RP: {'NET_BW_IGR_KILOBIT_PER_SEC': -1000}})
 
-    def test_change_placement_allocation_equal_minkbps(self):
+    def test_change_placement_allocation_equal_minkbps_and_minkpps(self):
         qos1 = self._make_qos_policy()
         qos2 = self._make_qos_policy()
-        port = self._prepare_port_for_placement_allocation(qos1, qos2, 1000,
-                                                           1000)
+        orig_port, port = self._prepare_port_for_placement_allocation(
+            qos1, qos2, original_min_kbps=1000, desired_min_kbps=1000,
+            original_min_kpps=1000, desired_min_kpps=1000)
         with mock.patch.object(self.qos_plugin._placement_client,
-                'update_qos_minbw_allocation') as mock_update_qos_alloc:
-            self.qos_plugin._change_placement_allocation(qos1, qos2, port)
+                'update_qos_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(
+                qos1, qos2, orig_port, port)
         mock_update_qos_alloc.assert_not_called()
 
     def test_change_placement_allocation_update_conflict(self):
         qos1 = self._make_qos_policy()
         qos2 = self._make_qos_policy()
-        port = self._prepare_port_for_placement_allocation(qos1, qos2)
+        orig_port, port = self._prepare_port_for_placement_allocation(
+            qos1, qos2, original_min_kbps=1000, desired_min_kbps=2000)
         with mock.patch.object(self.qos_plugin._placement_client,
-                'update_qos_minbw_allocation') as mock_update_qos_alloc:
+                'update_qos_allocation') as mock_update_qos_alloc:
             mock_update_qos_alloc.side_effect = ks_exc.Conflict(
                 response={'errors': [{'code': 'placement.concurrent_update'}]}
             )
             self.assertRaises(
-                qos_exc.QosPlacementAllocationConflict,
+                neutron_qos_exc.QosPlacementAllocationUpdateConflict,
                 self.qos_plugin._change_placement_allocation,
-                qos1, qos2, port)
+                qos1, qos2, orig_port, port)
 
     def test_change_placement_allocation_update_generation_conflict(self):
         qos1 = self._make_qos_policy()
         qos2 = self._make_qos_policy()
-        port = self._prepare_port_for_placement_allocation(qos1, qos2)
+        orig_port, port = self._prepare_port_for_placement_allocation(
+            qos1, qos2, original_min_kbps=1000, desired_min_kbps=2000)
         with mock.patch.object(self.qos_plugin._placement_client,
-                'update_qos_minbw_allocation') as mock_update_qos_alloc:
+                'update_qos_allocation') as mock_update_qos_alloc:
             mock_update_qos_alloc.side_effect = (
                 pl_exc.PlacementAllocationGenerationConflict(
-                    consumer='rp:uu:id'))
+                    consumer=self.MIN_BW_RP))
             self.assertRaises(
                 pl_exc.PlacementAllocationGenerationConflict,
                 self.qos_plugin._change_placement_allocation,
-                qos1, qos2, port)
+                qos1, qos2, orig_port, port)

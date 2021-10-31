@@ -211,40 +211,53 @@ class AgentMechanismDriverBase(api.MechanismDriver, metaclass=abc.ABCMeta):
         if 'allocation' not in context.current['binding:profile']:
             return False
 
-        rp = uuid.UUID(context.current['binding:profile']['allocation'])
+        allocation = context.current['binding:profile']['allocation']
         host_agents = self._possible_agents_for_port(context)
 
         reported = {}
         for agent in host_agents:
-            if 'resource_provider_bandwidths' in agent['configurations']:
+            if const.RP_BANDWIDTHS in agent['configurations']:
                 for device in agent['configurations'][
-                        'resource_provider_bandwidths'].keys():
+                        const.RP_BANDWIDTHS].keys():
                     device_rp_uuid = place_utils.device_resource_provider_uuid(
                         namespace=uuid_ns,
                         host=agent['host'],
                         device=device)
-                    if device_rp_uuid == rp:
-                        reported[agent['id']] = agent
+                    for group, rp in allocation.items():
+                        if device_rp_uuid == uuid.UUID(rp):
+                            reported[group] = reported.get(group, []) + [agent]
+            if (const.RP_PP_WITHOUT_DIRECTION in agent['configurations'] or
+                    const.RP_PP_WITH_DIRECTION in agent['configurations']):
+                for group, rp in allocation.items():
+                    agent_rp_uuid = place_utils.agent_resource_provider_uuid(
+                        namespace=uuid_ns,
+                        host=agent['host'])
+                    if agent_rp_uuid == uuid.UUID(rp):
+                        reported[group] = reported.get(group, []) + [agent]
 
-        if len(reported) == 1:
-            agent = list(reported.values())[0]
-            LOG.debug("Agent %(agent)s of type %(agent_type)s reports to be "
-                      "responsible for resource provider %(rsc_provider)s",
-                      {'agent': agent['id'],
-                       'agent_type': agent['agent_type'],
-                       'rsc_provider': rp})
-            return True
-        elif len(reported) > 1:
-            LOG.error("Agent misconfiguration, multiple agents on the same "
-                      "host %(host)s reports being responsible for resource "
-                      "provider %(rsc_provider)s: %(agents)s",
-                      {'host': context.current['binding:host_id'],
-                       'rsc_provider': rp,
-                       'agents': reported.keys()})
-            return False
-        else:
-            # not responsible, must be somebody else
-            return False
+        for group, agents in reported.items():
+            if len(agents) == 1:
+                agent = agents[0]
+                LOG.debug(
+                    "Agent %(agent)s of type %(agent_type)s reports to be "
+                    "responsible for resource provider %(rsc_provider)s",
+                    {'agent': agent['id'],
+                     'agent_type': agent['agent_type'],
+                     'rsc_provider': allocation[group]})
+            elif len(agents) > 1:
+                LOG.error(
+                    "Agent misconfiguration, multiple agents on the same "
+                    "host %(host)s reports being responsible for resource "
+                    "provider %(rsc_provider)s: %(agents)s",
+                    {'host': context.current['binding:host_id'],
+                    'rsc_provider': allocation[group],
+                    'agents': [agent['id'] for agent in agents]})
+                return False
+            else:
+                # not responsible, must be somebody else
+                return False
+
+        return (len(reported) >= 1 and (len(reported) == len(allocation)))
 
 
 class SimpleAgentMechanismDriverBase(AgentMechanismDriverBase,

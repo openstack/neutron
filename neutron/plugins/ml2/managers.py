@@ -912,15 +912,14 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                         # traits of the allocated resource provider on
                         # the top binding_level (==0).
                         if (context.current['binding:profile'] is not None and
-                                'allocation' in context.current[
-                                    'binding:profile'] and
+                                context.current[
+                                    'binding:profile'].get('allocation') and
                                 not redoing_bottom):
                             LOG.debug(
                                 "Undo bottom bound level and redo it "
-                                "according to binding_profile.allocation, "
-                                "resource provider uuid: %s",
-                                context.current[
-                                    'binding:profile']['allocation'])
+                                "according to binding_profile.allocation: %s",
+                                context.current['binding:profile'][
+                                    'allocation'])
                             context._pop_binding_level()
                             context._unset_binding()
                             return self._bind_port_level(
@@ -966,21 +965,22 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
             if driver.obj.responsible_for_ports_allocation(context):
                 drivers.append(driver)
 
+        allocation = context.current['binding:profile']['allocation']
+
         if len(drivers) == 0:
             LOG.error("Failed to bind port %(port)s on host "
-                      "%(host)s allocated on resource provider "
-                      "%(rsc_provider)s, because no mechanism driver "
+                      "%(host)s allocated on resource providers: "
+                      "%(rsc_providers)s, because no mechanism driver "
                       "reports being responsible",
                       {'port': context.current['id'],
                        'host': context.host,
-                       'rsc_provider': context.current[
-                           'binding:profile']['allocation']})
+                       'rsc_providers': ','.join(allocation.values())})
             raise place_exc.UnknownResourceProvider(
-                rsc_provider=context.current['binding:profile']['allocation'])
+                rsc_provider=','.join(allocation.values()))
 
         if len(drivers) >= 2:
             raise place_exc.AmbiguousResponsibilityForResourceProvider(
-                rsc_provider=context.current['binding:profile']['allocation'],
+                rsc_provider=','.join(allocation.values()),
                 drivers=','.join([driver.name for driver in drivers]))
 
         # NOTE(bence romsics): The error conditions for raising either

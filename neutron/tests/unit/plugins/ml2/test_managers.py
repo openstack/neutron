@@ -123,7 +123,8 @@ class TestManagers(base.BaseTestCase):
                     None,
                     None,
                     self.segments_to_bind,
-                    profile={'allocation': 'fake_resource_provider'})
+                    profile={'allocation':
+                        {'fake_uuid': 'fake_resource_provider'}})
             )
 
     def test__infer_driver_from_allocation_ambiguous(self):
@@ -145,7 +146,8 @@ class TestManagers(base.BaseTestCase):
                     None,
                     None,
                     self.segments_to_bind,
-                    profile={'allocation': 'fake_resource_provider'})
+                    profile={'allocation':
+                        {'fake_uuid': 'fake_resource_provider'}})
             )
 
     @mock.patch.object(managers.LOG, 'critical')

@@ -1,0 +1,17 @@
+---
+features:
+  - |
+    Added port-resource-request-groups API extension, that provides support for
+    the new format of port's ``resource_request`` and
+    ``binding:profile.allocation`` attributes. The new format allows to request
+    multiple groups of resources and traits from the same RP subtree.
+
+    Assigning a new ``QoS policy`` with ``minimum_packet_rate`` rule to an
+    ``already bound port`` updates the allocation in Placement.
+    ``NOTE``: Placement allocation update is not supported if original QoS
+    policy had no ``minimum_packet_rate`` rule. Changing from direction-less
+    ``minimum_packet_rate`` rule to a direction-oriented
+    ``minimum_packet_rate`` rule is not supported.
+fixes:
+  - |
+    Fixes bug `1943724 <https://bugs.launchpad.net/neutron/+bug/1943724>`_.
