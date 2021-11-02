@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    Since this version, the support for stateless security groups is mandatory.
+    The minimum OVN NB schema version must be 5.17.

@@ -311,6 +311,14 @@ def check_ovn_nb_db_schema_port_group_support():
     return result
 
 
+def check_ovn_nb_db_schema_stateless_nat():
+    result = checks.ovn_nb_db_schema_stateless_nat_supported()
+    if not result:
+        LOG.warning('OVN NB DB schema does not support stateless NAT. This '
+                    'support was added in DB schema version 5.17.')
+    return result
+
+
 # Define CLI opts to test specific features, with a callback for the test
 OPTS = [
     BoolOptCallback('ovs_vxlan', check_ovs_vxlan, default=False,
@@ -379,6 +387,10 @@ OPTS = [
                     check_ovn_nb_db_schema_port_group_support,
                     help=_('Check OVN NB DB schema support Port_Group'),
                     default=False),
+    BoolOptCallback('ovn_nb_db_schema_stateless_nat_support',
+                    check_ovn_nb_db_schema_stateless_nat,
+                    help=_('Check OVN NB DB schema support stateless NAT'),
+                    default=False),
 ]
 
 
@@ -427,6 +439,7 @@ def enable_tests_from_config():
         cfg.CONF.set_default('check_min_tx_rate_support', True)
     if 'ovn' in cfg.CONF.ml2.mechanism_drivers:
         cfg.CONF.set_default('ovn_nb_db_schema_port_group_support', True)
+        cfg.CONF.set_default('ovn_nb_db_schema_stateless_nat_support', True)
 
 
 def all_tests_passed():
