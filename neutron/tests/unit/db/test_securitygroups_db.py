@@ -290,6 +290,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             'description': 'Default security group',
             'stateful': mock.ANY,
             'standard_attr_id': mock.ANY,
+            'shared': False,
             'security_group_rules': [
                 # Four rules for egress/ingress and ipv4/ipv6
                 mock.ANY, mock.ANY, mock.ANY, mock.ANY,

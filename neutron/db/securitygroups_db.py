@@ -337,6 +337,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                'tenant_id': security_group['tenant_id'],
                'description': security_group['description'],
                'standard_attr_id': security_group.db_obj.standard_attr.id,
+               'shared': security_group['shared'],
                }
         if security_group.rules:
             res['security_group_rules'] = [

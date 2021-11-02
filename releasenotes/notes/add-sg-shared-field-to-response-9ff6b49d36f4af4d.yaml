@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Add the shared field to security group API responses and support
+    using shared as a query filter.
+    For more information see bug
+    `1942615 <https://bugs.launchpad.net/neutron/+bug/1942615>`_.
