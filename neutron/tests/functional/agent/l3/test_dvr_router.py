@@ -1039,8 +1039,11 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         router_info = self.generate_dvr_router_info(enable_snat=True)
         expected_neighbors = ['35.4.1.10', '10.0.0.10', '10.200.0.3']
         allowed_address_net = netaddr.IPNetwork('10.100.0.0/30')
+        subnet_id = router_info['_interfaces'][0]['fixed_ips'][0]['subnet_id']
         port_data = {
-            'fixed_ips': [{'ip_address': expected_neighbors[0]}],
+            'fixed_ips': [
+                {'ip_address': expected_neighbors[0],
+                 'subnet_id': subnet_id}],
             'mac_address': 'fa:3e:aa:bb:cc:dd',
             'device_owner': DEVICE_OWNER_COMPUTE,
             'allowed_address_pairs': [

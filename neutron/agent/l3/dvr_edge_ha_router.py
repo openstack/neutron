@@ -42,7 +42,7 @@ class DvrEdgeHaRouter(dvr_edge_router.DvrEdgeRouter,
         router_info.RouterInfo.internal_network_added(self, port)
 
         for subnet in port['subnets']:
-            self._set_subnet_arp_info(subnet['id'])
+            self._set_subnet_arp_info(subnet)
         self._snat_redirect_add_from_port(port)
 
         if not self.get_ex_gw_port() or not self._is_this_snat_host():

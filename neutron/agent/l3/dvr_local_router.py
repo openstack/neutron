@@ -346,52 +346,56 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         device_exists = device.exists()
         return device, device_exists
 
-    def _set_subnet_arp_info(self, subnet_id):
+    def _set_subnet_arp_info(self, subnet):
         """Set ARP info retrieved from Plugin for existing ports."""
         # TODO(Carl) Can we eliminate the need to make this RPC while
         # processing a router.
-        subnet_ports = self.agent.get_ports_by_subnet(subnet_id)
+        subnet_ports = self.agent.get_ports_by_subnet(subnet['id'])
         ignored_device_owners = (
             lib_constants.ROUTER_INTERFACE_OWNERS +
             tuple(common_utils.get_dvr_allowed_address_pair_device_owners()))
-        device, device_exists = self.get_arp_related_dev(subnet_id)
+        device, device_exists = self.get_arp_related_dev(subnet['id'])
 
+        subnet_ip_version = netaddr.IPNetwork(subnet['cidr']).version
         for p in subnet_ports:
             if p['device_owner'] not in ignored_device_owners:
                 for fixed_ip in p['fixed_ips']:
-                    self._update_arp_entry(fixed_ip['ip_address'],
-                                           p['mac_address'],
-                                           subnet_id,
-                                           'add',
-                                           device=device,
-                                           device_exists=device_exists)
+                    if fixed_ip['subnet_id'] == subnet['id']:
+                        self._update_arp_entry(fixed_ip['ip_address'],
+                                               p['mac_address'],
+                                               subnet['id'],
+                                               'add',
+                                               device=device,
+                                               device_exists=device_exists)
                 for allowed_address_pair in p.get('allowed_address_pairs', []):
                     if ('/' not in str(allowed_address_pair['ip_address']) or
                             common_utils.is_cidr_host(
                                 allowed_address_pair['ip_address'])):
                         ip_address = common_utils.cidr_to_ip(
                             allowed_address_pair['ip_address'])
-                        self._update_arp_entry(
-                            ip_address,
-                            allowed_address_pair['mac_address'],
-                            subnet_id,
-                            'add',
-                            device=device,
-                            device_exists=device_exists)
+                        ip_version = common_utils.get_ip_version(ip_address)
+                        if ip_version == subnet_ip_version:
+                            self._update_arp_entry(
+                                ip_address,
+                                allowed_address_pair['mac_address'],
+                                subnet['id'],
+                                'add',
+                                device=device,
+                                device_exists=device_exists)
 
         # subnet_ports does not have snat port if the port is still unbound
         # by the time this function is called. So ensure to add arp entry
         # for snat port if port details are updated in router info.
         for p in self.get_snat_interfaces():
             for fixed_ip in p['fixed_ips']:
-                if fixed_ip['subnet_id'] == subnet_id:
+                if fixed_ip['subnet_id'] == subnet['id']:
                     self._update_arp_entry(fixed_ip['ip_address'],
                                            p['mac_address'],
-                                           subnet_id,
+                                           subnet['id'],
                                            'add',
                                            device=device,
                                            device_exists=device_exists)
-        self._process_arp_cache_for_internal_port(subnet_id)
+        self._process_arp_cache_for_internal_port(subnet['id'])
 
     @staticmethod
     def _get_snat_idx(ip_cidr):
@@ -508,7 +512,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         # external_gateway port or the agent_mode.
         ex_gw_port = self.get_ex_gw_port()
         for subnet in port['subnets']:
-            self._set_subnet_arp_info(subnet['id'])
+            self._set_subnet_arp_info(subnet)
             if ex_gw_port:
                 # Check for address_scopes here if gateway exists.
                 address_scopes_match = self._check_if_address_scopes_match(
