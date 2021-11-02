@@ -264,6 +264,10 @@ class OVSConfigFixture(ConfigFixture):
                     'dhcp_renewal_time': '0',
                     'dhcp_rebinding_time': '0'}
             })
+        if env_desc.local_ip_ext:
+            self.config['agent']['extensions'] = 'local_ip'
+            if host_desc.firewall_driver == 'openvswitch':
+                self.config['local_ip'] = {'static_nat': 'True'}
 
     def _setUp(self):
         self.config['ovs'].update({
