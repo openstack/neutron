@@ -133,6 +133,9 @@ class TestOVNMechanismDriverBase(MechDriverSetupBase,
         p = mock.patch.object(ovn_revision_numbers_db, 'bump_revision')
         p.start()
         self.addCleanup(p.stop)
+        self.mock_vp_parents = mock.patch.object(
+            ovn_client.OVNClient, 'get_virtual_port_parents',
+            return_value=None).start()
 
     def test_delete_mac_binding_entries(self):
         self.config(group='ovn', ovn_sb_private_key=None)
@@ -159,6 +162,13 @@ class TestOVNMechanismDriverBase(MechDriverSetupBase,
 
 
 class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
+
+    def setUp(self):
+        super().setUp()
+        self.mock_vp_parents = mock.patch.object(
+            ovn_client.OVNClient, 'get_virtual_port_parents',
+            return_value=None).start()
+
     @mock.patch.object(ovsdb_monitor.OvnInitPGNbIdl, 'from_server')
     @mock.patch.object(ovsdb_monitor, 'short_living_ovsdb_api')
     def test__create_neutron_pg_drop_non_existing(
@@ -2214,6 +2224,9 @@ class OVNMechanismDriverTestCase(MechDriverSetupBase,
         p = mock.patch.object(ovn_utils, 'get_revision_number', return_value=1)
         p.start()
         self.addCleanup(p.stop)
+        self.mock_vp_parents = mock.patch.object(
+            ovn_client.OVNClient, 'get_virtual_port_parents',
+            return_value=None).start()
 
 
 class TestOVNMechanismDriverBasicGet(test_plugin.TestMl2BasicGet,
@@ -3209,6 +3222,9 @@ class TestOVNMechanismDriverSecurityGroup(MechDriverSetupBase,
         super(TestOVNMechanismDriverSecurityGroup, self).setUp()
         self.ctx = context.get_admin_context()
         revision_plugin.RevisionPlugin()
+        self.mock_vp_parents = mock.patch.object(
+            ovn_client.OVNClient, 'get_virtual_port_parents',
+            return_value=None).start()
 
     def _delete_default_sg_rules(self, security_group_id):
         res = self._list(
@@ -3714,8 +3730,6 @@ class TestOVNVtepPortBinding(OVNMechanismDriverTestCase):
                          ovn_port_info.options["vtep-logical-switch"])
 
 
-@mock.patch.object(ovn_client.OVNClient, '_is_virtual_port_supported',
-                   lambda *args: True)
 class TestOVNVVirtualPort(OVNMechanismDriverTestCase):
 
     def setUp(self):

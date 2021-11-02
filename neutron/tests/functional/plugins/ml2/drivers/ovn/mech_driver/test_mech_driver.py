@@ -207,9 +207,6 @@ class TestNetworkMTUUpdate(base.TestOVNFunctionalBase):
             second_revision.updated_at)
 
 
-@mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.'
-            'ovsdb.ovn_client.OVNClient._is_virtual_port_supported',
-            lambda *args: True)
 class TestVirtualPorts(base.TestOVNFunctionalBase):
 
     def setUp(self):

@@ -105,11 +105,6 @@ class OVNClient(object):
             for cmd in commands:
                 txn.add(cmd)
 
-    def _is_virtual_port_supported(self):
-        # TODO(lucasagomes): Remove this method in the future. The
-        # "virtual" port type was added in the version 2.12 of OVN
-        return self._sb_idl.is_col_present('Port_Binding', 'virtual_parent')
-
     def is_external_ports_supported(self):
         return self._nb_idl.is_col_present(
             'Logical_Switch_Port', 'ha_chassis_group')
@@ -259,8 +254,7 @@ class OVNClient(object):
                                          subnet['cidr'].split('/')[1])
 
                 # Check if the port being created is a virtual port
-                if (self._is_virtual_port_supported() and
-                        not port['device_owner']):
+                if not port['device_owner']:
                     parents = self.get_virtual_port_parents(ip_addr, port)
                     if parents:
                         port_type = ovn_const.LSP_TYPE_VIRTUAL
@@ -470,8 +464,7 @@ class OVNClient(object):
             # Check if the parent port was created with the
             # allowed_address_pairs already set
             allowed_address_pairs = port.get('allowed_address_pairs', [])
-            if (self._is_virtual_port_supported() and
-                    allowed_address_pairs and
+            if (allowed_address_pairs and
                     port_info.type != ovn_const.LSP_TYPE_VIRTUAL):
                 addrs = [addr['ip_address'] for addr in allowed_address_pairs]
                 self._set_unset_virtual_port_type(context, txn, port, addrs)
@@ -595,8 +588,7 @@ class OVNClient(object):
             ovn_port = self._nb_idl.lookup('Logical_Switch_Port', port['id'])
             addr_pairs_diff = utils.compute_address_pairs_diff(ovn_port, port)
 
-            if (self._is_virtual_port_supported() and
-                    port_info.type != ovn_const.LSP_TYPE_VIRTUAL):
+            if port_info.type != ovn_const.LSP_TYPE_VIRTUAL:
                 self._set_unset_virtual_port_type(
                     context, txn, port, addr_pairs_diff.added)
                 self._set_unset_virtual_port_type(
@@ -683,8 +675,7 @@ class OVNClient(object):
                 self.add_txns_to_remove_port_dns_records(txn, port_object)
 
             # Check if the port being deleted is a virtual parent
-            if (ovn_port.type != ovn_const.LSP_TYPE_VIRTUAL and
-                    self._is_virtual_port_supported()):
+            if ovn_port.type != ovn_const.LSP_TYPE_VIRTUAL:
                 ls = self._nb_idl.ls_get(ovn_network_name).execute(
                     check_error=True)
                 cmd = self._nb_idl.unset_lswitch_port_to_virtual_type
