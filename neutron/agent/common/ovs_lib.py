@@ -284,13 +284,19 @@ class OVSBridge(BaseOVS):
         self._set_bridge_fail_mode(FAILMODE_STANDALONE)
 
     def add_protocols(self, *protocols):
-        self.ovsdb.db_add('Bridge', self.br_name,
-                          'protocols', *protocols).execute(check_error=True)
-        # TODO(ralonsoh): this is a workaround for LP#1948642. When the OF
-        # protocols are changed, the OF controller is restarted. This sleep
-        # will provide time to os-ken ``OfctlService`` to receive the update
-        # events of the restarted controllers and set them as enabled.
-        time.sleep(1)
+        existing_protocols = self.db_get_val(
+            'Bridge', self.br_name, 'protocols')
+        diff = set(protocols).difference(existing_protocols)
+        if diff:
+            self.ovsdb.db_add(
+                'Bridge', self.br_name,
+                'protocols', *diff).execute(check_error=True)
+            # TODO(ralonsoh): this is a workaround for LP#1948642. When the OF
+            # protocols are changed, the OF controller is restarted. This
+            # sleep will provide time to os-ken ``OfctlService`` to receive
+            # the update events of the restarted controllers and set them as
+            # enabled.
+            time.sleep(1)
 
     def use_at_least_protocol(self, protocol):
         """Calls to ovs-ofctl will use a protocol version >= 'protocol'"""
