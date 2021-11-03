@@ -1400,6 +1400,8 @@ class TestQoSRuleAlias(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
 class TestQosPluginDB(base.BaseQosTestCase):
 
+    PORT_ID = 'f02f160e-1612-11ec-b2b8-bf60ab98186c'
+
     def setUp(self):
         super(TestQosPluginDB, self).setUp()
         self.setup_coreplugin(load_plugins=False)
@@ -1429,13 +1431,15 @@ class TestQosPluginDB(base.BaseQosTestCase):
         qos_rule.create()
         return qos_rule
 
-    def _make_port(self, network_id, qos_policy_id=None):
+    def _make_port(self, network_id, qos_policy_id=None, port_id=None):
+        port_id = port_id if port_id else uuidutils.generate_uuid()
         base_mac = ['aa', 'bb', 'cc', 'dd', 'ee', 'ff']
         mac = netaddr.EUI(next(net_utils.random_mac_generator(base_mac)))
         port = ports_object.Port(
             self.context, network_id=network_id, device_owner='3',
             project_id=self.project_id, admin_state_up=True, status='DOWN',
-            device_id='2', qos_policy_id=qos_policy_id, mac_address=mac)
+            device_id='2', qos_policy_id=qos_policy_id, mac_address=mac,
+            id=port_id)
         port.create()
         return port
 
@@ -1524,7 +1528,8 @@ class TestQosPluginDB(base.BaseQosTestCase):
         qos2_id = qos2.id if qos2 else None
 
         network = self._make_network()
-        port = self._make_port(network.id, qos_policy_id=qos1_id)
+        port = self._make_port(
+            network.id, qos_policy_id=qos1_id, port_id=TestQosPluginDB.PORT_ID)
 
         return {"context": self.context,
                 "original_port": {
@@ -1613,7 +1618,7 @@ class TestQosPluginDB(base.BaseQosTestCase):
             rule2_obj = self._make_qos_minbw_rule(qos2.id, min_kbps=min_kbps2)
             qos2.rules = [rule2_obj]
         orig_port = {'binding:profile': {'allocation': 'rp:uu:id'},
-                     'device_id': 'uu:id'}
+                     'device_id': 'uu:id', 'id': 'port_id'}
         return orig_port
 
     def test_change_placement_allocation_increase(self):
@@ -1638,6 +1643,23 @@ class TestQosPluginDB(base.BaseQosTestCase):
         mock_update_qos_alloc.assert_called_once_with(
             consumer_uuid='uu:id',
             minbw_alloc_diff={'NET_BW_IGR_KILOBIT_PER_SEC': -1000},
+            rp_uuid='rp:uu:id')
+
+    def test_change_placement_allocation_change_direction_min_bw(self):
+        qos1 = self._make_qos_policy()
+        qos2 = self._make_qos_policy()
+        port = self._prepare_port_for_placement_allocation(
+            qos1, qos2, min_kbps1=1000, min_kbps2=2000)
+        for rule in qos2.rules:
+            rule.direction = 'egress'
+        with mock.patch.object(self.qos_plugin._placement_client,
+                'update_qos_minbw_allocation') as mock_update_qos_alloc:
+            self.qos_plugin._change_placement_allocation(
+                qos1, qos2, port)
+        mock_update_qos_alloc.assert_called_once_with(
+            consumer_uuid='uu:id',
+            minbw_alloc_diff={'NET_BW_IGR_KILOBIT_PER_SEC': -1000,
+                              'NET_BW_EGR_KILOBIT_PER_SEC': 2000},
             rp_uuid='rp:uu:id')
 
     def test_change_placement_allocation_no_original_qos(self):
@@ -1709,12 +1731,16 @@ class TestQosPluginDB(base.BaseQosTestCase):
         qos2 = self._make_qos_policy()
         bw_limit_rule = rule_object.QosDscpMarkingRule(dscp_mark=16)
         qos2.rules = [bw_limit_rule]
-        port = self._prepare_port_for_placement_allocation(qos1)
+        port = self._prepare_port_for_placement_allocation(qos1,
+                                                           min_kbps1=1000)
 
         with mock.patch.object(self.qos_plugin._placement_client,
                 'update_qos_minbw_allocation') as mock_update_qos_alloc:
             self.qos_plugin._change_placement_allocation(qos1, qos2, port)
-        mock_update_qos_alloc.assert_not_called()
+        mock_update_qos_alloc.assert_called_once_with(
+            consumer_uuid='uu:id',
+            minbw_alloc_diff={'NET_BW_IGR_KILOBIT_PER_SEC': -1000},
+            rp_uuid='rp:uu:id')
 
     def test_change_placement_allocation_equal_minkbps(self):
         qos1 = self._make_qos_policy()

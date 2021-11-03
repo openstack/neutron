@@ -277,37 +277,61 @@ class QoSPlugin(qos.QoSPluginBase):
             self._change_placement_allocation(original_policy, policy,
                                               orig_port)
 
-    def _prepare_allocation_needs(self, original_rule, desired_rule):
-        if (isinstance(desired_rule, rule_object.QosMinimumBandwidthRule) or
-                isinstance(desired_rule, dict)):
-            o_dir = original_rule.get('direction')
-            o_minkbps = original_rule.get('min_kbps')
-            d_minkbps = desired_rule.get('min_kbps')
-            d_dir = desired_rule.get('direction')
-            if o_dir == d_dir and o_minkbps != d_minkbps:
-                diff = d_minkbps - o_minkbps
-                # TODO(lajoskatona): move this to neutron-lib, see similar
-                # dict @l125.
-                if d_dir == 'egress':
-                    drctn = orc.NET_BW_EGR_KILOBIT_PER_SEC
-                else:
-                    drctn = orc.NET_BW_IGR_KILOBIT_PER_SEC
-                return {drctn: diff}
+    def _translate_rule_for_placement(self, rule):
+        if isinstance(rule, rule_object.QosMinimumBandwidthRule):
+            dir = rule.get('direction')
+            value = rule.get('min_kbps')
+            # TODO(lajoskatona): move this to neutron-lib, see similar
+            # dict @l125.
+            if dir == 'egress':
+                drctn = orc.NET_BW_EGR_KILOBIT_PER_SEC
+            else:
+                drctn = orc.NET_BW_IGR_KILOBIT_PER_SEC
+            return {drctn: value}
         return {}
+
+    def _prepare_allocation_needs(self, original_rules, desired_rules):
+        alloc_diff = {}
+        for rule in original_rules:
+            translated_rule = self._translate_rule_for_placement(rule)
+            # NOTE(przszc): Updating Placement resource allocation relies on
+            # calculating a difference between current allocation and desired
+            # one. If we want to release resources we need to get a negative
+            # value of the original allocation.
+            translated_rule = {rc: v * -1 for rc, v in translated_rule.items()}
+            alloc_diff.update(translated_rule)
+
+        for rule in desired_rules:
+            translated_rule = self._translate_rule_for_placement(rule)
+            for rc, value in translated_rule.items():
+                new_value = alloc_diff.get(rc, 0) + value
+                if new_value == 0:
+                    alloc_diff.pop(rc, None)
+                else:
+                    alloc_diff[rc] = new_value
+
+        alloc_diff = {rc: diff for rc, diff in alloc_diff.items() if diff}
+        return alloc_diff
 
     def _change_placement_allocation(self, original_policy, desired_policy,
                                      orig_port):
         alloc_diff = {}
         original_rules = []
+        desired_rules = []
         rp_uuid = orig_port['binding:profile'].get('allocation')
         device_id = orig_port['device_id']
         if original_policy:
             original_rules = original_policy.get('rules')
         if desired_policy:
             desired_rules = desired_policy.get('rules')
-        else:
-            desired_rules = [{'direction': 'egress', 'min_kbps': 0},
-                             {'direction': 'ingress', 'min_kbps': 0}]
+
+        # Filter out rules that can't have resources allocated in Placement
+        original_rules = [r for r in original_rules
+            if (isinstance(r, rule_object.QosMinimumBandwidthRule))]
+        desired_rules = [r for r in desired_rules
+            if (isinstance(r, rule_object.QosMinimumBandwidthRule))]
+        if not original_rules and not desired_rules:
+            return
 
         any_rules_minbw = any(
             [isinstance(r, rule_object.QosMinimumBandwidthRule)
@@ -318,11 +342,9 @@ class QoSPlugin(qos.QoSPluginBase):
                         "record in placement for it, only the dataplane "
                         "enforcement will happen!", orig_port['id'])
             return
-        for o_rule in original_rules:
-            if isinstance(o_rule, rule_object.QosMinimumBandwidthRule):
-                for d_rule in desired_rules:
-                    alloc_diff.update(
-                        self._prepare_allocation_needs(o_rule, d_rule))
+
+        alloc_diff = self._prepare_allocation_needs(original_rules,
+                                                    desired_rules)
         if alloc_diff:
             try:
                 self._placement_client.update_qos_minbw_allocation(
