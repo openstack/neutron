@@ -73,7 +73,7 @@ traffic directions (from the VM point of view).
     ============================  ====================  ====================  ==============  =====
      Enforcement type \ Backend    Open vSwitch          SR-IOV                Linux Bridge    OVN
     ============================  ====================  ====================  ==============  =====
-     Dataplane                     -                     Egress (1)            -               -
+     Dataplane                     Egress (3)            Egress (1)            -               -
      Placement                     Egress/Ingress (2)    Egress/Ingress (2)    -               -
     ============================  ====================  ====================  ==============  =====
 
@@ -81,6 +81,9 @@ traffic directions (from the VM point of view).
 
     (1) Since Newton
     (2) Since Stein
+    (3) Open vSwitch minimum bandwidth support is only implemented for egress
+        direction and only for networks without tunneled traffic (only VLAN and
+        flat network types).
 
 .. table:: **Neutron backends, supported directions and enforcement types for Minimum Packet Rate rule**
 
