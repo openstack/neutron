@@ -384,6 +384,40 @@ class L3HATestCase(framework.L3AgentTestFramework):
         common_utils.wait_until_true(lambda: router.ha_state == 'master')
         self._wait_until_ipv6_forwarding_has_state(router.ns_name, 'all', 1)
 
+    def test_router_interface_mtu_update(self):
+        original_mtu = 1450
+        router_info = self.generate_router_info(False)
+        router_info['_interfaces'][0]['mtu'] = original_mtu
+        router_info['gw_port']['mtu'] = original_mtu
+
+        router = self.manage_router(self.agent, router_info)
+
+        interface_name = router.get_internal_device_name(
+            router_info['_interfaces'][0]['id'])
+        gw_interface_name = router.get_external_device_name(
+            router_info['gw_port']['id'])
+
+        self.assertEqual(
+            original_mtu,
+            ip_lib.IPDevice(interface_name, router.ns_name).link.mtu)
+        self.assertEqual(
+            original_mtu,
+            ip_lib.IPDevice(gw_interface_name, router.ns_name).link.mtu)
+
+        updated_mtu = original_mtu + 1
+        router_info_copy = copy.deepcopy(router_info)
+        router_info_copy['_interfaces'][0]['mtu'] = updated_mtu
+        router_info_copy['gw_port']['mtu'] = updated_mtu
+
+        self.agent._process_updated_router(router_info_copy)
+
+        self.assertEqual(
+            updated_mtu,
+            ip_lib.IPDevice(interface_name, router.ns_name).link.mtu)
+        self.assertEqual(
+            updated_mtu,
+            ip_lib.IPDevice(gw_interface_name, router.ns_name).link.mtu)
+
 
 class L3HATestFailover(framework.L3AgentTestFramework):
 
