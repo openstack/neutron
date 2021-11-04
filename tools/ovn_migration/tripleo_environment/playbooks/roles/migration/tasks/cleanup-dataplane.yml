@@ -11,6 +11,9 @@
       done
     done
 
+- name: Cleanup neutron trunk subports
+  shell: |
+    ovs-vsctl list interface | awk '/name[ ]*: sp[it]-/ { print $3 }' | xargs -n1 ovs-vsctl del-port
 
 - name: Clean neutron datapath security groups from iptables
   shell: |
