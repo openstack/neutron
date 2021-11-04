@@ -37,7 +37,7 @@ TEST_ROUTERS = [
      'name': 'router1',
      'distributed': False,
      'status': 'ACTIVE',
-     'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'},
+     'project_id': '6c5f5d2a1fa2441e88e35422926f48e8'},
     {'_metering_labels': [
         {'id': 'eeef45da-c600-4a2a-b2f4-c0fb6df73c83',
          'rules': [{
@@ -52,7 +52,7 @@ TEST_ROUTERS = [
      'name': 'router2',
      'status': 'ACTIVE',
      'distributed': False,
-     'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'},
+     'project_id': '6c5f5d2a1fa2441e88e35422926f48e8'},
 ]
 
 TEST_DVR_ROUTER = [
@@ -70,7 +70,7 @@ TEST_DVR_ROUTER = [
      'name': 'router-test',
      'distributed': True,
      'status': 'ACTIVE',
-     'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'}]
+     'project_id': '6c5f5d2a1fa2441e88e35422926f48e8'}]
 
 TEST_ROUTERS_WITH_ONE_RULE = [
     {'_metering_labels': [
@@ -87,7 +87,7 @@ TEST_ROUTERS_WITH_ONE_RULE = [
      'name': 'router1',
      'status': 'ACTIVE',
      'distributed': False,
-     'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'},
+     'project_id': '6c5f5d2a1fa2441e88e35422926f48e8'},
     {'_metering_labels': [
         {'id': 'eeef45da-c600-4a2a-b2f4-c0fb6df73c83',
          'rule': {
@@ -102,7 +102,7 @@ TEST_ROUTERS_WITH_ONE_RULE = [
      'name': 'router2',
      'distributed': False,
      'status': 'ACTIVE',
-     'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'},
+     'project_id': '6c5f5d2a1fa2441e88e35422926f48e8'},
 ]
 
 TEST_ROUTERS_WITH_NEW_LABEL = [
@@ -119,7 +119,7 @@ TEST_ROUTERS_WITH_NEW_LABEL = [
      'id': '473ec392-1711-44e3-b008-3251ccfc5099',
      'name': 'router1',
      'status': 'ACTIVE',
-     'tenant_id': '6c5f5d2a1fa2441e88e35422926f48e8'}]
+     'project_id': '6c5f5d2a1fa2441e88e35422926f48e8'}]
 
 
 class IptablesDriverTestCase(base.BaseTestCase):

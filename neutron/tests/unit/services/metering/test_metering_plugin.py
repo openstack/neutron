@@ -97,8 +97,8 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         self.uuid_patch = mock.patch(uuid, return_value=self.uuid)
         self.mock_uuid = self.uuid_patch.start()
 
-        self.tenant_id = 'a7e61382-47b8-4d40-bae3-f95981b5637b'
-        self.ctx = FakeContext('', self.tenant_id, is_admin=True)
+        self.project_id = 'a7e61382-47b8-4d40-bae3-f95981b5637b'
+        self.ctx = FakeContext('', self.project_id, is_admin=True)
         self.context_patch = mock.patch('neutron_lib.context.Context',
                                         return_value=self.ctx)
         self.mock_context = self.context_patch.start()
@@ -159,7 +159,7 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                      'gw_port_id': None,
                      'admin_state_up': True,
                      'distributed': False,
-                     'tenant_id': self.tenant_id,
+                     'project_id': self.project_id,
                      '_metering_labels': [
                          {'rules': [],
                           'id': self.uuid, 'shared': False,
@@ -171,9 +171,9 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         with self.router(name='router2', tenant_id=tenant_id_2,
                          set_context=True):
             self.mock_uuid.return_value = self.uuid
-            with self.router(name='router1', tenant_id=self.tenant_id,
+            with self.router(name='router1', tenant_id=self.project_id,
                              set_context=True):
-                with self.metering_label(tenant_id=self.tenant_id,
+                with self.metering_label(tenant_id=self.project_id,
                                          set_context=True):
                     self.mock_add.assert_called_with(self.ctx, expected)
 
@@ -184,7 +184,7 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                      'gw_port_id': None,
                      'admin_state_up': True,
                      'distributed': False,
-                     'tenant_id': self.tenant_id,
+                     'project_id': self.project_id,
                      '_metering_labels': [
                          {'rules': [],
                           'id': self.uuid, 'shared': False,
@@ -195,9 +195,9 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                      'id': self.uuid}]
 
         tenant_id_2 = '8a268a58-1610-4890-87e0-07abb8231206'
-        with self.router(name='router1', tenant_id=self.tenant_id, shared=True,
-                         set_context=True):
-            with self.metering_label(tenant_id=self.tenant_id,
+        with self.router(name='router1', tenant_id=self.project_id,
+                         shared=True, set_context=True):
+            with self.metering_label(tenant_id=self.project_id,
                                      set_context=True):
                 self.mock_uuid.return_value = second_uuid
                 with self.metering_label(tenant_id=tenant_id_2, shared=True,
@@ -210,15 +210,15 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                      'gw_port_id': None,
                      'admin_state_up': True,
                      'distributed': False,
-                     'tenant_id': self.tenant_id,
+                     'project_id': self.project_id,
                      '_metering_labels': [
                          {'rules': [],
                           'id': self.uuid, 'shared': False,
                           'name': 'label'}],
                      'id': self.uuid}]
 
-        with self.router(tenant_id=self.tenant_id, set_context=True):
-            with self.metering_label(tenant_id=self.tenant_id,
+        with self.router(tenant_id=self.project_id, set_context=True):
+            with self.metering_label(tenant_id=self.project_id,
                                      set_context=True) as label:
                 self.mock_add.assert_called_with(self.ctx, expected)
                 self._delete('metering-labels',
@@ -232,7 +232,7 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                          'gw_port_id': None,
                          'admin_state_up': True,
                          'distributed': False,
-                         'tenant_id': self.tenant_id,
+                         'project_id': self.project_id,
                          '_metering_labels': [
                              {'rules': [],
                               'id': self.uuid, 'shared': False,
@@ -246,18 +246,18 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                             'gw_port_id': None,
                             'admin_state_up': True,
                             'distributed': False,
-                            'tenant_id': self.tenant_id,
+                            'project_id': self.project_id,
                             '_metering_labels': [
                                 {'rules': [],
                                  'id': second_uuid, 'shared': False,
                                  'name': 'label'}],
                             'id': self.uuid}]
 
-        with self.router(tenant_id=self.tenant_id, set_context=True):
-            with self.metering_label(tenant_id=self.tenant_id,
+        with self.router(tenant_id=self.project_id, set_context=True):
+            with self.metering_label(tenant_id=self.project_id,
                                      set_context=True):
                 self.mock_uuid.return_value = second_uuid
-                with self.metering_label(tenant_id=self.tenant_id,
+                with self.metering_label(tenant_id=self.project_id,
                                          set_context=True) as label:
                     self.mock_add.assert_called_with(self.ctx, expected_add)
                     self._delete('metering-labels',
@@ -271,7 +271,7 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                          'gw_port_id': None,
                          'admin_state_up': True,
                          'distributed': False,
-                         'tenant_id': self.tenant_id,
+                         'project_id': self.project_id,
                          '_metering_labels': [
                              {'rule': {
                                  'remote_ip_prefix':
@@ -291,7 +291,7 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                          'gw_port_id': None,
                          'admin_state_up': True,
                          'distributed': False,
-                         'tenant_id': self.tenant_id,
+                         'project_id': self.project_id,
                          '_metering_labels': [
                              {'rule': {
                                  'remote_ip_prefix':
@@ -307,8 +307,8 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                          'id': self.uuid}]
 
         remote_ip_prefix = {'remote_ip_prefix': '10.0.0.0/24'}
-        with self.router(tenant_id=self.tenant_id, set_context=True):
-            with self.metering_label(tenant_id=self.tenant_id,
+        with self.router(tenant_id=self.project_id, set_context=True):
+            with self.metering_label(tenant_id=self.project_id,
                                      set_context=True) as label:
                 la = label['metering_label']
                 self.mock_uuid.return_value = second_uuid
@@ -326,7 +326,7 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                          'gw_port_id': None,
                          'admin_state_up': True,
                          'distributed': False,
-                         'tenant_id': self.tenant_id,
+                         'project_id': self.project_id,
                          '_metering_labels': [
                              {'rule': {
                                  'source_ip_prefix':
@@ -346,7 +346,7 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                          'gw_port_id': None,
                          'admin_state_up': True,
                          'distributed': False,
-                         'tenant_id': self.tenant_id,
+                         'project_id': self.project_id,
                          '_metering_labels': [
                              {'rule': {
                                  'source_ip_prefix':
@@ -362,8 +362,8 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                          'id': self.uuid}]
 
         source_ip_prefix = {'source_ip_prefix': '10.0.0.0/24'}
-        with self.router(tenant_id=self.tenant_id, set_context=True):
-            with self.metering_label(tenant_id=self.tenant_id,
+        with self.router(tenant_id=self.project_id, set_context=True):
+            with self.metering_label(tenant_id=self.project_id,
                                      set_context=True) as label:
                 la = label['metering_label']
                 self.mock_uuid.return_value = second_uuid
@@ -382,7 +382,7 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                          'gw_port_id': None,
                          'admin_state_up': True,
                          'distributed': False,
-                         'tenant_id': self.tenant_id,
+                         'project_id': self.project_id,
                          '_metering_labels': [
                              {'rule': {
                                  'destination_ip_prefix':
@@ -402,7 +402,7 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                          'gw_port_id': None,
                          'admin_state_up': True,
                          'distributed': False,
-                         'tenant_id': self.tenant_id,
+                         'project_id': self.project_id,
                          '_metering_labels': [
                              {'rule': {
                                  'destination_ip_prefix':
@@ -418,8 +418,8 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                          'id': self.uuid}]
 
         source_ip_prefix = {'destination_ip_prefix': '10.0.0.0/24'}
-        with self.router(tenant_id=self.tenant_id, set_context=True):
-            with self.metering_label(tenant_id=self.tenant_id,
+        with self.router(tenant_id=self.project_id, set_context=True):
+            with self.metering_label(tenant_id=self.project_id,
                                      set_context=True) as label:
                 la = label['metering_label']
                 self.mock_uuid.return_value = second_uuid
@@ -438,7 +438,7 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                          'gw_port_id': None,
                          'admin_state_up': True,
                          'distributed': False,
-                         'tenant_id': self.tenant_id,
+                         'project_id': self.project_id,
                          '_metering_labels': [
                              {'rule': {
                                  'destination_ip_prefix':
@@ -459,7 +459,7 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                          'gw_port_id': None,
                          'admin_state_up': True,
                          'distributed': False,
-                         'tenant_id': self.tenant_id,
+                         'project_id': self.project_id,
                          '_metering_labels': [
                              {'rule': {
                                  'destination_ip_prefix':
@@ -477,8 +477,8 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
 
         ip_prefixes = {'source_ip_prefix': '10.0.0.0/24',
                        'destination_ip_prefix': '0.0.0.0/0'}
-        with self.router(tenant_id=self.tenant_id, set_context=True):
-            with self.metering_label(tenant_id=self.tenant_id,
+        with self.router(tenant_id=self.project_id, set_context=True):
+            with self.metering_label(tenant_id=self.project_id,
                                      set_context=True) as label:
                 la = label['metering_label']
                 self.mock_uuid.return_value = second_uuid
@@ -491,8 +491,8 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                                                          expected_del)
 
     def test_add_and_remove_metering_label_rule_src_and_remote_ip(self):
-        with self.router(tenant_id=self.tenant_id, set_context=True):
-            with self.metering_label(tenant_id=self.tenant_id,
+        with self.router(tenant_id=self.project_id, set_context=True):
+            with self.metering_label(tenant_id=self.project_id,
                                      set_context=True) as label:
                 la = label['metering_label']
 
@@ -514,8 +514,8 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                         "NeutronError"]["message"])
 
     def test_add_and_remove_metering_label_rule_dest_and_remote_ip(self):
-        with self.router(tenant_id=self.tenant_id, set_context=True):
-            with self.metering_label(tenant_id=self.tenant_id,
+        with self.router(tenant_id=self.project_id, set_context=True):
+            with self.metering_label(tenant_id=self.project_id,
                                      set_context=True) as label:
                 la = label['metering_label']
 
@@ -537,8 +537,8 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                         "NeutronError"]["message"])
 
     def test_add_and_remove_metering_label_rule_no_ip_prefix_entered(self):
-        with self.router(tenant_id=self.tenant_id, set_context=True):
-            with self.metering_label(tenant_id=self.tenant_id,
+        with self.router(tenant_id=self.project_id, set_context=True):
+            with self.metering_label(tenant_id=self.project_id,
                                      set_context=True) as label:
                 la = label['metering_label']
 
@@ -603,8 +603,8 @@ class TestMeteringPluginL3AgentScheduler(
         self.uuid_patch = mock.patch(uuid, return_value=self.uuid)
         self.mock_uuid = self.uuid_patch.start()
 
-        self.tenant_id = 'a7e61382-47b8-4d40-bae3-f95981b5637b'
-        self.ctx = FakeContext('', self.tenant_id, is_admin=True)
+        self.project_id = 'a7e61382-47b8-4d40-bae3-f95981b5637b'
+        self.ctx = FakeContext('', self.project_id, is_admin=True)
         self.context_patch = mock.patch('neutron_lib.context.Context',
                                         return_value=self.ctx)
         self.mock_context = self.context_patch.start()
@@ -634,7 +634,7 @@ class TestMeteringPluginL3AgentScheduler(
                      'gw_port_id': None,
                      'admin_state_up': True,
                      'distributed': False,
-                     'tenant_id': self.tenant_id,
+                     'project_id': self.project_id,
                      '_metering_labels': [
                          {'rules': [],
                           'id': second_uuid, 'shared': False,
@@ -645,7 +645,7 @@ class TestMeteringPluginL3AgentScheduler(
                      'gw_port_id': None,
                      'admin_state_up': True,
                      'distributed': False,
-                     'tenant_id': self.tenant_id,
+                     'project_id': self.project_id,
                      '_metering_labels': [
                          {'rules': [],
                           'id': second_uuid, 'shared': False,
@@ -664,12 +664,12 @@ class TestMeteringPluginL3AgentScheduler(
 
         self.l3routers_mock.side_effect = side_effect
 
-        with self.router(name='router1', tenant_id=self.tenant_id,
+        with self.router(name='router1', tenant_id=self.project_id,
                          set_context=True):
             self.mock_uuid.return_value = second_uuid
-            with self.router(name='router2', tenant_id=self.tenant_id,
+            with self.router(name='router2', tenant_id=self.project_id,
                              set_context=True):
-                with self.metering_label(tenant_id=self.tenant_id,
+                with self.metering_label(tenant_id=self.project_id,
                                          set_context=True):
                     self.mock_add.assert_called_with(
                         self.ctx, tools.UnorderedList(expected))

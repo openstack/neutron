@@ -39,7 +39,7 @@ class MeteringDbMixin(metering.MeteringPluginBase):
                'name': metering_label['name'],
                'description': metering_label['description'],
                'shared': metering_label['shared'],
-               'tenant_id': metering_label['tenant_id']}
+               'project_id': metering_label['project_id']}
         return db_utils.resource_fields(res, fields)
 
     def create_metering_label(self, context, metering_label):
@@ -47,7 +47,7 @@ class MeteringDbMixin(metering.MeteringPluginBase):
 
         metering_obj = metering_objs.MeteringLabel(
             context, id=uuidutils.generate_uuid(),
-            description=m['description'], project_id=m['tenant_id'],
+            description=m['description'], project_id=m['project_id'],
             name=m['name'], shared=m['shared'])
         metering_obj.create()
         return self._make_metering_label_dict(metering_obj)
@@ -158,7 +158,7 @@ class MeteringDbMixin(metering.MeteringPluginBase):
         distributed = l3_dvr_db.is_distributed_router(router)
         res = {'id': router['id'],
                'name': router['name'],
-               'tenant_id': router['tenant_id'],
+               'project_id': router['project_id'],
                'admin_state_up': router['admin_state_up'],
                'status': router['status'],
                'gw_port_id': router['gw_port_id'],

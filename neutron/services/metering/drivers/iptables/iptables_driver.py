@@ -541,9 +541,9 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
         `traffic_counters` dictionary.
                 * labels -- label-<label_id>
                 * routers -- router-<router_id>
-                * project -- project-<tenant_id>
+                * project -- project-<project_id>
                 * router-label -- router-<router_id>-label-<label_id>
-                * project-label -- project-<tenant_id>-label-<label_id>
+                * project-label -- project-<project_id>-label-<label_id>
 
         And last, but not least, if we are not able to retrieve the traffic
         counters from `iptables` for a given router, we will add it to
@@ -560,7 +560,7 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
 
         default_traffic_counters = {'pkts': 0, 'bytes': 0}
         project_traffic_counter_key = self.get_project_traffic_counter_key(
-            router['tenant_id'])
+            router['project_id'])
         router_traffic_counter_key = self.get_router_traffic_counter_key(
             router_id)
 

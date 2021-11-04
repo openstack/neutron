@@ -26,13 +26,13 @@ from neutron.tests import base
 
 _uuid = uuidutils.generate_uuid
 
-TENANT_ID = _uuid()
+PROJECT_ID = _uuid()
 LABEL_ID = _uuid()
 ROUTERS = [{'status': 'ACTIVE',
             'name': 'router1',
             'gw_port_id': None,
             'admin_state_up': True,
-            'tenant_id': TENANT_ID,
+            'project_id': PROJECT_ID,
             '_metering_labels': [{'rules': [],
                                   'id': LABEL_ID}],
             'id': _uuid()}]
@@ -41,7 +41,7 @@ ROUTERS_WITH_RULE = [{'status': 'ACTIVE',
                       'name': 'router1',
                       'gw_port_id': None,
                       'admin_state_up': True,
-                      'tenant_id': TENANT_ID,
+                      'project_id': PROJECT_ID,
                       '_metering_labels': [{'rule': {},
                                             'id': LABEL_ID}],
                       'id': _uuid()}]
@@ -125,7 +125,7 @@ class TestMeteringOperations(base.BaseTestCase):
         self.assertEqual('l3.meter', n['event_type'])
 
         payload = n['payload']
-        self.assertEqual(TENANT_ID, payload['tenant_id'])
+        self.assertEqual(PROJECT_ID, payload['project_id'])
         self.assertEqual(LABEL_ID, payload['label_id'])
         self.assertEqual(88, payload['pkts'])
         self.assertEqual(444, payload['bytes'])
@@ -164,7 +164,7 @@ class TestMeteringOperations(base.BaseTestCase):
         self.assertEqual('l3.meter', n['event_type'])
 
         payload = n['payload']
-        self.assertEqual(TENANT_ID, payload['tenant_id'])
+        self.assertEqual(PROJECT_ID, payload['project_id'])
         self.assertEqual(LABEL_ID, payload['label_id'])
         self.assertLess((payload['time'] - report_interval),
                         measure_interval, payload)
