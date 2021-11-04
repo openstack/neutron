@@ -17,11 +17,15 @@
       - ^doc/.*$
       - ^neutron/locale/.*$
       - ^neutron/tests/unit/.*$
+      - ^neutron/tests/fullstack/.*$
       - ^releasenotes/.*$
       - ^setup.cfg$
       - ^tools/.*$
       - ^vagrant/.*$
       - ^devstack/.*\.sample$
+      - ^playbooks/.*$
+      - ^roles/.*$
+      - ^rally-jobs/.*$
     vars:
       OVN_BRANCH: v21.06.0
       OVS_BRANCH: v2.16.0
@@ -58,6 +62,7 @@
       - ^.*\.rst$
       - ^neutron/locale/.*$
       - ^neutron/tests/unit/.*$
+      - ^neutron/tests/functional/.*$
       - ^tools/.*$
       - ^neutron/agent/ovn/.*$
       - ^neutron/agent/windows/.*$
@@ -65,6 +70,11 @@
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
       - ^neutron/plugins/ml2/drivers/ovn/.*$
       - ^neutron_lib/tests/unit/.*$
+      - ^vagrant/.*$
+      - ^devstack/.*\.sample$
+      - ^playbooks/.*$
+      - ^roles/.*$
+      - ^rally-jobs/.*$
 
 - job:
     name: neutron-fullstack-with-uwsgi

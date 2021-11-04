@@ -15,7 +15,7 @@
       - ^setup.cfg$
       - ^.*\.rst$
       - ^neutron/locale/.*$
-      - ^neutron/tests/unit/.*$
+      - ^neutron/tests/.*$
       - ^tools/.*$
       - ^tox.ini$
       - ^neutron/agent/ovn/.*$
@@ -24,6 +24,7 @@
       - ^neutron/plugins/ml2/drivers/macvtap/.*$
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
       - ^neutron/plugins/ml2/drivers/ovn/.*$
+      - ^vagrant/.*$
     vars:
       tox_envlist: integrated-network
       devstack_localrc:
@@ -253,7 +254,7 @@
       - ^setup.cfg$
       - ^.*\.rst$
       - ^neutron/locale/.*$
-      - ^neutron/tests/unit/.*$
+      - ^neutron/tests/.*$
       - ^tools/.*$
       - ^tox.ini$
       - ^neutron/agent/dhcp/.*$
