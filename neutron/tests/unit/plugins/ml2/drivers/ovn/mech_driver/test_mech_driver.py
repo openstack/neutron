@@ -103,6 +103,7 @@ class TestOVNMechanismDriverBase(MechDriverSetupBase,
         ovn_conf.cfg.CONF.set_override('dns_servers', ['8.8.8.8'],
                                        group='ovn')
         cfg.CONF.set_override('vlan_transparent', True)
+        cfg.CONF.set_override('ovsdb_connection_timeout', 30, group='ovn')
         mock.patch.object(impl_idl_ovn.Backend, 'schema_helper').start()
         super().setUp()
         neutron_agent.AgentCache(self.mech_driver)
@@ -135,7 +136,7 @@ class TestOVNMechanismDriverBase(MechDriverSetupBase,
 
     def test_delete_mac_binding_entries(self):
         self.config(group='ovn', ovn_sb_private_key=None)
-        expected = ('ovsdb-client transact tcp:127.0.0.1:6642 '
+        expected = ('ovsdb-client transact tcp:127.0.0.1:6642 --timeout 30 '
                    '\'["OVN_Southbound", {"op": "delete", "table": '
                    '"MAC_Binding", "where": [["ip", "==", "1.1.1.1"]]}]\'')
         with mock.patch.object(processutils, 'execute') as mock_execute:
@@ -147,7 +148,7 @@ class TestOVNMechanismDriverBase(MechDriverSetupBase,
         self.config(group='ovn', ovn_sb_private_key='pk')
         self.config(group='ovn', ovn_sb_certificate='cert')
         self.config(group='ovn', ovn_sb_ca_cert='ca')
-        expected = ('ovsdb-client transact tcp:127.0.0.1:6642 '
+        expected = ('ovsdb-client transact tcp:127.0.0.1:6642 --timeout 30 '
                    '-p pk -c cert -C ca '
                    '\'["OVN_Southbound", {"op": "delete", "table": '
                    '"MAC_Binding", "where": [["ip", "==", "1.1.1.1"]]}]\'')
