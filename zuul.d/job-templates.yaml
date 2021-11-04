@@ -26,6 +26,14 @@
         - openstack-tox-cover:  # from openstack-cover-jobs template
             timeout: 4800
             irrelevant-files:  *irrelevant-files
+    check-arm64:
+      jobs:
+        - openstack-tox-py38-arm64: # from openstack-python3-wallaby-jobs-arm64 template
+            timeout: 4800
+            irrelevant-files:  *irrelevant-files
+        - openstack-tox-py39-arm64: # from openstack-python3-wallaby-jobs-arm64 template
+            timeout: 4800
+            irrelevant-files:  *irrelevant-files
     gate:
       jobs:
         - openstack-tox-py36:  # from openstack-python3-wallaby-jobs template
