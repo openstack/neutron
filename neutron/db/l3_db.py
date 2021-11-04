@@ -1424,8 +1424,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
         self._core_plugin.update_port(
             context.elevated(), external_port['id'],
-            {'port': {'device_id': fip_id,
-                      'project_id': fip['tenant_id']}})
+            {'port': {'device_id': fip_id}})
         registry.publish(
             resources.FLOATING_IP, events.AFTER_CREATE, self,
             payload=events.DBEventPayload(
