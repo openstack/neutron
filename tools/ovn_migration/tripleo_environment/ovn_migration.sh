@@ -36,6 +36,7 @@ LANG=C
 : ${STACK_NAME:=overcloud}
 : ${PUBLIC_NETWORK_NAME:=public}
 : ${IMAGE_NAME:=cirros}
+: ${FLAVOR_NAME:=ovn-migration}
 : ${SERVER_USER_NAME:=cirros}
 : ${VALIDATE_MIGRATION:=True}
 : ${DHCP_RENEWAL_TIME:=30}
@@ -204,6 +205,7 @@ EOF
 remote_user=$UNDERCLOUD_NODE_USER
 public_network_name=$PUBLIC_NETWORK_NAME
 image_name=$IMAGE_NAME
+flavor_name=$FLAVOR_NAME
 working_dir=$OPT_WORKDIR
 server_user_name=$SERVER_USER_NAME
 validate_migration=$VALIDATE_MIGRATION
@@ -300,6 +302,7 @@ start_migration() {
     -i hosts_for_migration -e working_dir=$OPT_WORKDIR \
     -e public_network_name=$PUBLIC_NETWORK_NAME \
     -e image_name=$IMAGE_NAME \
+    -e flavor_name=$FLAVOR_NAME \
     -e overcloud_ovn_deploy_script=$OVERCLOUD_OVN_DEPLOY_SCRIPT \
     -e server_user_name=$SERVER_USER_NAME        \
     -e overcloudrc=$OVERCLOUDRC_FILE             \
