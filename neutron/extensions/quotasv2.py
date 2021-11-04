@@ -131,6 +131,7 @@ class QuotaSetsController(wsgi.Controller):
 
     def update(self, request, id, body=None):
         validate_policy(request.context, "update_quota")
+        check_limit = body[self._resource_name].pop('check_limit', False)
         if self._update_extended_attributes:
             self._update_attributes()
         try:
@@ -142,6 +143,20 @@ class QuotaSetsController(wsgi.Controller):
                 "An exception happened while processing the request "
                 "body. The exception message is [%s].", e)
             raise e
+
+        if check_limit:
+            resources = resource_registry.get_all_resources()
+            for resource_name, limit in body[self._resource_name].items():
+                resource_usage = self._driver.get_resource_usage(
+                    request.context, id, resources, resource_name)
+                if resource_usage > limit:
+                    msg = ('Quota limit %(limit)s for %(resource)s must be '
+                           'greater than or equal to already used '
+                           '%(resource_usage)s' %
+                           {'limit': limit, 'resource': resource_name,
+                            'resource_usage': resource_usage})
+                    raise webob.exc.HTTPBadRequest(msg)
+
         for key, value in body[self._resource_name].items():
             self._driver.update_quota_limit(request.context, id, key, value)
         return {self._resource_name: self._get_quotas(request, id)}

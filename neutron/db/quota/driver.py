@@ -224,15 +224,13 @@ class DbQuotaDriver(quota_api.QuotaDriverAPI):
             requested_resources = (set(requested_resources) -
                                    unlimited_resources)
             # Gather current usage information
-            # TODO(salv-orlando): calling count() for every resource triggers
-            # multiple queries on quota usage. This should be improved, however
-            # this is not an urgent matter as the REST API currently only
-            # allows allocation of a resource at a time
-            # NOTE: pass plugin too for compatibility with CountableResource
-            # instances
+            # TODO(salv-orlando): calling get_resource_usage() for every
+            # resource triggers multiple queries on quota usage. This should be
+            # improved, however this is not an urgent matter as the REST API
+            # currently only allows allocation of a resource at a time
             current_usages = dict(
-                (resource, resources[resource].count(
-                    context, plugin, project_id, resync_usage=False)) for
+                (resource, self.get_resource_usage(context, project_id,
+                                                   resources, resource)) for
                 resource in requested_resources)
             # Adjust for expired reservations. Apparently it is cheaper than
             # querying every time for active reservations and counting overall
