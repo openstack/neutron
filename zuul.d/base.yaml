@@ -23,9 +23,8 @@
       - ^vagrant/.*$
       - ^devstack/.*\.sample$
     vars:
-      OVN_BRANCH: v20.06.1
-      # TODO(jlibosva): v2.13.1 is incompatible with kernel 4.15.0-118, sticking to commit hash until new v2.13 tag is created
-      OVS_BRANCH: 0047ca3a0290f1ef954f2c76b31477cf4b9755f5
+      OVN_BRANCH: v21.06.0
+      OVS_BRANCH: v2.16.0
       devstack_services:
         # Ignore any default set by devstack. Emit a "disable_all_services".
         base: false
