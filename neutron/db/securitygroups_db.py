@@ -686,8 +686,6 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         return sg_id
 
     def _make_security_group_rule_dict(self, security_group_rule, fields=None):
-
-        # TODO(slaweq): switch this to use OVO instead of db object
         res = {'id': security_group_rule['id'],
                'tenant_id': security_group_rule['tenant_id'],
                'security_group_id': security_group_rule['security_group_id'],
@@ -825,10 +823,10 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         # be returned
         rule_objs = sg_obj.SecurityGroupRule.get_objects(
             context_lib.get_admin_context(), _pager=pager,
-            validate_filters=False, **filters
+            validate_filters=False, return_db_obj=True, **filters
         )
         return [
-            self._make_security_group_rule_dict(obj.db_obj, fields)
+            self._make_security_group_rule_dict(obj, fields)
             for obj in rule_objs
         ]
 

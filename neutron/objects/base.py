@@ -614,7 +614,7 @@ class NeutronDbObject(NeutronObject, metaclass=DeclarativeObject):
 
     @classmethod
     def get_objects(cls, context, _pager=None, validate_filters=True,
-                    fields=None, **kwargs):
+                    fields=None, return_db_obj=False, **kwargs):
         """Fetch a list of objects
 
         Fetch all results from DB and convert them to versioned objects.
@@ -629,6 +629,8 @@ class NeutronDbObject(NeutronObject, metaclass=DeclarativeObject):
                        avoid loading synthetic fields when possible, and
                        does not affect db queries. Default is None, which
                        is the same as []. Example: ['id', 'name']
+        :param return_db_obj: if 'True', the DB object is returned instead of
+                              the OVO, saving the conversion time.
         :param kwargs: multiple keys defined by key=value pairs
         :return: list of objects of NeutronDbObject class or empty list
         """
@@ -637,6 +639,8 @@ class NeutronDbObject(NeutronObject, metaclass=DeclarativeObject):
         with cls.db_context_reader(context):
             db_objs = obj_db_api.get_objects(
                 cls, context, _pager=_pager, **cls.modify_fields_to_db(kwargs))
+            if return_db_obj:
+                return db_objs
 
             return [cls._load_object(context, db_obj, fields=fields)
                     for db_obj in db_objs]
