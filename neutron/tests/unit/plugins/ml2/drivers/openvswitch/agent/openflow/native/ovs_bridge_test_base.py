@@ -137,11 +137,12 @@ class OVSBridgeTestBase(ovs_test_base.OVSOSKenTestBase):
         self.assertEqual('192.168.0.1', f('192.168.0.1/32'))
         self.assertEqual(('192.168.0.0', '255.255.255.0'), f('192.168.0.0/24'))
 
-    def test__setup_controllers__out_of_band(self):
+    def _test_setup_controllers(self, existing_controllers):
         cfg = mock.MagicMock()
-        cfg.OVS.of_listen_address = ""
-        cfg.OVS.of_listen_port = ""
+        cfg.OVS.of_listen_address = "127.0.0.1"
+        cfg.OVS.of_listen_port = "6633"
 
+        m_get_controller = mock.patch.object(self.br, 'get_controller')
         m_add_protocols = mock.patch.object(self.br, 'add_protocols')
         m_set_controller = mock.patch.object(self.br, 'set_controller')
         m_set_probe = mock.patch.object(self.br,
@@ -149,13 +150,29 @@ class OVSBridgeTestBase(ovs_test_base.OVSOSKenTestBase):
         m_set_ccm = mock.patch.object(self.br,
                                       'set_controllers_connection_mode')
 
-        with m_set_ccm as set_ccm:
-            with m_add_protocols as add_protocols:
-                with m_set_controller, m_set_probe:
-                    self.br.setup_controllers(cfg)
-                    set_ccm.assert_called_once_with("out-of-band")
-                    add_protocols.assert_called_once_with(
-                        constants.OPENFLOW10, constants.OPENFLOW13)
+        with m_set_ccm as set_ccm, \
+                m_add_protocols as add_protocols, \
+                m_set_controller as set_controller, \
+                m_get_controller as get_controller, \
+                m_set_probe:
+            get_controller.return_value = existing_controllers
+
+            self.br.setup_controllers(cfg)
+
+            if existing_controllers:
+                set_controller.assert_not_called()
+            else:
+                set_controller.assert_called_once_with(["tcp:127.0.0.1:6633"])
+            set_ccm.assert_called_once_with("out-of-band")
+            add_protocols.assert_called_once_with(
+                constants.OPENFLOW10, constants.OPENFLOW13)
+
+    def test_setup_controllers(self):
+        self._test_setup_controllers(existing_controllers=[])
+
+    def test_setup_controllers_when_already_exists(self):
+        self._test_setup_controllers(
+            existing_controllers=["tcp:127.0.0.1:6633"])
 
 
 class OVSDVRProcessTestMixin(object):
