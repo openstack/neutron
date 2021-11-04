@@ -57,6 +57,7 @@ from neutron_lib.api.definitions import security_groups_normalized_cidr
 from neutron_lib.api.definitions import security_groups_remote_address_group
 from neutron_lib.api.definitions import segment as seg_def
 from neutron_lib.api.definitions import sorting
+from neutron_lib.api.definitions import stateful_security_group
 from neutron_lib.api.definitions import subnet_service_types
 from neutron_lib.api.definitions import trunk
 from neutron_lib.api.definitions import vlantransparent
@@ -120,6 +121,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     'security-group',
     security_groups_normalized_cidr.ALIAS,
     security_groups_remote_address_group.ALIAS,
+    stateful_security_group.ALIAS,
     'standard-attr-description',
     constants.SUBNET_ALLOCATION_EXT_ALIAS,
     'standard-attr-tag',
