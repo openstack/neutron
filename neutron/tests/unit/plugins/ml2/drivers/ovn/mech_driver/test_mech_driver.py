@@ -91,6 +91,7 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
         self.mech_driver._nb_ovn = fakes.FakeOvsdbNbOvnIdl()
         self.mech_driver._sb_ovn = fakes.FakeOvsdbSbOvnIdl()
         self.mech_driver._ovn_client._qos_driver = mock.Mock()
+        cfg.CONF.set_override('ovsdb_connection_timeout', 30, group='ovn')
         self.nb_ovn = self.mech_driver._nb_ovn
         self.sb_ovn = self.mech_driver._sb_ovn
 
@@ -116,7 +117,7 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
 
     def test_delete_mac_binding_entries(self):
         self.config(group='ovn', ovn_sb_private_key=None)
-        expected = ('ovsdb-client transact tcp:127.0.0.1:6642 '
+        expected = ('ovsdb-client transact tcp:127.0.0.1:6642 --timeout 30 '
                    '\'["OVN_Southbound", {"op": "delete", "table": '
                    '"MAC_Binding", "where": [["ip", "==", "1.1.1.1"]]}]\'')
         with mock.patch.object(processutils, 'execute') as mock_execute:
@@ -128,7 +129,7 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
         self.config(group='ovn', ovn_sb_private_key='pk')
         self.config(group='ovn', ovn_sb_certificate='cert')
         self.config(group='ovn', ovn_sb_ca_cert='ca')
-        expected = ('ovsdb-client transact tcp:127.0.0.1:6642 '
+        expected = ('ovsdb-client transact tcp:127.0.0.1:6642 --timeout 30 '
                    '-p pk -c cert -C ca '
                    '\'["OVN_Southbound", {"op": "delete", "table": '
                    '"MAC_Binding", "where": [["ip", "==", "1.1.1.1"]]}]\'')
