@@ -292,7 +292,6 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         self.assertEqual(0, len(dhcp_agents['agents']))
 
     def test_network_auto_schedule_with_disabled(self):
-        cfg.CONF.set_override('allow_overlapping_ips', True)
         with self.subnet(), self.subnet():
             dhcp_rpc_cb = dhcp_rpc.DhcpRpcCallback()
             self._register_agent_states()
@@ -314,7 +313,6 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
         self.assertEqual(2, num_hostc_nets)
 
     def test_network_auto_schedule_with_no_dhcp(self):
-        cfg.CONF.set_override('allow_overlapping_ips', True)
         with self.subnet(enable_dhcp=False), self.subnet(enable_dhcp=False):
             dhcp_rpc_cb = dhcp_rpc.DhcpRpcCallback()
             self._register_agent_states()
@@ -336,7 +334,6 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
 
     def test_network_auto_schedule_with_multiple_agents(self):
         cfg.CONF.set_override('dhcp_agents_per_network', 2)
-        cfg.CONF.set_override('allow_overlapping_ips', True)
         with self.subnet(), self.subnet():
             dhcp_rpc_cb = dhcp_rpc.DhcpRpcCallback()
             self._register_agent_states()
@@ -370,7 +367,6 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
 
     def test_network_auto_schedule_with_hosted(self):
         # one agent hosts all the networks, other hosts none
-        cfg.CONF.set_override('allow_overlapping_ips', True)
         with self.subnet() as sub1, self.subnet():
             dhcp_rpc_cb = dhcp_rpc.DhcpRpcCallback()
             self._register_agent_states()
@@ -398,7 +394,6 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
     def test_network_auto_schedule_with_hosted_2(self):
         # one agent hosts one network
         dhcp_rpc_cb = dhcp_rpc.DhcpRpcCallback()
-        cfg.CONF.set_override('allow_overlapping_ips', True)
         with self.subnet() as sub1:
             helpers.register_dhcp_agent(DHCP_HOSTA)
             dhcp_rpc_cb.get_active_networks_info(
@@ -1397,7 +1392,6 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                                                  exc.HTTPNotFound.code)
 
     def test_network_no_reschedule(self):
-        cfg.CONF.set_override('allow_overlapping_ips', True)
         cfg.CONF.set_override('network_auto_schedule', False)
         with self.subnet() as sb1, self.subnet():
             network1_id = sb1['subnet']['network_id']

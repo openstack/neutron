@@ -1671,8 +1671,6 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         self.assertTrue(listener.except_raised)
 
     def test_list_ports_filtered_by_fixed_ip_substring(self):
-        # for this test we need to enable overlapping ips
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         with self.port() as port1, self.port():
             fixed_ips = port1['port']['fixed_ips'][0]
             query_params = """
@@ -1738,8 +1736,6 @@ fixed_ips=ip_address_substr%%3D%s&fixed_ips=ip_address%%3D%s
             self._delete('ports', port2['port']['id'])
 
     def test_list_ports_filtered_by_security_groups(self):
-        # for this test we need to enable overlapping ips
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         ctx = context.get_admin_context()
         with self.port() as port1, self.port() as port2:
             query_params = "security_groups=%s" % (

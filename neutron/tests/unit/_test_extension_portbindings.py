@@ -18,7 +18,6 @@ from http import client as httplib
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import context
 from neutron_lib.plugins import directory
-from oslo_config import cfg
 from webob import exc
 
 from neutron.tests.unit.db import test_db_base_plugin_v2
@@ -78,7 +77,6 @@ class PortBindingsTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def test_ports_vif_details(self):
         plugin = directory.get_plugin()
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         with self.port(), self.port():
             ctx = context.get_admin_context()
             ports = plugin.get_ports(ctx)
@@ -212,7 +210,6 @@ class PortBindingsHostTestCaseMixin(object):
             self._check_response_no_portbindings_host(non_admin_port)
 
     def test_ports_vif_host(self):
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         host_arg = {portbindings.HOST_ID: self.hostname}
         with self.port(name='name1',
                        arg_list=(portbindings.HOST_ID,),
@@ -235,7 +232,6 @@ class PortBindingsHostTestCaseMixin(object):
                 self._check_response_no_portbindings_host(non_admin_port)
 
     def test_ports_vif_host_update(self):
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         host_arg = {portbindings.HOST_ID: self.hostname}
         with self.port(name='name1', arg_list=(portbindings.HOST_ID,),
                        **host_arg) as port1, self.port(name='name2') as port2:
@@ -269,7 +265,6 @@ class PortBindingsHostTestCaseMixin(object):
                              res['port'][portbindings.HOST_ID])
 
     def test_ports_vif_host_list(self):
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         host_arg = {portbindings.HOST_ID: self.hostname}
         with self.port(name='name1',
                        arg_list=(portbindings.HOST_ID,),
@@ -325,7 +320,6 @@ class PortBindingsVnicTestCaseMixin(object):
             self._check_response_portbindings_vnic_type(non_admin_port)
 
     def test_ports_vnic_type(self):
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         vnic_arg = {portbindings.VNIC_TYPE: self.vnic_type}
         with self.port(name='name1', arg_list=(portbindings.VNIC_TYPE,),
                        **vnic_arg), self.port(name='name2'):

@@ -100,8 +100,6 @@ class AgentDBTestCase(AgentDBTestMixIn,
 
     def setUp(self):
         plugin = 'neutron.tests.unit.extensions.test_agent.TestAgentPlugin'
-        # for these tests we need to enable overlapping ips
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         ext_mgr = AgentTestExtensionManager()
         super(AgentDBTestCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr)
         self.adminContext = context.get_admin_context()

@@ -86,7 +86,9 @@ core_opts = [
     cfg.BoolOpt('dhcp_agent_notification', default=True,
                 help=_("Allow sending resource operation"
                        " notification to DHCP agent")),
-    cfg.BoolOpt('allow_overlapping_ips', default=False,
+    cfg.BoolOpt('allow_overlapping_ips', default=True,
+                deprecated_for_removal=True,
+                deprecated_since='Yoga',
                 help=_("Allow overlapping IP support in Neutron. "
                        "Attention: the following parameter MUST be set to "
                        "False if Neutron is being used in conjunction with "

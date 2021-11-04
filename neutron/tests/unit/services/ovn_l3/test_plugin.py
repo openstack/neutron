@@ -1652,8 +1652,6 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
         plugin = 'neutron.tests.unit.extensions.test_l3.TestNoL3NatPlugin'
         l3_plugin = ('neutron.services.ovn_l3.plugin.OVNL3RouterPlugin')
         service_plugins = {'l3_plugin_name': l3_plugin}
-        # For these tests we need to enable overlapping ips
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         cfg.CONF.set_default('max_routes', 3)
         ext_mgr = test_extraroute.ExtraRouteTestExtensionManager()
         super(test_l3.L3BaseForIntTests, self).setUp(

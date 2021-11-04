@@ -1,0 +1,8 @@
+---
+deprecations:
+  - |
+    Config option ``allow_overlapping_ips`` is deprecated for removal now.
+    Default value for that option is now changed to the ``True`` in the default
+    IPAM module of Neutron, as the only reason it was defaulting to ``False``
+    was to keep compatibility with Nova security group code that was removed
+    already.  The config option itself will removed in the ``Z`` release.

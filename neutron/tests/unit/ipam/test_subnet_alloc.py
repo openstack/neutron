@@ -21,7 +21,6 @@ from neutron_lib import context
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions
 from neutron_lib.plugins import directory
-from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_utils import uuidutils
 
@@ -39,7 +38,6 @@ class TestSubnetAllocation(testlib_api.SqlTestCase):
         self.setup_coreplugin(test_db_base_plugin_v2.DB_PLUGIN_KLASS)
         self.plugin = directory.get_plugin()
         self.ctx = context.get_admin_context()
-        cfg.CONF.set_override('allow_overlapping_ips', True)
 
     def _create_subnet_pool(self, plugin, ctx, name, prefix_list,
                             min_prefixlen, ip_version,

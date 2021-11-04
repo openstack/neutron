@@ -136,8 +136,6 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
                                        ips_list=[ips[0]['ip_address']])
 
     def test_list_ports(self):
-        # for this test we need to enable overlapping ips
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         with self.port() as v1, self.port() as v2, self.port() as v3:
             ports = (v1, v2, v3)
             res = self._test_list_resources('port', ports)

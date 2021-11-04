@@ -25,7 +25,6 @@ from neutron_lib import context as nctx
 from neutron_lib.db import api as db_api
 from neutron_lib.plugins import directory
 from neutron_lib.utils import net as net_utils
-from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
@@ -369,8 +368,6 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         plugin = plugin or (
             'neutron.tests.unit.extensions.test_l3_ext_gw_mode.'
             'TestDbIntPlugin')
-        # for these tests we need to enable overlapping ips
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         ext_mgr = ext_mgr or TestExtensionManager()
         super(ExtGwModeIntTestCase, self).setUp(plugin=plugin,
                                                 ext_mgr=ext_mgr,
@@ -532,7 +529,5 @@ class ExtGwModeSepTestCase(ExtGwModeIntTestCase):
         l3_plugin = ('neutron.tests.unit.extensions.test_l3_ext_gw_mode.'
                      'TestDbSepPlugin')
         svc_plugins = {'l3_plugin_name': l3_plugin}
-        # for these tests we need to enable overlapping ips
-        cfg.CONF.set_default('allow_overlapping_ips', True)
         super(ExtGwModeSepTestCase, self).setUp(plugin=plugin,
                                                 svc_plugins=svc_plugins)

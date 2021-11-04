@@ -75,7 +75,6 @@ class L3HATestFramework(testlib_api.SqlTestCase):
         self.mock_quota_make_res = make_res.start()
         commit_res = mock.patch.object(quota.QuotaEngine, 'commit_reservation')
         self.mock_quota_commit_res = commit_res.start()
-        cfg.CONF.set_override('allow_overlapping_ips', True)
 
         self.plugin = FakeL3PluginWithAgents()
         directory.add_plugin(plugin_constants.L3, self.plugin)
