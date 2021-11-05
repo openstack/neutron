@@ -351,6 +351,8 @@ class SimpleAgentMechanismDriverBase(AgentMechanismDriverBase,
         determine whether or not the specified network segment can be
         bound for the agent.
         """
+        if agent['agent_type'] != self.agent_type:
+            return False
 
         mappings = self.get_mappings(agent)
         allowed_network_types = self.get_allowed_network_types(agent)

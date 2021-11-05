@@ -2613,6 +2613,25 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
             3,
             ovn_nb_api.delete_lswitch_port.call_count)
 
+    def test_check_segment_for_agent(self):
+        segment = {'physical_network': 'physnet1'}
+        agent = {'agent_type': ovn_const.OVN_METADATA_AGENT}
+        self.assertFalse(
+            self.mech_driver.check_segment_for_agent(segment, agent))
+
+        agent = {'agent_type': ovn_const.OVN_CONTROLLER_AGENT,
+                 'configurations': {}}
+        self.assertFalse(
+            self.mech_driver.check_segment_for_agent(segment, agent))
+
+        agent['configurations'] = {'bridge-mappings': 'physnet2:br-ex2'}
+        self.assertFalse(
+            self.mech_driver.check_segment_for_agent(segment, agent))
+
+        agent['configurations'] = {'bridge-mappings': 'physnet1:br-ex1'}
+        self.assertTrue(
+            self.mech_driver.check_segment_for_agent(segment, agent))
+
 
 @mock.patch.object(n_net, 'get_random_mac', lambda *_: '01:02:03:04:05:06')
 class TestOVNMechanismDriverDHCPOptions(OVNMechanismDriverTestCase):

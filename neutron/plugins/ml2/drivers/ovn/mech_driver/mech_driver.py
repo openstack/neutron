@@ -34,6 +34,7 @@ from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import availability_zone as az_exc
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
+from neutron_lib.utils import helpers
 from oslo_concurrency import processutils
 from oslo_config import cfg
 from oslo_db import exception as os_db_exc
@@ -1154,6 +1155,20 @@ class OVNMechanismDriver(api.MechanismDriver):
         hosts = {host for host, phynets in host_phynets_map.items()
                  if phynet in phynets}
         segment_service_db.map_segment_to_hosts(context, segment.id, hosts)
+
+    def check_segment_for_agent(self, segment, agent):
+        """Check if the OVN controller agent br mappings has segment physnet
+
+        Only segments on physical networks (flat or vlan) can be associated
+        to a host.
+        """
+        if agent['agent_type'] not in ovn_const.OVN_CONTROLLER_TYPES:
+            return False
+
+        br_map = agent.get('configurations', {}).get('bridge-mappings', '')
+        mapping_dict = helpers.parse_mappings(br_map.split(','),
+                                              unique_values=False)
+        return segment['physical_network'] in mapping_dict
 
     def patch_plugin_merge(self, method_name, new_fn, op=operator.add):
         old_method = getattr(self._plugin, method_name)
