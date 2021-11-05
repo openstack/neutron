@@ -10,6 +10,7 @@
         Q_ML2_TENANT_NETWORK_TYPE: vxlan
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch,linuxbridge
         Q_AGENT: openvswitch
+        KEYSTONE_ADMIN_ENDPOINT: true
       rally_task: rally-jobs/task-neutron.yaml
       devstack_plugins:
         osprofiler: https://opendev.org/openstack/osprofiler
@@ -143,6 +144,7 @@
         Q_USE_PROVIDERNET_FOR_PUBLIC: true
         ENABLE_CHASSIS_AS_GW: true
         OVN_L3_CREATE_PUBLIC_NETWORK: true
+        KEYSTONE_ADMIN_ENDPOINT: true
       devstack_local_conf:
         post-config:
           "${RALLY_CONF_DIR}/${RALLY_CONF_FILE}":
