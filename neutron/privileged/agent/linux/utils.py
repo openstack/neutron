@@ -13,6 +13,7 @@
 #    under the License.
 
 import os
+from os import path
 import re
 
 from eventlet.green import subprocess
@@ -47,8 +48,8 @@ def _find_listen_pids_namespace(namespace):
 
 
 @privileged.default.entrypoint
-def delete_if_exists(path, remove=os.unlink):
-    fileutils.delete_if_exists(path, remove=remove)
+def delete_if_exists(_path, remove=os.unlink):
+    fileutils.delete_if_exists(_path, remove=remove)
 
 
 @privileged.default.entrypoint
@@ -82,3 +83,8 @@ def _create_process(cmd, addl_env=None):
     obj = subprocess.Popen(cmd, shell=False, stdin=subprocess.PIPE,
                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return obj, cmd
+
+
+@privileged.default.entrypoint
+def path_exists(_path):
+    return path.exists(_path)

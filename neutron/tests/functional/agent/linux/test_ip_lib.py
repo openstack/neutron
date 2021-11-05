@@ -659,10 +659,16 @@ class NamespaceTestCase(functional_base.BaseSudoTestCase):
         ip_lib.delete_network_namespace(self.namespace)
 
     def test_network_namespace_exists_ns_exists(self):
-        self.assertTrue(ip_lib.network_namespace_exists(self.namespace))
+        for use_helper_for_ns_read in (True, False):
+            cfg.CONF.set_override('use_helper_for_ns_read',
+                                  use_helper_for_ns_read, 'AGENT')
+            self.assertTrue(ip_lib.network_namespace_exists(self.namespace))
 
     def test_network_namespace_exists_ns_doesnt_exists(self):
-        self.assertFalse(ip_lib.network_namespace_exists('another_ns'))
+        for use_helper_for_ns_read in (True, False):
+            cfg.CONF.set_override('use_helper_for_ns_read',
+                                  use_helper_for_ns_read, 'AGENT')
+            self.assertFalse(ip_lib.network_namespace_exists('another_ns'))
 
     def test_network_namespace_exists_ns_exists_try_is_ready(self):
         self.assertTrue(ip_lib.network_namespace_exists(self.namespace,

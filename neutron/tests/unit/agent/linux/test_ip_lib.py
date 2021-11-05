@@ -824,31 +824,6 @@ class TestIpNetnsCommand(TestIPCmdBase):
         self.netns_cmd.delete('ns')
         remove.assert_called_once_with('ns')
 
-    @mock.patch.object(pyroute2.netns, 'listnetns')
-    @mock.patch.object(priv_lib, 'list_netns')
-    def test_namespace_exists_use_helper(self, priv_listnetns, listnetns):
-        self.config(group='AGENT', use_helper_for_ns_read=True)
-        priv_listnetns.return_value = NETNS_SAMPLE
-        # need another instance to avoid mocking
-        netns_cmd = ip_lib.IpNetnsCommand(ip_lib.SubProcessBase())
-        self.assertTrue(
-            netns_cmd.exists('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'))
-        self.assertEqual(1, priv_listnetns.call_count)
-        self.assertFalse(listnetns.called)
-
-    @mock.patch.object(pyroute2.netns, 'listnetns')
-    @mock.patch.object(priv_lib, 'list_netns')
-    def test_namespace_does_not_exist_no_helper(self, priv_listnetns,
-                                                listnetns):
-        self.config(group='AGENT', use_helper_for_ns_read=False)
-        listnetns.return_value = NETNS_SAMPLE
-        # need another instance to avoid mocking
-        netns_cmd = ip_lib.IpNetnsCommand(ip_lib.SubProcessBase())
-        self.assertFalse(
-            netns_cmd.exists('bbbbbbbb-1111-2222-3333-bbbbbbbbbbbb'))
-        self.assertEqual(1, listnetns.call_count)
-        self.assertFalse(priv_listnetns.called)
-
     def test_execute(self):
         self.parent.namespace = 'ns'
         with mock.patch('neutron.agent.common.utils.execute') as execute:
