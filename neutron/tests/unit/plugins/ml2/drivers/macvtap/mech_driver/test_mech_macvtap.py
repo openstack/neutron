@@ -34,18 +34,26 @@ class MacvtapMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
 
     AGENT = {'alive': True,
              'configurations': GOOD_CONFIGS,
-             'host': 'host'}
+             'host': 'host',
+             'agent_type': AGENT_TYPE,
+             }
     AGENTS = [AGENT]
 
     AGENTS_DEAD = [{'alive': False,
                     'configurations': GOOD_CONFIGS,
-                    'host': 'dead_host'}]
+                    'host': 'dead_host',
+                    'agent_type': AGENT_TYPE,
+                    }]
     AGENTS_BAD = [{'alive': False,
                    'configurations': GOOD_CONFIGS,
-                   'host': 'bad_host_1'},
+                   'host': 'bad_host_1',
+                   'agent_type': AGENT_TYPE,
+                   },
                   {'alive': True,
                    'configurations': BAD_CONFIGS,
-                   'host': 'bad_host_2'}]
+                   'host': 'bad_host_2',
+                   'agent_type': AGENT_TYPE,
+                   }]
 
     def setUp(self):
         super(MacvtapMechanismBaseTestCase, self).setUp()

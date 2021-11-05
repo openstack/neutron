@@ -55,16 +55,24 @@ class OpenvswitchMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
 
     AGENTS = [{'alive': True,
                'configurations': GOOD_CONFIGS,
-               'host': 'host'}]
+               'host': 'host',
+               'agent_type': AGENT_TYPE,
+               }]
     AGENTS_DEAD = [{'alive': False,
                     'configurations': GOOD_CONFIGS,
-                    'host': 'dead_host'}]
+                    'host': 'dead_host',
+                    'agent_type': AGENT_TYPE,
+                    }]
     AGENTS_BAD = [{'alive': False,
                    'configurations': GOOD_CONFIGS,
-                   'host': 'bad_host_1'},
+                   'host': 'bad_host_1',
+                   'agent_type': AGENT_TYPE,
+                   },
                   {'alive': True,
                    'configurations': BAD_CONFIGS,
-                   'host': 'bad_host_2'}]
+                   'host': 'bad_host_2',
+                   'agent_type': AGENT_TYPE,
+                   }]
 
     def setUp(self):
         super(OpenvswitchMechanismBaseTestCase, self).setUp()
@@ -128,7 +136,9 @@ class OpenvswitchMechanismSGDisabledBaseTestCase(
                     'tunnel_types': GOOD_TUNNEL_TYPES}
     AGENTS = [{'alive': True,
                'configurations': GOOD_CONFIGS,
-               'host': 'host'}]
+               'host': 'host',
+               'agent_type': constants.AGENT_TYPE_OVS,
+               }]
 
     def setUp(self):
         cfg.CONF.set_override('enable_security_group',
@@ -151,7 +161,9 @@ class OpenvswitchMechanismHybridPlugTestCase(OpenvswitchMechanismBaseTestCase):
         self.driver.vif_details[hybrid] = False
         agents = [{'alive': True,
                    'configurations': {hybrid: True},
-                   'host': 'host'}]
+                   'host': 'host',
+                   'agent_type': self.AGENT_TYPE,
+                   }]
         context = self._make_port_ctx(agents)
         self.driver.bind_port(context)
         self.assertTrue(context._bound_vif_details[hybrid])
@@ -163,7 +175,9 @@ class OpenvswitchMechanismHybridPlugTestCase(OpenvswitchMechanismBaseTestCase):
         self.driver.vif_details[hybrid] = True
         agents = [{'alive': True,
                    'configurations': {hybrid: False},
-                   'host': 'host'}]
+                   'host': 'host',
+                   'agent_type': self.AGENT_TYPE,
+                   }]
         context = self._make_port_ctx(agents)
         self.driver.bind_port(context)
         self.assertFalse(context._bound_vif_details[hybrid])
