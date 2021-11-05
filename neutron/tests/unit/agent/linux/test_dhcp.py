@@ -3148,7 +3148,7 @@ class TestDeviceManager(TestConfBase):
             # Setup with no existing DHCP port - expect a new DHCP port to
             # be created.
             network = FakeDeviceManagerNetwork()
-            network.tenant_id = 'Tenant A'
+            network.project_id = 'Project A'
 
             def mock_create(dict):
                 port = dhcp.DictModel(dict['port'])
@@ -3231,7 +3231,7 @@ class TestDeviceManager(TestConfBase):
 
             # Setup with a reserved DHCP port.
             network = FakeDualNetworkReserved()
-            network.tenant_id = 'Tenant A'
+            network.project_id = 'Project A'
             reserved_port = network.ports[-1]
 
             def mock_update(port_id, dict):
@@ -3302,7 +3302,7 @@ class TestDeviceManager(TestConfBase):
 
             # Setup with a reserved DHCP port.
             network = FakeDualNetworkReserved2()
-            network.tenant_id = 'Tenant A'
+            network.project_id = 'Project A'
             reserved_port_1 = network.ports[-2]
             reserved_port_2 = network.ports[-1]
 
@@ -3333,7 +3333,7 @@ class TestDeviceManager(TestConfBase):
         """
         # Setup with a reserved DHCP port.
         fake_network = FakeDualNetworkReserved2()
-        fake_network.tenant_id = 'Tenant A'
+        fake_network.project_id = 'Project A'
         reserved_port_2 = fake_network.ports[-1]
 
         mock_plugin = mock.Mock()

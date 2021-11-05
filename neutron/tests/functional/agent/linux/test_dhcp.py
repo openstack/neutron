@@ -49,7 +49,7 @@ class TestDhcp(functional_base.BaseSudoTestCase):
         dev_mgr = dhcp.DeviceManager(self.conf, plugin)
         network = {
             'id': 'foo_id',
-            'tenant_id': 'foo_tenant',
+            'project_id': 'foo_project',
             'namespace': 'qdhcp-foo_id',
             'ports': [],
             'subnets': [tests_base.AttributeDict({'id': 'subnet_foo_id',
