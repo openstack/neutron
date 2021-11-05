@@ -177,6 +177,9 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         :param agent: agents_db entry describing agent to bind or None
         :returns: True if segment can be bound for agent
         """
+        if agent and agent['agent_type'] != self.agent_type:
+            return False
+
         network_type = segment[api.NETWORK_TYPE]
         if network_type in self.get_allowed_network_types(agent):
             if agent:
