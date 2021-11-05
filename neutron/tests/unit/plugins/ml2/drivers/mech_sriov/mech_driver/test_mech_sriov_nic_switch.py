@@ -58,13 +58,21 @@ class SriovNicSwitchMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
     BAD_CONFIGS = {'device_mappings': BAD_MAPPINGS}
 
     AGENTS = [{'alive': True,
-               'configurations': GOOD_CONFIGS}]
+               'configurations': GOOD_CONFIGS,
+               'agent_type': AGENT_TYPE,
+               }]
     AGENTS_DEAD = [{'alive': False,
-                    'configurations': GOOD_CONFIGS}]
+                    'configurations': GOOD_CONFIGS,
+                    'agent_type': AGENT_TYPE,
+                    }]
     AGENTS_BAD = [{'alive': False,
-                   'configurations': GOOD_CONFIGS},
+                   'configurations': GOOD_CONFIGS,
+                   'agent_type': AGENT_TYPE,
+                   },
                   {'alive': True,
-                   'configurations': BAD_CONFIGS}]
+                   'configurations': BAD_CONFIGS,
+                   'agent_type': AGENT_TYPE,
+                   }]
 
     def setUp(self):
         super(SriovNicSwitchMechanismBaseTestCase, self).setUp()
@@ -76,17 +84,23 @@ class SriovSwitchMechGenericTestCase(SriovNicSwitchMechanismBaseTestCase,
                                      base.AgentMechanismGenericTestCase):
     def test_check_segment(self):
         """Validate the check_segment call."""
-        segment = {'api.NETWORK_TYPE': ""}
-        segment[api.NETWORK_TYPE] = constants.TYPE_VLAN
-        self.assertTrue(self.driver.check_segment_for_agent(segment))
+        agent = {'agent_type': self.AGENT_TYPE,
+                 'configurations': {'device_mappings': ['physnet1']}}
+        segment = {api.NETWORK_TYPE: constants.TYPE_VLAN,
+                   api.PHYSICAL_NETWORK: 'physnet1'}
+        self.assertTrue(self.driver.check_segment_for_agent(segment, agent))
         # Validate a network type not currently supported
         segment[api.NETWORK_TYPE] = constants.TYPE_GRE
-        self.assertFalse(self.driver.check_segment_for_agent(segment))
+        self.assertFalse(self.driver.check_segment_for_agent(segment, agent))
 
     def test_check_segment_allows_supported_network_types(self):
         for network_type in self.driver.get_allowed_network_types(agent=None):
-            segment = {api.NETWORK_TYPE: network_type}
-            self.assertTrue(self.driver.check_segment_for_agent(segment))
+            agent = {'agent_type': self.AGENT_TYPE,
+                     'configurations': {'device_mappings': ['physnet1']}}
+            segment = {api.NETWORK_TYPE: network_type,
+                       api.PHYSICAL_NETWORK: 'physnet1'}
+            self.assertTrue(self.driver.check_segment_for_agent(segment,
+                                                                agent))
 
     def test_driver_responsible_for_ports_allocation(self):
         agents = [
