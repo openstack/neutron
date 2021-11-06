@@ -13,6 +13,7 @@
 #    under the License.
 
 import os
+from os import path
 import re
 
 from oslo_concurrency import processutils
@@ -45,5 +46,10 @@ def _find_listen_pids_namespace(namespace):
 
 
 @privileged.default.entrypoint
-def delete_if_exists(path, remove=os.unlink):
-    fileutils.delete_if_exists(path, remove=remove)
+def delete_if_exists(_path, remove=os.unlink):
+    fileutils.delete_if_exists(_path, remove=remove)
+
+
+@privileged.default.entrypoint
+def path_exists(_path):
+    return path.exists(_path)
