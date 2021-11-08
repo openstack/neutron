@@ -86,5 +86,5 @@ feature on a particular deployment.
 .. important::
 
     Despite the obvious parallels that could be drawn, this list is
-    unrelated to the DefCore effort.
-    See `InteropWG <https://wiki.openstack.org/wiki/Governance/InteropWG>`_
+    unrelated to the Interop effort.
+    See `InteropWG <https://docs.opendev.org/openinfra/interop/latest/>`_
