@@ -325,21 +325,23 @@ class HaRouter(router.RouterInfo):
                 return False
         return True
 
-    def _disable_ipv6_addressing_on_interface(self, interface_name):
+    def _disable_ipv6_addressing_on_interface(self, interface_name,
+                                              namespace=None):
         """Disable IPv6 link local addressing on the device and add it as
         a VIP to keepalived. This means that the IPv6 link local address
         will only be present on the primary.
         """
-        device = ip_lib.IPDevice(interface_name, namespace=self.ha_namespace)
+        namespace = namespace or self.ha_namespace
+        device = ip_lib.IPDevice(interface_name, namespace=namespace)
         ipv6_lladdr = ip_lib.get_ipv6_lladdr(device.link.address)
 
         if self._should_delete_ipv6_lladdr(ipv6_lladdr):
-            self.driver.configure_ipv6_ra(self.ha_namespace, interface_name,
+            self.driver.configure_ipv6_ra(namespace, interface_name,
                                           n_consts.ACCEPT_RA_DISABLED)
             device.addr.flush(n_consts.IP_VERSION_6)
         else:
             self.driver.configure_ipv6_ra(
-                self.ha_namespace, interface_name,
+                namespace, interface_name,
                 n_consts.ACCEPT_RA_WITHOUT_FORWARDING)
 
         self._remove_vip(ipv6_lladdr)
