@@ -230,12 +230,23 @@ dhcp_opts = [
                        "DHCPv6 packets.")),
 ]
 
+local_ip_opts = [
+    cfg.BoolOpt('static_nat', default=False,
+                help=_("When set to True, the Local IP openvswitch agent "
+                       "extension will use static NAT rules instead of using "
+                       "conntrack. This allows to use feature in OVS offload "
+                       "and DPDK scenarios at the cost of number and "
+                       "complexity of flows. This also allows to use feature "
+                       "together with ovs firewall.")),
+]
+
 
 def register_ovs_agent_opts(cfg=cfg.CONF):
     cfg.register_opts(ovs_opts, "OVS")
     cfg.register_opts(agent_opts, "AGENT")
     cfg.register_opts(dhcp_opts, "DHCP")
     cfg.register_opts(common.DHCP_PROTOCOL_OPTS, "DHCP")
+    cfg.register_opts(local_ip_opts, "LOCAL_IP")
 
 
 def register_ovs_opts(cfg=cfg.CONF):

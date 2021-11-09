@@ -15,16 +15,20 @@
 
 from unittest import mock
 
+import netaddr
 from neutron_lib.callbacks import events as lib_events
 from neutron_lib.callbacks import registry as lib_registry
 from neutron_lib import context
 from os_ken.lib.packet import ether_types
+from os_ken.lib.packet import in_proto as ip_proto
 from oslo_utils import uuidutils
 
 from neutron.agent.l2.extensions import local_ip as local_ip_ext
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.objects import local_ip as lip_obj
+from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
+     constants as ovs_constants)
 from neutron.plugins.ml2.drivers.openvswitch.agent \
     import ovs_agent_extension_api as ovs_ext_api
 from neutron.tests import base
@@ -223,21 +227,21 @@ class LocalIPAgentExtensionTestCase(base.BaseTestCase):
                     mac, 60, vlan, dest_ip)),
             mock.call(
                 table=31,
-                priority=11,
-                nw_src=dest_ip,
-                nw_dst=local_ip,
-                reg6=vlan,
-                dl_type="0x{:04x}".format(ether_types.ETH_TYPE_IP),
-                actions='resubmit(,{:d})'.format(60)),
-            mock.call(
-                table=31,
                 priority=10,
                 dl_src=mac,
                 nw_src=dest_ip,
                 reg6=vlan,
                 ct_state="-trk",
                 dl_type="0x{:04x}".format(ether_types.ETH_TYPE_IP),
-                actions='ct(table={:d},zone={:d},nat'.format(60, vlan))
+                actions='ct(table={:d},zone={:d},nat'.format(60, vlan)),
+            mock.call(
+                    table=31,
+                    priority=11,
+                    nw_src=dest_ip,
+                    nw_dst=local_ip,
+                    reg6=vlan,
+                    dl_type="0x{:04x}".format(ether_types.ETH_TYPE_IP),
+                    actions='resubmit(,{:d})'.format(60))
         ]
         self.assertEqual(expected_calls, self.int_br.add_flow.mock_calls)
 
@@ -273,3 +277,68 @@ class LocalIPAgentExtensionTestCase(base.BaseTestCase):
         ]
         self.assertEqual(
             expected_calls, self.int_br.uninstall_flows.mock_calls)
+
+    def test_setup_static_local_ip_translation(self):
+        ofpp_mock = mock.Mock()
+        self.int_br._get_dp.return_value = (
+            mock.Mock(), mock.Mock(), ofpp_mock)
+        vlan = 1234
+        local_ip = '172.0.0.10'
+        dest_ip = '10.0.0.10'
+        mac = 'fa:16:3e:11:22:33'
+        self.local_ip_ext.setup_static_local_ip_translation(
+            vlan, local_ip, dest_ip, mac)
+
+        expected_calls = [
+            mock.call(src=ether_types.ETH_TYPE_IP,
+                      dst=('eth_type', 0), n_bits=16),
+            mock.call(src=('eth_src', 0), dst=('eth_dst', 0), n_bits=48),
+            mock.call(src=('eth_dst', 0), dst=('eth_src', 0), n_bits=48),
+            mock.call(src=('ipv4_src', 0), dst=('ipv4_dst', 0), n_bits=32),
+            mock.call(src=int(netaddr.IPAddress(dest_ip)),
+                      dst=('ipv4_src', 0), n_bits=32),
+            mock.call(src=vlan, dst=('reg6', 0), n_bits=4),
+            mock.call(src=ip_proto.IPPROTO_ICMP, dst=('ip_proto', 0),
+                      n_bits=8),
+            mock.call(src=ip_proto.IPPROTO_TCP, dst=('ip_proto', 0),
+                      n_bits=8),
+            mock.call(src=('tcp_src', 0), dst=('tcp_dst', 0), n_bits=16),
+            mock.call(src=('tcp_dst', 0), dst=('tcp_src', 0), n_bits=16),
+            mock.call(src=ip_proto.IPPROTO_UDP, dst=('ip_proto', 0),
+                      n_bits=8),
+            mock.call(src=('udp_src', 0), dst=('udp_dst', 0), n_bits=16),
+            mock.call(src=('udp_dst', 0), dst=('udp_src', 0), n_bits=16)
+        ]
+        self.assertEqual(
+            expected_calls, ofpp_mock.NXFlowSpecMatch.mock_calls)
+
+        ofpp_mock.NXFlowSpecLoad.assert_called_once_with(
+            src=int(netaddr.IPAddress(local_ip)),
+            dst=('ipv4_src', 0), n_bits=32)
+
+        ofpp_mock.NXFlowSpecOutput.assert_called_once_with(
+            src=('in_port', 0), dst='', n_bits=32)
+
+        self.assertEqual(3, ofpp_mock.NXActionLearn.call_count)
+        ofpp_mock.NXActionLearn.assert_called_with(
+            table_id=ovs_constants.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE,
+            cookie=mock.ANY, priority=20, idle_timeout=30,
+            hard_timeout=300, specs=mock.ANY)
+
+        self.assertEqual(6, ofpp_mock.OFPActionSetField.call_count)
+        ofpp_mock.OFPActionSetField.assert_any_call(ipv4_dst=dest_ip)
+        ofpp_mock.OFPActionSetField.assert_any_call(eth_dst=mac)
+
+        self.assertEqual(3, ofpp_mock.NXActionResubmitTable.call_count)
+        ofpp_mock.NXActionResubmitTable.assert_called_with(
+            table_id=ovs_constants.TRANSIENT_TABLE)
+
+        self.assertEqual(3, self.int_br.install_apply_actions.call_count)
+        self.int_br.install_apply_actions.assert_called_with(
+            table_id=ovs_constants.LOCAL_IP_TABLE, match=mock.ANY,
+            priority=10, actions=mock.ANY)
+
+        self.int_br.add_flow.assert_called_once_with(
+            table=31, priority=11, nw_src=dest_ip, nw_dst=local_ip,
+            reg6=vlan, dl_type="0x{:04x}".format(ether_types.ETH_TYPE_IP),
+            actions='resubmit(,{:d})'.format(60))

@@ -22,6 +22,7 @@ from neutron_lib.callbacks import events as lib_events
 from neutron_lib.callbacks import registry as lib_registry
 from neutron_lib import context as lib_ctx
 from os_ken.lib.packet import ether_types
+from os_ken.lib.packet import in_proto as ip_proto
 from oslo_config import cfg
 from oslo_log import log as logging
 
@@ -47,9 +48,11 @@ class LocalIPAgentExtension(l2_extension.L2AgentExtension):
                       {'driver_type': driver_type})
             sys.exit(1)
         if (cfg.CONF.SECURITYGROUP.enable_security_group and
-                cfg.CONF.SECURITYGROUP.firewall_driver == 'openvswitch'):
-            LOG.error('Local IP extension is not supported together with '
-                      'openvswitch firewall')
+                cfg.CONF.SECURITYGROUP.firewall_driver == 'openvswitch' and
+                not cfg.CONF.LOCAL_IP.static_nat):
+            LOG.error('In order to use Local IP extension together with '
+                      'openvswitch firewall please set static_nat config to '
+                      'True')
             sys.exit(1)
 
         self.resource_rpc = resources_rpc.ResourcesPullRpcApi()
@@ -158,9 +161,14 @@ class LocalIPAgentExtension(l2_extension.L2AgentExtension):
                                    dialect=ovs_agent._mac_mydialect))
         dest_ip = str(assoc.fixed_ip)
         vlan = port['local_vlan']
-        self.setup_local_ip_translation(
-            vlan=vlan, local_ip=local_ip_address,
-            dest_ip=dest_ip, mac=port['mac_address'])
+        if cfg.CONF.LOCAL_IP.static_nat:
+            self.setup_static_local_ip_translation(
+                vlan=vlan, local_ip=local_ip_address,
+                dest_ip=dest_ip, mac=port['mac_address'])
+        else:
+            self.setup_local_ip_translation(
+                vlan=vlan, local_ip=local_ip_address,
+                dest_ip=dest_ip, mac=port['mac_address'])
         self.int_br.install_arp_responder(
             vlan=vlan, ip=local_ip_address, mac=dest_mac,
             table_id=ovs_constants.LOCAL_IP_TABLE)
@@ -199,16 +207,6 @@ class LocalIPAgentExtension(l2_extension.L2AgentExtension):
                     'ct(commit,table={:d},zone={:d},nat(dst={:s}))'.format(
                 mac, ovs_constants.TRANSIENT_TABLE, vlan, dest_ip)
         )
-        # avoid NAT to self and let VM with local IP access "true" IP owner
-        self.int_br.add_flow(
-            table=ovs_constants.LOCAL_IP_TABLE,
-            priority=11,
-            nw_src=dest_ip,
-            nw_dst=local_ip,
-            reg6=vlan,
-            dl_type="0x{:04x}".format(ether_types.ETH_TYPE_IP),
-            actions='resubmit(,{:d})'.format(ovs_constants.TRANSIENT_TABLE)
-        )
         self.int_br.add_flow(
             table=ovs_constants.LOCAL_IP_TABLE,
             priority=10,
@@ -219,6 +217,19 @@ class LocalIPAgentExtension(l2_extension.L2AgentExtension):
             dl_type="0x{:04x}".format(ether_types.ETH_TYPE_IP),
             actions='ct(table={:d},zone={:d},nat'.format(
                 ovs_constants.TRANSIENT_TABLE, vlan)
+        )
+        self._avoid_nat_to_self(vlan, local_ip, dest_ip)
+
+    def _avoid_nat_to_self(self, vlan, local_ip, dest_ip):
+        # avoid NAT to self and let VM with local IP access "true" IP owner
+        self.int_br.add_flow(
+            table=ovs_constants.LOCAL_IP_TABLE,
+            priority=11,
+            nw_src=dest_ip,
+            nw_dst=local_ip,
+            reg6=vlan,
+            dl_type="0x{:04x}".format(ether_types.ETH_TYPE_IP),
+            actions='resubmit(,{:d})'.format(ovs_constants.TRANSIENT_TABLE)
         )
 
     def delete_local_ip_translation(self, vlan, local_ip, dest_ip, mac):
@@ -245,3 +256,101 @@ class LocalIPAgentExtension(l2_extension.L2AgentExtension):
             reg6=vlan,
             eth_type=ether_types.ETH_TYPE_IP
         )
+
+    def setup_static_local_ip_translation(self, vlan, local_ip, dest_ip, mac):
+        (dp, ofp, ofpp) = self.int_br._get_dp()
+        common_match_kwargs = {
+            'reg6': vlan,
+            'ipv4_dst': local_ip,
+            'eth_type': ether_types.ETH_TYPE_IP}
+        common_specs = [
+            ofpp.NXFlowSpecMatch(src=ether_types.ETH_TYPE_IP,
+                                 dst=('eth_type', 0),
+                                 n_bits=16),
+            ofpp.NXFlowSpecMatch(src=('eth_src', 0),
+                                 dst=('eth_dst', 0),
+                                 n_bits=48),
+            ofpp.NXFlowSpecMatch(src=('eth_dst', 0),
+                                 dst=('eth_src', 0),
+                                 n_bits=48),
+            ofpp.NXFlowSpecMatch(src=('ipv4_src', 0),
+                                 dst=('ipv4_dst', 0),
+                                 n_bits=32),
+            ofpp.NXFlowSpecMatch(src=int(netaddr.IPAddress(dest_ip)),
+                                 dst=('ipv4_src', 0),
+                                 n_bits=32),
+            ofpp.NXFlowSpecMatch(src=vlan,
+                                 dst=('reg6', 0),
+                                 n_bits=4),
+            ofpp.NXFlowSpecLoad(src=int(netaddr.IPAddress(local_ip)),
+                                dst=('ipv4_src', 0),
+                                n_bits=32),
+            ofpp.NXFlowSpecOutput(src=('in_port', 0),
+                                  dst='',
+                                  n_bits=32),
+        ]
+        for specs, match_kwargs in [self._icmp_flow_match_specs(ofpp),
+                                    self._tcp_flow_match_specs(ofpp),
+                                    self._udp_flow_match_specs(ofpp)]:
+            flow_specs = common_specs + specs
+            learn_table = ovs_constants.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE
+            actions = [
+                ofpp.OFPActionSetField(eth_dst=mac),
+                ofpp.NXActionLearn(
+                    table_id=learn_table,
+                    cookie=self.int_br.default_cookie,
+                    priority=20,
+                    idle_timeout=30,
+                    hard_timeout=300,
+                    specs=flow_specs),
+                ofpp.OFPActionSetField(ipv4_dst=dest_ip),
+                ofpp.NXActionResubmitTable(
+                    table_id=ovs_constants.TRANSIENT_TABLE)]
+
+            match = ofpp.OFPMatch(**common_match_kwargs, **match_kwargs)
+            self.int_br.install_apply_actions(
+                table_id=ovs_constants.LOCAL_IP_TABLE,
+                match=match,
+                priority=10,
+                actions=actions)
+        self._avoid_nat_to_self(vlan, local_ip, dest_ip)
+
+    @staticmethod
+    def _icmp_flow_match_specs(ofpp):
+        specs = [
+            ofpp.NXFlowSpecMatch(src=ip_proto.IPPROTO_ICMP,
+                                 dst=('ip_proto', 0),
+                                 n_bits=8)
+        ]
+        match_kwargs = {'ip_proto': ip_proto.IPPROTO_ICMP}
+        return specs, match_kwargs
+
+    @staticmethod
+    def _tcp_flow_match_specs(ofpp):
+        specs = [
+            ofpp.NXFlowSpecMatch(src=ip_proto.IPPROTO_TCP,
+                                 dst=('ip_proto', 0),
+                                 n_bits=8),
+            ofpp.NXFlowSpecMatch(src=('tcp_src', 0),
+                                 dst=('tcp_dst', 0),
+                                 n_bits=16),
+            ofpp.NXFlowSpecMatch(src=('tcp_dst', 0),
+                                 dst=('tcp_src', 0),
+                                 n_bits=16)]
+        match_kwargs = {'ip_proto': ip_proto.IPPROTO_TCP}
+        return specs, match_kwargs
+
+    @staticmethod
+    def _udp_flow_match_specs(ofpp):
+        specs = [
+            ofpp.NXFlowSpecMatch(src=ip_proto.IPPROTO_UDP,
+                                 dst=('ip_proto', 0),
+                                 n_bits=8),
+            ofpp.NXFlowSpecMatch(src=('udp_src', 0),
+                                 dst=('udp_dst', 0),
+                                 n_bits=16),
+            ofpp.NXFlowSpecMatch(src=('udp_dst', 0),
+                                 dst=('udp_src', 0),
+                                 n_bits=16)]
+        match_kwargs = {'ip_proto': ip_proto.IPPROTO_UDP}
+        return specs, match_kwargs
