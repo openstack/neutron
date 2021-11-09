@@ -245,5 +245,5 @@ def main():
 
     if migrate:
         LOG.info("Migrating Neutron database from OVS to OVN")
-        db_migration.migrate_neutron_database_to_ovn(core_plugin)
+        db_migration.migrate_neutron_database_to_ovn()
         LOG.info("Neutron database migration from OVS to OVN completed")

@@ -33,7 +33,7 @@ VIF_DETAILS_TO_REMOVE = (
     pb_api.VIF_DETAILS_BRIDGE_NAME)
 
 
-def migrate_neutron_database_to_ovn(plugin):
+def migrate_neutron_database_to_ovn():
     """Change DB content from OVS to OVN mech driver.
 
      - Changes vxlan network type to Geneve and updates Geneve allocations.
