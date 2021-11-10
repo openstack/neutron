@@ -20,7 +20,6 @@ import operator
 import signal
 import threading
 import types
-import uuid
 
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net
@@ -95,8 +94,7 @@ class OVNMechanismDriver(api.MechanismDriver):
     update network/port case, all data validation must be done within
     methods that are part of the database transaction.
     """
-    resource_provider_uuid5_namespace = uuid.UUID(
-        '5533233b-800c-11eb-b1f4-000056b2f5b8')
+    resource_provider_uuid5_namespace = ovn_const.OVN_RP_UUID
 
     def initialize(self):
         """Perform driver initialization.
@@ -190,12 +188,7 @@ class OVNMechanismDriver(api.MechanismDriver):
                 in vlan_transparency_network_types)
 
     def _setup_vif_port_bindings(self):
-        self.supported_vnic_types = [portbindings.VNIC_NORMAL,
-                                     portbindings.VNIC_DIRECT,
-                                     portbindings.VNIC_DIRECT_PHYSICAL,
-                                     portbindings.VNIC_MACVTAP,
-                                     portbindings.VNIC_VHOST_VDPA,
-                                     ]
+        self.supported_vnic_types = ovn_const.OVN_SUPPORTED_VNIC_TYPES
         self.vif_details = {
             portbindings.VIF_TYPE_OVS: {
                 portbindings.CAP_PORT_FILTER: self.sg_enabled

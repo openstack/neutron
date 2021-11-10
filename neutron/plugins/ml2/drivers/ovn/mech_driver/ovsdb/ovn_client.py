@@ -45,6 +45,8 @@ from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.db import segments_db
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions \
+    import placement as placement_extension
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions \
     import qos as qos_extension
 from neutron.scheduler import l3_ovn_scheduler
 
@@ -74,6 +76,8 @@ class OVNClient(object):
 
         # TODO(ralonsoh): handle the OVN client extensions with an ext. manager
         self._qos_driver = qos_extension.OVNClientQosExtension(self)
+        self._placement_extension = (
+            placement_extension.OVNClientPlacementExtension(self))
         self._ovn_scheduler = l3_ovn_scheduler.get_scheduler()
 
     @property

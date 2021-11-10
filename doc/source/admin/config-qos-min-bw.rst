@@ -276,6 +276,28 @@ neutron-openvswitch-agent. However look out for:
     resource_provider_bandwidths = ens5:40000000:40000000,ens6:40000000:40000000,...
     #resource_provider_inventory_defaults = step_size:1000,...
 
+OVN chassis config
+~~~~~~~~~~~~~~~~~~
+
+Bandwidth config values are stored in each SB chassis register, in
+"external_ids:ovn-cms-options". The configuration options are the same as in
+SR-IOV and OVS agents. This is how the values are registered:
+
+.. code-block:: bash
+
+    $ root@dev20:~# ovs-vsctl list Open_vSwitch
+      ...
+      external_ids        : {hostname=dev20.fistro.com, \
+                             ovn-cms-options="resource_provider_bandwidths=br-ex:1001:2000;br-ex2:3000:4000, \
+                                              resource_provider_inventory_defaults=allocation_ratio:1.0;min_unit:10, \
+                                              resource_provider_hypervisors=br-ex:dev20.fistro.com;br-ex2:dev20.fistro.com", \
+                             rundir="/var/run/openvswitch", \
+                             system-id="029e7d3d-d2ab-4f2c-bc92-ec58c94a8fc1"}
+      ...
+
+Each configuration option defined in "external_ids:ovn-cms-options" is divided
+by commas.
+
 Propagation of resource information
 -----------------------------------
 

@@ -11,6 +11,7 @@
 #    under the License.
 
 import re
+import uuid
 
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as const
@@ -298,3 +299,16 @@ CMS_OPT_AVAILABILITY_ZONES = 'availability-zones'
 
 # OVN vlan transparency option
 VLAN_PASSTHRU = 'vlan-passthru'
+
+# OVN Placement API; used for minimum bandwidth scheduling allocation.
+# NOTE(ralonsoh): rehome to neutron-lib
+RP_HYPERVISORS = 'resource_provider_hypervisors'
+
+# OVN mechanism driver constants.
+OVN_RP_UUID = uuid.UUID('5533233b-800c-11eb-b1f4-000056b2f5b8')
+OVN_SUPPORTED_VNIC_TYPES = [portbindings.VNIC_NORMAL,
+                            portbindings.VNIC_DIRECT,
+                            portbindings.VNIC_DIRECT_PHYSICAL,
+                            portbindings.VNIC_MACVTAP,
+                            portbindings.VNIC_VHOST_VDPA,
+                            ]
