@@ -480,10 +480,10 @@ class OVNClient(object):
                 **kwargs))
 
             sg_ids = utils.get_lsp_security_groups(port)
-            # If this is not a trusted port or port security is enabled,
+            # If this is not a trusted port and port security is enabled,
             # add it to the default drop Port Group so that all traffic
             # is dropped by default.
-            if not utils.is_lsp_trusted(port) or port_info.port_security:
+            if not utils.is_lsp_trusted(port) and port_info.port_security:
                 self._add_port_to_drop_port_group(port_cmd, txn)
             # Just add the port to its Port Group.
             for sg in sg_ids:
