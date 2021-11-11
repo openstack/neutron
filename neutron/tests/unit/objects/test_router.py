@@ -12,9 +12,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from unittest import mock
+
 from oslo_utils import uuidutils
 
 from neutron.objects.qos import binding as qos_binding
+from neutron.objects.qos import policy
 from neutron.objects import router
 from neutron.tests.unit.objects import test_base as obj_test_base
 from neutron.tests.unit import testlib_api
@@ -201,10 +204,35 @@ class FloatingIPDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
             self.context, fip_id=fip_id)
         self.assertEqual([], qos_fip_binding)
 
+    @mock.patch.object(policy.QosPolicy, 'unset_default')
+    def test_qos_network_policy_id(self, *mocks):
+        policy_obj = policy.QosPolicy(self.context)
+        policy_obj.create()
+
+        obj = self._make_object(self.obj_fields[0])
+        obj.create()
+        obj = router.FloatingIP.get_object(self.context, id=obj.id)
+        self.assertIsNone(obj.qos_network_policy_id)
+        self.assertIsNone(obj.qos_policy_id)
+
+        network = self._create_test_network(qos_policy_id=policy_obj.id)
+        self.update_obj_fields({'floating_network_id': network.id})
+        obj = self._make_object(self.obj_fields[1])
+        obj.create()
+        obj = router.FloatingIP.get_object(self.context, id=obj.id)
+        self.assertEqual(policy_obj.id, obj.qos_network_policy_id)
+        self.assertIsNone(obj.qos_policy_id)
+
     def test_v1_1_to_v1_0_drops_qos_policy_id(self):
         obj = self._make_object(self.obj_fields[0])
         obj_v1_0 = obj.obj_to_primitive(target_version='1.0')
         self.assertNotIn('qos_policy_id', obj_v1_0['versioned_object.data'])
+
+    def test_v1_2_to_v1_1_drops_qos_network_policy_id(self):
+        obj = self._make_object(self.obj_fields[0])
+        obj_v1_1 = obj.obj_to_primitive(target_version='1.1')
+        self.assertNotIn('qos_network_policy_id',
+                         obj_v1_1['versioned_object.data'])
 
 
 class DvrFipGatewayPortAgentBindingTestCase(

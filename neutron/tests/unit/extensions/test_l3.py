@@ -2746,8 +2746,9 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                         port_id=port_id,
                         router_id=router_id)
                     skip = ('description', 'dns_domain', 'dns_name',
-                            'port_details', 'qos_policy_id', 'revision_number',
-                            'status', 'standard_attr_id')
+                            'port_details', 'qos_network_policy_id',
+                            'qos_policy_id', 'revision_number', 'status',
+                            'standard_attr_id')
                     for k in skip:
                         payload.states[0].pop(k, None)
                         payload.states[1].pop(k, None)
@@ -2793,8 +2794,9 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                         port_id=None,
                         router_id=None)
                     skip = ('description', 'dns_domain', 'dns_name',
-                            'port_details', 'qos_policy_id', 'revision_number',
-                            'status', 'standard_attr_id')
+                            'port_details', 'qos_network_policy_id',
+                            'qos_policy_id', 'revision_number', 'status',
+                            'standard_attr_id')
                     for k in skip:
                         payload.states[0].pop(k, None)
                         payload.states[1].pop(k, None)
@@ -2839,8 +2841,9 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                         port_id=None,
                         router_id=None)
                     skip = ('description', 'dns_domain', 'dns_name',
-                            'port_details', 'qos_policy_id', 'revision_number',
-                            'status', 'standard_attr_id')
+                            'port_details', 'qos_network_policy_id',
+                            'qos_policy_id', 'revision_number', 'status',
+                            'standard_attr_id')
                     for k in skip:
                         payload.states[0].pop(k, None)
                         payload.states[1].pop(k, None)
