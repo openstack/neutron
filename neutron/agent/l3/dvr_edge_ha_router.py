@@ -14,10 +14,14 @@
 #    under the License.
 
 from neutron_lib import constants
+from oslo_log import log as logging
 
 from neutron.agent.l3 import dvr_edge_router
 from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import router_info
+from neutron.common import utils as common_utils
+
+LOG = logging.getLogger(__name__)
 
 
 class DvrEdgeHaRouter(dvr_edge_router.DvrEdgeRouter,
@@ -56,6 +60,22 @@ class DvrEdgeHaRouter(dvr_edge_router.DvrEdgeRouter,
             sn_port,
             self._get_snat_int_device_name,
             constants.SNAT_INT_DEV_PREFIX)
+
+    def internal_network_updated(self, port):
+        interface_name = self.get_internal_device_name(port['id'])
+        ip_cidrs = common_utils.fixed_ip_cidrs(port['fixed_ips'])
+        mtu = port['mtu']
+        self.driver.set_mtu(interface_name, mtu, namespace=self.ns_name,
+                            prefix=router_info.INTERNAL_DEV_PREFIX)
+        self._clear_vips(interface_name)
+        # NOTE(slaweq): qr- interface is not in ha_namespace but in qrouter
+        # namespace in case of dvr ha ruter
+        self._disable_ipv6_addressing_on_interface(
+            interface_name, namespace=self.ns_name)
+        for ip_cidr in ip_cidrs:
+            self._add_vip(ip_cidr, interface_name)
+
+        self._set_snat_interfce_mtu(port)
 
     def add_centralized_floatingip(self, fip, fip_cidr):
         interface_name = self.get_snat_external_device_interface_name(
