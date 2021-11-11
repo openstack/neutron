@@ -3019,7 +3019,12 @@ class TestOVNMechanismDriverSecurityGroup(
     # test acl methods invoking. Content correctness of args of acl methods
     # is mainly guaranteed by acl_test.py.
 
+    _extension_drivers = ['port_security']
+
     def setUp(self):
+        cfg.CONF.set_override('extension_drivers',
+                              self._extension_drivers,
+                              group='ml2')
         cfg.CONF.set_override('mechanism_drivers',
                               ['logger', 'ovn'],
                               'ml2')
@@ -3212,8 +3217,9 @@ class TestOVNMechanismDriverSecurityGroup(
             req = self.new_update_request('ports', data, p['id'])
             req.get_response(self.api)
 
+            # Default neutron_pg_drop, 2 security group
             self.assertEqual(
-                2, self.mech_driver._nb_ovn.pg_add_ports.call_count)
+                3, self.mech_driver._nb_ovn.pg_add_ports.call_count)
 
     def test_update_sg_change_rule(self):
         with self.network() as n, self.subnet(n):
