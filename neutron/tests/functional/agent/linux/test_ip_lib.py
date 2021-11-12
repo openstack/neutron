@@ -1100,3 +1100,14 @@ class GetDevicesWithIpTestCase(functional_base.BaseSudoTestCase):
             ip_addresses = self._remove_loopback_interface(ip_addresses)
             ip_addresses = self._remove_ipv6_scope_link(ip_addresses)
             self.assertEqual(0, len(ip_addresses))
+
+
+class IpLinkCommandTestCase(IpLibTestFramework):
+
+    def test_set_netns(self):
+        device_name = ('int_' + uuidutils.generate_uuid())[
+                      :constants.DEVICE_NAME_MAX_LEN]
+        device = ip_lib.IPDevice(device_name, kind='dummy')
+        device.link.create()
+        namespace = self.useFixture(net_helpers.NamespaceFixture())
+        device.link.set_netns(namespace.name)
