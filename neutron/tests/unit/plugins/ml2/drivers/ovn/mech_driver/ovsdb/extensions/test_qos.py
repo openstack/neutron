@@ -352,7 +352,7 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
             self.networks[0].qos_policy_id = qos_policy_id
             self.networks[0].update()
             original_network = {'qos_policy_id': self.qos_policies[0]}
-            reviewed_port_ids = self.qos_driver.update_network(
+            reviewed_port_ids, _ = self.qos_driver.update_network(
                 mock.ANY, self.networks[0], original_network)
             self.assertEqual(reference_ports, reviewed_port_ids)
             calls = [mock.call(mock.ANY, self.ports[0].id,
@@ -360,6 +360,26 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
                                None)]
             self.mock_rules.assert_has_calls(calls)
             self.mock_rules.reset_mock()
+
+    def test_update_external_network(self):
+        """Test update external network (floating IPs).
+
+        - fip0: qos_policy0
+        - fip1: no QoS FIP policy (inherits from external network QoS)
+        """
+        network_policies = [
+            (self.qos_policies[1].id, {self.fips[1].id}),
+            (None, {self.fips[1].id})]
+
+        self.fips[0].qos_policy_id = self.qos_policies[0].id
+        self.fips[0].update()
+        for qos_policy_id, reference_fips in network_policies:
+            self.fips_network.qos_policy_id = qos_policy_id
+            self.fips_network.update()
+            original_network = {'qos_policy_id': self.qos_policies[0]}
+            _, reviewed_fips_ids = self.qos_driver.update_network(
+                mock.Mock(), self.fips_network, original_network)
+            self.assertEqual(reference_fips, reviewed_fips_ids)
 
     def test_update_network_no_policy_change(self):
         """Test update network if the QoS policy is the same.
@@ -371,9 +391,10 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
             self.networks[0].qos_policy_id = qos_policy_id
             self.networks[0].update()
             original_network = {'qos_policy_id': qos_policy_id}
-            reviewed_port_ids = self.qos_driver.update_network(
+            port_ids, fip_ids = self.qos_driver.update_network(
                 mock.ANY, self.networks[0], original_network)
-            self.assertEqual(set([]), reviewed_port_ids)
+            self.assertEqual(set([]), port_ids)
+            self.assertEqual(set([]), fip_ids)
             self.mock_rules.assert_not_called()
 
     def test_update_network_reset(self):
@@ -397,7 +418,7 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
             self.networks[0].qos_policy_id = qos_policy_id
             self.networks[0].update()
             original_network = {'qos_policy_id': self.qos_policies[0]}
-            reviewed_port_ids = self.qos_driver.update_network(
+            reviewed_port_ids, _ = self.qos_driver.update_network(
                 mock.ANY, self.networks[0], original_network, reset=True)
             self.assertEqual(reference_ports, reviewed_port_ids)
             calls = [mock.call(mock.ANY, self.ports[0].id,
@@ -427,7 +448,7 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
                 self.networks[0].qos_policy_id = qos_policy_id
                 self.networks[0].update()
                 original_network = {'qos_policy_id': self.qos_policies[0]}
-                reviewed_port_ids = self.qos_driver.update_network(
+                reviewed_port_ids, _ = self.qos_driver.update_network(
                     mock.ANY, self.networks[0], original_network, reset=True)
                 self.assertEqual(reference_ports, reviewed_port_ids)
                 calls = [mock.call(
@@ -522,6 +543,14 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         self.qos_driver.update_floatingip(txn, fip)
         nb_idl.qos_del_ext_ids.assert_called_once()
         nb_idl.qos_add.assert_not_called()
+        nb_idl.reset_mock()
+
+        # Add network QoS policy
+        fip.qos_network_policy_id = self.qos_policies[0].id
+        fip.update()
+        self.qos_driver.update_floatingip(txn, fip)
+        nb_idl.qos_del_ext_ids.assert_called_once()
+        nb_idl.qos_add.assert_called_once()
         nb_idl.reset_mock()
 
         # Add again another QoS policy
