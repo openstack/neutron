@@ -618,8 +618,9 @@ class TestIpLinkCommand(TestIPCmdBase):
         set_link_attribute.assert_called_once_with(
             self.parent.name, self.parent.namespace, state='down')
 
+    @mock.patch.object(priv_lib, 'interface_exists', return_value=True)
     @mock.patch.object(priv_lib, 'set_link_attribute')
-    def test_set_netns(self, set_link_attribute):
+    def test_set_netns(self, set_link_attribute, *args):
         original_namespace = self.parent.namespace
         self.link_cmd.set_netns('foo')
         set_link_attribute.assert_called_once_with(
