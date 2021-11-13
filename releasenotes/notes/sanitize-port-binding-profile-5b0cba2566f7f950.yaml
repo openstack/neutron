@@ -1,0 +1,9 @@
+---
+features:
+  - |
+    Added a check to verify if all rows of ``ml2_port_bindings`` table in the
+    DB are using the new format for ``profile`` column. This check is part of
+    upgrade check, that can be executed with ``neutron-status upgrade check``
+    command. If some rows are using obsolete format, they can be sanitized
+    with a script that can be executed with
+    ``neutron-sanitize-port-binding-profile-allocation`` command.

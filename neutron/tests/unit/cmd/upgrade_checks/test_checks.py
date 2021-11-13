@@ -211,3 +211,19 @@ class TestChecks(base.BaseTestCase):
                 result = checks.CoreChecks.\
                     networksegments_unique_constraint_check(mock.ANY)
                 self.assertEqual(returned_code, result.code)
+
+    def test_port_binding_profile_sanity(self):
+        new_format = {"allocation":
+            {"397aec7a-1f69-11ec-9f1a-7b14e597e275":
+                "41d7391e-1f69-11ec-a899-8f9d6d950f8d"}}
+        old_format = {"allocation": "41d7391e-1f69-11ec-a899-8f9d6d950f8d"}
+        cases = (([new_format], Code.SUCCESS),
+                 ([old_format], Code.FAILURE))
+        with mock.patch.object(
+                checks, 'port_binding_profiles') \
+                as mock_port_binding_profiles:
+            for profile, returned_code in cases:
+                mock_port_binding_profiles.return_value = profile
+                result = checks.CoreChecks.port_binding_profile_sanity(
+                    mock.ANY)
+                self.assertEqual(returned_code, result.code)
