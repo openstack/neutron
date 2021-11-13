@@ -52,6 +52,10 @@
         - openstack-tox-cover:  # from openstack-cover-jobs template
             timeout: 4800
         - neutron-ovn-tempest-slow
+        - openstack-tox-py38-arm64:  # from openstack-python3-yoga-jobs-arm64 template
+            timeout: 4800
+        - openstack-tox-py39-arm64:  # from openstack-python3-yoga-jobs-arm64 template
+            timeout: 4800
     gate:
       jobs:
         - neutron-functional-with-uwsgi
