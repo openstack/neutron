@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    Enabled placement enforcement for QoS minimum packet rate rule in OVS
+    backend.
