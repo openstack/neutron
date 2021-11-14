@@ -770,14 +770,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
     def get_port_group(self, pg_name):
         if uuidutils.is_uuid_like(pg_name):
             pg_name = utils.ovn_port_group_name(pg_name)
-        try:
-            return self.lookup('Port_Group', pg_name, default=None)
-        except KeyError:
-            # TODO(dalvarez): This except block is added for backwards compat
-            # with old OVN schemas (<=2.9) where Port Groups are not present.
-            # This (and other conditional code around this feature) shall be
-            # removed at some point.
-            return
+        return self.lookup('Port_Group', pg_name, default=None)
 
     def get_sg_port_groups(self):
         """Returns OVN port groups used as Neutron Security Groups.
@@ -787,22 +780,15 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         SGs, it will also not be returned.
         """
         port_groups = {}
-        try:
-            for row in self._tables['Port_Group'].rows.values():
-                name = getattr(row, 'name')
-                if not (ovn_const.OVN_SG_EXT_ID_KEY in row.external_ids or
-                   name == ovn_const.OVN_DROP_PORT_GROUP_NAME):
-                    continue
-                data = {}
-                for row_key in getattr(row, "_data", {}):
-                    data[row_key] = getattr(row, row_key)
-                port_groups[name] = data
-        except KeyError:
-            # TODO(dalvarez): This except block is added for backwards compat
-            # with old OVN schemas (<=2.9) where Port Groups are not present.
-            # This (and other conditional code around this feature) shall be
-            # removed at some point.
-            pass
+        for row in self._tables['Port_Group'].rows.values():
+            name = getattr(row, 'name')
+            if not (ovn_const.OVN_SG_EXT_ID_KEY in row.external_ids or
+               name == ovn_const.OVN_DROP_PORT_GROUP_NAME):
+                continue
+            data = {}
+            for row_key in getattr(row, "_data", {}):
+                data[row_key] = getattr(row, row_key)
+            port_groups[name] = data
         return port_groups
 
     def check_liveness(self):

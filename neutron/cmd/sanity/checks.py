@@ -14,6 +14,7 @@
 #    under the License.
 
 import distutils
+import enum
 import re
 import shutil
 import tempfile
@@ -49,6 +50,35 @@ DNSMASQ_VERSION_HOST_ADDR6_LIST = '2.81'
 DIRECT_PORT_QOS_MIN_OVS_VERSION = '2.11'
 MINIMUM_DIBBLER_VERSION = '1.0.1'
 CONNTRACK_GRE_MODULE = 'nf_conntrack_proto_gre'
+OVN_NB_DB_SCHEMA_PORT_GROUP = '5.11'
+
+
+class OVNCheckType(enum.Enum):
+    nb_version = 0
+    nb_db_schema = 1
+    sb_version = 2
+    sb_db_schema = 3
+
+
+def _get_ovn_version(check_type):
+    if check_type in (OVNCheckType.nb_version, OVNCheckType.nb_db_schema):
+        cmd = ['ovn-nbctl', '--version']
+    elif check_type in (OVNCheckType.nb_version, OVNCheckType.nb_db_schema):
+        cmd = ['ovn-sbctl', '--version']
+    else:
+        raise RuntimeError
+
+    out = agent_utils.execute(cmd)
+    if check_type == OVNCheckType.nb_version:
+        matched_line = re.search(r"ovn-nbctl.*", out)
+    elif check_type == OVNCheckType.sb_version:
+        matched_line = re.search(r"ovn-sbctl.*", out)
+    else:
+        matched_line = re.search(r"DB Schema.*", out)
+
+    matched_version = re.search(r"(\d+\.\d+)", matched_line.group(0))
+    return versionutils.convert_version_to_tuple(matched_version.group(1) if
+                                                 matched_version else '0.0')
 
 
 def ovs_vxlan_supported(from_ip='192.0.2.1', to_ip='192.0.2.2'):
@@ -549,5 +579,19 @@ def min_tx_rate_support():
     if devices_without_support:
         LOG.debug('The following NICs do not support "min_tx_rate": %s',
                   devices_without_support)
+        return False
+    return True
+
+
+def ovn_nb_db_schema_port_group_supported():
+    try:
+        ver = _get_ovn_version(OVNCheckType.nb_db_schema)
+        minver = versionutils.convert_version_to_tuple(
+                 OVN_NB_DB_SCHEMA_PORT_GROUP)
+        if ver < minver:
+            return False
+    except (OSError, RuntimeError, ValueError) as e:
+        LOG.debug('Exception while checking OVN DB schema version. '
+                  'Exception: %s', e)
         return False
     return True
