@@ -23,10 +23,10 @@ import sys
 from oslo_config import cfg
 from oslo_reports import guru_meditation_report as gmr
 
-from neutron import version
 from neutron._i18n import _
 from neutron.common import config
 from neutron.common import profiler
+from neutron import version
 
 # NOTE(annp): These environment variables are required for deploying
 # neutron-api under mod_wsgi. Currently, these variables are set as DevStack's
@@ -81,7 +81,8 @@ def get_application():
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
     _version_string = version.version_info.release_string()
-    gmr.TextGuruMeditation.setup_autorun(version=_version_string, signum=signal.SIGWINCH)
+    gmr.TextGuruMeditation.setup_autorun(version=_version_string,
+                                         signum=signal.SIGWINCH)
 
     _init_configuration()
     profiler.setup('neutron-server', cfg.CONF.host)
