@@ -44,6 +44,59 @@ agent. If any agent requires access to additional external services beyond the
 neutron RPC, those endpoints should be defined in the agent-specific
 configuration file (for example, nova metadata for metadata agent).
 
+Agent's admin state specific config options
+-------------------------------------------
+
+When creating a new agent the ``admin_state_up`` field will be set to the
+value of ``enable_new_agents`` config option, the default value of this config
+option is ``true``:
+
+.. code-block:: ini
+
+    [DEFAULT]
+    enable_new_agents = true
+
+It is possible to set the ``admin_state_up`` value of an agent to ``False``
+via the API, or CLI:
+
+.. code-block:: console
+
+    $ openstack network agent set agent-uuid --disable
+
+The effect of this varies by agent type:
+
+L2 agents
+~~~~~~~~~
+
+The ``admin_state_up`` field of the agent in the Neutron database is set to
+``False``, but the agent is still capable of binding ports.
+This is true for openvswitch-agent, linuxbridge-agent, and sriov-agent.
+
+.. note::
+
+    In case of OVN based deployment Neutron doesn't keep track of OVN
+    controllers in the ``agents`` db table, so setting the ``admin_state_up``
+    is not allowed as Neutron has no control over OVN entities.
+    The possiblity to delete an OVN agent via Neutron REST API, is to clean
+    up bad chassis information.
+
+Metadata agent
+~~~~~~~~~~~~~~
+
+Setting ``admin_state_up`` to False has no effect to the Metadata agent.
+
+DHCP agent
+~~~~~~~~~~
+
+DHCP agent scheduler will schedule networks to agents whose ``admin_state_up``
+is ``True``.
+
+L3 agent
+~~~~~~~~
+
+L3 scheduler will schedule routers to L3 agents whose ``admin_state_up`` field
+is ``True``.
+
 External processes run by agents
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
