@@ -14,16 +14,24 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 import os
+import signal
 
 from oslo_config import cfg
+from oslo_reports import guru_meditation_report as gmr
 
 from neutron.common import config
 from neutron.common import profiler
+from neutron import version
 
 
 def eventlet_api_server():
     if os.environ.get('PYTHONWARNINGS') == 'ignore:Unverified HTTPS request':
         import urllib3  # pylint: disable=import-outside-toplevel
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+    _version_string = version.version_info.release_string()
+    gmr.TextGuruMeditation.setup_autorun(version=_version_string,
+                                         signum=signal.SIGWINCH)
+
     profiler.setup('neutron-server', cfg.CONF.host)
     return config.load_paste_app('neutron')
