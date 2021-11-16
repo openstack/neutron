@@ -26,7 +26,6 @@ from oslo_versionedobjects import fields as obj_fields
 
 from neutron.db.qos import models as qos_db_model
 from neutron.objects import base
-from neutron.services.qos import constants as qos_constants
 
 DSCP_MARK = 'dscp_mark'
 
@@ -37,7 +36,7 @@ def get_rules(obj_cls, context, qos_policy_id):
         return all_rules
 
     with obj_cls.db_context_reader(context):
-        for rule_type in qos_constants.VALID_RULE_TYPES:
+        for rule_type in qos_consts.VALID_RULE_TYPES:
             rule_cls_name = 'Qos%sRule' % helpers.camelize(rule_type)
             rule_cls = getattr(sys.modules[__name__], rule_cls_name)
 
@@ -186,7 +185,7 @@ class QosPacketRateLimitRule(QosRule):
 
     duplicates_compare_fields = ['direction']
 
-    rule_type = qos_constants.RULE_TYPE_PACKET_RATE_LIMIT
+    rule_type = qos_consts.RULE_TYPE_PACKET_RATE_LIMIT
 
 
 @base.NeutronObjectRegistry.register
@@ -201,4 +200,4 @@ class QosMinimumPacketRateRule(QosRule):
 
     duplicates_compare_fields = ['direction']
 
-    rule_type = qos_constants.RULE_TYPE_MINIMUM_PACKET_RATE
+    rule_type = qos_consts.RULE_TYPE_MINIMUM_PACKET_RATE

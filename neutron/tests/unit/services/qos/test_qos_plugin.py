@@ -39,7 +39,6 @@ from neutron.objects import network as network_object
 from neutron.objects import ports as ports_object
 from neutron.objects.qos import policy as policy_object
 from neutron.objects.qos import rule as rule_object
-from neutron.services.qos import constants as qos_constants
 from neutron.services.qos import qos_plugin
 from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.services.qos import base
@@ -1310,12 +1309,12 @@ class TestQosPlugin(base.BaseQosTestCase):
 
     def test_get_rule_types(self):
         rule_types_mock = mock.PropertyMock(
-            return_value=qos_constants.VALID_RULE_TYPES)
+            return_value=qos_consts.VALID_RULE_TYPES)
         filters = {'type': 'type_id'}
         with mock.patch.object(qos_plugin.QoSPlugin, 'supported_rule_types',
                                new_callable=rule_types_mock):
             types = self.qos_plugin.get_rule_types(self.ctxt, filters=filters)
-            self.assertEqual(sorted(qos_constants.VALID_RULE_TYPES),
+            self.assertEqual(sorted(qos_consts.VALID_RULE_TYPES),
                              sorted(type_['type'] for type_ in types))
 
     @mock.patch('neutron.objects.ports.Port')
@@ -1524,9 +1523,9 @@ class TestQosPlugin(base.BaseQosTestCase):
             return_value=drivers_details
         ):
             rule_type_details = self.qos_plugin.get_rule_type(
-                admin_ctxt, qos_constants.RULE_TYPE_PACKET_RATE_LIMIT)
+                admin_ctxt, qos_consts.RULE_TYPE_PACKET_RATE_LIMIT)
             self.assertEqual(
-                qos_constants.RULE_TYPE_PACKET_RATE_LIMIT,
+                qos_consts.RULE_TYPE_PACKET_RATE_LIMIT,
                 rule_type_details['type'])
             self.assertEqual(
                 drivers_details, rule_type_details['drivers'])
@@ -1535,7 +1534,7 @@ class TestQosPlugin(base.BaseQosTestCase):
         self.assertRaises(
             lib_exc.NotAuthorized,
             self.qos_plugin.get_rule_type,
-            self.ctxt, qos_constants.RULE_TYPE_PACKET_RATE_LIMIT)
+            self.ctxt, qos_consts.RULE_TYPE_PACKET_RATE_LIMIT)
 
     def test_create_min_pps_rule_on_bound_port(self):
         _policy = self._get_policy()
@@ -1832,9 +1831,9 @@ class TestQosPlugin(base.BaseQosTestCase):
             return_value=drivers_details
         ):
             rule_type_details = self.qos_plugin.get_rule_type(
-                admin_ctxt, qos_constants.RULE_TYPE_MINIMUM_PACKET_RATE)
+                admin_ctxt, qos_consts.RULE_TYPE_MINIMUM_PACKET_RATE)
             self.assertEqual(
-                qos_constants.RULE_TYPE_MINIMUM_PACKET_RATE,
+                qos_consts.RULE_TYPE_MINIMUM_PACKET_RATE,
                 rule_type_details['type'])
             self.assertEqual(
                 drivers_details, rule_type_details['drivers'])
@@ -1843,7 +1842,7 @@ class TestQosPlugin(base.BaseQosTestCase):
         self.assertRaises(
             lib_exc.NotAuthorized,
             self.qos_plugin.get_rule_type,
-            self.ctxt, qos_constants.RULE_TYPE_MINIMUM_PACKET_RATE)
+            self.ctxt, qos_consts.RULE_TYPE_MINIMUM_PACKET_RATE)
 
 
 class QoSRuleAliasTestExtensionManager(object):

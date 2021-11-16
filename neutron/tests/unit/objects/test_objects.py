@@ -15,7 +15,6 @@
 import os
 import pprint
 
-from neutron_lib.utils import test
 from oslo_versionedobjects import fixture
 
 from neutron import objects
@@ -89,7 +88,7 @@ object_data = {
     'QosMinimumPacketRateRule': '1.5-d0516c55aa2f310a2646c7d243cb8620',
     'QosPacketRateLimitRule': '1.5-18411fa95f54602b8c8a5da2d3194b31',
     'QosPolicyRBAC': '1.1-192845c5ed0718e1c54fac36936fcd7d',
-    'QosRuleType': '1.5-56b25ec81e27aa5c8238b8c43e88aed6',
+    'QosRuleType': '1.5-ea51a164013e05d5956d8bf538622b33',
     'QosRuleTypeDriver': '1.0-7d8cb9f0ef661ac03700eae97118e3db',
     'QosPolicy': '1.10-4adb0cde3102c10d8970ec9487fd7fe7',
     'QosPolicyDefault': '1.0-59e5060eedb1f06dd0935a244d27d11c',
@@ -137,8 +136,6 @@ class TestObjectVersions(test_base.BaseTestCase):
         # before validating the hashes
         objects.register_objects()
 
-    @test.unstable_test('Re-enable this test once n-lib 2.17.0 is released '
-                        'and QosRuleType hash type fixed')
     def test_versions(self):
         checker = fixture.ObjectVersionChecker(
             base.NeutronObjectRegistry.obj_classes())

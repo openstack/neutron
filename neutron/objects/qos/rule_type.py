@@ -13,10 +13,10 @@
 from neutron_lib.objects import common_types
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
+from neutron_lib.services.qos import constants as qos_constants
 from oslo_versionedobjects import fields as obj_fields
 
 from neutron.objects import base
-from neutron.services.qos import constants as qos_constants
 
 
 class RuleTypeField(obj_fields.BaseEnumField):
