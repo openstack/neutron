@@ -15,6 +15,7 @@
 import os
 import pprint
 
+from neutron_lib.utils import test
 from oslo_versionedobjects import fixture
 
 from neutron import objects
@@ -136,6 +137,8 @@ class TestObjectVersions(test_base.BaseTestCase):
         # before validating the hashes
         objects.register_objects()
 
+    @test.unstable_test('Re-enable this test once n-lib 2.17.0 is released '
+                        'and QosRuleType hash type fixed')
     def test_versions(self):
         checker = fixture.ObjectVersionChecker(
             base.NeutronObjectRegistry.obj_classes())
