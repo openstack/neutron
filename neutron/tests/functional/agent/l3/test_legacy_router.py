@@ -470,3 +470,34 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
         self.assertEqual(
             updated_mtu,
             ip_lib.IPDevice(gw_interface_name, router.ns_name).link.mtu)
+
+    def test_legacy_router_update_ecmp_routes(self):
+        self.agent.conf.agent_mode = 'legacy'
+        dest_cidr = '8.8.8.0/24'
+        nexthop1 = '19.4.4.4'
+        nexthop2 = '19.4.4.5'
+
+        router_i_non_ha = self.generate_router_info(enable_ha=False,
+                                                    extra_routes=False)
+        router1 = self.manage_router(self.agent, router_i_non_ha)
+
+        router1.router['routes'] = [
+            {'destination': dest_cidr, 'nexthop': nexthop1},
+            {'destination': dest_cidr, 'nexthop': nexthop2}]
+        self.agent._process_updated_router(router1.router)
+        route_expected = {'cidr': dest_cidr,
+                          'table': 'main',
+                          'via': [{'via': nexthop1},
+                                  {'via': nexthop2}]
+                          }
+
+        self._assert_ecmp_route_in_routes(router=router1,
+                                          expected_route=route_expected)
+
+        # Delete one route
+        router1.router['routes'] = [
+            {'destination': dest_cidr, 'nexthop': nexthop1}]
+        self.agent._process_updated_router(router1.router)
+        expected_route = {'cidr': dest_cidr, 'table': 'main', 'via': nexthop1}
+        self._assert_route_in_routes(router=router1,
+                                     expected_route=expected_route)

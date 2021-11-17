@@ -738,3 +738,26 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             expected_address, ping_results[1],
             ("Expect to see %s in the reply of ping, but failed" %
              expected_address))
+
+    def _assert_route_in_routes(self, router, expected_route):
+        updated_route = ip_lib.list_ip_routes(
+            router.ns_name,
+            ip_version=constants.IP_VERSION_4, )
+
+        actual_routes = [{key: route[key] for key in expected_route.keys()}
+                         for route in updated_route]
+        self.assertIn(expected_route, actual_routes)
+
+    def _assert_ecmp_route_in_routes(self, router, expected_route):
+        updated_route = ip_lib.list_ip_routes(
+            router.ns_name,
+            ip_version=constants.IP_VERSION_4)
+        routes_actual = [{key: route[key] for key in expected_route.keys()}
+                         for route in updated_route]
+        for entry in routes_actual:
+            if entry['via']:
+                if isinstance(entry['via'], (list, tuple)):
+                    via_list = [{'via': hop['via']}
+                                for hop in entry['via']]
+                    entry['via'] = sorted(via_list, key=lambda i: i['via'])
+        self.assertIn(expected_route, routes_actual)
