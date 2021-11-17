@@ -126,10 +126,10 @@ class SecurityGroup(rbac_db.NeutronRbacObject):
                 filter_normalized_cidr_from_rules(primitive['rules'])
 
     @classmethod
-    def get_bound_tenant_ids(cls, context, obj_id):
+    def get_bound_project_ids(cls, context, obj_id):
         port_objs = ports.Port.get_objects(context,
                                            security_group_ids=[obj_id])
-        return {port.tenant_id for port in port_objs}
+        return {port.project_id for port in port_objs}
 
 
 @base.NeutronObjectRegistry.register

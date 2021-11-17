@@ -84,7 +84,7 @@ class SubnetPoolDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     @mock.patch.object(obj_db_api, 'get_object')
     def test_rbac_policy_create_no_address_scope(self, mock_get_object,
                                                  mock_query_with_hooks):
-        context = mock.Mock(is_admin=False, tenant_id='db_obj_owner_id')
+        context = mock.Mock(is_admin=False, project_id='db_obj_owner_id')
         payload = mock.Mock(
             context=context, request_body=dict(object_id="fake_id")
         )
@@ -114,8 +114,8 @@ class SubnetPoolDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     @mock.patch.object(obj_db_api, 'get_object')
     def test_rbac_policy_create_no_matching_policies(self, mock_get_object,
                                                      mock_query_with_hooks):
-        context = mock.Mock(is_admin=False, tenant_id='db_obj_owner_id')
-        fake_project_id = "fake_target_tenant_id"
+        context = mock.Mock(is_admin=False, project_id='db_obj_owner_id')
+        fake_project_id = "fake_target_project_id"
         payload = mock.Mock(
             context=context, request_body=dict(
                 object_id="fake_id",
@@ -146,8 +146,8 @@ class SubnetPoolDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     @mock.patch.object(obj_db_api, 'get_object')
     def test_rbac_policy_create_valid(self, mock_get_object,
                                       mock_query_with_hooks):
-        context = mock.Mock(is_admin=False, tenant_id='db_obj_owner_id')
-        fake_project_id = "fake_target_tenant_id"
+        context = mock.Mock(is_admin=False, project_id='db_obj_owner_id')
+        fake_project_id = "fake_target_project_id"
         payload = mock.Mock(
             context=context, request_body=dict(
                 object_id="fake_id",

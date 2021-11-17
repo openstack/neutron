@@ -148,8 +148,8 @@ class QosPolicyObjectTestCase(test_base.BaseObjectIfaceTestCase):
                 self._test_class, self.context, id='fake_id')
 
     def test_to_dict_makes_primitive_field_value(self):
-        # is_shared_with_tenant requires DB
-        with mock.patch.object(self._test_class, 'is_shared_with_tenant',
+        # is_shared_with_project requires DB
+        with mock.patch.object(self._test_class, 'is_shared_with_project',
                                return_value=False):
             (super(QosPolicyObjectTestCase, self).
              test_to_dict_makes_primitive_field_value())
@@ -460,10 +460,10 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
         policy_obj._reload_is_default()
         self.assertTrue(policy_obj.is_default)
 
-    def test_get_bound_tenant_ids_returns_set_of_tenant_ids(self):
+    def test_get_bound_project_ids_returns_set_of_project_ids(self):
         obj = self._create_test_policy()
         obj.attach_port(self._port['id'])
-        ids = self._test_class.get_bound_tenant_ids(self.context, obj['id'])
+        ids = self._test_class.get_bound_project_ids(self.context, obj['id'])
         self.assertEqual(ids.pop(), self._port.project_id)
         self.assertEqual(len(ids), 0)
 

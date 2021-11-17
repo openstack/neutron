@@ -39,23 +39,23 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
 
     @classmethod
     @abc.abstractmethod
-    def get_bound_tenant_ids(cls, context, obj_id):
-        """Returns ids of all tenants depending on this db object.
+    def get_bound_project_ids(cls, context, obj_id):
+        """Returns ids of all projects depending on this db object.
 
         Has to be implemented by classes using RbacNeutronMetaclass.
-        The tenants are the ones that need the sharing or 'visibility' of the
-        object to them. E.g: for QosPolicy that would be the tenants using the
+        The projects are the ones that need the sharing or 'visibility' of the
+        object to them. E.g: for QosPolicy that would be the projects using the
         Networks and Ports with the shared QosPolicy applied to them.
 
-        :returns: set -- a set of tenants' ids dependent on this object.
+        :returns: set -- a set of projects' ids dependent on this object.
         """
 
     @staticmethod
     def is_network_shared(context, rbac_entries):
         # NOTE(korzen) this method is copied from db_base_plugin_common.
         # The shared attribute for a network now reflects if the network
-        # is shared to the calling tenant via an RBAC entry.
-        matches = ('*',) + ((context.tenant_id,) if context else ())
+        # is shared to the calling project via an RBAC entry.
+        matches = ('*',) + ((context.project_id,) if context else ())
         for entry in rbac_entries:
             if (entry.action == models.ACCESS_SHARED and
                     entry.target_tenant in matches):
@@ -63,7 +63,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
         return False
 
     @staticmethod
-    def get_shared_with_tenant(context, rbac_db_cls, obj_id, tenant_id):
+    def get_shared_with_project(context, rbac_db_cls, obj_id, project_id):
         # NOTE(korzen) This method enables to query within already started
         # session
         rbac_db_model = rbac_db_cls.db_model
@@ -71,21 +71,21 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
                 and_(rbac_db_model.object_id == obj_id,
                      rbac_db_model.action == models.ACCESS_SHARED,
                      rbac_db_model.target_tenant.in_(
-                         ['*', tenant_id]))).count() != 0)
+                         ['*', project_id]))).count() != 0)
 
     @classmethod
-    def is_shared_with_tenant(cls, context, obj_id, tenant_id):
+    def is_shared_with_project(cls, context, obj_id, project_id):
         ctx = context.elevated()
         with cls.db_context_reader(ctx):
-            return cls.get_shared_with_tenant(ctx, cls.rbac_db_cls,
-                                              obj_id, tenant_id)
+            return cls.get_shared_with_project(ctx, cls.rbac_db_cls,
+                                               obj_id, project_id)
 
     @classmethod
     def is_accessible(cls, context, db_obj):
         return (super(
             RbacNeutronDbObjectMixin, cls).is_accessible(context, db_obj) or
-                cls.is_shared_with_tenant(context, db_obj.id,
-                                          context.tenant_id))
+                cls.is_shared_with_project(context, db_obj.id,
+                                           context.project_id))
 
     @classmethod
     def _get_db_obj_rbac_entries(cls, context, rbac_obj_id, rbac_action):
@@ -95,7 +95,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
                  rbac_db_model.action == rbac_action))
 
     @classmethod
-    def _get_tenants_with_shared_access_to_db_obj(cls, context, obj_id):
+    def _get_projects_with_shared_access_to_db_obj(cls, context, obj_id):
         rbac_db_model = cls.rbac_db_cls.db_model
         return set(itertools.chain.from_iterable(context.session.query(
             rbac_db_model.target_tenant).filter(
@@ -107,14 +107,14 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
     def _validate_rbac_policy_delete(cls, context, obj_id, target_tenant):
         ctx_admin = context.elevated()
         rb_model = cls.rbac_db_cls.db_model
-        bound_tenant_ids = cls.get_bound_tenant_ids(ctx_admin, obj_id)
+        bound_project_ids = cls.get_bound_project_ids(ctx_admin, obj_id)
         db_obj_sharing_entries = cls._get_db_obj_rbac_entries(
             ctx_admin, obj_id, models.ACCESS_SHARED)
 
         def raise_policy_in_use():
             raise ext_rbac.RbacPolicyInUse(
                 object_id=obj_id,
-                details='tenant_id={}'.format(target_tenant))
+                details='project_id={}'.format(target_tenant))
 
         if target_tenant != '*':
             # if there is a wildcard rule, we can return early because it
@@ -123,15 +123,15 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
                 rb_model.target_tenant == '*')
             if wildcard_sharing_entries.count():
                 return
-            if target_tenant in bound_tenant_ids:
+            if target_tenant in bound_project_ids:
                 raise_policy_in_use()
             return
 
         # for the wildcard we need to query all of the rbac entries to
         # see if any allow the object sharing
-        other_target_tenants = cls._get_tenants_with_shared_access_to_db_obj(
+        other_target_tenants = cls._get_projects_with_shared_access_to_db_obj(
                 ctx_admin, obj_id)
-        if not bound_tenant_ids.issubset(other_target_tenants):
+        if not bound_project_ids.issubset(other_target_tenants):
             raise_policy_in_use()
 
     @classmethod
@@ -149,7 +149,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
         target_tenant = policy['target_tenant']
         db_obj = obj_db_api.get_object(
             cls, context.elevated(), id=policy['object_id'])
-        if db_obj.tenant_id == target_tenant:
+        if db_obj.project_id == target_tenant:
             return
         cls._validate_rbac_policy_delete(context=context,
                                          obj_id=policy['object_id'],
@@ -171,11 +171,11 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
         """
         policy = payload.latest_state
 
-        prev_tenant = policy['target_tenant']
-        new_tenant = payload.request_body['target_tenant']
-        if prev_tenant == new_tenant:
+        prev_project = policy['target_tenant']
+        new_project = payload.request_body['target_tenant']
+        if prev_project == new_project:
             return
-        if new_tenant != '*':
+        if new_project != '*':
             return cls.validate_rbac_policy_delete(
                 resource, event, trigger, payload=payload)
 
@@ -203,7 +203,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
             cls, context.elevated(), id=policy['object_id'])
         if event in (events.BEFORE_CREATE, events.BEFORE_UPDATE):
             if (not context.is_admin and
-                    db_obj['tenant_id'] != context.tenant_id):
+                    db_obj['project_id'] != context.project_id):
                 msg = _("Only admins can manipulate policies on objects "
                         "they do not own")
                 raise exceptions.InvalidInput(error_message=msg)
@@ -235,7 +235,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
 
         # 'shared' goes False -> True
         if not is_shared_prev and is_shared_new:
-            self.attach_rbac(obj_id, self.obj_context.tenant_id)
+            self.attach_rbac(obj_id, self.obj_context.project_id)
             return
 
         # 'shared' goes True -> False is actually an attempt to delete
@@ -265,7 +265,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
             # NOTE(korzen) this case is used when object was
             # instantiated and without DB interaction (get_object(s), update,
             # create), it should be rare case to load 'shared' by that method
-            shared = self.get_shared_with_tenant(
+            shared = self.get_shared_with_project(
                 self.obj_context.elevated(),
                 self.rbac_db_cls,
                 self.id,
@@ -305,9 +305,8 @@ def _create_hook(self, orig_create):
 def _to_dict_hook(self, to_dict_orig):
     dct = to_dict_orig(self)
     if self.obj_context:
-        dct['shared'] = self.is_shared_with_tenant(self.obj_context,
-                                                   self.id,
-                                                   self.obj_context.tenant_id)
+        dct['shared'] = self.is_shared_with_project(
+            self.obj_context, self.id, self.obj_context.project_id)
     else:
         # most OVO objects on an agent will not have a context set on the
         # object because they will be generated from obj_from_primitive.

@@ -174,6 +174,7 @@ class NeutronObject(obj_base.VersionedObject,
             # is included in self.items()
             if name in self.fields and name not in self.synthetic_fields:
                 value = self.fields[name].to_primitive(self, name, value)
+            # TODO(ralonsoh): remove once bp/keystone-v3 migration finishes.
             if name == 'tenant_id':
                 if ('project_id' in self.fields and
                         not self.obj_attr_is_set('project_id')):
@@ -343,6 +344,7 @@ class DeclarativeObject(abc.ABCMeta):
 
     def __init__(cls, name, bases, dct):
         super(DeclarativeObject, cls).__init__(name, bases, dct)
+        # TODO(ralonsoh): remove once bp/keystone-v3 migration finishes.
         if 'project_id' in cls.fields:
             obj_extra_fields_set = set(cls.obj_extra_fields)
             obj_extra_fields_set.add('tenant_id')
@@ -389,6 +391,7 @@ class DeclarativeObject(abc.ABCMeta):
             standardattributes.add_tag_filter_names(cls)
         # Instantiate extra filters per class
         cls.extra_filter_names = set(cls.extra_filter_names)
+        # TODO(ralonsoh): remove once bp/keystone-v3 migration finishes.
         # add tenant_id filter for objects that have project_id
         if 'project_id' in cls.fields and 'tenant_id' not in cls.fields:
             cls.extra_filter_names.add('tenant_id')
@@ -754,7 +757,7 @@ class NeutronDbObject(NeutronObject, metaclass=DeclarativeObject):
     @classmethod
     def is_accessible(cls, context, db_obj):
         return (context.is_admin or
-                context.tenant_id == db_obj.tenant_id)
+                context.project_id == db_obj.project_id)
 
     @staticmethod
     def filter_to_str(value):

@@ -105,7 +105,7 @@ class SubnetPool(rbac_db.NeutronRbacObject):
                 self._attach_prefixes(fields['prefixes'])
 
     @classmethod
-    def get_bound_tenant_ids(cls, context, obj_id):
+    def get_bound_project_ids(cls, context, obj_id):
         sn_objs = subnet.Subnet.get_objects(context, subnetpool_id=obj_id)
         return {snp.project_id for snp in sn_objs}
 

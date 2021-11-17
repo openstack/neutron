@@ -77,9 +77,8 @@ class NetworkSegmentRange(base.NeutronDbObject):
         # fields
         _dict.update({'available': self._get_available_allocation()})
         _dict.update({'used': self._get_used_allocation_mapping()})
-        # NOTE(ralonsoh): this workaround should be removed once the migration
-        # from "tenant_id" to "project_id" is finished.
         _dict = db_utils.resource_fields(_dict, fields)
+        # TODO(ralonsoh): remove once bp/keystone-v3 migration finishes.
         _dict.pop('tenant_id', None)
         resource_extend.apply_funcs(nsr_def.COLLECTION_NAME, _dict,
                                     self.db_obj)

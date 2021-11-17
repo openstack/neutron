@@ -94,7 +94,7 @@ class SecurityGroupServerAPIShimTestCase(base.BaseTestCase):
         self.rcache.record_resource_update(self.ctx, 'Port', p)
         return p
 
-    @mock.patch.object(address_group.AddressGroup, 'is_shared_with_tenant',
+    @mock.patch.object(address_group.AddressGroup, 'is_shared_with_project',
                        return_value=False)
     def _make_address_group_ovo(self, *args, **kwargs):
         id = uuidutils.generate_uuid()
@@ -116,7 +116,7 @@ class SecurityGroupServerAPIShimTestCase(base.BaseTestCase):
                                            ag)
         return ag
 
-    @mock.patch.object(securitygroup.SecurityGroup, 'is_shared_with_tenant',
+    @mock.patch.object(securitygroup.SecurityGroup, 'is_shared_with_project',
                        return_value=False)
     def _make_security_group_ovo(self, *args, **kwargs):
         attrs = {'id': uuidutils.generate_uuid(), 'revision_number': 1}

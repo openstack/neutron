@@ -341,18 +341,18 @@ class QosPolicy(rbac_db.NeutronRbacObject):
             self.obj_context, policy_id=self.id)
 
     @classmethod
-    def _get_bound_tenant_ids(cls, session, binding_db, bound_db,
+    def _get_bound_project_ids(cls, session, binding_db, bound_db,
                               binding_db_id_column, policy_id):
         return list(itertools.chain.from_iterable(
-            session.query(bound_db.tenant_id).join(
+            session.query(bound_db.project_id).join(
                 binding_db, bound_db.id == binding_db_id_column).filter(
                 binding_db.policy_id == policy_id).all()))
 
     @classmethod
-    def get_bound_tenant_ids(cls, context, policy_id):
-        """Implements RbacNeutronObject.get_bound_tenant_ids.
+    def get_bound_project_ids(cls, context, policy_id):
+        """Implements RbacNeutronObject.get_bound_project_ids.
 
-        :returns: set -- a set of tenants' ids dependent on QosPolicy.
+        :returns: set -- a set of projects' ids dependent on QosPolicy.
         """
         net = models_v2.Network
         qosnet = qos_db_model.QosNetworkPolicyBinding
@@ -362,20 +362,20 @@ class QosPolicy(rbac_db.NeutronRbacObject):
         qosfip = qos_db_model.QosFIPPolicyBinding
         router = l3.Router
         qosrouter = qos_db_model.QosRouterGatewayIPPolicyBinding
-        bound_tenants = []
+        bound_projects = []
         with cls.db_context_reader(context):
-            bound_tenants.extend(cls._get_bound_tenant_ids(
+            bound_projects.extend(cls._get_bound_project_ids(
                 context.session, qosnet, net, qosnet.network_id, policy_id))
-            bound_tenants.extend(
-                cls._get_bound_tenant_ids(context.session, qosport, port,
-                                          qosport.port_id, policy_id))
-            bound_tenants.extend(
-                cls._get_bound_tenant_ids(context.session, qosfip, fip,
-                                          qosfip.fip_id, policy_id))
-            bound_tenants.extend(
-                cls._get_bound_tenant_ids(context.session, qosrouter, router,
-                                          qosrouter.router_id, policy_id))
-        return set(bound_tenants)
+            bound_projects.extend(
+                cls._get_bound_project_ids(context.session, qosport, port,
+                                           qosport.port_id, policy_id))
+            bound_projects.extend(
+                cls._get_bound_project_ids(context.session, qosfip, fip,
+                                           qosfip.fip_id, policy_id))
+            bound_projects.extend(
+                cls._get_bound_project_ids(context.session, qosrouter, router,
+                                           qosrouter.router_id, policy_id))
+        return set(bound_projects)
 
     def obj_make_compatible(self, primitive, target_version):
         def filter_rules(obj_names, rules):
