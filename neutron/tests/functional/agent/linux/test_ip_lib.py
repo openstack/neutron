@@ -1149,3 +1149,14 @@ class ListIpRoutesTestCase(functional_base.BaseSudoTestCase):
             return
 
         self.fail('Not matching route, routes: %s' % routes)
+
+
+class IpLinkCommandTestCase(IpLibTestFramework):
+
+    def test_set_netns(self):
+        device_name = ('int_' + uuidutils.generate_uuid())[
+                      :constants.DEVICE_NAME_MAX_LEN]
+        device = ip_lib.IPDevice(device_name, kind='dummy')
+        device.link.create()
+        namespace = self.useFixture(net_helpers.NamespaceFixture())
+        device.link.set_netns(namespace.name)

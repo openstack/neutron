@@ -445,6 +445,8 @@ class IpLinkCommand(IpDeviceCommandBase):
         privileged.set_link_attribute(
             self.name, self._parent.namespace, net_ns_fd=namespace)
         self._parent.namespace = namespace
+        common_utils.wait_until_true(lambda: self.exists, timeout=5,
+                                     sleep=0.5)
 
     def set_name(self, name):
         privileged.set_link_attribute(
