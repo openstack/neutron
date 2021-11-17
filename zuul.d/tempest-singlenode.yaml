@@ -58,7 +58,7 @@
       - ^.*\.rst$
       - ^doc/.*$
       - ^neutron/locale/.*$
-      - ^neutron/tests/unit/.*$
+      - ^neutron/tests/.*$
       - ^releasenotes/.*$
       - ^setup.cfg$
       - ^tools/.*$
