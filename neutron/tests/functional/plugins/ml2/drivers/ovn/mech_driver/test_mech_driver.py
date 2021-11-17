@@ -847,11 +847,11 @@ class AgentWaitEvent(event.WaitEvent):
 
     ONETIME = False
 
-    def __init__(self, driver, chassis_names):
+    def __init__(self, driver, chassis_names, events=None, timeout=None):
         table = driver.agent_chassis_table
-        events = (self.ROW_CREATE,)
+        events = events or (self.ROW_CREATE,)
         self.chassis_names = chassis_names
-        super().__init__(events, table, None)
+        super().__init__(events, table, None, timeout=timeout)
         self.event_name = "AgentWaitEvent"
 
     def match_fn(self, event, row, old):
@@ -909,11 +909,43 @@ class TestAgentApi(base.TestOVNFunctionalBase):
             self.context, filters={'host': self.host})]
         self.assertCountEqual(list(self.agent_types.values()), agent_ids)
 
+        # "ovn-controller" ends without deleting "Chassis" and
+        # "Chassis_Private" registers. If "Chassis" register is deleted,
+        # then Chassis_Private.chassis = []; both metadata and controller
+        # agents will still be present in the agent list.
+        agent_event = AgentWaitEvent(self.mech_driver, [self.chassis],
+                                     events=(event.RowEvent.ROW_UPDATE,),
+                                     timeout=1)
+        self.sb_api.idl.notify_handler.watch_event(agent_event)
+        self.sb_api.chassis_del(self.chassis, if_exists=True).execute(
+            check_error=False)
+        agent_event.wait()
+        agent_ids = [a['id'] for a in self.plugin.get_agents(
+            self.context, filters={'host': self.host})]
+        self.assertCountEqual(list(self.agent_types.values()), agent_ids)
+
     def test_agent_delete(self):
-        for agent_id in self.agent_types.values():
-            self.plugin.delete_agent(self.context, agent_id)
-            self.assertRaises(agent_exc.AgentNotFound, self.plugin.get_agent,
-                              self.context, agent_id)
+        # Non OVN agent deletion.
+        agent_id = self.agent_types[self.TEST_AGENT]
+        self.plugin.delete_agent(self.context, agent_id)
+        self.assertRaises(agent_exc.AgentNotFound, self.plugin.get_agent,
+                          self.context, agent_id)
+
+        # OVN controller agent deletion, that triggers the "Chassis" register
+        # deletion. The "Chassis" register deletion triggers the host OVN
+        # agents deletion, both controller and metadata if present.
+        controller_id = self.agent_types[ovn_const.OVN_CONTROLLER_AGENT]
+        metadata_id = self.agent_types[ovn_const.OVN_METADATA_AGENT]
+        self.plugin.delete_agent(self.context, controller_id)
+        self.assertRaises(agent_exc.AgentNotFound, self.plugin.get_agent,
+                          self.context, controller_id)
+        self.assertEqual(
+            metadata_id,
+            self.plugin.get_agent(self.context, metadata_id)['id'])
+
+        self.plugin.delete_agent(self.context, metadata_id)
+        self.assertRaises(agent_exc.AgentNotFound, self.plugin.get_agent,
+                          self.context, metadata_id)
 
 
 class ConnectionInactivityProbeSetEvent(event.WaitEvent):
