@@ -60,6 +60,8 @@ object_data = {
     'L3HARouterAgentPortBinding': '1.0-d1d7ee13f35d56d7e225def980612ee5',
     'L3HARouterNetwork': '1.0-87acea732853f699580179a94d2baf91',
     'L3HARouterVRIdAllocation': '1.0-37502aebdbeadc4f9e3bd5e9da714ab9',
+    'LocalIP': '1.0-85843868a01585c4e2614f2f635159ca',
+    'LocalIPAssociation': '1.0-4febb23ad22f11a69c431b077b3aac21',
     'MeteringLabel': '1.0-cc4b620a3425222447cbe459f62de533',
     'MeteringLabelRule': '2.0-0ad09894c62e1ce6e868f725158959ba',
     'Log': '1.0-6391351c0f34ed34375a19202f361d24',

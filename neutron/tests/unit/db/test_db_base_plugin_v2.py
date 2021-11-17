@@ -249,9 +249,10 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                          subresource=subresource, context=context)
 
     def new_list_request(self, resource, fmt=None, params=None,
-                         subresource=None):
+                         subresource=None, parent_id=None):
         return self._req(
-            'GET', resource, None, fmt, params=params, subresource=subresource
+            'GET', resource, None, fmt, params=params, id=parent_id,
+            subresource=subresource
         )
 
     def new_show_request(self, resource, id, fmt=None,
@@ -597,8 +598,10 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
     def _delete(self, collection, id,
                 expected_code=webob.exc.HTTPNoContent.code,
-                neutron_context=None, headers=None):
-        req = self.new_delete_request(collection, id, headers=headers)
+                neutron_context=None, headers=None, subresource=None,
+                sub_id=None):
+        req = self.new_delete_request(collection, id, headers=headers,
+                                      subresource=subresource, sub_id=sub_id)
         if neutron_context:
             # create a specific auth context for this request
             req.environ['neutron.context'] = neutron_context
@@ -635,9 +638,12 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         return self.deserialize(self.fmt, res)
 
     def _list(self, resource, fmt=None, neutron_context=None,
-              query_params=None, expected_code=webob.exc.HTTPOk.code):
+              query_params=None, expected_code=webob.exc.HTTPOk.code,
+              parent_id=None, subresource=None):
         fmt = fmt or self.fmt
-        req = self.new_list_request(resource, fmt, query_params)
+        req = self.new_list_request(resource, fmt, query_params,
+                                    subresource=subresource,
+                                    parent_id=parent_id)
         if neutron_context:
             req.environ['neutron.context'] = neutron_context
         res = req.get_response(self._api_for_resource(resource))
