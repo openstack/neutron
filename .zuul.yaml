@@ -69,9 +69,6 @@
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
             irrelevant-files: *tempest-irrelevant-files
             voting: false
-        - networking-midonet-tempest-aio-ml2-centos-7:
-            voting: false
-            irrelevant-files: *tempest-irrelevant-files
         - openstacksdk-functional-devstack-networking:
             voting: false
         - neutron-functional-with-uwsgi:
