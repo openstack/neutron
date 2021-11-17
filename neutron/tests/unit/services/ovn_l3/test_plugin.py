@@ -1399,6 +1399,22 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                                                port,
                                                if_exists=True)
 
+    def test_port_update_before_update_router_port_without_ip(self):
+        context = 'fake_context'
+        port = {'device_owner': constants.DEVICE_OWNER_ROUTER_INTF,
+                'fixed_ips': [],
+                'id': 'port-id'}
+        self.assertRaises(
+            n_exc.ServicePortInUse,
+            self.l3_inst._port_update,
+            resources.PORT,
+            events.BEFORE_UPDATE,
+            None,
+            payload=events.DBEventPayload(
+                                        context,
+                                        states=(port,))
+        )
+
     @mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.update_port_status')
     @mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.update_port')
     @mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.get_ports')
