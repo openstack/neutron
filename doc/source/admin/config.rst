@@ -30,6 +30,7 @@ Configuration
    config-ovsfwdriver
    config-qos
    config-qos-min-bw
+   config-qos-min-pps
    config-rbac
    config-routed-networks
    config-sfc
