@@ -225,7 +225,8 @@ class Server(object):
                              log=LOG,
                              keepalive=CONF.wsgi_keep_alive,
                              log_format=CONF.wsgi_log_format,
-                             socket_timeout=self.client_socket_timeout)
+                             socket_timeout=self.client_socket_timeout,
+                             debug=CONF.wsgi_server_debug)
 
     @property
     def process_launcher(self):
