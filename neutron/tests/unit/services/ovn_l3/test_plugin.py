@@ -1529,20 +1529,28 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.nb_idl().get_unhosted_gateways.assert_called_once_with(
             {'foo-1': 'physnet1'}, mock.ANY, mock.ANY)
 
-    @mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.get_network')
+    @mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.get_network')
+    @mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.get_networks')
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
                 'ovn_client.OVNClient._get_router_ports')
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.add_router_interface')
-    def test_add_router_interface_need_to_frag_enabled(self, ari, grps, gn):
+    def test_add_router_interface_need_to_frag_enabled(
+            self, ari, grps, gns, gn):
         config.cfg.CONF.set_override(
             'ovn_emit_need_to_frag', True, group='ovn')
         router_id = 'router-id'
-        interface_info = {'port_id': 'router-port-id'}
+        interface_info = {'port_id': 'router-port-id',
+                'network_id': 'priv-net'}
         ari.return_value = self.fake_router_interface_info
+        grps.return_value = [interface_info]
         self.get_router.return_value = self.fake_router_with_ext_gw
-        gn.return_value = self.fake_network
+        network_attrs = {'id': 'prov-net', 'mtu': 1200}
+        prov_net = fake_resources.FakeNetwork.create_one_network(
+                attrs=network_attrs).info()
         self.fake_router_port['device_owner'] = (
             constants.DEVICE_OWNER_ROUTER_GW)
+        gn.return_value = prov_net
+        gns.return_value = [self.fake_network]
 
         self.l3_inst.add_router_interface(self.context, router_id,
                                           interface_info)
@@ -1552,7 +1560,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         fake_router_port_assert['gateway_chassis'] = mock.ANY
         fake_router_port_assert['options'] = {
             ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION:
-            str(self.fake_network['mtu'])}
+            str(prov_net['mtu'])}
 
         self.l3_inst._ovn.add_lrouter_port.assert_called_once_with(
             **fake_router_port_assert)
