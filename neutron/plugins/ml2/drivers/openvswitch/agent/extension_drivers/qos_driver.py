@@ -171,6 +171,10 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
 
         self.ports[port['port_id']][(qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH,
                                      rule.direction)] = port
+        if rule.direction == constants.INGRESS_DIRECTION:
+            LOG.debug('Minimum bandwidth ingress rule was updated/created for '
+                      'port %s and rule %s.', port['port_id'], rule.id)
+            return
 
         # queue_num is used to identify the port which traffic come from,
         # it needs to be unique across br-int. It is convenient to use ofport
@@ -184,7 +188,7 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
             egress_port_names.extend(ports)
         qos_id = self.br_int.update_minimum_bandwidth_queue(
             port['port_id'], egress_port_names, vif_port.ofport, rule.min_kbps)
-        LOG.debug('Minimum bandwidth rule was updated/created for port '
+        LOG.debug('Minimum bandwidth egress rule was updated/created for port '
                   '%(port_id)s and rule %(rule_id)s. QoS ID: %(qos_id)s. '
                   'Egress ports with QoS applied: %(ports)s',
                   {'port_id': port['port_id'], 'rule_id': rule.id,
