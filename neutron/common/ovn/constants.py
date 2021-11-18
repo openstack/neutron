@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
 import re
 import uuid
 
@@ -47,10 +48,32 @@ OVN_DEVICE_OWNER_EXT_ID_KEY = 'neutron:device_owner'
 OVN_LIVENESS_CHECK_EXT_ID_KEY = 'neutron:liveness_check_at'
 METADATA_LIVENESS_CHECK_EXT_ID_KEY = 'neutron:metadata_liveness_check_at'
 OVN_PORT_BINDING_PROFILE = portbindings.PROFILE
-OVN_PORT_BINDING_PROFILE_PARAMS = [{'parent_name': str,
-                                    'tag': int},
-                                   {'vtep-physical-switch': str,
-                                    'vtep-logical-switch': str}]
+
+# Port Binding Profile data validation
+#
+# To allow for validating multiple parameter sets that may contain some of the
+# same keys, you can specify for which vnic_type and capability the parameter
+# set is valid for.
+#
+# By leaving vnic_type and capability to the default of 'None' any parameter
+# set that has a key which is present in the port binding data will be used for
+# validation.
+#
+# The param_set type is Dict[str,Optional[List[any]]] where the key is used to
+# match keys in the port binding data.  A value of 'None' means not to check
+# type for this key, when a list of type classes is provided the data will be
+# validated to be of one of the listed types.
+OVNPortBindingProfileParamSet = collections.namedtuple(
+    'OVNPortBindingProfileParamSet', ['param_set', 'vnic_type', 'capability'])
+OVN_PORT_BINDING_PROFILE_PARAMS = [
+    OVNPortBindingProfileParamSet({'parent_name': [str],
+                                   'tag': [int]},
+                                  None, None),
+    OVNPortBindingProfileParamSet({'vtep-physical-switch': [str],
+                                   'vtep-logical-switch': [str]},
+                                  None, None),
+]
+
 MIGRATING_ATTR = 'migrating_to'
 OVN_ROUTER_PORT_OPTION_KEYS = ['router-port', 'nat-addresses']
 OVN_GATEWAY_CHASSIS_KEY = 'redirect-chassis'
@@ -271,6 +294,7 @@ MAX_GW_CHASSIS = 5
 UNKNOWN_ADDR = 'unknown'
 
 PORT_CAP_SWITCHDEV = 'switchdev'
+PORT_CAP_PARAM = 'capabilities'
 
 # The name of the port security group attribute is currently not in neutron nor
 # neutron-lib api definitions or constants. To avoid importing the extension

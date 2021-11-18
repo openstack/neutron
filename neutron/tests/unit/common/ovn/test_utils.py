@@ -20,6 +20,7 @@ from unittest import mock
 import fixtures
 import neutron_lib
 from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as n_const
 from oslo_config import cfg
 
@@ -452,6 +453,30 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
         super(TestValidateAndGetDataFromBindingProfile, self).setUp()
         self.get_plugin = mock.patch(
             'neutron_lib.plugins.directory.get_plugin').start()
+        self.VNIC_FAKE_NORMAL = 'fake-vnic-normal'
+        self.VNIC_FAKE_OTHER = 'fake-vnic-other'
+
+        # Replace constants.OVN_PORT_BINDING_PROFILE_PARAMS to allow synthesis
+        _params = constants.OVN_PORT_BINDING_PROFILE_PARAMS.copy()
+        _params.extend([
+            constants.OVNPortBindingProfileParamSet(
+                {'key': [str, type(None)]},
+                self.VNIC_FAKE_NORMAL, None),
+            constants.OVNPortBindingProfileParamSet(
+                {'key': [str], 'other_key': [str]},
+                self.VNIC_FAKE_OTHER, None),
+            constants.OVNPortBindingProfileParamSet(
+                {
+                    'key': [str],
+                    'other_key': [str],
+                    'third_key': [str]
+                },
+                self.VNIC_FAKE_OTHER, constants.PORT_CAP_SWITCHDEV),
+        ])
+        self.OVN_PORT_BINDING_PROFILE_PARAMS = mock.patch.object(
+            constants,
+            'OVN_PORT_BINDING_PROFILE_PARAMS',
+            _params).start()
 
     def test_get_port_raises(self):
         # Confirm that a exception from get_port bubbles up as intended
@@ -486,6 +511,14 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
                     'tag': 42
                 },
             })
+        self.assertRaises(
+            neutron_lib.exceptions.InvalidInput,
+            utils.validate_and_get_data_from_binding_profile,
+            {
+                constants.OVN_PORT_BINDING_PROFILE: {
+                    'parent_name': 'fake-parent-port-tag-missing',
+                },
+            })
 
     def test_valid_input(self):
         # Confirm valid input produces expected output
@@ -514,3 +547,106 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
             utils.validate_and_get_data_from_binding_profile(
                 {constants.OVN_PORT_BINDING_PROFILE: {
                     'unknown-key': 'unknown-data'}}))
+
+    def test_polymorphic_validation(self):
+        expect = {
+            'key': 'value',
+        }
+        self.assertDictEqual(
+            expect,
+            utils.validate_and_get_data_from_binding_profile(
+                {portbindings.VNIC_TYPE: self.VNIC_FAKE_NORMAL,
+                 constants.OVN_PORT_BINDING_PROFILE: expect}))
+        expect = {
+            'key': None,
+        }
+        self.assertDictEqual(
+            expect,
+            utils.validate_and_get_data_from_binding_profile(
+                {portbindings.VNIC_TYPE: self.VNIC_FAKE_NORMAL,
+                 constants.OVN_PORT_BINDING_PROFILE: expect}))
+        # Type ``int`` is not among the accepted types for this key
+        expect = {
+            'key': 51,
+        }
+        self.assertRaises(
+            neutron_lib.exceptions.InvalidInput,
+            utils.validate_and_get_data_from_binding_profile,
+            {portbindings.VNIC_TYPE: self.VNIC_FAKE_NORMAL,
+             constants.OVN_PORT_BINDING_PROFILE: expect})
+
+    def test_overlapping_param_set_different_vnic_type(self):
+        # Confirm overlapping param sets discerned by vnic_type
+        expect = {
+            'key': 'value',
+            'other_key': 'value',
+        }
+        # This param set is not valid for VNIC_FAKE_NORMAL
+        self.assertRaises(
+            neutron_lib.exceptions.InvalidInput,
+            utils.validate_and_get_data_from_binding_profile,
+            {portbindings.VNIC_TYPE: self.VNIC_FAKE_NORMAL,
+             constants.OVN_PORT_BINDING_PROFILE: expect})
+        # It is valid for VNIC_FAKE_OTHER
+        self.assertDictEqual(
+            expect,
+            utils.validate_and_get_data_from_binding_profile(
+                {portbindings.VNIC_TYPE: self.VNIC_FAKE_OTHER,
+                 constants.OVN_PORT_BINDING_PROFILE: expect}))
+
+    def test_overlapping_param_set_different_vnic_type_and_capability(self):
+        # Confirm overlapping param sets discerned by vnic_type and capability
+        expect = {
+            'key': 'value',
+            'other_key': 'value',
+            'third_key': 'value',
+        }
+        # This param set is not valid for VNIC_FAKE_OTHER without capability
+        self.assertRaises(
+            neutron_lib.exceptions.InvalidInput,
+            utils.validate_and_get_data_from_binding_profile,
+            {portbindings.VNIC_TYPE: self.VNIC_FAKE_OTHER,
+             constants.OVN_PORT_BINDING_PROFILE: expect})
+        # This param set is also not valid as the capabilities do not match
+        binding_profile = {
+            constants.PORT_CAP_PARAM: ['fake-capability'],
+            'key': 'value',
+            'other_key': 'value',
+            'third_key': 'value',
+        }
+        self.assertEqual(
+            {},
+            utils.validate_and_get_data_from_binding_profile(
+                {portbindings.VNIC_TYPE: self.VNIC_FAKE_OTHER,
+                 constants.OVN_PORT_BINDING_PROFILE: binding_profile}))
+        # It is valid for VNIC_FAKE_OTHER with PORT_CAP_SWITCHDEV capability
+        binding_profile = {
+            constants.PORT_CAP_PARAM: [constants.PORT_CAP_SWITCHDEV],
+            'key': 'value',
+            'other_key': 'value',
+            'third_key': 'value',
+        }
+        expect = binding_profile.copy()
+        del(expect[constants.PORT_CAP_PARAM])
+        self.assertDictEqual(
+            expect,
+            utils.validate_and_get_data_from_binding_profile(
+                {portbindings.VNIC_TYPE: self.VNIC_FAKE_OTHER,
+                 constants.OVN_PORT_BINDING_PROFILE: binding_profile}))
+
+    def test_capability_only_allowed(self):
+        # The end user exposed workflow for creation of instances with special
+        # networking needs is to first create a port of certain type and/or
+        # capability, and then pass that port to Nova as part of instance
+        # creation.
+        #
+        # This means that it must be allowed to create port wihout a binding
+        # profile, or with capability as the only binding profile key.
+        binding_profile = {
+            constants.PORT_CAP_PARAM: [constants.PORT_CAP_SWITCHDEV],
+        }
+        self.assertEqual(
+            {},
+            utils.validate_and_get_data_from_binding_profile(
+                {portbindings.VNIC_TYPE: self.VNIC_FAKE_OTHER,
+                 constants.OVN_PORT_BINDING_PROFILE: binding_profile}))
