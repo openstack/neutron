@@ -1963,7 +1963,9 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
     def test__update_dnat_entry_if_needed_down(self):
         self._test__update_dnat_entry_if_needed(up=False)
 
-    def _test_update_network_fragmentation(self, new_mtu, expected_opts):
+    @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
+                'ovn_client.OVNClient._get_router_ports')
+    def _test_update_network_fragmentation(self, new_mtu, expected_opts, grps):
         network_attrs = {external_net.EXTERNAL: True}
         network = self._make_network(
             self.fmt, 'net1', True, arg_list=(external_net.EXTERNAL,),
@@ -1972,6 +1974,10 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         with self.subnet(network=network) as subnet:
             with self.port(subnet=subnet,
                            device_owner=const.DEVICE_OWNER_ROUTER_GW) as port:
+
+                grps.return_value = [{'port_id': port['port']['id'],
+                    'network_id':network['network']['id']}]
+
                 # Let's update the MTU to something different
                 network['network']['mtu'] = new_mtu
                 fake_ctx = mock.MagicMock(current=network['network'])
