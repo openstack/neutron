@@ -11,6 +11,7 @@
 #    under the License.
 
 from neutron.objects.qos import binding
+from neutron.objects import router
 from neutron.tests.unit.objects import test_base
 from neutron.tests.unit import testlib_api
 
@@ -102,3 +103,76 @@ class QosPolicyRouterGatewayIPBindingDbObjectTestCase(
         for db_obj in self.db_objs:
             self._create_test_qos_policy(id=db_obj['policy_id'])
             self._create_test_router_id(router_id=db_obj['router_id'])
+
+    def test_get_routers_by_network_id(self):
+        qos_policy_router_obj = self._create_test_qos_policy()
+        qos_policy_net_obj = self._create_test_qos_policy()
+        # External network 1, no QoS policy
+        ext_network_id_1 = self._create_external_network_id()
+        gw_port_id_1a = self._create_test_port_id(network_id=ext_network_id_1)
+        gw_port_id_1b = self._create_test_port_id(network_id=ext_network_id_1)
+        # External network 2, "qos_policy_network" assigned
+        ext_network_id_2 = self._create_external_network_id(
+            qos_policy_id=qos_policy_net_obj.id)
+        gw_port_id_2a = self._create_test_port_id(network_id=ext_network_id_2)
+        gw_port_id_2b = self._create_test_port_id(network_id=ext_network_id_2)
+
+        # Router 1: no GW
+        self._create_test_router_id(name='router1')
+
+        # Router 2: GW assigned, no router QoS, not public network QoS
+        router2 = self._create_test_router_id(name='router2')
+        router2_obj = router.Router.get_object(self.context, id=router2)
+        router2_obj.gw_port_id = gw_port_id_1a
+        router2_obj.update()
+
+        # Router 3: GW assigned, router QoS, not public network QoS
+        router3 = self._create_test_router_id(name='router3')
+        router3_obj = router.Router.get_object(self.context, id=router3)
+        router3_obj.gw_port_id = gw_port_id_1b
+        router3_obj.qos_policy_id = qos_policy_router_obj.id
+        router3_obj.update()
+
+        # Router 4: GW assigned, no router QoS, public network with QoS
+        router4 = self._create_test_router_id(name='router4')
+        router4_obj = router.Router.get_object(self.context, id=router4)
+        router4_obj.gw_port_id = gw_port_id_2a
+        router4_obj.update()
+
+        # Router 5: GW assigned, router QoS, public network with QoS
+        router5 = self._create_test_router_id(name='router5')
+        router5_obj = router.Router.get_object(self.context, id=router5)
+        router5_obj.gw_port_id = gw_port_id_2b
+        router5_obj.qos_policy_id = qos_policy_router_obj.id
+        router5_obj.update()
+
+        # Check that only router3 and router5 have
+        # "QosPolicyRouterGatewayIPBinding" related registers.
+        qos_gw_binds = self._test_class.get_objects(self.context)
+        self.assertEqual(2, len(qos_gw_binds))
+        router_ids = [qos_gw_bind.router_id for qos_gw_bind in qos_gw_binds]
+        self.assertEqual(sorted([router3, router5]), sorted(router_ids))
+
+        result = self._test_class.get_routers_by_network_id(
+            self.context, ext_network_id_1, policy_id=None)
+        self.assertEqual([router2], [r.id for r in result])
+
+        result = self._test_class.get_routers_by_network_id(
+            self.context, ext_network_id_1, policy_id=qos_policy_router_obj.id)
+        self.assertEqual([router3], [r.id for r in result])
+
+        result = self._test_class.get_routers_by_network_id(
+            self.context, ext_network_id_1, policy_id=qos_policy_net_obj.id)
+        self.assertEqual([], [r.id for r in result])
+
+        result = self._test_class.get_routers_by_network_id(
+            self.context, ext_network_id_2, policy_id=None)
+        self.assertEqual([router4], [r.id for r in result])
+
+        result = self._test_class.get_routers_by_network_id(
+            self.context, ext_network_id_2, policy_id=qos_policy_router_obj.id)
+        self.assertEqual([router5], [r.id for r in result])
+
+        result = self._test_class.get_routers_by_network_id(
+            self.context, ext_network_id_2, policy_id=qos_policy_net_obj.id)
+        self.assertEqual([], [r.id for r in result])

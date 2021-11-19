@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    Gateway IP QoS network inheritance is now available for OVN L3 plugin
+    QoS extension. If the router external network (gateway network) has a QoS
+    policy associated, the gateway IP port will inherit the network QoS policy.

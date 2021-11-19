@@ -337,7 +337,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
             self.obj_context, self.id)
 
     def get_bound_routers(self):
-        return binding.QosPolicyRouterGatewayIPBinding.get_objects(
+        return binding.QosPolicyRouterGatewayIPBinding.get_bound_ids(
             self.obj_context, policy_id=self.id)
 
     @classmethod
