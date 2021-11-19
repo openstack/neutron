@@ -1,0 +1,7 @@
+---
+other:
+  - |
+    Any L3 agent extension must inherit from
+    ``neutron_lib.agent.l3_extension.L3AgentExtension``. The
+    ``L3AgentExtensionsManager`` makes this check during the initial loading.
+    A ``L3ExtensionException`` will be raised if the condition is not met.
