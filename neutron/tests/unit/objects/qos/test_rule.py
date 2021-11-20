@@ -18,7 +18,6 @@ from oslo_versionedobjects import exception
 
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
-from neutron.services.qos import constants as qos_constants
 from neutron.tests import base as neutron_test_base
 from neutron.tests.unit.objects import test_base
 from neutron.tests.unit import testlib_api
@@ -251,7 +250,7 @@ class QosPacketRateLimitRuleObjectTestCase(test_base.BaseObjectIfaceTestCase):
     def test_to_dict_returns_type(self):
         obj = rule.QosPacketRateLimitRule(self.context, **self.db_objs[0])
         dict_ = obj.to_dict()
-        self.assertEqual(qos_constants.RULE_TYPE_PACKET_RATE_LIMIT,
+        self.assertEqual(qos_consts.RULE_TYPE_PACKET_RATE_LIMIT,
                          dict_['type'])
 
     def test_duplicate_rules(self):
@@ -300,7 +299,7 @@ class QosMinimumPacketRateRuleObjectTestCase(
     def test_to_dict_returns_type(self):
         obj = rule.QosMinimumPacketRateRule(self.context, **self.db_objs[0])
         dict_ = obj.to_dict()
-        self.assertEqual(qos_constants.RULE_TYPE_MINIMUM_PACKET_RATE,
+        self.assertEqual(qos_consts.RULE_TYPE_MINIMUM_PACKET_RATE,
                          dict_['type'])
 
     def test_duplicate_rules(self):

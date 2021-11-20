@@ -25,7 +25,6 @@ from neutron.objects import ports as port_obj
 from neutron.objects.qos import binding
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
-from neutron.services.qos import constants as q_consts
 from neutron.tests.unit.objects import test_base
 from neutron.tests.unit import testlib_api
 
@@ -34,8 +33,8 @@ RULE_OBJ_CLS = {
     qos_consts.RULE_TYPE_BANDWIDTH_LIMIT: rule.QosBandwidthLimitRule,
     qos_consts.RULE_TYPE_DSCP_MARKING: rule.QosDscpMarkingRule,
     qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH: rule.QosMinimumBandwidthRule,
-    q_consts.RULE_TYPE_PACKET_RATE_LIMIT: rule.QosPacketRateLimitRule,
-    q_consts.RULE_TYPE_MINIMUM_PACKET_RATE: rule.QosMinimumPacketRateRule,
+    qos_consts.RULE_TYPE_PACKET_RATE_LIMIT: rule.QosPacketRateLimitRule,
+    qos_consts.RULE_TYPE_MINIMUM_PACKET_RATE: rule.QosMinimumPacketRateRule,
 }
 
 
@@ -186,8 +185,8 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
             if (obj_cls.rule_type in [
                         qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
                         qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH,
-                        q_consts.RULE_TYPE_PACKET_RATE_LIMIT,
-                        q_consts.RULE_TYPE_MINIMUM_PACKET_RATE] and
+                        qos_consts.RULE_TYPE_PACKET_RATE_LIMIT,
+                        qos_consts.RULE_TYPE_MINIMUM_PACKET_RATE] and
                     bwlimit_direction is not None):
                 rule_fields['direction'] = bwlimit_direction
             rule_obj = obj_cls(self.context, **rule_fields)
@@ -480,7 +479,7 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
             [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
              qos_consts.RULE_TYPE_DSCP_MARKING,
              qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH,
-             q_consts.RULE_TYPE_PACKET_RATE_LIMIT], reload_rules=True,
+             qos_consts.RULE_TYPE_PACKET_RATE_LIMIT], reload_rules=True,
             bwlimit_direction=lib_consts.INGRESS_DIRECTION)
         policy_obj_v1_8 = self._policy_through_version(policy_obj, '1.8')
 
@@ -494,8 +493,8 @@ class QosPolicyDbObjectTestCase(test_base.BaseDbObjectTestCase,
             [qos_consts.RULE_TYPE_BANDWIDTH_LIMIT,
              qos_consts.RULE_TYPE_DSCP_MARKING,
              qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH,
-             q_consts.RULE_TYPE_PACKET_RATE_LIMIT,
-             q_consts.RULE_TYPE_MINIMUM_PACKET_RATE], reload_rules=True,
+             qos_consts.RULE_TYPE_PACKET_RATE_LIMIT,
+             qos_consts.RULE_TYPE_MINIMUM_PACKET_RATE], reload_rules=True,
             bwlimit_direction=lib_consts.INGRESS_DIRECTION)
         policy_obj_v1_9 = self._policy_through_version(policy_obj, '1.9')
 

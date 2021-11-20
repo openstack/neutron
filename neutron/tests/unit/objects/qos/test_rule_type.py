@@ -22,7 +22,6 @@ from oslo_config import cfg
 
 from neutron import manager
 from neutron.objects.qos import rule_type
-from neutron.services.qos import constants as qos_constants
 from neutron.services.qos import qos_plugin
 from neutron.tests import base as test_base
 
@@ -79,11 +78,11 @@ class QosRuleTypeObjectTestCase(test_base.BaseTestCase):
 
     def test_get_objects(self):
         rule_types_mock = mock.PropertyMock(
-            return_value=set(qos_constants.VALID_RULE_TYPES))
+            return_value=set(qos_consts.VALID_RULE_TYPES))
         with mock.patch.object(qos_plugin.QoSPlugin, 'supported_rule_types',
                                new_callable=rule_types_mock):
             types = rule_type.QosRuleType.get_objects()
-            self.assertEqual(sorted(qos_constants.VALID_RULE_TYPES),
+            self.assertEqual(sorted(qos_consts.VALID_RULE_TYPES),
                              sorted(type_['type'] for type_ in types))
 
     def test_wrong_type(self):

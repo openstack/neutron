@@ -58,7 +58,6 @@ from neutron.objects.qos import policy as policy_object
 from neutron.objects.qos import qos_policy_validator as checker
 from neutron.objects.qos import rule as rule_object
 from neutron.objects.qos import rule_type as rule_type_object
-from neutron.services.qos import constants as qos_constants
 from neutron.services.qos.drivers import manager
 
 
@@ -510,7 +509,7 @@ class QoSPlugin(qos.QoSPluginBase):
 
         for group_uuid, rp in allocation.items():
             for rule_type in [qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH,
-                              qos_constants.RULE_TYPE_MINIMUM_PACKET_RATE]:
+                              qos_consts.RULE_TYPE_MINIMUM_PACKET_RATE]:
                 o_filtered_rules = [r for r in original_rules
                                     if r.rule_type == rule_type]
                 d_filtered_rules = [r for r in desired_rules
@@ -871,7 +870,7 @@ class QoSPlugin(qos.QoSPluginBase):
             self.validate_policy(context, policy)
             if rule.rule_type in (
                     qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH,
-                    qos_constants.RULE_TYPE_MINIMUM_PACKET_RATE):
+                    qos_consts.RULE_TYPE_MINIMUM_PACKET_RATE):
                 self.reject_rule_update_for_bound_port(context, policy)
             self.driver_manager.call(qos_consts.UPDATE_POLICY_PRECOMMIT,
                                      context, policy)
@@ -915,7 +914,7 @@ class QoSPlugin(qos.QoSPluginBase):
             self.validate_policy(context, policy)
             if rule.rule_type in (
                     qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH,
-                    qos_constants.RULE_TYPE_MINIMUM_PACKET_RATE):
+                    qos_consts.RULE_TYPE_MINIMUM_PACKET_RATE):
                 self.reject_rule_update_for_bound_port(context, policy)
             self.driver_manager.call(qos_consts.UPDATE_POLICY_PRECOMMIT,
                                      context, policy)
@@ -977,7 +976,7 @@ class QoSPlugin(qos.QoSPluginBase):
             policy.obj_load_attr('rules')
             if rule.rule_type in (
                     qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH,
-                    qos_constants.RULE_TYPE_MINIMUM_PACKET_RATE):
+                    qos_consts.RULE_TYPE_MINIMUM_PACKET_RATE):
                 self.reject_rule_update_for_bound_port(context, policy)
             self.driver_manager.call(qos_consts.UPDATE_POLICY_PRECOMMIT,
                                      context, policy)
