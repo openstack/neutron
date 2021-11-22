@@ -173,11 +173,7 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         }
         self.assertEqual(expected, self.qos_driver._qos_rules(mock.ANY,
                                                               'policy_id1'))
-        msg = ('Rule type %(rule_type)s from QoS policy %(policy_id)s is not '
-               'supported in OVN')
-        mock_warning.assert_called_once_with(
-            msg, {'rule_type': qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH,
-                  'policy_id': 'policy_id1'})
+        mock_warning.assert_not_called()
 
     @mock.patch.object(rule_obj, 'get_rules')
     def test__qos_rules_no_rules(self, mock_get_rules):

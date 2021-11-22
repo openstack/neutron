@@ -33,7 +33,12 @@ SUPPORTED_RULES = {
     },
     qos_consts.RULE_TYPE_DSCP_MARKING: {
         qos_consts.DSCP_MARK: {'type:values': constants.VALID_DSCP_MARKS},
-    }
+    },
+    qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH: {
+        qos_consts.MIN_KBPS: {
+            'type:range': [0, db_consts.DB_INTEGER_MAX_VALUE]},
+        qos_consts.DIRECTION: {'type:values': constants.VALID_DIRECTIONS}
+    },
 }
 
 VIF_TYPES = [portbindings.VIF_TYPE_OVS, portbindings.VIF_TYPE_VHOST_USER]
