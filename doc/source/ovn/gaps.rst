@@ -28,8 +28,9 @@ at [1]_.
 
 * BGP support
 
-  Currently ML2/OVS supports making a tenant subnet routable via BGP, and
-  can announce host routes for both floating and fixed IP addresses.
+  Neutron-dynamic-routing supports making a tenant subnet routable via BGP, and
+  can announce host routes for both floating and fixed IP addresses. These
+  functions are not supported in OVN.
 
 * Baremetal provisioning with iPXE
 
@@ -55,6 +56,27 @@ at [1]_.
   no known production use-case for this feature hence we don't even have an RFE
   open for it and it's not on the roadmap to be implemented.
 
+* DHCP service for instances
+
+  ML2/OVS adds packet filtering rules to every instance that allow DHCP queries
+  from instances to reach the DHCP agent. For OVN this traffic has to be explicitly
+  allowed by security group rules attached to the instance. Note that the default
+  security group does allow all outgoing traffic, so this only becomes relevant
+  when using custom security groups [6]_.
+
+* DNS resolution for instances
+
+  OVN cannot use the host's networking for DNS resolution, so Case 2b in [7]_ can
+  only be used when additional DHCP agents are deployed. For Case 2a a different
+  configuration option has to be used in ``ml2_conf.ini``::
+
+    [ovn]
+    dns_servers = 203.0.113.8, 198.51.100.53
+
+  Note that this option currently only works for IPv4 nameservers [8]_.
+  In addition, with ML2/OVS setting the name-server option for a subnet to ``0.0.0.0``
+  or ``::`` respectively has the effect that no nameservers are announced via DHCP for
+  this subnet. This currently does not work with OVN [9]_.
 
 References
 ----------
@@ -64,3 +86,7 @@ References
 .. [3] https://specs.openstack.org/openstack/neutron-specs/specs/rocky/minimum-bandwidth-allocation-placement-api.html
 .. [4] https://patchwork.ozlabs.org/project/openvswitch/patch/6aec0fb280f610a2083fbb6c61e251b1d237b21f.1576840560.git.lorenzo.bianconi@redhat.com/
 .. [5] https://bugs.launchpad.net/neutron/+bug/1895972
+.. [6] https://bugs.launchpad.net/neutron/+bug/1926515
+.. [7] https://docs.openstack.org/neutron/latest/admin/config-dns-res.html
+.. [8] https://bugs.launchpad.net/neutron/+bug/1951816
+.. [9] https://bugs.launchpad.net/neutron/+bug/1950686
