@@ -18,6 +18,7 @@ import functools
 import itertools
 import operator
 import random
+import re
 import time
 import uuid
 
@@ -80,6 +81,11 @@ CTRL_BURST_LIMIT_MIN = 25
 
 # TODO(slaweq): move this to neutron_lib.constants
 TYPE_GRE_IP6 = 'ip6gre'
+
+
+MAX_METER_REGEX = re.compile(r"max_meter:(\w+) max_bands:(\w+) *")
+BAND_TYPES_REGEX = re.compile(r"band_types: (\w+)")
+CAPS_REGEX = re.compile(r"capabilities: (\w+) (\w+) (\w+) (\w+)")
 
 
 def _ovsdb_result_pending(result):
@@ -442,6 +448,24 @@ class OVSBridge(BaseOVS):
 
     def remove_all_flows(self):
         self.run_ofctl("del-flows", [])
+
+    def list_meter_features(self):
+        # For fullstack test mainly
+        f_list = self.run_ofctl("meter-features", []).split("\n")[1:]
+        max_meter = max_bands = support_drop = support_caps = None
+        for output in f_list:
+            match = MAX_METER_REGEX.match(output)
+            if match:
+                max_meter = match.group(1)
+                max_bands = match.group(2)
+            match = BAND_TYPES_REGEX.match(output)
+            if match:
+                support_drop = match.group(1)
+            match = CAPS_REGEX.match(output)
+            if match:
+                support_caps = [match.group(1), match.group(2),
+                                match.group(3), match.group(4)]
+        return all([max_meter, max_bands, support_drop, support_caps])
 
     @_ovsdb_retry
     def _get_port_val(self, port_name, port_val):

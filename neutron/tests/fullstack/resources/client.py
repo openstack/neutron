@@ -283,6 +283,27 @@ class ClientFixture(fixtures.Fixture):
 
         return rule['bandwidth_limit_rule']
 
+    def create_packet_rate_limit_rule(
+            self, project_id, qos_policy_id, limit=None,
+            burst=None, direction=None):
+        rule = {'project_id': project_id}
+        if limit:
+            rule['max_kpps'] = limit
+        if burst:
+            rule['max_burst_kpps'] = burst
+        if direction:
+            rule['direction'] = direction
+        rule = self.client.create_packet_rate_limit_rule(
+            policy=qos_policy_id,
+            body={'packet_rate_limit_rule': rule})
+
+        self.addCleanup(
+            _safe_method(self.client.delete_packet_rate_limit_rule),
+            rule['packet_rate_limit_rule']['id'],
+            qos_policy_id)
+
+        return rule['packet_rate_limit_rule']
+
     def create_minimum_bandwidth_rule(self, tenant_id, qos_policy_id,
                                       min_bw, direction=None):
         rule = {'tenant_id': tenant_id,

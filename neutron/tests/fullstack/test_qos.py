@@ -46,6 +46,9 @@ BANDWIDTH_LIMIT = 500
 MIN_BANDWIDTH = 300
 DSCP_MARK = 16
 
+PACKET_RATE_LIMIT = 10000
+PACKET_RATE_BURST = 1000
+
 
 class BaseQoSRuleTestCase(object):
     number_of_hosts = 1
@@ -545,6 +548,96 @@ class TestDscpMarkingQoSLinuxbridge(_TestDscpMarkingQoS,
     def _wait_for_dscp_marking_rule_applied(self, vm, dscp_mark):
         l2_extensions.wait_until_dscp_marking_rule_applied_linuxbridge(
             vm.host.host_namespace, vm.port.name, dscp_mark)
+
+
+class _TestPacketRateLimitQoS(BaseQoSRuleTestCase):
+
+    number_of_hosts = 1
+
+    def _wait_for_packet_rate_limit_rule_applied(self, vm, direction):
+        l2_extensions.wait_until_pkt_meter_rule_applied_ovs(
+            vm.bridge, vm.port.name, vm.neutron_port['id'],
+            direction, vm.mac_address)
+
+    def _wait_for_packet_rate_limit_rule_removed(self, vm, direction):
+        l2_extensions.wait_until_pkt_meter_rule_applied_ovs(
+            vm.bridge, vm.port.name, vm.neutron_port['id'], direction)
+
+    def _add_packet_rate_limit_rule(self, limit, burst, direction, qos_policy):
+        qos_policy_id = qos_policy['id']
+        rule = self.safe_client.create_packet_rate_limit_rule(
+            self.tenant_id, qos_policy_id, limit, burst, direction)
+        rule['type'] = qos_consts.RULE_TYPE_PACKET_RATE_LIMIT
+        rule['qos_policy_id'] = qos_policy_id
+        qos_policy['rules'].append(rule)
+
+    def _create_vm_with_limit_rules(self):
+        # Create port with qos policy attached, with different direction
+        vm, qos_policy = self._prepare_vm_with_qos_policy(
+            [functools.partial(
+                self._add_packet_rate_limit_rule,
+                PACKET_RATE_LIMIT, PACKET_RATE_BURST, self.direction),
+             functools.partial(
+                self._add_packet_rate_limit_rule,
+                PACKET_RATE_LIMIT, PACKET_RATE_BURST, self.reverse_direction)])
+
+        self._wait_for_packet_rate_limit_rule_applied(
+            vm, self.direction)
+        self._wait_for_packet_rate_limit_rule_applied(
+            vm, self.reverse_direction)
+        return vm, qos_policy
+
+    def test_packet_rate_limit_qos_policy_rule_lifecycle(self):
+        new_limit = PACKET_RATE_LIMIT + 100
+
+        # Create port with qos policy attached
+        vm, qos_policy = self._prepare_vm_with_qos_policy(
+            [functools.partial(
+                self._add_packet_rate_limit_rule,
+                PACKET_RATE_LIMIT, PACKET_RATE_BURST, self.direction)])
+
+        vm.bridge.use_at_least_protocol(ovs_constants.OPENFLOW13)
+        if not vm.bridge.list_meter_features():
+            self.skip("Test ovs bridge %s does not support meter.",
+                      vm.bridge.br_name)
+
+        pkt_rule = qos_policy['rules'][0]
+        self._wait_for_packet_rate_limit_rule_applied(
+            vm, self.direction)
+        qos_policy_id = qos_policy['id']
+
+        self.client.delete_packet_rate_limit_rule(pkt_rule['id'],
+                                                  qos_policy_id)
+        self._wait_for_packet_rate_limit_rule_removed(vm, self.direction)
+
+        new_rule = self.safe_client.create_packet_rate_limit_rule(
+            self.tenant_id, qos_policy_id, new_limit, direction=self.direction)
+        self._wait_for_packet_rate_limit_rule_applied(
+            vm, self.direction)
+
+        # Update qos policy rule id
+        self.client.update_packet_rate_limit_rule(
+            new_rule['id'], qos_policy_id,
+            body={'packet_rate_limit_rule': {
+                'max_kpps': PACKET_RATE_LIMIT,
+                'max_burst_kpps': PACKET_RATE_BURST}})
+        self._wait_for_packet_rate_limit_rule_applied(
+            vm, self.direction)
+
+        # Remove qos policy from port
+        self.client.update_port(
+            vm.neutron_port['id'],
+            body={'port': {'qos_policy_id': None}})
+        self._wait_for_packet_rate_limit_rule_removed(vm, self.direction)
+
+
+class TestPacketRateLimitQoSOvs(_TestPacketRateLimitQoS,
+                                base.BaseFullStackTestCase):
+    l2_agent_type = constants.AGENT_TYPE_OVS
+    scenarios = [
+        ('ingress', {'direction': constants.INGRESS_DIRECTION}),
+        ('egress', {'direction': constants.EGRESS_DIRECTION})
+    ]
 
 
 class TestQoSWithL2Population(base.BaseFullStackTestCase):
