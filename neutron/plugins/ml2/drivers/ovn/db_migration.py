@@ -54,37 +54,37 @@ def migrate_neutron_database_to_ovn(plugin):
                 vxlanallocation.VxlanAllocation.vxlan_vni ==
                 segment.segmentation_id).update({"allocated": False})
 
-    port_bindings = port_obj.PortBinding.get_objects(
-        ctx, vif_type='ovs', vnic_type='normal', status='ACTIVE')
-    for pb in port_bindings:
-        if not pb.vif_details:
-            continue
-        vif_details = pb.vif_details.copy()
-        for detail in VIF_DETAILS_TO_REMOVE:
-            try:
-                del vif_details[detail]
-            except KeyError:
-                pass
-        if vif_details != pb.vif_details:
-            pb.vif_details = vif_details
-            try:
-                pb.update()
-            except exceptions.ObjectNotFound:
-                # When Neutron server is running, it could happen that
-                # for example gateway port has been rescheduled to a
-                # different gateway chassis.
-                pass
-
-    for trunk in trunk_obj.Trunk.get_objects(ctx):
-        for subport in trunk.sub_ports:
-            pbs = port_obj.PortBinding.get_objects(
-                ctx, port_id=subport.port_id)
-            for pb in pbs:
-                profile = {}
-                if pb.profile:
-                    profile = pb.profile.copy()
-                profile['parent_name'] = trunk.port_id
-                profile['tag'] = subport.segmentation_id
-                if profile != pb.profile:
-                    pb.profile = profile
+        port_bindings = port_obj.PortBinding.get_objects(
+            ctx, vif_type='ovs', vnic_type='normal', status='ACTIVE')
+        for pb in port_bindings:
+            if not pb.vif_details:
+                continue
+            vif_details = pb.vif_details.copy()
+            for detail in VIF_DETAILS_TO_REMOVE:
+                try:
+                    del vif_details[detail]
+                except KeyError:
+                    pass
+            if vif_details != pb.vif_details:
+                pb.vif_details = vif_details
+                try:
                     pb.update()
+                except exceptions.ObjectNotFound:
+                    # When Neutron server is running, it could happen that
+                    # for example gateway port has been rescheduled to a
+                    # different gateway chassis.
+                    pass
+
+        for trunk in trunk_obj.Trunk.get_objects(ctx):
+            for subport in trunk.sub_ports:
+                pbs = port_obj.PortBinding.get_objects(
+                    ctx, port_id=subport.port_id)
+                for pb in pbs:
+                    profile = {}
+                    if pb.profile:
+                        profile = pb.profile.copy()
+                    profile['parent_name'] = trunk.port_id
+                    profile['tag'] = subport.segmentation_id
+                    if profile != pb.profile:
+                        pb.profile = profile
+                        pb.update()
