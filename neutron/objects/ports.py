@@ -20,6 +20,7 @@ from neutron_lib.utils import net as net_utils
 from oslo_log import log as logging
 from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
+from sqlalchemy import and_
 
 from neutron.common import _constants
 from neutron.db.models import dns as dns_models
@@ -83,6 +84,23 @@ class PortBinding(PortBindingBase):
     }
 
     primary_keys = ['port_id', 'host']
+
+    @classmethod
+    def get_port_id_and_host(cls, context, vif_type, vnic_type, status):
+        """Returns only the port_id and the host of matching registers
+
+        This method returns only the primary keys of a "PortBinding" register,
+        reducing the query complexity and increasing the retrieval speed.
+        This query does not check the "PortBinding" owner or RBACs.
+        """
+        with cls.db_context_reader(context):
+            query = context.session.query(cls.db_model.port_id,
+                                          cls.db_model.host)
+            query = query.filter(and_(
+                cls.db_model.vif_type == vif_type,
+                cls.db_model.vnic_type == vnic_type,
+                cls.db_model.status == status))
+            return query.all()
 
 
 @base.NeutronObjectRegistry.register
