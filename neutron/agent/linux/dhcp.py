@@ -1744,7 +1744,7 @@ class DeviceManager(object):
                     self.unplug(interface_name, network)
                     self.plugin.release_dhcp_port(network.id, port.device_id)
 
-            self.fill_dhcp_udp_checksums(namespace=network.namespace)
+            self.fill_ip_checksums(namespace=network.namespace)
         ip_cidrs = []
         for fixed_ip in port.fixed_ips:
             subnet = fixed_ip.subnet
@@ -1794,8 +1794,9 @@ class DeviceManager(object):
         self.plugin.release_dhcp_port(network.id,
                                       self.get_device_id(network))
 
-    def fill_dhcp_udp_checksums(self, namespace):
-        """Ensure DHCP reply packets always have correct UDP checksums."""
+    def fill_ip_checksums(self, namespace):
+        """Fill IP checksums for reply packets"""
+        # Ensure DHCP reply packets always have correct UDP checksums.
         iptables_mgr = iptables_manager.IptablesManager(
             use_ipv6=netutils.is_ipv6_enabled(), nat=False,
             namespace=namespace)
@@ -1803,6 +1804,14 @@ class DeviceManager(object):
                      % constants.DHCP_CLIENT_PORT)
         ipv6_rule = ('-p udp -m udp --dport %d -j CHECKSUM --checksum-fill'
                      % constants.DHCPV6_CLIENT_PORT)
+        iptables_mgr.ipv4['mangle'].add_rule('POSTROUTING', ipv4_rule)
+        iptables_mgr.ipv6['mangle'].add_rule('POSTROUTING', ipv6_rule)
+
+        # Ensure HTTP reply packets always have correct TCP checksums.
+        ipv4_rule = ('-p tcp -m tcp --sport %d -j CHECKSUM --checksum-fill'
+                     % constants.METADATA_PORT)
+        ipv6_rule = ('-p tcp -m tcp --sport %d -j CHECKSUM --checksum-fill'
+		% constants.METADATA_PORT)
         iptables_mgr.ipv4['mangle'].add_rule('POSTROUTING', ipv4_rule)
         iptables_mgr.ipv6['mangle'].add_rule('POSTROUTING', ipv6_rule)
         iptables_mgr.apply()
