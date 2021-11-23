@@ -15,6 +15,8 @@
         STACK_USER=stack
         OVS_BRANCH={{ OVS_BRANCH }}
         OVN_BRANCH={{ OVN_BRANCH }}
+        BUILD_OVS_FROM_SOURCE={{ BUILD_OVS_FROM_SOURCE }}
+        INSTALL_OVN={{ INSTALL_OVN }}
         # This is DB USER used in e.g. pgsql db
         DATABASE_USER=openstack_citest
 
