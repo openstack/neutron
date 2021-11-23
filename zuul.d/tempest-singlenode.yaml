@@ -55,6 +55,7 @@
         Q_AGENT: openvswitch
     irrelevant-files: &openvswitch-irrelevant-files
       - ^(test-|)requirements.txt$
+      - ^.*\.conf\.sample$
       - ^.*\.rst$
       - ^doc/.*$
       - ^neutron/locale/.*$
@@ -95,6 +96,7 @@
         Q_AGENT: linuxbridge
     irrelevant-files:
       - ^(test-|)requirements.txt$
+      - ^.*\.conf\.sample$
       - ^.*\.rst$
       - ^doc/.*$
       - ^neutron/locale/.*$
@@ -203,6 +205,7 @@
         s-proxy: false
     irrelevant-files: &tempest-db-irrelevant-files
       - ^(test-|)requirements.txt$
+      - ^.*\.conf\.sample$
       - ^.*\.rst$
       - ^doc/.*$
       - ^neutron/locale/.*$
@@ -273,6 +276,7 @@
         s-proxy: false
     irrelevant-files:
       - ^(test-|)requirements.txt$
+      - ^.*\.conf\.sample$
       - ^.*\.rst$
       - ^doc/.*$
       - ^neutron/locale/.*$
@@ -350,6 +354,7 @@
               debug_iptables_rules: True
     irrelevant-files: &irrelevant-files
       - ^(test-|)requirements.txt$
+      - ^.*\.conf\.sample$
       - ^.*\.rst$
       - ^doc/.*$
       - ^neutron/locale/.*$
@@ -455,6 +460,7 @@
       - ^releasenotes/.*$
       - ^doc/.*$
       - ^setup.cfg$
+      - ^.*\.conf\.sample$
       - ^.*\.rst$
       - ^neutron/locale/.*$
       - ^neutron/tests/unit/.*$

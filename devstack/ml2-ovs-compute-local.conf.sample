@@ -45,7 +45,7 @@ ENABLED_SERVICES=n-cpu,n-novnc,neutron,q-agt,q-l3,q-meta,q-dhcp
 local_ip=<CHANGE_TO_YOUR_LOCAL_IP>
 
 [agent]
-tunnel_types=vxlan
+tunnel_types=vxlan,gre
 # You can add more config options here for neutron-openvswith-agent, for instance
 # you can uncomment the followings settings to enable related functions.
 #l2_population=True
