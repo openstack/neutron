@@ -51,9 +51,11 @@
             timeout: 3600
         - openstack-tox-cover:  # from openstack-cover-jobs template
             timeout: 4800
-        - openstack-tox-py38-arm64:  # from openstack-python3-yoga-jobs-arm64 template
+    check-arm64:
+      jobs:
+        - openstack-tox-py38-arm64: # from openstack-python3-yoga-jobs-arm64 template
             timeout: 4800
-        - openstack-tox-py39-arm64:  # from openstack-python3-yoga-jobs-arm64 template
+        - openstack-tox-py39-arm64: # from openstack-python3-yoga-jobs-arm64 template
             timeout: 4800
     gate:
       jobs:
