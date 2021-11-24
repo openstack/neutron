@@ -224,16 +224,14 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
 
     def _get_acls_from_port_groups(self):
         ovn_acls = []
-        port_groups = self.ovn_api.db_list_rows('Port_Group').execute()
-        for pg in port_groups:
+        acl_columns = (self.ovn_api._tables['ACL'].columns.keys() &
+                       set(ovn_const.ACL_EXPECTED_COLUMNS_NBDB))
+        acl_columns.discard('external_ids')
+        for pg in self.ovn_api.db_list_rows('Port_Group').execute():
             acls = getattr(pg, 'acls', [])
             for acl in acls:
-                acl_string = {}
+                acl_string = {k: getattr(acl, k) for k in acl_columns}
                 acl_string['port_group'] = pg.name
-                for acl_key in getattr(acl, "_data", {}):
-                    acl_string[acl_key] = getattr(acl, acl_key)
-                acl_string.pop('meter')
-                acl_string.pop('external_ids')
                 ovn_acls.append(acl_string)
         return ovn_acls
 
