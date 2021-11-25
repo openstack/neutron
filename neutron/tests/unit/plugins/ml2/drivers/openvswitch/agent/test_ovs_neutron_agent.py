@@ -129,6 +129,8 @@ class TestOvsNeutronAgent(object):
         cfg.CONF.set_default('quitting_rpc_timeout', 10, 'AGENT')
         cfg.CONF.set_default('local_ip', '127.0.0.1', 'OVS')
         cfg.CONF.set_default('host', 'host')
+        # Set report_interval to 0 so rpc calls responds immediately
+        cfg.CONF.set_override('report_interval', 0, 'AGENT')
         mock.patch(
             'neutron.agent.ovsdb.native.helpers.enable_connection_uri').start()
         mock.patch(
@@ -3012,6 +3014,8 @@ class TestOvsDvrNeutronAgent(object):
         cfg.CONF.set_default('firewall_driver',
                              'neutron.agent.firewall.NoopFirewallDriver',
                              group='SECURITYGROUP')
+        # Set report_interval to 0 so rpc calls responds immediately
+        cfg.CONF.set_override('report_interval', 0, 'AGENT')
 
         mock.patch('neutron.agent.common.ovs_lib.BaseOVS.config',
                    new_callable=mock.PropertyMock,
