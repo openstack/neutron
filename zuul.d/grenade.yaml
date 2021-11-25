@@ -9,6 +9,7 @@
       - ^releasenotes/.*$
       - ^doc/.*$
       - ^setup.cfg$
+      - ^.*\.conf\.sample$
       - ^.*\.rst$
       - ^neutron/locale/.*$
       - ^neutron/tests/.*$
@@ -158,6 +159,7 @@
       - ^releasenotes/.*$
       - ^doc/.*$
       - ^setup.cfg$
+      - ^.*\.conf\.sample$
       - ^.*\.rst$
       - ^neutron/locale/.*$
       - ^neutron/tests/.*$

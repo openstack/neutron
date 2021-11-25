@@ -26,7 +26,8 @@ to use either CentOS 8 or the latest Ubuntu LTS.
 
 ::
 
-     $ cp -r devstack /opt/stack
+     $ sudo cp -r devstack /opt/stack
+     $ sudo chown -R stack:stack /opt/stack/devstack
      $ sudo su - stack
      $ cd /opt/stack
      $ git clone https://opendev.org/openstack/neutron.git

@@ -13,6 +13,7 @@
     run: playbooks/run_functional_job.yaml
     post-run: playbooks/post_functional_job.yaml
     irrelevant-files: &irrelevant-files
+      - ^.*\.conf\.sample$
       - ^.*\.rst$
       - ^doc/.*$
       - ^neutron/locale/.*$
@@ -59,6 +60,7 @@
       - ^releasenotes/.*$
       - ^doc/.*$
       - ^setup.cfg$
+      - ^.*\.conf\.sample$
       - ^.*\.rst$
       - ^neutron/locale/.*$
       - ^neutron/tests/unit/.*$

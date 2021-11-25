@@ -69,6 +69,9 @@ type_drivers=flat,gre,vlan,vxlan
 tenant_network_types=vxlan
 mechanism_drivers=openvswitch,l2population
 
+[agent]
+tunnel_types=vxlan,gre
+
 # You can add more config options here for ml2_conf.ini, for instance
 # you can uncomment the followings to set the segment ID ranges for
 # various tenant network types.
