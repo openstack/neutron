@@ -900,21 +900,13 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         if not ovn_conf.is_ovn_metadata_enabled():
             return
         LOG.debug('OVN sync metadata ports started')
-        # TODO(mjozefcz): Remove constants.DEVICE_OWNER_DHCP
-        # from get_ports in W-release.
         for net in self.core_plugin.get_networks(ctx):
-            # Get only DHCP ports that don't belong to agent, it should return
-            # only OVN metadata ports
-            dhcp_ports = [
-                p for p in self.core_plugin.get_ports(
+            metadata_ports = self.core_plugin.get_ports(
                     ctx, filters=dict(
                         network_id=[net['id']],
-                        device_owner=[
-                            constants.DEVICE_OWNER_DISTRIBUTED,
-                            constants.DEVICE_OWNER_DHCP]))
-                if not utils.is_neutron_dhcp_agent_port(p)]
+                        device_owner=[constants.DEVICE_OWNER_DISTRIBUTED]))
 
-            if not dhcp_ports:
+            if not metadata_ports:
                 LOG.warning('Missing metadata port found in Neutron for '
                             'network %s', net['id'])
                 if self.mode == SYNC_MODE_REPAIR:
@@ -931,7 +923,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
             else:
                 # Delete all but one DHCP ports. Only one is needed for
                 # metadata.
-                for port in dhcp_ports[1:]:
+                for port in metadata_ports[1:]:
                     LOG.warning('Unnecessary DHCP port %s for network %s '
                                 'found in Neutron', port['id'], net['id'])
                     if self.mode == SYNC_MODE_REPAIR:
@@ -939,7 +931,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                                     'network %s', port['id'], net['id'])
                         self.core_plugin.delete_port(ctx, port['id'])
                     db_ports.pop(port['id'], None)
-                port = dhcp_ports[0]
+                port = metadata_ports[0]
                 if port['id'] in db_ports.keys():
                     LOG.warning('Metadata port %s for network %s found in '
                                 'Neutron but not in OVN',

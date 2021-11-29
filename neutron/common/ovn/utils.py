@@ -460,17 +460,6 @@ def is_provider_network(network):
     return network.get(external_net.EXTERNAL, False)
 
 
-def is_neutron_dhcp_agent_port(port):
-    """Check if the given DHCP port belongs to Neutron DHCP agents
-
-    The DHCP ports with the device_id equals to 'reserved_dhcp_port'
-    or starting with the word 'dhcp' belongs to the Neutron DHCP agents.
-    """
-    return (port['device_owner'] == const.DEVICE_OWNER_DHCP and
-            (port['device_id'] == const.DEVICE_ID_RESERVED_DHCP_PORT or
-             port['device_id'].startswith('dhcp')))
-
-
 def compute_address_pairs_diff(ovn_port, neutron_port):
     """Compute the differences in the allowed_address_pairs field."""
     ovn_ap = get_allowed_address_pairs_ip_addresses_from_ovn_port(
