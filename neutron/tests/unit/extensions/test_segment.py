@@ -965,9 +965,9 @@ class TestMl2HostSegmentMappingAgentServerSynch(HostSegmentMappingTestCase):
         self._register_agent(host, mappings={physical_network: 'br-eth-1'},
                              plugin=self.plugin, start_flag=True)
         self.assertIn(host, db.reported_hosts)
-        self.assertEqual(2, mock_function.call_count)
+        self.assertEqual(1, mock_function.call_count)
         expected_call = mock.call(mock.ANY, host, set())
-        mock_function.assert_has_calls([expected_call, expected_call])
+        mock_function.assert_has_calls([expected_call])
 
     @mock.patch(mock_path)
     def test_no_starting_agent_is_not_processed(self, mock_function):

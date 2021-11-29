@@ -386,6 +386,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                 agent = self._get_agent_by_type_and_host(
                     context, agent_state['agent_type'], agent_state['host'])
                 agent_state_orig = copy.deepcopy(agent_state)
+                agent_state_previous = copy.deepcopy(agent)
                 if not agent.is_active:
                     status = agent_consts.AGENT_REVIVED
                     if 'resource_versions' not in agent_state:
@@ -406,6 +407,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                 event_type = events.AFTER_UPDATE
             except agent_exc.AgentNotFoundByTypeHost:
                 agent_state_orig = None
+                agent_state_previous = None
                 greenthread.sleep(0)
                 res['created_at'] = current_time
                 res['started_at'] = current_time
@@ -430,7 +432,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                                  'plugin': self,
                                  'status': status
                              },
-                             states=(agent_state_orig, ),
+                             states=(agent_state_orig, agent_state_previous),
                              desired_state=agent_state,
                              resource_id=agent.id
                          ))
