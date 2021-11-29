@@ -304,6 +304,11 @@ def _update_segment_host_mapping_for_agent(resource, event, trigger,
     if host in reported_hosts and not start_flag:
         return
     reported_hosts.add(host)
+    if (len(payload.states) > 1 and
+            payload.states[1] is not None and
+            agent.get('configurations') == payload.states[1].get(
+                'configurations')):
+        return
     segments = get_segments_with_phys_nets(context, phys_nets)
     current_segment_ids = {
         segment['id'] for segment in segments
