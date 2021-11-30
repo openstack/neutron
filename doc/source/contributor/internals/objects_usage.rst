@@ -683,13 +683,13 @@ The :code:`convert_filters` method is available in
 
 References
 ----------
-.. [#] https://opendev.org/openstack/neutron/tree/neutron/objects/base.py?h=stable/ocata#n258
-.. [#] https://opendev.org/openstack/neutron/tree/neutron/db/standard_attr.py?h=stable/ocata
-.. [#] https://opendev.org/openstack/neutron/tree/neutron/objects/base.py?h=stable/ocata#n516
-.. [#] https://opendev.org/openstack/neutron/tree/neutron/objects/base.py?h=stable/ocata#n542
+.. [#] https://opendev.org/openstack/neutron/src/tag/ocata-eol/neutron/objects/base.py#L258
+.. [#] https://opendev.org/openstack/neutron/src/tag/ocata-eol/neutron/db/standard_attr.py
+.. [#] https://opendev.org/openstack/neutron/src/tag/ocata-eol/neutron/objects/base.py#L516
+.. [#] https://opendev.org/openstack/neutron/src/tag/ocata-eol/neutron/objects/base.py#L542
 .. [#] https://docs.openstack.org/neutron/latest/contributor/internals/db_layer.html#the-standard-attribute-table
-.. [#] https://opendev.org/openstack/neutron/tree/neutron/objects/rbac_db.py?h=stable/ocata#n291
+.. [#] https://opendev.org/openstack/neutron/src/tag/ocata-eol/neutron/objects/rbac_db.py#L291
 .. [#] https://access.redhat.com/support/policy/updates/openstack/platform/
 .. [#] https://www.suse.com/releasenotes/x86_64/SUSE-OPENSTACK-CLOUD/8/#Upgrade
 .. [#] https://www.ubuntu.com/about/release-cycle
-.. [#] https://opendev.org/openstack/neutron-lib/tree/neutron_lib/objects/utils.py
+.. [#] https://opendev.org/openstack/neutron-lib/src/neutron_lib/objects/utils.py

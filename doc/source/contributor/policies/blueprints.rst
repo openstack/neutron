@@ -16,7 +16,7 @@ assign these into milestones or move them to the backlog for selection into
 a future release.
 
 Please note that we use a `template
-<http://opendev.org/openstack/neutron-specs/tree/specs/template.rst>`_
+<http://opendev.org/openstack/neutron-specs/src/specs/template.rst>`_
 for spec submissions. It is not required to fill out all sections in the
 template. Review of the spec may require filling in information left out by
 the submitter.

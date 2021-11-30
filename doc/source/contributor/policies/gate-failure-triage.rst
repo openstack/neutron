@@ -60,7 +60,7 @@ Troubleshooting Tempest jobs
 
 Troubleshooting functional/fullstack job
 ----------------------------------------
-1. Go to the job link provided by Jenkins CI.
+1. Go to the job link provided by Zuul CI.
 2. Look at logs/testr_results.html.gz for which particular test failed.
 3. More logs from a particular test are stored at
    logs/dsvm-functional-logs/<path_of_the_test> (or dsvm-fullstack-logs

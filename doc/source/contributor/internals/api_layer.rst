@@ -33,14 +33,14 @@ Server Gateway Interface (WSGI) - defined in `PEP 333 <http://legacy.python.org/
 Startup
 -------
 
-Neutron's WSGI server is started from the `server module <http://opendev.org/openstack/neutron/tree/neutron/server/__init__.py>`_
+Neutron's WSGI server is started from the `server module <http://opendev.org/openstack/neutron/src/neutron/server/__init__.py>`_
 and the entry point `serve_wsgi` is called to build an instance of the
 `NeutronApiService`_, which is then returned to the server module,
 which spawns a `Eventlet`_ `GreenPool`_ that will run the WSGI
 application and respond to requests from clients.
 
 
-.. _NeutronApiService: http://opendev.org/openstack/neutron/tree/neutron/service.py
+.. _NeutronApiService: http://opendev.org/openstack/neutron/src/neutron/service.py
 
 .. _Eventlet: http://eventlet.net/
 
@@ -62,11 +62,11 @@ Neutron, which contains several methods that map Neutron resources (such as
 Ports, Networks, Subnets) to URLs, and the controller for each resource.
 
 
-.. _config.py: http://opendev.org/openstack/neutron/tree/neutron/common/config.py
+.. _config.py: http://opendev.org/openstack/neutron/src/neutron/common/config.py
 
-.. _api-paste.ini: http://opendev.org/openstack/neutron/tree/etc/api-paste.ini
+.. _api-paste.ini: http://opendev.org/openstack/neutron/src/etc/api-paste.ini
 
-.. _APIRouter: http://opendev.org/openstack/neutron/tree/neutron/api/v2/router.py
+.. _APIRouter: http://opendev.org/openstack/neutron/src/neutron/api/v2/router.py
 
 .. _Paste: http://pythonpaste.org/
 

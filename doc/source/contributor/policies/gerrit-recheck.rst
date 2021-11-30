@@ -2,7 +2,7 @@ Recheck Failed CI jobs in Neutron
 =================================
 
 This document provides guidelines on what to do in case your patch fails one of
-the Jenkins CI jobs. In order to discover potential bugs hidden in the code or
+the Zuul CI jobs. In order to discover potential bugs hidden in the code or
 tests themselves, it's very helpful to check failed scenarios to investigate
 the cause of the failure. Sometimes the failure will be caused by the patch
 being tested, while other times the failure can be caused by a previously

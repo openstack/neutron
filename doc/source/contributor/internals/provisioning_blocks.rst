@@ -34,7 +34,7 @@ provisioning by multiple asynchronous entities before they are ready to
 be used so managing the transition to the ACTIVE status becomes more
 complex. To handle these cases, Neutron has `the provisioning_blocks
 module
-<http://opendev.org/openstack/neutron/tree/neutron/db/provisioning_blocks.py>`_
+<http://opendev.org/openstack/neutron/src/neutron/db/provisioning_blocks.py>`_
 to track the entities that are still provisioning a resource.
 
 The main example of this is with ML2, the L2 agents and the DHCP agents.

@@ -67,7 +67,7 @@ eventlet.monkey_patch() directly but instead maintain its entry point main()
 function under neutron/cmd/eventlet/... If that is the case, the standard
 Python library will be automatically patched for the service on entry point
 import (monkey patching is done inside `python package file
-<http://opendev.org/openstack/neutron/tree/neutron/cmd/eventlet/__init__.py>`_).
+<http://opendev.org/openstack/neutron/src/neutron/cmd/eventlet/__init__.py>`_).
 
 Note: an entry point 'main()' function may just be an indirection to a real
 callable located elsewhere, as is done for reference services such as DHCP, L3
