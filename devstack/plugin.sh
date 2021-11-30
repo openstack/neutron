@@ -9,7 +9,6 @@ source $LIBDIR/l3_agent
 source $LIBDIR/l3_conntrack_helper
 source $LIBDIR/ml2
 source $LIBDIR/network_segment_range
-source $LIBDIR/qos
 source $LIBDIR/segments
 source $LIBDIR/log
 source $LIBDIR/fip_port_forwarding
@@ -53,9 +52,6 @@ if [[ "$1" == "stack" ]]; then
             if is_service_enabled q-flavors neutron-flavors; then
                 configure_flavors
             fi
-            if is_service_enabled q-qos neutron-qos; then
-                configure_qos
-            fi
             if is_service_enabled q-log neutron-log; then
                 configure_log
             fi
@@ -90,10 +86,6 @@ if [[ "$1" == "stack" ]]; then
                 configure_l2_agent_sriovnicswitch
             fi
             if is_service_enabled q-l3 neutron-l3; then
-                if is_service_enabled q-qos neutron-qos; then
-                    configure_l3_agent_extension_fip_qos
-                    configure_l3_agent_extension_gateway_ip_qos
-                fi
                 if is_service_enabled q-port-forwarding neutron-port-forwarding; then
                     configure_port_forwarding
                 fi

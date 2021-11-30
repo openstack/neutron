@@ -1,8 +1,3 @@
-function configure_qos_ml2 {
-    neutron_ml2_extension_driver_add "qos"
-}
-
-
 function configure_ml2_extension_drivers {
     if is_neutron_legacy_enabled; then
         # NOTE(yamamoto): This overwrites what neutron-legacy set,
