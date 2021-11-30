@@ -615,14 +615,6 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         else:
             self.int_br.br.delete_flows(**kwargs)
 
-    def _strict_delete_flow(self, **kwargs):
-        """Delete given flow right away even if bridge is deferred.
-
-        Delete command will use strict delete.
-        """
-        create_reg_numbers(kwargs)
-        self.int_br.br.delete_flows(strict=True, **kwargs)
-
     @staticmethod
     def initialize_bridge(int_br):
         int_br.add_protocols(*OVSFirewallDriver.REQUIRED_PROTOCOLS)
@@ -804,13 +796,6 @@ class OVSFirewallDriver(firewall.FirewallDriver):
     def _update_flows_for_port(self, of_port, old_of_port):
         with self.update_cookie_context():
             self._set_port_filters(of_port)
-        # Flush the flows caused by changes made to deferred bridge. The reason
-        # is that following delete_all_port_flows() call uses --strict
-        # parameter that cannot be combined with other non-strict rules, hence
-        # all parameters with --strict are applied right away. In order to
-        # avoid applying delete rules with --strict *before*
-        # _set_port_filters() we dump currently cached flows here.
-        self.int_br.apply_flows()
         self.delete_all_port_flows(old_of_port)
         # Rewrite update cookie with default cookie
         self._set_port_filters(of_port)
@@ -923,15 +908,13 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
     def delete_physical_direct_flow(self, mac, segment_id):
         if segment_id:
-            self._strict_delete_flow(priority=90,
-                                     table=ovs_consts.TRANSIENT_TABLE,
-                                     dl_dst=mac,
-                                     dl_vlan=segment_id)
+            self._delete_flows(table=ovs_consts.TRANSIENT_TABLE,
+                               dl_dst=mac,
+                               dl_vlan=segment_id)
         else:
-            self._strict_delete_flow(priority=90,
-                                     table=ovs_consts.TRANSIENT_TABLE,
-                                     dl_dst=mac,
-                                     vlan_tci=ovs_consts.FLAT_VLAN_TCI)
+            self._delete_flows(table=ovs_consts.TRANSIENT_TABLE,
+                               dl_dst=mac,
+                               vlan_tci=ovs_consts.FLAT_VLAN_TCI)
 
     def initialize_port_flows(self, port):
         """Set base flows for port
@@ -1584,19 +1567,17 @@ class OVSFirewallDriver(firewall.FirewallDriver):
     def delete_all_port_flows(self, port):
         """Delete all flows for given port"""
         for mac_addr in port.all_allowed_macs:
-            self._strict_delete_flow(priority=90,
-                                     table=ovs_consts.TRANSIENT_TABLE,
-                                     dl_dst=mac_addr,
-                                     dl_vlan=port.vlan_tag)
+            self._delete_flows(table=ovs_consts.TRANSIENT_TABLE,
+                               dl_dst=mac_addr,
+                               dl_vlan=port.vlan_tag)
             self.delete_physical_direct_flow(mac_addr, port.segment_id)
             self._delete_flows(table=ovs_consts.ACCEPT_OR_INGRESS_TABLE,
                                dl_dst=mac_addr, reg_net=port.vlan_tag)
 
         self.delete_accepted_egress_direct_flow(
             port.mac, port.vlan_tag)
-        self._strict_delete_flow(priority=100,
-                                 table=ovs_consts.TRANSIENT_TABLE,
-                                 in_port=port.ofport)
+        self._delete_flows(table=ovs_consts.TRANSIENT_TABLE,
+                           in_port=port.ofport)
         self._delete_flows(reg_port=port.ofport)
 
     def delete_flows_for_flow_state(
