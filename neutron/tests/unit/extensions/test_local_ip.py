@@ -14,6 +14,7 @@
 #    under the License.
 
 import contextlib
+from unittest import mock
 
 import netaddr
 from neutron_lib.api.definitions import local_ip as apidef
@@ -97,6 +98,8 @@ class TestLocalIP(LocalIPTestBase):
         ext_mgr = LocalIPTestExtensionManager()
         svc_plugins = (
             'neutron.services.local_ip.local_ip_plugin.LocalIPPlugin',)
+        mock.patch("neutron.api.rpc.handlers.resources_rpc."
+                   "ResourcesPushRpcApi.push").start()
         super(TestLocalIP, self).setUp(ext_mgr=ext_mgr,
                                        service_plugins=svc_plugins)
 
