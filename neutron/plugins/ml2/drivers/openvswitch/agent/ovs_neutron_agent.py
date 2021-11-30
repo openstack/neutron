@@ -144,6 +144,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
     #   1.5 Added binding_activate and binding_deactivate
     #   1.7 Add support for smartnic ports
     target = oslo_messaging.Target(version='1.7')
+    max_device_retries = constants.MAX_DEVICE_RETRIES
 
     def __init__(self, bridge_classes, ext_manager, conf=None):
         '''Constructor.
@@ -2440,12 +2441,11 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             if sync:
                 LOG.info("Agent out of sync with plugin!")
                 consecutive_resyncs = consecutive_resyncs + 1
-                if (consecutive_resyncs >=
-                        constants.MAX_DEVICE_RETRIES):
+                if consecutive_resyncs >= self.max_device_retries:
                     LOG.warning(
                         "Clearing cache of registered ports,"
                         " retries to resync were > %s",
-                        constants.MAX_DEVICE_RETRIES)
+                        self.max_device_retries)
                     ports.clear()
                     ancillary_ports.clear()
                     consecutive_resyncs = 0
@@ -2521,12 +2521,12 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             devices_not_to_retry = set()
             for dev in devices_set:
                 retries = failed_devices_retries_map.get(dev, 0)
-                if retries >= constants.MAX_DEVICE_RETRIES:
+                if retries >= self.max_device_retries:
                     devices_not_to_retry.add(dev)
                     LOG.warning(
                         "Device %(dev)s failed for %(times)s times and won't "
                         "be retried anymore", {
-                            'dev': dev, 'times': constants.MAX_DEVICE_RETRIES})
+                            'dev': dev, 'times': self.max_device_retries})
                 else:
                     new_failed_devices_retries_map[dev] = retries + 1
             return devices_not_to_retry
