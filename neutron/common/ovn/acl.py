@@ -261,12 +261,15 @@ def _acl_columns_name_severity_supported(nb_idl):
     return ('name' in columns) and ('severity' in columns)
 
 
+def is_sg_stateful(sg, stateless_supported):
+    if stateless_supported:
+        return sg.get("stateful", True)
+    return True
+
+
 def add_acls_for_sg_port_group(ovn, security_group, txn,
                                stateless_supported=True):
-    if stateless_supported:
-        stateful = security_group.get("stateful", True)
-    else:
-        stateful = True
+    stateful = is_sg_stateful(security_group, stateless_supported)
     for r in security_group['security_group_rules']:
         acl = _add_sg_rule_acl_for_port_group(
             utils.ovn_port_group_name(security_group['id']), stateful, r)
@@ -288,11 +291,8 @@ def update_acls_for_security_group(plugin,
     # Check if ACL log name and severity supported or not
     keep_name_severity = _acl_columns_name_severity_supported(ovn)
 
-    if stateless_supported:
-        sg = plugin.get_security_group(admin_context, security_group_id)
-        stateful = sg.get("stateful", True)
-    else:
-        stateful = True
+    sg = plugin.get_security_group(admin_context, security_group_id)
+    stateful = is_sg_stateful(sg, stateless_supported)
 
     acl = _add_sg_rule_acl_for_port_group(
         utils.ovn_port_group_name(security_group_id),

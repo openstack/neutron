@@ -673,6 +673,61 @@ class TestCreateDefaultDropPortGroup(base.BaseLoggingTestCase,
         self._test_pg_with_ports(expected_ports=[])
 
 
+class TestSecurityGroup(base.TestOVNFunctionalBase):
+
+    def setUp(self):
+        super(TestSecurityGroup, self).setUp()
+        self._ovn_client = self.mech_driver._ovn_client
+        self.plugin = self.mech_driver._plugin
+
+    def _find_acls_for_sg(self, sg_id):
+        rows = self.nb_api.db_find_rows('ACL').execute(check_error=True)
+        if rows:
+            rule_ids = {
+                r['id'] for r in self.plugin.get_security_group_rules(
+                    self.context, {'security_group_id': [sg_id]})
+            }
+
+            def get_api_id(r):
+                return r.external_ids.get(
+                    ovn_const.OVN_SG_RULE_EXT_ID_KEY, '')
+
+            return [r for r in rows if get_api_id(r) in rule_ids]
+        return []
+
+    def test_sg_stateful_toggle_updates_ovn_acls(self):
+        def check_acl_actions(sg_id, expected):
+            self.assertEqual(
+                {expected},
+                set(a.action for a in self._find_acls_for_sg(sg_id))
+            )
+
+        sg_data = {
+            'name': 'testsg',
+            'description': 'Test Security Group',
+            'tenant_id': self._tenant_id,
+            'is_default': True,
+        }
+        sg = self.plugin.create_security_group(
+            self.context, security_group={'security_group': sg_data})
+        check_acl_actions(sg['id'], 'allow-related')
+
+        def update_sg(stateful):
+            sg_data['stateful'] = stateful
+            self.plugin.update_security_group(
+                self.context, sg['id'],
+                security_group={'security_group': sg_data})
+
+        update_sg(False)
+        check_acl_actions(sg['id'], 'allow-stateless')
+
+        update_sg(True)
+        check_acl_actions(sg['id'], 'allow-related')
+
+        update_sg(False)
+        check_acl_actions(sg['id'], 'allow-stateless')
+
+
 class TestProvnetPorts(base.TestOVNFunctionalBase):
 
     def setUp(self):
