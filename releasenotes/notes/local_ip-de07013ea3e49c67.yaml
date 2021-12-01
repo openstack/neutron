@@ -1,0 +1,12 @@
+---
+features:
+  - |
+    Local IP - a virtual IP that can be shared across multiple ports/VMs
+    (similar to anycast IP) and is guaranteed to only be reachable within
+    the same physical server/node boundaries. The feature is primarily focused
+    on high efficiency and performance of the networking data plane for very
+    large scale clouds and/or clouds with high network throughput demands.
+other:
+  - |
+    New service plugin and openvswitch agent extension could be configured
+    in order to enable Local IP feature: ``local_ip``
