@@ -286,11 +286,13 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
                 return is_excepted_alembic(clauseelement, exceptions)
             return True
 
-        def check_expand_branch(conn, clauseelement, multiparams, params):
+        def check_expand_branch(conn, clauseelement, multiparams, params,
+                                execution_options):
             if not is_allowed(clauseelement, drop_exceptions, DROP_OPERATIONS):
                 self.fail("Migration in expand branch contains drop command")
 
-        def check_contract_branch(conn, clauseelement, multiparams, params):
+        def check_contract_branch(conn, clauseelement, multiparams, params,
+                                  execution_options):
             if not is_allowed(clauseelement, creation_exceptions,
                               CREATION_OPERATIONS):
                 self.fail("Migration in contract branch contains create "
