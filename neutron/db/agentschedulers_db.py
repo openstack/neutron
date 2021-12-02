@@ -463,10 +463,8 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
 
         net_ids = [item.network_id for item in query]
         if net_ids:
-            return self.get_networks(
-                context,
-                filters={'id': net_ids, 'admin_state_up': [True]}
-            )
+            return network.Network.get_objects(context, id=net_ids,
+                                               admin_state_up=[True])
         else:
             return []
 

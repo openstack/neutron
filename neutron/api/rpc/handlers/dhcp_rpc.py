@@ -105,8 +105,8 @@ class DhcpRpcCallback(object):
                 LOG.debug("DHCP Agent admin state is down on host %s", host)
                 return []
 
-            filters = dict(admin_state_up=[True])
-            nets = plugin.get_networks(context, filters=filters)
+            nets = network_obj.Network.get_objects(context,
+                                                   admin_state_up=[True])
         return nets
 
     def _port_action(self, plugin, context, port, action):
@@ -159,78 +159,51 @@ class DhcpRpcCallback(object):
         LOG.debug('get_active_networks_info from %s', host)
         networks = self._get_active_networks(context, **kwargs)
         plugin = directory.get_plugin()
-        filters = {'network_id': [network['id'] for network in networks]}
+        filters = {'network_id': [network.id for network in networks]}
         ports = plugin.get_ports(context, filters=filters)
-        # default is to filter subnets based on 'enable_dhcp' flag
-        if kwargs.get('enable_dhcp_filter', True):
-            filters['enable_dhcp'] = [True]
-        # NOTE(kevinbenton): we sort these because the agent builds tags
-        # based on position in the list and has to restart the process if
-        # the order changes.
-        subnets = sorted(plugin.get_subnets(context, filters=filters),
-                         key=operator.itemgetter('id'))
-        # Handle the possibility that the dhcp agent(s) only has connectivity
-        # inside a segment.  If the segment service plugin is loaded and
-        # there are active dhcp enabled subnets, then filter out the subnets
-        # that are not on the host's segment.
-        seg_plug = directory.get_plugin(
-            segment_ext.SegmentPluginBase.get_plugin_type())
-        seg_subnets = [subnet for subnet in subnets
-                       if subnet.get('segment_id')]
-        nonlocal_subnets = []
-        if seg_plug and seg_subnets:
-            host_segment_ids = seg_plug.get_segments_by_hosts(context, [host])
-            # Gather the ids of all the subnets that are on a segment that
-            # this host touches
-            seg_subnet_ids = {subnet['id'] for subnet in seg_subnets
-                              if subnet['segment_id'] in host_segment_ids}
-            # Gather the ids of all the networks that are routed
-            routed_net_ids = {seg_subnet['network_id']
-                              for seg_subnet in seg_subnets}
-            # Remove the subnets with segments that are not in the same
-            # segments as the host.  Do this only for the networks that are
-            # routed because we want non-routed networks to work as
-            # before.
-            nonlocal_subnets = [subnet for subnet in seg_subnets
-                                if subnet['id'] not in seg_subnet_ids]
-            subnets = [subnet for subnet in subnets
-                       if subnet['network_id'] not in routed_net_ids or
-                       subnet['id'] in seg_subnet_ids]
-
-        grouped_subnets = self._group_by_network_id(subnets)
-        grouped_nonlocal_subnets = self._group_by_network_id(nonlocal_subnets)
         grouped_ports = self._group_by_network_id(ports)
+        # default is to filter subnets based on 'enable_dhcp' flag
+        enable_dhcp = True if kwargs.get('enable_dhcp_filter', True) else None
+        ret = []
         for network in networks:
-            network['subnets'] = grouped_subnets.get(network['id'], [])
-            network['non_local_subnets'] = (
-                grouped_nonlocal_subnets.get(network['id'], []))
-            network['ports'] = grouped_ports.get(network['id'], [])
+            ret.append(self.get_network_info(
+                context, network=network, enable_dhcp=enable_dhcp,
+                ports=grouped_ports.get(network.id, [])))
 
-        return networks
+        return ret
 
     def get_network_info(self, context, **kwargs):
         """Retrieve and return information about a network.
 
-        Retrieve and return extended information about a network
-        with only DHCP enabled subnets.
+        Retrieve and return extended information about a network.
+        The optional argument "enable_dhcp" can be used to filter the subnets
+        using the same flag (True/False). If None is passed, no filtering is
+        done.
         """
-        network_id = kwargs.get('network_id')
-        host = kwargs.get('host')
-        LOG.debug('Network %(network_id)s requested from '
-                  '%(host)s', {'network_id': network_id,
-                               'host': host})
-        network = network_obj.Network.get_object(context, id=network_id)
-        if not network:
-            LOG.debug('Network %s could not be found, it might have '
-                      'been deleted concurrently.', network_id)
-            return
+        enable_dhcp = kwargs.get('enable_dhcp', True)
+        network = kwargs.get('network')
+        plugin = directory.get_plugin()
+        if network:
+            ports = kwargs['ports']
+        else:
+            network_id = kwargs.get('network_id')
+            host = kwargs.get('host')
+            LOG.debug('Network %(network_id)s requested from '
+                      '%(host)s', {'network_id': network_id,
+                                   'host': host})
+            network = network_obj.Network.get_object(context, id=network_id)
+            if not network:
+                LOG.debug('Network %s could not be found, it might have '
+                          'been deleted concurrently.', network_id)
+                return
+            port_filters = {'network_id': [network_id]}
+            ports = plugin.get_ports(context, filters=port_filters)
 
         seg_plug = directory.get_plugin(
             segment_ext.SegmentPluginBase.get_plugin_type())
-        plugin = directory.get_plugin()
-        # Only subnets with DHCP enabled.
         subnets = [plugin._make_subnet_dict(subnet) for subnet in
-                   network.db_obj.subnets if subnet.enable_dhcp]
+                   network.db_obj.subnets if
+                   (enable_dhcp is None or subnet.enable_dhcp == enable_dhcp)]
         seg_subnets = [subnet for subnet in subnets if
                        subnet.get('segment_id')]
         nonlocal_subnets = []
@@ -254,7 +227,6 @@ class DhcpRpcCallback(object):
         # NOTE(kevinbenton): we sort these because the agent builds tags
         # based on position in the list and has to restart the process if
         # the order changes.
-        port_filters = {'network_id': [network_id]}
         # TODO(ralonsoh): in Z+, remove "tenant_id" parameter. DHCP agents
         # should read only "project_id".
         return {'id': network.id,
@@ -264,7 +236,7 @@ class DhcpRpcCallback(object):
                 'subnets': sorted(subnets, key=operator.itemgetter('id')),
                 'non_local_subnets': sorted(nonlocal_subnets,
                                             key=operator.itemgetter('id')),
-                'ports': plugin.get_ports(context, filters=port_filters),
+                'ports': ports,
                 'mtu': network.mtu}
 
     @db_api.retry_db_errors

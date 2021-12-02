@@ -64,64 +64,34 @@ class TestDhcpRpcCallback(base.BaseTestCase):
         self.assertEqual(expected, grouped_ports)
 
     def test_get_active_networks_info(self):
-        plugin_retval = [{'id': 'a'}, {'id': 'b'}]
-        self.plugin.get_networks.return_value = plugin_retval
-        port = {'network_id': 'a'}
-        subnet = {'network_id': 'b', 'id': 'c'}
-        self.plugin.get_ports.return_value = [port]
-        self.plugin.get_subnets.return_value = [subnet]
-        networks = self.callbacks.get_active_networks_info(mock.Mock(),
-                                                           host='host')
-        expected = [{'id': 'a',
-                     'non_local_subnets': [],
-                     'subnets': [],
-                     'ports': [port]},
-                    {'id': 'b',
-                     'non_local_subnets': [],
-                     'subnets': [subnet],
-                     'ports': []}]
-        self.assertEqual(expected, networks)
-
-    def test_get_active_networks_info_with_routed_networks(self):
-        plugin_retval = [{'id': 'a'}, {'id': 'b'}]
-        port = {'network_id': 'a'}
-        subnets = [{'network_id': 'b', 'id': 'c', 'segment_id': '1'},
-                   {'network_id': 'a', 'id': 'e'},
-                   {'network_id': 'b', 'id': 'd', 'segment_id': '3'}]
-        self.plugin.get_ports.return_value = [port]
-        self.plugin.get_networks.return_value = plugin_retval
-        hostseg_retval = ['1', '2']
-        self.segment_plugin.get_segments_by_hosts.return_value = hostseg_retval
-        self.plugin.get_subnets.return_value = subnets
-        networks = self.callbacks.get_active_networks_info(mock.Mock(),
-                                                           host='host')
-        expected = [{'id': 'a',
-                     'non_local_subnets': [],
-                     'subnets': [subnets[1]],
-                     'ports': [port]},
-                    {'id': 'b',
-                     'non_local_subnets': [subnets[2]],
-                     'subnets': [subnets[0]],
-                     'ports': []}]
-        self.assertEqual(expected, networks)
-
-    def _test_get_active_networks_info_enable_dhcp_filter(self,
-                                                          enable_dhcp_filter):
-        plugin_retval = [{'id': 'a'}, {'id': 'b'}]
-        self.plugin.get_networks.return_value = plugin_retval
-        self.callbacks.get_active_networks_info(mock.Mock(), host='host',
-            enable_dhcp_filter=enable_dhcp_filter)
-        filters = {'network_id': ['a', 'b']}
-        if enable_dhcp_filter:
-            filters['enable_dhcp'] = [True]
-        self.plugin.get_subnets.assert_called_once_with(mock.ANY,
-                                                        filters=filters)
-
-    def test_get_active_networks_info_enable_dhcp_filter_false(self):
-        self._test_get_active_networks_info_enable_dhcp_filter(False)
-
-    def test_get_active_networks_info_enable_dhcp_filter_true(self):
-        self._test_get_active_networks_info_enable_dhcp_filter(True)
+        networks = [mock.Mock(id='net1'), mock.Mock(id='net2'),
+                    mock.Mock(id='net3')]
+        ports = [{'id': 'port1', 'network_id': 'net1'},
+                 {'id': 'port2', 'network_id': 'net2'},
+                 {'id': 'port3', 'network_id': 'net3'}]
+        self.plugin.get_ports.return_value = ports
+        iter_kwargs = iter([{'enable_dhcp_filter': True},
+                            {'enable_dhcp_filter': False},
+                            {}])
+        with mock.patch.object(self.callbacks, '_get_active_networks') as \
+                mock_get_networks, \
+                mock.patch.object(self.callbacks, 'get_network_info') as \
+                mock_get_network_info:
+            mock_get_networks.return_value = networks
+            mock_get_network_info.side_effect = networks
+            kwargs = next(iter_kwargs)
+            ret = self.callbacks.get_active_networks_info('ctx', **kwargs)
+            self.assertEqual(networks, ret)
+            enable_dhcp = (True if kwargs.get('enable_dhcp_filter', True) else
+                           None)
+            mock_get_network_info.assert_has_calls([
+                mock.call('ctx', network=networks[0], enable_dhcp=enable_dhcp,
+                          ports=[ports[0]]),
+                mock.call('ctx', network=networks[1], enable_dhcp=enable_dhcp,
+                          ports=[ports[1]]),
+                mock.call('ctx', network=networks[2], enable_dhcp=enable_dhcp,
+                          ports=[ports[2]])
+            ])
 
     def _test__port_action_with_failures(self, exc=None, action=None):
         port = {
@@ -217,10 +187,17 @@ class TestDhcpRpcCallback(base.BaseTestCase):
 
     @mock.patch.object(network_obj.Network, 'get_object')
     def _test_get_network_info(self, mock_net_get_object,
-                               segmented_network=False, routed_network=False):
-        def _network_to_dict(network, ports):
+                               segmented_network=False, routed_network=False,
+                               network_info=False, enable_dhcp=True):
+        def _network_to_dict(network, ports, enable_dhcp):
             segment_ids = ['1']
-            subnets = [_make_subnet_dict(sn) for sn in network.db_obj.subnets]
+            if enable_dhcp is None:
+                subnets = [_make_subnet_dict(sn) for sn in
+                           network.db_obj.subnets]
+            else:
+                subnets = [_make_subnet_dict(sn) for sn in
+                           network.db_obj.subnets if
+                           sn.enable_dhcp == enable_dhcp]
             if routed_network:
                 non_local_subnets = [subnet for subnet in subnets
                                      if subnet.get('segment_id') not in
@@ -246,27 +223,34 @@ class TestDhcpRpcCallback(base.BaseTestCase):
             return ret
 
         if not routed_network:
-            subnets = [mock.Mock(id='a'), mock.Mock(id='c'), mock.Mock(id='b')]
+            subnets = [mock.Mock(id='a', enable_dhcp=True),
+                       mock.Mock(id='c', enable_dhcp=True),
+                       mock.Mock(id='b', enable_dhcp=False)]
         else:
-            subnets = [mock.Mock(id='a', segment_id='1'),
-                       mock.Mock(id='c', segment_id='2'),
-                       mock.Mock(id='b', segment_id='1')]
+            subnets = [mock.Mock(id='a', segment_id='1', enable_dhcp=True),
+                       mock.Mock(id='c', segment_id='2', enable_dhcp=True),
+                       mock.Mock(id='b', segment_id='1', enable_dhcp=False)]
         db_obj = mock.Mock(subnets=subnets)
         project_id = uuidutils.generate_uuid()
         network = mock.Mock(id='a', admin_state_up=True, db_obj=db_obj,
                             project_id=project_id, mtu=1234)
         ports = mock.Mock()
-        mock_net_get_object.return_value = network
-        self.plugin.get_ports.return_value = ports
+        if not network_info:
+            mock_net_get_object.return_value = network
+            self.plugin.get_ports.return_value = ports
         self.plugin._make_subnet_dict = _make_subnet_dict
 
         if segmented_network:
             network.segments = [mock.Mock(id='1', hosts=['host1']),
                                 mock.Mock(id='2', hosts=['host2'])]
 
-        retval = self.callbacks.get_network_info(mock.Mock(), network_id='a',
-                                                 host='host1')
-        reference = _network_to_dict(network, ports)
+        _kwargs = {'network_id': 'a', 'host': 'host1'}
+        if network_info:
+            _kwargs.update({'network': network,
+                            'enable_dhcp': enable_dhcp,
+                            'ports': ports})
+        retval = self.callbacks.get_network_info(mock.Mock(), **_kwargs)
+        reference = _network_to_dict(network, ports, enable_dhcp)
         self.assertEqual(reference, retval)
 
     def test_get_network_info(self):
@@ -281,6 +265,12 @@ class TestDhcpRpcCallback(base.BaseTestCase):
 
     def test_get_network_info_with_non_segmented_network(self):
         self._test_get_network_info()
+
+    def test_get_network_info_with_network_info_provided(self):
+        self._test_get_network_info(network_info=True)
+        self._test_get_network_info(network_info=True, enable_dhcp=True)
+        self._test_get_network_info(network_info=True, enable_dhcp=False)
+        self._test_get_network_info(network_info=True, enable_dhcp=None)
 
     def test_update_dhcp_port_verify_port_action_port_dict(self):
         port = {'port': {'network_id': 'foo_network_id',
