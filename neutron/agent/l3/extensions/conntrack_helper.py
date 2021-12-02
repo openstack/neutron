@@ -278,3 +278,6 @@ class ConntrackHelperAgentExtension(l3_extension.L3AgentExtension):
 
     def ha_state_change(self, context, data):
         pass
+
+    def update_network(self, context, data):
+        pass
