@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import types
 import uuid
 
@@ -613,7 +614,10 @@ class QoSPlugin(qos.QoSPluginBase):
         #
         # Subscribers should *NOT* modify event payload objects, but this is
         # the only way we can avoid inconsistency in port's attributes.
-        port['binding:profile'] = {'allocation': updated_allocation}
+        orig_binding_prof = orig_port.get('binding:profile', {})
+        binding_prof = copy.deepcopy(orig_binding_prof)
+        binding_prof.update({'allocation': updated_allocation})
+        port['binding:profile'] = binding_prof
 
     def _validate_update_port_callback(self, resource, event, trigger,
                                        payload=None):

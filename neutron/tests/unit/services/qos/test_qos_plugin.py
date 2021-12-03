@@ -2223,7 +2223,8 @@ class TestQosPluginDB(base.BaseQosTestCase):
                                                original_min_kbps=None,
                                                desired_min_kbps=None,
                                                original_min_kpps=None,
-                                               desired_min_kpps=None):
+                                               desired_min_kpps=None,
+                                               is_sriov=False):
         kwargs = self._prepare_for_port_placement_allocation_change(
             original_qos, desired_qos)
         orig_port = kwargs['original_port']
@@ -2251,17 +2252,33 @@ class TestQosPluginDB(base.BaseQosTestCase):
             if desired_min_kpps:
                 desired_qos.rules += [self._make_qos_minpps_rule(
                     desired_qos.id, min_kpps=desired_min_kpps)]
+
+        binding_prof = {}
+        if is_sriov:
+            binding_prof = {
+                'pci_slot': '0000:42:41.0',
+                'pci_vendor_info': '8086:107ed',
+                'physical_network': 'sriov_phy'
+            }
+
+        binding_prof.update({'allocation': allocation})
         orig_port.update(
-            {'binding:profile':
-                {'allocation': allocation},
-            'device_id': 'uu:id'})
+            {'binding:profile': binding_prof,
+             'device_id': 'uu:id'}
+        )
         return orig_port, kwargs['port']
+
+    def _assert_pci_info(self, port):
+        self.assertIn('pci_slot', port['binding:profile'])
+        self.assertIn('pci_vendor_info', port['binding:profile'])
+        self.assertIn('physical_network', port['binding:profile'])
 
     def test_change_placement_allocation_increase(self):
         qos1 = self._make_qos_policy()
         qos2 = self._make_qos_policy()
         orig_port, port = self._prepare_port_for_placement_allocation(
-            qos1, qos2, original_min_kbps=1000, desired_min_kbps=2000)
+            qos1, qos2, original_min_kbps=1000, desired_min_kbps=2000,
+            is_sriov=True)
         with mock.patch.object(self.qos_plugin._placement_client,
                 'update_qos_allocation') as mock_update_qos_alloc:
             self.qos_plugin._change_placement_allocation(
@@ -2269,12 +2286,14 @@ class TestQosPluginDB(base.BaseQosTestCase):
         mock_update_qos_alloc.assert_called_once_with(
             consumer_uuid='uu:id',
             alloc_diff={self.MIN_BW_RP: {'NET_BW_IGR_KILOBIT_PER_SEC': 1000}})
+        self._assert_pci_info(port)
 
     def test_change_placement_allocation_increase_min_pps(self):
         qos1 = self._make_qos_policy()
         qos2 = self._make_qos_policy()
         orig_port, port = self._prepare_port_for_placement_allocation(
-            qos1, qos2, original_min_kpps=1000, desired_min_kpps=2000)
+            qos1, qos2, original_min_kpps=1000, desired_min_kpps=2000,
+            is_sriov=True)
         with mock.patch.object(self.qos_plugin._placement_client,
                 'update_qos_allocation') as mock_update_qos_alloc:
             self.qos_plugin._change_placement_allocation(
@@ -2283,6 +2302,7 @@ class TestQosPluginDB(base.BaseQosTestCase):
             consumer_uuid='uu:id',
             alloc_diff={self.MIN_PPS_RP: {
                 'NET_PACKET_RATE_IGR_KILOPACKET_PER_SEC': 1000}})
+        self._assert_pci_info(port)
 
     def test_change_placement_allocation_increase_min_pps_and_min_bw(self):
         qos1 = self._make_qos_policy()
@@ -2372,7 +2392,7 @@ class TestQosPluginDB(base.BaseQosTestCase):
         desired_qos = self._make_qos_policy()
         orig_port, port = self._prepare_port_for_placement_allocation(
             original_qos, desired_qos, original_min_kbps=2000,
-            desired_min_kbps=1000)
+            desired_min_kbps=1000, is_sriov=True)
         with mock.patch.object(self.qos_plugin._placement_client,
                 'update_qos_allocation') as mock_update_qos_alloc:
             self.qos_plugin._change_placement_allocation(
@@ -2380,13 +2400,14 @@ class TestQosPluginDB(base.BaseQosTestCase):
         mock_update_qos_alloc.assert_called_once_with(
             consumer_uuid='uu:id',
             alloc_diff={self.MIN_BW_RP: {'NET_BW_IGR_KILOBIT_PER_SEC': -1000}})
+        self._assert_pci_info(port)
 
     def test_change_placement_allocation_decrease_min_pps(self):
         original_qos = self._make_qos_policy()
         desired_qos = self._make_qos_policy()
         orig_port, port = self._prepare_port_for_placement_allocation(
             original_qos, desired_qos, original_min_kpps=2000,
-            desired_min_kpps=1000)
+            desired_min_kpps=1000, is_sriov=True)
         with mock.patch.object(self.qos_plugin._placement_client,
                 'update_qos_allocation') as mock_update_qos_alloc:
             self.qos_plugin._change_placement_allocation(
@@ -2395,6 +2416,7 @@ class TestQosPluginDB(base.BaseQosTestCase):
             consumer_uuid='uu:id',
             alloc_diff={self.MIN_PPS_RP: {
                 'NET_PACKET_RATE_IGR_KILOPACKET_PER_SEC': -1000}})
+        self._assert_pci_info(port)
 
     def test_change_placement_allocation_no_original_qos(self):
         qos1 = None
