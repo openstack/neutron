@@ -389,10 +389,10 @@ Please be aware of the following limitations of the quota enforcement engine:
 References
 ----------
 
-.. [1] Subnet allocation extension: http://opendev.org/openstack/neutron/tree/neutron/extensions/subnetallocation.py
-.. [2] DB Quota driver class: http://opendev.org/openstack/neutron/tree/neutron/db/quota/driver.py#n30
-.. [3] Quota API extension controller: http://opendev.org/openstack/neutron/tree/neutron/extensions/quotasv2.py#n40
-.. [4] Neutron resource attribute map: http://opendev.org/openstack/neutron/tree/neutron/api/v2/attributes.py#n639
+.. [1] Subnet allocation extension: http://opendev.org/openstack/neutron/src/neutron/extensions/subnetallocation.py
+.. [2] DB Quota driver class: http://opendev.org/openstack/neutron/src/neutron/db/quota/driver.py#L30
+.. [3] Quota API extension controller: https://opendev.org/openstack/neutron/src/tag/19.0.0/neutron/extensions/quotasv2.py#L56
+.. [4] Neutron resource attribute map: https://opendev.org/openstack/neutron-lib/src/tag/2.17.0/neutron_lib/api/attributes.py#L299
 .. [5] Quota limit exceeded: https://bugs.launchpad.net/neutron/+bug/1862050/
-.. [6] Base controller class: http://opendev.org/openstack/neutron/tree/neutron/api/v2/base.py#n50
+.. [6] Base controller class: https://opendev.org/openstack/neutron/src/tag/19.0.0/neutron/api/v2/base.py#L44
 .. [7] http://lists.openstack.org/pipermail/openstack-dev/2015-February/057534.html

@@ -405,7 +405,7 @@ Running Tests
 -------------
 
 Before submitting a patch for review you should always ensure all tests pass; a
-tox run is triggered by the jenkins gate executed on gerrit for each patch
+tox run is triggered by the zuul jobs executed on gerrit for each patch
 pushed for review.
 
 Neutron, like other OpenStack projects, uses `tox`_ for managing the virtual

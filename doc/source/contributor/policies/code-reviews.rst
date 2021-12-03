@@ -57,7 +57,7 @@ In addition to that, the following rules are to follow:
         the right to discontinue support for unresponsive platforms.
 
   #. The change should also include a new `sanity check
-     <https://opendev.org/openstack/neutron/tree/neutron/cmd/sanity/checks.py>`_
+     <https://opendev.org/openstack/neutron/src/neutron/cmd/sanity/checks.py>`_
      that would help interested parties to identify their platform limitation
      in timely manner.
 

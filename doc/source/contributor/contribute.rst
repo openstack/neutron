@@ -132,7 +132,7 @@ quickly their code can fall out of sync with the rapidly changing Neutron core
 code base.
 
 * You should run unit tests in your own external library (e.g. on
-  opendev.org where Jenkins setup is for free).
+  opendev.org where Zuul setup is for free).
 
 * Your third-party CI should validate third-party integration with Neutron via
   functional testing. The third-party CI is a communication mechanism. The
@@ -268,10 +268,8 @@ flexibility when dealing with DevStack based dev/test deployments.
 One final consideration is worth making for third-party CI setups: if `Devstack
 Gate <https://opendev.org/openstack/devstack-gate>`_ is used,
 it does provide hook functions that can be executed at specific times of the
-devstack-gate-wrap script run.  For example, the `Neutron Functional job
-<https://opendev.org/openstack/project-config/tree/jenkins/jobs/neutron.yaml>`_
-uses them. For more details see `devstack-vm-gate-wrap.sh
-<https://opendev.org/openstack/devstack-gate/tree/devstack-vm-gate-wrap.sh>`_.
+devstack-gate-wrap script run. For more details see `devstack-vm-gate-wrap.sh
+<https://opendev.org/openstack/devstack-gate/src/devstack-vm-gate-wrap.sh>`_.
 
 
 Documentation
@@ -319,7 +317,7 @@ be the bare minimum you have to complete in order to get you off the ground.
   validate your patches when posted to Gerrit. For instance, one thing you
   would need to do is to define an entry point for your plugin or driver in
   your own setup.cfg similarly as to how it is done in the `setup.cfg for ODL
-  <https://opendev.org/openstack/networking-odl/tree/setup.cfg#n31>`_.
+  <https://opendev.org/openstack/networking-odl/src/tag/19.0.0/setup.cfg#L41>`_.
 * Define an entry point for your plugin or driver in setup.cfg
 * Create third-party CI account: if you do not already have one, follow
   instructions for `third-party CI

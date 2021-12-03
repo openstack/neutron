@@ -152,7 +152,7 @@ To release a sub-project, follow the following steps:
   other Neutron projects. You can skip this step if you don't have a version in
   setup.cfg.
 * A sub-project owner `proposes
-  <https://opendev.org/openstack/releases/tree/README.rst>`_ a patch
+  <https://opendev.org/openstack/releases/src/README.rst>`_ a patch
   to openstack/releases repository with the intended git hash. `The Neutron
   release liaison <https://wiki.openstack.org/wiki/CrossProjectLiaisons#Release_management>`_
   should be added in Gerrit to the list of reviewers for the patch.
@@ -210,7 +210,7 @@ To make a branch end of life, follow the following steps:
 * A sub-project owner should request the infrastructure team to delete
   the branch by sending an email to the infrastructure mailing list, not by
   bothering the infrastructure team on IRC.
-* A sub-project owner should tweak jenkins jobs in project-config if any.
+* A sub-project owner should tweak zuul jobs in project-config if any.
 
 References
 ~~~~~~~~~~
