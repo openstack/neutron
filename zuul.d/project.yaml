@@ -25,10 +25,7 @@
             voting: false
         - neutron-ovs-tempest-multinode-full
         - neutron-ovs-tempest-dvr-ha-multinode-full
-        - neutron-ovs-tempest-slow
         - neutron-ovn-tempest-ipv6-only
-        - neutron-ovn-tempest-ovs-release
-        - neutron-ovn-tempest-ovs-release-ipv6-only
         # TODO(slaweq): add this job again to the check queue when it will be
         # working fine on python 3
         #- networking-midonet-tempest-aio-ml2-centos-7:
@@ -48,7 +45,6 @@
             timeout: 3600
         - openstack-tox-cover:  # from openstack-cover-jobs template
             timeout: 4800
-        - neutron-ovn-tempest-slow
     gate:
       jobs:
         - neutron-functional-with-uwsgi
@@ -59,13 +55,9 @@
         # https://bugs.launchpad.net/neutron/+bug/1920778
         # will be fixed
         # - neutron-ovs-grenade-dvr-multinode
-        - neutron-ovs-tempest-slow
         - neutron-ovn-tempest-ipv6-only
-        - neutron-ovn-tempest-ovs-release
-        - neutron-ovn-tempest-ovs-release-ipv6-only
         - openstack-tox-py36:  # from openstack-python3-xena-jobs template
             timeout: 3600
-        - neutron-ovn-tempest-slow
         #- neutron-ovn-rally-task
         #- neutron-ovn-tripleo-ci-centos-8-containers-multinode
 
@@ -80,6 +72,8 @@
         - neutron-fullstack
         - neutron-ovn-tempest-postgres-full
         - neutron-ovn-tempest-mariadb-full
+        - neutron-ovn-tempest-ovs-release
+        - neutron-ovn-tempest-ovs-release-ipv6-only
         - devstack-tobiko-faults-centos:
             voting: true
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa
