@@ -27,10 +27,6 @@
         - neutron-ovs-tempest-multinode-full
         - neutron-ovs-tempest-dvr-ha-multinode-full
         - neutron-ovn-tempest-ipv6-only
-        # TODO(slaweq): add this job again to the check queue when it will be
-        # working fine on python 3
-        #- networking-midonet-tempest-aio-ml2-centos-7:
-        #    voting: false
         - neutron-ovn-rally-task:
             voting: false
         # TripleO jobs that deploy OVN.
@@ -61,10 +57,6 @@
         - neutron-fullstack-with-uwsgi
         - neutron-ovs-tempest-multinode-full
         - neutron-ovs-grenade-multinode
-        # TODO(slaweq): make that job gating when bug
-        # https://bugs.launchpad.net/neutron/+bug/1920778
-        # will be fixed
-        # - neutron-ovs-grenade-dvr-multinode
         - neutron-ovn-tempest-ipv6-only
         - openstack-tox-py36:  # from openstack-python3-yoga-jobs template
             timeout: 3600
@@ -72,8 +64,6 @@
             timeout: 3600
         - openstack-tox-lower-constraints:  # from openstack-tox-lower-constraints template
             timeout: 3600
-        #- neutron-ovn-rally-task
-        #- neutron-ovn-tripleo-ci-centos-8-containers-multinode
 
     experimental:
       jobs:
