@@ -1413,8 +1413,9 @@ class OVNClient(object):
 
     def _gen_router_port_options(self, port, network=None):
         options = {}
+        admin_context = n_context.get_admin_context()
         if network is None:
-            network = self._plugin.get_network(n_context.get_admin_context(),
+            network = self._plugin.get_network(admin_context,
                                                port['network_id'])
         # For VLAN type networks we need to set the
         # "reside-on-redirect-chassis" option so the routing for this
@@ -1428,9 +1429,15 @@ class OVNClient(object):
         is_gw_port = const.DEVICE_OWNER_ROUTER_GW == port.get(
             'device_owner')
         if is_gw_port and ovn_conf.is_ovn_emit_need_to_frag_enabled():
-            options[ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION] = str(
-                network['mtu'])
-
+            network_ids = set([port['network_id'] for port in
+                            self._get_router_ports(admin_context,
+                                port['device_id'])])
+            for net in self._plugin.get_networks(admin_context,
+                                        filters={'id': network_ids}):
+                if net['mtu'] > network['mtu']:
+                    options[ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION] = str(
+                            network['mtu'])
+                    break
         return options
 
     def _create_lrouter_port(self, context, router, port, txn=None):
@@ -1502,6 +1509,11 @@ class OVNClient(object):
                                 continue
                     if subnet['ip_version'] == const.IP_VERSION_4:
                         cidr = subnet['cidr']
+
+                if ovn_conf.is_ovn_emit_need_to_frag_enabled():
+                    provider_net = self._plugin.get_network(context,
+                            router[l3.EXTERNAL_GW_INFO]['network_id'])
+                    self.set_gateway_mtu(context, provider_net)
 
                 if utils.is_snat_enabled(router) and cidr:
                     self.update_nat_rules(router, networks=[cidr],
@@ -1602,6 +1614,12 @@ class OVNClient(object):
                 subnet_ids = subnet_ids.split()
             elif port:
                 subnet_ids = utils.get_port_subnet_ids(port)
+
+            if (ovn_conf.is_ovn_emit_need_to_frag_enabled() and
+                    router.get('gw_port_id')):
+                provider_net = self._plugin.get_network(context,
+                            router[l3.EXTERNAL_GW_INFO]['network_id'])
+                self.set_gateway_mtu(context, provider_net, txn=txn)
 
             cidr = None
             for sid in subnet_ids:
