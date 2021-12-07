@@ -37,6 +37,8 @@ from ovsdbapp import constants as ovsdbapp_const
 from neutron._i18n import _
 from neutron.common.ovn import constants
 from neutron.common.ovn import exceptions as ovn_exc
+from neutron.common import utils as common_utils
+from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import models_v2
 from neutron.objects import ports as ports_obj
 
@@ -412,6 +414,26 @@ def get_system_dns_resolvers(resolver_file=DNS_RESOLVER_FILE):
             if ipv4:
                 resolvers.append(ipv4.group(0))
     return resolvers
+
+
+def get_dhcp_dns_servers(subnet, ip_version=const.IP_VERSION_4):
+    """Retrieve the DHCP option DNS servers
+
+    The DHCP should not announce any DNS resolver at all on the subnet if any
+    configured DNS server is "0.0.0.0" (IPv4) or "::" (IPv6).
+    https://docs.openstack.org/neutron/latest/admin/config-dns-res.html
+    """
+    if ip_version == const.IP_VERSION_4:
+        dns_servers = (subnet.get('dns_nameservers') or
+                       ovn_conf.get_dns_servers() or
+                       get_system_dns_resolvers())
+    else:
+        dns_servers = subnet['dns_nameservers']
+
+    if common_utils.is_dns_servers_any_address(dns_servers, ip_version):
+        return []
+
+    return dns_servers
 
 
 def get_port_subnet_ids(port):
