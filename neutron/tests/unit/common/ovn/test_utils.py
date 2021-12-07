@@ -14,10 +14,13 @@
 #    under the License.
 
 from collections import namedtuple
+from os import path
 from unittest import mock
 
 import fixtures
 from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
+from neutron_lib import constants as n_const
+from oslo_config import cfg
 
 from neutron.common.ovn import constants
 from neutron.common.ovn import utils
@@ -33,6 +36,7 @@ nameserver foo 10.0.0.4
 nameserver aef0::4
 foo 10.0.0.5
 """
+RESOLV_DNS_SERVERS = ['10.0.0.1', '10.0.0.3']
 
 
 class TestUtils(base.BaseTestCase):
@@ -43,7 +47,7 @@ class TestUtils(base.BaseTestCase):
         tmp_resolv_file = open(resolver_file_name, 'w')
         tmp_resolv_file.writelines(RESOLV_CONF_TEMPLATE)
         tmp_resolv_file.close()
-        expected_dns_resolvers = ['10.0.0.1', '10.0.0.3']
+        expected_dns_resolvers = RESOLV_DNS_SERVERS
         observed_dns_resolvers = utils.get_system_dns_resolvers(
             resolver_file=resolver_file_name)
         self.assertEqual(expected_dns_resolvers, observed_dns_resolvers)
@@ -379,3 +383,53 @@ class TestConnectionConfigToTargetString(base.BaseTestCase):
         for config, target in config_target:
             output = utils.connection_config_to_target_string(config)
             self.assertEqual(target, output)
+
+
+class TestGetDhcpDnsServers(base.BaseTestCase):
+
+    def test_ipv4(self):
+        # DNS servers from subnet.
+        dns_servers = utils.get_dhcp_dns_servers(
+            {'dns_nameservers': ['1.2.3.4', '5.6.7.8']})
+        self.assertEqual(['1.2.3.4', '5.6.7.8'], dns_servers)
+
+        # DNS servers from config parameter.
+        cfg.CONF.set_override('dns_servers',
+                              '1.1.2.2,3.3.4.4', group='ovn')
+        dns_servers = utils.get_dhcp_dns_servers({})
+        self.assertEqual(['1.1.2.2', '3.3.4.4'], dns_servers)
+
+        # DNS servers from local DNS resolver.
+        cfg.CONF.set_override('dns_servers', '', group='ovn')
+        with mock.patch('builtins.open',
+                        mock.mock_open(read_data=RESOLV_CONF_TEMPLATE)), \
+                mock.patch.object(path, 'exists', return_value=True):
+            dns_servers = utils.get_dhcp_dns_servers({})
+            self.assertEqual(RESOLV_DNS_SERVERS, dns_servers)
+
+        # No DNS servers if only '0.0.0.0' configured.
+        dns_servers = utils.get_dhcp_dns_servers(
+            {'dns_nameservers': ['0.0.0.0', '5.6.7.8']})
+        self.assertEqual(['0.0.0.0', '5.6.7.8'], dns_servers)
+        dns_servers = utils.get_dhcp_dns_servers(
+            {'dns_nameservers': ['0.0.0.0']})
+        self.assertEqual([], dns_servers)
+
+    def test_ipv6(self):
+        # DNS servers from subnet.
+        dns_servers = utils.get_dhcp_dns_servers(
+            {'dns_nameservers': ['2001:4860:4860::8888',
+                                 '2001:4860:4860::8844']},
+            ip_version=n_const.IP_VERSION_6)
+        self.assertEqual(['2001:4860:4860::8888',
+                          '2001:4860:4860::8844'], dns_servers)
+
+        # No DNS servers if only '::' configured.
+        dns_servers = utils.get_dhcp_dns_servers(
+            {'dns_nameservers': ['2001:4860:4860::8888', '::']},
+            ip_version=n_const.IP_VERSION_6)
+        self.assertEqual(['2001:4860:4860::8888', '::'], dns_servers)
+        dns_servers = utils.get_dhcp_dns_servers(
+            {'dns_nameservers': ['::']},
+            ip_version=n_const.IP_VERSION_6)
+        self.assertEqual([], dns_servers)
