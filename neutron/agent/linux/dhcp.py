@@ -1145,10 +1145,8 @@ class Dnsmasq(DhcpLocalProcess):
                  addr_mode == constants.IPV6_SLAAC)):
                 continue
             if subnet.dns_nameservers:
-                if ((subnet.ip_version == 4 and
-                     subnet.dns_nameservers == ['0.0.0.0']) or
-                    (subnet.ip_version == 6 and
-                     subnet.dns_nameservers == ['::'])):
+                if common_utils.is_dns_servers_any_address(
+                        subnet.dns_nameservers, subnet.ip_version):
                     # Special case: Do not announce DNS servers
                     options.append(
                         self._format_option(
