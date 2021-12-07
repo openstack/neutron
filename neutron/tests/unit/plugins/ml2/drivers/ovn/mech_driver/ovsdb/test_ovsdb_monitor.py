@@ -100,33 +100,29 @@ class TestOvnDbNotifyHandler(base.BaseTestCase):
     def setUp(self):
         super(TestOvnDbNotifyHandler, self).setUp()
         self.handler = ovsdb_monitor.OvnDbNotifyHandler(mock.ANY)
-        # NOTE(ralonsoh): once the ovsdbapp library version is bumped beyond
-        # 1.5.0, the first assignation (using name mangling) can be deleted.
-        try:
-            self.watched_events = self.handler._RowEventHandler__watched_events
-        except AttributeError:
-            self.watched_events = self.handler._watched_events
 
     def test_watch_and_unwatch_events(self):
         expected_events = set()
-        networking_event = mock.Mock()
-        ovn_event = mock.Mock()
-        unknown_event = mock.Mock()
+        networking_event = mock.Mock(priority=1)
+        ovn_event = mock.Mock(priority=2)
+        unknown_event = mock.Mock(priority=3)
 
-        self.assertCountEqual(set(), self.watched_events)
+        self.assertCountEqual(set(), set(self.handler._watched_events))
 
         expected_events.add(networking_event)
         self.handler.watch_event(networking_event)
-        self.assertCountEqual(expected_events, self.watched_events)
+        self.assertCountEqual(expected_events,
+                              set(self.handler._watched_events))
 
         expected_events.add(ovn_event)
         self.handler.watch_events([ovn_event])
-        self.assertCountEqual(expected_events, self.watched_events)
+        self.assertCountEqual(expected_events,
+                              set(self.handler._watched_events))
 
         self.handler.unwatch_events([networking_event, ovn_event])
         self.handler.unwatch_event(unknown_event)
         self.handler.unwatch_events([unknown_event])
-        self.assertCountEqual(set(), self.watched_events)
+        self.assertCountEqual(set(), set(self.handler._watched_events))
 
     def test_shutdown(self):
         self.handler.shutdown()
