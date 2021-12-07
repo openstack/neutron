@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import operator
 from unittest import mock
 
 from neutron_lib.api.definitions import portbindings
@@ -23,10 +24,12 @@ from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_db import exception as db_exc
 from oslo_messaging.rpc import dispatcher as rpc_dispatcher
+from oslo_utils import uuidutils
 
 from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.common import utils
 from neutron.db import provisioning_blocks
+from neutron.objects import network as network_obj
 from neutron.tests import base
 
 
@@ -207,50 +210,64 @@ class TestDhcpRpcCallback(base.BaseTestCase):
             context='ctx', host='host', port_id='66',
             port={'port': {'network_id': 'a'}}))
 
-    def test_get_network_info_return_none_on_not_found(self):
-        self.plugin.get_network.side_effect = exceptions.NetworkNotFound(
-            net_id='a')
+    @mock.patch.object(network_obj.Network, 'get_object', return_value=None)
+    def test_get_network_info_return_none_on_not_found(self, *args):
         retval = self.callbacks.get_network_info(mock.Mock(), network_id='a')
         self.assertIsNone(retval)
 
-    def _test_get_network_info(self, segmented_network=False,
-                               routed_network=False):
-        network_retval = dict(id='a')
-        if not routed_network:
-            subnet_retval = [dict(id='a'), dict(id='c'), dict(id='b')]
-        else:
-            subnet_retval = [dict(id='c', segment_id='1'),
-                             dict(id='b', segment_id='2'),
-                             dict(id='a', segment_id='1')]
-        port_retval = mock.Mock()
+    @mock.patch.object(network_obj.Network, 'get_object')
+    def _test_get_network_info(self, mock_net_get_object,
+                               segmented_network=False, routed_network=False):
+        def _network_to_dict(network, ports):
+            segment_ids = ['1']
+            subnets = [_make_subnet_dict(sn) for sn in network.db_obj.subnets]
+            if routed_network:
+                non_local_subnets = [subnet for subnet in subnets
+                                     if subnet.get('segment_id') not in
+                                     segment_ids]
+                subnets = [subnet for subnet in subnets
+                           if subnet.get('segment_id') in segment_ids]
+            else:
+                non_local_subnets = []
+            return {'id': network.id,
+                    'project_id': network.project_id,
+                    'tenant_id': network.project_id,
+                    'admin_state_up': network.admin_state_up,
+                    'ports': ports,
+                    'subnets': sorted(subnets, key=operator.itemgetter('id')),
+                    'non_local_subnets': sorted(non_local_subnets,
+                                                key=operator.itemgetter('id')),
+                    'mtu': network.mtu}
 
-        self.plugin.get_network.return_value = network_retval
-        self.plugin.get_subnets.return_value = subnet_retval
-        self.plugin.get_ports.return_value = port_retval
+        def _make_subnet_dict(subnet):
+            ret = {'id': subnet.id}
+            if type(subnet.segment_id) == str:
+                ret['segment_id'] = subnet.segment_id
+            return ret
+
+        if not routed_network:
+            subnets = [mock.Mock(id='a'), mock.Mock(id='c'), mock.Mock(id='b')]
+        else:
+            subnets = [mock.Mock(id='a', segment_id='1'),
+                       mock.Mock(id='c', segment_id='2'),
+                       mock.Mock(id='b', segment_id='1')]
+        db_obj = mock.Mock(subnets=subnets)
+        project_id = uuidutils.generate_uuid()
+        network = mock.Mock(id='a', admin_state_up=True, db_obj=db_obj,
+                            project_id=project_id, mtu=1234)
+        ports = mock.Mock()
+        mock_net_get_object.return_value = network
+        self.plugin.get_ports.return_value = ports
+        self.plugin._make_subnet_dict = _make_subnet_dict
+
         if segmented_network:
-            self.segment_plugin.get_segments.return_value = [dict(id='1'),
-                                                             dict(id='2')]
-            self.segment_plugin.get_segments_by_hosts.return_value = ['1']
+            network.segments = [mock.Mock(id='1', hosts=['host1']),
+                                mock.Mock(id='2', hosts=['host2'])]
 
-        retval = self.callbacks.get_network_info(mock.Mock(), network_id='a')
-        self.assertEqual(retval, network_retval)
-        sorted_nonlocal_subnet_retval = []
-        if not routed_network:
-            sorted_subnet_retval = [dict(id='a'), dict(id='b'), dict(id='c')]
-        else:
-            sorted_subnet_retval = [dict(id='a', segment_id='1'),
-                                    dict(id='c', segment_id='1')]
-            sorted_nonlocal_subnet_retval = [dict(id='b', segment_id='2')]
-        self.assertEqual(retval['subnets'], sorted_subnet_retval)
-        self.assertEqual(retval['non_local_subnets'],
-                         sorted_nonlocal_subnet_retval)
-        self.assertEqual(retval['ports'], port_retval)
-        subnet_filters = {'network_id': [network_retval['id']],
-                          'enable_dhcp': [True]}
-        self.plugin.assert_has_calls(
-            [mock.call.get_network(mock.ANY, 'a'),
-             mock.call.get_subnets(mock.ANY, filters=subnet_filters),
-             mock.call.get_ports(mock.ANY, filters={'network_id': ['a']})])
+        retval = self.callbacks.get_network_info(mock.Mock(), network_id='a',
+                                                 host='host1')
+        reference = _network_to_dict(network, ports)
+        self.assertEqual(reference, retval)
 
     def test_get_network_info(self):
         self._test_get_network_info()

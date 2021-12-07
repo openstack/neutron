@@ -170,6 +170,14 @@ class NetModel(DictModel):
     def namespace(self):
         return self._ns_name
 
+    # TODO(ralonsoh): remove in Z+.
+    @property
+    def project_id(self):
+        try:
+            return self['project_id']
+        except KeyError:
+            return self['tenant_id']
+
 
 class DhcpBase(object, metaclass=abc.ABCMeta):
 
@@ -1584,7 +1592,7 @@ class DeviceManager(object):
             admin_state_up=True,
             device_id=device_id,
             network_id=network.id,
-            tenant_id=network.tenant_id,
+            project_id=network.project_id,
             fixed_ips=unique_ip_subnets)
         return self.plugin.create_dhcp_port({'port': port_dict})
 

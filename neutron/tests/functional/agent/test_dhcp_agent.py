@@ -147,7 +147,7 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
                                  non_local_subnets=non_local_subnets,
                                  ports=ports,
                                  admin_state_up=True,
-                                 tenant_id=uuidutils.generate_uuid())
+                                 project_id=uuidutils.generate_uuid())
         return net_dict
 
     def get_interface_name(self, network, port):

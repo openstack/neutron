@@ -51,7 +51,7 @@ DEVICE_MANAGER = '%s.%s' % (dev_man.__module__, dev_man.__name__)
 DHCP_PLUGIN = '%s.%s' % (rpc_api.__module__, rpc_api.__name__)
 FAKE_NETWORK_UUID = '12345678-1234-5678-1234567890ab'
 FAKE_NETWORK_DHCP_NS = "qdhcp-%s" % FAKE_NETWORK_UUID
-FAKE_TENANT_ID = 'aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa'
+FAKE_PROJECT_ID = 'aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa'
 FAKE_PRIORITY = 6
 
 
@@ -60,7 +60,7 @@ fake_subnet1_allocation_pools = dhcp.DictModel(id='', start='172.9.9.2',
 fake_subnet1 = dhcp.DictModel(id='bbbbbbbb-bbbb-bbbb-bbbbbbbbbbbb',
                               network_id=FAKE_NETWORK_UUID,
                               cidr='172.9.9.0/24', enable_dhcp=True, name='',
-                              tenant_id=FAKE_TENANT_ID,
+                              project_id=FAKE_PROJECT_ID,
                               gateway_ip='172.9.9.1', host_routes=[],
                               dns_nameservers=[],
                               ip_version=const.IP_VERSION_4,
@@ -72,7 +72,8 @@ fake_subnet2_allocation_pools = dhcp.DictModel(id='', start='172.9.8.2',
 fake_subnet2 = dhcp.DictModel(id='dddddddd-dddd-dddd-dddddddddddd',
                               network_id=FAKE_NETWORK_UUID,
                               cidr='172.9.8.0/24', enable_dhcp=False, name='',
-                              tenant_id=FAKE_TENANT_ID, gateway_ip='172.9.8.1',
+                              project_id=FAKE_PROJECT_ID,
+                              gateway_ip='172.9.8.1',
                               host_routes=[], dns_nameservers=[],
                               ip_version=const.IP_VERSION_4,
                               allocation_pools=fake_subnet2_allocation_pools)
@@ -85,7 +86,7 @@ fake_subnet3 = dhcp.DictModel(id='bbbbbbbb-1111-2222-bbbbbbbbbbbb',
 fake_ipv6_subnet = dhcp.DictModel(id='bbbbbbbb-1111-2222-bbbbbbbbbbbb',
                                   network_id=FAKE_NETWORK_UUID,
                                   cidr='2001:0db8::0/64', enable_dhcp=True,
-                                  tenant_id=FAKE_TENANT_ID,
+                                  project_id=FAKE_PROJECT_ID,
                                   gateway_ip='2001:0db8::1',
                                   ip_version=const.IP_VERSION_6,
                                   ipv6_ra_mode='slaac', ipv6_address_mode=None)
@@ -160,44 +161,44 @@ fake_dist_port = dhcp.DictModel(id='12345678-1234-aaaa-1234567890ab',
                                 fixed_ips=[fake_meta_fixed_ip])
 
 fake_network = dhcp.NetModel(id=FAKE_NETWORK_UUID,
-                             tenant_id=FAKE_TENANT_ID,
+                             project_id=FAKE_PROJECT_ID,
                              admin_state_up=True,
                              subnets=[fake_subnet1, fake_subnet2],
                              ports=[fake_port1])
 
 fake_network_ipv6 = dhcp.NetModel(id=FAKE_NETWORK_UUID,
-                                  tenant_id=FAKE_TENANT_ID,
+                                  project_id=FAKE_PROJECT_ID,
                                   admin_state_up=True,
                                   subnets=[fake_ipv6_subnet],
                                   ports=[fake_ipv6_port])
 
 fake_network_ipv6_ipv4 = dhcp.NetModel(
     id=FAKE_NETWORK_UUID,
-    tenant_id=FAKE_TENANT_ID,
+    project_id=FAKE_PROJECT_ID,
     admin_state_up=True,
     subnets=[fake_ipv6_subnet, fake_subnet1],
     ports=[fake_port1])
 
 isolated_network = dhcp.NetModel(id=FAKE_NETWORK_UUID,
-                                 tenant_id=FAKE_TENANT_ID,
+                                 project_id=FAKE_PROJECT_ID,
                                  admin_state_up=True,
                                  subnets=[fake_subnet1],
                                  ports=[fake_port1])
 
 nonisolated_dist_network = dhcp.NetModel(id=FAKE_NETWORK_UUID,
-                                         tenant_id=FAKE_TENANT_ID,
+                                         project_id=FAKE_PROJECT_ID,
                                          admin_state_up=True,
                                          subnets=[fake_subnet1],
                                          ports=[fake_port1, fake_port2])
 
 empty_network = dhcp.NetModel(id=FAKE_NETWORK_UUID,
-                              tenant_id=FAKE_TENANT_ID,
+                              project_id=FAKE_PROJECT_ID,
                               admin_state_up=True,
                               subnets=[fake_subnet1],
                               ports=[])
 
 fake_meta_network = dhcp.NetModel(id=FAKE_NETWORK_UUID,
-                                  tenant_id=FAKE_TENANT_ID,
+                                  project_id=FAKE_PROJECT_ID,
                                   admin_state_up=True,
                                   subnets=[fake_meta_subnet],
                                   ports=[fake_meta_port])
@@ -206,13 +207,13 @@ fake_meta_dvr_network = dhcp.NetModel(fake_meta_network)
 fake_meta_dvr_network['ports'] = [fake_meta_dvr_port]
 
 fake_dist_network = dhcp.NetModel(id=FAKE_NETWORK_UUID,
-                                  tenant_id=FAKE_TENANT_ID,
+                                  project_id=FAKE_PROJECT_ID,
                                   admin_state_up=True,
                                   subnets=[fake_meta_subnet],
                                   ports=[fake_meta_port, fake_dist_port])
 
 fake_down_network = dhcp.NetModel(id='12345678-dddd-dddd-1234567890ab',
-                                  tenant_id=FAKE_TENANT_ID,
+                                  project_id=FAKE_PROJECT_ID,
                                   admin_state_up=False,
                                   subnets=[],
                                   ports=[])
@@ -1113,7 +1114,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
 
     def test_refresh_dhcp_helper_no_dhcp_enabled_networks(self):
         network = dhcp.NetModel(dict(id='net-id',
-                                     tenant_id=FAKE_TENANT_ID,
+                                     project_id=FAKE_PROJECT_ID,
                                      admin_state_up=True,
                                      subnets=[],
                                      ports=[]))
@@ -1130,7 +1131,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
 
     def test_refresh_dhcp_helper_exception_during_rpc(self):
         network = dhcp.NetModel(dict(id='net-id',
-                                     tenant_id=FAKE_TENANT_ID,
+                                     project_id=FAKE_PROJECT_ID,
                                      admin_state_up=True,
                                      subnets=[],
                                      ports=[]))
@@ -1221,7 +1222,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
 
     def test_subnet_update_end_restart(self):
         new_state = dhcp.NetModel(dict(id=fake_network.id,
-                                       tenant_id=fake_network.tenant_id,
+                                       project_id=fake_network.project_id,
                                        admin_state_up=True,
                                        subnets=[fake_subnet1, fake_subnet3],
                                        ports=[fake_port1]))
@@ -1240,7 +1241,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
 
     def test_subnet_delete_end_no_network_id(self):
         prev_state = dhcp.NetModel(dict(id=fake_network.id,
-                                        tenant_id=fake_network.tenant_id,
+                                        project_id=fake_network.project_id,
                                         admin_state_up=True,
                                         subnets=[fake_subnet1, fake_subnet3],
                                         ports=[fake_port1]))
@@ -1264,7 +1265,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
 
     def test_subnet_update_end_delete_payload(self):
         prev_state = dhcp.NetModel(dict(id=fake_network.id,
-                                        tenant_id=fake_network.tenant_id,
+                                        project_id=fake_network.project_id,
                                         admin_state_up=True,
                                         subnets=[fake_subnet1, fake_subnet3],
                                         ports=[fake_port1]))
@@ -1593,7 +1594,7 @@ class TestNetworkCache(base.BaseTestCase):
     def test_get_port_ids(self):
         fake_net = dhcp.NetModel(
             dict(id=FAKE_NETWORK_UUID,
-                 tenant_id=FAKE_TENANT_ID,
+                 project_id=FAKE_PROJECT_ID,
                  subnets=[fake_subnet1],
                  ports=[fake_port1]))
         self.nc.put(fake_net)
@@ -1604,7 +1605,7 @@ class TestNetworkCache(base.BaseTestCase):
     def test_get_port_ids_limited_nets(self):
         fake_net = dhcp.NetModel(
             dict(id=FAKE_NETWORK_UUID,
-                 tenant_id=FAKE_TENANT_ID,
+                 project_id=FAKE_PROJECT_ID,
                  subnets=[fake_subnet1],
                  ports=[fake_port1]))
         fake_port2 = copy.deepcopy(fake_port1)
@@ -1612,7 +1613,7 @@ class TestNetworkCache(base.BaseTestCase):
         fake_port2['network_id'] = '12345678-1234-5678-1234567890ac'
         fake_net2 = dhcp.NetModel(
             dict(id='12345678-1234-5678-1234567890ac',
-                 tenant_id=FAKE_TENANT_ID,
+                 project_id=FAKE_PROJECT_ID,
                  subnets=[fake_subnet1],
                  ports=[fake_port2]))
         self.nc.put(fake_net)
@@ -1628,7 +1629,7 @@ class TestNetworkCache(base.BaseTestCase):
     def test_put_port(self):
         fake_net = dhcp.NetModel(
             dict(id=FAKE_NETWORK_UUID,
-                 tenant_id=FAKE_TENANT_ID,
+                 project_id=FAKE_PROJECT_ID,
                  subnets=[fake_subnet1],
                  ports=[fake_port1]))
         self.nc.put(fake_net)
@@ -1639,7 +1640,7 @@ class TestNetworkCache(base.BaseTestCase):
     def test_put_port_existing(self):
         fake_net = dhcp.NetModel(
             dict(id=FAKE_NETWORK_UUID,
-                 tenant_id=FAKE_TENANT_ID,
+                 project_id=FAKE_PROJECT_ID,
                  subnets=[fake_subnet1],
                  ports=[fake_port1, fake_port2]))
         self.nc.put(fake_net)
@@ -1651,7 +1652,7 @@ class TestNetworkCache(base.BaseTestCase):
     def test_remove_port_existing(self):
         fake_net = dhcp.NetModel(
             dict(id=FAKE_NETWORK_UUID,
-                 tenant_id=FAKE_TENANT_ID,
+                 project_id=FAKE_PROJECT_ID,
                  subnets=[fake_subnet1],
                  ports=[fake_port1, fake_port2]))
         self.nc.put(fake_net)
@@ -1891,7 +1892,7 @@ class TestDeviceManager(base.BaseTestCase):
         plugin.assert_has_calls([
             mock.call.create_dhcp_port(
                 {'port': {'name': '', 'admin_state_up': True,
-                          'network_id': net.id, 'tenant_id': net.tenant_id,
+                          'network_id': net.id, 'project_id': net.project_id,
                           'fixed_ips':
                           [{'subnet_id': port.fixed_ips[0].subnet_id}],
                           'device_id': mock.ANY}})])
@@ -1981,7 +1982,7 @@ class TestDeviceManager(base.BaseTestCase):
                 mock.call.create_dhcp_port(
                     {'port': {'name': '', 'admin_state_up': True,
                               'network_id': net.id,
-                              'tenant_id': net.tenant_id,
+                              'project_id': net.project_id,
                               'fixed_ips': [{'subnet_id':
                               fake_dhcp_port.fixed_ips[0].subnet_id}],
                               'device_id': mock.ANY}})])
@@ -2027,8 +2028,8 @@ class TestDeviceManager(base.BaseTestCase):
         plugin.assert_has_calls([
             mock.call.create_dhcp_port(
                 {'port': {'name': '', 'admin_state_up': True,
-                          'network_id':
-                          fake_network.id, 'tenant_id': fake_network.tenant_id,
+                          'network_id': fake_network.id,
+                          'project_id': fake_network.project_id,
                           'fixed_ips':
                           [{'subnet_id': fake_fixed_ip1.subnet_id}],
                           'device_id': mock.ANY}})])
@@ -2111,7 +2112,7 @@ class TestDeviceManager(base.BaseTestCase):
     def test_destroy(self):
         fake_net = dhcp.NetModel(
             dict(id=FAKE_NETWORK_UUID,
-                 tenant_id=FAKE_TENANT_ID))
+                 project_uid=FAKE_PROJECT_ID))
 
         with mock.patch('neutron.agent.linux.interface.NullDriver') as dvr_cls:
             mock_driver = mock.MagicMock()
@@ -2134,7 +2135,7 @@ class TestDeviceManager(base.BaseTestCase):
     def test_destroy_with_none(self):
         fake_net = dhcp.NetModel(
             dict(id=FAKE_NETWORK_UUID,
-                 tenant_id=FAKE_TENANT_ID))
+                 project_id=FAKE_PROJECT_ID))
 
         with mock.patch('neutron.agent.linux.interface.NullDriver') as dvr_cls:
             mock_driver = mock.MagicMock()
@@ -2155,7 +2156,7 @@ class TestDeviceManager(base.BaseTestCase):
     def test_get_interface_name(self):
         fake_net = dhcp.NetModel(
             dict(id=FAKE_NETWORK_UUID,
-                 tenant_id=FAKE_TENANT_ID))
+                 project_id=FAKE_PROJECT_ID))
 
         fake_port = dhcp.DictModel(
             dict(id='12345678-1234-aaaa-1234567890ab',
@@ -2181,7 +2182,7 @@ class TestDeviceManager(base.BaseTestCase):
     def test_get_device_id(self):
         fake_net = dhcp.NetModel(
             dict(id=FAKE_NETWORK_UUID,
-                 tenant_id=FAKE_TENANT_ID))
+                 project_id=FAKE_PROJECT_ID))
         expected = ('dhcp1ae5f96c-c527-5079-82ea-371a01645457-12345678-1234-'
                     '5678-1234567890ab')
         # the DHCP port name only contains the hostname and not the domain name
