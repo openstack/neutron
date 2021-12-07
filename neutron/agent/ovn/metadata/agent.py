@@ -203,6 +203,13 @@ class MetadataAgent(object):
 
     def _load_config(self):
         self.chassis = self._get_own_chassis_name()
+        try:
+            self.chassis_id = uuid.UUID(self.chassis)
+        except ValueError:
+            LOG.exception('Chassis name %s is not a correctly formatted UUID '
+                          'string', self.chassis)
+            raise ConfigException()
+
         self.ovn_bridge = self._get_ovn_bridge()
         LOG.debug("Loaded chassis %s and ovn bridge %s.",
                   self.chassis, self.ovn_bridge)
@@ -263,9 +270,8 @@ class MetadataAgent(object):
         # NOTE(lucasagomes): db_add() will not overwrite the UUID if
         # it's already set.
         table = ('Chassis_Private' if self.has_chassis_private else 'Chassis')
-        chassis_id = uuid.UUID(self._get_own_chassis_name())
         # Generate unique, but consistent metadata id for chassis name
-        agent_id = uuid.uuid5(chassis_id, 'metadata_agent')
+        agent_id = uuid.uuid5(self.chassis_id, 'metadata_agent')
         ext_ids = {ovn_const.OVN_AGENT_METADATA_ID_KEY: str(agent_id)}
         self.sb_idl.db_add(table, self.chassis, 'external_ids',
                            ext_ids).execute(check_error=True)
