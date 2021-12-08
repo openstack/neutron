@@ -61,6 +61,14 @@ class QosNetworkPolicyBinding(model_base.BASEV2):
         backref=sa.orm.backref('qos_network_policy_binding', uselist=False,
                                lazy='joined'),
         sync_backref=False, viewonly=True)
+    floatingip = sa.orm.relationship(
+        l3.FloatingIP,
+        primaryjoin=('QosNetworkPolicyBinding.network_id == '
+                     'FloatingIP.floating_network_id'),
+        foreign_keys=network_id,
+        backref=sa.orm.backref('qos_network_policy_binding', uselist=False,
+                               lazy='joined'),
+        sync_backref=False, viewonly=True)
 
 
 class QosFIPPolicyBinding(model_base.BASEV2):

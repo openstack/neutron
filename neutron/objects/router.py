@@ -235,7 +235,8 @@ class Router(base.NeutronDbObject):
 class FloatingIP(base.NeutronDbObject):
     # Version 1.0: Initial version
     # Version 1.1: Added qos_policy_id field
-    VERSION = '1.1'
+    # Version 1.2: Added qos_network_policy_id field
+    VERSION = '1.2'
 
     db_model = l3.FloatingIP
 
@@ -248,6 +249,8 @@ class FloatingIP(base.NeutronDbObject):
         'fixed_port_id': common_types.UUIDField(nullable=True),
         'fixed_ip_address': obj_fields.IPAddressField(nullable=True),
         'qos_policy_id': common_types.UUIDField(nullable=True, default=None),
+        'qos_network_policy_id': common_types.UUIDField(nullable=True,
+                                                        default=None),
         'router_id': common_types.UUIDField(nullable=True),
         'last_known_router_id': common_types.UUIDField(nullable=True),
         'status': common_types.FloatingIPStatusEnumField(nullable=True),
@@ -257,6 +260,7 @@ class FloatingIP(base.NeutronDbObject):
                         'floating_network_id', 'floating_port_id']
     synthetic_fields = ['dns',
                         'qos_policy_id',
+                        'qos_network_policy_id',
                         ]
 
     @classmethod
@@ -314,13 +318,18 @@ class FloatingIP(base.NeutronDbObject):
         if db_obj.get('qos_policy_binding'):
             self.qos_policy_id = db_obj.qos_policy_binding.policy_id
             fields_to_change.append('qos_policy_id')
-
+        if db_obj.get('qos_network_policy_binding'):
+            self.qos_network_policy_id = (
+                db_obj.qos_network_policy_binding.policy_id)
+            fields_to_change.append('qos_network_policy_binding')
         self.obj_reset_changes(fields_to_change)
 
     def obj_make_compatible(self, primitive, target_version):
         _target_version = versionutils.convert_version_to_tuple(target_version)
         if _target_version < (1, 1):
             primitive.pop('qos_policy_id', None)
+        if _target_version < (1, 2):
+            primitive.pop('qos_network_policy_id', None)
 
     @classmethod
     def get_scoped_floating_ips(cls, context, router_ids):

@@ -205,6 +205,20 @@ class FakeStandardAttribute(object):
         self.revision_number = revision_number
 
 
+class FakeQosNetworkPolicyBinding(object):
+
+    def __init__(self, policy_id=mock.ANY, network_id=mock.ANY):
+        self.policy_id = policy_id
+        self.network_id = network_id
+
+
+class FakeQosFIPPolicyBinding(object):
+
+    def __init__(self, policy_id=mock.ANY, fip_id=mock.ANY):
+        self.policy_id = policy_id
+        self.fip_id = fip_id
+
+
 class FakeResource(dict):
 
     def __init__(self, manager=None, info=None, loaded=False, methods=None):
@@ -688,6 +702,8 @@ class FakeFloatingIp(object):
             'dns_name': '',
             'project_id': '',
             'standard_attr': FakeStandardAttribute(),
+            'qos_policy_binding': FakeQosFIPPolicyBinding(),
+            'qos_network_policy_binding': FakeQosNetworkPolicyBinding(),
         }
 
         # Overwrite default attributes.

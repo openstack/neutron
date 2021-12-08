@@ -26,11 +26,12 @@ class FloatingQoSDbMixin(object):
     @staticmethod
     @resource_extend.extends([l3_apidef.FLOATINGIPS])
     def _extend_extra_fip_dict(fip_res, fip_db):
-        if fip_db.get('qos_policy_binding'):
-            fip_res[qos_consts.QOS_POLICY_ID] = (
-                fip_db.qos_policy_binding.policy_id)
-        else:
-            fip_res[qos_consts.QOS_POLICY_ID] = None
+        qos_id = (fip_db.qos_policy_binding.policy_id if
+                  fip_db.qos_policy_binding else None)
+        fip_res[qos_consts.QOS_POLICY_ID] = qos_id
+        qos_id = (fip_db.qos_network_policy_binding.policy_id if
+                  fip_db.qos_network_policy_binding else None)
+        fip_res[qos_consts.QOS_NETWORK_POLICY_ID] = qos_id
         return fip_res
 
     def _create_fip_qos_db(self, context, fip_id, policy_id):
