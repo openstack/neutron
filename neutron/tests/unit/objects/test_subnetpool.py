@@ -100,7 +100,7 @@ class SubnetPoolDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
                                    address_scope_id):
         filter_mock.assert_called_once()
         self.assertEqual(
-            "addressscoperbacs.target_tenant IN ('*', '%(project_id)s') "
+            "addressscoperbacs.target_project IN ('*', '%(project_id)s') "
             "AND addressscoperbacs.object_id = '%(address_scope_id)s'" % {
                 "project_id": project_id,
                 "address_scope_id": address_scope_id,
@@ -119,7 +119,7 @@ class SubnetPoolDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         payload = mock.Mock(
             context=context, request_body=dict(
                 object_id="fake_id",
-                target_tenant=fake_project_id
+                target_project=fake_project_id
             )
         )
         fake_address_scope_id = "fake_as_id"
@@ -151,7 +151,7 @@ class SubnetPoolDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         payload = mock.Mock(
             context=context, request_body=dict(
                 object_id="fake_id",
-                target_tenant=fake_project_id
+                target_project=fake_project_id
             )
         )
         fake_address_scope_id = "fake_as_id"

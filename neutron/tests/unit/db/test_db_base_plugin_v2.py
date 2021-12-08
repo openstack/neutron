@@ -2795,12 +2795,12 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                     ctx, object_id=network['network']['id'],
                     action='access_as_shared',
                     project_id=network['network']['tenant_id'],
-                    target_tenant='somebody_else').create()
+                    target_project='somebody_else').create()
                 network_obj.NetworkRBAC(
                     ctx, object_id=network['network']['id'],
                     action='access_as_shared',
                     project_id=network['network']['tenant_id'],
-                    target_tenant='one_more_somebody_else').create()
+                    target_project='one_more_somebody_else').create()
             res1 = self._create_port(self.fmt,
                                      network['network']['id'],
                                      webob.exc.HTTPCreated.code,
@@ -6560,7 +6560,7 @@ class DbModelMixin(object):
                 ctx, object_id=network.id,
                 action='access_as_shared',
                 project_id=network.project_id,
-                target_tenant='*').create()
+                target_project='*').create()
             net2 = models_v2.Network(name="net_net2", status="OK",
                                      admin_state_up=True,
                                      mtu=1500)

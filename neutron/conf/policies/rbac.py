@@ -25,12 +25,14 @@ RESOURCE_PATH = '/rbac-policies/{id}'
 
 
 rules = [
+    # TODO(ralonsoh): remove 'target_tenant=*' reference.
     policy.RuleDefault(
         name='restrict_wildcard',
         check_str=base.policy_or(
-            '(not field:rbac_policy:target_tenant=*)',
+            '(not field:rbac_policy:target_tenant=* and '
+            'not field:rbac_policy:target_project=*)',
             base.RULE_ADMIN_ONLY),
-        description='Definition of a wildcard target_tenant'),
+        description='Definition of a wildcard target_project'),
 
     policy.DocumentedRuleDefault(
         name='create_rbac_policy',
@@ -49,11 +51,14 @@ rules = [
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
+    # TODO(ralonsoh): change name to 'create_rbac_policy:target_project'
+    # and remove 'target_tenant=*' reference.
     policy.DocumentedRuleDefault(
         name='create_rbac_policy:target_tenant',
         check_str=base.policy_or(
             base.SYSTEM_ADMIN,
-            '(not field:rbac_policy:target_tenant=*)'),
+            '(not field:rbac_policy:target_tenant=* and '
+            'not field:rbac_policy:target_project=*)'),
         description='Specify ``target_tenant`` when creating an RBAC policy',
         operations=[
             {
@@ -85,11 +90,14 @@ rules = [
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
+    # TODO(ralonsoh): change name to 'create_rbac_policy:target_project'
+    # and remove 'target_tenant=*' reference.
     policy.DocumentedRuleDefault(
         name='update_rbac_policy:target_tenant',
         check_str=base.policy_or(
             base.SYSTEM_ADMIN,
-            '(not field:rbac_policy:target_tenant=*)'),
+            '(not field:rbac_policy:target_tenant=* and '
+            'not field:rbac_policy:target_project=*)'),
         description='Update ``target_tenant`` attribute of an RBAC policy',
         operations=[
             {

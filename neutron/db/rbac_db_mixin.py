@@ -36,6 +36,12 @@ class RbacPluginMixin(object):
     @db_api.retry_if_session_inactive()
     def create_rbac_policy(self, context, rbac_policy):
         e = rbac_policy['rbac_policy']
+        # NOTE(ralonsoh): remove this conversion when "bp/keystone-v3" is
+        # widely implemented in all OpenStack projects.
+        try:
+            e['target_project'] = e.pop('target_tenant')
+        except KeyError:
+            pass
         try:
             registry.publish(resources.RBAC_POLICY, events.BEFORE_CREATE, self,
                              payload=events.DBEventPayload(
@@ -49,7 +55,7 @@ class RbacPluginMixin(object):
             rbac_args = {'project_id': e['project_id'],
                          'object_id': e['object_id'],
                          'action': e['action'],
-                         'target_tenant': e['target_tenant']}
+                         'target_project': e['target_project']}
             _rbac_obj = rbac_class(context, **rbac_args)
             _rbac_obj.create()
         except o_exc.NeutronDbObjectDuplicateEntry:
@@ -58,14 +64,22 @@ class RbacPluginMixin(object):
 
     @staticmethod
     def _make_rbac_policy_dict(entry, fields=None):
-        res = {f: entry[f] for f in ('id', 'project_id', 'target_tenant',
+        res = {f: entry[f] for f in ('id', 'project_id', 'target_project',
                                      'action', 'object_id')}
+        # TODO(ralonsoh): remove once all calls refer to "target_project"
+        res['target_tenant'] = res['target_project']
         res['object_type'] = entry.db_model.object_type
         return db_utils.resource_fields(res, fields)
 
     @db_api.retry_if_session_inactive()
     def update_rbac_policy(self, context, id, rbac_policy):
         pol = rbac_policy['rbac_policy']
+        # NOTE(ralonsoh): remove this conversion when "bp/keystone-v3" is
+        # widely implemented in all OpenStack projects.
+        try:
+            pol['target_project'] = pol.pop('target_tenant')
+        except KeyError:
+            pass
         entry = self._get_rbac_policy(context, id)
         object_type = entry.db_model.object_type
         try:
@@ -122,6 +136,12 @@ class RbacPluginMixin(object):
         pager = base_obj.Pager(sorts, limit, page_reverse)
         filters = filters or {}
         object_types = filters.pop('object_type', None)
+        # NOTE(ralonsoh): remove this conversion when "bp/keystone-v3" is
+        # widely implemented in all OpenStack projects.
+        try:
+            filters['target_project'] = filters.pop('target_tenant')
+        except KeyError:
+            pass
         rbac_classes_to_query = [
             o for t, o in rbac_obj.RBACBaseObject.get_type_class_map().items()
             if not object_types or t in object_types]

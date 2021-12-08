@@ -143,13 +143,13 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         ctx = context.Context('edinson', 'cavani')
         model = models_v2.Network
         txt = ("networkrbacs.action = :action_1 AND "
-               "networkrbacs.target_tenant = :target_tenant_1 OR "
-               "networkrbacs.target_tenant = :target_tenant_2")
+               "networkrbacs.target_project = :target_project_1 OR "
+               "networkrbacs.target_project = :target_project_2")
         conditions = external_net_db._network_filter_hook(ctx, model, [])
         self.assertEqual(conditions.__str__(), txt)
         # Try to concatenate conditions
-        txt2 = (txt.replace('tenant_1', 'tenant_3').
-                replace('tenant_2', 'tenant_4').
+        txt2 = (txt.replace('project_1', 'project_3').
+                replace('project_2', 'project_4').
                 replace('action_1', 'action_2'))
         conditions = external_net_db._network_filter_hook(ctx, model,
                                                           conditions)

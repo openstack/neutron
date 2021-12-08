@@ -42,8 +42,8 @@ class QosPolicyRBAC(rbac.RBACBaseObject):
     # Version 1.1: Inherit from rbac_db.RBACBaseObject; added 'id' and
     #              'project_id'; changed 'object_id' from StringField to
     #              UUIDField
-
-    VERSION = '1.1'
+    # Version 1.2: Changed 'target_tenant' to 'target_project'
+    VERSION = '1.2'
 
     db_model = rbac_db_models.QosPolicyRBAC
 

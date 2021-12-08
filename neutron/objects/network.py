@@ -41,8 +41,8 @@ class NetworkRBAC(rbac.RBACBaseObject):
     # Version 1.1: Added 'id' and 'project_id'
     # Version 1.2: Inherit from rbac.RBACBaseObject; changed 'object_id' from
     #              StringField to UUIDField
-
-    VERSION = '1.2'
+    # Version 1.3: Changed 'target_tenant' to 'target_project'
+    VERSION = '1.3'
 
     db_model = rbac_db_models.NetworkRBAC
 

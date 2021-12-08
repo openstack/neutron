@@ -28,7 +28,8 @@ from neutron.objects import rbac_db
 @base.NeutronObjectRegistry.register
 class SecurityGroupRBAC(rbac.RBACBaseObject):
     # Version 1.0: Initial version
-    VERSION = '1.0'
+    # Version 1.1: Changed 'target_tenant' to 'target_project'
+    VERSION = '1.1'
 
     db_model = rbac_db_models.SecurityGroupRBAC
 

@@ -49,7 +49,7 @@ class FakeNeutronRbacObject(base.NeutronDbObject):
 
     fields = {
         'object_id': obj_fields.StringField(),
-        'target_tenant': obj_fields.StringField(),
+        'target_project': obj_fields.StringField(),
         'action': obj_fields.StringField(),
     }
 
@@ -202,10 +202,10 @@ class RbacNeutronDbObjectTestCase(test_rbac.RBACBaseObjectIfaceTestCase,
     def test_validate_rbac_policy_delete_skips_db_object_owner(self,
                                                             mock_get_object):
         policy = {'action': rbac_db_models.ACCESS_SHARED,
-                  'target_tenant': 'fake_project_id',
+                  'target_project': 'fake_project_id',
                   'object_id': 'fake_obj_id',
                   'project_id': 'fake_project_id'}
-        mock_get_object.return_value.project_id = policy['target_tenant']
+        mock_get_object.return_value.project_id = policy['target_project']
         self._test_validate_rbac_policy_delete_handles_policy(policy)
 
     @mock.patch.object(obj_db_api, 'get_object')
@@ -214,14 +214,14 @@ class RbacNeutronDbObjectTestCase(test_rbac.RBACBaseObjectIfaceTestCase,
     def test_validate_rbac_policy_delete_fails_single_project_and_in_use(
             self, get_bound_project_ids_mock, mock_get_object):
         policy = {'action': rbac_db_models.ACCESS_SHARED,
-                  'target_tenant': 'project_id_shared_with',
+                  'target_project': 'project_id_shared_with',
                   'project_id': 'object_owner_project_id',
                   'object_id': 'fake_obj_id'}
         context = mock.Mock()
         with mock.patch.object(
                 self._test_class,
-                '_get_db_obj_rbac_entries') as target_tenants_mock:
-            filter_mock = target_tenants_mock.return_value.filter
+                '_get_db_obj_rbac_entries') as target_projects_mock:
+            filter_mock = target_projects_mock.return_value.filter
             filter_mock.return_value.count.return_value = 0
             payload = events.DBEventPayload(
                 context,
@@ -251,7 +251,7 @@ class RbacNeutronDbObjectTestCase(test_rbac.RBACBaseObjectIfaceTestCase,
             self._test_class._validate_rbac_policy_delete(
                 context=context,
                 obj_id='fake_obj_id',
-                target_tenant='fake_tid1')
+                target_project='fake_tid1')
             sh_tids.assert_not_called()
 
     @mock.patch.object(_test_class, '_get_db_obj_rbac_entries')
@@ -264,7 +264,7 @@ class RbacNeutronDbObjectTestCase(test_rbac.RBACBaseObjectIfaceTestCase,
             self, get_bound_project_ids_mock, mock_projects_with_shared_access,
             _get_db_obj_rbac_entries_mock):
         policy = {'action': rbac_db_models.ACCESS_SHARED,
-                  'target_tenant': '*',
+                  'target_project': '*',
                   'project_id': 'object_owner_project_id',
                   'object_id': 'fake_obj_id'}
         context = mock.Mock()
@@ -294,7 +294,7 @@ class RbacNeutronDbObjectTestCase(test_rbac.RBACBaseObjectIfaceTestCase,
         obj.update_shared(is_shared_new=True, obj_id=obj_id)
         get_object_mock.assert_called_with(
             obj.rbac_db_cls, mock.ANY, object_id=obj_id,
-            target_tenant='*', action=rbac_db_models.ACCESS_SHARED)
+            target_project='*', action=rbac_db_models.ACCESS_SHARED)
         self.assertFalse(mock_validate_delete.called)
         self.assertFalse(attach_rbac_mock.called)
 
@@ -309,7 +309,7 @@ class RbacNeutronDbObjectTestCase(test_rbac.RBACBaseObjectIfaceTestCase,
         test_neutron_obj.update_shared(is_shared_new=True, obj_id=obj_id)
         get_object_mock.assert_called_with(
             test_neutron_obj.rbac_db_cls, mock.ANY, object_id=obj_id,
-            target_tenant='*', action=rbac_db_models.ACCESS_SHARED)
+            target_project='*', action=rbac_db_models.ACCESS_SHARED)
 
         attach_rbac_mock.assert_called_with(
             obj_id, test_neutron_obj.obj_context.project_id)
@@ -329,7 +329,7 @@ class RbacNeutronDbObjectTestCase(test_rbac.RBACBaseObjectIfaceTestCase,
         obj.update_shared(is_shared_new=False, obj_id=obj_id)
         get_object_mock.assert_called_with(
             obj.rbac_db_cls, mock.ANY, object_id=obj_id,
-            target_tenant='*', action=rbac_db_models.ACCESS_SHARED)
+            target_project='*', action=rbac_db_models.ACCESS_SHARED)
 
         self.assertFalse(attach_rbac_mock.attach_rbac.called)
         mock_validate_delete.assert_called_with(mock.ANY, obj_id, '*')
@@ -338,12 +338,12 @@ class RbacNeutronDbObjectTestCase(test_rbac.RBACBaseObjectIfaceTestCase,
     def test_attach_rbac_returns_type(self, create_rbac_mock):
         obj_id = 'fake_obj_id'
         project_id = 'fake_project_id'
-        target_tenant = 'fake_target_project'
+        target_project = 'fake_target_project'
         self._test_class(mock.Mock()).attach_rbac(obj_id, project_id,
-                                                  target_tenant)
+                                                  target_project)
         rbac_pol = create_rbac_mock.call_args_list[0][0][1]['rbac_policy']
         self.assertEqual(rbac_pol['object_id'], obj_id)
-        self.assertEqual(rbac_pol['target_tenant'], target_tenant)
+        self.assertEqual(rbac_pol['target_project'], target_project)
         self.assertEqual(rbac_pol['action'], rbac_db_models.ACCESS_SHARED)
         self.assertEqual(rbac_pol['object_type'],
                          self._test_class.rbac_db_cls.db_model.object_type)

@@ -16,6 +16,7 @@
 import abc
 
 from neutron_lib.objects import common_types
+from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 from sqlalchemy import and_
 
@@ -24,15 +25,14 @@ from neutron.objects import base
 
 class RBACBaseObject(base.NeutronDbObject, metaclass=abc.ABCMeta):
     # Version 1.0: Initial version
+    # Version 1.1: Changed 'target_tenant' to 'target_project'
+    VERSION = '1.1'
 
-    VERSION = '1.0'
-
-    # TODO(ralonsoh): move 'target_tenant' to 'target_project'.
     fields = {
         'id': common_types.UUIDField(),
         'project_id': obj_fields.StringField(),
         'object_id': common_types.UUIDField(),
-        'target_tenant': obj_fields.StringField(),
+        'target_project': obj_fields.StringField(),
         'action': obj_fields.StringField(),
     }
 
@@ -40,15 +40,15 @@ class RBACBaseObject(base.NeutronDbObject, metaclass=abc.ABCMeta):
 
     @classmethod
     def get_projects(cls, context, object_id=None, action=None,
-                     target_tenant=None):
+                     target_project=None):
         clauses = []
         if object_id:
             clauses.append(cls.db_model.object_id == object_id)
         if action:
             clauses.append(cls.db_model.action == action)
-        if target_tenant:
-            clauses.append(cls.db_model.target_tenant == target_tenant)
-        query = context.session.query(cls.db_model.target_tenant)
+        if target_project:
+            clauses.append(cls.db_model.target_project == target_project)
+        query = context.session.query(cls.db_model.target_project)
         if clauses:
             query = query.filter(and_(*clauses))
         return [data[0] for data in query]
@@ -57,3 +57,8 @@ class RBACBaseObject(base.NeutronDbObject, metaclass=abc.ABCMeta):
     def get_type_class_map(cls):
         return {klass.db_model.object_type: klass
                 for klass in cls.__subclasses__()}
+
+    def obj_make_compatible(self, primitive, target_version):
+        _target_version = versionutils.convert_version_to_tuple(target_version)
+        if _target_version < (1, 1):  # NOTE(ralonsoh): remove in Yoga + 4.
+            primitive['target_tenant'] = primitive.pop('target_project')

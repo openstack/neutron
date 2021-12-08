@@ -47,8 +47,8 @@ def _network_filter_hook(context, original_model, conditions):
         rbac_model = original_model.rbac_entries.property.mapper.class_
         tenant_allowed = (
             (rbac_model.action == 'access_as_external') &
-            (rbac_model.target_tenant == context.tenant_id) |
-            (rbac_model.target_tenant == '*'))
+            (rbac_model.target_project == context.tenant_id) |
+            (rbac_model.target_project == '*'))
         conditions = expr.or_(tenant_allowed, *conditions)
     return conditions
 
@@ -100,7 +100,7 @@ class External_net_db_mixin(object):
             net_rbac_args = {'project_id': net_data['tenant_id'],
                              'object_id': net_data['id'],
                              'action': 'access_as_external',
-                             'target_tenant': '*'}
+                             'target_project': '*'}
             net_obj.NetworkRBAC(context, **net_rbac_args).create()
         net_data[extnet_apidef.EXTERNAL] = external
 
@@ -121,7 +121,7 @@ class External_net_db_mixin(object):
                 net_rbac_args = {'project_id': net_data['tenant_id'],
                                  'object_id': net_id,
                                  'action': 'access_as_external',
-                                 'target_tenant': '*'}
+                                 'target_project': '*'}
                 net_obj.NetworkRBAC(context, **net_rbac_args).create()
         else:
             # must make sure we do not have any external gateway ports
@@ -196,24 +196,24 @@ class External_net_db_mixin(object):
             return
         new_project = None
         if event == events.BEFORE_UPDATE:
-            new_project = payload.request_body['target_tenant']
-            if new_project == policy['target_tenant']:
+            new_project = payload.request_body['target_project']
+            if new_project == policy['target_project']:
                 # nothing to validate if the tenant didn't change
                 return
         gw_ports = context.session.query(models_v2.Port.id).filter_by(
             device_owner=constants.DEVICE_OWNER_ROUTER_GW,
             network_id=policy['object_id'])
         gw_ports = [gw_port[0] for gw_port in gw_ports]
-        if policy['target_tenant'] != '*':
+        if policy['target_project'] != '*':
             filters = {
                 'gw_port_id': gw_ports,
-                'project_id': policy['target_tenant']
+                'project_id': policy['target_project']
             }
             # if there is a wildcard entry we can safely proceed without the
             # router lookup because they will have access either way
             if net_obj.NetworkRBAC.count(
                     context, object_id=policy['object_id'],
-                    action='access_as_external', target_tenant='*'):
+                    action='access_as_external', target_project='*'):
                 return
             router_exist = l3_obj.Router.objects_exist(context, **filters)
         else:
