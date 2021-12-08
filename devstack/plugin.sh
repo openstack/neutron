@@ -34,13 +34,6 @@ fi
 if [[ "$1" == "stack" ]]; then
     case "$2" in
         install)
-            if [[ "$NEUTRON_AGENT" == "openvswitch" ]] && \
-               [[ "$Q_BUILD_OVS_FROM_GIT" == "True" ]]; then
-                remove_ovs_packages
-                compile_ovs False /usr /var
-                load_conntrack_gre_module
-                start_new_ovs
-            fi
             ;;
         post-config)
             if is_service_enabled neutron-tag-ports-during-bulk-creation; then
