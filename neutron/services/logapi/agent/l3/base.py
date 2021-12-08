@@ -106,3 +106,6 @@ class L3LoggingExtensionBase(object):
 
     def ha_state_change(self, context, data):
         pass
+
+    def update_network(self, context, data):
+        pass

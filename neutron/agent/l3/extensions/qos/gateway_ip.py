@@ -99,6 +99,9 @@ class RouterGatewayIPQosAgentExtension(qos_base.L3QosAgentExtensionBase,
     def ha_state_change(self, context, data):
         pass
 
+    def update_network(self, context, data):
+        pass
+
     def process_gateway_rate_limit(self, context, router_info):
         is_distributed_router = router_info.router.get('distributed')
         agent_mode = router_info.agent_conf.agent_mode

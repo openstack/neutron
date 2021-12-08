@@ -346,3 +346,6 @@ class FipQosAgentExtension(qos_base.L3QosAgentExtensionBase,
 
     def ha_state_change(self, context, data):
         pass
+
+    def update_network(self, context, data):
+        pass
