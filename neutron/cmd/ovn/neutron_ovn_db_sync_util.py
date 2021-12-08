@@ -227,6 +227,7 @@ def main():
     ovn_driver = driver.obj
     ovn_driver.nb_ovn = ovn_api
     ovn_driver.sb_ovn = ovn_sb_api
+    ovn_driver._post_fork_event.set()
 
     synchronizer = ovn_db_sync.OvnNbSynchronizer(
         core_plugin, ovn_api, ovn_sb_api, mode, ovn_driver)
