@@ -34,7 +34,7 @@ def get_cdll():
     return _CDLL
 
 
-def make_serializable(value):
+def make_serializable(value, attr_filter=None):
     """Make a pyroute2 object serializable
 
     This function converts 'netlink.nla_slot' object (key, value) in a list
@@ -44,14 +44,18 @@ def make_serializable(value):
         return value.decode() if isinstance(value, bytes) else value
 
     if isinstance(value, list):
-        return [make_serializable(item) for item in value]
+        return [make_serializable(item, attr_filter) for item in value
+                if attr_filter is None or
+                not isinstance(item, netlink.nla_slot) or
+                (attr_filter and item.name in attr_filter)]
     elif isinstance(value, netlink.nla_slot):
-        return [_ensure_string(value[0]), make_serializable(value[1])]
+        return [_ensure_string(value[0]), make_serializable(value[1],
+                                                            attr_filter)]
     elif isinstance(value, netlink.nla_base):
-        return make_serializable(value.dump())
+        return make_serializable(value.dump(), attr_filter)
     elif isinstance(value, dict):
-        return {_ensure_string(key): make_serializable(data)
+        return {_ensure_string(key): make_serializable(data, attr_filter)
                 for key, data in value.items()}
     elif isinstance(value, tuple):
-        return tuple(make_serializable(item) for item in value)
+        return tuple(make_serializable(item, attr_filter) for item in value)
     return _ensure_string(value)

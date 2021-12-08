@@ -784,7 +784,7 @@ class IpNetnsCommand(object):
 
 def vlan_in_use(segmentation_id, namespace=None):
     """Return True if VLAN ID is in use by an interface, else False."""
-    interfaces = get_devices_info(namespace)
+    interfaces = get_devices_info(namespace, attrs=['vlan_id'])
     vlans = {interface.get('vlan_id') for interface in interfaces
              if interface.get('vlan_id')}
     return segmentation_id in vlans
@@ -792,7 +792,7 @@ def vlan_in_use(segmentation_id, namespace=None):
 
 def vxlan_in_use(segmentation_id, namespace=None):
     """Return True if VXLAN VNID is in use by an interface, else False."""
-    interfaces = get_devices_info(namespace)
+    interfaces = get_devices_info(namespace, attrs=['vxlan_id'])
     vxlans = {interface.get('vxlan_id') for interface in interfaces
               if interface.get('vxlan_id')}
     return segmentation_id in vxlans
@@ -1429,7 +1429,7 @@ def get_devices_with_ip(namespace, name=None, **kwargs):
     if not link_args:
         ip_addresses = privileged.get_ip_addresses(namespace, **kwargs)
     else:
-        device = get_devices_info(namespace, **link_args)
+        device = get_devices_info(namespace, **link_args, attrs=[])
         if not device:
             return retval
         ip_addresses = privileged.get_ip_addresses(
@@ -1441,7 +1441,7 @@ def get_devices_with_ip(namespace, name=None, **kwargs):
         name = (linux_utils.get_attr(ip_address, 'IFA_LABEL') or
                 devices.get(index))
         if not name:
-            device = get_devices_info(namespace, index=index)
+            device = get_devices_info(namespace, index=index, attrs=['name'])
             if not device:
                 continue
             name = device[0]['name']
@@ -1452,7 +1452,40 @@ def get_devices_with_ip(namespace, name=None, **kwargs):
     return retval
 
 
-def get_devices_info(namespace, **kwargs):
+def get_devices_info(namespace, attrs=None, **kwargs):
+    attr_map = {
+        'name': ['IFLA_IFNAME'],
+        'operstate': ['IFLA_OPERSTATE'],
+        'linkmode': ['IFLA_LINKMODE'],
+        'mtu': ['IFLA_MTU'],
+        'promiscuity': ['IFLA_PROMISCUITY'],
+        'mac': ['IFLA_ADDRESS'],
+        'broadcast': ['IFLA_BROADCAST'],
+        'parent_index': ['IFLA_LINK', 'IFLA_LINKINFO'],
+        'parent_name': ['IFLA_LINK', 'IFLA_LINKINFO'],
+        'kind': ['IFLA_LINKINFO', 'IFLA_INFO_KIND'],
+        'vlan_id': ['IFLA_LINKINFO', 'IFLA_INFO_KIND', 'IFLA_INFO_DATA',
+                    'IFLA_VLAN_ID'],
+        'vxlan_id': ['IFLA_LINKINFO', 'IFLA_INFO_KIND', 'IFLA_INFO_DATA',
+                     'IFLA_VXLAN_ID'],
+        'vxlan_group': ['IFLA_LINKINFO', 'IFLA_INFO_KIND', 'IFLA_INFO_DATA',
+                        'IFLA_VXLAN_GROUP'],
+        'vxlan_link_index': ['IFLA_LINKINFO', 'IFLA_INFO_KIND', 'IFLA_INFO_DATA',
+                             'IFLA_VXLAN_LINK'],
+        'vxlan_link_name': ['IFLA_LINKINFO', 'IFLA_INFO_KIND', 'IFLA_INFO_DATA',
+                            'IFLA_VXLAN_LINK'],
+    }
+    attr_filter = set()
+    if attrs is not None:
+        for attr in attrs:
+            attr_filter.update(attr_map[attr])
+    else:
+        for attr_list in attr_map.values():
+            attr_filter.update(attr_list)
+    if 'IFLA_LINK' in attr_filter:
+        attr_filter.add('IFLA_IFNAME')
+    kwargs['attr_filter'] = list(attr_filter)
+
     devices = privileged.get_link_devices(namespace, **kwargs)
     retval = {}
     for device in devices:
@@ -1610,7 +1643,8 @@ def list_ip_routes(namespace, ip_version, scope=None, via=None, table=None,
     table = IP_RULE_TABLES.get(table, table)
     routes = privileged.list_ip_routes(namespace, ip_version, device=device,
                                        table=table, **kwargs)
-    devices = privileged.get_link_devices(namespace)
+    devices = privileged.get_link_devices(namespace,
+                                          attr_filter=['IFLA_IFNAME'])
     ret = []
     for route in routes:
         cidr = linux_utils.get_attr(route, 'RTA_DST')
