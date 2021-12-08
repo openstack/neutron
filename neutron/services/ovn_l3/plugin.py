@@ -28,6 +28,7 @@ from neutron_lib.services import base as service_base
 from oslo_log import log
 from oslo_utils import excutils
 
+from neutron._i18n import _
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import extensions
 from neutron.common.ovn import utils
@@ -462,7 +463,10 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                     context, router_id, add, remove, txn=txn)
 
     @staticmethod
-    @registry.receives(resources.PORT, [events.AFTER_UPDATE])
+    @registry.receives(
+        resources.PORT,
+        [events.BEFORE_UPDATE, events.AFTER_UPDATE]
+    )
     def _port_update(resource, event, trigger, payload):
         l3plugin = directory.get_plugin(plugin_constants.L3)
         if not l3plugin:
@@ -470,8 +474,23 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
 
         context = payload.context
         current = payload.latest_state
+        original = payload.states[0]
 
-        if utils.is_lsp_router_port(current):
+        # The OVN NB DB has a constraint where network has to be
+        # greater than 0. Updating it with an empty network would
+        # cause a constraint violation error. This problem happens
+        # when the last IP of a LRP is deleted, in order to avoid it
+        # an exception needs to be thrown before any write is performed
+        # to the DB, since if not it would leave the Neutron DB and the
+        # OVN DB unsync.
+        # https://bugs.launchpad.net/neutron/+bug/1948457
+        if (event == events.BEFORE_UPDATE and
+                'fixed_ips' in current and not current['fixed_ips'] and
+                utils.is_lsp_router_port(original)):
+            reason = _("Router port must have at least one IP.")
+            raise n_exc.ServicePortInUse(port_id=original['id'], reason=reason)
+
+        if event == events.AFTER_UPDATE and utils.is_lsp_router_port(current):
             # We call the update_router port with if_exists, because neutron,
             # internally creates the port, and then calls update, which will
             # trigger this callback even before we had the chance to create
