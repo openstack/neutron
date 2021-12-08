@@ -623,7 +623,7 @@ def list_netns(**kwargs):
     stop=tenacity.stop_after_delay(8),
     reraise=True)
 @privileged.default.entrypoint
-def get_link_devices(namespace, **kwargs):
+def get_link_devices(namespace, attr_filter=None, **kwargs):
     """List interfaces in a namespace
 
     :return: (list) interfaces in a namespace
@@ -631,7 +631,8 @@ def get_link_devices(namespace, **kwargs):
     index = kwargs.pop('index') if 'index' in kwargs else 'all'
     try:
         with get_iproute(namespace) as ip:
-            return priv_linux.make_serializable(ip.get_links(index, **kwargs))
+            return priv_linux.make_serializable(ip.get_links(index, **kwargs),
+                                                attr_filter=attr_filter)
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
@@ -644,7 +645,8 @@ def get_device_names(namespace, **kwargs):
     :return: a list of strings with the names of the interfaces in a namespace
     """
     devices_attrs = [link['attrs'] for link
-                     in get_link_devices(namespace, **kwargs)]
+                     in get_link_devices(namespace,
+                                         attr_filter=['IFLA_IFNAME'], **kwargs)]
     device_names = []
     for device_attrs in devices_attrs:
         for link_name in (link_attr[1] for link_attr in device_attrs
