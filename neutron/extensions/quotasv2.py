@@ -131,7 +131,22 @@ class QuotaSetsController(wsgi.Controller):
 
     def update(self, request, id, body=None):
         validate_policy(request.context, "update_quota")
-        check_limit = body[self._resource_name].pop('check_limit', False)
+        force = body[self._resource_name].pop('force', None)
+        check_limit = body[self._resource_name].pop('check_limit', None)
+        # NOTE(ralonsoh): these warning messages will be removed once
+        # LP#1953170 is completed and Neutron quota engine accepts "--force" or
+        # nothing (by default, Neutron quota engine will check the resource
+        # usage before setting the quota limit).
+        if force is None and check_limit is None:
+            warnings.warn('Neutron quota engine will require "--force" '
+                          'parameter to set a quota limit without checking '
+                          'the resource usage.')
+        elif check_limit:
+            warnings.warn('"--check-limit" parameter will not be needed in '
+                          'Z+. By default, Neutron quota engine will check '
+                          'the resource usage before setting a new quota '
+                          'limit. Use "--force" to skip this check.')
+
         if self._update_extended_attributes:
             self._update_attributes()
         try:
