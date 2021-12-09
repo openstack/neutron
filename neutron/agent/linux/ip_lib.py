@@ -276,9 +276,10 @@ class IPWrapper(SubProcessBase):
                                     vlan_id=vlan_id)
         return IPDevice(name, namespace=self.namespace)
 
-    def add_vxlan(self, name, vni, group=None, dev=None, ttl=None, tos=None,
+    def add_vxlan(self, name, vni, dev, group=None, ttl=None, tos=None,
                   local=None, srcport=None, dstport=None, proxy=False):
-        kwargs = {'vxlan_id': vni}
+        kwargs = {'vxlan_id': vni,
+                  'physical_interface': dev}
         if group:
             try:
                 ip_version = common_utils.get_ip_version(group)
@@ -289,8 +290,6 @@ class IPWrapper(SubProcessBase):
             except netaddr.core.AddrFormatError:
                 err_msg = _("Invalid group address: %s") % group
                 raise exceptions.InvalidInput(error_message=err_msg)
-        if dev:
-            kwargs['physical_interface'] = dev
         if ttl:
             kwargs['vxlan_ttl'] = ttl
         if tos:

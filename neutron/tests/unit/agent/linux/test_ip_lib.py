@@ -385,10 +385,9 @@ class TestIpWrapper(base.BaseTestCase):
             'vxlan_proxy': True,
             'vxlan_port_range': ('1', '2')}
 
-        retval = ip_lib.IPWrapper().add_vxlan('vxlan0', 'vni0',
+        retval = ip_lib.IPWrapper().add_vxlan('vxlan0', 'vni0', 'dev0',
                                               group=VXLAN4_GROUP_SAMPLE,
-                                              dev='dev0', ttl='ttl0',
-                                              tos='tos0',
+                                              ttl='ttl0', tos='tos0',
                                               local=VXLAN4_LOCAL_SAMPLE,
                                               proxy=True, srcport=(1, 2))
         self.assertIsInstance(retval, ip_lib.IPDevice)
@@ -486,10 +485,9 @@ class TestIpWrapper(base.BaseTestCase):
             'vxlan_port_range': ('1', '2'),
             'vxlan_port': 4789}
 
-        retval = ip_lib.IPWrapper().add_vxlan('vxlan0', 'vni0',
+        retval = ip_lib.IPWrapper().add_vxlan('vxlan0', 'vni0', 'dev0',
                                               group=VXLAN4_GROUP_SAMPLE,
-                                              dev='dev0', ttl='ttl0',
-                                              tos='tos0',
+                                              ttl='ttl0', tos='tos0',
                                               local=VXLAN4_LOCAL_SAMPLE,
                                               proxy=True, srcport=(1, 2),
                                               dstport=4789)
