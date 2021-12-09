@@ -396,22 +396,22 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                 retval = self.lbm.ensure_vxlan(seg_id, mtu=1450)
                 self.assertEqual("vxlan-" + seg_id, retval)
                 add_vxlan_fn.assert_called_with("vxlan-" + seg_id, seg_id,
+                                                self.lbm.local_int,
                                                 group="224.0.0.1",
                                                 srcport=(0, 0),
                                                 dstport=None,
-                                                ttl=None,
-                                                dev=self.lbm.local_int)
+                                                ttl=None)
                 dv6_fn.assert_called_once_with()
                 set_mtu_fn.assert_called_once_with(1450)
                 cfg.CONF.set_override('l2_population', 'True', 'VXLAN')
                 self.assertEqual("vxlan-" + seg_id,
                                  self.lbm.ensure_vxlan(seg_id))
                 add_vxlan_fn.assert_called_with("vxlan-" + seg_id, seg_id,
+                                                self.lbm.local_int,
                                                 group="224.0.0.1",
                                                 srcport=(0, 0),
                                                 dstport=None,
                                                 ttl=None,
-                                                dev=self.lbm.local_int,
                                                 local=self.lbm.local_ip,
                                                 proxy=expected_proxy)
 
@@ -432,12 +432,12 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                 self.assertEqual("vxlan-" + seg_id,
                                  self.lbm.ensure_vxlan(seg_id))
                 add_vxlan_fn.assert_called_with("vxlan-" + seg_id, seg_id,
+                                                self.lbm.local_int,
                                                 group="224.0.0.1",
                                                 srcport=(0, 0),
                                                 dstport=None,
                                                 ttl=None,
-                                                tos='inherit',
-                                                dev=self.lbm.local_int)
+                                                tos='inherit')
                 dv6_fn.assert_called_once_with()
 
     def test_ensure_vxlan_mtu_too_big(self):
@@ -463,11 +463,11 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                 self.assertFalse(
                     self.lbm.ensure_vxlan(seg_id, mtu=mtu))
                 add_vxlan_fn.assert_called_with("vxlan-" + seg_id, seg_id,
+                                                self.lbm.local_int,
                                                 group="224.0.0.1",
                                                 srcport=(0, 0),
                                                 dstport=None,
-                                                ttl=None,
-                                                dev=self.lbm.local_int)
+                                                ttl=None)
                 delete_dev.assert_called_once_with()
                 dv6_fn.assert_not_called()
 
