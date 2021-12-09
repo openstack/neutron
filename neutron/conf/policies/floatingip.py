@@ -25,7 +25,7 @@ DEPRECATION_REASON = (
 rules = [
     policy.DocumentedRuleDefault(
         name='create_floatingip',
-        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        check_str=base.PROJECT_MEMBER,
         description='Create a floating IP',
         operations=[
             {
@@ -33,7 +33,7 @@ rules = [
                 'path': COLLECTION_PATH,
             },
         ],
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='create_floatingip',
             check_str=base.RULE_ANY,
@@ -42,7 +42,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_floatingip:floating_ip_address',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.PROJECT_ADMIN,
         description='Create a floating IP with a specific IP address',
         operations=[
             {
@@ -50,7 +50,7 @@ rules = [
                 'path': COLLECTION_PATH,
             },
         ],
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='create_floatingip:floating_ip_address',
             check_str=base.RULE_ADMIN_ONLY,
@@ -59,7 +59,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_floatingip',
-        check_str=base.SYSTEM_OR_PROJECT_READER,
+        check_str=base.PROJECT_READER,
         description='Get a floating IP',
         operations=[
             {
@@ -71,7 +71,7 @@ rules = [
                 'path': RESOURCE_PATH,
             },
         ],
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_floatingip',
             check_str=base.RULE_ADMIN_OR_OWNER,
@@ -80,7 +80,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_floatingip',
-        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        check_str=base.PROJECT_MEMBER,
         description='Update a floating IP',
         operations=[
             {
@@ -88,7 +88,7 @@ rules = [
                 'path': RESOURCE_PATH,
             },
         ],
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='update_floatingip',
             check_str=base.RULE_ADMIN_OR_OWNER,
@@ -97,7 +97,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_floatingip',
-        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        check_str=base.PROJECT_MEMBER,
         description='Delete a floating IP',
         operations=[
             {
@@ -105,7 +105,7 @@ rules = [
                 'path': RESOURCE_PATH,
             },
         ],
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_floatingip',
             check_str=base.RULE_ADMIN_OR_OWNER,

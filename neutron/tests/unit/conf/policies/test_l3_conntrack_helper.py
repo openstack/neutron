@@ -19,7 +19,7 @@ from oslo_policy import policy as base_policy
 from oslo_utils import uuidutils
 
 from neutron import policy
-from neutron.tests.unit.conf.policies import base
+from neutron.tests.unit.conf.policies import test_base as base
 
 
 class L3ConntrackHelperAPITestCase(base.PolicyBaseTestCase):
@@ -53,36 +53,44 @@ class SystemAdminTests(L3ConntrackHelperAPITestCase):
         self.context = self.system_admin_ctx
 
     def test_create_router_conntrack_helper(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'create_router_conntrack_helper', self.target))
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'create_router_conntrack_helper', self.alt_target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_router_conntrack_helper', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_router_conntrack_helper', self.alt_target)
 
     def test_get_router_conntrack_helper(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'get_router_conntrack_helper', self.target))
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'get_router_conntrack_helper', self.alt_target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_router_conntrack_helper', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_router_conntrack_helper', self.alt_target)
 
     def test_update_router_conntrack_helper(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'update_router_conntrack_helper', self.target))
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'update_router_conntrack_helper', self.alt_target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_router_conntrack_helper', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_router_conntrack_helper', self.alt_target)
 
     def test_delete_router_conntrack_helper(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'delete_router_conntrack_helper', self.target))
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'delete_router_conntrack_helper', self.alt_target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_router_conntrack_helper', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_router_conntrack_helper', self.alt_target)
 
 
 class SystemMemberTests(SystemAdminTests):
@@ -90,36 +98,6 @@ class SystemMemberTests(SystemAdminTests):
     def setUp(self):
         super(SystemMemberTests, self).setUp()
         self.context = self.system_member_ctx
-
-    def test_create_router_conntrack_helper(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'create_router_conntrack_helper', self.target)
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'create_router_conntrack_helper', self.alt_target)
-
-    def test_update_router_conntrack_helper(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'update_router_conntrack_helper', self.target)
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'update_router_conntrack_helper', self.alt_target)
-
-    def test_delete_router_conntrack_helper(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'delete_router_conntrack_helper', self.target)
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'delete_router_conntrack_helper', self.alt_target)
 
 
 class SystemReaderTests(SystemMemberTests):

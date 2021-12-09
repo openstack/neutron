@@ -36,8 +36,8 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='create_rbac_policy',
-        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
-        scope_types=['system', 'project'],
+        check_str=base.PROJECT_MEMBER,
+        scope_types=['project'],
         description='Create an RBAC policy',
         operations=[
             {
@@ -56,7 +56,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='create_rbac_policy:target_tenant',
         check_str=base.policy_or(
-            base.SYSTEM_ADMIN,
+            base.PROJECT_ADMIN,
             '(not field:rbac_policy:target_tenant=* and '
             'not field:rbac_policy:target_project=*)'),
         description='Specify ``target_tenant`` when creating an RBAC policy',
@@ -66,7 +66,7 @@ rules = [
                 'path': COLLECTION_PATH,
             },
         ],
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='create_rbac_policy:target_tenant',
             check_str='rule:restrict_wildcard',
@@ -75,8 +75,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_rbac_policy',
-        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
-        scope_types=['project', 'system'],
+        check_str=base.PROJECT_MEMBER,
+        scope_types=['project'],
         description='Update an RBAC policy',
         operations=[
             {
@@ -95,7 +95,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='update_rbac_policy:target_tenant',
         check_str=base.policy_or(
-            base.SYSTEM_ADMIN,
+            base.PROJECT_ADMIN,
             '(not field:rbac_policy:target_tenant=* and '
             'not field:rbac_policy:target_project=*)'),
         description='Update ``target_tenant`` attribute of an RBAC policy',
@@ -112,12 +112,12 @@ rules = [
                 base.RULE_ADMIN_OR_OWNER),
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
     ),
     policy.DocumentedRuleDefault(
         name='get_rbac_policy',
-        check_str=base.SYSTEM_OR_PROJECT_READER,
-        scope_types=['project', 'system'],
+        check_str=base.PROJECT_READER,
+        scope_types=['project'],
         description='Get an RBAC policy',
         operations=[
             {
@@ -137,8 +137,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_rbac_policy',
-        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
-        scope_types=['project', 'system'],
+        check_str=base.PROJECT_MEMBER,
+        scope_types=['project'],
         description='Delete an RBAC policy',
         operations=[
             {

@@ -19,7 +19,7 @@ from oslo_policy import policy as base_policy
 from oslo_utils import uuidutils
 
 from neutron import policy
-from neutron.tests.unit.conf.policies import base
+from neutron.tests.unit.conf.policies import test_base as base
 
 
 class LocalIPAssociationAPITestCase(base.PolicyBaseTestCase):

@@ -16,176 +16,214 @@
 from oslo_policy import policy as base_policy
 
 from neutron import policy
-from neutron.tests.unit.conf.policies import base
+from neutron.tests.unit.conf.policies import test_base as base
 
 
 class AddressScopeAPITestCase(base.PolicyBaseTestCase):
 
     def setUp(self):
         super(AddressScopeAPITestCase, self).setUp()
-        self.target = {
-            'project_id': self.project_id}
+        self.target = {'project_id': self.project_id}
+        self.alt_target = {'project_id': self.alt_project_id}
 
-    def test_system_admin_can_create_address_scope(self):
-        # system_admin_ctx don't have project_id set so it's always call to
-        # create it for "other project"
+
+class SystemAdminTests(AddressScopeAPITestCase):
+
+    def setUp(self):
+        super(SystemAdminTests, self).setUp()
+        self.context = self.system_admin_ctx
+
+    def test_create_address_scope(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_address_scope', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_address_scope', self.alt_target)
+
+    def test_create_address_scope_shared(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_address_scope:shared', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_address_scope:shared', self.alt_target)
+
+    def test_get_address_scope(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_address_scope', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_address_scope', self.alt_target)
+
+    def test_update_address_scope(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_address_scope', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_address_scope', self.alt_target)
+
+    def test_update_address_scope_shared(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_address_scope:shared', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_address_scope:shared', self.alt_target)
+
+    def test_delete_address_scope(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_address_scope', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_address_scope', self.alt_target)
+
+
+class SystemMemberTests(SystemAdminTests):
+
+    def setUp(self):
+        super(SystemMemberTests, self).setUp()
+        self.context = self.system_member_ctx
+
+
+class SystemReaderTests(SystemMemberTests):
+
+    def setUp(self):
+        super(SystemReaderTests, self).setUp()
+        self.context = self.system_reader_ctx
+
+
+class ProjectAdminTests(AddressScopeAPITestCase):
+
+    def setUp(self):
+        super(ProjectAdminTests, self).setUp()
+        self.context = self.project_admin_ctx
+
+    def test_create_address_scope(self):
         self.assertTrue(
-            policy.enforce(self.system_admin_ctx,
-                           'create_address_scope', self.target))
-
-    def test_system_member_can_not_create_address_scope(self):
-        # If system member is not able to do that, it implies that
-        # system_reader also will not be able to do that
+            policy.enforce(self.context, 'create_address_scope', self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.system_member_ctx, 'create_address_scope', self.target)
+            self.context, 'create_address_scope', self.alt_target)
 
-    def test_project_member_can_create_address_scope(self):
+    def test_create_address_scope_shared(self):
         self.assertTrue(
-            policy.enforce(self.project_member_ctx,
-                           'create_address_scope', self.target))
-
-    def test_project_member_can_not_create_address_scope_other_project(self):
-        # If project member is not able to do that, it implies that
-        # project_reader also will not be able to do that
-        target = {'project_id': 'other-project'}
+            policy.enforce(
+                self.context, 'create_address_scope:shared', self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.project_member_ctx, 'create_address_scope', target)
+            self.context, 'create_address_scope:shared', self.alt_target)
 
-    def test_system_admin_can_create_shared_address_scope(self):
-        # system_admin_ctx don't have project_id set so it's always call to
-        # create it for "other project"
-        target = self.target.copy()
-        target['shared'] = True
+    def test_get_address_scope(self):
         self.assertTrue(
-            policy.enforce(self.system_admin_ctx,
-                           'create_address_scope:shared', target))
-
-    def test_system_member_can_not_create_shared_address_scope(self):
-        # If system member is not able to do that, it implies that
-        # system_reader also will not be able to do that
-        target = self.target.copy()
-        target['shared'] = True
+            policy.enforce(self.context, 'get_address_scope', self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.system_member_ctx, 'create_address_scope:shared', target)
+            self.context, 'get_address_scope', self.alt_target)
 
-    def test_project_admin_can_not_create_shared_address_scope(self):
-        # If project admin is not able to do that, it implies that
-        # project_member and project_reader also will not be able to do that
-        target = self.target.copy()
-        target['shared'] = True
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.project_admin_ctx, 'create_address_scope:shared', target)
-
-    def test_system_reader_can_get_address_scope(self):
+    def test_update_address_scope(self):
         self.assertTrue(
-            policy.enforce(self.system_reader_ctx,
-                           'get_address_scope', self.target))
+            policy.enforce(self.context, 'update_address_scope', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_address_scope', self.alt_target)
 
-    def test_project_reader_can_get_address_scope(self):
+    def test_update_address_scope_shared(self):
         self.assertTrue(
-            policy.enforce(self.project_reader_ctx,
-                           'get_address_scope', self.target))
-
-    def test_project_admin_can_not_get_address_scope_other_project(self):
-        # If project admin is not able to do that, it implies that
-        # project_member and project_reader also will not be able to do that
-        target = {'project_id': 'other-project'}
+            policy.enforce(
+                self.context, 'update_address_scope:shared', self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.project_admin_ctx, 'get_address_scope', target)
+            self.context, 'update_address_scope:shared', self.alt_target)
 
-    def test_system_admin_can_update_address_scope(self):
-        # system_admin_ctx don't have project_id set so it's always call to
-        # create it for "other project"
+    def test_delete_address_scope(self):
         self.assertTrue(
-            policy.enforce(self.system_admin_ctx,
-                           'update_address_scope', self.target))
-
-    def test_system_member_can_not_update_address_scope(self):
-        # If system member is not able to do that, it implies that
-        # system_reader also will not be able to do that
+            policy.enforce(self.context, 'delete_address_scope', self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.system_member_ctx, 'update_address_scope', self.target)
+            self.context, 'delete_address_scope', self.alt_target)
 
-    def test_project_member_can_update_address_scope(self):
-        self.assertTrue(
-            policy.enforce(self.project_member_ctx,
-                           'update_address_scope', self.target))
 
-    def test_project_member_can_not_update_address_scope_other_project(self):
-        # If project member is not able to do that, it implies that
-        # project_reader also will not be able to do that
-        target = {'project_id': 'other-project'}
+class ProjectMemberTests(ProjectAdminTests):
+
+    def setUp(self):
+        super(ProjectMemberTests, self).setUp()
+        self.context = self.project_member_ctx
+
+    def test_create_address_scope_shared(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.project_member_ctx, 'update_address_scope', target)
-
-    def test_system_admin_can_update_shared_address_scope(self):
-        # system_admin_ctx don't have project_id set so it's always call to
-        # create it for "other project"
-        target = self.target.copy()
-        target['shared'] = True
-        self.assertTrue(
-            policy.enforce(self.system_admin_ctx,
-                           'update_address_scope:shared', target))
-
-    def test_system_member_can_not_update_shared_address_scope(self):
-        # If system member is not able to do that, it implies that
-        # system_reader also will not be able to do that
-        target = self.target.copy()
-        target['shared'] = True
+            self.context, 'create_address_scope:shared', self.target)
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.system_member_ctx, 'update_address_scope:shared', target)
+            self.context, 'create_address_scope:shared', self.alt_target)
 
-    def test_project_admin_can_not_update_shared_address_scope(self):
-        # If project admin is not able to do that, it implies that
-        # project_member and project_reader also will not be able to do that
-        target = self.target.copy()
-        target['shared'] = True
+    def test_update_address_scope_shared(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.project_admin_ctx, 'update_address_scope:shared', target)
-
-    def test_system_admin_can_delete_address_scope(self):
-        # system_admin_ctx don't have project_id set so it's always call to
-        # create it for "other project"
-        self.assertTrue(
-            policy.enforce(self.system_admin_ctx,
-                           'delete_address_scope', self.target))
-
-    def test_system_member_can_not_delete_address_scope(self):
-        # If system member is not able to do that, it implies that
-        # system_reader also will not be able to do that
+            self.context, 'update_address_scope:shared', self.target)
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.system_member_ctx, 'delete_address_scope', self.target)
+            self.context, 'update_address_scope:shared', self.alt_target)
 
-    def test_project_member_can_delete_address_scope(self):
-        self.assertTrue(
-            policy.enforce(self.project_member_ctx,
-                           'delete_address_scope', self.target))
 
-    def test_project_member_can_not_delete_address_scope_other_project(self):
-        # If project member is not able to do that, it implies that
-        # project_reader also will not be able to do that
-        target = {'project_id': 'other-project'}
+class ProjectReaderTests(ProjectMemberTests):
+
+    def setUp(self):
+        super(ProjectReaderTests, self).setUp()
+        self.context = self.project_reader_ctx
+
+    def test_create_address_scope(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.project_member_ctx, 'delete_address_scope', target)
+            self.context, 'create_address_scope', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_address_scope', self.alt_target)
+
+    def test_update_address_scope(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_address_scope', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_address_scope', self.alt_target)
+
+    def test_delete_address_scope(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_address_scope', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_address_scope', self.alt_target)

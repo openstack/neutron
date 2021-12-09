@@ -51,8 +51,8 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='create_port',
-        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
-        scope_types=['system', 'project'],
+        check_str=base.PROJECT_MEMBER,
+        scope_types=['project'],
         description='Create a port',
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
@@ -65,12 +65,11 @@ rules = [
         name='create_port:device_owner',
         check_str=base.policy_or(
             'not rule:network_device',
-            base.SYSTEM_ADMIN,
             base.PROJECT_ADMIN,
             base.RULE_ADVSVC,
             base.RULE_NET_OWNER
         ),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description='Specify ``device_owner`` attribute when creting a port',
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
@@ -87,9 +86,8 @@ rules = [
         check_str=base.policy_or(
             base.RULE_ADVSVC,
             base.RULE_NET_OWNER,
-            base.SYSTEM_ADMIN,
             base.PROJECT_ADMIN),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description='Specify ``mac_address`` attribute when creating a port',
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
@@ -105,10 +103,9 @@ rules = [
         check_str=base.policy_or(
             base.RULE_ADVSVC,
             base.RULE_NET_OWNER,
-            base.SYSTEM_ADMIN,
             base.PROJECT_ADMIN,
             'rule:shared'),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description='Specify ``fixed_ips`` information when creating a port',
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
@@ -125,9 +122,8 @@ rules = [
         check_str=base.policy_or(
             base.RULE_ADVSVC,
             base.RULE_NET_OWNER,
-            base.SYSTEM_ADMIN,
             base.PROJECT_ADMIN),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description='Specify IP address in ``fixed_ips`` when creating a port',
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
@@ -143,10 +139,9 @@ rules = [
         check_str=base.policy_or(
             base.RULE_ADVSVC,
             base.RULE_NET_OWNER,
-            base.SYSTEM_ADMIN,
             base.PROJECT_ADMIN,
             'rule:shared'),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description='Specify subnet ID in ``fixed_ips`` when creating a port',
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
@@ -163,9 +158,8 @@ rules = [
         check_str=base.policy_or(
             base.RULE_ADVSVC,
             base.RULE_NET_OWNER,
-            base.SYSTEM_ADMIN,
             base.PROJECT_ADMIN),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description=(
             'Specify ``port_security_enabled`` '
             'attribute when creating a port'
@@ -181,8 +175,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_port:binding:host_id',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description=(
             'Specify ``binding:host_id`` '
             'attribute when creating a port'
@@ -196,8 +190,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_port:binding:profile',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description=(
             'Specify ``binding:profile`` attribute '
             'when creating a port'
@@ -211,8 +205,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_port:binding:vnic_type',
-        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
-        scope_types=['system', 'project'],
+        check_str=base.PROJECT_MEMBER,
+        scope_types=['project'],
         description=(
             'Specify ``binding:vnic_type`` '
             'attribute when creating a port'
@@ -227,10 +221,9 @@ rules = [
     policy.DocumentedRuleDefault(
         name='create_port:allowed_address_pairs',
         check_str=base.policy_or(
-            base.SYSTEM_ADMIN,
             base.PROJECT_ADMIN,
             base.RULE_NET_OWNER),
-        scope_types=['project', 'system'],
+        scope_types=['project'],
         description=(
             'Specify ``allowed_address_pairs`` '
             'attribute when creating a port'
@@ -245,10 +238,9 @@ rules = [
     policy.DocumentedRuleDefault(
         name='create_port:allowed_address_pairs:mac_address',
         check_str=base.policy_or(
-            base.SYSTEM_ADMIN,
             base.PROJECT_ADMIN,
             base.RULE_NET_OWNER),
-        scope_types=['project', 'system'],
+        scope_types=['project'],
         description=(
             'Specify ``mac_address` of `allowed_address_pairs`` '
             'attribute when creating a port'
@@ -263,10 +255,9 @@ rules = [
     policy.DocumentedRuleDefault(
         name='create_port:allowed_address_pairs:ip_address',
         check_str=base.policy_or(
-            base.SYSTEM_ADMIN,
             base.PROJECT_ADMIN,
             base.RULE_NET_OWNER),
-        scope_types=['project', 'system'],
+        scope_types=['project'],
         description=(
             'Specify ``ip_address`` of ``allowed_address_pairs`` '
             'attribute when creating a port'
@@ -283,9 +274,9 @@ rules = [
         name='get_port',
         check_str=base.policy_or(
             base.RULE_ADVSVC,
-            base.SYSTEM_OR_PROJECT_READER
+            base.PROJECT_READER
         ),
-        scope_types=['project', 'system'],
+        scope_types=['project'],
         description='Get a port',
         operations=ACTION_GET,
         deprecated_rule=policy.DeprecatedRule(
@@ -298,8 +289,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_port:binding:vif_type',
-        check_str=base.SYSTEM_READER,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Get ``binding:vif_type`` attribute of a port',
         operations=ACTION_GET,
         deprecated_rule=policy.DeprecatedRule(
@@ -310,8 +301,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_port:binding:vif_details',
-        check_str=base.SYSTEM_READER,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Get ``binding:vif_details`` attribute of a port',
         operations=ACTION_GET,
         deprecated_rule=policy.DeprecatedRule(
@@ -322,8 +313,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_port:binding:host_id',
-        check_str=base.SYSTEM_READER,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Get ``binding:host_id`` attribute of a port',
         operations=ACTION_GET,
         deprecated_rule=policy.DeprecatedRule(
@@ -334,8 +325,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_port:binding:profile',
-        check_str=base.SYSTEM_READER,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Get ``binding:profile`` attribute of a port',
         operations=ACTION_GET,
         deprecated_rule=policy.DeprecatedRule(
@@ -346,8 +337,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_port:resource_request',
-        check_str=base.SYSTEM_READER,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Get ``resource_request`` attribute of a port',
         operations=ACTION_GET,
         deprecated_rule=policy.DeprecatedRule(
@@ -362,10 +353,10 @@ rules = [
     policy.DocumentedRuleDefault(
         name='update_port',
         check_str=base.policy_or(
-            base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+            base.PROJECT_MEMBER,
             base.RULE_ADVSVC
         ),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description='Update a port',
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
@@ -382,10 +373,9 @@ rules = [
             'not rule:network_device',
             base.RULE_ADVSVC,
             base.RULE_NET_OWNER,
-            base.SYSTEM_ADMIN,
             base.PROJECT_ADMIN
         ),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description='Update ``device_owner`` attribute of a port',
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
@@ -400,10 +390,10 @@ rules = [
     policy.DocumentedRuleDefault(
         name='update_port:mac_address',
         check_str=base.policy_or(
-            base.SYSTEM_ADMIN,
+            base.PROJECT_ADMIN,
             base.RULE_ADVSVC
         ),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description='Update ``mac_address`` attribute of a port',
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
@@ -419,10 +409,9 @@ rules = [
         check_str=base.policy_or(
             base.RULE_ADVSVC,
             base.RULE_NET_OWNER,
-            base.SYSTEM_ADMIN,
             base.PROJECT_ADMIN
         ),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description='Specify ``fixed_ips`` information when updating a port',
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
@@ -438,10 +427,9 @@ rules = [
         check_str=base.policy_or(
             base.RULE_ADVSVC,
             base.RULE_NET_OWNER,
-            base.SYSTEM_ADMIN,
             base.PROJECT_ADMIN
         ),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description=(
             'Specify IP address in ``fixed_ips`` '
             'information when updating a port'
@@ -460,11 +448,10 @@ rules = [
         check_str=base.policy_or(
             base.RULE_ADVSVC,
             base.RULE_NET_OWNER,
-            base.SYSTEM_ADMIN,
             base.PROJECT_ADMIN,
             'rule:shared'
         ),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description=(
             'Specify subnet ID in ``fixed_ips`` '
             'information when updating a port'
@@ -484,10 +471,9 @@ rules = [
         check_str=base.policy_or(
             base.RULE_ADVSVC,
             base.RULE_NET_OWNER,
-            base.SYSTEM_ADMIN,
             base.PROJECT_ADMIN
         ),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description='Update ``port_security_enabled`` attribute of a port',
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
@@ -500,8 +486,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_port:binding:host_id',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Update ``binding:host_id`` attribute of a port',
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
@@ -512,8 +498,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_port:binding:profile',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Update ``binding:profile`` attribute of a port',
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
@@ -525,10 +511,10 @@ rules = [
     policy.DocumentedRuleDefault(
         name='update_port:binding:vnic_type',
         check_str=base.policy_or(
-            base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+            base.PROJECT_MEMBER,
             base.RULE_ADVSVC
         ),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description='Update ``binding:vnic_type`` attribute of a port',
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
@@ -542,10 +528,9 @@ rules = [
     policy.DocumentedRuleDefault(
         name='update_port:allowed_address_pairs',
         check_str=base.policy_or(
-            base.SYSTEM_ADMIN,
             base.PROJECT_ADMIN,
             base.RULE_NET_OWNER),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description='Update ``allowed_address_pairs`` attribute of a port',
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
@@ -557,10 +542,9 @@ rules = [
     policy.DocumentedRuleDefault(
         name='update_port:allowed_address_pairs:mac_address',
         check_str=base.policy_or(
-            base.SYSTEM_ADMIN,
             base.PROJECT_ADMIN,
             base.RULE_NET_OWNER),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description=(
             'Update ``mac_address`` of ``allowed_address_pairs`` '
             'attribute of a port'
@@ -575,10 +559,9 @@ rules = [
     policy.DocumentedRuleDefault(
         name='update_port:allowed_address_pairs:ip_address',
         check_str=base.policy_or(
-            base.SYSTEM_ADMIN,
             base.PROJECT_ADMIN,
             base.RULE_NET_OWNER),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description=(
             'Update ``ip_address`` of ``allowed_address_pairs`` '
             'attribute of a port'
@@ -593,9 +576,9 @@ rules = [
     policy.DocumentedRuleDefault(
         name='update_port:data_plane_status',
         check_str=base.policy_or(
-            base.SYSTEM_ADMIN,
+            base.PROJECT_ADMIN,
             'role:data_plane_integrator'),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description='Update ``data_plane_status`` attribute of a port',
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
@@ -609,9 +592,9 @@ rules = [
         name='delete_port',
         check_str=base.policy_or(
             base.RULE_ADVSVC,
-            base.SYSTEM_ADMIN_OR_PROJECT_MEMBER
+            base.PROJECT_MEMBER
         ),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description='Delete a port',
         operations=ACTION_DELETE,
         deprecated_rule=policy.DeprecatedRule(

@@ -19,7 +19,28 @@ from neutron_lib import context
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
+from neutron import policy
 from neutron.tests import base as tests_base
+
+
+# According to the community goal guidelines
+# https://governance.openstack.org/tc/goals/selected/consistent-and-secure-rbac.html#re-evaluate-project-specific-api-policies
+# each rule should have only one scope type,
+# If for any reason, rule needs to have more than one scope, it should be
+# listed in that list of exceptions.
+# This is dictionary where key is the rule name and value is list of the
+# rule scopes, like e.g.:
+#
+#     {
+#         'rule_name': ["system", "project"],
+#         'rule_name_2': ["system", "domain"]
+#     }
+SCOPE_TYPES_EXCEPTIONS = {
+    'get_flavor_service_profile': ['system', 'project'],
+    'get_flavor': ['system', 'project'],
+    'get_rule_type': ['system', 'project'],
+    'get_service_provider': ['system', 'project'],
+}
 
 
 class PolicyBaseTestCase(tests_base.BaseTestCase):
@@ -76,3 +97,29 @@ class PolicyBaseTestCase(tests_base.BaseTestCase):
             user_id=self.user_id,
             roles=['reader'],
             project_id=self.project_id)
+
+
+class RuleScopesTestCase(PolicyBaseTestCase):
+
+    def setUp(self):
+        super(RuleScopesTestCase, self).setUp()
+        policy.init()
+
+    def test_rules_are_single_scoped(self):
+        for rule_name, rule in policy._ENFORCER.registered_rules.items():
+            if not rule.scope_types:
+                # If scope types are not set for rule, that's ok
+                continue
+            if len(rule.scope_types) == 1:
+                # If rule has only one scope, it's fine
+                continue
+            else:
+                expected_scope_types = SCOPE_TYPES_EXCEPTIONS.get(
+                    rule_name, [])
+                fail_msg = (
+                    "Rule %s have scope types %s which are not defined "
+                    "in the exceptions list: %s" % (
+                        rule_name, rule.scope_types, expected_scope_types))
+                self.assertListEqual(expected_scope_types,
+                                     rule.scope_types,
+                                     fail_msg)

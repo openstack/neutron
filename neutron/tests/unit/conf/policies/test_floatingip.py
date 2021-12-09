@@ -16,7 +16,7 @@
 from oslo_policy import policy as base_policy
 
 from neutron import policy
-from neutron.tests.unit.conf.policies import base
+from neutron.tests.unit.conf.policies import test_base as base
 
 
 class FloatingIPAPITestCase(base.PolicyBaseTestCase):
@@ -38,58 +38,63 @@ class SystemAdminTests(FloatingIPAPITestCase):
         self.context = self.system_admin_ctx
 
     def test_create_floatingip(self):
-        self.assertTrue(
-            policy.enforce(self.context, "create_floatingip", self.target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, "create_floatingip", self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, "create_floatingip", self.alt_target)
 
     def test_create_floatingip_with_ip_address(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           "create_floatingip:floating_ip_address",
-                           self.target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, "create_floatingip:floating_ip_address",
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, "create_floatingip:floating_ip_address",
+            self.alt_target)
 
     def test_get_floatingip(self):
-        self.assertTrue(
-            policy.enforce(self.context, "get_floatingip", self.target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, "get_floatingip", self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, "get_floatingip", self.alt_target)
 
     def test_update_floatingip(self):
-        self.assertTrue(
-            policy.enforce(self.context, "update_floatingip", self.target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, "update_floatingip", self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, "update_floatingip", self.alt_target)
 
     def test_delete_floatingip(self):
-        self.assertTrue(
-            policy.enforce(self.context, "delete_floatingip", self.target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, "delete_floatingip", self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, "delete_floatingip", self.alt_target)
 
 
-class SystemMemberTests(FloatingIPAPITestCase):
+class SystemMemberTests(SystemAdminTests):
 
     def setUp(self):
         super(SystemMemberTests, self).setUp()
         self.context = self.system_member_ctx
-
-    def test_create_floatingip(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, "create_floatingip", self.target)
-
-    def test_create_floatingip_with_ip_address(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, "create_floatingip:floating_ip_address", self.target)
-
-    def test_get_floatingip(self):
-        self.assertTrue(
-            policy.enforce(self.context, "get_floatingip", self.target))
-
-    def test_update_floatingip(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, "update_floatingip", self.target)
-
-    def test_delete_floatingip(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, "delete_floatingip", self.target)
 
 
 class SystemReaderTests(SystemMemberTests):
@@ -108,19 +113,16 @@ class ProjectAdminTests(FloatingIPAPITestCase):
     def test_create_floatingip(self):
         self.assertTrue(
             policy.enforce(self.context, "create_floatingip", self.target))
-
-    def test_create_floatingip_other_project(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, "create_floatingip", self.alt_target)
-
-    def test_create_floatingip_with_ip_address(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.context, "create_floatingip:floating_ip_address", self.target)
+            self.context, "create_floatingip", self.alt_target)
 
-    def test_create_floatingip_with_ip_address_other_project(self):
+    def test_create_floatingip_with_ip_address(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                "create_floatingip:floating_ip_address", self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
@@ -130,8 +132,6 @@ class ProjectAdminTests(FloatingIPAPITestCase):
     def test_get_floatingip(self):
         self.assertTrue(
             policy.enforce(self.context, "get_floatingip", self.target))
-
-    def test_get_floatingip_other_project(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, "get_floatingip", self.alt_target)
@@ -139,8 +139,6 @@ class ProjectAdminTests(FloatingIPAPITestCase):
     def test_update_floatingip(self):
         self.assertTrue(
             policy.enforce(self.context, "update_floatingip", self.target))
-
-    def test_update_floatingip_other_project(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, "update_floatingip", self.alt_target)
@@ -148,8 +146,6 @@ class ProjectAdminTests(FloatingIPAPITestCase):
     def test_delete_floatingip(self):
         self.assertTrue(
             policy.enforce(self.context, "delete_floatingip", self.target))
-
-    def test_delete_floatingip_other_project(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, "delete_floatingip", self.alt_target)
@@ -161,8 +157,20 @@ class ProjectMemberTests(ProjectAdminTests):
         super(ProjectMemberTests, self).setUp()
         self.context = self.project_member_ctx
 
+    def test_create_floatingip_with_ip_address(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "create_floatingip:floating_ip_address",
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "create_floatingip:floating_ip_address",
+            self.alt_target)
 
-class ProjectReaderTests(FloatingIPAPITestCase):
+
+class ProjectReaderTests(ProjectMemberTests):
 
     def setUp(self):
         super(ProjectReaderTests, self).setUp()
@@ -171,51 +179,29 @@ class ProjectReaderTests(FloatingIPAPITestCase):
     def test_create_floatingip(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, "create_floatingip", self.target)
-
-    def test_create_floatingip_other_project(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, "create_floatingip", self.alt_target)
-
-    def test_create_floatingip_with_ip_address(self):
+            policy.enforce,
+            self.context, "create_floatingip", self.target)
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.context, "create_floatingip:floating_ip_address", self.target)
-
-    def test_create_floatingip_with_ip_address_other_project(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, "create_floatingip:floating_ip_address",
-            self.alt_target)
-
-    def test_get_floatingip(self):
-        self.assertTrue(
-            policy.enforce(self.context, "get_floatingip", self.target))
-
-    def test_get_floatingip_other_project(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, "get_floatingip", self.alt_target)
+            self.context, "create_floatingip", self.alt_target)
 
     def test_update_floatingip(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, "update_floatingip", self.target)
-
-    def test_update_floatingip_other_project(self):
+            policy.enforce,
+            self.context, "update_floatingip", self.target)
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, "update_floatingip", self.alt_target)
+            policy.enforce,
+            self.context, "update_floatingip", self.alt_target)
 
     def test_delete_floatingip(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, "delete_floatingip", self.target)
-
-    def test_delete_floatingip_other_project(self):
+            policy.enforce,
+            self.context, "delete_floatingip", self.target)
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, "delete_floatingip", self.alt_target)
+            policy.enforce,
+            self.context, "delete_floatingip", self.alt_target)

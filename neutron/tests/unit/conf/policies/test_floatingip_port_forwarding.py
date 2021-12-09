@@ -19,7 +19,7 @@ from oslo_policy import policy as base_policy
 from oslo_utils import uuidutils
 
 from neutron import policy
-from neutron.tests.unit.conf.policies import base
+from neutron.tests.unit.conf.policies import test_base as base
 
 
 class FloatingipPortForwardingAPITestCase(base.PolicyBaseTestCase):
@@ -53,44 +53,52 @@ class SystemAdminTests(FloatingipPortForwardingAPITestCase):
         self.context = self.system_admin_ctx
 
     def test_create_fip_pf(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'create_floatingip_port_forwarding',
-                           self.target))
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'create_floatingip_port_forwarding',
-                           self.alt_target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_floatingip_port_forwarding',
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_floatingip_port_forwarding',
+            self.alt_target)
 
     def test_get_fip_pf(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'get_floatingip_port_forwarding',
-                           self.target))
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'get_floatingip_port_forwarding',
-                           self.alt_target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_floatingip_port_forwarding',
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_floatingip_port_forwarding',
+            self.alt_target)
 
     def test_update_fip_pf(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'update_floatingip_port_forwarding',
-                           self.target))
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'update_floatingip_port_forwarding',
-                           self.alt_target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_floatingip_port_forwarding',
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_floatingip_port_forwarding',
+            self.alt_target)
 
     def test_delete_fip_pf(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'delete_floatingip_port_forwarding',
-                           self.target))
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'delete_floatingip_port_forwarding',
-                           self.alt_target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_floatingip_port_forwarding',
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_floatingip_port_forwarding',
+            self.alt_target)
 
 
 class SystemMemberTests(SystemAdminTests):
@@ -98,42 +106,6 @@ class SystemMemberTests(SystemAdminTests):
     def setUp(self):
         super(SystemMemberTests, self).setUp()
         self.context = self.system_member_ctx
-
-    def test_create_fip_pf(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'create_floatingip_port_forwarding',
-            self.target)
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'create_floatingip_port_forwarding',
-            self.alt_target)
-
-    def test_update_fip_pf(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'update_floatingip_port_forwarding',
-            self.target)
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'update_floatingip_port_forwarding',
-            self.alt_target)
-
-    def test_delete_fip_pf(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'delete_floatingip_port_forwarding',
-            self.target)
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'delete_floatingip_port_forwarding',
-            self.alt_target)
 
 
 class SystemReaderTests(SystemMemberTests):

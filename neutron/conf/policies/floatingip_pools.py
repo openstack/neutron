@@ -21,7 +21,7 @@ DEPRECATED_REASON = (
 rules = [
     policy.DocumentedRuleDefault(
         name='get_floatingip_pool',
-        check_str=base.SYSTEM_OR_PROJECT_READER,
+        check_str=base.PROJECT_READER,
         description='Get floating IP pools',
         operations=[
             {
@@ -29,7 +29,7 @@ rules = [
                 'path': '/floatingip_pools',
             },
         ],
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_floatingip_pool',
             check_str=base.RULE_ANY,

@@ -14,7 +14,7 @@
 # limitations under the License.
 
 from neutron import policy
-from neutron.tests.unit.conf.policies import base
+from neutron.tests.unit.conf.policies import test_base as base
 
 
 class ServiceTypeAPITestCase(base.PolicyBaseTestCase):

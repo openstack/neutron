@@ -30,9 +30,9 @@ rules = [
     policy.DocumentedRuleDefault(
         name='create_floatingip_port_forwarding',
         check_str=base.policy_or(
-            base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+            base.PROJECT_MEMBER,
             base.RULE_PARENT_OWNER),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description='Create a floating IP port forwarding',
         operations=[
             {
@@ -49,9 +49,9 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_floatingip_port_forwarding',
         check_str=base.policy_or(
-            base.SYSTEM_OR_PROJECT_READER,
+            base.PROJECT_READER,
             base.RULE_PARENT_OWNER),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description='Get a floating IP port forwarding',
         operations=[
             {
@@ -72,9 +72,9 @@ rules = [
     policy.DocumentedRuleDefault(
         name='update_floatingip_port_forwarding',
         check_str=base.policy_or(
-            base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+            base.PROJECT_MEMBER,
             base.RULE_PARENT_OWNER),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description='Update a floating IP port forwarding',
         operations=[
             {
@@ -91,9 +91,9 @@ rules = [
     policy.DocumentedRuleDefault(
         name='delete_floatingip_port_forwarding',
         check_str=base.policy_or(
-            base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+            base.PROJECT_MEMBER,
             base.RULE_PARENT_OWNER),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description='Delete a floating IP port forwarding',
         operations=[
             {

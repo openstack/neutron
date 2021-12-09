@@ -32,7 +32,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_address_group',
         check_str=base.policy_or(
-            base.SYSTEM_OR_PROJECT_READER,
+            base.PROJECT_READER,
             'rule:shared_address_groups'),
         description='Get an address group',
         operations=[
@@ -45,7 +45,7 @@ rules = [
                 'path': AG_RESOURCE_PATH,
             },
         ],
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_address_group',
             check_str=base.policy_or(base.RULE_ADMIN_OR_OWNER,
