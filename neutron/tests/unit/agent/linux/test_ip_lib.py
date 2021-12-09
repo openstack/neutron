@@ -382,9 +382,9 @@ class TestIpWrapper(base.BaseTestCase):
             'vxlan_proxy': True,
             'vxlan_port_range': ('1', '2')}
 
-        retval = ip_lib.IPWrapper().add_vxlan('vxlan0', 'vni0',
+        retval = ip_lib.IPWrapper().add_vxlan('vxlan0', 'vni0', 'dev0',
                                               group='group0',
-                                              dev='dev0', ttl='ttl0',
+                                              ttl='ttl0',
                                               tos='tos0',
                                               local='local0', proxy=True,
                                               srcport=(1, 2))
@@ -434,9 +434,9 @@ class TestIpWrapper(base.BaseTestCase):
             'vxlan_port_range': ('1', '2'),
             'vxlan_port': 4789}
 
-        retval = ip_lib.IPWrapper().add_vxlan('vxlan0', 'vni0',
+        retval = ip_lib.IPWrapper().add_vxlan('vxlan0', 'vni0', 'dev0',
                                               group='group0',
-                                              dev='dev0', ttl='ttl0',
+                                              ttl='ttl0',
                                               tos='tos0',
                                               local='local0', proxy=True,
                                               srcport=(1, 2),

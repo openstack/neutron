@@ -328,8 +328,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
                       "VNI %(segmentation_id)s",
                       {'interface': interface,
                        'segmentation_id': segmentation_id})
-            args = {'dev': self.local_int,
-                    'srcport': (cfg.CONF.VXLAN.udp_srcport_min,
+            args = {'srcport': (cfg.CONF.VXLAN.udp_srcport_min,
                                 cfg.CONF.VXLAN.udp_srcport_max),
                     'dstport': cfg.CONF.VXLAN.udp_dstport,
                     'ttl': cfg.CONF.VXLAN.ttl}
@@ -355,7 +354,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
 
             try:
                 int_vxlan = self.ip.add_vxlan(interface, segmentation_id,
-                                              **args)
+                                              self.local_int, **args)
             except RuntimeError:
                 with excutils.save_and_reraise_exception() as ctxt:
                     # perform this check after an attempt rather than before

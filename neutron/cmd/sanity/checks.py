@@ -77,8 +77,10 @@ def ovs_geneve_supported(from_ip='192.0.2.3', to_ip='192.0.2.4'):
 
 def iproute2_vxlan_supported():
     ip = ip_lib.IPWrapper()
+    name_dummy = common_utils.get_rand_device_name(prefix='vxlantest-')
+    ip.add_dummy(name_dummy)
     name = common_utils.get_rand_device_name(prefix='vxlantest-')
-    port = ip.add_vxlan(name, 3000)
+    port = ip.add_vxlan(name, 3000, name_dummy)
     ip.del_veth(name)
     return name == port.name
 

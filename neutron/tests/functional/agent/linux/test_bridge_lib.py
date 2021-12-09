@@ -154,7 +154,7 @@ class FdbInterfaceTestCase(testscenarios.WithScenarios, base.BaseSudoTestCase):
         vni = random.randint(1, 2**24 - 1)
         ip_wrapper = ip_lib.IPWrapper(self.namespace)
         ip_wrapper.add_dummy(self.device)
-        ip_wrapper.add_vxlan(self.device_vxlan, vni, dev=self.device)
+        ip_wrapper.add_vxlan(self.device_vxlan, vni, self.device)
         ip_device = ip_lib.IPDevice(self.device, self.namespace)
         ip_device.link.set_up()
         ip_device.addr.add(self.ip)
