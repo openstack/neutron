@@ -56,24 +56,23 @@ class L3_NAT_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
                 ]
             })
 
-    def _update_router_gw_info(self, context, router_id, info, router=None):
+    def _update_router_gw_info(self, context, router_id, info,
+                               request_body, router=None):
         with db_api.CONTEXT_WRITER.using(context):
             # Always load the router inside the DB context.
             router = self._get_router(context, router_id)
             old_router = self._make_router_dict(router)
             router.enable_snat = self._get_enable_snat(info)
-            router_body = {l3_apidef.ROUTER:
-                           {l3_apidef.EXTERNAL_GW_INFO: info}}
             registry.publish(resources.ROUTER_GATEWAY,
                              events.PRECOMMIT_UPDATE, self,
                              payload=events.DBEventPayload(
-                                 context, request_body=router_body,
+                                 context, request_body=request_body,
                                  states=(old_router,), resource_id=router_id,
                                  desired_state=router))
 
         # Calls superclass, pass router db object for avoiding re-loading
         super(L3_NAT_dbonly_mixin, self)._update_router_gw_info(
-            context, router_id, info, router=router)
+            context, router_id, info, request_body, router=router)
         # Returning the router might come back useful if this
         # method is overridden in child classes
         return self._get_router(context, router_id)

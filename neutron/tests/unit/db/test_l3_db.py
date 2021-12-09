@@ -17,6 +17,8 @@ from unittest import mock
 
 import ddt
 import netaddr
+from neutron_lib.api.definitions import external_net as extnet_apidef
+from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -30,6 +32,7 @@ from neutron_lib.plugins import directory
 from neutron_lib.plugins import utils as plugin_utils
 from oslo_utils import uuidutils
 import testtools
+import webob.exc
 
 from neutron.db import extraroute_db
 from neutron.db import l3_db
@@ -606,6 +609,10 @@ class L3TestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             self.ctx, network_id=self.network['network']['id'])
         network_obj.Network.get_object(
             self.ctx, id=self.network['network']['id']).delete()
+        router_ports = l3_obj.RouterPort.get_objects(
+            self.ctx, **{'router_id': self.router['id']})
+        for router_port in router_ports:
+            router_port.delete()
         l3_obj.Router.get_object(self.ctx, id=self.router['id']).delete()
 
     def create_router(self, router):
@@ -708,3 +715,104 @@ class L3TestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         mock_log.warning.assert_called_once_with(self.GET_PORTS_BY_ROUTER_MSG,
                                                  msg_vars)
         self._check_routerports((False, True))
+
+    def test_create_router_notify(self):
+        with mock.patch.object(l3_db.registry, 'publish') as mock_publish:
+            router = {'router': {'name': 'foo_router',
+                                 'admin_state_up': True,
+                                 'tenant_id': 'foo_tenant'}}
+            self.create_router(router)
+            expected_calls = [
+                mock.call(resources.ROUTER, events.BEFORE_CREATE,
+                          self.mixin, payload=mock.ANY),
+                mock.call(resources.ROUTER, events.PRECOMMIT_CREATE,
+                          self.mixin, payload=mock.ANY),
+                mock.call(resources.ROUTER, events.AFTER_CREATE,
+                          self.mixin, payload=mock.ANY),
+            ]
+            mock_publish.assert_has_calls(expected_calls)
+
+    def test_update_router_notify(self):
+        with mock.patch.object(l3_db.registry, 'publish') as mock_publish:
+            self.mixin.update_router(self.ctx, self.router['id'],
+                                     {'router': {'name': 'test1'}})
+            expected_calls = [
+                mock.call(resources.ROUTER, events.PRECOMMIT_UPDATE,
+                          self.mixin, payload=mock.ANY),
+                mock.call(resources.ROUTER, events.AFTER_UPDATE,
+                         self.mixin, payload=mock.ANY),
+            ]
+            mock_publish.assert_has_calls(expected_calls)
+
+    def _create_external_network(self, name=None, **kwargs):
+        name = name or 'network1'
+        kwargs[extnet_apidef.EXTERNAL] = True
+        with db_api.CONTEXT_WRITER.using(self.ctx):
+            res = self._create_network(
+                self.fmt, name, True,
+                arg_list=(extnet_apidef.EXTERNAL,), **kwargs)
+            if res.status_int >= webob.exc.HTTPClientError.code:
+                raise webob.exc.HTTPClientError(code=res.status_int)
+            return self.deserialize(self.fmt, res)
+
+    def test_update_router_gw_notify(self):
+        with mock.patch.object(l3_db.registry, 'publish') as mock_publish:
+            ext_net = self._create_external_network()
+            self.create_subnet(ext_net, '1.1.2.1', '1.1.2.0/24')
+            update_data = {
+                l3_apidef.EXTERNAL_GW_INFO: {
+                    'network_id': ext_net['network']['id']}}
+            self.mixin.update_router(
+                self.ctx, self.router['id'], {'router': update_data})
+            expected_calls = [
+                mock.call(resources.NETWORK, events.BEFORE_CREATE,
+                          mock.ANY, payload=mock.ANY),
+                mock.call(resources.SEGMENT, events.PRECOMMIT_CREATE,
+                          mock.ANY, payload=mock.ANY),
+                mock.call(resources.NETWORK, events.PRECOMMIT_CREATE,
+                          mock.ANY, payload=mock.ANY),
+                mock.call(resources.NETWORK, events.AFTER_CREATE,
+                          mock.ANY, payload=mock.ANY),
+                mock.call(resources.NETWORK, events.BEFORE_RESPONSE,
+                          mock.ANY, payload=mock.ANY),
+                mock.call(resources.SUBNET, events.BEFORE_CREATE,
+                          mock.ANY, payload=mock.ANY),
+                mock.call(resources.SUBNET, events.AFTER_CREATE,
+                          mock.ANY, payload=mock.ANY),
+                mock.call(resources.SUBNET, events.BEFORE_RESPONSE,
+                          mock.ANY, payload=mock.ANY),
+                mock.call(resources.ROUTER_GATEWAY, events.BEFORE_CREATE,
+                          self.mixin, payload=mock.ANY),
+                mock.call(resources.PORT, events.BEFORE_CREATE,
+                          mock.ANY, payload=mock.ANY),
+                mock.call(resources.PORT, events.PRECOMMIT_CREATE,
+                          mock.ANY, payload=mock.ANY),
+                mock.call(resources.PORT, events.AFTER_CREATE,
+                          mock.ANY, payload=mock.ANY),
+                mock.call(resources.ROUTER_GATEWAY, events.AFTER_CREATE,
+                          mock.ANY, payload=mock.ANY),
+                mock.call(resources.ROUTER, events.PRECOMMIT_UPDATE,
+                          self.mixin, payload=mock.ANY),
+                mock.call(resources.ROUTER, events.AFTER_UPDATE,
+                          self.mixin, payload=mock.ANY)]
+            mock_publish.assert_has_calls(expected_calls)
+            mock_publish.reset_mock()
+            update_data = {l3_apidef.EXTERNAL_GW_INFO: {}}
+            self.mixin.update_router(
+                self.ctx, self.router['id'], {'router': update_data})
+            expected_calls = [
+                mock.call(resources.ROUTER_GATEWAY, events.BEFORE_DELETE,
+                          self.mixin, payload=mock.ANY),
+                mock.call(resources.PORT, events.BEFORE_DELETE,
+                          mock.ANY, payload=mock.ANY),
+                mock.call(resources.PORT, events.PRECOMMIT_DELETE,
+                          mock.ANY, payload=mock.ANY),
+                mock.call(resources.PORT, events.AFTER_DELETE,
+                          mock.ANY, payload=mock.ANY),
+                mock.call(resources.ROUTER_GATEWAY, events.AFTER_DELETE,
+                          self.mixin, payload=mock.ANY),
+                mock.call(resources.ROUTER, events.PRECOMMIT_UPDATE,
+                          self.mixin, payload=mock.ANY),
+                mock.call(resources.ROUTER, events.AFTER_UPDATE,
+                          self.mixin, payload=mock.ANY)]
+            mock_publish.assert_has_calls(expected_calls)

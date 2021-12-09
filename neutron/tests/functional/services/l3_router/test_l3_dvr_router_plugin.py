@@ -119,9 +119,13 @@ class L3DvrTestCase(L3DvrTestCaseBase):
         ext_net_id = ext_net['network']['id']
         net1_id = net1['network']['id']
         # Set gateway to router
+
+        gw_info = {'network_id': ext_net_id}
+        request_body = {
+            l3_apidef.EXTERNAL_GW_INFO: gw_info}
         self.l3_plugin._update_router_gw_info(
             self.context, router1['id'],
-            {'network_id': ext_net_id})
+            gw_info, request_body)
         # Now add router interface (subnet1) from net1 to router
         self.l3_plugin.add_router_interface(
             self.context, router1['id'],
@@ -292,18 +296,24 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             self.context, router1['id'],
             {'subnet_id': subnet1['subnet']['id']})
         # Set gateway to first router
+        gw_info = {'network_id': ext_net['network']['id']}
+        request_body = {
+            l3_apidef.EXTERNAL_GW_INFO: gw_info}
         self.l3_plugin._update_router_gw_info(
             self.context, router1['id'],
-            {'network_id': ext_net_id})
+            gw_info, request_body)
         # Create second router and add an interface
         router2 = self._create_router()
         self.l3_plugin.add_router_interface(
             self.context, router2['id'],
             {'subnet_id': subnet2['subnet']['id']})
         # Set gateway to second router
+        gw_info = {'network_id': ext_net['network']['id']}
+        request_body = {
+            l3_apidef.EXTERNAL_GW_INFO: gw_info}
         self.l3_plugin._update_router_gw_info(
             self.context, router2['id'],
-            {'network_id': ext_net_id})
+            gw_info, request_body)
         # Create an agent gateway port for the external network
         net_id, agent_gw_port = (
             self.setup_create_agent_gw_port_for_network(network=ext_net))
@@ -312,13 +322,15 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             self.l3_plugin._get_agent_gw_ports_exist_for_network(
                 self.context, ext_net_id, "", self.l3_agent['id']))
         self.l3_plugin._update_router_gw_info(
-            self.context, router1['id'], {})
+            self.context, router1['id'], {},
+            {l3_apidef.EXTERNAL_GW_INFO: {}})
         # Check for agent gateway port after deleting one of the gw
         self.assertIsNotNone(
             self.l3_plugin._get_agent_gw_ports_exist_for_network(
                 self.context, ext_net_id, "", self.l3_agent['id']))
         self.l3_plugin._update_router_gw_info(
-            self.context, router2['id'], {})
+            self.context, router2['id'], {},
+            {l3_apidef.EXTERNAL_GW_INFO: {}})
         # Check for agent gateway port after deleting last gw
         self.assertIsNone(
             self.l3_plugin._get_agent_gw_ports_exist_for_network(
@@ -631,9 +643,12 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             self.fmt, ext_net, '2001:db8::1', '2001:db8::/64',
             ip_version=constants.IP_VERSION_6, enable_dhcp=True)
         router1 = self._create_router()
+        gw_info = {'network_id': ext_net['network']['id']}
+        request_body = {
+            l3_apidef.EXTERNAL_GW_INFO: gw_info}
         self.l3_plugin._update_router_gw_info(
             self.context, router1['id'],
-            {'network_id': ext_net['network']['id']})
+            gw_info, request_body)
         snat_router_intfs = self.l3_plugin._get_snat_sync_interfaces(
             self.context, [router1['id']])
         self.assertEqual(0, len(snat_router_intfs[router1['id']]))
@@ -703,9 +718,12 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                                        candidates=[self.l3_agent])
 
         # Set gateway to router
+        gw_info = {'network_id': ext_net['network']['id']}
+        request_body = {
+            l3_apidef.EXTERNAL_GW_INFO: gw_info}
         self.l3_plugin._update_router_gw_info(
             self.context, router['id'],
-            {'network_id': ext_net['network']['id']})
+            gw_info, request_body)
         private_subnet1 = self._make_subnet(
             self.fmt,
             private_net1,
@@ -811,9 +829,12 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                                        candidates=[self.l3_agent])
 
         # Set gateway to router
+        gw_info = {'network_id': ext_net['network']['id']}
+        request_body = {
+            l3_apidef.EXTERNAL_GW_INFO: gw_info}
         self.l3_plugin._update_router_gw_info(
             self.context, router['id'],
-            {'network_id': ext_net['network']['id']})
+            gw_info, request_body)
         private_subnet1 = self._make_subnet(
             self.fmt,
             private_net1,
@@ -891,9 +912,12 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                                        candidates=[self.l3_agent])
 
         # Set gateway to router
+        gw_info = {'network_id': ext_net['network']['id']}
+        request_body = {
+            l3_apidef.EXTERNAL_GW_INFO: gw_info}
         self.l3_plugin._update_router_gw_info(
             self.context, router['id'],
-            {'network_id': ext_net['network']['id']})
+            gw_info, request_body)
         private_subnet1 = self._make_subnet(
             self.fmt,
             private_net1,
@@ -966,9 +990,12 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                                        candidates=[self.l3_agent])
 
         # Set gateway to router
+        gw_info = {'network_id': ext_net['network']['id']}
+        request_body = {
+            l3_apidef.EXTERNAL_GW_INFO: gw_info}
         self.l3_plugin._update_router_gw_info(
             self.context, router['id'],
-            {'network_id': ext_net['network']['id']})
+            gw_info, request_body)
         private_subnet1 = self._make_subnet(
             self.fmt,
             private_net1,
@@ -1048,9 +1075,12 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                                        candidates=[self.l3_agent])
 
         # Set gateway to router
+        gw_info = {'network_id': ext_net['network']['id']}
+        request_body = {
+            l3_apidef.EXTERNAL_GW_INFO: gw_info}
         self.l3_plugin._update_router_gw_info(
             self.context, router['id'],
-            {'network_id': ext_net['network']['id']})
+            gw_info, request_body)
         private_subnet1 = self._make_subnet(
             self.fmt,
             private_net1,
@@ -1177,9 +1207,12 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                                        router['id'],
                                        candidates=[self.l3_agent])
         # Set gateway to router
+        gw_info = {'network_id': ext_net['network']['id']}
+        request_body = {
+            l3_apidef.EXTERNAL_GW_INFO: gw_info}
         self.l3_plugin._update_router_gw_info(
             self.context, router['id'],
-            {'network_id': ext_net['network']['id']})
+            gw_info, request_body)
         private_subnet1 = self._make_subnet(
             self.fmt,
             private_net1,
@@ -1217,9 +1250,12 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                                        router['id'],
                                        candidates=[self.l3_agent])
         # Set gateway to router
+        gw_info = {'network_id': ext_net['network']['id']}
+        request_body = {
+            l3_apidef.EXTERNAL_GW_INFO: gw_info}
         self.l3_plugin._update_router_gw_info(
             self.context, router['id'],
-            {'network_id': ext_net['network']['id']})
+            gw_info, request_body)
         private_subnet1 = self._make_subnet(
             self.fmt,
             private_net1,
@@ -1349,9 +1385,12 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                 self.subnet(network=ext_net),\
                 self.subnet(cidr='20.0.0.0/24') as subnet,\
                 self.port(subnet=subnet):
+            gw_info = {'network_id': ext_net['network']['id']}
+            request_body = {
+                l3_apidef.EXTERNAL_GW_INFO: gw_info}
             self.l3_plugin._update_router_gw_info(
                 self.context, router['id'],
-                {'network_id': ext_net['network']['id']})
+                gw_info, request_body)
             self.l3_plugin.add_router_interface(
                 self.context, router['id'],
                 {'subnet_id': subnet['subnet']['id']})
@@ -1380,9 +1419,12 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             self.core_plugin.update_port(
                 self.context, port['port']['id'],
                 {'port': {'binding:host_id': self.l3_agent['host']}})
+            gw_info = {'network_id': ext_net['network']['id']}
+            request_body = {
+                l3_apidef.EXTERNAL_GW_INFO: gw_info}
             self.l3_plugin._update_router_gw_info(
                 self.context, router['id'],
-                {'network_id': ext_net['network']['id']})
+                gw_info, request_body)
             self.l3_plugin.add_router_interface(
                 self.context, router['id'],
                 {'subnet_id': subnet['subnet']['id']})
@@ -1620,9 +1662,12 @@ class L3DvrTestCase(L3DvrTestCaseBase):
         with self.subnet() as subnet,\
                 self.network(**kwargs) as ext_net,\
                 self.subnet(network=ext_net, cidr='20.0.0.0/24'):
+            gw_info = {'network_id': ext_net['network']['id']}
+            request_body = {
+                l3_apidef.EXTERNAL_GW_INFO: gw_info}
             self.l3_plugin._update_router_gw_info(
                 self.context, router['id'],
-                {'network_id': ext_net['network']['id']})
+                gw_info, request_body)
             self.l3_plugin.add_router_interface(
                 self.context, router['id'],
                 {'subnet_id': subnet['subnet']['id']})
@@ -1655,9 +1700,12 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             self.core_plugin.update_port(
                     self.context, port['port']['id'],
                     {'port': {'binding:host_id': self.l3_agent['host']}})
+            gw_info = {'network_id': ext_net['network']['id']}
+            request_body = {
+                l3_apidef.EXTERNAL_GW_INFO: gw_info}
             self.l3_plugin._update_router_gw_info(
                 self.context, router['id'],
-                {'network_id': ext_net['network']['id']})
+                gw_info, request_body)
             self.l3_plugin.add_router_interface(
                 self.context, router['id'],
                 {'subnet_id': subnet['subnet']['id']})
@@ -2036,9 +2084,12 @@ class L3DvrTestCaseMigration(L3DvrTestCaseBase):
                 self.l3_plugin.add_router_interface(
                     self.context, router['id'],
                     {'subnet_id': subnet1['subnet']['id']})
+                gw_info = {'network_id': ext_net['network']['id']}
+                request_body = {
+                    l3_apidef.EXTERNAL_GW_INFO: gw_info}
                 self.l3_plugin._update_router_gw_info(
                     self.context, router['id'],
-                    {'network_id': ext_net['network']['id']})
+                    gw_info, request_body)
                 self.assertEqual(
                     0, len(self.l3_plugin._get_snat_sync_interfaces(
                         self.context, [router['id']])))

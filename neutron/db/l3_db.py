@@ -47,6 +47,7 @@ from neutron.common import ipv6_utils
 from neutron.common import utils
 from neutron.db import _utils as db_utils
 from neutron.db.models import l3 as l3_models
+from neutron.db.models import l3_attrs as l3_attrs_models
 from neutron.db import models_v2
 from neutron.db import standardattrdescription_db as st_attr
 from neutron.extensions import l3
@@ -254,26 +255,36 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                  states=(router,)))
             return router_db
 
-    def _update_gw_for_create_router(self, context, gw_info, router_id):
+    def _update_gw_for_create_router(self, context, gw_info,
+                                     request_body, router_id):
         if gw_info:
             with db_utils.context_if_transaction(
                     context, not context.session.is_active, writer=False):
                 router_db = self._get_router(context, router_id)
             self._update_router_gw_info(context, router_id,
-                                        gw_info, router=router_db)
+                                        gw_info, request_body,
+                                        router=router_db)
 
             return self._get_router(context, router_id), None
         return None, None
 
+    def _get_stripped_router(self, router_body):
+        stripped_router = {}
+        for key in router_body:
+            if getattr(l3_models.Router, key, None) or getattr(
+                    l3_attrs_models.RouterExtraAttributes, key, None):
+                stripped_router[key] = router_body[key]
+        return stripped_router
+
     @db_api.retry_if_session_inactive()
     def create_router(self, context, router):
         r = router['router']
-        gw_info = r.pop(EXTERNAL_GW_INFO, None)
+        gw_info = r.get(EXTERNAL_GW_INFO, None)
         create = functools.partial(self._create_router_db, context, r,
                                    r['tenant_id'])
         delete = functools.partial(self.delete_router, context)
         update_gw = functools.partial(self._update_gw_for_create_router,
-                                      context, gw_info)
+                                      context, gw_info, r)
         router_db, _unused = db_utils.safe_creation(context, create,
                                                     delete, update_gw,
                                                     transaction=False)
@@ -294,7 +305,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             router_db = self._get_router(context, router_id)
             old_router = self._make_router_dict(router_db)
             if data:
-                router_db.update(data)
+                router_db.update(self._get_stripped_router(data))
             registry.publish(resources.ROUTER, events.PRECOMMIT_UPDATE, self,
                              payload=events.DBEventPayload(
                                  context, request_body=data,
@@ -305,10 +316,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
     @db_api.retry_if_session_inactive()
     def update_router(self, context, id, router):
         r = router['router']
-        gw_info = r.pop(EXTERNAL_GW_INFO, constants.ATTR_NOT_SPECIFIED)
+        gw_info = r.get(EXTERNAL_GW_INFO, constants.ATTR_NOT_SPECIFIED)
         original = self.get_router(context, id)
         if gw_info != constants.ATTR_NOT_SPECIFIED:
-            self._update_router_gw_info(context, id, gw_info)
+            self._update_router_gw_info(context, id, gw_info, r)
         router_db = self._update_router_db(context, id, r)
         updated = self._make_router_dict(router_db)
 
@@ -409,7 +420,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                                {'router_id': [router_id]}))
 
     def _delete_current_gw_port(self, context, router_id, router,
-                                new_network_id):
+                                new_network_id, request_body=None):
         """Delete gw port if attached to an old network."""
         port_requires_deletion = (
             router.gw_port and router.gw_port['network_id'] != new_network_id)
@@ -423,7 +434,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 router_id=router_id, net_id=router.gw_port['network_id'])
         gw_ips = [x['ip_address'] for x in router.gw_port['fixed_ips']]
         gw_port_id = router.gw_port['id']
-        self._delete_router_gw_port_db(context, router)
+        self._delete_router_gw_port_db(context, router, request_body)
         if admin_ctx.session.is_active:
             # TODO(ralonsoh): ML2 plugin "delete_port" should be called outside
             # a DB transaction. In this case an exception is made but in order
@@ -443,7 +454,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                              metadata=metadata,
                              resource_id=router_id))
 
-    def _delete_router_gw_port_db(self, context, router):
+    def _delete_router_gw_port_db(self, context, router, request_body):
         with db_api.CONTEXT_WRITER.using(context):
             router.gw_port = None
             if router not in context.session:
@@ -453,6 +464,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                  events.BEFORE_DELETE, self,
                                  payload=events.DBEventPayload(
                                      context, states=(router,),
+                                     request_body=request_body,
                                      resource_id=router.id))
             except exceptions.CallbackFailure as e:
                 # NOTE(armax): preserve old check's behavior
@@ -475,7 +487,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 registry.publish(
                     resources.ROUTER_GATEWAY, events.BEFORE_CREATE, self,
                     payload=events.DBEventPayload(
-                        context, request_body=router,
+                        context,
                         metadata={
                             'network_id': new_network_id,
                             'subnets': subnets},
@@ -503,11 +515,17 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                            'network_id': new_network_id},
                                  resource_id=router_id))
 
-    def _update_current_gw_port(self, context, router_id, router, ext_ips):
+    def _update_current_gw_port(self, context, router_id, router,
+                                ext_ips, request_body):
+        registry.publish(resources.ROUTER_GATEWAY, events.BEFORE_UPDATE, self,
+                         payload=events.DBEventPayload(
+                             context, request_body=request_body,
+                             states=(router,)))
         self._core_plugin.update_port(context.elevated(), router.gw_port['id'],
                                       {'port': {'fixed_ips': ext_ips}})
 
-    def _update_router_gw_info(self, context, router_id, info, router=None):
+    def _update_router_gw_info(self, context, router_id, info,
+                               request_body, router=None):
         router = router or self._get_router(context, router_id)
         gw_port = router.gw_port
         ext_ips = info.get('external_fixed_ips', []) if info else []
@@ -516,10 +534,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         network_id = self._validate_gw_info(context, info, ext_ips, router)
         if gw_port and ext_ip_change and gw_port['network_id'] == network_id:
             self._update_current_gw_port(context, router_id, router,
-                                         ext_ips)
+                                         ext_ips, request_body)
         else:
             self._delete_current_gw_port(context, router_id, router,
-                                         network_id)
+                                         network_id, request_body)
             self._create_gw_port(context, router_id, router, network_id,
                                  ext_ips)
 

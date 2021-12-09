@@ -256,11 +256,15 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
         if not current_enable_snat:
             previous_gw_info = {'network_id': self.ext_net_id,
                                 'enable_snat': current_enable_snat}
+            request_body = {
+                l3_apidef.EXTERNAL_GW_INFO: previous_gw_info}
             self.target_object._update_router_gw_info(
-                self.context, self.router.id, previous_gw_info)
+                self.context, self.router.id, previous_gw_info, request_body)
 
+        request_body = {
+            l3_apidef.EXTERNAL_GW_INFO: gw_info}
         self.target_object._update_router_gw_info(
-            self.context, self.router.id, gw_info)
+            self.context, self.router.id, gw_info, request_body)
         router = self.target_object._get_router(
             self.context, self.router.id)
         try:

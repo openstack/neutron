@@ -389,7 +389,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                     '_create_snat_intf_ports_if_not_exists') as cs:
             self.mixin._create_gw_port(
                 self.ctx, router_id, router_db, mock.ANY,
-                mock.ANY)
+                mock.ANY, mock.ANY)
             self.assertFalse(cs.call_count)
 
     def test_build_routers_list_with_gw_port_mismatch(self):
