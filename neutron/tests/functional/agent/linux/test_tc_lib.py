@@ -209,7 +209,7 @@ class TcFiltersTestCase(functional_base.BaseSudoTestCase):
             if i == 0:
                 ip_wrapper.add_veth(self.device[0], self.device[1], self.ns[1])
             ip_wrapper.add_vxlan(self.device_vxlan[i], self.vxlan_id,
-                                 dev=self.device[i])
+                                 self.device[i])
             ip_device = ip_lib.IPDevice(self.device[i], ns)
             ip_device.link.set_up()
             ip_device.addr.add(self.ip[i])
