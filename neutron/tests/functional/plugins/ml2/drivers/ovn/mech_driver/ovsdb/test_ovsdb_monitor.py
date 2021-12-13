@@ -191,12 +191,18 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
             lambda: not self._check_mac_binding_exists(macb_id),
             timeout=15, sleep=1)
 
+    def _get_port_uuid(self, port_id):
+        sb_port = self.sb_api.db_find(
+            'Port_Binding', ('logical_port', '=', port_id)).execute()[0]
+        return sb_port['_uuid']
+
     def _test_port_binding_and_status(self, port_id, action, status):
         # This function binds or unbinds port to chassis and
         # checks if port status matches with input status
         core_plugin = directory.get_plugin()
         self.sb_api.check_for_row_by_value_and_retry(
             'Port_Binding', 'logical_port', port_id)
+        port_uuid = self._get_port_uuid(port_id)
 
         def check_port_status(status):
             port = core_plugin.get_ports(
@@ -205,8 +211,12 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         if action == 'bind':
             self.sb_api.lsp_bind(port_id, self.chassis,
                                  may_exist=True).execute(check_error=True)
+            self.sb_api.db_set('Port_Binding', port_uuid,
+                               ('up', True)).execute(check_error=True)
         else:
             self.sb_api.lsp_unbind(port_id).execute(check_error=True)
+            self.sb_api.db_set('Port_Binding', port_uuid,
+                               ('up', False)).execute(check_error=True)
         n_utils.wait_until_true(lambda: check_port_status(status))
 
     def test_port_up_down_events(self):
