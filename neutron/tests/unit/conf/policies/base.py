@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import warnings
+
 from neutron_lib import context
 from oslo_config import cfg
 from oslo_utils import uuidutils
@@ -23,6 +25,11 @@ from neutron.tests import base as tests_base
 class PolicyBaseTestCase(tests_base.BaseTestCase):
 
     def setUp(self):
+        # NOTE(slaweq): Because of issue with stestr and Python3, we need
+        # to avoid too much output to be produced during tests, so we will
+        # ignore python warnings in the tests policy tests
+        warnings.simplefilter("ignore")
+
         # NOTE(slaweq): Enforcing new policies has to be done before calling
         # super() as in BaseTestCase policies are initialized and config
         # options has to be set properly at that point already.
