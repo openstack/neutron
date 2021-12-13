@@ -1602,8 +1602,12 @@ class TestDvrRouter(framework.L3AgentTestFramework):
         master, backup = self._get_master_and_slave_routers(
             router1, router2, check_external_device=False)
 
+        utils.wait_until_true(lambda: master.ha_state == 'master')
+        utils.wait_until_true(lambda: backup.ha_state == 'backup')
+
         self._assert_ip_addresses_in_dvr_ha_snat_namespace_with_fip(master)
         self._assert_no_ip_addresses_in_dvr_ha_snat_namespace_with_fip(backup)
+
         self.fail_ha_router(master)
 
         utils.wait_until_true(lambda: backup.ha_state == 'master')
@@ -1627,6 +1631,9 @@ class TestDvrRouter(framework.L3AgentTestFramework):
 
         master, backup = self._get_master_and_slave_routers(
             router1, router2, check_external_device=False)
+
+        utils.wait_until_true(lambda: master.ha_state == 'master')
+        utils.wait_until_true(lambda: backup.ha_state == 'backup')
 
         self._assert_ip_addresses_in_dvr_ha_snat_namespace(master)
         self._assert_no_ip_addresses_in_dvr_ha_snat_namespace(backup)
