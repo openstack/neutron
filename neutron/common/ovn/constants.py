@@ -277,6 +277,10 @@ LSP_OPTIONS_VIRTUAL_IP_KEY = 'virtual-ip'
 LSP_OPTIONS_MCAST_FLOOD_REPORTS = 'mcast_flood_reports'
 LSP_OPTIONS_MCAST_FLOOD = 'mcast_flood'
 
+# Port Binding types
+PB_TYPE_PATCH = 'patch'
+PB_TYPE_VIRTUAL = 'virtual'
+
 HA_CHASSIS_GROUP_DEFAULT_NAME = 'default_ha_chassis_group'
 HA_CHASSIS_GROUP_HIGHEST_PRIORITY = 32767
 
