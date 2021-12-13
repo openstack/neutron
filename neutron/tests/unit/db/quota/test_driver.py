@@ -95,6 +95,8 @@ class TestDbQuotaDriver(testlib_api.SqlTestCase,
         self.quota_driver = driver.DbQuotaDriver()
         self.project_1, self.project_2 = 'prj_test_1', 'prj_test_2'
         self.resource_1, self.resource_2 = 'res_test_1', 'res_test_2'
+        self.projects = (self.project_1, self.project_2)
+        self.resources = (self.resource_1, self.resource_2)
 
     def test_create_quota_limit(self):
         defaults = {RESOURCE: TestResource(RESOURCE, 4)}
