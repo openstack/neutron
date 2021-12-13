@@ -86,7 +86,18 @@ OVN_SB_SCHEMA = {
                              "min": 0, "max": "unlimited"}}},
             "isRoot": True,
             "indexes": [["name"]]
-        }
+        },
+        "Port_Binding": {
+            "columns": {
+                "logical_port": {"type": "string"},
+                "type": {"type": "string"},
+                "chassis": {"type": {"key": {"type": "uuid",
+                                             "refTable": "Chassis",
+                                             "refType": "weak"},
+                                     "min": 0, "max": 1}},
+                "up": {"type": {"key": "boolean", "min": 0, "max": 1}}},
+            "indexes": [["logical_port"]],
+            "isRoot": True},
     }
 }
 
@@ -341,35 +352,6 @@ class TestOvnIdlDistributedLock(base.BaseTestCase):
                          self.fake_driver.agent_chassis_table)
 
 
-class TestPortBindingChassisUpdateEvent(base.BaseTestCase):
-    def setUp(self):
-        super(TestPortBindingChassisUpdateEvent, self).setUp()
-        self.driver = mock.Mock()
-        self.event = ovsdb_monitor.PortBindingChassisUpdateEvent(self.driver)
-
-    def _test_event(self, event, row, old):
-        if self.event.matches(event, row, old):
-            self.event.run(event, row, old)
-            self.driver.set_port_status_up.assert_called()
-        else:
-            self.driver.set_port_status_up.assert_not_called()
-
-    def test_event_matches(self):
-        # NOTE(twilson) This primarily tests implementation details. If a
-        # scenario test is written that handles shutting down a compute
-        # node uncleanly and performing a 'host-evacuate', this can be removed
-        pbtable = fakes.FakeOvsdbTable.create_one_ovsdb_table(
-            attrs={'name': 'Port_Binding'})
-        ovsdb_row = fakes.FakeOvsdbRow.create_one_ovsdb_row
-        self.driver.nb_ovn.lookup.return_value = ovsdb_row(attrs={'up': True})
-        self._test_event(
-            self.event.ROW_UPDATE,
-            ovsdb_row(attrs={'_table': pbtable, 'chassis': 'one',
-                             'type': '_fake_', 'logical_port': 'foo'}),
-            ovsdb_row(attrs={'_table': pbtable, 'chassis': 'two',
-                             'type': '_fake_'}))
-
-
 class TestOvnNbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
 
     def setUp(self):
@@ -378,108 +360,7 @@ class TestOvnNbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
         helper.register_all()
         self.idl = ovsdb_monitor.OvnNbIdl(self.driver, "remote", helper)
         self.lp_table = self.idl.tables.get('Logical_Switch_Port')
-        self.driver.set_port_status_up = mock.Mock()
-        self.driver.set_port_status_down = mock.Mock()
         mock.patch.object(self.idl, 'handle_db_schema_changes').start()
-
-    def _test_lsp_helper(self, event, new_row_json, old_row_json=None,
-                         table=None):
-        row_uuid = uuidutils.generate_uuid()
-        if not table:
-            table = self.lp_table
-        lp_row = ovs_idl.Row.from_json(self.idl, table,
-                                       row_uuid, new_row_json)
-        if old_row_json:
-            old_row = ovs_idl.Row.from_json(self.idl, table,
-                                            row_uuid, old_row_json)
-        else:
-            old_row = None
-        self.idl.notify(event, lp_row, updates=old_row)
-        # Add a STOP EVENT to the queue
-        self.idl.notify_handler.shutdown()
-        # Execute the notifications queued
-        self.idl.notify_handler.notify_loop()
-
-    def test_lsp_up_create_event(self):
-        row_data = {"up": True, "name": "foo-name"}
-        self._test_lsp_helper('create', row_data)
-        self.driver.set_port_status_up.assert_called_once_with("foo-name")
-        self.assertFalse(self.driver.set_port_status_down.called)
-
-    def test_lsp_down_create_event(self):
-        row_data = {"up": False, "name": "foo-name"}
-        self._test_lsp_helper('create', row_data)
-        self.driver.set_port_status_down.assert_called_once_with("foo-name")
-        self.assertFalse(self.driver.set_port_status_up.called)
-
-    def test_lsp_up_not_set_event(self):
-        row_data = {"up": ['set', []], "name": "foo-name"}
-        self._test_lsp_helper('create', row_data)
-        self.assertFalse(self.driver.set_port_status_up.called)
-        self.assertFalse(self.driver.set_port_status_down.called)
-
-    def test_unwatch_logical_switch_port_create_events(self):
-        self.idl.unwatch_logical_switch_port_create_events()
-        row_data = {"up": True, "name": "foo-name"}
-        self._test_lsp_helper('create', row_data)
-        self.assertFalse(self.driver.set_port_status_up.called)
-        self.assertFalse(self.driver.set_port_status_down.called)
-
-        row_data["up"] = False
-        self._test_lsp_helper('create', row_data)
-        self.assertFalse(self.driver.set_port_status_up.called)
-        self.assertFalse(self.driver.set_port_status_down.called)
-
-    def test_post_connect(self):
-        self.idl.post_connect()
-        self.assertIsNone(self.idl._lsp_create_up_event)
-        self.assertIsNone(self.idl._lsp_create_down_event)
-
-    def test_lsp_up_update_event(self):
-        new_row_json = {"up": True, "name": "foo-name"}
-        old_row_json = {"up": False}
-        self._test_lsp_helper('update', new_row_json,
-                              old_row_json=old_row_json)
-        self.driver.set_port_status_up.assert_called_once_with("foo-name")
-        self.assertFalse(self.driver.set_port_status_down.called)
-
-    def test_lsp_down_update_event(self):
-        new_row_json = {"up": False, "name": "foo-name"}
-        old_row_json = {"up": True}
-        self._test_lsp_helper('update', new_row_json,
-                              old_row_json=old_row_json)
-        self.driver.set_port_status_down.assert_called_once_with("foo-name")
-        self.assertFalse(self.driver.set_port_status_up.called)
-
-    def test_lsp_up_update_event_no_old_data(self):
-        new_row_json = {"up": True, "name": "foo-name"}
-        self._test_lsp_helper('update', new_row_json,
-                              old_row_json=None)
-        self.assertFalse(self.driver.set_port_status_up.called)
-        self.assertFalse(self.driver.set_port_status_down.called)
-
-    def test_lsp_down_update_event_no_old_data(self):
-        new_row_json = {"up": False, "name": "foo-name"}
-        self._test_lsp_helper('update', new_row_json,
-                              old_row_json=None)
-        self.assertFalse(self.driver.set_port_status_up.called)
-        self.assertFalse(self.driver.set_port_status_down.called)
-
-    def test_lsp_other_column_update_event(self):
-        new_row_json = {"up": False, "name": "foo-name",
-                        "addresses": ["10.0.0.2"]}
-        old_row_json = {"addresses": ["10.0.0.3"]}
-        self._test_lsp_helper('update', new_row_json,
-                              old_row_json=old_row_json)
-        self.assertFalse(self.driver.set_port_status_up.called)
-        self.assertFalse(self.driver.set_port_status_down.called)
-
-    def test_notify_other_table(self):
-        new_row_json = {"name": "foo-name"}
-        self._test_lsp_helper('create', new_row_json,
-                              table=self.idl.tables.get("Logical_Switch"))
-        self.assertFalse(self.driver.set_port_status_up.called)
-        self.assertFalse(self.driver.set_port_status_down.called)
 
     @mock.patch.object(hash_ring_manager.HashRingManager, 'get_node')
     def test_notify_different_target_node(self, mock_get_node):
@@ -501,11 +382,12 @@ class TestOvnSbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
         super(TestOvnSbIdlNotifyHandler, self).setUp()
         sb_helper = ovs_idl.SchemaHelper(schema_json=OVN_SB_SCHEMA)
         sb_helper.register_table('Chassis')
+        sb_helper.register_table('Port_Binding')
         self.driver.agent_chassis_table = 'Chassis'
         self.sb_idl = ovsdb_monitor.OvnSbIdl(self.driver, "remote", sb_helper)
-        self.sb_idl.post_connect()
-        self.chassis_table = self.sb_idl.tables.get('Chassis')
         self.driver.update_segment_host_mapping = mock.Mock()
+        self.driver.set_port_status_up = mock.Mock()
+        self.driver.set_port_status_down = mock.Mock()
         self.l3_plugin = directory.get_plugin(n_const.L3)
         self.l3_plugin.schedule_unhosted_gateways = mock.Mock()
 
@@ -516,9 +398,8 @@ class TestOvnSbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
                                       "fake-phynet1:fake-br1"]]]
         }
 
-    def _test_chassis_helper(self, event, new_row_json, old_row_json=None):
+    def _test_helper(self, event, table, new_row_json, old_row_json=None):
         row_uuid = uuidutils.generate_uuid()
-        table = self.chassis_table
         row = ovs_idl.Row.from_json(self.sb_idl, table, row_uuid, new_row_json)
         if old_row_json:
             old_row = ovs_idl.Row.from_json(self.sb_idl, table,
@@ -530,6 +411,14 @@ class TestOvnSbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
         self.sb_idl.notify_handler.shutdown()
         # Execute the notifications queued
         self.sb_idl.notify_handler.notify_loop()
+
+    def _test_chassis_helper(self, event, new_row_json, old_row_json=None,
+                             table=None):
+        self.sb_idl.post_connect()
+        self.chassis_table = self.sb_idl.tables.get('Chassis')
+        if not table:
+            table = self.chassis_table
+        self._test_helper(event, table, new_row_json, old_row_json)
 
     def test_chassis_create_event(self):
         self._test_chassis_helper('create', self.row_json)
@@ -600,6 +489,119 @@ class TestOvnSbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
             self.driver.update_segment_host_mapping.assert_not_called()
             self.l3_plugin.schedule_unhosted_gateways.assert_not_called()
             mock_ha.assert_not_called()
+
+    def _test_port_binding_helper(self, event, new_row_json,
+                                  old_row_json=None, table=None):
+        self.port_binding_table = self.sb_idl.tables.get('Port_Binding')
+        if not table:
+            table = self.port_binding_table
+        self._test_helper(event, table, new_row_json, old_row_json)
+
+    def test_port_binding_up_create_event(self):
+        row_data = {"type": "", "up": True, "logical_port": "foo-name"}
+        self._test_port_binding_helper('create', row_data)
+        self.driver.set_port_status_up.assert_called_once_with("foo-name")
+        self.assertFalse(self.driver.set_port_status_down.called)
+
+    def test_port_binding_create_patch_type_event(self):
+        # Note(ltomasbo): This will behave the same for up = True|False
+        # as the port needs to transition to up anyway
+        row_data = {"type": "patch", "logical_port": "foo-name"}
+        self._test_port_binding_helper('create', row_data)
+        self.driver.set_port_status_up.assert_called_once_with("foo-name")
+        self.assertFalse(self.driver.set_port_status_down.called)
+
+        row_data = {"type": "patch", "logical_port": "lrp-foo-name"}
+        self._test_port_binding_helper('create', row_data)
+        self.assertEqual(1, self.driver.set_port_status_up.call_count)
+        self.assertFalse(self.driver.set_port_status_down.called)
+
+    def test_port_binding_up_create_virtual_type_event(self):
+        row_data = {"type": "virtual", "up": True,
+                    "logical_port": "foo-name"}
+        self._test_port_binding_helper('create', row_data)
+        self.assertFalse(self.driver.set_port_status_up.called)
+        self.assertFalse(self.driver.set_port_status_down.called)
+
+    def test_port_binding_down_create_event(self):
+        row_data = {"type": "", "up": False, "logical_port": "foo-name"}
+        self._test_port_binding_helper('create', row_data)
+        self.driver.set_port_status_down.assert_called_once_with("foo-name")
+        self.assertFalse(self.driver.set_port_status_up.called)
+
+    def test_port_binding_down_create_virtual_type_event(self):
+        row_data = {"type": "virtual", "up": False,
+                    "logical_port": "foo-name"}
+        self._test_port_binding_helper('create', row_data)
+        self.assertFalse(self.driver.set_port_status_up.called)
+        self.assertFalse(self.driver.set_port_status_down.called)
+
+    def test_port_binding_up_update_event(self):
+        new_row_json = {"type": "", "up": True, "logical_port": "foo-name"}
+        old_row_json = {"type": "", "up": False, "logical_port": "foo-name"}
+        self._test_port_binding_helper('update', new_row_json,
+                                       old_row_json=old_row_json)
+        self.driver.set_port_status_up.assert_called_once_with("foo-name")
+        self.assertFalse(self.driver.set_port_status_down.called)
+
+    def test_port_binding_down_update_event(self):
+        new_row_json = {"type": "", "up": False, "logical_port": "foo-name"}
+        old_row_json = {"type": "", "up": True, "logical_port": "foo-name"}
+        self._test_port_binding_helper('update', new_row_json,
+                                       old_row_json=old_row_json)
+        self.driver.set_port_status_down.assert_called_once_with("foo-name")
+        self.assertFalse(self.driver.set_port_status_up.called)
+
+    def test_port_binding_up_update_event_no_old_data(self):
+        new_row_json = {"type": "", "up": True, "logical_port": "foo-name"}
+        self._test_port_binding_helper('update', new_row_json,
+                                       old_row_json=None)
+        self.assertFalse(self.driver.set_port_status_up.called)
+        self.assertFalse(self.driver.set_port_status_down.called)
+
+    def test_port_binding_down_update_event_no_old_data(self):
+        new_row_json = {"type": "", "up": False, "logical_port": "foo-name"}
+        self._test_port_binding_helper('update', new_row_json,
+                                       old_row_json=None)
+        self.assertFalse(self.driver.set_port_status_up.called)
+        self.assertFalse(self.driver.set_port_status_down.called)
+
+    def test_port_binding_other_column_update_event(self):
+        new_row_json = {"type": "", "up": True, "name": "foo-name",
+                        "addresses": ["10.0.0.2"]}
+        old_row_json = {"type": "", "up": True, "name": "foo-name",
+                        "addresses": ["10.0.0.3"]}
+        self._test_port_binding_helper('update', new_row_json,
+                                       old_row_json=old_row_json)
+        self.assertFalse(self.driver.set_port_status_up.called)
+        self.assertFalse(self.driver.set_port_status_down.called)
+
+    def test_notify_other_table(self):
+        new_row_json = {"type": "", "up": True, "logical_port": "foo-name"}
+        self._test_port_binding_helper(
+            'create', new_row_json,
+            table=self.sb_idl.tables.get("Chassis"))
+        self.assertFalse(self.driver.set_port_status_up.called)
+        self.assertFalse(self.driver.set_port_status_down.called)
+
+    def test_unwatch_port_binding_create_events(self):
+        self.sb_idl.unwatch_port_binding_create_events()
+        row_data = {"type": "", "up": True, "logical_port": "foo-name"}
+        self._test_port_binding_helper('create', row_data)
+        self.assertFalse(self.driver.set_port_status_up.called)
+        self.assertFalse(self.driver.set_port_status_down.called)
+
+        row_data["up"] = False
+        self._test_port_binding_helper('create', row_data)
+        self.assertFalse(self.driver.set_port_status_up.called)
+        self.assertFalse(self.driver.set_port_status_down.called)
+
+    def test_post_connect(self):
+        self.assertIsNotNone(self.sb_idl._pb_create_up_event)
+        self.assertIsNotNone(self.sb_idl._pb_create_down_event)
+        self.sb_idl.post_connect()
+        self.assertIsNone(self.sb_idl._pb_create_up_event)
+        self.assertIsNone(self.sb_idl._pb_create_down_event)
 
 
 class TestChassisEvent(base.BaseTestCase):
