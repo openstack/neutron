@@ -100,7 +100,7 @@ def _send_deferred_batch(state):
             LOG.exception('Placement client call failed: %s', str(deferred))
 
 
-def _dict_chassis_config(state):
+def dict_chassis_config(state):
     if state:
         return {n_const.RP_BANDWIDTHS: state._rp_bandwidths,
                 n_const.RP_INVENTORY_DEFAULTS: state._rp_inventory_defaults,
@@ -122,10 +122,11 @@ class ChassisBandwidthConfigEvent(row_event.RowEvent):
     def run(self, event, row, old):
         name2uuid = self._placement_extension.name2uuid()
         state = self._placement_extension.build_placement_state(row, name2uuid)
+        if not state:
+            return
+
         _send_deferred_batch(state)
-        self._placement_extension.add_chassis_config(
-            row.name, _dict_chassis_config(state))
-        ch_config = self._placement_extension.get_chassis_config(row.name)
+        ch_config = dict_chassis_config(state)
         LOG.debug('OVN chassis %(chassis)s Placement configuration modified: '
                   '%(config)s', {'chassis': row.name, 'config': ch_config})
 
@@ -152,9 +153,7 @@ class OVNClientPlacementExtension(object):
         self._plugin = None
         self.uuid_ns = ovn_const.OVN_RP_UUID
         self.supported_vnic_types = ovn_const.OVN_SUPPORTED_VNIC_TYPES
-        self._enabled = bool(self.placement_plugin)
-        self._chassis = {}  # Initial config read could take some time.
-        if not self._enabled:
+        if not self.enabled:
             return
 
         if not self._config_event:
@@ -163,12 +162,9 @@ class OVNClientPlacementExtension(object):
                 self._driver._sb_idl.idl.notify_handler.watch_events(
                     [self._config_event])
             except AttributeError:
-                self._enabled = False
-
-        if not self._enabled:
-            return
-
-        self._chassis = self._read_initial_chassis_config()
+                # "sb_idl.idl.notify_handler" is not present in the
+                # MaintenanceWorker.
+                pass
 
     @property
     def placement_plugin(self):
@@ -176,6 +172,10 @@ class OVNClientPlacementExtension(object):
             self._placement_plugin = directory.get_plugin(
                 plugins_constants.PLACEMENT_REPORT)
         return self._placement_plugin
+
+    @property
+    def enabled(self):
+        return bool(self.placement_plugin)
 
     @property
     def plugin(self):
@@ -190,24 +190,33 @@ class OVNClientPlacementExtension(object):
                 self.plugin.mechanism_manager.mech_drivers['ovn'].obj)
         return self._ovn_mech_driver
 
-    @property
-    def chassis(self):
-        return self._chassis
-
-    def _read_initial_chassis_config(self):
+    def get_chassis_config(self):
+        """Read all Chassis BW config and returns the Placement states"""
         chassis = {}
         name2uuid = self.name2uuid()
         for ch in self._driver._sb_idl.chassis_list().execute(
                 check_error=True):
             state = self.build_placement_state(ch, name2uuid)
-            _send_deferred_batch(state)
-            config = _dict_chassis_config(state)
-            if config:
-                chassis[ch.name] = config
+            if state:
+                chassis[ch.name] = state
 
-        msg = '\n'.join(['Chassis %s: %s' % (name, config)
-                         for (name, config) in chassis.items()])
-        LOG.debug('OVN chassis Placement initial configuration:\n%s', msg)
+        return chassis
+
+    def read_initial_chassis_config(self):
+        """Read the Chassis BW configuration and update the Placement API
+
+        This method is called once from the MaintenanceWorker when the Neutron
+        server starts.
+        """
+        if not self.enabled:
+            return
+
+        chassis = self.get_chassis_config()
+        for state in chassis.values():
+            _send_deferred_batch(state)
+        msg = ', '.join(['Chassis %s: %s' % (name, dict_chassis_config(state))
+                         for (name, state) in chassis.items()]) or '(no info)'
+        LOG.debug('OVN chassis Placement initial configuration: %s', msg)
         return chassis
 
     def name2uuid(self, name=None):
@@ -248,7 +257,9 @@ class OVNClientPlacementExtension(object):
                 device in hypervisor_rps and device in bridges}
 
         # NOTE(ralonsoh): OVN only reports min BW RPs; packet processing RPs
-        # will be added in a future implementation.
+        # will be added in a future implementation. If no RP_BANDWIDTHS values
+        # are present (that means there is no BW information for any interface
+        # in this host), no "PlacementState" is returned.
         return placement_report.PlacementState(
             rp_bandwidths=cms_options[n_const.RP_BANDWIDTHS],
             rp_inventory_defaults=cms_options[n_const.RP_INVENTORY_DEFAULTS],
@@ -260,10 +271,3 @@ class OVNClientPlacementExtension(object):
             device_mappings=bridge_mappings,
             supported_vnic_types=self.supported_vnic_types,
             client=self.placement_plugin._placement_client)
-
-    def get_chassis_config(self, chassis_name):
-        return self._chassis.get(chassis_name)
-
-    def add_chassis_config(self, chassis_name, config):
-        if config:
-            self._chassis[chassis_name] = config

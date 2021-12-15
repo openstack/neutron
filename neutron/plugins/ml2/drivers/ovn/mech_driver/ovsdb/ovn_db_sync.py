@@ -1273,6 +1273,9 @@ class OvnSbSynchronizer(OvnDbSynchronizer):
         self.sync_hostname_and_physical_networks(ctx)
         if utils.is_ovn_l3(self.l3_plugin):
             self.l3_plugin.schedule_unhosted_gateways()
+        # NOTE(ralonsoh): this could be called using a resource event.
+        self.ovn_driver._ovn_client.placement_extension.\
+            read_initial_chassis_config()
 
     def sync_hostname_and_physical_networks(self, ctx):
         LOG.debug('OVN-SB Sync hostname and physical networks started')

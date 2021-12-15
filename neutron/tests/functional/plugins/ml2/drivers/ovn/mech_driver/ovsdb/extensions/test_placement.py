@@ -66,7 +66,7 @@ class TestOVNClientQosExtension(base.TestOVNFunctionalBase):
         super().setUp(maintenance_worker=maintenance_worker,
                       service_plugins=service_plugins)
         self.ovn_client = self.mech_driver._ovn_client
-        self.placement_ext = self.ovn_client._placement_extension
+        self.placement_ext = self.ovn_client.placement_extension
         self.mock_name2uuid = mock.patch.object(
             self.placement_ext, 'name2uuid').start()
         self.mock_send_batch = mock.patch.object(
@@ -98,12 +98,15 @@ class TestOVNClientQosExtension(base.TestOVNFunctionalBase):
             'Chassis', name, ('external_ids', external_ids)
         ).execute(check_error=True)
 
-    def _check_placement_cache(self, expected_chassis):
+    def _check_placement_config(self, expected_chassis):
         current_chassis = None
 
         def check_chassis():
             nonlocal current_chassis
-            current_chassis = self.placement_ext.chassis
+            current_chassis = self.placement_ext.get_chassis_config()
+            current_chassis = {
+                chassis_name: placement_extension.dict_chassis_config(state)
+                for chassis_name, state in current_chassis.items()}
             return current_chassis == expected_chassis
 
         try:
@@ -126,37 +129,37 @@ class TestOVNClientQosExtension(base.TestOVNFunctionalBase):
             bandwidths='br-provider0:3000:4000',
             inventory_defaults='allocation_ratio:3.0;min_unit:1',
             hypervisors='br-provider0:host2')
-        self._check_placement_cache({**self.CHASSIS1, **self.CHASSIS2})
+        self._check_placement_config({**self.CHASSIS1, **self.CHASSIS2})
 
         self._update_chassis(
             'chassis2',
             bandwidths='br-provider0:5000:6000',
             inventory_defaults='allocation_ratio:1.1;min_unit:1',
             hypervisors='br-provider0:host2')
-        self._check_placement_cache({**self.CHASSIS1, **self.CHASSIS2_B})
+        self._check_placement_config({**self.CHASSIS1, **self.CHASSIS2_B})
 
     def test_read_initial_empty_config_and_update(self):
         self.mock_name2uuid.return_value = {'host1': 'uuid1',
                                             'host2': 'uuid2'}
         self._create_chassis('host1', 'chassis1', physical_nets=['phys1'])
         self._create_chassis('host2', 'chassis2', physical_nets=['phys2'])
-        self._check_placement_cache({**{'chassis1': self.EMPTY_CHASSIS},
-                                     **{'chassis2': self.EMPTY_CHASSIS}})
+        self._check_placement_config({**{'chassis1': self.EMPTY_CHASSIS},
+                                      **{'chassis2': self.EMPTY_CHASSIS}})
 
         self._update_chassis(
             'chassis1',
             bandwidths='br-provider0:1000:2000',
             inventory_defaults='allocation_ratio:1.0;min_unit:2',
             hypervisors='br-provider0:host1')
-        self._check_placement_cache({**self.CHASSIS1,
-                                     **{'chassis2': self.EMPTY_CHASSIS}})
+        self._check_placement_config({**self.CHASSIS1,
+                                      **{'chassis2': self.EMPTY_CHASSIS}})
 
         self._update_chassis(
             'chassis2',
             bandwidths='br-provider0:3000:4000',
             inventory_defaults='allocation_ratio:3.0;min_unit:1',
             hypervisors='br-provider0:host2')
-        self._check_placement_cache({**self.CHASSIS1, **self.CHASSIS2})
+        self._check_placement_config({**self.CHASSIS1, **self.CHASSIS2})
 
     def test_update_twice(self):
         self.mock_name2uuid.return_value = {'host1': 'uuid1',
@@ -167,19 +170,19 @@ class TestOVNClientQosExtension(base.TestOVNFunctionalBase):
             inventory_defaults='allocation_ratio:1.0;min_unit:2',
             hypervisors='br-provider0:host1')
         self._create_chassis('host2', 'chassis2', physical_nets=['phys2'])
-        self._check_placement_cache({**self.CHASSIS1,
-                                     **{'chassis2': self.EMPTY_CHASSIS}})
+        self._check_placement_config({**self.CHASSIS1,
+                                      **{'chassis2': self.EMPTY_CHASSIS}})
 
         self._update_chassis(
             'chassis2',
             bandwidths='br-provider0:3000:4000',
             inventory_defaults='allocation_ratio:3.0;min_unit:1',
             hypervisors='br-provider0:host2')
-        self._check_placement_cache({**self.CHASSIS1, **self.CHASSIS2})
+        self._check_placement_config({**self.CHASSIS1, **self.CHASSIS2})
 
         self._update_chassis(
             'chassis2',
             bandwidths='br-provider0:5000:6000',
             inventory_defaults='allocation_ratio:1.1;min_unit:1',
             hypervisors='br-provider0:host2')
-        self._check_placement_cache({**self.CHASSIS1, **self.CHASSIS2_B})
+        self._check_placement_config({**self.CHASSIS1, **self.CHASSIS2_B})
