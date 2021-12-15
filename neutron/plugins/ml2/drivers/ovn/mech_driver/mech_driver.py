@@ -13,6 +13,7 @@
 #
 
 import atexit
+import collections
 import copy
 import datetime
 import functools
@@ -20,6 +21,7 @@ import operator
 import signal
 import threading
 import types
+import uuid
 
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net
@@ -31,6 +33,7 @@ from neutron_lib import constants as const
 from neutron_lib import context as n_context
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import availability_zone as az_exc
+from neutron_lib.placement import utils as place_utils
 from neutron_lib.plugins import directory
 from neutron_lib.plugins.ml2 import api
 from neutron_lib.utils import helpers
@@ -55,6 +58,8 @@ from neutron.db import provisioning_blocks
 from neutron.extensions import securitygroup as ext_sg
 from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent as n_agent
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions \
+    import placement as placement_ext
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import maintenance
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
@@ -71,6 +76,9 @@ import neutron.wsgi
 
 LOG = log.getLogger(__name__)
 OVN_MIN_GENEVE_MAX_HEADER_SIZE = 38
+
+# TODO(ralonsoh): rehome this to ``neutron_lib.placement.constants``.
+ALLOCATION = 'allocation'
 
 
 class OVNPortUpdateError(n_exc.BadRequest):
@@ -1298,6 +1306,58 @@ class OVNMechanismDriver(api.MechanismDriver):
                               'state': 'available',
                               'tenant_id': context.project_id}
         return azs
+
+    def responsible_for_ports_allocation(self, context):
+        """Report if a chassis is responsible for a resource provider.
+
+        New "allocation" resource request defined in
+        https://review.opendev.org/c/openstack/neutron-specs/+/785236
+
+        This method replicates the logic implemented in
+        ``AgentMechanismDriverBase.responsible_for_ports_allocation``.
+
+        :param context: PortContext instance describing the port
+        :returns: True for responsible, False for not responsible
+        """
+        uuid_ns = self.resource_provider_uuid5_namespace
+        if uuid_ns is None:
+            return False
+        try:
+            allocation = context.current['binding:profile'][ALLOCATION]
+        except KeyError:
+            return False
+
+        reported = collections.defaultdict(list)
+        _placement = self._ovn_client.placement_extension
+        for ch_name, state in _placement.get_chassis_config().items():
+            for device in state._rp_bandwidths:
+                # chassis = {RP_HYPERVISORS:
+                #     {device1: {name: hostname1, uuid: uuid1}
+                #     {device2: {name: hostname1, uuid: uuid2} ...}
+                hostname = state._hypervisor_rps.get(device, {}).get('name')
+                if not hostname:
+                    continue
+                device_rp_uuid = place_utils.device_resource_provider_uuid(
+                    namespace=uuid_ns, host=hostname, device=device)
+                for group, rp in allocation.items():
+                    if device_rp_uuid == uuid.UUID(rp):
+                        reported[group].append((ch_name, state))
+
+        for group, states in reported.items():
+            if len(states) == 1:
+                ch_name = states[0][0]
+                ch_rp = placement_ext.dict_chassis_config(states[0][1])
+                LOG.debug('Chassis %s is reponsible of the resource provider '
+                          '%s', ch_name, ch_rp)
+                return True
+            elif len(states) > 1:
+                rps = {state[0]: placement_ext.dict_chassis_config(state[1])
+                       for state in states}
+                LOG.error('Several chassis reported the requested resource '
+                          'provider: %s', rps)
+                return False
+
+        return False
 
 
 def get_agents(self, context, filters=None, fields=None, _driver=None):
