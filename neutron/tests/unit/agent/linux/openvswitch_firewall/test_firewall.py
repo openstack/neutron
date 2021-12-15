@@ -851,16 +851,12 @@ class TestOVSFirewallDriver(base.BaseTestCase):
 
         self.firewall.delete_all_port_flows(port)
 
-        call_args1 = {"strict": True,
-                      "priority": 90,
-                      "table": ovs_consts.TRANSIENT_TABLE,
+        call_args1 = {"table": ovs_consts.TRANSIENT_TABLE,
                       "dl_dst": port.mac,
                       "dl_vlan": port.vlan_tag}
         flow1 = mock.call(**call_args1)
 
-        call_args2 = {"strict": True,
-                      "priority": 90,
-                      "table": ovs_consts.TRANSIENT_TABLE,
+        call_args2 = {"table": ovs_consts.TRANSIENT_TABLE,
                       "dl_dst": port.mac,
                       "dl_vlan": port.segment_id}
         flow2 = mock.call(**call_args2)
@@ -871,8 +867,6 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         flow3 = mock.call(**call_args3)
 
         call_args4 = {"in_port": port.ofport,
-                      "strict": True,
-                      "priority": 100,
                       "table": ovs_consts.TRANSIENT_TABLE}
         flow4 = mock.call(**call_args4)
 
@@ -983,7 +977,7 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         self.firewall.prepare_port_filter(port_dict)
         with self.firewall.defer_apply():
             self.firewall.update_port_filter(port_dict)
-        self.assertEqual(2, self.mock_bridge.apply_flows.call_count)
+        self.mock_bridge.apply_flows.assert_called_once()
 
     def test_update_port_filter_clean_when_port_not_found(self):
         """Check flows are cleaned if port is not found in the bridge."""
