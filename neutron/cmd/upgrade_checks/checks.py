@@ -20,15 +20,20 @@ from oslo_config import cfg
 from oslo_serialization import jsonutils
 from oslo_upgradecheck import common_checks
 from oslo_upgradecheck import upgradecheck
+from sqlalchemy import and_
+from sqlalchemy import exists
 from sqlalchemy import func
 from sqlalchemy import or_
 
 from neutron._i18n import _
 from neutron.cmd.upgrade_checks import base
 from neutron.db.models import agent as agent_model
+from neutron.db.models import external_net
+from neutron.db.models import l3 as l3_models
 from neutron.db.models.plugins.ml2 import vlanallocation
 from neutron.db.models import segment
 from neutron.db import models_v2
+from neutron.db.qos import models as qos_models
 from neutron.objects import ports as port_obj
 
 
@@ -113,6 +118,25 @@ def port_binding_profiles():
             for port_binding in port_obj.PortBinding.get_objects(ctx)]
 
 
+def get_external_networks_with_qos_policies():
+    ctx = context.get_admin_context()
+    query = ctx.session.query(external_net.ExternalNetwork.network_id)
+    query = query.filter(external_net.ExternalNetwork.network_id ==
+                         qos_models.QosNetworkPolicyBinding.network_id)
+    return [network[0] for network in query.all()]
+
+
+def get_fip_per_network_without_qos_policies(network_id):
+    ctx = context.get_admin_context()
+    query = ctx.session.query(l3_models.FloatingIP)
+    query = query.filter(and_(
+        ~exists().where(qos_models.QosFIPPolicyBinding.fip_id ==
+                        l3_models.FloatingIP.id),
+        l3_models.FloatingIP.floating_network_id == network_id)
+    )
+    return query.count()
+
+
 class CoreChecks(base.BaseChecks):
 
     def get_checks(self):
@@ -136,6 +160,9 @@ class CoreChecks(base.BaseChecks):
              self.networksegments_unique_constraint_check),
             (_('Port Binding profile sanity check'),
              self.port_binding_profile_sanity),
+            (_('Floating IP inherits the QoS policy from the external '
+               'network'),
+             self.floatingip_inherit_qos_from_network),
         ]
 
     @staticmethod
@@ -402,3 +429,37 @@ class CoreChecks(base.BaseChecks):
             upgradecheck.Code.SUCCESS,
             _("All ml2_port_bindings.profile rows are correctly formated in "
               "the database."))
+
+    @staticmethod
+    def floatingip_inherit_qos_from_network(checker):
+        """Check if a floating IP network has a QoS policy
+
+        Since LP#1950454, the floating IPs inherit the QoS policy from the
+        external network. This check emits a warning message in case of having
+        any external network with a QoS policy associated and at least one
+        bound floating IPs with no QoS policy.
+        """
+        if not cfg.CONF.database.connection:
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _("Database connection string is not set. Check for "
+                  "floating IP network QoS inheritance can't be done."))
+
+        network_ids = []
+        for network_id in get_external_networks_with_qos_policies():
+            if get_fip_per_network_without_qos_policies(network_id):
+                network_ids.append(network_id)
+
+        if network_ids:
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _('The following external networks have a QoS policy '
+                  'associated and at least one floating IP without QoS: %s. '
+                  'Since LP#1950454, the floating IPs will inherit the QoS '
+                  'policy from the external network.') %
+                ', '.join(network_ids))
+
+        return upgradecheck.Result(
+            upgradecheck.Code.SUCCESS,
+            _('There are no external networks with QoS policies associated '
+              'and floating IPs without.'))

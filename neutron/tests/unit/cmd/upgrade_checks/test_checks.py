@@ -227,3 +227,20 @@ class TestChecks(base.BaseTestCase):
                 result = checks.CoreChecks.port_binding_profile_sanity(
                     mock.ANY)
                 self.assertEqual(returned_code, result.code)
+
+    def test_floatingip_inherit_qos_from_network(self):
+        cases = ([[], mock.ANY, Code.SUCCESS],
+                 [['net1'], 0, Code.SUCCESS],
+                 [['net1'], 1, Code.WARNING])
+        with mock.patch.object(
+                checks, 'get_external_networks_with_qos_policies') \
+                as mock_nets, \
+                mock.patch.object(checks,
+                                  'get_fip_per_network_without_qos_policies') \
+                as mock_fips:
+            for _nets, _fips, returned_code in cases:
+                mock_nets.return_value = _nets
+                mock_fips.return_value = _fips
+                result = checks.CoreChecks. \
+                    floatingip_inherit_qos_from_network(mock.ANY)
+                self.assertEqual(returned_code, result.code)
