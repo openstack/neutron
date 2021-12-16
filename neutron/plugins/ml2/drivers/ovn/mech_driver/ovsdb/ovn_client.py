@@ -603,6 +603,13 @@ class OVNClient(object):
             txn.add(check_rev_cmd)
             columns_dict = {}
             if utils.is_lsp_router_port(port):
+                # It is needed to specify the port type, if not specified
+                # the AddLSwitchPortCommand will trigger a change
+                # on the northd status column from UP to DOWN, triggering a
+                # LogicalSwitchPortUpdateDownEvent, that will most likely
+                # cause a revision conflict.
+                # https://bugs.launchpad.net/neutron/+bug/1955578
+                columns_dict['type'] = ovn_const.LSP_TYPE_ROUTER
                 port_info.options.update(
                     self._nb_idl.get_router_port_options(port['id']))
             else:
