@@ -317,10 +317,10 @@ maintain a level of review numbers relatively close to other core reviewers.
 There are no hard statistics around code review numbers, but in general we
 use 30, 60, 90 and 180 day stats when examining review stats.
 
-* `30 day review stats <http://stackalytics.com/report/contribution/neutron-group/30>`_
-* `60 day review stats <http://stackalytics.com/report/contribution/neutron-group/60>`_
-* `90 day review stats <http://stackalytics.com/report/contribution/neutron-group/90>`_
-* `180 day review stats <http://stackalytics.com/report/contribution/neutron-group/180>`_
+* `30 day review stats <https://www.stackalytics.io/report/contribution?module=neutron-group&project_type=openstack&days=30>`_
+* `60 day review stats <https://www.stackalytics.io/report/contribution?module=neutron-group&project_type=openstack&days=60>`_
+* `90 day review stats <https://www.stackalytics.io/report/contribution?module=neutron-group&project_type=openstack&days=90>`_
+* `180 day review stats <https://www.stackalytics.io/report/contribution?module=neutron-group&project_type=openstack&days=180>`_
 
 There are soft-touch items around being a Neutron core reviewer as well.
 Gaining trust with the existing Neutron core reviewers is important. Being

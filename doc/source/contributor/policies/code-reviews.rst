@@ -128,7 +128,7 @@ Stackalytics provides some nice interfaces to track review statistics. The links
 statistics are used to track not only Neutron core reviewer statistics, but also to track review statistics
 for potential future core members.
 
-* `30 day review stats <http://stackalytics.com/report/contribution/neutron-group/30>`_
-* `60 day review stats <http://stackalytics.com/report/contribution/neutron-group/60>`_
-* `90 day review stats <http://stackalytics.com/report/contribution/neutron-group/90>`_
-* `180 day review stats <http://stackalytics.com/report/contribution/neutron-group/180>`_
+* `30 day review stats <https://www.stackalytics.io/report/contribution?module=neutron-group&project_type=openstack&days=30>`_
+* `60 day review stats <https://www.stackalytics.io/report/contribution?module=neutron-group&project_type=openstack&days=60>`_
+* `90 day review stats <https://www.stackalytics.io/report/contribution?module=neutron-group&project_type=openstack&days=90>`_
+* `180 day review stats <https://www.stackalytics.io/report/contribution?module=neutron-group&project_type=openstack&days=180>`_
