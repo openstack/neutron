@@ -61,17 +61,6 @@ class FakePort(object):
     network_id = network.id
 
 
-class FakeLegacyInterfaceDriver(interface.LinuxInterfaceDriver):
-
-    def plug_new(self, network_id, port_id, device_name, mac_address,
-                 bridge=None, namespace=None, prefix=None, mtu=None):
-        """This is legacy method which don't accepts link_up argument."""
-        pass
-
-    def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
-        pass
-
-
 class TestBase(base.BaseTestCase):
     def setUp(self):
         super(TestBase, self).setUp()
@@ -685,20 +674,3 @@ class TestBridgeInterfaceDriver(TestBase):
 
         self.ip_dev.assert_has_calls([mock.call('tap0', namespace=None),
                                       mock.call().link.delete()])
-
-
-class TestLegacyDriver(TestBase):
-
-    def test_plug(self):
-        self.device_exists.return_value = False
-        with mock.patch('neutron.agent.linux.interface.LOG.warning') as log:
-            driver = FakeLegacyInterfaceDriver(self.conf)
-            try:
-                driver.plug(
-                    '01234567-1234-1234-99', 'port-1234', 'tap0',
-                    'aa:bb:cc:dd:ee:ff')
-            except TypeError:
-                self.fail("LinuxInterfaceDriver class can not call properly "
-                          "plug_new method from the legacy drivers that "
-                          "do not accept 'link_up' parameter.")
-            log.assert_called_once()

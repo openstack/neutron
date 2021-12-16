@@ -1,0 +1,9 @@
+---
+other:
+  - |
+    Abstract method ``plug_new`` from the
+    neutron.agent.linux.interface.LinuxInterfaceDriver now has additional
+    positional argument ``link_up``. Usage of this method without ``link_up``
+    is now not possible.
+    Third-party drivers which inherit from this base class now have to update
+    the implementation of their ``plug_new`` method.
