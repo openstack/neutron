@@ -45,6 +45,8 @@ from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
 
 
+LOG = logging.getLogger(__name__)
+
 _uuid = uuidutils.generate_uuid
 
 OVS_INTERFACE_DRIVER = 'neutron.agent.linux.interface.OVSInterfaceDriver'
@@ -169,6 +171,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                                                   qos_policy_id=qos_policy_id)
 
     def change_router_state(self, router_id, state):
+        LOG.debug("Router %s state changed to '%s'", router_id, state)
         ri = self.agent.router_info.get(router_id)
         if not ri:
             self.fail('Router %s is not present in the L3 agent' % router_id)
