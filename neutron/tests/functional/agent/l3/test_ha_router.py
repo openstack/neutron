@@ -17,6 +17,7 @@ import copy
 from unittest import mock
 
 from neutron_lib import constants
+from oslo_log import log as logging
 from oslo_utils import netutils
 import testtools
 
@@ -27,6 +28,9 @@ from neutron.common import utils as common_utils
 from neutron.tests.common import l3_test_common
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.l3 import framework
+
+
+LOG = logging.getLogger(__name__)
 
 
 class L3HATestCase(framework.L3AgentTestFramework):
@@ -46,11 +50,13 @@ class L3HATestCase(framework.L3AgentTestFramework):
         self.fail_ha_router(router)
         common_utils.wait_until_true(lambda: router.ha_state == 'backup')
 
-        common_utils.wait_until_true(lambda:
-            (enqueue_mock.call_count == 3 or enqueue_mock.call_count == 4))
+        def enqueue_call_count_match():
+            LOG.debug("enqueue_mock called %s times.", enqueue_mock.call_count)
+            return enqueue_mock.call_count in [2, 3]
+
+        common_utils.wait_until_true(enqueue_call_count_match)
         calls = [args[0] for args in enqueue_mock.call_args_list]
-        self.assertEqual((router.router_id, 'backup'), calls[0])
-        self.assertEqual((router.router_id, 'primary'), calls[1])
+        self.assertEqual((router.router_id, 'primary'), calls[-2])
         self.assertEqual((router.router_id, 'backup'), calls[-1])
 
     def _expected_rpc_report(self, expected):
