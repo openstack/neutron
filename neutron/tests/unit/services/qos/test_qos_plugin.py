@@ -2039,12 +2039,14 @@ class TestQosPluginDB(base.BaseQosTestCase):
         qos_rule.create()
         return qos_rule
 
-    def _make_port(self, network_id, qos_policy_id=None, port_id=None):
+    def _make_port(self, network_id, qos_policy_id=None, port_id=None,
+                   device_owner=None):
         port_id = port_id if port_id else uuidutils.generate_uuid()
         base_mac = ['aa', 'bb', 'cc', 'dd', 'ee', 'ff']
         mac = netaddr.EUI(next(net_utils.random_mac_generator(base_mac)))
+        device_owner = device_owner if device_owner else '3'
         port = ports_object.Port(
-            self.context, network_id=network_id, device_owner='3',
+            self.context, network_id=network_id, device_owner=device_owner,
             project_id=self.project_id, admin_state_up=True, status='DOWN',
             device_id='2', qos_policy_id=qos_policy_id, mac_address=mac,
             id=port_id)
@@ -2217,6 +2219,179 @@ class TestQosPluginDB(base.BaseQosTestCase):
                 payload=events.DBEventPayload(
                     context, states=(original_port, port)))
         mock_alloc_change.assert_not_called()
+
+    def test_check_network_for_placement_allocation_change_no_qos_change(self):
+        qos1 = self._make_qos_policy()
+        original_network = self._make_network(qos1.id)
+        network = original_network
+        ml2plugin_mock = mock.MagicMock()
+
+        with mock.patch.object(
+                self.qos_plugin,
+                '_change_placement_allocation') as mock_alloc_change:
+            self.qos_plugin._check_network_for_placement_allocation_change(
+                'network', 'after_update', ml2plugin_mock,
+                payload=events.DBEventPayload(
+                    self.context, states=(original_network, network)))
+        mock_alloc_change.assert_not_called()
+        ml2plugin_mock._make_port_dict.assert_not_called()
+
+    def test_check_network_for_placement_allocation_change_no_ports_to_update(
+            self):
+        original_qos = self._make_qos_policy()
+        qos = self._make_qos_policy()
+        port_qos = self._make_qos_policy()
+        original_network = self._make_network(original_qos.id)
+        network = self._make_network(qos.id)
+        # Port which is not compute bound
+        self._make_port(network_id=network.id, qos_policy_id=None,
+                        device_owner='uu:id')
+        # Port with overwritten QoS policy
+        self._make_port(network_id=network.id, qos_policy_id=port_qos.id,
+                        device_owner='compute:uu:id')
+        ml2plugin_mock = mock.MagicMock()
+
+        with mock.patch.object(
+                self.qos_plugin,
+                '_change_placement_allocation') as mock_alloc_change:
+            self.qos_plugin._check_network_for_placement_allocation_change(
+                'network', 'after_update', ml2plugin_mock,
+                payload=events.DBEventPayload(
+                    self.context, states=(original_network, network)))
+        mock_alloc_change.assert_not_called()
+        ml2plugin_mock._make_port_dict.assert_not_called()
+
+    def test_check_network_for_placement_allocation_change_remove_qos(self):
+        original_qos = self._make_qos_policy()
+        original_network = self._make_network(original_qos.id)
+        network = self._make_network()
+        ml2plugin_mock = mock.MagicMock()
+
+        def fake_make_port_dict(port):
+            return {
+                'id': port.id,
+                'device_owner': port.device_owner,
+                'qos_policy_id': port.qos_policy_id,
+                'qos_network_policy_id': port.qos_network_policy_id,
+            }
+        ml2plugin_mock._make_port_dict.side_effect = fake_make_port_dict
+
+        port1 = self._make_port(
+            network_id=network.id, qos_policy_id=None,
+            device_owner='compute:uu:id')
+        port1_binding = ports_object.PortBinding(
+            self.context, port_id=port1.id, host='fake_host1',
+            vnic_type='fake_vnic_type', vif_type='fake_vif_type',
+            profile={'allocation': 'fake_allocation'})
+        port1_binding.create()
+        port1.bindings = [port1_binding]
+        port1.update()
+
+        with mock.patch.object(
+                self.qos_plugin,
+                '_change_placement_allocation') as mock_alloc_change:
+            def fake_change_placement_allocation(orig_policy, policy,
+                                                 orig_port, port):
+                port['binding:profile'] = {}
+            mock_alloc_change.side_effect = fake_change_placement_allocation
+
+            self.qos_plugin._check_network_for_placement_allocation_change(
+                'network', 'after_update', ml2plugin_mock,
+                payload=events.DBEventPayload(
+                    self.context, states=(original_network, network)))
+
+        self.assertEqual(ml2plugin_mock._make_port_dict.call_count, 1)
+        mock_alloc_change_calls = [
+            mock.call(
+                original_qos,
+                None,
+                {'id': port1.id,
+                    'device_owner': 'compute:uu:id',
+                    'qos_policy_id': None,
+                    'qos_network_policy_id': None},
+                mock.ANY),
+        ]
+        mock_alloc_change.assert_has_calls(mock_alloc_change_calls,
+                                           any_order=True)
+        port1.update()
+        self.assertDictEqual(port1.bindings[0].profile, {})
+
+    def test_check_network_for_placement_allocation_change(self):
+        original_qos = self._make_qos_policy()
+        qos = self._make_qos_policy()
+        original_network = self._make_network(original_qos.id)
+        network = self._make_network(qos.id)
+        ml2plugin_mock = mock.MagicMock()
+
+        def fake_make_port_dict(port):
+            return {
+                'id': port.id,
+                'device_owner': port.device_owner,
+                'qos_policy_id': port.qos_policy_id,
+                'qos_network_policy_id': port.qos_network_policy_id,
+            }
+        ml2plugin_mock._make_port_dict.side_effect = fake_make_port_dict
+
+        port1 = self._make_port(
+            network_id=network.id, qos_policy_id=None,
+            device_owner='compute:uu:id')
+        port1_binding = ports_object.PortBinding(
+            self.context, port_id=port1.id, host='fake_host1',
+            vnic_type='fake_vnic_type', vif_type='fake_vif_type', profile={})
+        port1_binding.create()
+        port1.bindings = [port1_binding]
+        port1.update()
+
+        port2 = self._make_port(
+            network_id=network.id, qos_policy_id=None,
+            device_owner='compute:uu:id')
+        port2_binding = ports_object.PortBinding(
+            self.context, port_id=port2.id, host='fake_host2',
+            vnic_type='fake_vnic_type', vif_type='fake_vif_type', profile={})
+        port2_binding.create()
+        port2.bindings = [port2_binding]
+        port2.update()
+
+        with mock.patch.object(
+                self.qos_plugin,
+                '_change_placement_allocation') as mock_alloc_change:
+            def fake_change_placement_allocation(orig_policy, policy,
+                                                 orig_port, port):
+                port['binding:profile'] = {'allocation': 'fake_allocation'}
+            mock_alloc_change.side_effect = fake_change_placement_allocation
+
+            self.qos_plugin._check_network_for_placement_allocation_change(
+                'network', 'after_update', ml2plugin_mock,
+                payload=events.DBEventPayload(
+                    self.context, states=(original_network, network)))
+
+        self.assertEqual(ml2plugin_mock._make_port_dict.call_count, 2)
+
+        mock_alloc_change_calls = [
+            mock.call(
+                original_qos,
+                qos,
+                {'id': port1.id,
+                    'device_owner': 'compute:uu:id',
+                    'qos_policy_id': None,
+                    'qos_network_policy_id': qos.id},
+                mock.ANY),
+            mock.call(
+                original_qos,
+                qos,
+                {'id': port2.id,
+                    'device_owner': 'compute:uu:id',
+                    'qos_policy_id': None,
+                    'qos_network_policy_id': qos.id},
+                mock.ANY)]
+        mock_alloc_change.assert_has_calls(mock_alloc_change_calls,
+                                           any_order=True)
+        port1.update()
+        port2.update()
+        self.assertDictEqual(
+            port1.bindings[0].profile, {'allocation': 'fake_allocation'})
+        self.assertDictEqual(
+            port2.bindings[0].profile, {'allocation': 'fake_allocation'})
 
     def _prepare_port_for_placement_allocation(self, original_qos,
                                                desired_qos=None,

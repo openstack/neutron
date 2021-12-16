@@ -165,6 +165,10 @@ class QoSPlugin(qos.QoSPluginBase):
             self._validate_create_network_callback,
             callbacks_resources.NETWORK,
             callbacks_events.PRECOMMIT_CREATE)
+        callbacks_registry.subscribe(
+            self._check_network_for_placement_allocation_change,
+            callbacks_resources.NETWORK,
+            callbacks_events.AFTER_UPDATE)
 
     @staticmethod
     @resource_extend.extends([port_def.COLLECTION_NAME])
@@ -649,6 +653,39 @@ class QoSPlugin(qos.QoSPluginBase):
         policy = policy_object.QosPolicy.get_object(
             context.elevated(), id=policy_id)
         self.validate_policy_for_network(context, policy, network_id)
+
+    def _check_network_for_placement_allocation_change(self, resource, event,
+                                                       trigger, payload=None):
+        context = payload.context
+        original_network, updated_network = payload.states
+
+        original_policy_id = original_network.get(qos_consts.QOS_POLICY_ID)
+        policy_id = updated_network.get(qos_consts.QOS_POLICY_ID)
+
+        if policy_id == original_policy_id:
+            return
+
+        original_policy = policy_object.QosPolicy.get_object(
+                context.elevated(), id=original_policy_id)
+        policy = policy_object.QosPolicy.get_object(
+                context.elevated(), id=policy_id)
+        ports = ports_object.Port.get_objects(
+                context, network_id=updated_network['id'])
+
+        # Filter compute bound ports without overwritten QoS policy
+        ports = [port for port in ports if (port.qos_policy_id is None and
+            nl_constants.DEVICE_OWNER_COMPUTE_PREFIX in port['device_owner'])]
+
+        for port in ports:
+            # Use _make_port_dict() to load extension data
+            port_dict = trigger._make_port_dict(port)
+            updated_port_attrs = {}
+            self._change_placement_allocation(
+                    original_policy, policy, port_dict, updated_port_attrs)
+            for port_binding in port.bindings:
+                port_binding.profile = updated_port_attrs.get(
+                    'binding:profile', {})
+                port_binding.update()
 
     def _validate_update_network_callback(self, resource, event, trigger,
                                           payload=None):
