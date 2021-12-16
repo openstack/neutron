@@ -36,6 +36,7 @@ from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.plugins.ml2.drivers.ovn.mech_driver import mech_driver
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
 from neutron.tests import base as tests_base
 from neutron.tests.functional import base
 
@@ -508,6 +509,74 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
         self.assertEqual(1, len(ovn_port.ha_chassis_group))
         self.assertEqual(str(self.default_ch_grp.uuid),
                          str(ovn_port.ha_chassis_group[0].uuid))
+
+    def _create_router_port(self, vnic_type):
+        net_id = self.n1['network']['id']
+        port_data = {
+            'port': {'network_id': net_id,
+                     'tenant_id': self._tenant_id,
+                     portbindings.VNIC_TYPE: 'normal'}}
+
+        # Create port
+        port_req = self.new_create_request('ports', port_data, self.fmt)
+        port_res = port_req.get_response(self.api)
+        port = self.deserialize(self.fmt, port_res)['port']
+
+        # Update it as lsp port
+        port_upt_data = {
+            'port': {'device_owner': "network:router_gateway"}
+        }
+        port_req = self.new_update_request(
+            'ports', port_upt_data, port['id'], self.fmt)
+        port_res = port_req.get_response(self.api)
+
+    def test_add_external_port_avoid_flapping(self):
+        class LogicalSwitchPortUpdateUpEventTest(event.RowEvent):
+            def __init__(self):
+                self.count = 0
+                table = 'Logical_Switch_Port'
+                events = (self.ROW_UPDATE,)
+                super(LogicalSwitchPortUpdateUpEventTest, self).__init__(
+                    events, table, (('up', '=', True),),
+                    old_conditions=(('up', '=', False),))
+
+            def run(self, event, row, old):
+                self.count += 1
+
+            def get_count(self):
+                return self.count
+
+        class LogicalSwitchPortUpdateDownEventTest(event.RowEvent):
+            def __init__(self):
+                self.count = 0
+                table = 'Logical_Switch_Port'
+                events = (self.ROW_UPDATE,)
+                super(LogicalSwitchPortUpdateDownEventTest, self).__init__(
+                    events, table, (('up', '=', False),),
+                    old_conditions=(('up', '=', True),))
+
+            def run(self, event, row, old):
+                self.count += 1
+
+            def get_count(self):
+                return self.count
+
+        og_up_event = ovsdb_monitor.LogicalSwitchPortUpdateUpEvent(None)
+        og_down_event = ovsdb_monitor.LogicalSwitchPortUpdateDownEvent(None)
+        test_down_event = LogicalSwitchPortUpdateDownEventTest()
+        test_up_event = LogicalSwitchPortUpdateUpEventTest()
+        self.nb_api.idl.notify_handler.unwatch_events(
+            [og_up_event, og_down_event])
+        self.nb_api.idl.notify_handler.watch_events(
+            [test_down_event, test_up_event])
+        # Creating a port the same way as the osp cli cmd
+        # openstack router add port ROUTER PORT
+        # shouldn't trigger an status flapping (up -> down -> up)
+        # it should be created with status false and then change the
+        # status as up, triggering only a LogicalSwitchPortUpdateUpEvent.
+        self._create_router_port(portbindings.VNIC_DIRECT)
+        self.assertEqual(test_down_event.get_count(), 0)
+        self.assertEqual(test_up_event.get_count(), 1)
 
     def test_external_port_create_vnic_direct(self):
         self._test_external_port_create(portbindings.VNIC_DIRECT)
