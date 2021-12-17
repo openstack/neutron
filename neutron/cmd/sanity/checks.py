@@ -21,6 +21,7 @@ import tempfile
 import netaddr
 from neutron_lib import constants as n_consts
 from neutron_lib import exceptions
+from neutron_lib.plugins.ml2 import ovs_constants as ovs_const
 from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -36,8 +37,6 @@ from neutron.agent.linux import keepalived
 from neutron.agent.linux import utils as agent_utils
 from neutron.common import utils as common_utils
 from neutron.conf.agent.l3 import config as l3_config
-from neutron.plugins.ml2.drivers.openvswitch.agent.common \
-    import constants as ovs_const
 from neutron.privileged.agent.linux import dhcp as priv_dhcp
 
 LOG = logging.getLogger(__name__)

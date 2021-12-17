@@ -16,8 +16,8 @@
 
 from unittest import mock
 
-import neutron.plugins.ml2.drivers.openvswitch.agent.common.constants \
-    as ovs_const
+from neutron_lib.plugins.ml2 import ovs_constants as ovs_const
+
 from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent.openflow.native \
     import ovs_bridge_test_base
 

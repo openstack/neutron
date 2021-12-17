@@ -16,9 +16,9 @@
 
 from unittest import mock
 
+from neutron_lib.plugins.ml2 import ovs_constants
 from oslo_utils import importutils
 
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \
     import ovs_test_base
 
@@ -165,7 +165,7 @@ class OVSBridgeTestBase(ovs_test_base.OVSOSKenTestBase):
                 set_controller.assert_called_once_with(["tcp:127.0.0.1:6633"])
             set_ccm.assert_called_once_with("out-of-band")
             add_protocols.assert_called_once_with(
-                constants.OPENFLOW10, constants.OPENFLOW13)
+                ovs_constants.OPENFLOW10, ovs_constants.OPENFLOW13)
 
     def test_setup_controllers(self):
         self._test_setup_controllers(existing_controllers=[])
@@ -240,7 +240,7 @@ class OVSDVRProcessTestMixin(object):
                     arp_tpa=gateway_ip,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT),
                 priority=3,
-                table_id=constants.FLOOD_TO_TUN),
+                table_id=ovs_constants.FLOOD_TO_TUN),
                            active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
@@ -252,7 +252,7 @@ class OVSDVRProcessTestMixin(object):
                                         gateway_ip=gateway_ip)
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
-            call.uninstall_flows(table_id=constants.FLOOD_TO_TUN,
+            call.uninstall_flows(table_id=ovs_constants.FLOOD_TO_TUN,
                 match=ofpp.OFPMatch(
                     eth_type=self.ether_types.ETH_TYPE_ARP,
                     arp_tpa=gateway_ip,
@@ -277,7 +277,7 @@ class OVSDVRProcessTestMixin(object):
                     ip_proto=self.in_proto.IPPROTO_ICMPV6,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT),
                 priority=3,
-                table_id=constants.FLOOD_TO_TUN),
+                table_id=ovs_constants.FLOOD_TO_TUN),
                            active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
@@ -289,7 +289,7 @@ class OVSDVRProcessTestMixin(object):
                                         gateway_mac=gateway_mac)
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
-            call.uninstall_flows(table_id=constants.FLOOD_TO_TUN,
+            call.uninstall_flows(table_id=ovs_constants.FLOOD_TO_TUN,
                 match=ofpp.OFPMatch(
                     eth_src=gateway_mac,
                     eth_type=self.ether_types.ETH_TYPE_IPV6,

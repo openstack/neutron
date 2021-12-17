@@ -20,9 +20,9 @@ from unittest import mock
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
+from neutron_lib.plugins.ml2 import ovs_constants
 
 from neutron.common import utils
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.l2 import base
 
@@ -70,7 +70,7 @@ class TestOVSAgent(base.OVSAgentTestFramework):
             lambda: num_ports_with_drop_flows(
                 ofports,
                 self.agent.int_br.dump_flows(
-                    constants.LOCAL_SWITCHING
+                    ovs_constants.LOCAL_SWITCHING
                 )) == len(ofports))
 
         # delete the ports on bridge
@@ -83,7 +83,7 @@ class TestOVSAgent(base.OVSAgentTestFramework):
             num_ports_with_drop_flows(
                 ofports,
                 self.agent.int_br.dump_flows(
-                    constants.LOCAL_SWITCHING
+                    ovs_constants.LOCAL_SWITCHING
                 )
             ))
 
@@ -106,15 +106,15 @@ class TestOVSAgent(base.OVSAgentTestFramework):
 
     def test_datapath_type_netdev(self):
         self._check_datapath_type_netdev(
-            constants.OVS_DATAPATH_NETDEV)
+            ovs_constants.OVS_DATAPATH_NETDEV)
 
     def test_datapath_type_system(self):
         self._check_datapath_type_netdev(
-            constants.OVS_DATAPATH_SYSTEM)
+            ovs_constants.OVS_DATAPATH_SYSTEM)
 
     def test_datapath_type_default(self):
         self._check_datapath_type_netdev(
-            constants.OVS_DATAPATH_SYSTEM, default=True)
+            ovs_constants.OVS_DATAPATH_SYSTEM, default=True)
 
     def test_resync_devices_set_up_after_exception(self):
         self.setup_agent_and_ports(
@@ -126,7 +126,7 @@ class TestOVSAgent(base.OVSAgentTestFramework):
         self.setup_agent_and_ports(
             port_dicts=self.create_test_ports())
         self.wait_until_ports_state(self.ports, up=True)
-        self.agent.check_ovs_status.return_value = constants.OVS_RESTARTED
+        self.agent.check_ovs_status.return_value = ovs_constants.OVS_RESTARTED
         # OVS restarted, the agent should reprocess all the ports
         self.agent.plugin_rpc.update_device_list.reset_mock()
         self.wait_until_ports_state(self.ports, up=True)
@@ -340,7 +340,7 @@ class TestOVSAgent(base.OVSAgentTestFramework):
                            resources.AGENT,
                            events.OVS_RESTARTED)
 
-        self.agent.check_ovs_status.return_value = constants.OVS_RESTARTED
+        self.agent.check_ovs_status.return_value = ovs_constants.OVS_RESTARTED
 
         utils.wait_until_true(lambda: callback.call_count, timeout=10)
 

@@ -13,12 +13,11 @@
 #    under the License.
 
 from neutron_lib import constants as n_const
+from neutron_lib.plugins.ml2 import ovs_constants
 from oslo_config import cfg
 
 from neutron._i18n import _
 from neutron.conf.agent import common
-from neutron.plugins.ml2.drivers.openvswitch.agent.common \
-    import constants
 
 
 DEFAULT_BRIDGE_MAPPINGS = []
@@ -149,13 +148,14 @@ ovs_opts = [
                        "See also: "
                        "https://docs.openstack.org/api-ref/placement/"
                        "#update-resource-provider-inventories")),
-    cfg.StrOpt('datapath_type', default=constants.OVS_DATAPATH_SYSTEM,
-               choices=[constants.OVS_DATAPATH_SYSTEM,
-                        constants.OVS_DATAPATH_NETDEV],
+    cfg.StrOpt('datapath_type', default=ovs_constants.OVS_DATAPATH_SYSTEM,
+               choices=[ovs_constants.OVS_DATAPATH_SYSTEM,
+                        ovs_constants.OVS_DATAPATH_NETDEV],
                help=_("OVS datapath to use. 'system' is the default value and "
                       "corresponds to the kernel datapath. To enable the "
                       "userspace datapath set this value to 'netdev'.")),
-    cfg.StrOpt('vhostuser_socket_dir', default=constants.VHOST_USER_SOCKET_DIR,
+    cfg.StrOpt('vhostuser_socket_dir',
+               default=ovs_constants.VHOST_USER_SOCKET_DIR,
                help=_("OVS vhost-user socket directory.")),
     cfg.IPOpt('of_listen_address', default='127.0.0.1',
               help=_("Address to listen on for OpenFlow connections.")),
@@ -188,7 +188,7 @@ agent_opts = [
                 help=_("Minimize polling by monitoring ovsdb for interface "
                        "changes.")),
     cfg.IntOpt('ovsdb_monitor_respawn_interval',
-               default=constants.DEFAULT_OVSDBMON_RESPAWN,
+               default=ovs_constants.DEFAULT_OVSDBMON_RESPAWN,
                help=_("The number of seconds to wait before respawning the "
                       "ovsdb monitor after losing communication with it.")),
     cfg.ListOpt('tunnel_types', default=DEFAULT_TUNNEL_TYPES,

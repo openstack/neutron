@@ -19,12 +19,12 @@ import time
 from unittest import mock
 
 from neutron_lib import constants as n_const
+from neutron_lib.plugins.ml2 import ovs_constants
 from oslo_config import cfg
 from oslo_log import log
 
 from neutron.agent.common import ip_lib
 from neutron.agent.common import ovs_lib
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \
     import ovs_test_base
 from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent \
@@ -219,14 +219,14 @@ class TunnelTest(object):
             mock.call.setup_default_table(),
             mock.call.port_exists('phy-%s' % self.MAP_TUN_BRIDGE),
             mock.call.add_patch_port('phy-%s' % self.MAP_TUN_BRIDGE,
-                                     constants.NONEXISTENT_PEER),
+                                     ovs_constants.NONEXISTENT_PEER),
         ]
         self.mock_int_bridge_expected += [
             mock.call.db_get_val('Interface', 'int-%s' % self.MAP_TUN_BRIDGE,
                                  'type', log_errors=False),
             mock.call.port_exists('int-%s' % self.MAP_TUN_BRIDGE),
             mock.call.add_patch_port('int-%s' % self.MAP_TUN_BRIDGE,
-                                     constants.NONEXISTENT_PEER),
+                                     ovs_constants.NONEXISTENT_PEER),
             mock.call.set_igmp_snooping_flood('int-%s' % self.MAP_TUN_BRIDGE,
                                               igmp_snooping),
         ]
@@ -282,16 +282,16 @@ class TunnelTest(object):
 
         self.mock_int_bridge_expected += [
             mock.call.install_goto(
-                dest_table_id=constants.LOCAL_MAC_DIRECT,
+                dest_table_id=ovs_constants.LOCAL_MAC_DIRECT,
                 in_port=self.MAP_TUN_INT_OFPORT,
-                priority=4, table_id=constants.TRANSIENT_TABLE),
+                priority=4, table_id=ovs_constants.TRANSIENT_TABLE),
             mock.call.install_goto(
-                dest_table_id=constants.LOCAL_MAC_DIRECT,
+                dest_table_id=ovs_constants.LOCAL_MAC_DIRECT,
                 in_port=self.TUN_OFPORT,
-                priority=4, table_id=constants.TRANSIENT_TABLE),
+                priority=4, table_id=ovs_constants.TRANSIENT_TABLE),
             mock.call.install_goto(
-                dest_table_id=constants.TRANSIENT_EGRESS_TABLE,
-                table_id=constants.LOCAL_MAC_DIRECT),
+                dest_table_id=ovs_constants.TRANSIENT_EGRESS_TABLE,
+                table_id=ovs_constants.LOCAL_MAC_DIRECT),
         ]
 
     def _build_agent(self, **config_opts_agent):
@@ -537,7 +537,7 @@ class TunnelTest(object):
                                  log_errors=True),
             mock.call.set_db_attribute(
                 'Port', VIF_PORT.port_name,
-                'tag', constants.DEAD_VLAN_TAG,
+                'tag', ovs_constants.DEAD_VLAN_TAG,
                 log_errors=True),
             mock.call.drop_port(in_port=VIF_PORT.ofport),
         ]
@@ -613,7 +613,7 @@ class TunnelTest(object):
         # No cleanup is expected on ancillary bridge
 
         self.ovs_bridges[self.INT_BRIDGE].check_canary_table.return_value = \
-            constants.OVS_NORMAL
+            ovs_constants.OVS_NORMAL
         with mock.patch.object(log.KeywordArgumentAdapter,
                                'exception') as log_exception,\
                 mock.patch.object(self.mod_agent.OVSNeutronAgent,

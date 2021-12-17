@@ -17,8 +17,8 @@
 from unittest import mock
 
 from neutron_lib import constants as p_const
+from neutron_lib.plugins.ml2 import ovs_constants
 
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent.openflow.native \
     import ovs_bridge_test_base
 
@@ -134,7 +134,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                 ],
                 match=ofpp.OFPMatch(),
                 priority=3,
-                table_id=constants.TRANSIENT_EGRESS_TABLE),
+                table_id=ovs_constants.TRANSIENT_EGRESS_TABLE),
                            active_bundle=None),
             call._send_msg(ofpp.OFPFlowMod(
                 dp, cookie=self.stamp,
@@ -621,9 +621,9 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
 
     def _test_delete_dvr_dst_mac_for_arp(self, network_type):
         if network_type in (p_const.TYPE_VLAN, p_const.TYPE_FLAT):
-            table_id = constants.DVR_TO_SRC_MAC_PHYSICAL
+            table_id = ovs_constants.DVR_TO_SRC_MAC_PHYSICAL
         else:
-            table_id = constants.DVR_TO_SRC_MAC
+            table_id = ovs_constants.DVR_TO_SRC_MAC
 
         if network_type == p_const.TYPE_FLAT:
             vlan_tag = None
@@ -733,7 +733,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
 
         instructions = [
             ofpp.OFPInstructionMeter(meter_id, type_=ofp.OFPIT_METER),
-            ofpp.OFPInstructionGotoTable(table_id=constants.TRANSIENT_TABLE)]
+            ofpp.OFPInstructionGotoTable(
+                table_id=ovs_constants.TRANSIENT_TABLE)]
 
         expected = [
             call._send_msg(ofpp.OFPFlowMod(dp,
@@ -741,7 +742,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                 instructions=instructions,
                 match=match,
                 priority=100,
-                table_id=constants.PACKET_RATE_LIMIT),
+                table_id=ovs_constants.PACKET_RATE_LIMIT),
                 active_bundle=None)
         ]
         self.assertEqual(expected, self.mock.mock_calls)
@@ -770,7 +771,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
 
         expected = [
             call.uninstall_flows(
-                    table_id=constants.PACKET_RATE_LIMIT,
+                    table_id=ovs_constants.PACKET_RATE_LIMIT,
                     match=match)
         ]
         self.assertEqual(expected, self.mock.mock_calls)
@@ -842,7 +843,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
         self.assertEqual(expected, self.mock.mock_calls)
 
     def test_setup_local_egress_flows_ofport_invalid(self):
-        in_port = constants.OFPORT_INVALID
+        in_port = ovs_constants.OFPORT_INVALID
         vlan = 3333
         self.br.setup_local_egress_flows(in_port=in_port, vlan=vlan)
 

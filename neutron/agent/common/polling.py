@@ -16,13 +16,13 @@
 import contextlib
 
 import eventlet
+from neutron_lib.plugins.ml2 import ovs_constants as ovs_const
 from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron.agent.common import async_process
 from neutron.agent.common import base_polling
 from neutron.agent.common import ovsdb_monitor
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 
 LOG = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ LOG = logging.getLogger(__name__)
 @contextlib.contextmanager
 def get_polling_manager(minimize_polling=False,
                         ovsdb_monitor_respawn_interval=(
-                            constants.DEFAULT_OVSDBMON_RESPAWN),
+                            ovs_const.DEFAULT_OVSDBMON_RESPAWN),
                         bridge_names=None, ovs=None):
     if minimize_polling:
         pm = InterfacePollingMinimizer(
@@ -51,7 +51,7 @@ class InterfacePollingMinimizer(base_polling.BasePollingManager):
 
     def __init__(
             self,
-            ovsdb_monitor_respawn_interval=constants.DEFAULT_OVSDBMON_RESPAWN,
+            ovsdb_monitor_respawn_interval=ovs_const.DEFAULT_OVSDBMON_RESPAWN,
             bridge_names=None, ovs=None):
 
         super(InterfacePollingMinimizer, self).__init__()

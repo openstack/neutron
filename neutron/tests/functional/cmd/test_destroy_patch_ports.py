@@ -14,12 +14,12 @@
 #    under the License.
 
 from neutron_lib import constants as n_const
+from neutron_lib.plugins.ml2 import ovs_constants
 from oslo_config import cfg
 
 from neutron.cmd import destroy_patch_ports
 from neutron.common import utils
 from neutron.conf.plugins.ml2.drivers import ovs_conf
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
 
@@ -53,9 +53,9 @@ class TestDestroyPatchPorts(base.BaseSudoTestCase):
         int_if_name, phys_if_name = destroy_patch_ports.get_patch_port_names(
             bridge.br_name)
         self.int_br.add_patch_port(
-            int_if_name, constants.NONEXISTENT_PEER)
+            int_if_name, ovs_constants.NONEXISTENT_PEER)
         bridge.add_patch_port(
-            phys_if_name, constants.NONEXISTENT_PEER)
+            phys_if_name, ovs_constants.NONEXISTENT_PEER)
         self.int_br.set_db_attribute(
             'Interface', int_if_name, 'options', {'peer': phys_if_name})
         bridge.set_db_attribute(
@@ -86,7 +86,7 @@ class TestDestroyPatchPorts(base.BaseSudoTestCase):
         cleaner.destroy_patch_ports()
 
     def test_destroy_patch_ports_canary_flow_on_int_br(self):
-        self.int_br.add_flow(table=constants.CANARY_TABLE, actions="drop")
+        self.int_br.add_flow(table=ovs_constants.CANARY_TABLE, actions="drop")
         self._assert_has_all_ports()
         cleaner = destroy_patch_ports.PatchPortCleaner(self.config)
         cleaner.destroy_patch_ports()

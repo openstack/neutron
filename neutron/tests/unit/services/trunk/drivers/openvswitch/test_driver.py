@@ -16,10 +16,9 @@ from unittest import mock
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib import constants
+from neutron_lib.plugins.ml2 import ovs_constants as agent_consts
 from oslo_config import cfg
 
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
-    constants as agent_consts)
 from neutron.services.trunk.drivers.openvswitch import driver
 from neutron.tests import base
 

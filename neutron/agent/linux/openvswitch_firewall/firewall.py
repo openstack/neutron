@@ -25,6 +25,7 @@ from neutron_lib.callbacks import events as callbacks_events
 from neutron_lib.callbacks import registry as callbacks_registry
 from neutron_lib.callbacks import resources as callbacks_resources
 from neutron_lib import constants as lib_const
+from neutron_lib.plugins.ml2 import ovs_constants as ovs_consts
 from neutron_lib.plugins import utils as p_utils
 from neutron_lib.utils import helpers
 from oslo_config import cfg
@@ -39,8 +40,6 @@ from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.agent.linux.openvswitch_firewall import exceptions
 from neutron.agent.linux.openvswitch_firewall import iptables
 from neutron.agent.linux.openvswitch_firewall import rules
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
-        as ovs_consts
 
 LOG = logging.getLogger(__name__)
 CONJ_ID_REGEX = re.compile(r"conj_id=(\d+),")

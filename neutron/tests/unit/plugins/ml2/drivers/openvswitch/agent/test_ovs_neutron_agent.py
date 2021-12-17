@@ -23,6 +23,7 @@ from neutron_lib.agent import constants as agent_consts
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net
 from neutron_lib import constants as n_const
+from neutron_lib.plugins.ml2 import ovs_constants
 from neutron_lib import rpc as n_rpc
 import os_vif
 from os_vif.objects import instance_info as vif_instance_object
@@ -42,7 +43,6 @@ from neutron.api.rpc.callbacks import resources
 from neutron.objects.ports import Port
 from neutron.objects.ports import PortBinding
 from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent import ovs_neutron_agent \
     as ovs_agent
 from neutron.tests import base
@@ -214,7 +214,7 @@ class TestOvsNeutronAgent(object):
 
     def test_datapath_type_system(self):
         # verify kernel datapath is default
-        expected = constants.OVS_DATAPATH_SYSTEM
+        expected = ovs_constants.OVS_DATAPATH_SYSTEM
         self.assertEqual(expected, self.agent.int_br.datapath_type)
 
     def test_datapath_type_netdev(self):
@@ -239,7 +239,7 @@ class TestOvsNeutronAgent(object):
             mock.patch('neutron.agent.rpc.PluginReportStateAPI.'
                        'has_alive_neutron_server'):
             # validate setting non default datapath
-            expected = constants.OVS_DATAPATH_NETDEV
+            expected = ovs_constants.OVS_DATAPATH_NETDEV
             cfg.CONF.set_override('datapath_type',
                                   expected,
                                   group='OVS')
@@ -364,13 +364,13 @@ class TestOvsNeutronAgent(object):
         with mock.patch.object(self.agent, 'int_br') as int_br:
             int_br.db_get_val.return_value = cur_tag
             self.agent.port_dead(port)
-        if cur_tag is None or cur_tag == constants.DEAD_VLAN_TAG:
+        if cur_tag is None or cur_tag == ovs_constants.DEAD_VLAN_TAG:
             self.assertFalse(int_br.set_db_attribute.called)
             self.assertFalse(int_br.drop_port.called)
         else:
             int_br.assert_has_calls([
                 mock.call.set_db_attribute("Port", mock.ANY, "tag",
-                                           constants.DEAD_VLAN_TAG,
+                                           ovs_constants.DEAD_VLAN_TAG,
                                            log_errors=True),
                 mock.call.drop_port(in_port=port.ofport),
             ])
@@ -379,7 +379,7 @@ class TestOvsNeutronAgent(object):
         self._test_port_dead()
 
     def test_port_dead_with_port_already_dead(self):
-        self._test_port_dead(constants.DEAD_VLAN_TAG)
+        self._test_port_dead(ovs_constants.DEAD_VLAN_TAG)
 
     def test_port_dead_with_valid_tag(self):
         self._test_port_dead(cur_tag=1)
@@ -667,9 +667,9 @@ class TestOvsNeutronAgent(object):
 
     def test_update_retries_map_and_remove_devs_not_to_retry(self):
         failed_devices_retries_map = {
-            'device_not_to_retry': constants.MAX_DEVICE_RETRIES,
+            'device_not_to_retry': ovs_constants.MAX_DEVICE_RETRIES,
             'device_to_retry': 2,
-            'ancillary_not_to_retry': constants.MAX_DEVICE_RETRIES,
+            'ancillary_not_to_retry': ovs_constants.MAX_DEVICE_RETRIES,
             'ancillary_to_retry': 1}
         failed_devices = {
             'added': set(['device_not_to_retry']),
@@ -1242,7 +1242,7 @@ class TestOvsNeutronAgent(object):
     def test_not_report_state_when_ovs_dead(self):
         with mock.patch.object(self.agent.state_rpc,
                                "report_state") as report_st:
-            self.agent.ovs_status = constants.OVS_DEAD
+            self.agent.ovs_status = ovs_constants.OVS_DEAD
             self.agent._report_state()
             report_st.assert_not_called()
             self.systemd_notify.assert_not_called()
@@ -1456,7 +1456,7 @@ class TestOvsNeutronAgent(object):
             # the main things we care about are that it gets put in the
             # dead vlan and gets blocked
             int_br.set_db_attribute.assert_any_call(
-                'Port', vif.port_name, 'tag', constants.DEAD_VLAN_TAG,
+                'Port', vif.port_name, 'tag', ovs_constants.DEAD_VLAN_TAG,
                 log_errors=False)
             int_br.drop_port.assert_called_once_with(in_port=vif.ofport)
 
@@ -1581,7 +1581,7 @@ class TestOvsNeutronAgent(object):
             else:
                 expected_calls += [
                     mock.call.int_br.add_patch_port(
-                        'int-br-eth', constants.NONEXISTENT_PEER),
+                        'int-br-eth', ovs_constants.NONEXISTENT_PEER),
                 ]
             expected_calls += [
                 mock.call.int_br.set_igmp_snooping_flood(
@@ -1595,7 +1595,7 @@ class TestOvsNeutronAgent(object):
             else:
                 expected_calls += [
                     mock.call.phys_br.add_patch_port(
-                        'phy-br-eth', constants.NONEXISTENT_PEER),
+                        'phy-br-eth', ovs_constants.NONEXISTENT_PEER),
                 ]
             expected_calls += [
                     mock.call.int_br.drop_port(in_port='int_ofport')
@@ -1675,7 +1675,7 @@ class TestOvsNeutronAgent(object):
             else:
                 expected_calls += [
                     mock.call.int_br.add_patch_port(
-                        'int-br-eth', constants.NONEXISTENT_PEER),
+                        'int-br-eth', ovs_constants.NONEXISTENT_PEER),
                 ]
             expected_calls += [
                 mock.call.int_br.set_igmp_snooping_flood(
@@ -1689,7 +1689,7 @@ class TestOvsNeutronAgent(object):
             else:
                 expected_calls += [
                     mock.call.phys_br.add_patch_port(
-                        'phy-br-eth', constants.NONEXISTENT_PEER),
+                        'phy-br-eth', ovs_constants.NONEXISTENT_PEER),
                 ]
             expected_calls += [
                 mock.call.int_br.drop_port(in_port='int_ofport'),
@@ -1984,7 +1984,7 @@ class TestOvsNeutronAgent(object):
         expected_added_bridges = (
             bridges_added if setup_bridges_side_effect else [])
         with mock.patch.object(self.agent, 'check_ovs_status',
-                               return_value=constants.OVS_NORMAL), \
+                               return_value=ovs_constants.OVS_NORMAL), \
                 mock.patch.object(self.agent, '_agent_has_updates',
                                   side_effect=TypeError('loop exit')), \
                 mock.patch.dict(self.agent.bridge_mappings, bridge_mappings,
@@ -2024,7 +2024,7 @@ class TestOvsNeutronAgent(object):
                 mock_idl_monitor:
             self.agent.daemon_loop()
         mock_get_pm.assert_called_with(
-            True, constants.DEFAULT_OVSDBMON_RESPAWN, bridge_names=[],
+            True, ovs_constants.DEFAULT_OVSDBMON_RESPAWN, bridge_names=[],
             ovs=self.agent.ovs)
         mock_loop.assert_called_once_with(polling_manager=mock.ANY)
         mock_idl_monitor.start_bridge_monitor.assert_called()
@@ -2326,17 +2326,17 @@ class TestOvsNeutronAgent(object):
                     self.agent.context, self.agent.agent_state, True)
 
     def test_ovs_status(self):
-        self._test_ovs_status(constants.OVS_NORMAL,
-                              constants.OVS_DEAD,
-                              constants.OVS_RESTARTED)
+        self._test_ovs_status(ovs_constants.OVS_NORMAL,
+                              ovs_constants.OVS_DEAD,
+                              ovs_constants.OVS_RESTARTED)
         # OVS will not DEAD in some exception, like DBConnectionError.
-        self._test_ovs_status(constants.OVS_NORMAL,
-                              constants.OVS_RESTARTED)
+        self._test_ovs_status(ovs_constants.OVS_NORMAL,
+                              ovs_constants.OVS_RESTARTED)
 
     def test_ovs_restart_for_ingress_direct_goto_flows(self):
         with mock.patch.object(self.agent,
                                'check_ovs_status',
-                               return_value=constants.OVS_RESTARTED), \
+                               return_value=ovs_constants.OVS_RESTARTED), \
              mock.patch.object(self.agent,
                                '_agent_has_updates',
                                side_effect=TypeError('loop exit')), \
@@ -2372,7 +2372,7 @@ class TestOvsNeutronAgent(object):
                     '_check_and_handle_signal') as check_and_handle_signal, \
                 mock.patch.object(self.agent.ovs.ovsdb, 'idl_monitor'):
             process_network_ports.side_effect = Exception("Trigger resync")
-            check_ovs_status.return_value = constants.OVS_NORMAL
+            check_ovs_status.return_value = ovs_constants.OVS_NORMAL
             check_and_handle_signal.side_effect = [True, False]
             self.agent.daemon_loop()
             self.assertTrue(update_stale.called)
@@ -2875,7 +2875,7 @@ class TestOvsNeutronAgentOSKen(TestOvsNeutronAgent,
             self.agent.cleanup_stale_flows()
 
             dump_flows_expected = [
-                mock.call(tid) for tid in constants.INT_BR_ALL_TABLES]
+                mock.call(tid) for tid in ovs_constants.INT_BR_ALL_TABLES]
             dump_flows.assert_has_calls(dump_flows_expected)
 
             expected = [mock.call(cookie=17185,
@@ -2883,8 +2883,9 @@ class TestOvsNeutronAgentOSKen(TestOvsNeutronAgent,
                         mock.call(cookie=9029,
                                   cookie_mask=uint64_max)]
             uninstall_flows.assert_has_calls(expected, any_order=True)
-            self.assertEqual(len(constants.INT_BR_ALL_TABLES) * len(expected),
-                             len(uninstall_flows.mock_calls))
+            self.assertEqual(
+                len(ovs_constants.INT_BR_ALL_TABLES) * len(expected),
+                len(uninstall_flows.mock_calls))
 
 
 class AncillaryBridgesTest(object):
@@ -4014,12 +4015,12 @@ class TestOvsDvrNeutronAgent(object):
             expected_on_int_br = [
                 # setup_dvr_flows_on_integ_br
                 mock.call.setup_canary_table(),
-                mock.call.install_drop(table_id=constants.DVR_TO_SRC_MAC,
+                mock.call.install_drop(table_id=ovs_constants.DVR_TO_SRC_MAC,
                                        priority=1),
                 mock.call.install_drop(
-                    table_id=constants.DVR_TO_SRC_MAC_PHYSICAL,
+                    table_id=ovs_constants.DVR_TO_SRC_MAC_PHYSICAL,
                     priority=1),
-                mock.call.install_drop(table_id=constants.LOCAL_SWITCHING,
+                mock.call.install_drop(table_id=ovs_constants.LOCAL_SWITCHING,
                                        priority=2,
                                        in_port=ioport),
             ]
@@ -4171,7 +4172,7 @@ class TestOvsDvrNeutronAgent(object):
         tun_br = mock.create_autospec(self.agent.tun_br)
         with mock.patch.object(self.agent,
                                'check_ovs_status',
-                               return_value=constants.OVS_RESTARTED),\
+                               return_value=ovs_constants.OVS_RESTARTED),\
                 mock.patch.object(self.agent,
                                   '_agent_has_updates',
                                   side_effect=TypeError('loop exit')),\
@@ -4198,7 +4199,7 @@ class TestOvsDvrNeutronAgent(object):
     def _test_scan_ports_failure(self, scan_method_name):
         with mock.patch.object(self.agent,
                                'check_ovs_status',
-                               return_value=constants.OVS_RESTARTED),\
+                               return_value=ovs_constants.OVS_RESTARTED),\
                 mock.patch.object(self.agent, scan_method_name,
                                side_effect=TypeError('broken')),\
                 mock.patch.object(self.agent, '_agent_has_updates',
@@ -4237,7 +4238,7 @@ class TestOvsDvrNeutronAgent(object):
                         'physnet1': ex_br_mocks[1]}
         bridges_added = ['br-ex0']
         with mock.patch.object(self.agent, 'check_ovs_status',
-                               return_value=constants.OVS_NORMAL), \
+                               return_value=ovs_constants.OVS_NORMAL), \
                 mock.patch.object(self.agent, '_agent_has_updates',
                                   side_effect=TypeError('loop exit')), \
                 mock.patch.dict(self.agent.bridge_mappings, bridge_mappings,

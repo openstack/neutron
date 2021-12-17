@@ -23,12 +23,12 @@
 import netaddr
 
 from neutron_lib import constants as lib_consts
+from neutron_lib.plugins.ml2 import ovs_constants as constants
 from os_ken.lib.packet import ether_types
 from os_ken.lib.packet import icmpv6
 from os_ken.lib.packet import in_proto
 from oslo_log import log as logging
 
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
     import br_dvr_process
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \

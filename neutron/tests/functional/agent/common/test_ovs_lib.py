@@ -17,6 +17,7 @@ import functools
 from unittest import mock
 
 from neutron_lib import constants as p_const
+from neutron_lib.plugins.ml2 import ovs_constants
 from neutron_lib.services.qos import constants as qos_constants
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import event
@@ -24,8 +25,6 @@ from ovsdbapp.backend.ovs_idl import event
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
 from neutron.common import utils as common_utils
-from neutron.plugins.ml2.drivers.openvswitch.agent.common \
-    import constants as ovs_constants
 from neutron.tests.functional import base
 
 

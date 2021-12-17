@@ -21,6 +21,7 @@ from neutron_lib.api.definitions import provider_net
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib import constants
+from neutron_lib.plugins.ml2 import ovs_constants as ovs_const
 from oslo_config import cfg
 from oslo_log import log
 
@@ -28,8 +29,6 @@ from neutron._i18n import _
 from neutron.agent import securitygroups_rpc
 from neutron.conf.plugins.ml2.drivers.openvswitch import mech_ovs_conf
 from neutron.plugins.ml2.drivers import mech_agent
-from neutron.plugins.ml2.drivers.openvswitch.agent.common \
-    import constants as a_const
 from neutron.services.logapi.drivers.openvswitch import driver as log_driver
 from neutron.services.qos.drivers.openvswitch import driver as ovs_qos_driver
 
@@ -136,10 +135,10 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     def get_supported_vif_type(self, agent):
         caps = agent['configurations'].get('ovs_capabilities', {})
         if (any(x in caps.get('iface_types', []) for x
-                in [a_const.OVS_DPDK_VHOST_USER,
-                    a_const.OVS_DPDK_VHOST_USER_CLIENT]) and
+                in [ovs_const.OVS_DPDK_VHOST_USER,
+                    ovs_const.OVS_DPDK_VHOST_USER_CLIENT]) and
                 agent['configurations'].get('datapath_type') ==
-                a_const.OVS_DATAPATH_NETDEV):
+                ovs_const.OVS_DATAPATH_NETDEV):
             return portbindings.VIF_TYPE_VHOST_USER
         return self.vif_type
 
@@ -153,7 +152,7 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         # NOTE(sean-k-mooney): this function converts the ovs vhost user
         # driver mode into the qemu vhost user mode. If OVS is the server,
         # qemu is the client and vice-versa.
-        if (a_const.OVS_DPDK_VHOST_USER_CLIENT in iface_types):
+        if (ovs_const.OVS_DPDK_VHOST_USER_CLIENT in iface_types):
             return portbindings.VHOST_USER_MODE_SERVER
         return portbindings.VHOST_USER_MODE_CLIENT
 
@@ -176,7 +175,7 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
             vif_details[portbindings.VIF_DETAILS_BRIDGE_NAME] = bridge_name
 
         registry.publish(
-            a_const.OVS_BRIDGE_NAME, events.BEFORE_READ,
+            ovs_const.OVS_BRIDGE_NAME, events.BEFORE_READ,
             set_bridge_name_inner,
             payload=events.EventPayload(None, metadata={'port': port}))
 
@@ -198,14 +197,14 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
                        portbindings.VHOST_USER_OVS_PLUG: True,
                        portbindings.VHOST_USER_SOCKET: sock_path}
         details[portbindings.OVS_DATAPATH_TYPE] = a_config.get(
-            'datapath_type', a_const.OVS_DATAPATH_SYSTEM)
+            'datapath_type', ovs_const.OVS_DATAPATH_SYSTEM)
         return details
 
     @staticmethod
     def agent_vhu_sockpath(agent, port_id):
         """Return the agent's vhost-user socket path for a given port"""
         sockdir = agent['configurations'].get('vhostuser_socket_dir',
-                                              a_const.VHOST_USER_SOCKET_DIR)
+                                              ovs_const.VHOST_USER_SOCKET_DIR)
         sock_name = (constants.VHOST_USER_DEVICE_PREFIX + port_id)[:14]
         return os.path.join(sockdir, sock_name)
 

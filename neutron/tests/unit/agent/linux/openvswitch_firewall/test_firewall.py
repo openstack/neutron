@@ -18,6 +18,7 @@ from neutron_lib.callbacks import events as callbacks_events
 from neutron_lib.callbacks import registry as callbacks_registry
 from neutron_lib.callbacks import resources as callbacks_resources
 from neutron_lib import constants
+from neutron_lib.plugins.ml2 import ovs_constants as ovs_consts
 from neutron_lib.utils import helpers
 from os_ken.ofproto import ofproto_v1_3_parser
 from oslo_config import cfg
@@ -30,8 +31,6 @@ from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.agent.linux.openvswitch_firewall import exceptions
 from neutron.agent.linux.openvswitch_firewall import firewall as ovsfw
 from neutron.conf.agent import securitygroups_rpc
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
-        as ovs_consts
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
     import ovs_bridge
 from neutron.tests import base

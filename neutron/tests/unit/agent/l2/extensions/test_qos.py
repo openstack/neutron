@@ -18,6 +18,7 @@ from unittest import mock
 from neutron_lib import constants as common_constants
 from neutron_lib import context
 from neutron_lib.db import constants as db_consts
+from neutron_lib.plugins.ml2 import ovs_constants
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_utils import uuidutils
 
@@ -32,7 +33,6 @@ from neutron.objects.qos import policy
 from neutron.objects.qos import rule
 from neutron.plugins.ml2.drivers.openvswitch.agent import (
         ovs_agent_extension_api as ovs_ext_api)
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native import (
     ovs_bridge)
 from neutron.tests import base
@@ -248,7 +248,7 @@ class QosExtensionRpcTestCase(QosExtensionBaseTestCase):
     def setUp(self):
         super(QosExtensionRpcTestCase, self).setUp()
         self.qos_ext.initialize(
-            self.connection, constants.EXTENSION_DRIVER_TYPE)
+            self.connection, ovs_constants.EXTENSION_DRIVER_TYPE)
 
         self.pull_mock = mock.patch.object(
             self.qos_ext.resource_rpc, 'pull',
@@ -449,7 +449,7 @@ class QosExtensionInitializeTestCase(QosExtensionBaseTestCase):
     @mock.patch.object(resources_rpc, 'ResourcesPushRpcCallback')
     def test_initialize_subscribed_to_rpc(self, rpc_mock, subscribe_mock):
         self.qos_ext.initialize(
-            self.connection, constants.EXTENSION_DRIVER_TYPE)
+            self.connection, ovs_constants.EXTENSION_DRIVER_TYPE)
         self.connection.create_consumer.assert_has_calls(
             [mock.call(
                  resources_rpc.resource_type_versioned_topic(resource_type),
@@ -465,7 +465,7 @@ class QosExtensionReflushRulesTestCase(QosExtensionBaseTestCase):
     def setUp(self):
         super(QosExtensionReflushRulesTestCase, self).setUp()
         self.qos_ext.initialize(
-            self.connection, constants.EXTENSION_DRIVER_TYPE)
+            self.connection, ovs_constants.EXTENSION_DRIVER_TYPE)
 
         self.pull_mock = mock.patch.object(
             self.qos_ext.resource_rpc, 'pull',

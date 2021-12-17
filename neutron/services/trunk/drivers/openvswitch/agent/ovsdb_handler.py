@@ -21,6 +21,7 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import context as n_context
+from neutron_lib.plugins.ml2 import ovs_constants as ovs_agent_constants
 from neutron_lib.services.trunk import constants
 from oslo_concurrency import lockutils
 from oslo_context import context as o_context
@@ -32,8 +33,6 @@ from neutron._i18n import _
 from neutron.agent.common import ovs_lib
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.common import utils as common_utils
-from neutron.plugins.ml2.drivers.openvswitch.agent.common \
-    import constants as ovs_agent_constants
 from neutron.services.trunk.drivers.openvswitch.agent import exceptions
 from neutron.services.trunk.drivers.openvswitch.agent \
     import trunk_manager as tman

@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.plugins.ml2 import ovs_constants
 from oslo_config import cfg
 from ovsdbapp.backend.ovs_idl import command
 from ovsdbapp.backend.ovs_idl import connection
@@ -22,7 +23,6 @@ from ovsdbapp.schema.open_vswitch import impl_idl
 from neutron.agent.ovsdb.native import connection as n_connection
 from neutron.common import utils
 from neutron.conf.agent import ovs_conf
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 
 
 ovs_conf.register_ovs_agent_opts()
@@ -62,7 +62,7 @@ class OvsCleanup(command.BaseCommand):
         # Deletable defined as "looks like vif port and not set to skip delete"
         if self.all_ports:
             return True
-        if constants.SKIP_CLEANUP in port.external_ids:
+        if ovs_constants.SKIP_CLEANUP in port.external_ids:
             return False
         if not all(field in port.external_ids
                    for field in ('iface-id', 'attached-mac')):

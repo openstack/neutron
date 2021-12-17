@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.plugins.ml2 import ovs_constants as ovs_consts
 from os_ken.lib.packet import arp
 from os_ken.lib.packet import ether_types
 from oslo_log import log as logging
@@ -22,8 +23,6 @@ from oslo_utils import excutils
 from neutron._i18n import _
 from neutron.agent.common import ovs_lib
 from neutron.common import ipv6_utils
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
-        as ovs_consts
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow \
     import br_cookie
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \

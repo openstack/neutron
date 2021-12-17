@@ -14,12 +14,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.plugins.ml2 import ovs_constants as constants
 from os_ken.lib.packet import arp
 from os_ken.lib.packet import ether_types
 from os_ken.lib.packet import icmpv6
 from os_ken.lib.packet import in_proto
-
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 
 
 class OVSDVRInterfaceMixin(object):

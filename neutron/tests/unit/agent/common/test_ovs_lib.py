@@ -16,6 +16,7 @@ import collections
 from unittest import mock
 
 from neutron_lib import exceptions
+from neutron_lib.plugins.ml2 import ovs_constants as p_const
 from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
 import tenacity
@@ -23,8 +24,6 @@ import testtools
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.common import utils
-from neutron.plugins.ml2.drivers.openvswitch.agent.common \
-    import constants as p_const
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import exceptions as ovs_exc
 from neutron.tests import base

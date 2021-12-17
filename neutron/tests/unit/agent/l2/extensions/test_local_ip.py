@@ -19,6 +19,7 @@ import netaddr
 from neutron_lib.callbacks import events as lib_events
 from neutron_lib.callbacks import registry as lib_registry
 from neutron_lib import context
+from neutron_lib.plugins.ml2 import ovs_constants
 from os_ken.lib.packet import ether_types
 from os_ken.lib.packet import in_proto as ip_proto
 from oslo_utils import uuidutils
@@ -27,8 +28,6 @@ from neutron.agent.l2.extensions import local_ip as local_ip_ext
 from neutron.api.rpc.callbacks import events
 from neutron.api.rpc.callbacks import resources
 from neutron.objects import local_ip as lip_obj
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
-     constants as ovs_constants)
 from neutron.plugins.ml2.drivers.openvswitch.agent \
     import ovs_agent_extension_api as ovs_ext_api
 from neutron.tests import base

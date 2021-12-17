@@ -16,12 +16,11 @@
 from unittest import mock
 
 from neutron_lib import constants
+from neutron_lib.plugins.ml2 import ovs_constants as ovs_consts
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
 from neutron.objects.logapi import logging_resource as log_object
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
-    as ovs_consts
 from neutron.services.logapi.common import exceptions as log_exc
 from neutron.services.logapi.drivers.openvswitch \
     import ovs_firewall_log as ovsfw_log

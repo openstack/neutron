@@ -20,6 +20,7 @@ import netaddr
 from neutron_lib.agent.linux import interface
 from neutron_lib import constants
 from neutron_lib import exceptions
+from neutron_lib.plugins.ml2 import ovs_constants as ovs_const
 from oslo_log import log as logging
 from oslo_utils import excutils
 from pyroute2.netlink import exceptions \
@@ -29,8 +30,6 @@ from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
 from neutron.common import utils
 from neutron.conf.plugins.ml2.drivers import ovs_conf
-from neutron.plugins.ml2.drivers.openvswitch.agent.common \
-    import constants as ovs_const
 from neutron.privileged.agent.linux import ethtool
 
 LOG = logging.getLogger(__name__)
