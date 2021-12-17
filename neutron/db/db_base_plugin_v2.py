@@ -635,17 +635,20 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             # NOTE(salv-orlando): There is slight chance of a race, when
             # a subnet-update and a router-interface-add operation are
             # executed concurrently
-            if cur_subnet and not ipv6_utils.is_ipv6_pd_enabled(s):
+            s_gateway_ip = netaddr.IPAddress(s['gateway_ip'])
+            if (cur_subnet and
+                    s_gateway_ip != cur_subnet['gateway_ip'] and
+                    not ipv6_utils.is_ipv6_pd_enabled(s)):
                 gateway_ip = str(cur_subnet['gateway_ip'])
                 with db_api.CONTEXT_READER.using(context):
-                    allocated = port_obj.IPAllocation.get_alloc_routerports(
+                    alloc = port_obj.IPAllocation.get_alloc_routerports(
                         context, cur_subnet['id'], gateway_ip=gateway_ip,
                         first=True)
 
-                if allocated and allocated.port_id:
+                if alloc and alloc.port_id:
                     raise exc.GatewayIpInUse(
                         ip_address=gateway_ip,
-                        port_id=allocated.port_id)
+                        port_id=alloc.port_id)
 
         if validators.is_attr_set(s.get('dns_nameservers')):
             if len(s['dns_nameservers']) > cfg.CONF.max_dns_nameservers:
