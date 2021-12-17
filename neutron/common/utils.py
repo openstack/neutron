@@ -145,6 +145,13 @@ def get_dhcp_agent_device_id(network_id, host):
     return 'dhcp%s-%s' % (host_uuid, network_id)
 
 
+def is_dns_servers_any_address(dns_servers, ip_version):
+    """Checks if DNS server list matches the IP any address '0.0.0.0'/'::'"""
+    ip_any = netaddr.IPNetwork(n_const.IP_ANY[ip_version]).ip
+    return (len(dns_servers) == 1 and
+            netaddr.IPNetwork(dns_servers[0]).ip == ip_any)
+
+
 class exception_logger(object):
     """Wrap a function and log raised exception
 
