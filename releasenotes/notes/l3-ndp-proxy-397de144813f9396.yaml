@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    Support for IPv6 NDP proxy has been added. Read the related
+    `specification <https://specs.openstack.org/openstack/neutron-specs/specs/xena/l3-router-support-ndp-proxy.html>`_
+    for more details.
