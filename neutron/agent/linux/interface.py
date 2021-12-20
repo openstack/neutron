@@ -267,9 +267,8 @@ class LinuxInterfaceDriver(object, metaclass=abc.ABCMeta):
              bridge=None, namespace=None, prefix=None, mtu=None, link_up=True):
         if not ip_lib.device_exists(device_name,
                                     namespace=namespace):
-            self._safe_plug_new(
-                network_id, port_id, device_name, mac_address, bridge,
-                namespace, prefix, mtu, link_up)
+            self.plug_new(network_id, port_id, device_name, mac_address,
+                          bridge, namespace, prefix, mtu, link_up)
         else:
             LOG.info("Device %s already exists", device_name)
             if mtu:
@@ -277,22 +276,6 @@ class LinuxInterfaceDriver(object, metaclass=abc.ABCMeta):
                     device_name, mtu, namespace=namespace, prefix=prefix)
             else:
                 LOG.warning("No MTU configured for port %s", port_id)
-
-    def _safe_plug_new(self, network_id, port_id, device_name, mac_address,
-            bridge=None, namespace=None, prefix=None, mtu=None, link_up=True):
-        try:
-            self.plug_new(
-                network_id, port_id, device_name, mac_address, bridge,
-                namespace, prefix, mtu, link_up)
-        except TypeError:
-            LOG.warning("Interface driver's plug_new() method should now "
-                        "accept additional optional parameter 'link_up'. "
-                        "Usage of plug_new() method which takes from 5 to 9 "
-                        "positional arguments is now deprecated and will not "
-                        "be possible in W release.")
-            self.plug_new(
-                network_id, port_id, device_name, mac_address, bridge,
-                namespace, prefix, mtu)
 
     @abc.abstractmethod
     def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
