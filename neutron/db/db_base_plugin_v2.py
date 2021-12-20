@@ -476,7 +476,10 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             ~models_v2.Port.device_owner.in_(
                 _constants.AUTO_DELETE_PORT_OWNERS))
         if non_auto_ports.count():
-            raise exc.NetworkInUse(net_id=net_id)
+            ports = [port.id for port in non_auto_ports.all()]
+            reason = _("There are one or more ports still in use on the "
+                       "network, id for these ports is: %s" % ",".join(ports))
+            raise exc.NetworkInUse(net_id=net_id, reason=reason)
 
     @db_api.retry_if_session_inactive()
     def delete_network(self, context, id):

@@ -1621,6 +1621,10 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                                           port['port']['network_id'])
             res = req.get_response(self.api)
             self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
+            self.assertIn(port['port']['network_id'],
+                          res.json["NeutronError"]["message"])
+            self.assertIn(port['port']['id'],
+                          res.json["NeutronError"]["message"])
 
     def _test_delete_network_port_exists_owned_by_network(self, device_owner):
         res = self._create_network(fmt=self.fmt, name='net',
