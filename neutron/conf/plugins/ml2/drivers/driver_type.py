@@ -75,7 +75,9 @@ vlan_opts = [
                        "<physical_network> specifying physical_network names "
                        "usable for VLAN provider and tenant networks, as "
                        "well as ranges of VLAN tags on each available for "
-                       "allocation to tenant networks."))
+                       "allocation to tenant networks. If no range is "
+                       "defined, the whole valid VLAN ID set [1, 4094] will "
+                       "be assigned."))
 ]
 
 
