@@ -23,7 +23,7 @@ from neutron.common import utils
 from neutron.objects import quota as quota_obj
 
 
-RESERVATION_EXPIRATION_TIMEOUT = 20  # seconds
+RESERVATION_EXPIRATION_TIMEOUT = 120  # seconds
 UNLIMITED_QUOTA = -1
 
 
@@ -175,7 +175,8 @@ def set_all_quota_usage_dirty(context, resource, dirty=True):
 def create_reservation(context, tenant_id, deltas, expiration=None):
     # This method is usually called from within another transaction.
     # Consider using begin_nested
-    expiration = expiration or (utcnow() + datetime.timedelta(0, 120))
+    expiration = expiration or (
+            utcnow() + datetime.timedelta(0, RESERVATION_EXPIRATION_TIMEOUT))
     delta_objs = []
     for (resource, delta) in deltas.items():
         delta_objs.append(quota_obj.ResourceDelta(
@@ -241,7 +242,6 @@ def get_reservations_for_resources(context, tenant_id, resources,
         context, utcnow(), tenant_id, resources, expired)
 
 
-@db_api.retry_if_session_inactive()
 @db_api.CONTEXT_WRITER
 def remove_expired_reservations(context, tenant_id=None, timeout=None):
     expiring_time = utcnow()

@@ -15,8 +15,10 @@
 
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions
+from oslo_db import exception as db_exc
 from oslo_log import log
 
+from neutron.common import utils
 from neutron.db.quota import api as quota_api
 from neutron.db.quota import driver as quota_driver
 
@@ -40,8 +42,26 @@ class DbQuotaNoLockDriver(quota_driver.DbQuotaDriver):
     method is to be fast enough to avoid the concurrency when counting the
     resources while not blocking concurrent API operations.
     """
+    @utils.skip_exceptions(db_exc.DBError)
+    def _remove_expired_reservations(self, context, project_id, timeout):
+        """Remove expired reservations
+
+        Any DB exception will be catch and dismissed. This operation can have
+        been successfully executed by another concurrent request. There is no
+        need to fail or retry it.
+        """
+        quota_api.remove_expired_reservations(context, tenant_id=project_id,
+                                              timeout=timeout)
+
     @db_api.retry_if_session_inactive()
     def make_reservation(self, context, project_id, resources, deltas, plugin):
+        # Delete expired reservations before counting valid ones. This
+        # operation is fast and by calling it before making any
+        # reservation, we ensure the freshness of the reservations.
+        self._remove_expired_reservations(
+            context, project_id=project_id,
+            timeout=quota_api.RESERVATION_EXPIRATION_TIMEOUT)
+
         resources_over_limit = []
         with db_api.CONTEXT_WRITER.using(context):
             # Filter out unlimited resources.
@@ -49,13 +69,6 @@ class DbQuotaNoLockDriver(quota_driver.DbQuotaDriver):
             unlimited_resources = set([resource for (resource, limit) in
                                        limits.items() if limit < 0])
             requested_resources = (set(deltas.keys()) - unlimited_resources)
-
-            # Delete expired reservations before counting valid ones. This
-            # operation is fast and by calling it before making any
-            # reservation, we ensure the freshness of the reservations.
-            quota_api.remove_expired_reservations(
-                context, tenant_id=project_id,
-                timeout=quota_api.RESERVATION_EXPIRATION_TIMEOUT)
 
             # Count the number of (1) used and (2) reserved resources for this
             # project_id. If any resource limit is exceeded, raise exception.
