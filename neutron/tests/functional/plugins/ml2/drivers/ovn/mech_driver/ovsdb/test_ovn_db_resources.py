@@ -966,6 +966,9 @@ class TestDNSRecords(base.TestOVNFunctionalBase):
              'records': {'n1p1': port_ips, 'n1p1.ovn.test': port_ips,
                          'n1p1.net-n1': port_ips}}
         ]
+        for ip in port_ips.split(" "):
+            p_record = netaddr.IPAddress(ip).reverse_dns.rstrip(".")
+            expected_dns_records[0]['records'][p_record] = 'n1p1.ovn.test'
 
         self._validate_dns_records(expected_dns_records)
         self._validate_ls_dns_records(n1_lswitch_name,
@@ -991,6 +994,9 @@ class TestDNSRecords(base.TestOVNFunctionalBase):
         expected_dns_records.append(
             {'external_ids': {'ls_name': n2_lswitch_name},
              'records': {'n2p1': port_ips, 'n2p1.ovn.test': port_ips}})
+        for ip in port_ips.split(" "):
+            p_record = netaddr.IPAddress(ip).reverse_dns.rstrip(".")
+            expected_dns_records[1]['records'][p_record] = 'n2p1.ovn.test'
         self._validate_dns_records(expected_dns_records)
         self._validate_ls_dns_records(n1_lswitch_name,
                                       [expected_dns_records[0]])
@@ -1008,6 +1014,9 @@ class TestDNSRecords(base.TestOVNFunctionalBase):
         expected_dns_records[0]['records']['n1p2'] = port_ips
         expected_dns_records[0]['records']['n1p2.ovn.test'] = port_ips
         expected_dns_records[0]['records']['n1p2.net-n1'] = port_ips
+        for ip in port_ips.split(" "):
+            p_record = netaddr.IPAddress(ip).reverse_dns.rstrip(".")
+            expected_dns_records[0]['records'][p_record] = 'n1p2.ovn.test'
         self._validate_dns_records(expected_dns_records)
         self._validate_ls_dns_records(n1_lswitch_name,
                                       [expected_dns_records[0]])
@@ -1021,6 +1030,11 @@ class TestDNSRecords(base.TestOVNFunctionalBase):
         res = req.get_response(self.api)
         self.assertEqual(200, res.status_int)
         expected_dns_records[0]['records'].pop('n1p1')
+        port_ips = " ".join([f['ip_address']
+                             for f in n1p1['port']['fixed_ips']])
+        for ip in port_ips.split(" "):
+            p_record = netaddr.IPAddress(ip).reverse_dns.rstrip(".")
+            expected_dns_records[0]['records'].pop(p_record)
         expected_dns_records[0]['records'].pop('n1p1.ovn.test')
         expected_dns_records[0]['records'].pop('n1p1.net-n1')
         self._validate_dns_records(expected_dns_records)

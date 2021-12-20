@@ -2321,6 +2321,10 @@ class OVNClient(object):
                 port_dns_records[fqdn] = dns_assignment['ip_address']
             else:
                 port_dns_records[fqdn] += " " + dns_assignment['ip_address']
+            # Add reverse DNS enteries for port only for fqdn
+            for ip in port_dns_records[fqdn].split(" "):
+                ptr_record = netaddr.IPAddress(ip).reverse_dns.rstrip(".")
+                port_dns_records[ptr_record] = fqdn
 
         return port_dns_records
 
@@ -2369,14 +2373,18 @@ class OVNClient(object):
         net_dns_domain = net.get('dns_domain', '').rstrip('.')
 
         hostnames = []
+        ips = []
         for dns_assignment in port['dns_assignment']:
             hostname = dns_assignment['hostname']
             fqdn = dns_assignment['fqdn'].rstrip('.')
+            ip = dns_assignment['ip_address']
             if hostname not in hostnames:
                 hostnames.append(hostname)
                 net_dns_fqdn = hostname + '.' + net_dns_domain
                 if net_dns_domain and net_dns_fqdn != fqdn:
                     hostnames.append(net_dns_fqdn)
+            if ip not in ips:
+                ips.append(ip)
 
             if fqdn not in hostnames:
                 hostnames.append(fqdn)
@@ -2385,3 +2393,8 @@ class OVNClient(object):
             if ls_dns_record.records.get(hostname):
                 txn.add(self._nb_idl.dns_remove_record(
                         ls_dns_record.uuid, hostname, if_exists=True))
+        for ip in ips:
+            ptr_record = netaddr.IPAddress(ip).reverse_dns.rstrip(".")
+            if ls_dns_record.records.get(ptr_record):
+                txn.add(self._nb_idl.dns_remove_record(
+                        ls_dns_record.uuid, ptr_record, if_exists=True))
