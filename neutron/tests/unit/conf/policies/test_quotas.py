@@ -94,31 +94,31 @@ class ProjectAdminTests(QuoatsAPITestCase):
 
     def test_get_quota(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'get_quota', self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'get_quota', self.alt_target)
 
     def test_update_quota(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_quota', self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_quota', self.alt_target)
 
     def test_delete_quota(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'delete_quota', self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'delete_quota', self.alt_target)
 

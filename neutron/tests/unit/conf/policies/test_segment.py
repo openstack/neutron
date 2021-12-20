@@ -89,25 +89,25 @@ class ProjectAdminTests(SegmentAPITestCase):
 
     def test_create_segment(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_segment', self.target)
 
     def test_get_segment(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'get_segment', self.target)
 
     def test_update_segment(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_segment', self.target)
 
     def test_delete_segment(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'delete_segment', self.target)
 

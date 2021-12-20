@@ -114,26 +114,26 @@ class ProjectAdminQosPolicyTests(QosPolicyAPITestCase):
 
     def test_create_policy(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'create_policy', self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'create_policy', self.alt_target)
 
     def test_update_policy(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'update_policy', self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'update_policy', self.alt_target)
 
     def test_delete_policy(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'delete_policy', self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'delete_policy', self.alt_target)
 
 
@@ -415,24 +415,24 @@ class ProjectAdminQosBandwidthLimitRuleTests(QosRulesAPITestCase):
 
     def test_create_policy_bandwidth_limit_rule(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_policy_bandwidth_limit_rule',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_policy_bandwidth_limit_rule',
             self.alt_target)
 
     def test_update_policy_bandwidth_limit_rule(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_policy_bandwidth_limit_rule',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_policy_bandwidth_limit_rule',
             self.alt_target)
@@ -451,12 +451,12 @@ class ProjectAdminQosBandwidthLimitRuleTests(QosRulesAPITestCase):
 
     def test_delete_policy_bandwidth_limit_rule(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'delete_policy_bandwidth_limit_rule',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'delete_policy_bandwidth_limit_rule',
             self.alt_target)
@@ -671,24 +671,24 @@ class ProjectAdminQosDSCPMarkingRuleTests(QosRulesAPITestCase):
 
     def test_create_policy_dscp_marking_rule(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_policy_dscp_marking_rule',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_policy_dscp_marking_rule',
             self.alt_target)
 
     def test_update_policy_dscp_marking_rule(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_policy_dscp_marking_rule',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_policy_dscp_marking_rule',
             self.alt_target)
@@ -707,12 +707,12 @@ class ProjectAdminQosDSCPMarkingRuleTests(QosRulesAPITestCase):
 
     def test_delete_policy_dscp_marking_rule(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'delete_policy_dscp_marking_rule',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'delete_policy_dscp_marking_rule',
             self.alt_target)
@@ -929,24 +929,24 @@ class ProjectAdminQosMinimumBandwidthRuleTests(QosRulesAPITestCase):
 
     def test_create_policy_minimum_bandwidth_rule(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_policy_minimum_bandwidth_rule',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_policy_minimum_bandwidth_rule',
             self.alt_target)
 
     def test_update_policy_minimum_bandwidth_rule(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_policy_minimum_bandwidth_rule',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_policy_minimum_bandwidth_rule',
             self.alt_target)
@@ -965,12 +965,12 @@ class ProjectAdminQosMinimumBandwidthRuleTests(QosRulesAPITestCase):
 
     def test_delete_policy_minimum_bandwidth_rule(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'delete_policy_minimum_bandwidth_rule',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'delete_policy_minimum_bandwidth_rule',
             self.alt_target)
@@ -1122,36 +1122,36 @@ class ProjectAdminQosMinimumPacketRateRuleTests(QosRulesAPITestCase):
 
     def test_create_policy_minimum_packet_rate_rule(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_policy_minimum_packet_rate_rule',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_policy_minimum_packet_rate_rule',
             self.alt_target)
 
     def test_update_policy_minimum_packet_rate_rule(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_policy_minimum_packet_rate_rule',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_policy_minimum_packet_rate_rule',
             self.alt_target)
 
     def test_delete_policy_minimum_packet_rate_rule(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'delete_policy_minimum_packet_rate_rule',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'delete_policy_minimum_packet_rate_rule',
             self.alt_target)

@@ -422,21 +422,21 @@ class ProjectAdminTests(RouterAPITestCase):
 
     def test_create_router_distributed(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_router:distributed', self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_router:distributed', self.alt_target)
 
     def test_create_router_ha(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_router:ha', self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_router:ha', self.alt_target)
 
@@ -464,25 +464,25 @@ class ProjectAdminTests(RouterAPITestCase):
 
     def test_create_router_external_gateway_info_enable_snat(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_router:external_gateway_info:enable_snat',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_router:external_gateway_info:enable_snat',
             self.alt_target)
 
     def test_create_router_external_gateway_info_external_fixed_ips(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context,
             'create_router:external_gateway_info:external_fixed_ips',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context,
             'create_router:external_gateway_info:external_fixed_ips',
@@ -498,21 +498,21 @@ class ProjectAdminTests(RouterAPITestCase):
 
     def test_get_router_distributed(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'get_router:distributed', self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'get_router:distributed', self.alt_target)
 
     def test_get_router_ha(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'get_router:ha', self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'get_router:ha', self.alt_target)
 
@@ -526,21 +526,21 @@ class ProjectAdminTests(RouterAPITestCase):
 
     def test_update_router_distributed(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_router:distributed', self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_router:distributed', self.alt_target)
 
     def test_update_router_ha(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_router:ha', self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_router:ha', self.alt_target)
 
@@ -568,25 +568,25 @@ class ProjectAdminTests(RouterAPITestCase):
 
     def test_update_router_external_gateway_info_enable_snat(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_router:external_gateway_info:enable_snat',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_router:external_gateway_info:enable_snat',
             self.alt_target)
 
     def test_update_router_external_gateway_info_external_fixed_ips(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context,
             'update_router:external_gateway_info:external_fixed_ips',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context,
             'update_router:external_gateway_info:external_fixed_ips',

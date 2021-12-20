@@ -161,50 +161,50 @@ class ProjectAdminTests(FlavorAPITestCase):
 
     def test_create_flavor(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_flavor', self.target)
 
     def test_update_flavor(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_flavor', self.target)
 
     def test_delete_flavor(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'delete_flavor', self.target)
 
     def test_create_service_profile(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_service_profile', self.target)
 
     def test_update_service_profile(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_service_profile', self.target)
 
     def test_delete_service_profile(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'delete_service_profile', self.target)
 
     def test_create_flavor_service_profile(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_flavor_service_profile',
             self.target)
 
     def test_delete_flavor_service_profile(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'delete_flavor_service_profile',
             self.target)

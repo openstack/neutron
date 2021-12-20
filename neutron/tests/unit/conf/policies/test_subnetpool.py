@@ -222,21 +222,21 @@ class ProjectAdminTests(SubnetpoolAPITestCase):
 
     def test_create_subnetpool_shared(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_subnetpool:shared', self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_subnetpool:shared', self.alt_target)
 
     def test_create_subnetpool_default(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_subnetpool:is_default', self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_subnetpool:is_default', self.alt_target)
 
@@ -258,11 +258,11 @@ class ProjectAdminTests(SubnetpoolAPITestCase):
 
     def test_update_subnetpool_default(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_subnetpool:is_default', self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_subnetpool:is_default', self.alt_target)
 

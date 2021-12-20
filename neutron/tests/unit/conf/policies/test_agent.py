@@ -147,67 +147,67 @@ class ProjectAdminTests(AgentAPITestCase):
 
     def test_get_agent(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, "get_agent", self.target)
 
     def test_update_agent(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, "update_agent", self.target)
 
     def test_delete_agent(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, "delete_agent", self.target)
 
     def test_add_network_to_dhcp_agent(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, "create_dhcp-network", self.target)
 
     def test_networks_on_dhcp_agent(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, "get_dhcp-networks", self.target)
 
     def test_delete_network_from_dhcp_agent(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, "delete_dhcp-network", self.target)
 
     def test_add_router_to_l3_agent(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, "create_l3-router", self.target)
 
     def test_get_routers_on_l3_agent(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, "get_l3-routers", self.target)
 
     def test_delete_router_from_l3_agent(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, "delete_l3-router", self.target)
 
     def test_get_dhcp_agents_hosting_network(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, "get_dhcp-agents", self.target)
 
     def test_get_l3_agents_hosting_router(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, "get_l3-agents", self.target)
 
