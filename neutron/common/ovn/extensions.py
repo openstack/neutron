@@ -52,6 +52,7 @@ from neutron_lib.api.definitions import qos_bw_limit_direction
 from neutron_lib.api.definitions import qos_default
 from neutron_lib.api.definitions import qos_rule_type_details
 from neutron_lib.api.definitions import qos_rules_alias
+from neutron_lib.api.definitions import quota_check_limit
 from neutron_lib.api.definitions import rbac_address_scope
 from neutron_lib.api.definitions import rbac_security_groups
 from neutron_lib.api.definitions import router_availability_zone as raz_def
@@ -66,6 +67,7 @@ from neutron_lib.api.definitions import trunk
 from neutron_lib.api.definitions import vlantransparent
 from neutron_lib import constants
 
+from neutron.extensions import quotasv2_detail
 from neutron.extensions import security_groups_shared_filtering_lib
 
 # NOTE(russellb) This remains in its own file (vs constants.py) because we want
@@ -122,6 +124,8 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     qos_rule_type_details.ALIAS,
     qos_rules_alias.ALIAS,
     'quotas',
+    quota_check_limit.ALIAS,
+    quotasv2_detail.ALIAS,
     rbac_address_scope.ALIAS,
     'rbac-policies',
     rbac_security_groups.ALIAS,
@@ -137,7 +141,6 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     'standard-attr-timestamp',
     subnet_service_types.ALIAS,
     trunk.ALIAS,
-    'quota_details',
     seg_def.ALIAS,
     expose_port_forwarding_in_fip.ALIAS,
     fip_pf_description.ALIAS,
