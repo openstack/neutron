@@ -293,6 +293,10 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             '.OVNClient._is_lb_member_fip',
             return_value=False)
         self.mock_is_lb_member_fip.start()
+        self._start_mock(
+            'neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.ovn_client.'
+            'OVNClient.delete_mac_binding_entries_by_mac',
+            return_value=1)
 
     def test__plugin_driver(self):
         # No valid mech drivers should raise an exception.
@@ -1711,6 +1715,10 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
             return_value=None)
         self._start_mock(
             'neutron.common.ovn.utils.get_revision_number',
+            return_value=1)
+        self._start_mock(
+            'neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.ovn_client.'
+            'OVNClient.delete_mac_binding_entries_by_mac',
             return_value=1)
         self.setup_notification_driver()
 
