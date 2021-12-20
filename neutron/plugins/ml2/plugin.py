@@ -2281,7 +2281,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             return
         else:
             port_host = db.get_port_binding_host(context, port_id)
-            return port if (port_host == host) else None
+            ret_val = port if (port_host == host) else None
+            if not ret_val:
+                LOG.debug('The host %s is not matching for port %s host %s!',
+                          host, port_id, port_host)
+            return ret_val
 
     @db_api.retry_if_session_inactive()
     def get_ports_from_devices(self, context, devices):
