@@ -1921,9 +1921,7 @@ class OVNClient(object):
             options['server_mac'] = n_net.get_random_mac(
                 cfg.CONF.base_mac.split(':'))
 
-        dns_servers = (subnet.get('dns_nameservers') or
-                       ovn_conf.get_dns_servers() or
-                       utils.get_system_dns_resolvers())
+        dns_servers = utils.get_dhcp_dns_servers(subnet)
         if dns_servers:
             options['dns_server'] = '{%s}' % ', '.join(dns_servers)
         else:
@@ -1962,9 +1960,10 @@ class OVNClient(object):
                 cfg.CONF.base_mac.split(':'))
         }
 
-        if subnet['dns_nameservers']:
-            dns_servers = '{%s}' % ', '.join(subnet['dns_nameservers'])
-            dhcpv6_opts['dns_server'] = dns_servers
+        dns_servers = utils.get_dhcp_dns_servers(subnet,
+                                                 ip_version=const.IP_VERSION_6)
+        if dns_servers:
+            dhcpv6_opts['dns_server'] = '{%s}' % ', '.join(dns_servers)
 
         if subnet.get('ipv6_address_mode') == const.DHCPV6_STATELESS:
             dhcpv6_opts[ovn_const.DHCPV6_STATELESS_OPT] = 'true'
