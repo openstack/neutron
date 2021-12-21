@@ -169,7 +169,7 @@ generate_ansible_inventory_file() {
     echo "[ovn-controllers]" >> hosts_for_migration
 
     # We want to run ovn-controller where OVS agent was running before the migration
-    OVN_CONTROLLERS=$(get_group_hosts "$inventory_file" neutron_ovs_agent)
+    OVN_CONTROLLERS=$(get_group_hosts "$inventory_file" neutron_ovs_agent; get_group_hosts "$inventory_file" neutron_ovs_dpdk_agent)
     for node_name in $OVN_CONTROLLERS; do
         node_ip=$(get_host_ip "$inventory_file" $node_name)
         echo $node_name ansible_host=$node_ip ansible_ssh_user=$UNDERCLOUD_NODE_USER ansible_become=true ovn_controller=true >> hosts_for_migration
