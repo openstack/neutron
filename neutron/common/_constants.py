@@ -63,7 +63,7 @@ RPC_RES_PROCESSING_STEP = 20
 
 # IPtables version to support --random-fully option.
 # Do not move this constant to neutron-lib, since it is temporary
-IPTABLES_RANDOM_FULLY_VERSION = '1.6.2'
+IPTABLES_RANDOM_FULLY_VERSION = '1.6.0'
 
 # Segmentation ID pool; DB select limit to improve the performace.
 IDPOOL_SELECT_SIZE = 100
