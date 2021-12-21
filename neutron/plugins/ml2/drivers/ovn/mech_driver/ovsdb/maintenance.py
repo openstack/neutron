@@ -16,6 +16,7 @@
 import abc
 import copy
 import inspect
+import re
 import threading
 
 from futurist import periodics
@@ -745,6 +746,41 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                 opt = {ovn_const.LRP_OPTIONS_RESIDE_REDIR_CH: expected_value}
                 cmds.append(self._nb_idl.db_set(
                     'Logical_Router_Port', lrp_name, ('options', opt)))
+        if cmds:
+            with self._nb_idl.transaction(check_error=True) as txn:
+                for cmd in cmds:
+                    txn.add(cmd)
+        raise periodics.NeverAgain()
+
+    # TODO(ralonsoh): Remove this in the Z+2 cycle
+    # A static spacing value is used here, but this method will only run
+    # once per lock due to the use of periodics.NeverAgain().
+    @periodics.periodic(spacing=600, run_immediately=True)
+    def update_port_qos_with_external_ids_reference(self):
+        """Update all OVN QoS registers with the port ID
+
+        This method will only update the OVN QoS registers related to port QoS,
+        not FIP QoS. FIP QoS have the corresponding "external_ids" reference.
+        """
+        if not self.has_lock:
+            return
+
+        regex = re.compile(
+            r'(inport|outport) == \"(?P<port_id>[a-z0-9\-]{36})\"')
+        cmds = []
+        for ls in self._nb_idl.ls_list().execute(check_error=True):
+            for qos in self._nb_idl.qos_list(ls.name).execute(
+                    check_error=True):
+                if qos.external_ids:
+                    continue
+                match = re.match(regex, qos.match)
+                if not match:
+                    continue
+                port_id = match.group('port_id')
+                external_ids = {ovn_const.OVN_PORT_EXT_ID_KEY: port_id}
+                cmds.append(self._nb_idl.db_set(
+                    'QoS', qos.uuid, ('external_ids', external_ids)))
+
         if cmds:
             with self._nb_idl.transaction(check_error=True) as txn:
                 for cmd in cmds:
