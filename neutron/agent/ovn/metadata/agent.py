@@ -48,6 +48,8 @@ OVN_VIF_PORT_TYPES = ("", "external", )
 MetadataPortInfo = collections.namedtuple('MetadataPortInfo', ['mac',
                                                                'ip_addresses'])
 
+OVN_METADATA_UUID_NAMESPACE = uuid.UUID('d34bf9f6-da32-4871-9af8-15a4626b41ab')
+
 
 def _sync_lock(f):
     """Decorator to block all operations for a global sync call."""
@@ -206,13 +208,12 @@ class MetadataAgent(object):
         try:
             self.chassis_id = uuid.UUID(self.chassis)
         except ValueError:
-            LOG.exception('Chassis name %s is not a correctly formatted UUID '
-                          'string', self.chassis)
-            raise ConfigException()
-
+            # OVS system-id could be a non UUID formatted string.
+            self.chassis_id = uuid.uuid5(OVN_METADATA_UUID_NAMESPACE,
+                                         self.chassis)
         self.ovn_bridge = self._get_ovn_bridge()
-        LOG.debug("Loaded chassis %s and ovn bridge %s.",
-                  self.chassis, self.ovn_bridge)
+        LOG.debug("Loaded chassis name %s (UUID: %s) and ovn bridge %s.",
+                  self.chassis, self.chassis_id, self.ovn_bridge)
 
     @_sync_lock
     def resync(self):
