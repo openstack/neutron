@@ -4824,6 +4824,70 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                     res = req.get_response(self.api)
                     self.assertEqual(res.status_int, 200)
 
+    def test_update_subnet_the_same_gw_as_in_use_by_router(self):
+        with self.network() as network:
+            with self.subnet(network=network,
+                             allocation_pools=[{'start': '10.0.0.2',
+                                                'end': '10.0.0.8'}]) as subnet:
+                s = subnet['subnet']
+                with self.port(
+                    subnet=subnet, fixed_ips=[{'subnet_id': s['id'],
+                                               'ip_address': s['gateway_ip']}]
+                ) as port:
+                    # this protection only applies to router ports so we need
+                    # to make this port belong to a router
+                    ctx = context.get_admin_context()
+                    with db_api.CONTEXT_WRITER.using(ctx):
+                        router = l3_models.Router()
+                        ctx.session.add(router)
+                    rp = l3_obj.RouterPort(ctx, router_id=router.id,
+                                           port_id=port['port']['id'])
+                    rp.create()
+
+                    # update subnet will be with the same gateway_ip as was
+                    # used before, thus it should be fine
+                    data = {'subnet': {
+                        'gateway_ip': s['gateway_ip'],
+                        'description': 'test update subnet'}}
+                    req = self.new_update_request('subnets', data,
+                                                  s['id'])
+                    res = req.get_response(self.api)
+                    self.assertEqual(200, res.status_int)
+
+    def test_update_subnet_the_same_gw_as_in_use_by_router_ipv6(self):
+        with self.network() as network:
+            with self.subnet(network=network,
+                             ip_version=constants.IP_VERSION_6,
+                             cidr="fe80::/48") as subnet:
+                s = subnet['subnet']
+                with self.port(
+                    subnet=subnet, fixed_ips=[{'subnet_id': s['id'],
+                                               'ip_address': s['gateway_ip']}]
+                ) as port:
+                    # this protection only applies to router ports so we need
+                    # to make this port belong to a router
+                    ctx = context.get_admin_context()
+                    with db_api.CONTEXT_WRITER.using(ctx):
+                        router = l3_models.Router()
+                        ctx.session.add(router)
+                    rp = l3_obj.RouterPort(ctx, router_id=router.id,
+                                           port_id=port['port']['id'])
+                    rp.create()
+
+                    # It's the same IP address but with all zeros now so string
+                    # is different
+                    new_gw_ip = netaddr.IPAddress(s['gateway_ip']).format(
+                            dialect=netaddr.ipv6_verbose)
+                    # update subnet will be with the same gateway_ip as was
+                    # used before, thus it should be fine
+                    data = {'subnet': {
+                        'gateway_ip': new_gw_ip,
+                        'description': 'test update subnet'}}
+                    req = self.new_update_request('subnets', data,
+                                                  s['id'])
+                    res = req.get_response(self.api)
+                    self.assertEqual(200, res.status_int)
+
     def test_update_subnet_invalid_gw_V4_cidr(self):
         with self.network() as network:
             with self.subnet(network=network) as subnet:
