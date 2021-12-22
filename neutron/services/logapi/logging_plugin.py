@@ -58,9 +58,11 @@ class LoggingPlugin(log_ext.LoggingPluginBase):
                 self.delete_log(context, log['id'])
 
     @registry.receives(resources.SECURITY_GROUP, [events.AFTER_DELETE])
-    def _clean_logs_by_resource_id(self, resource, event, trigger, payload):
+    def _clean_logs_by_resource_id(self, resource, event, trigger, **kwargs):
         # log.resource_id == SG
-        self._clean_logs(payload.context.elevated(), sg_id=payload.resource_id)
+        context = kwargs['context']
+        sg_id = kwargs['security_group_id']
+        self._clean_logs(context.elevated(), sg_id=sg_id)
 
     @registry.receives(resources.PORT, [events.AFTER_DELETE])
     def _clean_logs_by_target_id(self, resource, event, trigger, **kwargs):
