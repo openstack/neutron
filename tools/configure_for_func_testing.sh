@@ -117,7 +117,7 @@ function _install_base_deps {
         compile_ovs False /usr /var
         if [[ "$INSTALL_OVN" == "True" ]]; then
             echo_summary "OVN_BRANCH: ${OVN_BRANCH}"
-            compile_ovn False /usr /var
+            compile_ovn /usr /var
         fi
     else
         PACKAGES=$(get_packages general,neutron,q-agt,q-l3,openvswitch)
