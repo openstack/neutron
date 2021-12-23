@@ -36,7 +36,9 @@ nameserver foo 10.0.0.4
 nameserver aef0::4
 foo 10.0.0.5
 """
-RESOLV_DNS_SERVERS = ['10.0.0.1', '10.0.0.3']
+RESOLV_DNS_SERVERS = ['10.0.0.1', '10.0.0.3', 'aef0::4']
+RESOLV_DNS_SERVERS_V4 = ['10.0.0.1', '10.0.0.3']
+RESOLV_DNS_SERVERS_V6 = ['aef0::4']
 
 
 class TestUtils(base.BaseTestCase):
@@ -405,7 +407,7 @@ class TestGetDhcpDnsServers(base.BaseTestCase):
                         mock.mock_open(read_data=RESOLV_CONF_TEMPLATE)), \
                 mock.patch.object(path, 'exists', return_value=True):
             dns_servers = utils.get_dhcp_dns_servers({})
-            self.assertEqual(RESOLV_DNS_SERVERS, dns_servers)
+            self.assertEqual(RESOLV_DNS_SERVERS_V4, dns_servers)
 
         # No DNS servers if only '0.0.0.0' configured.
         dns_servers = utils.get_dhcp_dns_servers(
@@ -423,6 +425,14 @@ class TestGetDhcpDnsServers(base.BaseTestCase):
             ip_version=n_const.IP_VERSION_6)
         self.assertEqual(['2001:4860:4860::8888',
                           '2001:4860:4860::8844'], dns_servers)
+
+        # DNS servers from local DNS resolver.
+        cfg.CONF.set_override('dns_servers', '', group='ovn')
+        with mock.patch('builtins.open',
+                        mock.mock_open(read_data=RESOLV_CONF_TEMPLATE)), \
+                mock.patch.object(path, 'exists', return_value=True):
+            dns_servers = utils.get_dhcp_dns_servers({}, ip_version=6)
+            self.assertEqual(RESOLV_DNS_SERVERS_V6, dns_servers)
 
         # No DNS servers if only '::' configured.
         dns_servers = utils.get_dhcp_dns_servers(
