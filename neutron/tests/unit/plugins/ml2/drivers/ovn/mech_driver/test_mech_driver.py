@@ -2725,6 +2725,58 @@ class TestOVNMechanismDriverDHCPOptions(OVNMechanismDriverTestCase):
             self._test_get_ovn_dhcp_options_helper(subnet, network,
                                                    expected_dhcp_options)
 
+    def test_get_ovn_dhcpv4_options_ovn_conf_ip4_ip6_dns(self):
+        ovn_conf.cfg.CONF.set_override('dns_servers',
+                                       '8.8.8.8,2001:db8::8888',
+                                       group='ovn')
+        subnet = {'id': 'foo-subnet', 'network_id': 'network-id',
+                  'cidr': '10.0.0.0/24',
+                  'ip_version': 4,
+                  'enable_dhcp': True,
+                  'host_routes': [],
+                  'gateway_ip': '10.0.0.1'}
+        network = {'id': 'network-id', 'mtu': 1400}
+
+        expected_dhcpv4_options = {'cidr': subnet['cidr'],
+                                   'external_ids': {
+                                   'subnet_id': subnet['id'],
+                                   ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1'}}
+        expected_dhcpv4_options['options'] = {
+            'server_id': subnet['gateway_ip'],
+            'server_mac': '01:02:03:04:05:06',
+            'lease_time': str(12 * 60 * 60),
+            'mtu': str(network['mtu']),
+            'router': subnet['gateway_ip'],
+            'dns_server': '{8.8.8.8}'
+        }
+
+        self._test_get_ovn_dhcp_options_helper(subnet, network,
+                                               expected_dhcpv4_options)
+
+    def test_get_ovn_dhcpv6_options_ovn_conf_ip4_ip6_dns(self):
+        ovn_conf.cfg.CONF.set_override('dns_servers',
+                                       '8.8.8.8,2001:db8::8888',
+                                       group='ovn')
+        subnet = {'id': 'foo-subnet', 'network_id': 'network-id',
+                  'cidr': '2001:db8::/64',
+                  'ip_version': 6,
+                  'enable_dhcp': True,
+                  'host_routes': [],
+                  'gateway_ip': '2001:db8::1'}
+        network = {'id': 'network-id', 'mtu': 1400}
+
+        expected_dhcpv6_options = {'cidr': subnet['cidr'],
+                                   'external_ids': {
+                                   'subnet_id': subnet['id'],
+                                   ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1'}}
+        expected_dhcpv6_options['options'] = {
+            'server_id': '01:02:03:04:05:06',
+            'dns_server': '{2001:db8::8888}'
+        }
+
+        self._test_get_ovn_dhcp_options_helper(subnet, network,
+                                               expected_dhcpv6_options)
+
     def test_get_ovn_dhcp_options_with_global_options(self):
         ovn_conf.cfg.CONF.set_override('ovn_dhcp4_global_options',
                                        'ntp_server:8.8.8.8,'
@@ -2776,7 +2828,7 @@ class TestOVNMechanismDriverDHCPOptions(OVNMechanismDriverTestCase):
                   'cidr': 'ae70::/24',
                   'ip_version': 6,
                   'enable_dhcp': True,
-                  'dns_nameservers': ['7.7.7.7', '8.8.8.8']}
+                  'dns_nameservers': ['2001:db8::4444', '2001:db8::8888']}
         network = {'id': 'network-id', 'mtu': 1400}
 
         ext_ids = {'subnet_id': 'foo-subnet',
@@ -2785,7 +2837,7 @@ class TestOVNMechanismDriverDHCPOptions(OVNMechanismDriverTestCase):
             'cidr': 'ae70::/24', 'external_ids': ext_ids,
             'options': {'server_id': '01:02:03:04:05:06',
                         'ntp_server': '8.8.8.8',
-                        'dns_server': '{7.7.7.7, 8.8.8.8}'}}
+                        'dns_server': '{2001:db8::4444, 2001:db8::8888}'}}
 
         self._test_get_ovn_dhcp_options_helper(subnet, network,
                                                expected_dhcp_options)
@@ -2799,7 +2851,7 @@ class TestOVNMechanismDriverDHCPOptions(OVNMechanismDriverTestCase):
                   'cidr': 'ae70::/24',
                   'ip_version': 6,
                   'enable_dhcp': True,
-                  'dns_nameservers': ['7.7.7.7', '8.8.8.8']}
+                  'dns_nameservers': ['2001:db8::4444', '2001:db8::8888']}
         network = {'id': 'network-id', 'mtu': 1400}
 
         ext_ids = {'subnet_id': 'foo-subnet',
@@ -2807,7 +2859,7 @@ class TestOVNMechanismDriverDHCPOptions(OVNMechanismDriverTestCase):
         expected_dhcp_options = {
             'cidr': 'ae70::/24', 'external_ids': ext_ids,
             'options': {'server_id': '01:02:03:04:05:06',
-                        'dns_server': '{7.7.7.7, 8.8.8.8}'}}
+                        'dns_server': '{2001:db8::4444, 2001:db8::8888}'}}
 
         self._test_get_ovn_dhcp_options_helper(subnet, network,
                                                expected_dhcp_options)
@@ -2821,7 +2873,7 @@ class TestOVNMechanismDriverDHCPOptions(OVNMechanismDriverTestCase):
                   'cidr': 'ae70::/24',
                   'ip_version': 6,
                   'enable_dhcp': True,
-                  'dns_nameservers': ['7.7.7.7', '8.8.8.8'],
+                  'dns_nameservers': ['2001:db8::4444', '2001:db8::8888'],
                   'ipv6_address_mode': const.DHCPV6_STATELESS}
         network = {'id': 'network-id', 'mtu': 1400}
 
@@ -2830,7 +2882,7 @@ class TestOVNMechanismDriverDHCPOptions(OVNMechanismDriverTestCase):
         expected_dhcp_options = {
             'cidr': 'ae70::/24', 'external_ids': ext_ids,
             'options': {'server_id': '01:02:03:04:05:06',
-                        'dns_server': '{7.7.7.7, 8.8.8.8}',
+                        'dns_server': '{2001:db8::4444, 2001:db8::8888}',
                         'dhcpv6_stateless': 'true'}}
 
         self._test_get_ovn_dhcp_options_helper(subnet, network,
