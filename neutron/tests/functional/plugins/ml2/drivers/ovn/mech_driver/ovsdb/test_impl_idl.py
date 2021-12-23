@@ -53,7 +53,7 @@ class TestSbApi(BaseOvnIdlTest):
                 {'external_ids': {'ovn-bridge-mappings':
                                   'public:br-ex,private:br-0'}},
                 {'external_ids': {'ovn-bridge-mappings':
-                                  'public:br-ex,public2:br-ex'}},
+                                  'public:br-ex,public2:br-ex2'}},
                 {'external_ids': {'ovn-bridge-mappings':
                                   'public:br-ex'}},
             ]
@@ -98,6 +98,15 @@ class TestSbApi(BaseOvnIdlTest):
         self.assertLessEqual(len(self.data['chassis']), len(mapping))
         self.assertGreaterEqual(set(mapping.keys()),
                                 {c['name'] for c in self.data['chassis']})
+
+    def test_multiple_physnets_in_one_bridge(self):
+        self.data = {
+            'chassis': [
+                {'external_ids': {'ovn-bridge-mappings': 'p1:br-ex,p2:br-ex'}}
+            ]
+        }
+        self.load_test_data()
+        self.assertRaises(ValueError, self.api.get_chassis_and_physnets)
 
     def _add_switch_port(self, chassis_name,
                          type=ovn_const.LSP_TYPE_LOCALPORT):
