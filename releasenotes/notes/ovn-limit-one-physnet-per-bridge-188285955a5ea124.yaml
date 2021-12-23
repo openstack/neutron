@@ -1,0 +1,4 @@
+---
+other:
+  - |
+    OVN mechanism driver allows only to have one physical network per bridge.
