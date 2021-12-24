@@ -260,7 +260,7 @@ class SerializerTest(base.BaseTestCase):
         serializer = wsgi.Serializer()
         result = serializer.deserialize(data_string, content_type)
 
-        self.assertEqual({'body': {u'servers': [u'test=pass']}}, result)
+        self.assertEqual({'body': {'servers': ['test=pass']}}, result)
 
 
 class RequestDeserializerTest(testtools.TestCase):
@@ -520,7 +520,7 @@ class JSONDictSerializerTest(base.BaseTestCase):
         self.assertEqual(expected_json, result)
 
     def test_json_with_unicode(self):
-        input_dict = dict(servers=dict(a=(2, u'\u7f51\u7edc')))
+        input_dict = dict(servers=dict(a=(2, '\u7f51\u7edc')))
         expected_json = b'{"servers":{"a":[2,"\\u7f51\\u7edc"]}}'
         serializer = wsgi.JSONDictSerializer()
         result = serializer.serialize(input_dict)
@@ -572,14 +572,14 @@ class JSONDeserializerTest(base.BaseTestCase):
 
     def test_json_with_utf8(self):
         data = b'{"a": "\xe7\xbd\x91\xe7\xbb\x9c"}'
-        as_dict = {'body': {'a': u'\u7f51\u7edc'}}
+        as_dict = {'body': {'a': '\u7f51\u7edc'}}
         deserializer = wsgi.JSONDeserializer()
         self.assertEqual(as_dict,
                          deserializer.deserialize(data))
 
     def test_json_with_unicode(self):
         data = b'{"a": "\u7f51\u7edc"}'
-        as_dict = {'body': {'a': u'\u7f51\u7edc'}}
+        as_dict = {'body': {'a': '\u7f51\u7edc'}}
         deserializer = wsgi.JSONDeserializer()
         self.assertEqual(as_dict,
                          deserializer.deserialize(data))

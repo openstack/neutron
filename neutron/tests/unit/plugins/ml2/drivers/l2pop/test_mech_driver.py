@@ -375,8 +375,8 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
                                                 host=HOST_4,
                                                 refresh_tunnels=True)
                 fanout_expected = {port['port']['network_id']: {
-                    'network_type': u'vxlan',
-                    'ports': {u'20.0.0.4': [('00:00:00:00:00:00', '0.0.0.0')]},
+                    'network_type': 'vxlan',
+                    'ports': {'20.0.0.4': [('00:00:00:00:00:00', '0.0.0.0')]},
                     'segment_id': 1}}
                 self.mock_fanout.assert_called_with(mock.ANY,
                                                     'add_fdb_entries',
@@ -1490,13 +1490,13 @@ class TestL2PopulationMechDriver(base.BaseTestCase):
         self.assertEqual(expected_result, result)
 
     def test_update_port_precommit_mac_address_changed_raises(self):
-        port = {'status': u'ACTIVE',
+        port = {'status': 'ACTIVE',
                 'device_owner': DEVICE_OWNER_COMPUTE,
-                'mac_address': u'12:34:56:78:4b:0e',
-                'id': u'1'}
+                'mac_address': '12:34:56:78:4b:0e',
+                'id': '1'}
 
         original_port = port.copy()
-        original_port['mac_address'] = u'12:34:56:78:4b:0f'
+        original_port['mac_address'] = '12:34:56:78:4b:0f'
 
         with mock.patch.object(driver_context.segments_db,
                                'get_network_segments'):

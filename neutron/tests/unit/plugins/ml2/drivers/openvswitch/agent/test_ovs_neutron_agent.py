@@ -2619,7 +2619,7 @@ class TestOvsNeutronAgent(object):
         self.assertRaises(ValueError, self._make_agent)
 
     def test__check_bridge_datapath_id(self):
-        datapath_id = u'0000622486fa3f42'
+        datapath_id = '0000622486fa3f42'
         datapath_ids_set = set()
         for i in range(5):
             dpid = format((i << 48) + int(datapath_id, 16), '0x').zfill(16)
