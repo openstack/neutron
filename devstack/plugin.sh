@@ -7,6 +7,7 @@ source $LIBDIR/l2_agent
 source $LIBDIR/l2_agent_sriovnicswitch
 source $LIBDIR/l3_agent
 source $LIBDIR/l3_conntrack_helper
+source $LIBDIR/l3_ndp_proxy
 source $LIBDIR/ml2
 source $LIBDIR/network_segment_range
 source $LIBDIR/segments
@@ -91,6 +92,9 @@ if [[ "$1" == "stack" ]]; then
                 fi
                 if is_service_enabled q-conntrack-helper neutron-conntrack-helper; then
                     configure_l3_conntrack_helper
+                fi
+                if is_service_enabled q-ndp-proxy neutron-ndp-proxy; then
+                    configure_l3_ndp_proxy
                 fi
                 configure_l3_agent
             fi
