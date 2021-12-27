@@ -133,6 +133,26 @@ QDISC_IDS = {constants.INGRESS_DIRECTION: INGRESS_QSIC_ID,
 TC_QDISCS = [{'handle': '1:', 'qdisc_type': 'htb', 'parent': 'root'},
              {'handle': 'ffff:', 'qdisc_type': 'ingress', 'parent': 'ingress'}]
 
+TC_FILTERS_ADD_BY_OTHERS_BASE = (
+    'filter protocol %(protocol)s u32 %(chain_name)s \n'
+    'filter protocol %(protocol)s u32 %(chain_name)s fh 800: ht divisor 1 \n'
+    'filter protocol %(protocol)s u32 %(chain_name)s fh %(filter_id1)s order '
+    '2048 key ht 800 bkt 0 flowid :1 not_in_hw  (rule hit 0 success 0) \n'
+    'match %(matches)s at 16 (success 0 ) \n'
+    'police 0x3 rate 3000Kbit burst 3Mb mtu 64Kb action drop overhead 0b '
+    'linklayer ethernet \n'
+    'ref 1 bind 1 installed 22 sec used 22 sec \n'
+    '\n'
+    ' Sent 111 bytes 222 pkts (dropped 0, overlimits 0)\n'
+)
+
+TC_FILTERS_ADD_BY_OTHERS_FOR_ALL_PROTOCOL = TC_FILTERS_ADD_BY_OTHERS_BASE % {
+    "protocol": "all",
+    "chain_name": "chain 1 ",
+    "filter_id1": FILETER_ID_1,
+    "matches": "c0a8dc06/ffffffff"
+}
+
 
 class TestFloatingIPTcCommandBase(base.BaseTestCase):
     def setUp(self):
@@ -226,6 +246,15 @@ class TestFloatingIPTcCommandBase(base.BaseTestCase):
 
     def test__get_filterid_for_ip_not_found_with_chain(self):
         self._test__get_filterid_for_ip_not_found(TC_EGRESS_FILTERS_WITH_CHAIN)
+
+    def test__get_filterid_for_ip_with_additional_filters(self):
+        with mock.patch.object(tc_lib.FloatingIPTcCommandBase,
+                               '_get_filters') as get_filters:
+            get_filters.return_value = \
+                TC_FILTERS_ADD_BY_OTHERS_FOR_ALL_PROTOCOL
+            self.assertRaises(exceptions.FilterIDForIPNotFound,
+                              self.tc._get_filterid_for_ip,
+                              INGRESS_QSIC_ID, "192.168.220.6")
 
     def test__del_filter_by_id(self):
         self.tc._del_filter_by_id(INGRESS_QSIC_ID, FLOATING_IP_1)
