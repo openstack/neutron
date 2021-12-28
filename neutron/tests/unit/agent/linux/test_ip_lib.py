@@ -98,6 +98,16 @@ SUBNET_SAMPLE1 = ("10.0.0.0/24 dev qr-23380d11-d2  scope link  src 10.0.0.1\n"
 SUBNET_SAMPLE2 = ("10.0.0.0/24 dev tap1d7888a7-10  scope link  src 10.0.0.2\n"
                   "10.0.0.0/24 dev qr-23380d11-d2  scope link  src 10.0.0.1")
 
+VXLAN4_GROUP_SAMPLE = "239.0.0.1"
+
+VXLAN4_LOCAL_SAMPLE = "192.168.45.100"
+
+VXLAN6_GROUP_SAMPLE = "ff00::1"
+
+VXLAN6_INVALID_IPV6_SAMPLE = "invalid:ipv6::address"
+
+VXLAN6_LOCAL_SAMPLE = "fd00::1"
+
 
 class TestSubProcessBase(base.BaseTestCase):
     def setUp(self):
@@ -374,20 +384,54 @@ class TestIpWrapper(base.BaseTestCase):
             'namespace': None,
             'kind': 'vxlan',
             'vxlan_id': 'vni0',
-            'vxlan_group': 'group0',
+            'vxlan_group': VXLAN4_GROUP_SAMPLE,
             'physical_interface': 'dev0',
             'vxlan_ttl': 'ttl0',
             'vxlan_tos': 'tos0',
-            'vxlan_local': 'local0',
+            'vxlan_local': VXLAN4_LOCAL_SAMPLE,
+            'vxlan_proxy': True,
+            'vxlan_port_range': ('1', '2')}
+
+        retval = ip_lib.IPWrapper().add_vxlan('vxlan0', 'vni0',
+                                              group=VXLAN4_GROUP_SAMPLE,
+                                              dev='dev0', ttl='ttl0',
+                                              tos='tos0',
+                                              local=VXLAN4_LOCAL_SAMPLE,
+                                              proxy=True, srcport=(1, 2))
+        self.assertIsInstance(retval, ip_lib.IPDevice)
+        self.assertEqual(retval.name, 'vxlan0')
+        self.assertDictEqual(expected_call_params, self.call_params)
+
+    @mock.patch.object(priv_lib, 'create_interface')
+    def test_add_vxlan6_valid_srcport_length(self, create):
+        self.call_params = {}
+
+        def fake_create_interface(ifname, namespace, kind, **kwargs):
+            self.call_params = dict(
+                ifname=ifname,
+                namespace=namespace,
+                kind=kind,
+                **kwargs)
+
+        create.side_effect = fake_create_interface
+        expected_call_params = {
+            'ifname': 'vxlan0',
+            'namespace': None,
+            'kind': 'vxlan',
+            'vxlan_id': 'vni0',
+            'vxlan_group6': VXLAN6_GROUP_SAMPLE,
+            'physical_interface': 'dev0',
+            'vxlan_ttl': 'ttl0',
+            'vxlan_tos': 'tos0',
+            'vxlan_local6': VXLAN6_LOCAL_SAMPLE,
             'vxlan_proxy': True,
             'vxlan_port_range': ('1', '2')}
 
         retval = ip_lib.IPWrapper().add_vxlan('vxlan0', 'vni0', 'dev0',
-                                              group='group0',
-                                              ttl='ttl0',
-                                              tos='tos0',
-                                              local='local0', proxy=True,
-                                              srcport=(1, 2))
+                                              group=VXLAN6_GROUP_SAMPLE,
+                                              ttl='ttl0', tos='tos0',
+                                              local=VXLAN6_LOCAL_SAMPLE,
+                                              proxy=True, srcport=(1, 2))
         self.assertIsInstance(retval, ip_lib.IPDevice)
         self.assertEqual(retval.name, 'vxlan0')
         self.assertDictEqual(expected_call_params, self.call_params)
@@ -395,18 +439,32 @@ class TestIpWrapper(base.BaseTestCase):
     def test_add_vxlan_invalid_srcport_length(self):
         wrapper = ip_lib.IPWrapper()
         self.assertRaises(exceptions.NetworkVxlanPortRangeError,
-                          wrapper.add_vxlan, 'vxlan0', 'vni0', group='group0',
-                          dev='dev0', ttl='ttl0', tos='tos0',
-                          local='local0', proxy=True,
+                          wrapper.add_vxlan, 'vxlan0', 'vni0',
+                          group=VXLAN4_GROUP_SAMPLE, dev='dev0', ttl='ttl0',
+                          tos='tos0', local=VXLAN4_LOCAL_SAMPLE, proxy=True,
                           srcport=('1', '2', '3'))
 
     def test_add_vxlan_invalid_srcport_range(self):
         wrapper = ip_lib.IPWrapper()
         self.assertRaises(exceptions.NetworkVxlanPortRangeError,
-                          wrapper.add_vxlan, 'vxlan0', 'vni0', group='group0',
-                          dev='dev0', ttl='ttl0', tos='tos0',
-                          local='local0', proxy=True,
+                          wrapper.add_vxlan, 'vxlan0', 'vni0',
+                          group=VXLAN4_GROUP_SAMPLE, dev='dev0', ttl='ttl0',
+                          tos='tos0', local=VXLAN4_LOCAL_SAMPLE, proxy=True,
                           srcport=(2000, 1000))
+
+    def test_add_vxlan_invalid_ipv6_groupaddr(self):
+        wrapper = ip_lib.IPWrapper()
+        self.assertRaises(exceptions.InvalidInput,
+                          wrapper.add_vxlan, 'vxlan0', 'vni0',
+                          group=VXLAN6_INVALID_IPV6_SAMPLE,
+                          dev='dev0', ttl='ttl0', tos='tos0')
+
+    def test_add_vxlan_invalid_ipv6_localaddr(self):
+        wrapper = ip_lib.IPWrapper()
+        self.assertRaises(exceptions.InvalidInput,
+                          wrapper.add_vxlan, 'vxlan0', 'vni0',
+                          local=VXLAN6_INVALID_IPV6_SAMPLE, dev='dev0',
+                          ttl='ttl0', tos='tos0')
 
     @mock.patch.object(priv_lib, 'create_interface')
     def test_add_vxlan_dstport(self, create):
@@ -425,21 +483,20 @@ class TestIpWrapper(base.BaseTestCase):
             'namespace': None,
             'kind': 'vxlan',
             'vxlan_id': 'vni0',
-            'vxlan_group': 'group0',
+            'vxlan_group': VXLAN4_GROUP_SAMPLE,
             'physical_interface': 'dev0',
             'vxlan_ttl': 'ttl0',
             'vxlan_tos': 'tos0',
-            'vxlan_local': 'local0',
+            'vxlan_local': VXLAN4_LOCAL_SAMPLE,
             'vxlan_proxy': True,
             'vxlan_port_range': ('1', '2'),
             'vxlan_port': 4789}
 
         retval = ip_lib.IPWrapper().add_vxlan('vxlan0', 'vni0', 'dev0',
-                                              group='group0',
-                                              ttl='ttl0',
-                                              tos='tos0',
-                                              local='local0', proxy=True,
-                                              srcport=(1, 2),
+                                              group=VXLAN4_GROUP_SAMPLE,
+                                              ttl='ttl0', tos='tos0',
+                                              local=VXLAN4_LOCAL_SAMPLE,
+                                              proxy=True, srcport=(1, 2),
                                               dstport=4789)
 
         self.assertIsInstance(retval, ip_lib.IPDevice)

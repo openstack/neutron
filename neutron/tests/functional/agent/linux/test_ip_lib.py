@@ -49,6 +49,7 @@ TEST_IP_NEIGH = '240.0.0.2'
 TEST_IP_SECONDARY = '240.0.0.3'
 TEST_IP6_NEIGH = 'fd00::2'
 TEST_IP6_SECONDARY = 'fd00::3'
+TEST_IP6_VXLAN_GROUP = 'ff00::1'
 TEST_IP_NUD_STATES = ((TEST_IP_NEIGH, 'permanent'),
                       (TEST_IP_SECONDARY, 'reachable'),
                       (TEST_IP6_NEIGH, 'permanent'),
@@ -242,6 +243,22 @@ class IpLibTestCase(IpLibTestFramework):
         self.addCleanup(ip.netns.delete, attr.namespace)
         self.assertFalse(ip_lib.vxlan_in_use(9999, namespace=attr.namespace))
         device = ip.add_vxlan(attr.name, 9999, 'dummy_device')
+        self.addCleanup(self._safe_delete_device, device)
+        self.assertTrue(ip_lib.vxlan_in_use(9999, namespace=attr.namespace))
+        device.link.delete()
+        self.assertFalse(ip_lib.vxlan_in_use(9999, namespace=attr.namespace))
+
+    def test_ipv6_vxlan_exists(self):
+        attr = self.generate_device_details(
+            name='test_device', ip_cidrs=["%s/24" % TEST_IP, 'fd00::1/64']
+        )
+        self.manage_device(attr)
+        ip = ip_lib.IPWrapper(namespace=attr.namespace)
+        ip.netns.add(attr.namespace)
+        self.addCleanup(ip.netns.delete, attr.namespace)
+        self.assertFalse(ip_lib.vxlan_in_use(9999, namespace=attr.namespace))
+        device = ip.add_vxlan('test_vxlan_device', 9999, local='fd00::1',
+            group=TEST_IP6_VXLAN_GROUP, dev='test_device')
         self.addCleanup(self._safe_delete_device, device)
         self.assertTrue(ip_lib.vxlan_in_use(9999, namespace=attr.namespace))
         device.link.delete()
