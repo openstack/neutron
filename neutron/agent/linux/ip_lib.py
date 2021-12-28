@@ -280,7 +280,15 @@ class IPWrapper(SubProcessBase):
                   local=None, srcport=None, dstport=None, proxy=False):
         kwargs = {'vxlan_id': vni}
         if group:
-            kwargs['vxlan_group'] = group
+            try:
+                ip_version = common_utils.get_ip_version(group)
+                if ip_version == constants.IP_VERSION_6:
+                    kwargs['vxlan_group6'] = group
+                else:
+                    kwargs['vxlan_group'] = group
+            except netaddr.core.AddrFormatError:
+                err_msg = _("Invalid group address: %s") % group
+                raise exceptions.InvalidInput(error_message=err_msg)
         if dev:
             kwargs['physical_interface'] = dev
         if ttl:
@@ -288,7 +296,15 @@ class IPWrapper(SubProcessBase):
         if tos:
             kwargs['vxlan_tos'] = tos
         if local:
-            kwargs['vxlan_local'] = local
+            try:
+                ip_version = common_utils.get_ip_version(local)
+                if ip_version == constants.IP_VERSION_6:
+                    kwargs['vxlan_local6'] = local
+                else:
+                    kwargs['vxlan_local'] = local
+            except netaddr.core.AddrFormatError:
+                err_msg = _("Invalid local address: %s") % local
+                raise exceptions.InvalidInput(error_message=err_msg)
         if proxy:
             kwargs['vxlan_proxy'] = proxy
         # tuple: min,max
