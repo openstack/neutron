@@ -65,6 +65,12 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
         self.install_normal(table_id=constants.TRANSIENT_EGRESS_TABLE,
                             priority=3)
 
+        # Local IP defaults
+        self.install_goto(dest_table_id=constants.TRANSIENT_TABLE,
+                          table_id=constants.LOCAL_EGRESS_TABLE)
+        self.install_goto(dest_table_id=constants.TRANSIENT_TABLE,
+                          table_id=constants.LOCAL_IP_TABLE)
+
     def init_dhcp(self, enable_openflow_dhcp=False, enable_dhcpv6=False):
         if not enable_openflow_dhcp:
             return
@@ -381,7 +387,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
             self.install_goto(
                 table_id=constants.MAC_SPOOF_TABLE, priority=2,
                 eth_src=address, in_port=port,
-                dest_table_id=constants.TRANSIENT_TABLE)
+                dest_table_id=constants.LOCAL_EGRESS_TABLE)
         # normalize so we can see if macs are the same
         mac_addresses = {netaddr.EUI(mac) for mac in mac_addresses}
         flows = self.dump_flows(constants.MAC_SPOOF_TABLE)
@@ -454,3 +460,68 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
         self.install_instructions(instructions, table_id=0,
                                   priority=65535, in_port=port, reg2=0,
                                   eth_type=0x86DD)
+
+    def setup_local_egress_flows(self, in_port, vlan):
+        # Setting priority to 8 to give advantage to ARP/MAC spoofing rules
+        self.install_goto(table_id=constants.LOCAL_SWITCHING,
+                          priority=8,
+                          in_port=in_port,
+                          dest_table_id=constants.LOCAL_EGRESS_TABLE)
+        (dp, ofp, ofpp) = self._get_dp()
+        actions = [ofpp.OFPActionSetField(reg6=vlan),
+                   ofpp.NXActionResubmitTable(
+                       in_port=in_port, table_id=constants.LOCAL_IP_TABLE)]
+        instructions = [
+            ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, actions),
+        ]
+        self.install_instructions(instructions,
+                                  table_id=constants.LOCAL_EGRESS_TABLE,
+                                  priority=10, in_port=in_port)
+
+    @staticmethod
+    def _arp_responder_match(ofp, ofpp, vlan, ip):
+        return ofpp.OFPMatch(reg6=vlan,
+                             eth_type=ether_types.ETH_TYPE_ARP,
+                             arp_tpa=ip)
+
+    def _garp_blocker_match(self, vlan, ip):
+        (dp, ofp, ofpp) = self._get_dp()
+        return ofpp.OFPMatch(vlan_vid=vlan | ofp.OFPVID_PRESENT,
+                             eth_type=ether_types.ETH_TYPE_ARP,
+                             arp_spa=ip)
+
+    def install_garp_blocker(self, vlan, ip,
+                             table_id=constants.LOCAL_SWITCHING):
+        match = self._garp_blocker_match(vlan, ip)
+        self.install_drop(table_id=table_id,
+                          priority=10,
+                          match=match)
+
+    def delete_garp_blocker(self, vlan, ip,
+                            table_id=constants.LOCAL_SWITCHING):
+        match = self._garp_blocker_match(vlan, ip)
+        self.uninstall_flows(table_id=table_id,
+                             priority=10,
+                             match=match)
+
+    def _garp_blocker_exception_match(self, vlan, ip, except_ip):
+        (dp, ofp, ofpp) = self._get_dp()
+        return ofpp.OFPMatch(vlan_vid=vlan | ofp.OFPVID_PRESENT,
+                             eth_type=ether_types.ETH_TYPE_ARP,
+                             arp_spa=ip,
+                             arp_tpa=except_ip)
+
+    def install_garp_blocker_exception(self, vlan, ip, except_ip,
+                                       table_id=constants.LOCAL_SWITCHING):
+        match = self._garp_blocker_exception_match(vlan, ip, except_ip)
+        self.install_goto(dest_table_id=constants.TRANSIENT_TABLE,
+                          table_id=table_id,
+                          priority=11,
+                          match=match)
+
+    def delete_garp_blocker_exception(self, vlan, ip, except_ip,
+                                      table_id=constants.LOCAL_SWITCHING):
+        match = self._garp_blocker_exception_match(vlan, ip, except_ip)
+        self.uninstall_flows(table_id=table_id,
+                             priority=11,
+                             match=match)
