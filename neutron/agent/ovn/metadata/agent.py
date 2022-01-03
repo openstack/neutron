@@ -48,6 +48,8 @@ OVN_VIF_PORT_TYPES = ("", "external", )
 MetadataPortInfo = collections.namedtuple('MetadataPortInfo', ['mac',
                                                                'ip_addresses'])
 
+OVN_METADATA_UUID_NAMESPACE = uuid.UUID('d34bf9f6-da32-4871-9af8-15a4626b41ab')
+
 
 def _sync_lock(f):
     """Decorator to block all operations for a global sync call."""
@@ -203,9 +205,16 @@ class MetadataAgent(object):
 
     def _load_config(self):
         self.chassis = self._get_own_chassis_name()
+        try:
+            self.chassis_id = uuid.UUID(self.chassis)
+        except ValueError:
+            # OVS system-id could be a non UUID formatted string.
+            self.chassis_id = uuid.uuid5(OVN_METADATA_UUID_NAMESPACE,
+                                         self.chassis)
+
         self.ovn_bridge = self._get_ovn_bridge()
-        LOG.debug("Loaded chassis %s and ovn bridge %s.",
-                  self.chassis, self.ovn_bridge)
+        LOG.info("Loaded chassis name %s (UUID: %s) and ovn bridge %s.",
+                 self.chassis, self.chassis_id, self.ovn_bridge)
 
     @_sync_lock
     def resync(self):
@@ -263,9 +272,8 @@ class MetadataAgent(object):
         # NOTE(lucasagomes): db_add() will not overwrite the UUID if
         # it's already set.
         table = ('Chassis_Private' if self.has_chassis_private else 'Chassis')
-        chassis_id = uuid.UUID(self._get_own_chassis_name())
         # Generate unique, but consistent metadata id for chassis name
-        agent_id = uuid.uuid5(chassis_id, 'metadata_agent')
+        agent_id = uuid.uuid5(self.chassis_id, 'metadata_agent')
         ext_ids = {ovn_const.OVN_AGENT_METADATA_ID_KEY: str(agent_id)}
         self.sb_idl.db_add(table, self.chassis, 'external_ids',
                            ext_ids).execute(check_error=True)
