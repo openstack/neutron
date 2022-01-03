@@ -26,6 +26,7 @@ import testtools
 
 from neutron.agent.common import ovs_lib
 from neutron.agent.l3 import agent as neutron_l3_agent
+from neutron.agent.l3 import dvr_local_router
 from neutron.agent.l3 import namespaces
 from neutron.agent.l3 import router_info as l3_router_info
 from neutron.agent import l3_agent as l3_agent_main
@@ -405,7 +406,9 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             ovsbr.clear_db_attribute('Port', device_name, 'tag')
 
         with mock.patch(OVS_INTERFACE_DRIVER + '.plug_new', autospec=True) as (
-                ovs_plug):
+                ovs_plug), \
+                mock.patch.object(dvr_local_router.DvrLocalRouter,
+                                  '_load_used_fip_information'):
             ovs_plug.side_effect = new_ovs_plug
             agent._process_added_router(router)
 
