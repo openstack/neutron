@@ -65,10 +65,11 @@ class LoggingPlugin(log_ext.LoggingPluginBase):
         self._clean_logs(context.elevated(), sg_id=sg_id)
 
     @registry.receives(resources.PORT, [events.AFTER_DELETE])
-    def _clean_logs_by_target_id(self, resource, event, trigger, payload):
+    def _clean_logs_by_target_id(self, resource, event, trigger, **kwargs):
         # log.target_id == port
-        self._clean_logs(payload.context.elevated(),
-                         port_id=payload.resource_id)
+        context = kwargs['context']
+        port_id = kwargs['port']['id']
+        self._clean_logs(context.elevated(), port_id=port_id)
 
     @db_base_plugin_common.filter_fields
     @db_base_plugin_common.convert_result_to_dict
