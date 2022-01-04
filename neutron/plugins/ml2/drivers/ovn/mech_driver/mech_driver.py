@@ -416,11 +416,23 @@ class OVNMechanismDriver(api.MechanismDriver):
                                                security_group_id)
 
     def _update_security_group(self, resource, event, trigger, payload):
-        # OVN doesn't care about updates to security groups, only if they
-        # exist or not. We are bumping the revision number here so it
-        # doesn't show as inconsistent to the maintenance periodic task
         context = payload.context
         security_group = payload.latest_state
+
+        old_state, new_state = payload.states
+        is_allow_stateless_supported = (
+            self._ovn_client.is_allow_stateless_supported()
+        )
+        old_stateful = ovn_acl.is_sg_stateful(
+            old_state, is_allow_stateless_supported)
+        new_stateful = ovn_acl.is_sg_stateful(
+            new_state, is_allow_stateless_supported)
+        if old_stateful != new_stateful:
+            for rule in self._plugin.get_security_group_rules(
+                    context, {'security_group_id': [security_group['id']]}):
+                self._ovn_client.delete_security_group_rule(context, rule)
+                self._ovn_client.create_security_group_rule(context, rule)
+
         ovn_revision_numbers_db.bump_revision(
             context, security_group, ovn_const.TYPE_SECURITY_GROUPS)
 
