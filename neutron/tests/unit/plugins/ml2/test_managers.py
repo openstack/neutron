@@ -167,7 +167,7 @@ class TestManagers(base.BaseTestCase):
         cfg.CONF.set_override('mechanism_drivers', ['faulty_agent'],
                               group='ml2')
         self.assertRaises(SystemExit, managers.MechanismManager)
-        mock_log.assert_called_once_with(u"The '%(entrypoint)s' entrypoint "
+        mock_log.assert_called_once_with("The '%(entrypoint)s' entrypoint "
                                          "could not be loaded for the "
                                          "following reason: '%(reason)s'.",
                                          {'entrypoint': mock.ANY,

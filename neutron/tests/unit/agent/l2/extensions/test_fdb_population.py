@@ -33,11 +33,11 @@ from neutron.tests import base
 
 class FdbPopulationExtensionTestCase(base.BaseTestCase):
 
-    UPDATE_MSG = {u'device_owner': constants.DEVICE_OWNER_ROUTER_INTF,
-                  u'physical_network': u'physnet1',
-                  u'mac_address': u'fa:16:3e:ba:bc:21',
-                  u'port_id': u'17ceda02-43e1-48d8-beb6-35885b20cae6'}
-    DELETE_MSG = {u'port_id': u'17ceda02-43e1-48d8-beb6-35885b20cae6'}
+    UPDATE_MSG = {'device_owner': constants.DEVICE_OWNER_ROUTER_INTF,
+                  'physical_network': 'physnet1',
+                  'mac_address': 'fa:16:3e:ba:bc:21',
+                  'port_id': '17ceda02-43e1-48d8-beb6-35885b20cae6'}
+    DELETE_MSG = {'port_id': '17ceda02-43e1-48d8-beb6-35885b20cae6'}
 
     def setUp(self):
         super(FdbPopulationExtensionTestCase, self).setUp()

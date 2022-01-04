@@ -60,8 +60,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Neutron Release Notes'
-copyright = u'2015, Neutron Developers'
+project = 'Neutron Release Notes'
+copyright = '2015, Neutron Developers'
 
 # Release notes are version independent
 # The short X.Y version.
@@ -209,8 +209,8 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     ('index', 'NeutronReleaseNotes.tex',
-     u'Neutron Release Notes Documentation',
-     u'Neutron Developers', 'manual'),
+     'Neutron Release Notes Documentation',
+     'Neutron Developers', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -239,8 +239,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'neutronreleasenotes', u'Neutron Release Notes Documentation',
-     [u'Neutron Developers'], 1)
+    ('index', 'neutronreleasenotes', 'Neutron Release Notes Documentation',
+     ['Neutron Developers'], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -253,8 +253,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    ('index', 'NeutronReleaseNotes', u'Neutron Release Notes Documentation',
-     u'Neutron Developers', 'NeutronReleaseNotes',
+    ('index', 'NeutronReleaseNotes', 'Neutron Release Notes Documentation',
+     'Neutron Developers', 'NeutronReleaseNotes',
      'One line description of project.',
      'Miscellaneous'),
 ]

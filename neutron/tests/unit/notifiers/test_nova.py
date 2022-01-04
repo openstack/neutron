@@ -139,7 +139,7 @@ class TestNovaNotify(base.BaseTestCase):
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
         returned_obj = {'port':
                         {'device_owner': DEVICE_OWNER_COMPUTE,
-                         'id': u'bee50827-bcee-4cc8-91c1-a27b0ce54222',
+                         'id': 'bee50827-bcee-4cc8-91c1-a27b0ce54222',
                          'device_id': device_id}}
 
         expected_event = {'server_uuid': device_id,
@@ -152,7 +152,7 @@ class TestNovaNotify(base.BaseTestCase):
     def test_create_floatingip_notify(self):
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
         returned_obj = {'floatingip':
-                        {'port_id': u'bee50827-bcee-4cc8-91c1-a27b0ce54222'}}
+                        {'port_id': 'bee50827-bcee-4cc8-91c1-a27b0ce54222'}}
 
         expected_event = {'server_uuid': device_id,
                           'name': 'network-changed',
@@ -172,7 +172,7 @@ class TestNovaNotify(base.BaseTestCase):
     def test_delete_floatingip_notify(self):
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
         returned_obj = {'floatingip':
-                        {'port_id': u'bee50827-bcee-4cc8-91c1-a27b0ce54222'}}
+                        {'port_id': 'bee50827-bcee-4cc8-91c1-a27b0ce54222'}}
 
         expected_event = {'server_uuid': device_id,
                           'name': 'network-changed',
@@ -202,7 +202,7 @@ class TestNovaNotify(base.BaseTestCase):
     def test_associate_floatingip_notify(self):
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
         returned_obj = {'floatingip':
-                        {'port_id': u'5a39def4-3d3f-473d-9ff4-8e90064b9cc1'}}
+                        {'port_id': '5a39def4-3d3f-473d-9ff4-8e90064b9cc1'}}
         original_obj = {'port_id': None}
 
         expected_event = {'server_uuid': device_id,
