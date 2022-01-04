@@ -14,10 +14,12 @@
 
 import collections
 from unittest import mock
+import uuid
 
 from neutron_lib import constants as n_const
 from oslo_config import cfg
 from oslo_config import fixture as config_fixture
+from oslo_utils import uuidutils
 
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux.ip_lib import IpAddrCommand as ip_addr
@@ -268,3 +270,24 @@ class TestMetadataAgent(base.BaseTestCase):
                 mock.ANY, 'namespace', 80, mock.ANY,
                 bind_address=n_const.METADATA_V4_IP, network_id='1')
             mock_checksum.assert_called_once_with('namespace')
+
+    def test__load_config(self):
+        # Chassis name UUID formatted string. OVN bridge "br-ovn".
+        valid_uuid_str = uuidutils.generate_uuid()
+        self.agent.ovs_idl.db_get.return_value.execute.side_effect = [
+            {'system-id': valid_uuid_str}, {'ovn-bridge': 'br-ovn'}]
+        self.agent._load_config()
+        self.assertEqual(valid_uuid_str, self.agent.chassis)
+        self.assertEqual(uuid.UUID(valid_uuid_str), self.agent.chassis_id)
+        self.assertEqual('br-ovn', self.agent.ovn_bridge)
+
+        # Chassis name non UUID formatted string. OVN bridge not defined,
+        # "br-int" assigned by default.
+        self.agent.ovs_idl.db_get.return_value.execute.side_effect = [
+            {'system-id': 'RandomName1'}, {}]
+        self.agent._load_config()
+        generated_uuid = uuid.uuid5(agent.OVN_METADATA_UUID_NAMESPACE,
+                                    'RandomName1')
+        self.assertEqual('RandomName1', self.agent.chassis)
+        self.assertEqual(generated_uuid, self.agent.chassis_id)
+        self.assertEqual('br-int', self.agent.ovn_bridge)
