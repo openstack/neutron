@@ -65,6 +65,7 @@ INSTALL_MYSQL_ONLY=${INSTALL_MYSQL_ONLY:-False}
 # The gate should automatically install dependencies.
 INSTALL_BASE_DEPENDENCIES=${INSTALL_BASE_DEPENDENCIES:-$IS_GATE}
 BUILD_OVS_FROM_SOURCE=${BUILD_OVS_FROM_SOURCE:-True}
+INSTALL_OVN=${INSTALL_OVN:-True}
 OVN_BRANCH=${OVN_BRANCH:-main}
 OVS_BRANCH=${OVS_BRANCH:-master}
 
@@ -112,9 +113,12 @@ function _install_base_deps {
         install_package $PACKAGES
 
         source $DEVSTACK_PATH/lib/neutron_plugins/ovn_agent
-        echo_summary "OVN_BRANCH: ${OVN_BRANCH} OVS_BRANCH: ${OVS_BRANCH}"
+        echo_summary "OVS_BRANCH: ${OVS_BRANCH}"
         compile_ovs False /usr /var
-        compile_ovn False /usr /var
+        if [[ "$INSTALL_OVN" == "True" ]]; then
+            echo_summary "OVN_BRANCH: ${OVN_BRANCH}"
+            compile_ovn False /usr /var
+        fi
     else
         PACKAGES=$(get_packages general,neutron,q-agt,q-l3,openvswitch)
         PACKAGES=$(echo $PACKAGES | perl -pe 's|python-(?!dev)[^ ]*||g')
