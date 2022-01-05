@@ -1977,7 +1977,7 @@ class OVNClient(object):
         dhcp_options = self._nb_idl.get_subnet_dhcp_options(
             subnet_id, with_ports=True)
 
-        if dhcp_options['subnet'] is not None:
+        if dhcp_options['subnet']:
             txn.add(self._nb_idl.delete_dhcp_options(
                 dhcp_options['subnet']['uuid']))
 
