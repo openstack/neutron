@@ -1031,6 +1031,16 @@ def get_az_hints(resource):
             cfg.CONF.default_availability_zones)
 
 
+def disable_notifications(function):
+    """Decorator to disable notifications"""
+
+    @functools.wraps(function)
+    def wrapper(*args, **kwargs):
+        if cfg.CONF.rpc_workers is None or cfg.CONF.rpc_workers >= 1:
+            return function(*args, **kwargs)
+    return wrapper
+
+
 def skip_exceptions(exceptions):
     """Decorator to catch and hide any provided exception in the argument"""
 

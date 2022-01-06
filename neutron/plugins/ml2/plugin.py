@@ -400,7 +400,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @log_helpers.log_method_call
     def _start_rpc_notifiers(self):
         """Initialize RPC notifiers for agents."""
-        self.ovo_notifier = ovo_rpc.OVOServerRpcInterface()
+        self.ovo_notifier = None
+        if cfg.CONF.rpc_workers is None or cfg.CONF.rpc_workers >= 1:
+            self.ovo_notifier = ovo_rpc.OVOServerRpcInterface()
         self.notifier = rpc.AgentNotifierApi(topics.AGENT)
         if cfg.CONF.enable_traditional_dhcp:
             self.agent_notifiers[const.AGENT_TYPE_DHCP] = (
