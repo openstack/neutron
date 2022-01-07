@@ -416,6 +416,7 @@ class FakeOvsdbTable(FakeResource):
         ovsdb_table_attrs = {
             'rows': collections.UserDict(),
             'columns': {},
+            'indexes': [],
         }
 
         # Overwrite default attributes.

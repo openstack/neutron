@@ -873,7 +873,12 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
 
     def get_chassis_metadata_networks(self, chassis_name):
         """Return a list with the metadata networks the chassis is hosting."""
-        chassis = self.lookup('Chassis', chassis_name)
+        try:
+            chassis = self.lookup('Chassis', chassis_name)
+        except idlutils.RowNotFound:
+            LOG.warning("Couldn't find Chassis named %s in OVN while looking "
+                        "for metadata networks", chassis_name)
+            return []
         proxy_networks = chassis.external_ids.get(
             'neutron-metadata-proxy-networks', None)
         return proxy_networks.split(',') if proxy_networks else []
