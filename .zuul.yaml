@@ -175,7 +175,6 @@
       - openstack/networking-bgpvpn
       - openstack/neutron
       - openstack/neutron-fwaas
-      - openstack/neutron-lbaas
       - openstack/neutron-vpnaas
       - openstack/octavia
       - openstack/panko
