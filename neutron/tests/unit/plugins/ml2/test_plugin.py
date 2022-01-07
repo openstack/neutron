@@ -1490,6 +1490,27 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                                             data, context=ctx)
                 self.assertFalse(m_upd.called)
 
+    def test_create_ports_bulk_ip_allocation_reverted_in_case_of_error(self):
+        ctx = context.get_admin_context()
+        with self.network() as net:
+            plugin = directory.get_plugin()
+            with mock.patch.object(
+                plugin, '_create_port_bulk',
+                side_effect=ml2_exc.MechanismDriverError(
+                    method='create_port_bulk')), \
+                    mock.patch.object(
+                        plugin.ipam,
+                        'deallocate_ips_from_port') as deallocate_mock:
+
+                res = self._create_port_bulk(self.fmt, 2, net['network']['id'],
+                                             'test', True, context=ctx)
+
+                # We expect a 500 as we injected a fault in the plugin
+                self._validate_behavior_on_bulk_failure(
+                    res, 'ports', webob.exc.HTTPServerError.code)
+
+                self.assertEqual(2, deallocate_mock.call_count)
+
     def test_delete_port_no_notify_in_disassociate_floatingips(self):
         ctx = context.get_admin_context()
         plugin = directory.get_plugin()
