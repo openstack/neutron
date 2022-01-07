@@ -410,6 +410,7 @@ class FakeOvsdbTable(FakeResource):
         ovsdb_table_attrs = {
             'rows': {},
             'columns': {},
+            'indexes': [],
         }
 
         # Overwrite default attributes.

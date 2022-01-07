@@ -17,6 +17,8 @@ import uuid
 
 import mock
 
+from ovsdbapp.backend import ovs_idl
+
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
@@ -758,3 +760,51 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         self._tables.pop('Port_Group', None)
         port_groups = self.nb_ovn_idl.get_port_groups()
         self.assertEqual({}, port_groups)
+
+
+class TestSBImplIdlOvn(TestDBImplIdlOvn):
+
+    fake_set = {
+        'chassis': [
+            {'name': 'fake-chassis',
+             'external_ids': {'neutron-metadata-proxy-networks': 'fake-id'}}],
+    }
+
+    def setUp(self):
+        super(TestSBImplIdlOvn, self).setUp()
+        self.chassis_table = fakes.FakeOvsdbTable.create_one_ovsdb_table()
+
+        self._tables = {}
+        self._tables['Chassis'] = self.chassis_table
+
+        with mock.patch.object(impl_idl_ovn.OvsdbSbOvnIdl, 'from_worker',
+                               return_value=mock.Mock()):
+            with mock.patch.object(ovs_idl.Backend, 'autocreate_indices',
+                                   create=True):
+                impl_idl_ovn.OvsdbSbOvnIdl.ovsdb_connection = None
+                self.sb_ovn_idl = impl_idl_ovn.OvsdbSbOvnIdl(mock.MagicMock())
+
+        self.sb_ovn_idl.idl.tables = self._tables
+
+    def _load_sb_db(self):
+        fake_chassis = TestSBImplIdlOvn.fake_set['chassis']
+        self._load_ovsdb_fake_rows(self.chassis_table, fake_chassis)
+
+    @mock.patch.object(impl_idl_ovn.LOG, 'warning')
+    def test_get_chassis_metadata_networks_chassis_empty(self, mock_log):
+        chassis_name = 'fake-chassis'
+        result = self.sb_ovn_idl.get_chassis_metadata_networks(chassis_name)
+
+        mock_log.assert_called_once_with(
+            "Couldn't find Chassis named %s in OVN while looking "
+            "for metadata networks", chassis_name)
+        self.assertEqual([], result)
+
+    @mock.patch.object(impl_idl_ovn.LOG, 'warning')
+    def test_get_chassis_metadata_networks(self, mock_log):
+        chassis_name = 'fake-chassis'
+        self._load_sb_db()
+        result = self.sb_ovn_idl.get_chassis_metadata_networks(chassis_name)
+
+        self.assertFalse(mock_log.called)
+        self.assertEqual(['fake-id'], result)
