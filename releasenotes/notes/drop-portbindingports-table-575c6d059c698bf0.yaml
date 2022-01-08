@@ -1,0 +1,8 @@
+---
+other:
+  - |
+    Class "PortBindingMixin" is removed. Last time this class was used in-tree
+    was in Kilo release, in "N1kvNeutronPluginV2" and "SdnvePluginV2" classes.
+    No active project is using it anymore.
+    Table "portbindingports" is dropped from the database; it was used only in
+    "PortBindingMixin".
