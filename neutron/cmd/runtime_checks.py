@@ -41,7 +41,7 @@ def keepalived_use_no_track_support():
     cmd = ['keepalived', '--version']
     env = {'LC_ALL': 'C', 'PATH': '/sbin:/usr/sbin'}
 
-    keepalived_with_track = version.parse("2.0.0")
+    keepalived_with_track = version.parse('2.0.3')
     try:
         # keepalived --version returns with stderr only
         res = agent_utils.execute(cmd, addl_env=env, log_fail_as_error=False,
