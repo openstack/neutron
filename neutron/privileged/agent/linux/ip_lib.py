@@ -534,7 +534,7 @@ def create_netns(name, **kwargs):
     pid = os.fork()
     if pid == 0:
         try:
-            netns.create(name, libc=_get_cdll())
+            netns._create(name, libc=_get_cdll())
         except OSError as e:
             if e.errno != errno.EEXIST:
                 os._exit(1)
