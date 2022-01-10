@@ -270,7 +270,8 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
     def _check_for_rtr_serviceable_ports(
             self, admin_context, router_id, port_host):
         subnet_ids = self.get_subnet_ids_on_router(admin_context,
-                                                   router_id)
+                                                   router_id,
+                                                   keep_gateway_port=False)
         return self._check_dvr_serviceable_ports_on_host(
             admin_context, port_host, subnet_ids)
 
