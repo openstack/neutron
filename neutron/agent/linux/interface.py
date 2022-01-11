@@ -17,6 +17,7 @@ import abc
 import time
 
 import netaddr
+from neutron_lib.agent.linux import interface
 from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_log import log as logging
@@ -40,10 +41,8 @@ def _get_veth(name1, name2, namespace2):
             ip_lib.IPDevice(name2, namespace=namespace2))
 
 
-class LinuxInterfaceDriver(object, metaclass=abc.ABCMeta):
-
-    DEV_NAME_LEN = constants.LINUX_DEV_LEN
-    DEV_NAME_PREFIX = constants.TAP_DEVICE_PREFIX
+class LinuxInterfaceDriver(interface.LinuxInterfaceDriver,
+                           metaclass=abc.ABCMeta):
 
     def __init__(self, conf, **kwargs):
         self.conf = conf
@@ -257,12 +256,6 @@ class LinuxInterfaceDriver(object, metaclass=abc.ABCMeta):
                {'dev': dev_name, 'enabled': int(enabled)}]
         ip_lib.sysctl(cmd, namespace=namespace)
 
-    @abc.abstractmethod
-    def plug_new(self, network_id, port_id, device_name, mac_address,
-                 bridge=None, namespace=None, prefix=None, mtu=None,
-                 link_up=True):
-        """Plug in the interface only for new devices that don't exist yet."""
-
     def plug(self, network_id, port_id, device_name, mac_address,
              bridge=None, namespace=None, prefix=None, mtu=None, link_up=True):
         if not ip_lib.device_exists(device_name,
@@ -276,10 +269,6 @@ class LinuxInterfaceDriver(object, metaclass=abc.ABCMeta):
                     device_name, mtu, namespace=namespace, prefix=prefix)
             else:
                 LOG.warning("No MTU configured for port %s", port_id)
-
-    @abc.abstractmethod
-    def unplug(self, device_name, bridge=None, namespace=None, prefix=None):
-        """Unplug the interface."""
 
     @property
     def bridged(self):
