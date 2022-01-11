@@ -177,6 +177,9 @@ supported:
 * Open vSwitch (``openvswitch``) vnic_types: ``normal``, ``direct``
 * SR-IOV (``sriovnicswitch``) vnic_types: ``direct``, ``macvtap``
 
+From the Yoga release the ``direct-physical`` vnic_type is now marked supported
+for the SR-IOV (``sriovnicswitch``) agent.
+
 neutron-server config
 ~~~~~~~~~~~~~~~~~~~~~
 

@@ -85,6 +85,10 @@ traffic directions (from the VM point of view).
         direction and only for networks without tunneled traffic (only VLAN and
         flat network types).
 
+.. note:: The SR-IOV agent does not support dataplane enforcement for ports
+  with ``direct-physical`` vnic_type. However since Yoga the Placement
+  enforcement is supported for this vnic_type too.
+
 .. table:: **Neutron backends, supported directions and enforcement types for Minimum Packet Rate rule**
 
     ============================  ==========================  ====================  ==============  =====
