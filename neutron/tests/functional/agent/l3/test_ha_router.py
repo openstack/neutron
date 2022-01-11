@@ -45,10 +45,10 @@ class L3HATestCase(framework.L3AgentTestFramework):
             side_effect=self.change_router_state).start()
         router_info = self.generate_router_info(enable_ha=True)
         router = self.manage_router(self.agent, router_info)
-        common_utils.wait_until_true(lambda: router.ha_state == 'primary')
+        self.wait_until_ha_router_has_state(router, 'primary')
 
         self.fail_ha_router(router)
-        common_utils.wait_until_true(lambda: router.ha_state == 'backup')
+        self.wait_until_ha_router_has_state(router, 'backup')
 
         def enqueue_call_count_match():
             LOG.debug("enqueue_mock called %s times.", enqueue_mock.call_count)
@@ -78,8 +78,8 @@ class L3HATestCase(framework.L3AgentTestFramework):
         router_info = self.generate_router_info(enable_ha=True)
         router2 = self.manage_router(self.agent, router_info)
 
-        common_utils.wait_until_true(lambda: router1.ha_state == 'backup')
-        common_utils.wait_until_true(lambda: router2.ha_state == 'primary')
+        self.wait_until_ha_router_has_state(router1, 'backup')
+        self.wait_until_ha_router_has_state(router2, 'primary')
         common_utils.wait_until_true(
             lambda: self._expected_rpc_report(
                 {router1.router_id: 'standby', router2.router_id: 'active'}))
@@ -118,10 +118,10 @@ class L3HATestCase(framework.L3AgentTestFramework):
         router_info = l3_test_common.prepare_router_data(
             enable_snat=True, enable_ha=True, dual_stack=True, enable_gw=False)
         router = self.manage_router(self.agent, router_info)
-        common_utils.wait_until_true(lambda: router.ha_state == 'primary')
+        self.wait_until_ha_router_has_state(router, 'primary')
         if state == 'backup':
             self.fail_ha_router(router)
-            common_utils.wait_until_true(lambda: router.ha_state == 'backup')
+            self.wait_until_ha_router_has_state(router, 'backup')
         _ext_dev_name, ex_port = l3_test_common.prepare_ext_gw_test(
             mock.Mock(), router, dual_stack=enable_v6_gw)
         router_info['gw_port'] = ex_port
@@ -225,7 +225,7 @@ class L3HATestCase(framework.L3AgentTestFramework):
         router_info = self.generate_router_info(
             ip_version=constants.IP_VERSION_6, enable_ha=True)
         router1 = self.manage_router(self.agent, router_info)
-        common_utils.wait_until_true(lambda: router1.ha_state == 'primary')
+        self.wait_until_ha_router_has_state(router1, 'primary')
         common_utils.wait_until_true(lambda: router1.radvd.enabled)
 
         def _check_lla_status(router, expected):
@@ -243,7 +243,7 @@ class L3HATestCase(framework.L3AgentTestFramework):
         ha_device = ip_lib.IPDevice(device_name, namespace=router1.ns_name)
         ha_device.link.set_down()
 
-        common_utils.wait_until_true(lambda: router1.ha_state == 'backup')
+        self.wait_until_ha_router_has_state(router1, 'backup')
         common_utils.wait_until_true(
             lambda: not router1.radvd.enabled, timeout=10)
         _check_lla_status(router1, False)
@@ -269,7 +269,7 @@ class L3HATestCase(framework.L3AgentTestFramework):
                 ipv6_subnet_modes=[slaac_mode],
                 interface_id=interface_id)
         router.process()
-        common_utils.wait_until_true(lambda: router.ha_state == 'primary')
+        self.wait_until_ha_router_has_state(router, 'primary')
 
         # Verify that router internal interface is present and is configured
         # with IP address from both the subnets.
@@ -301,10 +301,10 @@ class L3HATestCase(framework.L3AgentTestFramework):
     def test_delete_external_gateway_on_standby_router(self):
         router_info = self.generate_router_info(enable_ha=True)
         router = self.manage_router(self.agent, router_info)
-        common_utils.wait_until_true(lambda: router.ha_state == 'primary')
+        self.wait_until_ha_router_has_state(router, 'primary')
 
         self.fail_ha_router(router)
-        common_utils.wait_until_true(lambda: router.ha_state == 'backup')
+        self.wait_until_ha_router_has_state(router, 'backup')
 
         # The purpose of the test is to simply make sure no exception is raised
         port = router.get_ex_gw_port()
@@ -316,7 +316,7 @@ class L3HATestCase(framework.L3AgentTestFramework):
         router = self.manage_router(self.agent, router_info)
         ex_gw_port = router.get_ex_gw_port()
         interface_name = router.get_external_device_interface_name(ex_gw_port)
-        common_utils.wait_until_true(lambda: router.ha_state == 'primary')
+        self.wait_until_ha_router_has_state(router, 'primary')
         self._add_fip(router, '172.168.1.20', fixed_address='10.0.0.3')
         router.process()
         router.router[constants.FLOATINGIP_KEY] = []
@@ -330,12 +330,12 @@ class L3HATestCase(framework.L3AgentTestFramework):
         router_info[constants.HA_INTERFACE_KEY]['status'] = (
             constants.PORT_STATUS_DOWN)
         router1 = self.manage_router(self.agent, router_info)
-        common_utils.wait_until_true(lambda: router1.ha_state == 'backup')
+        self.wait_until_ha_router_has_state(router1, 'backup')
 
         router1.router[constants.HA_INTERFACE_KEY]['status'] = (
             constants.PORT_STATUS_ACTIVE)
         self.agent._process_updated_router(router1.router)
-        common_utils.wait_until_true(lambda: router1.ha_state == 'primary')
+        self.wait_until_ha_router_has_state(router1, 'primary')
 
     def test_ha_router_namespace_has_ip_nonlocal_bind_disabled(self):
         router_info = self.generate_router_info(enable_ha=True)
@@ -362,14 +362,14 @@ class L3HATestCase(framework.L3AgentTestFramework):
         external_device_name = router.get_external_device_name(
             external_port['id'])
 
-        common_utils.wait_until_true(lambda: router.ha_state == 'backup')
+        self.wait_until_ha_router_has_state(router, 'backup')
         self._wait_until_ipv6_forwarding_has_state(
             router.ns_name, external_device_name, 0)
 
         router.router[constants.HA_INTERFACE_KEY]['status'] = (
             constants.PORT_STATUS_ACTIVE)
         self.agent._process_updated_router(router.router)
-        common_utils.wait_until_true(lambda: router.ha_state == 'primary')
+        self.wait_until_ha_router_has_state(router, 'primary')
         self._wait_until_ipv6_forwarding_has_state(
             router.ns_name, external_device_name, 1)
 
@@ -381,13 +381,13 @@ class L3HATestCase(framework.L3AgentTestFramework):
             constants.PORT_STATUS_DOWN)
         router = self.manage_router(self.agent, router_info)
 
-        common_utils.wait_until_true(lambda: router.ha_state == 'backup')
+        self.wait_until_ha_router_has_state(router, 'backup')
         self._wait_until_ipv6_forwarding_has_state(router.ns_name, 'all', 0)
 
         router.router[constants.HA_INTERFACE_KEY]['status'] = (
             constants.PORT_STATUS_ACTIVE)
         self.agent._process_updated_router(router.router)
-        common_utils.wait_until_true(lambda: router.ha_state == 'primary')
+        self.wait_until_ha_router_has_state(router, 'primary')
         self._wait_until_ipv6_forwarding_has_state(router.ns_name, 'all', 1)
 
     def test_router_interface_mtu_update(self):
@@ -475,10 +475,8 @@ class L3HATestFailover(framework.L3AgentTestFramework):
         self._assert_ipv6_accept_ra(backup_router, False)
         self._assert_ipv6_forwarding(backup_router, False, False)
 
-        common_utils.wait_until_true(
-            lambda: primary_router.ha_state == 'primary')
-        common_utils.wait_until_true(
-            lambda: backup_router.ha_state == 'backup')
+        self.wait_until_ha_router_has_state(primary_router, 'primary')
+        self.wait_until_ha_router_has_state(backup_router, 'backup')
 
         self.fail_ha_router(router1)
 
@@ -531,10 +529,8 @@ class L3HATestFailover(framework.L3AgentTestFramework):
         self.fail_gw_router_port(primary_router)
         self.fail_gw_router_port(backup_router)
 
-        common_utils.wait_until_true(
-            lambda: primary_router.ha_state == 'primary')
-        common_utils.wait_until_true(
-            lambda: backup_router.ha_state == 'primary')
+        self.wait_until_ha_router_has_state(primary_router, 'primary')
+        self.wait_until_ha_router_has_state(backup_router, 'primary')
 
         self.restore_gw_router_port(primary_router)
 
