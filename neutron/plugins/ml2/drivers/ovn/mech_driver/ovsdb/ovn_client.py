@@ -32,10 +32,12 @@ from neutron_lib.plugins import directory
 from neutron_lib.plugins import utils as p_utils
 from neutron_lib.utils import helpers
 from neutron_lib.utils import net as n_net
+from oslo_concurrency import processutils
 from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import excutils
 from ovsdbapp.backend.ovs_idl import idlutils
+import tenacity
 
 from neutron.common.ovn import acl as ovn_acl
 from neutron.common.ovn import constants as ovn_const
@@ -1561,6 +1563,26 @@ class OVNClient(object):
             db_rev.bump_revision(
                 context, port, ovn_const.TYPE_ROUTER_PORTS)
 
+    @tenacity.retry(wait=tenacity.wait_random(min=2, max=3),
+                    stop=tenacity.stop_after_attempt(3))
+    def delete_mac_binding_entries_by_mac(self, mac):
+        """Delete all MAC_Binding entries associated to this mac address
+
+        The reason for using ovsdb-client intead of sb_ovn.db_destroy
+        is refer to patch:
+        https://review.opendev.org/c/openstack/neutron/+/812805
+        """
+        cmd = ['ovsdb-client', 'transact', ovn_conf.get_ovn_sb_connection(),
+               '--timeout', str(ovn_conf.get_ovn_ovsdb_timeout())]
+        if ovn_conf.get_ovn_sb_private_key():
+            cmd += ['-p', ovn_conf.get_ovn_sb_private_key(), '-c',
+                    ovn_conf.get_ovn_sb_certificate(), '-C',
+                    ovn_conf.get_ovn_sb_ca_cert()]
+        cmd += ['["OVN_Southbound", {"op": "delete", "table": "MAC_Binding", '
+                '"where": [["mac", "==", "%s"]]}]' % mac]
+        return processutils.execute(*cmd,
+                                    log_errors=processutils.LOG_FINAL_ERROR)
+
     def _delete_lrouter_port(self, context, port_id, router_id=None, txn=None):
         """Delete a logical router port."""
         commands = [self._nb_idl.lrp_del(
@@ -1580,6 +1602,7 @@ class OVNClient(object):
 
         subnet_ids = subnet_ids or []
         port_removed = False
+        port_mac = ovn_port.mac
         with self._nb_idl.transaction(check_error=True) as txn:
             port = None
             try:
@@ -1610,6 +1633,8 @@ class OVNClient(object):
                 if port_removed:
                     self._delete_lrouter_port(context, port_id, router_id,
                                               txn=txn)
+                if port_mac:
+                    self.delete_mac_binding_entries_by_mac(port_mac)
                 return
 
             if not subnet_ids:
@@ -1644,6 +1669,8 @@ class OVNClient(object):
             # revision database to ensure consistency
             if port_removed:
                 self._delete_lrouter_port(context, port_id, router_id, txn=txn)
+                if port_mac:
+                    self.delete_mac_binding_entries_by_mac(port_mac)
             else:
                 # otherwise, we just update the revision database
                 db_rev.bump_revision(
