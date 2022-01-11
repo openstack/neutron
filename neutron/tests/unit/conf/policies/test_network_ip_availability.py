@@ -60,7 +60,7 @@ class ProjectAdminTests(NetworkIPAvailabilityAPITestCase):
 
     def test_get_network_ip_availability(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'get_network_ip_availability', self.target)
 

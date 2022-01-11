@@ -218,21 +218,21 @@ class ProjectAdminTests(SubnetAPITestCase):
 
     def test_create_subnet_segment_id(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_subnet:segment_id', self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_subnet:segment_id', self.alt_target)
 
     def test_create_subnet_service_types(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_subnet:service_types', self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'create_subnet:service_types', self.alt_target)
 
@@ -246,11 +246,11 @@ class ProjectAdminTests(SubnetAPITestCase):
 
     def test_get_subnet_segment_id(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'get_subnet:segment_id', self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'get_subnet:segment_id', self.alt_target)
 
@@ -264,21 +264,21 @@ class ProjectAdminTests(SubnetAPITestCase):
 
     def test_update_subnet_segment_id(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_subnet:segment_id', self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_subnet:segment_id', self.alt_target)
 
     def test_update_subnet_service_types(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_subnet:service_types', self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_subnet:service_types', self.alt_target)
 

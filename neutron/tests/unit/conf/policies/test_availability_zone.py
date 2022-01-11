@@ -32,6 +32,6 @@ class AvailabilityZoneAPITestCase(base.PolicyBaseTestCase):
 
     def test_project_reader_can_not_get_availability_zone(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.project_reader_ctx, "get_availability_zone", self.target)

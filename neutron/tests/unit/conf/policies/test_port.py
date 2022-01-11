@@ -724,21 +724,21 @@ class ProjectAdminTests(PortAPITestCase):
 
     def test_create_port_with_binding_host_id(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'create_port:binding:host_id',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'create_port:binding:host_id',
             self.alt_target)
 
     def test_create_port_with_binding_profile(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'create_port:binding:profile',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'create_port:binding:profile',
             self.alt_target)
 
@@ -792,51 +792,51 @@ class ProjectAdminTests(PortAPITestCase):
 
     def test_get_port_binding_vif_type(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'get_port:binding:vif_type',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'get_port:binding:vif_type',
             self.alt_target)
 
     def test_get_port_binding_vif_details(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'get_port:binding:vif_details',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'get_port:binding:vif_details',
             self.alt_target)
 
     def test_get_port_binding_host_id(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'get_port:binding:host_id',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'get_port:binding:host_id',
             self.alt_target)
 
     def test_get_port_binding_profile(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'get_port:binding:profile',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'get_port:binding:profile',
             self.alt_target)
 
     def test_get_port_resource_request(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'get_port:resource_request',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'get_port:resource_request',
             self.alt_target)
 
@@ -908,21 +908,21 @@ class ProjectAdminTests(PortAPITestCase):
 
     def test_update_port_with_binding_host_id(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'update_port:binding:host_id',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'update_port:binding:host_id',
             self.alt_target)
 
     def test_update_port_with_binding_profile(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'update_port:binding:profile',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'update_port:binding:profile',
             self.alt_target)
 
@@ -1057,21 +1057,21 @@ class ProjectMemberTests(ProjectAdminTests):
 
     def test_create_port_with_binding_host_id(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'create_port:binding:host_id',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'create_port:binding:host_id',
             self.alt_target)
 
     def test_create_port_with_binding_profile(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'create_port:binding:profile',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'create_port:binding:profile',
             self.alt_target)
 
@@ -1113,51 +1113,51 @@ class ProjectMemberTests(ProjectAdminTests):
 
     def test_get_port_binding_vif_type(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'get_port:binding:vif_type',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'get_port:binding:vif_type',
             self.alt_target)
 
     def test_get_port_binding_vif_details(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'get_port:binding:vif_details',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'get_port:binding:vif_details',
             self.alt_target)
 
     def test_get_port_binding_host_id(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'get_port:binding:host_id',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'get_port:binding:host_id',
             self.alt_target)
 
     def test_get_port_binding_profile(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'get_port:binding:profile',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'get_port:binding:profile',
             self.alt_target)
 
     def test_get_port_resource_request(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'get_port:resource_request',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'get_port:resource_request',
             self.alt_target)
 
@@ -1227,21 +1227,21 @@ class ProjectMemberTests(ProjectAdminTests):
 
     def test_update_port_with_binding_host_id(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'update_port:binding:host_id',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'update_port:binding:host_id',
             self.alt_target)
 
     def test_update_port_with_binding_profile(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'update_port:binding:profile',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce, self.context, 'update_port:binding:profile',
             self.alt_target)
 
