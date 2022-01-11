@@ -179,6 +179,24 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         ipam_driver = driver.Pool.get_instance(None, context)
         return ipam_driver.get_subnet(subnet_id)
 
+    @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_WRITER
+    def deallocate_ips_from_port(self, context, port, ips):
+        """Deallocate set of ips from port.
+
+        Deallocate IP addresses previosly allocated for given port.
+        Format of the ips:
+            [{
+                "ip_address": IP.ADDRESS,
+                "subnet_id": subnet_id
+            }]
+        """
+        if not ips:
+            return
+        ipam_driver = driver.Pool.get_instance(None, context)
+        self._ipam_deallocate_ips(
+            context, ipam_driver, port['port'], ips)
+
     def allocate_ips_for_port_and_store(self, context, port, port_id):
         # Make a copy of port dict to prevent changing
         # incoming dict by adding 'id' to it.
@@ -198,28 +216,34 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
 
         port_copy['port']['id'] = port_id
         network_id = port_copy['port']['network_id']
-        ips = []
+        ips = self.allocate_ips_for_port(context, port_copy)
+        self.store_ip_allocation_for_port(context, ips, network_id, port_copy)
+        return ips
+
+    @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_WRITER
+    def allocate_ips_for_port(self, context, port):
+        return self._allocate_ips_for_port(context, port)
+
+    def store_ip_allocation_for_port(self, context, ips, network_id, port):
         try:
-            ips = self._allocate_ips_for_port(context, port_copy)
             for ip in ips:
                 ip_address = ip['ip_address']
                 subnet_id = ip['subnet_id']
                 IpamPluggableBackend._store_ip_allocation(
                     context, ip_address, network_id,
-                    subnet_id, port_id)
-            return ips
+                    subnet_id, port['port']['id'])
         except Exception:
             with excutils.save_and_reraise_exception():
-                if ips:
-                    ipam_driver = driver.Pool.get_instance(None, context)
-                    if not ipam_driver.needs_rollback():
-                        return
+                ipam_driver = driver.Pool.get_instance(None, context)
+                if not ipam_driver.needs_rollback():
+                    return
 
-                    LOG.debug("An exception occurred during port creation. "
-                              "Reverting IP allocation")
-                    self._safe_rollback(self._ipam_deallocate_ips, context,
-                                        ipam_driver, port_copy['port'], ips,
-                                        revert_on_fail=False)
+                LOG.debug("An exception occurred during port creation. "
+                          "Reverting IP allocation")
+                self._safe_rollback(self._ipam_deallocate_ips, context,
+                                    ipam_driver, port['port'], ips,
+                                    revert_on_fail=False)
 
     def _allocate_ips_for_port(self, context, port):
         """Allocate IP addresses for the port. IPAM version.
