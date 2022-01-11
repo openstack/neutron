@@ -14,6 +14,7 @@
 
 from neutron_lib.api.definitions import external_net as enet_apidef
 from neutron_lib.api.definitions import l3 as l3_apidef
+from neutron_lib.api.definitions import qos_fip as qos_fip_apidef
 from neutron_lib import context
 from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.services.qos import constants as qos_consts
@@ -23,7 +24,6 @@ from oslo_utils import uuidutils
 from neutron.conf.db import extraroute_db
 from neutron.db import l3_fip_qos
 from neutron.extensions import l3
-from neutron.extensions import qos_fip
 from neutron.objects.qos import policy
 from neutron.services.revisions import revision_plugin
 from neutron.tests.unit.extensions import test_l3
@@ -45,14 +45,14 @@ class TestFloatingIPQoSIntPlugin(
         test_l3.TestL3NatIntPlugin,
         l3_fip_qos.FloatingQoSDbMixin):
     supported_extension_aliases = [enet_apidef.ALIAS, l3_apidef.ALIAS,
-                                   qos_fip.FIP_QOS_ALIAS]
+                                   qos_fip_apidef.ALIAS]
 
 
 class TestFloatingIPQoSL3NatServicePlugin(
         test_l3.TestL3NatServicePlugin,
         l3_fip_qos.FloatingQoSDbMixin):
     supported_extension_aliases = [l3_apidef.ALIAS, 'qos',
-                                   qos_fip.FIP_QOS_ALIAS]
+                                   qos_fip_apidef.ALIAS]
 
 
 class FloatingIPQoSDBTestCaseBase(object):

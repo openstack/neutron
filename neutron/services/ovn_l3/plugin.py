@@ -15,6 +15,7 @@
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
+from neutron_lib.api.definitions import qos_fip as qos_fip_apidef
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -41,7 +42,6 @@ from neutron.db import l3_fip_qos
 from neutron.db import l3_gwmode_db
 from neutron.db.models import l3 as l3_models
 from neutron.db import ovn_revision_numbers_db as db_rev
-from neutron.extensions import qos_fip as qos_fip_api
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.quota import resource_registry
 from neutron.scheduler import l3_ovn_scheduler
@@ -97,9 +97,9 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
     @staticmethod
     def disable_qos_fip_extension_by_extension_drivers(aliases):
         qos_service_plugin = directory.get_plugin(plugin_constants.QOS)
-        qos_aliases = qos_fip_api.FIP_QOS_ALIAS in aliases
+        qos_aliases = qos_fip_apidef.ALIAS in aliases
         if not qos_service_plugin and qos_aliases:
-            aliases.remove(qos_fip_api.FIP_QOS_ALIAS)
+            aliases.remove(qos_fip_apidef.ALIAS)
 
     @property
     def supported_extension_aliases(self):

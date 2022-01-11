@@ -17,6 +17,7 @@ import random
 
 import netaddr
 from neutron_lib.api.definitions import l3 as l3_apidef
+from neutron_lib.api.definitions import qos_fip as qos_fip_apidef
 from neutron_lib.api import extensions
 from neutron_lib.api import validators
 from neutron_lib.callbacks import events
@@ -51,7 +52,6 @@ from neutron.db.models import l3_attrs as l3_attrs_models
 from neutron.db import models_v2
 from neutron.db import standardattrdescription_db as st_attr
 from neutron.extensions import l3
-from neutron.extensions import qos_fip
 from neutron.extensions import segment as segment_ext
 from neutron.objects import base as base_obj
 from neutron.objects import port_forwarding
@@ -134,7 +134,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         if self._fip_qos is None:
             # Check L3 service plugin
             self._fip_qos = extensions.is_extension_supported(
-                self, qos_fip.FIP_QOS_ALIAS)
+                self, qos_fip_apidef.ALIAS)
         return self._fip_qos
 
     @property
