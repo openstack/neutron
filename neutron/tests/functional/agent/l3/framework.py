@@ -689,12 +689,29 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                 lambda: self._check_external_device(primary_router))
         common_utils.wait_until_true(
             lambda: backup_router.ha_state == 'backup')
+
+        LOG.debug("Found primary router %s and backup router %s",
+                  primary_router.router_id, backup_router.router_id)
         return primary_router, backup_router
 
     def fail_ha_router(self, router):
         device_name = router.get_ha_device_name()
+        LOG.debug("Failing HA router %s by setting device %s to DOWN",
+                  router.router_id, device_name)
         ha_device = ip_lib.IPDevice(device_name, router.ha_namespace)
         ha_device.link.set_down()
+
+    @staticmethod
+    def wait_until_ha_router_has_state(router, expected_state):
+
+        def router_has_expected_state():
+            state = router.ha_state
+            LOG.debug("Router %s; current state is '%s', "
+                      "expected state is '%s'",
+                      router.router_id, state, expected_state)
+            return state == expected_state
+
+        common_utils.wait_until_true(router_has_expected_state)
 
     @staticmethod
     def fail_gw_router_port(router):
