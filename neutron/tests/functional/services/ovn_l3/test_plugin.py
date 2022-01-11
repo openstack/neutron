@@ -14,19 +14,21 @@
 
 from unittest import mock
 
-from neutron.common.ovn import constants as ovn_const
-from neutron.common.ovn import utils as ovn_utils
-from neutron.common import utils as n_utils
-from neutron.scheduler import l3_ovn_scheduler as l3_sched
-from neutron.tests.functional import base
-from neutron.tests.functional.resources.ovsdb import events
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib import constants as n_consts
 from neutron_lib.plugins import directory
+from oslo_db import exception as db_exc
 from ovsdbapp.backend.ovs_idl import idlutils
+
+from neutron.common.ovn import constants as ovn_const
+from neutron.common.ovn import utils as ovn_utils
+from neutron.common import utils as n_utils
+from neutron.scheduler import l3_ovn_scheduler as l3_sched
+from neutron.tests.functional import base
+from neutron.tests.functional.resources.ovsdb import events
 
 
 class TestRouter(base.TestOVNFunctionalBase):
@@ -488,10 +490,20 @@ class TestRouter(base.TestOVNFunctionalBase):
         ext1 = self._create_ext_network(
             'ext1', 'flat', 'physnet4', None, "30.0.0.1", "30.0.0.0/24")
         gw_info = {'network_id': ext1['network']['id']}
-        # Create 20 routers with a gateway. Since we're using physnet4, the
-        # chassis candidates will be chassis4 initially.
-        for i in range(20):
-            router = self._create_router('router%d' % i, gw_info=gw_info)
+        # Tries to create 20 routers with a gateway. Since we're using
+        # physnet4, the chassis candidates will be chassis4 initially.
+        num_routers = 20
+        for i in range(num_routers):
+            try:
+                router = self._create_router('router%d' % i, gw_info=gw_info)
+            except db_exc.DBReferenceError:
+                # NOTE(ralonsoh): this is a workaround for LP#1956344. There
+                # seems to be a bug in SQLite3. The "port" DB object is not
+                # persistently stored in the DB and raises a "DBReferenceError"
+                # exception occasionally.
+                num_routers -= 1
+                continue
+
             gw_port_id = router.get('gw_port_id')
             logical_port = 'cr-lrp-%s' % gw_port_id
             self.assertTrue(self.cr_lrp_pb_event.wait(logical_port),
@@ -499,7 +511,7 @@ class TestRouter(base.TestOVNFunctionalBase):
             self.sb_api.lsp_bind(logical_port, chassis4,
                                  may_exist=True).execute(check_error=True)
         self.l3_plugin.schedule_unhosted_gateways()
-        expected = {chassis4: {1: 20}}
+        expected = {chassis4: {1: num_routers}}
         self.assertEqual(expected, _get_result_dict())
 
         # Add another chassis as a gateway chassis
@@ -514,9 +526,9 @@ class TestRouter(base.TestOVNFunctionalBase):
 
         # Chassis4 should have all ports at Priority 2
         self.l3_plugin.schedule_unhosted_gateways()
-        self.assertEqual({2: 20}, _get_result_dict()[chassis4])
+        self.assertEqual({2: num_routers}, _get_result_dict()[chassis4])
         # Chassis5 should have all ports at Priority 1
-        self.assertEqual({1: 20}, _get_result_dict()[chassis5])
+        self.assertEqual({1: num_routers}, _get_result_dict()[chassis5])
 
         # delete chassis that hosts all the gateways
         self.del_fake_chassis(chassis4)
@@ -525,7 +537,7 @@ class TestRouter(base.TestOVNFunctionalBase):
         # As Chassis4 has been removed so all gateways that were
         # hosted there are now primaries on chassis5 and have
         # priority 1.
-        self.assertEqual({1: 20}, _get_result_dict()[chassis5])
+        self.assertEqual({1: num_routers}, _get_result_dict()[chassis5])
 
     def test_gateway_chassis_rebalance_max_chassis(self):
         chassis_list = []
