@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Changes the API behaviour while using OVN driver to enforce that it's not possible to delete
+    all the IPs from a router port.
+    For more info see `bug LP#1948457 <https://bugs.launchpad.net/neutron/+bug/1948457>`_
