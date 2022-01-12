@@ -66,8 +66,6 @@ class DummyVlanBinding(object):
 
 
 class TunnelTest(object):
-    VETH_MTU = None
-
     def setUp(self):
         super(TunnelTest, self).setUp()
         self.useFixture(test_vlanmanager.LocalVlanManagerFixture())
@@ -313,7 +311,6 @@ class TunnelTest(object):
         cfg.CONF.set_override('bridge_mappings', self.NET_MAPPING, 'OVS')
         cfg.CONF.set_override('polling_interval', 2, 'AGENT')
         cfg.CONF.set_override('tunnel_types', ['gre'], 'AGENT')
-        cfg.CONF.set_override('veth_mtu', self.VETH_MTU, 'AGENT')
         cfg.CONF.set_override('minimize_polling', False, 'AGENT')
         cfg.CONF.set_override('enable_ipv6', False, 'DHCP')
 

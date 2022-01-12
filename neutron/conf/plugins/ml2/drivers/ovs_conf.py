@@ -188,6 +188,10 @@ agent_opts = [
     cfg.PortOpt('vxlan_udp_port', default=n_const.VXLAN_UDP_PORT,
                 help=_("The UDP port to use for VXLAN tunnels.")),
     cfg.IntOpt('veth_mtu', default=9000,
+               deprecated_for_removal=True,
+               deprecated_since="Yoga",
+               deprecated_reason="This parameter has had no effect since "
+                                 "the Wallaby release.",
                help=_("MTU size of veth interfaces")),
     cfg.BoolOpt('l2_population', default=False,
                 help=_("Use ML2 l2population mechanism driver to learn "
