@@ -392,11 +392,13 @@ class PortBindingCreateUpEvent(row_event.RowEvent):
         self.event_name = 'PortBindingCreateUpEvent'
 
     def match_fn(self, event, row, old):
-        if row.type == ovn_const.PB_TYPE_VIRTUAL:
-            # NOTE(ltomasbo): Skipping as virtual ports are not being set to
-            # ACTIVE
+        if row.type in (ovn_const.PB_TYPE_VIRTUAL,
+                        ovn_const.OVN_CHASSIS_REDIRECT):
+            # NOTE(ltomasbo): Skipping virtual ports as they are not being
+            # set to ACTIVE
+            # NOTE(ltomasbo): No need to handle cr ports
             return False
-        elif row.type == ovn_const.PB_TYPE_PATCH:
+        if row.type == ovn_const.PB_TYPE_PATCH:
             # NOTE(ltomasbo): Only handle the logical_switch_port side,
             # not the router side.
             if (row.logical_port.startswith('lrp-') or
@@ -434,10 +436,12 @@ class PortBindingCreateDownEvent(row_event.RowEvent):
         self.event_name = 'PortBindingCreateDownEvent'
 
     def match_fn(self, event, row, old):
-        if row.type in [ovn_const.PB_TYPE_VIRTUAL, ovn_const.PB_TYPE_PATCH]:
+        if row.type in [ovn_const.PB_TYPE_VIRTUAL, ovn_const.PB_TYPE_PATCH,
+                        ovn_const.OVN_CHASSIS_REDIRECT]:
             # NOTE(ltomasbo): Skipping as virtual ports are not being set to
             # ACTIVE
             # Patch ports are set to UP on creation, no need to update
+            # No need to handle cr ports
             return False
 
         # TODO(ltomasbo): Remove the checkings for 'up' column once minimal
@@ -472,17 +476,27 @@ class PortBindingUpdateUpEvent(row_event.RowEvent):
         self.event_name = 'PortBindingUpdateUpEvent'
 
     def match_fn(self, event, row, old):
-        if row.type == ovn_const.PB_TYPE_VIRTUAL:
-            # NOTE(ltomasbo): Skipping as virtual ports are not being set to
-            # ACTIVE
+        if row.type in (ovn_const.PB_TYPE_VIRTUAL,
+                        ovn_const.OVN_CHASSIS_REDIRECT):
+            # NOTE(ltomasbo): Skipping virtual ports as they are not being
+            # set to ACTIVE
+            # NOTE(ltomasbo): No need to handle cr ports
             return False
-        elif row.type == ovn_const.PB_TYPE_PATCH:
+        if row.type == ovn_const.PB_TYPE_PATCH:
             # NOTE(ltomasbo): Only handle the logical_switch_port side,
             # not the router side.
             if (row.logical_port.startswith('lrp-') or
                     row.logical_port.startswith('cr-lrp')):
                 return False
-            return True
+            try:
+                if old.mac:
+                    # NOTE(ltomasbo): only execute it once (the first update
+                    # event for this port), as you don't need to set it to
+                    # active several time
+                    return True
+            except AttributeError:
+                return False
+            return False
         # TODO(ltomasbo): Remove the checkings for 'up' column once minimal
         # ovn version has it (v21.03.0). The match_fn can be then replaced
         # by different init method above:
@@ -521,10 +535,13 @@ class PortBindingUpdateDownEvent(row_event.RowEvent):
         self.event_name = 'PortBindingUpdateDownEvent'
 
     def match_fn(self, event, row, old):
-        if row.type in [ovn_const.PB_TYPE_VIRTUAL, ovn_const.PB_TYPE_PATCH]:
+        if row.type in [ovn_const.PB_TYPE_VIRTUAL, ovn_const.PB_TYPE_PATCH,
+                        ovn_const.OVN_CHASSIS_REDIRECT]:
             # NOTE(ltomasbo): Skipping as virtual ports are not being set to
             # ACTIVE
-            # Patch ports are set to UP on creation, no need to update
+            # Patch ports are meant to be always UP, after creation, no need
+            # to update
+            # No need to handle cr ports
             return False
         # TODO(ltomasbo): Remove the checkings for 'up' column once minimal
         # ovn version has it (v21.03.0). The match_fn can be then replaced
