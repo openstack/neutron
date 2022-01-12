@@ -205,10 +205,12 @@
             ovs:
               bridge_mappings: public:br-ex
               resource_provider_bandwidths: br-ex:1000000:1000000
+              resource_provider_packet_processing_without_direction: :100
         test-config:
           $TEMPEST_CONFIG:
             network-feature-enabled:
               qos_placement_physnet: public
+              qos_min_bw_and_pps: True
     group-vars:
       subnode:
         devstack_localrc:
@@ -237,6 +239,7 @@
               ovs:
                 bridge_mappings: public:br-ex
                 resource_provider_bandwidths: br-ex:1000000:1000000
+                resource_provider_packet_processing_without_direction: :100
 
 - job:
     name: neutron-ovn-multinode-base
