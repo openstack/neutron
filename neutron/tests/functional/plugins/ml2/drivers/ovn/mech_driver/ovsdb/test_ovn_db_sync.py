@@ -14,6 +14,7 @@
 
 from collections import namedtuple
 
+import netaddr
 from neutron.common.ovn import acl as acl_utils
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
@@ -173,6 +174,9 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                 self.expected_dns_records[0]['records'][hname] = port_ips
                 hname = 'n1-' + p + '.ovn.test'
                 self.expected_dns_records[0]['records'][hname] = port_ips
+                for ip in port_ips.split(" "):
+                    p_record = netaddr.IPAddress(ip).reverse_dns.rstrip(".")
+                    self.expected_dns_records[0]['records'][p_record] = hname
                 self.expected_ports_with_unknown_addr.append(lport_name)
 
             if p == 'p2':
@@ -572,6 +576,9 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                 self.expected_dns_records[1]['records'][hname] = port_ips
                 hname = 'n4-' + p + '.ovn.test'
                 self.expected_dns_records[1]['records'][hname] = port_ips
+                for ip in port_ips.split(" "):
+                    p_record = netaddr.IPAddress(ip).reverse_dns.rstrip(".")
+                    self.expected_dns_records[1]['records'][p_record] = hname
 
             n4_port_dict[p] = port['port']['id']
             self.lport_dhcp_ignored.append(port['port']['id'])
