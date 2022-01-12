@@ -45,10 +45,13 @@ class OVNTrunkHandler(object):
     def _set_sub_ports(self, parent_port, subports):
         txn = self.plugin_driver._nb_ovn.transaction
         context = n_context.get_admin_context()
+        db_parent_port = port_obj.Port.get_object(context, id=parent_port)
+        parent_port_status = db_parent_port.status
         for port in subports:
             with db_api.CONTEXT_WRITER.using(context), (
                     txn(check_error=True)) as ovn_txn:
-                self._set_binding_profile(context, port, parent_port, ovn_txn)
+                self._set_binding_profile(context, port, parent_port,
+                                          parent_port_status, ovn_txn)
 
     def _unset_sub_ports(self, subports):
         txn = self.plugin_driver._nb_ovn.transaction
@@ -58,7 +61,8 @@ class OVNTrunkHandler(object):
                     txn(check_error=True)) as ovn_txn:
                 self._unset_binding_profile(context, port, ovn_txn)
 
-    def _set_binding_profile(self, context, subport, parent_port, ovn_txn):
+    def _set_binding_profile(self, context, subport, parent_port,
+                             parent_port_status, ovn_txn):
         LOG.debug("Setting parent %s for subport %s",
                   parent_port, subport.port_id)
         db_port = port_obj.Port.get_object(context, id=subport.port_id)
@@ -71,6 +75,10 @@ class OVNTrunkHandler(object):
             # NOTE(flaviof): We expect binding's host to be set. Otherwise,
             # sub-port will not transition from DOWN to ACTIVE.
             db_port.device_owner = trunk_consts.TRUNK_SUBPORT_OWNER
+            # NOTE(ksambor):  When sub-port was created and event was process
+            # without binding profile this port will end forever in DOWN
+            # status so we need to switch it here to the parent port status
+            db_port.status = parent_port_status
             for binding in db_port.bindings:
                 binding.profile['parent_name'] = parent_port
                 binding.profile['tag'] = subport.segmentation_id
