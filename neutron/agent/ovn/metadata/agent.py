@@ -15,6 +15,7 @@
 import collections
 import functools
 import re
+import threading
 import uuid
 
 from neutron_lib import constants as n_const
@@ -202,6 +203,18 @@ class MetadataAgent(object):
         self._process_monitor = external_process.ProcessMonitor(
             config=self.conf,
             resource_type='metadata')
+        self._sb_idl = None
+        self._post_fork_event = threading.Event()
+
+    @property
+    def sb_idl(self):
+        if not self._sb_idl:
+            self._post_fork_event.wait()
+        return self._sb_idl
+
+    @sb_idl.setter
+    def sb_idl(self, val):
+        self._sb_idl = val
 
     def _load_config(self):
         self.chassis = self._get_own_chassis_name()
@@ -246,6 +259,7 @@ class MetadataAgent(object):
         # Chassis table.
         # Open the connection to OVN SB database.
         self.has_chassis_private = False
+        self._post_fork_event.clear()
         try:
             self.sb_idl = ovsdb.MetadataAgentOvnSbIdl(
                 chassis=self.chassis, tables=tables + ('Chassis_Private', ),
@@ -255,6 +269,9 @@ class MetadataAgent(object):
             self.sb_idl = ovsdb.MetadataAgentOvnSbIdl(
                 chassis=self.chassis, tables=tables,
                 events=events + (ChassisCreateEvent(self), )).start()
+
+        # Now IDL connections can be safely used.
+        self._post_fork_event.set()
 
         # Do the initial sync.
         self.sync()
