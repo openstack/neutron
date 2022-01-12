@@ -210,7 +210,8 @@ class TestWSGIServer(base.BaseTestCase):
             log=mock.ANY,
             keepalive=CONF.wsgi_keep_alive,
             log_format=CONF.wsgi_log_format,
-            socket_timeout=server.client_socket_timeout
+            socket_timeout=server.client_socket_timeout,
+            debug=False,
         )
 
 
