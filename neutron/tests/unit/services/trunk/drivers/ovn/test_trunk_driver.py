@@ -41,6 +41,8 @@ class TestTrunkHandler(base.BaseTestCase):
         self.handler = trunk_driver.OVNTrunkHandler(self.plugin_driver)
         self.trunk_1 = mock.Mock()
         self.trunk_1.port_id = "trunk-1"
+        self.trunk_1_obj = self._get_fake_port_obj(
+            port_id='trunk-1')
 
         self.trunk_2 = mock.Mock()
         self.trunk_2.port_id = "trunk-2"
@@ -77,7 +79,8 @@ class TestTrunkHandler(base.BaseTestCase):
             "neutron.objects.ports.Port.get_object").start()
         self.mock_get_port.side_effect = lambda ctxt, id: (
             self.sub_port_1_obj if id == 'sub_port_1' else (
-                self.sub_port_2_obj if id == 'sub_port_2' else None))
+                self.sub_port_2_obj if id == 'sub_port_2' else
+                self.trunk_1_obj if id == 'trunk-1' else None))
         self.mock_port_update = mock.patch(
             "neutron.objects.ports.Port.update").start()
         self.mock_update_pb = mock.patch(
@@ -91,6 +94,7 @@ class TestTrunkHandler(base.BaseTestCase):
             port = Port()
             port.id = port_id
             port.bindings = [PortBinding(profile={}, host='foo.com')]
+            port.status = 'ACTIVE'
         return port
 
     def _assert_calls(self, mock, expected_calls):
