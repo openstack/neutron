@@ -244,3 +244,37 @@ class TestChecks(base.BaseTestCase):
                 result = checks.CoreChecks. \
                     floatingip_inherit_qos_from_network(mock.ANY)
                 self.assertEqual(returned_code, result.code)
+
+    def test_extra_dhcp_options_check_all_good(self):
+        with mock.patch.object(
+                checks, 'get_extra_dhcp_opts') as get_extra_dhcp_opts_mock:
+            get_extra_dhcp_opts_mock.return_value = [
+                mock.Mock(port_id="port-1", opt_name='foo', opt_value='bar')]
+            result = checks.CoreChecks.extra_dhcp_options_check(mock.ANY)
+            self.assertEqual(Code.SUCCESS, result.code)
+
+    def test_extra_dhcp_options_check_bad_name(self):
+        with mock.patch.object(
+                checks, 'get_extra_dhcp_opts') as get_extra_dhcp_opts_mock:
+            get_extra_dhcp_opts_mock.return_value = [
+                mock.Mock(port_id='good',
+                          opt_name='foo',
+                          opt_value='bar'),
+                mock.Mock(port_id='bad-name',
+                          opt_name='foo\nfoo',
+                          opt_value='bar')]
+            result = checks.CoreChecks.extra_dhcp_options_check(mock.ANY)
+            self.assertEqual(Code.WARNING, result.code)
+
+    def test_extra_dhcp_options_check_bad_value(self):
+        with mock.patch.object(
+                checks, 'get_extra_dhcp_opts') as get_extra_dhcp_opts_mock:
+            get_extra_dhcp_opts_mock.return_value = [
+                mock.Mock(port_id='good',
+                          opt_name='foo',
+                          opt_value='bar'),
+                mock.Mock(port_id='bad-value',
+                          opt_name='foo',
+                          opt_value='bar\nbar')]
+            result = checks.CoreChecks.extra_dhcp_options_check(mock.ANY)
+            self.assertEqual(Code.WARNING, result.code)
