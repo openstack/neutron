@@ -23,10 +23,9 @@ from neutron_lib.exceptions import address_scope as addr_scope_exc
 from oslo_utils import uuidutils
 import webob.exc
 
-from neutron.db import db_base_plugin_v2
 from neutron.db import ipam_backend_mixin
-from neutron.db import portbindings_db
 from neutron.objects import subnet as subnet_obj
+from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron.services.segments import db as segments_db
 from neutron.tests import base
 from neutron.tests.unit.db import test_db_base_plugin_v2
@@ -346,26 +345,11 @@ class TestIpamBackendMixin(base.BaseTestCase):
                           None)
 
 
-class TestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
-                 portbindings_db.PortBindingMixin,
-                 segments_db.SegmentDbMixin):
+class TestPlugin(ml2_plugin.Ml2Plugin, segments_db.SegmentDbMixin):
     __native_pagination_support = True
     __native_sorting_support = True
 
     supported_extension_aliases = [portbindings.ALIAS]
-
-    def get_plugin_description(self):
-        return "Test Plugin"
-
-    @classmethod
-    def get_plugin_type(cls):
-        return "test_plugin"
-
-    def create_port(self, context, port):
-        port_dict = super(TestPlugin, self).create_port(context, port)
-        self._process_portbindings_create_and_update(
-            context, port['port'], port_dict)
-        return port_dict
 
 
 class TestPortUpdateIpam(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
@@ -373,6 +357,11 @@ class TestPortUpdateIpam(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         if not plugin:
             plugin = 'neutron.tests.unit.db.test_ipam_backend_mixin.TestPlugin'
         super(TestPortUpdateIpam, self).setUp(plugin=plugin)
+        ml2_plugin.MAX_BIND_TRIES = 0
+        self.addCleanup(self._cleanup)
+
+    def _cleanup(self):
+        ml2_plugin.MAX_BIND_TRIES = 10
 
     def test_port_update_allocate_from_net_subnet(self):
         """Tests that a port can get address by updating fixed_ips"""

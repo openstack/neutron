@@ -2361,7 +2361,7 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
         with self.network() as network:
             network = network['network']
         segment1 = self._test_create_segment(
-            network_id=network['id'], physical_network='phys_net1',
+            network_id=network['id'], physical_network='physnet1',
             segmentation_id=200, network_type='vlan')['segment']
 
         # As geneve networks mtu shouldn't be more than 1442 considering the
@@ -2375,7 +2375,7 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
             network_id=network['id'],
             segmentation_id=200,
             network_type='geneve')
-        self.mech_driver.update_segment_host_mapping(host, ['phys_net1'])
+        self.mech_driver.update_segment_host_mapping(host, ['physnet1'])
         segments_host_db = self._get_segments_for_host(host)
         self.assertEqual({segment1['id']}, set(segments_host_db))
         return network['id'], host
@@ -2385,9 +2385,9 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
 
         # Update the mapping
         segment2 = self._test_create_segment(
-            network_id=network_id, physical_network='phys_net2',
+            network_id=network_id, physical_network='physnet2',
             segmentation_id=201, network_type='vlan')['segment']
-        self.mech_driver.update_segment_host_mapping(host, ['phys_net2'])
+        self.mech_driver.update_segment_host_mapping(host, ['physnet2'])
         segments_host_db = self._get_segments_for_host(host)
         self.assertEqual({segment2['id']}, set(segments_host_db))
 
@@ -2400,8 +2400,8 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
         self.assertEqual({}, segments_host_db)
 
     def test_update_segment_host_mapping_with_new_segment(self):
-        hostname_with_physnets = {'hostname1': ['phys_net1', 'phys_net2'],
-                                  'hostname2': ['phys_net1']}
+        hostname_with_physnets = {'hostname1': ['physnet1', 'physnet2'],
+                                  'hostname2': ['physnet1']}
         ovn_sb_api = self.mech_driver.sb_ovn
         ovn_sb_api.get_chassis_hostname_and_physnets.return_value = (
             hostname_with_physnets)
@@ -2409,7 +2409,7 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
         with self.network() as network:
             network_id = network['network']['id']
         segment = self._test_create_segment(
-            network_id=network_id, physical_network='phys_net2',
+            network_id=network_id, physical_network='physnet2',
             segmentation_id=201, network_type='vlan')['segment']
         segments_host_db1 = self._get_segments_for_host('hostname1')
         # A new SegmentHostMapping should be created for hostname1
@@ -2423,28 +2423,28 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
         with self.network() as network:
             net = network['network']
         new_segment = self._test_create_segment(
-            network_id=net['id'], physical_network='phys_net1',
+            network_id=net['id'], physical_network='physnet1',
             segmentation_id=200, network_type='vlan')['segment']
         ovn_nb_api.create_lswitch_port.assert_called_once_with(
             addresses=[ovn_const.UNKNOWN_ADDR],
             external_ids={},
             lport_name=ovn_utils.ovn_provnet_port_name(new_segment['id']),
             lswitch_name=ovn_utils.ovn_name(net['id']),
-            options={'network_name': 'phys_net1',
+            options={'network_name': 'physnet1',
                      ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true',
                      ovn_const.LSP_OPTIONS_MCAST_FLOOD: 'false'},
             tag=200,
             type='localnet')
         ovn_nb_api.create_lswitch_port.reset_mock()
         new_segment = self._test_create_segment(
-            network_id=net['id'], physical_network='phys_net2',
+            network_id=net['id'], physical_network='physnet2',
             segmentation_id=300, network_type='vlan')['segment']
         ovn_nb_api.create_lswitch_port.assert_called_once_with(
             addresses=[ovn_const.UNKNOWN_ADDR],
             external_ids={},
             lport_name=ovn_utils.ovn_provnet_port_name(new_segment['id']),
             lswitch_name=ovn_utils.ovn_name(net['id']),
-            options={'network_name': 'phys_net2',
+            options={'network_name': 'physnet2',
                      ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true',
                      ovn_const.LSP_OPTIONS_MCAST_FLOOD: 'false'},
             tag=300,
@@ -2458,7 +2458,7 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
         with self.network() as network:
             net = network['network']
         segment = self._test_create_segment(
-            network_id=net['id'], physical_network='phys_net1',
+            network_id=net['id'], physical_network='physnet1',
             segmentation_id=200, network_type='vlan')['segment']
         self._delete('segments', segment['id'])
         ovn_nb_api.delete_lswitch_port.assert_called_once_with(
@@ -2470,22 +2470,22 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
         with self.network() as network:
             net = network['network']
         seg_1 = self._test_create_segment(
-            network_id=net['id'], physical_network='phys_net1',
+            network_id=net['id'], physical_network='physnet1',
             segmentation_id=200, network_type='vlan')['segment']
         seg_2 = self._test_create_segment(
-            network_id=net['id'], physical_network='phys_net2',
+            network_id=net['id'], physical_network='physnet2',
             segmentation_id=300, network_type='vlan')['segment']
         # Lets pretend that segment_1 is old and its localnet
         # port is based on neutron network id.
         ovn_nb_api.fake_ls_row.ports = [
             fakes.FakeOVNPort.create_one_port(
                 attrs={
-                    'options': {'network_name': 'phys_net1'},
+                    'options': {'network_name': 'physnet1'},
                     'tag': 200,
                     'name': ovn_utils.ovn_provnet_port_name(net['id'])}),
             fakes.FakeOVNPort.create_one_port(
                 attrs={
-                    'options': {'network_name': 'phys_net2'},
+                    'options': {'network_name': 'physnet2'},
                     'tag': 300,
                     'name': ovn_utils.ovn_provnet_port_name(seg_2['id'])})]
         self._delete('segments', seg_1['id'])
@@ -2511,7 +2511,7 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
         with self.network() as n:
             self.net = n
         self.seg_1 = self._test_create_segment(
-            network_id=self.net['network']['id'], physical_network='phys_net1',
+            network_id=self.net['network']['id'], physical_network='physnet1',
             segmentation_id=200, network_type='vlan')['segment']
         with self.subnet(network=self.net, cidr='10.0.1.0/24',
                          segment_id=self.seg_1['id']) as subnet:
@@ -2519,7 +2519,7 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
 
         # Create second segment and subnet linked to it
         self.seg_2 = self._test_create_segment(
-            network_id=self.net['network']['id'], physical_network='phys_net2',
+            network_id=self.net['network']['id'], physical_network='physnet2',
             segmentation_id=300, network_type='vlan')['segment']
         with self.subnet(network=self.net, cidr='10.0.2.0/24',
                          segment_id=self.seg_2['id']) as subnet:
