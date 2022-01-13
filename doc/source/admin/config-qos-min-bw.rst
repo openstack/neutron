@@ -62,7 +62,7 @@ Limitations
   to change guarantees of in-use policies are rejected.
 
 * Changing the QoS policy of the port with new ``minimum_bandwidth`` rules
-  changes placement ``allocations`` from Victoria release.
+  changes placement ``allocations`` from Wallaby release.
   If the VM was booted with port without QoS policy and ``minimum_bandwidth``
   rules the port update succeeds but placement allocations will not change.
   The same is true if the port has no ``binding:profile``, thus no placement
