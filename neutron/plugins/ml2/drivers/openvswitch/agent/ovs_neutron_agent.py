@@ -169,7 +169,6 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                               datapath_type=ovs_conf.datapath_type)
             for b in ('br_int', 'br_phys', 'br_tun'))
 
-        self.veth_mtu = agent_conf.veth_mtu
         self.available_local_vlans = set(range(n_const.MIN_VLAN_TAG,
                                                n_const.MAX_VLAN_TAG + 1))
         self.tunnel_types = agent_conf.tunnel_types or []
