@@ -33,7 +33,7 @@ class Agent(model_base.BASEV2, model_base.HasId):
     # TOPIC is a fanout exchange topic
     topic = sa.Column(sa.String(255), nullable=False)
     # TOPIC.host is a target topic
-    host = sa.Column(sa.String(255), nullable=False)
+    host = sa.Column(sa.String(255), nullable=False, index=True)
     availability_zone = sa.Column(sa.String(255))
     admin_state_up = sa.Column(sa.Boolean, default=True,
                                server_default=sql.true(), nullable=False)
