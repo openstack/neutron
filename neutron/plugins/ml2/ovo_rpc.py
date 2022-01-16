@@ -36,6 +36,12 @@ from neutron.objects import subnet
 LOG = logging.getLogger(__name__)
 
 
+def _setup_change_handlers_cleanup():
+    atexit.register(_ObjectChangeHandler.clean_up)
+    signal.signal(signal.SIGINT, _ObjectChangeHandler.clean_up)
+    signal.signal(signal.SIGTERM, _ObjectChangeHandler.clean_up)
+
+
 class _ObjectChangeHandler(object):
     MAX_IDLE_FOR = 1
     _TO_CLEAN = weakref.WeakSet()
@@ -151,6 +157,7 @@ class OVOServerRpcInterface(object):
     def __init__(self):
         self._rpc_pusher = resources_rpc.ResourcesPushRpcApi()
         self._setup_change_handlers()
+        _setup_change_handlers_cleanup()
         LOG.debug("ML2 OVO RPC backend initialized.")
 
     def _setup_change_handlers(self):
@@ -172,8 +179,3 @@ class OVOServerRpcInterface(object):
         """Wait for all handlers to finish processing async events."""
         for handler in self._resource_handlers.values():
             handler.wait()
-
-
-atexit.register(_ObjectChangeHandler.clean_up)
-signal.signal(signal.SIGINT, _ObjectChangeHandler.clean_up)
-signal.signal(signal.SIGTERM, _ObjectChangeHandler.clean_up)
