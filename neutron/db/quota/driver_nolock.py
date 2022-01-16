@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import context as n_context
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions
 from oslo_db import exception as db_exc
@@ -21,6 +22,7 @@ from oslo_log import log
 from neutron.common import utils
 from neutron.db.quota import api as quota_api
 from neutron.db.quota import driver as quota_driver
+from neutron import worker as neutron_worker
 
 
 LOG = log.getLogger(__name__)
@@ -42,26 +44,21 @@ class DbQuotaNoLockDriver(quota_driver.DbQuotaDriver):
     method is to be fast enough to avoid the concurrency when counting the
     resources while not blocking concurrent API operations.
     """
+    @staticmethod
     @utils.skip_exceptions(db_exc.DBError)
-    def _remove_expired_reservations(self, context, project_id, timeout):
-        """Remove expired reservations
+    def _remove_expired_reservations():
+        """Remove expired reservations from all projects
 
         Any DB exception will be catch and dismissed. This operation can have
         been successfully executed by another concurrent request. There is no
         need to fail or retry it.
         """
-        quota_api.remove_expired_reservations(context, tenant_id=project_id,
-                                              timeout=timeout)
+        context = n_context.get_admin_context()
+        quota_api.remove_expired_reservations(
+            context, timeout=quota_api.RESERVATION_EXPIRATION_TIMEOUT)
 
     @db_api.retry_if_session_inactive()
     def make_reservation(self, context, project_id, resources, deltas, plugin):
-        # Delete expired reservations before counting valid ones. This
-        # operation is fast and by calling it before making any
-        # reservation, we ensure the freshness of the reservations.
-        self._remove_expired_reservations(
-            context, project_id=project_id,
-            timeout=quota_api.RESERVATION_EXPIRATION_TIMEOUT)
-
         resources_over_limit = []
         with db_api.CONTEXT_WRITER.using(context):
             # Filter out unlimited resources.
@@ -94,3 +91,9 @@ class DbQuotaNoLockDriver(quota_driver.DbQuotaDriver):
             return
         return tracked_resource.count(context, None, project_id,
                                       count_db_registers=True)
+
+    @staticmethod
+    def get_workers():
+        interval = quota_api.RESERVATION_EXPIRATION_TIMEOUT
+        method = DbQuotaNoLockDriver._remove_expired_reservations
+        return [neutron_worker.PeriodicWorker(method, interval, interval)]

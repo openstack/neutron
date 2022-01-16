@@ -114,7 +114,6 @@ from neutron.db import extradhcpopt_db
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
 from neutron.db import provisioning_blocks
-from neutron.db.quota import driver  # noqa
 from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.db import segments_db
 from neutron.db import subnet_service_type_mixin
@@ -135,6 +134,7 @@ from neutron.plugins.ml2 import managers
 from neutron.plugins.ml2 import models
 from neutron.plugins.ml2 import ovo_rpc
 from neutron.plugins.ml2 import rpc
+from neutron import quota
 from neutron.quota import resource_registry
 from neutron.services.segments import plugin as segments_plugin
 
@@ -275,6 +275,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.add_agent_status_check_worker(self.agent_health_check)
         self.add_workers(self.mechanism_manager.get_workers())
         self._verify_service_plugins_requirements()
+        self._quota_workers()
         LOG.info("Modular L2 Plugin initialization complete")
 
     def _setup_rpc(self):
@@ -399,6 +400,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                           [agents_db.AgentExtRpcCallback()],
                                           fanout=False)
         return self.conn_reports.consume_in_threads()
+
+    def _quota_workers(self):
+        workers = quota.QUOTAS.get_driver().get_workers()
+        if workers:
+            self.add_workers(workers)
 
     def _filter_nets_provider(self, context, networks, filters):
         return [network

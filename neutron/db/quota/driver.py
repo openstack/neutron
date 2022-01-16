@@ -341,3 +341,7 @@ class DbQuotaDriver(quota_api.QuotaDriverAPI):
 
         if overs:
             raise exceptions.OverQuota(overs=sorted(overs))
+
+    @staticmethod
+    def get_workers():
+        return []
