@@ -15,6 +15,7 @@
 
 from neutron_lib.api import attributes
 from neutron_lib.db import api as db_api
+from neutron_lib.db import quota_api as nlib_quota_api
 from neutron_lib import exceptions
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
@@ -27,7 +28,7 @@ from neutron.quota import resource as res
 LOG = log.getLogger(__name__)
 
 
-class DbQuotaDriver(quota_api.QuotaDriverAPI):
+class DbQuotaDriver(nlib_quota_api.QuotaDriverAPI):
     """Driver to perform necessary checks to enforce quotas and obtain quota
     information.
 
@@ -342,3 +343,7 @@ class DbQuotaDriver(quota_api.QuotaDriverAPI):
 
         if overs:
             raise exceptions.OverQuota(overs=sorted(overs))
+
+    @staticmethod
+    def get_workers():
+        return []
