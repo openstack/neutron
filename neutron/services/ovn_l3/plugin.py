@@ -37,6 +37,7 @@ from neutron.common import utils as common_utils
 from neutron.db.availability_zone import router as router_az_db
 from neutron.db import dns_db
 from neutron.db import extraroute_db
+from neutron.db import l3_fip_pools_db
 from neutron.db import l3_fip_port_details
 from neutron.db import l3_fip_qos
 from neutron.db import l3_gwmode_db
@@ -60,7 +61,9 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                         dns_db.DNSDbMixin,
                         l3_fip_port_details.Fip_port_details_db_mixin,
                         router_az_db.RouterAvailabilityZoneMixin,
-                        l3_fip_qos.FloatingQoSDbMixin):
+                        l3_fip_qos.FloatingQoSDbMixin,
+                        l3_fip_pools_db.FloatingIPPoolsMixin,
+                        ):
     """Implementation of the OVN L3 Router Service Plugin.
 
     This class implements a L3 service plugin that provides

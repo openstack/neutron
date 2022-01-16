@@ -29,6 +29,7 @@ from neutron_lib.api.definitions import filter_validation
 from neutron_lib.api.definitions import fip_pf_description
 from neutron_lib.api.definitions import fip_port_details
 from neutron_lib.api.definitions import floating_ip_port_forwarding
+from neutron_lib.api.definitions import floatingip_pools
 from neutron_lib.api.definitions import l3
 from neutron_lib.api.definitions import l3_ext_gw_mode
 from neutron_lib.api.definitions import logging
@@ -81,6 +82,7 @@ ML2_SUPPORTED_API_EXTENSIONS_OVN_L3 = [
     extraroute.ALIAS,
     l3_ext_gw_mode.ALIAS,
     fip_port_details.ALIAS,
+    floatingip_pools.ALIAS,
     pagination.ALIAS,
     'qos-fip',
     sorting.ALIAS,
