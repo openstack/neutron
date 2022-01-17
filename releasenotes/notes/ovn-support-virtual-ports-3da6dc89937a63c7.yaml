@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    Virtual ports are supported in OVN since version 2.12. Since Yoga, this
+    support is mandatory. The minimum OVN SB schema version must be 2.5.

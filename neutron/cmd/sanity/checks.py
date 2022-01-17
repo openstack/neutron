@@ -52,6 +52,7 @@ MINIMUM_DIBBLER_VERSION = '1.0.1'
 CONNTRACK_GRE_MODULE = 'nf_conntrack_proto_gre'
 OVN_NB_DB_SCHEMA_PORT_GROUP = '5.11'
 OVN_NB_DB_SCHEMA_STATELESS_NAT = '5.17'
+OVN_SB_DB_SCHEMA_VIRTUAL_PORT = '2.5'
 
 
 class OVNCheckType(enum.Enum):
@@ -605,6 +606,20 @@ def ovn_nb_db_schema_stateless_nat_supported():
         ver = _get_ovn_version(OVNCheckType.nb_db_schema)
         minver = versionutils.convert_version_to_tuple(
                  OVN_NB_DB_SCHEMA_STATELESS_NAT)
+        if ver < minver:
+            return False
+    except (OSError, RuntimeError, ValueError) as e:
+        LOG.debug('Exception while checking OVN DB schema version. '
+                  'Exception: %s', e)
+        return False
+    return True
+
+
+def ovn_sb_db_schema_virtual_port_supported():
+    try:
+        ver = _get_ovn_version(OVNCheckType.sb_db_schema)
+        minver = versionutils.convert_version_to_tuple(
+                 OVN_SB_DB_SCHEMA_VIRTUAL_PORT)
         if ver < minver:
             return False
     except (OSError, RuntimeError, ValueError) as e:
