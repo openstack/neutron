@@ -21,7 +21,6 @@
       - ^neutron/tests/fullstack/.*$
       - ^releasenotes/.*$
       - ^setup.cfg$
-      - ^tools/.*$
       - ^vagrant/.*$
       - ^devstack/.*\.sample$
       - ^playbooks/.*$
@@ -69,7 +68,6 @@
       - ^neutron/locale/.*$
       - ^neutron/tests/unit/.*$
       - ^neutron/tests/functional/.*$
-      - ^tools/.*$
       - ^neutron/agent/ovn/.*$
       - ^neutron/agent/windows/.*$
       - ^neutron/plugins/ml2/drivers/macvtap/.*$
