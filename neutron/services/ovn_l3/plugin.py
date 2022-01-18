@@ -345,7 +345,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
             # device owner is router_gateway. We need to look into it and
             # fix the problem in Neutron before updating it here.
             if host:
-                self._plugin.update_port(
+                port = self._plugin.update_port(
                     context, port['id'],
                     {'port': {portbindings.HOST_ID: host}})
 
