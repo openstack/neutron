@@ -498,7 +498,8 @@ def ovn_metadata_name(id_):
 
 
 def is_gateway_chassis_invalid(chassis_name, gw_chassis,
-                               physnet, chassis_physnets):
+                               physnet, chassis_physnets,
+                               az_hints, chassis_with_azs):
     """Check if gateway chassis is invalid
 
     @param    chassis_name: gateway chassis name
@@ -509,6 +510,10 @@ def is_gateway_chassis_invalid(chassis_name, gw_chassis,
     @type     physnet: string
     @param    chassis_physnets: Dictionary linking chassis with their physnets
     @type     chassis_physnets: {}
+    @param   az_hints: available zone hints associated to chassis_name
+    @type     az_hints: []
+    @param    chassis_with_azs: Dictionary linking chassis with their azs
+    @type     chassis_with_azs: {}
     @return   Boolean
     """
 
@@ -519,6 +524,9 @@ def is_gateway_chassis_invalid(chassis_name, gw_chassis,
     elif physnet and physnet not in chassis_physnets.get(chassis_name):
         return True
     elif gw_chassis and chassis_name not in gw_chassis:
+        return True
+    elif az_hints and not set(az_hints) & set(chassis_with_azs.get(
+            chassis_name, [])):
         return True
     return False
 

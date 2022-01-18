@@ -209,26 +209,28 @@ class TestGateWayChassisValidity(base.BaseTestCase):
         self.chassis_name = self.gw_chassis[0]
         self.physnet = 'physical-nw-1'
         self.chassis_physnets = {self.chassis_name: [self.physnet]}
+        self.az_hints = ['ovn', ]
+        self.chassis_azs = {self.chassis_name: self.az_hints}
 
     def test_gateway_chassis_valid(self):
         # Return False, since everything is valid
         self.assertFalse(utils.is_gateway_chassis_invalid(
             self.chassis_name, self.gw_chassis, self.physnet,
-            self.chassis_physnets))
+            self.chassis_physnets, self.az_hints, self.chassis_azs))
 
     def test_gateway_chassis_due_to_invalid_chassis_name(self):
         # Return True since chassis is invalid
         self.chassis_name = constants.OVN_GATEWAY_INVALID_CHASSIS
         self.assertTrue(utils.is_gateway_chassis_invalid(
             self.chassis_name, self.gw_chassis, self.physnet,
-            self.chassis_physnets))
+            self.chassis_physnets, self.az_hints, self.chassis_azs))
 
     def test_gateway_chassis_for_chassis_not_in_chassis_physnets(self):
         # Return True since chassis is not in chassis_physnets
         self.chassis_name = 'host-2'
         self.assertTrue(utils.is_gateway_chassis_invalid(
             self.chassis_name, self.gw_chassis, self.physnet,
-            self.chassis_physnets))
+            self.chassis_physnets, self.az_hints, self.chassis_azs))
 
     def test_gateway_chassis_for_undefined_physnet(self):
         # Return True since physnet is not defined
@@ -236,14 +238,14 @@ class TestGateWayChassisValidity(base.BaseTestCase):
         self.physnet = None
         self.assertTrue(utils.is_gateway_chassis_invalid(
             self.chassis_name, self.gw_chassis, self.physnet,
-            self.chassis_physnets))
+            self.chassis_physnets, self.az_hints, self.chassis_azs))
 
     def test_gateway_chassis_for_physnet_not_in_chassis_physnets(self):
         # Return True since physnet is not in chassis_physnets
         self.physnet = 'physical-nw-2'
         self.assertTrue(utils.is_gateway_chassis_invalid(
             self.chassis_name, self.gw_chassis, self.physnet,
-            self.chassis_physnets))
+            self.chassis_physnets, self.az_hints, self.chassis_azs))
 
     def test_gateway_chassis_for_gw_chassis_empty(self):
         # Return False if gw_chassis is []
@@ -252,14 +254,28 @@ class TestGateWayChassisValidity(base.BaseTestCase):
         self.gw_chassis = []
         self.assertFalse(utils.is_gateway_chassis_invalid(
             self.chassis_name, self.gw_chassis, self.physnet,
-            self.chassis_physnets))
+            self.chassis_physnets, self.az_hints, self.chassis_azs))
 
     def test_gateway_chassis_for_chassis_not_in_gw_chassis_list(self):
         # Return True since chassis_name not in gw_chassis
         self.gw_chassis = ['host-2']
         self.assertTrue(utils.is_gateway_chassis_invalid(
             self.chassis_name, self.gw_chassis, self.physnet,
-            self.chassis_physnets))
+            self.chassis_physnets, self.az_hints, self.chassis_azs))
+
+    def test_gateway_chassis_for_chassis_az_hints_empty(self):
+        # Return False since az_hints is []
+        az_hints = []
+        self.assertFalse(utils.is_gateway_chassis_invalid(
+            self.chassis_name, self.gw_chassis, self.physnet,
+            self.chassis_physnets, az_hints, self.chassis_azs))
+
+    def test_gateway_chassis_for_chassis_no_in_az_hints(self):
+        # Return True since az_hints not match chassis_azs
+        az_hints = ['ovs']
+        self.assertTrue(utils.is_gateway_chassis_invalid(
+            self.chassis_name, self.gw_chassis, self.physnet,
+            self.chassis_physnets, az_hints, self.chassis_azs))
 
 
 class TestDHCPUtils(base.BaseTestCase):

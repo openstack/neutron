@@ -513,24 +513,42 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         except idlutils.RowNotFound:
             return []
 
+    def get_gateway_chassis_az_hints(self, gateway_name):
+        lrp = self.lookup('Logical_Router_Port', gateway_name,
+                          default=None)
+        if not lrp:
+            return []
+        router_id = lrp.external_ids.get(
+            ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY, "")
+        lrouter = self.lookup('Logical_Router', utils.ovn_name(router_id),
+                              default=None)
+        if not lrouter:
+            return []
+        az_string = lrouter.external_ids.get(
+            ovn_const.OVN_AZ_HINTS_EXT_ID_KEY, "")
+        if not az_string:
+            return []
+        return az_string.split(",")
+
     def get_chassis_gateways(self, chassis_name):
         gw_chassis = self.db_find_rows(
             'Gateway_Chassis', ('chassis_name', '=', chassis_name))
         return gw_chassis.execute(check_error=True)
 
     def get_unhosted_gateways(self, port_physnet_dict, chassis_with_physnets,
-                              all_gw_chassis):
+                              all_gw_chassis, chassis_with_azs):
         unhosted_gateways = set()
         for port, physnet in port_physnet_dict.items():
             lrp_name = '%s%s' % (ovn_const.LRP_PREFIX, port)
             original_state = self.get_gateway_chassis_binding(lrp_name)
-
+            az_hints = self.get_gateway_chassis_az_hints(lrp_name)
             # Filter out chassis that lost physnet, the cms option,
             # or has been deleted.
             actual_gw_chassis = [
                 chassis for chassis in original_state
                 if not utils.is_gateway_chassis_invalid(
-                    chassis, all_gw_chassis, physnet, chassis_with_physnets)]
+                    chassis, all_gw_chassis, physnet, chassis_with_physnets,
+                    az_hints, chassis_with_azs)]
 
             # Check if gw ports are fully scheduled.
             if len(actual_gw_chassis) >= ovn_const.MAX_GW_CHASSIS:
@@ -542,7 +560,8 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
             available_chassis = {
                 c for c in all_gw_chassis or chassis_with_physnets.keys()
                 if not utils.is_gateway_chassis_invalid(
-                    c, all_gw_chassis, physnet, chassis_with_physnets)}
+                    c, all_gw_chassis, physnet, chassis_with_physnets,
+                    az_hints, chassis_with_azs)}
 
             if available_chassis == set(original_state):
                 # The same situation as was before. Nothing
@@ -852,6 +871,12 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
         for ch in self.chassis_list().execute(check_error=True):
             chassis_info_dict[ch.name] = self._get_chassis_physnets(ch)
         return chassis_info_dict
+
+    def get_chassis_and_azs(self):
+        chassis_azs = {}
+        for ch in self.chassis_list().execute(check_error=True):
+            chassis_azs[ch.name] = utils.get_chassis_availability_zones(ch)
+        return chassis_azs
 
     def get_all_chassis(self, chassis_type=None):
         # TODO(azbiswas): Use chassis_type as input once the compute type

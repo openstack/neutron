@@ -94,7 +94,9 @@ class TestOVNGatewayScheduler(base.BaseTestCase):
             nb_idl=kwargs.pop('nb_idl'), gw_chassis=kwargs.pop('gw_chassis'),
             physnet=kwargs.pop('physnet'),
             chassis_physnets=kwargs.pop('chassis_physnets'),
-            existing_chassis=kwargs.pop('existing_chassis'))
+            existing_chassis=kwargs.pop('existing_chassis'),
+            az_hints=kwargs.pop('az_hints', []),
+            chassis_with_azs=kwargs.pop('chassis_with_azs', {}))
 
 
 class OVNGatewayChanceScheduler(TestOVNGatewayScheduler):

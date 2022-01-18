@@ -14,6 +14,7 @@
 
 import collections
 import copy
+import sys
 from unittest import mock
 
 from neutron_lib.api.definitions import l3
@@ -77,6 +78,8 @@ class FakeOvsdbNbOvnIdl(object):
         self.get_all_chassis_gateway_bindings = mock.Mock()
         self.get_chassis_gateways = mock.Mock()
         self.get_gateway_chassis_binding = mock.Mock()
+        self.get_gateway_chassis_az_hints = mock.Mock()
+        self.get_gateway_chassis_az_hints.return_value = []
         self.get_unhosted_gateways = mock.Mock()
         self.add_dhcp_options = mock.Mock()
         self.delete_dhcp_options = mock.Mock()
@@ -168,6 +171,8 @@ class FakeOvsdbSbOvnIdl(object):
         self.chassis_exists.return_value = True
         self.get_chassis_hostname_and_physnets = mock.Mock()
         self.get_chassis_hostname_and_physnets.return_value = {}
+        self.get_chassis_and_azs = mock.Mock()
+        self.get_chassis_and_azs.return_value = {}
         self.get_all_chassis = mock.Mock()
         self.get_chassis_data_for_ml2_bind_port = mock.Mock()
         self.get_chassis_data_for_ml2_bind_port.return_value = \
@@ -431,11 +436,13 @@ class FakeOvsdbTable(FakeResource):
     """Fake one or more OVSDB tables."""
 
     @staticmethod
-    def create_one_ovsdb_table(attrs=None):
+    def create_one_ovsdb_table(attrs=None, max_rows=sys.maxsize):
         """Create a fake OVSDB table.
 
         :param Dictionary attrs:
             A dictionary with all attributes
+        :param Int max_rows:
+            A num of max rows
         :return:
             A FakeResource object faking the OVSDB table
         """
@@ -446,6 +453,7 @@ class FakeOvsdbTable(FakeResource):
             'rows': collections.UserDict(),
             'columns': {},
             'indexes': [],
+            'max_rows': max_rows,
         }
 
         # Overwrite default attributes.

@@ -41,11 +41,13 @@ class TestRouter(base.TestOVNFunctionalBase):
         self.cr_lrp_pb_event = events.WaitForCrLrpPortBindingEvent()
         self.sb_api.idl.notify_handler.watch_event(self.cr_lrp_pb_event)
 
-    def _create_router(self, name, gw_info=None):
+    def _create_router(self, name, gw_info=None, az_hints=None):
         router = {'router':
                   {'name': name,
                    'admin_state_up': True,
                    'tenant_id': self._tenant_id}}
+        if az_hints:
+            router['router']['availability_zone_hints'] = az_hints
         if gw_info:
             router['router']['external_gateway_info'] = gw_info
         return self.l3_plugin.create_router(self.context, router)
@@ -92,7 +94,8 @@ class TestRouter(base.TestOVNFunctionalBase):
                 rc = row.options.get(ovn_const.OVN_GATEWAY_CHASSIS_KEY)
                 self.assertIn(rc, expected)
 
-    def _check_gateway_chassis_candidates(self, candidates):
+    def _check_gateway_chassis_candidates(self, candidates,
+                                          router_az_hints=None):
         # In this test, fake_select() is called once from _create_router()
         # and later from schedule_unhosted_gateways()
         ovn_client = self.l3_plugin._ovn_client
@@ -104,7 +107,7 @@ class TestRouter(base.TestOVNFunctionalBase):
         def fake_select(*args, **kwargs):
             self.assertCountEqual(candidates, kwargs['candidates'])
             # We are not interested in further processing, let us return
-            # INVALID_CHASSIS to avoid erros
+            # INVALID_CHASSIS to avoid errors
             return [ovn_const.OVN_GATEWAY_INVALID_CHASSIS]
 
         with mock.patch.object(ovn_client._ovn_scheduler, 'select',
@@ -112,7 +115,8 @@ class TestRouter(base.TestOVNFunctionalBase):
             mock.patch.object(self.l3_plugin.scheduler, 'select',
                               side_effect=fake_select) as plugin_select:
             gw_info = {'network_id': ext1['network']['id']}
-            self._create_router('router1', gw_info=gw_info)
+            self._create_router('router1', gw_info=gw_info,
+                                az_hints=router_az_hints)
             self.assertFalse(plugin_select.called)
             self.assertTrue(client_select.called)
             client_select.reset_mock()
@@ -153,6 +157,53 @@ class TestRouter(base.TestOVNFunctionalBase):
             gw_info = {'network_id': ext1['network']['id']}
             self._create_router('router1', gw_info=gw_info)
 
+        with mock.patch.object(
+                ovn_client._nb_idl, 'update_lrouter_port') as ulrp:
+            self.l3_plugin.schedule_unhosted_gateways()
+            # Make sure that we don't schedule on chassis3
+            # and do not updated the lrp port.
+            ulrp.assert_not_called()
+
+    def test_gateway_chassis_with_cms_and_azs(self):
+        # Both chassis3 and chassis4 are having azs,
+        # but only chassis3's azs is ['ovn'].
+        # Test if chassis3 is selected as candidate or not.
+        self.chassis3 = self.add_fake_chassis(
+            'ovs-host3', physical_nets=['physnet1'],
+            external_ids={'ovn-cms-options': 'enable-chassis-as-gw'},
+            azs=['ovn'])
+        self.chassis4 = self.add_fake_chassis(
+            'ovs-host4', physical_nets=['physnet1'],
+            external_ids={'ovn-cms-options': 'enable-chassis-as-gw'},
+            azs=['ovn2'])
+        self._check_gateway_chassis_candidates([self.chassis3],
+                                               router_az_hints=['ovn'])
+
+    def test_gateway_chassis_with_cms_and_not_match_azs(self):
+        # add chassis3 is having azs [ovn], match router az_hints,
+        # if not add chassis3, create router will fail with
+        # AvailabilityZoneNotFound. after create will delete if.
+        # add chassis4 is having azs [ovn2], not match routers az_hints [ovn]
+        self.chassis3 = self.add_fake_chassis(
+            'ovs-host3', physical_nets=['physnet1'],
+            external_ids={'ovn-cms-options': 'enable-chassis-as-gw'})
+        self.chassis4 = self.add_fake_chassis(
+            'ovs-host4', physical_nets=['physnet1'],
+            external_ids={'ovn-cms-options': 'enable-chassis-as-gw'},
+            azs=['ovn2'])
+        ovn_client = self.l3_plugin._ovn_client
+        ext1 = self._create_ext_network(
+            'ext1', 'vlan', 'physnet1', 1, "10.0.0.1", "10.0.0.0/24")
+        # As we have 'gateways' in the system, but without required
+        # chassis we should not schedule gw in that case at all.
+        self._set_redirect_chassis_to_invalid_chassis(ovn_client)
+        with mock.patch.object(ovn_client._ovn_scheduler, 'select',
+                              return_value=[self.chassis1]), \
+            mock.patch.object(self.l3_plugin.scheduler, 'select',
+                              side_effect=[self.chassis1]):
+            gw_info = {'network_id': ext1['network']['id']}
+            self._create_router('router1', gw_info=gw_info, az_hints=['ovn'])
+        self.del_fake_chassis(self.chassis3)
         with mock.patch.object(
                 ovn_client._nb_idl, 'update_lrouter_port') as ulrp:
             self.l3_plugin.schedule_unhosted_gateways()

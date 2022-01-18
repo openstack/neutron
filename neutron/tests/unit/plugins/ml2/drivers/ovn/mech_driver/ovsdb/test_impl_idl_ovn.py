@@ -147,10 +147,12 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         'lrouters': [
             {'name': utils.ovn_name('lr-id-a'),
              'external_ids': {ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
-                              'lr-name-a'}},
+                              'lr-name-a',
+                              ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: 'az-a'}},
             {'name': utils.ovn_name('lr-id-b'),
              'external_ids': {ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
-                              'lr-name-b'}},
+                              'lr-name-b',
+                              ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: 'az-b'}},
             {'name': utils.ovn_name('lr-id-c'),
              'external_ids': {ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
                               'lr-name-c'}},
@@ -162,7 +164,9 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
                               'lr-name-e'}}],
         'lrouter_ports': [
             {'name': utils.ovn_lrouter_port_name('orp-id-a1'),
-             'external_ids': {}, 'networks': ['10.0.1.0/24'],
+             'external_ids': {ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
+                              'lr-id-a'},
+             'networks': ['10.0.1.0/24'],
              'options': {ovn_const.OVN_GATEWAY_CHASSIS_KEY: 'host-1'}},
             {'name': utils.ovn_lrouter_port_name('orp-id-a2'),
              'external_ids': {}, 'networks': ['10.0.2.0/24'],
@@ -596,16 +600,28 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         # Test only that orp-id-a3 is to be scheduled.
         # Rest ports don't have required chassis (physnet2)
         # or are already scheduled.
+        chassis_with_azs = {'host-1': ['az-a'], 'host-2': ['az-b']}
         unhosted_gateways = self.nb_ovn_idl.get_unhosted_gateways(
             port_physnet_dict, {'host-1': 'physnet1', 'host-2': 'physnet3'},
-            ['host-1', 'host-2'])
+            ['host-1', 'host-2'], chassis_with_azs)
         expected = ['lrp-orp-id-a3']
         self.assertCountEqual(unhosted_gateways, expected)
         # Test both host-1, host-2 in valid list
         unhosted_gateways = self.nb_ovn_idl.get_unhosted_gateways(
             port_physnet_dict, {'host-1': 'physnet1', 'host-2': 'physnet2'},
-            ['host-1', 'host-2'])
+            ['host-1', 'host-2'], chassis_with_azs)
         expected = ['lrp-orp-id-a3', 'lrp-orp-id-b6']
+        self.assertCountEqual(unhosted_gateways, expected)
+        # Test lrp-orp-id-a1 az_hints not in host-1's azs
+        # lrp-orp-id-a2 not set az_hints, should schedule in host-1, host-3
+        # lrp-orp-id-a3 not scheduled
+        chassis_with_azs = {'host-1': ['az-b'], 'host-2': ['az-b'],
+                            'host-3': ['az-a']}
+        unhosted_gateways = self.nb_ovn_idl.get_unhosted_gateways(
+            port_physnet_dict, {'host-1': 'physnet1', 'host-2': 'physnet3',
+                                'host-3': 'physnet1'},
+            ['host-1', 'host-2', 'host-3'], chassis_with_azs)
+        expected = ['lrp-orp-id-a1', 'lrp-orp-id-a2', 'lrp-orp-id-a3']
         self.assertCountEqual(unhosted_gateways, expected)
 
     def test_get_unhosted_gateways_deleted_physnet(self):
@@ -616,17 +632,18 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         setattr(router_row, 'options', {
             ovn_const.OVN_GATEWAY_CHASSIS_KEY: 'host-2'})
         port_physnet_dict = {'orp-id-a1': 'physnet1'}
+        chassis_with_azs = {'host-1': ['az-a'], 'host-2': ['az-a']}
         # Lets spoof that physnet1 is deleted from host-2.
         unhosted_gateways = self.nb_ovn_idl.get_unhosted_gateways(
             port_physnet_dict, {'host-1': 'physnet1', 'host-2': 'physnet3'},
-            ['host-1', 'host-2'])
+            ['host-1', 'host-2'], chassis_with_azs)
         # Make sure that lrp is rescheduled, because host-1 has physet1
         expected = ['lrp-orp-id-a1']
         self.assertCountEqual(unhosted_gateways, expected)
         # Spoof that there is no valid host with required physnet.
         unhosted_gateways = self.nb_ovn_idl.get_unhosted_gateways(
             port_physnet_dict, {'host-1': 'physnet4', 'host-2': 'physnet3'},
-            ['host-1', 'host-2'])
+            ['host-1', 'host-2'], chassis_with_azs)
         self.assertCountEqual(unhosted_gateways, [])
 
     def _test_get_unhosted_gateway_max_chassis(self, r):
@@ -647,7 +664,8 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
             {'host-1': 'physnet1', 'host-2': 'physnet2',
              'host-3': 'physnet1', 'host-4': 'physnet2',
              'host-5': 'physnet1', 'host-6': 'physnet2'},
-            ['host-%s' % x for x in range(1, 7)])
+            ['host-%s' % x for x in range(1, 7)],
+            {'host-%s' % x: ['az-a'] for x in range(1, 7)})
         # We don't have required number of chassis
         expected = []
         self.assertCountEqual(unhosted_gateways, expected)
@@ -661,7 +679,8 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
             {'host-1': 'physnet1', 'host-2': 'physnet1',
              'host-3': 'physnet1', 'host-4': 'physnet1',
              'host-5': 'physnet1', 'host-6': 'physnet1'},
-            ['host-%s' % x for x in range(1, 7)])
+            ['host-%s' % x for x in range(1, 7)],
+            {'host-%s' % x: ['az-a'] for x in range(1, 7)})
         expected = []
         self.assertCountEqual(unhosted_gateways, expected)
 
@@ -674,7 +693,8 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
             {'host-1': 'physnet1', 'host-2': 'physnet1',
              'host-3': 'physnet1', 'host-4': 'physnet1',
              'host-5': 'physnet1', 'host-6': 'physnet1'},
-            ['host-%s' % x for x in range(1, 7)])
+            ['host-%s' % x for x in range(1, 7)],
+            {'host-%s' % x: ['az-a'] for x in range(1, 7)})
         expected = ['lrp-orp-id-a1']
         self.assertCountEqual(unhosted_gateways, expected)
 
