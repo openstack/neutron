@@ -62,6 +62,38 @@ class ClientFixture(fixtures.Fixture):
 
         return delete(id)
 
+    def create_local_ip(self, project_id, network_id=None):
+        delete = self.delete_local_ip
+
+        path = '/local_ips'
+        body = {'local_ip': {'project_id': project_id,
+                             'network_id': network_id}}
+        resp = self.client.post(path, body=body)
+        data = resp['local_ip']
+        self.addCleanup(_safe_method(delete), data['id'])
+        return data
+
+    def create_local_ip_association(self, local_ip_id, port_id, fixed_ip=None):
+        delete = self.delete_local_ip_association
+
+        path = '/local_ips/{0}/port_associations'.format(local_ip_id)
+        body = {'port_association': {'fixed_port_id': port_id}}
+        if fixed_ip:
+            body['port_association']['fixed_ip'] = fixed_ip
+        resp = self.client.post(path, body=body)
+        data = resp['port_association']
+        self.addCleanup(_safe_method(delete), local_ip_id, port_id)
+        return data
+
+    def delete_local_ip(self, local_ip_id):
+        path = "/local-ips/{0}".format(local_ip_id)
+        self.client.delete(path)
+
+    def delete_local_ip_association(self, local_ip_id, port_id):
+        path = "/local_ips/{0}/port_associations/{1}".format(
+            local_ip_id, port_id)
+        self.client.delete(path)
+
     def create_router(self, tenant_id, name=None, ha=False,
                       external_network=None, external_subnet=None):
         resource_type = 'router'

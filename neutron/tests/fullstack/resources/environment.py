@@ -42,7 +42,7 @@ class EnvironmentDescription(object):
                  has_placement=False, placement_port=None,
                  dhcp_scheduler_class=None, ml2_extension_drivers=None,
                  api_workers=1,
-                 enable_traditional_dhcp=True):
+                 enable_traditional_dhcp=True, local_ip_ext=False):
         self.network_type = network_type
         self.l2_pop = l2_pop
         self.qos = qos
@@ -66,6 +66,9 @@ class EnvironmentDescription(object):
         self.ml2_extension_drivers = ml2_extension_drivers
         self.api_workers = api_workers
         self.enable_traditional_dhcp = enable_traditional_dhcp
+        self.local_ip_ext = local_ip_ext
+        if self.local_ip_ext:
+            self.service_plugins += ',local_ip'
 
     @property
     def tunneling_enabled(self):
