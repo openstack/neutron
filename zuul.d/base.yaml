@@ -17,11 +17,15 @@
       - ^doc/.*$
       - ^neutron/locale/.*$
       - ^neutron/tests/unit/.*$
+      - ^neutron/tests/fullstack/.*$
       - ^releasenotes/.*$
       - ^setup.cfg$
       - ^tools/.*$
       - ^vagrant/.*$
       - ^devstack/.*\.sample$
+      - ^playbooks/.*$
+      - ^roles/.*$
+      - ^rally-jobs/.*$
     vars:
       OVN_BRANCH: v20.06.1
       # TODO(jlibosva): v2.13.1 is incompatible with kernel 4.15.0-118, sticking to commit hash until new v2.13 tag is created
@@ -60,12 +64,19 @@
       - ^.*\.rst$
       - ^neutron/locale/.*$
       - ^neutron/tests/unit/.*$
+      - ^neutron/tests/functional/.*$
       - ^tools/.*$
       - ^neutron/agent/ovn/.*$
       - ^neutron/agent/windows/.*$
       - ^neutron/plugins/ml2/drivers/macvtap/.*$
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
       - ^neutron/plugins/ml2/drivers/ovn/.*$
+      - ^neutron_lib/tests/unit/.*$
+      - ^vagrant/.*$
+      - ^devstack/.*\.sample$
+      - ^playbooks/.*$
+      - ^roles/.*$
+      - ^rally-jobs/.*$
 
 - job:
     name: neutron-fullstack-with-uwsgi
