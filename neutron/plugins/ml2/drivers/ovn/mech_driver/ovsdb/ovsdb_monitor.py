@@ -411,7 +411,11 @@ class PortBindingCreateUpEvent(row_event.RowEvent):
         # super().__init__(
         #     events, table, (('up', '=', True), ('type', '=', ''),))
         if hasattr(row, 'up'):
-            return bool(row.up[0])
+            # NOTE(ltomasbo): Due to bug in core ovn not setting the up field
+            # to DOWN in some cases (for example subports detachment from
+            # trunks), we need to also check the chassis is set to claim the
+            # port as ACTIVE
+            return row.chassis and bool(row.up[0])
         elif row.chassis:
             return True
         return False
@@ -450,7 +454,11 @@ class PortBindingCreateDownEvent(row_event.RowEvent):
         # super().__init__(
         #     events, table, (('up', '=', False), ('type', '=', ''),))
         if hasattr(row, 'up'):
-            return not bool(row.up[0])
+            # NOTE(ltomasbo): Due to bug in core ovn not setting the up field
+            # to DOWN in some cases (for example subports detachment from
+            # trunks), we need to also check if the chassis is unset to set
+            # the port as DOWN
+            return not row.chassis or not bool(row.up[0])
         elif not row.chassis:
             return True
         return False
@@ -505,7 +513,12 @@ class PortBindingUpdateUpEvent(row_event.RowEvent):
         #     old_conditions=(('up', '=', False),))
         try:
             if hasattr(row, 'up'):
-                return (bool(row.up[0]) and not bool(old.up[0]))
+                # NOTE(ltomasbo): Due to bug in core ovn not setting the up
+                # field to DOWN in some cases (for example subports detachment
+                # from trunks), we need to also check the chassis is set to
+                # claim the port as ACTIVE
+                return (bool(row.up[0]) and not bool(old.up[0]) and
+                        row.chassis)
             elif row.chassis and not old.chassis:
                 return True
         except AttributeError:
@@ -551,7 +564,12 @@ class PortBindingUpdateDownEvent(row_event.RowEvent):
         #     old_conditions=(('up', '=', True),))
         try:
             if hasattr(row, 'up'):
-                return (not bool(row.up[0]) and bool(old.up[0]))
+                # NOTE(ltomasbo): Due to bug in core ovn not setting the up
+                # field to DOWN in some cases (for example subports detachment
+                # from trunks), we need to also check if the chassis is being
+                # unset to set the port as DOWN
+                return ((not bool(row.up[0]) and bool(old.up[0])) or
+                        (not row.chassis and old.chassis))
             elif not row.chassis and old.chassis:
                 return True
         except AttributeError:

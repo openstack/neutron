@@ -91,10 +91,7 @@ OVN_SB_SCHEMA = {
             "columns": {
                 "logical_port": {"type": "string"},
                 "type": {"type": "string"},
-                "chassis": {"type": {"key": {"type": "uuid",
-                                             "refTable": "Chassis",
-                                             "refType": "weak"},
-                                     "min": 0, "max": 1}},
+                "chassis": {"type": "string"},
                 "up": {"type": {"key": "boolean", "min": 0, "max": 1}}},
             "indexes": [["logical_port"]],
             "isRoot": True},
@@ -391,7 +388,7 @@ class TestOvnSbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
         self.l3_plugin = directory.get_plugin(n_const.L3)
         self.l3_plugin.schedule_unhosted_gateways = mock.Mock()
 
-        self.row_json = {
+        self.chassis_row_json = {
             "name": "fake-name",
             "hostname": "fake-hostname",
             "external_ids": ['map', [["ovn-bridge-mappings",
@@ -421,71 +418,78 @@ class TestOvnSbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
         self._test_helper(event, table, new_row_json, old_row_json)
 
     def test_chassis_create_event(self):
-        self._test_chassis_helper('create', self.row_json)
+        self._test_chassis_helper('create', self.chassis_row_json)
         self.driver.update_segment_host_mapping.assert_called_once_with(
             'fake-hostname', ['fake-phynet1'])
         self.l3_plugin.schedule_unhosted_gateways.assert_called_once_with(
             event_from_chassis=None)
 
     def test_chassis_delete_event(self):
-        self._test_chassis_helper('delete', self.row_json)
+        self._test_chassis_helper('delete', self.chassis_row_json)
         self.driver.update_segment_host_mapping.assert_called_once_with(
             'fake-hostname', [])
         self.l3_plugin.schedule_unhosted_gateways.assert_called_once_with(
             event_from_chassis='fake-name')
 
     def test_chassis_update_event(self):
-        old_row_json = copy.deepcopy(self.row_json)
+        old_row_json = copy.deepcopy(self.chassis_row_json)
         old_row_json['external_ids'][1][0][1] = (
             "fake-phynet2:fake-br2")
-        self._test_chassis_helper('update', self.row_json, old_row_json)
+        self._test_chassis_helper('update', self.chassis_row_json,
+                                  old_row_json)
         self.driver.update_segment_host_mapping.assert_called_once_with(
             'fake-hostname', ['fake-phynet1'])
         self.l3_plugin.schedule_unhosted_gateways.assert_called_once_with(
             event_from_chassis=None)
 
     def test_chassis_update_event_reschedule_not_needed(self):
-        self.row_json['external_ids'][1].append(['foo_field', 'foo_value_new'])
-        old_row_json = copy.deepcopy(self.row_json)
+        self.chassis_row_json['external_ids'][1].append(['foo_field',
+                                                         'foo_value_new'])
+        old_row_json = copy.deepcopy(self.chassis_row_json)
         old_row_json['external_ids'][1][1][1] = (
             "foo_value")
-        self._test_chassis_helper('update', self.row_json, old_row_json)
+        self._test_chassis_helper('update', self.chassis_row_json,
+                                  old_row_json)
         self.driver.update_segment_host_mapping.assert_not_called()
         self.l3_plugin.schedule_unhosted_gateways.assert_not_called()
 
     def test_chassis_update_event_reschedule_lost_physnet(self):
-        old_row_json = copy.deepcopy(self.row_json)
-        self.row_json['external_ids'][1][0][1] = ''
-        self._test_chassis_helper('update', self.row_json, old_row_json)
+        old_row_json = copy.deepcopy(self.chassis_row_json)
+        self.chassis_row_json['external_ids'][1][0][1] = ''
+        self._test_chassis_helper('update', self.chassis_row_json,
+                                  old_row_json)
         self.l3_plugin.schedule_unhosted_gateways.assert_called_once_with(
             event_from_chassis='fake-name')
 
     def test_chassis_update_event_reschedule_add_physnet(self):
-        old_row_json = copy.deepcopy(self.row_json)
-        self.row_json['external_ids'][1][0][1] += ',foo_physnet:foo_br'
-        self._test_chassis_helper('update', self.row_json, old_row_json)
+        old_row_json = copy.deepcopy(self.chassis_row_json)
+        self.chassis_row_json['external_ids'][1][0][1] += ',foo_physnet:foo_br'
+        self._test_chassis_helper('update', self.chassis_row_json,
+                                  old_row_json)
         self.driver.update_segment_host_mapping.assert_called_once_with(
             'fake-hostname', ['fake-phynet1', 'foo_physnet'])
         self.l3_plugin.schedule_unhosted_gateways.assert_called_once_with(
             event_from_chassis=None)
 
     def test_chassis_update_event_reschedule_add_and_remove_physnet(self):
-        old_row_json = copy.deepcopy(self.row_json)
-        self.row_json['external_ids'][1][0][1] = 'foo_physnet:foo_br'
-        self._test_chassis_helper('update', self.row_json, old_row_json)
+        old_row_json = copy.deepcopy(self.chassis_row_json)
+        self.chassis_row_json['external_ids'][1][0][1] = 'foo_physnet:foo_br'
+        self._test_chassis_helper('update', self.chassis_row_json,
+                                  old_row_json)
         self.driver.update_segment_host_mapping.assert_called_once_with(
             'fake-hostname', ['foo_physnet'])
         self.l3_plugin.schedule_unhosted_gateways.assert_called_once_with(
             event_from_chassis=None)
 
     def test_chassis_update_empty_no_external_ids(self):
-        old_row_json = copy.deepcopy(self.row_json)
+        old_row_json = copy.deepcopy(self.chassis_row_json)
         old_row_json.pop('external_ids')
         with mock.patch(
             'neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
             'ovsdb_monitor.ChassisEvent.'
                 'handle_ha_chassis_group_changes') as mock_ha:
-            self._test_chassis_helper('update', self.row_json, old_row_json)
+            self._test_chassis_helper('update', self.chassis_row_json,
+                                      old_row_json)
             self.driver.update_segment_host_mapping.assert_not_called()
             self.l3_plugin.schedule_unhosted_gateways.assert_not_called()
             mock_ha.assert_not_called()
@@ -498,15 +502,17 @@ class TestOvnSbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
         self._test_helper(event, table, new_row_json, old_row_json)
 
     def test_port_binding_up_create_event(self):
-        row_data = {"type": "", "up": True, "logical_port": "foo-name"}
+        row_data = {"type": "", "up": True, "logical_port": "foo-name",
+                    "chassis": "foo-host"}
         self._test_port_binding_helper('create', row_data)
         self.driver.set_port_status_up.assert_called_once_with("foo-name")
         self.assertFalse(self.driver.set_port_status_down.called)
 
-    def test_port_binding_create_patch_type_event(self):
+    def test_port_binding_up_create_patch_type_event(self):
         # Note(ltomasbo): This will behave the same for up = True|False
         # as the port needs to transition to up anyway
-        row_data = {"type": "patch", "logical_port": "foo-name"}
+        row_data = {"type": "patch", "logical_port": "foo-name",
+                    "chassis": "foo-host"}
         self._test_port_binding_helper('create', row_data)
         self.driver.set_port_status_up.assert_called_once_with("foo-name")
         self.assertFalse(self.driver.set_port_status_down.called)
@@ -518,49 +524,66 @@ class TestOvnSbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
 
     def test_port_binding_up_create_virtual_type_event(self):
         row_data = {"type": "virtual", "up": True,
-                    "logical_port": "foo-name"}
+                    "logical_port": "foo-name", "chassis": "foo-host"}
         self._test_port_binding_helper('create', row_data)
         self.assertFalse(self.driver.set_port_status_up.called)
         self.assertFalse(self.driver.set_port_status_down.called)
 
     def test_port_binding_down_create_event(self):
-        row_data = {"type": "", "up": False, "logical_port": "foo-name"}
+        row_data = {"type": "", "up": False, "logical_port": "foo-name",
+                    "chassis": None}
         self._test_port_binding_helper('create', row_data)
         self.driver.set_port_status_down.assert_called_once_with("foo-name")
         self.assertFalse(self.driver.set_port_status_up.called)
 
     def test_port_binding_down_create_virtual_type_event(self):
         row_data = {"type": "virtual", "up": False,
-                    "logical_port": "foo-name"}
+                    "logical_port": "foo-name", "chassis": None}
         self._test_port_binding_helper('create', row_data)
         self.assertFalse(self.driver.set_port_status_up.called)
         self.assertFalse(self.driver.set_port_status_down.called)
 
     def test_port_binding_up_update_event(self):
-        new_row_json = {"type": "", "up": True, "logical_port": "foo-name"}
-        old_row_json = {"type": "", "up": False, "logical_port": "foo-name"}
+        new_row_json = {"type": "", "up": True, "logical_port": "foo-name",
+                        "chassis": "foo-host"}
+        old_row_json = {"type": "", "up": False, "logical_port": "foo-name",
+                        "chassis": None}
         self._test_port_binding_helper('update', new_row_json,
                                        old_row_json=old_row_json)
         self.driver.set_port_status_up.assert_called_once_with("foo-name")
         self.assertFalse(self.driver.set_port_status_down.called)
 
     def test_port_binding_down_update_event(self):
-        new_row_json = {"type": "", "up": False, "logical_port": "foo-name"}
-        old_row_json = {"type": "", "up": True, "logical_port": "foo-name"}
+        new_row_json = {"type": "", "up": False, "logical_port": "foo-name",
+                        "chassis": None}
+        old_row_json = {"type": "", "up": True, "logical_port": "foo-name",
+                        "chassis": "foo-host"}
+        self._test_port_binding_helper('update', new_row_json,
+                                       old_row_json=old_row_json)
+        self.driver.set_port_status_down.assert_called_once_with("foo-name")
+        self.assertFalse(self.driver.set_port_status_up.called)
+
+    def test_port_binding_down_update_event_up_not_updated(self):
+        new_row_json = {"type": "", "up": True, "logical_port": "foo-name",
+                        "chassis": None}
+        old_row_json = {"type": "", "up": True, "logical_port": "foo-name",
+                        "chassis": "foo-host"}
         self._test_port_binding_helper('update', new_row_json,
                                        old_row_json=old_row_json)
         self.driver.set_port_status_down.assert_called_once_with("foo-name")
         self.assertFalse(self.driver.set_port_status_up.called)
 
     def test_port_binding_up_update_event_no_old_data(self):
-        new_row_json = {"type": "", "up": True, "logical_port": "foo-name"}
+        new_row_json = {"type": "", "up": True, "logical_port": "foo-name",
+                        "chassis": "foo-host"}
         self._test_port_binding_helper('update', new_row_json,
                                        old_row_json=None)
         self.assertFalse(self.driver.set_port_status_up.called)
         self.assertFalse(self.driver.set_port_status_down.called)
 
     def test_port_binding_down_update_event_no_old_data(self):
-        new_row_json = {"type": "", "up": False, "logical_port": "foo-name"}
+        new_row_json = {"type": "", "up": False, "logical_port": "foo-name",
+                        "chassis": None}
         self._test_port_binding_helper('update', new_row_json,
                                        old_row_json=None)
         self.assertFalse(self.driver.set_port_status_up.called)
