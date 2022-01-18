@@ -1,0 +1,9 @@
+function configure_local_ip {
+    neutron_service_plugin_class_add "local_ip"
+    plugin_agent_add_l2_agent_extension "local_ip"
+}
+
+function configure_local_ip_static {
+    configure_local_ip
+    iniset /$NEUTRON_CORE_PLUGIN_CONF local_ip static_nat True
+}

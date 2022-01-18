@@ -16,6 +16,7 @@ source $LIBDIR/uplink_status_propagation
 source $LIBDIR/tag_ports_during_bulk_creation
 source $LIBDIR/octavia
 source $LIBDIR/loki
+source $LIBDIR/local_ip
 
 # source the OVS/OVN compilation helper methods
 source $TOP_DIR/lib/neutron_plugins/ovs_source
@@ -72,6 +73,12 @@ if [[ "$1" == "stack" ]]; then
                 if [ $Q_AGENT = openvswitch ]; then
                     configure_ovs_distributed_dhcp
                 fi
+            fi
+            if is_service_enabled neutron-local-ip; then
+                configure_local_ip
+            fi
+            if is_service_enabled neutron-local-ip-static; then
+                configure_local_ip_static
             fi
             if is_service_enabled q-agt neutron-agent; then
                 configure_l2_agent
