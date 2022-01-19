@@ -32,13 +32,6 @@
         #    voting: false
         - neutron-ovn-rally-task:
             voting: false
-        # TripleO jobs that deploy OVN.
-        # Note we don't use a project-template here, so it's easier
-        # to disable voting on one specific job if things go wrong.
-        # In Stein and beyond, fs010 will run using
-        # networking-ovn-tripleo-ci-centos-7-containers-multinode.
-        # If you need any support to debug these jobs in case of
-        # failures, please reach us on #tripleo IRC channel.
         - openstack-tox-py36:  # from openstack-python3-xena-jobs template
             timeout: 3600
         - openstack-tox-py38:  # from openstack-python3-xena-jobs template
@@ -59,7 +52,6 @@
         - openstack-tox-py36:  # from openstack-python3-xena-jobs template
             timeout: 3600
         #- neutron-ovn-rally-task
-        #- neutron-ovn-tripleo-ci-centos-8-containers-multinode
 
     experimental:
       jobs:
@@ -78,18 +70,5 @@
             voting: true
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa
         - openstacksdk-functional-devstack-networking
-        - tripleo-ci-centos-8-content-provider
-        - neutron-centos-8-tripleo-standalone:
-            voting: true
-            vars: &consumer_vars
-              consumer_job: true
-              build_container_images: false
-              remove_tags:
-                - build
-            dependencies: &consumer_deps
-              - tripleo-ci-centos-8-content-provider
-        - neutron-ovn-tripleo-ci-centos-8-containers-multinode:
-            vars: *consumer_vars
-            dependencies: *consumer_deps
         - neutron-linuxbridge-tempest-plugin-scenario-nftables
         - neutron-ovs-tempest-plugin-scenario-iptables_hybrid-nftables
