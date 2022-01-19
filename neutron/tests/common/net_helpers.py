@@ -305,9 +305,27 @@ class RootHelperProcess(subprocess.Popen):
         super(RootHelperProcess, self).__init__(cmd, *args, **kwargs)
         self._wait_for_child_process()
 
-    def kill(self, sig=signal.SIGKILL):
+    def kill(self, sig=signal.SIGKILL, skip_errors=None):
+        skip_errors = (
+            ["No such process"] if skip_errors is None else skip_errors)
         pid = self.child_pid or str(self.pid)
-        utils.execute(['kill', '-%d' % sig, pid], run_as_root=True)
+        try:
+            utils.execute(['kill', '-%d' % sig, pid], run_as_root=True)
+        except n_exc.ProcessExecutionError as e:
+            # NOTE(slaweq): kill command returns 1 for many
+            # different issues, e.g. when there is no such process to kill
+            # (which we want to handle here) but also in cases like e.g. when
+            # user don't have privileges to kill process (which we don't want
+            # to silently hide). Sometimes we don't want really to fail if e.g.
+            # we are trying to kill process which already don't exists, so we
+            # can check if that was the error and not fail than.
+            for skip_error in skip_errors:
+                if skip_error in str(e):
+                    LOG.debug('Kill process %(pid)s failed due to error: '
+                              '%(err)s. This error can be ignored.',
+                              {'pid': pid, 'err': e})
+                    return
+            raise e
 
     def read_stdout(self, timeout=None):
         return self._read_stream(self.stdout, timeout)
@@ -580,14 +598,12 @@ class NetcatTester(object):
         return proc
 
     def stop_processes(self, skip_errors=None):
-        skip_errors = (['No such process'] if skip_errors is None
-                       else skip_errors)
         for proc_attr in ('_client_process', '_server_process'):
             proc = getattr(self, proc_attr)
             if proc:
                 try:
                     if proc.poll() is None:
-                        proc.kill()
+                        proc.kill(skip_errors=skip_errors)
                         proc.wait()
                 except n_exc.ProcessExecutionError as exc:
                     for skip_error in skip_errors:
