@@ -27,6 +27,7 @@ from sqlalchemy import or_
 
 from neutron._i18n import _
 from neutron.cmd.upgrade_checks import base
+from neutron.db.extra_dhcp_opt import models as extra_dhcp_opt_models
 from neutron.db.models import agent as agent_model
 from neutron.db.models import external_net
 from neutron.db.models import l3 as l3_models
@@ -53,6 +54,18 @@ def get_agents(agt_type):
     query = model_query.get_collection_query(ctx,
                                              agent_model.Agent,
                                              filters=filters)
+    return query.all()
+
+
+def get_extra_dhcp_opts():
+    """Get extra DHCP options for all ports from Database
+
+    :return: list of ports' extra_dhcp_option names and values
+    """
+    ctx = context.get_admin_context()
+    query = model_query.get_collection_query(
+        ctx,
+        extra_dhcp_opt_models.ExtraDhcpOpt)
     return query.all()
 
 
@@ -163,6 +176,8 @@ class CoreChecks(base.BaseChecks):
             (_('Floating IP inherits the QoS policy from the external '
                'network'),
              self.floatingip_inherit_qos_from_network),
+            (_('Port extra DHCP options check'),
+             self.extra_dhcp_options_check),
         ]
 
     @staticmethod
@@ -463,3 +478,39 @@ class CoreChecks(base.BaseChecks):
             upgradecheck.Code.SUCCESS,
             _('There are no external networks with QoS policies associated '
               'and floating IPs without.'))
+
+    @staticmethod
+    def extra_dhcp_options_check(checker):
+        """Check newline char in the extra_dhcp_opts
+
+        Since LP#1939733, extra_dhcp_opts names and values shouldn't contain
+        newline characters. This check emits a warning message in case of
+        having any extra dhcp option defined with newline char in the name or
+        value.
+        """
+        if not cfg.CONF.database.connection:
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _("Database connection string is not set. Check for "
+                  "extra_dhcp_opts can't be done."))
+
+        ports_with_invalid_options = []
+        for extra_dhcp_opt in get_extra_dhcp_opts():
+            if (len(extra_dhcp_opt.opt_name.splitlines()) > 1 or
+                    len(extra_dhcp_opt.opt_value.splitlines()) > 1):
+                ports_with_invalid_options.append(extra_dhcp_opt.port_id)
+
+        if ports_with_invalid_options:
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _('The following ports have an extra DHCP options with '
+                  'the newline character inside: %s. '
+                  'Please update them manually in the Neutron Database, '
+                  'otherwise they will be trimmed automatically before '
+                  'used in the DHCP service') %
+                ', '.join(ports_with_invalid_options))
+
+        return upgradecheck.Result(
+            upgradecheck.Code.SUCCESS,
+            _('There are no extra_dhcp_opts with the newline character '
+              'in the option name or option value.'))
