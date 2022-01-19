@@ -159,7 +159,7 @@ class TestMigrateNeutronDatabaseToOvn(
         ]
 
         self._create_ml2_ovs_test_resources(vif_details_list)
-        db_migration.migrate_neutron_database_to_ovn(self.mech_driver._plugin)
+        db_migration.migrate_neutron_database_to_ovn()
         self._validate_resources_after_migration(expected_vif_details)
 
     def test_db_migration_with_pb_not_found(self):
@@ -180,6 +180,5 @@ class TestMigrateNeutronDatabaseToOvn(
                 side_effect=exceptions.ObjectNotFound(id='foo')):
             with mock.patch.object(trunk_obj.Trunk, 'get_objects',
                                    return_value=[]):
-                db_migration.migrate_neutron_database_to_ovn(
-                    self.mech_driver._plugin)
+                db_migration.migrate_neutron_database_to_ovn()
         self._validate_resources_after_migration(vif_details_list)
