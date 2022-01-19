@@ -137,6 +137,15 @@ fake_port2 = dhcp.DictModel(id='12345678-1234-aaaa-123456789000',
                             revision_number=77,
                             fixed_ips=[fake_fixed_ip2])
 
+fake_port_subnet_2 = dhcp.DictModel(
+        id='12345678-1234-aaaa-1234567890ab',
+        device_id='dhcp-12345678-1234-aaaa-1234567890ab',
+        device_owner='',
+        allocation_pools=fake_subnet2_allocation_pools,
+        mac_address='aa:bb:cc:dd:ee:ff',
+        network_id=FAKE_NETWORK_UUID,
+        fixed_ips=[fake_fixed_ip_subnet2])
+
 fake_ipv6_port = dhcp.DictModel(id='12345678-1234-aaaa-123456789000',
                                 device_owner='',
                                 mac_address='aa:bb:cc:dd:ee:99',
@@ -165,6 +174,12 @@ fake_network = dhcp.NetModel(id=FAKE_NETWORK_UUID,
                              admin_state_up=True,
                              subnets=[fake_subnet1, fake_subnet2],
                              ports=[fake_port1])
+
+fake_network_no_dhcp_subnets = dhcp.NetModel(id=FAKE_NETWORK_UUID,
+                                             project_id=FAKE_PROJECT_ID,
+                                             admin_state_up=True,
+                                             subnets=[fake_subnet2],
+                                             ports=[fake_port_subnet_2])
 
 fake_network_ipv6 = dhcp.NetModel(id=FAKE_NETWORK_UUID,
                                   project_id=FAKE_PROJECT_ID,
@@ -562,6 +577,32 @@ class TestDhcpAgent(base.BaseTestCase):
         all_ports = (set(range(port_count)) |
                      set(range(sync_max, sync_max + port_count)))
         self.assertEqual(all_ports, ports_ready)
+
+    def test_configure_dhcp_for_network(self):
+        dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+        with mock.patch.object(
+                dhcp, 'update_isolated_metadata_proxy') as ump, \
+            mock.patch.object(
+                dhcp, 'call_driver', return_value=True):
+            dhcp.configure_dhcp_for_network(fake_network)
+
+        ump.assert_called_once_with(fake_network)
+        self.assertIn(fake_network.id, dhcp.cache.get_network_ids())
+        self.assertIn(fake_port1.id, dhcp.dhcp_ready_ports)
+
+    def test_configure_dhcp_for_network_no_subnets_with_dhcp_enabled(self):
+        dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+        with mock.patch.object(
+                dhcp, 'update_isolated_metadata_proxy') as ump, \
+            mock.patch.object(
+                dhcp, 'call_driver', return_value=True) as call_driver_mock:
+            dhcp.configure_dhcp_for_network(fake_network_no_dhcp_subnets)
+
+        ump.assert_not_called()
+        call_driver_mock.assert_not_called()
+        self.assertNotIn(fake_network_no_dhcp_subnets.id,
+                         dhcp.cache.get_network_ids())
+        self.assertNotIn(fake_port_subnet_2.id, dhcp.dhcp_ready_ports)
 
     @mock.patch.object(linux_utils, 'delete_if_exists')
     def test_dhcp_ready_ports_updates_after_enable_dhcp(self, *args):

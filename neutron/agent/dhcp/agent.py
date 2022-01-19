@@ -400,7 +400,8 @@ class DhcpAgent(manager.Manager):
         if not network.admin_state_up:
             return
 
-        if len(network.subnets) and self.call_driver('enable', network):
+        if (any(s for s in network.subnets if s.enable_dhcp) and
+                self.call_driver('enable', network)):
             self.update_isolated_metadata_proxy(network)
             self.cache.put(network)
             # After enabling dhcp for network, mark all existing
