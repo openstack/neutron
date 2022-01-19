@@ -35,6 +35,7 @@ from neutron.agent.linux import utils
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.common import utils as common_utils
 from neutron.conf.agent import common as config
+from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import helpers
 from neutron.tests.functional import base
@@ -73,8 +74,9 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
             'interface_driver',
             'neutron.agent.linux.interface.OVSInterfaceDriver')
         self.conf.set_override('report_interval', 0, 'AGENT')
-        br_int = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
-        self.conf.set_override('integration_bridge', br_int.br_name, 'OVS')
+        self.br_int = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
+        self.conf.set_override(
+            'integration_bridge', self.br_int.br_name, 'OVS')
 
         self.mock_plugin_api = mock.patch(
             'neutron.agent.dhcp.agent.DhcpPluginApi').start().return_value
@@ -291,13 +293,6 @@ class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
         dev = ip_lib.IPDevice(iface_name, network.namespace)
         self.assertEqual(789, dev.link.mtu)
 
-    def test_good_address_allocation(self):
-        network, port = self._get_network_port_for_allocation_test()
-        network.ports.append(port)
-        self.configure_dhcp_for_network(network=network)
-        self._plug_port_for_dhcp_request(network, port)
-        self.assert_good_allocation_for_port(network, port)
-
     def test_bad_address_allocation(self):
         network, port = self._get_network_port_for_allocation_test()
         network.ports.append(port)
@@ -448,3 +443,25 @@ class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
         else:
             self.assertEqual(agent.DHCP_PROCESS_GREENLET_MAX,
                              self.agent._pool.size)
+
+
+class DHCPAgentOVSTestCaseOwnBridge(DHCPAgentOVSTestFramework):
+    """Class for a single test that needs its own bridge.
+
+    This way the ofport numbers are predictable and we can fake ovs-agent's
+    flow deletions with hardcoded ofport numbers.
+    """
+
+    def test_good_address_allocation(self):
+        network, port = self._get_network_port_for_allocation_test()
+        network.ports.append(port)
+        self.configure_dhcp_for_network(network=network)
+        self._plug_port_for_dhcp_request(network, port)
+        for ofport in (1, 2):
+            self.br_int.delete_flows(
+                cookie=ovs_lib.COOKIE_ANY,
+                table=constants.LOCAL_SWITCHING,
+                priority=constants.OPENFLOW_MAX_PRIORITY - 1,
+                in_port=ofport,
+                strict=True)
+        self.assert_good_allocation_for_port(network, port)
