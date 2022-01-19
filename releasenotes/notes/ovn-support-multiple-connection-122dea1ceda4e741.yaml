@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Ovn configuration items "ovn_nb_connection" and "ovn_sb_connection"
+    can set multiple addresses separated by commas. Setting NB/SB
+    "connection" inactivity probe can also work well, if multiple
+    connection be specified.

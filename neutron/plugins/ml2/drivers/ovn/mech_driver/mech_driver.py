@@ -310,19 +310,24 @@ class OVNMechanismDriver(api.MechanismDriver):
                (ovn_conf.get_ovn_sb_connection(), self.sb_schema_helper,
                 impl_idl_ovn.OvsdbSbOvnIdl)]
         for connection, schema, klass in dbs:
-            target = ovn_utils.connection_config_to_target_string(connection)
-            if not target:
+            targets = []
+            for _conn in idlutils.parse_connection(connection):
+                target = ovn_utils.connection_config_to_target_string(_conn)
+                if target:
+                    targets.append(target)
+            if not targets:
                 continue
 
             idl = ovsdb_monitor.BaseOvnIdl.from_server(connection, schema)
             with ovsdb_monitor.short_living_ovsdb_api(klass, idl) as idl_api:
-                conn = idlutils.row_by_value(idl_api, 'Connection', 'target',
-                                             target, None)
-                if conn:
-                    idl_api.db_set(
-                        'Connection', target,
-                        ('inactivity_probe', int(inactivity_probe))).execute(
-                        check_error=True)
+                for target in targets:
+                    conn = idlutils.row_by_value(idl_api, 'Connection',
+                                                 'target', target, None)
+                    if conn:
+                        idl_api.db_set(
+                            'Connection', target,
+                            ('inactivity_probe', int(inactivity_probe))
+                        ).execute(check_error=True)
 
     @staticmethod
     def should_post_fork_initialize(worker_class):

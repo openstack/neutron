@@ -376,3 +376,39 @@ class TestOvnIdlProbeInterval(base.TestOVNFunctionalBase):
         interval = ovn_conf.get_ovn_ovsdb_probe_interval()
         for idl in idls:
             self.assertEqual(interval, idl._session.reconnect.probe_interval)
+
+
+class TestOvnIdlConnections(base.TestOVNFunctionalBase):
+    def setUp(self):
+        temp_dir = self.useFixture(og_fixtures.TempDir()).path
+        install_share_path = self._get_install_share_path()
+        mgr = self.useFixture(
+            process.OvsdbServer(temp_dir, install_share_path,
+                                ovn_nb_db=True, ovn_sb_db=True,
+                                protocol='tcp'))
+        connection = mgr.get_ovsdb_connection_path
+
+        nb_conns = connection()
+        sb_conns = connection(db_type='sb')
+        # add fake address, idl support multiple addresses, as long as there
+        # is an available address, it will run successfully.
+        nb_conns += ',tcp:192.168.0.1:6641'
+        sb_conns += ',tcp:192.168.0.1:6642'
+        self.connections = {'OVN_Northbound': nb_conns,
+                            'OVN_Southbound': sb_conns}
+        super().setUp()
+
+    def test_ovsdb_connections(self):
+        klasses = {
+            ovsdb_monitor.OvnNbIdl: ('OVN_Northbound',
+                                     {'driver': self.mech_driver}),
+            ovsdb_monitor.OvnSbIdl: ('OVN_Southbound',
+                                     {'driver': self.mech_driver})}
+        for kls, (schema, kwargs) in klasses.items():
+            conns = self.connections[schema]
+            idl = kls.from_server(
+                conns,
+                idlutils.get_schema_helper(conns, schema),
+                **kwargs)
+            self.assertEqual(set(idlutils.parse_connection(conns)),
+                             set(idl._session.remotes))
