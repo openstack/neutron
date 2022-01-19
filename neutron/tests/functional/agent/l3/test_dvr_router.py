@@ -599,7 +599,7 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
             interface_name = router.get_external_device_name(port['id'])
             self._assert_no_ip_addresses_on_interface(router.ha_namespace,
                                                       interface_name)
-            utils.wait_until_true(lambda: router.ha_state == 'primary')
+            self.wait_until_ha_router_has_state(router, 'primary')
 
             # Keepalived notifies of a state transition when it starts,
             # not when it ends. Thus, we have to wait until keepalived finishes
@@ -1608,7 +1608,7 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         self.assertFalse(
             ip_lib.device_exists(primary_ha_device, snat_namespace_name))
 
-        utils.wait_until_true(lambda: backup.ha_state == 'primary')
+        self.wait_until_ha_router_has_state(backup, 'primary')
         self._assert_ip_addresses_in_dvr_ha_snat_namespace(backup)
         self.assertTrue(
             ip_lib.device_exists(backup_ha_device, backup.ha_namespace))
@@ -1638,16 +1638,16 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         primary, backup = self._get_primary_and_backup_routers(
             router1, router2, check_external_device=False)
 
-        utils.wait_until_true(lambda: primary.ha_state == 'primary')
-        utils.wait_until_true(lambda: backup.ha_state == 'backup')
+        self.wait_until_ha_router_has_state(primary, 'primary')
+        self.wait_until_ha_router_has_state(backup, 'backup')
 
         self._assert_ip_addresses_in_dvr_ha_snat_namespace_with_fip(primary)
         self._assert_no_ip_addresses_in_dvr_ha_snat_namespace_with_fip(backup)
 
         self.fail_ha_router(primary)
 
-        utils.wait_until_true(lambda: backup.ha_state == 'primary')
-        utils.wait_until_true(lambda: primary.ha_state == 'backup')
+        self.wait_until_ha_router_has_state(backup, 'primary')
+        self.wait_until_ha_router_has_state(primary, 'backup')
 
         self._assert_ip_addresses_in_dvr_ha_snat_namespace_with_fip(backup)
         self._assert_no_ip_addresses_in_dvr_ha_snat_namespace_with_fip(primary)
@@ -1668,16 +1668,16 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         primary, backup = self._get_primary_and_backup_routers(
             router1, router2, check_external_device=False)
 
-        utils.wait_until_true(lambda: primary.ha_state == 'primary')
-        utils.wait_until_true(lambda: backup.ha_state == 'backup')
+        self.wait_until_ha_router_has_state(primary, 'primary')
+        self.wait_until_ha_router_has_state(backup, 'backup')
 
         self._assert_ip_addresses_in_dvr_ha_snat_namespace(primary)
         self._assert_no_ip_addresses_in_dvr_ha_snat_namespace(backup)
 
         self.fail_ha_router(primary)
 
-        utils.wait_until_true(lambda: backup.ha_state == 'primary')
-        utils.wait_until_true(lambda: primary.ha_state == 'backup')
+        self.wait_until_ha_router_has_state(backup, 'primary')
+        self.wait_until_ha_router_has_state(primary, 'backup')
 
         self._assert_ip_addresses_in_dvr_ha_snat_namespace(backup)
         self._assert_no_ip_addresses_in_dvr_ha_snat_namespace(primary)
@@ -1714,7 +1714,7 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         r2_chsfr = mock.patch.object(self.failover_agent,
                                      'check_ha_state_for_router').start()
 
-        utils.wait_until_true(lambda: router1.ha_state == 'primary')
+        self.wait_until_ha_router_has_state(router1, 'primary')
 
         self.agent._process_updated_router(router1.router)
         self.assertTrue(r1_chsfr.called)
