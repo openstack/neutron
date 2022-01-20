@@ -866,18 +866,6 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
         # preference patch (as part of external ids) merges.
         return [c.name for c in self.chassis_list().execute(check_error=True)]
 
-    def get_chassis_data_for_ml2_bind_port(self, hostname):
-        try:
-            cmd = self.db_find_rows('Chassis', ('hostname', '=', hostname))
-            chassis = next(c for c in cmd.execute(check_error=True))
-        except StopIteration:
-            msg = _('Chassis with hostname %s does not exist') % hostname
-            raise RuntimeError(msg)
-        other_config = utils.get_ovn_chassis_other_config(chassis)
-        return (other_config.get('datapath-type', ''),
-                other_config.get('iface-types', ''),
-                self._get_chassis_physnets(chassis))
-
     def get_metadata_port_network(self, network):
         # TODO(twilson) This function should really just take a Row/RowView
         try:
