@@ -175,9 +175,8 @@ class FakeOvsdbSbOvnIdl(object):
         self.get_chassis_and_azs = mock.Mock()
         self.get_chassis_and_azs.return_value = {}
         self.get_all_chassis = mock.Mock()
-        self.get_chassis_data_for_ml2_bind_port = mock.Mock()
-        self.get_chassis_data_for_ml2_bind_port.return_value = \
-            ('fake', '', ['fake-physnet'])
+        self._get_chassis_physnets = mock.Mock()
+        self._get_chassis_physnets.return_value = ['fake-physnet']
         self.get_chassis_and_physnets = mock.Mock()
         self.get_gateway_chassis_from_cms_options = mock.Mock()
         self.is_col_present = mock.Mock()

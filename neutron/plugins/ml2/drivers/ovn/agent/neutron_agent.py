@@ -254,3 +254,12 @@ class AgentCache:
                      for cls in NeutronAgent.types.values()}
         # Return the cached agents of agent_ids whose keys are in the cache
         return (self.agents[id_] for id_ in agent_ids & self.agents.keys())
+
+    def get_agents(self, filters=None):
+        filters = filters or {}
+        agent_list = []
+        for agent in self.agents.values():
+            agent_dict = agent.as_dict()
+            if all(agent_dict[k] in v for k, v in filters.items()):
+                agent_list.append(agent)
+        return agent_list

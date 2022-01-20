@@ -959,8 +959,7 @@ class OVNMechanismDriver(api.MechanismDriver):
 
         # OVN chassis information is needed to ensure a valid port bind.
         # Collect port binding data and refuse binding if the OVN chassis
-        # cannot be found.
-        chassis_physnets = []
+        # cannot be found or is dead.
         try:
             # The PortContext host property contains special handling that
             # we need to take into account, thus passing both the port Dict
@@ -969,14 +968,6 @@ class OVNMechanismDriver(api.MechanismDriver):
             bind_host = self._ovn_client.determine_bind_host(
                 port,
                 port_context=context)
-            datapath_type, iface_types, chassis_physnets = (
-                self.sb_ovn.get_chassis_data_for_ml2_bind_port(bind_host))
-            iface_types = iface_types.split(',') if iface_types else []
-        except RuntimeError:
-            LOG.debug('Refusing to bind port %(port_id)s due to '
-                      'no OVN chassis for host: %(host)s',
-                      {'port_id': port['id'], 'host': bind_host})
-            return
         except n_exc.InvalidInput as e:
             # The port binding profile is validated both on port creation and
             # update.  The new rules apply to a VNIC type previously not
@@ -985,7 +976,23 @@ class OVNMechanismDriver(api.MechanismDriver):
             LOG.error('Validation of binding profile unexpectedly failed '
                       'while attempting to bind port %s', port['id'])
             raise e
-
+        agents = n_agent.AgentCache().get_agents({'host': bind_host})
+        if not agents:
+            LOG.warning('Refusing to bind port %(port_id)s due to '
+                        'no OVN chassis for host: %(host)s',
+                      {'port_id': port['id'], 'host': bind_host})
+            return
+        agent = agents[0]
+        if not agent.alive:
+            LOG.warning("Refusing to bind port %(pid)s to dead agent:  "
+                        "%(agent)s", {'pid': context.current['id'],
+                                      'agent': agent})
+            return
+        chassis = agent.chassis
+        datapath_type = chassis.external_ids.get('datapath-type', '')
+        iface_types = chassis.external_ids.get('iface-types', '')
+        iface_types = iface_types.split(',') if iface_types else []
+        chassis_physnets = self.sb_ovn._get_chassis_physnets(chassis)
         for segment_to_bind in context.segments_to_bind:
             network_type = segment_to_bind['network_type']
             segmentation_id = segment_to_bind['segmentation_id']
@@ -1296,12 +1303,8 @@ class OVNMechanismDriver(api.MechanismDriver):
 def get_agents(self, context, filters=None, fields=None, _driver=None):
     _driver.ping_all_chassis()
     filters = filters or {}
-    agent_list = []
-    for agent in n_agent.AgentCache():
-        agent_dict = agent.as_dict()
-        if all(agent_dict[k] in v for k, v in filters.items()):
-            agent_list.append(agent_dict)
-    return agent_list
+    agent_list = n_agent.AgentCache().get_agents(filters)
+    return [agent.as_dict() for agent in agent_list]
 
 
 def get_agent(self, context, id, fields=None, _driver=None):
