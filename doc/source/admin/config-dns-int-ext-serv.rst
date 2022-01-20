@@ -927,3 +927,85 @@ meet the following requirements:
 This usually implies that these use cases only work for networks specifically
 created for this purpose by an admin, they do not work for networks
 which tenants can create on their own.
+
+.. _config-dns-int-ext-dns-assignment:
+
+The port's ``dns_assignment`` attribute with use case 3
+-------------------------------------------------------
+
+The ``dns_assignment`` attribute is not calculated as described in
+:ref:`config-dns-int` when a port is created under use case 3. Instead of
+concatenating the port's ``dns_name`` with the value configured
+in the ``dns_domain`` parameter in ``neutron.conf``, the ``dns_name`` is
+concatenated with the ``dns_domain`` of either the port or the network,
+depending on whether the use case is 3a, 3b or 3c. For example:
+
+.. code-block:: console
+
+   $ openstack network show external -c dns_domain -f value
+   dns-domain-1.org.
+   $ cat /etc/neutron/neutron.conf | grep dns_domain
+   dns_domain = my-domain.org
+   $ openstack recordset list dns-domain-1.org.
+   +--------------------------------------+-------------------+------+-----------------------------------------------------------------------+--------+--------+
+   | id                                   | name              | type | records                                                               | status | action |
+   +--------------------------------------+-------------------+------+-----------------------------------------------------------------------+--------+--------+
+   | 2b3e9ea4-8035-4595-955d-ec8c55816111 | dns-domain-1.org. | SOA  | ns1.devstack.org. mlavalle.redhat.com. 1642583355 3517 600 86400 3600 | ACTIVE | NONE   |
+   | 801dd911-43e6-430a-a80b-ea09af76a9a4 | dns-domain-1.org. | NS   | ns1.devstack.org.                                                     | ACTIVE | NONE   |
+   +--------------------------------------+-------------------+------+-----------------------------------------------------------------------+--------+--------+
+   $ openstack port create --dns-name a-port --network external a_port
+   +-------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+   | Field                   | Value                                                                                                                                                                                     |
+   +-------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+   | admin_state_up          | UP                                                                                                                                                                                        |
+   | allowed_address_pairs   |                                                                                                                                                                                           |
+   | binding_host_id         | None                                                                                                                                                                                      |
+   | binding_profile         | None                                                                                                                                                                                      |
+   | binding_vif_details     | None                                                                                                                                                                                      |
+   | binding_vif_type        | None                                                                                                                                                                                      |
+   | binding_vnic_type       | normal                                                                                                                                                                                    |
+   | created_at              | 2022-01-19T09:15:34Z                                                                                                                                                                      |
+   | data_plane_status       | None                                                                                                                                                                                      |
+   | description             |                                                                                                                                                                                           |
+   | device_id               |                                                                                                                                                                                           |
+   | device_owner            |                                                                                                                                                                                           |
+   | device_profile          | None                                                                                                                                                                                      |
+   | dns_assignment          | fqdn='a-port.dns-domain-1.org.', hostname='a-port', ip_address='172.31.251.113'                                                                                                           |
+   |                         | fqdn='a-port.dns-domain-1.org.', hostname='a-port', ip_address='fd5e:7a6b:1a62::a3'                                                                                                       |
+   | dns_domain              |                                                                                                                                                                                           |
+   | dns_name                | a-port                                                                                                                                                                                    |
+   | extra_dhcp_opts         |                                                                                                                                                                                           |
+   | fixed_ips               | ip_address='172.31.251.113', subnet_id='6795a775-4a76-49b0-bac6-ba8a8b62bd22'                                                                                                             |
+   |                         | ip_address='fd5e:7a6b:1a62::a3', subnet_id='97b719f8-2307-4162-bf08-523d9c0fc6a9'                                                                                                         |
+   | id                      | 080f01e7-78b9-43ed-a807-1e0d59099bed                                                                                                                                                      |
+   | ip_allocation           | None                                                                                                                                                                                      |
+   | location                | Munch({'cloud': '', 'region_name': 'RegionOne', 'zone': None, 'project': Munch({'id': 'afc55714081b4ef29f99ec128cb1fa30', 'name': 'demo', 'domain_id': 'default', 'domain_name': None})}) |
+   | mac_address             | fa:16:3e:4d:fa:33                                                                                                                                                                         |
+   | name                    | a_port                                                                                                                                                                                    |
+   | network_id              | 2d696f10-97a4-454c-a411-ea8d4d685636                                                                                                                                                      |
+   | numa_affinity_policy    | None                                                                                                                                                                                      |
+   | port_security_enabled   | True                                                                                                                                                                                      |
+   | project_id              | afc55714081b4ef29f99ec128cb1fa30                                                                                                                                                          |
+   | propagate_uplink_status | None                                                                                                                                                                                      |
+   | qos_network_policy_id   | None                                                                                                                                                                                      |
+   | qos_policy_id           | None                                                                                                                                                                                      |
+   | resource_request        | None                                                                                                                                                                                      |
+   | revision_number         | 1                                                                                                                                                                                         |
+   | security_group_ids      | 1a350403-cad3-4a2d-b30a-73815bd96e0f                                                                                                                                                      |
+   | status                  | DOWN                                                                                                                                                                                      |
+   | tags                    |                                                                                                                                                                                           |
+   | trunk_details           | None                                                                                                                                                                                      |
+   | updated_at              | 2022-01-19T09:15:34Z                                                                                                                                                                      |
+   +-------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+   $ openstack recordset list dns-domain-1.org.
+   +--------------------------------------+--------------------------+------+-----------------------------------------------------------------------+--------+--------+
+   | id                                   | name                     | type | records                                                               | status | action |
+   +--------------------------------------+--------------------------+------+-----------------------------------------------------------------------+--------+--------+
+   | 2b3e9ea4-8035-4595-955d-ec8c55816111 | dns-domain-1.org.        | SOA  | ns1.devstack.org. mlavalle.redhat.com. 1642583736 3517 600 86400 3600 | ACTIVE | NONE   |
+   | 801dd911-43e6-430a-a80b-ea09af76a9a4 | dns-domain-1.org.        | NS   | ns1.devstack.org.                                                     | ACTIVE | NONE   |
+   | 61597628-dafe-4aba-8e30-1d45b4e59874 | a-port.dns-domain-1.org. | AAAA | fd5e:7a6b:1a62::a3                                                    | ACTIVE | NONE   |
+   | 83fe489f-2ebc-4911-a67e-bef688833f31 | a-port.dns-domain-1.org. | A    | 172.31.251.113                                                        | ACTIVE | NONE   |
+   +--------------------------------------+--------------------------+------+-----------------------------------------------------------------------+--------+--------+
+
+In this manner, the ``FQDN`` in the ``dns_assignment`` attribute is compatible
+with what is being published by the external DNS service.
