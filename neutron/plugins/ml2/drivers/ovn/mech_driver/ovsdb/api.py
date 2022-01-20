@@ -657,16 +657,3 @@ class SbAPI(api.API, metaclass=abc.ABCMeta):
         :param chassis_type:    The type of chassis
         :type chassis_type:     string
         """
-
-    @abc.abstractmethod
-    def get_chassis_data_for_ml2_bind_port(self, hostname):
-        """Return chassis data for ML2 port binding.
-
-        @param hostname:       The hostname of the chassis
-        @type hostname:        string
-        :returns:              Tuple containing the chassis datapath type,
-                               iface types and physical networks for the
-                               OVN bridge mappings.
-        :raises:               RuntimeError exception if an OVN chassis
-                               does not exist.
-        """

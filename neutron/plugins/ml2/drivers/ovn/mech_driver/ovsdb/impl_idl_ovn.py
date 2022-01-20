@@ -876,17 +876,6 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
                      card_serial_number)
         raise RuntimeError(msg)
 
-    def get_chassis_data_for_ml2_bind_port(self, hostname):
-        try:
-            cmd = self.db_find_rows('Chassis', ('hostname', '=', hostname))
-            chassis = next(c for c in cmd.execute(check_error=True))
-        except StopIteration:
-            msg = _('Chassis with hostname %s does not exist') % hostname
-            raise RuntimeError(msg)
-        return (chassis.external_ids.get('datapath-type', ''),
-                chassis.external_ids.get('iface-types', ''),
-                self._get_chassis_physnets(chassis))
-
     def get_metadata_port_network(self, network):
         # TODO(twilson) This function should really just take a Row/RowView
         try:
