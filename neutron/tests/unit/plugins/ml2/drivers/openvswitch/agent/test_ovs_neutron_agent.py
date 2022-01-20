@@ -1981,6 +1981,13 @@ class TestOvsNeutronAgent(object):
             self.agent.reclaim_local_vlan('net1')
             tun_br.cleanup_tunnel_port.assert_not_called()
 
+        with mock.patch.object(self.mod_agent.LOG, 'debug') as log_debug_fn:
+            self.agent.reclaim_local_vlan('net999')
+            log_debug_fn.assert_called_once_with(
+                'Network %s not used on agent.',
+                'net999',
+            )
+
     def test_recl_lv_port_to_remove(self):
         self._prepare_l2_pop_ofports()
         self.agent.l2_pop = True
