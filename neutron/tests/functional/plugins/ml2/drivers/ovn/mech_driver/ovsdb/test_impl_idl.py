@@ -83,13 +83,6 @@ class TestSbApi(BaseOvnIdlTest):
         our_chassis = {c['name'] for c in self.data['chassis']}
         self.assertLessEqual(our_chassis, chassis_list)
 
-    def test_get_chassis_data_for_ml2_bind_port(self):
-        host = self.data['chassis'][0]['hostname']
-        dp, iface, phys = self.api.get_chassis_data_for_ml2_bind_port(host)
-        self.assertEqual('', dp)
-        self.assertEqual('', iface)
-        self.assertCountEqual(phys, ['private', 'public'])
-
     def test_chassis_exists(self):
         self.assertTrue(self.api.chassis_exists(
             self.data['chassis'][0]['hostname']))
