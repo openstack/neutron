@@ -73,10 +73,14 @@ class Notifier(object):
     @contextlib.contextmanager
     def context_enabled(self, enabled):
         stored_enabled = self._enabled
+        LOG.debug("nova notifier stored_enabled: %s; enabled: %s",
+                  stored_enabled, enabled)
         try:
             self._enabled = enabled
             yield
         finally:
+            LOG.debug("Restoring value: %s for the _enabled flag.",
+                      stored_enabled)
             self._enabled = stored_enabled
 
     def _get_nova_client(self):
