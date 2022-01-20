@@ -235,3 +235,9 @@ In the above example notice that:
   must be equal to the value that Compute service will assign to the instance's
   ``hostname``, in this example ``my-vm``. Otherwise, the instance boot will
   fail.
+
+.. note::
+   When the Networking service integration with an external DNS service is
+   enabled, a port's FQDN in the ``dns_assignment`` attribute will not be
+   calculated as described above in some well defined cases. For a description
+   of these cases please see :ref:`config-dns-int-ext-dns-assignment`.
