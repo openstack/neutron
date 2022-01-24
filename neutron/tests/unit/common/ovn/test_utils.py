@@ -18,6 +18,7 @@ from os import path
 from unittest import mock
 
 import fixtures
+import neutron_lib
 from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
 from neutron_lib import constants as n_const
 from oslo_config import cfg
@@ -443,3 +444,73 @@ class TestGetDhcpDnsServers(base.BaseTestCase):
             {'dns_nameservers': ['::']},
             ip_version=n_const.IP_VERSION_6)
         self.assertEqual([], dns_servers)
+
+
+class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
+
+    def setUp(self):
+        super(TestValidateAndGetDataFromBindingProfile, self).setUp()
+        self.get_plugin = mock.patch(
+            'neutron_lib.plugins.directory.get_plugin').start()
+
+    def test_get_port_raises(self):
+        # Confirm that a exception from get_port bubbles up as intended
+        self.get_plugin().get_port.side_effect = KeyError
+        self.assertRaises(
+            KeyError,
+            utils.validate_and_get_data_from_binding_profile,
+            {
+                constants.OVN_PORT_BINDING_PROFILE: {
+                    'parent_name': 'fake-parent-port-uuid',
+                    'tag': 42
+                },
+            })
+
+    def test_invalid_input_raises(self):
+        # Confirm that invalid input raises an exception
+        self.assertRaises(
+            neutron_lib.exceptions.InvalidInput,
+            utils.validate_and_get_data_from_binding_profile,
+            {
+                constants.OVN_PORT_BINDING_PROFILE: {
+                    'parent_name': 'fake-parent-port-uuid',
+                    'tag': 'notint'
+                },
+            })
+        self.assertRaises(
+            neutron_lib.exceptions.InvalidInput,
+            utils.validate_and_get_data_from_binding_profile,
+            {
+                constants.OVN_PORT_BINDING_PROFILE: {
+                    'parent_name': 51,
+                    'tag': 42
+                },
+            })
+
+    def test_valid_input(self):
+        # Confirm valid input produces expected output
+        expect = {
+            'parent_name': 'fake-parent-port-uuid',
+            'tag': 42
+        }
+        self.assertDictEqual(
+            expect,
+            utils.validate_and_get_data_from_binding_profile(
+                {constants.OVN_PORT_BINDING_PROFILE: expect}))
+
+        expect = {
+            'vtep-physical-switch': 'fake-physical-switch-uuid',
+            'vtep-logical-switch': 'fake-logical-switch-uuid',
+        }
+        self.assertDictEqual(
+            expect,
+            utils.validate_and_get_data_from_binding_profile(
+                {constants.OVN_PORT_BINDING_PROFILE: expect}))
+
+    def test_unknown_profile_items_pruned(self):
+        # Confirm that unknown profile items are pruned
+        self.assertEqual(
+            {},
+            utils.validate_and_get_data_from_binding_profile(
+                {constants.OVN_PORT_BINDING_PROFILE: {
+                    'unknown-key': 'unknown-data'}}))
