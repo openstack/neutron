@@ -262,12 +262,12 @@ class PlacementReporterAgents(object):
                 "You likely want to remove 'placement' from "
                 "neutron.conf: DEFAULT.service_plugins")
             raise
-        self._supported_agent_types = []
+        self._supported_agent_types = None
         self._agent_type_to_mech_driver = {}
 
     @property
     def supported_agent_types(self):
-        if not self._supported_agent_types:
+        if self._supported_agent_types is None:
             # NOTE(bence romsics): We treat the presence of the
             # RP uuid namespace a proxy for supporting placement reports from
             # the driver's agent type. But we could introduce a property/logic
@@ -276,9 +276,12 @@ class PlacementReporterAgents(object):
             self._supported_agent_types = [
                 driver.obj.agent_type
                 for driver in self._mechanism_drivers
-                if driver.obj.resource_provider_uuid5_namespace is not None]
+                if (driver.obj.resource_provider_uuid5_namespace is
+                    not None and hasattr(driver.obj, 'agent_type') and
+                    driver.obj.agent_type)]
+            supported_agents = ', '.join(self._supported_agent_types) or 'None'
             LOG.debug('agent types supporting placement reports: %s',
-                      ', '.join(self._supported_agent_types))
+                      supported_agents)
         return self._supported_agent_types
 
     def mechanism_driver_by_agent_type(self, agent_type):
