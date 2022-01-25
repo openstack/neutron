@@ -29,6 +29,10 @@ class TestDbQuotaDriverNoLock(test_driver.TestDbQuotaDriver):
         super(TestDbQuotaDriverNoLock, self).setUp()
         self.quota_driver = driver_nolock.DbQuotaNoLockDriver()
 
+    @staticmethod
+    def _cleanup_timeout(previous_value):
+        quota_api.RESERVATION_EXPIRATION_TIMEOUT = previous_value
+
     def test__remove_expired_reservations(self):
         for project, resource in itertools.product(self.projects,
                                                    self.resources):
@@ -46,14 +50,13 @@ class TestDbQuotaDriverNoLock(test_driver.TestDbQuotaDriver):
                 self.assertIn(delta.resource, self.resources)
 
         # Delete the expired reservations and check.
-        for project in self.projects:
-            # NOTE(ralonsoh): the timeout is set to -121 to force the deletion
-            # of all created reservations, including those ones created in this
-            # test. The value of 121 overcomes the 120 seconds of default
-            # expiration time a reservation has.
-            time_delta = quota_api.RESERVATION_EXPIRATION_TIMEOUT + 1
-            self.quota_driver._remove_expired_reservations(
-                self.context, project, -time_delta)
-            res = quota_obj.Reservation.get_objects(self.context,
-                                                    project_id=project)
-            self.assertEqual([], res)
+        # NOTE(ralonsoh): the timeout is set to -121 to force the deletion
+        # of all created reservations, including those ones created in this
+        # test. The value of 121 overcomes the 120 seconds of default
+        # expiration time a reservation has.
+        timeout = quota_api.RESERVATION_EXPIRATION_TIMEOUT
+        quota_api.RESERVATION_EXPIRATION_TIMEOUT = -(timeout + 1)
+        self.addCleanup(self._cleanup_timeout, timeout)
+        self.quota_driver._remove_expired_reservations()
+        res = quota_obj.Reservation.get_objects(self.context)
+        self.assertEqual([], res)
