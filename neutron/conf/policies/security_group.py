@@ -46,8 +46,8 @@ rules = [
     # Does an empty string make more sense for create_security_group?
     policy.DocumentedRuleDefault(
         name='create_security_group',
-        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
-        scope_types=['system', 'project'],
+        check_str=base.PROJECT_MEMBER,
+        scope_types=['project'],
         description='Create a security group',
         operations=[
             {
@@ -63,8 +63,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_security_group',
-        check_str=base.SYSTEM_OR_PROJECT_READER,
-        scope_types=['system', 'project'],
+        check_str=base.PROJECT_READER,
+        scope_types=['project'],
         description='Get a security group',
         operations=[
             {
@@ -84,8 +84,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_security_group',
-        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
-        scope_types=['system', 'project'],
+        check_str=base.PROJECT_MEMBER,
+        scope_types=['project'],
         description='Update a security group',
         operations=[
             {
@@ -101,8 +101,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_security_group',
-        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
-        scope_types=['system', 'project'],
+        check_str=base.PROJECT_MEMBER,
+        scope_types=['project'],
         description='Delete a security group',
         operations=[
             {
@@ -121,8 +121,8 @@ rules = [
     # Does an empty string make more sense for create_security_group_rule?
     policy.DocumentedRuleDefault(
         name='create_security_group_rule',
-        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
-        scope_types=['system', 'project'],
+        check_str=base.PROJECT_MEMBER,
+        scope_types=['project'],
         description='Create a security group rule',
         operations=[
             {
@@ -139,9 +139,9 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_security_group_rule',
         check_str=base.policy_or(
-            base.SYSTEM_OR_PROJECT_READER,
+            base.PROJECT_READER,
             base.RULE_SG_OWNER),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description='Get a security group rule',
         operations=[
             {
@@ -161,8 +161,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_security_group_rule',
-        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
-        scope_types=['system', 'project'],
+        check_str=base.PROJECT_MEMBER,
+        scope_types=['project'],
         description='Delete a security group rule',
         operations=[
             {

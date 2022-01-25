@@ -29,8 +29,8 @@ RULE_RESOURCE_PATH = '/metering/metering-label-rules/{id}'
 rules = [
     policy.DocumentedRuleDefault(
         name='create_metering_label',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system', 'project'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Create a metering label',
         operations=[
             {
@@ -46,8 +46,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_metering_label',
-        check_str=base.SYSTEM_READER,
-        scope_types=['system', 'project'],
+        check_str=base.PROJECT_READER,
+        scope_types=['project'],
         description='Get a metering label',
         operations=[
             {
@@ -67,8 +67,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_metering_label',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system', 'project'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Delete a metering label',
         operations=[
             {
@@ -84,8 +84,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_metering_label_rule',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system', 'project'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Create a metering label rule',
         operations=[
             {
@@ -101,8 +101,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_metering_label_rule',
-        check_str=base.SYSTEM_READER,
-        scope_types=['system', 'project'],
+        check_str=base.PROJECT_READER,
+        scope_types=['project'],
         description='Get a metering label rule',
         operations=[
             {
@@ -122,8 +122,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_metering_label_rule',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system', 'project'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Delete a metering label rule',
         operations=[
             {

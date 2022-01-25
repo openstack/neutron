@@ -25,7 +25,7 @@ DEPRECATION_REASON = (
 rules = [
     policy.DocumentedRuleDefault(
         name='get_auto_allocated_topology',
-        check_str=base.SYSTEM_OR_PROJECT_READER,
+        check_str=base.PROJECT_READER,
         description="Get a project's auto-allocated topology",
         operations=[
             {
@@ -33,7 +33,7 @@ rules = [
                 'path': RESOURCE_PATH,
             },
         ],
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_auto_allocated_topology',
             check_str=base.RULE_ADMIN_OR_OWNER,
@@ -42,7 +42,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_auto_allocated_topology',
-        check_str=base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+        check_str=base.PROJECT_MEMBER,
         description="Delete a project's auto-allocated topology",
         operations=[
             {
@@ -50,7 +50,7 @@ rules = [
                 'path': RESOURCE_PATH,
             },
         ],
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_auto_allocated_topology',
             check_str=base.RULE_ADMIN_OR_OWNER,

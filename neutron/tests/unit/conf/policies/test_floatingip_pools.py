@@ -16,7 +16,7 @@
 from oslo_policy import policy as base_policy
 
 from neutron import policy
-from neutron.tests.unit.conf.policies import base
+from neutron.tests.unit.conf.policies import test_base as base
 
 
 class FloatingipPoolsAPITestCase(base.PolicyBaseTestCase):
@@ -33,9 +33,10 @@ class SystemAdminTests(FloatingipPoolsAPITestCase):
         self.context = self.system_admin_ctx
 
     def test_get_floatingip_pool(self):
-        self.assertTrue(
-            policy.enforce(self.context, 'get_floatingip_pool',
-                           self.target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_floatingip_pool', self.target)
 
 
 class SystemMemberTests(SystemAdminTests):

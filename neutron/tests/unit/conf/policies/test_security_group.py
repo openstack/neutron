@@ -19,7 +19,7 @@ from oslo_policy import policy as base_policy
 from oslo_utils import uuidutils
 
 from neutron import policy
-from neutron.tests.unit.conf.policies import base
+from neutron.tests.unit.conf.policies import test_base as base
 
 
 class SecurityGroupAPITestCase(base.PolicyBaseTestCase):
@@ -37,32 +37,44 @@ class SystemAdminSecurityGroupTests(SecurityGroupAPITestCase):
         self.context = self.system_admin_ctx
 
     def test_create_security_group(self):
-        self.assertTrue(
-            policy.enforce(self.context, 'create_security_group', self.target))
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'create_security_group', self.alt_target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_security_group', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_security_group', self.alt_target)
 
     def test_get_security_group(self):
-        self.assertTrue(
-            policy.enforce(self.context, 'get_security_group', self.target))
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'get_security_group', self.alt_target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_security_group', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_security_group', self.alt_target)
 
     def test_update_security_group(self):
-        self.assertTrue(
-            policy.enforce(self.context, 'update_security_group', self.target))
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'update_security_group', self.alt_target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_security_group', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_security_group', self.alt_target)
 
     def test_delete_security_group(self):
-        self.assertTrue(
-            policy.enforce(self.context, 'delete_security_group', self.target))
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'delete_security_group', self.alt_target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_security_group', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_security_group', self.alt_target)
 
 
 class SystemMemberSecurityGroupTests(SystemAdminSecurityGroupTests):
@@ -70,36 +82,6 @@ class SystemMemberSecurityGroupTests(SystemAdminSecurityGroupTests):
     def setUp(self):
         super(SystemMemberSecurityGroupTests, self).setUp()
         self.context = self.system_member_ctx
-
-    def test_create_security_group(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'create_security_group', self.target)
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'create_security_group', self.alt_target)
-
-    def test_update_security_group(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'update_security_group', self.target)
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'update_security_group', self.alt_target)
-
-    def test_delete_security_group(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'delete_security_group', self.target)
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'delete_security_group', self.alt_target)
 
 
 class SystemReaderSecurityGroupTests(SystemMemberSecurityGroupTests):
@@ -171,14 +153,6 @@ class ProjectReaderSecurityGroupTests(ProjectMemberSecurityGroupTests):
             policy.enforce,
             self.context, 'create_security_group', self.alt_target)
 
-    def test_get_security_group(self):
-        self.assertTrue(
-            policy.enforce(self.context, 'get_security_group', self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'get_security_group', self.alt_target)
-
     def test_update_security_group(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
@@ -231,28 +205,34 @@ class SystemAdminSecurityGroupRuleTests(SecurityGroupRuleAPITestCase):
         self.context = self.system_admin_ctx
 
     def test_create_security_group_rule(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'create_security_group_rule', self.target))
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'create_security_group_rule', self.alt_target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_security_group_rule', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_security_group_rule', self.alt_target)
 
     def test_get_security_group_rule(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'get_security_group_rule', self.target))
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'get_security_group_rule', self.alt_target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_security_group_rule', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_security_group_rule', self.alt_target)
 
     def test_delete_security_group_rule(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'delete_security_group_rule', self.target))
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'delete_security_group_rule', self.alt_target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_security_group_rule', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_security_group_rule', self.alt_target)
 
 
 class SystemMemberSecurityGroupRuleTests(SystemAdminSecurityGroupRuleTests):
@@ -260,26 +240,6 @@ class SystemMemberSecurityGroupRuleTests(SystemAdminSecurityGroupRuleTests):
     def setUp(self):
         super(SystemMemberSecurityGroupRuleTests, self).setUp()
         self.context = self.system_member_ctx
-
-    def test_create_security_group_rule(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'create_security_group_rule', self.target)
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'create_security_group_rule', self.alt_target)
-
-    def test_delete_security_group_rule(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'delete_security_group_rule', self.target)
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'delete_security_group_rule', self.alt_target)
 
 
 class SystemReaderSecurityGroupRuleTests(SystemMemberSecurityGroupRuleTests):

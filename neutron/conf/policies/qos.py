@@ -23,8 +23,8 @@ The QoS API now supports system scope and default roles.
 rules = [
     policy.DocumentedRuleDefault(
         name='get_policy',
-        check_str=base.SYSTEM_OR_PROJECT_READER,
-        scope_types=['system', 'project'],
+        check_str=base.PROJECT_READER,
+        scope_types=['project'],
         description='Get QoS policies',
         operations=[
             {
@@ -44,8 +44,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_policy',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Create a QoS policy',
         operations=[
             {
@@ -61,8 +61,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_policy',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Update a QoS policy',
         operations=[
             {
@@ -78,8 +78,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_policy',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Delete a QoS policy',
         operations=[
             {
@@ -96,7 +96,12 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='get_rule_type',
-        check_str=base.SYSTEM_OR_PROJECT_READER,
+        # NOTE: we are using role:admin instead of PROJECT_ADMIN here because
+        # rule_type resource don't belongs to any project so using
+        # PROJECT_ADMIN as check string would cause enforcement error
+        check_str=base.policy_or(
+            "role:admin",
+            base.SYSTEM_READER),
         scope_types=['system', 'project'],
         description='Get available QoS rule types',
         operations=[
@@ -118,8 +123,8 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='get_policy_bandwidth_limit_rule',
-        check_str=base.SYSTEM_OR_PROJECT_READER,
-        scope_types=['system', 'project'],
+        check_str=base.PROJECT_READER,
+        scope_types=['project'],
         description='Get a QoS bandwidth limit rule',
         operations=[
             {
@@ -140,8 +145,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_policy_bandwidth_limit_rule',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Create a QoS bandwidth limit rule',
         operations=[
             {
@@ -157,8 +162,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_policy_bandwidth_limit_rule',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Update a QoS bandwidth limit rule',
         operations=[
             {
@@ -175,8 +180,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_policy_bandwidth_limit_rule',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Delete a QoS bandwidth limit rule',
         operations=[
             {
@@ -194,8 +199,8 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='get_policy_dscp_marking_rule',
-        check_str=base.SYSTEM_OR_PROJECT_READER,
-        scope_types=['system', 'project'],
+        check_str=base.PROJECT_READER,
+        scope_types=['project'],
         description='Get a QoS DSCP marking rule',
         operations=[
             {
@@ -216,8 +221,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_policy_dscp_marking_rule',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Create a QoS DSCP marking rule',
         operations=[
             {
@@ -233,8 +238,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_policy_dscp_marking_rule',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Update a QoS DSCP marking rule',
         operations=[
             {
@@ -251,8 +256,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_policy_dscp_marking_rule',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Delete a QoS DSCP marking rule',
         operations=[
             {
@@ -270,8 +275,8 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='get_policy_minimum_bandwidth_rule',
-        check_str=base.SYSTEM_OR_PROJECT_READER,
-        scope_types=['system', 'project'],
+        check_str=base.PROJECT_READER,
+        scope_types=['project'],
         description='Get a QoS minimum bandwidth rule',
         operations=[
             {
@@ -292,8 +297,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_policy_minimum_bandwidth_rule',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Create a QoS minimum bandwidth rule',
         operations=[
             {
@@ -309,8 +314,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_policy_minimum_bandwidth_rule',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Update a QoS minimum bandwidth rule',
         operations=[
             {
@@ -327,8 +332,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_policy_minimum_bandwidth_rule',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Delete a QoS minimum bandwidth rule',
         operations=[
             {
@@ -345,8 +350,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_policy_minimum_packet_rate_rule',
-        check_str=base.SYSTEM_OR_PROJECT_READER,
-        scope_types=['system', 'project'],
+        check_str=base.PROJECT_READER,
+        scope_types=['project'],
         description='Get a QoS minimum packet rate rule',
         operations=[
             {
@@ -362,8 +367,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_policy_minimum_packet_rate_rule',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Create a QoS minimum packet rate rule',
         operations=[
             {
@@ -374,8 +379,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_policy_minimum_packet_rate_rule',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Update a QoS minimum packet rate rule',
         operations=[
             {
@@ -387,8 +392,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_policy_minimum_packet_rate_rule',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Delete a QoS minimum packet rate rule',
         operations=[
             {
@@ -400,102 +405,156 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_alias_bandwidth_limit_rule',
-        check_str='rule:get_policy_bandwidth_limit_rule',
+        check_str=base.PROJECT_READER,
+        scope_types=['project'],
         description='Get a QoS bandwidth limit rule through alias',
         operations=[
             {
                 'method': 'GET',
                 'path': '/qos/alias_bandwidth_limit_rules/{rule_id}/',
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_alias_bandwidth_limit_rule',
+            check_str=base.RULE_ANY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_alias_bandwidth_limit_rule',
-        check_str='rule:update_policy_bandwidth_limit_rule',
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Update a QoS bandwidth limit rule through alias',
         operations=[
             {
                 'method': 'PUT',
                 'path': '/qos/alias_bandwidth_limit_rules/{rule_id}/',
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_alias_bandwidth_limit_rule',
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='delete_alias_bandwidth_limit_rule',
-        check_str='rule:delete_policy_bandwidth_limit_rule',
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Delete a QoS bandwidth limit rule through alias',
         operations=[
             {
                 'method': 'DELETE',
                 'path': '/qos/alias_bandwidth_limit_rules/{rule_id}/',
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_alias_bandwidth_limit_rule',
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_alias_dscp_marking_rule',
-        check_str='rule:get_policy_dscp_marking_rule',
+        check_str=base.PROJECT_READER,
+        scope_types=['project'],
         description='Get a QoS DSCP marking rule through alias',
         operations=[
             {
                 'method': 'GET',
                 'path': '/qos/alias_dscp_marking_rules/{rule_id}/',
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_alias_dscp_marking_rule',
+            check_str=base.RULE_ANY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_alias_dscp_marking_rule',
-        check_str='rule:update_policy_dscp_marking_rule',
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Update a QoS DSCP marking rule through alias',
         operations=[
             {
                 'method': 'PUT',
                 'path': '/qos/alias_dscp_marking_rules/{rule_id}/',
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_alias_dscp_marking_rule',
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='delete_alias_dscp_marking_rule',
-        check_str='rule:delete_policy_dscp_marking_rule',
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Delete a QoS DSCP marking rule through alias',
         operations=[
             {
                 'method': 'DELETE',
                 'path': '/qos/alias_dscp_marking_rules/{rule_id}/',
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_alias_dscp_marking_rule',
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_alias_minimum_bandwidth_rule',
-        check_str='rule:get_policy_minimum_bandwidth_rule',
+        check_str=base.PROJECT_READER,
+        scope_types=['project'],
         description='Get a QoS minimum bandwidth rule through alias',
         operations=[
             {
                 'method': 'GET',
                 'path': '/qos/alias_minimum_bandwidth_rules/{rule_id}/',
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='get_alias_minimum_bandwidth_rule',
+            check_str=base.RULE_ANY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='update_alias_minimum_bandwidth_rule',
-        check_str='rule:update_policy_minimum_bandwidth_rule',
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Update a QoS minimum bandwidth rule through alias',
         operations=[
             {
                 'method': 'PUT',
                 'path': '/qos/alias_minimum_bandwidth_rules/{rule_id}/',
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='update_alias_minimum_bandwidth_rule',
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='delete_alias_minimum_bandwidth_rule',
-        check_str='rule:delete_policy_minimum_bandwidth_rule',
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Delete a QoS minimum bandwidth rule through alias',
         operations=[
             {
                 'method': 'DELETE',
                 'path': '/qos/alias_minimum_bandwidth_rules/{rule_id}/',
             },
-        ]
+        ],
+        deprecated_rule=policy.DeprecatedRule(
+            name='delete_alias_minimum_bandwidth_rule',
+            check_str=base.RULE_ADMIN_ONLY,
+            deprecated_reason=DEPRECATED_REASON,
+            deprecated_since=versionutils.deprecated.WALLABY)
     ),
 ]
 

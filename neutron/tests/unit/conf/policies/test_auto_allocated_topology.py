@@ -16,7 +16,7 @@
 from oslo_policy import policy as base_policy
 
 from neutron import policy
-from neutron.tests.unit.conf.policies import base
+from neutron.tests.unit.conf.policies import test_base as base
 
 GET_POLICY = 'get_auto_allocated_topology'
 DELETE_POLICY = 'delete_auto_allocated_topology'
@@ -37,18 +37,28 @@ class SystemAdminTests(AutoAllocatedTopologyAPITestCase):
         self.context = self.system_admin_ctx
 
     def test_get_topology(self):
-        # System admins can get topologies for any project.
-        self.assertTrue(policy.enforce(self.context, GET_POLICY, self.target))
-        self.assertTrue(policy.enforce(
-            self.context, GET_POLICY, self.alt_target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, GET_POLICY, self.target
+        )
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, GET_POLICY, self.alt_target
+        )
 
     def test_delete_topology(self):
         # System admins can delete topologies for any project.
-        self.assertTrue(
-            policy.enforce(self.context, DELETE_POLICY, self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, DELETE_POLICY, self.target
         )
-        self.assertTrue(
-            policy.enforce(self.context, DELETE_POLICY, self.alt_target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, DELETE_POLICY, self.alt_target
         )
 
 
@@ -60,12 +70,12 @@ class SystemMemberTests(AutoAllocatedTopologyAPITestCase):
 
     def test_delete_topology(self):
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, DELETE_POLICY, self.target
         )
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, DELETE_POLICY, self.alt_target
         )

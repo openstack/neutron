@@ -16,7 +16,7 @@
 from oslo_policy import policy as base_policy
 
 from neutron import policy
-from neutron.tests.unit.conf.policies import base
+from neutron.tests.unit.conf.policies import test_base as base
 
 
 class MeteringAPITestCase(base.PolicyBaseTestCase):
@@ -34,52 +34,64 @@ class SystemAdminTests(MeteringAPITestCase):
         self.context = self.system_admin_ctx
 
     def test_create_metering_label(self):
-        self.assertTrue(
-            policy.enforce(
-                self.context, 'create_metering_label', self.target))
-        self.assertTrue(
-            policy.enforce(
-                self.context, 'create_metering_label', self.alt_target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_metering_label', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_metering_label', self.alt_target)
 
     def test_get_metering_label(self):
-        self.assertTrue(
-            policy.enforce(
-                self.context, 'get_metering_label', self.target))
-        self.assertTrue(
-            policy.enforce(
-                self.context, 'get_metering_label', self.alt_target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_metering_label', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_metering_label', self.alt_target)
 
     def test_delete_metering_label(self):
-        self.assertTrue(
-            policy.enforce(
-                self.context, 'delete_metering_label', self.target))
-        self.assertTrue(
-            policy.enforce(
-                self.context, 'delete_metering_label', self.alt_target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_metering_label', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_metering_label', self.alt_target)
 
     def test_create_metering_label_rule(self):
-        self.assertTrue(
-            policy.enforce(
-                self.context, 'create_metering_label_rule', self.target))
-        self.assertTrue(
-            policy.enforce(
-                self.context, 'create_metering_label_rule', self.alt_target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_metering_label_rule', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_metering_label_rule', self.alt_target)
 
     def test_get_metering_label_rule(self):
-        self.assertTrue(
-            policy.enforce(
-                self.context, 'get_metering_label_rule', self.target))
-        self.assertTrue(
-            policy.enforce(
-                self.context, 'get_metering_label_rule', self.alt_target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_metering_label_rule', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_metering_label_rule', self.alt_target)
 
     def test_delete_metering_label_rule(self):
-        self.assertTrue(
-            policy.enforce(
-                self.context, 'delete_metering_label_rule', self.target))
-        self.assertTrue(
-            policy.enforce(
-                self.context, 'delete_metering_label_rule', self.alt_target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_metering_label_rule', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_metering_label_rule', self.alt_target)
 
 
 class SystemMemberTests(SystemAdminTests):
@@ -87,46 +99,6 @@ class SystemMemberTests(SystemAdminTests):
     def setUp(self):
         super(SystemMemberTests, self).setUp()
         self.context = self.system_member_ctx
-
-    def test_create_metering_label(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'create_metering_label', self.target)
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'create_metering_label', self.alt_target)
-
-    def test_delete_metering_label(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'delete_metering_label', self.target)
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'delete_metering_label', self.alt_target)
-
-    def test_create_metering_label_rule(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'create_metering_label_rule', self.target)
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'create_metering_label_rule', self.alt_target)
-
-    def test_delete_metering_label_rule(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'delete_metering_label_rule', self.target)
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'delete_metering_label_rule', self.alt_target)
 
 
 class SystemReaderTests(SystemMemberTests):
@@ -143,6 +115,64 @@ class ProjectAdminTests(MeteringAPITestCase):
         self.context = self.project_admin_ctx
 
     def test_create_metering_label(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'create_metering_label', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_metering_label', self.alt_target)
+
+    def test_get_metering_label(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'get_metering_label', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_metering_label', self.alt_target)
+
+    def test_delete_metering_label(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_metering_label', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_metering_label', self.alt_target)
+
+    def test_create_metering_label_rule(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'create_metering_label_rule', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_metering_label_rule', self.alt_target)
+
+    def test_get_metering_label_rule(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'get_metering_label_rule', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_metering_label_rule', self.alt_target)
+
+    def test_delete_metering_label_rule(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'delete_metering_label_rule', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_metering_label_rule', self.alt_target)
+
+
+class ProjectMemberTests(ProjectAdminTests):
+
+    def setUp(self):
+        super(ProjectMemberTests, self).setUp()
+        self.context = self.project_member_ctx
+
+    def test_create_metering_label(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
@@ -151,16 +181,6 @@ class ProjectAdminTests(MeteringAPITestCase):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'create_metering_label', self.alt_target)
-
-    def test_get_metering_label(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'get_metering_label', self.target)
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'get_metering_label', self.alt_target)
 
     def test_delete_metering_label(self):
         self.assertRaises(
@@ -182,16 +202,6 @@ class ProjectAdminTests(MeteringAPITestCase):
             policy.enforce,
             self.context, 'create_metering_label_rule', self.alt_target)
 
-    def test_get_metering_label_rule(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'get_metering_label_rule', self.target)
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'get_metering_label_rule', self.alt_target)
-
     def test_delete_metering_label_rule(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
@@ -201,13 +211,6 @@ class ProjectAdminTests(MeteringAPITestCase):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'delete_metering_label_rule', self.alt_target)
-
-
-class ProjectMemberTests(ProjectAdminTests):
-
-    def setUp(self):
-        super(ProjectMemberTests, self).setUp()
-        self.context = self.project_member_ctx
 
 
 class ProjectReaderTests(ProjectMemberTests):

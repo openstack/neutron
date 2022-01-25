@@ -40,9 +40,9 @@ rules = [
     policy.DocumentedRuleDefault(
         name='create_subnet',
         check_str=base.policy_or(
-            base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+            base.PROJECT_MEMBER,
             base.RULE_NET_OWNER),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description='Create a subnet',
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
@@ -53,8 +53,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_subnet:segment_id',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description=(
             'Specify ``segment_id`` attribute when creating a subnet'
         ),
@@ -67,8 +67,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_subnet:service_types',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description=(
             'Specify ``service_types`` attribute when creating a subnet'
         ),
@@ -82,9 +82,9 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_subnet',
         check_str=base.policy_or(
-            base.SYSTEM_OR_PROJECT_READER,
+            base.PROJECT_READER,
             'rule:shared'),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description='Get a subnet',
         operations=ACTION_GET,
         deprecated_rule=policy.DeprecatedRule(
@@ -97,8 +97,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_subnet:segment_id',
-        check_str=base.SYSTEM_READER,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Get ``segment_id`` attribute of a subnet',
         operations=ACTION_GET,
         deprecated_rule=policy.DeprecatedRule(
@@ -110,9 +110,9 @@ rules = [
     policy.DocumentedRuleDefault(
         name='update_subnet',
         check_str=base.policy_or(
-            base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+            base.PROJECT_MEMBER,
             base.RULE_NET_OWNER),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description='Update a subnet',
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
@@ -123,8 +123,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_subnet:segment_id',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Update ``segment_id`` attribute of a subnet',
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
@@ -135,8 +135,8 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_subnet:service_types',
-        check_str=base.SYSTEM_ADMIN,
-        scope_types=['system'],
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
         description='Update ``service_types`` attribute of a subnet',
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
@@ -148,9 +148,9 @@ rules = [
     policy.DocumentedRuleDefault(
         name='delete_subnet',
         check_str=base.policy_or(
-            base.SYSTEM_ADMIN_OR_PROJECT_MEMBER,
+            base.PROJECT_MEMBER,
             base.RULE_NET_OWNER),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description='Delete a subnet',
         operations=ACTION_DELETE,
         deprecated_rule=policy.DeprecatedRule(

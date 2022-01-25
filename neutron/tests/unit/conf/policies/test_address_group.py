@@ -16,7 +16,7 @@
 from oslo_policy import policy as base_policy
 
 from neutron import policy
-from neutron.tests.unit.conf.policies import base
+from neutron.tests.unit.conf.policies import test_base as base
 
 
 class AddressGroupAPITestCase(base.PolicyBaseTestCase):
@@ -24,26 +24,64 @@ class AddressGroupAPITestCase(base.PolicyBaseTestCase):
     def setUp(self):
         super(AddressGroupAPITestCase, self).setUp()
         self.target = {'project_id': self.project_id}
+        self.alt_target = {'project_id': self.alt_project_id}
 
-    def test_system_reader_can_get_address_group(self):
+
+class SystemAdminTests(AddressGroupAPITestCase):
+
+    def setUp(self):
+        super(SystemAdminTests, self).setUp()
+        self.context = self.system_admin_ctx
+
+    def test_get_address_group(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, "get_address_group", self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, "get_address_group", self.alt_target)
+
+
+class SystemMemberTests(SystemAdminTests):
+
+    def setUp(self):
+        super(SystemMemberTests, self).setUp()
+        self.context = self.system_member_ctx
+
+
+class SystemReaderTests(SystemMemberTests):
+
+    def setUp(self):
+        super(SystemReaderTests, self).setUp()
+        self.context = self.system_reader_ctx
+
+
+class ProjectAdminTests(AddressGroupAPITestCase):
+
+    def setUp(self):
+        super(ProjectAdminTests, self).setUp()
+        self.context = self.project_admin_ctx
+
+    def test_get_address_group(self):
         self.assertTrue(
-            policy.enforce(self.system_reader_ctx,
-                           "get_address_group", self.target))
-
-    def test_project_reader_can_get_address_group(self):
-        self.assertTrue(
-            policy.enforce(self.project_reader_ctx,
-                           "get_address_group", self.target))
-
-    def test_system_reader_can_get_any_address_group(self):
-        target = {'project_id': 'some-other-project'}
-        self.assertTrue(
-            policy.enforce(self.system_reader_ctx,
-                           "get_address_group", target))
-
-    def test_project_reader_can_not_get_address_group_other_tenant(self):
-        target = {'project_id': 'some-other-project'}
+            policy.enforce(self.context, "get_address_group", self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
-            self.project_reader_ctx, "get_address_group", target)
+            self.context, "get_address_group", self.alt_target)
+
+
+class ProjectMemberTests(ProjectAdminTests):
+
+    def setUp(self):
+        super(ProjectMemberTests, self).setUp()
+        self.context = self.project_member_ctx
+
+
+class ProjectReaderTests(ProjectMemberTests):
+
+    def setUp(self):
+        super(ProjectReaderTests, self).setUp()
+        self.context = self.project_reader_ctx
