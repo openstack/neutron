@@ -413,6 +413,9 @@ def get_system_dns_resolvers(resolver_file=DNS_RESOLVER_FILE):
             ipv4 = re.search(r'^(?:[0-9]{1,3}\.){3}[0-9]{1,3}', line)
             if ipv4:
                 resolvers.append(ipv4.group(0))
+            elif netutils.is_valid_ipv6(line):
+                resolvers.append(line)
+
     return resolvers
 
 
@@ -423,12 +426,13 @@ def get_dhcp_dns_servers(subnet, ip_version=const.IP_VERSION_4):
     configured DNS server is "0.0.0.0" (IPv4) or "::" (IPv6).
     https://docs.openstack.org/neutron/latest/admin/config-dns-res.html
     """
-    if ip_version == const.IP_VERSION_4:
-        dns_servers = (subnet.get('dns_nameservers') or
-                       ovn_conf.get_dns_servers() or
-                       get_system_dns_resolvers())
-    else:
-        dns_servers = subnet['dns_nameservers']
+    def filter_ips(ips, ip_version=const.IP_VERSION_4):
+        return [ip for ip in ips
+                if netaddr.IPAddress(ip).version == ip_version]
+
+    dns_servers = (subnet.get('dns_nameservers') or
+                   filter_ips(ovn_conf.get_dns_servers(), ip_version) or
+                   filter_ips(get_system_dns_resolvers(), ip_version))
 
     if common_utils.is_dns_servers_any_address(dns_servers, ip_version):
         return []
