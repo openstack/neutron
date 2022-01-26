@@ -182,12 +182,12 @@ class DhcpRpcCallback(object):
         """
         enable_dhcp = kwargs.get('enable_dhcp', True)
         network = kwargs.get('network')
+        host = kwargs.get('host')
         plugin = directory.get_plugin()
         if network:
             ports = kwargs['ports']
         else:
             network_id = kwargs.get('network_id')
-            host = kwargs.get('host')
             LOG.debug('Network %(network_id)s requested from '
                       '%(host)s', {'network_id': network_id,
                                    'host': host})
