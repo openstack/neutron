@@ -1,0 +1,10 @@
+---
+- name: Read OVS configuration file and extract "firewall_driver" variable.
+  set_fact:
+    firewall_driver: "{{ lookup('ini', 'firewall_driver section=securitygroup file=/var/lib/config-data/puppet-generated/neutron/etc/neutron/plugins/ml2/openvswitch_agent.ini', allow_no_value=True) }}"
+
+- name: Check OVS agent firewall is not using "iptables_hybrid" option
+  assert:
+    that:
+      - "'iptables_hybrid' != firewall_driver"
+    fail_msg: "OVS agent firewall cannot be 'iptables_hybrid', migration will not continue"
