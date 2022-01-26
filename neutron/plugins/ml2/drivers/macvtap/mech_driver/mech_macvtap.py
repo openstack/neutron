@@ -40,11 +40,15 @@ class MacvtapMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     def __init__(self):
         vif_details = {portbindings.CAP_PORT_FILTER: False,
                        portbindings.VIF_DETAILS_CONNECTIVITY:
-                           portbindings.CONNECTIVITY_L2}
+                           self.connectivity}
         super(MacvtapMechanismDriver, self).__init__(
             constants.AGENT_TYPE_MACVTAP,
             portbindings.VIF_TYPE_MACVTAP,
             vif_details)
+
+    @property
+    def connectivity(self):
+        return portbindings.CONNECTIVITY_L2
 
     def get_allowed_network_types(self, agent):
         return [constants.TYPE_FLAT, constants.TYPE_VLAN]

@@ -58,7 +58,7 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         sg_enabled = securitygroups_rpc.is_firewall_enabled()
         vif_details = {portbindings.CAP_PORT_FILTER: sg_enabled,
                        portbindings.VIF_DETAILS_CONNECTIVITY:
-                           portbindings.CONNECTIVITY_L2}
+                           self.connectivity}
         # NOTE(moshele): Bind DIRECT (SR-IOV) port allows
         # to offload the OVS flows using tc to the SR-IOV NIC.
         # We are using OVS mechanism driver because the openvswitch (>=2.8.0)
@@ -79,6 +79,10 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
 
         ovs_qos_driver.register()
         log_driver.register()
+
+    @property
+    def connectivity(self):
+        return portbindings.CONNECTIVITY_L2
 
     def get_allowed_network_types(self, agent):
         return (agent['configurations'].get('tunnel_types', []) +

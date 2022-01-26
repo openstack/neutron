@@ -296,7 +296,7 @@ class SimpleAgentMechanismDriverBase(AgentMechanismDriverBase,
             self.supported_vnic_types, vnic_type_prohibit_list)
         self.vif_type = vif_type
         self.vif_details = {portbindings.VIF_DETAILS_CONNECTIVITY:
-                            portbindings.CONNECTIVITY_LEGACY}
+                            self.connectivity}
         self.vif_details.update(vif_details)
 
     def try_to_bind_segment_for_agent(self, context, segment, agent):

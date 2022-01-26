@@ -35,12 +35,16 @@ class LinuxbridgeMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         sg_enabled = securitygroups_rpc.is_firewall_enabled()
         vif_details = {portbindings.CAP_PORT_FILTER: sg_enabled,
                        portbindings.VIF_DETAILS_CONNECTIVITY:
-                           portbindings.CONNECTIVITY_L2}
+                           self.connectivity}
         super(LinuxbridgeMechanismDriver, self).__init__(
             constants.AGENT_TYPE_LINUXBRIDGE,
             portbindings.VIF_TYPE_BRIDGE,
             vif_details)
         lb_qos_driver.register()
+
+    @property
+    def connectivity(self):
+        return portbindings.CONNECTIVITY_L2
 
     def get_allowed_network_types(self, agent):
         return (agent['configurations'].get('tunnel_types', []) +

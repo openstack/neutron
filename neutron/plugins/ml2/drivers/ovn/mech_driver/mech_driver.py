@@ -194,18 +194,20 @@ class OVNMechanismDriver(api.MechanismDriver):
         self.vif_details = {
             portbindings.VIF_TYPE_OVS: {
                 portbindings.CAP_PORT_FILTER: self.sg_enabled,
-                portbindings.VIF_DETAILS_CONNECTIVITY:
-                    portbindings.CONNECTIVITY_L2,
+                portbindings.VIF_DETAILS_CONNECTIVITY: self.connectivity,
             },
             portbindings.VIF_TYPE_VHOST_USER: {
                 portbindings.CAP_PORT_FILTER: False,
                 portbindings.VHOST_USER_MODE:
                 portbindings.VHOST_USER_MODE_SERVER,
                 portbindings.VHOST_USER_OVS_PLUG: True,
-                portbindings.VIF_DETAILS_CONNECTIVITY:
-                    portbindings.CONNECTIVITY_L2,
+                portbindings.VIF_DETAILS_CONNECTIVITY: self.connectivity,
             },
         }
+
+    @property
+    def connectivity(self):
+        return portbindings.CONNECTIVITY_L2
 
     def supported_extensions(self, extensions):
         return set(ovn_extensions.ML2_SUPPORTED_API_EXTENSIONS) & extensions
