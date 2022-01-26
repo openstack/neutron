@@ -1030,7 +1030,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         '''
         try:
             lvm = vlanmanager.LocalVlanManager().pop(net_uuid)
-        except KeyError:
+        except vlanmanager.MappingNotFound:
             LOG.debug("Network %s not used on agent.", net_uuid)
             return
 
