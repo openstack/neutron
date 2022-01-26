@@ -100,6 +100,8 @@ class TestMetadataDriverProcess(base.BaseTestCase):
 
     def test_after_router_updated_called_on_agent_process_update(self):
         with mock.patch.object(metadata_driver, 'after_router_updated') as f,\
+                mock.patch('neutron.agent.l3.namespace_manager.'
+                           'NamespaceManager.list_all', return_value={}),\
                 mock.patch.object(router_info.RouterInfo, 'process'):
             agent = l3_agent.L3NATAgent('localhost')
             router_id = _uuid()
@@ -123,6 +125,8 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                                   'apply'),\
                 mock.patch.object(metadata_driver.MetadataDriver,
                                   'spawn_monitored_metadata_proxy'),\
+                mock.patch('neutron.agent.l3.namespace_manager.'
+                           'NamespaceManager.list_all', return_value={}),\
                 mock.patch.object(router_info.RouterInfo, 'process'):
             agent = l3_agent.L3NATAgent('localhost')
             router_id = _uuid()
@@ -144,7 +148,6 @@ class TestMetadataDriverProcess(base.BaseTestCase):
         cfg.CONF.set_override('metadata_proxy_socket', self.METADATA_SOCKET)
         cfg.CONF.set_override('debug', True)
 
-        agent = l3_agent.L3NATAgent('localhost')
         with mock.patch(ip_class_path) as ip_mock,\
                 mock.patch(
                     'neutron.agent.linux.external_process.'
@@ -155,9 +158,12 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 mock.patch('grp.getgrnam',
                            return_value=test_utils.FakeGroup(self.EGNAME)),\
                 mock.patch('os.makedirs'),\
+                mock.patch('neutron.agent.l3.namespace_manager.'
+                           'NamespaceManager.list_all', return_value={}),\
                 mock.patch(
                     'neutron.agent.linux.ip_lib.'
                     'IpAddrCommand.wait_until_address_ready') as mock_wait:
+            agent = l3_agent.L3NATAgent('localhost')
             cfg_file = os.path.join(
                 metadata_driver.HaproxyConfigurator.get_config_path(
                     agent.conf.state_path),

@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import contextlib
 import copy
 from itertools import chain as iter_chain
 from itertools import combinations as iter_combinations
@@ -20,6 +21,7 @@ import os
 import pwd
 from unittest import mock
 
+import ddt
 import eventlet
 import fixtures
 import netaddr
@@ -214,6 +216,7 @@ class IptablesFixture(fixtures.Fixture):
         iptables_manager.IptablesManager.random_fully = self.random_fully
 
 
+@ddt.ddt
 class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def setUp(self):
         super(TestBasicRouterOperations, self).setUp()
@@ -4221,3 +4224,20 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         agent.stop()
         self.assertTrue(router.delete.called)
         self.assertTrue(agent._exiting)
+
+    @ddt.data(['fip-AAA', 'snat-BBB', 'qrouter-CCC'], [])
+    def test_check_ha_router_process_status(self, namespaces):
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        with contextlib.ExitStack() as stack:
+            list_all = stack.enter_context(mock.patch.object(
+                agent.namespaces_manager, 'list_all'))
+            update = stack.enter_context(mock.patch.object(
+                agent.plugin_rpc, 'update_all_ha_network_port_statuses'))
+            list_all.return_value = namespaces
+
+            agent._check_ha_router_process_status()
+
+            if not namespaces:
+                update.assert_called_once()
+            else:
+                update.assert_not_called()
