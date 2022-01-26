@@ -29,9 +29,14 @@ load_tests = testlib_api.module_load_tests
 class TestPortsRebind(base.BaseFullStackTestCase):
 
     scenarios = [
-        ('Open vSwitch Agent', {'l2_agent_type': constants.AGENT_TYPE_OVS}),
+        ('Open vSwitch Agent', {
+            'l2_agent_type': constants.AGENT_TYPE_OVS,
+            'l2_mechdriver_name': 'openvswitch',
+        }),
         ('Linux Bridge Agent', {
-            'l2_agent_type': constants.AGENT_TYPE_LINUXBRIDGE})]
+            'l2_agent_type': constants.AGENT_TYPE_LINUXBRIDGE,
+            'l2_mechdriver_name': 'linuxbridge',
+        })]
 
     def setUp(self):
         host_descriptions = [
@@ -55,8 +60,10 @@ class TestPortsRebind(base.BaseFullStackTestCase):
             self.tenant_id, self.network['id'], '20.0.0.0/24')
 
     def _ensure_port_bound(self, port_id):
+        port = None
 
         def port_bound():
+            nonlocal port
             port = self.safe_client.client.show_port(port_id)['port']
             return (
                 port[portbindings.VIF_TYPE] not in
@@ -64,6 +71,10 @@ class TestPortsRebind(base.BaseFullStackTestCase):
                      portbindings.VIF_TYPE_BINDING_FAILED])
 
         common_utils.wait_until_true(port_bound)
+        bound_drivers = {'0': self.l2_mechdriver_name}
+        self.assertEqual(bound_drivers,
+                         port[portbindings.VIF_DETAILS][
+                             portbindings.VIF_DETAILS_BOUND_DRIVERS])
 
     def _ensure_port_binding_failed(self, port_id):
 

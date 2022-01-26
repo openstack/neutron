@@ -539,6 +539,9 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
                 port['id'], self.host, raw_response=False)
         self._assert_bound_port_binding(active_binding)
         updated_port = self._show('ports', port['id'])['port']
+        updated_bound_drivers = updated_port[portbindings.VIF_DETAILS].pop(
+            portbindings.VIF_DETAILS_BOUND_DRIVERS)
+        self.assertEqual({'0': 'test'}, updated_bound_drivers)
         self.assertEqual(new_binding[pbe_ext.HOST],
             updated_port[portbindings.HOST_ID])
         self.assertEqual(new_binding[pbe_ext.PROFILE],

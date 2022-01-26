@@ -739,6 +739,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                             cur_binding.host)
                     db.set_binding_levels(plugin_context,
                                           bind_context._binding_levels)
+                    # Expire the "binding_levels" and fetch them into the port.
+                    plugin_context.session.flush()
+                    getattr(port_db, 'binding_levels')
                 # refresh context with a snapshot of updated state
                 cur_context._binding = driver_context.InstanceSnapshot(
                     cur_context_binding)
@@ -807,6 +810,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             port[portbindings.VIF_TYPE] = binding.vif_type
             port[portbindings.VIF_DETAILS] = self._get_vif_details(binding)
 
+    def _update_port_dict_bound_drivers(self, port, binding_levels):
+        levels = {str(bl.level): bl.driver for bl in binding_levels}
+        if levels:
+            port[portbindings.VIF_DETAILS][
+                portbindings.VIF_DETAILS_BOUND_DRIVERS] = levels
+
     def _get_vif_details(self, binding):
         if binding.vif_details:
             try:
@@ -835,13 +844,17 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         plugin = directory.get_plugin()
         if isinstance(port_db, ports_obj.Port):
             bindings = port_db.bindings
+            binding_levels = port_db.db_obj.binding_levels
         else:
             bindings = port_db.port_bindings
+            binding_levels = port_db.binding_levels
+
         port_binding = p_utils.get_port_binding_by_status_and_host(
             bindings, const.ACTIVE)
         # None when called during unit tests for other plugins.
         if port_binding:
             plugin._update_port_dict_binding(port_res, port_binding)
+            plugin._update_port_dict_bound_drivers(port_res, binding_levels)
 
     # ML2's resource extend functions allow extension drivers that extend
     # attributes for the resources to add those attributes to the result.
