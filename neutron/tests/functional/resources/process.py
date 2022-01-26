@@ -82,8 +82,9 @@ class OvnNorthd(DaemonProcessFixture):
 
     def stop(self):
         try:
-            stop_cmd = ['ovs-appctl', '-t', self.unixctl_path, 'exit']
-            utils.execute(stop_cmd)
+            if os.path.isfile(self.unixctl_path):
+                stop_cmd = ['ovs-appctl', '-t', self.unixctl_path, 'exit']
+                utils.execute(stop_cmd)
         except Exception:
             pass
 
