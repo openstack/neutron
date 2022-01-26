@@ -607,6 +607,14 @@ still valid. It will delete the stale trunk and subports using the procedure spe
 in the previous paragraphs according to the implementation.
 
 
+Local IP
+--------
+
+Local IP is a new feature added in Yoga release. For details on openvswitch
+agent impact please see:
+:doc:`Local IPs <local_ips>`.
+
+
 Further Reading
 ---------------
 
