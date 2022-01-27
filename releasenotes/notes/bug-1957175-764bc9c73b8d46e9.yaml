@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Enforce policy for 'qos_policy_id' attribute of
+    Floating IP so only authorized users can set/unset it.
+    For more info see `bug LP#1957175 <https://bugs.launchpad.net/bugs/1957175>`_.
