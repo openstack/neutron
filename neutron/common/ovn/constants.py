@@ -68,6 +68,9 @@ OVN_AGENT_METADATA_ID_KEY = 'neutron:ovn-metadata-id'
 OVN_CONTROLLER_AGENT = 'OVN Controller agent'
 OVN_CONTROLLER_GW_AGENT = 'OVN Controller Gateway agent'
 OVN_METADATA_AGENT = 'OVN Metadata agent'
+OVN_CONTROLLER_TYPES = (OVN_CONTROLLER_AGENT,
+                        OVN_CONTROLLER_GW_AGENT,
+                        )
 
 # OVN ACLs have priorities.  The highest priority ACL that matches is the one
 # that takes effect.  Our choice of priority numbers is arbitrary, but it
