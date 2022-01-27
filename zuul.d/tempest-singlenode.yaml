@@ -70,6 +70,15 @@
       - ^neutron/plugins/ml2/drivers/macvtap/.*$
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
       - ^neutron/plugins/ml2/drivers/ovn/.*$
+      - ^neutron/services/ovn_l3/.*$
+      - ^neutron/services/logapi/drivers/ovn/.*$
+      - ^neutron/services/portforwarding/drivers/ovn/.*$
+      - ^neutron/services/qos/drivers/linuxbridge/.*$
+      - ^neutron/services/qos/drivers/ovn/.*$
+      - ^neutron/services/trunk/drivers/linuxbridge/.*$
+      - ^neutron/services/trunk/drivers/ovn/.*$
+      - ^neutron/cmd/ovn/.*$
+      - ^neutron/common/ovn/.*$
       - ^zuul.d/(?!(project)).*\.yaml
 
 - job:
@@ -99,7 +108,7 @@
       - ^.*\.rst$
       - ^doc/.*$
       - ^neutron/locale/.*$
-      - ^neutron/tests/unit/.*$
+      - ^neutron/tests/.*$
       - ^releasenotes/.*$
       - ^setup.cfg$
       - ^tools/.*$
@@ -112,6 +121,16 @@
       - ^neutron/plugins/ml2/drivers/macvtap/.*$
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
       - ^neutron/plugins/ml2/drivers/ovn/.*$
+      - ^neutron/services/ovn_l3/.*$
+      - ^neutron/services/logapi/drivers/openvswitch/.*$
+      - ^neutron/services/logapi/drivers/ovn/.*$
+      - ^neutron/services/portforwarding/drivers/ovn/.*$
+      - ^neutron/services/qos/drivers/openvswitch/.*$
+      - ^neutron/services/qos/drivers/ovn/.*$
+      - ^neutron/services/trunk/drivers/openvswitch/.*$
+      - ^neutron/services/trunk/drivers/ovn/.*$
+      - ^neutron/cmd/ovn/.*$
+      - ^neutron/common/ovn/.*$
       - ^zuul.d/(?!(project)).*\.yaml
 
 # TODO(ralonsoh): remove this duplicated definition when "devstack" and "nova"
@@ -208,7 +227,7 @@
       - ^.*\.rst$
       - ^doc/.*$
       - ^neutron/locale/.*$
-      - ^neutron/tests/unit/.*$
+      - ^neutron/tests/.*$
       - ^releasenotes/.*$
       - ^setup.cfg$
       - ^tools/.*$
@@ -283,7 +302,7 @@
       - ^.*\.rst$
       - ^doc/.*$
       - ^neutron/locale/.*$
-      - ^neutron/tests/unit/.*$
+      - ^neutron/tests/.*$
       - ^releasenotes/.*$
       - ^setup.cfg$
       - ^tools/.*$
@@ -388,7 +407,7 @@
       - ^setup.cfg$
       - ^.*\.rst$
       - ^neutron/locale/.*$
-      - ^neutron/tests/unit/.*$
+      - ^neutron/tests/.*$
       - ^tools/.*$
       - ^tox.ini$
       - ^neutron/agent/dhcp/.*$
@@ -406,6 +425,10 @@
       - ^neutron/plugins/ml2/drivers/openvswitch/.*$
       - ^neutron/plugins/ml2/drivers/macvtap/.*$
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
+      - ^neutron/services/qos/drivers/linuxbridge/.*$
+      - ^neutron/services/qos/drivers/openvswitch/.*$
+      - ^neutron/services/trunk/drivers/linuxbridge/.*$
+      - ^neutron/services/trunk/drivers/openvswitch/.*$
       - ^neutron/scheduler/.*$
       - ^zuul.d/(?!(project)).*\.yaml
 
