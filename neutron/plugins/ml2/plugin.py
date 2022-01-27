@@ -2368,8 +2368,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def check_segment_for_agent(self, segment, agent):
         for mech_driver in self.mechanism_manager.ordered_mech_drivers:
-            driver_agent_type = getattr(mech_driver.obj, 'agent_type', None)
-            if driver_agent_type and driver_agent_type == agent['agent_type']:
+            # TODO(ralonsoh): add "check_segment_for_agent" method to ABC
+            # "MechanismDriver", returning False by default.
+            if hasattr(mech_driver.obj, 'check_segment_for_agent'):
                 if mech_driver.obj.check_segment_for_agent(segment, agent):
                     return True
         return False
