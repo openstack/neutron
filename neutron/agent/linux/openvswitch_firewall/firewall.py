@@ -646,6 +646,14 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                     'resubmit(,%d)' % ovs_consts.BASE_EGRESS_TABLE,
         )
 
+        if cfg.CONF.AGENT.explicitly_egress_direct:
+            self._add_flow(
+                table=ovs_consts.TRANSIENT_TABLE,
+                priority=2,
+                actions='resubmit(,%d)' % (
+                    ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE)
+            )
+
     def _initialize_third_party_tables(self):
         self.int_br.br.add_flow(
             table=ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE,
@@ -1245,6 +1253,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             return
 
         # Prevent flood for accepted egress traffic
+        # For packets from internal ports or VM ports.
         self._add_flow(
             flow_group_id=dst_port,
             table=ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE,
@@ -1252,6 +1261,15 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             dl_dst=mac,
             reg_net=vlan_tag,
             actions='output:{:d}'.format(dst_port)
+        )
+        # For packets from patch ports.
+        self._add_flow(
+            flow_group_id=dst_port,
+            table=ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE,
+            priority=12,
+            dl_dst=mac,
+            dl_vlan=vlan_tag,
+            actions='strip_vlan,output:{:d}'.format(dst_port)
         )
 
         # The former flow may not match, that means the destination port is
@@ -1300,6 +1318,12 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             table=ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE,
             dl_src=mac,
             reg_net=vlan_tag)
+
+        self._delete_flows(
+            table=ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE,
+            dl_dst=mac,
+            dl_vlan=vlan_tag
+        )
 
     def _initialize_tracked_egress(self, port):
         # Drop invalid packets
