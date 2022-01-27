@@ -365,8 +365,14 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             send_nova_event = bool(trigger ==
                                    provisioning_blocks.L2_AGENT_ENTITY)
             with self.nova_notifier.context_enabled(send_nova_event):
+                LOG.debug("Updating port %s status to %s; "
+                          "nova_notifier enabled: %s",
+                          port_id, const.PORT_STATUS_ACTIVE, send_nova_event)
                 self.update_port_status(payload.context, port_id,
                                         const.PORT_STATUS_ACTIVE)
+            LOG.debug("After port %s status update nova_notifier is now "
+                      "restored to old value: %s",
+                      port_id, self.nova_notifier._enabled)
         else:
             self.update_port_status(payload.context, port_id,
                                     const.PORT_STATUS_ACTIVE)
