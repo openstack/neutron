@@ -62,7 +62,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                         ]),
                 ],
                 match=ofpp.OFPMatch(),
-                priority=3,
+                priority=1,
                 table_id=60),
                            active_bundle=None),
             call._send_msg(ofpp.OFPFlowMod(dp,
