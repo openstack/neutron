@@ -465,6 +465,11 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
                                   eth_type=0x86DD)
 
     def setup_local_egress_flows(self, in_port, vlan):
+        if in_port == constants.OFPORT_INVALID:
+            LOG.warning("Invalid ofport: %s, vlan: %s - "
+                        "skipping setup_local_egress_flows", in_port, vlan)
+            return
+
         # Setting priority to 8 to give advantage to ARP/MAC spoofing rules
         self.install_goto(table_id=constants.LOCAL_SWITCHING,
                           priority=8,

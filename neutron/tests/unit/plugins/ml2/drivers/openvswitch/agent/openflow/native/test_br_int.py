@@ -716,6 +716,13 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
+    def test_setup_local_egress_flows_ofport_invalid(self):
+        in_port = constants.OFPORT_INVALID
+        vlan = 3333
+        self.br.setup_local_egress_flows(in_port=in_port, vlan=vlan)
+
+        self.assertFalse(self.mock.called)
+
     def test_install_garp_blocker(self):
         vlan = 2222
         ip = '192.0.0.10'
