@@ -24,6 +24,7 @@ EXTENDED_ATTRIBUTES_2_0 = {
             'allow_put': True,
             'is_visible': True,
             'default': None,
+            'enforce_policy': True,
             'validate': {'type:uuid_or_none': None}}
     }
 }
