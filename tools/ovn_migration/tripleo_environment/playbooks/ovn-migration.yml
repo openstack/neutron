@@ -13,6 +13,15 @@
   tags:
     - pre-migration
 
+
+- name: Pre migration checks in the OVN controllers
+  hosts: ovn-controllers
+  roles:
+    - pre-checks/ovn-controllers
+  tags:
+    - pre-migration
+
+
 #
 # This step is executed before migration, and will backup some config
 # files related to containers before those get lost.
