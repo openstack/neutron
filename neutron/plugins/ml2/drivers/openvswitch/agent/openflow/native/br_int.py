@@ -57,7 +57,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
         self.install_goto(dest_table_id=constants.PACKET_RATE_LIMIT)
         self.install_goto(dest_table_id=constants.TRANSIENT_TABLE,
                           table_id=constants.PACKET_RATE_LIMIT)
-        self.install_normal(table_id=constants.TRANSIENT_TABLE, priority=3)
+        self.install_normal(table_id=constants.TRANSIENT_TABLE, priority=1)
         self.init_dhcp(enable_openflow_dhcp=enable_openflow_dhcp,
                        enable_dhcpv6=enable_dhcpv6)
         self.install_drop(table_id=constants.ARP_SPOOF_TABLE)
