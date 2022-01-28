@@ -32,6 +32,32 @@ class LoggerMechanismDriver(api.MechanismDriver):
     def initialize(self):
         pass
 
+    def _log_diff_call(self, method_name, context):
+        # On the delete the context.current item is the object with
+        # all the info and the context.original is the delete object
+        # In order to have the output format correct this swap is needed
+        if "delete" in method_name:
+            og_item = context.current if context.current else {}
+            curr_item = context.original if context.original else {}
+        else:
+            og_item = context.original if context.original else {}
+            curr_item = context.current if context.current else {}
+
+        removed_keys = set(og_item.keys()) - set(curr_item.keys())
+        added_keys = set(curr_item.keys()) - set(og_item.keys())
+        output = "{}:\n".format(method_name)
+
+        for k in curr_item.keys():
+            if k in og_item and og_item[k] != curr_item[k]:
+                output += "key[{}], {} -> {}\n".format(
+                        k, og_item[k], curr_item[k])
+        for add_k in added_keys:
+            output += "key[{}], None -> {}\n".format(add_k, curr_item[add_k])
+        for rem_k in removed_keys:
+            output += "key[{}], {} -> None\n".format(rem_k, og_item[rem_k])
+
+        LOG.debug(output)
+
     def _log_network_call(self, method_name, context):
         LOG.info("%(method)s called with network settings %(current)s "
                  "(original settings %(original)s) and "
@@ -43,24 +69,31 @@ class LoggerMechanismDriver(api.MechanismDriver):
 
     def create_network_precommit(self, context):
         self._log_network_call("create_network_precommit", context)
+        self._log_diff_call("create_network_precommit", context)
 
     def create_network_postcommit(self, context):
         self._log_network_call("create_network_postcommit", context)
+        self._log_diff_call("create_network_postcommit", context)
 
     def update_network_precommit(self, context):
         self._log_network_call("update_network_precommit", context)
+        self._log_diff_call("update_network_precommit", context)
 
     def update_network_postcommit(self, context):
         self._log_network_call("update_network_postcommit", context)
+        self._log_diff_call("update_network_postcommit", context)
 
     def delete_network_precommit(self, context):
         self._log_network_call("delete_network_precommit", context)
+        self._log_diff_call("delete_network_precommit", context)
 
     def delete_network_postcommit(self, context):
         self._log_network_call("delete_network_postcommit", context)
+        self._log_diff_call("delete_network_postcommit", context)
 
     def check_vlan_transparency(self, context):
         self._log_network_call("check_vlan_transparency", context)
+        self._log_diff_call("check_vlan_transparency", context)
         return True
 
     def _log_subnet_call(self, method_name, context):
@@ -72,21 +105,27 @@ class LoggerMechanismDriver(api.MechanismDriver):
 
     def create_subnet_precommit(self, context):
         self._log_subnet_call("create_subnet_precommit", context)
+        self._log_diff_call("create_subnet_precommit", context)
 
     def create_subnet_postcommit(self, context):
         self._log_subnet_call("create_subnet_postcommit", context)
+        self._log_diff_call("create_subnet_postcommit", context)
 
     def update_subnet_precommit(self, context):
         self._log_subnet_call("update_subnet_precommit", context)
+        self._log_diff_call("update_subnet_precommit", context)
 
     def update_subnet_postcommit(self, context):
         self._log_subnet_call("update_subnet_postcommit", context)
+        self._log_diff_call("update_subnet_postcommit", context)
 
     def delete_subnet_precommit(self, context):
         self._log_subnet_call("delete_subnet_precommit", context)
+        self._log_diff_call("delete_subnet_precommit", context)
 
     def delete_subnet_postcommit(self, context):
         self._log_subnet_call("delete_subnet_postcommit", context)
+        self._log_diff_call("delete_subnet_postcommit", context)
 
     def _log_port_call(self, method_name, context):
         network_context = context.network
@@ -118,24 +157,31 @@ class LoggerMechanismDriver(api.MechanismDriver):
 
     def create_port_precommit(self, context):
         self._log_port_call("create_port_precommit", context)
+        self._log_diff_call("create_port_precommit", context)
 
     def create_port_postcommit(self, context):
         self._log_port_call("create_port_postcommit", context)
+        self._log_diff_call("create_port_postcommit", context)
 
     def update_port_precommit(self, context):
         self._log_port_call("update_port_precommit", context)
+        self._log_diff_call("update_port_precommit", context)
 
     def update_port_postcommit(self, context):
         self._log_port_call("update_port_postcommit", context)
+        self._log_diff_call("update_port_postcommit", context)
 
     def delete_port_precommit(self, context):
         self._log_port_call("delete_port_precommit", context)
+        self._log_diff_call("delete_port_precommit", context)
 
     def delete_port_postcommit(self, context):
         self._log_port_call("delete_port_postcommit", context)
+        self._log_diff_call("delete_port_postcommit", context)
 
     def bind_port(self, context):
         self._log_port_call("bind_port", context)
+        self._log_diff_call("bind_port", context)
 
     def filter_hosts_with_segment_access(
             self, context, segments, candidate_hosts, agent_getter):
