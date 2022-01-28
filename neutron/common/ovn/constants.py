@@ -283,6 +283,8 @@ LSP_OPTIONS_VIRTUAL_IP_KEY = 'virtual-ip'
 LSP_OPTIONS_MCAST_FLOOD_REPORTS = 'mcast_flood_reports'
 LSP_OPTIONS_MCAST_FLOOD = 'mcast_flood'
 
+LRP_OPTIONS_RESIDE_REDIR_CH = 'reside-on-redirect-chassis'
+
 HA_CHASSIS_GROUP_DEFAULT_NAME = 'default_ha_chassis_group'
 HA_CHASSIS_GROUP_HIGHEST_PRIORITY = 32767
 
