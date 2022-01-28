@@ -372,9 +372,25 @@ class OVNClient(object):
                             ovn_const.VIF_DETAILS_PF_MAC_ADDRESS)),
                     ovn_const.LSP_OPTIONS_VIF_PLUG_REPRESENTOR_VF_NUM_KEY: str(
                         binding_prof.get(ovn_const.VIF_DETAILS_VF_NUM))})
-            options.update({
-                ovn_const.LSP_OPTIONS_REQUESTED_CHASSIS_KEY: (
-                    self.determine_bind_host(port))})
+            chassis = self.determine_bind_host(port)
+            if chassis:
+                # If OVN supports multi-chassis port bindings, use it for live
+                # migration to asynchronously configure destination port while
+                # VM is migrating
+                if self._sb_idl.is_col_present('Port_Binding',
+                                               'additional_chassis'):
+                    mdst = port.get(
+                        portbindings.PROFILE, {}).get(
+                        ovn_const.MIGRATING_ATTR)
+                    if mdst:
+                        # Let OVN know that the port should be configured on
+                        # destination too
+                        chassis += ',%s' % mdst
+                        # Block traffic on destination host until libvirt sends
+                        # a RARP packet from it to inform network about the new
+                        # location of the port
+                        options['activation-strategy'] = 'rarp'
+            options[ovn_const.LSP_OPTIONS_REQUESTED_CHASSIS_KEY] = chassis
 
         # TODO(lucasagomes): Enable the mcast_flood_reports by default,
         # according to core OVN developers it shouldn't cause any harm
