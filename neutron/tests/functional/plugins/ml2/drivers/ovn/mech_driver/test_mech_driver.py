@@ -42,12 +42,16 @@ from neutron.tests.functional import base
 VHU_MODE = 'server'
 OVS_VIF_DETAILS = {
     portbindings.CAP_PORT_FILTER: True,
-    portbindings.VIF_DETAILS_CONNECTIVITY: portbindings.CONNECTIVITY_L2}
+    portbindings.VIF_DETAILS_CONNECTIVITY: portbindings.CONNECTIVITY_L2,
+    portbindings.VIF_DETAILS_BOUND_DRIVERS: {'0': 'ovn'},
+}
 VHOSTUSER_VIF_DETAILS = {
     portbindings.CAP_PORT_FILTER: False,
     'vhostuser_mode': VHU_MODE,
     'vhostuser_ovs_plug': True,
-    portbindings.VIF_DETAILS_CONNECTIVITY: portbindings.CONNECTIVITY_L2}
+    portbindings.VIF_DETAILS_CONNECTIVITY: portbindings.CONNECTIVITY_L2,
+    portbindings.VIF_DETAILS_BOUND_DRIVERS: {'0': 'ovn'},
+}
 
 
 class TestPortBinding(base.TestOVNFunctionalBase):

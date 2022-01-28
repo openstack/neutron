@@ -1560,7 +1560,6 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     @db_api.CONTEXT_READER
     def get_port(self, context, id, fields=None):
         lazy_fields = [models_v2.Port.port_forwardings,
-                       models_v2.Port.binding_levels,
                        models_v2.Port.distributed_port_binding]
         port = self._get_port(context, id, lazy_fields=lazy_fields)
         return self._make_port_dict(port, fields)
@@ -1606,7 +1605,6 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         marker_obj = ndb_utils.get_marker_obj(self, context, 'port',
                                               limit, marker)
         lazy_fields = [models_v2.Port.port_forwardings,
-                       models_v2.Port.binding_levels,
                        models_v2.Port.distributed_port_binding]
         query = self._get_ports_query(context, filters=filters,
                                       sorts=sorts, limit=limit,
