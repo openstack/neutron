@@ -236,7 +236,8 @@ class Controller(object):
                                           do_authz=True,
                                           field_list=None,
                                           parent_id=parent_id)
-                except oslo_policy.PolicyNotAuthorized:
+                except (oslo_policy.PolicyNotAuthorized,
+                        oslo_policy.InvalidScope):
                     msg = _('The resource could not be found.')
                     raise webob.exc.HTTPNotFound(msg)
                 body = kwargs.pop('body', None)
@@ -388,7 +389,7 @@ class Controller(object):
                                           field_list=field_list,
                                           parent_id=parent_id),
                                fields_to_strip=added_fields)}
-        except oslo_policy.PolicyNotAuthorized:
+        except (oslo_policy.PolicyNotAuthorized, oslo_policy.InvalidScope):
             # To avoid giving away information, pretend that it
             # doesn't exist
             msg = _('The resource could not be found.')
@@ -585,7 +586,7 @@ class Controller(object):
                            action,
                            obj,
                            pluralized=self._collection)
-        except oslo_policy.PolicyNotAuthorized:
+        except (oslo_policy.PolicyNotAuthorized, oslo_policy.InvalidScope):
             # To avoid giving away information, pretend that it
             # doesn't exist if policy does not authorize SHOW
             with excutils.save_and_reraise_exception() as ctxt:
@@ -672,7 +673,7 @@ class Controller(object):
                            action,
                            orig_obj,
                            pluralized=self._collection)
-        except oslo_policy.PolicyNotAuthorized:
+        except (oslo_policy.PolicyNotAuthorized, oslo_policy.InvalidScope):
             # To avoid giving away information, pretend that it
             # doesn't exist if policy does not authorize SHOW
             with excutils.save_and_reraise_exception() as ctxt:

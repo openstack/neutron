@@ -483,10 +483,18 @@ def check(context, action, target, plugin=None, might_not_exist=False,
                                                      action,
                                                      target,
                                                      pluralized)
-    result = _ENFORCER.enforce(match_rule,
-                               target,
-                               credentials,
-                               pluralized=pluralized)
+    # TODO(slaweq): this try..except.. block can be removed when bug
+    # https://bugs.launchpad.net/oslo.policy/+bug/1965315 will be fixed in
+    # oslo.policy
+    try:
+        result = _ENFORCER.enforce(match_rule,
+                                   target,
+                                   credentials,
+                                   pluralized=pluralized)
+    except policy.InvalidScope:
+        log_rule_list(match_rule)
+        LOG.debug("Failed policy check for '%s'", action)
+        result = False
     return result
 
 
@@ -518,10 +526,10 @@ def enforce(context, action, target, plugin=None, pluralized=None):
     try:
         result = _ENFORCER.enforce(rule, target, context, action=action,
                                    do_raise=True)
-    except policy.PolicyNotAuthorized:
+    except (policy.PolicyNotAuthorized, policy.InvalidScope):
         with excutils.save_and_reraise_exception():
             log_rule_list(rule)
-            LOG.debug("Failed policy check for '%s'", action)
+            LOG.debug("Failed policy enforce for '%s'", action)
     return result
 
 
