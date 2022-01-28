@@ -80,12 +80,30 @@ class PolicyTestCase(base.BaseTestCase):
             "example:uppercase_admin": "role:ADMIN or role:sysadmin",
             "example:only_system_admin_allowed": (
                 "role:admin and system_scope:all"),
+            "example:only_project_user_allowed": (
+                "role:reader and tenant_id:%(tenant_id)s")
         }
         policy.refresh()
+        self._register_default_rules()
         # NOTE(vish): then overload underlying rules
         policy.set_rules(oslo_policy.Rules.from_dict(rules))
         self.context = context.Context('fake', 'fake', roles=['member'])
         self.target = {}
+
+    def _register_default_rules(self):
+        rules_with_scope = [
+            oslo_policy.DocumentedRuleDefault(
+                name='get_example:only_project_user_allowed',
+                description="Test rule only",
+                check_str='role:reader and project_id:%(project_id)s',
+                operations=[
+                    {
+                        'method': 'GET',
+                        'path': '/example',
+                    },
+                ],
+                scope_types=['project'])]
+        policy._ENFORCER.register_defaults(rules_with_scope)
 
     def _test_check_system_admin_allowed_action(self, enforce_new_defaults):
         action = "example:only_system_admin_allowed"
@@ -95,9 +113,11 @@ class PolicyTestCase(base.BaseTestCase):
             user="fake", project_id="fake",
             roles=['admin', 'member', 'reader'])
         system_admin_ctx = context.Context(
-            user="fake", project_id="fake",
+            user="fake",
             roles=['admin', 'member', 'reader'],
             system_scope='all')
+        if not enforce_new_defaults:
+            system_admin_ctx.project_id = 'fake'
         self.assertTrue(policy.check(system_admin_ctx, action, self.target))
         if enforce_new_defaults:
             self.assertFalse(
@@ -121,9 +141,11 @@ class PolicyTestCase(base.BaseTestCase):
             user="fake", project_id="fake",
             roles=['admin', 'member', 'reader'])
         system_admin_ctx = context.Context(
-            user="fake", project_id="fake",
+            user="fake",
             roles=['admin', 'member', 'reader'],
             system_scope='all')
+        if not enforce_new_defaults:
+            system_admin_ctx.project_id = 'fake'
         self.assertTrue(policy.enforce(system_admin_ctx, action, self.target))
         if enforce_new_defaults:
             self.assertRaises(
@@ -164,6 +186,19 @@ class PolicyTestCase(base.BaseTestCase):
                                 might_not_exist=True)
         self.assertTrue(result_2)
 
+    def test_check_invalid_scope(self):
+        cfg.CONF.set_override(
+            'enforce_new_defaults', True, group='oslo_policy')
+        cfg.CONF.set_override(
+            'enforce_scope', True, group='oslo_policy')
+        action = "get_example:only_project_user_allowed"
+        target = {'project_id': 'some-project'}
+        system_admin_ctx = context.Context(
+            user="fake",
+            roles=['admin', 'member', 'reader'],
+            system_scope='all')
+        self.assertFalse(policy.check(system_admin_ctx, action, target))
+
     def test_enforce_good_action(self):
         action = "example:allowed"
         result = policy.enforce(self.context, action, self.target)
@@ -183,6 +218,21 @@ class PolicyTestCase(base.BaseTestCase):
         self.assertRaises(oslo_policy.PolicyNotAuthorized,
                           policy.enforce, self.context,
                           action, target)
+
+    def test_enforce_invalid_scope(self):
+        cfg.CONF.set_override(
+            'enforce_new_defaults', True, group='oslo_policy')
+        cfg.CONF.set_override(
+            'enforce_scope', True, group='oslo_policy')
+        action = "get_example:only_project_user_allowed"
+        target = {'project_id': 'some-project'}
+        system_admin_ctx = context.Context(
+            user="fake",
+            roles=['admin', 'member', 'reader'],
+            system_scope='all')
+        self.assertRaises(
+            oslo_policy.InvalidScope,
+            policy.enforce, system_admin_ctx, action, target)
 
     def test_templatized_enforcement(self):
         target_mine = {'tenant_id': 'fake'}
