@@ -13,8 +13,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import queue
 from unittest import mock
 
+import eventlet
 from neutron_lib import constants as n_const
 from neutron_lib import context as n_ctx
 from neutron_lib import exceptions as n_exc
@@ -371,3 +373,35 @@ class TestNovaNotify(base.BaseTestCase):
         self.assertEqual(
             expected_event,
             self.nova_notifier.batch_notifier._pending_events.get())
+
+    def test_notify_concurrent_enable_flag_update(self):
+        # This test assumes Neutron server uses eventlet.
+        # NOTE(ralonsoh): the exceptions raise inside a thread won't stop the
+        # test. The checks are stored in "_queue" and tested at the end of the
+        # test execution.
+        _queue = eventlet.queue.Queue()
+
+        def _local_executor(thread_idx):
+            # This thread has not yet initialized the local "enable" flag.
+            _queue.put(getattr(nova._notifier_store, 'enable', None) is None)
+            eventlet.sleep(0)  # Next thread execution.
+            new_enable = bool(thread_idx % 2)
+            with self.nova_notifier.context_enabled(new_enable):
+                # At this point, the Nova Notifier should have updated the
+                # "enable" flag.
+                _queue.put(new_enable == nova._notifier_store.enable)
+                eventlet.sleep(0)  # Next thread execution.
+                _queue.put(new_enable == nova._notifier_store.enable)
+            _queue.put(nova.NOTIFIER_ENABLE_DEFAULT ==
+                       nova._notifier_store.enable)
+
+        num_threads = 20
+        pool = eventlet.GreenPool(num_threads)
+        for idx in range(num_threads):
+            pool.spawn(_local_executor, idx)
+        pool.waitall()
+        try:
+            while True:
+                self.assertTrue(_queue.get(block=False))
+        except queue.Empty:
+            pass
