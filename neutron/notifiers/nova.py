@@ -15,6 +15,7 @@
 
 import contextlib
 
+from eventlet.green import threading
 from keystoneauth1 import loading as ks_loading
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
@@ -45,6 +46,13 @@ NEUTRON_NOVA_EVENT_STATUS_MAP = {constants.PORT_STATUS_ACTIVE: 'completed',
                                  constants.PORT_STATUS_DOWN: 'completed'}
 NOVA_API_VERSION = "2.1"
 
+NOTIFIER_ENABLE_DEFAULT = True
+# NOTE(ralonsoh): the Nova notifier can be called simultaneously by several RPC
+# callbacks from the agents (DHCP, L2), trying to update the provisioning
+# status of a port. In order to handle each context notifier enable flag, a
+# thread local variable is used.
+_notifier_store = threading.local()
+
 
 @registry.has_registry_receivers
 class Notifier(object):
@@ -68,16 +76,14 @@ class Notifier(object):
             if ext.name == "server_external_events"]
         self.batch_notifier = batch_notifier.BatchNotifier(
             cfg.CONF.send_events_interval, self.send_events)
-        self._enabled = True
 
     @contextlib.contextmanager
     def context_enabled(self, enabled):
-        stored_enabled = self._enabled
         try:
-            self._enabled = enabled
+            _notifier_store.enable = enabled
             yield
         finally:
-            self._enabled = stored_enabled
+            _notifier_store.enable = NOTIFIER_ENABLE_DEFAULT
 
     def _get_nova_client(self):
         global_id = common_context.generate_request_id()
@@ -176,7 +182,10 @@ class Notifier(object):
                 return self._get_network_changed_event(port)
 
     def _can_notify(self, port):
-        if not self._enabled:
+        if getattr(_notifier_store, 'enable', None) is None:
+            _notifier_store.enable = NOTIFIER_ENABLE_DEFAULT
+
+        if not _notifier_store.enable:
             LOG.debug("Nova notifier disabled")
             return False
 
