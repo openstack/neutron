@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import functools
 import re
 from unittest import mock
@@ -38,6 +39,16 @@ from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.tests import base as tests_base
 from neutron.tests.functional import base
 
+VHU_MODE = 'server'
+OVS_VIF_DETAILS = {
+    portbindings.CAP_PORT_FILTER: True,
+    portbindings.VIF_DETAILS_CONNECTIVITY: portbindings.CONNECTIVITY_L2}
+VHOSTUSER_VIF_DETAILS = {
+    portbindings.CAP_PORT_FILTER: False,
+    'vhostuser_mode': VHU_MODE,
+    'vhostuser_ovs_plug': True,
+    portbindings.VIF_DETAILS_CONNECTIVITY: portbindings.CONNECTIVITY_L2}
+
 
 class TestPortBinding(base.TestOVNFunctionalBase):
 
@@ -46,7 +57,6 @@ class TestPortBinding(base.TestOVNFunctionalBase):
         self.ovs_host = 'ovs-host'
         self.dpdk_host = 'dpdk-host'
         self.invalid_dpdk_host = 'invalid-host'
-        self.vhu_mode = 'server'
         self.add_fake_chassis(self.ovs_host)
         self.add_fake_chassis(
             self.dpdk_host,
@@ -103,12 +113,10 @@ class TestPortBinding(base.TestOVNFunctionalBase):
     def test_port_binding_create_port(self):
         port_id = self._create_or_update_port(hostname=self.ovs_host)
         self._verify_vif_details(port_id, self.ovs_host, 'ovs',
-                                 {'port_filter': True})
+                                 OVS_VIF_DETAILS)
 
         port_id = self._create_or_update_port(hostname=self.dpdk_host)
-        expected_vif_details = {'port_filter': False,
-                                'vhostuser_mode': self.vhu_mode,
-                                'vhostuser_ovs_plug': True}
+        expected_vif_details = copy.deepcopy(VHOSTUSER_VIF_DETAILS)
         expected_vif_details['vhostuser_socket'] = (
             utils.ovn_vhu_sockpath(cfg.CONF.ovn.vhost_sock_dir, port_id))
         self._verify_vif_details(port_id, self.dpdk_host, 'vhostuser',
@@ -116,7 +124,7 @@ class TestPortBinding(base.TestOVNFunctionalBase):
 
         port_id = self._create_or_update_port(hostname=self.invalid_dpdk_host)
         self._verify_vif_details(port_id, self.invalid_dpdk_host, 'ovs',
-                                 {'port_filter': True})
+                                 OVS_VIF_DETAILS)
 
     def test_port_binding_update_port(self):
         port_id = self._create_or_update_port()
@@ -124,13 +132,11 @@ class TestPortBinding(base.TestOVNFunctionalBase):
         port_id = self._create_or_update_port(port_id=port_id,
                                               hostname=self.ovs_host)
         self._verify_vif_details(port_id, self.ovs_host, 'ovs',
-                                 {'port_filter': True})
+                                 OVS_VIF_DETAILS)
 
         port_id = self._create_or_update_port(port_id=port_id,
                                               hostname=self.dpdk_host)
-        expected_vif_details = {'port_filter': False,
-                                'vhostuser_mode': self.vhu_mode,
-                                'vhostuser_ovs_plug': True}
+        expected_vif_details = copy.deepcopy(VHOSTUSER_VIF_DETAILS)
         expected_vif_details['vhostuser_socket'] = (
             utils.ovn_vhu_sockpath(cfg.CONF.ovn.vhost_sock_dir, port_id))
         self._verify_vif_details(port_id, self.dpdk_host, 'vhostuser',
@@ -139,7 +145,7 @@ class TestPortBinding(base.TestOVNFunctionalBase):
         port_id = self._create_or_update_port(port_id=port_id,
                                               hostname=self.invalid_dpdk_host)
         self._verify_vif_details(port_id, self.invalid_dpdk_host, 'ovs',
-                                 {'port_filter': True})
+                                 OVS_VIF_DETAILS)
 
 
 class TestPortBindingOverTcp(TestPortBinding):
