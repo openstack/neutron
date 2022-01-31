@@ -4,7 +4,7 @@
 # Please update this document always when any changes to jobs are made.
 - project:
     templates:
-      - neutron-tempest-plugin-jobs
+      - neutron-tempest-plugin-jobs-xena
       - openstack-cover-jobs
       - openstack-python3-xena-jobs
       - openstack-python3-xena-jobs-arm64
