@@ -40,7 +40,7 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
     def consume_api(self, agent_api):
         self.agent_api = agent_api
 
-    def _minimum_bandwidth_initialize(self):
+    def _qos_bandwidth_initialize(self):
         """Clear QoS setting at agent restart.
 
         This is for clearing stale settings (such as ports and QoS tables
@@ -49,12 +49,12 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
         rebuild. There is no performance impact however the QoS feature will
         be down until the QoS rules are rebuilt.
         """
-        self.br_int.clear_minimum_bandwidth_qos()
+        self.br_int.clear_bandwidth_qos()
 
     def initialize(self):
         self.br_int = self.agent_api.request_int_br()
         self.cookie = self.br_int.default_cookie
-        self._minimum_bandwidth_initialize()
+        self._qos_bandwidth_initialize()
 
     def create_bandwidth_limit(self, port, rule):
         self.update_bandwidth_limit(port, rule)
