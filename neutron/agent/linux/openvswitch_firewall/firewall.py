@@ -1345,7 +1345,12 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             )
 
     def _initialize_ingress_ipv6_icmp(self, port):
-        for icmp_type in firewall.ICMPV6_ALLOWED_INGRESS_TYPES:
+        # NOTE(ralonsoh): "ICMPV6_TYPE_RA" was removed from
+        # "ICMPV6_ALLOWED_INGRESS_TYPES" because of a bug in the iptables
+        # firewall. This rule was added in "_add_ingress_ra_rule". However,
+        # the OVS firewall does not use port["security_group_rules"].
+        for icmp_type in (firewall.ICMPV6_ALLOWED_INGRESS_TYPES +
+                          (lib_const.ICMPV6_TYPE_RA, )):
             self._add_flow(
                 table=ovs_consts.BASE_INGRESS_TABLE,
                 priority=100,
