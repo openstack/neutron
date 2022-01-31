@@ -10,10 +10,35 @@
         ovs-vsctl del-port $dhcp_port
       done
     done
+  register: router_dhcp_error
+  ignore_errors: True
+
+- name: Cleanup neutron router and dhcp interfaces finished
+  debug:
+    msg: WARNING error while cleaning ovs interface with msg {{ router_dhcp_error.msg }}
+  when:
+    - router_dhcp_error.changed
+    - router_dhcp_error.rc != 0
+
+- name: Check if neutron trunk subports need cleanup
+  shell: |
+    ovs-vsctl list interface | awk '/name[ ]*: sp[it]-/ { print $3 }' | grep 'spi-\|spt-'
+  register: do_cleanup
+  ignore_errors: True
 
 - name: Cleanup neutron trunk subports
+  when: do_cleanup.rc == 0
   shell: |
     ovs-vsctl list interface | awk '/name[ ]*: sp[it]-/ { print $3 }' | xargs -n1 ovs-vsctl del-port
+  register: trunk_error
+  ignore_errors: True
+
+- name: Cleanup trunk ports finished
+  debug:
+    msg: WARNING error while cleaning ovs interface with msg {{ trunk_error.msg }}
+  when:
+    - trunk_error.changed
+    - trunk_error.rc != 0
 
 - name: Clean neutron datapath security groups from iptables
   shell: |
