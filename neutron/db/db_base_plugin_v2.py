@@ -748,7 +748,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         external_gateway_info['external_fixed_ips'].append(
                                      {'subnet_id': subnet['id']})
         info = {'router': {'external_gateway_info': external_gateway_info}}
-        l3plugin.update_router(context, router_id, info)
+        l3plugin.update_router(ctx_admin, router_id, info)
 
     @db_api.retry_if_session_inactive()
     def _create_subnet_postcommit(self, context, result,
