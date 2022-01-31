@@ -19,7 +19,6 @@ from neutron_lib.services.qos import constants as qos_consts
 from neutronclient.common import exceptions
 from oslo_utils import uuidutils
 
-from neutron.agent.common import ovs_lib
 from neutron.agent.linux import tc_lib
 from neutron.common import utils
 from neutron.tests.common.agents import l2_extensions
@@ -364,7 +363,8 @@ class TestBwLimitQoSOvs(_TestBwLimitQoS, base.BaseFullStackTestCase):
         elif direction == constants.INGRESS_DIRECTION:
             utils.wait_until_true(
                 lambda: vm.bridge.get_ingress_bw_limit_for_port(
-                    vm.port.name) == (limit, burst))
+                    vm.port.name) == (limit, burst),
+                timeout=10)
 
     def test_bw_limit_qos_port_removed(self):
         """Test if rate limit config is properly removed when whole port is
@@ -382,9 +382,11 @@ class TestBwLimitQoSOvs(_TestBwLimitQoS, base.BaseFullStackTestCase):
         # Delete port with qos policy attached
         vm.destroy(delete_port=True)
         self._wait_for_bw_rule_removed(vm, self.direction)
-        self.assertIsNone(vm.bridge.find_qos(vm.port.name))
-        self.assertIsNone(vm.bridge.find_queue(vm.port.name,
-                                               ovs_lib.QOS_DEFAULT_QUEUE))
+        qos_id, qos_queues = vm.bridge._find_qos(
+            vm.port.name,
+            qos_consts.RULE_TYPE_BANDWIDTH_LIMIT)
+        self.assertIsNone(qos_id)
+        self.assertIsNone(qos_queues)
 
 
 class TestBwLimitQoSLinuxbridge(_TestBwLimitQoS, base.BaseFullStackTestCase):
