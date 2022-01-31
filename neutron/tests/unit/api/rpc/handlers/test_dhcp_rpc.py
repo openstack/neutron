@@ -70,9 +70,9 @@ class TestDhcpRpcCallback(base.BaseTestCase):
                  {'id': 'port2', 'network_id': 'net2'},
                  {'id': 'port3', 'network_id': 'net3'}]
         self.plugin.get_ports.return_value = ports
-        iter_kwargs = iter([{'enable_dhcp_filter': True},
-                            {'enable_dhcp_filter': False},
-                            {}])
+        iter_kwargs = iter([{'enable_dhcp_filter': True, 'host': 'test-host'},
+                            {'enable_dhcp_filter': False, 'host': 'test-host'},
+                            {'host': 'test-host'}])
         with mock.patch.object(self.callbacks, '_get_active_networks') as \
                 mock_get_networks, \
                 mock.patch.object(self.callbacks, 'get_network_info') as \
@@ -86,11 +86,11 @@ class TestDhcpRpcCallback(base.BaseTestCase):
                            None)
             mock_get_network_info.assert_has_calls([
                 mock.call('ctx', network=networks[0], enable_dhcp=enable_dhcp,
-                          ports=[ports[0]]),
+                          host='test-host', ports=[ports[0]]),
                 mock.call('ctx', network=networks[1], enable_dhcp=enable_dhcp,
-                          ports=[ports[1]]),
+                          host='test-host', ports=[ports[1]]),
                 mock.call('ctx', network=networks[2], enable_dhcp=enable_dhcp,
-                          ports=[ports[2]])
+                          host='test-host', ports=[ports[2]])
             ])
 
     def _test__port_action_with_failures(self, exc=None, action=None):
