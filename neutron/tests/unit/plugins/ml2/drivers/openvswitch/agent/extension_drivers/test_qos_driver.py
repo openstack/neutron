@@ -40,7 +40,7 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         self.context = context.get_admin_context()
         self.qos_driver = qos_driver.QosOVSAgentDriver()
         self.mock_clear_minimum_bandwidth_qos = mock.patch.object(
-            self.qos_driver, '_minimum_bandwidth_initialize').start()
+            self.qos_driver, '_qos_bandwidth_initialize').start()
         os_ken_app = mock.Mock()
         self.agent_api = ovs_ext_api.OVSAgentExtensionAPI(
                          ovs_bridge.OVSAgentBridge(
@@ -55,7 +55,6 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         self.qos_driver.br_int.get_egress_bw_limit_for_port = mock.Mock(
             return_value=(1000, 10))
         self.get_egress = self.qos_driver.br_int.get_egress_bw_limit_for_port
-        self.get_ingress = self.qos_driver.br_int.get_ingress_bw_limit_for_port
         self.qos_driver.br_int.dump_flows_for = mock.Mock(return_value=None)
         self.qos_driver.br_int.del_egress_bw_limit_for_port = mock.Mock()
         self.delete_egress = (
@@ -119,8 +118,6 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
     def test_create_new_rules(self):
         self.qos_driver.br_int.get_egress_bw_limit_for_port = mock.Mock(
             return_value=(None, None))
-        self.qos_driver.br_int.get_ingress_bw_limit_for_port = mock.Mock(
-            return_value=(None, None))
         self.qos_driver.create(self.port, self.qos_policy)
         self.assertEqual(0, self.delete_egress.call_count)
         self.assertEqual(0, self.delete_ingress.call_count)
@@ -150,18 +147,12 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         self.update_ingress.assert_not_called()
 
     def _test_delete_rules(self, qos_policy):
-        self.qos_driver.br_int.get_ingress_bw_limit_for_port = mock.Mock(
-            return_value=(self.rules[1].max_kbps,
-                          self.rules[1].max_burst_kbps))
         self.qos_driver.create(self.port, qos_policy)
         self.qos_driver.delete(self.port, qos_policy)
         self.delete_egress.assert_called_once_with(self.port_name)
         self.delete_ingress.assert_called_once_with(self.port_name)
 
     def _test_delete_rules_no_policy(self):
-        self.qos_driver.br_int.get_ingress_bw_limit_for_port = mock.Mock(
-            return_value=(self.rules[1].max_kbps,
-                          self.rules[1].max_burst_kbps))
         self.qos_driver.delete(self.port)
         self.delete_egress.assert_called_once_with(self.port_name)
         self.delete_ingress.assert_called_once_with(self.port_name)
