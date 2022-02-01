@@ -842,6 +842,9 @@ class OVSPortFixture(PortFixture):
         # on ports that we intend to use as fake vm interfaces, they
         # need to be flat. This is related to lp#1767422
         self.bridge.clear_db_attribute("Port", port_name, "tag")
+        # Clear vlan_mode that is added for each new port. lp#1930414
+        self.bridge.clear_db_attribute("Port", port_name, "vlan_mode")
+        self.bridge.clear_db_attribute("Port", port_name, "trunks")
         self.addCleanup(self.bridge.delete_port, port_name)
         self.port = ip_lib.IPDevice(port_name, self.namespace)
 

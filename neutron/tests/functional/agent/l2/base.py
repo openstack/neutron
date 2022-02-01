@@ -465,13 +465,16 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase, OVSOFControllerHelper):
         self._plug_ports(network, ports, self.agent, bridge=phys_br,
                          namespace=namespace)
 
-        if network_type == 'flat':
-            # NOTE(slaweq): for OVS implementations remove the DEAD VLAN tag
-            # on ports that belongs to flat network. DEAD VLAN tag is added
-            # to each newly created port. This is related to lp#1767422
-            for port in ports:
+        for port in ports:
+            if network_type == 'flat':
+                # NOTE(slaweq): for OVS implementations remove the DEAD VLAN
+                # tag on ports that belongs to flat network. DEAD VLAN tag is
+                # added to each newly created port.
+                # This is related to lp#1767422
                 phys_br.clear_db_attribute("Port", port['vif_name'], "tag")
-        elif phys_segmentation_id and network_type == 'vlan':
-            for port in ports:
+            elif phys_segmentation_id and network_type == 'vlan':
                 phys_br.set_db_attribute(
                     "Port", port['vif_name'], "tag", phys_segmentation_id)
+            # Clear vlan_mode that is added for each new port. lp#1930414
+            phys_br.clear_db_attribute("Port", port['vif_name'], "vlan_mode")
+            phys_br.clear_db_attribute("Port", port['vif_name'], "trunks")
