@@ -163,6 +163,8 @@ class TrunkManagerTestCase(base.BaseSudoTestCase):
             self.tester.bridge)
         self.trunk = trunk_manager.TrunkParentPort(
             trunk_id, uuidutils.generate_uuid())
+        mock.patch('neutron.agent.common.ovs_lib.'
+                   'OVSBridge._set_port_dead').start()
 
     def test_connectivity(self):
         """Test connectivity with trunk and sub ports.
