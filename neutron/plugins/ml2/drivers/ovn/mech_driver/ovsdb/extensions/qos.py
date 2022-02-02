@@ -247,16 +247,18 @@ class OVNClientQosExtension(object):
     def update_network(self, txn, network, original_network, reset=False,
                        qos_rules=None):
         updated_port_ids = set([])
+        updated_fip_ids = set([])
         if not reset and not original_network:
             # If there is no information about the previous QoS policy, do not
             # make any change.
-            return updated_port_ids
+            return updated_port_ids, updated_fip_ids
 
         qos_policy_id = network.get('qos_policy_id')
         if not reset:
             original_qos_policy_id = original_network.get('qos_policy_id')
             if qos_policy_id == original_qos_policy_id:
-                return updated_port_ids  # No QoS policy change
+                # No QoS policy change
+                return updated_port_ids, updated_fip_ids
 
         # NOTE(ralonsoh): we don't use the transaction context because some
         # ports can belong to other projects.
@@ -271,14 +273,23 @@ class OVNClientQosExtension(object):
                                         qos_policy_id, qos_rules)
             updated_port_ids.add(port['id'])
 
-        return updated_port_ids
+        fips = qos_binding.QosPolicyFloatingIPBinding.get_fips_by_network_id(
+            admin_context, network['id'])
+        fip_ids = [fip.id for fip in fips]
+        for floatingip in self._plugin_l3.get_floatingips(
+                admin_context, filters={'id': fip_ids}):
+            self.update_floatingip(txn, floatingip)
+            updated_fip_ids.add(floatingip['id'])
+
+        return updated_port_ids, updated_fip_ids
 
     def create_floatingip(self, txn, floatingip):
         self.update_floatingip(txn, floatingip)
 
     def update_floatingip(self, txn, floatingip):
         router_id = floatingip.get('router_id')
-        qos_policy_id = floatingip.get('qos_policy_id')
+        qos_policy_id = (floatingip.get('qos_policy_id') or
+                         floatingip.get('qos_network_policy_id'))
         if floatingip['floating_network_id']:
             lswitch_name = utils.ovn_name(floatingip['floating_network_id'])
             txn.add(self._driver._nb_idl.qos_del_ext_ids(
@@ -319,8 +330,10 @@ class OVNClientQosExtension(object):
 
     def update_policy(self, context, policy):
         updated_port_ids = set([])
+        updated_fip_ids = set([])
         bound_networks = policy.get_bound_networks()
         bound_ports = policy.get_bound_ports()
+        bound_fips = policy.get_bound_floatingips()
         qos_rules = self._qos_rules(context, policy.id)
         # TODO(ralonsoh): we need to benchmark this transaction in systems with
         # a huge amount of ports. This can take a while and could block other
@@ -328,19 +341,24 @@ class OVNClientQosExtension(object):
         with self._driver._nb_idl.transaction(check_error=True) as txn:
             for network_id in bound_networks:
                 network = {'qos_policy_id': policy.id, 'id': network_id}
-                updated_port_ids.update(
-                    self.update_network(txn, network, {}, reset=True,
-                                        qos_rules=qos_rules))
+                port_ids, fip_ids = self.update_network(
+                    txn, network, {}, reset=True, qos_rules=qos_rules)
+                updated_port_ids.update(port_ids)
+                updated_fip_ids.update(fip_ids)
 
             # Update each port bound to this policy, not handled previously in
             # the network update loop
             port_ids = [p for p in bound_ports if p not in updated_port_ids]
-            for port in self._plugin.get_ports(context,
-                                               filters={'id': port_ids}):
-                self.update_port(txn, port, {}, reset=True,
-                                 qos_rules=qos_rules)
+            if port_ids:
+                for port in self._plugin.get_ports(context,
+                                                   filters={'id': port_ids}):
+                    self.update_port(txn, port, {}, reset=True,
+                                     qos_rules=qos_rules)
 
-            for fip_binding in policy.get_bound_floatingips():
-                fip = self._plugin_l3.get_floatingip(context,
-                                                     fip_binding.fip_id)
-                self.update_floatingip(txn, fip)
+            # Update each FIP bound to this policy, not handled previously in
+            # the network update loop
+            fip_ids = [fip for fip in bound_fips if fip not in updated_fip_ids]
+            if fip_ids:
+                for fip in self._plugin_l3.get_floatingips(
+                        context, filters={'id': fip_ids}):
+                    self.update_floatingip(txn, fip)

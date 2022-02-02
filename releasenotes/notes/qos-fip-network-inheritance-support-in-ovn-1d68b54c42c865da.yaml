@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Floating IP QoS network inheritance is now available for OVN L3 plugin
+    QoS extension. If a network, hosting a floating IP, has a QoS associated,
+    the floating IP addresses will inherit the network QoS policy and will
+    apply on the OVN backend.
