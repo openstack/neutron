@@ -31,6 +31,7 @@
       - ^neutron/cmd/ovn/.*$
       - ^neutron/common/ovn/.*$
       - ^vagrant/.*$
+      - ^zuul.d/(?!(project)).*\.yaml
     vars:
       devstack_services:
         etcd: false
@@ -195,6 +196,7 @@
       - ^neutron/services/trunk/drivers/openvswitch/.*$
       - ^neutron/scheduler/.*$
       - ^vagrant/.*$
+      - ^zuul.d/(?!(project)).*\.yaml
     roles:
       - zuul: openstack/neutron-tempest-plugin
     required-projects:

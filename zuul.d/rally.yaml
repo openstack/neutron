@@ -77,6 +77,7 @@
       - ^neutron/services/trunk/drivers/ovn/.*$
       - ^neutron/cmd/ovn/.*$
       - ^neutron/common/ovn/.*$
+      - ^zuul.d/(?!(project)).*\.yaml
 
 - job:
     name: neutron-ovn-rally-task
@@ -116,6 +117,7 @@
       - ^neutron/services/trunk/drivers/linuxbridge/.*$
       - ^neutron/services/trunk/drivers/openvswitch/.*$
       - ^neutron/scheduler/.*$
+      - ^zuul.d/(?!(project)).*\.yaml
     vars:
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron
