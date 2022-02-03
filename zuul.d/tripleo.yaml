@@ -33,6 +33,7 @@
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
       - ^neutron/plugins/ml2/drivers/ovn/.*$
       - ^vagrant/.*$
+      - ^zuul.d/(?!(project)).*\.yaml
 
 - job:
     name: neutron-ovn-tripleo-ci-centos-8-containers-multinode
@@ -67,3 +68,4 @@
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
       - ^neutron/scheduler/.*$
       - ^vagrant/.*$
+      - ^zuul.d/(?!(project)).*\.yaml

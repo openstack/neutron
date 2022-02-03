@@ -26,6 +26,7 @@
       - ^playbooks/.*$
       - ^roles/.*$
       - ^rally-jobs/.*$
+      - ^zuul.d/(?!(project)).*\.yaml
     vars:
       OVN_BRANCH: v20.06.1
       # TODO(jlibosva): v2.13.1 is incompatible with kernel 4.15.0-118, sticking to commit hash until new v2.13 tag is created
@@ -77,6 +78,7 @@
       - ^playbooks/.*$
       - ^roles/.*$
       - ^rally-jobs/.*$
+      - ^zuul.d/(?!(project)).*\.yaml
 
 - job:
     name: neutron-fullstack-with-uwsgi
