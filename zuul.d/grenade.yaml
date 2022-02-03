@@ -21,6 +21,7 @@
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
       - ^neutron/plugins/ml2/drivers/ovn/.*$
       - ^vagrant/.*$
+      - ^zuul.d/(?!(project)).*\.yaml
     vars:
       devstack_services:
         etcd: false
@@ -180,6 +181,7 @@
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
       - ^neutron/scheduler/.*$
       - ^vagrant/.*$
+      - ^zuul.d/(?!(project)).*\.yaml
     roles:
       - zuul: openstack/neutron-tempest-plugin
     required-projects:

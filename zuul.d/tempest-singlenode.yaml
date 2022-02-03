@@ -70,6 +70,7 @@
       - ^neutron/plugins/ml2/drivers/macvtap/.*$
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
       - ^neutron/plugins/ml2/drivers/ovn/.*$
+      - ^zuul.d/(?!(project)).*\.yaml
 
 - job:
     name: neutron-ovs-tempest-dvr
@@ -111,6 +112,7 @@
       - ^neutron/plugins/ml2/drivers/macvtap/.*$
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
       - ^neutron/plugins/ml2/drivers/ovn/.*$
+      - ^zuul.d/(?!(project)).*\.yaml
 
 # TODO(ralonsoh): remove this duplicated definition when "devstack" and "nova"
 # adopt the new name.
@@ -214,6 +216,7 @@
       - ^vagrant/.*$
       - ^neutron/agent/.*$
       - ^neutron/plugins/ml2/drivers/.*$
+      - ^zuul.d/(?!(project)).*\.yaml
 
 - job:
     name: neutron-ovn-tempest-mariadb-full
@@ -286,6 +289,7 @@
       - ^tools/.*$
       - ^tox.ini$
       - ^vagrant/.*$
+      - ^zuul.d/(?!(project)).*\.yaml
 
 - job:
     name: neutron-ovn-tempest-with-uwsgi-loki
@@ -403,6 +407,7 @@
       - ^neutron/plugins/ml2/drivers/macvtap/.*$
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
       - ^neutron/scheduler/.*$
+      - ^zuul.d/(?!(project)).*\.yaml
 
 # TODO(slaweq): move this to be multinode job when it will be possible in Zuul
 - job:

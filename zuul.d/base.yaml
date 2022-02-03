@@ -26,6 +26,7 @@
       - ^playbooks/.*$
       - ^roles/.*$
       - ^rally-jobs/.*$
+      - ^zuul.d/(?!(project)).*\.yaml
     vars:
       OVN_BRANCH: v21.06.0
       OVS_BRANCH: v2.16.0
@@ -75,6 +76,7 @@
       - ^playbooks/.*$
       - ^roles/.*$
       - ^rally-jobs/.*$
+      - ^zuul.d/(?!(project)).*\.yaml
 
 - job:
     name: neutron-fullstack-with-uwsgi
