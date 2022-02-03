@@ -167,7 +167,7 @@ class DhcpRpcCallback(object):
         ret = []
         for network in networks:
             ret.append(self.get_network_info(
-                context, network=network, enable_dhcp=enable_dhcp,
+                context, network=network, enable_dhcp=enable_dhcp, host=host,
                 ports=grouped_ports.get(network.id, [])))
 
         return ret
