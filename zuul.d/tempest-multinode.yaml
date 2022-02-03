@@ -35,6 +35,7 @@
       - ^neutron/cmd/ovn/.*$
       - ^neutron/common/ovn/.*$
       - ^vagrant/.*$
+      - ^zuul.d/(?!(project)).*\.yaml
     vars:
       tox_envlist: integrated-network
       devstack_localrc:
@@ -291,6 +292,7 @@
       - ^neutron/services/trunk/drivers/linuxbridge/.*$
       - ^neutron/services/trunk/drivers/openvswitch/.*$
       - ^neutron/scheduler/.*$
+      - ^zuul.d/(?!(project)).*\.yaml
     roles:
       - zuul: zuul/zuul-jobs
       - zuul: openstack/neutron-tempest-plugin

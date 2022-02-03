@@ -26,6 +26,7 @@
       - ^playbooks/.*$
       - ^roles/.*$
       - ^rally-jobs/.*$
+      - ^zuul.d/(?!(project)).*\.yaml
     vars:
       Q_BUILD_OVS_FROM_GIT: True
       INSTALL_OVN: True
@@ -79,6 +80,7 @@
       - ^playbooks/.*$
       - ^roles/.*$
       - ^rally-jobs/.*$
+      - ^zuul.d/(?!(project)).*\.yaml
 
 - job:
     name: neutron-fullstack-with-uwsgi
