@@ -84,6 +84,8 @@
       jobs:
         - neutron-functional
         - neutron-fullstack
+        - neutron-ovs-tempest-slow
+        - neutron-ovn-tempest-slow
         - neutron-ovs-tempest-with-os-ken-master
         - neutron-ovn-tempest-postgres-full
         - neutron-ovn-tempest-mariadb-full
