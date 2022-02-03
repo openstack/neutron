@@ -1310,11 +1310,9 @@ class TestQosPlugin(base.BaseQosTestCase):
             self.ctxt, qos_consts.RULE_TYPE_BANDWIDTH_LIMIT)
 
     def test_get_rule_types(self):
-        rule_types_mock = mock.PropertyMock(
-            return_value=qos_consts.VALID_RULE_TYPES)
         filters = {'type': 'type_id'}
         with mock.patch.object(qos_plugin.QoSPlugin, 'supported_rule_types',
-                               new_callable=rule_types_mock):
+                               return_value=qos_consts.VALID_RULE_TYPES):
             types = self.qos_plugin.get_rule_types(self.ctxt, filters=filters)
             self.assertEqual(sorted(qos_consts.VALID_RULE_TYPES),
                              sorted(type_['type'] for type_ in types))

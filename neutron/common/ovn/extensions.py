@@ -52,6 +52,7 @@ from neutron_lib.api.definitions import qos
 from neutron_lib.api.definitions import qos_bw_limit_direction
 from neutron_lib.api.definitions import qos_default
 from neutron_lib.api.definitions import qos_rule_type_details
+from neutron_lib.api.definitions import qos_rule_type_filter
 from neutron_lib.api.definitions import qos_rules_alias
 from neutron_lib.api.definitions import quota_check_limit
 from neutron_lib.api.definitions import rbac_address_scope
@@ -124,6 +125,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     qos_bw_limit_direction.ALIAS,
     qos_default.ALIAS,
     qos_rule_type_details.ALIAS,
+    qos_rule_type_filter.ALIAS,
     qos_rules_alias.ALIAS,
     'quotas',
     quota_check_limit.ALIAS,
