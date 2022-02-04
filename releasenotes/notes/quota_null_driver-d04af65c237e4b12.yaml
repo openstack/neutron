@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Enabled ``DbQuotaDriverNull`` as production ready database quota driver.
+    This driver does not have access to the database and will return empty
+    values to the request queries. This driver can be used to override the
+    Neutron quota engine.

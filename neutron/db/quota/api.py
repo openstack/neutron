@@ -16,7 +16,6 @@ import collections
 import datetime
 
 from neutron_lib.db import api as db_api
-from neutron_lib.db import quota_api as nlib_quota_api
 from oslo_db import exception as db_exc
 
 from neutron.common import utils
@@ -249,58 +248,3 @@ def remove_expired_reservations(context, project_id=None, timeout=None):
         expiring_time -= datetime.timedelta(seconds=timeout)
     return quota_obj.Reservation.delete_expired(context, expiring_time,
                                                 project_id)
-
-
-class NullQuotaDriver(nlib_quota_api.QuotaDriverAPI):
-
-    @staticmethod
-    def get_default_quotas(context, resources, project_id):
-        pass
-
-    @staticmethod
-    def get_project_quotas(context, resources, project_id):
-        pass
-
-    @staticmethod
-    def get_detailed_project_quotas(context, resources, project_id):
-        pass
-
-    @staticmethod
-    def delete_project_quota(context, project_id):
-        pass
-
-    @staticmethod
-    def get_all_quotas(context, resources):
-        pass
-
-    @staticmethod
-    def update_quota_limit(context, project_id, resource, limit):
-        pass
-
-    @staticmethod
-    def make_reservation(context, project_id, resources, deltas, plugin):
-        pass
-
-    @staticmethod
-    def commit_reservation(context, reservation_id):
-        pass
-
-    @staticmethod
-    def cancel_reservation(context, reservation_id):
-        pass
-
-    @staticmethod
-    def limit_check(context, project_id, resources, values):
-        pass
-
-    @staticmethod
-    def get_resource_usage(context, project_id, resources, resource_name):
-        pass
-
-    @staticmethod
-    def quota_limit_check(context, project_id, resources, deltas):
-        pass
-
-    @staticmethod
-    def get_workers():
-        return []

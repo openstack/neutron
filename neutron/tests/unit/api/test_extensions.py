@@ -1033,7 +1033,7 @@ class ExtensionExtendedAttributeTestCase(base.BaseTestCase):
 
         quota.QUOTAS._driver = None
         cfg.CONF.set_override('quota_driver',
-                              'neutron.db.quota.api.NullQuotaDriver',
+                              'neutron.db.quota.driver_null.DbQuotaDriverNull',
                               group='QUOTAS')
 
     def _do_request(self, method, path, data=None, params=None, action=None):

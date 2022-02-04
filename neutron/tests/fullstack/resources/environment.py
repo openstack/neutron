@@ -19,6 +19,7 @@ from oslo_config import cfg
 
 from neutron.agent.linux import ip_lib
 from neutron.common import utils as common_utils
+from neutron.conf import quota as quota_conf
 from neutron.plugins.ml2.drivers.linuxbridge.agent import \
     linuxbridge_neutron_agent as lb_agent
 from neutron.tests.common.exclusive_resources import ip_address
@@ -42,7 +43,8 @@ class EnvironmentDescription(object):
                  has_placement=False, placement_port=None,
                  dhcp_scheduler_class=None, ml2_extension_drivers=None,
                  api_workers=1,
-                 enable_traditional_dhcp=True, local_ip_ext=False):
+                 enable_traditional_dhcp=True, local_ip_ext=False,
+                 quota_driver=quota_conf.QUOTA_DB_DRIVER):
         self.network_type = network_type
         self.l2_pop = l2_pop
         self.qos = qos
@@ -69,6 +71,7 @@ class EnvironmentDescription(object):
         self.local_ip_ext = local_ip_ext
         if self.local_ip_ext:
             self.service_plugins += ',local_ip'
+        self.quota_driver = quota_driver
 
     @property
     def tunneling_enabled(self):

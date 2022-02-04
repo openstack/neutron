@@ -94,6 +94,9 @@ class NeutronConfigFixture(ConfigFixture):
                 'report_interval': str(env_desc.agent_down_time // 2),
                 'log_agent_heartbeats': 'True',
             },
+            'quotas': {
+                'quota_driver': env_desc.quota_driver
+            },
         })
 
         if use_local_apipaste:
