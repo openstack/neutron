@@ -86,7 +86,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
 
     def stop(self):
         if utils.is_ovn_l3(self.l3_plugin):
-            self.l3_plugin._ovn.ovsdb_connection.stop()
+            self.l3_plugin._nb_ovn.ovsdb_connection.stop()
             self.l3_plugin._sb_ovn.ovsdb_connection.stop()
         super(OvnNbSynchronizer, self).stop()
 

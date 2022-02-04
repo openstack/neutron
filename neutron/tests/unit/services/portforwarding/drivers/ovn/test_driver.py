@@ -34,8 +34,8 @@ class TestOVNPortForwardingBase(base.BaseTestCase):
         super(TestOVNPortForwardingBase, self).setUp()
         self.context = mock.Mock()
         self.l3_plugin = mock.Mock()
-        self.l3_plugin._ovn = fake_resources.FakeOvsdbNbOvnIdl()
-        self.txn = self.l3_plugin._ovn.transaction
+        self.l3_plugin._nb_ovn = fake_resources.FakeOvsdbNbOvnIdl()
+        self.txn = self.l3_plugin._nb_ovn.transaction
 
     def _fake_pf_obj(self, **kwargs):
         pf_obj_defaults_dict = {
@@ -108,7 +108,7 @@ class TestOVNPortForwardingHandler(TestOVNPortForwardingBase):
             _get_lb_attributes(fake_pf_obj))
         exp_protocol = self.handler._get_lb_protocol(fake_pf_obj)
         self.handler.port_forwarding_created(
-            self.txn, self.l3_plugin._ovn, fake_pf_obj)
+            self.txn, self.l3_plugin._nb_ovn, fake_pf_obj)
         info_args, _info_kwargs = m_info.call_args_list[0]
         self.assertIn('CREATE for port-forwarding', info_args[0])
         self.assertEqual(2, len(self.txn.add.call_args_list))
@@ -117,10 +117,10 @@ class TestOVNPortForwardingHandler(TestOVNPortForwardingBase):
             ovn_const.OVN_FIP_EXT_ID_KEY: fake_pf_obj.floatingip_id,
             ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: exp_rtr_name,
         }
-        self.l3_plugin._ovn.lb_add.assert_called_once_with(
+        self.l3_plugin._nb_ovn.lb_add.assert_called_once_with(
             exp_lb_name, exp_vip, exp_internal_ips, exp_protocol,
             may_exist=True, external_ids=exp_external_ids)
-        self.l3_plugin._ovn.lr_lb_add.assert_called_once_with(
+        self.l3_plugin._nb_ovn.lr_lb_add.assert_called_once_with(
             exp_rtr_name, exp_lb_name, may_exist=True)
 
     @mock.patch.object(port_forwarding.LOG, 'info')
@@ -132,12 +132,12 @@ class TestOVNPortForwardingHandler(TestOVNPortForwardingBase):
         fake_pf_obj = self._fake_pf_obj(protocol='udp')
         fake_orig_pf_obj = self._fake_pf_obj(protocol='tcp')
         self.handler.port_forwarding_updated(
-            self.txn, self.l3_plugin._ovn, fake_pf_obj, fake_orig_pf_obj)
+            self.txn, self.l3_plugin._nb_ovn, fake_pf_obj, fake_orig_pf_obj)
         info_args, _info_kwargs = m_info.call_args_list[0]
         self.assertIn('UPDATE for port-forwarding', info_args[0])
-        m_deleted.assert_called_once_with(self.txn, self.l3_plugin._ovn,
+        m_deleted.assert_called_once_with(self.txn, self.l3_plugin._nb_ovn,
                                           fake_orig_pf_obj)
-        m_created.assert_called_once_with(self.txn, self.l3_plugin._ovn,
+        m_created.assert_called_once_with(self.txn, self.l3_plugin._nb_ovn,
                                           fake_pf_obj)
 
     @mock.patch.object(port_forwarding.LOG, 'info')
@@ -146,11 +146,11 @@ class TestOVNPortForwardingHandler(TestOVNPortForwardingBase):
         exp_lb_name, exp_vip, _, _ = self.handler._get_lb_attributes(
             fake_pf_obj)
         self.handler.port_forwarding_deleted(
-            self.txn, self.l3_plugin._ovn, fake_pf_obj)
+            self.txn, self.l3_plugin._nb_ovn, fake_pf_obj)
         info_args, _info_kwargs = m_info.call_args_list[0]
         self.assertIn('DELETE for port-forwarding', info_args[0])
         self.assertEqual(1, len(self.txn.add.call_args_list))
-        self.l3_plugin._ovn.lb_del.assert_called_once_with(
+        self.l3_plugin._nb_ovn.lb_del.assert_called_once_with(
             exp_lb_name, exp_vip, if_exists=mock.ANY)
 
 
@@ -248,7 +248,8 @@ class TestOVNPortForwarding(TestOVNPortForwardingBase):
             mock_get_fip_objs.assert_called_once_with(self.context, payload)
             if fip_objs:
                 calls = [
-                    mock.call(mock.ANY, self.l3_plugin._ovn, fip_id, fip_obj)
+                    mock.call(mock.ANY, self.l3_plugin._nb_ovn, fip_id,
+                              fip_obj)
                     for fip_id, fip_obj in fip_objs.items()]
                 self.fake_check_rev.assert_has_calls(calls)
                 self.fake_db_rev.assert_called_once_with(
@@ -265,7 +266,7 @@ class TestOVNPortForwarding(TestOVNPortForwardingBase):
         self._handle_notification_common(events.AFTER_CREATE,
                                          fake_payload_entry)
         self.handler.port_forwarding_created.assert_called_once_with(
-            mock.ANY, self.l3_plugin._ovn, fake_payload_entry.latest_state)
+            mock.ANY, self.l3_plugin._nb_ovn, fake_payload_entry.latest_state)
 
     def test_handle_notification_create(self):
         fip_objs = {1: {'description': 'one'},
@@ -275,7 +276,7 @@ class TestOVNPortForwarding(TestOVNPortForwardingBase):
             self._handle_notification_common(events.AFTER_CREATE,
                                              fake_payload,
                                              fip_objs)
-            calls = [mock.call(mock.ANY, self.l3_plugin._ovn,
+            calls = [mock.call(mock.ANY, self.l3_plugin._nb_ovn,
                                fake_payload.latest_state)]
             self.handler.port_forwarding_created.assert_has_calls(calls)
             update_calls = [mock.call(
@@ -289,7 +290,7 @@ class TestOVNPortForwarding(TestOVNPortForwardingBase):
         fake_payload = self._fake_pf_payload_entry(100, 100)
         self._handle_notification_common(events.AFTER_UPDATE, fake_payload,
                                          fip_objs)
-        calls = [mock.call(mock.ANY, self.l3_plugin._ovn,
+        calls = [mock.call(mock.ANY, self.l3_plugin._nb_ovn,
                            fake_payload.latest_state,
                            fake_payload.states[0])]
         self.handler.port_forwarding_updated.assert_has_calls(calls)
@@ -297,7 +298,7 @@ class TestOVNPortForwarding(TestOVNPortForwardingBase):
         fake_payload = self._fake_pf_payload_entry(101, 101)
         self._handle_notification_common(events.AFTER_UPDATE, fake_payload,
                                          fip_objs)
-        calls = [mock.call(mock.ANY, self.l3_plugin._ovn,
+        calls = [mock.call(mock.ANY, self.l3_plugin._nb_ovn,
                            fake_payload.latest_state,
                            fake_payload.states[0])]
         self.handler.port_forwarding_updated.assert_has_calls(calls)
@@ -314,7 +315,7 @@ class TestOVNPortForwarding(TestOVNPortForwardingBase):
                 self._handle_notification_common(events.AFTER_DELETE,
                                                  fake_payload, fip_objs)
                 calls = [mock.call(
-                    mock.ANY, self.l3_plugin._ovn, fake_payload.states[0])]
+                    mock.ANY, self.l3_plugin._nb_ovn, fake_payload.states[0])]
                 self.handler.port_forwarding_deleted.assert_has_calls(calls)
                 update_calls = [mock.call(
                     self.context, fake_payload.states[0].floatingip_id,
@@ -333,12 +334,12 @@ class TestOVNPortForwarding(TestOVNPortForwardingBase):
         with mock.patch.object(self._ovn_pf, '_get_pf_objs',
                                return_value=pf_objs) as mock_get_pf_objs:
             self._ovn_pf._maintenance_create_update(self.context, fip_id)
-            self.l3_plugin._ovn.transaction.assert_called_once_with(
+            self.l3_plugin._nb_ovn.transaction.assert_called_once_with(
                 check_error=True)
             calls = [mock.call(lb_name, vip=None, if_exists=True)
                      for lb_name in fake_lb_names]
-            self.l3_plugin._ovn.lb_del.assert_has_calls(calls)
-            calls = [mock.call(mock.ANY, self.l3_plugin._ovn, pf_obj)
+            self.l3_plugin._nb_ovn.lb_del.assert_has_calls(calls)
+            calls = [mock.call(mock.ANY, self.l3_plugin._nb_ovn, pf_obj)
                      for pf_obj in pf_objs]
             self.handler.port_forwarding_created.assert_has_calls(calls)
             mock_get_pf_objs.assert_called_once_with(self.context, fip_id)
@@ -358,11 +359,11 @@ class TestOVNPortForwarding(TestOVNPortForwardingBase):
         with mock.patch.object(self._ovn_pf, '_get_pf_objs',
                                return_value=pf_objs) as mock_get_pf_objs:
             self._ovn_pf.maintenance_delete(self.context, fip_id)
-            self.l3_plugin._ovn.transaction.assert_called_once_with(
+            self.l3_plugin._nb_ovn.transaction.assert_called_once_with(
                 check_error=True)
             calls = [mock.call(lb_name, vip=None, if_exists=True)
                      for lb_name in fake_lb_names]
-            self.l3_plugin._ovn.lb_del.assert_has_calls(calls)
+            self.l3_plugin._nb_ovn.lb_del.assert_has_calls(calls)
             self.handler.port_forwarding_created.assert_not_called()
             mock_get_pf_objs.assert_not_called()
             self.l3_plugin.get_floatingip.assert_not_called()
@@ -386,14 +387,14 @@ class TestOVNPortForwarding(TestOVNPortForwardingBase):
             mock_get_pf_objs.assert_called_once_with(self.context, fip_id)
             calls = [mock.call(lb_name, vip=None, if_exists=True)
                      for lb_name in fake_lb_names]
-            self.l3_plugin._ovn.lb_del.assert_has_calls(calls)
-            calls = [mock.call(mock.ANY, self.l3_plugin._ovn, pf_obj)
+            self.l3_plugin._nb_ovn.lb_del.assert_has_calls(calls)
+            calls = [mock.call(mock.ANY, self.l3_plugin._nb_ovn, pf_obj)
                      for pf_obj in pf_objs]
             self.handler.port_forwarding_created.assert_has_calls(calls)
             self.l3_plugin.get_floatingip.assert_called_once_with(
                 self.context, fip_id)
             self.fake_check_rev.assert_called_once_with(
-                self.txn, self.l3_plugin._ovn, fip_id, fake_fip_obj)
+                self.txn, self.l3_plugin._nb_ovn, fip_id, fake_fip_obj)
 
     @mock.patch.object(port_forwarding.LOG, 'info')
     def test_db_sync_delete(self, m_info):
@@ -405,4 +406,4 @@ class TestOVNPortForwarding(TestOVNPortForwardingBase):
         self.assertIn('db_sync DELETE entries', info_args[0])
         calls = [mock.call(lb_name, vip=None, if_exists=True)
                  for lb_name in fake_lb_names]
-        self.l3_plugin._ovn.lb_del.assert_has_calls(calls)
+        self.l3_plugin._nb_ovn.lb_del.assert_has_calls(calls)

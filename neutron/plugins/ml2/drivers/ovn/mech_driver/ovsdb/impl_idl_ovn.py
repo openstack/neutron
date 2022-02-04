@@ -404,7 +404,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
             # Iterate over each acl in a lswitch and store the acl in
             # a key:value representation for e.g. acl_string. This
             # key:value representation can invoke the code -
-            # self._ovn.add_acl(**acl_string)
+            # self.add_acl(**acl_string)
             for acl in acls:
                 ext_ids = getattr(acl, 'external_ids', {})
                 port_id = ext_ids.get('neutron:lport')
