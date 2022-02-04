@@ -15,6 +15,7 @@
 
 import collections
 import copy
+import datetime
 import random
 
 import netaddr
@@ -35,6 +36,7 @@ from neutron_lib.utils import net as n_net
 from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import excutils
+from oslo_utils import timeutils
 from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron.common.ovn import acl as ovn_acl
@@ -662,11 +664,7 @@ class OVNClient(object):
             db_rev.bump_revision(context, port, ovn_const.TYPE_PORTS)
 
     def _delete_port(self, port_id, port_object=None):
-        ovn_port = self._nb_idl.lookup(
-            'Logical_Switch_Port', port_id, default=None)
-        if ovn_port is None:
-            return
-
+        ovn_port = self._nb_idl.lookup('Logical_Switch_Port', port_id)
         ovn_network_name = ovn_port.external_ids.get(
             ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY)
         network_id = ovn_network_name.replace('neutron-', '')
@@ -700,6 +698,18 @@ class OVNClient(object):
     def delete_port(self, context, port_id, port_object=None):
         try:
             self._delete_port(port_id, port_object=port_object)
+        except idlutils.RowNotFound:
+            # NOTE(dalvarez): At this point the port doesn't exist in the OVN
+            # database or, most likely, this worker IDL hasn't been updated
+            # yet. See Bug #1960006 for more information. The approach here is
+            # to allow at least one maintenance cycle  before we delete the
+            # revision number so that the port doesn't stale and eventually
+            # gets deleted by the maintenance task.
+            rev_row = db_rev.get_revision_row(context, port_id)
+            time_ = (timeutils.utcnow() - datetime.timedelta(
+                seconds=ovn_const.DB_CONSISTENCY_CHECK_INTERVAL + 30))
+            if rev_row and rev_row.created_at >= time_:
+                return
         except Exception as e:
             with excutils.save_and_reraise_exception():
                 LOG.error('Failed to delete port %(port)s. Error: '

@@ -224,6 +224,8 @@ _TYPES_PRIORITY_ORDER = (
     TYPE_FLOATINGIPS,
     TYPE_SECURITY_GROUP_RULES)
 
+DB_CONSISTENCY_CHECK_INTERVAL = 300  # 5 minutes
+
 # The order in which the resources should be created or updated by the
 # maintenance task: Root ones first and leafs at the end.
 MAINTENANCE_CREATE_UPDATE_TYPE_ORDER = {
