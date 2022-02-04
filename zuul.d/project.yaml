@@ -19,11 +19,7 @@
         - neutron-fullstack-with-uwsgi
         - neutron-ovs-rally-task
         - neutron-ovs-grenade-multinode
-        - neutron-ovs-grenade-dvr-multinode:
-            # TODO(slaweq): make that job voting when bug
-            # https://bugs.launchpad.net/neutron/+bug/1920778
-            # will be fixed
-            voting: false
+        - neutron-ovs-grenade-dvr-multinode
         - neutron-ovs-tempest-multinode-full
         - neutron-ovs-tempest-dvr-ha-multinode-full
         - neutron-ovn-tempest-ipv6-only
@@ -59,6 +55,7 @@
         - neutron-fullstack-with-uwsgi
         - neutron-ovs-tempest-multinode-full
         - neutron-ovs-grenade-multinode
+        - neutron-ovs-grenade-dvr-multinode
         - neutron-ovn-tempest-ipv6-only
         - openstack-tox-py36:  # from openstack-python3-yoga-jobs template
             timeout: 3600
