@@ -20,6 +20,7 @@ from neutron_lib.db import api as db_api
 from oslo_log import log as logging
 
 from neutron._i18n import _
+from neutron.common import utils
 from neutron.db import models_v2
 from neutron.objects import provisioning_blocks as pb_obj
 
@@ -122,7 +123,7 @@ def provisioning_complete(context, object_id, object_type, entity):
     log_dict = {'oid': object_id, 'entity': entity, 'otype': object_type}
     # this can't be called in a transaction to avoid REPEATABLE READ
     # tricking us into thinking there are remaining provisioning components
-    if context.session.is_active:
+    if utils.is_session_active(context.session):
         raise RuntimeError(_("Must not be called in a transaction"))
     standard_attr_id = _get_standard_attr_id(context, object_id,
                                              object_type)

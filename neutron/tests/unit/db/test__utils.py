@@ -17,6 +17,7 @@ from unittest import mock
 
 from neutron_lib import context
 
+from neutron.common import utils
 from neutron.db import _utils as db_utils
 from neutron.tests.unit import testlib_api
 
@@ -30,8 +31,8 @@ class TestCommonHelpFunctions(testlib_api.SqlTestCase):
     def test__safe_creation_create_bindings_fails(self):
         create_fn = mock.Mock(return_value={'id': 1234})
         create_bindings = mock.Mock(side_effect=ValueError)
-        tx_check = lambda i: setattr(self, '_active',
-                                     self.admin_ctx.session.is_active)
+        tx_check = lambda i: setattr(
+            self, '_active', utils.is_session_active(self.admin_ctx.session))
         delete_fn = mock.Mock(side_effect=tx_check)
         self.assertRaises(ValueError, db_utils.safe_creation,
                           self.admin_ctx, create_fn, delete_fn,

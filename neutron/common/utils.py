@@ -694,7 +694,7 @@ def transaction_guard(f):
                                          n_context.ContextBaseWithSession) else
                    args[1])
         # FIXME(kevinbenton): get rid of all uses of this flag
-        if (context.session.is_active and
+        if (is_session_active(context.session) and
                 getattr(context, 'GUARD_TRANSACTION', True)):
             raise RuntimeError(_("Method %s cannot be called within a "
                                  "transaction.") % f)
@@ -1026,3 +1026,23 @@ def skip_exceptions(exceptions):
                         ctx.reraise = False
         return wrapper
     return decorator
+
+
+def is_session_active(session):
+    """Return if the session is active
+
+    Since sqlalchemy 1.4, "autocommit=False" by default; in sqlalchemy 2.0,
+    that will be the only possible value. If session autocommit is False, the
+    session transaction will not end at the end of a reader/writer context.
+    In this case, a session could have an active transaction even when it is
+    not inside a reader/writer context. In order to mimic the previous
+    behaviour, this method checks the pending new, deleted and dirty elements
+    to be flushed.
+    """
+    if session.autocommit:  # old behaviour, to be removed with sqlalchemy 2.0
+        return session.is_active
+    if not session.transaction:
+        return False
+    if not (session.dirty or session.deleted or session.new):
+        return False
+    return True

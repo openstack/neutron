@@ -23,6 +23,7 @@ from oslo_utils import uuidutils
 from sqlalchemy.orm import session as se
 from webob import exc
 
+from neutron.common import utils
 from neutron.db import models_v2
 from neutron.objects import ports as port_obj
 from neutron.tests.unit.plugins.ml2 import test_plugin
@@ -59,7 +60,7 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
         # the new engine facade is resulting in changes being spread over
         # other sessions so we can end up getting stale reads in the parent
         # session if objects remain in the identity map.
-        if not self._ctx.session.is_active:
+        if not utils.is_session_active(self._ctx.session):
             self._ctx.session.expire_all()
         return self._ctx
 

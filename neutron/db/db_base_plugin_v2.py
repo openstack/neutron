@@ -426,7 +426,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def update_network(self, context, id, network, db_network=None):
         n = network['network']
         # we dont't use DB objects not belonging to the current active session
-        db_network = db_network if context.session.is_active else None
+        db_network = (db_network if utils.is_session_active(context.session)
+                      else None)
         with db_api.CONTEXT_WRITER.using(context):
             network = db_network or self._get_network(context, id)
             # validate 'shared' parameter
@@ -1498,7 +1499,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     @db_api.retry_if_session_inactive()
     def update_port(self, context, id, port, db_port=None):
         # we dont't use DB objects not belonging to the current active session
-        db_port = db_port if context.session.is_active else None
+        db_port = db_port if utils.is_session_active(context.session) else None
         new_port = port['port']
 
         with db_api.CONTEXT_WRITER.using(context):
