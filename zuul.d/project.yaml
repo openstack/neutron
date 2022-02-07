@@ -68,6 +68,12 @@
       jobs:
         - neutron-functional-with-uwsgi-fips
         - neutron-fullstack-with-uwsgi-fips
+        # NOTE(slaweq): those two FIPS jobs will fail until paramiko module will
+        # not be fixed to work properly with FIPS enabled. See
+        # https://review.opendev.org/c/openstack/tempest/+/810809
+        # for details
+        - neutron-ovs-tempest-fips
+        - neutron-ovn-tempest-ovs-release-fips
         - neutron-ovn-grenade-multinode
         - neutron-ovn-tempest-with-uwsgi-loki
         - neutron-ovn-tempest-full-multinode-ovs-master
