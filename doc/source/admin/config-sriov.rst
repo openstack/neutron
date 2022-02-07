@@ -304,6 +304,12 @@ Configuring allow list for PCI devices nova-compute (Compute)
 Configure neutron-server (Controller)
 -------------------------------------
 
+   .. note::
+
+      This section does not apply to remote-managed ports of SmartNIC DPU
+      devices which also use SR-IOV at the host side but do not rely on the
+      ``sriovnicswitch`` mechanism driver.
+
 #. Add ``sriovnicswitch`` as mechanism driver. Edit the ``ml2_conf.ini`` file
    on each controller:
 
