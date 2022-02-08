@@ -19,6 +19,7 @@
 
 import copy
 import functools
+from unittest import mock
 
 import netaddr
 from neutron_lib import constants
@@ -139,6 +140,8 @@ class BaseFirewallTestCase(linux_base.BaseOVSLinuxTestCase):
             conn_testers.OVSConnectionTester(self.ip_cidr,
                                              self.of_helper.br_int_cls))
         firewall_drv = openvswitch_firewall.OVSFirewallDriver(tester.bridge)
+        mock.patch('neutron.agent.common.ovs_lib.'
+                   'OVSBridge._set_port_dead').start()
         return tester, firewall_drv
 
     def assign_vlan_to_peers(self):

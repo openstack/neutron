@@ -20,7 +20,6 @@ from neutron_lib import constants
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
-from neutron.agent.common import ovs_lib
 from neutron.common import utils as common_utils
 from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
     constants as ovs_consts)
@@ -386,13 +385,6 @@ class OVSBaseConnectionTester(ConnectionTester):
             txn.add(
                 ovsdb.db_add(
                     'Port', port_name, 'other_config', {'tag': str(tag)}))
-        bridge.delete_flows(
-            cookie=ovs_lib.COOKIE_ANY,
-            table=ovs_consts.LOCAL_SWITCHING,
-            priority=ovs_consts.OPENFLOW_MAX_PRIORITY - 1,
-            in_port=bridge.get_port_ofport(port_name),
-            strict=True,
-        )
 
 
 class OVSConnectionTester(OVSBaseConnectionTester):

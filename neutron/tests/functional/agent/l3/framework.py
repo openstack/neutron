@@ -98,6 +98,8 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         self.mock_plugin_api = mock.patch(
             'neutron.agent.l3.agent.L3PluginApi').start().return_value
         mock.patch('neutron.agent.rpc.PluginReportStateAPI').start()
+        mock.patch('neutron.agent.common.ovs_lib.'
+                   'OVSBridge._set_port_dead').start()
         l3_config.register_l3_agent_config_opts(l3_config.OPTS, cfg.CONF)
         self.conf = self._configure_agent('agent1')
         self.agent = neutron_l3_agent.L3NATAgentWithStateReport('agent1',
