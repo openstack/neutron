@@ -215,9 +215,23 @@ class OVNDriver(base.DriverBase):
 
         """
         if not log_obj.resource_id and not log_obj.target_id:
-            # No sg, no port: return all pgs
-            return self._pgs_all()
-
+            # No sg, no port, ALL: return all pgs
+            if log_obj.event == log_const.ALL_EVENT:
+                return self._pgs_all()
+            try:
+                pg_drop = self.ovn_nb.lookup("Port_Group",
+                    ovn_const.OVN_DROP_PORT_GROUP_NAME)
+                # No sg, no port, DROP: return DROP pg
+                if log_obj.event == log_const.DROP_EVENT:
+                    return [{"name": pg_drop.name,
+                        "acls": [r.uuid for r in pg_drop.acls]}]
+                # No sg, no port, ACCEPT: return all except DROP pg
+                pgs = self._pgs_all()
+                pgs.remove({"name": pg_drop.name,
+                    "acls": [r.uuid for r in pg_drop.acls]})
+                return pgs
+            except idlutils.RowNotFound:
+                pass
         pgs = []
         # include special pg_drop to log DROP and ALL actions
         if not log_obj.event or log_obj.event in (log_const.DROP_EVENT,
@@ -229,6 +243,8 @@ class OVNDriver(base.DriverBase):
                             "acls": [r.uuid for r in pg.acls]})
             except idlutils.RowNotFound:
                 pass
+            if log_obj.event == log_const.DROP_EVENT:
+                return pgs
 
         if log_obj.resource_id:
             try:
