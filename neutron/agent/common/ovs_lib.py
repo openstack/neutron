@@ -355,13 +355,7 @@ class OVSBridge(BaseOVS):
         with self.ovsdb.transaction() as txn:
             txn.add(self.ovsdb.add_port(self.br_name, port_name,
                                         may_exist=False))
-            # NOTE(mangelajo): Port is added to dead vlan (4095) by default
-            # until it's handled by the neutron-openvswitch-agent. Otherwise it
-            # becomes a trunk port on br-int (receiving traffic for all vlans),
-            # and also triggers issues on ovs-vswitchd related to the
-            # datapath flow revalidator thread, see lp#1767422
-            txn.add(self.ovsdb.db_set(
-                    'Port', port_name, ('tag', constants.DEAD_VLAN_TAG)))
+            self._set_port_dead(port_name, txn)
 
             # TODO(mangelajo): We could accept attr tuples for the Port too
             # but, that could potentially break usage of this function in
@@ -372,22 +366,27 @@ class OVSBridge(BaseOVS):
                 txn.add(self.ovsdb.db_set('Interface', port_name,
                                           *interface_attr_tuples))
 
-        # NOTE(bence romsics): We are after the ovsdb transaction therefore
-        # there's still a short time window between the port created and
-        # the flow added in which the dead vlan tag is not pushed onto the
-        # frames arriving at these ports and because of that those frames may
-        # get through. However before the transaction we cannot create the
-        # flow because we don't have the ofport. And I'm not aware of a
-        # combined ovsdb+openflow transaction to do it inside the transaction.
-        if (self.br_name == cfg.CONF.OVS.integration_bridge):
-            self.add_flow(
-                table=constants.LOCAL_SWITCHING,
-                priority=constants.OPENFLOW_MAX_PRIORITY - 1,
-                in_port=self.get_port_ofport(port_name),
-                actions='mod_vlan_vid:{:d},'
-                        'resubmit(,{:d})'.format(
-                            constants.DEAD_VLAN_TAG,
-                            constants.LOCAL_SWITCHING))
+    def _set_port_dead(self, port_name, txn):
+        # NOTE(mangelajo): Port is added to dead vlan (4095) by default
+        # until it's handled by the neutron-openvswitch-agent. Otherwise it
+        # may trigger issues on ovs-vswitchd related to the
+        # datapath flow revalidator thread, see lp#1767422
+        txn.add(self.ovsdb.db_set(
+            'Port', port_name, ('tag', constants.DEAD_VLAN_TAG)))
+        # Just setting 'tag' to 4095 is not enough to prevent any traffic
+        # to/from new port because "access" ports do not have 802.1Q header
+        # and hence are not matched by default 4095-dropping rule.
+        # So we also set "vlan_mode" attribute to "trunk" and "trunks"=[4095]
+        # With this OVS normal pipeline will allow only packets tagged with
+        # 4095 from such ports, which normally not happens,
+        # but even if it does - default rule in br-int will drop them anyway.
+        # Thus untagged packets from such ports will also be dropped until
+        # ovs agent sets proper VLAN tag and clears vlan_mode to default
+        # ("access"). See lp#1930414 for details.
+        txn.add(self.ovsdb.db_set(
+            'Port', port_name, ('vlan_mode', 'trunk')))
+        txn.add(self.ovsdb.db_set(
+            'Port', port_name, ('trunks', constants.DEAD_VLAN_TAG)))
 
     def delete_port(self, port_name):
         self.ovsdb.del_port(port_name, self.br_name).execute()

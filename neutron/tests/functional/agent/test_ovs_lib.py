@@ -92,6 +92,10 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
                                                     'external_ids')['test'])
         self.assertEqual(agent_const.DEAD_VLAN_TAG,
                          self.br.db_get_val('Port', port_name, 'tag'))
+        self.assertEqual("trunk",
+                         self.br.db_get_val('Port', port_name, 'vlan_mode'))
+        self.assertEqual(4095,
+                         self.br.db_get_val('Port', port_name, 'trunks'))
 
     def test_attribute_lifecycle(self):
         (port_name, ofport) = self.create_ovs_port()
