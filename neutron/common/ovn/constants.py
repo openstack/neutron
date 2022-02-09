@@ -315,3 +315,6 @@ CMS_OPT_AVAILABILITY_ZONES = 'availability-zones'
 
 # OVN vlan transparency option
 VLAN_PASSTHRU = 'vlan-passthru'
+
+# Port Binding types
+PB_TYPE_VIRTUAL = 'virtual'
