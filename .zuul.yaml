@@ -3,7 +3,6 @@
       - neutron-tempest-plugin-jobs-queens
       - openstack-python-jobs
       - openstack-python35-jobs
-      - publish-openstack-sphinx-docs
       - periodic-stable-jobs
       - check-requirements
       - integrated-gate
