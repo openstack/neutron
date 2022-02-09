@@ -1001,6 +1001,15 @@ class OVNMechanismDriver(api.MechanismDriver):
                                     vif_details)
                 break
 
+    def update_virtual_port_host(self, port_id, chassis_id):
+        if chassis_id:
+            hostname = self.sb_ovn.db_get(
+                'Chassis', chassis_id, 'hostname').execute(check_error=True)
+        else:
+            hostname = ''
+        self._plugin.update_virtual_port_host(n_context.get_admin_context(),
+                                              port_id, hostname)
+
     def get_workers(self):
         """Get any worker instances that should have their own process
 
