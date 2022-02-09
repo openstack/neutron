@@ -127,6 +127,8 @@ updating the core review team for the sub-project's repositories.
 |                         +-----------------------------+-------------------+
 |                         | Jens Harbott                | frickler          |
 +-------------------------+-----------------------------+-------------------+
+| neutron-fwaas           | ZhouHeng                    | zhouhenglc        |
++-------------------------+-----------------------------+-------------------+
 | neutron-vpnaas          | YAMAMOTO Takashi            | yamamoto          |
 |                         +-----------------------------+-------------------+
 |                         | Dongcan Ye                  | yedongcan         |
