@@ -114,10 +114,10 @@ function _install_base_deps {
 
         source $DEVSTACK_PATH/lib/neutron_plugins/ovn_agent
         echo_summary "OVS_BRANCH: ${OVS_BRANCH}"
-        compile_ovs False /usr /var
+        compile_ovs False /usr/local /var
         if [[ "$INSTALL_OVN" == "True" ]]; then
             echo_summary "OVN_BRANCH: ${OVN_BRANCH}"
-            compile_ovn /usr /var
+            compile_ovn /usr/local /var
         fi
     else
         PACKAGES=$(get_packages general,neutron,q-agt,q-l3,openvswitch)
