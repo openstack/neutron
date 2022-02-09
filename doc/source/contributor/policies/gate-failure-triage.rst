@@ -8,7 +8,7 @@ Spotting Gate Failures
 ----------------------
 This can be achieved using several tools:
 
-* `Grafana dashboard <http://grafana.openstack.org/dashboard/db/neutron-failure-rate>`_
+* `Grafana dashboard <https://grafana.opendev.org/d/f913631585/neutron-failure-rate>`_
 * `logstash <http://logstash.openstack.org/>`_
 
 For checking gate failures with logstash the following query will return failures for a specific job:
