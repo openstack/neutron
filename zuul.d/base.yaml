@@ -22,6 +22,7 @@
       - ^tools/.*$
       - ^vagrant/.*$
       - ^devstack/.*\.sample$
+      - ^zuul.d/(?!(project)).*\.yaml
     vars:
       OVN_BRANCH: v20.06.1
       # TODO(jlibosva): v2.13.0 is incompatible with kernel 4.15.0, sticking to commit hash until new v2.13 tag is created.
@@ -66,6 +67,7 @@
       - ^neutron/plugins/ml2/drivers/macvtap/.*$
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
       - ^neutron/plugins/ml2/drivers/ovn/.*$
+      - ^zuul.d/(?!(project)).*\.yaml
 
 - job:
     name: neutron-fullstack-with-uwsgi

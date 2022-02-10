@@ -65,6 +65,7 @@
       - ^neutron/plugins/ml2/drivers/macvtap/.*$
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
       - ^neutron/plugins/ml2/drivers/ovn/.*$
+      - ^zuul.d/(?!(project)).*\.yaml
 
 - job:
     name: neutron-tempest-dvr
@@ -100,6 +101,7 @@
       - ^neutron/plugins/ml2/drivers/macvtap/.*$
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
       - ^neutron/plugins/ml2/drivers/ovn/.*$
+      - ^zuul.d/(?!(project)).*\.yaml
 
 - job:
     name: neutron-tempest-iptables_hybrid
@@ -191,6 +193,7 @@
       - ^vagrant/.*$
       - ^neutron/agent/.*$
       - ^neutron/plugins/ml2/drivers/.*$
+      - ^zuul.d/(?!(project)).*\.yaml
 
 - job:
     name: neutron-tempest-mariadb-full
@@ -260,6 +263,7 @@
       - ^vagrant/.*$
       - ^migration/.*$
       - ^devstack/.*\.sample$
+      - ^zuul.d/(?!(project)).*\.yaml
 
 - job:
     name: neutron-ovn-base
@@ -369,6 +373,7 @@
       - ^neutron/plugins/ml2/drivers/macvtap/.*$
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
       - ^neutron/scheduler/.*$
+      - ^zuul.d/(?!(project)).*\.yaml
 
 - job:
     name: neutron-tempest-ipv6-only
