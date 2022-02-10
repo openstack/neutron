@@ -568,9 +568,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         """
         router = self._get_router(context, router_id)
         device_owner = self._get_device_owner(context, router)
-        if any(rp.port_type == device_owner
-               for rp in router.attached_ports):
-            raise l3_exc.RouterInUse(router_id=router_id)
+        attached_ports = [rp.port_id for rp in router.attached_ports if
+                          rp.port_type == device_owner]
+        if attached_ports:
+            reason = 'has ports still attached: ' + ', '.join(attached_ports)
+            raise l3_exc.RouterInUse(router_id=router_id, reason=reason)
         return router
 
     @db_api.retry_if_session_inactive()
