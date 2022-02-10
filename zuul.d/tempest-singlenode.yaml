@@ -48,17 +48,7 @@
     vars:
       devstack_localrc:
         Q_AGENT: openvswitch
-
-- job:
-    name: neutron-tempest-dvr
-    parent: neutron-ovs-base
-    vars:
-      devstack_localrc:
-        Q_DVR_MODE: dvr_snat
-      devstack_services:
-        br-ex-tcpdump: true
-        br-int-flows: true
-    irrelevant-files: &irrelevant-files
+    irrelevant-files: &openvswitch-irrelevant-files
       - ^(test-|)requirements.txt$
       - ^.*\.rst$
       - ^doc/.*$
@@ -69,7 +59,22 @@
       - ^tools/.*$
       - ^tox.ini$
       - ^vagrant/.*$
-      - ^migration/.*$
+      - ^neutron/agent/ovn/.*$
+      - ^neutron/agent/windows/.*$
+      - ^neutron/plugins/ml2/drivers/linuxbridge/.*$
+      - ^neutron/plugins/ml2/drivers/macvtap/.*$
+      - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
+      - ^neutron/plugins/ml2/drivers/ovn/.*$
+
+- job:
+    name: neutron-tempest-dvr
+    parent: neutron-ovs-base
+    vars:
+      devstack_localrc:
+        Q_DVR_MODE: dvr_snat
+      devstack_services:
+        br-ex-tcpdump: true
+        br-int-flows: true
 
 - job:
     name: neutron-tempest-linuxbridge
@@ -77,7 +82,24 @@
     vars:
       devstack_localrc:
         Q_AGENT: linuxbridge
-    irrelevant-files: *irrelevant-files
+    irrelevant-files:
+      - ^(test-|)requirements.txt$
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^neutron/tests/unit/.*$
+      - ^releasenotes/.*$
+      - ^setup.cfg$
+      - ^tools/.*$
+      - ^tox.ini$
+      - ^vagrant/.*$
+      - ^neutron/agent/linux/openvswitch_firewall/.*$
+      - ^neutron/agent/ovn/.*$
+      - ^neutron/agent/windows/.*$
+      - ^neutron/plugins/ml2/drivers/openvswitch/.*$
+      - ^neutron/plugins/ml2/drivers/macvtap/.*$
+      - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
+      - ^neutron/plugins/ml2/drivers/ovn/.*$
 
 - job:
     name: neutron-tempest-iptables_hybrid
@@ -129,7 +151,6 @@
               agent_availability_zone: nova
               image_is_advanced: true
               available_type_drivers: flat,geneve,vlan,gre,local,vxlan
-    irrelevant-files: *irrelevant-files
 
 - job:
     name: neutron-tempest-postgres-full
@@ -157,7 +178,19 @@
         s-container: false
         s-object: false
         s-proxy: false
-    irrelevant-files: *irrelevant-files
+    irrelevant-files: &tempest-db-irrelevant-files
+      - ^(test-|)requirements.txt$
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^neutron/tests/unit/.*$
+      - ^releasenotes/.*$
+      - ^setup.cfg$
+      - ^tools/.*$
+      - ^tox.ini$
+      - ^vagrant/.*$
+      - ^neutron/agent/.*$
+      - ^neutron/plugins/ml2/drivers/.*$
 
 - job:
     name: neutron-tempest-mariadb-full
@@ -188,7 +221,7 @@
     # NOTE(ralonsoh): once MariaDB default version in Ubuntu is bumped to
     # >10.1, this workaround can be removed (bug 1855912)
     pre-run: playbooks/add_mariadb_repo.yaml
-    irrelevant-files: *irrelevant-files
+    irrelevant-files: *tempest-db-irrelevant-files
 
 - job:
     name: neutron-tempest-with-uwsgi
@@ -214,7 +247,19 @@
         s-container: false
         s-object: false
         s-proxy: false
-    irrelevant-files: *irrelevant-files
+    irrelevant-files: &irrelevant-files
+      - ^(test-|)requirements.txt$
+      - ^.*\.rst$
+      - ^doc/.*$
+      - ^neutron/locale/.*$
+      - ^neutron/tests/unit/.*$
+      - ^releasenotes/.*$
+      - ^setup.cfg$
+      - ^tools/.*$
+      - ^tox.ini$
+      - ^vagrant/.*$
+      - ^migration/.*$
+      - ^devstack/.*\.sample$
 
 - job:
     name: neutron-ovn-base
@@ -224,7 +269,6 @@
     required-projects: &ovn-base-required-projects
       - openstack/neutron
       - openstack/tempest
-    irrelevant-files: *irrelevant-files
     vars: &ovn-base-vars
       tempest_concurrency: 4
       devstack_local_conf:
@@ -299,12 +343,37 @@
         c-sch: false
         c-vol: false
         cinder: false
+    irrelevant-files: &ovn-irrelevant-files
+      - ^(test-|)requirements.txt$
+      - ^releasenotes/.*$
+      - ^doc/.*$
+      - ^setup.cfg$
+      - ^.*\.rst$
+      - ^neutron/locale/.*$
+      - ^neutron/tests/unit/.*$
+      - ^tools/.*$
+      - ^tox.ini$
+      - ^neutron/agent/dhcp/.*$
+      - ^neutron/agent/l2/.*$
+      - ^neutron/agent/l3/.*$
+      - ^neutron/agent/metadata/.*$
+      - ^neutron/agent/windows/.*$
+      - ^neutron/agent/dhcp_agent.py
+      - ^neutron/agent/l3_agent.py
+      - ^neutron/agent/metadata_agent.py
+      - ^neutron/agent/resource_cache.py
+      - ^neutron/agent/rpc.py
+      - ^neutron/agent/securitygroup_rpc.py
+      - ^neutron/plugins/ml2/drivers/linuxbridge/.*$
+      - ^neutron/plugins/ml2/drivers/openvswitch/.*$
+      - ^neutron/plugins/ml2/drivers/macvtap/.*$
+      - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
+      - ^neutron/scheduler/.*$
 
 - job:
     name: neutron-tempest-ipv6-only
     parent: tempest-ipv6-only
     timeout: 10800
-    irrelevant-files: *irrelevant-files
     vars:
       tox_envlist: integrated-network
       devstack_plugins:
@@ -323,13 +392,14 @@
         s-container: false
         s-object: false
         s-proxy: false
+    irrelevant-files: *openvswitch-irrelevant-files
 
 - job:
     name: neutron-ovn-tempest-ovs-ipv6-only-base
     description: Base job for devstack/tempest to test Neutron with ovn driver in an IPv6-only deployment
     parent: devstack-tempest-ipv6
     timeout: 10800
-    irrelevant-files: *irrelevant-files
+    irrelevant-files: *ovn-irrelevant-files
     required-projects: *ovn-base-required-projects
     vars: *ovn-base-vars
 

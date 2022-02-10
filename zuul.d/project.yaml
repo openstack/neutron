@@ -13,64 +13,33 @@
       - release-notes-jobs-python3
     check:
       jobs:
-        - neutron-functional-with-uwsgi:
-            # We don't run the job on things like neutron docs-only changes
-            irrelevant-files: &irrelevant-files
-              - ^(test-|)requirements.txt$
-              - ^.*\.rst$
-              - ^doc/.*$
-              - ^neutron/locale/.*$
-              - ^neutron/tests/unit/.*$
-              - ^releasenotes/.*$
-              - ^setup.cfg$
-              - ^tools/.*$
-              - ^tox.ini$
-              - ^vagrant/.*$
-              - ^migration/.*$
-              - ^devstack/.*\.sample$
-        - neutron-fullstack-with-uwsgi:
-            irrelevant-files: *irrelevant-files
-        - neutron-rally-task:
-            irrelevant-files: *irrelevant-files
-        - neutron-grenade-multinode:
-            irrelevant-files: *irrelevant-files
-        - neutron-grenade-dvr-multinode:
-            irrelevant-files: *irrelevant-files
+        - neutron-functional-with-uwsgi
+        - neutron-fullstack-with-uwsgi
+        - neutron-rally-task
+        - neutron-grenade-multinode
+        - neutron-grenade-dvr-multinode
         - neutron-grenade-ovn:
             voting: false
-            irrelevant-files: *irrelevant-files
-        - neutron-tempest-linuxbridge:
-            irrelevant-files: *irrelevant-files
-        - neutron-tempest-with-uwsgi:
-            irrelevant-files: *irrelevant-files
-        - neutron-tempest-multinode-full-py3:
-            irrelevant-files: *irrelevant-files
-        - neutron-tempest-dvr-ha-multinode-full:
-            irrelevant-files: *irrelevant-files
-        - neutron-tempest-iptables_hybrid:
-            irrelevant-files: *irrelevant-files
+        - neutron-tempest-linuxbridge
+        - neutron-tempest-with-uwsgi
+        - neutron-tempest-multinode-full-py3
+        - neutron-tempest-dvr-ha-multinode-full
+        - neutron-tempest-iptables_hybrid
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa:
             voting: false
-            irrelevant-files: *irrelevant-files
-        - neutron-tempest-slow-py3:
-            irrelevant-files: *irrelevant-files
-        - neutron-tempest-ipv6-only:
-            irrelevant-files: *irrelevant-files
-        - neutron-ovn-tempest-ovs-release:
-            irrelevant-files: *irrelevant-files
+        - neutron-tempest-slow-py3
+        - neutron-tempest-ipv6-only
+        - neutron-ovn-tempest-ovs-release
         - neutron-ovn-tempest-ovs-release-ipv6-only:
             voting: false
-            irrelevant-files: *irrelevant-files
         # TODO(slaweq): add this job again to the check queue when it will be
         # working fine on python 3
         #- networking-midonet-tempest-aio-ml2-centos-7:
         #    voting: false
-        #    irrelevant-files: *irrelevant-files
         - openstacksdk-functional-devstack-networking:
             voting: false
         - tripleo-ci-centos-8-content-provider:
             voting: false
-            irrelevant-files: *irrelevant-files
         - neutron-centos-8-tripleo-standalone:
             vars: &consumer_vars
               consumer_job: true
@@ -81,7 +50,6 @@
               - tripleo-ci-centos-8-content-provider
         - neutron-ovn-rally-task:
             voting: false
-            irrelevant-files: *irrelevant-files
         # TripleO jobs that deploy OVN.
         # Note we don't use a project-template here, so it's easier
         # to disable voting on one specific job if things go wrong.

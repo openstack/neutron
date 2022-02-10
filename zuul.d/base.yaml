@@ -12,11 +12,16 @@
     pre-run: playbooks/configure_functional_job.yaml
     run: playbooks/run_functional_job.yaml
     post-run: playbooks/post_functional_job.yaml
-    irrelevant-files:
+    irrelevant-files: &irrelevant-files
       - ^.*\.rst$
       - ^doc/.*$
       - ^neutron/locale/.*$
+      - ^neutron/tests/unit/.*$
       - ^releasenotes/.*$
+      - ^setup.cfg$
+      - ^tools/.*$
+      - ^vagrant/.*$
+      - ^devstack/.*\.sample$
     vars:
       OVN_BRANCH: v20.06.1
       # TODO(jlibosva): v2.13.0 is incompatible with kernel 4.15.0, sticking to commit hash until new v2.13 tag is created.
@@ -47,6 +52,20 @@
         # /opt/stack/logs is default logs directory defined in neutron's
         # tox.ini file
         '{{ devstack_base_dir }}/logs/dsvm-fullstack-logs': logs
+    irrelevant-files:
+      - ^(test-|)requirements.txt$
+      - ^releasenotes/.*$
+      - ^doc/.*$
+      - ^setup.cfg$
+      - ^.*\.rst$
+      - ^neutron/locale/.*$
+      - ^neutron/tests/unit/.*$
+      - ^tools/.*$
+      - ^neutron/agent/ovn/.*$
+      - ^neutron/agent/windows/.*$
+      - ^neutron/plugins/ml2/drivers/macvtap/.*$
+      - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
+      - ^neutron/plugins/ml2/drivers/ovn/.*$
 
 - job:
     name: neutron-fullstack-with-uwsgi
