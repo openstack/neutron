@@ -44,7 +44,7 @@ from neutron.services.trunk.rpc import agent
 LOG = logging.getLogger(__name__)
 
 DEFAULT_WAIT_FOR_PORT_TIMEOUT = 60
-WAIT_BEFORE_TRUNK_DELETE = 3
+WAIT_BEFORE_TRUNK_DELETE = 6
 
 
 def lock_on_bridge_name(required_parameter):
