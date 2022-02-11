@@ -78,13 +78,13 @@ class NetworkDhcpAgentBindingMigrationMixin(object):
             self.assertEqual(list(range(1, 3)), sorted(binding_indices))
 
 
-class TestNetworkDhcpAgentBindingMigrationMysql(
+class TestNetworkDhcpAgentBindingMigrationMySQL(
                                     NetworkDhcpAgentBindingMigrationMixin,
-                                    test_migrations.TestWalkMigrationsMysql):
+                                    test_migrations.TestWalkMigrationsMySQL):
     pass
 
 
-class TestNetworkDhcpAgentBindingMigrationPsql(
-                                    NetworkDhcpAgentBindingMigrationMixin,
-                                    test_migrations.TestWalkMigrationsPsql):
+class TestNetworkDhcpAgentBindingMigrationPostgreSQL(
+        NetworkDhcpAgentBindingMigrationMixin,
+        test_migrations.TestWalkMigrationsPostgreSQL):
     pass

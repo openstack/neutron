@@ -62,10 +62,11 @@ class _ReservationSql(testlib_api.SqlTestCase):
         self.assertIsInstance(res_map['port'], int)
 
 
-class TestReservationMySQL(_ReservationSql, testlib_api.MySQLTestCaseMixin):
+class TestReservationMySQL(testlib_api.MySQLTestCaseMixin,
+                           _ReservationSql):
     pass
 
 
-class TestReservationPostgreSQL(_ReservationSql,
-                                testlib_api.PostgreSQLTestCaseMixin):
+class TestReservationPostgreSQL(testlib_api.PostgreSQLTestCaseMixin,
+                                _ReservationSql):
     pass
