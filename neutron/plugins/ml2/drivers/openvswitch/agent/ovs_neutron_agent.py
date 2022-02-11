@@ -1201,8 +1201,19 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 self.setup_arp_spoofing_protection(self.int_br,
                                                    port, port_detail)
             if cur_tag != lvm.vlan:
-                self.int_br.set_db_attribute(
-                    "Port", port.port_name, "tag", lvm.vlan)
+                ovsdb = self.int_br.ovsdb
+                with ovsdb.transaction() as txn:
+                    txn.add(ovsdb.db_set(
+                        'Port', port.port_name, ('tag', lvm.vlan)))
+                    # When changing the port's tag from DEAD_VLAN_TAG to
+                    # something else, also clear port's vlan_mode and trunks,
+                    # which were set to make sure all packets are dropped.
+                    if (cur_tag == constants.DEAD_VLAN_TAG and
+                            port.ofport != ovs_lib.INVALID_OFPORT):
+                        txn.add(ovsdb.db_clear(
+                            'Port', port.port_name, 'vlan_mode'))
+                        txn.add(ovsdb.db_clear(
+                            'Port', port.port_name, 'trunks'))
 
             # update plugin about port status
             # FIXME(salv-orlando): Failures while updating device status
