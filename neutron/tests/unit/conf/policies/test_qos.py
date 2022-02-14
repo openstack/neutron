@@ -1059,6 +1059,18 @@ class SystemAdminQosMinimumPacketRateRuleTests(QosRulesAPITestCase):
             self.context, 'get_policy_minimum_packet_rate_rule',
             self.alt_target)
 
+        # And the same for aliases
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_alias_minimum_packet_rate_rule',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_alias_minimum_packet_rate_rule',
+            self.alt_target)
+
     def test_create_policy_minimum_packet_rate_rule(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -1083,6 +1095,18 @@ class SystemAdminQosMinimumPacketRateRuleTests(QosRulesAPITestCase):
             self.context, 'update_policy_minimum_packet_rate_rule',
             self.alt_target)
 
+        # And the same for aliases
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_alias_minimum_packet_rate_rule',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_alias_minimum_packet_rate_rule',
+            self.alt_target)
+
     def test_delete_policy_minimum_packet_rate_rule(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -1093,6 +1117,18 @@ class SystemAdminQosMinimumPacketRateRuleTests(QosRulesAPITestCase):
             base_policy.InvalidScope,
             policy.enforce,
             self.context, 'delete_policy_minimum_packet_rate_rule',
+            self.alt_target)
+
+        # And the same for aliases
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_alias_minimum_packet_rate_rule',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_alias_minimum_packet_rate_rule',
             self.alt_target)
 
 
@@ -1129,6 +1165,17 @@ class ProjectAdminQosMinimumPacketRateRuleTests(QosRulesAPITestCase):
             self.context, 'get_policy_minimum_packet_rate_rule',
             self.alt_target)
 
+        # And the same for aliases
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_alias_minimum_packet_rate_rule',
+                           self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_alias_minimum_packet_rate_rule',
+            self.alt_target)
+
     def test_create_policy_minimum_packet_rate_rule(self):
         self.assertTrue(
             policy.enforce(self.context,
@@ -1149,6 +1196,17 @@ class ProjectAdminQosMinimumPacketRateRuleTests(QosRulesAPITestCase):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'update_policy_minimum_packet_rate_rule',
+            self.alt_target)
+
+        # And the same for aliases
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_alias_minimum_packet_rate_rule',
+                           self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_alias_minimum_packet_rate_rule',
             self.alt_target)
 
     def test_delete_policy_minimum_packet_rate_rule(self):
@@ -1194,6 +1252,18 @@ class ProjectMemberQosMinimumPacketRateRuleTests(
             self.context, 'update_policy_minimum_packet_rate_rule',
             self.alt_target)
 
+        # And the same for aliases
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_alias_minimum_packet_rate_rule',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_alias_minimum_packet_rate_rule',
+            self.alt_target)
+
     def test_delete_policy_minimum_packet_rate_rule(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
@@ -1204,6 +1274,18 @@ class ProjectMemberQosMinimumPacketRateRuleTests(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'delete_policy_minimum_packet_rate_rule',
+            self.alt_target)
+
+        # And the same for aliases
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_alias_minimum_packet_rate_rule',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_alias_minimum_packet_rate_rule',
             self.alt_target)
 
 

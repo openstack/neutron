@@ -33,6 +33,7 @@ from oslo_utils import uuidutils
 import webob.exc
 
 from neutron.exceptions import qos as neutron_qos_exc
+from neutron.extensions import qos_pps_minimum_rule_alias
 from neutron.extensions import qos_rules_alias
 from neutron import manager
 from neutron.objects import network as network_object
@@ -1858,6 +1859,19 @@ class QoSRuleAliasTestExtensionManager(object):
         return []
 
 
+class QoSRuleAliasMinimumPacketRateTestExtensionManager(object):
+
+    def get_resources(self):
+        return qos_pps_minimum_rule_alias.Qos_pps_minimum_rule_alias.\
+            get_resources()
+
+    def get_actions(self):
+        return []
+
+    def get_request_extensions(self):
+        return []
+
+
 class TestQoSRuleAlias(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def setUp(self):
@@ -1981,6 +1995,30 @@ class TestQoSRuleAlias(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 request = self.new_show_request(resource, rule_id, self.fmt)
                 res = request.get_response(self.ext_api)
                 self.assertEqual(webob.exc.HTTPNotFound.code, res.status_int)
+
+
+class TestQoSRuleAliasMinimumPacketRate(TestQoSRuleAlias):
+    def setUp(self):
+        # Remove MissingAuthPlugin exception from logs
+        self.patch_notifier = mock.patch(
+            'neutron.notifiers.batch_notifier.BatchNotifier._notify')
+        self.patch_notifier.start()
+        plugin = 'ml2'
+        service_plugins = {'qos_plugin_name': SERVICE_PLUGIN_KLASS}
+        ext_mgr = QoSRuleAliasMinimumPacketRateTestExtensionManager()
+        super(TestQoSRuleAlias, self).setUp(plugin=plugin, ext_mgr=ext_mgr,
+                                            service_plugins=service_plugins)
+        self.qos_plugin = directory.get_plugin(plugins_constants.QOS)
+
+        self.ctxt = context.Context('fake_user', 'fake_tenant')
+        self.rule_objects = {
+            'minimum_packet_rate': rule_object.QosMinimumPacketRateRule
+        }
+
+        self.qos_policy_id = uuidutils.generate_uuid()
+        self.rule_data = {
+            'minimum_packet_rate_rule': {'min_kpps': 10, 'direction': 'any'}
+        }
 
 
 class TestQosPluginDB(base.BaseQosTestCase):
