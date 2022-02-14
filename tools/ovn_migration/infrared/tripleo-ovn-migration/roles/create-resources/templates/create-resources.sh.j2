@@ -65,6 +65,8 @@ do
         if [ $num_attempts -gt 24 ]
         then
             echo "VM is not up even after 2 minutes. Something is wrong"
+            # printing server information for debugging
+            openstack server show ovn-migration-server-{{ resource_suffix }}-$i
             exit 1
         fi
     done
@@ -86,6 +88,8 @@ do
         if [ $num_attempts -gt 24 ]
         then
             echo "Port is not up even after 2 minutes. Something is wrong"
+            # printing port information for debugging
+            openstack port show $port_id
             exit 1
         fi
     done
@@ -140,6 +144,9 @@ do
             if [ $num_attempts -gt 60 ]
             then
                 echo "VM is not pingable. Something is wrong."
+                # printing server information for debugging
+                server_id=$(openstack server list -f value | grep $server_ip | awk '{print $1}')
+                openstack console log show $server_id
                 exit 1
             fi
         fi
@@ -147,6 +154,16 @@ do
 
     ssh -i {{ ovn_migration_temp_dir }}/ovn_migration_ssh_key -o StrictHostKeyChecking=no \
     -o UserKnownHostsFile=/dev/null  cirros@$server_ip date
+    rc=$?
+    if [ "$rc" != "0" ]
+    then
+        echo "VM not accessible via ssh. Something went wrong. Exiting with rc=$rc"
+        # printing server information for debugging purposes
+        server_id=$(openstack server list -f value | grep $server_ip | awk '{print $1}')
+        openstack console log show $server_id
+        exit $rc
+    fi
+
 done
 
 echo "Done with the resource creation : exiting"

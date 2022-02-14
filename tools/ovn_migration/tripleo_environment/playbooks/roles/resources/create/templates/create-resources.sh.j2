@@ -78,6 +78,8 @@ do
     if [ $num_attempts -gt 24 ]
     then
         echo "Port is not up even after 2 minutes. Something is wrong"
+        # printing port information for debugging
+        openstack port show ovn-migration-server-port-{{ resource_suffix }}
         exit 1
     fi
 done
@@ -120,7 +122,9 @@ do
         if [ $num_attempts -gt 60 ]
         then
             echo "VM is not reachable. Something is wrong."
-            # Even though something seems wrong, lets try and ping.
+            # printing server information for debugging
+            server_id=$(openstack server list -f value | grep $server_ip | awk '{print $1}')
+            openstack console log show $server_id
             exit 1
         fi
     fi
@@ -132,4 +136,6 @@ ssh -i {{ ovn_migration_temp_dir }}/ovn_migration_ssh_key -o StrictHostKeyChecki
 rc=$?
 
 echo "Done with the resource creation : exiting with $rc"
+# printing server information for debugging
+[ "$rc" != "0" ] && openstack console log show $(openstack server list -f value | grep $server_ip | awk '{print $1}')
 exit $rc
