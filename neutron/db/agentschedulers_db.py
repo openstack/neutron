@@ -502,8 +502,13 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         subnets = subnet_obj.Subnet.get_objects(
             payload.context, segment_id=segment_ids)
         network_ids = {s.network_id for s in subnets}
+
+        # pre-compute net-id per segments.
+        netsegs = {}
+        [netsegs.setdefault(s['network_id'], []).append(s)
+         for s in segments if 'network_id' in s]
         for network_id in network_ids:
-            for segment in segments:
+            for segment in netsegs.get(network_id, []):
                 self._schedule_network(
                     payload.context, network_id, dhcp_notifier,
                     candidate_hosts=segment['hosts'])
