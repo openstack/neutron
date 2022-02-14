@@ -1386,7 +1386,7 @@ def get_devices_info(namespace, attrs=None, **kwargs):
         'parent_index': ['IFLA_LINK', 'IFLA_LINKINFO'],
         'parent_name': ['IFLA_LINK', 'IFLA_LINKINFO'],
         'kind': ['IFLA_LINKINFO', 'IFLA_INFO_KIND'],
-        'vlan_id': ['IFLA_LINKINFO', 'IFLA_INFO_KIND' 'IFLA_INFO_DATA',
+        'vlan_id': ['IFLA_LINKINFO', 'IFLA_INFO_KIND', 'IFLA_INFO_DATA',
                     'IFLA_VLAN_ID'],
         'vxlan_id': ['IFLA_LINKINFO', 'IFLA_INFO_KIND', 'IFLA_INFO_DATA',
                      'IFLA_VXLAN_ID'],
