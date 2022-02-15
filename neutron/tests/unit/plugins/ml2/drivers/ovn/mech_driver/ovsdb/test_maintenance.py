@@ -489,3 +489,49 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
                       options={'always_learn_from_arp_request': 'false',
                                'dynamic_neigh_routers': 'true'})]
         nb_idl.update_lrouter.assert_has_calls(expected_calls)
+
+    def _test_check_vlan_distributed_ports(self, opt_value=None):
+        fake_net0 = {'id': 'net0'}
+        fake_net1 = {'id': 'net1'}
+        fake_port0 = {'id': 'port0'}
+        fake_port1 = {'id': 'port1'}
+
+        self.fake_ovn_client._plugin.get_networks.return_value = [
+            fake_net0, fake_net1]
+        self.fake_ovn_client._plugin.get_ports.return_value = [
+            fake_port0, fake_port1]
+
+        fake_lrp = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={
+                'name': 'lrp',
+                'options': {constants.LRP_OPTIONS_RESIDE_REDIR_CH: opt_value}})
+        self.fake_ovn_client._nb_idl.get_lrouter_port.return_value = fake_lrp
+
+        # Invoke the periodic method, it meant to run only once at startup
+        # so NeverAgain will be raised at the end
+        self.assertRaises(periodics.NeverAgain,
+                          self.periodic.check_vlan_distributed_ports)
+
+    def test_check_vlan_distributed_ports_expected_value(self):
+        cfg.CONF.set_override('enable_distributed_floating_ip', 'False',
+                              group='ovn')
+        self._test_check_vlan_distributed_ports(opt_value='true')
+
+        # If the "reside-on-redirect-chassis" option value do match
+        # the expected value, assert we do not update the database
+        self.assertFalse(
+            self.fake_ovn_client._nb_idl.db_set.called)
+
+    def test_check_vlan_distributed_ports_non_expected_value(self):
+        cfg.CONF.set_override('enable_distributed_floating_ip', 'False',
+                              group='ovn')
+        self._test_check_vlan_distributed_ports(opt_value='false')
+
+        # If the "reside-on-redirect-chassis" option value does not match
+        # the expected value, assert we update the database
+        opt = {constants.LRP_OPTIONS_RESIDE_REDIR_CH: 'true'}
+        expected_calls = [
+            mock.call('Logical_Router_Port', 'lrp-port0', ('options', opt)),
+            mock.call('Logical_Router_Port', 'lrp-port1', ('options', opt))]
+        self.fake_ovn_client._nb_idl.db_set.assert_has_calls(
+            expected_calls)

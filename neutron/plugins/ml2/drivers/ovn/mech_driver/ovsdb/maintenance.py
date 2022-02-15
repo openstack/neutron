@@ -20,6 +20,7 @@ import threading
 
 from futurist import periodics
 from neutron_lib.api.definitions import external_net
+from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib.api.definitions import segment as segment_def
 from neutron_lib import constants as n_const
 from neutron_lib import context as n_context
@@ -707,6 +708,41 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                          'dynamic_neigh_routers': 'true'})
             cmds.append(self._nb_idl.update_lrouter(router.name, options=opts))
 
+        if cmds:
+            with self._nb_idl.transaction(check_error=True) as txn:
+                for cmd in cmds:
+                    txn.add(cmd)
+        raise periodics.NeverAgain()
+
+    # A static spacing value is used here, but this method will only run
+    # once per lock due to the use of periodics.NeverAgain().
+    @periodics.periodic(spacing=600, run_immediately=True)
+    def check_vlan_distributed_ports(self):
+        """Check VLAN distributed ports
+        Check for the option "reside-on-redirect-chassis" value for
+        distributed VLAN ports.
+        """
+        if not self.has_lock:
+            return
+        context = n_context.get_admin_context()
+        cmds = []
+        # Get router ports belonging to VLAN networks
+        vlan_nets = self._ovn_client._plugin.get_networks(
+            context, {pnet.NETWORK_TYPE: [n_const.TYPE_VLAN]})
+        vlan_net_ids = [vn['id'] for vn in vlan_nets]
+        router_ports = self._ovn_client._plugin.get_ports(
+            context, {'network_id': vlan_net_ids,
+                      'device_owner': n_const.ROUTER_PORT_OWNERS})
+        expected_value = ('false' if ovn_conf.is_ovn_distributed_floating_ip()
+                          else 'true')
+        for rp in router_ports:
+            lrp_name = utils.ovn_lrouter_port_name(rp['id'])
+            lrp = self._nb_idl.get_lrouter_port(lrp_name)
+            if lrp.options.get(
+                    ovn_const.LRP_OPTIONS_RESIDE_REDIR_CH) != expected_value:
+                opt = {ovn_const.LRP_OPTIONS_RESIDE_REDIR_CH: expected_value}
+                cmds.append(self._nb_idl.db_set(
+                    'Logical_Router_Port', lrp_name, ('options', opt)))
         if cmds:
             with self._nb_idl.transaction(check_error=True) as txn:
                 for cmd in cmds:
