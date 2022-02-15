@@ -193,6 +193,62 @@ rules = [
     ),
 
     policy.DocumentedRuleDefault(
+        name='get_policy_packet_rate_limit_rule',
+        check_str=base.PROJECT_READER,
+        scope_types=['project'],
+        description='Get a QoS packet rate limit rule',
+        operations=[
+            {
+                'method': 'GET',
+                'path': '/qos/policies/{policy_id}/packet_rate_limit_rules',
+            },
+            {
+                'method': 'GET',
+                'path': ('/qos/policies/{policy_id}/'
+                         'packet_rate_limit_rules/{rule_id}'),
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        name='create_policy_packet_rate_limit_rule',
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
+        description='Create a QoS packet rate limit rule',
+        operations=[
+            {
+                'method': 'POST',
+                'path': '/qos/policies/{policy_id}/packet_rate_limit_rules',
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_policy_packet_rate_limit_rule',
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
+        description='Update a QoS packet rate limit rule',
+        operations=[
+            {
+                'method': 'PUT',
+                'path': ('/qos/policies/{policy_id}/'
+                         'packet_rate_limit_rules/{rule_id}'),
+            },
+        ]
+    ),
+    policy.DocumentedRuleDefault(
+        name='delete_policy_packet_rate_limit_rule',
+        check_str=base.PROJECT_ADMIN,
+        scope_types=['project'],
+        description='Delete a QoS packet rate limit rule',
+        operations=[
+            {
+                'method': 'DELETE',
+                'path': ('/qos/policies/{policy_id}/'
+                         'packet_rate_limit_rules/{rule_id}'),
+            },
+        ]
+    ),
+
+    policy.DocumentedRuleDefault(
         name='get_policy_dscp_marking_rule',
         check_str=base.PROJECT_READER,
         scope_types=['project'],
