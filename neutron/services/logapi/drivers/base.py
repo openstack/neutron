@@ -18,13 +18,14 @@ from neutron_lib.callbacks import registry
 from neutron_lib.services.logapi import constants as log_const
 from oslo_log import log as logging
 
+from neutron.services.logapi import api_base
 from neutron.services.logapi.rpc import server as server_rpc
 
 LOG = logging.getLogger(__name__)
 
 
 @registry.has_registry_receivers
-class DriverBase(object):
+class DriverBase(api_base.LoggingApiBase):
 
     def __init__(self, name, vif_types, vnic_types,
                  supported_logging_types, requires_rpc=False):
