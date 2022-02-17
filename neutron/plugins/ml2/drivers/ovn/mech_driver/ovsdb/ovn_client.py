@@ -79,7 +79,7 @@ class OVNClient(object):
         self._l3_plugin_property = None
 
         # TODO(ralonsoh): handle the OVN client extensions with an ext. manager
-        self._qos_driver = qos_extension.OVNClientQosExtension(self)
+        self._qos_driver = qos_extension.OVNClientQosExtension(driver=self)
         self._placement_extension = (
             placement_extension.OVNClientPlacementExtension(self))
         self._ovn_scheduler = l3_ovn_scheduler.get_scheduler()

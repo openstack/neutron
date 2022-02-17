@@ -15,18 +15,6 @@
 from collections import namedtuple
 
 import netaddr
-from neutron.common.ovn import acl as acl_utils
-from neutron.common.ovn import constants as ovn_const
-from neutron.common.ovn import utils
-from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as ovn_config
-from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
-from neutron.services.portforwarding.drivers.ovn.driver import \
-    OVNPortForwarding as ovn_pf
-from neutron.services.segments import db as segments_db
-from neutron.tests.functional import base
-from neutron.tests.unit.api import test_extensions
-from neutron.tests.unit.extensions import test_extraroute
-from neutron.tests.unit.extensions import test_securitygroup
 from neutron_lib.api.definitions import dns as dns_apidef
 from neutron_lib.api.definitions import fip_pf_description as ext_pf_def
 from neutron_lib.api.definitions import floating_ip_port_forwarding as pf_def
@@ -34,16 +22,33 @@ from neutron_lib.api.definitions import l3
 from neutron_lib.api.definitions import port_security as ps
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.services.qos import constants as qos_const
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import idlutils
 from ovsdbapp import constants as ovsdbapp_const
 
+from neutron.common.ovn import acl as acl_utils
+from neutron.common.ovn import constants as ovn_const
+from neutron.common.ovn import utils
+from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as ovn_config
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions \
+    import qos as qos_extension
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
+from neutron.services.portforwarding.drivers.ovn.driver import \
+    OVNPortForwarding as ovn_pf
+from neutron.services.revisions import revision_plugin
+from neutron.services.segments import db as segments_db
+from neutron.tests.functional import base
+from neutron.tests.unit.api import test_extensions
+from neutron.tests.unit.extensions import test_extraroute
+from neutron.tests.unit.extensions import test_securitygroup
+
 
 class TestOvnNbSync(base.TestOVNFunctionalBase):
 
-    _extension_drivers = ['port_security', 'dns']
+    _extension_drivers = ['port_security', 'dns', 'qos', 'revision_plugin']
 
-    def setUp(self):
+    def setUp(self, *args):
         ovn_config.cfg.CONF.set_override('dns_domain', 'ovn.test')
         super(TestOvnNbSync, self).setUp(maintenance_worker=True)
         ext_mgr = test_extraroute.ExtraRouteTestExtensionManager()
@@ -83,11 +88,18 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         self.match_old_mac_dhcp_subnets = []
         self.expected_dns_records = []
         self.expected_ports_with_unknown_addr = []
+        self.expected_qos_records = []
         self.ctx = context.get_admin_context()
         ovn_config.cfg.CONF.set_override('ovn_metadata_enabled', True,
                                          group='ovn')
         ovn_config.cfg.CONF.set_override(
             'enable_distributed_floating_ip', True, group='ovn')
+        self.rp = revision_plugin.RevisionPlugin()
+        self.qos_driver = qos_extension.OVNClientQosExtension(
+            nb_idl=self.nb_api)
+
+    def get_additional_service_plugins(self):
+        return {'qos': 'qos', 'segments': 'segments'}
 
     def _api_for_resource(self, resource):
         if resource in ['security-groups']:
@@ -1499,6 +1511,20 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
             self.assertRaises(AssertionError, self.assertCountEqual,
                               self.expected_dns_records, observed_dns_records)
 
+    def _validate_qos_records(self, should_match=True):
+        observed_qos_records = []
+        for qos_row in self.nb_api.tables['QoS'].rows.values():
+            observed_qos_records.append({
+                'action': qos_row.action, 'bandwidth': qos_row.bandwidth,
+                'direction': qos_row.direction, 'match': qos_row.match,
+                'external_ids': qos_row.external_ids})
+
+        if should_match:
+            self.assertCountEqual(self.expected_qos_records,
+                                  observed_qos_records)
+        else:
+            self.assertEqual([], observed_qos_records)
+
     def _validate_resources(self, should_match=True):
         self._validate_networks(should_match=should_match)
         self._validate_metadata_ports(should_match=should_match)
@@ -1552,6 +1578,152 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
 
     def test_ovn_nb_sync_off(self):
         self._test_ovn_nb_sync_helper('off', should_match_after_sync=False)
+
+    def test_sync_port_qos_policies(self):
+        res = self._create_network(self.fmt, 'n1', True)
+        net = self.deserialize(self.fmt, res)['network']
+        self._create_subnet(self.fmt, net['id'], '10.0.0.0/24')
+
+        res = self._create_qos_policy(self.fmt, 'qos_maxbw')
+        qos_maxbw = self.deserialize(self.fmt, res)['policy']
+        self._create_qos_rule(self.fmt, qos_maxbw['id'],
+                              qos_const.RULE_TYPE_BANDWIDTH_LIMIT,
+                              max_kbps=1000, max_burst_kbps=800)
+        self._create_qos_rule(self.fmt, qos_maxbw['id'],
+                              qos_const.RULE_TYPE_BANDWIDTH_LIMIT,
+                              direction=constants.INGRESS_DIRECTION,
+                              max_kbps=700, max_burst_kbps=600)
+
+        res = self._create_qos_policy(self.fmt, 'qos_maxbw')
+        qos_dscp = self.deserialize(self.fmt, res)['policy']
+        self._create_qos_rule(self.fmt, qos_dscp['id'],
+                              qos_const.RULE_TYPE_DSCP_MARKING, dscp_mark=14)
+
+        res = self._create_port(
+            self.fmt, net['id'], arg_list=('qos_policy_id', ),
+            name='n1-port1', device_owner='compute:nova',
+            qos_policy_id=qos_maxbw['id'])
+        port_1 = self.deserialize(self.fmt, res)['port']
+        res = self._create_port(
+            self.fmt, net['id'], arg_list=('qos_policy_id', ),
+            name='n1-port2', device_owner='compute:nova',
+            qos_policy_id=qos_dscp['id'])
+        port_2 = self.deserialize(self.fmt, res)['port']
+
+        # Check QoS policies have been correctly created in OVN DB.
+        self.expected_qos_records = [
+            {'action': {}, 'bandwidth': {'burst': 800, 'rate': 1000},
+             'direction': 'from-lport',
+             'match': 'inport == "%s"' % port_1['id'],
+             'external_ids': {ovn_const.OVN_PORT_EXT_ID_KEY: port_1['id']}},
+            {'action': {}, 'bandwidth': {'burst': 600, 'rate': 700},
+             'direction': 'to-lport',
+             'match': 'outport == "%s"' % port_1['id'],
+             'external_ids': {ovn_const.OVN_PORT_EXT_ID_KEY: port_1['id']}},
+            {'action': {'dscp': 14}, 'bandwidth': {},
+             'direction': 'from-lport',
+             'match': 'inport == "%s"' % port_2['id'],
+             'external_ids': {ovn_const.OVN_PORT_EXT_ID_KEY: port_2['id']}}]
+        self._validate_qos_records()
+
+        # Delete QoS policies from the OVN DB.
+        with self.nb_api.transaction(check_error=True) as txn:
+            for port in (port_1, port_2):
+                for ovn_rule in [self.qos_driver._ovn_qos_rule(
+                        direction, {}, port['id'], port['network_id'],
+                        delete=True)
+                        for direction in constants.VALID_DIRECTIONS]:
+                    txn.add(self.nb_api.qos_del(**ovn_rule))
+        self._validate_qos_records(should_match=False)
+
+        # Manually sync port QoS registers.
+        nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
+            self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
+            'log', self.mech_driver)
+        ctx = context.get_admin_context()
+        nb_synchronizer.sync_port_qos_policies(ctx)
+        self._validate_qos_records()
+
+    def _create_floatingip(self, fip_network_id, port_id, qos_policy_id):
+        body = {'tenant_id': self._tenant_id,
+                'floating_network_id': fip_network_id,
+                'port_id': port_id,
+                'qos_policy_id': qos_policy_id}
+        return self.l3_plugin.create_floatingip(self.context,
+                                                {'floatingip': body})
+
+    def test_sync_fip_qos_policies(self):
+        res = self._create_network(self.fmt, 'n1_ext', True,
+                                   arg_list=('router:external', ),
+                                   **{'router:external': True})
+        net_ext = self.deserialize(self.fmt, res)['network']
+        res = self._create_subnet(self.fmt, net_ext['id'], '10.0.0.0/24')
+        subnet_ext = self.deserialize(self.fmt, res)['subnet']
+        res = self._create_network(self.fmt, 'n1_int', True)
+        net_int = self.deserialize(self.fmt, res)['network']
+        self._create_subnet(self.fmt, net_int['id'], '10.10.0.0/24')
+
+        res = self._create_qos_policy(self.fmt, 'qos_maxbw')
+        qos_maxbw = self.deserialize(self.fmt, res)['policy']
+        self._create_qos_rule(self.fmt, qos_maxbw['id'],
+                              qos_const.RULE_TYPE_BANDWIDTH_LIMIT,
+                              max_kbps=1000, max_burst_kbps=800)
+        self._create_qos_rule(self.fmt, qos_maxbw['id'],
+                              qos_const.RULE_TYPE_BANDWIDTH_LIMIT,
+                              direction=constants.INGRESS_DIRECTION,
+                              max_kbps=700, max_burst_kbps=600)
+
+        # Create a router with net_ext as GW network and net_int as internal
+        # one, and a floating IP on the external network.
+        data = {'name': 'r1', 'admin_state_up': True,
+                'tenant_id': self._tenant_id,
+                'external_gateway_info': {
+                    'enable_snat': True,
+                    'network_id': net_ext['id'],
+                    'external_fixed_ips': [{'ip_address': '10.0.0.5',
+                                            'subnet_id': subnet_ext['id']}]}
+                }
+        router = self.l3_plugin.create_router(self.context, {'router': data})
+        net_int_prtr = self._make_port(self.fmt, net_int['id'],
+                                       name='n1_int-p-rtr')['port']
+        self.l3_plugin.add_router_interface(
+            self.context, router['id'], {'port_id': net_int_prtr['id']})
+
+        fip = self._create_floatingip(net_ext['id'], net_int_prtr['id'],
+                                      qos_maxbw['id'])
+
+        # Check QoS policies have been correctly created in OVN DB.
+        fip_match = ('%s == "%s" && ip4.%s == %s && '
+                     'is_chassis_resident("%s")')
+        self.expected_qos_records = [
+            {'action': {}, 'bandwidth': {'burst': 600, 'rate': 700},
+             'direction': 'to-lport',
+             'external_ids': {'neutron:fip_id': fip['id']},
+             'match': fip_match % ('outport', router['gw_port_id'], 'dst',
+                                   fip['floating_ip_address'],
+                                   net_int_prtr['id'])},
+            {'action': {}, 'bandwidth': {'burst': 800, 'rate': 1000},
+             'direction': 'from-lport',
+             'external_ids': {'neutron:fip_id': fip['id']},
+             'match': fip_match % ('inport', router['gw_port_id'], 'src',
+                                   fip['floating_ip_address'],
+                                   net_int_prtr['id'])}]
+        self._validate_qos_records()
+
+        # Delete QoS policies from the OVN DB.
+        with self.nb_api.transaction(check_error=True) as txn:
+            lswitch_name = utils.ovn_name(net_ext['id'])
+            txn.add(self.nb_api.qos_del_ext_ids(
+                lswitch_name, {ovn_const.OVN_FIP_EXT_ID_KEY: fip['id']}))
+        self._validate_qos_records(should_match=False)
+
+        # Manually sync port QoS registers.
+        nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
+            self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
+            'log', self.mech_driver)
+        ctx = context.get_admin_context()
+        nb_synchronizer.sync_fip_qos_policies(ctx)
+        self._validate_qos_records()
 
 
 class TestOvnSbSync(base.TestOVNFunctionalBase):

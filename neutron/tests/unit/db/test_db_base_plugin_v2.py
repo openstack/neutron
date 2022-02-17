@@ -31,6 +31,7 @@ from neutron_lib.db import standard_attr
 from neutron_lib import exceptions as lib_exc
 from neutron_lib import fixture
 from neutron_lib.plugins import directory
+from neutron_lib.services.qos import constants as qos_const
 from neutron_lib.tests import tools
 from neutron_lib.utils import helpers
 from neutron_lib.utils import net
@@ -589,6 +590,58 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         if res.status_int >= webob.exc.HTTPClientError.code:
             raise webob.exc.HTTPClientError(code=res.status_int)
         return self.deserialize(fmt, res)
+
+    def _create_qos_rule(self, fmt, qos_policy_id, rule_type, max_kbps=None,
+                         max_burst_kbps=None, dscp_mark=None, min_kbps=None,
+                         direction=constants.EGRESS_DIRECTION,
+                         expected_res_status=None, project_id=None,
+                         set_context=False, is_admin=False):
+        # Accepted rule types: "bandwidth_limit", "dscp_marking" and
+        # "minimum_bandwidth"
+        self.assertIn(rule_type, [qos_const.RULE_TYPE_BANDWIDTH_LIMIT,
+                                  qos_const.RULE_TYPE_DSCP_MARKING,
+                                  qos_const.RULE_TYPE_MINIMUM_BANDWIDTH])
+        project_id = project_id or self._tenant_id
+        type_req = rule_type + '_rule'
+        data = {type_req: {'project_id': project_id}}
+        if rule_type == qos_const.RULE_TYPE_BANDWIDTH_LIMIT:
+            data[type_req][qos_const.MAX_KBPS] = max_kbps
+            data[type_req][qos_const.MAX_BURST] = max_burst_kbps
+            data[type_req][qos_const.DIRECTION] = direction
+        elif rule_type == qos_const.RULE_TYPE_DSCP_MARKING:
+            data[type_req][qos_const.DSCP_MARK] = dscp_mark
+        else:
+            data[type_req][qos_const.MIN_KBPS] = min_kbps
+            data[type_req][qos_const.DIRECTION] = direction
+        route = 'qos/policies/%s/%s' % (qos_policy_id, type_req + 's')
+        qos_rule_req = self.new_create_request(route, data, fmt)
+        if set_context and project_id:
+            # create a specific auth context for this request
+            qos_rule_req.environ['neutron.context'] = context.Context(
+                '', project_id, is_admin=is_admin)
+
+        qos_rule_res = qos_rule_req.get_response(self.api)
+        if expected_res_status:
+            self.assertEqual(expected_res_status, qos_rule_res.status_int)
+        return qos_rule_res
+
+    def _create_qos_policy(self, fmt, qos_policy_name=None,
+                           expected_res_status=None, project_id=None,
+                           set_context=False, is_admin=False):
+        project_id = project_id or self._tenant_id
+        name = qos_policy_name or uuidutils.generate_uuid()
+        data = {'policy': {'name': name,
+                           'project_id': project_id}}
+        qos_req = self.new_create_request('policies', data, fmt)
+        if set_context and project_id:
+            # create a specific auth context for this request
+            qos_req.environ['neutron.context'] = context.Context(
+                '', project_id, is_admin=is_admin)
+
+        qos_policy_res = qos_req.get_response(self.api)
+        if expected_res_status:
+            self.assertEqual(expected_res_status, qos_policy_res.status_int)
+        return qos_policy_res
 
     def _api_for_resource(self, resource):
         if resource in ['networks', 'subnets', 'ports', 'subnetpools',
