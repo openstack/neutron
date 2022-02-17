@@ -28,7 +28,7 @@ class LocalIPTestCase(base.BaseFullStackTestCase):
     number_of_hosts = 2
 
     scenarios = [
-        ('with_conntrack_rules', {'firewall_driver': 'iptables_hybrid'}),
+        ('with_conntrack_rules', {'firewall_driver': 'noop'}),
         # with ovs firewall driver - test config will set static_nat=True
         ('static_nat', {'firewall_driver': 'openvswitch'}),
     ]
