@@ -1232,7 +1232,9 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
     def _test_bind_port_sriov(self, fake_segments):
         fake_port = fakes.FakePort.create_one_port(
             attrs={'binding:vnic_type': 'direct',
-                   'binding:profile': {'capabilities': ['switchdev']}}).info()
+                   'binding:profile': {
+                       ovn_const.PORT_CAP_PARAM: [
+                           ovn_const.PORT_CAP_SWITCHDEV]}}).info()
         fake_host = 'host'
         fake_port_context = fakes.FakePortContext(
             fake_port, fake_host, fake_segments)

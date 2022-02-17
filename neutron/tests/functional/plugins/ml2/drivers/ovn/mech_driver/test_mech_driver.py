@@ -557,7 +557,8 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
                      'tenant_id': self._tenant_id,
                      portbindings.VNIC_TYPE: vnic_type,
                      ovn_const.OVN_PORT_BINDING_PROFILE: {
-                     'capabilities': [ovn_const.PORT_CAP_SWITCHDEV]}}}
+                         ovn_const.PORT_CAP_PARAM: [
+                             ovn_const.PORT_CAP_SWITCHDEV]}}}
 
         port_req = self.new_create_request('ports', port_data, self.fmt)
         port_res = port_req.get_response(self.api)
@@ -604,7 +605,8 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
         # included in a HA Chassis Group
         port_upt_data = {
             'port': {ovn_const.OVN_PORT_BINDING_PROFILE: {
-                     'capabilities': [ovn_const.PORT_CAP_SWITCHDEV]}}}
+                     ovn_const.PORT_CAP_PARAM: [
+                         ovn_const.PORT_CAP_SWITCHDEV]}}}
         port_req = self.new_update_request(
             'ports', port_upt_data, port['id'], self.fmt)
         port_res = port_req.get_response(self.api)

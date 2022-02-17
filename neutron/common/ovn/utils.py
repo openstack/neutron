@@ -11,6 +11,7 @@
 #    under the License.
 
 import collections
+import copy
 import inspect
 import os
 import re
@@ -229,12 +230,29 @@ def validate_and_get_data_from_binding_profile(port):
         return {}
     param_set = {}
     param_dict = {}
-    for param_set in constants.OVN_PORT_BINDING_PROFILE_PARAMS:
+    vnic_type = port.get(portbindings.VNIC_TYPE, portbindings.VNIC_NORMAL)
+
+    # A port's capabilities is listed as part of the binding profile, but we
+    # treat it separately and do not want it to be included in the generic
+    # validation.
+    binding_profile = copy.deepcopy(port[constants.OVN_PORT_BINDING_PROFILE])
+    capabilities = binding_profile.pop(constants.PORT_CAP_PARAM, [])
+    if not isinstance(capabilities, list):
+        msg = _('Invalid binding:profile. %s must be of type list.'
+                ) % constants.PORT_CAP_PARAM
+        raise n_exc.InvalidInput(error_message=msg)
+
+    for pbp_param_set in constants.OVN_PORT_BINDING_PROFILE_PARAMS:
+        if pbp_param_set.vnic_type:
+            if pbp_param_set.vnic_type != vnic_type:
+                continue
+            if capabilities and pbp_param_set.capability not in capabilities:
+                continue
+        param_set = pbp_param_set.param_set
         param_keys = param_set.keys()
         for param_key in param_keys:
             try:
-                param_dict[param_key] = (port[
-                    constants.OVN_PORT_BINDING_PROFILE][param_key])
+                param_dict[param_key] = binding_profile[param_key]
             except KeyError:
                 pass
         if len(param_dict) == 0:
@@ -243,8 +261,7 @@ def validate_and_get_data_from_binding_profile(port):
             msg = _('Invalid binding:profile. %s are all '
                     'required.') % param_keys
             raise n_exc.InvalidInput(error_message=msg)
-        if (len(port[constants.OVN_PORT_BINDING_PROFILE]) != len(
-                param_keys)):
+        if (len(binding_profile) != len(param_keys)):
             msg = _('Invalid binding:profile. too many parameters')
             raise n_exc.InvalidInput(error_message=msg)
         break
@@ -252,11 +269,36 @@ def validate_and_get_data_from_binding_profile(port):
     if not param_dict:
         return {}
 
-    for param_key, param_type in param_set.items():
-        if param_type is None:
+    # With this example param_set:
+    #
+    # param_set = {
+    #     'do_not_check_this_key': None,
+    #     'pci_slot': [str],
+    #     'physical_network': [str, type(None)]
+    # }
+    #
+    # We confirm that each binding_profile key is of one of the listed types,
+    # allowing validation of polymorphic entries.
+    #
+    # 'physical_network' is polymorphic because:  When a VNIC_REMOTE_MANAGED or
+    # VNIC_DIRECT with PORT_CAP_SWITCHDEV capability port is attached to a
+    # project network backed by an overlay (tunneled) network the value will be
+    # 'None'.  For the case of ports attached to a project network backed by
+    # VLAN the value will be of type ``str``.  This comes from Nova and is
+    # provided in the ``physical_network`` tag in the Nova PCI Passthrough
+    # configuration.
+    #
+    # In the above example the type of the value behind 'do_not_check_this_key'
+    # will not be checked, 'pci_slot' must be ``str``, 'physical_network  must
+    # be either ``str`` or ``NoneType``.
+    for param_key, param_types in param_set.items():
+        if param_types is None:
             continue
         param_value = param_dict[param_key]
-        if not isinstance(param_value, param_type):
+        for param_type in param_types:
+            if isinstance(param_value, param_type):
+                break
+        else:
             msg = _('Invalid binding:profile. %(key)s %(value)s '
                     'value invalid type') % {'key': param_key,
                                              'value': param_value}
@@ -508,7 +550,7 @@ def is_gateway_chassis(chassis):
 
 def get_port_capabilities(port):
     """Return a list of port's capabilities"""
-    return port.get(portbindings.PROFILE, {}).get('capabilities', [])
+    return port.get(portbindings.PROFILE, {}).get(constants.PORT_CAP_PARAM, [])
 
 
 def get_port_id_from_gwc_row(row):
@@ -618,7 +660,7 @@ def is_port_external(port):
                 # DB object, not OVO, stores the dict in JSON.
                 profile = (jsonutils.loads(profile) if isinstance(profile, str)
                            else profile)
-                capabilities = profile.get('capabilities', [])
+                capabilities = profile.get(constants.PORT_CAP_PARAM, [])
             vnic_type = bindings[0].get('vnic_type', portbindings.VNIC_NORMAL)
 
     return (vnic_type in constants.EXTERNAL_PORT_TYPES and
