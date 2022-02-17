@@ -24,12 +24,20 @@ from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
+from neutron.common import utils as n_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as ovn_config
 from neutron.tests.functional import base
 
 
 class TestNBDbResources(base.TestOVNFunctionalBase):
     _extension_drivers = ['dns']
+
+    def _is_nb_global_ready(self):
+        try:
+            next(iter(self.nb_api.tables['NB_Global'].rows))
+        except StopIteration:
+            return False
+        return True
 
     def setUp(self):
         super(TestNBDbResources, self).setUp()
@@ -39,6 +47,12 @@ class TestNBDbResources(base.TestOVNFunctionalBase):
                                          False,
                                          group='ovn')
         ovn_config.cfg.CONF.set_override('dns_domain', 'ovn.test')
+
+        # Wait for NB_Global table, for details see: LP #1956965
+        n_utils.wait_until_true(
+            self._is_nb_global_ready,
+            timeout=15, sleep=1
+        )
 
     # FIXME(lucasagomes): Map the revision numbers properly instead
     # of stripping them out. Currently, tests like test_dhcp_options()
