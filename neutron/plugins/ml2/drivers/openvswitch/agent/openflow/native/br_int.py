@@ -53,7 +53,9 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
                             enable_dhcpv6=False):
         (_dp, ofp, ofpp) = self._get_dp()
         self.setup_canary_table()
-        self.install_goto(dest_table_id=constants.TRANSIENT_TABLE)
+        self.install_goto(dest_table_id=constants.PACKET_RATE_LIMIT)
+        self.install_goto(dest_table_id=constants.TRANSIENT_TABLE,
+                          table_id=constants.PACKET_RATE_LIMIT)
         self.install_normal(table_id=constants.TRANSIENT_TABLE, priority=3)
         self.init_dhcp(enable_openflow_dhcp=enable_openflow_dhcp,
                        enable_dhcpv6=enable_dhcpv6)
@@ -69,9 +71,9 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
                             priority=3)
 
         # Local IP defaults
-        self.install_goto(dest_table_id=constants.TRANSIENT_TABLE,
+        self.install_goto(dest_table_id=constants.PACKET_RATE_LIMIT,
                           table_id=constants.LOCAL_EGRESS_TABLE)
-        self.install_goto(dest_table_id=constants.TRANSIENT_TABLE,
+        self.install_goto(dest_table_id=constants.PACKET_RATE_LIMIT,
                           table_id=constants.LOCAL_IP_TABLE)
 
     def init_dhcp(self, enable_openflow_dhcp=False, enable_dhcpv6=False):
@@ -184,7 +186,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
         ]
         instructions = [
             ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, actions),
-            ofpp.OFPInstructionGotoTable(table_id=constants.TRANSIENT_TABLE),
+            ofpp.OFPInstructionGotoTable(table_id=constants.PACKET_RATE_LIMIT),
         ]
         self.install_instructions(
             instructions=instructions,
@@ -265,7 +267,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
         ]
         instructions = [
             ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, actions),
-            ofpp.OFPInstructionGotoTable(table_id=constants.TRANSIENT_TABLE),
+            ofpp.OFPInstructionGotoTable(table_id=constants.PACKET_RATE_LIMIT),
         ]
         self.install_instructions(table_id=table_id,
                                   priority=20,
@@ -366,7 +368,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
                 ip_proto=in_proto.IPPROTO_ICMPV6,
                 icmpv6_type=icmpv6.ND_NEIGHBOR_ADVERT,
                 ipv6_nd_target=masked_ip, in_port=port,
-                dest_table_id=constants.TRANSIENT_TABLE)
+                dest_table_id=constants.PACKET_RATE_LIMIT)
 
         # Now that the rules are ready, direct icmpv6 neighbor advertisement
         # traffic from the port into the anti-spoof table.
@@ -522,7 +524,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
     def install_garp_blocker_exception(self, vlan, ip, except_ip,
                                        table_id=constants.LOCAL_SWITCHING):
         match = self._garp_blocker_exception_match(vlan, ip, except_ip)
-        self.install_goto(dest_table_id=constants.TRANSIENT_TABLE,
+        self.install_goto(dest_table_id=constants.PACKET_RATE_LIMIT,
                           table_id=table_id,
                           priority=11,
                           match=match)
