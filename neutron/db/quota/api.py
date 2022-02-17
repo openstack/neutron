@@ -455,3 +455,7 @@ class NullQuotaDriver(QuotaDriverAPI):
     @staticmethod
     def quota_limit_check(context, project_id, resources, deltas):
         pass
+
+    @staticmethod
+    def get_workers():
+        return []
