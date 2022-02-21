@@ -15,7 +15,7 @@ example unable to fetch things from external resources like git or pip due to
 outage. Such failures outside of OpenStack world are not worth tracking in
 launchpad and you can recheck leaving couple of words what went wrong. Data
 about gate stability is collected and visualized via
-`Grafana <http://grafana.openstack.org/dashboard/db/neutron-failure-rate>`_.
+`Grafana <https://grafana.opendev.org/d/f913631585/neutron-failure-rate>`_.
 
 Please, do not recheck without providing the bug number for the failed job.
 For example, do not just put an empty "recheck" comment but find the related

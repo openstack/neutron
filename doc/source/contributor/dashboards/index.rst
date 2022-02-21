@@ -20,9 +20,9 @@ Grafana Dashboards
 
 Look for neutron and networking-* dashboard by names by going to the following link:
 
-`Grafana <http://grafana.openstack.org/>`_
+`Grafana <https://grafana.opendev.org/>`_
 
 For instance:
 
-* `Neutron <http://grafana.openstack.org/dashboard/db/neutron-failure-rate>`_
-* `Neutron-lib <http://grafana.openstack.org/dashboard/db/neutron-lib-failure-rate>`_
+* `Neutron <https://grafana.opendev.org/d/f913631585/neutron-failure-rate>`_
+* `Neutron-lib <https://grafana.opendev.org/d/92ab2dc01e/neutron-lib-failure-rate>`_
