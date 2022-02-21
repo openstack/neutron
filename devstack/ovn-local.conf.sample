@@ -98,7 +98,7 @@ disable_service cinder c-sch c-api c-vol
 OVN_BUILD_MODULES=True
 
 # Skydive
-#enable_plugin skydive https://github.com/redhat-cip/skydive.git
+#enable_plugin skydive https://github.com/skydive-project/skydive.git
 #enable_service skydive-analyzer
 #enable_service skydive-agent
 
