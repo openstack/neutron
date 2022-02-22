@@ -1183,6 +1183,8 @@ class OVNClient(object):
         self._transaction(commands, txn=txn)
 
     def _get_router_ports(self, context, router_id, get_gw_port=False):
+        # _get_router() will raise a RouterNotFound error if there's no router
+        # with the router_id
         router_db = self._l3_plugin._get_router(context, router_id)
         if get_gw_port:
             return [p.port for p in router_db.attached_ports]
@@ -1430,15 +1432,18 @@ class OVNClient(object):
         is_gw_port = const.DEVICE_OWNER_ROUTER_GW == port.get(
             'device_owner')
         if is_gw_port and ovn_conf.is_ovn_emit_need_to_frag_enabled():
-            network_ids = set([port['network_id'] for port in
-                            self._get_router_ports(admin_context,
-                                port['device_id'])])
-            for net in self._plugin.get_networks(admin_context,
-                                        filters={'id': network_ids}):
-                if net['mtu'] > network['mtu']:
-                    options[ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION] = str(
-                            network['mtu'])
-                    break
+            try:
+                network_ids = set([port['network_id'] for port in
+                    self._get_router_ports(admin_context, port['device_id'])])
+                for net in self._plugin.get_networks(admin_context,
+                                            filters={'id': network_ids}):
+                    if net['mtu'] > network['mtu']:
+                        options[ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION] = str(
+                                network['mtu'])
+                        break
+            except l3_exc.RouterNotFound:
+                # Don't add any mtu info if the router no longer exists
+                pass
         return options
 
     def _create_lrouter_port(self, context, router, port, txn=None):

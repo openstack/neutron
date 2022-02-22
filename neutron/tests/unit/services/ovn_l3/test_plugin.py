@@ -1592,6 +1592,52 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             mock.ANY, self.fake_router_port,
             ovn_const.TYPE_ROUTER_PORTS)
 
+    @mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.get_network')
+    @mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.get_networks')
+    @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
+                'ovn_client.OVNClient._get_router_ports')
+    @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.add_router_interface')
+    def test_add_router_interface_need_to_frag_enabled_then_remove(
+            self, ari, grps, gns, gn):
+        config.cfg.CONF.set_override(
+            'ovn_emit_need_to_frag', True, group='ovn')
+        router_id = 'router-id'
+        interface_info = {'port_id': 'router-port-id',
+                'network_id': 'priv-net'}
+        ari.return_value = self.fake_router_interface_info
+        # If we remove the router halfway the return value of
+        # _get_routers_ports will be []
+        grps.side_effect = l3_exc.RouterNotFound(router_id=router_id)
+        self.get_router.return_value = self.fake_router_with_ext_gw
+        network_attrs = {'id': 'prov-net', 'mtu': 1200}
+        prov_net = fake_resources.FakeNetwork.create_one_network(
+                attrs=network_attrs).info()
+        self.fake_router_port['device_owner'] = (
+            constants.DEVICE_OWNER_ROUTER_GW)
+        gn.return_value = prov_net
+        gns.return_value = [self.fake_network]
+
+        self.l3_inst.add_router_interface(self.context, router_id,
+                                          interface_info)
+
+        # Make sure that the "gateway_mtu" option was set to the router port
+        fake_router_port_assert = self.fake_router_port_assert
+        fake_router_port_assert['gateway_chassis'] = mock.ANY
+        fake_router_port_assert['options'] = {}
+
+        self.l3_inst._ovn.add_lrouter_port.assert_called_once_with(
+            **fake_router_port_assert)
+        # Since if_exists = True it will safely return
+        self.l3_inst._ovn.lrp_set_options(
+            name='lrp-router-port-id', if_exists=True,
+            options=fake_router_port_assert)
+        # If no if_exists is provided, it is defaulted to true, so this
+        # operation is safe.
+        self.l3_inst._ovn.set_lrouter_port_in_lswitch_port.\
+            assert_called_once_with(
+                'router-port-id', 'lrp-router-port-id', is_gw_port=True,
+                lsp_address=ovn_const.DEFAULT_ADDR_FOR_LSP_WITH_PEER)
+
     def _test_get_router_availability_zones(self, azs, expected):
         lr = fake_resources.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'id': 'fake-router', 'external_ids': {
