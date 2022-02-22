@@ -16,3 +16,4 @@ OVN Driver Administration Guide
    sriov
    availability_zones
    routed_provider_networks
+   smartnic_dpu
