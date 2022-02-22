@@ -97,8 +97,8 @@
             voting: true
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa
         - openstacksdk-functional-devstack-networking
-        - tripleo-ci-centos-8-content-provider
-        - neutron-centos-8-tripleo-standalone:
+        - tripleo-ci-centos-9-content-provider
+        - neutron-centos-9-tripleo-standalone:
             voting: true
             vars: &consumer_vars
               consumer_job: true
@@ -106,8 +106,8 @@
               remove_tags:
                 - build
             dependencies: &consumer_deps
-              - tripleo-ci-centos-8-content-provider
-        - neutron-ovn-tripleo-ci-centos-8-containers-multinode:
+              - tripleo-ci-centos-9-content-provider
+        - neutron-ovn-tripleo-ci-centos-9-containers-multinode:
             vars: *consumer_vars
             dependencies: *consumer_deps
         - neutron-linuxbridge-tempest-plugin-scenario-nftables
