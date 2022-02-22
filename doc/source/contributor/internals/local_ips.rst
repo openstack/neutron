@@ -37,12 +37,13 @@ Usage
 Usage is similar to Floating IP usage. If you want to assign a virtual Local IP
 to one of your VMs:
 
-- first create Local IP object using network_id or local_port_id input
-  parameter: it will be used to allocate/take IP address
+- first create Local IP object using network (name or ID) or
+  local-port (name or ID) input parameter: it will be used
+  to allocate/take IP address
 
   .. code-block:: console
 
-    $ openstack local ip create --network_id <net-id>
+    $ openstack local ip create --network <network>
     +------------------+--------------------------------------+
     | Field            | Value                                |
     +------------------+--------------------------------------+
@@ -59,12 +60,12 @@ to one of your VMs:
     | updated_at       | 2021-12-01T13:50:24Z                 |
     +------------------+--------------------------------------+
 
-- then create Local IP association object using local_ip_id and fixed_port_id
-  input parameters, thus assigning Local IP to the needed VM
+- then create Local IP association object using local-ip (name or ID) and
+  fixed-port-id input parameters, thus assigning Local IP to the needed VM
 
   .. code-block:: console
 
-    $ openstack local ip association create <local_ip_id> <fixed_port_id>
+    $ openstack local ip association create <local-ip> <fixed-port-id>
     +------------------+--------------------------------------+
     | Field            | Value                                |
     +------------------+--------------------------------------+
