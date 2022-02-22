@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Add support for VNIC type ``remote-managed`` in OVN. The OVN driver can now
+    bind remote managed ports to SmartNIC DPUs. SmartNIC DPU portbinding
+    requires OVN version 21.12 or above, compiled with OVN VIF version 21.12 or
+    above.

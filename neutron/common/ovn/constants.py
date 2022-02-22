@@ -49,31 +49,6 @@ OVN_LIVENESS_CHECK_EXT_ID_KEY = 'neutron:liveness_check_at'
 METADATA_LIVENESS_CHECK_EXT_ID_KEY = 'neutron:metadata_liveness_check_at'
 OVN_PORT_BINDING_PROFILE = portbindings.PROFILE
 
-# Port Binding Profile data validation
-#
-# To allow for validating multiple parameter sets that may contain some of the
-# same keys, you can specify for which vnic_type and capability the parameter
-# set is valid for.
-#
-# By leaving vnic_type and capability to the default of 'None' any parameter
-# set that has a key which is present in the port binding data will be used for
-# validation.
-#
-# The param_set type is Dict[str,Optional[List[any]]] where the key is used to
-# match keys in the port binding data.  A value of 'None' means not to check
-# type for this key, when a list of type classes is provided the data will be
-# validated to be of one of the listed types.
-OVNPortBindingProfileParamSet = collections.namedtuple(
-    'OVNPortBindingProfileParamSet', ['param_set', 'vnic_type', 'capability'])
-OVN_PORT_BINDING_PROFILE_PARAMS = [
-    OVNPortBindingProfileParamSet({'parent_name': [str],
-                                   'tag': [int]},
-                                  None, None),
-    OVNPortBindingProfileParamSet({'vtep-physical-switch': [str],
-                                   'vtep-logical-switch': [str]},
-                                  None, None),
-]
-
 MIGRATING_ATTR = 'migrating_to'
 OVN_ROUTER_PORT_OPTION_KEYS = ['router-port', 'nat-addresses']
 OVN_GATEWAY_CHASSIS_KEY = 'redirect-chassis'
@@ -295,6 +270,69 @@ UNKNOWN_ADDR = 'unknown'
 
 PORT_CAP_SWITCHDEV = 'switchdev'
 PORT_CAP_PARAM = 'capabilities'
+VIF_DETAILS_PCI_VENDOR_INFO = 'pci_vendor_info'
+VIF_DETAILS_PCI_SLOT = 'pci_slot'
+VIF_DETAILS_PHYSICAL_NETWORK = 'physical_network'
+VIF_DETAILS_CARD_SERIAL_NUMBER = 'card_serial_number'
+VIF_DETAILS_PF_MAC_ADDRESS = 'pf_mac_address'
+VIF_DETAILS_VF_NUM = 'vf_num'
+
+# Port Binding Profile data validation
+#
+# To allow for validating multiple parameter sets that may contain some of the
+# same keys, you can specify for which vnic_type and capability the parameter
+# set is valid for.
+#
+# By leaving vnic_type and capability to the default of 'None' any parameter
+# set that has a key which is present in the port binding data will be used for
+# validation.
+#
+# The param_set type is Dict[str,Optional[List[any]]] where the key is used to
+# match keys in the port binding data.  A value of 'None' means not to check
+# type for this key, when a list of type classes is provided the data will be
+# validated to be of one of the listed types.
+OVNPortBindingProfileParamSet = collections.namedtuple(
+    'OVNPortBindingProfileParamSet', ['param_set', 'vnic_type', 'capability'])
+OVN_PORT_BINDING_PROFILE_PARAMS = [
+    OVNPortBindingProfileParamSet({'parent_name': [str],
+                                   'tag': [int]},
+                                  None, None),
+    OVNPortBindingProfileParamSet({'vtep-physical-switch': [str],
+                                   'vtep-logical-switch': [str]},
+                                  None, None),
+    # For the two supported switchdev modes the data provided in the binding
+    # profile is similar to what is used for Legacy SR-IOV.  However, the
+    # `physical_network` value type is Union[str,None].  When a port is
+    # attached to a project network backed by an overlay (tunneled) network the
+    # value will be 'None'.  For the case of ports attached to a project
+    # network backed by VLAN the value will be of type `str` and set to the
+    # value provided in the `physical_network` tag in the Nova PCI Passthrough
+    # configuration.
+    #
+    # Note that while the OVN driver provides services to Legacy SR-IOV
+    # instances through the creation of external ports for DHCP and Metadata,
+    # it does not bind the instance ports themselves.  Thus there is no
+    # parameter set for them here.
+    #
+    # Switchdev capable device exposed on the hypervisor host.
+    OVNPortBindingProfileParamSet({VIF_DETAILS_PCI_VENDOR_INFO: [str],
+                                   VIF_DETAILS_PCI_SLOT: [str],
+                                   VIF_DETAILS_PHYSICAL_NETWORK: [str,
+                                                                  type(None)]},
+                                  portbindings.VNIC_DIRECT,
+                                  PORT_CAP_SWITCHDEV),
+    # SmartNIC DPU. Switchdev capable device exposed on the SmartNIC DPU
+    # control plane CPUs.
+    OVNPortBindingProfileParamSet({VIF_DETAILS_PCI_VENDOR_INFO: [str],
+                                   VIF_DETAILS_PCI_SLOT: [str],
+                                   VIF_DETAILS_PHYSICAL_NETWORK: [str,
+                                                                  type(None)],
+                                   VIF_DETAILS_CARD_SERIAL_NUMBER: [str],
+                                   VIF_DETAILS_PF_MAC_ADDRESS: [str],
+                                   VIF_DETAILS_VF_NUM: [int]},
+                                  portbindings.VNIC_REMOTE_MANAGED,
+                                  None),
+]
 
 # The name of the port security group attribute is currently not in neutron nor
 # neutron-lib api definitions or constants. To avoid importing the extension
@@ -308,6 +346,11 @@ LSP_TYPE_EXTERNAL = 'external'
 LSP_TYPE_LOCALPORT = 'localport'
 LSP_OPTIONS_VIRTUAL_PARENTS_KEY = 'virtual-parents'
 LSP_OPTIONS_VIRTUAL_IP_KEY = 'virtual-ip'
+LSP_OPTIONS_VIF_PLUG_TYPE_KEY = 'vif-plug-type'
+LSP_OPTIONS_VIF_PLUG_MTU_REQUEST_KEY = 'vif-plug-mtu-request'
+LSP_OPTIONS_VIF_PLUG_REPRESENTOR_PF_MAC_KEY = 'vif-plug:representor:pf-mac'
+LSP_OPTIONS_VIF_PLUG_REPRESENTOR_VF_NUM_KEY = 'vif-plug:representor:vf-num'
+LSP_OPTIONS_REQUESTED_CHASSIS_KEY = 'requested-chassis'
 LSP_OPTIONS_MCAST_FLOOD_REPORTS = 'mcast_flood_reports'
 LSP_OPTIONS_MCAST_FLOOD = 'mcast_flood'
 
@@ -332,6 +375,7 @@ NEUTRON_AVAILABILITY_ZONES = 'neutron-availability-zones'
 OVN_CMS_OPTIONS = 'ovn-cms-options'
 CMS_OPT_CHASSIS_AS_GW = 'enable-chassis-as-gw'
 CMS_OPT_AVAILABILITY_ZONES = 'availability-zones'
+CMS_OPT_CARD_SERIAL_NUMBER = 'card-serial-number'
 
 # OVN vlan transparency option
 VLAN_PASSTHRU = 'vlan-passthru'
@@ -347,4 +391,5 @@ OVN_SUPPORTED_VNIC_TYPES = [portbindings.VNIC_NORMAL,
                             portbindings.VNIC_DIRECT_PHYSICAL,
                             portbindings.VNIC_MACVTAP,
                             portbindings.VNIC_VHOST_VDPA,
+                            portbindings.VNIC_REMOTE_MANAGED,
                             ]

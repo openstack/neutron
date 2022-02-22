@@ -858,6 +858,21 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
         # preference patch (as part of external ids) merges.
         return [c.name for c in self.chassis_list().execute(check_error=True)]
 
+    def get_chassis_by_card_serial_from_cms_options(self,
+                                                    card_serial_number):
+        for ch in self.chassis_list().execute(check_error=True):
+            if ('{}={}'
+                .format(ovn_const.CMS_OPT_CARD_SERIAL_NUMBER,
+                        card_serial_number)
+                    in ch.external_ids.get(
+                        ovn_const.OVN_CMS_OPTIONS, '').split(',')):
+                return ch
+        msg = _('Chassis with %s %s %s does not exist'
+                ) % (ovn_const.OVN_CMS_OPTIONS,
+                     ovn_const.CMS_OPT_CARD_SERIAL_NUMBER,
+                     card_serial_number)
+        raise RuntimeError(msg)
+
     def get_chassis_data_for_ml2_bind_port(self, hostname):
         try:
             cmd = self.db_find_rows('Chassis', ('hostname', '=', hostname))

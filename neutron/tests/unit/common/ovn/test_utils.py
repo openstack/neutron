@@ -540,6 +540,50 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
             utils.validate_and_get_data_from_binding_profile(
                 {constants.OVN_PORT_BINDING_PROFILE: expect}))
 
+        binding_profile = {
+            constants.PORT_CAP_PARAM: [constants.PORT_CAP_SWITCHDEV],
+            'pci_vendor_info': 'dead:beef',
+            'pci_slot': '0000:ca:fe.42',
+            'physical_network': 'physnet1',
+
+        }
+        expect = binding_profile.copy()
+        del(expect[constants.PORT_CAP_PARAM])
+        self.assertDictEqual(
+            expect,
+            utils.validate_and_get_data_from_binding_profile(
+                {portbindings.VNIC_TYPE: portbindings.VNIC_DIRECT,
+                 constants.OVN_PORT_BINDING_PROFILE: binding_profile}))
+
+        binding_profile = {
+            constants.PORT_CAP_PARAM: [constants.PORT_CAP_SWITCHDEV],
+            'pci_vendor_info': 'dead:beef',
+            'pci_slot': '0000:ca:fe.42',
+            'physical_network': None,
+
+        }
+        expect = binding_profile.copy()
+        del(expect[constants.PORT_CAP_PARAM])
+        self.assertDictEqual(
+            expect,
+            utils.validate_and_get_data_from_binding_profile(
+                {portbindings.VNIC_TYPE: portbindings.VNIC_DIRECT,
+                 constants.OVN_PORT_BINDING_PROFILE: binding_profile}))
+
+        expect = {
+            'pci_vendor_info': 'dead:beef',
+            'pci_slot': '0000:ca:fe.42',
+            'physical_network': 'physnet1',
+            'card_serial_number': 'AB2000X00042',
+            'pf_mac_address': '00:53:00:00:00:42',
+            'vf_num': 42,
+        }
+        self.assertDictEqual(
+            utils.validate_and_get_data_from_binding_profile(
+                {portbindings.VNIC_TYPE: portbindings.VNIC_REMOTE_MANAGED,
+                 constants.OVN_PORT_BINDING_PROFILE: expect}),
+            expect)
+
     def test_unknown_profile_items_pruned(self):
         # Confirm that unknown profile items are pruned
         self.assertEqual(
