@@ -1,10 +1,24 @@
 # This is the playbook used by ovn-migration.sh.
 
 #
+# Backup the controllers to have a backup in case the
+# migration fails leaving the testbed on a broken status.
+#
+
+- name: Backup controllers pre-migration
+  hosts: localhost
+  roles:
+    - recovery-backup
+  tags:
+    - recovery-backup
+
+
+#
 # Pre migration and validation tasks will make sure that the initial cloud
 # is functional, and will create resources which will be checked after
 # migration.
 #
+
 
 - name: Pre migration and validation tasks
   hosts: localhost
@@ -50,6 +64,7 @@
     - setup
   become: false
 
+
 #
 # Once everything is migrated prepare everything by syncing the neutron DB
 # into the OVN NB database, and then switching the dataplane to br-int
@@ -67,6 +82,7 @@
   tags:
     - migration
 
+
 #
 # Verify that the initial resources are still reachable, remove them,
 # and afterwards create new resources and repeat the connectivity tests.
@@ -79,6 +95,7 @@
     - post-migration
   tags:
     - post-migration
+
 
 #
 # Final step to make sure tripleo knows about OVNIntegrationBridge == br-int.
