@@ -53,14 +53,6 @@
     name: neutron-experimental-jobs
     experimental:
       jobs:
-        - neutron-functional-with-uwsgi-fips
-        - neutron-fullstack-with-uwsgi-fips
-        # NOTE(slaweq): those two FIPS jobs will fail until paramiko module will
-        # not be fixed to work properly with FIPS enabled. See
-        # https://review.opendev.org/c/openstack/tempest/+/810809
-        # for details
-        - neutron-ovs-tempest-fips
-        - neutron-ovn-tempest-ovs-release-fips
         - neutron-ovn-grenade-multinode
         - neutron-ovn-tempest-with-uwsgi-loki
         - neutron-ovn-tempest-full-multinode-ovs-master
@@ -75,7 +67,9 @@
     periodic:
       jobs:
         - neutron-functional
+        - neutron-functional-with-uwsgi-fips
         - neutron-fullstack
+        - neutron-fullstack-with-uwsgi-fips
         - neutron-ovs-tempest-slow
         - neutron-ovn-tempest-slow
         - neutron-ovs-tempest-with-os-ken-master
@@ -85,6 +79,8 @@
         - neutron-ovn-tempest-ovs-release-ipv6-only
         - neutron-ovn-tempest-ovs-master-fedora
         - neutron-ovn-tempest-with-neutron-lib-master
+        - neutron-ovs-tempest-fips
+        - neutron-ovn-tempest-ovs-release-fips
         - devstack-tobiko-neutron:
             voting: true
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa
