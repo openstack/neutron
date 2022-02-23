@@ -1,6 +1,6 @@
 - job:
-    name: neutron-centos-8-tripleo-standalone
-    parent: tripleo-ci-base-standalone-centos-8
+    name: neutron-centos-9-tripleo-standalone
+    parent: tripleo-ci-centos-9-standalone
     voting: false
     branches: ^master$
     vars:
@@ -38,8 +38,8 @@
       - ^zuul.d/(?!(project)).*\.yaml
 
 - job:
-    name: neutron-ovn-tripleo-ci-centos-8-containers-multinode
-    parent: tripleo-ci-centos-8-containers-multinode
+    name: neutron-ovn-tripleo-ci-centos-9-containers-multinode
+    parent: tripleo-ci-centos-9-containers-multinode
     branches: ^master$
     vars:
       nodes: 1ctlr
