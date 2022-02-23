@@ -1,0 +1,12 @@
+---
+
+# Name of the group hosts where the NFS instalation will take place
+# If the NFS server is the undercloud (and there is only one) will
+# not be a problem, but if multiple servers exist on the server_name group
+# it is possible that the nfs will be installed on every server, eventho the
+# storage of the backup will only be done in the backup_ip.
+#
+# This can be solved if a new tripleo-inventory is manually created specifying
+# a [BackupNode] section, with the nfs server info
+revert_preparation_server_name: "Undercloud"
+backup_and_recover_temp_folder: /tmp/backup-recover-temp

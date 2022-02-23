@@ -1,0 +1,68 @@
+---
+
+- name: Create controller's backup
+  block:
+    - name: Create temp folder related to backup
+      file:
+        state: directory
+        path: "{{ backup_and_recover_temp_folder }}"
+
+    # Using this task on OSP17
+    - name: Copy tripleo-inventory
+      copy:
+        src: "{{ ansible_inventory }}"
+        dest: "{{ backup_and_recover_temp_folder }}/tripleo-inventory.yaml"
+      when:
+        - create_backup|bool
+        - ansible_inventory is defined
+        - ansible_inventory != ""
+
+    # Using this task in OSP16.x
+    - name: Generate tripleo inventory
+      shell: |
+        source {{ stackrc }} &&
+        tripleo-ansible-inventory \
+        --ansible_ssh_user {{ undercloud_node_user }} \
+        --static-yaml-inventory {{ backup_and_recover_temp_folder }}/tripleo-inventory.yaml
+      when:
+        - create_backup|bool
+        - ansible_inventory is not defined or ansible_inventory == ""
+
+    - name: Setup NFS on the backup node using IP {{ backup_migration_ip }}
+      shell: |
+        source {{ stackrc }} &&
+        openstack overcloud backup \
+        --inventory {{ backup_and_recover_temp_folder }}/tripleo-inventory.yaml \
+        --setup-nfs \
+        --extra-vars '{
+                "tripleo_backup_and_restore_server": {{ backup_migration_ip }},
+                "nfs_server_group_name": {{ revert_preparation_server_name }}
+              }'
+
+    - name: Setup REAR on the controllers
+      shell: |
+        source {{ stackrc }} &&
+        openstack overcloud backup \
+        --inventory {{ backup_and_recover_temp_folder }}/tripleo-inventory.yaml \
+        --setup-rear \
+        --extra-vars '{
+                "tripleo_backup_and_restore_server": {{ backup_migration_ip }}
+              }'
+
+    - name: Backup the controllers
+      shell: |
+        source {{ stackrc }} &&
+        openstack overcloud backup \
+        --inventory {{ backup_and_recover_temp_folder }}/tripleo-inventory.yaml
+
+    # Ensure that after the controller backups the api responds
+    - name: Ensure that the OSP api is working
+      shell: >
+        source {{ overcloudrc }} && openstack flavor list
+      retries: 20
+      register: api_rc
+      delay: 5
+      ignore_errors: yes
+      until: api_rc.rc == "0"
+  when: create_backup|bool
+
