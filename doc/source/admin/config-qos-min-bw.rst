@@ -301,6 +301,25 @@ SR-IOV and OVS agents. This is how the values are registered:
 Each configuration option defined in "external_ids:ovn-cms-options" is divided
 by commas.
 
+This information is retrieved from the OVN SB database during the Neutron
+server initialization and when the "Chassis" registers are updated.
+
+During the Neutron server initialization, a ``MaintenanceWorker`` thread will
+call ``OvnSbSynchronizer.do_sync``, that will call
+``OVNClientPlacementExtension.read_initial_chassis_config``. This method lists
+all chassis and builds the resource provider information needed by Placement.
+This information is stored in the "Chassis" registers, in
+"external_ids:ovn-cms-options", with the same format as retrieved from the
+local "Open_vSwitch" registers from each chassis.
+
+The second method to update the Placement information is when a "Chassis"
+registers is updated. The ``OVNClientPlacementExtension`` extension registers
+an event handler that attends the OVN SB "Chassis" bandwidth configuration
+changes. This event handler builds a ``PlacementState`` instance and sends it
+to the Placement API. If a new chassis is added or an existing one changes its
+resource provider configuration, this event updates it in the Placement
+database.
+
 Propagation of resource information
 -----------------------------------
 

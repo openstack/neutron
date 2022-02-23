@@ -48,9 +48,14 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
                                    {'name': 'compute2', 'uuid': 'uuid2'}]
         }
 
-    def test__read_initial_chassis_config(self):
+    def test_read_initial_chassis_config(self):
         # Add two public networks, a RP per bridge and the correlation between
         # the hypervisors and the bridges.
+        def _check_expected_config(init_conf, expected):
+            res = {chassis_name: p_extension.dict_chassis_config(state) for
+                   chassis_name, state in init_conf.items()}
+            self.assertEqual(expected, res)
+
         chassis = fakes.FakeChassis.create(
             bridge_mappings=['public1:br-ext1', 'public2:br-ext2'],
             rp_bandwidths=['br-ext1:1000:2000', 'br-ext2:3000:4000'],
@@ -58,7 +63,7 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
             rp_hypervisors=['br-ext1:compute1', 'br-ext2:compute2'])
         self.plugin_driver._sb_idl.chassis_list.return_value.execute.\
             return_value = [chassis]
-        init_conf = self.placement_driver._read_initial_chassis_config()
+        init_conf = self.placement_driver.read_initial_chassis_config()
         expected = {chassis.name: {
             n_const.RP_BANDWIDTHS: {
                 'br-ext1': {'egress': 1000, 'ingress': 2000},
@@ -69,7 +74,7 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
                 'br-ext1': {'name': 'compute1', 'uuid': 'uuid1'},
                 'br-ext2': {'name': 'compute2', 'uuid': 'uuid2'}}
         }}
-        self.assertEqual(expected, init_conf)
+        _check_expected_config(init_conf, expected)
 
         # Add an extra bridge mapping that is discarded because it is not in
         # the hypervisors list (wrong configuration).
@@ -81,7 +86,7 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
             rp_hypervisors=['br-ext1:compute1', 'br-ext2:compute2'])
         self.plugin_driver._sb_idl.chassis_list.return_value.execute.\
             return_value = [chassis]
-        init_conf = self.placement_driver._read_initial_chassis_config()
+        init_conf = self.placement_driver.read_initial_chassis_config()
         expected = {chassis.name: {
             n_const.RP_BANDWIDTHS: {
                 'br-ext1': {'egress': 1000, 'ingress': 2000},
@@ -92,7 +97,7 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
                 'br-ext1': {'name': 'compute1', 'uuid': 'uuid1'},
                 'br-ext2': {'name': 'compute2', 'uuid': 'uuid2'}}
         }}
-        self.assertEqual(expected, init_conf)
+        _check_expected_config(init_conf, expected)
 
         # Add an unknown bridge, not present in the bridge mappings, that is
         # discarded (wrong configuration).
@@ -103,7 +108,7 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
             rp_hypervisors=['br-ext1:compute1', 'br-ext2:compute2'])
         self.plugin_driver._sb_idl.chassis_list.return_value.execute.\
             return_value = [chassis]
-        init_conf = self.placement_driver._read_initial_chassis_config()
+        init_conf = self.placement_driver.read_initial_chassis_config()
         expected = {chassis.name: {
             n_const.RP_BANDWIDTHS: {
                 'br-ext1': {'egress': 1000, 'ingress': 2000}},
@@ -113,7 +118,7 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
                 'br-ext1': {'name': 'compute1', 'uuid': 'uuid1'},
                 'br-ext2': {'name': 'compute2', 'uuid': 'uuid2'}}
         }}
-        self.assertEqual(expected, init_conf)
+        _check_expected_config(init_conf, expected)
 
         # Add an unknown hypervisor, that is not present in the Placement list
         # of resource providers. This hypervisor is discarded (wrong
@@ -126,7 +131,7 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
             rp_hypervisors=['br-ext1:compute1', 'br-ext2:compute3'])
         self.plugin_driver._sb_idl.chassis_list.return_value.execute.\
             return_value = [chassis]
-        init_conf = self.placement_driver._read_initial_chassis_config()
+        init_conf = self.placement_driver.read_initial_chassis_config()
         expected = {chassis.name: {
             n_const.RP_BANDWIDTHS: {
                 'br-ext1': {'egress': 1000, 'ingress': 2000}},
@@ -135,7 +140,7 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
             ovn_const.RP_HYPERVISORS: {
                 'br-ext1': {'name': 'compute1', 'uuid': 'uuid1'}}
         }}
-        self.assertEqual(expected, init_conf)
+        _check_expected_config(init_conf, expected)
 
         # Missing bridge mapping for br-ext2, the RP for this bridge will be
         # discarded.
@@ -146,7 +151,7 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
             rp_hypervisors=['br-ext1:compute1', 'br-ext2:compute2'])
         self.plugin_driver._sb_idl.chassis_list.return_value.execute.\
             return_value = [chassis]
-        init_conf = self.placement_driver._read_initial_chassis_config()
+        init_conf = self.placement_driver.read_initial_chassis_config()
         expected = {chassis.name: {
             n_const.RP_BANDWIDTHS: {
                 'br-ext1': {'egress': 1000, 'ingress': 2000}},
@@ -156,7 +161,7 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
                 'br-ext1': {'name': 'compute1', 'uuid': 'uuid1'},
                 'br-ext2': {'name': 'compute2', 'uuid': 'uuid2'}}
         }}
-        self.assertEqual(expected, init_conf)
+        _check_expected_config(init_conf, expected)
 
         # No bridge mappings, no RP BW inventories.
         chassis = fakes.FakeChassis.create(
@@ -166,7 +171,7 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
             rp_hypervisors=['br-ext1:compute1', 'br-ext2:compute2'])
         self.plugin_driver._sb_idl.chassis_list.return_value.execute.\
             return_value = [chassis]
-        init_conf = self.placement_driver._read_initial_chassis_config()
+        init_conf = self.placement_driver.read_initial_chassis_config()
         expected = {chassis.name: {
             n_const.RP_BANDWIDTHS: {},
             n_const.RP_INVENTORY_DEFAULTS: {
@@ -175,7 +180,7 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
                 'br-ext1': {'name': 'compute1', 'uuid': 'uuid1'},
                 'br-ext2': {'name': 'compute2', 'uuid': 'uuid2'}}
         }}
-        self.assertEqual(expected, init_conf)
+        _check_expected_config(init_conf, expected)
 
         # No bridge mappings nor hypervisors, no RP BW inventories.
         chassis = fakes.FakeChassis.create(
@@ -185,14 +190,14 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
             rp_hypervisors=None)
         self.plugin_driver._sb_idl.chassis_list.return_value.execute.\
             return_value = [chassis]
-        init_conf = self.placement_driver._read_initial_chassis_config()
+        init_conf = self.placement_driver.read_initial_chassis_config()
         expected = {chassis.name: {
             n_const.RP_BANDWIDTHS: {},
             n_const.RP_INVENTORY_DEFAULTS: {
                 'allocation_ratio': 1.0, 'min_unit': 5},
             ovn_const.RP_HYPERVISORS: {}
         }}
-        self.assertEqual(expected, init_conf)
+        _check_expected_config(init_conf, expected)
 
         # If no RP BW information (any deployment not using it), OVN Placement
         # extension won't break anything (sorry for LP#1936983, that was me).
@@ -203,13 +208,13 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
             rp_hypervisors=None)
         self.plugin_driver._sb_idl.chassis_list.return_value.execute.\
             return_value = [chassis]
-        init_conf = self.placement_driver._read_initial_chassis_config()
+        init_conf = self.placement_driver.read_initial_chassis_config()
         expected = {chassis.name: {
             n_const.RP_BANDWIDTHS: {},
             n_const.RP_INVENTORY_DEFAULTS: {},
             ovn_const.RP_HYPERVISORS: {}
         }}
-        self.assertEqual(expected, init_conf)
+        _check_expected_config(init_conf, expected)
 
         # Test wrongly defined parameters. E.g.:
         # external_ids: {ovn-cms-options={resource_provider_bandwidths=, ...}}
@@ -220,10 +225,10 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
             rp_hypervisors='')
         self.plugin_driver._sb_idl.chassis_list.return_value.execute.\
             return_value = [chassis]
-        init_conf = self.placement_driver._read_initial_chassis_config()
+        init_conf = self.placement_driver.read_initial_chassis_config()
         expected = {chassis.name: {
             n_const.RP_BANDWIDTHS: {},
             n_const.RP_INVENTORY_DEFAULTS: {},
             ovn_const.RP_HYPERVISORS: {}
         }}
-        self.assertEqual(expected, init_conf)
+        _check_expected_config(init_conf, expected)
