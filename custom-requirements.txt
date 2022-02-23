@@ -7,6 +7,10 @@ raven
 # agent checks for neutron
 openstack-agent-checks
 
+# uwsgi plugins
+uwsgi-dogstatsd
+uwsgi-shortmsecs
+
 # for memcached based oslo.cache
 python-memcached
 pymemcache
