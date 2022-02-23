@@ -29,6 +29,7 @@ from neutron.conf.policies import local_ip
 from neutron.conf.policies import local_ip_association
 from neutron.conf.policies import logging
 from neutron.conf.policies import metering
+from neutron.conf.policies import ndp_proxy
 from neutron.conf.policies import network
 from neutron.conf.policies import network_ip_availability
 from neutron.conf.policies import network_segment_range
@@ -62,6 +63,7 @@ def list_rules():
         local_ip_association.list_rules(),
         logging.list_rules(),
         metering.list_rules(),
+        ndp_proxy.list_rules(),
         network.list_rules(),
         network_ip_availability.list_rules(),
         network_segment_range.list_rules(),
