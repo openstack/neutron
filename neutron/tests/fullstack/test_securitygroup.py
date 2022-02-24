@@ -252,6 +252,7 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
         self.assertEqual(5, len(vms))
 
         vms[4].block_until_boot()
+        vms[4].block_until_dhcp_config_done()
 
         netcat = net_helpers.NetcatTester(vms[4].namespace,
             vms[0].namespace, vms[0].ip, 3355,
