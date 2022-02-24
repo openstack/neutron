@@ -335,6 +335,9 @@
             neutron_plugin_options:
               is_igmp_snooping_enabled: True
       devstack_localrc:
+        CIRROS_VERSION: 0.5.1
+        DEFAULT_IMAGE_NAME: cirros-0.5.1-x86_64-uec
+        DEFAULT_IMAGE_FILE_NAME: cirros-0.5.1-x86_64-uec.tar.gz
         Q_AGENT: ovn
         ML2_L3_PLUGIN: ovn-router,trunk
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger
@@ -439,6 +442,10 @@
     timeout: 10800
     vars:
       tox_envlist: integrated-network
+      devstack_localrc:
+        CIRROS_VERSION: 0.5.1
+        DEFAULT_IMAGE_NAME: cirros-0.5.1-x86_64-uec
+        DEFAULT_IMAGE_FILE_NAME: cirros-0.5.1-x86_64-uec.tar.gz
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
