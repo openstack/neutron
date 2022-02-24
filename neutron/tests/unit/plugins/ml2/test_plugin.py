@@ -356,10 +356,10 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
         after = []
 
         def b_func(r, c, v, payload=None):
-            before.append(payload.context.session.is_active)
+            before.append(utils.is_session_active(payload.context.session))
 
         def a_func(r, c, v, payload=None):
-            after.append(payload.context.session.is_active)
+            after.append(utils.is_session_active(payload.context.session))
 
         registry.subscribe(b_func, resources.NETWORK, events.BEFORE_CREATE)
         registry.subscribe(a_func, resources.NETWORK, events.AFTER_CREATE)
@@ -1085,7 +1085,8 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         self.tx_open = True
 
         def receive(r, e, t, payload=None):
-            setattr(self, 'tx_open', payload.context.session.is_active)
+            setattr(self, 'tx_open',
+                    utils.is_session_active(payload.context.session))
 
         registry.subscribe(receive, resources.PORT, events.AFTER_CREATE)
         with self.port():
@@ -1094,7 +1095,8 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
     def test_port_after_update_outside_transaction(self):
         self.tx_open = True
         receive = lambda r, e, t, payload: \
-            setattr(self, 'tx_open', payload.context.session.is_active)
+            setattr(self, 'tx_open',
+                    utils.is_session_active(payload.context.session))
 
         with self.port() as p:
             registry.subscribe(receive, resources.PORT, events.AFTER_UPDATE)
@@ -1105,7 +1107,8 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
     def test_port_after_delete_outside_transaction(self):
         self.tx_open = True
         receive = lambda r, e, t, payload: \
-            setattr(self, 'tx_open', payload.context.session.is_active)
+            setattr(self, 'tx_open',
+                    utils.is_session_active(payload.context.session))
 
         with self.port() as p:
             registry.subscribe(receive, resources.PORT, events.AFTER_DELETE)

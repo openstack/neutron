@@ -259,7 +259,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                      request_body, router_id):
         if gw_info:
             with db_utils.context_if_transaction(
-                    context, not context.session.is_active, writer=False):
+                    context, not utils.is_session_active(context.session),
+                    writer=False):
                 router_db = self._get_router(context, router_id)
             self._update_router_gw_info(context, router_id,
                                         gw_info, request_body,
@@ -342,7 +343,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                      'admin_state_up': True,
                      'name': ''}
 
-        if context.session.is_active:
+        if utils.is_session_active(context.session):
             # TODO(ralonsoh): ML2 plugin "create_port" should be called outside
             # a DB transaction. In this case an exception is made but in order
             # to prevent future errors, this call should be moved outside
@@ -435,7 +436,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         gw_ips = [x['ip_address'] for x in router.gw_port['fixed_ips']]
         gw_port_id = router.gw_port['id']
         self._delete_router_gw_port_db(context, router, request_body)
-        if admin_ctx.session.is_active:
+        if utils.is_session_active(admin_ctx.session):
             # TODO(ralonsoh): ML2 plugin "delete_port" should be called outside
             # a DB transaction. In this case an exception is made but in order
             # to prevent future errors, this call should be moved outside
@@ -589,7 +590,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             # transaction.
             router_ports_ids = (rp.port_id for rp in
                 l3_obj.RouterPort.get_objects(context, router_id=id))
-            if context.session.is_active:
+            if utils.is_session_active(context.session):
                 context.GUARD_TRANSACTION = False
             for rp_id in router_ports_ids:
                 self._core_plugin.delete_port(context.elevated(), rp_id,

@@ -29,6 +29,7 @@ from oslo_db import exception as db_exc
 from oslo_log import helpers as log_helpers
 from oslo_utils import uuidutils
 
+from neutron.common import utils
 from neutron.db import segments_db as db
 from neutron.extensions import segment as extension
 from neutron import manager
@@ -326,7 +327,7 @@ def _add_segment_host_mapping_for_segment(resource, event, trigger,
                                           payload=None):
     context = payload.context
     segment = payload.latest_state
-    if not context.session.is_active:
+    if not utils.is_session_active(context.session):
         # The session might be in partial rollback state, due to errors in
         # peer callback. In that case, there is no need to add the mapping.
         # Just return here.

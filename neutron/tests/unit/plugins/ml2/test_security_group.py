@@ -25,6 +25,7 @@ from neutron_lib import context
 from neutron_lib import fixture
 from neutron_lib.plugins import directory
 
+from neutron.common import utils
 from neutron.extensions import securitygroup as ext_sg
 from neutron.tests.unit.agent import test_securitygroups_rpc as test_sg_rpc
 from neutron.tests.unit.api.v2 import test_base
@@ -150,7 +151,7 @@ class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,
 
     def test_security_groups_created_outside_transaction(self):
         def record_after_state(r, e, t, payload=None):
-            self.was_active = payload.context.session.is_active
+            self.was_active = utils.is_session_active(payload.context.session)
 
         registry.subscribe(record_after_state, resources.SECURITY_GROUP,
                            events.AFTER_CREATE)
