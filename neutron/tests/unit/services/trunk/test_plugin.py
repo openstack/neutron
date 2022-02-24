@@ -149,23 +149,7 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
         self._test_trunk_update_notify(events.AFTER_UPDATE)
 
     def test_trunk_update_notify_precommit_update(self):
-        # TODO(boden): refactor back into _test_trunk_update_notify
-        # once all code uses neutron-lib payloads
-        with self.port() as parent_port:
-            callback = register_mock_callback(
-                resources.TRUNK, events.PRECOMMIT_UPDATE)
-            trunk = self._create_test_trunk(parent_port)
-            orig_trunk_obj = self._get_trunk_obj(trunk['id'])
-            trunk_req = {'trunk': {'name': 'foo'}}
-            self.trunk_plugin.update_trunk(self.context, trunk['id'],
-                                           trunk_req)
-            trunk_obj = self._get_trunk_obj(trunk['id'])
-            callback.assert_called_once_with(
-                resources.TRUNK, events.PRECOMMIT_UPDATE,
-                self.trunk_plugin, payload=mock.ANY)
-            call_payload = callback.call_args[1]['payload']
-            self.assertEqual(orig_trunk_obj, call_payload.states[0])
-            self.assertEqual(trunk_obj, call_payload.desired_state)
+        self._test_trunk_update_notify(events.PRECOMMIT_UPDATE)
 
     def _test_trunk_delete_notify(self, event):
         with self.port() as parent_port:
@@ -181,21 +165,7 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
             self.assertEqual(trunk['id'], payload.resource_id)
 
     def test_delete_trunk_notify_after_delete(self):
-        # TODO(boden): refactor into common method once all use payloads
-        with self.port() as parent_port:
-            callback = register_mock_callback(resources.TRUNK,
-                                              events.AFTER_DELETE)
-            trunk = self._create_test_trunk(parent_port)
-            trunk_obj = self._get_trunk_obj(trunk['id'])
-            self.trunk_plugin.delete_trunk(self.context, trunk['id'])
-
-            callback.assert_called_once_with(
-                resources.TRUNK, events.AFTER_DELETE,
-                self.trunk_plugin, payload=mock.ANY)
-
-            call_payload = callback.mock_calls[0][2]['payload']
-            self.assertEqual(trunk['id'], call_payload.resource_id)
-            self.assertEqual((trunk_obj,), call_payload.states)
+        self._test_trunk_delete_notify(events.AFTER_DELETE)
 
     def test_delete_trunk_notify_precommit_delete(self):
         self._test_trunk_delete_notify(events.PRECOMMIT_DELETE)
