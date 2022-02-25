@@ -21,7 +21,8 @@ set -e
 IS_GATE=${IS_GATE:-False}
 USE_CONSTRAINT_ENV=${USE_CONSTRAINT_ENV:-True}
 MYSQL_USER=${MYSQL_USER:-root}
-DATABASE_USER=${DATABASE_USER:-${MYSQL_USER}}
+DATABASE_USER=${DATABASE_USER:-openstack_citest}
+DATABASE_NAME=${DATABASE_NAME:-openstack_citest}
 
 
 if [[ "$IS_GATE" != "True" ]] && [[ "$#" -lt 1 ]]; then
@@ -150,7 +151,7 @@ function _install_databases {
 
     # Avoid attempting to configure the db if it appears to already
     # have run.  The setup as currently defined is not idempotent.
-    if mysql openstack_citest > /dev/null 2>&1 < /dev/null; then
+    if mysql ${DATABASE_NAME} > /dev/null 2>&1 < /dev/null; then
         echo_summary "DB config appears to be complete, skipping."
         return 0
     fi
@@ -172,27 +173,27 @@ function _install_databases {
         configure_database_postgresql
     fi
 
-    # Set up the 'openstack_citest' user and database in each backend
+    # Set up the '${DATABASE_USER}' user and '${DATABASE_NAME}' database in each backend
     tmp_dir=$(mktemp -d)
     trap "rm -rf $tmp_dir" EXIT
 
     cat << EOF > $tmp_dir/mysql.sql
-CREATE DATABASE openstack_citest;
+CREATE DATABASE ${DATABASE_NAME};
 CREATE USER '${DATABASE_USER}'@'localhost' IDENTIFIED BY '${MYSQL_PASSWORD}';
 GRANT ALL PRIVILEGES ON *.* TO '${DATABASE_USER}'@'localhost';
 FLUSH PRIVILEGES;
 EOF
-    /usr/bin/mysql -u root -p"$MYSQL_PASSWORD" < $tmp_dir/mysql.sql
+    /usr/bin/mysql -u $MYSQL_USER -p"$MYSQL_PASSWORD" < $tmp_dir/mysql.sql
 
     if [[ "$install_pg" == "True" ]]; then
         cat << EOF > $tmp_dir/postgresql.sql
-CREATE USER ${DATABASE_USER} WITH CREATEDB LOGIN PASSWORD ${DATABASE_PASSWORD};
-CREATE DATABASE ${DATABASE_USER} WITH OWNER ${DATABASE_USER};
+CREATE USER ${DATABASE_USER} WITH CREATEDB LOGIN PASSWORD '${DATABASE_PASSWORD}';
+CREATE DATABASE ${DATABASE_NAME} WITH OWNER ${DATABASE_USER};
 EOF
 
         # User/group postgres needs to be given access to tmp_dir
         setfacl -m g:postgres:rwx $tmp_dir
-        sudo -u postgres /usr/bin/psql --file=$tmp_dir/postgresql.sql
+        sudo -u root sudo -u postgres /usr/bin/psql --file=$tmp_dir/postgresql.sql
     fi
 }
 
