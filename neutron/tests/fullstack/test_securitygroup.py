@@ -20,7 +20,6 @@ from neutron.agent.linux import iptables_firewall
 from neutron.agent.linux import iptables_manager
 from neutron.cmd.sanity import checks
 from neutron.common import utils as common_utils
-from neutron.tests import base as tests_base
 from neutron.tests.common import net_helpers
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
@@ -109,7 +108,6 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
     # NOTE(toshii): As a firewall_driver can interfere with others,
     # the recommended way to add test is to expand this method, not
     # adding another.
-    @tests_base.unstable_test("bug 1742401")
     def test_securitygroup(self):
         """Tests if a security group rules are working, by confirming
         that 0. traffic is allowed when port security is disabled,
