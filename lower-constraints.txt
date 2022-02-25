@@ -7,7 +7,7 @@ beautifulsoup4==4.6.0
 cachetools==2.0.0
 cryptography<3.3
 cffi==1.13.2
-cliff==2.8.0
+cliff==3.4.0
 cmd2==0.8.0
 contextlib2==0.4.0
 coverage==4.0
@@ -57,7 +57,7 @@ os-ken==2.2.0
 os-resource-classes==1.1.0
 os-service-types==1.7.0
 os-vif==1.15.1
-osc-lib==1.8.0
+osc-lib==1.12.0
 oslo.cache==1.26.0
 oslo.concurrency==3.26.0
 oslo.config==8.0.0
@@ -104,7 +104,7 @@ python-designateclient==2.7.0
 python-editor==1.0.3
 python-keystoneclient==3.8.0
 python-mimeparse==1.6.0
-python-neutronclient==6.7.0
+python-neutronclient==7.8.0
 python-novaclient==9.1.0
 python-subunit==1.0.0
 pytz==2013.6
@@ -121,7 +121,7 @@ SQLAlchemy==1.4.23
 sqlparse==0.2.2
 statsd==3.2.1
 stestr==1.0.0
-stevedore==1.20.0
+stevedore==2.0.1
 Tempita==0.5.2
 tenacity==6.0.0
 testrepository==0.0.18
