@@ -12,6 +12,9 @@
       - periodic-stable-jobs
       - check-requirements
       - release-notes-jobs-python3
+      - neutron-experimental-jobs
+      - neutron-periodic-jobs
+      - neutron-tox-override-jobs
     check:
       jobs:
         - neutron-functional-with-uwsgi
@@ -32,12 +35,6 @@
         #    voting: false
         - neutron-ovn-rally-task:
             voting: false
-        - openstack-tox-py36:  # from openstack-python3-xena-jobs template
-            timeout: 3600
-        - openstack-tox-py38:  # from openstack-python3-xena-jobs template
-            timeout: 3600
-        - openstack-tox-cover:  # from openstack-cover-jobs template
-            timeout: 4800
     gate:
       jobs:
         - neutron-functional-with-uwsgi
@@ -49,30 +46,4 @@
         # will be fixed
         # - neutron-ovs-grenade-dvr-multinode
         - neutron-ovn-tempest-ipv6-only
-        - openstack-tox-py36:  # from openstack-python3-xena-jobs template
-            timeout: 3600
         #- neutron-ovn-rally-task
-
-    experimental:
-      jobs:
-        - neutron-functional-with-uwsgi-fips
-        - neutron-fullstack-with-uwsgi-fips
-        - neutron-ovs-tempest-fips
-        - neutron-ovn-tempest-ovs-release-fips
-        - neutron-ovn-grenade-multinode
-        - neutron-ovn-tempest-with-uwsgi-loki
-
-    periodic:
-      jobs:
-        - neutron-functional
-        - neutron-fullstack
-        - neutron-ovn-tempest-postgres-full
-        - neutron-ovn-tempest-mariadb-full
-        - neutron-ovn-tempest-ovs-release
-        - neutron-ovn-tempest-ovs-release-ipv6-only
-        - devstack-tobiko-neutron:
-            voting: true
-        - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa
-        - openstacksdk-functional-devstack-networking
-        - neutron-linuxbridge-tempest-plugin-scenario-nftables
-        - neutron-ovs-tempest-plugin-scenario-iptables_hybrid-nftables

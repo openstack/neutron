@@ -1,0 +1,61 @@
+- project-template:
+    name: neutron-tox-override-jobs
+    check:
+      jobs:
+        - openstack-tox-py36:  # from openstack-python3-xena-jobs template
+            timeout: 3600
+            irrelevant-files:  &irrelevant-files
+              - ^.*\.conf\.sample$
+              - ^.*\.rst$
+              - ^doc/.*$
+              - ^neutron/locale/.*$
+              - ^neutron/tests/fullstack/.*$
+              - ^neutron/tests/functional/.*$
+              - ^releasenotes/.*$
+              - ^setup.cfg$
+              - ^tools/.*$
+              - ^vagrant/.*$
+              - ^devstack/.*$
+              - ^playbooks/.*$
+              - ^roles/.*$
+              - ^rally-jobs/.*$
+              - ^zuul.d/(?!(job-templates)).*\.yaml
+        - openstack-tox-py38: # from openstack-python3-xena-jobs template
+            timeout: 3600
+            irrelevant-files:  *irrelevant-files
+        - openstack-tox-cover:  # from openstack-cover-jobs template
+            timeout: 4800
+            irrelevant-files:  *irrelevant-files
+    gate:
+      jobs:
+        - openstack-tox-py36:  # from openstack-python3-xena-jobs template
+            timeout: 3600
+            irrelevant-files:  *irrelevant-files
+
+- project-template:
+    name: neutron-experimental-jobs
+    experimental:
+      jobs:
+        - neutron-functional-with-uwsgi-fips
+        - neutron-fullstack-with-uwsgi-fips
+        - neutron-ovs-tempest-fips
+        - neutron-ovn-tempest-ovs-release-fips
+        - neutron-ovn-grenade-multinode
+        - neutron-ovn-tempest-with-uwsgi-loki
+
+- project-template:
+    name: neutron-periodic-jobs
+    periodic:
+      jobs:
+        - neutron-functional
+        - neutron-fullstack
+        - neutron-ovn-tempest-postgres-full
+        - neutron-ovn-tempest-mariadb-full
+        - neutron-ovn-tempest-ovs-release
+        - neutron-ovn-tempest-ovs-release-ipv6-only
+        - devstack-tobiko-neutron:
+            voting: true
+        - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa
+        - openstacksdk-functional-devstack-networking
+        - neutron-linuxbridge-tempest-plugin-scenario-nftables
+        - neutron-ovs-tempest-plugin-scenario-iptables_hybrid-nftables
