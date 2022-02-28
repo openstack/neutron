@@ -2,7 +2,7 @@
     name: neutron-centos-8-tripleo-standalone
     parent: tripleo-ci-base-standalone-centos-8
     voting: false
-    vars:
+    vars: &tripleo_standalone_vars
       featureset: '052'
       featureset_override:
         standalone_environment_files:
@@ -16,7 +16,7 @@
         tempest_test_whitelist:
           - 'tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_network_basic_ops'
         use_os_tempest: true
-    irrelevant-files:
+    irrelevant-files: &tripleo_standalone_irrelevant
       - ^(test-|)requirements.txt$
       - ^releasenotes/.*$
       - ^doc/.*$
@@ -36,12 +36,19 @@
       - ^zuul.d/(?!(project)).*\.yaml
 
 - job:
+    name: neutron-centos-9-tripleo-standalone
+    parent: tripleo-ci-centos-9-standalone
+    voting: false
+    vars: *tripleo_standalone_vars
+    irrelevant-files: *tripleo_standalone_irrelevant
+
+- job:
     name: neutron-ovn-tripleo-ci-centos-8-containers-multinode
     parent: tripleo-ci-centos-8-containers-multinode
-    vars:
+    vars: &tripleo_multinode_vars
       nodes: 1ctlr
       featureset: '010'
-    irrelevant-files:
+    irrelevant-files: &tripleo_multinode_irrelevant
       - ^(test-|)requirements.txt$
       - ^releasenotes/.*$
       - ^doc/.*$
@@ -69,3 +76,9 @@
       - ^neutron/scheduler/.*$
       - ^vagrant/.*$
       - ^zuul.d/(?!(project)).*\.yaml
+
+- job:
+    name: neutron-ovn-tripleo-ci-centos-9-containers-multinode
+    parent: tripleo-ci-centos-9-containers-multinode
+    vars: *tripleo_multinode_vars
+    irrelevant-files: *tripleo_multinode_irrelevant
