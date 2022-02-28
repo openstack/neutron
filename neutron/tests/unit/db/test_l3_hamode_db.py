@@ -1034,11 +1034,17 @@ class L3HAModeDbTestCase(L3HATestFramework):
         subnet = self._create_subnet(self.core_plugin, self.admin_ctx,
                                      network_id)
         interface_info = {'subnet_id': subnet['id']}
-        self.plugin.add_router_interface(self.admin_ctx,
-                                         router['id'],
-                                         interface_info)
-        self.assertRaises(l3_exc.RouterInUse, self.plugin.delete_router,
-                          self.admin_ctx, router['id'])
+        interface = self.plugin.add_router_interface(
+            self.admin_ctx, router['id'], interface_info)
+        try:
+            self.plugin.delete_router(self.admin_ctx, router['id'])
+        except l3_exc.RouterInUse as exc:
+            msg = 'Router %s has ports still attached: %s' % (
+                router['id'], interface['port_id'])
+            self.assertEqual(msg, exc.msg)
+        else:
+            self.fail('The router %s deletion should have raised a '
+                      '"RouterInUse" exception' % router['id'])
         bindings = self.plugin.get_ha_router_port_bindings(
             self.admin_ctx, [router['id']])
         self.assertEqual(2, len(bindings))
