@@ -88,7 +88,12 @@ class TestSubnet(base.BaseFullStackTestCase):
                                      ipv6_ra_mode='slaac',
                                      subnetpool_id='prefix_delegation')
         subnet = self._show_subnet(subnet['id'])
-        self.assertIsNone(subnet['subnet']['gateway_ip'])
+        cidr = subnet['subnet']['cidr']
+        self.assertEqual(subnet['subnet']['gateway_ip'],
+                         str(netaddr.IPNetwork(cidr).network))
+        router = self.safe_client.create_router(self._project_id)
+        self.safe_client.add_router_interface(
+            router['id'], subnet['subnet']['id'])
 
     def test_create_subnet_ipv4_with_subnetpool(self):
         subnetpool_cidr = self.useFixture(
