@@ -436,6 +436,7 @@ class FakeV4Subnet(Dictable):
         self.enable_dhcp = True
         self.host_routes = [FakeV4HostRoute()]
         self.dns_nameservers = ['8.8.8.8']
+        self.subnetpool_id = 'kkkkkkkk-kkkk-kkkk-kkkk-kkkkkkkkkkkk'
 
 
 class FakeV4Subnet2(FakeV4Subnet):
@@ -563,6 +564,7 @@ class FakeV6Subnet(object):
         self.dns_nameservers = ['2001:0200:feed:7ac0::1']
         self.ipv6_ra_mode = None
         self.ipv6_address_mode = None
+        self.subnetpool_id = 'jjjjjjjj-jjjj-jjjj-jjjj-jjjjjjjjjjjj'
 
 
 class FakeV4SubnetNoDHCP(object):
@@ -587,6 +589,7 @@ class FakeV6SubnetDHCPStateful(Dictable):
         self.dns_nameservers = ['2001:0200:feed:7ac0::1']
         self.ipv6_ra_mode = None
         self.ipv6_address_mode = constants.DHCPV6_STATEFUL
+        self.subnetpool_id = 'mmmmmmmm-mmmm-mmmm-mmmm-mmmmmmmmmmmm'
 
 
 class FakeV6SubnetSlaac(object):
