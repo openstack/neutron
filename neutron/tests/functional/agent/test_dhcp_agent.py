@@ -108,6 +108,7 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
                            ip_version=lib_const.IP_VERSION_4,
                            prefix_override=None):
         cidr = self._IP_ADDRS[ip_version]['cidr']
+        spool_id = uuidutils.generate_uuid()
         if prefix_override is not None:
             cidr = '/'.join((cidr.split('/')[0], str(prefix_override)))
         sn_dict = dhcp.DictModel(
@@ -115,6 +116,7 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
             network_id=net_id,
             ip_version=ip_version,
             cidr=cidr,
+            subnetpool_id=spool_id,
             gateway_ip=self._IP_ADDRS[ip_version]['gateway'],
             enable_dhcp=dhcp_enabled,
             dns_nameservers=[],
