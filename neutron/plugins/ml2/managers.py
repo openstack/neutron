@@ -1055,9 +1055,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
             return drivers
 
         return [d for d in drivers if
-                getattr(d.obj, 'vif_details', {}).get(
-                    portbindings.VIF_DETAILS_CONNECTIVITY) ==
-                portbindings.CONNECTIVITY_L2]
+                d.obj.connectivity == portbindings.CONNECTIVITY_L2]
 
     def get_workers(self):
         workers = []

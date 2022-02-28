@@ -69,7 +69,7 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         agent_type = constants.AGENT_TYPE_NIC_SWITCH
         vif_details = {portbindings.CAP_PORT_FILTER: False,
                        portbindings.VIF_DETAILS_CONNECTIVITY:
-                           portbindings.CONNECTIVITY_L2}
+                           self.connectivity}
         supported_vnic_types = SRIOV_SUPPORTED_VNIC_TYPES
         prohibit_list = cfg.CONF.SRIOV_DRIVER.vnic_type_prohibit_list
         super().__init__(agent_type, None, vif_details,
@@ -84,6 +84,10 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
              for vtype in self.supported_vnic_types})
         self.vif_details = vif_details
         sriov_qos_driver.register()
+
+    @property
+    def connectivity(self):
+        return portbindings.CONNECTIVITY_L2
 
     def get_allowed_network_types(self, agent):
         return (constants.TYPE_FLAT, constants.TYPE_VLAN)

@@ -64,6 +64,10 @@ class FakeAgentMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     def get_mappings(self, agent):
         return dict(agent['configurations'].get('interface_mappings', {}))
 
+    @property
+    def connectivity(self):
+        return portbindings.CONNECTIVITY_L2
+
 
 class AnotherFakeAgentMechanismDriver(FakeAgentMechanismDriver):
     pass
@@ -76,3 +80,7 @@ class FakeAgentMechanismDriverL3(FakeAgentMechanismDriver):
         super(FakeAgentMechanismDriverL3, self).__init__()
         self.vif_details[portbindings.VIF_DETAILS_CONNECTIVITY] = (
             portbindings.CONNECTIVITY_L3)
+
+    @property
+    def connectivity(self):
+        return portbindings.CONNECTIVITY_L3
