@@ -53,9 +53,12 @@ IP_DEFAULT_BURST = 0
 class RateLimitMaps(object):
 
     def __init__(self, lock_name):
-        self.qos_policy_resources = collections.defaultdict(dict)
+        # qos_policy_2_resources = {qos_id_1: {res_1, res_2, res_3, ...} }
+        self.qos_policy_2_resources = collections.defaultdict(set)
+        # known_policies = {qos_id_1: qos_policy_1, ...}
         self.known_policies = {}
-        self.resource_policies = {}
+        # resource_2_qos_policies = {res1: qos_id_1, ...}
+        self.resource_2_qos_policies = {}
         self.lock_name = lock_name
 
     def update_policy(self, policy):
@@ -78,7 +81,7 @@ class RateLimitMaps(object):
 
         @lockutils.synchronized(self.lock_name)
         def _get_resources():
-            return self.qos_policy_resources[policy.id].values()
+            return self.qos_policy_2_resources[policy.id]
 
         return _get_resources()
 
@@ -86,7 +89,7 @@ class RateLimitMaps(object):
 
         @lockutils.synchronized(self.lock_name)
         def _get_resource_policy():
-            policy_id = self.resource_policies.get(resource)
+            policy_id = self.resource_2_qos_policies.get(resource)
             return self.known_policies.get(policy_id)
 
         return _get_resource_policy()
@@ -99,13 +102,13 @@ class RateLimitMaps(object):
 
         @lockutils.synchronized(self.lock_name)
         def _set_resource_policy():
-            policy_id = self.resource_policies.get(resource)
+            policy_id = self.resource_2_qos_policies.get(resource)
             old_policy = self.known_policies.get(policy_id)
             self.known_policies[policy.id] = policy
-            self.resource_policies[resource] = policy.id
-            self.qos_policy_resources[policy.id][resource] = resource
+            self.resource_2_qos_policies[resource] = policy.id
+            self.qos_policy_2_resources[policy.id].add(resource)
             if old_policy and old_policy.id != policy.id:
-                del self.qos_policy_resources[old_policy.id][resource]
+                self.qos_policy_2_resources[old_policy.id].remove(resource)
 
         _set_resource_policy()
 
@@ -117,22 +120,21 @@ class RateLimitMaps(object):
 
         @lockutils.synchronized(self.lock_name)
         def _clean_by_resource():
-            if resource in self.resource_policies:
-                del self.resource_policies[resource]
-                for (qos_policy_id,
-                     res_dict) in self.qos_policy_resources.items():
-                    if resource in res_dict:
-                        del res_dict[resource]
-                        if not res_dict:
-                            self._clean_policy_info(qos_policy_id)
-                        return
-            LOG.debug("L3 QoS extension did not have "
-                      "information on floating IP %s", resource)
+            qos_policy_id = self.resource_2_qos_policies.pop(resource, None)
+            if not qos_policy_id:
+                LOG.debug("L3 QoS extension did not have "
+                          "information on floating IP %s", resource)
+                return
+
+            resources = self.qos_policy_2_resources[qos_policy_id]
+            resources.discard(resource)
+            if not resources:
+                self._clean_policy_info(qos_policy_id)
 
         _clean_by_resource()
 
     def _clean_policy_info(self, qos_policy_id):
-        del self.qos_policy_resources[qos_policy_id]
+        del self.qos_policy_2_resources[qos_policy_id]
         del self.known_policies[qos_policy_id]
 
 
