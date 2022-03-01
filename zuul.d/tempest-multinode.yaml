@@ -469,10 +469,6 @@
     vars:
       tox_envlist: slow-serial
       tempest_test_regex: ""
-      # TODO(ralonsoh): "test_update_router_admin_state" excluded until bug
-      # https://bugs.launchpad.net/neutron/+bug/1890445 is fixed.
-      tempest_exclude_regex: "\
-          (^tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_update_router_admin_state)"
 
 - job:
     # TODO(slaweq): propose job with ovs-release and move -master one to
