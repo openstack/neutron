@@ -13,6 +13,9 @@
       - periodic-stable-jobs
       - check-requirements
       - release-notes-jobs-python3
+      - neutron-experimental-jobs
+      - neutron-periodic-jobs
+      - neutron-tox-override-jobs
     check:
       jobs:
         - neutron-functional-with-uwsgi
@@ -25,27 +28,6 @@
         - neutron-ovn-tempest-ipv6-only
         - neutron-ovn-rally-task:
             voting: false
-        # TripleO jobs that deploy OVN.
-        # Note we don't use a project-template here, so it's easier
-        # to disable voting on one specific job if things go wrong.
-        # In Stein and beyond, fs010 will run using
-        # networking-ovn-tripleo-ci-centos-7-containers-multinode.
-        # If you need any support to debug these jobs in case of
-        # failures, please reach us on #tripleo IRC channel.
-        - openstack-tox-py36:  # from openstack-python3-yoga-jobs template
-            timeout: 3600
-        - openstack-tox-py39: # from openstack-python3-yoga-jobs template
-            timeout: 3600
-        - openstack-tox-lower-constraints:  # from openstack-tox-lower-constraints template
-            timeout: 3600
-        - openstack-tox-cover:  # from openstack-cover-jobs template
-            timeout: 4800
-    check-arm64:
-      jobs:
-        - openstack-tox-py38-arm64: # from openstack-python3-yoga-jobs-arm64 template
-            timeout: 4800
-        - openstack-tox-py39-arm64: # from openstack-python3-yoga-jobs-arm64 template
-            timeout: 4800
     gate:
       jobs:
         - neutron-functional-with-uwsgi
@@ -54,61 +36,3 @@
         - neutron-ovs-grenade-multinode
         - neutron-ovs-grenade-dvr-multinode
         - neutron-ovn-tempest-ipv6-only
-        - openstack-tox-py36:  # from openstack-python3-yoga-jobs template
-            timeout: 3600
-        - openstack-tox-py39: # from openstack-python3-yoga-jobs template
-            timeout: 3600
-        - openstack-tox-lower-constraints:  # from openstack-tox-lower-constraints template
-            timeout: 3600
-
-    experimental:
-      jobs:
-        - neutron-functional-with-uwsgi-fips
-        - neutron-fullstack-with-uwsgi-fips
-        # NOTE(slaweq): those two FIPS jobs will fail until paramiko module will
-        # not be fixed to work properly with FIPS enabled. See
-        # https://review.opendev.org/c/openstack/tempest/+/810809
-        # for details
-        - neutron-ovs-tempest-fips
-        - neutron-ovn-tempest-ovs-release-fips
-        - neutron-ovn-grenade-multinode
-        - neutron-ovn-tempest-with-uwsgi-loki
-        - neutron-ovn-tempest-full-multinode-ovs-master
-        - neutron-ovn-tempest-ovs-master
-        - neutron-ovn-tempest-with-neutron-lib-master
-        - neutron-ovs-tempest-with-neutron-lib-master
-        - neutron-fullstack-with-uwsgi-with-neutron-lib-master
-        - neutron-functional-with-uwsgi-with-neutron-lib-master
-
-    periodic:
-      jobs:
-        - neutron-functional
-        - neutron-fullstack
-        - neutron-ovs-tempest-slow
-        - neutron-ovn-tempest-slow
-        - neutron-ovs-tempest-with-os-ken-master
-        - neutron-ovn-tempest-postgres-full
-        - neutron-ovn-tempest-mariadb-full
-        - neutron-ovn-tempest-ovs-release
-        - neutron-ovn-tempest-ovs-release-ipv6-only
-        - neutron-ovn-tempest-ovs-master-fedora
-        - neutron-ovn-tempest-with-neutron-lib-master
-        - devstack-tobiko-neutron:
-            voting: true
-        - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa
-        - openstacksdk-functional-devstack-networking
-        - tripleo-ci-centos-9-content-provider
-        - neutron-centos-9-tripleo-standalone:
-            voting: true
-            vars: &consumer_vars
-              consumer_job: true
-              build_container_images: false
-              remove_tags:
-                - build
-            dependencies: &consumer_deps
-              - tripleo-ci-centos-9-content-provider
-        - neutron-ovn-tripleo-ci-centos-9-containers-multinode:
-            vars: *consumer_vars
-            dependencies: *consumer_deps
-        - neutron-linuxbridge-tempest-plugin-scenario-nftables
-        - neutron-ovs-tempest-plugin-scenario-iptables_hybrid-nftables
