@@ -99,7 +99,7 @@ primary node. See the :doc:`/ovn/faq/index` for more information.
 
         Permit remote access to TCP ports: 6640 (OVS) to VTEPS (if you use vteps),
         6642 (SBDB) to hosts running neutron-server, gateway nodes that run ovn-controller,
-        and compute node services like ovn-controller an ovn-metadata-agent. 6641 (NBDB) to
+        and compute node services like ovn-controller and ovn-metadata-agent. 6641 (NBDB) to
         hosts running neutron-server.
 
 #. Start the ``ovn-northd`` service.
