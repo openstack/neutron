@@ -104,3 +104,4 @@
             dependencies: *consumer_deps
         - neutron-linuxbridge-tempest-plugin-scenario-nftables
         - neutron-ovs-tempest-plugin-scenario-iptables_hybrid-nftables
+        - devstack-enforce-scope
