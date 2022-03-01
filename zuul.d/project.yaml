@@ -57,6 +57,8 @@
       jobs:
         - neutron-functional-with-uwsgi-fips
         - neutron-fullstack-with-uwsgi-fips
+        - neutron-ovs-tempest-fips
+        - neutron-ovn-tempest-ovs-release-fips
         - neutron-ovn-grenade-multinode
         - neutron-ovn-tempest-with-uwsgi-loki
 
