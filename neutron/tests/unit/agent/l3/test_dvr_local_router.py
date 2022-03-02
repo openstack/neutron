@@ -153,6 +153,10 @@ class TestDvrRouterOperations(base.BaseTestCase):
         self.ri_kwargs = {'agent_conf': self.conf,
                           'interface_driver': self.mock_driver}
 
+        self.mock_list_all = mock.patch(
+            'neutron.agent.l3.namespace_manager.NamespaceManager'
+            '.list_all', return_value={}).start()
+
     def _create_router(self, router=None, **kwargs):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self.router_id = _uuid()

@@ -51,9 +51,9 @@ from neutron.agent.l3 import l3_agent_extension_api as l3_ext_api
 from neutron.agent.l3 import l3_agent_extensions_manager as l3_ext_manager
 from neutron.agent.l3 import legacy_router
 from neutron.agent.l3 import namespace_manager
+from neutron.agent.l3 import namespaces as l3_namespaces
 from neutron.agent.linux import external_process
 from neutron.agent.linux import pd
-from neutron.agent.linux import utils as linux_utils
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.agent import rpc as agent_rpc
 from neutron.common import utils
@@ -370,30 +370,23 @@ class L3NATAgent(ha.AgentMixin,
         if self.ha_router_count <= 0:
             return
 
-        # HA routers VRRP (keepalived) process count
-        vrrp_pcount = linux_utils.get_process_count_by_name("keepalived")
-        LOG.debug("VRRP process count %s.", vrrp_pcount)
-        # HA routers state change python monitor process count
-        vrrp_st_pcount = linux_utils.get_process_count_by_name(
-            "neutron-keepalived-state-change")
-        LOG.debug("neutron-keepalived-state-change process count %s.",
-                  vrrp_st_pcount)
+        # Only set HA ports down when host was rebooted so no net
+        # namespaces were still created.
+        if any(ns.startswith(l3_namespaces.NS_PREFIX) for ns in
+               self.namespaces_manager.list_all()):
+            LOG.debug("Network configuration already done. Skipping"
+                      " set HA port to DOWN state.")
+            return
 
-        # Due to the process structure design of keepalived and the current
-        # config of l3-ha router, it will run one main 'keepalived' process
-        # and a child  'VRRP' process. So in the following check, we divided
-        # number of processes by 2 to match the ha router count.
-        if (not (vrrp_pcount / 2 >= self.ha_router_count and
-                 vrrp_st_pcount >= self.ha_router_count)):
-            LOG.debug("Call neutron server to set HA port to DOWN state.")
-            try:
-                # We set HA network port status to DOWN to let l2 agent
-                # update it to ACTIVE after wiring. This allows us to spawn
-                # keepalived only when l2 agent finished wiring the port.
-                self.plugin_rpc.update_all_ha_network_port_statuses(
-                    self.context)
-            except Exception:
-                LOG.exception('update_all_ha_network_port_statuses failed')
+        LOG.debug("Call neutron server to set HA port to DOWN state.")
+        try:
+            # We set HA network port status to DOWN to let l2 agent
+            # update it to ACTIVE after wiring. This allows us to spawn
+            # keepalived only when l2 agent finished wiring the port.
+            self.plugin_rpc.update_all_ha_network_port_statuses(
+                self.context)
+        except Exception:
+            LOG.exception('update_all_ha_network_port_statuses failed')
 
     def _register_router_cls(self, factory):
         factory.register([], legacy_router.LegacyRouter)
