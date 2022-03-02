@@ -25,6 +25,7 @@ from neutron_lib import fixture as lib_fixtures
 from oslo_config import cfg
 import oslo_messaging
 from oslo_utils import fileutils
+from oslo_utils import netutils
 from oslo_utils import uuidutils
 import testtools
 
@@ -3059,6 +3060,8 @@ class TestDeviceManager(TestConfBase):
             'load_interface_driver')
         self.mock_ip_lib = ip_lib_patcher.start()
         self.mock_load_interface_driver = load_interface_driver_patcher.start()
+        mock.patch.object(netutils, 'is_ipv6_enabled',
+                          return_value=True).start()
 
     def _test_setup(self, load_interface_driver, ip_lib, use_gateway_ips):
         with mock.patch.object(dhcp.ip_lib, 'IPDevice') as mock_IPDevice:
