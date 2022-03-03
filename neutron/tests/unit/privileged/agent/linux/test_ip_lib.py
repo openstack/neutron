@@ -238,9 +238,11 @@ class IpLibTestCase(base.BaseTestCase):
             vf_info.append(pyroute2.netlink.nlmsg_base())
             mac_info = {'mac': 'mac_%s' % idx, 'vf': idx}
             link_state = {'link_state': idx}  # see SR-IOV pci_lib.LinkState
+            rates = {'max_tx_rate': idx * 1000, 'min_tx_rate': idx * 500}
             vf_info[idx].setvalue(
                 {'attrs': [('IFLA_VF_MAC', mac_info),
-                           ('IFLA_VF_LINK_STATE', link_state)]})
+                           ('IFLA_VF_LINK_STATE', link_state),
+                           ('IFLA_VF_RATE', rates)]})
         vfinfo_list = pyroute2.netlink.nlmsg_base()
         vfinfo_list.setvalue({'attrs': [('IFLA_VF_INFO', vf_info[0]),
                                         ('IFLA_VF_INFO', vf_info[1]),
@@ -254,10 +256,13 @@ class IpLibTestCase(base.BaseTestCase):
         with mock.patch.object(priv_lib, '_run_iproute_link') as mock_iplink:
             mock_iplink.return_value = [value]
             result = priv_lib.get_link_vfs('device', 'namespace')
-            self.assertEqual({0: {'mac': 'mac_0', 'link_state': 0},
-                              1: {'mac': 'mac_1', 'link_state': 1},
-                              2: {'mac': 'mac_2', 'link_state': 2}},
-                             result)
+            exp = {0: {'mac': 'mac_0', 'link_state': 0,
+                       'max_tx_rate': 0, 'min_tx_rate': 0},
+                   1: {'mac': 'mac_1', 'link_state': 1,
+                       'max_tx_rate': 1000, 'min_tx_rate': 500},
+                   2: {'mac': 'mac_2', 'link_state': 2,
+                       'max_tx_rate': 2000, 'min_tx_rate': 1000}}
+            self.assertEqual(exp, result)
 
 
 class MakeSerializableTestCase(base.BaseTestCase):

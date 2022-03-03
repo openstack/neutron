@@ -404,8 +404,12 @@ def get_link_vfs(device, namespace):
     for vinfo in vfinfo_list.get_attrs('IFLA_VF_INFO'):
         mac = vinfo.get_attr('IFLA_VF_MAC')
         link_state = vinfo.get_attr('IFLA_VF_LINK_STATE')
+        rate = vinfo.get_attr('IFLA_VF_RATE', default={})
         vfs[mac['vf']] = {'mac': mac['mac'],
-                          'link_state': link_state['link_state']}
+                          'link_state': link_state['link_state'],
+                          'max_tx_rate': rate.get('max_tx_rate'),
+                          'min_tx_rate': rate.get('min_tx_rate'),
+                          }
 
     return vfs
 
