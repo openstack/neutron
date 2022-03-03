@@ -91,20 +91,22 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
         vf_config = {'vf': vf_index, 'spoofchk': int(enabled)}
         ip.link.set_vf_feature(vf_config)
 
-    def set_vf_rate(self, vf_index, rate_type, rate_value):
-        """sets vf rate.
-
+    def set_vf_rate(self, vf_index, rates):
+        """sets vf rates.
         @param vf_index: vf index
-        @param rate_type: vf rate type ('max_tx_rate', 'min_tx_rate')
-        @param rate_value: vf rate in Mbps
+        @param rates: dictionary with rate type (str) and the value (int)
+                      in Mbps. Example:
+                        {'max_tx_rate': 20, 'min_tx_rate': 10}
+                        {'max_tx_rate': 30}
+                        {'min_tx_rate': 5}
         """
         ip = self.device(self.dev_name)
-        vf_config = {'vf': vf_index, 'rate': {rate_type: int(rate_value)}}
+        vf_config = {'vf': vf_index, 'rate': rates}
         try:
             ip.link.set_vf_feature(vf_config)
         except ip_lib.InvalidArgument:
             # NOTE(ralonsoh): some NICs do not support "min_tx_rate" parameter.
             # https://bugs.launchpad.net/neutron/+bug/1918464
             LOG.error('Device %(device)s does not support ip-link vf '
-                      '"%(rate_type)s" parameter.',
-                      {'device': self.dev_name, 'rate_type': rate_type})
+                      '"min_tx_rate" parameter. Rates: %(rates)s',
+                      {'device': self.dev_name, 'rates': rates})
