@@ -47,9 +47,7 @@ class LocalIPAgentExtension(l2_extension.L2AgentExtension):
                       'currently uses %(driver_type)s',
                       {'driver_type': driver_type})
             sys.exit(1)
-        if (cfg.CONF.SECURITYGROUP.enable_security_group and
-                cfg.CONF.SECURITYGROUP.firewall_driver == 'openvswitch' and
-                not cfg.CONF.LOCAL_IP.static_nat):
+        if self._is_ovs_firewall() and not cfg.CONF.LOCAL_IP.static_nat:
             LOG.error('In order to use Local IP extension together with '
                       'openvswitch firewall please set static_nat config to '
                       'True')
@@ -293,7 +291,10 @@ class LocalIPAgentExtension(l2_extension.L2AgentExtension):
                                     self._tcp_flow_match_specs(ofpp),
                                     self._udp_flow_match_specs(ofpp)]:
             flow_specs = common_specs + specs
-            learn_table = ovs_constants.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE
+            learn_table = ovs_constants.LOCAL_IP_TABLE
+            if self._is_ovs_firewall():
+                learn_table = ovs_constants.\
+                    ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE
             actions = [
                 ofpp.OFPActionSetField(eth_dst=mac),
                 ofpp.NXActionLearn(
@@ -354,3 +355,8 @@ class LocalIPAgentExtension(l2_extension.L2AgentExtension):
                                  n_bits=16)]
         match_kwargs = {'ip_proto': ip_proto.IPPROTO_UDP}
         return specs, match_kwargs
+
+    @staticmethod
+    def _is_ovs_firewall():
+        return (cfg.CONF.SECURITYGROUP.enable_security_group and
+                cfg.CONF.SECURITYGROUP.firewall_driver == 'openvswitch')
