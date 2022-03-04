@@ -912,16 +912,11 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
             if not port.chassis:
                 return False
 
-            # TODO(dalvarez): Remove the comparison to port.datapath.uuid in Y
-            # cycle when we are sure that all namespaces will be created with
-            # the Neutron network UUID and not anymore with the OVN datapath
-            # UUID.
-            is_in_network = lambda port: (
-                str(port.datapath.uuid) == network or
-                utils.get_network_name_from_datapath(port.datapath) == network)
-
-            return port.mac and is_in_network(port) and (
-                    ip_address in port.mac[0].split(' '))
+            is_in_network = utils.get_network_name_from_datapath(
+                port.datapath) == network
+            return (port.mac and
+                    is_in_network and
+                    (ip_address in port.mac[0].split(' ')))
 
         return [r for r in rows if check_net_and_ip(r)]
 

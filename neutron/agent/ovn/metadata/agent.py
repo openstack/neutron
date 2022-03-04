@@ -353,18 +353,13 @@ class MetadataAgent(object):
     def _vif_ports(self, ports):
         return (p for p in ports if p.type in OVN_VIF_PORT_TYPES)
 
-    def teardown_datapath(self, datapath, net_name=None):
+    def teardown_datapath(self, net_name):
         """Unprovision this datapath to stop serving metadata.
 
         This function will shutdown metadata proxy if it's running and delete
         the VETH pair, the OVS port and the namespace.
         """
-        # TODO(dalvarez): Remove this in Y cycle when we are sure that all
-        # namespaces will be created with the Neutron network UUID and not
-        # anymore with the OVN datapath UUID.
-        dp = net_name or datapath
-
-        namespace = self._get_namespace_name(dp)
+        namespace = self._get_namespace_name(net_name)
         ip = ip_lib.IPWrapper(namespace)
         # If the namespace doesn't exist, return
         if not ip.netns.exists(namespace):
@@ -374,9 +369,9 @@ class MetadataAgent(object):
                  namespace)
 
         metadata_driver.MetadataDriver.destroy_monitored_metadata_proxy(
-            self._process_monitor, dp, self.conf, namespace)
+            self._process_monitor, net_name, self.conf, namespace)
 
-        veth_name = self._get_veth_name(dp)
+        veth_name = self._get_veth_name(net_name)
         self.ovs_idl.del_port(veth_name[0]).execute()
         if ip_lib.device_exists(veth_name[0]):
             ip_lib.IPWrapper().del_veth(veth_name[0])
@@ -400,7 +395,7 @@ class MetadataAgent(object):
         if datapath_ports:
             self.provision_datapath(datapath, net_name)
         else:
-            self.teardown_datapath(datapath, net_name)
+            self.teardown_datapath(net_name)
 
     def _ensure_datapath_checksum(self, namespace):
         """Ensure the correct checksum in the metadata packets in DPDK bridges
@@ -442,7 +437,7 @@ class MetadataAgent(object):
             LOG.debug("There is no metadata port for network %s or it has no "
                       "MAC or IP addresses configured, tearing the namespace "
                       "down if needed", net_name)
-            self.teardown_datapath(datapath, net_name)
+            self.teardown_datapath(net_name)
             return
 
         # First entry of the mac field must be the MAC address.
@@ -453,7 +448,7 @@ class MetadataAgent(object):
             LOG.error("Metadata port for network %s doesn't have a MAC "
                       "address, tearing the namespace down if needed",
                       net_name)
-            self.teardown_datapath(datapath)
+            self.teardown_datapath(net_name)
             return
 
         mac = match.group()

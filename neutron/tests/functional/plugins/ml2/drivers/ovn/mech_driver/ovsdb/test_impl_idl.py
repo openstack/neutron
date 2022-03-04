@@ -150,9 +150,9 @@ class TestSbApi(BaseOvnIdlTest):
         return binding, ipaddr, switch
 
     def test_get_network_port_bindings_by_ip(self):
-        binding, ipaddr, _ = self._create_bound_port_with_ip()
-        result = self.api.get_network_port_bindings_by_ip(
-            str(binding.datapath.uuid), ipaddr)
+        binding, ipaddr, switch = self._create_bound_port_with_ip()
+        network_id = switch.name.replace('neutron-', '')
+        result = self.api.get_network_port_bindings_by_ip(network_id, ipaddr)
         self.assertIn(binding, result)
 
     def test_get_network_port_bindings_by_ip_with_unbound_port(self):
@@ -163,8 +163,8 @@ class TestSbApi(BaseOvnIdlTest):
             txn.add(
                 self.nbapi.lsp_add(switch.name, unbound_port_name, type=type))
             txn.add(self.nbapi.lsp_set_addresses(unbound_port_name, [mac_ip]))
-        result = self.api.get_network_port_bindings_by_ip(
-            str(binding.datapath.uuid), ipaddr)
+        network_id = switch.name.replace('neutron-', '')
+        result = self.api.get_network_port_bindings_by_ip(network_id, ipaddr)
         self.assertIn(binding, result)
         self.assertEqual(1, len(result))
 
