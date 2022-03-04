@@ -881,6 +881,19 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
                     self.assertEqual(
                         1, self.nb_ovn.delete_lswitch_port.call_count)
 
+    @mock.patch.object(ovn_revision_numbers_db, 'delete_revision')
+    @mock.patch.object(ovn_client.OVNClient, '_delete_port')
+    def test_delete_port_exception_delete_revision(self, mock_del_port,
+                                                   mock_del_rev):
+        mock_del_port.side_effect = Exception('BoOoOoOoOmmmmm!!!')
+        with self.network(set_context=True, tenant_id='test') as net:
+            with self.subnet(network=net) as subnet:
+                with self.port(subnet=subnet,
+                               set_context=True, tenant_id='test') as port:
+                    self._delete('ports', port['port']['id'])
+                    # Assert that delete_revision wasn't invoked
+                    mock_del_rev.assert_not_called()
+
     def _test_set_port_status_up(self, is_compute_port=False):
         port_device_owner = 'compute:nova' if is_compute_port else ''
         self.mech_driver._plugin.nova_notifier = mock.Mock()
