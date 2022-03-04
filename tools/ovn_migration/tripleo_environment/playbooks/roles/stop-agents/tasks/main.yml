@@ -9,6 +9,10 @@
     loop_var: service
   when: ansible_facts.services[service.service_file] is defined
 
+- name: Reload systemctl daemons
+  systemd:
+    daemon_reload: yes
+
 - name: remove containers
   become: yes
   shell: |
