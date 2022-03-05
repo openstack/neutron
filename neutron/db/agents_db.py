@@ -77,7 +77,7 @@ def get_availability_zones_by_agent_type(context, agent_type,
                                          availability_zones):
     """Get list of availability zones based on agent type"""
 
-    agents = agent_obj.Agent._get_agents_by_availability_zones_and_agent_type(
+    agents = agent_obj.Agent.get_agents_by_availability_zones_and_agent_type(
         context, agent_type=agent_type, availability_zones=availability_zones)
     return set(agent.availability_zone for agent in agents)
 

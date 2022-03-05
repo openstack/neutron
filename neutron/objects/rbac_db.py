@@ -18,6 +18,7 @@ import itertools
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions
 from sqlalchemy import and_
 
@@ -104,6 +105,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
                  rbac_db_model.target_project != '*'))))
 
     @classmethod
+    @db_api.CONTEXT_READER
     def _validate_rbac_policy_delete(cls, context, obj_id, target_project):
         ctx_admin = context.elevated()
         rb_model = cls.rbac_db_cls.db_model
@@ -147,13 +149,14 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
         if policy['action'] != models.ACCESS_SHARED:
             return
         target_project = policy['target_project']
-        db_obj = obj_db_api.get_object(
-            cls, context.elevated(), id=policy['object_id'])
+        elevated_context = context.elevated()
+        with db_api.CONTEXT_READER.using(elevated_context):
+            db_obj = obj_db_api.get_object(cls, elevated_context,
+                                           id=policy['object_id'])
         if db_obj.project_id == target_project:
             return
-        cls._validate_rbac_policy_delete(context=context,
-                                         obj_id=policy['object_id'],
-                                         target_project=target_project)
+        cls._validate_rbac_policy_delete(context, policy['object_id'],
+                                         target_project)
 
     @classmethod
     def validate_rbac_policy_create(cls, resource, event, trigger,
@@ -199,8 +202,10 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
         # (hopefully) melded with this one.
         if object_type != cls.rbac_db_cls.db_model.object_type:
             return
-        db_obj = obj_db_api.get_object(
-            cls, context.elevated(), id=policy['object_id'])
+        elevated_context = context.elevated()
+        with db_api.CONTEXT_READER.using(elevated_context):
+            db_obj = obj_db_api.get_object(cls, elevated_context,
+                                           id=policy['object_id'])
         if event in (events.BEFORE_CREATE, events.BEFORE_UPDATE):
             if (not context.is_admin and
                     db_obj['project_id'] != context.project_id):
@@ -225,23 +230,23 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
 
     def update_shared(self, is_shared_new, obj_id):
         admin_context = self.obj_context.elevated()
-        shared_prev = obj_db_api.get_object(self.rbac_db_cls, admin_context,
-                                            object_id=obj_id,
-                                            target_project='*',
-                                            action=models.ACCESS_SHARED)
-        is_shared_prev = bool(shared_prev)
-        if is_shared_prev == is_shared_new:
-            return
+        with db_api.CONTEXT_WRITER.using(admin_context):
+            shared_prev = obj_db_api.get_object(
+                self.rbac_db_cls, admin_context, object_id=obj_id,
+                target_project='*', action=models.ACCESS_SHARED)
+            is_shared_prev = bool(shared_prev)
+            if is_shared_prev == is_shared_new:
+                return
 
-        # 'shared' goes False -> True
-        if not is_shared_prev and is_shared_new:
-            self.attach_rbac(obj_id, self.obj_context.project_id)
-            return
+            # 'shared' goes False -> True
+            if not is_shared_prev and is_shared_new:
+                self.attach_rbac(obj_id, self.obj_context.project_id)
+                return
 
-        # 'shared' goes True -> False is actually an attempt to delete
-        # rbac rule for sharing obj_id with target_project = '*'
-        self._validate_rbac_policy_delete(self.obj_context, obj_id, '*')
-        return self.obj_context.session.delete(shared_prev)
+            # 'shared' goes True -> False is actually an attempt to delete
+            # rbac rule for sharing obj_id with target_project = '*'
+            self._validate_rbac_policy_delete(self.obj_context, obj_id, '*')
+            return self.obj_context.session.delete(shared_prev)
 
     def from_db_object(self, db_obj):
         self._load_shared(db_obj)

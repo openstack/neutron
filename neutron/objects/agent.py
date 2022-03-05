@@ -13,6 +13,7 @@
 #    under the License.
 
 from neutron_lib import constants as const
+from neutron_lib.db import api as db_api
 from neutron_lib.objects import common_types
 from neutron_lib.objects import utils as obj_utils
 from oslo_utils import versionutils
@@ -122,11 +123,10 @@ class Agent(base.NeutronDbObject):
                 group_by(agent_model.Agent).
                 filter(agent_model.Agent.id.in_(agent_ids)).
                 order_by('count'))
-        agents = [cls._load_object(context, record[0]) for record in query]
-
-        return agents
+            return [cls._load_object(context, record[0]) for record in query]
 
     @classmethod
+    @db_api.CONTEXT_READER
     def get_ha_agents(cls, context, network_id=None, router_id=None):
         if not (network_id or router_id):
             return []
@@ -154,7 +154,8 @@ class Agent(base.NeutronDbObject):
         return agents
 
     @classmethod
-    def _get_agents_by_availability_zones_and_agent_type(
+    @db_api.CONTEXT_READER
+    def get_agents_by_availability_zones_and_agent_type(
             cls, context, agent_type, availability_zones):
         query = context.session.query(
             agent_model.Agent).filter_by(

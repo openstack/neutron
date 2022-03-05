@@ -315,10 +315,9 @@ def _prevent_segment_delete_with_port_bound(resource, event, trigger,
         # don't check for network deletes
         return
 
-    with db_api.CONTEXT_READER.using(payload.context):
-        auto_delete_port_ids, proper_port_count = port_obj.Port.\
-            get_auto_deletable_port_ids_and_proper_port_count_by_segment(
-                payload.context, segment_id=payload.resource_id)
+    auto_delete_port_ids, proper_port_count = port_obj.Port.\
+        get_auto_deletable_port_ids_and_proper_port_count_by_segment(
+            payload.context, segment_id=payload.resource_id)
 
     if proper_port_count:
         reason = (_("The segment is still bound with %s port(s)") %

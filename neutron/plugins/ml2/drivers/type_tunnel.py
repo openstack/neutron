@@ -345,44 +345,54 @@ class EndpointTunnelTypeDriver(ML2TunnelTypeDriver):
 
     def get_endpoint_by_host(self, host):
         LOG.debug("get_endpoint_by_host() called for host %s", host)
-        session = db_api.get_reader_session()
-        return (session.query(self.endpoint_model).
-                filter_by(host=host).first())
+        ctx = context.get_admin_context()
+        with db_api.CONTEXT_READER.using(ctx):
+            return (ctx.session.query(self.endpoint_model).
+                    filter_by(host=host).first())
 
     def get_endpoint_by_ip(self, ip):
         LOG.debug("get_endpoint_by_ip() called for ip %s", ip)
-        session = db_api.get_reader_session()
-        return (session.query(self.endpoint_model).
-                filter_by(ip_address=ip).first())
+        ctx = context.get_admin_context()
+        with db_api.CONTEXT_READER.using(ctx):
+            return (ctx.session.query(self.endpoint_model).
+                    filter_by(ip_address=ip).first())
 
     def delete_endpoint(self, ip):
         LOG.debug("delete_endpoint() called for ip %s", ip)
-        session = db_api.get_writer_session()
-        session.query(self.endpoint_model).filter_by(ip_address=ip).delete()
+        ctx = context.get_admin_context()
+        with db_api.CONTEXT_WRITER.using(ctx):
+            ctx.session.query(self.endpoint_model).filter_by(
+                ip_address=ip).delete()
 
     def delete_endpoint_by_host_or_ip(self, host, ip):
         LOG.debug("delete_endpoint_by_host_or_ip() called for "
                   "host %(host)s or %(ip)s", {'host': host, 'ip': ip})
-        session = db_api.get_writer_session()
-        session.query(self.endpoint_model).filter(
-            or_(self.endpoint_model.host == host,
-                self.endpoint_model.ip_address == ip)).delete()
+        ctx = context.get_admin_context()
+        with db_api.CONTEXT_WRITER.using(ctx):
+            ctx.session.query(self.endpoint_model).filter(
+                or_(self.endpoint_model.host == host,
+                    self.endpoint_model.ip_address == ip)).delete()
 
     def _get_endpoints(self):
         LOG.debug("_get_endpoints() called")
-        session = db_api.get_reader_session()
-        return session.query(self.endpoint_model)
+        ctx = context.get_admin_context()
+        with db_api.CONTEXT_READER.using(ctx):
+            return ctx.session.query(self.endpoint_model).all()
 
     def _add_endpoint(self, ip, host, **kwargs):
         LOG.debug("_add_endpoint() called for ip %s", ip)
-        session = db_api.get_writer_session()
+        ctx = context.get_admin_context()
+
         try:
-            endpoint = self.endpoint_model(ip_address=ip, host=host, **kwargs)
-            endpoint.save(session)
+            with db_api.CONTEXT_WRITER.using(ctx):
+                endpoint = self.endpoint_model(ip_address=ip, host=host,
+                                               **kwargs)
+                endpoint.save(ctx.session)
         except db_exc.DBDuplicateEntry:
-            endpoint = (session.query(self.endpoint_model).
-                        filter_by(ip_address=ip).one())
-            LOG.warning("Endpoint with ip %s already exists", ip)
+            with db_api.CONTEXT_READER.using(ctx):
+                endpoint = (ctx.session.query(self.endpoint_model).
+                            filter_by(ip_address=ip).one())
+                LOG.warning("Endpoint with ip %s already exists", ip)
         return endpoint
 
 

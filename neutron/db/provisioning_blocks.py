@@ -42,6 +42,7 @@ def add_model_for_resource(resource, model):
 
 
 @db_api.retry_if_session_inactive()
+@db_api.CONTEXT_WRITER
 def add_provisioning_component(context, object_id, object_type, entity):
     """Adds a provisioning block by an entity to a given object.
 
@@ -77,6 +78,7 @@ def add_provisioning_component(context, object_id, object_type, entity):
 
 
 @db_api.retry_if_session_inactive()
+@db_api.CONTEXT_WRITER
 def remove_provisioning_component(context, object_id, object_type, entity,
                                   standard_attr_id=None):
     """Remove a provisioning block for an object without triggering a callback.
@@ -125,26 +127,30 @@ def provisioning_complete(context, object_id, object_type, entity):
     # tricking us into thinking there are remaining provisioning components
     if utils.is_session_active(context.session):
         raise RuntimeError(_("Must not be called in a transaction"))
-    standard_attr_id = _get_standard_attr_id(context, object_id,
-                                             object_type)
-    if not standard_attr_id:
-        return
-    if remove_provisioning_component(context, object_id, object_type, entity,
-                                     standard_attr_id):
-        LOG.debug("Provisioning for %(otype)s %(oid)s completed by entity "
-                  "%(entity)s.", log_dict)
-    # now with that committed, check if any records are left. if None, emit
-    # an event that provisioning is complete.
-    if not pb_obj.ProvisioningBlock.objects_exist(
-            context, standard_attr_id=standard_attr_id):
-        LOG.debug("Provisioning complete for %(otype)s %(oid)s triggered by "
-                  "entity %(entity)s.", log_dict)
-        registry.publish(object_type, PROVISIONING_COMPLETE, entity,
-                         payload=events.DBEventPayload(
-                             context, resource_id=object_id))
+    with db_api.CONTEXT_WRITER.using(context):
+        standard_attr_id = _get_standard_attr_id(context, object_id,
+                                                 object_type)
+        if not standard_attr_id:
+            return
+        if remove_provisioning_component(context, object_id, object_type,
+                                         entity, standard_attr_id):
+            LOG.debug("Provisioning for %(otype)s %(oid)s completed by entity "
+                      "%(entity)s.", log_dict)
+        # now with that committed, check if any records are left. if None, emit
+        # an event that provisioning is complete.
+        if pb_obj.ProvisioningBlock.objects_exist(
+                context, standard_attr_id=standard_attr_id):
+            return
+
+    LOG.debug("Provisioning complete for %(otype)s %(oid)s triggered by "
+              "entity %(entity)s.", log_dict)
+    registry.publish(object_type, PROVISIONING_COMPLETE, entity,
+                     payload=events.DBEventPayload(
+                         context, resource_id=object_id))
 
 
 @db_api.retry_if_session_inactive()
+@db_api.CONTEXT_READER
 def is_object_blocked(context, object_id, object_type):
     """Return boolean indicating if object has a provisioning block.
 

@@ -230,37 +230,39 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             tenant_to_check = policy['target_project']
 
         if tenant_to_check:
-            self.ensure_no_tenant_ports_on_network(net['id'], net['tenant_id'],
-                                                   tenant_to_check)
+            self.ensure_no_tenant_ports_on_network(
+                context, net['id'], net['tenant_id'], tenant_to_check)
 
-    def ensure_no_tenant_ports_on_network(self, network_id, net_tenant_id,
-                                          tenant_id):
-        ctx_admin = ctx.get_admin_context()
-        ports = model_query.query_with_hooks(ctx_admin, models_v2.Port).filter(
-            models_v2.Port.network_id == network_id)
-        if tenant_id == '*':
-            # for the wildcard we need to get all of the rbac entries to
-            # see if any allow the remaining ports on the network.
-            # any port with another RBAC entry covering it or one belonging to
-            # the same tenant as the network owner is ok
-            other_rbac_objs = network_obj.NetworkRBAC.get_objects(
-                ctx_admin, object_id=network_id, action='access_as_shared')
-            allowed_tenants = [rbac['target_project'] for rbac
-                               in other_rbac_objs
-                               if rbac.target_project != tenant_id]
-            allowed_tenants.append(net_tenant_id)
-            ports = ports.filter(
-                ~models_v2.Port.tenant_id.in_(allowed_tenants))
-        else:
-            # if there is a wildcard rule, we can return early because it
-            # allows any ports
-            if network_obj.NetworkRBAC.get_object(
-                    ctx_admin, object_id=network_id, action='access_as_shared',
-                    target_project='*'):
-                return
-            ports = ports.filter(models_v2.Port.project_id == tenant_id)
-        if ports.count():
-            raise exc.InvalidSharedSetting(network=network_id)
+    def ensure_no_tenant_ports_on_network(self, context, network_id,
+                                          net_tenant_id, tenant_id):
+        elevated = context.elevated()
+        with db_api.CONTEXT_READER.using(elevated):
+            ports = model_query.query_with_hooks(
+                elevated, models_v2.Port).filter(
+                models_v2.Port.network_id == network_id)
+            if tenant_id == '*':
+                # for the wildcard we need to get all of the rbac entries to
+                # see if any allow the remaining ports on the network.
+                # any port with another RBAC entry covering it or one belonging
+                # to the same tenant as the network owner is ok
+                other_rbac_objs = network_obj.NetworkRBAC.get_objects(
+                    elevated, object_id=network_id, action='access_as_shared')
+                allowed_tenants = [rbac['target_project'] for rbac
+                                   in other_rbac_objs
+                                   if rbac.target_project != tenant_id]
+                allowed_tenants.append(net_tenant_id)
+                ports = ports.filter(
+                    ~models_v2.Port.tenant_id.in_(allowed_tenants))
+            else:
+                # if there is a wildcard rule, we can return early because it
+                # allows any ports
+                if network_obj.NetworkRBAC.get_object(
+                        elevated, object_id=network_id,
+                        action='access_as_shared', target_project='*'):
+                    return
+                ports = ports.filter(models_v2.Port.project_id == tenant_id)
+            if ports.count():
+                raise exc.InvalidSharedSetting(network=network_id)
 
     def set_ipam_backend(self):
         self.ipam = ipam_pluggable_backend.IpamPluggableBackend()
@@ -487,8 +489,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         registry.publish(resources.NETWORK, events.BEFORE_DELETE, self,
                          payload=events.DBEventPayload(
                              context, resource_id=id))
-        self._ensure_network_not_in_use(context, id)
         with db_api.CONTEXT_READER.using(context):
+            self._ensure_network_not_in_use(context, id)
             auto_delete_port_ids = [p.id for p in context.session.query(
                 models_v2.Port.id).filter_by(network_id=id).filter(
                 models_v2.Port.device_owner.in_(
@@ -647,10 +649,9 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     s_gateway_ip != cur_subnet['gateway_ip'] and
                     not ipv6_utils.is_ipv6_pd_enabled(s)):
                 gateway_ip = str(cur_subnet['gateway_ip'])
-                with db_api.CONTEXT_READER.using(context):
-                    alloc = port_obj.IPAllocation.get_alloc_routerports(
-                        context, cur_subnet['id'], gateway_ip=gateway_ip,
-                        first=True)
+                alloc = port_obj.IPAllocation.get_alloc_routerports(
+                    context, cur_subnet['id'], gateway_ip=gateway_ip,
+                    first=True)
 
                 if alloc and alloc.port_id:
                     raise exc.GatewayIpInUse(
@@ -1600,6 +1601,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         return query
 
     @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_READER
     def get_ports(self, context, filters=None, fields=None,
                   sorts=None, limit=None, marker=None,
                   page_reverse=False):
@@ -1619,6 +1621,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         return items
 
     @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_READER
     def get_ports_count(self, context, filters=None):
         return self._get_ports_query(context, filters).count()
 

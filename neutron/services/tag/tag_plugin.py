@@ -50,6 +50,7 @@ class TagPlugin(tagging.TagPluginBase):
         tags = [tag_db.tag for tag_db in db_data.standard_attr.tags]
         response_data['tags'] = tags
 
+    @db_api.CONTEXT_READER
     def _get_resource(self, context, resource, resource_id):
         model = resource_model_map[resource]
         try:

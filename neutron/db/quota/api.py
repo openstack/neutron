@@ -44,6 +44,7 @@ class ReservationInfo(collections.namedtuple(
 
 
 @db_api.retry_if_session_inactive()
+@db_api.CONTEXT_READER
 def get_quota_usage_by_resource_and_project(context, resource, project_id):
     """Return usage info for a given resource and project.
 

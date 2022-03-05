@@ -259,6 +259,7 @@ class DbBasePluginCommon(object):
             res.pop('bulk')
         return db_utils.resource_fields(res, fields)
 
+    @db_api.CONTEXT_READER
     def _get_network(self, context, id):
         try:
             network = model_query.get_by_id(context, models_v2.Network, id)
@@ -266,6 +267,7 @@ class DbBasePluginCommon(object):
             raise exceptions.NetworkNotFound(net_id=id)
         return network
 
+    @db_api.CONTEXT_READER
     def _network_exists(self, context, network_id):
         query = model_query.query_with_hooks(
             context, models_v2.Network, field='id')
@@ -284,6 +286,7 @@ class DbBasePluginCommon(object):
             raise exceptions.SubnetPoolNotFound(subnetpool_id=id)
         return subnetpool
 
+    @db_api.CONTEXT_READER
     def _get_port(self, context, id, lazy_fields=None):
         try:
             port = model_query.get_by_id(context, models_v2.Port, id,

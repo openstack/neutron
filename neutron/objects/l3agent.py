@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.db import api as db_api
 from neutron_lib.objects import common_types
 from oslo_versionedobjects import fields as obj_fields
 import sqlalchemy as sa
@@ -42,6 +43,7 @@ class RouterL3AgentBinding(base.NeutronDbObject):
     # TODO(ihrachys) return OVO objects not models
     # TODO(ihrachys) move under Agent object class
     @classmethod
+    @db_api.CONTEXT_READER
     def get_l3_agents_by_router_ids(cls, context, router_ids):
         query = context.session.query(l3agent.RouterL3AgentBinding)
         query = query.options(joinedload('l3_agent')).filter(
@@ -49,6 +51,7 @@ class RouterL3AgentBinding(base.NeutronDbObject):
         return [db_obj.l3_agent for db_obj in query.all()]
 
     @classmethod
+    @db_api.CONTEXT_READER
     def get_down_router_bindings(cls, context, cutoff):
         query = (context.session.query(
                  l3agent.RouterL3AgentBinding).
