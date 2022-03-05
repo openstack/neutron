@@ -67,7 +67,7 @@ The gateway nodes contain the following components:
 
    Each OVN metadata agent provides metadata service locally on the compute
    nodes in a lightweight way. Each network being accessed by the instances of
-   the compute node will have a corresponding metadata ovn-metadata-$net_uuid
+   the compute node will have a corresponding metadata ovnmeta-$net_uuid
    namespace, and inside an haproxy will funnel the requests to the
    ovn-metadata-agent over a unix socket.
 
@@ -75,7 +75,7 @@ The gateway nodes contain the following components:
    instances on the compute node. If you login as root on such compute node
    you can execute:
 
-   ip netns ovn-metadata-$net_uuid exec ssh user@my.instance.ip.address
+   ip netns ovnmeta-$net_uuid exec ssh user@my.instance.ip.address
 
 Hardware layout
 ~~~~~~~~~~~~~~~
