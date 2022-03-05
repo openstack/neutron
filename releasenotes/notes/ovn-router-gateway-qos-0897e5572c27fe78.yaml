@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    Added support for router gateway IP QoS in OVN backend. The L3 OVN router
+    plugin now can apply router QoS policy rules on the router gateway port.

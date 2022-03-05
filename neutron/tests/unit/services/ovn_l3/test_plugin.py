@@ -432,6 +432,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.l3_inst._nb_ovn.update_lrouter.assert_called_once_with(
             'neutron-router-id', enabled=True, external_ids={
                 ovn_const.OVN_GW_PORT_EXT_ID_KEY: '',
+                ovn_const.OVN_GW_NETWORK_EXT_ID_KEY: '',
                 ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
                 ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'router',
                 ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: ''})
@@ -453,6 +454,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             external_ids={ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'test',
                           ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
                           ovn_const.OVN_GW_PORT_EXT_ID_KEY: '',
+                          ovn_const.OVN_GW_NETWORK_EXT_ID_KEY: '',
                           ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: ''})
 
     @mock.patch.object(utils, 'get_lrouter_non_gw_routes')
@@ -547,6 +549,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         external_ids = {ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'router',
                         ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
                         ovn_const.OVN_GW_PORT_EXT_ID_KEY: 'gw-port-id',
+                        ovn_const.OVN_GW_NETWORK_EXT_ID_KEY: 'ext-network-id',
                         ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: ''}
         self.l3_inst._nb_ovn.create_lrouter.assert_called_once_with(
             'neutron-router-id', external_ids=external_ids,
@@ -581,6 +584,9 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
     def test_delete_router_with_ext_gw(self, gprs):
         self.get_router.return_value = self.fake_router_with_ext_gw
         self.get_subnet.return_value = self.fake_ext_subnet
+        self.l3_inst._nb_ovn.get_lrouter.return_value = (
+            fake_resources.FakeOVNRouter.from_neutron_router(
+                self.fake_router_with_ext_gw))
 
         self.l3_inst.delete_router(self.context, 'router-id')
 

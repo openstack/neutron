@@ -734,6 +734,39 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                     txn.add(cmd)
         raise periodics.NeverAgain()
 
+    # TODO(ralonsoh): Remove this in the Z+3 cycle. This method adds the
+    # "external_ids:OVN_GW_NETWORK_EXT_ID_KEY" to each router that has
+    # a gateway (that means, that has "external_ids:OVN_GW_PORT_EXT_ID_KEY").
+    # A static spacing value is used here, but this method will only run
+    # once per lock due to the use of periodics.NeverAgain().
+    @periodics.periodic(spacing=600, run_immediately=True)
+    def update_logical_router_with_gateway_network_id(self):
+        """Update all OVN logical router registers with the GW network ID"""
+        if not self.has_lock:
+            return
+
+        cmds = []
+        context = n_context.get_admin_context()
+        for lr in self._nb_idl.lr_list().execute(check_error=True):
+            gw_port = lr.external_ids.get(ovn_const.OVN_GW_PORT_EXT_ID_KEY)
+            gw_net = lr.external_ids.get(ovn_const.OVN_GW_NETWORK_EXT_ID_KEY)
+            if not gw_port or (gw_port and gw_net):
+                # This router does not have a gateway network assigned yet or
+                # it has a gateway port and its corresponding network.
+                continue
+
+            port = self._ovn_client._plugin.get_port(context, gw_port)
+            external_ids = {
+                ovn_const.OVN_GW_NETWORK_EXT_ID_KEY: port['network_id']}
+            cmds.append(self._nb_idl.db_set(
+                'Logical_Router', lr.uuid, ('external_ids', external_ids)))
+
+        if cmds:
+            with self._nb_idl.transaction(check_error=True) as txn:
+                for cmd in cmds:
+                    txn.add(cmd)
+        raise periodics.NeverAgain()
+
 
 class HashRingHealthCheckPeriodics(object):
 

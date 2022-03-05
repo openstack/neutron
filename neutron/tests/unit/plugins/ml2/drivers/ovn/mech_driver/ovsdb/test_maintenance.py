@@ -589,3 +589,29 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
             mock.call('Logical_Router_Port', 'lrp-port1', ('options', opt))]
         self.fake_ovn_client._nb_idl.db_set.assert_has_calls(
             expected_calls)
+
+    def test_update_logical_router_with_gateway_network_id(self):
+        nb_idl = self.fake_ovn_client._nb_idl
+        # lr0: GW port ID, not GW network ID --> we need to add network ID.
+        lr0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
+            'name': 'lr0',
+            'external_ids': {constants.OVN_GW_PORT_EXT_ID_KEY: 'port0'}})
+        # lr1: GW port ID and not GW network ID --> register already updated.
+        lr1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
+                'name': 'lr1',
+                'external_ids': {constants.OVN_GW_PORT_EXT_ID_KEY: 'port1',
+                                 constants.OVN_GW_NETWORK_EXT_ID_KEY: 'net1'}})
+        # lr2: no GW port ID (nor GW network ID) --> no QoS.
+        lr2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
+                'name': 'lr2', 'external_ids': {}})
+        nb_idl.lr_list.return_value.execute.return_value = (lr0, lr1, lr2)
+        self.fake_ovn_client._plugin.get_port.return_value = {
+            'network_id': 'net0'}
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.periodic.update_logical_router_with_gateway_network_id)
+        ext_ids = {constants.OVN_GW_NETWORK_EXT_ID_KEY: 'net0'}
+        expected_calls = [mock.call('Logical_Router', lr0.uuid,
+                                    ('external_ids', ext_ids))]
+        nb_idl.db_set.assert_has_calls(expected_calls)

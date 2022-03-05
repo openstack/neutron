@@ -52,6 +52,7 @@ from neutron_lib.api.definitions import provider_net
 from neutron_lib.api.definitions import qos
 from neutron_lib.api.definitions import qos_bw_limit_direction
 from neutron_lib.api.definitions import qos_default
+from neutron_lib.api.definitions import qos_gateway_ip
 from neutron_lib.api.definitions import qos_rule_type_details
 from neutron_lib.api.definitions import qos_rule_type_filter
 from neutron_lib.api.definitions import qos_rules_alias
@@ -87,6 +88,7 @@ ML2_SUPPORTED_API_EXTENSIONS_OVN_L3 = [
     floatingip_pools.ALIAS,
     pagination.ALIAS,
     'qos-fip',
+    qos_gateway_ip.ALIAS,
     sorting.ALIAS,
     project_id.ALIAS,
     dns.ALIAS,

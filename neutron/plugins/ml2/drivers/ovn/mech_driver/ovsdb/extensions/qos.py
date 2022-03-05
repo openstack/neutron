@@ -15,6 +15,7 @@
 from neutron.objects.qos import binding as qos_binding
 from neutron.objects.qos import policy as qos_policy
 from neutron.objects.qos import rule as qos_rule
+from neutron_lib.api.definitions import l3 as l3_api
 from neutron_lib import constants
 from neutron_lib import context as n_context
 from neutron_lib.plugins import constants as plugins_const
@@ -118,7 +119,7 @@ class OVNClientQosExtension(object):
 
     def _ovn_qos_rule(self, rules_direction, rules, port_id, network_id,
                       fip_id=None, ip_address=None, resident_port=None,
-                      delete=False):
+                      router_id=None, delete=False):
         """Generate an OVN QoS register based on several Neutron QoS rules
 
         A OVN QoS register can contain "bandwidth" and "action" parameters.
@@ -142,6 +143,8 @@ class OVNClientQosExtension(object):
         :param resident_port: (string) for L3 floating IP bandwidth, this is
                               a logical switch port located in the chassis
                               where the floating IP traffic is NATed.
+        :param router_id: (string) router ID, for L3 router gateway port
+                          bandwidth limit.
         :param delete: (bool) defines if this rule if going to be a partial
                        one (without any bandwidth or DSCP information) to be
                        used only as deletion rule.
@@ -168,8 +171,13 @@ class OVNClientQosExtension(object):
 
         # All OVN QoS rules have an external ID reference to the port or the
         # FIP that are attached to.
+        # 1) L3 floating IP ports.
         if fip_id:
             key, value = ovn_const.OVN_FIP_EXT_ID_KEY, fip_id
+        # 2) L3 router gateway port.
+        elif router_id:
+            key, value = ovn_const.OVN_ROUTER_ID_EXT_ID_KEY, router_id
+        # 3) Fixed IP ports (aka VM ports)
         else:
             key, value = ovn_const.OVN_PORT_EXT_ID_KEY, port_id
         ovn_qos_rule['external_ids'] = {key: value}
@@ -365,6 +373,49 @@ class OVNClientQosExtension(object):
     def disassociate_floatingip(self, txn, floatingip):
         self.delete_floatingip(txn, floatingip)
 
+    def _delete_gateway_ip_qos_rules(self, txn, router_id, network_id):
+        if network_id:
+            lswitch_name = utils.ovn_name(network_id)
+            txn.add(self.nb_idl.qos_del_ext_ids(
+                lswitch_name,
+                {ovn_const.OVN_ROUTER_ID_EXT_ID_KEY: router_id}))
+
+    def create_router(self, txn, router):
+        self.update_router(txn, router)
+
+    def update_router(self, txn, router):
+        gw_info = router.get(l3_api.EXTERNAL_GW_INFO) or {}
+        qos_policy_id = gw_info.get('qos_policy_id')
+        router_id = router.get('id')
+        gw_port_id = router.get('gw_port_id')
+        gw_network_id = gw_info.get('network_id')
+        if not (router_id and gw_port_id and gw_network_id):
+            # NOTE(ralonsoh): when the gateway network is detached, the gateway
+            # port is deleted. Any QoS policy related to this port_id is
+            # deleted in "self.update_port()".
+            LOG.debug('Router %s does not have ID or gateway assigned', router)
+            return
+
+        admin_context = n_context.get_admin_context()
+        qos_rules = self._qos_rules(admin_context, qos_policy_id)
+        for direction, rules in qos_rules.items():
+            # "delete=not rule": that means, when we don't have rules, we
+            # generate a "ovn_rule" to be used as input in a "qos_del" method.
+            ovn_rule = self._ovn_qos_rule(
+                direction, rules, gw_port_id, gw_network_id,
+                router_id=router_id, delete=not rules)
+            if rules:
+                # NOTE(ralonsoh): with "may_exist=True", the "qos_add" will
+                # create the QoS OVN rule or update the existing one.
+                txn.add(self.nb_idl.qos_add(**ovn_rule, may_exist=True))
+            else:
+                # Delete, if exists, the QoS rule in this direction.
+                txn.add(self.nb_idl.qos_del(**ovn_rule, if_exists=True))
+
+    def delete_router(self, txn, router):
+        self._delete_gateway_ip_qos_rules(txn, router['id'],
+                                          router['gw_network_id'])
+
     def update_policy(self, context, policy):
         updated_port_ids = set([])
         updated_fip_ids = set([])
@@ -399,3 +450,8 @@ class OVNClientQosExtension(object):
                 for fip in self._plugin_l3.get_floatingips(
                         context, filters={'id': fip_ids}):
                     self.update_floatingip(txn, fip)
+
+            for router_binding in policy.get_bound_routers():
+                router = self._plugin_l3.get_router(context,
+                                                    router_binding.router_id)
+                self.update_router(txn, router)

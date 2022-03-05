@@ -16,6 +16,7 @@ from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib.api.definitions import qos_fip as qos_fip_apidef
+from neutron_lib.api.definitions import qos_gateway_ip as qos_gateway_ip_apidef
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -40,6 +41,7 @@ from neutron.db import extraroute_db
 from neutron.db import l3_fip_pools_db
 from neutron.db import l3_fip_port_details
 from neutron.db import l3_fip_qos
+from neutron.db import l3_gateway_ip_qos
 from neutron.db import l3_gwmode_db
 from neutron.db.models import l3 as l3_models
 from neutron.db import ovn_revision_numbers_db as db_rev
@@ -62,6 +64,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                         l3_fip_port_details.Fip_port_details_db_mixin,
                         router_az_db.RouterAvailabilityZoneMixin,
                         l3_fip_qos.FloatingQoSDbMixin,
+                        l3_gateway_ip_qos.L3_gw_ip_qos_db_mixin,
                         l3_fip_pools_db.FloatingIPPoolsMixin,
                         ):
     """Implementation of the OVN L3 Router Service Plugin.
@@ -98,17 +101,20 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
             events.PRECOMMIT_CREATE)
 
     @staticmethod
-    def disable_qos_fip_extension_by_extension_drivers(aliases):
+    def _disable_qos_extensions_by_extension_drivers(aliases):
         qos_service_plugin = directory.get_plugin(plugin_constants.QOS)
-        qos_aliases = qos_fip_apidef.ALIAS in aliases
-        if not qos_service_plugin and qos_aliases:
+        qos_fip_in_aliases = qos_fip_apidef.ALIAS in aliases
+        qos_gwip_in_aliases = qos_gateway_ip_apidef.ALIAS in aliases
+        if not qos_service_plugin and qos_fip_in_aliases:
             aliases.remove(qos_fip_apidef.ALIAS)
+        if not qos_service_plugin and qos_gwip_in_aliases:
+            aliases.remove(qos_gateway_ip_apidef.ALIAS)
 
     @property
     def supported_extension_aliases(self):
         if not hasattr(self, '_aliases'):
             self._aliases = self._supported_extension_aliases[:]
-            self.disable_qos_fip_extension_by_extension_drivers(self._aliases)
+            self._disable_qos_extensions_by_extension_drivers(self._aliases)
         return self._aliases
 
     @property
