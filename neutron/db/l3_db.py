@@ -37,6 +37,7 @@ from neutron_lib.plugins import directory
 from neutron_lib.plugins import utils as plugin_utils
 from neutron_lib import rpc as n_rpc
 from neutron_lib.services import base as base_services
+from neutron_lib.services.qos import constants as qos_const
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 from sqlalchemy import orm
@@ -1413,6 +1414,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
             floating_fixed_ip = external_ipv4_ips[0]
             floating_ip_address = floating_fixed_ip['ip_address']
+            qos_policy_id = (fip.get(qos_const.QOS_POLICY_ID)
+                             if self._is_fip_qos_supported else None)
             floatingip_obj = l3_obj.FloatingIP(
                 context,
                 id=fip_id,
@@ -1421,7 +1424,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 floating_network_id=fip['floating_network_id'],
                 floating_ip_address=floating_ip_address,
                 floating_port_id=external_port['id'],
-                description=fip.get('description'))
+                description=fip.get('description'),
+                qos_policy_id=qos_policy_id)
             # Update association with internal port
             # and define external IP address
             assoc_result = self._update_fip_assoc(context, fip, floatingip_obj)
@@ -1431,8 +1435,6 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             if self._is_dns_integration_supported:
                 dns_data = self._process_dns_floatingip_create_precommit(
                     context, floatingip_dict, fip)
-            if self._is_fip_qos_supported:
-                self._process_extra_fip_qos_create(context, fip_id, fip)
 
             registry.publish(resources.FLOATING_IP,
                              events.PRECOMMIT_CREATE,
@@ -1490,17 +1492,15 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             old_floatingip = self._make_floatingip_dict(floatingip_obj)
             old_fixed_port_id = floatingip_obj.fixed_port_id
             assoc_result = self._update_fip_assoc(context, fip, floatingip_obj)
+            if self._is_fip_qos_supported:
+                floatingip_obj.qos_policy_id = fip.get(qos_const.QOS_POLICY_ID)
 
             floatingip_obj.update()
             floatingip_dict = self._make_floatingip_dict(floatingip_obj)
+
             if self._is_dns_integration_supported:
                 dns_data = self._process_dns_floatingip_update_precommit(
                     context, floatingip_dict)
-            if self._is_fip_qos_supported:
-                self._process_extra_fip_qos_update(context,
-                                                   floatingip_obj,
-                                                   fip,
-                                                   old_floatingip)
             floatingip_obj = l3_obj.FloatingIP.get_object(
                 context, id=floatingip_obj.id)
             floatingip_db = floatingip_obj.db_obj
