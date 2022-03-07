@@ -74,7 +74,7 @@ VNCSERVER_LISTEN=$HOST_IP
 VNCSERVER_PROXYCLIENT_ADDRESS=$VNCSERVER_LISTEN
 
 # Skydive
-#enable_plugin skydive https://github.com/redhat-cip/skydive.git
+#enable_plugin skydive https://github.com/skydive-project/skydive.git
 #enable_service skydive-agent
 
 # Provider Network
