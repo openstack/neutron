@@ -140,9 +140,9 @@ class IpamTestCase(testlib_api.SqlTestCase):
             self._create_port(self.port_id)
 
 
-class TestIpamMySql(testlib_api.MySQLTestCaseMixin, IpamTestCase):
+class TestIpamMySQL(testlib_api.MySQLTestCaseMixin, IpamTestCase):
     pass
 
 
-class TestIpamPsql(testlib_api.PostgreSQLTestCaseMixin, IpamTestCase):
+class TestIpamPostgreSQL(testlib_api.PostgreSQLTestCaseMixin, IpamTestCase):
     pass

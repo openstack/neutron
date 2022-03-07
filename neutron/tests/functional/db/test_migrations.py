@@ -340,7 +340,7 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
             msg='Offline contract migration scripts are forbidden for Ocata+')
 
 
-class TestModelsMigrationsMysql(testlib_api.MySQLTestCaseMixin,
+class TestModelsMigrationsMySQL(testlib_api.MySQLTestCaseMixin,
                                 _TestModelsMigrations,
                                 testlib_api.SqlTestCaseLight,
                                 functional_base.BaseLoggingTestCase):
@@ -364,12 +364,12 @@ class TestModelsMigrationsMysql(testlib_api.MySQLTestCaseMixin,
             self.assertEqual(0, len(res), "%s non InnoDB tables created" % res)
 
     def test_models_sync(self):
-        super(TestModelsMigrationsMysql, self).test_models_sync()
+        super(TestModelsMigrationsMySQL, self).test_models_sync()
 
 
-class TestModelsMigrationsPsql(testlib_api.PostgreSQLTestCaseMixin,
-                               _TestModelsMigrations,
-                               testlib_api.SqlTestCaseLight):
+class TestModelsMigrationsPostgreSQL(testlib_api.PostgreSQLTestCaseMixin,
+                                     _TestModelsMigrations,
+                                     testlib_api.SqlTestCaseLight):
     pass
 
 
@@ -575,7 +575,7 @@ class _TestWalkMigrations(object):
             migration.do_alembic_command(config, 'upgrade', dest)
 
 
-class TestWalkMigrationsMysql(testlib_api.MySQLTestCaseMixin,
+class TestWalkMigrationsMySQL(testlib_api.MySQLTestCaseMixin,
                               _TestWalkMigrations,
                               testlib_api.SqlTestCaseLight):
 
@@ -589,10 +589,10 @@ class TestWalkMigrationsMysql(testlib_api.MySQLTestCaseMixin,
     # timeout is required only when for testing with 'mysql' backend.
     @test_base.set_timeout(600)
     def test_walk_versions(self):
-        super(TestWalkMigrationsMysql, self).test_walk_versions()
+        super(TestWalkMigrationsMySQL, self).test_walk_versions()
 
 
-class TestWalkMigrationsPsql(testlib_api.PostgreSQLTestCaseMixin,
-                             _TestWalkMigrations,
-                             testlib_api.SqlTestCaseLight):
+class TestWalkMigrationsPostgreSQL(testlib_api.PostgreSQLTestCaseMixin,
+                                   _TestWalkMigrations,
+                                   testlib_api.SqlTestCaseLight):
     pass
