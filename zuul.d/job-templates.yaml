@@ -66,3 +66,10 @@
         - neutron-ovn-tripleo-ci-centos-8-containers-multinode:
             vars: *consumer_vars
             dependencies: *consumer_deps
+        - tripleo-ci-centos-9-content-provider
+        - neutron-centos-9-tripleo-standalone: &c9_consumer
+            voting: true
+            vars: *consumer_vars
+            dependencies:
+              - tripleo-ci-centos-9-content-provider
+        - neutron-ovn-tripleo-ci-centos-9-containers-multinode: *c9_consumer
