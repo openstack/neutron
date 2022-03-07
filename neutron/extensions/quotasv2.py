@@ -27,6 +27,7 @@ from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.api.v2 import resource
+from neutron import policy
 from neutron import quota
 from neutron.quota import resource_registry
 from neutron import wsgi
@@ -40,6 +41,14 @@ DB_QUOTA_DRIVER = 'neutron.db.quota.driver.DbQuotaDriver'
 EXTENDED_ATTRIBUTES_2_0 = {
     RESOURCE_COLLECTION: {}
 }
+
+
+def validate_policy(context, policy_name):
+    policy.init()
+    policy.enforce(context,
+                   policy_name,
+                   target={'project_id': context.project_id},
+                   plugin=None)
 
 
 class QuotaSetsController(wsgi.Controller):
@@ -70,12 +79,11 @@ class QuotaSetsController(wsgi.Controller):
             tenant_id)
 
     def default(self, request, id):
-        if id != request.context.tenant_id:
-            self._check_admin(request.context,
-                              reason=_("Only admin is authorized "
-                                       "to access quotas for another tenant"))
+        context = request.context
+        if id != context.tenant_id:
+            validate_policy(context, "get_quota")
         return {self._resource_name: self._driver.get_default_quotas(
-                   context=request.context,
+                   context=context,
                    resources=resource_registry.get_all_resources(),
                    tenant_id=id)}
 
@@ -85,7 +93,7 @@ class QuotaSetsController(wsgi.Controller):
 
     def index(self, request):
         context = request.context
-        self._check_admin(context)
+        validate_policy(context, "get_quota")
         return {self._resource_name + "s":
                 self._driver.get_all_quotas(
                     context, resource_registry.get_all_resources())}
@@ -99,22 +107,15 @@ class QuotaSetsController(wsgi.Controller):
 
     def show(self, request, id):
         if id != request.context.tenant_id:
-            self._check_admin(request.context,
-                              reason=_("Only admin is authorized "
-                                       "to access quotas for another tenant"))
+            validate_policy(request.context, "get_quota")
         return {self._resource_name: self._get_quotas(request, id)}
 
-    def _check_admin(self, context,
-                     reason=_("Only admin can view or configure quota")):
-        if not context.is_admin:
-            raise exceptions.AdminRequired(reason=reason)
-
     def delete(self, request, id):
-        self._check_admin(request.context)
+        validate_policy(request.context, "delete_quota")
         self._driver.delete_tenant_quota(request.context, id)
 
     def update(self, request, id, body=None):
-        self._check_admin(request.context)
+        validate_policy(request.context, "update_quota")
         if self._update_extended_attributes:
             self._update_attributes()
         body = base.Controller.prepare_request_body(
