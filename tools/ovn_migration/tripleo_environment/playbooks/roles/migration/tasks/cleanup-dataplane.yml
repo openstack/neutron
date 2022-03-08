@@ -1,7 +1,7 @@
 ---
 - name: Cleanup neutron router and dhcp interfaces
   shell: |
-    ovs-vsctl list interface | awk '/name[ ]*: qr-|ha-|qg-|rfp-/ { print $3 }' | xargs -n1 ovs-vsctl del-port
+    ovs-vsctl list interface | awk '/name[ ]*: qr-|ha-|qg-|rfp-|sg-|fg-/ { print $3 }' | xargs -n1 ovs-vsctl del-port
 
     # dhcp tap ports cannot be easily distinguished from ovsfw ports, so we
     # list them from within the qdhcp namespaces

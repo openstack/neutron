@@ -49,7 +49,7 @@ function recreate_bridge_mappings() {
 
 function copy_interfaces_to_br_migration() {
 
-    interfaces=$(ovs-vsctl list-ifaces br-int | egrep -v 'qr-|ha-|qg-|rfp-')
+    interfaces=$(ovs-vsctl list-ifaces br-int | egrep -v 'qr-|ha-|qg-|rfp-|sg-|fg-')
     for interface in $interfaces; do
         if [[ "$interface" == "br-int" ]]; then
         continue
