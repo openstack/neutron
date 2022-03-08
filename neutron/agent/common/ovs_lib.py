@@ -708,6 +708,17 @@ class OVSBridge(BaseOVS):
         LOG.info("Port %(port_id)s not present in bridge %(br_name)s",
                  {'port_id': port_id, 'br_name': self.br_name})
 
+    def get_bridge_patch_ports_ofports(self):
+        ports = self.ovsdb.db_find(
+            'Interface', ('type', '=', 'patch'),
+            columns=['name', 'ofport']).execute()
+        patch_ports = []
+        for port in ports:
+            if self.br_name != self.get_bridge_for_iface(port['name']):
+                continue
+            patch_ports.append(port['ofport'])
+        return patch_ports
+
     def delete_ports(self, all_ports=False):
         if all_ports:
             port_names = self.get_port_name_list()
@@ -783,6 +794,23 @@ class OVSBridge(BaseOVS):
                     'QoS', external_ids=external_ids, type='egress-policer',
                     other_config=other_config))
         return qos_uuid
+
+    def set_queue_for_ingress_bandwidth_limit(self):
+        # reg3 is used to memoize if queue was set or not. If it is first visit
+        # to table 0 for a packet (i.e. reg3 == 0), set queue and memoize (i.e.
+        # load 1 to reg3), then goto table 0 again. The packet will be handled
+        # as usual when the second visit to table 0.
+        # For min bw reg4 is used for the same purpose. In case if there we
+        # would need one of those registries for something else in the future
+        # we can try to use same reg4 for both OF rules, this one and the one
+        # which sets pkt_mark for minimum bandwidth and play with bitmask
+        self.add_flow(
+            table=constants.LOCAL_SWITCHING,
+            reg3=0,
+            priority=200,
+            actions=("set_queue:%s,load:1->NXM_NX_REG3[0],"
+                     "resubmit(,%s)" % (QOS_DEFAULT_QUEUE,
+                                        constants.LOCAL_SWITCHING)))
 
     def _update_ingress_bw_limit_for_port(
             self, port_name, max_kbps, max_burst_kbps):
@@ -910,7 +938,7 @@ class OVSBridge(BaseOVS):
         min_bps = queue['other_config'].get('min-rate')
         return int(int(min_bps) / 1000) if min_bps else None
 
-    def _set_queue_for_minimum_bandwidth(self, queue_num):
+    def _set_pkt_mark_for_minimum_bandwidth(self, queue_num):
         # reg4 is used to memoize if queue was set or not. If it is first visit
         # to table 0 for a packet (i.e. reg4 == 0), set queue and memoize (i.e.
         # load 1 to reg4), then goto table 0 again. The packet will be handled
@@ -920,10 +948,26 @@ class OVSBridge(BaseOVS):
             in_port=queue_num,
             reg4=0,
             priority=200,
-            actions=("set_queue:%s,load:1->NXM_NX_REG4[0],"
+            actions=("set_field:%s->pkt_mark,load:1->NXM_NX_REG4[0],"
                      "resubmit(,%s)" % (queue_num, constants.LOCAL_SWITCHING)))
 
-    def _unset_queue_for_minimum_bandwidth(self, queue_num):
+    def set_queue_for_minimum_bandwidth(self, queue_num):
+        # reg4 is used to memoize if queue was set or not. If it is first visit
+        # to table 0 for a packet (i.e. reg4 == 0), set queue and memoize (i.e.
+        # load 1 to reg4), then goto table 0 again. The packet will be handled
+        # as usual when the second visit to table 0.
+        patch_ports = self.get_bridge_patch_ports_ofports()
+        for patch_port in patch_ports:
+            self.add_flow(
+                table=0,
+                in_port=patch_port,
+                pkt_mark=queue_num,
+                reg4=0,
+                priority=200,
+                actions=("set_queue:%s,load:1->NXM_NX_REG4[0],"
+                         "resubmit(,0)" % queue_num))
+
+    def _unset_pkt_mark_for_minimum_bandwidth(self, queue_num):
         self.delete_flows(
             table=constants.LOCAL_SWITCHING,
             in_port=queue_num,
@@ -948,7 +992,7 @@ class OVSBridge(BaseOVS):
             qos_id=qos_id, queues=qos_queues)
         for egress_port_name in egress_port_names:
             self._set_port_qos(egress_port_name, qos_id=qos_id)
-        self._set_queue_for_minimum_bandwidth(queue_num)
+        self._set_pkt_mark_for_minimum_bandwidth(queue_num)
         return qos_id
 
     def delete_minimum_bandwidth_queue(self, port_id):
@@ -956,7 +1000,7 @@ class OVSBridge(BaseOVS):
         if not queue:
             return
         queue_num = int(queue['external_ids']['queue-num'])
-        self._unset_queue_for_minimum_bandwidth(queue_num)
+        self._unset_pkt_mark_for_minimum_bandwidth(queue_num)
         qos_id, qos_queues = self._find_qos(
             self._min_bw_qos_id,
             qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH)
@@ -964,10 +1008,15 @@ class OVSBridge(BaseOVS):
             return
         if queue_num in qos_queues.keys():
             qos_queues.pop(queue_num)
-            self._update_qos(
-                self._min_bw_qos_id,
-                qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH,
-                qos_id=qos_id, queues=qos_queues)
+            if qos_queues:
+                self._update_qos(
+                    self._min_bw_qos_id,
+                    qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH,
+                    qos_id=qos_id, queues=qos_queues)
+            self.ovsdb.db_clear('Port', port_id, 'qos').execute(
+                check_error=False)
+            if not qos_queues:
+                self._delete_qos(qos_id)
             self._delete_queue(
                 queue['_uuid'], qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH)
 
