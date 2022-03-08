@@ -17,6 +17,7 @@ from unittest import mock
 
 import pyroute2
 from pyroute2 import netlink
+from pyroute2.netlink import exceptions as netlink_exceptions
 from pyroute2.netlink.rtnl import ifinfmsg
 
 from neutron.privileged.agent.linux import ip_lib as priv_lib
@@ -254,7 +255,8 @@ class IpLibTestCase(base.BaseTestCase):
         priv_lib.privileged.link_cmd.client_mode = False
         self.addCleanup(self._clean, client_mode)
         with mock.patch.object(priv_lib, '_run_iproute_link') as mock_iplink:
-            mock_iplink.return_value = [value]
+            mock_iplink.side_effect = [
+                netlink_exceptions.NetlinkDumpInterrupted(), value]
             result = priv_lib.get_link_vfs('device', 'namespace')
             exp = {0: {'mac': 'mac_0', 'link_state': 0,
                        'max_tx_rate': 0, 'min_tx_rate': 0},
@@ -263,6 +265,11 @@ class IpLibTestCase(base.BaseTestCase):
                    2: {'mac': 'mac_2', 'link_state': 2,
                        'max_tx_rate': 2000, 'min_tx_rate': 1000}}
             self.assertEqual(exp, result)
+            # Check that _run_iproute_link was called twice
+            mock_iplink.assert_has_calls(
+                [mock.call('get', 'device', namespace='namespace', ext_mask=1),
+                 mock.call('get', 'device', namespace='namespace', ext_mask=1)]
+            )
 
 
 class MakeSerializableTestCase(base.BaseTestCase):
