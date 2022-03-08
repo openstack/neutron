@@ -1443,17 +1443,19 @@ class OVNClient(object):
             'device_owner')
         if is_gw_port and ovn_conf.is_ovn_emit_need_to_frag_enabled():
             try:
-                network_ids = set([port['network_id'] for port in
-                    self._get_router_ports(admin_context, port['device_id'])])
+                router_ports = self._get_router_ports(admin_context,
+                                                      port['device_id'])
+            except l3_exc.RouterNotFound:
+                # Don't add any mtu info if the router no longer exists
+                LOG.debug("Router %s not found", port['device_id'])
+            else:
+                network_ids = {port['network_id'] for port in router_ports}
                 for net in self._plugin.get_networks(admin_context,
                                             filters={'id': network_ids}):
                     if net['mtu'] > network['mtu']:
                         options[ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION] = str(
                                 network['mtu'])
                         break
-            except l3_exc.RouterNotFound:
-                # Don't add any mtu info if the router no longer exists
-                pass
         return options
 
     def _create_lrouter_port(self, context, router, port, txn=None):
