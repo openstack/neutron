@@ -49,7 +49,7 @@ ovs>=2.10.0 # Apache-2.0
 ovsdbapp>=1.12.1 # Apache-2.0
 packaging>=20.4  # Apache-2.0
 psutil>=5.3.0 # BSD
-pyroute2>=0.6.4;sys_platform!='win32' # Apache-2.0 (+ dual licensed GPL2)
+pyroute2>=0.6.6;sys_platform!='win32' # Apache-2.0 (+ dual licensed GPL2)
 pyOpenSSL>=17.1.0 # Apache-2.0
 
 python-novaclient>=9.1.0 # Apache-2.0
