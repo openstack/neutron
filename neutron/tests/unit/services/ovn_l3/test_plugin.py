@@ -1606,7 +1606,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 'network_id': 'priv-net'}
         ari.return_value = self.fake_router_interface_info
         # If we remove the router halfway the return value of
-        # _get_routers_ports will be []
+        # _get_routers_ports will be RouterNotFound
         grps.side_effect = l3_exc.RouterNotFound(router_id=router_id)
         self.get_router.return_value = self.fake_router_with_ext_gw
         network_attrs = {'id': 'prov-net', 'mtu': 1200}
