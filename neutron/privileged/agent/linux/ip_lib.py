@@ -24,6 +24,7 @@ from pyroute2.netlink import rtnl  # pylint: disable=no-name-in-module
 from pyroute2.netlink.rtnl import ifinfmsg  # pylint: disable=no-name-in-module
 from pyroute2.netlink.rtnl import ndmsg  # pylint: disable=no-name-in-module
 from pyroute2 import netns  # pylint: disable=no-name-in-module
+import tenacity
 
 from neutron._i18n import _
 from neutron import privileged
@@ -419,6 +420,12 @@ def set_link_bridge_master(device, bridge, namespace=None):
                              master=bridge_idx)
 
 
+@tenacity.retry(
+    retry=tenacity.retry_if_exception_type(
+        netlink_exceptions.NetlinkDumpInterrupted),
+    wait=tenacity.wait_exponential(multiplier=0.02, max=1),
+    stop=tenacity.stop_after_delay(8),
+    reraise=True)
 @privileged.default.entrypoint
 def get_link_attributes(device, namespace):
     link = _run_iproute_link("get", device, namespace)[0]
@@ -435,6 +442,12 @@ def get_link_attributes(device, namespace):
     }
 
 
+@tenacity.retry(
+    retry=tenacity.retry_if_exception_type(
+        netlink_exceptions.NetlinkDumpInterrupted),
+    wait=tenacity.wait_exponential(multiplier=0.02, max=1),
+    stop=tenacity.stop_after_delay(8),
+    reraise=True)
 @privileged.default.entrypoint
 def get_link_vfs(device, namespace):
     link = _run_iproute_link('get', device, namespace=namespace, ext_mask=1)[0]
@@ -506,6 +519,12 @@ def delete_neigh_entry(ip_version, ip_address, mac_address, device, namespace,
         raise
 
 
+@tenacity.retry(
+    retry=tenacity.retry_if_exception_type(
+        netlink_exceptions.NetlinkDumpInterrupted),
+    wait=tenacity.wait_exponential(multiplier=0.02, max=1),
+    stop=tenacity.stop_after_delay(8),
+    reraise=True)
 @privileged.default.entrypoint
 def dump_neigh_entries(ip_version, device, namespace, **kwargs):
     """Dump all neighbour entries.
@@ -602,6 +621,12 @@ def make_serializable(value):
     return _ensure_string(value)
 
 
+@tenacity.retry(
+    retry=tenacity.retry_if_exception_type(
+        netlink_exceptions.NetlinkDumpInterrupted),
+    wait=tenacity.wait_exponential(multiplier=0.02, max=1),
+    stop=tenacity.stop_after_delay(8),
+    reraise=True)
 @privileged.default.entrypoint
 def get_link_devices(namespace, **kwargs):
     """List interfaces in a namespace
@@ -632,6 +657,12 @@ def get_device_names(namespace, **kwargs):
     return device_names
 
 
+@tenacity.retry(
+    retry=tenacity.retry_if_exception_type(
+        netlink_exceptions.NetlinkDumpInterrupted),
+    wait=tenacity.wait_exponential(multiplier=0.02, max=1),
+    stop=tenacity.stop_after_delay(8),
+    reraise=True)
 @privileged.default.entrypoint
 def get_ip_addresses(namespace, **kwargs):
     """List of IP addresses in a namespace
@@ -647,6 +678,12 @@ def get_ip_addresses(namespace, **kwargs):
         raise
 
 
+@tenacity.retry(
+    retry=tenacity.retry_if_exception_type(
+        netlink_exceptions.NetlinkDumpInterrupted),
+    wait=tenacity.wait_exponential(multiplier=0.02, max=1),
+    stop=tenacity.stop_after_delay(8),
+    reraise=True)
 @privileged.default.entrypoint
 def list_ip_rules(namespace, ip_version, match=None, **kwargs):
     """List all IP rules"""
@@ -747,6 +784,12 @@ def add_ip_route(namespace, cidr, ip_version, device=None, via=None,
         raise
 
 
+@tenacity.retry(
+    retry=tenacity.retry_if_exception_type(
+        netlink_exceptions.NetlinkDumpInterrupted),
+    wait=tenacity.wait_exponential(multiplier=0.02, max=1),
+    stop=tenacity.stop_after_delay(8),
+    reraise=True)
 @privileged.default.entrypoint
 def list_ip_routes(namespace, ip_version, device=None, table=None, **kwargs):
     """List IP routes"""
@@ -776,6 +819,12 @@ def delete_ip_route(namespace, cidr, ip_version, device=None, via=None,
         raise
 
 
+@tenacity.retry(
+    retry=tenacity.retry_if_exception_type(
+        netlink_exceptions.NetlinkDumpInterrupted),
+    wait=tenacity.wait_exponential(multiplier=0.02, max=1),
+    stop=tenacity.stop_after_delay(8),
+    reraise=True)
 @privileged.default.entrypoint
 def list_bridge_fdb(namespace=None, **kwargs):
     """List bridge fdb table"""
