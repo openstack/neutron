@@ -406,6 +406,7 @@ class SetLRouterPortInLSwitchPortCommand(command.BaseCommand):
         options = {'router-port': self.lrouter_port}
         if self.is_gw_port:
             options[ovn_const.OVN_GATEWAY_NAT_ADDRESSES_KEY] = 'router'
+            options[ovn_const.OVN_ROUTER_PORT_EXCLUDE_LB_VIPS_GARP] = 'true'
         setattr(port, 'options', options)
         setattr(port, 'type', 'router')
         setattr(port, 'addresses', self.lsp_address)
