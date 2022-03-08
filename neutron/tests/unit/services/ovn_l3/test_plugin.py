@@ -1454,6 +1454,10 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         mock_get_port.return_value = [{
             'id': fake_port_id,
             'status': constants.PORT_STATUS_DOWN}]
+        mock_updt_port.return_value = {
+            'id': fake_port_id,
+            'status': constants.PORT_STATUS_DOWN
+        }
         self.l3_inst.update_router_gateway_port_bindings(
             fake_router, fake_host)
 
