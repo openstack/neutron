@@ -50,10 +50,12 @@ OVN_PORT_BINDING_PROFILE_PARAMS = [{'parent_name': str,
                                    {'vtep-physical-switch': str,
                                     'vtep-logical-switch': str}]
 MIGRATING_ATTR = 'migrating_to'
-OVN_ROUTER_PORT_OPTION_KEYS = ['router-port', 'nat-addresses']
+OVN_ROUTER_PORT_OPTION_KEYS = ['router-port', 'nat-addresses',
+                               'exclude-lb-vips-from-garp']
 OVN_GATEWAY_CHASSIS_KEY = 'redirect-chassis'
 OVN_CHASSIS_REDIRECT = 'chassisredirect'
 OVN_GATEWAY_NAT_ADDRESSES_KEY = 'nat-addresses'
+OVN_ROUTER_PORT_EXCLUDE_LB_VIPS_GARP = 'exclude-lb-vips-from-garp'
 OVN_DROP_PORT_GROUP_NAME = 'neutron_pg_drop'
 OVN_ROUTER_PORT_GW_MTU_OPTION = 'gateway_mtu'
 
