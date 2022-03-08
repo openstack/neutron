@@ -677,7 +677,9 @@ class TestSetLRouterPortInLSwitchPortCommand(TestBaseCommand):
                 self.ovn_api, fake_lsp.name, lrp_name, True, True, 'router')
             cmd.run_idl(self.transaction)
             self.assertEqual({'router-port': lrp_name,
-                             'nat-addresses': 'router'}, fake_lsp.options)
+                              'nat-addresses': 'router',
+                              'exclude-lb-vips-from-garp': 'true'},
+                             fake_lsp.options)
             self.assertEqual('router', fake_lsp.type)
             self.assertEqual('router', fake_lsp.addresses)
 
