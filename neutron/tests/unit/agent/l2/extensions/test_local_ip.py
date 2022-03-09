@@ -321,7 +321,7 @@ class LocalIPAgentExtensionTestCase(base.BaseTestCase):
 
         self.assertEqual(3, ofpp_mock.NXActionLearn.call_count)
         ofpp_mock.NXActionLearn.assert_called_with(
-            table_id=ovs_constants.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE,
+            table_id=ovs_constants.LOCAL_IP_TABLE,
             cookie=mock.ANY, priority=20, idle_timeout=30,
             hard_timeout=300, specs=mock.ANY)
 
