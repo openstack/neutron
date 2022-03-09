@@ -33,6 +33,8 @@ IP_LINK_CAPABILITY_STATE = 'state'
 IP_LINK_CAPABILITY_VLAN = 'vlan'
 IP_LINK_CAPABILITY_RATE = 'max_tx_rate'
 IP_LINK_CAPABILITY_MIN_TX_RATE = 'min_tx_rate'
+IP_LINK_CAPABILITY_RATES = (IP_LINK_CAPABILITY_RATE,
+                            IP_LINK_CAPABILITY_MIN_TX_RATE)
 IP_LINK_CAPABILITY_SPOOFCHK = 'spoofchk'
 IP_LINK_SUB_CAPABILITY_QOS = 'qos'
 
@@ -172,6 +174,9 @@ class EmbSwitch(object):
             if pci_slot not in exclude_devices:
                 self.pci_slot_map[pci_slot] = vf_index
 
+    def _get_vfs(self):
+        return self.pci_dev_wrapper.device(self.dev_name).link.get_vfs()
+
     def get_pci_slot_list(self):
         """Get list of VF addresses."""
         return self.pci_slot_map.keys()
@@ -208,40 +213,45 @@ class EmbSwitch(object):
         return self.pci_dev_wrapper.set_vf_state(vf_index, state,
                                                  auto=propagate_uplink_state)
 
-    def set_device_rate(self, pci_slot, rate_type, rate_kbps):
+    def set_device_rate(self, pci_slot, rates):
         """Set device rate: max_tx_rate, min_tx_rate
 
         @param pci_slot: Virtual Function address
-        @param rate_type: device rate name type. Could be 'max_tx_rate' and
-                          'min_tx_rate' ('rate' is not supported anymore).
-        @param rate_kbps: device rate in kbps
+        @param rates: dictionary with rate type (str) and the value (int)
+                      in Kbps. Example:
+                        {'max_tx_rate': 20000, 'min_tx_rate': 10000}
+                        {'max_tx_rate': 30000}
+                        {'min_tx_rate': 5000}
+
         """
         vf_index = self._get_vf_index(pci_slot)
         # NOTE(ralonsoh): ip link sets rate in Mbps therefore we need to
         # convert the rate_kbps value from kbps to Mbps.
         # Zero means to disable the rate so the lowest rate available is 1Mbps.
         # Floating numbers are not allowed
-        if 0 < rate_kbps < 1000:
-            rate_mbps = 1
-        else:
-            rate_mbps = helpers.round_val(rate_kbps / 1000.0)
+        rates_mbps = {}
+        for rate_type, rate_kbps in rates.items():
+            if 0 < rate_kbps < 1000:
+                rate_mbps = 1
+            else:
+                rate_mbps = helpers.round_val(rate_kbps / 1000.0)
 
-        log_dict = {
-            'rate_mbps': rate_mbps,
-            'rate_kbps': rate_kbps,
-            'vf_index': vf_index,
-            'rate_type': rate_type
-        }
-        if rate_kbps % 1000 != 0:
-            LOG.debug("'%(rate_type)s' for SR-IOV ports is counted in Mbps; "
-                      "setting %(rate_mbps)s Mbps limit for port %(vf_index)s "
-                      "instead of %(rate_kbps)s kbps",
-                      log_dict)
-        else:
-            LOG.debug("Setting %(rate_mbps)s Mbps limit for port %(vf_index)s",
-                      log_dict)
+            rates_mbps[rate_type] = rate_mbps
 
-        return self.pci_dev_wrapper.set_vf_rate(vf_index, rate_type, rate_mbps)
+        missing_rate_types = set(IP_LINK_CAPABILITY_RATES) - rates.keys()
+        if missing_rate_types:
+            # A key is missing. As explained in LP#1962844, in order not to
+            # delete an existing rate ('max_tx_rate', 'min_tx_rate'), it is
+            # needed to read the current VF rates and set the same value again.
+            vf = self._get_vfs()[int(vf_index)]
+            # Devices without 'min_tx_rate' support will return None in this
+            # value. If current value is 0, there is no need to set it again.
+            for _type in (_type for _type in missing_rate_types if vf[_type]):
+                rates_mbps[_type] = vf[_type]
+
+        LOG.debug('Setting %s limits (in Mbps) for port VF %s',
+                  rates_mbps, vf_index)
+        return self.pci_dev_wrapper.set_vf_rate(vf_index, rates_mbps)
 
     def _get_vf_index(self, pci_slot):
         vf_index = self.pci_slot_map.get(pci_slot)
