@@ -63,7 +63,7 @@ class SegmentTestExtensionManager(object):
 
     def get_resources(self):
         ext_segment.Segment().update_attributes_map(
-            {ext_segment.SEGMENTS: ext_stddesc.DESCRIPTION_BODY})
+            {seg_apidef.COLLECTION_NAME: ext_stddesc.DESCRIPTION_BODY})
         return ext_segment.Segment.get_resources()
 
     def get_actions(self):
@@ -1865,7 +1865,7 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
         # Need notifier here
         self.patch_notifier.stop()
         self._mock_keystone_auth()
-        self.segments_plugin = directory.get_plugin(ext_segment.SEGMENTS)
+        self.segments_plugin = directory.get_plugin(seg_apidef.COLLECTION_NAME)
 
         nova_updater = self.segments_plugin.nova_updater
         nova_updater.p_client = mock.MagicMock()
