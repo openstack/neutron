@@ -92,12 +92,12 @@ class TestPciLib(base.BaseTestCase):
         self.mock_ip_device.link.set_vf_feature.assert_called_once_with(vf)
 
     def test_set_vf_rate(self):
-        self.pci_wrapper.set_vf_rate(self.VF_INDEX, 'max_tx_rate', 20)
+        self.pci_wrapper.set_vf_rate(self.VF_INDEX, {'max_tx_rate': 20})
         vf = {'vf': self.VF_INDEX, 'rate': {'max_tx_rate': 20}}
         self.mock_ip_device.link.set_vf_feature.assert_called_once_with(vf)
 
         self.mock_ip_device.link.set_vf_feature.reset_mock()
-        self.pci_wrapper.set_vf_rate(self.VF_INDEX, 'min_tx_rate', 10)
+        self.pci_wrapper.set_vf_rate(self.VF_INDEX, {'min_tx_rate': 10})
         vf = {'vf': self.VF_INDEX, 'rate': {'min_tx_rate': 10}}
         self.mock_ip_device.link.set_vf_feature.assert_called_once_with(vf)
 
@@ -105,8 +105,9 @@ class TestPciLib(base.BaseTestCase):
     def test_set_vf_rate_exception(self, mock_log):
         self.mock_ip_device.link.set_vf_feature.side_effect = (
             ip_lib.InvalidArgument)
-        self.pci_wrapper.set_vf_rate(self.VF_INDEX, 'min_tx_rate', 10)
+        self.pci_wrapper.set_vf_rate(self.VF_INDEX, {'min_tx_rate': 10})
         mock_log.error.assert_called_once_with(
-            'Device %(device)s does not support ip-link vf "%(rate_type)s" '
-            'parameter.', {'device': self.DEV_NAME, 'rate_type': 'min_tx_rate'}
+            'Device %(device)s does not support ip-link vf "min_tx_rate" '
+            'parameter. Rates: %(rates)s',
+            {'device': self.DEV_NAME, 'rates': {'min_tx_rate': 10}}
         )
