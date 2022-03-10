@@ -316,3 +316,31 @@
             PHYSICAL_NETWORK: public
             ENABLE_CHASSIS_AS_GW: false
             OVN_DBS_LOG_LEVEL: dbg
+
+- job:
+    name: neutron-ovs-grenade-multinode-tick-tick
+    parent: neutron-ovs-grenade-multinode
+    description: |
+      Grenade job that skips a release, validating that deployers can skip
+      specific releases as prescribed by our process.
+    vars:
+      # Move this forward when master changes to a new skip-level-allowed
+      # target release. Right now, this is wallaby because master is yoga.
+      # When master is A, this should become yoga, and so forth.
+      grenade_from_branch: stable/wallaby
+      grenade_localrc:
+        NOVA_ENABLE_UPGRADE_WORKAROUND: True
+
+- job:
+    name: neutron-ovn-grenade-multinode-tick-tick
+    parent: neutron-ovn-grenade-multinode
+    description: |
+      Grenade job that skips a release, validating that deployers can skip
+      specific releases as prescribed by our process.
+    vars:
+      # Move this forward when master changes to a new skip-level-allowed
+      # target release. Right now, this is wallaby because master is yoga.
+      # When master is A, this should become yoga, and so forth.
+      grenade_from_branch: stable/wallaby
+      grenade_localrc:
+        NOVA_ENABLE_UPGRADE_WORKAROUND: True
