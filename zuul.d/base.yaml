@@ -112,8 +112,8 @@
     nodeset: devstack-single-node-centos-8-stream
     description: |
       Functional testing for a FIPS enabled Centos 8 system
-    pre-run: playbooks/enable-fips.yaml
     vars:
+      enable_fips: True
       configure_swap_size: 4096
       devstack_localrc:
         ISCSI_CHAP_ALGORITHMS: SHA3-256,SHA256
@@ -125,8 +125,8 @@
     nodeset: devstack-single-node-centos-8-stream
     description: |
       Functional testing for a FIPS enabled Centos 8 system
-    pre-run: playbooks/enable-fips.yaml
     vars:
+      enable_fips: True
       configure_swap_size: 4096
       devstack_localrc:
         ISCSI_CHAP_ALGORITHMS: SHA3-256,SHA256
