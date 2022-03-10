@@ -1,7 +1,7 @@
 # This file contains runtime (non-python) dependencies
 # More info at: http://docs.openstack.org/infra/bindep/readme.html
 
-python36-devel [platform:rpm]
+python3-devel [platform:rpm]
 
 # tools/misc-sanity-checks.sh validates .po[t] files
 gettext [test]
