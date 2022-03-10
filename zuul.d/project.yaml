@@ -7,8 +7,8 @@
       - neutron-tempest-plugin-jobs
       - openstack-cover-jobs
       - openstack-lower-constraints-jobs
-      - openstack-python3-yoga-jobs
-      - openstack-python3-yoga-jobs-arm64
+      - openstack-python3-zed-jobs
+      - openstack-python3-zed-jobs-arm64
       - publish-openstack-docs-pti
       - periodic-stable-jobs
       - check-requirements
