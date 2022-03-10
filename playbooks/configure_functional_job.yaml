@@ -5,4 +5,10 @@
     # destination IP addresses in arp tables:
     - legacy_ebtables
     - setup_logdir
+    - role: persistent-firewall
+      when: enable_fips is defined and enable_fips|bool
+    - role: enable-fips
+      when: enable_fips is defined and enable_fips|bool
+    - role: disable_selinux
+      when: enable_fips is defined and enable_fips|bool
     - configure_functional_tests
