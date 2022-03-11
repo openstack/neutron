@@ -53,14 +53,49 @@
     name: neutron-experimental-jobs
     experimental:
       jobs:
+        - neutron-functional
+        - neutron-functional-with-uwsgi-fips
+        - neutron-functional-with-uwsgi-with-neutron-lib-master
+        - neutron-fullstack
+        - neutron-fullstack-with-uwsgi-fips
+        - neutron-fullstack-with-uwsgi-with-neutron-lib-master
         - neutron-ovn-grenade-multinode
         - neutron-ovn-tempest-with-uwsgi-loki
         - neutron-ovn-tempest-full-multinode-ovs-master
         - neutron-ovn-tempest-ovs-master
         - neutron-ovn-tempest-with-neutron-lib-master
         - neutron-ovs-tempest-with-neutron-lib-master
-        - neutron-fullstack-with-uwsgi-with-neutron-lib-master
-        - neutron-functional-with-uwsgi-with-neutron-lib-master
+        - neutron-ovs-tempest-slow
+        - neutron-ovn-tempest-slow
+        - neutron-ovs-tempest-with-os-ken-master
+        - neutron-ovn-tempest-postgres-full
+        - neutron-ovn-tempest-mariadb-full
+        - neutron-ovn-tempest-ovs-release
+        - neutron-ovn-tempest-ovs-release-ipv6-only
+        - neutron-ovn-tempest-ovs-master-fedora
+        - neutron-ovn-tempest-with-neutron-lib-master
+        - neutron-ovs-tempest-fips
+        - neutron-ovn-tempest-ovs-release-fips
+        - devstack-tobiko-neutron:
+            voting: true
+        - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa
+        - openstacksdk-functional-devstack-networking
+        - tripleo-ci-centos-9-content-provider
+        - neutron-centos-9-tripleo-standalone:
+            voting: true
+            vars: &consumer_vars
+              consumer_job: true
+              build_container_images: false
+              remove_tags:
+                - build
+            dependencies: &consumer_deps
+              - tripleo-ci-centos-9-content-provider
+        - neutron-ovn-tripleo-ci-centos-9-containers-multinode:
+            vars: *consumer_vars
+            dependencies: *consumer_deps
+        - neutron-linuxbridge-tempest-plugin-scenario-nftables
+        - neutron-ovs-tempest-plugin-scenario-iptables_hybrid-nftables
+        - devstack-enforce-scope
 
 - project-template:
     name: neutron-periodic-jobs
@@ -88,13 +123,8 @@
         - tripleo-ci-centos-9-content-provider
         - neutron-centos-9-tripleo-standalone:
             voting: true
-            vars: &consumer_vars
-              consumer_job: true
-              build_container_images: false
-              remove_tags:
-                - build
-            dependencies: &consumer_deps
-              - tripleo-ci-centos-9-content-provider
+            vars: *consumer_vars
+            dependencies: *consumer_deps
         - neutron-ovn-tripleo-ci-centos-9-containers-multinode:
             vars: *consumer_vars
             dependencies: *consumer_deps
