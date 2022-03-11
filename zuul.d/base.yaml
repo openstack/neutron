@@ -23,8 +23,14 @@
       - ^tools/.*$
       - ^vagrant/.*$
       - ^devstack/.*\.sample$
-      - ^playbooks/.*$
-      - ^roles/.*$
+      - ^playbooks/add_mariadb_repo.yaml
+      - ^playbooks/configure_ebtables.yaml
+      - ^playbooks/dvr-multinode-scenario-pre-run.yaml
+      - ^playbooks/install_nftables.yaml
+      - ^playbooks/multinode-setup.yaml
+      - ^playbooks/prepare-ovn-multinode.yaml
+      - ^roles/add_mariadb_repo/.*$
+      - ^roles/nftables/.*$
       - ^rally-jobs/.*$
       - ^zuul.d/(?!(project)).*\.yaml
     vars:
@@ -75,8 +81,14 @@
       - ^neutron_lib/tests/unit/.*$
       - ^vagrant/.*$
       - ^devstack/.*\.sample$
-      - ^playbooks/.*$
-      - ^roles/.*$
+      - ^playbooks/add_mariadb_repo.yaml
+      - ^playbooks/configure_ebtables.yaml
+      - ^playbooks/dvr-multinode-scenario-pre-run.yaml
+      - ^playbooks/install_nftables.yaml
+      - ^playbooks/multinode-setup.yaml
+      - ^playbooks/prepare-ovn-multinode.yaml
+      - ^roles/add_mariadb_repo/.*$
+      - ^roles/nftables/.*$
       - ^rally-jobs/.*$
       - ^zuul.d/(?!(project)).*\.yaml
 
