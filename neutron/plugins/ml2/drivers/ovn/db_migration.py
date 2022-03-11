@@ -16,6 +16,7 @@ from neutron_lib.api.definitions import portbindings as pb_api
 from neutron_lib import context as n_context
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions
+from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from sqlalchemy.orm import exc as sqla_exc
 
@@ -88,7 +89,9 @@ def migrate_neutron_database_to_ovn(plugin):
                 pb.vif_details = vif_details
                 try:
                     pb.update()
-                except (exceptions.ObjectNotFound, sqla_exc.StaleDataError):
+                except (exceptions.ObjectNotFound,
+                        sqla_exc.StaleDataError,
+                        db_exc.DBDeadlock):
                     # The PortBinding register has been already modified.
                     pb_missed.add(port_id)
 
