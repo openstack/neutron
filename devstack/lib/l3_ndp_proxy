@@ -1,0 +1,4 @@
+function configure_l3_ndp_proxy {
+    neutron_service_plugin_class_add "ndp_proxy"
+    plugin_agent_add_l3_agent_extension "ndp_proxy"
+}
