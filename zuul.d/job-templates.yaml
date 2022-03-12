@@ -2,7 +2,7 @@
     name: neutron-tox-override-jobs
     check:
       jobs:
-        - openstack-tox-py36:  # from openstack-python3-yoga-jobs template
+        - openstack-tox-py36:  # from openstack-python3-zed-jobs template
             timeout: 3600
             irrelevant-files:  &irrelevant-files
               - ^.*\.conf\.sample$
@@ -20,7 +20,7 @@
               - ^roles/.*$
               - ^rally-jobs/.*$
               - ^zuul.d/(?!(job-templates)).*\.yaml
-        - openstack-tox-py39: # from openstack-python3-yoga-jobs template
+        - openstack-tox-py39: # from openstack-python3-zed-jobs template
             timeout: 3600
             irrelevant-files:  *irrelevant-files
         - openstack-tox-lower-constraints:  # from openstack-tox-lower-constraints template
@@ -31,18 +31,18 @@
             irrelevant-files:  *irrelevant-files
     check-arm64:
       jobs:
-        - openstack-tox-py38-arm64: # from openstack-python3-yoga-jobs-arm64 template
+        - openstack-tox-py38-arm64: # from openstack-python3-zed-jobs-arm64 template
             timeout: 4800
             irrelevant-files:  *irrelevant-files
-        - openstack-tox-py39-arm64: # from openstack-python3-yoga-jobs-arm64 template
+        - openstack-tox-py39-arm64: # from openstack-python3-zed-jobs-arm64 template
             timeout: 4800
             irrelevant-files:  *irrelevant-files
     gate:
       jobs:
-        - openstack-tox-py36:  # from openstack-python3-yoga-jobs template
+        - openstack-tox-py36:  # from openstack-python3-zed-jobs template
             timeout: 3600
             irrelevant-files:  *irrelevant-files
-        - openstack-tox-py39: # from openstack-python3-yoga-jobs template
+        - openstack-tox-py39: # from openstack-python3-zed-jobs template
             timeout: 3600
             irrelevant-files:  *irrelevant-files
         - openstack-tox-lower-constraints:  # from openstack-tox-lower-constraints template
