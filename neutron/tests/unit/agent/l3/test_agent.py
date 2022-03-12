@@ -151,6 +151,10 @@ class BasicRouterOperationsFramework(base.BaseTestCase):
         ip_dev = mock.patch('neutron.agent.linux.ip_lib.IPDevice').start()
         self.mock_ip_dev = mock.MagicMock()
         ip_dev.return_value = self.mock_ip_dev
+        self.lladdr = "fe80::f816:3eff:fe5f:9d67"
+        get_ipv6_lladdr = mock.patch("neutron.agent.linux.ip_lib."
+                                     "get_ipv6_lladdr").start()
+        get_ipv6_lladdr.return_value = "%s/64" % self.lladdr
 
         self.l3pluginApi_cls_p = mock.patch(
             'neutron.agent.l3.agent.L3PluginApi')

@@ -89,6 +89,14 @@ class FipNamespace(namespaces.Namespace):
     def get_rtr_ext_device_name(self, router_id):
         return (ROUTER_2_FIP_DEV_PREFIX + router_id)[:self.driver.DEV_NAME_LEN]
 
+    def get_fip_2_rtr_device(self, ri):
+        fip_2_rtr_name = self.get_int_device_name(ri.router_id)
+        return ip_lib.IPDevice(fip_2_rtr_name, ri.fip_ns.name)
+
+    def get_rtr_2_fip_device(self, ri):
+        rtr_2_fip_name = self.get_rtr_ext_device_name(ri.router_id)
+        return ip_lib.IPDevice(rtr_2_fip_name, ri.ns_name)
+
     def has_subscribers(self):
         return len(self._subscribers) != 0
 
@@ -410,22 +418,19 @@ class FipNamespace(namespaces.Namespace):
     def create_rtr_2_fip_link(self, ri):
         """Create interface between router and Floating IP namespace."""
         LOG.debug("Create FIP link interfaces for router %s", ri.router_id)
-        rtr_2_fip_name = self.get_rtr_ext_device_name(ri.router_id)
-        fip_2_rtr_name = self.get_int_device_name(ri.router_id)
         fip_ns_name = self.get_name()
 
         # add link local IP to interface
         if ri.rtr_fip_subnet is None:
             ri.rtr_fip_subnet = self.local_subnets.allocate(ri.router_id)
         rtr_2_fip, fip_2_rtr = ri.rtr_fip_subnet.get_pair()
-        rtr_2_fip_dev = ip_lib.IPDevice(rtr_2_fip_name, namespace=ri.ns_name)
-        fip_2_rtr_dev = ip_lib.IPDevice(fip_2_rtr_name, namespace=fip_ns_name)
+        rtr_2_fip_dev = self.get_rtr_2_fip_device(ri)
+        fip_2_rtr_dev = self.get_fip_2_rtr_device(ri)
 
         if not rtr_2_fip_dev.exists():
             ip_wrapper = ip_lib.IPWrapper(namespace=ri.ns_name)
-            rtr_2_fip_dev, fip_2_rtr_dev = ip_wrapper.add_veth(rtr_2_fip_name,
-                                                               fip_2_rtr_name,
-                                                               fip_ns_name)
+            rtr_2_fip_dev, fip_2_rtr_dev = ip_wrapper.add_veth(
+                rtr_2_fip_dev.name, fip_2_rtr_dev.name, fip_ns_name)
             rtr_2_fip_dev.link.set_up()
             fip_2_rtr_dev.link.set_up()
 
@@ -444,10 +449,13 @@ class FipNamespace(namespaces.Namespace):
                                 rtr_2_fip_dev.link.address)
 
         self._add_rtr_ext_route_rule_to_route_table(ri, fip_2_rtr,
-                                                    fip_2_rtr_name)
+                                                    fip_2_rtr_dev.name)
 
         # add default route for the link local interface
         rtr_2_fip_dev.route.add_gateway(str(fip_2_rtr.ip), table=FIP_RT_TBL)
+        v6_gateway = common_utils.cidr_to_ip(
+                ip_lib.get_ipv6_lladdr(fip_2_rtr_dev.link.address))
+        rtr_2_fip_dev.route.add_gateway(v6_gateway)
 
     def scan_fip_ports(self, ri):
         # scan system for any existing fip ports

@@ -43,6 +43,10 @@ class TestDvrFipNs(base.BaseTestCase):
                                               self.conf,
                                               self.driver,
                                               use_ipv6=True)
+        self.lladdr = "fe80::f816:3eff:fe5f:9d67"
+        get_ipv6_lladdr = mock.patch("neutron.agent.linux.ip_lib."
+                                     "get_ipv6_lladdr").start()
+        get_ipv6_lladdr.return_value = "%s/64" % self.lladdr
 
     def test_subscribe(self):
         is_first = self.fip_ns.subscribe(mock.sentinel.external_net_id)
@@ -276,8 +280,6 @@ class TestDvrFipNs(base.BaseTestCase):
         ri.ns_name = mock.sentinel.router_ns
         ri.get_ex_gw_port.return_value = {'mtu': 2000}
 
-        rtr_2_fip_name = self.fip_ns.get_rtr_ext_device_name(ri.router_id)
-        fip_2_rtr_name = self.fip_ns.get_int_device_name(ri.router_id)
         fip_ns_name = self.fip_ns.get_name()
 
         self.fip_ns.local_subnets = allocator = mock.Mock()
@@ -294,8 +296,8 @@ class TestDvrFipNs(base.BaseTestCase):
         self.fip_ns.create_rtr_2_fip_link(ri)
 
         if not dev_exists:
-            ip_wrapper.add_veth.assert_called_with(rtr_2_fip_name,
-                                                   fip_2_rtr_name,
+            ip_wrapper.add_veth.assert_called_with(device.name,
+                                                   device.name,
                                                    fip_ns_name)
 
             self.assertEqual(2, device.link.set_up.call_count)
@@ -314,8 +316,10 @@ class TestDvrFipNs(base.BaseTestCase):
         device.neigh.add.assert_has_calls(expected)
         self.assertEqual(2, device.neigh.add.call_count)
 
-        device.route.add_gateway.assert_called_once_with(
-            '169.254.31.29', table=16)
+        expected_calls = [mock.call('169.254.31.29', table=16),
+                          mock.call(self.lladdr)]
+        self.assertEqual(expected_calls,
+                         device.route.add_gateway.mock_calls)
         self.assertTrue(
             self.fip_ns._add_rtr_ext_route_rule_to_route_table.called)
 

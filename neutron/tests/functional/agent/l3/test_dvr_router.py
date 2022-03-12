@@ -892,8 +892,11 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         rfp_device = ip_lib.IPDevice(rfp_device_name,
                                      namespace=router1.ns_name)
         rtr_2_fip, fip_2_rtr = router1.rtr_fip_subnet.get_pair()
+        fpr_device_name = router1.fip_ns.get_int_device_name(router1.router_id)
+        fpr_device = ip_lib.IPDevice(fpr_device_name,
+                                     namespace=fip_ns_name)
         self._assert_default_gateway(
-            fip_2_rtr, rfp_device, rfp_device_name)
+            fip_2_rtr, rfp_device, rfp_device_name, fpr_device)
 
         router1.router[lib_constants.FLOATINGIP_KEY] = []
         self.agent._process_updated_router(router1.router)
@@ -914,16 +917,26 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         self.assertEqual(2, interface_rules_list_count)
         self.assertEqual(0, fip_rule_count)
 
-    def _assert_default_gateway(self, fip_2_rtr, rfp_device, device_name):
+    def _assert_default_gateway(self, fip_2_rtr, rfp_device,
+                                device_name, fpr_device):
+        v6_gateway = utils.cidr_to_ip(
+                ip_lib.get_ipv6_lladdr(fpr_device.link.address))
         expected_gateway = [{'device': device_name,
                              'cidr': '0.0.0.0/0',
                              'via': str(fip_2_rtr.ip),
-                             'table': dvr_fip_ns.FIP_RT_TBL}]
-        listed_routes = rfp_device.route.list_routes(
+                             'table': dvr_fip_ns.FIP_RT_TBL},
+                            {'device': device_name,
+                             'cidr': '::/0',
+                             'table': 'main',
+                             'via': v6_gateway}]
+        v4_routes = rfp_device.route.list_routes(
             ip_version=lib_constants.IP_VERSION_4,
             table=dvr_fip_ns.FIP_RT_TBL,
             via=str(fip_2_rtr.ip))
-        self._check_routes(expected_gateway, listed_routes)
+        v6_routers = rfp_device.route.list_routes(
+            ip_version=lib_constants.IP_VERSION_6,
+            via=v6_gateway)
+        self._check_routes(expected_gateway, v4_routes + v6_routers)
 
     def test_dvr_router_rem_fips_on_restarted_agent(self):
         self.agent.conf.agent_mode = 'dvr_snat'
@@ -1965,7 +1978,7 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
                                      namespace=fip_ns_name)
         rtr_2_fip, fip_2_rtr = router1.rtr_fip_subnet.get_pair()
         self._assert_default_gateway(
-            fip_2_rtr, rfp_device, rfp_device_name)
+            fip_2_rtr, rfp_device, rfp_device_name, fpr_device)
 
         # Check if any snat redirect rules in the router namespace exist.
         ip4_rules_list = ip_lib.list_ip_rules(router1.ns_name,
