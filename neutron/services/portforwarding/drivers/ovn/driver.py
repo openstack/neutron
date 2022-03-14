@@ -12,15 +12,18 @@
 
 from oslo_log import log
 
+from ovsdbapp.backend.ovs_idl import idlutils
 from ovsdbapp import constants as ovsdbapp_const
 
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants as const
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 
 from neutron.common.ovn import constants as ovn_const
+from neutron.common.ovn import utils as ovn_utils
 from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron import manager
 from neutron.objects import port_forwarding as port_forwarding_obj
@@ -54,6 +57,36 @@ class OVNPortForwardingHandler(object):
         rtr_name = 'neutron-{}'.format(pf_obj.router_id)
         return lb_name, vip, [internal_ip], rtr_name
 
+    def _get_lbs_and_ls(self, nb_ovn, payload):
+        rtr_name = ovn_utils.ovn_name(payload.resource_id)
+        ovn_lr = nb_ovn.get_lrouter(rtr_name)
+        if ovn_lr:
+            ext_id_key = ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY
+            # Filter only lbs managed by port forwarding plugin
+            lr_lbs = [lr for lr in ovn_lr.load_balancer
+                      if lr.external_ids.get(ext_id_key) ==
+                      pf_const.PORT_FORWARDING_PLUGIN]
+            r_port = payload.metadata.get('port')
+
+            if r_port:
+                ls_name = ovn_utils.ovn_name(r_port['network_id'])
+                ovn_ls = nb_ovn.get_lswitch(ls_name)
+                ls_lbs = ovn_ls.load_balancer
+                return lr_lbs, ls_lbs, ls_name
+        return [], [], None
+
+    def _add_lb_on_ls(self, ovn_txn, nb_ovn, payload):
+        lr_lbs, ls_lbs, ls_name = self._get_lbs_and_ls(nb_ovn, payload)
+        for lb in lr_lbs:
+            if lb not in ls_lbs:
+                ovn_txn.add(nb_ovn.ls_lb_add(ls_name, lb.name, may_exist=True))
+
+    def _del_lb_on_ls(self, ovn_txn, nb_ovn, payload):
+        lr_lbs, ls_lbs, ls_name = self._get_lbs_and_ls(nb_ovn, payload)
+        for lb in lr_lbs:
+            if lb in ls_lbs:
+                ovn_txn.add(nb_ovn.ls_lb_del(ls_name, lb.name))
+
     def _port_forwarding_created(self, ovn_txn, nb_ovn, pf_obj):
         # Add vip to its corresponding load balancer. There can be multiple
         # vips, so load balancer may already be present.
@@ -70,6 +103,26 @@ class OVNPortForwardingHandler(object):
                           external_ids=external_ids))
         # Ensure logical router has load balancer configured.
         ovn_txn.add(nb_ovn.lr_lb_add(rtr_name, lb_name, may_exist=True))
+        # Ensure logical switches on logical router have load balancer
+        # configured, can be removed this handling if in future ovn
+        # supports auto handling of lbs on ls rhbz#2043543
+        ovn_lr = nb_ovn.get_lrouter(rtr_name)
+        if ovn_lr:
+            ext_id_key = ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY
+            ovn_lss = [port.external_ids.get(ext_id_key)
+                       for port in ovn_lr.ports
+                       if port.external_ids.get(ext_id_key) and
+                       not port.gateway_chassis]
+            for ls_name in ovn_lss:
+                try:
+                    ovn_txn.add(nb_ovn.ls_lb_add(ls_name, lb_name,
+                        may_exist=True))
+                except idlutils.RowNotFound:
+                    # If one or more logical_switches are deleted
+                    # log warning for those and continue with the rest.
+                    LOG.warning("Addition of Load Balancer %s to Logical "
+                                "Switch %s failed as it is not found",
+                                lb_name, ls_name)
 
     def port_forwarding_created(self, ovn_txn, nb_ovn, pf_obj):
         LOG.info("CREATE for port-forwarding %s vip %s:%s to %s:%s",
@@ -266,6 +319,18 @@ class OVNPortForwarding(object):
         for lb_name in self._handler.lb_names(fip_id):
             ovn_txn.add(ovn_nb.lb_del(lb_name, vip=None, if_exists=True))
 
+    def _handle_lb_on_ls(self, _resource, event_type, _pf_plugin, payload):
+        if not payload:
+            return
+        ovn_nb = self._l3_plugin._nb_ovn
+        with ovn_nb.transaction(check_error=True) as ovn_txn:
+            if event_type == events.AFTER_CREATE:
+                self._handler._add_lb_on_ls(ovn_txn, ovn_nb,
+                                            payload)
+            if event_type == events.AFTER_DELETE:
+                self._handler._del_lb_on_ls(ovn_txn, ovn_nb,
+                                            payload)
+
     @staticmethod
     def ovn_lb_protocol(pf_protocol):
         return pf_const.LB_PROTOCOL_MAP.get(
@@ -277,3 +342,6 @@ class OVNPortForwarding(object):
                            events.AFTER_DELETE):
             registry.subscribe(self._handle_notification,
                                pf_const.PORT_FORWARDING, event_type)
+            if event_type in (events.AFTER_CREATE, events.AFTER_DELETE):
+                registry.subscribe(self._handle_lb_on_ls,
+                                   resources.ROUTER_INTERFACE, event_type)
