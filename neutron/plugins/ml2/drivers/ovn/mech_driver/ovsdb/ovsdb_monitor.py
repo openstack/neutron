@@ -582,6 +582,55 @@ class PortBindingUpdateDownEvent(row_event.RowEvent):
         self.driver.set_port_status_down(row.logical_port)
 
 
+class PortBindingUpdateVirtualPortsEvent(row_event.RowEvent):
+    """Row update event - Port_Binding for virtual ports
+
+    The goal of this event is to catch the events of the virtual ports and
+    update the hostname in the related "portbinding" register.
+    """
+    def __init__(self, driver):
+        self.driver = driver
+        table = 'Port_Binding'
+        events = (self.ROW_UPDATE, )
+        super().__init__(events, table, None)
+        self.event_name = 'PortBindingUpdateVirtualPortsEvent'
+
+    def match_fn(self, event, row, old):
+        # This event should catch only those events from ports that are
+        # "virtual" or have been "virtual". The second happens when all virtual
+        # parent are disassociated; in the same transaction the
+        # "virtual-parents" list is removed from "options" and the type is set
+        # to "".
+        if (row.type != ovn_const.PB_TYPE_VIRTUAL and
+                getattr(old, 'type', None) != ovn_const.PB_TYPE_VIRTUAL):
+            return False
+
+        virtual_parents = (row.options or {}).get(
+            ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY)
+        old_virtual_parents = getattr(old, 'options', {}).get(
+            ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY)
+        chassis = row.chassis
+        old_chassis = getattr(old, 'chassis', [])
+
+        if virtual_parents and chassis != old_chassis:
+            # That happens when the chassis is assigned (VIP is first detected
+            # in a port) or changed (the VIP changes of assigned port and
+            # host).
+            return True
+
+        if not virtual_parents and old_virtual_parents:
+            # All virtual parent ports are removed, the VIP is unbound.
+            return True
+        return False
+
+    def run(self, event, row, old):
+        virtual_parents = (row.options or {}).get(
+            ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY)
+        chassis_uuid = (row.chassis[0].uuid if
+                        row.chassis and virtual_parents else None)
+        self.driver.update_virtual_port_host(row.logical_port, chassis_uuid)
+
+
 class FIPAddDeleteEvent(row_event.RowEvent):
     """Row event - NAT 'dnat_and_snat' entry added or deleted
 
@@ -797,7 +846,9 @@ class OvnSbIdl(OvnIdlDistributedLock):
             self._pb_create_up_event,
             self._pb_create_down_event,
             PortBindingUpdateUpEvent(driver),
-            PortBindingUpdateDownEvent(driver)])
+            PortBindingUpdateDownEvent(driver),
+            PortBindingUpdateVirtualPortsEvent(driver),
+        ])
 
     @classmethod
     def from_server(cls, connection_string, helper, driver):

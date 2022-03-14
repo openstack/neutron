@@ -12,26 +12,30 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import functools
 from unittest import mock
 
 import fixtures as og_fixtures
+from neutron_lib.api.definitions import allowedaddresspairs
+from neutron_lib.api.definitions import portbindings
+from neutron_lib.plugins import constants as plugin_constants
+from neutron_lib.plugins import directory
 from oslo_concurrency import processutils
 from oslo_utils import uuidutils
+from ovsdbapp.backend.ovs_idl import event
+from ovsdbapp.backend.ovs_idl import idlutils
+
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils as n_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_hash_ring_db as db_hash_ring
 from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent
+from neutron.plugins.ml2.drivers.ovn.mech_driver import mech_driver
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
 from neutron.tests.functional import base
 from neutron.tests.functional.resources.ovsdb import fixtures
 from neutron.tests.functional.resources import process
-from neutron_lib.api.definitions import portbindings
-from neutron_lib.plugins import constants as plugin_constants
-from neutron_lib.plugins import directory
-from ovsdbapp.backend.ovs_idl import event
-from ovsdbapp.backend.ovs_idl import idlutils
 
 
 class WaitForDataPathBindingCreateEvent(event.WaitEvent):
@@ -80,16 +84,21 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         super(TestNBDbMonitor, self).setUp()
         self.chassis = self.add_fake_chassis('ovs-host1')
         self.l3_plugin = directory.get_plugin(plugin_constants.L3)
+        self.net = self._make_network(self.fmt, 'net1', True)
+        self._make_subnet(self.fmt, self.net, '20.0.0.1', '20.0.0.0/24',
+                          ip_version=4)
 
-    def create_port(self):
-        net = self._make_network(self.fmt, 'net1', True)
-        self._make_subnet(self.fmt, net, '20.0.0.1',
-                          '20.0.0.0/24', ip_version=4)
-        arg_list = ('device_owner', 'device_id', portbindings.HOST_ID)
-        host_arg = {'device_owner': 'compute:nova',
+    def create_port(self, device_owner='compute:nova', host='ovs-host1',
+                    allowed_address_pairs=None):
+        allowed_address_pairs = allowed_address_pairs or []
+        arg_list = ('device_owner', 'device_id', portbindings.HOST_ID,
+                    allowedaddresspairs.ADDRESS_PAIRS)
+        host_arg = {'device_owner': device_owner,
                     'device_id': uuidutils.generate_uuid(),
-                    portbindings.HOST_ID: 'ovs-host1'}
-        port_res = self._create_port(self.fmt, net['network']['id'],
+                    portbindings.HOST_ID: host,
+                    allowedaddresspairs.ADDRESS_PAIRS: allowed_address_pairs
+                    }
+        port_res = self._create_port(self.fmt, self.net['network']['id'],
                                      arg_list=arg_list, **host_arg)
         port = self.deserialize(self.fmt, port_res)['port']
         return port
@@ -301,6 +310,55 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
             exception=Exception(
                 "Fanout event didn't get handled expected %d times" %
                 (worker_num + 1)))
+
+    def _find_port_binding(self, port_id):
+        cmd = self.sb_api.db_find_rows('Port_Binding',
+                                       ('logical_port', '=', port_id))
+        rows = cmd.execute(check_error=True)
+        return rows[0] if rows else None
+
+    def _check_port_binding_type(self, port_id, port_type):
+        def is_port_binding_type(port_id, port_type):
+            bp = self._find_port_binding(port_id)
+            return port_type == bp.type
+
+        check = functools.partial(is_port_binding_type, port_id, port_type)
+        n_utils.wait_until_true(check, timeout=10)
+
+    def _check_port_virtual_parents(self, port_id, vparents):
+        def is_port_virtual_parents(port_id, vparents):
+            bp = self._find_port_binding(port_id)
+            return (vparents ==
+                    bp.options.get(ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY))
+
+        check = functools.partial(is_port_virtual_parents, port_id, vparents)
+        n_utils.wait_until_true(check, timeout=10)
+
+    @mock.patch.object(mech_driver.OVNMechanismDriver,
+                       'update_virtual_port_host')
+    def test_virtual_port_host_update(self, mock_update_vip_host):
+        # NOTE: because we can't simulate traffic from a port, this check is
+        # not done in this test. This test checks the VIP host is unset when
+        # the port allowed address pairs are removed.
+        vip = self.create_port(device_owner='', host='')
+        vip_address = vip['fixed_ips'][0]['ip_address']
+        allowed_address_pairs = [{'ip_address': vip_address}]
+        port = self.create_port()
+        self._check_port_binding_type(vip['id'], '')
+
+        data = {'port': {'allowed_address_pairs': allowed_address_pairs}}
+        req = self.new_update_request('ports', data, port['id'])
+        req.get_response(self.api)
+        # This test checks that the VIP "Port_Binding" register gets the type
+        # and the corresponding "virtual-parents".
+        self._check_port_binding_type(vip['id'], ovn_const.LSP_TYPE_VIRTUAL)
+        mock_update_vip_host.assert_not_called()
+
+        data = {'port': {'allowed_address_pairs': []}}
+        req = self.new_update_request('ports', data, port['id'])
+        req.get_response(self.api)
+        self._check_port_binding_type(vip['id'], '')
+        mock_update_vip_host.assert_called_once_with(vip['id'], None)
 
 
 class TestNBDbMonitorOverTcp(TestNBDbMonitor):
