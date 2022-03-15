@@ -2,7 +2,7 @@
     name: neutron-tox-override-jobs
     check:
       jobs:
-        - openstack-tox-py36:  # from openstack-python3-zed-jobs template
+        - openstack-tox-py38:  # from openstack-python3-zed-jobs template
             timeout: 3600
             irrelevant-files:  &irrelevant-files
               - ^.*\.conf\.sample$
@@ -42,7 +42,7 @@
             irrelevant-files:  *irrelevant-files
     gate:
       jobs:
-        - openstack-tox-py36:  # from openstack-python3-zed-jobs template
+        - openstack-tox-py38:  # from openstack-python3-zed-jobs template
             timeout: 3600
             irrelevant-files:  *irrelevant-files
         - openstack-tox-py39: # from openstack-python3-zed-jobs template
