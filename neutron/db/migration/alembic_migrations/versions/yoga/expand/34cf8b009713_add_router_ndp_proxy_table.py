@@ -18,6 +18,7 @@ import sqlalchemy as sa
 
 from neutron_lib.db import constants
 
+from neutron.db import migration
 
 """add router ndp proxy table
 
@@ -30,6 +31,9 @@ Create Date: 2021-12-03 03:57:34.838905
 # revision identifiers, used by Alembic.
 revision = '34cf8b009713'
 down_revision = 'cd9ef14ccf87'
+
+# milestone identifier, used by neutron-db-manage
+neutron_milestone = [migration.YOGA]
 
 
 def upgrade():
