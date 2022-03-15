@@ -31,6 +31,7 @@ from neutron_lib.api.definitions import qos_pps_minimum_rule
 from neutron_lib.api.definitions import qos_pps_minimum_rule_alias
 from neutron_lib.api.definitions import qos_pps_rule
 from neutron_lib.api.definitions import qos_rule_type_details
+from neutron_lib.api.definitions import qos_rule_type_filter
 from neutron_lib.api.definitions import qos_rules_alias
 from neutron_lib.callbacks import events as callbacks_events
 from neutron_lib.callbacks import registry as callbacks_registry
@@ -126,6 +127,7 @@ class QoSPlugin(qos.QoSPluginBase):
         qos_bw_limit_direction.ALIAS,
         qos_default.ALIAS,
         qos_rule_type_details.ALIAS,
+        qos_rule_type_filter.ALIAS,
         port_resource_request.ALIAS,
         port_resource_request_groups.ALIAS,
         qos_bw_minimum_ingress.ALIAS,
@@ -882,9 +884,9 @@ class QoSPlugin(qos.QoSPluginBase):
     def supported_rule_type_details(self, rule_type_name):
         return self.driver_manager.supported_rule_type_details(rule_type_name)
 
-    @property
-    def supported_rule_types(self):
-        return self.driver_manager.supported_rule_types
+    def supported_rule_types(self, all_supported=None, all_rules=None):
+        return self.driver_manager.supported_rule_types(
+            all_supported=all_supported, all_rules=all_rules)
 
     @db_base_plugin_common.convert_result_to_dict
     def create_policy_rule(self, context, rule_cls, policy_id, rule_data):

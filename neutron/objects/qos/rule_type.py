@@ -60,13 +60,14 @@ class QosRuleType(base.NeutronObject):
     # we don't receive context because we don't need db access at all
     @classmethod
     def get_objects(cls, validate_filters=True, **kwargs):
+        all_supported = kwargs.pop('all_supported', None)
+        all_rules = kwargs.pop('all_rules', None)
         if validate_filters:
             cls.validate_filters(**kwargs)
 
-        rule_types = (
-            directory.get_plugin(alias=constants.QOS).supported_rule_types)
-
-        # TODO(ihrachys): apply filters to returned result
+        rule_types = directory.get_plugin(
+            alias=constants.QOS).supported_rule_types(
+            all_supported=all_supported, all_rules=all_rules)
         return [cls(type=type_) for type_ in rule_types]
 
     # we don't receive context because we don't need db access at all

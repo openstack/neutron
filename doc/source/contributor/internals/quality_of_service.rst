@@ -98,7 +98,7 @@ NotImplemented.
 Supported QoS rule types
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Each QoS driver has a property called supported_rule_types, where the driver
+Each QoS driver has a member called ``supported_rules``, where the driver
 exposes the rules it's able to handle.
 
 For a list of all rule types, see:

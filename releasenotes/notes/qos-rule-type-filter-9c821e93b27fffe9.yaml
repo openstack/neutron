@@ -1,0 +1,11 @@
+---
+features:
+  - |
+    QoS rule type list accepts two filter flags:
+
+    * ``all_supported``: if True, the listing call will print all QoS
+      rule types supported by at least one loaded mechanism driver.
+    * ``all_rules``: if True, the listing call will print all QoS rule
+      types supported by the Neutron server.
+
+    Both filter flags are exclusive and not required.
