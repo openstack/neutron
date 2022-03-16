@@ -4,10 +4,10 @@
   template:
     src: "clone-br-int.sh.j2"
     dest: "/tmp/clone-br-int.sh"
-    mode: 0744
+    mode: 0644
 
 - name: Run clone script for dataplane
-  shell: /tmp/clone-br-int.sh
+  shell: sh /tmp/clone-br-int.sh
 
 - name: Delete clone script
   file:
