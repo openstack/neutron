@@ -17,6 +17,7 @@ from collections import namedtuple
 import netaddr
 from neutron_lib.api.definitions import dns as dns_apidef
 from neutron_lib.api.definitions import fip_pf_description as ext_pf_def
+from neutron_lib.api.definitions import fip_pf_port_range as ranges_pf_def
 from neutron_lib.api.definitions import floating_ip_port_forwarding as pf_def
 from neutron_lib.api.definitions import l3
 from neutron_lib.api.definitions import port_security as ps
@@ -465,8 +466,8 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
 
         p5_ip = n1_port_details_dict['p5']['fixed_ips'][0]['ip_address']
         fip_pf_args = {
-            pf_def.EXTERNAL_PORT: 2222,
-            pf_def.INTERNAL_PORT: 22,
+            ranges_pf_def.EXTERNAL_PORT_RANGE: '2222:2223',
+            ranges_pf_def.INTERNAL_PORT_RANGE: '22:23',
             pf_def.INTERNAL_PORT_ID: n1_port_dict['p5'],
             pf_def.PROTOCOL: "tcp",
             ext_pf_def.DESCRIPTION_FIELD: 'PortFwd r1_f3_p5:22 tcp',
@@ -476,8 +477,8 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
             self.context, r1_f3['id'], **fip_args)
 
         # Add port forwarding with same external and internal value
-        fip_pf_args[pf_def.EXTERNAL_PORT] = 80
-        fip_pf_args[pf_def.INTERNAL_PORT] = 80
+        fip_pf_args[ranges_pf_def.EXTERNAL_PORT_RANGE] = '80:81'
+        fip_pf_args[ranges_pf_def.INTERNAL_PORT_RANGE] = '80:81'
         fip_pf_args[ext_pf_def.DESCRIPTION_FIELD] = 'PortFwd r1_f3_p5:80 tcp'
         self.pf_plugin.create_floatingip_port_forwarding(
             self.context, r1_f3['id'], **fip_args)
@@ -1420,14 +1421,37 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         for fip in fips['floatingips']:
             for pf in self.pf_plugin.get_floatingip_port_forwardings(
                     self.ctx, floatingip_id=fip['id']):
+                if pf.get('external_port'):
+                    db_pfs.append(fip_pf_cmp(
+                        fip['id'],
+                        ovn_pf.ovn_lb_protocol(pf['protocol']),
+                        utils.ovn_name(pf['router_id']),
+                        pf['floating_ip_address'],
+                        pf['external_port'],
+                        pf['internal_ip_address'],
+                        pf['internal_port'],
+                    ))
+                    continue
+
+                extrn_1, extrn_2 = pf['external_port_range'].split(':')
+                intrn_1, intrn_2 = pf['internal_port_range'].split(':')
                 db_pfs.append(fip_pf_cmp(
                     fip['id'],
                     ovn_pf.ovn_lb_protocol(pf['protocol']),
                     utils.ovn_name(pf['router_id']),
                     pf['floating_ip_address'],
-                    pf['external_port'],
+                    int(extrn_1),
                     pf['internal_ip_address'],
-                    pf['internal_port'],
+                    int(intrn_1),
+                ))
+                db_pfs.append(fip_pf_cmp(
+                    fip['id'],
+                    ovn_pf.ovn_lb_protocol(pf['protocol']),
+                    utils.ovn_name(pf['router_id']),
+                    pf['floating_ip_address'],
+                    int(extrn_2),
+                    pf['internal_ip_address'],
+                    int(intrn_2)
                 ))
 
         nb_pfs = []

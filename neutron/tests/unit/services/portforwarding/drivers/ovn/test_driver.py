@@ -15,6 +15,7 @@
 from unittest import mock
 
 from neutron.common.ovn import constants as ovn_const
+from neutron.objects import port_forwarding as port_forwarding_obj
 from neutron.services.portforwarding.constants import PORT_FORWARDING
 from neutron.services.portforwarding.constants import PORT_FORWARDING_PLUGIN
 from neutron.services.portforwarding.drivers.ovn import driver \
@@ -37,8 +38,9 @@ class TestOVNPortForwardingBase(base.BaseTestCase):
         self.l3_plugin._nb_ovn = fake_resources.FakeOvsdbNbOvnIdl()
         self.txn = self.l3_plugin._nb_ovn.transaction
 
-    def _fake_pf_obj(self, **kwargs):
+    def _fake_pf_obj(self, is_object=False, **kwargs):
         pf_obj_defaults_dict = {
+            'id': 'id',
             'floatingip_id': 'fip_id',
             'protocol': 'udp',
             'floating_ip_address': 'fip_addr',
@@ -48,6 +50,8 @@ class TestOVNPortForwardingBase(base.BaseTestCase):
             'router_id': 'rtr_id'
         }
         pf_obj_dict = {**pf_obj_defaults_dict, **kwargs}
+        if is_object:
+            return port_forwarding_obj.PortForwarding(**pf_obj_dict)
         return mock.Mock(**pf_obj_dict)
 
     def _fake_pf_payload_entry(self, curr_pf_id, orig_pf_id=None, **kwargs):
@@ -103,9 +107,19 @@ class TestOVNPortForwardingHandler(TestOVNPortForwardingBase):
 
     @mock.patch.object(port_forwarding.LOG, 'info')
     def test_port_forwarding_created(self, m_info):
-        fake_pf_obj = self._fake_pf_obj()
-        exp_lb_name, exp_vip, exp_internal_ips, exp_rtr_name = (self.handler.
-            _get_lb_attributes(fake_pf_obj))
+        fake_pf_obj = self._fake_pf_obj(
+            is_object=True,
+            id=uuidutils.generate_uuid(),
+            floatingip_id=uuidutils.generate_uuid(),
+            router_id=uuidutils.generate_uuid(),
+            protocol='udp',
+            floating_ip_address='10.0.0.1',
+            external_port=2222,
+            internal_ip_address='192.168.0.1',
+            internal_port=22,
+        )
+        exp_lb_name, exp_vip, exp_internal_ips, exp_rtr_name = (
+            self.handler._get_lb_attributes(fake_pf_obj))
         exp_protocol = self.handler._get_lb_protocol(fake_pf_obj)
         self.handler.port_forwarding_created(
             self.txn, self.l3_plugin._nb_ovn, fake_pf_obj)
@@ -124,25 +138,303 @@ class TestOVNPortForwardingHandler(TestOVNPortForwardingBase):
             exp_rtr_name, exp_lb_name, may_exist=True)
 
     @mock.patch.object(port_forwarding.LOG, 'info')
+    def test_port_forwarding_created_with_ranges(self, m_info):
+        id = uuidutils.generate_uuid()
+        floatingip_id = uuidutils.generate_uuid()
+        router_id = uuidutils.generate_uuid()
+        fake_pf_obj_ranges = self._fake_pf_obj(
+            is_object=True,
+            id=id,
+            floatingip_id=floatingip_id,
+            router_id=router_id,
+            protocol='udp',
+            floating_ip_address='10.0.0.1',
+            external_port=None,
+            external_port_range='2222:2223',
+            internal_ip_address='192.168.0.1',
+            internal_port=None,
+            internal_port_range='22:23'
+        )
+        fake_pf_obj_1 = self._fake_pf_obj(
+            is_object=True,
+            id=id,
+            floatingip_id=floatingip_id,
+            router_id=router_id,
+            protocol='udp',
+            floating_ip_address='10.0.0.1',
+            external_port=2222,
+            external_port_range=None,
+            internal_ip_address='192.168.0.1',
+            internal_port=22,
+            internal_port_range=None
+        )
+        fake_pf_obj_2 = self._fake_pf_obj(
+            is_object=True,
+            id=id,
+            floatingip_id=floatingip_id,
+            router_id=router_id,
+            protocol='udp',
+            floating_ip_address='10.0.0.1',
+            external_port=2223,
+            external_port_range=None,
+            internal_ip_address='192.168.0.1',
+            internal_port=23,
+            internal_port_range=None
+        )
+        exp_lb_name_1, exp_vip_1, exp_internal_ips_1, exp_rtr_name_1 = (
+            self.handler._get_lb_attributes(fake_pf_obj_1, True))
+        exp_lb_name_2, exp_vip_2, exp_internal_ips_2, exp_rtr_name_2 = (
+            self.handler._get_lb_attributes(fake_pf_obj_2, True))
+        exp_protocol_1 = self.handler._get_lb_protocol(fake_pf_obj_1)
+        exp_protocol_2 = self.handler._get_lb_protocol(fake_pf_obj_2)
+        self.handler.port_forwarding_created(
+            self.txn, self.l3_plugin._nb_ovn, fake_pf_obj_ranges)
+        info_args, _info_kwargs = m_info.call_args_list[0]
+        self.assertIn('CREATE for port-forwarding', info_args[0])
+        self.assertEqual(4, len(self.txn.add.call_args_list))
+        info_args, _info_kwargs = m_info.call_args_list[1]
+        self.assertIn('CREATE for port-forwarding', info_args[0])
+        self.assertEqual(4, len(self.txn.add.call_args_list))
+        exp_external_ids_1 = {
+            ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY: PORT_FORWARDING_PLUGIN,
+            ovn_const.OVN_FIP_EXT_ID_KEY: fake_pf_obj_1.floatingip_id,
+            ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: exp_rtr_name_1,
+        }
+        exp_external_ids_2 = {
+            ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY: PORT_FORWARDING_PLUGIN,
+            ovn_const.OVN_FIP_EXT_ID_KEY: fake_pf_obj_1.floatingip_id,
+            ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: exp_rtr_name_2,
+        }
+        self.l3_plugin._nb_ovn.lb_add.assert_any_call(
+            exp_lb_name_1, exp_vip_1, exp_internal_ips_1, exp_protocol_1,
+            may_exist=True, external_ids=exp_external_ids_1)
+        self.l3_plugin._nb_ovn.lr_lb_add.assert_any_call(
+            exp_rtr_name_1, exp_lb_name_1, may_exist=True)
+        self.l3_plugin._nb_ovn.lb_add.assert_any_call(
+            exp_lb_name_2, exp_vip_2, exp_internal_ips_2, exp_protocol_2,
+            may_exist=True, external_ids=exp_external_ids_2)
+        self.l3_plugin._nb_ovn.lr_lb_add.assert_any_call(
+            exp_rtr_name_2, exp_lb_name_2, may_exist=True)
+
+    @mock.patch.object(port_forwarding.LOG, 'info')
+    @mock.patch.object(
+        port_forwarding.OVNPortForwardingHandler, '_port_forwarding_deleted')
+    @mock.patch.object(
+        port_forwarding.OVNPortForwardingHandler, '_port_forwarding_created')
+    def test_port_forwarding_updated_with_ranges(self, m_created, m_deleted,
+                                                 m_info):
+        id = uuidutils.generate_uuid()
+        floatingip_id = uuidutils.generate_uuid()
+        router_id = uuidutils.generate_uuid()
+        fake_pf_obj_ranges_old = self._fake_pf_obj(
+            is_object=True,
+            id=id,
+            floatingip_id=floatingip_id,
+            router_id=router_id,
+            protocol='udp',
+            floating_ip_address='10.0.0.1',
+            external_port=None,
+            external_port_range='2222:2223',
+            internal_ip_address='192.168.0.1',
+            internal_port=None,
+            internal_port_range='22:23'
+        )
+        fake_pf_obj_1_old = self._fake_pf_obj(
+            is_object=True,
+            id=id,
+            floatingip_id=floatingip_id,
+            router_id=router_id,
+            protocol='udp',
+            floating_ip_address='10.0.0.1',
+            external_port=2222,
+            external_port_range=None,
+            internal_ip_address='192.168.0.1',
+            internal_port=22,
+            internal_port_range=None
+        )
+        fake_pf_obj_2_old = self._fake_pf_obj(
+            is_object=True,
+            id=id,
+            floatingip_id=floatingip_id,
+            router_id=router_id,
+            protocol='udp',
+            floating_ip_address='10.0.0.1',
+            external_port=2223,
+            external_port_range=None,
+            internal_ip_address='192.168.0.1',
+            internal_port=23,
+            internal_port_range=None
+        )
+        fake_pf_obj_ranges = self._fake_pf_obj(
+            is_object=True,
+            id=id,
+            floatingip_id=floatingip_id,
+            router_id=router_id,
+            protocol='tcp',
+            floating_ip_address='10.0.0.1',
+            external_port=None,
+            external_port_range='2222:2223',
+            internal_ip_address='192.168.0.1',
+            internal_port=None,
+            internal_port_range='22:23'
+        )
+        fake_pf_obj_1 = self._fake_pf_obj(
+            is_object=True,
+            id=id,
+            floatingip_id=floatingip_id,
+            router_id=router_id,
+            protocol='tcp',
+            floating_ip_address='10.0.0.1',
+            external_port=2222,
+            external_port_range=None,
+            internal_ip_address='192.168.0.1',
+            internal_port=22,
+            internal_port_range=None
+        )
+        fake_pf_obj_2 = self._fake_pf_obj(
+            is_object=True,
+            id=id,
+            floatingip_id=floatingip_id,
+            router_id=router_id,
+            protocol='tcp',
+            floating_ip_address='10.0.0.1',
+            external_port=2223,
+            external_port_range=None,
+            internal_ip_address='192.168.0.1',
+            internal_port=23,
+            internal_port_range=None
+        )
+
+        def do_simple_comparation(pf_1, pf_2):
+            pf_1_dict = {f: getattr(pf_1, f)
+                         for f in pf_1.fields if hasattr(pf_1, f)}
+            pf_2_dict = {f: getattr(pf_2, f)
+                         for f in pf_2.fields if hasattr(pf_2, f)}
+            self.assertEqual(pf_1_dict, pf_2_dict)
+
+        self.handler.port_forwarding_updated(
+            self.txn, self.l3_plugin._nb_ovn, fake_pf_obj_ranges,
+            fake_pf_obj_ranges_old)
+        info_args, _info_kwargs = m_info.call_args_list[0]
+        self.assertIn('UPDATE for port-forwarding', info_args[0])
+        deleted_pf_1 = m_deleted.call_args_list[0][0][2]
+        deleted_pf_2 = m_deleted.call_args_list[1][0][2]
+        do_simple_comparation(deleted_pf_1, fake_pf_obj_1_old)
+        do_simple_comparation(deleted_pf_2, fake_pf_obj_2_old)
+        created_pf_1 = m_created.call_args_list[0][0][2]
+        created_pf_2 = m_created.call_args_list[1][0][2]
+        do_simple_comparation(created_pf_1, fake_pf_obj_1)
+        do_simple_comparation(created_pf_2, fake_pf_obj_2)
+
+    @mock.patch.object(port_forwarding.LOG, 'info')
     @mock.patch.object(
         port_forwarding.OVNPortForwardingHandler, '_port_forwarding_deleted')
     @mock.patch.object(
         port_forwarding.OVNPortForwardingHandler, '_port_forwarding_created')
     def test_port_forwarding_updated(self, m_created, m_deleted, m_info):
-        fake_pf_obj = self._fake_pf_obj(protocol='udp')
-        fake_orig_pf_obj = self._fake_pf_obj(protocol='tcp')
+        fake_pf_obj = self._fake_pf_obj(
+            is_object=True,
+            id=uuidutils.generate_uuid(),
+            floatingip_id=uuidutils.generate_uuid(),
+            router_id=uuidutils.generate_uuid(),
+            protocol='udp',
+            floating_ip_address='10.0.0.1',
+            external_port=2222,
+            internal_ip_address='192.168.0.1',
+            internal_port=22,
+        )
+        fake_orig_pf_obj = self._fake_pf_obj(
+            is_object=True,
+            id=uuidutils.generate_uuid(),
+            floatingip_id=uuidutils.generate_uuid(),
+            router_id=uuidutils.generate_uuid(),
+            protocol='tcp',
+            floating_ip_address='10.0.0.1',
+            external_port=2222,
+            internal_ip_address='192.168.0.1',
+            internal_port=22,
+        )
         self.handler.port_forwarding_updated(
             self.txn, self.l3_plugin._nb_ovn, fake_pf_obj, fake_orig_pf_obj)
         info_args, _info_kwargs = m_info.call_args_list[0]
         self.assertIn('UPDATE for port-forwarding', info_args[0])
         m_deleted.assert_called_once_with(self.txn, self.l3_plugin._nb_ovn,
-                                          fake_orig_pf_obj)
+                                          fake_orig_pf_obj, is_range=False)
         m_created.assert_called_once_with(self.txn, self.l3_plugin._nb_ovn,
-                                          fake_pf_obj)
+                                          fake_pf_obj, is_range=False)
+
+    @mock.patch.object(port_forwarding.LOG, 'info')
+    def test_port_forwarding_deleted_with_ranges(self, m_info):
+        id = uuidutils.generate_uuid()
+        floatingip_id = uuidutils.generate_uuid()
+        router_id = uuidutils.generate_uuid()
+        fake_pf_obj_ranges = self._fake_pf_obj(
+            is_object=True,
+            id=id,
+            floatingip_id=floatingip_id,
+            router_id=router_id,
+            protocol='udp',
+            floating_ip_address='10.0.0.1',
+            external_port=None,
+            external_port_range='2222:2223',
+            internal_ip_address='192.168.0.1',
+            internal_port=None,
+            internal_port_range='22:23'
+        )
+        fake_pf_obj_1 = self._fake_pf_obj(
+            is_object=True,
+            id=id,
+            floatingip_id=floatingip_id,
+            router_id=router_id,
+            protocol='udp',
+            floating_ip_address='10.0.0.1',
+            external_port=2222,
+            external_port_range=None,
+            internal_ip_address='192.168.0.1',
+            internal_port=22,
+            internal_port_range=None
+        )
+        fake_pf_obj_2 = self._fake_pf_obj(
+            is_object=True,
+            id=id,
+            floatingip_id=floatingip_id,
+            router_id=router_id,
+            protocol='udp',
+            floating_ip_address='10.0.0.1',
+            external_port=2223,
+            external_port_range=None,
+            internal_ip_address='192.168.0.1',
+            internal_port=23,
+            internal_port_range=None
+        )
+
+        exp_lb_name_1, exp_vip_1, _, _ = self.handler._get_lb_attributes(
+            fake_pf_obj_1, True)
+        exp_lb_name_2, exp_vip_2, _, _ = self.handler._get_lb_attributes(
+            fake_pf_obj_2, True)
+        self.handler.port_forwarding_deleted(
+            self.txn, self.l3_plugin._nb_ovn, fake_pf_obj_ranges)
+        info_args, _info_kwargs = m_info.call_args_list[0]
+        self.assertIn('DELETE for port-forwarding', info_args[0])
+        self.assertEqual(2, len(self.txn.add.call_args_list))
+        self.l3_plugin._nb_ovn.lb_del.assert_any_call(
+            exp_lb_name_1, exp_vip_1, if_exists=mock.ANY)
+        self.l3_plugin._nb_ovn.lb_del.assert_any_call(
+            exp_lb_name_2, exp_vip_2, if_exists=mock.ANY)
 
     @mock.patch.object(port_forwarding.LOG, 'info')
     def test_port_forwarding_deleted(self, m_info):
-        fake_pf_obj = self._fake_pf_obj()
+        fake_pf_obj = self._fake_pf_obj(
+            is_object=True,
+            id=uuidutils.generate_uuid(),
+            floatingip_id=uuidutils.generate_uuid(),
+            router_id=uuidutils.generate_uuid(),
+            protocol='udp',
+            floating_ip_address='10.0.0.1',
+            external_port=2222,
+            internal_ip_address='192.168.0.1',
+            internal_port=22,
+        )
         exp_lb_name, exp_vip, _, _ = self.handler._get_lb_attributes(
             fake_pf_obj)
         self.handler.port_forwarding_deleted(

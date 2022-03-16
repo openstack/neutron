@@ -31,6 +31,7 @@ from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron import manager
+from neutron.objects.port_forwarding import PortForwarding
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions import qos \
     as ovn_qos
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
@@ -369,6 +370,11 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
 
         return to_add, to_remove
 
+    def _unroll_port_forwarding(self, db_pf):
+        pf = PortForwarding(**db_pf)
+        pfs = pf.unroll_port_ranges()
+        return [p.to_dict() for p in pfs]
+
     def _calculate_fip_pfs_differences(self, ovn_rtr_lb_pfs, db_pfs):
         to_add_or_update = set()
         to_remove = []
@@ -378,20 +384,21 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         # a set for each protocol and then comparing it with ovn_pfs
         db_mapped_pfs = {}
         for db_pf in db_pfs:
-            fip_id = db_pf.get('floatingip_id')
-            protocol = self.l3_plugin.port_forwarding.ovn_lb_protocol(
-                db_pf.get('protocol'))
-            db_vip = "{}:{} {}:{}".format(
-                db_pf.get('floating_ip_address'), db_pf.get('external_port'),
-                db_pf.get('internal_ip_address'), db_pf.get('internal_port'))
+            for pf in self._unroll_port_forwarding(db_pf):
+                fip_id = pf.get('floatingip_id')
+                protocol = self.l3_plugin.port_forwarding.ovn_lb_protocol(
+                    pf.get('protocol'))
+                db_vip = "{}:{} {}:{}".format(
+                    pf.get('floating_ip_address'), pf.get('external_port'),
+                    pf.get('internal_ip_address'), pf.get('internal_port'))
 
-            fip_dict = db_mapped_pfs.get(fip_id, {})
-            fip_dict_proto = fip_dict.get(protocol, set())
-            fip_dict_proto.add(db_vip)
-            if protocol not in fip_dict:
-                fip_dict[protocol] = fip_dict_proto
-            if fip_id not in db_mapped_pfs:
-                db_mapped_pfs[fip_id] = fip_dict
+                fip_dict = db_mapped_pfs.get(fip_id, {})
+                fip_dict_proto = fip_dict.get(protocol, set())
+                fip_dict_proto.add(db_vip)
+                if protocol not in fip_dict:
+                    fip_dict[protocol] = fip_dict_proto
+                if fip_id not in db_mapped_pfs:
+                    db_mapped_pfs[fip_id] = fip_dict
         for fip_id in db_mapped_pfs:
             ovn_pfs_fip_id = ovn_pfs.get(fip_id, {})
             # check for cases when ovn has lbs for protocols that are not in

@@ -154,8 +154,8 @@ class PortForwardingAgentExtension(l3_extension.L3AgentExtension):
         floating_ip_address = str(port_forward.floating_ip_address)
         protocol = port_forward.protocol
         internal_ip_address = str(port_forward.internal_ip_address)
-        internal_port = port_forward.internal_port
-        external_port = port_forward.external_port
+        external_port, internal_port = self.extract_ports(port_forward)
+
         chain_rule = (pf_chain_name,
                       '-d %s/32 -p %s -m %s --dport %s '
                       '-j DNAT --to-destination %s:%s' % (
@@ -164,6 +164,41 @@ class PortForwardingAgentExtension(l3_extension.L3AgentExtension):
                           internal_port))
         chain_rule_list.append(chain_rule)
         return chain_rule_list
+
+    @staticmethod
+    def extract_ports(port_forward):
+        # The IP table rules handles internal port ranges with "-"
+        # while the external ports ranges it handles using ":"
+        internal_port = port_forward.internal_port_range.replace(':', '-')
+        external_port = port_forward.external_port_range
+        internal_start, internal_end = internal_port.split('-')
+        external_start, external_end = external_port.split(':')
+        internal_port_one_to_one_mask = ''
+        is_single_external_port = external_start == external_end
+        is_single_internal_port = internal_start == internal_end
+        if is_single_external_port:
+            external_port = external_start
+        else:
+            # This mask will ensure that the rules will be applied in N-N
+            # like 40:50 -> 60:70, the port 40 will be mapped to 60,
+            # the 41 to 61, 42 to 62...50 to 70.
+            # In the case of 40:60 -> 70:80, the ports will be rounded
+            # so the port 41 and 51, will be mapped to 71.
+            internal_port_one_to_one_mask = '/' + external_start
+        if is_single_internal_port:
+            internal_port = internal_start
+        else:
+            internal_port = internal_port + internal_port_one_to_one_mask
+
+        are_ranges_different = (int(internal_end) - int(internal_start)) - (
+                int(external_end) - int(external_start))
+        if are_ranges_different and not (
+                is_single_internal_port or is_single_external_port):
+            LOG.warning("Port forwarding rule with different internal "
+                        "and external port ranges applied. Internal "
+                        "port range: [%s], external port range: [%s].",
+                        internal_port, external_port)
+        return external_port, internal_port
 
     def _rule_apply(self, iptables_manager, port_forwarding, rule_tag):
         iptables_manager.ipv4['nat'].clear_rules_by_tag(rule_tag)

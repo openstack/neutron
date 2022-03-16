@@ -13,6 +13,7 @@
 from unittest import mock
 
 from neutron_lib.api.definitions import fip_pf_description as ext_apidef
+from neutron_lib.api.definitions import fip_pf_port_range as ext_range_apidef
 from neutron_lib.api.definitions import floating_ip_port_forwarding as apidef
 from neutron_lib import exceptions as lib_exc
 from neutron_lib.exceptions import l3 as lib_l3_exc
@@ -120,6 +121,8 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
             apidef.RESOURCE_NAME:
                 {apidef.EXTERNAL_PORT: 2225,
                  apidef.INTERNAL_PORT: 25,
+                 ext_range_apidef.EXTERNAL_PORT_RANGE: '2225:2225',
+                 ext_range_apidef.INTERNAL_PORT_RANGE: '25:25',
                  apidef.INTERNAL_PORT_ID: self.port['id'],
                  apidef.PROTOCOL: "tcp",
                  ext_apidef.DESCRIPTION_FIELD: 'Some description',
@@ -139,6 +142,8 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
         expect = {
             "external_port": 2225,
             "internal_port": 25,
+            "internal_port_range": '25:25',
+            "external_port_range": '2225:2225',
             "internal_port_id": self.port['id'],
             "protocol": "tcp",
             "internal_ip_address": self.port['fixed_ips'][0]['ip_address'],
@@ -201,6 +206,8 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
         expect = {
             "external_port": 2225,
             "internal_port": 25,
+            "external_port_range": '2225:2225',
+            "internal_port_range": '25:25',
             "internal_port_id": self.port['id'],
             "protocol": "tcp",
             "internal_ip_address": self.port['fixed_ips'][0]['ip_address'],
@@ -242,6 +249,8 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
         expect = {
             "external_port": 2226,
             "internal_port": 26,
+            "external_port_range": '2226:2226',
+            "internal_port_range": '26:26',
             "internal_port_id": self.port['id'],
             "protocol": "udp",
             "internal_ip_address": self.port['fixed_ips'][0]['ip_address'],
@@ -269,7 +278,9 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
             self.context, res['id'], self.fip['id'], update_body)
         expect = {
             "external_port": 2227,
+            "external_port_range": '2227:2227',
             "internal_port": 27,
+            "internal_port_range": '27:27',
             "internal_port_id": new_port['id'],
             "protocol": "tcp",
             "internal_ip_address": new_port['fixed_ips'][0]['ip_address'],
@@ -321,7 +332,10 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
             'internal_port_id': new_port['id'],
             'internal_ip_address': new_port['fixed_ips'][0]['ip_address'],
             'external_port': self.port_forwarding[
-                                 apidef.RESOURCE_NAME]['external_port'] + 1
+                                 apidef.RESOURCE_NAME]['external_port'] + 1,
+            'external_port_range': '%(port)s:%(port)s' % {
+                'port': self.port_forwarding[
+                            apidef.RESOURCE_NAME]['external_port'] + 1}
         })
         new_res = self.pf_plugin.create_floatingip_port_forwarding(
             self.context, self.fip['id'], self.port_forwarding)
@@ -345,6 +359,7 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
         new_port = self._create_port(self.fmt, self.net['id']).json['port']
         self.port_forwarding[apidef.RESOURCE_NAME].update({
             'external_port': 2226,
+            'external_port_range': '2226:2226',
             'internal_port_id': new_port['id'],
             'internal_ip_address': new_port['fixed_ips'][0]['ip_address']
         })
@@ -392,6 +407,8 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
         expected = {
             "external_port": 2225,
             "internal_port": 25,
+            "external_port_range": '2225:2225',
+            "internal_port_range": '25:25',
             "internal_port_id": self.port['id'],
             "protocol": "tcp",
             "internal_ip_address": self.port['fixed_ips'][0]['ip_address'],

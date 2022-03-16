@@ -21,6 +21,7 @@ from sqlalchemy import orm
 from neutron.db.models import l3
 from neutron.db import models_v2
 from neutron_lib.api.definitions import fip_pf_description as apidef
+from neutron_lib.api.definitions import fip_pf_port_range as range_apidef
 from neutron_lib.db import constants as db_const
 
 
@@ -28,28 +29,34 @@ class PortForwarding(standard_attr.HasStandardAttributes,
                      model_base.BASEV2, model_base.HasId):
 
     __table_args__ = (
-        sa.UniqueConstraint('floatingip_id', 'external_port', 'protocol',
+        sa.UniqueConstraint('floatingip_id', 'protocol',
+                            'external_port_start', 'external_port_end',
                             name='uniq_port_forwardings0floatingip_id0'
-                                 'external_port0protocol'),
-        sa.UniqueConstraint('internal_neutron_port_id', 'socket', 'protocol',
-                            name='uniq_port_forwardings0'
-                                 'internal_neutron_port_id0socket0'
-                                 'protocol')
+                                 'protocol0external_ports'),
+        sa.UniqueConstraint('protocol', 'internal_neutron_port_id',
+                            'internal_ip_address', 'internal_port_start',
+                            'internal_port_end',
+                            name='uniq_port_forwardings0ptcl0in_prt_id0'
+                                 'in_ip_addr0in_prts')
     )
 
     floatingip_id = sa.Column(sa.String(db_const.UUID_FIELD_SIZE),
                               sa.ForeignKey('floatingips.id',
                                             ondelete="CASCADE"),
                               nullable=False)
-    external_port = sa.Column(sa.Integer, nullable=False)
     internal_neutron_port_id = sa.Column(
         sa.String(db_const.UUID_FIELD_SIZE),
         sa.ForeignKey('ports.id', ondelete="CASCADE"),
         nullable=False)
     protocol = sa.Column(sa.String(40), nullable=False)
-    socket = sa.Column(sa.String(36), nullable=False)
+    internal_ip_address = sa.Column(sa.String(64), nullable=False)
+    internal_port_start = sa.Column(sa.Integer, nullable=False)
+    external_port_start = sa.Column(sa.Integer, nullable=False)
+    internal_port_end = sa.Column(sa.Integer, nullable=False)
+    external_port_end = sa.Column(sa.Integer, nullable=False)
     port = orm.relationship(
         models_v2.Port, load_on_pending=True,
+        foreign_keys=internal_neutron_port_id,
         backref=orm.backref("port_forwardings",
                             lazy='subquery', uselist=True,
                             cascade='delete')
@@ -61,4 +68,4 @@ class PortForwarding(standard_attr.HasStandardAttributes,
                             cascade='delete')
     )
     revises_on_change = ('floating_ip', 'port',)
-    api_collections = [apidef.ALIAS]
+    api_collections = [apidef.ALIAS, range_apidef.ALIAS]

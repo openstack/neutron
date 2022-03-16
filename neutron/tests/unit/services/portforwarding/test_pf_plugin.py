@@ -184,6 +184,8 @@ class TestPortForwardingPlugin(testlib_api.SqlTestCase):
             'floatingip_id': 'fip_id'}
         pf_obj = mock.Mock()
         pf_obj.internal_ip_address = "10.0.0.1"
+        pf_obj.internal_port = 22
+        pf_obj.external_port = 222
         mock_pf_get_object.return_value = pf_obj
         port_dict = {'id': 'ID', 'fixed_ips': [{"subnet_id": "test-subnet-id",
                                                 "ip_address": "10.0.0.1"}]}

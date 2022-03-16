@@ -60,6 +60,8 @@ class PortForwardingExtensionBaseTestCase(
         self.portforwarding1 = pf_obj.PortForwarding(
             context=None, id=_uuid(), floatingip_id=self.floatingip2.id,
             external_port=1111, protocol='tcp', internal_port_id=_uuid(),
+            external_port_range='1111:1111',
+            internal_port_range='11111:11111',
             internal_ip_address='1.1.1.1', internal_port=11111,
             floating_ip_address=self.floatingip2.floating_ip_address,
             router_id=self.floatingip2.router_id)
@@ -148,15 +150,16 @@ class FipPortForwardingExtensionTestCase(PortForwardingExtensionBaseTestCase):
         rule_tag = 'fip_portforwarding-' + target_obj.id
         chain_name = (
             'pf-' + target_obj.id)[:lib_const.MAX_IPTABLES_CHAIN_LEN_WRAP]
+        ports = pf.PortForwardingAgentExtension.extract_ports(target_obj)
         chain_rule = (chain_name,
                       '-d %s/32 -p %s -m %s --dport %s '
                       '-j DNAT --to-destination %s:%s' % (
                           target_obj.floating_ip_address,
                           target_obj.protocol,
                           target_obj.protocol,
-                          target_obj.external_port,
+                          ports[0],
                           target_obj.internal_ip_address,
-                          target_obj.internal_port))
+                          ports[1]))
         return chain_name, chain_rule, rule_tag
 
     def _assert_called_iptables_process(self, mock_add_chain,
@@ -183,6 +186,69 @@ class FipPortForwardingExtensionTestCase(PortForwardingExtensionBaseTestCase):
                 lib_const.FLOATINGIP_STATUS_ACTIVE}
         mock_send_fip_status.assert_called_once_with(mock.ANY, fip_status)
 
+    def _test_extract_ports(self, internal_port_range, external_port_range,
+                            expected_internal_port, expected_external_port,
+                            log_called=False):
+        mock_pf = mock.Mock()
+        mock_log = mock.patch.object(pf.LOG, 'warning').start()
+        mock_pf.internal_port_range = internal_port_range
+        mock_pf.external_port_range = external_port_range
+        ports = pf.PortForwardingAgentExtension.extract_ports(mock_pf)
+        self.assertEqual(expected_internal_port, ports[1])
+        self.assertEqual(expected_external_port, ports[0])
+        if log_called:
+            mock_log.assert_called_with(
+                "Port forwarding rule with different internal "
+                "and external port ranges applied. Internal "
+                "port range: [%s], external port range: [%s].",
+                ports[1], ports[0])
+        else:
+            self.assertFalse(mock_log.called)
+
+    def test_extract_ports(self):
+        test_cases = {
+            'internal port range = external port range': {
+                'internal': '10:12',
+                'external': '13:15',
+                'expected_internal': '10-12/13',
+                'expected_external': '13:15',
+            },
+            'internal port range = external port range = 1': {
+                'internal': '10:10',
+                'external': '13:13',
+                'expected_internal': '10',
+                'expected_external': '13',
+            },
+            'internal port range < external port range': {
+                'internal': '10:12',
+                'external': '13:16',
+                'expected_internal': '10-12/13',
+                'expected_external': '13:16',
+                'log_called': True
+            },
+            'internal port range > external port range': {
+                'internal': '9:12',
+                'external': '13:15',
+                'expected_internal': '9-12/13',
+                'expected_external': '13:15',
+                'log_called': True
+            },
+            'internal port range = 1': {
+                'internal': '10:10',
+                'external': '13:15',
+                'expected_internal': '10',
+                'expected_external': '13:15',
+            },
+            'external port range = 1': {
+                'internal': '10:12',
+                'external': '13:13',
+                'expected_internal': '10-12',
+                'expected_external': '13',
+            }
+        }
+        for case in test_cases.values():
+            self._test_extract_ports(*case.values())
+
     @mock.patch.object(pf.PortForwardingAgentExtension,
                        '_sending_port_forwarding_fip_status')
     @mock.patch.object(iptables_manager.IptablesTable, 'add_rule')
@@ -208,6 +274,8 @@ class FipPortForwardingExtensionTestCase(PortForwardingExtensionBaseTestCase):
         test_portforwarding = pf_obj.PortForwarding(
             context=None, id=_uuid(), floatingip_id=self.floatingip2.id,
             external_port=2222, protocol='tcp', internal_port_id=_uuid(),
+            external_port_range='2222:2222',
+            internal_port_range='22222:22222',
             internal_ip_address='2.2.2.2', internal_port=22222,
             floating_ip_address=self.floatingip2.floating_ip_address,
             router_id=self.floatingip2.router_id)
@@ -229,8 +297,9 @@ class FipPortForwardingExtensionTestCase(PortForwardingExtensionBaseTestCase):
         update_portforwarding = pf_obj.PortForwarding(
             context=None, id=self.portforwarding1.id,
             floatingip_id=self.portforwarding1.floatingip_id,
-            external_port=2222, protocol='tcp', internal_port_id=_uuid(),
-            internal_ip_address='2.2.2.2', internal_port=22222,
+            external_port_range='2222:2223', protocol='tcp',
+            internal_port_id=_uuid(), internal_ip_address='2.2.2.2',
+            internal_port_range='22222:22223',
             floating_ip_address=self.portforwarding1.floating_ip_address,
             router_id=self.portforwarding1.router_id)
         self.port_forwardings = [update_portforwarding]

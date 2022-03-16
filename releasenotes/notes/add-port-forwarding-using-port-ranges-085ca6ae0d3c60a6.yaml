@@ -1,0 +1,8 @@
+---
+
+features:
+  - |
+    Add support for port ranges in the port forwarding rules.
+    The supported ranges are N:M with N <= M. Also, the ranges
+    of internal and external ports relation must be:
+    internal range = external range or internal range = 1.
