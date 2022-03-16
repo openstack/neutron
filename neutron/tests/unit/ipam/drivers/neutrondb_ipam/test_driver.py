@@ -423,12 +423,6 @@ class TestNeutronDbIpamSubnet(testlib_api.SqlTestCase,
         # future proofing in case v6-specific logic will be added.
         self._test_deallocate_address('fde3:abcd:4321:1::/64', 6)
 
-    def test_allocate_unallocated_address_fails(self):
-        ipam_subnet = self._create_and_allocate_ipam_subnet(
-            '10.0.0.0/24', ip_version=constants.IP_VERSION_4)[0]
-        self.assertRaises(ipam_exc.IpAddressAllocationNotFound,
-                          ipam_subnet.deallocate, '10.0.0.2')
-
     def test_allocate_all_pool_addresses_triggers_range_recalculation(self):
         # This test instead might be made to pass, but for the wrong reasons!
         pass

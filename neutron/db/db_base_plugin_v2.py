@@ -1515,13 +1515,6 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     old_port_db=db_port,
                     old_port=self._make_port_dict(db_port),
                     new_port=new_port)
-            except ipam_exc.IpAddressAllocationNotFound as e:
-                # If a port update and a subnet delete interleave, there is a
-                # chance that the IPAM update operation raises this exception.
-                # Rather than throwing that up to the user under some sort of
-                # conflict, bubble up a retry instead that should bring things
-                # back to sanity.
-                raise os_db_exc.RetryRequest(e)
             except ipam_exc.IPAddressChangeNotAllowed as e:
                 raise exc.BadRequest(resource='ports', msg=e)
         return self._make_port_dict(db_port)
