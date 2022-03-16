@@ -13,7 +13,6 @@ libffi-devel [platform:rpm]
 # MySQL and PostgreSQL databases since some jobs are set up in
 # OpenStack infra that need these like
 # periodic-neutron-py35-with-neutron-lib-master.
-haproxy
 libmysqlclient-dev [platform:dpkg test]
 mariadb [platform:rpm test]
 mariadb-devel [platform:rpm test]
@@ -24,3 +23,8 @@ postgresql [test]
 postgresql-client [platform:dpkg test]
 postgresql-devel [platform:rpm test]
 postgresql-server [platform:rpm test]
+
+haproxy
+keepalived
+
+iproute-tc [platform:rpm]
