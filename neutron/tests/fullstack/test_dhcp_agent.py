@@ -72,6 +72,7 @@ class BaseDhcpAgentTest(base.BaseFullStackTestCase):
                 self.safe_client,
                 use_dhcp=True))
         vm.block_until_boot()
+        vm.block_until_dhcp_config_done()
         return vm
 
     def _create_network_subnet_and_vm(self):
@@ -181,8 +182,7 @@ class TestDhcpAgentHA(BaseDhcpAgentTest):
         self.assertEqual(1, len(new_network_dhcp_agents))
 
         # check if new vm will get IP from new DHCP agent
-        new_vm = self._spawn_vm()
-        new_vm.block_until_dhcp_config_done()
+        self._spawn_vm()
 
     def test_multiple_agents_for_network(self):
         network_dhcp_agents = self.client.list_dhcp_agent_hosting_networks(
@@ -198,8 +198,7 @@ class TestDhcpAgentHA(BaseDhcpAgentTest):
         self._kill_dhcp_agent(network_dhcp_agents[0])
 
         # check if new vm will get IP from DHCP agent which is still alive
-        new_vm = self._spawn_vm()
-        new_vm.block_until_dhcp_config_done()
+        self._spawn_vm()
 
 
 class TestDhcpAgentHARaceCondition(BaseDhcpAgentTest):
@@ -300,8 +299,6 @@ class TestSubnetDeleteRace(BaseDhcpAgentTest):
             enable_dhcp=True)
 
         self.vm = self._spawn_vm()
-        self.vm.block_until_boot()
-        self.vm.block_until_dhcp_config_done()
 
         dhcp_ports = self.safe_client.list_ports(**{
             'device_owner': 'network:dhcp',

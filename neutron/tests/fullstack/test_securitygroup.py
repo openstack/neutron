@@ -52,7 +52,7 @@ class BaseSecurityGroupsSameNetworkTest(base.BaseFullStackTestCase):
             environment.HostDescription(
                 l2_agent_type=self.l2_agent_type,
                 firewall_driver=self.firewall_driver,
-                dhcp_agent=True) for _ in range(self.num_hosts)]
+                dhcp_agent=False) for _ in range(self.num_hosts)]
         env = environment.Environment(
             environment.EnvironmentDescription(
                 network_type=self.network_type,
@@ -246,11 +246,10 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
                     tenant_uuid,
                     self.safe_client,
                     neutron_port=ports[-1],
-                    use_dhcp=True)))
+                    use_dhcp=False)))
         self.assertEqual(5, len(vms))
 
         vms[4].block_until_boot()
-        vms[4].block_until_dhcp_config_done()
 
         netcat = net_helpers.NetcatTester(vms[4].namespace,
             vms[0].namespace, vms[0].ip, 3355,
@@ -566,10 +565,9 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
                     tenant_uuid,
                     self.safe_client,
                     neutron_port=ports[port],
-                    use_dhcp=True))
+                    use_dhcp=False))
             for port, host in enumerate(index_to_host)]
         map(lambda vm: vm.block_until_boot(), vms)
-        map(lambda vm: vm.block_until_dhcp_config_done(), vms)
 
         return vms, ports, sgs, network, index_to_host
 

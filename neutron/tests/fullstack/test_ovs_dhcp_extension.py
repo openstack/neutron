@@ -163,6 +163,7 @@ class OvsDHCPExtensionTestCase(base.BaseFullStackTestCase):
     def test_ovs_dhcp_agent_extension_ping_vms(self):
         vms = self._prepare_vms()
         vms.block_until_all_boot()
+        vms.block_until_all_dhcp_config_done()
         # ping -4 from vm_1 to vm_2
         vms.ping_all()
         # ping -6 from vm_1 to vm_2

@@ -37,7 +37,7 @@ LOG = logging.getLogger(__name__)
 class BaseConnectivitySameNetworkTest(base.BaseFullStackTestCase):
 
     arp_responder = False
-    use_dhcp = True
+    use_dhcp = False
 
     num_hosts = 3
 
@@ -161,23 +161,6 @@ class TestLinuxBridgeConnectivitySameNetwork(BaseConnectivitySameNetworkTest):
         ('VXLAN and l2pop', {'network_type': 'vxlan',
                              'l2_pop': True})
     ]
-
-    def test_connectivity(self):
-        self._test_connectivity()
-
-
-class TestConnectivitySameNetworkNoDhcp(BaseConnectivitySameNetworkTest):
-
-    scenarios = [
-        (constants.AGENT_TYPE_OVS,
-         {'l2_agent_type': constants.AGENT_TYPE_OVS}),
-        (constants.AGENT_TYPE_LINUXBRIDGE,
-         {'l2_agent_type': constants.AGENT_TYPE_LINUXBRIDGE})
-    ]
-
-    use_dhcp = False
-    network_type = 'vxlan'
-    l2_pop = False
 
     def test_connectivity(self):
         self._test_connectivity()

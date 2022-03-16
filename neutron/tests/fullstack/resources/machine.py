@@ -38,6 +38,10 @@ class FakeFullstackMachinesList(list):
         for vm in self:
             vm.block_until_boot()
 
+    def block_until_all_dhcp_config_done(self):
+        for vm in self:
+            vm.block_until_dhcp_config_done()
+
     def ping_all(self):
         # Generate an iterable of all unique pairs. For example:
         # itertools.permutations(range(3), 2) results in:

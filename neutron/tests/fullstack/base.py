@@ -172,6 +172,8 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
             for host in self.environment.hosts)
 
         vms.block_until_all_boot()
+        if use_dhcp:
+            vms.block_until_all_dhcp_config_done()
         return vms
 
     def assert_namespace_exists(self, ns_name):
