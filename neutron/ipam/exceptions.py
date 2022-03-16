@@ -31,6 +31,8 @@ class InvalidAddressType(exceptions.NeutronException):
     message = _("Unknown address type %(address_type)s")
 
 
+# NOTE(ralonsoh): this exception is used in VMware NSX plugin but is removed
+# in Zed release.
 class IpAddressAllocationNotFound(exceptions.NeutronException):
     message = _("Unable to find IP address %(ip_address)s on subnet "
                 "%(subnet_id)s")

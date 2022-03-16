@@ -281,14 +281,8 @@ class NeutronDbSubnet(ipam_base.Subnet):
     def deallocate(self, address):
         # This is almost a no-op because the Neutron DB IPAM driver does not
         # delete IPAllocation objects at every deallocation. The only
-        # operation it performs is to delete an IPRequest entry.
-        count = self.subnet_manager.delete_allocation(
-            self._context, address)
-        # count can hardly be greater than 1, but it can be 0...
-        if not count:
-            raise ipam_exc.IpAddressAllocationNotFound(
-                subnet_id=self.subnet_manager.neutron_id,
-                ip_address=address)
+        # operation it performs is to delete an IPAMAllocation entry.
+        self.subnet_manager.delete_allocation(self._context, address)
 
     def _no_pool_changes(self, context, pools):
         """Check if pool updates in db are required."""
