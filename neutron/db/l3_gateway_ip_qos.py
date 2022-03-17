@@ -43,6 +43,7 @@ class L3_gw_ip_qos_dbonly_mixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
             policy_id = router_db.qos_policy_binding.policy_id
             router_res[l3_apidef.EXTERNAL_GW_INFO].update(
                 {qos_consts.QOS_POLICY_ID: policy_id})
+            router_res[qos_consts.QOS_POLICY_ID] = policy_id
 
     @property
     def _is_gw_ip_qos_supported(self):

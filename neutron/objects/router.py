@@ -194,7 +194,8 @@ class DVRMacAddress(base.NeutronDbObject):
 @base.NeutronObjectRegistry.register
 class Router(base.NeutronDbObject):
     # Version 1.0: Initial version
-    VERSION = '1.0'
+    # Version 1.1: Added "qos_policy_id" field
+    VERSION = '1.1'
 
     db_model = l3.Router
 
@@ -209,9 +210,12 @@ class Router(base.NeutronDbObject):
         'flavor_id': common_types.UUIDField(nullable=True),
         'extra_attributes': obj_fields.ObjectField(
             'RouterExtraAttributes', nullable=True),
+        'qos_policy_id': common_types.UUIDField(nullable=True, default=None),
     }
 
-    synthetic_fields = ['extra_attributes']
+    synthetic_fields = ['extra_attributes',
+                        'qos_policy_id',
+                        ]
 
     fields_no_update = ['project_id']
 
@@ -229,6 +233,46 @@ class Router(base.NeutronDbObject):
             ~l3.Router.project_id.in_(projects))
 
         return bool(query.count())
+
+    def _attach_qos_policy(self, qos_policy_id):
+        qos_binding.QosPolicyRouterGatewayIPBinding.delete_objects(
+            self.obj_context, router_id=self.id)
+        if qos_policy_id:
+            qos_binding.QosPolicyRouterGatewayIPBinding(
+                self.obj_context, policy_id=qos_policy_id,
+                router_id=self.id).create()
+
+        self.qos_policy_id = qos_policy_id
+        self.obj_reset_changes(['qos_policy_id'])
+
+    def create(self):
+        fields = self.obj_get_changes()
+        with self.db_context_writer(self.obj_context):
+            qos_policy_id = self.qos_policy_id
+            super().create()
+            if 'qos_policy_id' in fields:
+                self._attach_qos_policy(qos_policy_id)
+
+    def update(self):
+        fields = self.obj_get_changes()
+        with self.db_context_writer(self.obj_context):
+            super().update()
+            if 'qos_policy_id' in fields:
+                self._attach_qos_policy(fields['qos_policy_id'])
+
+    def from_db_object(self, db_obj):
+        super().from_db_object(db_obj)
+        fields_to_change = []
+        if db_obj.get('qos_policy_binding'):
+            self.qos_policy_id = db_obj.qos_policy_binding.policy_id
+            fields_to_change.append('qos_policy_id')
+
+        self.obj_reset_changes(fields_to_change)
+
+    def obj_make_compatible(self, primitive, target_version):
+        _target_version = versionutils.convert_version_to_tuple(target_version)
+        if _target_version < (1, 1):
+            primitive.pop('qos_policy_id', None)
 
 
 @base.NeutronObjectRegistry.register
