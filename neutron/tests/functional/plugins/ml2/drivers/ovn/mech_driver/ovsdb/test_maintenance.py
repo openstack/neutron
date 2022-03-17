@@ -721,64 +721,6 @@ class TestMaintenance(_TestMaintenanceHelper):
             self.context,
             neutron_obj['port_id']))
 
-    def test_check_for_port_security_unknown_address(self):
-        neutron_net = self._create_network('network1')
-        neutron_port = self._create_port('port1', neutron_net['id'])
-
-        # Let's force disabling port security for the LSP
-        self.nb_api.lsp_set_port_security(neutron_port['id'], []).execute(
-            check_error=True)
-
-        ovn_port = self.nb_api.db_find(
-            'Logical_Switch_Port', ('name', '=', neutron_port['id'])).execute(
-            check_error=True)[0]
-
-        # Assert that port security is now disabled but the 'unknown'
-        # is not set in the addresses column
-        self.assertFalse(ovn_port['port_security'])
-        self.assertNotIn('unknown', ovn_port['addresses'])
-
-        # Call the maintenance task to fix the problem. Note that
-        # NeverAgain is raised so it only runs once at start up
-        self.assertRaises(periodics.NeverAgain,
-                          self.maint.check_for_port_security_unknown_address)
-
-        ovn_port = self.nb_api.db_find(
-            'Logical_Switch_Port', ('name', '=', neutron_port['id'])).execute(
-            check_error=True)[0]
-
-        # Assert that 'unknown' was set in the addresses column for
-        # the port
-        self.assertFalse(ovn_port['port_security'])
-        self.assertIn('unknown', ovn_port['addresses'])
-
-        # Now the other way around, let's set port_security in the OVN
-        # table while the 'unknown' address is set in the addresses column
-        self.nb_api.lsp_set_port_security(
-            neutron_port['id'], ovn_port['addresses']).execute(
-            check_error=True)
-
-        ovn_port = self.nb_api.db_find(
-            'Logical_Switch_Port', ('name', '=', neutron_port['id'])).execute(
-            check_error=True)[0]
-
-        self.assertTrue(ovn_port['port_security'])
-        self.assertIn('unknown', ovn_port['addresses'])
-
-        # Call the maintenance task to fix the problem. Note that
-        # NeverAgain is raised so it only runs once at start up
-        self.assertRaises(periodics.NeverAgain,
-                          self.maint.check_for_port_security_unknown_address)
-
-        ovn_port = self.nb_api.db_find(
-            'Logical_Switch_Port', ('name', '=', neutron_port['id'])).execute(
-            check_error=True)[0]
-
-        # Assert that 'unknown' was removed from the addresses column
-        # for the port
-        self.assertTrue(ovn_port['port_security'])
-        self.assertNotIn('unknown', ovn_port['addresses'])
-
     def test_check_for_igmp_snooping_enabled(self):
         cfg.CONF.set_override('igmp_snooping_enable', False, group='OVS')
         net = self._create_network('net')
