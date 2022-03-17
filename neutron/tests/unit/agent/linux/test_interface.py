@@ -695,20 +695,3 @@ class TestBridgeInterfaceDriver(TestBase):
 
         self.ip_dev.assert_has_calls([mock.call('tap0', namespace=None),
                                       mock.call().link.delete()])
-
-
-class TestLegacyDriver(TestBase):
-
-    def test_plug(self):
-        self.device_exists.return_value = False
-        with mock.patch('neutron.agent.linux.interface.LOG.warning') as log:
-            driver = FakeLegacyInterfaceDriver(self.conf)
-            try:
-                driver.plug(
-                    '01234567-1234-1234-99', 'port-1234', 'tap0',
-                    'aa:bb:cc:dd:ee:ff')
-            except TypeError:
-                self.fail("LinuxInterfaceDriver class can not call properly "
-                          "plug_new method from the legacy drivers that "
-                          "do not accept 'link_up' parameter.")
-            log.assert_called_once()
