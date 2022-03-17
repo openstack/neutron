@@ -970,7 +970,6 @@ class TestDvrRouterOperations(base.BaseTestCase):
         self.mock_driver.unplug.reset_mock()
         self._set_ri_kwargs(agent, router['id'], router)
         ri = dvr_edge_ha_rtr.DvrEdgeHaRouter(HOSTNAME, **self.ri_kwargs)
-        ri._ha_state_path = self.get_temp_file_path('router_ha_state')
         ri._create_snat_namespace = mock.Mock()
         ri._plug_external_gateway = mock.Mock()
         ri.initialize(mock.Mock())
