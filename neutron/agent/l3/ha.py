@@ -182,10 +182,11 @@ class AgentMixin(object):
         if ri is None:
             return
 
-        state_change_data = {"router_id": router_id, "state": state,
-                             "host": ri.agent.host}
+        state_change_data = {
+            "router_id": router_id, "state": state, "host": ri.agent.host,
+            "enable_ndp_proxy": ri.router.get("enable_ndp_proxy", False)}
         LOG.info('Router %(router_id)s transitioned to %(state)s on '
-                 'agent %(host)s',
+                 'agent %(host)s; NDP proxy enabled: %(enable_ndp_proxy)s',
                  state_change_data)
 
         # Set external gateway port link up or down according to state
