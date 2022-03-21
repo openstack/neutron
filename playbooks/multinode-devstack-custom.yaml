@@ -1,0 +1,27 @@
+- hosts: all
+  vars:
+    install_ovs: false
+  roles:
+    - orchestrate-devstack
+    # For ovs from source jobs we need to reconfigure bridges after devstack setup
+    - multi-node-bridge
+    - multi-node-setup
+
+# We run tests only on one node, regardless how many nodes are in the system
+- hosts: tempest
+  tasks:
+    - name: Setup Tempest Run Directory
+      include_role:
+        name: setup-tempest-run-dir
+
+    - name: Setup Tempest Data Directory
+      include_role:
+        name: setup-tempest-data-dir
+
+    - name: ACL devstack files
+      include_role:
+        name: acl-devstack-files
+
+    - name: Run Tempest
+      include_role:
+        name: run-tempest

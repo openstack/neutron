@@ -475,6 +475,7 @@
     # experimental queue
     name: neutron-ovn-tempest-full-multinode-ovs-master
     parent: neutron-ovn-multinode-base
+    run: playbooks/multinode-devstack-custom.yaml
     vars:
       tox_envlist: all
       tempest_test_regex: "^(?!.*\
