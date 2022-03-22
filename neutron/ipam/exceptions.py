@@ -31,11 +31,6 @@ class InvalidAddressType(exceptions.NeutronException):
     message = _("Unknown address type %(address_type)s")
 
 
-class IpAddressAllocationNotFound(exceptions.NeutronException):
-    message = _("Unable to find IP address %(ip_address)s on subnet "
-                "%(subnet_id)s")
-
-
 class IpAddressAlreadyAllocated(exceptions.Conflict):
     message = _("IP address %(ip)s already allocated in subnet %(subnet_id)s")
 
