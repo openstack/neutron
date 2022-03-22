@@ -23,6 +23,7 @@ from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import timeutils
+from ovs.db import idl as ovs_idl_mod
 from ovs.stream import Stream
 from ovsdbapp.backend.ovs_idl import connection
 from ovsdbapp.backend.ovs_idl import event as row_event
@@ -693,6 +694,15 @@ class Ml2OvnIdlBase(connection.OvsdbIdl):
         super(Ml2OvnIdlBase, self).__init__(
             remote, schema, probe_interval=probe_interval, **kwargs)
 
+    def set_table_condition(self, table_name, condition):
+        # Prior to ovs commit 46d44cf3be0, self.cond_change() doesn't work here
+        # but after that commit, setting table.condtion doesn't work.
+        if hasattr(ovs_idl_mod, 'ConditionState'):
+            self.cond_change(table_name, condition)
+        else:
+            # Can be removed after the minimum ovs version >= 2.17.0
+            self.tables[table_name].condition = condition
+
 
 class BaseOvnIdl(Ml2OvnIdlBase):
     def __init__(self, remote, schema, **kwargs):
@@ -909,11 +919,8 @@ class OvnInitPGNbIdl(OvnIdl):
 
     def __init__(self, driver, remote, schema):
         super(OvnInitPGNbIdl, self).__init__(driver, remote, schema)
-        # self.cond_change() doesn't work here because we are setting the
-        # condition *before an initial monitor request is made* so there is
-        # no previous session whose condition we wish to change
-        self.tables['Port_Group'].condition = [
-            ['name', '==', ovn_const.OVN_DROP_PORT_GROUP_NAME]]
+        self.set_table_condition(
+            'Port_Group', [['name', '==', ovn_const.OVN_DROP_PORT_GROUP_NAME]])
         self.neutron_pg_drop_event = NeutronPgDropPortGroupCreated(
                 timeout=ovn_conf.get_ovn_ovsdb_timeout())
         self.notify_handler.watch_event(self.neutron_pg_drop_event)
