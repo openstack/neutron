@@ -27,6 +27,7 @@ from oslo_utils import uuidutils
 from neutron.conf.db import extraroute_db
 from neutron.db import l3_gateway_ip_qos
 from neutron.extensions import l3
+from neutron.objects.qos import binding
 from neutron.objects.qos import policy
 from neutron.tests.unit.extensions import test_l3
 
@@ -110,8 +111,7 @@ class GatewayIPQoSDBTestCaseBase(object):
                 res['router']['external_gateway_info'].get(
                     qos_consts.QOS_POLICY_ID))
 
-    def test_clear_router_gateway_and_create_with_old_qos_policy_implicitly(
-            self):
+    def test_clear_router_gateway_and_create_again(self):
         ctx = context.get_admin_context()
         policy_obj = policy.QosPolicy(ctx,
                                       id=uuidutils.generate_uuid(),
@@ -129,22 +129,25 @@ class GatewayIPQoSDBTestCaseBase(object):
                 policy_obj.id,
                 res['router']['external_gateway_info'].get(
                     qos_consts.QOS_POLICY_ID))
+            gw_binding = binding.QosPolicyRouterGatewayIPBinding.get_object(
+                ctx, router_id=r['router']['id'])
+            self.assertEqual(r['router']['id'], gw_binding.router_id)
 
-            # Clear router gateway
+            # Clear router gateway, the QoS policy must be removed.
             self._remove_external_gateway_from_router(
                 r['router']['id'],
                 public_sub['subnet']['network_id'],
                 external_gw_info={})
+            gw_binding = binding.QosPolicyRouterGatewayIPBinding.get_object(
+                ctx, router_id=r['router']['id'])
+            self.assertIsNone(gw_binding)
 
-            # Create router gateway again, then the qos policy binding will be
-            # reused here.
+            # Create router gateway again.
             res = self._add_external_gateway_to_router(
                 r['router']['id'],
                 public_sub['subnet']['network_id'])
-            self.assertEqual(
-                policy_obj.id,
-                res['router']['external_gateway_info'].get(
-                    qos_consts.QOS_POLICY_ID))
+            self.assertIsNone(res['router']['external_gateway_info'].get(
+                qos_consts.QOS_POLICY_ID))
 
     def test_clear_router_gateway_qos_policy(self):
         ctx = context.get_admin_context()
