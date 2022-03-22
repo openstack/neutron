@@ -58,7 +58,7 @@ class L3_gw_ip_qos_dbonly_mixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
 
     def _delete_gw_ip_qos_db(self, context, router_id, policy_id):
         policy = policy_object.QosPolicy.get_policy_obj(context, policy_id)
-        policy.detach_router(router_id)
+        policy.detach_router(router_id, if_exists=True)
 
     def _update_router_gw_info(self, context, router_id, info, router=None):
         # Calls superclass, pass router db object for avoiding re-loading
@@ -66,10 +66,13 @@ class L3_gw_ip_qos_dbonly_mixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
                        self)._update_router_gw_info(
             context, router_id, info, router)
 
+        if not self._is_gw_ip_qos_supported:
+            return router
+
         with db_api.CONTEXT_WRITER.using(context):
-            if self._is_gw_ip_qos_supported and router.gw_port:
-                self._update_router_gw_qos_policy(context, router_id,
-                                                  info, router)
+            if not router.gw_port:
+                info = {qos_consts.QOS_POLICY_ID: None}
+            self._update_router_gw_qos_policy(context, router_id, info, router)
 
         return router
 
@@ -79,7 +82,7 @@ class L3_gw_ip_qos_dbonly_mixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
 
     def _update_router_gw_qos_policy(self, context, router_id, info, router):
         if not info or qos_consts.QOS_POLICY_ID not in info:
-            # An explicit 'None' for `qos_polcy_id` indicates to clear
+            # An explicit 'None' for `qos_policy_id` indicates to clear
             # the router gateway IP policy. So if info does not have
             # the key `qos_polcy_id`, we can not decide what behavior
             # to be done, then directly return here.
