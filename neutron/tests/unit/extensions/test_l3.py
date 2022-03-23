@@ -458,9 +458,11 @@ class L3NatTestCaseMixin(object):
 
     @contextlib.contextmanager
     def router(self, name='router1', admin_state_up=True,
-               fmt=None, tenant_id=None,
+               fmt=None, project_id=None,
                external_gateway_info=None, set_context=False,
                **kwargs):
+        tenant_id = project_id if project_id else kwargs.pop(
+            'tenant_id', None)
         router = self._make_router(fmt or self.fmt, tenant_id, name,
                                    admin_state_up, external_gateway_info,
                                    set_context, **kwargs)
@@ -520,7 +522,9 @@ class L3NatTestCaseMixin(object):
     @contextlib.contextmanager
     def floatingip_with_assoc(self, port_id=None, fmt=None, fixed_ip=None,
                               public_cidr='11.0.0.0/24', set_context=False,
-                              tenant_id=None, flavor_id=None, **kwargs):
+                              project_id=None, flavor_id=None, **kwargs):
+        tenant_id = project_id if project_id else kwargs.pop(
+            'tenant_id', None)
         with self.subnet(cidr=public_cidr,
                          set_context=set_context,
                          tenant_id=tenant_id) as public_sub:
@@ -566,6 +570,8 @@ class L3NatTestCaseMixin(object):
     def floatingip_no_assoc_with_public_sub(self, private_sub, fmt=None,
                                             set_context=False, public_sub=None,
                                             flavor_id=None, **kwargs):
+        if 'project_id' in kwargs:
+            kwargs['tenant_id'] = kwargs['project_id']
         self._set_net_external(public_sub['subnet']['network_id'])
         args_list = {}
         if flavor_id:
@@ -598,6 +604,8 @@ class L3NatTestCaseMixin(object):
     @contextlib.contextmanager
     def floatingip_no_assoc(self, private_sub, fmt=None,
                             set_context=False, flavor_id=None, **kwargs):
+        if 'project_id' in kwargs:
+            kwargs['tenant_id'] = kwargs['project_id']
         with self.subnet(cidr='12.0.0.0/24') as public_sub:
             with self.floatingip_no_assoc_with_public_sub(
                     private_sub, fmt, set_context, public_sub,

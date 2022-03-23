@@ -108,6 +108,8 @@ class MeteringPluginDbTestCaseMixin(object):
     @contextlib.contextmanager
     def metering_label(self, name='label', description='desc',
                        fmt=None, **kwargs):
+        if 'project_id' in kwargs:
+            kwargs['tenant_id'] = kwargs['project_id']
         if not fmt:
             fmt = self.fmt
         metering_label = self._make_metering_label(fmt, name,
@@ -117,6 +119,8 @@ class MeteringPluginDbTestCaseMixin(object):
     @contextlib.contextmanager
     def metering_label_rule(self, metering_label_id=None, direction='ingress',
                             excluded=False, fmt=None, **kwargs):
+        if 'project_id' in kwargs:
+            kwargs['tenant_id'] = kwargs['project_id']
         if not fmt:
             fmt = self.fmt
         metering_label_rule = self._make_metering_label_rule(fmt,

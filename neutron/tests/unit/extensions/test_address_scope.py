@@ -78,6 +78,8 @@ class AddressScopeTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     @contextlib.contextmanager
     def address_scope(self, ip_version=constants.IP_VERSION_4,
                       admin=False, **kwargs):
+        if 'project_id' in kwargs:
+            kwargs['tenant_id'] = kwargs['project_id']
         addr_scope = self._make_address_scope(self.fmt, ip_version,
                                               admin, **kwargs)
         yield addr_scope
