@@ -122,6 +122,12 @@ Perform the following steps in the undercloud
      undercloud. If that's not possible please configure VALIDATE_MIGRATION
      to False.
 
+   * OOO_WORKDIR - Name of TripleO working directory
+     Default: '$HOME/overcloud-deploy'
+     This directory contains different stacks in TripleO and its files. It
+     should be configured if TripleO commands were invoked with --work-dir
+     option.
+
    * IMAGE_NAME - Name/ID of the glance image to us for booting a test server.
      Default:'cirros'.
      If the image does not exist it will automatically download and use
