@@ -38,7 +38,7 @@ LANG=C
 : ${IMAGE_NAME:=cirros}
 : ${FLAVOR_NAME:=ovn-migration}
 : ${SERVER_USER_NAME:=cirros}
-: ${VALIDATE_MIGRATION:=True}
+: ${VALIDATE_MIGRATION:=False}
 : ${DHCP_RENEWAL_TIME:=30}
 
 

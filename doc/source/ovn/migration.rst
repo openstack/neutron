@@ -130,7 +130,7 @@ Perform the following steps in the undercloud
    * VALIDATE_MIGRATION - Create migration resources to validate the
      migration. The migration script, before starting the migration, boot a
      server and validates that the server is reachable after the migration.
-     Default: True.
+     Default: False
 
    * SERVER_USER_NAME - User name to use for logging into the migration
      instances.

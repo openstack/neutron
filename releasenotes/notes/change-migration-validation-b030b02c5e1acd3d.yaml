@@ -1,0 +1,12 @@
+---
+other:
+  - |
+    The OVN migration performs validation by default. This validation means an
+    instance is spawned and is tested by simple ping after the migration is
+    finished. Also it tries to create new workload post migration. This is
+    useful for very simple scenarios when migration is tested but is not
+    really useful in production since likely the production envrionments
+    already have running workloads. It makes more sense to require the
+    validation explicitly rather than implicitly run it as the migration
+    is mostly intended for production. The VALIDATE_MIGRATION now defaults to
+    False and needs to be changed to True if validation upon request.
