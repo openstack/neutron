@@ -113,10 +113,10 @@ packets are left to be normally switched by the integration bridge.
 .. note::
 
   There is a new config option ``explicitly_egress_direct``, if it is set
-  to True, it will direct egress unicast traffic to local port directly
-  or to patch bridge port if destination is in remote host. So there is
-  no NORMAL for egress in such scenario. This option is used to overcome
-  the egress packet flooding when openflow firewall is enabled.
+  to True, it will direct egress unicast traffic to the local port directly
+  or to the patch bridge port if the destination is in a remote host. So there
+  is no NORMAL for egress in such scenario. This option is used to overcome
+  the egress packet flooding when the openflow firewall is enabled.
 
 Connections that are not matched by the above rules are sent to either the
 ingress or egress filtering table, depending on its direction. The reason the
@@ -182,8 +182,8 @@ Rules example with explanation:
 -------------------------------
 
 The following example presents two ports on the same host. They have different
-security groups and there is ICMP traffic allowed from first security group to
-the second security group. Ports have following attributes:
+security groups and there is ICMP traffic allowed from the first security group
+to the second security group. Ports have the following attributes:
 
 ::
 
@@ -208,7 +208,7 @@ the second security group. Ports have following attributes:
  Port 3
    - patch bridge port (e.g. patch-tun) in OVS bridge
 
-|table_0| - |table_59| contain some low priority rules to continue packets
+|table_0| - |table_59| contain some low priority rules to continue packet
 processing in |table_60| aka TRANSIENT table. |table_0| - |table_59| is
 left for use to other features that take precedence over firewall, e.g.
 DVR, ARP poison/spoofing prevention, MAC spoof filtering and packet rate
@@ -234,20 +234,20 @@ match rule to do such identifying work as well.
  table=60,  priority=0 actions=NORMAL
 
 The following table, |table_71| implements ARP spoofing protection, IP spoofing
-protection, allows traffic related to IP address allocations (dhcp, dhcpv6,
-slaac, ndp) for egress traffic, and allows ARP replies. Also identifies not
+protection, allows traffic related to IP address allocations (DHCP, DHCPv6,
+SLAAC, NDP) for egress traffic, and allows ARP replies. Also identifies not
 tracked connections which are processed later with information obtained from
 conntrack. Notice the ``zone=NXM_NX_REG6[0..15]`` in ``actions`` when obtaining
 information from conntrack. It says every port has its own conntrack zone
 defined by the value in ``register 6`` (OVSDB port tag identifying the network).
-It's there to avoid accepting established traffic that belongs to different
-port with same conntrack parameters.
+It's there to avoid accepting established traffic that belongs to a different
+port with the same conntrack parameters.
 
-The very first rule in |table_71| is a rule removing conntrack information
-for a use-case where Neutron logical port is placed directly to the hypervisor.
-In such case kernel does conntrack lookup before packet reaches Open vSwitch
-bridge. Tracked packets are sent back for processing by the same table after
-conntrack information is cleared.
+The very first rule in |table_71| is a rule removing conntrack information for
+a use-case where a Neutron logical port is placed directly to the hypervisor.
+In such cases the kernel does conntrack lookup before the packet reaches the
+Open vSwitch bridge. Tracked packets are sent back for processing by the same
+table after conntrack information is cleared.
 
 ::
 
@@ -292,7 +292,7 @@ instances.
  table=71, priority=70,udp,reg5=0x2,in_port=2,tp_src=67,tp_dst=68 actions=resubmit(,93)
  table=71, priority=70,udp6,reg5=0x2,in_port=2,tp_src=547,tp_dst=546 actions=resubmit(,93)
 
-Flowing rules obtain conntrack information for valid IP and MAC address
+Following rules obtain conntrack information for valid IP and MAC address
 combinations. All other packets are dropped.
 
 ::
@@ -344,9 +344,9 @@ allowed.
  table=72, priority=50,ct_state=-new-est+rel-inv,ct_zone=644,ct_mark=0,reg5=0x1 actions=resubmit(,94)
  table=72, priority=50,ct_state=-new-est+rel-inv,ct_zone=644,ct_mark=0,reg5=0x2 actions=resubmit(,94)
 
-In the following, flows are marked established connections that weren't matched
-in the previous flows, which means they don't have accepting security group
-rule anymore.
+In the following, flows are marked established for connections that weren't
+matched in the previous flows, which means they don't have an accepting
+security group rule anymore.
 
 ::
 
@@ -356,10 +356,10 @@ rule anymore.
  table=72, priority=40,ct_state=+est,reg5=0x2 actions=ct(commit,zone=NXM_NX_REG6[0..15],exec(load:0x1->NXM_NX_CT_MARK[]))
  table=72, priority=0 actions=drop
 
-In following |table_73| are all detected ingress connections sent to ingress
-pipeline. Since the connection was already accepted by egress pipeline, all
-remaining egress connections are sent to normal flood'n'learn switching
-in |table_94|.
+In the following |table_73| are all detected ingress connections sent to the
+ingress pipeline. Since the connection was already accepted by the egress
+pipeline, all remaining egress connections are sent to the normal flood'n'learn
+switching in |table_94|.
 
 ::
 
@@ -374,7 +374,7 @@ in |table_94|.
  table=73, priority=0 actions=drop
 
 |table_81| is similar to |table_71|, allows basic ingress traffic for
-obtaining IP address and ARP queries. Note that vlan tag must be removed by
+obtaining IP address and ARP queries. Note that the VLAN tag must be removed by
 adding ``strip_vlan`` to actions list, prior to injecting packet directly to
 port. Not tracked packets are sent to obtain conntrack information.
 
@@ -447,7 +447,7 @@ rules are:
 
 Only dimension 2/2 flows are shown here, as the other are similar to
 the previous ICMP example. There are many more flows but only the port
-ranges that covers from 64 to 127 are shown for brevity.
+ranges that cover from 64 to 127 are shown for brevity.
 
 The conjunction IDs 14 and 15 correspond to packets from the security
 group 1, and the conjunction IDs 22 and 23 correspond to those from
@@ -506,9 +506,9 @@ same as in |table_72|.
   a port is plugged in. That makes a difference between traffic on hypervisor
   only and east-west traffic. For example, if a port has a VIP that was
   migrated to a port on a different node, then the new port won't contain
-  conntrack information about previous traffic that happened with VIP.
+  conntrack information about previous traffic that happened with that VIP.
 
-By default the |table_94| will have one single flow like this:
+By default |table_94| will have one single flow like this:
 
 ::
 
