@@ -1474,6 +1474,8 @@ def ip_monitor(namespace, queue, event_stop, event_started):
             while True:
                 ip_addresses = _ip.get()
                 for ip_address in ip_addresses:
+                    LOG.debug("IP monitor %s; Adding IP address: %s "
+                              "to the queue.", namespace, ip_address)
                     _queue.put(ip_address)
         except EOFError:
             pass
@@ -1493,6 +1495,8 @@ def ip_monitor(namespace, queue, event_stop, event_started):
         while not event_stop.is_set():
             try:
                 ip_address = _queue.get(timeout=1)
+                LOG.debug("IP monitor %s; IP address to process: %s",
+                          namespace, ip_address)
             except eventlet.queue.Empty:
                 continue
             if 'index' in ip_address and 'prefixlen' in ip_address:
@@ -1502,6 +1506,8 @@ def ip_monitor(namespace, queue, event_stop, event_started):
                 if not name:
                     continue
 
+                LOG.debug("IP monitor %s; Queueing IP address: %s; device: %s",
+                          namespace, ip_address, name)
                 cache_devices[index] = name
                 queue.put(_parse_ip_address(ip_address, name))
 
