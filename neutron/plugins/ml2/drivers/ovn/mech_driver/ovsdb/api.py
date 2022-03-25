@@ -293,13 +293,14 @@ class API(api.API, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_unhosted_gateways(self, port_physnet_dict, chassis_physnets,
-                              gw_chassis):
+                              gw_chassis, chassis_with_azs):
         """Return a list of gateways not hosted on chassis
 
         :param port_physnet_dict: Dictionary of gateway ports and their physnet
         :param chassis_physnets:  Dictionary of chassis and physnets
         :param gw_chassis:        List of gateway chassis provided by admin
                                   through ovn-cms-options
+        :param chassis_with_azs:  Dictionary of chassis and available zones
         :returns:                 List of gateways not hosted on a valid
                                   chassis
         """

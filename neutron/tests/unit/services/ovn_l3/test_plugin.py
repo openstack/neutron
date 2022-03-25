@@ -1581,7 +1581,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.l3_inst.schedule_unhosted_gateways(event_from_chassis='chassis1')
         # Validate that only foo-1 port is beign rescheduled.
         self.nb_idl().get_unhosted_gateways.assert_called_once_with(
-            {'foo-1': 'physnet1'}, mock.ANY, mock.ANY)
+            {'foo-1': 'physnet1'}, mock.ANY, mock.ANY, mock.ANY)
 
     @mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.get_network')
     @mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.get_networks')

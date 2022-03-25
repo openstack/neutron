@@ -400,20 +400,23 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         chassis_with_physnets = self._sb_ovn.get_chassis_and_physnets()
         # All chassis with enable_as_gw_chassis set
         all_gw_chassis = self._sb_ovn.get_gateway_chassis_from_cms_options()
+        chassis_with_azs = self._sb_ovn.get_chassis_and_azs()
         unhosted_gateways = self._nb_ovn.get_unhosted_gateways(
             port_physnet_dict, chassis_with_physnets,
-            all_gw_chassis)
+            all_gw_chassis, chassis_with_azs)
         for g_name in unhosted_gateways:
             physnet = port_physnet_dict.get(g_name[len(ovn_const.LRP_PREFIX):])
             # Remove any invalid gateway chassis from the list, otherwise
             # we can have a situation where all existing_chassis are invalid
             existing_chassis = self._nb_ovn.get_gateway_chassis_binding(g_name)
             primary = existing_chassis[0] if existing_chassis else None
+            az_hints = self._nb_ovn.get_gateway_chassis_az_hints(g_name)
             existing_chassis = self.scheduler.filter_existing_chassis(
                 nb_idl=self._nb_ovn, gw_chassis=all_gw_chassis,
                 physnet=physnet, chassis_physnets=chassis_with_physnets,
-                existing_chassis=existing_chassis)
-            az_hints = self._get_availability_zones_from_router_port(g_name)
+                existing_chassis=existing_chassis, az_hints=az_hints,
+                chassis_with_azs=chassis_with_azs)
+
             candidates = self._ovn_client.get_candidates_for_scheduling(
                 physnet, cms=all_gw_chassis,
                 chassis_physnets=chassis_with_physnets,

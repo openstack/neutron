@@ -44,11 +44,12 @@ class OVNGatewayScheduler(object, metaclass=abc.ABCMeta):
 
     def filter_existing_chassis(self, nb_idl, gw_chassis,
                                 physnet, chassis_physnets,
-                                existing_chassis):
+                                existing_chassis, az_hints, chassis_with_azs):
         chassis_list = copy.copy(existing_chassis)
         for chassis_name in existing_chassis:
             if utils.is_gateway_chassis_invalid(chassis_name, gw_chassis,
-                                                physnet, chassis_physnets):
+                                                physnet, chassis_physnets,
+                                                az_hints, chassis_with_azs):
                 LOG.debug("Chassis %(chassis)s is invalid for scheduling "
                           "router in physnet: %(physnet)s.",
                           {'chassis': chassis_name,
