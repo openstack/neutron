@@ -40,6 +40,8 @@
         - neutron-fullstack-with-uwsgi-fips
         - neutron-grenade-ovn
         - neutron-tempest-with-uwsgi-loki
+        - neutron-ovs-tempest-fips
+        - neutron-ovn-tempest-ovs-release-fips
 
 - project-template:
     name: neutron-periodic-jobs
