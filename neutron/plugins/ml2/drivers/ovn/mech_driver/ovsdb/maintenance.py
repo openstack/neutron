@@ -502,43 +502,6 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
         raise periodics.NeverAgain()
 
-    # TODO(lucasagomes): Remove this in the U cycle
-    # A static spacing value is used here, but this method will only run
-    # once per lock due to the use of periodics.NeverAgain().
-    @periodics.periodic(spacing=600, run_immediately=True)
-    def check_for_port_security_unknown_address(self):
-
-        if not self.has_lock:
-            return
-
-        for port in self._nb_idl.lsp_list().execute(check_error=True):
-
-            if port.type == ovn_const.LSP_TYPE_LOCALNET:
-                continue
-
-            addresses = port.addresses
-            type_ = port.type.strip()
-            if not port.port_security:
-                if not type_ and ovn_const.UNKNOWN_ADDR not in addresses:
-                    addresses.append(ovn_const.UNKNOWN_ADDR)
-                elif type_ and ovn_const.UNKNOWN_ADDR in addresses:
-                    addresses.remove(ovn_const.UNKNOWN_ADDR)
-            else:
-                if type_ and ovn_const.UNKNOWN_ADDR in addresses:
-                    addresses.remove(ovn_const.UNKNOWN_ADDR)
-                elif not type_ and ovn_const.UNKNOWN_ADDR in addresses:
-                    addresses.remove(ovn_const.UNKNOWN_ADDR)
-
-            if addresses:
-                self._nb_idl.lsp_set_addresses(
-                    port.name, addresses=addresses).execute(check_error=True)
-            else:
-                self._nb_idl.db_clear(
-                    'Logical_Switch_Port', port.name,
-                    'addresses').execute(check_error=True)
-
-        raise periodics.NeverAgain()
-
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
     @periodics.periodic(spacing=600, run_immediately=True)
