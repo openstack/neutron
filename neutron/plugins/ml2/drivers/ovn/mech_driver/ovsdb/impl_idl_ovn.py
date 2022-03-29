@@ -43,7 +43,6 @@ from neutron.services.portforwarding import constants as pf_const
 
 
 LOG = log.getLogger(__name__)
-DEFAULT_LOOKUP_TIMEOUT = 2
 
 
 # Override wait_for_change to not use a timeout so we always try to reconnect
@@ -201,11 +200,6 @@ class Backend(ovs_idl.Backend):
             msg = (_("%(match)s does not exist in %(column)s of %(table)s")
                    % {'match': match, 'column': column, 'table': table})
             raise RuntimeError(msg)
-
-    def lookup(self, table, record, default=ovs_idl._NO_DEFAULT,
-               timeout=DEFAULT_LOOKUP_TIMEOUT, notify_handler=None):
-        return super().lookup(table, record, default=default, timeout=timeout,
-                              notify_handler=notify_handler)
 
 
 class OvsdbConnectionUnavailable(n_exc.ServiceUnavailable):
