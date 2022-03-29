@@ -32,7 +32,9 @@ class SubnetpoolPrefixOpsTestBase(object):
     @contextlib.contextmanager
     def address_scope(self, ip_version, prefixes=None, shared=False,
                       admin=True, name='test-scope', is_default_pool=False,
-                      tenant_id=None, **kwargs):
+                      project_id=None, **kwargs):
+        tenant_id = project_id if project_id else kwargs.get(
+            'tenant_id', None)
         if not tenant_id:
             tenant_id = _uuid()
 
@@ -45,8 +47,10 @@ class SubnetpoolPrefixOpsTestBase(object):
 
     @contextlib.contextmanager
     def subnetpool(self, ip_version, prefixes=None, shared=False, admin=True,
-                   name='test-pool', is_default_pool=False, tenant_id=None,
+                   name='test-pool', is_default_pool=False, project_id=None,
                    address_scope_id=None, **kwargs):
+        tenant_id = project_id if project_id else kwargs.get(
+            'tenant_id', None)
         if not tenant_id:
             tenant_id = _uuid()
         pool_data = {'tenant_id': tenant_id, 'shared': shared, 'name': name,

@@ -746,6 +746,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                 admin_state_up=True,
                 fmt=None,
                 **kwargs):
+        if 'project_id' in kwargs:
+            kwargs['tenant_id'] = kwargs['project_id']
         network = self._make_network(fmt or self.fmt, name,
                                      admin_state_up, **kwargs)
         yield network
@@ -766,9 +768,11 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                ipv6_ra_mode=None,
                ipv6_address_mode=None,
                tenant_id=None,
+               project_id=None,
                service_types=None,
                set_context=False):
-
+        if project_id:
+            tenant_id = project_id
         cidr = netaddr.IPNetwork(cidr) if cidr else None
         if (gateway_ip is not None and
                 gateway_ip != constants.ATTR_NOT_SPECIFIED):
@@ -797,6 +801,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
     @contextlib.contextmanager
     def subnetpool(self, prefixes, admin=False, **kwargs):
+        if 'project_id' in kwargs:
+            kwargs['tenant_id'] = kwargs['project_id']
         subnetpool = self._make_subnetpool(self.fmt,
                                            prefixes,
                                            admin,
@@ -804,8 +810,10 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         yield subnetpool
 
     @contextlib.contextmanager
-    def port(self, subnet=None, fmt=None, set_context=False, tenant_id=None,
+    def port(self, subnet=None, fmt=None, set_context=False, project_id=None,
              **kwargs):
+        tenant_id = project_id if project_id else kwargs.pop(
+            'tenant_id', None)
         with optional_ctx(
                 subnet, self.subnet,
                 set_context=set_context, tenant_id=tenant_id) as subnet_to_use:
