@@ -63,6 +63,7 @@ class FloatingIPTcCommandBase(ip_lib.IPDevice):
         if not filters_output:
             raise exceptions.FilterIDForIPNotFound(ip=ip)
         filter_lines = filters_output.split('\n')
+        filter_id = None
         for line in filter_lines:
             line = line.strip()
             m = FILTER_ID_REGEX.match(line)
@@ -73,7 +74,7 @@ class FloatingIPTcCommandBase(ip_lib.IPDevice):
             if not line.startswith('match'):
                 continue
             parts = line.split(" ")
-            if ip + '/32' in parts:
+            if ip + '/32' in parts and filter_id:
                 filterids_for_ip.append(filter_id)
         if len(filterids_for_ip) > 1:
             raise exceptions.MultipleFilterIDForIPFound(ip=ip)
