@@ -171,7 +171,7 @@ class TestMetadataAgent(base.BaseTestCase):
                 mock.patch.object(self.agent.sb_idl, 'get_ports_on_chassis',
                                   return_value=ports):
             self.agent.update_datapath('5', 'a')
-            tdp.assert_called_once_with('5', 'a')
+            tdp.assert_called_once_with('a')
             pdp.assert_not_called()
 
     def test_teardown_datapath(self):
