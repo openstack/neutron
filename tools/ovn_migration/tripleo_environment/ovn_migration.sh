@@ -145,6 +145,7 @@ EOF
 }
 
 # Generate the inventory file for ansible migration playbook.
+# It uses tripleo-ansible-inventory.yaml which was used during deployment as source inventory
 generate_ansible_inventory_file() {
     local dhcp_nodes
     local inventory_file="$OOO_WORKDIR/$STACK_NAME/config-download/$STACK_NAME/tripleo-ansible-inventory.yaml"
@@ -222,11 +223,12 @@ EOF
     echo "Please review the file before running the next command - setup-mtu-t1"
 }
 
-# Check if the stack exists
-function check_stack {
-    if [ ! -d $OOO_WORKDIR/$STACK_NAME/config-download/$STACK_NAME ]; then
-        echo "ERROR: STACK_NAME=${STACK_NAME} does not exist. Please provide the stack name or its ID "
-        echo "       via STACK_NAME environment variable."
+# Check if source inventory exists
+function check_source_inventory {
+    local inventory_file="$OOO_WORKDIR/$STACK_NAME/config-download/$STACK_NAME/tripleo-ansible-inventory.yaml"
+    if [ ! -f $inventory_file ]; then
+        echo "ERROR: Source Inventory File ${inventory_file} does not exist. Please provide the Stack Name and TripleO Workdir"
+        echo "       via STACK_NAME and OOO_WORKDIR environment variables."
         exit 1
     fi
 }
@@ -349,7 +351,7 @@ command=$1
 ret_val=0
 case $command in
     generate-inventory)
-        check_stack
+        check_source_inventory
         oc_check_public_network
         generate_ansible_inventory_file
         generate_ansible_config_file
