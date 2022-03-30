@@ -34,6 +34,7 @@ LANG=C
 
 : ${OPT_WORKDIR:=$PWD}
 : ${STACK_NAME:=overcloud}
+: ${OOO_WORKDIR:=$HOME/overcloud-deploy}
 : ${PUBLIC_NETWORK_NAME:=public}
 : ${IMAGE_NAME:=cirros}
 : ${SERVER_USER_NAME:=cirros}
@@ -146,13 +147,11 @@ EOF
 # Generate the inventory file for ansible migration playbook.
 generate_ansible_inventory_file() {
     local dhcp_nodes
+    local inventory_file="$OOO_WORKDIR/$STACK_NAME/config-download/$STACK_NAME/tripleo-ansible-inventory.yaml"
 
     echo "Generating the inventory file for ansible-playbook"
-    source $STACKRC_FILE
     echo "[ovn-dbs]"  > hosts_for_migration
     ovn_central=True
-    inventory_file=$(mktemp --tmpdir ansible-inventory-XXXXXXXX.yaml)
-    /usr/bin/tripleo-ansible-inventory --stack $STACK_NAME --static-yaml-inventory "$inventory_file"
     # We want to run ovn_dbs where neutron_api is running
     OVN_DBS=$(get_group_hosts "$inventory_file" neutron_api)
     for node_name in $OVN_DBS; do
@@ -183,7 +182,6 @@ generate_ansible_inventory_file() {
         echo $node_name ansible_host=$node_ip ansible_ssh_user=$UNDERCLOUD_NODE_USER ansible_become=true >> hosts_for_migration
     done
 
-    rm -f "$inventory_file"
     echo "" >> hosts_for_migration
 
     cat >> hosts_for_migration << EOF
@@ -226,12 +224,11 @@ EOF
 
 # Check if the stack exists
 function check_stack {
-    source $STACKRC_FILE
-    openstack stack show $STACK_NAME 1> /dev/null || {
+    if [ ! -d $OOO_WORKDIR/$STACK_NAME/config-download/$STACK_NAME ]; then
         echo "ERROR: STACK_NAME=${STACK_NAME} does not exist. Please provide the stack name or its ID "
         echo "       via STACK_NAME environment variable."
         exit 1
-    }
+    fi
 }
 
 # Check if the public network exists, and if it has floating ips available
