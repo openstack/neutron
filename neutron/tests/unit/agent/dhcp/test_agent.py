@@ -53,6 +53,8 @@ FAKE_NETWORK_UUID = '12345678-1234-5678-1234567890ab'
 FAKE_NETWORK_DHCP_NS = "qdhcp-%s" % FAKE_NETWORK_UUID
 FAKE_TENANT_ID = 'aaaaaaaa-aaaa-aaaa-aaaaaaaaaaaa'
 FAKE_PRIORITY = 6
+FAKE_V4_SUBNETPOOL_ID = 'kkkkkkkk-kkkk-kkkk-kkkk-kkkkkkkkkkkk'
+FAKE_V6_SUBNETPOOL_ID = 'jjjjjjjj-jjjj-jjjj-jjjj-jjjjjjjjjjjj'
 
 
 fake_subnet1_allocation_pools = dhcp.DictModel(id='', start='172.9.9.2',
@@ -64,6 +66,7 @@ fake_subnet1 = dhcp.DictModel(id='bbbbbbbb-bbbb-bbbb-bbbbbbbbbbbb',
                               gateway_ip='172.9.9.1', host_routes=[],
                               dns_nameservers=[],
                               ip_version=const.IP_VERSION_4,
+                              subnetpool_id=FAKE_V4_SUBNETPOOL_ID,
                               ipv6_ra_mode=None, ipv6_address_mode=None,
                               allocation_pools=fake_subnet1_allocation_pools)
 
@@ -1744,6 +1747,7 @@ class FakeV4Subnet(object):
         self.cidr = '192.168.0.0/24'
         self.gateway_ip = '192.168.0.1'
         self.enable_dhcp = True
+        self.subnetpool_id = FAKE_V4_SUBNETPOOL_ID
 
 
 class FakeV6Subnet(object):
@@ -1753,6 +1757,7 @@ class FakeV6Subnet(object):
         self.cidr = '2001:db8:0:1::/64'
         self.gateway_ip = '2001:db8:0:1::1'
         self.enable_dhcp = True
+        self.subnetpool_id = FAKE_V6_SUBNETPOOL_ID
 
 
 class FakeV4SubnetOutsideGateway(FakeV4Subnet):

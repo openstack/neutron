@@ -160,7 +160,7 @@ class DbBasePluginCommon(object):
                'standard_attr_id': standard_attr_id,
                }
         res['gateway_ip'] = str(
-                subnet['gateway_ip']) if subnet['gateway_ip'] else None
+            subnet['gateway_ip']) if subnet['gateway_ip'] is not None else None
         # TODO(korzen) this method can get subnet as DB object or Subnet OVO,
         # so temporary workaround will be to fill in the fields in separate
         # ways. After converting all code pieces to use Subnet OVO, the latter
