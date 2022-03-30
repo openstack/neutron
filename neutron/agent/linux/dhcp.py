@@ -1429,7 +1429,8 @@ class DeviceManager(object):
             skip_subnet = (
                 subnet.ip_version != ip_version or
                 not subnet.enable_dhcp or
-                subnet.gateway_ip is None)
+                subnet.gateway_ip is None or
+                subnet.subnetpool_id == constants.IPV6_PD_POOL_ID)
 
             if skip_subnet:
                 continue

@@ -58,9 +58,6 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         if subnet.get('gateway_ip') is const.ATTR_NOT_SPECIFIED:
             if subnet.get('ip_version') == const.IP_VERSION_6:
                 gateway_ip = netaddr.IPNetwork(cidr_net).network
-                pd_net = netaddr.IPNetwork(const.PROVISIONAL_IPV6_PD_PREFIX)
-                if gateway_ip == pd_net.network:
-                    return
             else:
                 gateway_ip = netaddr.IPNetwork(cidr_net).network + 1
             return str(gateway_ip)

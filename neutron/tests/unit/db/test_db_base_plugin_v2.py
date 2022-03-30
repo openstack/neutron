@@ -3966,8 +3966,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                  ipv6_ra_mode=constants.DHCPV6_STATELESS,
                                  ipv6_address_mode=constants.DHCPV6_STATELESS)
         # If gateway_ip is not specified and the subnet is using prefix
-        # delegation, until the CIDR is assigned, this value should be "None"
-        expected = {'gateway_ip': None,
+        # delegation, until the CIDR is assigned, this value should be first
+        # IP from the subnet
+        expected = {'gateway_ip': str(netaddr.IPNetwork(cidr).network),
                     'cidr': cidr}
         self._test_create_subnet(expected=expected,
                                  cidr=cidr, ip_version=constants.IP_VERSION_6,

@@ -16,6 +16,7 @@ from unittest import mock
 
 from neutron_lib import constants
 from oslo_config import cfg
+from oslo_utils import uuidutils
 
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import ip_lib
@@ -47,6 +48,7 @@ class TestDhcp(functional_base.BaseSudoTestCase):
     def test_cleanup_stale_devices(self):
         plugin = mock.MagicMock()
         dev_mgr = dhcp.DeviceManager(self.conf, plugin)
+        spool_id = uuidutils.generate_uuid()
         network = {
             'id': 'foo_id',
             'tenant_id': 'foo_tenant',
@@ -57,6 +59,7 @@ class TestDhcp(functional_base.BaseSudoTestCase):
                                                   'ipv6_address_mode': None,
                                                   'ipv6_ra_mode': None,
                                                   'cidr': '10.0.0.0/24',
+                                                  'subnetpool_id': spool_id,
                                                   'ip_version':
                                                       constants.IP_VERSION_4,
                                                   'gateway_ip': '10.0.0.1'})]}
