@@ -23,6 +23,7 @@ USE_CONSTRAINT_ENV=${USE_CONSTRAINT_ENV:-True}
 MYSQL_USER=${MYSQL_USER:-root}
 DATABASE_USER=${DATABASE_USER:-openstack_citest}
 DATABASE_NAME=${DATABASE_NAME:-openstack_citest}
+MEMORY_TRACKER=${MEMORY_TRACKER:-False}
 
 
 if [[ "$IS_GATE" != "True" ]] && [[ "$#" -lt 1 ]]; then
@@ -277,6 +278,20 @@ function _install_post_devstack {
     fi
 
     enable_kernel_bridge_firewall
+
+    # install/start memory tracker service if enabled
+    if [[ "$MEMORY_TRACKER" == "True" ]]; then
+        # is_service_enabled checks for service into ENABLED_SERVICES
+        ENABLED_SERVICES+=,dstat,memory_tracker
+        source $DEVSTACK_PATH/lib/dstat
+        if is_ubuntu; then
+            install_package pcp
+        else
+            install_package pcp-system-tools
+        fi
+        install_dstat
+        start_dstat
+    fi
 }
 
 
