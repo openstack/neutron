@@ -37,7 +37,7 @@
       Q_BUILD_OVS_FROM_GIT: True
       INSTALL_OVN: True
       OVN_BRANCH: v21.06.0
-      OVS_BRANCH: v2.16.0
+      OVS_BRANCH: "a4b04276ab5934d087669ff2d191a23931335c87"
       devstack_services:
         # Ignore any default set by devstack. Emit a "disable_all_services".
         base: false
