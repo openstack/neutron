@@ -36,6 +36,7 @@
     vars:
       configure_swap_size: 8192
       Q_BUILD_OVS_FROM_GIT: True
+      MEMORY_TRACKER: True
       OVN_BRANCH: v21.06.0
       OVS_BRANCH: v2.16.0
       devstack_services:
