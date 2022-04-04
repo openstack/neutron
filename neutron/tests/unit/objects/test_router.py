@@ -127,6 +127,45 @@ class RouterDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
             [project, new_project])
         self.assertFalse(router_exist)
 
+    def test_qos_policy(self):
+        _qos_policy_1 = self._create_test_qos_policy()
+        _qos_policy_2 = self._create_test_qos_policy()
+
+        self.obj_fields[0]['qos_policy_id'] = _qos_policy_1.id
+        obj = self._test_class(
+            self.context, **obj_test_base.remove_timestamps_from_fields(
+                self.obj_fields[0], self._test_class.fields))
+        obj.create()
+        self.assertEqual(_qos_policy_1.id, obj.qos_policy_id)
+
+        obj.qos_policy_id = _qos_policy_2.id
+        obj.update()
+        self.assertEqual(_qos_policy_2.id, obj.qos_policy_id)
+
+        obj.qos_policy_id = None
+        obj.update()
+        self.assertIsNone(obj.qos_policy_id)
+
+        obj.qos_policy_id = _qos_policy_1.id
+        obj.update()
+        router_id = obj.id
+        gw_binding = qos_binding.QosPolicyRouterGatewayIPBinding.get_objects(
+            self.context, router_id=router_id)
+        self.assertEqual(1, len(gw_binding))
+        self.assertEqual(_qos_policy_1.id, gw_binding[0].policy_id)
+        obj.delete()
+        gw_binding = qos_binding.QosPolicyRouterGatewayIPBinding.get_objects(
+            self.context, router_id=router_id)
+        self.assertEqual([], gw_binding)
+
+    def test_object_version_degradation_1_1_to_1_0_no_qos_policy_id(self):
+        self.objs[0].create()
+        router_obj = self.objs[0]
+        router_dict = router_obj.obj_to_primitive('1.1')
+        self.assertIn('qos_policy_id', router_dict['versioned_object.data'])
+        router_dict = router_obj.obj_to_primitive('1.0')
+        self.assertNotIn('qos_policy_id', router_dict['versioned_object.data'])
+
 
 class RouterPortIfaceObjectTestCase(obj_test_base.BaseObjectIfaceTestCase):
 

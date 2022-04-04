@@ -104,7 +104,7 @@ object_data = {
     'Reservation': '1.0-49929fef8e82051660342eed51b48f2a',
     'ResourceDelta': '1.0-a980b37e0a52618b5af8db29af18be76',
     'Route': '1.0-a9883a63b416126f9e345523ec09483b',
-    'Router': '1.0-adb984d9b73aa11566d40abbeb790df1',
+    'Router': '1.1-614fa16cc99c60e4fc19ac1b31a52291',
     'RouterExtraAttributes': '1.0-ef8d61ae2864f0ec9af0ab7939cab318',
     'RouterL3AgentBinding': '1.0-c5ba6c95e3a4c1236a55f490cd67da82',
     'RouterNDPProxyState': '1.0-4042e475bf173d1d8d17adb962eae1b2',

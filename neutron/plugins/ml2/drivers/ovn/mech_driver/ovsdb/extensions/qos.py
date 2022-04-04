@@ -385,7 +385,7 @@ class OVNClientQosExtension(object):
 
     def update_router(self, txn, router):
         gw_info = router.get(l3_api.EXTERNAL_GW_INFO) or {}
-        qos_policy_id = gw_info.get('qos_policy_id')
+        qos_policy_id = router.get('qos_policy_id')
         router_id = router.get('id')
         gw_port_id = router.get('gw_port_id')
         gw_network_id = gw_info.get('network_id')
