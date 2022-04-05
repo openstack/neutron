@@ -544,7 +544,8 @@ class OVNClient(object):
 
         check_rev_cmd = self._nb_idl.check_revision_number(
             port['id'], port, ovn_const.TYPE_PORTS)
-        with self._nb_idl.transaction(check_error=True) as txn:
+        with self._nb_idl.transaction(check_error=True,
+                                      revision_mismatch_raise=True) as txn:
             txn.add(check_rev_cmd)
             columns_dict = {}
             if utils.is_lsp_router_port(port):
