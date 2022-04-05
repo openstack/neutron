@@ -488,6 +488,12 @@ endpoints can be accessed via an IPv6 network. At this time, Open vSwitch
 Prefix delegation
 ~~~~~~~~~~~~~~~~~
 
+.. warning::
+
+   This feature is experimental with low test coverage, and the Dibbler client
+   which is used for this feature is no longer maintained. For details see:
+   https://github.com/tomaszmrugalski/dibbler#project-status
+
 From the Liberty release onwards, OpenStack Networking supports IPv6 prefix
 delegation. This section describes the configuration and workflow steps
 necessary to use IPv6 prefix delegation to provide automatic allocation of

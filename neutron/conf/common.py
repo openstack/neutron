@@ -66,7 +66,10 @@ core_opts = [
     cfg.IntOpt('max_subnet_host_routes', default=20,
                help=_("Maximum number of host routes per subnet")),
     cfg.BoolOpt('ipv6_pd_enabled', default=False,
-                help=_("Enables IPv6 Prefix Delegation for automatic subnet "
+                help=_("Warning: This feature is experimental with low test "
+                       "coverage, and the Dibbler client which is used for "
+                       "this feature is no longer maintained! "
+                       "Enables IPv6 Prefix Delegation for automatic subnet "
                        "CIDR allocation. "
                        "Set to True to enable IPv6 Prefix Delegation for "
                        "subnet allocation in a PD-capable environment. Users "
