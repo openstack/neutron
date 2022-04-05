@@ -39,7 +39,7 @@ class UplinkStatusPropagationML2ExtDriverTestCase(
 
             driver = usp.UplinkStatusPropagationExtensionDriver()
             driver.extend_port_dict(session, db_data, response_data)
-            self.assertFalse(response_data['propagate_uplink_status'])
+            self.assertTrue(response_data['propagate_uplink_status'])
 
     def test_show_port_has_propagate_uplink_status(self):
         with self.port(propagate_uplink_status=True) as port:
