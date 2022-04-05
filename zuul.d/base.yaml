@@ -34,6 +34,7 @@
       - ^rally-jobs/.*$
       - ^zuul.d/(?!(project)).*\.yaml
     vars:
+      configure_swap_size: 8192
       Q_BUILD_OVS_FROM_GIT: True
       INSTALL_OVN: True
       OVN_BRANCH: v21.06.0
@@ -140,7 +141,6 @@
       Functional testing for a FIPS enabled Centos 8 system
     vars:
       enable_fips: True
-      configure_swap_size: 4096
       devstack_localrc:
         ISCSI_CHAP_ALGORITHMS: SHA3-256,SHA256
         Q_BUILD_OVS_FROM_GIT: true
@@ -153,7 +153,6 @@
       Functional testing for a FIPS enabled Centos 8 system
     vars:
       enable_fips: True
-      configure_swap_size: 4096
       devstack_localrc:
         ISCSI_CHAP_ALGORITHMS: SHA3-256,SHA256
         Q_BUILD_OVS_FROM_GIT: true
