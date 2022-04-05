@@ -41,7 +41,7 @@ def monkeypatch_init_handler():
 
 
 def monkeypatch_qos():
-    mock.patch.object(ovs_lib.OVSBridge, 'clear_minimum_bandwidth_qos').start()
+    mock.patch.object(ovs_lib.OVSBridge, 'clear_bandwidth_qos').start()
     if "qos" in cfg.CONF.service_plugins:
         mock.patch.object(qos_extension.QosAgentExtension,
                           '_process_reset_port').start()
