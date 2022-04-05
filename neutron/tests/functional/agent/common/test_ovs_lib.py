@@ -382,6 +382,19 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         self.assertIsNone(max_rate)
         self.assertIsNone(burst)
 
+    def test_set_pkt_mark_for_ingress_bandwidth_limit(self):
+        self._create_bridge()
+        self.ovs.set_queue_for_ingress_bandwidth_limit()
+        flows = self.ovs.dump_flows_for_table(ovs_constants.LOCAL_SWITCHING)
+        expected = (
+            'priority=200,reg3=0 '
+            'actions=set_queue:%(queue_num)s,'
+            'load:0x1->NXM_NX_REG3[0],resubmit(,0)' % {
+                'queue_num': ovs_lib.QOS_DEFAULT_QUEUE
+            }
+        )
+        self.assertIn(expected, flows)
+
     def test_ingress_bw_limit(self):
         port_name = ('port-' + uuidutils.generate_uuid())[:8]
         self._create_bridge()
@@ -438,18 +451,22 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         qos = self._list_qos(qos_id)
         self.assertEqual(0, len(qos['queues']))
 
-    def test__set_queue_for_minimum_bandwidth(self):
+    def test__set_pkt_mark_for_minimum_bandwidth(self):
         self._create_bridge()
-        self.ovs._set_queue_for_minimum_bandwidth(1234)
+        self.ovs._set_pkt_mark_for_minimum_bandwidth(1234)
         flows = self.ovs.dump_flows_for_table(ovs_constants.LOCAL_SWITCHING)
-        expected = 'priority=200,reg4=0,in_port=1234 actions=set_queue:1234,' \
-                   'load:0x1->NXM_NX_REG4[0],resubmit(,0)'
+        # NOTE(slaweq) 1234 in dec is 0x4d2,
+        # action set_field:1234->pkt mark is shown in the OF output as
+        # load:0x4d2->NXM_NX_PKT_MARK[]
+        expected = ('priority=200,reg4=0,in_port=1234 '
+                    'actions=load:0x4d2->NXM_NX_PKT_MARK[],'
+                    'load:0x1->NXM_NX_REG4[0],resubmit(,0)')
         self.assertIn(expected, flows)
 
-    def test__unset_queue_for_minimum_bandwidth(self):
-        self.test__set_queue_for_minimum_bandwidth()
+    def test__unset_pkt_mark_for_minimum_bandwidth(self):
+        self.test__set_pkt_mark_for_minimum_bandwidth()
 
-        self.ovs._unset_queue_for_minimum_bandwidth(1234)
+        self.ovs._unset_pkt_mark_for_minimum_bandwidth(1234)
         flows = self.ovs.dump_flows_for_table(ovs_constants.LOCAL_SWITCHING)
         expected = 'in_port=1234'
         self.assertNotIn(expected, flows)
@@ -521,10 +538,7 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         self.assertEqual(queue_id_1, qos['queues'][1].uuid)
 
         self.ovs.delete_minimum_bandwidth_queue(neutron_port_id_1)
-        self._check_value({'_uuid': qos_id}, self._list_qos, qos_id,
-                          keys_to_check=['_uuid'])
-        qos = self._list_qos(qos_id)
-        self.assertEqual(0, len(qos['queues']))
+        self.assertIsNone(self._list_qos(qos_id))
 
     def test_delete_minimum_bandwidth_queue_no_qos_found(self):
         queue_id, neutron_port_id = self._create_queue(queue_num=1)
