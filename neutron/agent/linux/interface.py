@@ -370,6 +370,48 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
         ovs = ovs_lib.OVSBridge(bridge)
         ovs.replace_port(device_name, *attrs)
 
+    def _set_device_address(self, device, mac_address):
+        for i in range(9):
+            # workaround for the OVS shy port syndrome. ports sometimes
+            # hide for a bit right after they are first created.
+            # see bug/1618987
+            try:
+                device.link.set_address(mac_address)
+                break
+            except RuntimeError as e:
+                LOG.warning("Got error trying to set mac, retrying: %s",
+                            str(e))
+                time.sleep(1)
+        else:
+            # didn't break, we give it one last shot without catching
+            device.link.set_address(mac_address)
+
+    def _add_device_to_namespace(self, ip_wrapper, device, namespace):
+        namespace_obj = ip_wrapper.ensure_namespace(namespace)
+        for i in range(9):
+            try:
+                namespace_obj.add_device_to_namespace(device)
+                break
+            except ip_lib.NetworkInterfaceNotFound:
+                # NOTE(slaweq): if the exception was NetworkInterfaceNotFound
+                # then lets try again, otherwise lets simply raise it as this
+                # is some different issue than retry tries to workaround
+                LOG.warning("Failed to set interface %s into namespace %s. "
+                            "Interface not found, attempt: %s, retrying.",
+                            device, namespace, i + 1)
+                time.sleep(1)
+            except utils.WaitTimeout:
+                # NOTE(slaweq): if the exception was WaitTimeout then it means
+                # that probably device wasn't found in the desired namespace
+                # for 5 seconds, so lets try again too
+                LOG.warning("Failed to set interface %s into namespace %s. "
+                            "Interface not found in namespace, attempt: %s, "
+                            "retrying.", device, namespace, i + 1)
+                time.sleep(1)
+        else:
+            # didn't break, we give it one last shot without catching
+            namespace_obj.add_device_to_namespace(device)
+
     def plug_new(self, network_id, port_id, device_name, mac_address,
                  bridge=None, namespace=None, prefix=None, mtu=None,
                  link_up=True):
@@ -394,31 +436,25 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
         internal = not self.conf.ovs_use_veth
         self._ovs_add_port(bridge, tap_name, port_id, mac_address,
                            internal=internal)
-        for i in range(9):
-            # workaround for the OVS shy port syndrome. ports sometimes
-            # hide for a bit right after they are first created.
-            # see bug/1618987
-            try:
-                ns_dev.link.set_address(mac_address)
-                break
-            except RuntimeError as e:
-                LOG.warning("Got error trying to set mac, retrying: %s",
-                            str(e))
-                time.sleep(1)
-        else:
-            # didn't break, we give it one last shot without catching
-            ns_dev.link.set_address(mac_address)
+        try:
+            self._set_device_address(ns_dev, mac_address)
+        except Exception:
+            LOG.warning("Failed to set mac for interface %s", ns_dev)
+            with excutils.save_and_reraise_exception():
+                ovs = ovs_lib.OVSBridge(bridge)
+                ovs.delete_port(tap_name)
 
         # Add an interface created by ovs to the namespace.
         if not self.conf.ovs_use_veth and namespace:
             try:
-                namespace_obj = ip.ensure_namespace(namespace)
-                namespace_obj.add_device_to_namespace(ns_dev)
-            except (pyroute2_exc.NetlinkError, OSError):
+                self._add_device_to_namespace(ip, ns_dev, namespace)
+            except (pyroute2_exc.NetlinkError, OSError, RuntimeError):
                 # To prevent the namespace failure from blasting OVS, the OVS
                 # port creation should be reverted. Possible exceptions:
                 # - NetlinkError in case of duplicated interface
                 # - OSError in case of corrupted namespace
+                # - RuntimeError in case of any issue with interface, like e.g.
+                #   Interface not found
                 LOG.warning("Failed to plug interface %s into bridge %s, "
                             "cleaning up", device_name, bridge)
                 with excutils.save_and_reraise_exception():
