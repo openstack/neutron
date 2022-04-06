@@ -179,18 +179,21 @@ class TestOvsNeutronAgent(object):
             self.agent.vlan_manager.add(
                 net_uuid, old_local_vlan, None, None, None)
         with mock.patch.object(self.agent, 'int_br', autospec=True) as int_br:
-            int_br.db_get_val.return_value = db_get_val
-            int_br.set_db_attribute.return_value = True
-            needs_binding = self.agent.port_bound(
-                port, net_uuid, 'local', None, None,
-                fixed_ips, DEVICE_OWNER_COMPUTE, False)
+            with mock.patch.object(self.agent, '_set_port_vlan') as set_vlan:
+                int_br.db_get_val.return_value = db_get_val
+                int_br.set_db_attribute.return_value = True
+                needs_binding = self.agent.port_bound(
+                    port, net_uuid, 'local', None, None,
+                    fixed_ips, DEVICE_OWNER_COMPUTE, False)
         if db_get_val is None:
             int_br.assert_not_called()
             self.assertFalse(needs_binding)
         else:
             vlan_mapping = {'net_uuid': net_uuid,
                             'network_type': 'local',
-                            'physical_network': 'None'}
+                            'physical_network': 'None',
+                            'tag': str(new_local_vlan)}
+            set_vlan.assert_called_once_with(port, new_local_vlan)
             int_br.set_db_attribute.assert_called_once_with(
                 "Port", mock.ANY, "other_config", vlan_mapping)
             self.assertTrue(needs_binding)
@@ -3102,6 +3105,7 @@ class TestOvsDvrNeutronAgent(object):
             self.agent = self.mod_agent.OVSNeutronAgent(self._bridge_classes(),
                                                        ext_manager, cfg.CONF)
             self.agent.tun_br = self.br_tun_cls(br_name='br-tun')
+            self.agent._set_port_vlan = mock.Mock()
         self.agent.sg_agent = mock.Mock()
 
     def _setup_for_dvr_test(self):

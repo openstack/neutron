@@ -503,7 +503,8 @@ class TunnelTest(object):
         vlan_mapping = {'segmentation_id': str(LS_ID),
                         'physical_network': 'None',
                         'net_uuid': NET_UUID,
-                        'network_type': 'gre'}
+                        'network_type': 'gre',
+                        'tag': str(LV_ID)}
         self.mock_int_bridge_expected += [
             mock.call.db_get_val('Port', 'port', 'other_config'),
             mock.call.set_db_attribute('Port', VIF_PORT.port_name,
@@ -514,9 +515,11 @@ class TunnelTest(object):
         a.vlan_manager.add(NET_UUID, *self.LVM_DATA)
         a.local_dvr_map = {}
         self.ovs_bridges[self.INT_BRIDGE].db_get_val.return_value = {}
-        a.port_bound(VIF_PORT, NET_UUID, 'gre', None, LS_ID,
-                     FIXED_IPS, VM_DEVICE_OWNER, False)
-        self._verify_mock_calls()
+        with mock.patch.object(a, "_set_port_vlan") as set_vlan:
+            a.port_bound(VIF_PORT, NET_UUID, 'gre', None, LS_ID,
+                         FIXED_IPS, VM_DEVICE_OWNER, False)
+            self._verify_mock_calls()
+            set_vlan.assert_called_once_with(VIF_PORT, LV_ID)
 
     def test_port_unbound(self):
         with mock.patch.object(self.mod_agent.OVSNeutronAgent,

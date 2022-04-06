@@ -1117,6 +1117,16 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
         self.available_local_vlans.add(lvm.vlan)
 
+    def _set_port_vlan(self, port, vlan):
+        ovsdb = self.int_br.ovsdb
+        with self.int_br.ovsdb.transaction() as txn:
+            # When adding the port's tag,
+            # also clear port's vlan_mode and trunks,
+            # which were set to make sure all packets are dropped.
+            txn.add(ovsdb.db_set('Port', port.port_name, ('tag', vlan)))
+            txn.add(ovsdb.db_clear('Port', port.port_name, 'vlan_mode'))
+            txn.add(ovsdb.db_clear('Port', port.port_name, 'trunks'))
+
     def port_bound(self, port, net_uuid,
                    network_type, physical_network,
                    segmentation_id, fixed_ips, device_owner,
@@ -1157,10 +1167,12 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
         vlan_mapping = {'net_uuid': net_uuid,
                         'network_type': network_type,
-                        'physical_network': str(physical_network)}
+                        'physical_network': str(physical_network),
+                        'tag': str(lvm.vlan)}
         if segmentation_id is not None:
             vlan_mapping['segmentation_id'] = str(segmentation_id)
         port_other_config.update(vlan_mapping)
+        self._set_port_vlan(port, lvm.vlan)
         self.int_br.set_db_attribute("Port", port.port_name, "other_config",
                                      port_other_config)
         return True
