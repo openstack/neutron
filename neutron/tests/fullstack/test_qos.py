@@ -28,10 +28,13 @@ from neutron.tests.fullstack.resources import environment
 from neutron.tests.fullstack.resources import machine
 from neutron.tests.unit import testlib_api
 
+from neutron.agent.common import ovs_lib
 from neutron.conf.plugins.ml2.drivers import linuxbridge as \
     linuxbridge_agent_config
 from neutron.plugins.ml2.drivers.linuxbridge.agent import \
     linuxbridge_neutron_agent as linuxbridge_agent
+from neutron.plugins.ml2.drivers.openvswitch.agent.common \
+    import constants as ovs_constants
 from neutron.services.qos.drivers.linuxbridge import driver as lb_drv
 from neutron.services.qos.drivers.openvswitch import driver as ovs_drv
 
@@ -365,6 +368,16 @@ class TestBwLimitQoSOvs(_TestBwLimitQoS, base.BaseFullStackTestCase):
                 lambda: vm.bridge.get_ingress_bw_limit_for_port(
                     vm.port.name) == (limit, burst),
                 timeout=10)
+            br_int_flows = vm.bridge.dump_flows_for_table(
+                ovs_constants.LOCAL_SWITCHING)
+            expected = (
+                'priority=200,reg3=0 '
+                'actions=set_queue:%(queue_num)s,'
+                'load:0x1->NXM_NX_REG3[0],resubmit(,0)' % {
+                    'queue_num': ovs_lib.QOS_DEFAULT_QUEUE
+                }
+            )
+            self.assertIn(expected, br_int_flows)
 
     def test_bw_limit_qos_port_removed(self):
         """Test if rate limit config is properly removed when whole port is
