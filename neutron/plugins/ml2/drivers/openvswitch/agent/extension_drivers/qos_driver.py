@@ -50,6 +50,7 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
         be down until the QoS rules are rebuilt.
         """
         self.br_int.clear_bandwidth_qos()
+        self.br_int.set_queue_for_ingress_bandwidth_limit()
 
     def initialize(self):
         self.br_int = self.agent_api.request_int_br()
@@ -188,6 +189,8 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver):
             egress_port_names.extend(ports)
         qos_id = self.br_int.update_minimum_bandwidth_queue(
             port['port_id'], egress_port_names, vif_port.ofport, rule.min_kbps)
+        for phy_br in self.agent_api.request_phy_brs():
+            phy_br.set_queue_for_minimum_bandwidth(vif_port.ofport)
         LOG.debug('Minimum bandwidth egress rule was updated/created for port '
                   '%(port_id)s and rule %(rule_id)s. QoS ID: %(qos_id)s. '
                   'Egress ports with QoS applied: %(ports)s',
