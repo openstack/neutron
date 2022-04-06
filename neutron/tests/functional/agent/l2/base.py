@@ -176,7 +176,7 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase, OVSOFControllerHelper):
         self._bridge_classes()['br_phys'](self.br_phys).create()
         ext_mgr = ext_manager.L2AgentExtensionsManager(self.config)
         with mock.patch.object(ovs_qos_driver.QosOVSAgentDriver,
-                               '_minimum_bandwidth_initialize'):
+                               '_qos_bandwidth_initialize'):
             agent = ovs_agent.OVSNeutronAgent(self._bridge_classes(),
                                               ext_mgr, self.config)
         self.addCleanup(self.ovs.delete_bridge, self.br_int)

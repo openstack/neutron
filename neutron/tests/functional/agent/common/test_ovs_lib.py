@@ -72,9 +72,9 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         for device in self.elements_to_clean['devices']:
             ip_lib.IPDevice(device).link.delete()
         for qos in self.elements_to_clean['qoses']:
-            self.ovs.ovsdb.db_destroy('QoS', qos).execute()
+            self.ovs.ovsdb.db_destroy('QoS', qos).execute(log_errors=False)
         for queue in self.elements_to_clean['queues']:
-            self.ovs.ovsdb.db_destroy('Queue', queue).execute()
+            self.ovs.ovsdb.db_destroy('Queue', queue).execute(log_errors=False)
 
     def _list_queues(self, queue_id=None):
         queues = self.ovs.ovsdb.db_list(
@@ -88,7 +88,9 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
                 return None
         return queues
 
-    def _create_queue(self, max_kbps=int(MAX_RATE_DEFAULT / 1000),
+    def _create_queue(self,
+                      queue_type=qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH,
+                      max_kbps=int(MAX_RATE_DEFAULT / 1000),
                       max_burst_kbps=int(BURST_DEFAULT / 1000),
                       min_kbps=int(MIN_RATE_DEFAULT / 1000),
                       neutron_port_id=None, queue_num=None):
@@ -96,6 +98,7 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
                            if not neutron_port_id else neutron_port_id)
         queue_num = QUEUE_NUM_DEFAULT if not queue_num else queue_num
         queue_id = self.ovs._update_queue(neutron_port_id, queue_num,
+                                          queue_type,
                                           max_kbps=max_kbps,
                                           max_burst_kbps=max_burst_kbps,
                                           min_kbps=min_kbps)
@@ -103,15 +106,19 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         self.elements_to_clean['queues'].append(queue_id)
         return queue_id, neutron_port_id
 
-    def _create_qos(self, qos_id=None, queues=None):
-        qos_id = self.ovs._update_qos(qos_id=qos_id, queues=queues)
+    def _create_qos(self, qos_id=None, queues=None,
+                    rule_type_id=None,
+                    rule_type=qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH):
+        qos_id = self.ovs._update_qos(
+            rule_type_id, rule_type, qos_id=qos_id, queues=queues)
         self.elements_to_clean['qoses'].append(qos_id)
         return qos_id
 
     def _list_qos(self, qos_id=None):
         qoses = self.ovs.ovsdb.db_list(
             'QoS',
-            columns=('_uuid', 'queues', 'external_ids', 'type')).execute()
+            columns=('_uuid', 'queues', 'other_config', 'external_ids', 'type')
+        ).execute()
         if qos_id:
             for qos in (qos for qos in qoses if qos['_uuid'] == qos_id):
                 return qos
@@ -163,7 +170,9 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
 
     def _check_no_minbw_qos(self):
         """Asserts that there are no min BW qos/queues for this OVS instance"""
-        qos_id, qos_queues = self.ovs._find_qos()
+        qos_id, qos_queues = self.ovs._find_qos(
+            self.ovs._min_bw_qos_id,
+            qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH)
         if not qos_id and not qos_queues:
             return
 
@@ -259,9 +268,13 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
     def test__delete_queue_still_used_in_a_qos(self):
         queue_id, port_id = self._create_queue()
         queues = {1: queue_id}
-        qos_id_1 = self._create_qos(queues=queues)
+        qos_id_1 = self._create_qos(
+            queues=queues,
+            rule_type_id=self.ovs._min_bw_qos_id)
         self.ovs._min_bw_qos_id = uuidutils.generate_uuid()
-        qos_id_2 = self._create_qos(queues=queues)
+        qos_id_2 = self._create_qos(
+            queues=queues,
+            rule_type_id=self.ovs._min_bw_qos_id)
         with mock.patch.object(ovs_lib.LOG, 'error') as mock_error:
             self.assertRaises(RuntimeError, self.ovs._delete_queue,
                               queue_id)
@@ -276,7 +289,9 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         queue_id, port_id = self._create_queue()
         queues = {1: queue_id}
 
-        qos_id = self._create_qos(queues=queues)
+        qos_id = self._create_qos(
+            queues=queues,
+            rule_type_id=self.ovs._min_bw_qos_id)
         external_ids = {'id': str(self.ovs._min_bw_qos_id),
                         '_type': qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH}
         expected = {'_uuid': qos_id,
@@ -291,7 +306,9 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         queue_id_1, _ = self._create_queue()
         queues = {1: queue_id_1}
 
-        qos_id = self._create_qos(queues=queues)
+        qos_id = self._create_qos(
+            queues=queues,
+            rule_type_id=self.ovs._min_bw_qos_id)
         external_ids = {'id': str(self.ovs._min_bw_qos_id),
                         '_type': qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH}
         expected = {'_uuid': qos_id,
@@ -305,7 +322,10 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         queue_id_2, _ = self._create_queue()
         queues[2] = queue_id_2
 
-        self._create_qos(qos_id=qos_id, queues=queues)
+        self._create_qos(
+            qos_id=qos_id,
+            queues=queues,
+            rule_type_id=self.ovs._min_bw_qos_id)
         self._check_value(expected, self._list_qos, qos_id,
                           keys_to_check=['_uuid', 'type', 'external_ids'])
         qos = self._list_qos(qos_id)
@@ -316,8 +336,11 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
     def test__find_qos(self):
         queue_id, _ = self._create_queue()
         queues = {1: queue_id}
-        qos_id = self._create_qos(queues=queues)
-        self._check_value((qos_id, queues), self.ovs._find_qos)
+        qos_id = self._create_qos(
+            queues=queues,
+            rule_type_id=self.ovs._min_bw_qos_id)
+        self._check_value((qos_id, queues), self.ovs._find_qos,
+                          self.ovs._min_bw_qos_id)
 
     def test__set_port_qos(self):
         port_name = ('port-' + uuidutils.generate_uuid())[:8]
@@ -325,7 +348,8 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         self._create_port(port_name)
         self._check_value([], self._find_port_qos, port_name)
 
-        qos_id = self._create_qos()
+        qos_id = self._create_qos(
+            rule_type_id=self.ovs._min_bw_qos_id)
         self.ovs._set_port_qos(port_name, qos_id=qos_id)
         self._check_value(qos_id, self._find_port_qos, port_name)
 
@@ -344,6 +368,75 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         device_names.sort()
         bridge_ports.sort()
         self.assertEqual(device_names, bridge_ports)
+
+    def test_egress_bw_limit(self):
+        port_name = ('port-' + uuidutils.generate_uuid())[:8]
+        self._create_bridge()
+        self._create_port(port_name)
+        self.ovs.create_egress_bw_limit_for_port(port_name, 700, 70)
+        max_rate, burst = self.ovs.get_egress_bw_limit_for_port(port_name)
+        self.assertEqual(700, max_rate)
+        self.assertEqual(70, burst)
+        self.ovs.delete_egress_bw_limit_for_port(port_name)
+        max_rate, burst = self.ovs.get_egress_bw_limit_for_port(port_name)
+        self.assertIsNone(max_rate)
+        self.assertIsNone(burst)
+
+    def test_ingress_bw_limit(self):
+        port_name = ('port-' + uuidutils.generate_uuid())[:8]
+        self._create_bridge()
+        self._create_port(port_name)
+        self.ovs.update_ingress_bw_limit_for_port(port_name, 700, 70)
+        qos_id = self._find_port_qos(port_name)
+        qos = self._list_qos(qos_id)
+        queue_id = qos['queues'][0].uuid
+        external_ids = {'port': str(port_name),
+                        'type': qos_constants.RULE_TYPE_BANDWIDTH_LIMIT,
+                        'queue-num': '0'}
+        other_config = {'burst': '70000',
+                        'max-rate': '700000'}
+        expected = {'_uuid': queue_id,
+                    'external_ids': external_ids,
+                    'other_config': other_config}
+
+        self._check_value(expected, self._list_queues, queue_id)
+        self.elements_to_clean['qoses'].append(qos_id)
+        self.elements_to_clean['queues'].append(queue_id)
+
+        self.ovs.update_ingress_bw_limit_for_port(port_name, 750, 100)
+        expected['other_config'] = {'burst': '100000',
+                                    'max-rate': '750000'}
+
+        self.ovs.delete_ingress_bw_limit_for_port(port_name)
+        self.assertIsNone(self._list_qos(qos_id))
+
+    def test_ingress_bw_limit_dpdk_port(self):
+        port_name = ('port-' + uuidutils.generate_uuid())[:8]
+        self._create_bridge()
+        self._create_port(port_name)
+        self.ovs.ovsdb.db_set(
+            'Interface', port_name,
+            ('type', ovs_constants.OVS_DPDK_VHOST_USER)).execute()
+        self.ovs.update_ingress_bw_limit_for_port(port_name, 700, 70)
+        qos_id = self._find_port_qos(port_name)
+        external_ids = {'id': str(port_name)}
+        other_config = {'cir': str(700 * p_const.SI_BASE // 8),
+                        'cbs': str(70 * p_const.SI_BASE // 8)}
+        expected = {'_uuid': qos_id,
+                    'external_ids': external_ids,
+                    'other_config': other_config,
+                    'queues': {},
+                    'type': 'egress-policer'}
+        self._check_value(expected, self._list_qos, qos_id)
+
+        self.ovs.update_ingress_bw_limit_for_port(port_name, 750, 100)
+        expected['other_config'] = {'cir': str(750 * p_const.SI_BASE // 8),
+                                    'cbs': str(100 * p_const.SI_BASE // 8)}
+        self._check_value(expected, self._list_qos, qos_id)
+
+        self.ovs.delete_ingress_bw_limit_for_port(port_name)
+        qos = self._list_qos(qos_id)
+        self.assertEqual(0, len(qos['queues']))
 
     def test__set_queue_for_minimum_bandwidth(self):
         self._create_bridge()
@@ -368,8 +461,9 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         queue_num = 1
         queue_id, port_id = self._create_queue(neutron_port_id=self.port_id)
         queues = {queue_num: queue_id}
-        qos_id = self._create_qos(queues=queues)
-
+        qos_id = self._create_qos(
+            queues=queues,
+            rule_type_id=self.ovs._min_bw_qos_id)
         self.ovs.update_minimum_bandwidth_queue(self.port_id, [port_name],
                                                 queue_num, 1800)
         self._check_value(qos_id, self._find_port_qos, port_name)
@@ -410,7 +504,9 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         queue_id_1, neutron_port_id_1 = self._create_queue(queue_num=1)
         queue_id_2, neutron_port_id_2 = self._create_queue(queue_num=2)
         queues = {1: queue_id_1, 2: queue_id_2}
-        qos_id = self._create_qos(queues=queues)
+        qos_id = self._create_qos(
+            queues=queues,
+            rule_type_id=self.ovs._min_bw_qos_id)
         self._check_value({'_uuid': qos_id}, self._list_qos, qos_id,
                           keys_to_check=['_uuid'])
         qos = self._list_qos(qos_id)
@@ -443,19 +539,21 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         queue = self._list_queues(queue_id)
         self.assertEqual(queue_id, queue['_uuid'])
 
-    def test_clear_minimum_bandwidth_qos(self):
+    def test_clear_bandwidth_qos(self):
         queue_id_1, _ = self._create_queue(queue_num=1)
         queue_id_2, _ = self._create_queue(queue_num=2)
         queue_id_3, port_id_3 = self._create_queue()
         queues = {1: queue_id_1, 2: queue_id_2}
-        qos_id = self._create_qos(queues=queues)
+        qos_id = self._create_qos(
+            queues=queues,
+            rule_type_id=self.ovs._min_bw_qos_id)
 
         # NOTE(ralonsoh): we need to clean only the QoS rule created in this
         # test in order to avoid any interference with other tests.
         qoses = self.ovs._list_qos(_id=self.ovs._min_bw_qos_id)
         with mock.patch.object(self.ovs, '_list_qos') as mock_list_qos:
-            mock_list_qos.return_value = qoses
-            self.ovs.clear_minimum_bandwidth_qos()
+            mock_list_qos.side_effect = [qoses, []]
+            self.ovs.clear_bandwidth_qos()
         self._check_value(None, self._list_qos, qos_id=qos_id)
         self._check_value(None, self._list_queues, queue_id=queue_id_1)
         self._check_value(None, self._list_queues, queue_id=queue_id_2)
