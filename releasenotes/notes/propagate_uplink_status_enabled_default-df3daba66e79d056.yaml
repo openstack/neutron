@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    If ``uplink-status-propagation`` extension is enabled, all existing ports
+    before enabling it will have the flag "propagate_uplink_status" enabled by
+    default. This is aligned with the aim of an administrator that enables
+    this extension. Now only new ports can be created with this flag disabled.

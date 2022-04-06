@@ -28,6 +28,10 @@ class UplinkStatusPropagationMixin(object):
 
     @staticmethod
     def _extend_port_dict(port_res, port_db):
+        # NOTE(ralonsoh): the default value is "True". Ports created before
+        # enabling this extension won't have an associated
+        # "PortUplinkStatusPropagation" register but we assume they have this
+        # flag enabled.
         usp_db = port_db.get(usp.PROPAGATE_UPLINK_STATUS)
         port_res[usp.PROPAGATE_UPLINK_STATUS] = (
-            usp_db.propagate_uplink_status if usp_db else False)
+            usp_db.propagate_uplink_status if usp_db else True)
