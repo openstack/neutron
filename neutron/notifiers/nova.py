@@ -291,11 +291,15 @@ class Notifier(object):
                 except KeyError:
                     response_error = True
                     continue
-                if code != 200:
-                    LOG.warning("Nova event: %s returned with failed "
-                                "status", event)
+                if hasattr(response, 'request_ids'):
+                    msg = "Nova event matching {}".format(response.request_ids)
                 else:
-                    LOG.info("Nova event response: %s", event)
+                    msg = "Nova event"
+                if code != 200:
+                    LOG.warning("%s: %s returned with failed "
+                                "status", msg, event)
+                else:
+                    LOG.info("%s response: %s", msg, event)
             if response_error:
                 LOG.error("Error response returned from nova: %s",
                           response)
