@@ -1137,6 +1137,7 @@ class TestOvsNeutronAgent(object):
         skipped_devices = skipped_devices or []
         binding_no_activated_devices = binding_no_activated_devices or set()
         added_devices = port_info.get('added', set())
+        re_added_devices = port_info.get('re_added', set())
         with mock.patch.object(self.agent.sg_agent,
                                "setup_port_filters") as setup_port_filters,\
                 mock.patch.object(
@@ -1155,7 +1156,9 @@ class TestOvsNeutronAgent(object):
                 mock.patch.object(self.agent,
                                   "treat_devices_skipped",
                                   return_value=(
-                                      skipped_devices)) as device_skipped:
+                                      skipped_devices)) as device_skipped,\
+                mock.patch.object(self.agent.plugin_rpc,
+                                  'update_device_list') as update_device_list:
             self.assertEqual(
                 failed_devices,
                 self.agent.process_network_ports(port_info, False))
@@ -1167,11 +1170,20 @@ class TestOvsNeutronAgent(object):
                                      port_info.get('updated', set()))
             if devices_added_updated:
                 device_added_updated.assert_called_once_with(
-                    devices_added_updated, False, set())
+                    devices_added_updated, False, re_added_devices)
             if port_info.get('removed', set()):
                 device_removed.assert_called_once_with(port_info['removed'])
             if skipped_devices:
                 device_skipped.assert_called_once_with(set(skipped_devices))
+            if port_info.get('re_added'):
+                update_device_list.assert_called_once_with(
+                    context=self.agent.context,
+                    devices_up=[],
+                    devices_down=port_info['re_added'],
+                    agent_id=self.agent.agent_id,
+                    host=self.agent.conf.host)
+            else:
+                update_device_list.assert_not_called()
 
     def test_process_network_ports(self):
         self._test_process_network_ports(
@@ -1202,6 +1214,13 @@ class TestOvsNeutronAgent(object):
 
     def test_process_network_port_with_empty_port(self):
         self._test_process_network_ports({})
+
+    def test_process_network_ports_with_re_added_ports(self):
+        self._test_process_network_ports(
+            {'current': set(['tap0']),
+             'removed': set([]),
+             'added': set(['eth1']),
+             're_added': set(['eth1'])})
 
     @mock.patch.object(linux_utils, 'execute', return_value=False)
     def test_hybrid_plug_flag_based_on_firewall(self, *args):
