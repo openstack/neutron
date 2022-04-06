@@ -85,7 +85,6 @@ mature OpenStack projects:
 
 * Exhaustive OpenStack CI coverage: unit, functional, and tempest coverage
   using OpenStack CI (upstream) resources so that `Grafana <https://grafana.opendev.org/d/f913631585/neutron-failure-rate>`_
-  and `OpenStack Health <http://status.openstack.org/openstack-health/#/>`_
   support is available. Access to CI resources and historical data by the
   team is key to ensuring stability and robustness of a project.
   In particular, it is of paramount importance to ensure that DB models/migrations
