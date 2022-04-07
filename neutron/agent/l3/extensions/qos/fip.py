@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import collections
+
 from neutron_lib.agent import l3_extension
 from neutron_lib import constants
 from neutron_lib.services.qos import constants as qos_consts
@@ -28,6 +30,8 @@ from neutron.common import coordination
 
 LOG = logging.getLogger(__name__)
 
+FipResource = collections.namedtuple('FipResource', 'id ip_address')
+
 
 class RouterFipRateLimitMaps(qos_base.RateLimitMaps):
     LOCK_NAME = "fip-qos-cache"
@@ -35,14 +39,16 @@ class RouterFipRateLimitMaps(qos_base.RateLimitMaps):
     def __init__(self):
         """Initialize RouterFipRateLimitMaps
 
-        The router_floating_ips will be:
-            router_floating_ips = {
-                router_id_1: set(fip1, fip2),
-                router_id_2: set(), # default
-            }
+        "_router_2_fips" stores the FIP resources (``FipResource`` tuple) per
+        router. The "_fips_2_router" dictionary stores the reverse lookup info.
+        _router_2_fips = {router_id_1: {fip_res_1, fip_res_2, ...},
+                          router_id_2: {fip_res_3, fip_res_4, ...}, ... }
+        _fips_2_router = {fip_res_1: router_id_1,
+                          fip_res_2: router_id_1,
+                          fip_res_3: router_id_2, ... }
         """
-        self.router_floating_ips = {}
-
+        self._router_2_fips = {}
+        self._fips_2_router = {}
         """
         The rate limits dict will be:
             xxx_ratelimits = {
@@ -56,64 +62,89 @@ class RouterFipRateLimitMaps(qos_base.RateLimitMaps):
         self.egress_ratelimits = {}
         super(RouterFipRateLimitMaps, self).__init__(self.LOCK_NAME)
 
-    def find_fip_router_id(self, fip):
+    def get_router_id_by_fip(self, fip_res):
 
         @lockutils.synchronized(self.lock_name)
-        def _find_fip_router_id():
-            for router_id, ips in self.router_floating_ips.items():
-                if fip in ips:
-                    return router_id
+        def _find_router_id_by_fip_id():
+            return self._fips_2_router.get(fip_res)
 
-        return _find_fip_router_id()
+        return _find_router_id_by_fip_id()
 
-    def get_router_floating_ips(self, router_id):
+    def get_fips_by_router_id(self, router_id):
 
         @lockutils.synchronized(self.lock_name)
-        def _get_router_floating_ips():
-            return self.router_floating_ips.pop(
-                router_id, [])
+        def _get_fips_by_router_id():
+            return self._router_2_fips.get(router_id, set([]))
 
-        return _get_router_floating_ips()
+        return _get_fips_by_router_id()
 
-    def remove_fip_ratelimit_cache(self, direction, fip):
+    def set_fips(self, router_id, fips):
+
+        @lockutils.synchronized(self.lock_name)
+        def _set_fips():
+            self._router_2_fips[router_id] = fips
+            for fip_res in fips:
+                self._fips_2_router[fip_res] = router_id
+
+        if not isinstance(fips, set):
+            fips = set(fips)
+        return _set_fips()
+
+    def delete_fips(self, fips):
+
+        @lockutils.synchronized(self.lock_name)
+        def _delete_fips():
+            router_ids = set([])
+            for fip_res in fips:
+                router_id = self._fips_2_router.pop(fip_res, None)
+                if router_id:
+                    router_ids.add(router_id)
+
+            for router_id in router_ids:
+                stored_fips = self._router_2_fips.pop(router_id)
+                current_fips = stored_fips - set(fips)
+                if current_fips:
+                    self._router_2_fips[router_id] = current_fips
+
+        if not isinstance(fips, set):
+            fips = set(fips)
+        return _delete_fips()
+
+    def remove_fip_ratelimit_cache(self, direction, fip_id):
 
         @lockutils.synchronized(self.lock_name)
         def _remove_fip_ratelimit_cache():
             rate_limits = getattr(self, direction + "_ratelimits")
-            rate_limits.pop(fip, None)
+            rate_limits.pop(fip_id, None)
 
         _remove_fip_ratelimit_cache()
 
-    def set_fip_ratelimit_cache(self, direction, fip, rate, burst):
+    def set_fip_ratelimit_cache(self, direction, fip_id, rate, burst):
 
         @lockutils.synchronized(self.lock_name)
         def _set_fip_ratelimit_cache():
             rate_limits = getattr(self, direction + "_ratelimits")
-            rate_limits[fip] = (rate, burst)
+            rate_limits[fip_id] = (rate, burst)
 
         _set_fip_ratelimit_cache()
 
-    def get_fip_ratelimit_cache(self, direction, fip):
+    def get_fip_ratelimit_cache(self, direction, fip_id):
 
         @lockutils.synchronized(self.lock_name)
         def _get_fip_ratelimit_cache():
             rate_limits = getattr(self, direction + "_ratelimits")
-            rate, burst = rate_limits.get(fip, (qos_base.IP_DEFAULT_RATE,
-                                                qos_base.IP_DEFAULT_BURST))
+            rate, burst = rate_limits.get(fip_id, (qos_base.IP_DEFAULT_RATE,
+                                                   qos_base.IP_DEFAULT_BURST))
             return rate, burst
 
         return _get_fip_ratelimit_cache()
 
-    def remove_fip_all_cache(self, fip):
-        for direction in constants.VALID_DIRECTIONS:
-            self.remove_fip_ratelimit_cache(direction, fip)
-        self.clean_by_resource(fip)
-
     def clean_router_all_fip_cache(self, router_id):
-        floating_ips = self.router_floating_ips.pop(
-            router_id, [])
-        for fip in floating_ips:
-            self.remove_fip_all_cache(fip)
+        for fip_res in self._router_2_fips.pop(router_id, []):
+            self._fips_2_router.pop(fip_res, None)
+            for direction in constants.VALID_DIRECTIONS:
+                self.remove_fip_ratelimit_cache(direction, fip_res.id)
+            self.clean_by_resource(fip_res)
 
 
 class FipQosAgentExtension(qos_base.L3QosAgentExtensionBase,
@@ -133,26 +164,28 @@ class FipQosAgentExtension(qos_base.L3QosAgentExtensionBase,
 
     def _process_update_policy(self, qos_policy):
         old_qos_policy = self.fip_qos_map.get_policy(qos_policy.id)
-        if old_qos_policy:
-            if self._policy_rules_modified(old_qos_policy, qos_policy):
-                for fip in self.fip_qos_map.get_resources(qos_policy):
-                    router_id = self.fip_qos_map.find_fip_router_id(fip)
-                    router_info = self._get_router_info(router_id)
-                    if not router_info:
-                        continue
-                    device = self._get_rate_limit_ip_device(router_info)
-                    dvr_fip_device = self._get_dvr_fip_device(router_info)
-                    if not device and not dvr_fip_device:
-                        LOG.debug("Router %s does not have a floating IP "
-                                  "related device, skipping.", router_id)
-                        continue
-                    rates = self.get_policy_rates(qos_policy)
-                    if device:
-                        self.process_ip_rates(fip, device, rates)
-                    if dvr_fip_device:
-                        self.process_ip_rates(
-                            fip, dvr_fip_device, rates, with_cache=False)
-            self.fip_qos_map.update_policy(qos_policy)
+        if not old_qos_policy:
+            return
+
+        if self._policy_rules_modified(old_qos_policy, qos_policy):
+            for fip_res in self.fip_qos_map.get_resources(qos_policy):
+                router_id = self.fip_qos_map.get_router_id_by_fip(fip_res)
+                router_info = self._get_router_info(router_id)
+                if not router_info:
+                    continue
+                device = self._get_rate_limit_ip_device(router_info)
+                dvr_fip_device = self._get_dvr_fip_device(router_info)
+                if not device and not dvr_fip_device:
+                    LOG.debug("Router %s does not have a floating IP "
+                              "related device, skipping.", router_id)
+                    continue
+                rates = self.get_policy_rates(qos_policy)
+                if device:
+                    self.process_ip_rates(fip_res, device, rates)
+                if dvr_fip_device:
+                    self.process_ip_rates(
+                        fip_res, dvr_fip_device, rates, with_cache=False)
+        self.fip_qos_map.update_policy(qos_policy)
 
     @coordination.synchronized('qos-floating-ip-{ip}')
     def process_ip_rate_limit(self, ip, direction,
@@ -196,16 +229,16 @@ class FipQosAgentExtension(qos_base.L3QosAgentExtensionBase,
         namespace = router_info.get_gw_ns_name()
         return ip_lib.IPDevice(name, namespace=namespace)
 
-    def _remove_fip_rate_limit(self, device, fip_ip):
+    def _remove_fip_rate_limit(self, device, fip_res):
         tc_wrapper = self._get_tc_wrapper(device)
         for direction in constants.VALID_DIRECTIONS:
             if device.exists():
-                tc_wrapper.clear_ip_rate_limit(direction, fip_ip)
-            self.fip_qos_map.remove_fip_ratelimit_cache(direction, fip_ip)
+                tc_wrapper.clear_ip_rate_limit(direction, fip_res.ip_address)
+            self.fip_qos_map.remove_fip_ratelimit_cache(direction, fip_res.id)
 
-    def get_fip_qos_rates(self, context, fip, policy_id):
+    def get_fip_qos_rates(self, context, fip_res, policy_id):
         if policy_id is None:
-            self.fip_qos_map.clean_by_resource(fip)
+            self.fip_qos_map.clean_by_resource(fip_res)
             # process_ip_rate_limit will treat value 0 as
             # cleaning the tc filters if exits or no action.
             return {constants.INGRESS_DIRECTION: {
@@ -216,36 +249,36 @@ class FipQosAgentExtension(qos_base.L3QosAgentExtensionBase,
                         "burst": qos_base.IP_DEFAULT_BURST}}
         policy = self.resource_rpc.pull(
             context, resources.QOS_POLICY, policy_id)
-        self.fip_qos_map.set_resource_policy(fip, policy)
+        self.fip_qos_map.set_resource_policy(fip_res, policy)
         return self.get_policy_rates(policy)
 
-    def process_ip_rates(self, fip, device, rates, with_cache=True):
+    def process_ip_rates(self, fip_res, device, rates, with_cache=True):
         for direction in constants.VALID_DIRECTIONS:
             rate = rates.get(direction)
             if with_cache:
 
                 old_rate, old_burst = self.fip_qos_map.get_fip_ratelimit_cache(
-                    direction, fip)
+                    direction, fip_res.id)
                 if old_rate == rate['rate'] and old_burst == rate['burst']:
                     # Two possibilities here:
                     # 1. Floating IP rate limit does not change.
                     # 2. Floating IP bandwidth does not limit.
                     continue
 
-                self.process_ip_rate_limit(
-                    fip, direction, device,
-                    rate['rate'], rate['burst'])
+                self.process_ip_rate_limit(fip_res.ip_address, direction,
+                                           device, rate['rate'], rate['burst'])
 
                 self.fip_qos_map.set_fip_ratelimit_cache(
-                    direction, fip, rate['rate'], rate['burst'])
+                    direction, fip_res.id, rate['rate'], rate['burst'])
             else:
                 tc_wrapper = self._get_tc_wrapper(device)
                 if (rate['rate'] == qos_base.IP_DEFAULT_RATE and
                         rate['burst'] == qos_base.IP_DEFAULT_BURST):
                     # Default value is no limit
-                    tc_wrapper.clear_ip_rate_limit(direction, fip)
+                    tc_wrapper.clear_ip_rate_limit(direction,
+                                                   fip_res.ip_address)
                 else:
-                    tc_wrapper.set_ip_rate_limit(direction, fip,
+                    tc_wrapper.set_ip_rate_limit(direction, fip_res.ip_address,
                                                  rate['rate'], rate['burst'])
 
     def _get_dvr_fip_device(self, router_info):
@@ -301,17 +334,17 @@ class FipQosAgentExtension(qos_base.L3QosAgentExtensionBase,
 
         floating_ips = (router_info.get_floating_ips() +
                         router_info.get_port_forwarding_fips())
-        current_fips = self.fip_qos_map.router_floating_ips.get(
-            router_info.router_id, set())
-        new_fips = set()
+        current_fips = self.fip_qos_map.get_fips_by_router_id(
+            router_info.router_id)
+        new_fips = set([])
         for fip in floating_ips:
-            fip_addr = fip['floating_ip_address']
-            new_fips.add(fip_addr)
+            fip_res = FipResource(fip['id'], fip['floating_ip_address'])
+            new_fips.add(fip_res)
             rates = self.get_fip_qos_rates(context,
-                                           fip_addr,
+                                           fip_res,
                                            fip.get(qos_consts.QOS_POLICY_ID))
             if device:
-                self.process_ip_rates(fip_addr, device, rates)
+                self.process_ip_rates(fip_res, device, rates)
 
             if dvr_fip_device:
                 # NOTE(liuyulong): for scenario 4 (mixed dvr_snat and compute
@@ -320,16 +353,16 @@ class FipQosAgentExtension(qos_base.L3QosAgentExtensionBase,
                 # already set. We just install the rules to the device in
                 # qrouter-namesapce.
                 self.process_ip_rates(
-                    fip_addr, dvr_fip_device, rates, with_cache=False)
+                    fip_res, dvr_fip_device, rates, with_cache=False)
 
-        self.fip_qos_map.router_floating_ips[router_info.router_id] = new_fips
+        self.fip_qos_map.set_fips(router_info.router_id, new_fips)
         fips_removed = current_fips - new_fips
-        for fip in fips_removed:
+        for fip_res in fips_removed:
             if device:
-                self._remove_fip_rate_limit(device, fip)
+                self._remove_fip_rate_limit(device, fip_res)
             if dvr_fip_device:
-                self._remove_fip_rate_limit(dvr_fip_device, fip)
-            self.fip_qos_map.clean_by_resource(fip)
+                self._remove_fip_rate_limit(dvr_fip_device, fip_res)
+            self.fip_qos_map.clean_by_resource(fip_res)
 
     def add_router(self, context, data):
         router_info = self._get_router_info(data['id'])
