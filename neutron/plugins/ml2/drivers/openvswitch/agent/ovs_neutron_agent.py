@@ -2085,6 +2085,30 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         devices_not_in_datapath = set()
         migrating_devices = set()
         start = time.time()
+        if re_added:
+            # NOTE(slaweq): to make sure that devices which were deleted and
+            # then quickly added back (e.g. during rebuild of the VM by nova),
+            # we will update all such devices to be DOWN first. That way when
+            # we will process those devices as added/updated later in
+            # process_network_ports, we can be sure that update state to UP
+            # will trigger send notification about port status to Nova
+            re_added_devices = self.plugin_rpc.update_device_list(
+                context=self.context,
+                devices_up=[],
+                devices_down=re_added,
+                agent_id=self.agent_id,
+                host=self.conf.host)
+            failed_re_added_down = re_added_devices.get('failed_devices_down')
+            if failed_re_added_down:
+                LOG.debug("Status updated failed for re_added devices: %s",
+                          failed_re_added_down)
+            LOG.info("process_network_ports - iteration:%(iter_num)d - "
+                     "reporting re_added devices DOWN completed. "
+                     "Number of readded devices: %(re_added)s. "
+                     "Time elapsed: %(elapsed).3f",
+                     {'iter_num': self.iter_num,
+                      're_added': len(re_added),
+                      'elapsed': time.time() - start})
         if devices_added_updated:
             (skipped_devices, binding_no_activated_devices,
              need_binding_devices, failed_devices['added'],
