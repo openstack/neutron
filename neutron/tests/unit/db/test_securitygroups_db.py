@@ -130,6 +130,16 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                 self.mixin.create_security_group_rule(
                     self.ctx, mock.MagicMock())
 
+    def test_create_security_group_rule_raise_error_on_not_found(self):
+        with mock.patch("neutron.objects.securitygroup.SecurityGroup."
+                        "objects_exist") as mock_object_exists:
+            with testtools.ExpectedException(
+                    securitygroup.SecurityGroupNotFound):
+                rule = copy.deepcopy(FAKE_SECGROUP_RULE)
+                rule['security_group_rule']['security_group_id'] = 0
+                self.mixin.create_security_group_rule(self.ctx, rule)
+            mock_object_exists.assert_called_once_with(self.ctx, id='0')
+
     def test__check_for_duplicate_rules_does_not_drop_protocol(self):
         with mock.patch.object(self.mixin, 'get_security_group',
                                return_value=None):

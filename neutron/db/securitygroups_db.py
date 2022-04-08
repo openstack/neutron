@@ -633,10 +633,10 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         remote_group_id = rule['remote_group_id']
         # Check that remote_group_id exists for tenant
         if remote_group_id:
-            self._check_security_group(context, remote_group_id,
+            self._check_security_group(context, str(remote_group_id),
                                        tenant_id=rule['tenant_id'])
 
-        security_group_id = rule['security_group_id']
+        security_group_id = str(rule['security_group_id'])
 
         # Confirm that the tenant has permission
         # to add rules to this security group.
