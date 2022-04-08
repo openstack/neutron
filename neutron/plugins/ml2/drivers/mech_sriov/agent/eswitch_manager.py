@@ -381,7 +381,7 @@ class ESwitchManager(object):
         embedded_switch = self._get_emb_eswitch(device_mac, pci_slot)
         if embedded_switch:
             embedded_switch.set_device_rate(
-                pci_slot, IP_LINK_CAPABILITY_RATE, max_kbps)
+                pci_slot, {IP_LINK_CAPABILITY_RATE: max_kbps})
 
     def set_device_min_tx_rate(self, device_mac, pci_slot, min_kbps):
         """Set device min_tx_rate
@@ -394,7 +394,7 @@ class ESwitchManager(object):
         embedded_switch = self._get_emb_eswitch(device_mac, pci_slot)
         if embedded_switch:
             embedded_switch.set_device_rate(
-                pci_slot, IP_LINK_CAPABILITY_MIN_TX_RATE, min_kbps)
+                pci_slot, {IP_LINK_CAPABILITY_MIN_TX_RATE: min_kbps})
 
     def set_device_state(self, device_mac, pci_slot, admin_state_up,
                          propagate_uplink_state):
@@ -540,7 +540,7 @@ class ESwitchManager(object):
             # NOTE(Moshe Levi): check the pci_slot is not assigned to some
             # other port before resetting the rate.
             if embedded_switch.get_pci_device(pci_slot) is None:
-                embedded_switch.set_device_rate(pci_slot, rate_type, 0)
+                embedded_switch.set_device_rate(pci_slot, {rate_type: 0})
             else:
                 LOG.warning("VF with PCI slot %(pci_slot)s is already "
                             "assigned; skipping reset for '%(rate_type)s' "
