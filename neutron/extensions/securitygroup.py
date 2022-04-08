@@ -245,7 +245,9 @@ RESOURCE_ATTRIBUTE_MAP = {
                'primary_key': True},
         'security_group_id': {'allow_post': True, 'allow_put': False,
                               'is_visible': True, 'required_by_policy': True,
-                              'is_sort_key': True, 'is_filter': True},
+                              'is_sort_key': True, 'is_filter': True,
+                              'validate': {
+                                  'type:string': db_const.UUID_FIELD_SIZE}},
         'remote_group_id': {'allow_post': True, 'allow_put': False,
                             'default': None, 'is_visible': True,
                             'is_sort_key': True, 'is_filter': True},

@@ -2064,6 +2064,15 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         self.deserialize(self.fmt, res)
         self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
 
+    def test_create_security_group_rule_with_non_uuid_security_group_id(self):
+        security_group_id = 0
+        rule = self._build_security_group_rule(
+            security_group_id, 'ingress',
+            const.PROTO_NAME_TCP, '22', '22')
+        res = self._create_security_group_rule(self.fmt, rule)
+        self.deserialize(self.fmt, res)
+        self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
+
     def test_create_port_with_non_uuid(self):
         with self.network() as n:
             with self.subnet(n):
