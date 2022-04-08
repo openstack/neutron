@@ -25,13 +25,58 @@ class AvailabilityZoneAPITestCase(base.PolicyBaseTestCase):
         super(AvailabilityZoneAPITestCase, self).setUp()
         self.target = {}
 
-    def test_system_reader_can_get_availability_zone(self):
-        self.assertTrue(
-            policy.enforce(self.system_reader_ctx, "get_availability_zone",
-                           self.target))
 
-    def test_project_reader_can_not_get_availability_zone(self):
+class SystemAdminTests(AvailabilityZoneAPITestCase):
+
+    def setUp(self):
+        super(SystemAdminTests, self).setUp()
+        self.context = self.system_admin_ctx
+
+    def test_get_availability_zone(self):
+        self.assertTrue(
+            policy.enforce(self.context, "get_availability_zone", self.target))
+
+
+class SystemMemberTests(SystemAdminTests):
+
+    def setUp(self):
+        self.skipTest("SYSTEM_MEMBER persona isn't supported in phase1 of the "
+                      "community goal")
+        super(SystemMemberTests, self).setUp()
+        self.context = self.system_member_ctx
+
+
+class SystemReaderTests(SystemMemberTests):
+
+    def setUp(self):
+        self.skipTest("SYSTEM_READER persona isn't supported in phase1 of the "
+                      "community goal")
+        super(SystemReaderTests, self).setUp()
+        self.context = self.system_reader_ctx
+
+
+class ProjectAdminTests(AvailabilityZoneAPITestCase):
+
+    def setUp(self):
+        super(ProjectAdminTests, self).setUp()
+        self.context = self.project_admin_ctx
+
+    def test_get_availability_zone(self):
         self.assertRaises(
             base_policy.InvalidScope,
             policy.enforce,
-            self.project_reader_ctx, "get_availability_zone", self.target)
+            self.context, "get_availability_zone", self.target)
+
+
+class ProjectMemberTests(ProjectAdminTests):
+
+    def setUp(self):
+        super(ProjectMemberTests, self).setUp()
+        self.context = self.project_member_ctx
+
+
+class ProjectReaderTests(ProjectMemberTests):
+
+    def setUp(self):
+        super(ProjectReaderTests, self).setUp()
+        self.context = self.project_reader_ctx

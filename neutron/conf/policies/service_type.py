@@ -22,7 +22,7 @@ DEPRECATION_REASON = (
 rules = [
     policy.DocumentedRuleDefault(
         name='get_service_provider',
-        # NOTE: it can't be SYSTEM_OR_PROJECT_READER constant from the base
+        # NOTE: it can't be ADMIN_OR_PROJECT_READER constant from the base
         # module because that is using "project_id" in the check string and the
         # service_provider resource don't belongs to any project thus such
         # check string would fail enforcment.

@@ -25,7 +25,7 @@ RESOURCE_PATH = '/segments/{id}'
 rules = [
     policy.DocumentedRuleDefault(
         name='create_segment',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['system'],
         description='Create a segment',
         operations=[
@@ -42,7 +42,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_segment',
-        check_str=base.SYSTEM_READER,
+        check_str=base.ADMIN,
         scope_types=['system'],
         description='Get a segment',
         operations=[
@@ -63,7 +63,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_segment',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['system'],
         description='Update a segment',
         operations=[
@@ -80,7 +80,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_segment',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['system'],
         description='Delete a segment',
         operations=[

@@ -25,7 +25,7 @@ DEPRECATION_REASON = (
 rules = [
     policy.DocumentedRuleDefault(
         name='get_agent',
-        check_str=base.SYSTEM_READER,
+        check_str=base.ADMIN,
         description='Get an agent',
         operations=[
             {
@@ -46,7 +46,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_agent',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.ADMIN,
         description='Update an agent',
         operations=[
             {
@@ -63,7 +63,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_agent',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.ADMIN,
         description='Delete an agent',
         operations=[
             {
@@ -80,7 +80,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_dhcp-network',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.ADMIN,
         description='Add a network to a DHCP agent',
         operations=[
             {
@@ -97,7 +97,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_dhcp-networks',
-        check_str=base.SYSTEM_READER,
+        check_str=base.ADMIN,
         description='List networks on a DHCP agent',
         operations=[
             {
@@ -114,7 +114,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_dhcp-network',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.ADMIN,
         description='Remove a network from a DHCP agent',
         operations=[
             {
@@ -131,7 +131,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_l3-router',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.ADMIN,
         description='Add a router to an L3 agent',
         operations=[
             {
@@ -148,7 +148,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_l3-routers',
-        check_str=base.SYSTEM_READER,
+        check_str=base.ADMIN,
         description='List routers on an L3 agent',
         operations=[
             {
@@ -165,7 +165,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_l3-router',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.ADMIN,
         description='Remove a router from an L3 agent',
         operations=[
             {
@@ -182,7 +182,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_dhcp-agents',
-        check_str=base.SYSTEM_READER,
+        check_str=base.ADMIN,
         description='List DHCP agents hosting a network',
         operations=[
             {
@@ -199,7 +199,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_l3-agents',
-        check_str=base.SYSTEM_READER,
+        check_str=base.ADMIN,
         description='List L3 agents hosting a router',
         operations=[
             {

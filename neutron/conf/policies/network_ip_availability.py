@@ -23,7 +23,7 @@ The network IP availability API now support system scope and default roles.
 rules = [
     policy.DocumentedRuleDefault(
         name='get_network_ip_availability',
-        check_str=base.SYSTEM_READER,
+        check_str=base.ADMIN,
         scope_types=['system'],
         description='Get network IP availability',
         operations=[

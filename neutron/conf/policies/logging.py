@@ -27,7 +27,7 @@ RESOURCE_PATH = '/log/logs/{id}'
 rules = [
     policy.DocumentedRuleDefault(
         name='get_loggable_resource',
-        check_str=base.SYSTEM_READER,
+        check_str=base.ADMIN,
         scope_types=['system'],
         description='Get loggable resources',
         operations=[
@@ -44,7 +44,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_log',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['system'],
         description='Create a network log',
         operations=[
@@ -61,7 +61,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_log',
-        check_str=base.SYSTEM_READER,
+        check_str=base.ADMIN,
         scope_types=['system'],
         description='Get a network log',
         operations=[
@@ -82,7 +82,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_log',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['system'],
         description='Update a network log',
         operations=[
@@ -99,7 +99,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_log',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['system'],
         description='Delete a network log',
         operations=[

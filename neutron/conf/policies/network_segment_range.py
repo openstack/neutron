@@ -29,7 +29,7 @@ RESOURCE_PATH = '/network_segment_ranges/{id}'
 rules = [
     policy.DocumentedRuleDefault(
         name='create_network_segment_range',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['system'],
         description='Create a network segment range',
         operations=[
@@ -46,7 +46,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_network_segment_range',
-        check_str=base.SYSTEM_READER,
+        check_str=base.ADMIN,
         scope_types=['system'],
         description='Get a network segment range',
         operations=[
@@ -67,7 +67,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_network_segment_range',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['system'],
         description='Update a network segment range',
         operations=[
@@ -84,7 +84,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_network_segment_range',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['system'],
         description='Delete a network segment range',
         operations=[

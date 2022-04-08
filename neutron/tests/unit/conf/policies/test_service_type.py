@@ -38,6 +38,8 @@ class SystemAdminTests(ServiceTypeAPITestCase):
 class SystemMemberTests(SystemAdminTests):
 
     def setUp(self):
+        self.skipTest("SYSTEM_MEMBER persona isn't supported in phase1 of the "
+                      "community goal")
         super(SystemMemberTests, self).setUp()
         self.context = self.system_member_ctx
 
@@ -45,15 +47,21 @@ class SystemMemberTests(SystemAdminTests):
 class SystemReaderTests(SystemMemberTests):
 
     def setUp(self):
+        self.skipTest("SYSTEM_READER persona isn't supported in phase1 of the "
+                      "community goal")
         super(SystemReaderTests, self).setUp()
         self.context = self.system_reader_ctx
 
 
-class ProjectAdminTests(SystemAdminTests):
+class ProjectAdminTests(ServiceTypeAPITestCase):
 
     def setUp(self):
         super(ProjectAdminTests, self).setUp()
         self.context = self.project_admin_ctx
+
+    def test_get_service_provider(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'get_service_provider', self.target))
 
 
 class ProjectMemberTests(ProjectAdminTests):
