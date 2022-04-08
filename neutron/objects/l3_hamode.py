@@ -13,6 +13,7 @@
 #    under the License.
 
 from neutron_lib import constants
+from neutron_lib.db import api as db_api
 from neutron_lib.objects import common_types
 from oslo_versionedobjects import fields as obj_fields
 
@@ -40,6 +41,7 @@ class L3HARouterAgentPortBinding(base.NeutronDbObject):
     fields_no_update = ['router_id', 'port_id']
 
     @classmethod
+    @db_api.CONTEXT_READER
     def get_l3ha_filter_host_router(cls, context, router_ids, host):
         query = context.session.query(l3ha.L3HARouterAgentPortBinding)
 

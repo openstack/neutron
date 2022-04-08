@@ -60,6 +60,7 @@ class IpAvailabilityMixin(object):
     total_ips_columns.append(mod.IPAllocationPool.last_ip)
 
     @classmethod
+    @db_api.CONTEXT_READER
     def get_network_ip_availabilities(cls, context, filters=None):
         """Get IP availability stats on a per subnet basis.
 

@@ -15,6 +15,7 @@
 import itertools
 
 import netaddr
+from neutron_lib.db import api as db_api
 from neutron_lib.objects import common_types
 
 from neutron.db.models import l3
@@ -265,21 +266,23 @@ class PortForwarding(base.NeutronDbObject):
         return result
 
     @classmethod
+    @db_api.CONTEXT_READER
     def get_port_forwarding_obj_by_routers(cls, context, router_ids):
         query = context.session.query(cls.db_model, l3.FloatingIP)
         query = query.join(l3.FloatingIP,
                            cls.db_model.floatingip_id == l3.FloatingIP.id)
         query = query.filter(l3.FloatingIP.router_id.in_(router_ids))
 
-        return cls._unique_port_forwarding_iterator(query)
+        return cls._unique_port_forwarding(query)
 
-    @classmethod
-    def _unique_port_forwarding_iterator(cls, query):
+    @staticmethod
+    def _unique_port_forwarding(query):
         q = query.order_by(l3.FloatingIP.router_id)
         keyfunc = lambda row: row[1]
         group_iterator = itertools.groupby(q, keyfunc)
 
+        result = []
         for key, value in group_iterator:
-            for row in value:
-                yield (row[1]['router_id'], row[1]['floating_ip_address'],
-                       row[0]['id'], row[1]['id'])
+            result.extend([(row[1]['router_id'], row[1]['floating_ip_address'],
+                            row[0]['id'], row[1]['id']) for row in value])
+        return result

@@ -268,6 +268,7 @@ class TrackedResource(BaseResource):
         # Update quota usage
         return self._resync(context, project_id, in_use)
 
+    @db_api.CONTEXT_WRITER
     def count_used(self, context, project_id, resync_usage=True):
         """Returns the current usage count for the resource.
 

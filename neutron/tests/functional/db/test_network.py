@@ -176,24 +176,24 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
     def test_ensure_no_port_in_asterisk(self):
         self._create_network(self.tenant_1, self.network_id, True)
         self.plugin.ensure_no_tenant_ports_on_network(
-            self.network_id, self.tenant_1, '*')
+            self.cxt, self.network_id, self.tenant_1, '*')
 
     def test_ensure_no_port_in_tenant_1(self):
         self._create_network(self.tenant_1, self.network_id, True)
         self.plugin.ensure_no_tenant_ports_on_network(
-            self.network_id, self.tenant_1, self.tenant_1)
+            self.cxt, self.network_id, self.tenant_1, self.tenant_1)
 
     def test_ensure_no_port_in_tenant_2(self):
         self._create_network(self.tenant_1, self.network_id, True)
         self.plugin.ensure_no_tenant_ports_on_network(
-            self.network_id, self.tenant_1, self.tenant_2)
+            self.cxt, self.network_id, self.tenant_1, self.tenant_2)
 
     def test_ensure_port_tenant_1_in_asterisk(self):
         self._create_network(self.tenant_1, self.network_id, True)
         self._create_subnet(self.tenant_1, self.subnet_1_id, True)
         self._create_port(self.tenant_1, self.network_id, self.port_id)
         self.plugin.ensure_no_tenant_ports_on_network(
-            self.network_id, self.tenant_1, '*')
+            self.cxt, self.network_id, self.tenant_1, '*')
 
     def test_ensure_port_tenant_2_in_asterisk(self):
         self._create_network(self.tenant_1, self.network_id, True)
@@ -201,21 +201,21 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
         self._create_port(self.tenant_2, self.network_id, self.port_id)
         self.assertRaises(n_exc.InvalidSharedSetting,
                           self.plugin.ensure_no_tenant_ports_on_network,
-                          self.network_id, self.tenant_1, '*')
+                          self.cxt, self.network_id, self.tenant_1, '*')
 
     def test_ensure_port_tenant_1_in_tenant_1(self):
         self._create_network(self.tenant_1, self.network_id, True)
         self._create_subnet(self.tenant_1, self.subnet_1_id, True)
         self._create_port(self.tenant_1, self.network_id, self.port_id)
         self.plugin.ensure_no_tenant_ports_on_network(
-            self.network_id, self.tenant_1, self.tenant_1)
+            self.cxt, self.network_id, self.tenant_1, self.tenant_1)
 
     def test_ensure_no_share_port_tenant_2_in_tenant_1(self):
         self._create_network(self.tenant_1, self.network_id, False)
         self._create_subnet(self.tenant_1, self.subnet_1_id, True)
         self._create_port(self.tenant_2, self.network_id, self.port_id)
         self.plugin.ensure_no_tenant_ports_on_network(
-            self.network_id, self.tenant_1, self.tenant_1)
+            self.cxt, self.network_id, self.tenant_1, self.tenant_1)
 
     def test_ensure_no_share_port_tenant_2_in_tenant_2(self):
         self._create_network(self.tenant_1, self.network_id, False)
@@ -223,4 +223,5 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
         self._create_port(self.tenant_2, self.network_id, self.port_id)
         self.assertRaises(n_exc.InvalidSharedSetting,
                           self.plugin.ensure_no_tenant_ports_on_network,
-                          self.network_id, self.tenant_1, self.tenant_2)
+                          self.cxt, self.network_id, self.tenant_1,
+                          self.tenant_2)

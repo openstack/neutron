@@ -17,6 +17,7 @@ import netaddr
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.validators import availability_zone as az_validator
 from neutron_lib import constants as n_const
+from neutron_lib.db import api as db_api
 from neutron_lib.objects import common_types
 from neutron_lib.utils import net as net_utils
 from oslo_utils import versionutils
@@ -108,6 +109,7 @@ class RouterExtraAttributes(base.NeutronDbObject):
         return result
 
     @classmethod
+    @db_api.CONTEXT_READER
     def get_router_agents_count(cls, context):
         # TODO(sshank): This is pulled out from l3_agentschedulers_db.py
         # until a way to handle joins is figured out.
@@ -146,6 +148,7 @@ class RouterPort(base.NeutronDbObject):
     }
 
     @classmethod
+    @db_api.CONTEXT_READER
     def get_router_ids_by_subnetpool(cls, context, subnetpool_id):
         query = context.session.query(l3.RouterPort.router_id)
         query = query.join(models_v2.Port)
@@ -220,6 +223,7 @@ class Router(base.NeutronDbObject):
     fields_no_update = ['project_id']
 
     @classmethod
+    @db_api.CONTEXT_READER
     def check_routers_not_owned_by_projects(cls, context, gw_ports, projects):
         """This method is to check whether routers that aren't owned by
         existing projects or not
@@ -376,6 +380,7 @@ class FloatingIP(base.NeutronDbObject):
             primitive.pop('qos_network_policy_id', None)
 
     @classmethod
+    @db_api.CONTEXT_READER
     def get_scoped_floating_ips(cls, context, router_ids):
         query = context.session.query(l3.FloatingIP,
                                       models_v2.SubnetPool.address_scope_id)
@@ -410,6 +415,7 @@ class FloatingIP(base.NeutronDbObject):
             yield (cls._load_object(context, row[0]), row[1])
 
     @classmethod
+    @db_api.CONTEXT_READER
     def get_disassociated_ids_for_net(cls, context, network_id):
         query = context.session.query(cls.db_model.id)
         query = query.filter_by(

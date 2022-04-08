@@ -33,6 +33,7 @@ from neutron._i18n import _
 from neutron.db import models_v2
 from neutron.extensions import rbac as rbac_ext
 from neutron.objects import network as net_obj
+from neutron.objects import ports as port_obj
 from neutron.objects import router as l3_obj
 
 
@@ -127,9 +128,9 @@ class External_net_db_mixin(object):
             # must make sure we do not have any external gateway ports
             # (and thus, possible floating IPs) on this network before
             # allow it to be update to external=False
-            if context.session.query(models_v2.Port.id).filter_by(
-                    device_owner=constants.DEVICE_OWNER_ROUTER_GW,
-                    network_id=net_data['id']).first():
+            if port_obj.Port.count(
+                    context, network_id=net_data['id'],
+                    device_owner=constants.DEVICE_OWNER_ROUTER_GW):
                 raise extnet_exc.ExternalNetworkInUse(net_id=net_id)
 
             net_obj.ExternalNetwork.delete_objects(
@@ -200,10 +201,9 @@ class External_net_db_mixin(object):
             if new_project == policy['target_project']:
                 # nothing to validate if the tenant didn't change
                 return
-        gw_ports = context.session.query(models_v2.Port.id).filter_by(
-            device_owner=constants.DEVICE_OWNER_ROUTER_GW,
-            network_id=policy['object_id'])
-        gw_ports = [gw_port[0] for gw_port in gw_ports]
+
+        gw_ports = port_obj.Port.get_gateway_port_ids_by_network(
+            context, policy['object_id'])
         if policy['target_project'] != '*':
             filters = {
                 'gw_port_id': gw_ports,

@@ -622,6 +622,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         return self._make_router_dict(router, fields)
 
     @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_READER
     def get_routers(self, context, filters=None, fields=None,
                     sorts=None, limit=None, marker=None,
                     page_reverse=False):
@@ -636,6 +637,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                           page_reverse=page_reverse)
 
     @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_READER
     def get_routers_count(self, context, filters=None):
         return model_query.get_collection_count(
             context, l3_models.Router, filters=filters,
@@ -1365,7 +1367,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         fip_id = uuidutils.generate_uuid()
 
         f_net_id = fip['floating_network_id']
-        f_net_db = self._core_plugin._get_network(context, f_net_id)
+        with db_api.CONTEXT_READER.using(context):
+            f_net_db = self._core_plugin._get_network(context, f_net_id)
         if not f_net_db.external:
             msg = _("Network %s is not a valid external network") % f_net_id
             raise n_exc.BadRequest(resource='floatingip', msg=msg)
@@ -1834,6 +1837,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 continue
             yield port
 
+    @db_api.CONTEXT_READER
     def _get_subnets_by_network_list(self, context, network_ids):
         if not network_ids:
             return {}

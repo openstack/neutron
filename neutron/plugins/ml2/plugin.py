@@ -2017,12 +2017,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @utils.transaction_guard
     @db_api.retry_if_session_inactive()
     def delete_port(self, context, id, l3_port_check=True):
-        try:
-            port_db = self._get_port(context, id)
-            port = self._make_port_dict(port_db)
-        except exc.PortNotFound:
-            LOG.debug("The port '%s' was deleted", id)
-            return
+        with db_api.CONTEXT_READER.using(context):
+            try:
+                port_db = self._get_port(context, id)
+                port = self._make_port_dict(port_db)
+            except exc.PortNotFound:
+                LOG.debug("The port '%s' was deleted", id)
+                return
 
         self._pre_delete_port(context, id, l3_port_check, port)
         # TODO(armax): get rid of the l3 dependency in the with block

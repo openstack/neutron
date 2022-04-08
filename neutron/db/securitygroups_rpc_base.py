@@ -441,6 +441,7 @@ class SecurityGroupServerRpcMixin(SecurityGroupInfoAPIMixin,
     """Server-side RPC mixin using DB for SG notifications and responses."""
 
     @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_READER
     def _select_sg_ids_for_ports(self, context, ports):
         if not ports:
             return []
@@ -451,6 +452,7 @@ class SecurityGroupServerRpcMixin(SecurityGroupInfoAPIMixin,
         return query.all()
 
     @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_READER
     def _select_rules_for_ports(self, context, ports):
         if not ports:
             return []
@@ -467,6 +469,7 @@ class SecurityGroupServerRpcMixin(SecurityGroupInfoAPIMixin,
         return query.all()
 
     @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_READER
     def _select_ips_for_remote_group(self, context, remote_group_ids):
         ips_by_group = {}
         if not remote_group_ids:
@@ -507,6 +510,7 @@ class SecurityGroupServerRpcMixin(SecurityGroupInfoAPIMixin,
         return ips_by_group
 
     @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_READER
     def _select_ips_for_remote_address_group(self, context,
                                              remote_address_group_ids):
         ips_by_group = {}

@@ -391,10 +391,9 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             rb_obj.RouterL3AgentBinding.get_l3_agents_by_router_ids(
                 context, router_ids))
 
+    @db_api.CONTEXT_READER
     def list_l3_agents_hosting_router(self, context, router_id):
-        with db_api.CONTEXT_READER.using(context):
-            agents = self._get_l3_agents_hosting_routers(
-                context, [router_id])
+        agents = self._get_l3_agents_hosting_routers(context, [router_id])
         return {'agents': [self._make_agent_dict(agent)
                            for agent in agents]}
 

@@ -15,6 +15,7 @@
 
 import abc
 
+from neutron_lib.db import api as db_api
 from neutron_lib.objects import common_types
 from sqlalchemy import and_
 from sqlalchemy import exists
@@ -55,6 +56,7 @@ class QosPolicyPortBinding(base.NeutronDbObject, _QosPolicyBindingMixin):
     _bound_model_id = db_model.port_id
 
     @classmethod
+    @db_api.CONTEXT_READER
     def get_ports_by_network_id(cls, context, network_id, policy_id=None):
         query = context.session.query(models_v2.Port).filter(
             models_v2.Port.network_id == network_id)
@@ -103,6 +105,7 @@ class QosPolicyFloatingIPBinding(base.NeutronDbObject, _QosPolicyBindingMixin):
     _bound_model_id = db_model.fip_id
 
     @classmethod
+    @db_api.CONTEXT_READER
     def get_fips_by_network_id(cls, context, network_id, policy_id=None):
         """Return the FIP belonging to a network, filtered by a QoS policy
 

@@ -13,6 +13,7 @@
 # TODO(ihrachys): cover the module with functional tests targeting supported
 # backends
 
+from neutron_lib.db import api as db_api
 from neutron_lib.db import model_query
 from neutron_lib import exceptions as n_exc
 from neutron_lib.objects import utils as obj_utils
@@ -34,6 +35,7 @@ def get_object(obj_cls, context, **kwargs):
     return _get_filter_query(obj_cls, context, **kwargs).first()
 
 
+@db_api.CONTEXT_READER
 def count(obj_cls, context, query_field=None, query_limit=None, **kwargs):
     if not query_field and obj_cls.primary_keys:
         query_field = obj_cls.primary_keys[0]

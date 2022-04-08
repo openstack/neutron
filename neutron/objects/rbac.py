@@ -15,6 +15,7 @@
 
 import abc
 
+from neutron_lib.db import api as db_api
 from neutron_lib.objects import common_types
 from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
@@ -39,6 +40,7 @@ class RBACBaseObject(base.NeutronDbObject, metaclass=abc.ABCMeta):
     fields_no_update = ['id', 'project_id', 'object_id']
 
     @classmethod
+    @db_api.CONTEXT_READER
     def get_projects(cls, context, object_id=None, action=None,
                      target_project=None):
         clauses = []

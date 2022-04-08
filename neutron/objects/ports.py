@@ -243,6 +243,7 @@ class IPAllocation(base.NeutronDbObject):
             alloc_obj.delete()
 
     @classmethod
+    @db_api.CONTEXT_READER
     def get_alloc_routerports(cls, context, subnet_id, gateway_ip=None,
                               first=False):
         alloc_qry = context.session.query(cls.db_model.port_id)
@@ -466,6 +467,7 @@ class Port(base.NeutronDbObject):
         return port_array
 
     @classmethod
+    @db_api.CONTEXT_READER
     def get_auto_deletable_port_ids_and_proper_port_count_by_segment(
             cls, context, segment_id):
 
@@ -584,6 +586,7 @@ class Port(base.NeutronDbObject):
             primitive.pop('device_profile', None)
 
     @classmethod
+    @db_api.CONTEXT_READER
     def get_ports_by_router_and_network(cls, context, router_id, owner,
                                         network_id):
         """Returns port objects filtering by router ID, owner and network ID"""
@@ -593,6 +596,7 @@ class Port(base.NeutronDbObject):
                                         rports_filter, router_filter)
 
     @classmethod
+    @db_api.CONTEXT_READER
     def get_ports_by_router_and_port(cls, context, router_id, owner, port_id):
         """Returns port objects filtering by router ID, owner and port ID"""
         rports_filter = (l3.RouterPort.port_id == port_id, )
@@ -645,6 +649,7 @@ class Port(base.NeutronDbObject):
         return ports_rports
 
     @classmethod
+    @db_api.CONTEXT_READER
     def get_ports_ids_by_security_groups(cls, context, security_group_ids,
                                          excluded_device_owners=None):
         query = context.session.query(sg_models.SecurityGroupPortBinding)
@@ -658,6 +663,7 @@ class Port(base.NeutronDbObject):
         return [port_binding['port_id'] for port_binding in query.all()]
 
     @classmethod
+    @db_api.CONTEXT_READER
     def get_ports_by_host(cls, context, host):
         query = context.session.query(models_v2.Port.id).join(
             ml2_models.PortBinding)
@@ -666,6 +672,7 @@ class Port(base.NeutronDbObject):
         return [port_id[0] for port_id in query.all()]
 
     @classmethod
+    @db_api.CONTEXT_READER
     def get_ports_by_binding_type_and_host(cls, context,
                                            binding_type, host):
         query = context.session.query(models_v2.Port).join(
@@ -676,6 +683,7 @@ class Port(base.NeutronDbObject):
         return [cls._load_object(context, db_obj) for db_obj in query.all()]
 
     @classmethod
+    @db_api.CONTEXT_READER
     def get_ports_by_vnic_type_and_host(
             cls, context, vnic_type, host):
         query = context.session.query(models_v2.Port).join(
@@ -686,6 +694,7 @@ class Port(base.NeutronDbObject):
         return [cls._load_object(context, db_obj) for db_obj in query.all()]
 
     @classmethod
+    @db_api.CONTEXT_READER
     def check_network_ports_by_binding_types(
             cls, context, network_id, binding_types, negative_search=False):
         """This method is to check whether networks have ports with given
@@ -710,6 +719,7 @@ class Port(base.NeutronDbObject):
         return bool(query.count())
 
     @classmethod
+    @db_api.CONTEXT_READER
     def get_ports_allocated_by_subnet_id(cls, context, subnet_id):
         """Return ports with fixed IPs in a subnet"""
         return context.session.query(models_v2.Port).filter(
@@ -731,3 +741,11 @@ class Port(base.NeutronDbObject):
                 for _binding in port.bindings:
                     if _binding.get('profile', {}).get('pci_slot') == pci_slot:
                         return port
+
+    @classmethod
+    @db_api.CONTEXT_READER
+    def get_gateway_port_ids_by_network(cls, context, network_id):
+        gw_ports = context.session.query(models_v2.Port.id).filter_by(
+            device_owner=constants.DEVICE_OWNER_ROUTER_GW,
+            network_id=network_id)
+        return [gw_port[0] for gw_port in gw_ports]

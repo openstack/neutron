@@ -11,6 +11,7 @@
 #    under the License.
 
 from neutron_lib import context as context_lib
+from neutron_lib.db import api as db_api
 from neutron_lib.objects import common_types
 from neutron_lib.utils import net as net_utils
 from oslo_utils import versionutils
@@ -239,11 +240,14 @@ class SecurityGroupRule(base.NeutronDbObject):
         - The rule belongs to a security group that belongs to the project_id
         """
         context = context_lib.get_admin_context()
-        query = context.session.query(cls.db_model.id)
-        query = query.join(
-            SecurityGroup.db_model,
-            cls.db_model.security_group_id == SecurityGroup.db_model.id)
-        clauses = or_(SecurityGroup.db_model.project_id == project_id,
-                      cls.db_model.project_id == project_id)
-        rule_ids = query.filter(clauses).all()
-        return [rule_id[0] for rule_id in rule_ids]
+        # NOTE(ralonsoh): do no use a READER decorator in this method. Elevated
+        # permissions are needed here.
+        with db_api.CONTEXT_READER.using(context):
+            query = context.session.query(cls.db_model.id)
+            query = query.join(
+                SecurityGroup.db_model,
+                cls.db_model.security_group_id == SecurityGroup.db_model.id)
+            clauses = or_(SecurityGroup.db_model.project_id == project_id,
+                          cls.db_model.project_id == project_id)
+            rule_ids = query.filter(clauses).all()
+            return [rule_id[0] for rule_id in rule_ids]

@@ -14,6 +14,7 @@
 #    under the License.
 
 import netaddr
+from neutron_lib.db import api as db_api
 from neutron_lib.db import model_query
 from neutron_lib.objects import common_types
 from oslo_versionedobjects import fields as obj_fields
@@ -123,21 +124,22 @@ class SubnetPool(rbac_db.NeutronRbacObject):
             # Nothing to validate
             return
 
-        rbac_as_model = rbac_db_models.AddressScopeRBAC
+        with db_api.CONTEXT_READER.using(context):
+            rbac_as_model = rbac_db_models.AddressScopeRBAC
 
-        # Ensure that target project has access to AS
-        shared_to_target_project_or_to_all = (
-            sa.and_(
-                rbac_as_model.target_project.in_(
-                    ["*", policy['target_project']]
-                ),
-                rbac_as_model.object_id == db_obj["address_scope_id"]
+            # Ensure that target project has access to AS
+            shared_to_target_project_or_to_all = (
+                sa.and_(
+                    rbac_as_model.target_project.in_(
+                        ["*", policy['target_project']]
+                    ),
+                    rbac_as_model.object_id == db_obj["address_scope_id"]
+                )
             )
-        )
 
-        matching_policies = model_query.query_with_hooks(
-            context, rbac_db_models.AddressScopeRBAC
-        ).filter(shared_to_target_project_or_to_all).count()
+            matching_policies = model_query.query_with_hooks(
+                context, rbac_db_models.AddressScopeRBAC
+            ).filter(shared_to_target_project_or_to_all).count()
 
         if matching_policies == 0:
             raise ext_rbac.RbacPolicyInitError(

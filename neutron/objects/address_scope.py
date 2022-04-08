@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.db import api as db_api
 from neutron_lib.objects import common_types
 from oslo_versionedobjects import fields as obj_fields
 
@@ -53,6 +54,7 @@ class AddressScope(rbac_db.NeutronRbacObject):
     }
 
     @classmethod
+    @db_api.CONTEXT_READER
     def get_network_address_scope(cls, context, network_id, ip_version):
         query = context.session.query(cls.db_model)
         query = query.join(

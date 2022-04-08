@@ -249,9 +249,7 @@ class RbacNeutronDbObjectTestCase(test_rbac.RBACBaseObjectIfaceTestCase,
                     '_get_projects_with_shared_access_to_db_obj') as sh_tids:
             get_rbac_entries_mock.filter.return_value.count.return_value = 0
             self._test_class._validate_rbac_policy_delete(
-                context=context,
-                obj_id='fake_obj_id',
-                target_project='fake_tid1')
+                context, 'fake_obj_id', 'fake_tid1')
             sh_tids.assert_not_called()
 
     @mock.patch.object(_test_class, '_get_db_obj_rbac_entries')

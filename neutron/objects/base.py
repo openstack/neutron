@@ -16,12 +16,15 @@ from collections import abc as collections_abc
 import copy
 import functools
 import itertools
+import sys
+import traceback
 
 from neutron_lib.db import api as db_api
 from neutron_lib.db import standard_attr
 from neutron_lib import exceptions as n_exc
 from neutron_lib.objects import exceptions as o_exc
 from neutron_lib.objects.extensions import standardattributes
+from oslo_config import cfg
 from oslo_db import exception as obj_exc
 from oslo_db.sqlalchemy import enginefacade
 from oslo_db.sqlalchemy import utils as db_utils
@@ -39,8 +42,36 @@ from neutron.objects.db import api as obj_db_api
 
 
 LOG = logging.getLogger(__name__)
+CONF = cfg.CONF
 
 _NO_DB_MODEL = object()
+
+
+# NOTE(ralonsoh): this is a method evaluated anytime an ORM session is
+# executing a SQL transaction.
+# If "autocommit" is disabled (the default value in SQLAlchemy 1.4 and the
+# only value in SQLAlchemy 2.0) and there is not active transaction, that
+# means the SQL transaction is being run on an "implicit transaction". Under
+# autocommit, this transaction is created, executed and discarded immediately;
+# under non-autocommit, a transaction must be explicitly created
+# (writer/reader) and sticks open.
+# This evaluation is done only in debug mode to monitor the Neutron code
+# compliance to SQLAlchemy 2.0.
+def do_orm_execute(orm_execute_state):
+    if not orm_execute_state.session.in_transaction():
+        trace_string = '\n'.join(traceback.format_stack(sys._getframe(1)))
+        LOG.warning('ORM session: SQL execution without transaction in '
+                    'progress, traceback:\n%s', trace_string)
+
+
+try:
+    _debug = cfg.CONF.debug
+except cfg.NoSuchOptError:
+    _debug = False
+
+
+if _debug:
+    db_api.sqla_listen(orm.Session, 'do_orm_execute', do_orm_execute)
 
 
 def get_object_class_by_model(model):
@@ -919,6 +950,7 @@ class NeutronDbObject(NeutronObject, metaclass=DeclarativeObject):
         self._captured_db_model = None
 
     @classmethod
+    @db_api.CONTEXT_READER
     def count(cls, context, validate_filters=True, **kwargs):
         """Count the number of objects matching filtering criteria.
 
@@ -935,6 +967,7 @@ class NeutronDbObject(NeutronObject, metaclass=DeclarativeObject):
         )
 
     @classmethod
+    @db_api.CONTEXT_READER
     def objects_exist(cls, context, validate_filters=True, **kwargs):
         """Check if objects are present in DB.
 
