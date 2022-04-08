@@ -216,7 +216,7 @@ class TestESwitchManagerApi(base.BaseTestCase):
                                                  self.PCI_SLOT, 1000)
             get_pci_mock.assert_called_once_with(self.PCI_SLOT)
             set_device_rate_mock.assert_called_once_with(
-                self.PCI_SLOT, self.MAX_RATE, 1000)
+                self.PCI_SLOT, {self.MAX_RATE: 1000})
 
     def test_set_device_min_tx_rate(self):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
@@ -229,7 +229,7 @@ class TestESwitchManagerApi(base.BaseTestCase):
                                                     self.PCI_SLOT, 1000)
             get_pci_mock.assert_called_once_with(self.PCI_SLOT)
             set_device_rate_mock.assert_called_once_with(
-                self.PCI_SLOT, self.MIN_RATE, 1000)
+                self.PCI_SLOT, {self.MIN_RATE: 1000})
 
     def test_set_device_status_mismatch(self):
         with mock.patch("neutron.plugins.ml2.drivers.mech_sriov.agent."
@@ -336,7 +336,8 @@ class TestESwitchManagerApi(base.BaseTestCase):
                            return_value=True):
             self.eswitch_mgr._clear_rate(pci_slot, rate_type)
             if passed:
-                set_rate_mock.assert_called_once_with(pci_slot, rate_type, 0)
+                set_rate_mock.assert_called_once_with(pci_slot,
+                                                      {rate_type: 0})
             else:
                 self.assertFalse(set_rate_mock.called)
 
