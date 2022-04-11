@@ -450,6 +450,11 @@ class TestOVSInterfaceDriver(TestBase):
                 self.device_exists.side_effect = device_exists
                 link = self.ip.return_value.device.return_value.link
                 link.set_address.side_effect = (RuntimeError, None)
+                namespace_obj = (
+                    self.ip.return_value.ensure_namespace.return_value)
+                self.ip.ensure_namespace.return_value = namespace_obj
+                namespace_obj.add_device_to_namespace.side_effect = (
+                    ip_lib.NetworkInterfaceNotFound, utils.WaitTimeout, None)
                 ovs.plug('01234567-1234-1234-99',
                          'port-1234',
                          'tap0',
@@ -474,6 +479,10 @@ class TestOVSInterfaceDriver(TestBase):
                 expected.extend(
                     [mock.call().ensure_namespace(namespace),
                      mock.call().ensure_namespace().add_device_to_namespace(
+                         mock.ANY),
+                     mock.call().ensure_namespace().add_device_to_namespace(
+                         mock.ANY),
+                     mock.call().ensure_namespace().add_device_to_namespace(
                          mock.ANY)])
             expected.extend([
                 mock.call(namespace=namespace),
@@ -497,7 +506,8 @@ class TestOVSInterfaceDriver(TestBase):
                     reraise.start()
                     ip_wrapper = mock.Mock()
                     for exception in (OSError(),
-                                      pyroute2_exc.NetlinkError(22)):
+                                      pyroute2_exc.NetlinkError(22),
+                                      RuntimeError()):
                         ip_wrapper.ensure_namespace.side_effect = exception
                         self.ip.return_value = ip_wrapper
                         delete_port.reset_mock()
