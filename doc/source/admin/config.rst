@@ -24,6 +24,7 @@ Configuration
    config-logging
    config-macvtap
    config-mtu
+   config-ndp-proxy
    config-network-segment-ranges
    config-ovs-dpdk
    config-ovs-offload

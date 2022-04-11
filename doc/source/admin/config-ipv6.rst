@@ -485,6 +485,8 @@ endpoints can be accessed via an IPv6 network. At this time, Open vSwitch
 (OVS) tunnel types - STT, VXLAN, GRE, support both IPv4 and IPv6 endpoints.
 
 
+.. _prefix-delegation:
+
 Prefix delegation
 ~~~~~~~~~~~~~~~~~
 
