@@ -301,20 +301,21 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_enqueue_state_change_l3_extension(self):
         self.conf.set_override('ha_vrrp_advert_int', 1)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        router = mock.Mock()
+        router_dict = {'id': 'router_id', 'enable_ndp_proxy': True}
         router_info = mock.MagicMock()
         router_info.agent = agent
-        agent.router_info[router.id] = router_info
+        router_info.router = router_dict
+        agent.router_info['router_id'] = router_info
         agent.l3_ext_manager.ha_state_change = mock.Mock()
         with mock.patch('neutron.agent.linux.ip_lib.'
                         'IpAddrCommand.wait_until_address_ready') as mock_wait:
             mock_wait.return_value = True
-            agent.enqueue_state_change(router.id, 'primary')
+            agent.enqueue_state_change('router_id', 'primary')
             eventlet.sleep(self.conf.ha_vrrp_advert_int + 2)
             agent.l3_ext_manager.ha_state_change.assert_called_once_with(
                 agent.context,
-                {'router_id': router.id, 'state': 'primary',
-                 'host': agent.host})
+                {'router_id': 'router_id', 'state': 'primary',
+                 'host': agent.host, 'enable_ndp_proxy': True})
 
     def test_enqueue_state_change_router_active_ha(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)

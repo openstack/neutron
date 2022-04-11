@@ -346,9 +346,8 @@ class NDPProxyAgentExtension(l3_extension.L3AgentExtension):
                         'FORWARD', subnet_rule)
         ip_wrapper.netns.execute(sysctl_cmd, privsep_exec=True)
 
-    def _process_router(self, context, data):
-        state = data.get('enable_ndp_proxy', False)
-        ri = self._get_router_info(data['id'])
+    def _process_router(self, context, router_id, enable_ndp_proxy):
+        ri = self._get_router_info(router_id)
         if not self._check_if_ri_need_process(ri):
             return
         agent_mode = ri.agent_conf.agent_mode
@@ -362,14 +361,14 @@ class NDPProxyAgentExtension(l3_extension.L3AgentExtension):
 
         existing_ndp_proxies = self.mapping.get_ndp_proxies_by_router_id(
             ri.router_id)
-        if state:
+        if enable_ndp_proxy:
             self._init_ndp_proxy_rule(
                 ri, interface_name, iptables_manager,
                 is_distributed, ip_wrapper, namespace)
 
             ndp_proxies = self.resource_rpc.bulk_pull(
                 context, resources.NDPPROXY,
-                filter_kwargs={'router_id': [data['id']]})
+                filter_kwargs={'router_id': [router_id]})
             need_create = set(ndp_proxies) - set(existing_ndp_proxies)
             need_delete = set(existing_ndp_proxies) - set(ndp_proxies)
 
@@ -422,10 +421,12 @@ class NDPProxyAgentExtension(l3_extension.L3AgentExtension):
         ip_wrapper.netns.execute(sysctl_cmd, privsep_exec=True)
 
     def add_router(self, context, data):
-        self._process_router(context, data)
+        self._process_router(context, data['id'],
+                             data.get('enable_ndp_proxy', False))
 
     def update_router(self, context, data):
-        self._process_router(context, data)
+        self._process_router(context, data['id'],
+                             data.get('enable_ndp_proxy', False))
 
     def delete_router(self, context, data):
         # Just process dvr router, clear the fip-namespace related rules
@@ -445,7 +446,9 @@ class NDPProxyAgentExtension(l3_extension.L3AgentExtension):
     def ha_state_change(self, context, data):
         if data['state'] == 'backup':
             return
-        self._process_router(context, data)
+
+        self._process_router(context, data['router_id'],
+                             data['enable_ndp_proxy'])
 
     def update_network(self, context, data):
         pass
