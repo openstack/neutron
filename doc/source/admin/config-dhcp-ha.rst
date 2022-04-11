@@ -94,7 +94,6 @@ Configuration
       [DEFAULT]
       core_plugin = linuxbridge
       rabbit_host = controlnode
-      allow_overlapping_ips = True
       host = controlnode
       agent_down_time = 5
       dhcp_agents_per_network = 1

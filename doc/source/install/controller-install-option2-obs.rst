@@ -55,7 +55,6 @@ Configure the server component
        # ...
        core_plugin = ml2
        service_plugins = router
-       allow_overlapping_ips = true
 
     .. end
 

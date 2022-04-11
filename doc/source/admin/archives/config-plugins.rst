@@ -112,7 +112,6 @@ formerly known as Nicira NVP.
 
       core_plugin = vmware
       rabbit_host = 192.168.203.10
-      allow_overlapping_ips = True
 
 #. To configure the NSX-mh controller cluster for OpenStack Networking,
    locate the ``[default]`` section in the

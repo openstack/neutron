@@ -3487,17 +3487,6 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         with self.subnet(cidr=cidr_1), self.subnet(cidr=cidr_2):
             pass
 
-    def test_create_2_subnets_overlapping_cidr_not_allowed_returns_400(self):
-        cidr_1 = '10.0.0.0/23'
-        cidr_2 = '10.0.0.0/24'
-        cfg.CONF.set_override('allow_overlapping_ips', False)
-        with testlib_api.ExpectedException(
-                webob.exc.HTTPClientError) as ctx_manager:
-            with self.subnet(cidr=cidr_1), self.subnet(cidr=cidr_2):
-                pass
-        self.assertEqual(webob.exc.HTTPClientError.code,
-                         ctx_manager.exception.code)
-
     def test_create_subnets_bulk_native(self):
         if self._skip_native_bulk:
             self.skipTest("Plugin does not support native bulk subnet create")

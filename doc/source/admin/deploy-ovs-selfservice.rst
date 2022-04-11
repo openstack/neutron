@@ -61,7 +61,6 @@ Controller node
 
         [DEFAULT]
         service_plugins = router
-        allow_overlapping_ips = True
 
 #. In the ``ml2_conf.ini`` file:
 
