@@ -18,6 +18,7 @@ from oslo_db import options as db_options
 from oslo_log import log as logging
 from oslo_upgradecheck import upgradecheck
 
+from neutron.common import config as common_config
 from neutron.conf import common as neutron_conf_base
 from neutron.conf import service as neutron_conf_service
 
@@ -50,7 +51,7 @@ def setup_conf(conf=cfg.CONF):
     Use separate setup_conf for the utility because there are many options
     from the main config that do not apply during checks.
     """
-
+    common_config.register_common_config_options()
     neutron_conf_base.register_core_common_config_opts(conf)
     neutron_conf_service.register_service_opts(
         neutron_conf_service.SERVICE_OPTS, cfg.CONF)

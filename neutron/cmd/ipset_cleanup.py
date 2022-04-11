@@ -32,6 +32,7 @@ def setup_conf():
     from the main config that do not apply during clean-up.
     """
     conf = cfg.CONF
+    config.register_common_config_options()
     agent_config.register_root_helper(conf=conf)
     agent_config.setup_privsep()
     command.register_cmd_opts(command.ip_opts, conf)

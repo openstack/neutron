@@ -37,6 +37,7 @@ LOG = logging.getLogger(__name__)
 
 
 def setup_conf():
+    config.register_common_config_options()
     ovs_conf.register_ovs_agent_opts(cfg.CONF)
     lb_conf.register_linuxbridge_opts(cfg.CONF)
     sriov_conf.register_agent_sriov_nic_opts(cfg.CONF)

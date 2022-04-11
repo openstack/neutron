@@ -30,6 +30,7 @@ cfg.CONF.import_group('OVS', 'neutron.plugins.ml2.drivers.openvswitch.agent.'
 
 
 def main():
+    common_config.register_common_config_options()
     common_config.init(sys.argv[1:])
     of_main.init_config()
     common_config.setup_logging()

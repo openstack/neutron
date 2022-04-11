@@ -395,6 +395,7 @@ class MeteringAgentWithStateReport(MeteringAgent):
 
 def main():
     conf = cfg.CONF
+    common_config.register_common_config_options()
     metering_agent.register_metering_agent_opts()
     config.register_agent_state_opts_helper(conf)
     common_config.init(sys.argv[1:])

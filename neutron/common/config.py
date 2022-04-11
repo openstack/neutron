@@ -37,6 +37,8 @@ from neutron import version
 
 LOG = logging.getLogger(__name__)
 
+_COMMON_OPTIONS_ALREADY_REGISTERED = False
+
 # Jam here any extra log level default you care about. This helps keep
 # Neutron logs lean.
 EXTRA_LOG_LEVEL_DEFAULTS = [
@@ -46,40 +48,46 @@ EXTRA_LOG_LEVEL_DEFAULTS = [
     'os_ken.controller.controller=INFO',
 ]
 
-# Register the configuration options
-common_config.register_core_common_config_opts()
 
-# Ensure that the control exchange is set correctly
-oslo_messaging.set_transport_defaults(control_exchange='neutron')
+def register_common_config_options():
+    global _COMMON_OPTIONS_ALREADY_REGISTERED
+    if _COMMON_OPTIONS_ALREADY_REGISTERED:
+        return
 
+    # Register the configuration options
+    common_config.register_core_common_config_opts()
 
-NOVA_CONF_SECTION = 'nova'
+    # Ensure that the control exchange is set correctly
+    oslo_messaging.set_transport_defaults(control_exchange='neutron')
 
-ks_loading.register_auth_conf_options(cfg.CONF, NOVA_CONF_SECTION)
-ks_loading.register_session_conf_options(cfg.CONF, NOVA_CONF_SECTION)
+    ks_loading.register_auth_conf_options(
+        cfg.CONF, common_config.NOVA_CONF_SECTION)
+    ks_loading.register_session_conf_options(
+        cfg.CONF, common_config.NOVA_CONF_SECTION)
 
+    # Register the nova configuration options
+    common_config.register_nova_opts()
 
-# Register the nova configuration options
-common_config.register_nova_opts()
+    ks_loading.register_auth_conf_options(cfg.CONF,
+                                          common_config.PLACEMENT_CONF_SECTION)
+    ks_loading.register_session_conf_options(
+        cfg.CONF, common_config.PLACEMENT_CONF_SECTION)
 
-ks_loading.register_auth_conf_options(cfg.CONF,
-                                      common_config.PLACEMENT_CONF_SECTION)
-ks_loading.register_session_conf_options(cfg.CONF,
-                                         common_config.PLACEMENT_CONF_SECTION)
+    # Register the placement configuration options
+    common_config.register_placement_opts()
 
-# Register the placement configuration options
-common_config.register_placement_opts()
+    logging.register_options(cfg.CONF)
 
-logging.register_options(cfg.CONF)
+    # Register the ironic configuration options
+    ks_loading.register_auth_conf_options(cfg.CONF,
+                                          common_config.IRONIC_CONF_SECTION)
+    ks_loading.register_session_conf_options(cfg.CONF,
+                                             common_config.IRONIC_CONF_SECTION)
+    ks_loading.register_adapter_conf_options(cfg.CONF,
+                                             common_config.IRONIC_CONF_SECTION)
+    common_config.register_ironic_opts()
 
-# Register the ironic configuration options
-ks_loading.register_auth_conf_options(cfg.CONF,
-                                      common_config.IRONIC_CONF_SECTION)
-ks_loading.register_session_conf_options(cfg.CONF,
-                                         common_config.IRONIC_CONF_SECTION)
-ks_loading.register_adapter_conf_options(cfg.CONF,
-                                         common_config.IRONIC_CONF_SECTION)
-common_config.register_ironic_opts()
+    _COMMON_OPTIONS_ALREADY_REGISTERED = True
 
 
 def init(args, default_config_files=None, **kwargs):

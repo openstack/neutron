@@ -646,7 +646,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
     def _add_port_to_updated_smartnic_ports(self, mac, vif_name, iface_id,
                         vif_type, vm_uuid='',
-                        mtu=plugin_utils.get_deployment_physnet_mtu()):
+                        mtu=None):
+        if mtu is None:
+            mtu = plugin_utils.get_deployment_physnet_mtu()
         self.updated_smartnic_ports.append({
             'mac': mac,
             'vm_uuid': vm_uuid,

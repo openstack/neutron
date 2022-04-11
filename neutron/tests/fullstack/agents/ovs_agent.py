@@ -21,6 +21,7 @@ from oslo_config import cfg
 from neutron.agent.common import ovs_lib
 from neutron.agent.common import polling
 from neutron.agent.l2.extensions import qos as qos_extension
+from neutron.common import config
 from neutron.services.trunk.drivers.openvswitch.agent \
     import driver as trunk_driver
 from neutron.tests.common.agents import ovs_agent
@@ -61,6 +62,7 @@ def main():
     # https://review.opendev.org/#/c/506722/ will be merged and ovsdb-server
     # ovs-vswitchd processes for each test will be isolated in separate
     # namespace
+    config.register_common_config_options()
     monkeypatch_init_handler()
     monkeypatch_qos()
     monkeypatch_event_filtering()

@@ -135,6 +135,7 @@ class FakePlacement(object):
 
 
 if __name__ == "__main__":
+    common_config.register_common_config_options()
     common_config.init(sys.argv[1:])
     common_config.setup_logging()
     placement_port = cfg.CONF.placement_port

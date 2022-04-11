@@ -31,6 +31,7 @@ from neutron import service as neutron_service
 
 
 def register_opts(conf):
+    common_config.register_common_config_options()
     l3_config.register_l3_agent_config_opts(l3_config.OPTS, conf)
     ha_conf.register_l3_agent_ha_opts(conf)
     meta_conf.register_meta_conf_opts(meta_conf.SHARED_OPTS, conf)

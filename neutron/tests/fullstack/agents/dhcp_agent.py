@@ -22,6 +22,7 @@ from oslo_utils import uuidutils
 
 from neutron.agent.linux import dhcp as linux_dhcp
 from neutron.cmd.eventlet.agents import dhcp as dhcp_agent
+from neutron.common import config
 
 
 OPTS = [
@@ -76,6 +77,7 @@ def monkeypatch_linux_dhcp():
 
 
 def main():
+    config.register_common_config_options()
     cfg.CONF.register_opts(OPTS)
     monkeypatch_linux_dhcp()
     dhcp_agent.main()

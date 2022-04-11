@@ -16,6 +16,7 @@ from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log as logging
 
+from neutron.common import config as common_config
 from neutron.conf.agent import common as config
 from neutron.plugins.ml2.drivers.linuxbridge.agent \
     import linuxbridge_neutron_agent
@@ -67,6 +68,7 @@ def main():
     This tool should not be called during an instance create, migrate, etc. as
     it can delete a linux bridge about to be used by nova.
     """
+    common_config.register_common_config_options()
     cfg.CONF(sys.argv[1:])
     config.setup_logging()
     config.setup_privsep()

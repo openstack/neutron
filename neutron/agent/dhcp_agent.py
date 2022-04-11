@@ -30,6 +30,7 @@ from neutron import service as neutron_service
 
 
 def register_options(conf):
+    common_config.register_common_config_options()
     config.register_interface_driver_opts_helper(conf)
     config.register_agent_state_opts_helper(conf)
     config.register_availability_zone_opts_helper(conf)
