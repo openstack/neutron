@@ -28,6 +28,3 @@ haproxy
 keepalived
 
 iproute-tc [platform:rpm]
-
-# Provide ndsend command, used to send IPv6 Neighbor Discovery packets
-vzctl [platform:dpkg]
