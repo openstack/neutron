@@ -27,6 +27,7 @@ import webtest
 
 from neutron.api import extensions
 from neutron.api.v2 import router
+from neutron.conf import quota as quota_conf
 from neutron.extensions import providernet as pnet
 from neutron import quota
 from neutron.tests import tools
@@ -80,7 +81,7 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
         self.api = webtest.TestApp(router.APIRouter())
 
         quota.QUOTAS._driver = None
-        cfg.CONF.set_override('quota_driver', quota.QUOTA_DB_DRIVER,
+        cfg.CONF.set_override('quota_driver', quota_conf.QUOTA_DB_DRIVER,
                               group='QUOTAS')
 
     def _prepare_net_data(self):

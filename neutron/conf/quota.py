@@ -19,8 +19,13 @@ from oslo_config import cfg
 from neutron._i18n import _
 
 
-QUOTA_DB_MODULE = 'neutron.db.quota.driver_nolock'
-QUOTA_DB_DRIVER = QUOTA_DB_MODULE + '.DbQuotaNoLockDriver'
+QUOTA_DB_DIRECTORY = 'neutron.db.quota.'
+QUOTA_DB_DRIVER_LEGACY = QUOTA_DB_DIRECTORY + 'driver.DbQuotaDriver'
+QUOTA_DB_DRIVER_NO_LOCK = (QUOTA_DB_DIRECTORY +
+                           'driver_nolock.DbQuotaNoLockDriver')
+QUOTA_DB_DRIVER_NULL = QUOTA_DB_DIRECTORY + 'driver_null.DbQuotaDriverNull'
+
+QUOTA_DB_DRIVER = QUOTA_DB_DRIVER_NO_LOCK
 QUOTAS_CFG_GROUP = 'QUOTAS'
 
 DEFAULT_QUOTA = -1

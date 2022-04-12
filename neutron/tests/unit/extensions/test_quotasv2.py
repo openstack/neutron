@@ -31,6 +31,7 @@ from neutron.common import config
 from neutron.conf import quota as qconf
 from neutron.db.quota import driver
 from neutron.db.quota import driver_nolock
+from neutron.db.quota import driver_null
 from neutron import quota
 from neutron.quota import resource_registry
 from neutron.tests import base
@@ -88,7 +89,7 @@ class QuotaExtensionDbTestCase(QuotaExtensionTestCase):
 
     def setUp(self):
         cfg.CONF.set_override(
-            'quota_driver', quota.QUOTA_DB_DRIVER, group='QUOTAS')
+            'quota_driver', qconf.QUOTA_DB_DRIVER, group='QUOTAS')
         super(QuotaExtensionDbTestCase, self).setUp()
 
     def test_quotas_loaded_right(self):
@@ -443,7 +444,7 @@ class QuotaExtensionCfgTestCase(QuotaExtensionTestCase):
 
     def setUp(self):
         cfg.CONF.set_override(
-            'quota_driver', quota.QUOTA_DB_DRIVER, group='QUOTAS')
+            'quota_driver', qconf.QUOTA_DB_DRIVER, group='QUOTAS')
         super(QuotaExtensionCfgTestCase, self).setUp()
 
     def test_quotas_default_values(self):
@@ -524,20 +525,24 @@ class TestDbQuotaDriver(base.BaseTestCase):
 
 class TestQuotaDriverLoad(base.BaseTestCase):
 
-    def _test_quota_driver(self, cfg_driver, loaded_driver,
-                           with_quota_db_module=True):
+    MODULE_CLASS = [
+        (qconf.QUOTA_DB_DRIVER_LEGACY, driver.DbQuotaDriver),
+        (qconf.QUOTA_DB_DRIVER_NO_LOCK, driver_nolock.DbQuotaNoLockDriver),
+        (qconf.QUOTA_DB_DRIVER_NULL, driver_null.DbQuotaDriverNull),
+    ]
+
+    def _test_quota_driver(self, module, cfg_driver, loaded_driver):
         quota.QUOTAS._driver = None
         cfg.CONF.set_override('quota_driver', cfg_driver, group='QUOTAS')
         with mock.patch.dict(sys.modules, {}):
-            if (not with_quota_db_module and
-                    quota.QUOTA_DB_MODULE in sys.modules):
+            if module in sys.modules:
                 del sys.modules[quota.QUOTA_DB_MODULE]
             driver = quota.QUOTAS.get_driver()
             self.assertEqual(loaded_driver, driver.__class__.__name__)
 
     def test_quota_driver_load(self):
-        for klass in (driver.DbQuotaDriver,
-                      driver_nolock.DbQuotaNoLockDriver):
+        for module, klass in self.MODULE_CLASS:
             self._test_quota_driver(
+                module,
                 '.'.join([klass.__module__, klass.__name__]),
-                klass.__name__, True)
+                klass.__name__)

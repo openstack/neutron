@@ -40,6 +40,7 @@ from neutron.api import api_common
 from neutron.api import extensions
 from neutron.api.v2 import base as v2_base
 from neutron.api.v2 import router
+from neutron.conf import quota as quota_conf
 from neutron import policy
 from neutron import quota
 from neutron.tests import base
@@ -49,7 +50,7 @@ from neutron.tests.unit import testlib_api
 
 
 EXTDIR = os.path.join(base.ROOTDIR, 'unit/extensions')
-NULL_QUOTA_DRIVER = 'neutron.db.quota.api.NullQuotaDriver'
+NULL_QUOTA_DRIVER = 'neutron.db.quota.driver_null.DbQuotaDriverNull'
 
 _uuid = uuidutils.generate_uuid
 
@@ -98,7 +99,7 @@ class APIv2TestBase(base.BaseTestCase):
         self.api = webtest.TestApp(api)
 
         quota.QUOTAS._driver = None
-        cfg.CONF.set_override('quota_driver', quota.QUOTA_DB_DRIVER,
+        cfg.CONF.set_override('quota_driver', quota_conf.QUOTA_DB_DRIVER,
                               group='QUOTAS')
 
         # APIRouter initialization resets policy module, re-initializing it

@@ -21,8 +21,6 @@ from neutron.conf import quota
 from neutron.quota import resource_registry
 
 LOG = logging.getLogger(__name__)
-QUOTA_DB_MODULE = quota.QUOTA_DB_MODULE
-QUOTA_DB_DRIVER = quota.QUOTA_DB_DRIVER
 
 
 # Register the configuration options

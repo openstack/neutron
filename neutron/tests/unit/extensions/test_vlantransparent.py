@@ -17,6 +17,7 @@ from neutron_lib.db import api as db_api
 from oslo_config import cfg
 from webob import exc as web_exc
 
+from neutron.conf import quota as quota_conf
 from neutron.db import db_base_plugin_v2
 from neutron.db import vlantransparent_db as vlt_db
 from neutron.extensions import vlantransparent as vlt
@@ -72,7 +73,7 @@ class VlanTransparentExtensionTestCase(test_db_base_plugin_v2.TestNetworksV2):
                                                             ext_mgr=ext_mgr)
 
         quota.QUOTAS._driver = None
-        cfg.CONF.set_override('quota_driver', quota.QUOTA_DB_DRIVER,
+        cfg.CONF.set_override('quota_driver', quota_conf.QUOTA_DB_DRIVER,
                               group='QUOTAS')
 
     def test_network_create_with_vlan_transparent_attr(self):
