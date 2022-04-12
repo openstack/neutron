@@ -150,6 +150,17 @@ class TestPolicyEnforcementHook(test_functional.PecanFunctionalTest):
                           'validate': {'type:string':
                                        db_const.PROJECT_ID_FIELD_SIZE},
                           'is_visible': True}
+        },
+        'admin_mehs': {
+            'id': {'allow_post': False, 'allow_put': False,
+                   'is_visible': True, 'primary_key': True},
+            'foo': {'allow_post': True, 'allow_put': True,
+                    'is_visible': True, 'default': ''},
+            'tenant_id': {'allow_post': True, 'allow_put': False,
+                          'required_by_policy': True,
+                          'validate': {'type:string':
+                                       db_const.PROJECT_ID_FIELD_SIZE},
+                          'is_visible': True}
         }
     }
 
@@ -163,9 +174,15 @@ class TestPolicyEnforcementHook(test_functional.PecanFunctionalTest):
         attributes.RESOURCES.update(self.FAKE_RESOURCE)
         manager.NeutronManager.set_plugin_for_resource('mehs',
                                                        self.mock_plugin)
+        manager.NeutronManager.set_plugin_for_resource('admin_mehs',
+                                                       self.mock_plugin)
         fake_controller = resource.CollectionsController('mehs', 'meh')
+        admin_fake_controller = resource.CollectionsController('admin_mehs',
+                                                               'admin_meh')
         manager.NeutronManager.set_controller_for_resource(
             'mehs', fake_controller)
+        manager.NeutronManager.set_controller_for_resource(
+            'admin_mehs', admin_fake_controller)
         # Inject policies for the fake resource
         policy.init()
         policy._ENFORCER.set_rules(
@@ -174,8 +191,19 @@ class TestPolicyEnforcementHook(test_functional.PecanFunctionalTest):
                  'update_meh': 'rule:admin_only',
                  'delete_meh': 'rule:admin_only',
                  'get_meh': 'rule:admin_only or field:mehs:id=xxx',
-                 'get_meh:restricted_attr': 'rule:admin_only'}),
+                 'get_meh:restricted_attr': 'rule:admin_only',
+                 'create_admin_meh': 'rule:admin_only',
+                 'get_admin_meh': 'rule:admin_only'}),
             overwrite=False)
+
+    def test_before_on_create_unauthorized_returns_403(self):
+        response = self.app.post_json(
+            '/v2.0/admin_mehs.json',
+            params={'admin_meh': {'foo': 'bar'}},
+            headers={'X-Project-Id': 'tenid'},
+            expect_errors=True)
+        # We expect this operation to fail with 403 error
+        self.assertEqual(403, response.status_int)
 
     def test_before_on_create_authorized(self):
         # Mock a return value for an hypothetical create operation
