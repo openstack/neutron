@@ -630,7 +630,7 @@ class TestDhcpAgent(base.BaseTestCase):
             sync_state.side_effect = RuntimeError
             with testtools.ExpectedException(RuntimeError):
                 dhcp._periodic_resync_helper()
-            sync_state.assert_called_once_with(resync_reasons.keys())
+            sync_state.assert_called_once_with(list(resync_reasons.keys()))
             self.assertEqual(0, len(dhcp.needs_resync_reasons))
 
     def test_periodic_resync_helper_with_event(self):
@@ -638,7 +638,7 @@ class TestDhcpAgent(base.BaseTestCase):
             dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
             dhcp.schedule_resync('reason1', 'a')
             dhcp.schedule_resync('reason1', 'b')
-            reasons = dhcp.needs_resync_reasons.keys()
+            reasons = list(dhcp.needs_resync_reasons.keys())
             with mock.patch.object(dhcp, 'sync_state') as sync_state:
                 sync_state.side_effect = RuntimeError
                 with testtools.ExpectedException(RuntimeError):
