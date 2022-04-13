@@ -13,10 +13,13 @@
 
 from unittest import mock
 
+from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib import constants
+from neutron_lib import context
 from neutron_lib.plugins.ml2 import ovs_constants as agent_consts
+from neutron_lib.services.trunk import constants as trunk_consts
 from oslo_config import cfg
 
 from neutron.services.trunk.drivers.openvswitch import driver
@@ -70,3 +73,23 @@ class OVSDriverTestCase(base.BaseTestCase):
                                  }
                              }))
         test_trigger.assert_called_once_with('fake-trunk-br-name')
+
+    def test__update_subport_binding(self):
+        ovs_driver = driver.OVSDriver.create()
+        core_plugin = mock.Mock()
+        core_plugin.get_port.return_value = {portbindings.HOST_ID: 'host_id'}
+        ovs_driver._core_plugin = core_plugin
+        ctx = context.get_admin_context()
+        mock_subports = [mock.Mock(port_id='sport_id1'),
+                         mock.Mock(port_id='sport_id2')]
+        mock_trunk_obj = mock.Mock(sub_ports=mock_subports, port_id='port_id',
+                                   id='trunk_id')
+        with mock.patch.object(ovs_driver, '_get_trunk') as mock_get_trunk:
+            mock_get_trunk.return_value = mock_trunk_obj
+            updated_port = {
+                'port': {portbindings.HOST_ID: 'host_id',
+                         'device_owner': trunk_consts.TRUNK_SUBPORT_OWNER}}
+            ovs_driver._update_subport_binding(ctx, 'trunk_id')
+            core_plugin.update_port.assert_has_calls(
+                [mock.call(ctx, 'sport_id1', updated_port),
+                 mock.call(ctx, 'sport_id2', updated_port)], any_order=True)

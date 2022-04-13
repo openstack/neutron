@@ -44,6 +44,7 @@ from neutron.conf.agent import common as config
 from neutron.db import db_base_plugin_common as db_base
 from neutron.plugins.ml2.drivers.linuxbridge.agent import \
     linuxbridge_neutron_agent as linuxbridge_agent
+from neutron.services.trunk.drivers.openvswitch.agent import trunk_manager
 from neutron.tests.common import base as common_base
 from neutron.tests.common import helpers
 from neutron.tests import tools
@@ -809,6 +810,18 @@ class OVSTrunkBridgeFixture(OVSBridgeFixture):
     def _setUp(self):
         ovs = ovs_lib.BaseOVS()
         self.bridge = ovs.add_bridge(self.prefix)
+        self.addCleanup(self.bridge.destroy)
+
+
+class OVSTrunkBridgeFixtureTrunkBridge(fixtures.Fixture):
+
+    def __init__(self, trunk_id):
+        super(OVSTrunkBridgeFixtureTrunkBridge, self).__init__()
+        self.trunk_id = trunk_id
+
+    def _setUp(self):
+        self.bridge = trunk_manager.TrunkBridge(self.trunk_id)
+        self.bridge.create()
         self.addCleanup(self.bridge.destroy)
 
 
