@@ -29,6 +29,7 @@
       - ^zuul.d/(?!(project)).*\.yaml
     vars:
       Q_BUILD_OVS_FROM_GIT: True
+      MEMORY_TRACKER: True
       INSTALL_OVN: True
       OVN_BRANCH: v21.06.0
       OVS_BRANCH: v2.16.0
