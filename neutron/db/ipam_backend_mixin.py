@@ -247,9 +247,9 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             if ((netaddr.IPSet([subnet['cidr']]) & new_subnet_ipset) and
                     str(subnet['cidr']) != const.PROVISIONAL_IPV6_PD_PREFIX):
                 # don't give out details of the overlapping subnet
-                err_msg = ("Requested subnet with cidr: %(cidr)s for "
+                err_msg = (_("Requested subnet with cidr: %(cidr)s for "
                            "network: %(network_id)s overlaps with another "
-                           "subnet" %
+                           "subnet") %
                            {'cidr': new_subnet_cidr,
                             'network_id': network.id})
                 LOG.info("Validation for CIDR: %(new_cidr)s failed - "
