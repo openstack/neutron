@@ -96,12 +96,7 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='get_rule_type',
-        # NOTE: we are using role:admin instead of PROJECT_ADMIN here because
-        # rule_type resource don't belongs to any project so using
-        # PROJECT_ADMIN as check string would cause enforcement error
-        check_str=base.policy_or(
-            "role:admin",
-            base.SYSTEM_READER),
+        check_str=base.ADMIN,
         scope_types=['system', 'project'],
         description='Get available QoS rule types',
         operations=[

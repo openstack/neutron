@@ -22,7 +22,7 @@ DEPRECATION_REASON = (
 rules = [
     policy.DocumentedRuleDefault(
         name='get_availability_zone',
-        check_str=base.SYSTEM_READER,
+        check_str=base.ADMIN,
         description='List availability zones',
         operations=[
             {

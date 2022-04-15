@@ -30,7 +30,7 @@ DEPRECATION_REASON = (
 rules = [
     policy.DocumentedRuleDefault(
         name='create_flavor',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.ADMIN,
         description='Create a flavor',
         operations=[
             {
@@ -47,7 +47,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_flavor',
-        check_str=base.SYSTEM_OR_PROJECT_READER,
+        check_str=base.ADMIN_OR_PROJECT_READER,
         description='Get a flavor',
         operations=[
             {
@@ -68,7 +68,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_flavor',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.ADMIN,
         description='Update a flavor',
         operations=[
             {
@@ -85,7 +85,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_flavor',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.ADMIN,
         description='Delete a flavor',
         operations=[
             {
@@ -103,7 +103,7 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='create_service_profile',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.ADMIN,
         description='Create a service profile',
         operations=[
             {
@@ -120,7 +120,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_service_profile',
-        check_str=base.SYSTEM_READER,
+        check_str=base.ADMIN,
         description='Get a service profile',
         operations=[
             {
@@ -141,7 +141,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_service_profile',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.ADMIN,
         description='Update a service profile',
         operations=[
             {
@@ -158,7 +158,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_service_profile',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.ADMIN,
         description='Delete a service profile',
         operations=[
             {
@@ -176,7 +176,7 @@ rules = [
 
     policy.RuleDefault(
         name='get_flavor_service_profile',
-        check_str=base.SYSTEM_OR_PROJECT_READER,
+        check_str=base.ADMIN_OR_PROJECT_READER,
         description=(
             'Get a flavor associated with a given service profiles. '
             'There is no corresponding GET operations in API currently. '
@@ -191,7 +191,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_flavor_service_profile',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.ADMIN,
         description='Associate a flavor with a service profile',
         operations=[
             {
@@ -208,7 +208,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_flavor_service_profile',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.ADMIN,
         description='Disassociate a flavor with a service profile',
         operations=[
             {

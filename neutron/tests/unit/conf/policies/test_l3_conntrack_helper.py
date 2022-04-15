@@ -96,6 +96,8 @@ class SystemAdminTests(L3ConntrackHelperAPITestCase):
 class SystemMemberTests(SystemAdminTests):
 
     def setUp(self):
+        self.skipTest("SYSTEM_MEMBER persona isn't supported in phase1 of the "
+                      "community goal")
         super(SystemMemberTests, self).setUp()
         self.context = self.system_member_ctx
 
@@ -103,6 +105,8 @@ class SystemMemberTests(SystemAdminTests):
 class SystemReaderTests(SystemMemberTests):
 
     def setUp(self):
+        self.skipTest("SYSTEM_READER persona isn't supported in phase1 of the "
+                      "community goal")
         super(SystemReaderTests, self).setUp()
         self.context = self.system_reader_ctx
 

@@ -27,7 +27,7 @@ RESOURCE_PATH = '/quota/{id}'
 rules = [
     policy.DocumentedRuleDefault(
         name='get_quota',
-        check_str=base.SYSTEM_READER,
+        check_str=base.ADMIN,
         scope_types=['system'],
         description='Get a resource quota',
         operations=[
@@ -48,7 +48,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_quota',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['system'],
         description='Update a resource quota',
         operations=[
@@ -65,7 +65,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_quota',
-        check_str=base.SYSTEM_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['system'],
         description='Delete a resource quota',
         operations=[
