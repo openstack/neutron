@@ -37,8 +37,12 @@ _uuid = uuidutils.generate_uuid
 
 TEST_QOS_FIP = "3.3.3.3"
 
-TEST_FIP = "1.1.1.1"
-TEST_FIP2 = "2.2.2.2"
+TEST_FIP_RES_NON_STORED = fip_qos.FipResource('fip_none', '8.8.8.8')
+# fip1/fip3 and fip2/fip4 have duplicated IP addresses on purpose
+TEST_FIP_RES_1 = fip_qos.FipResource('fip1', '1.1.1.1')
+TEST_FIP_RES_2 = fip_qos.FipResource('fip2', '2.2.2.2')
+TEST_FIP_RES_3 = fip_qos.FipResource('fip3', '1.1.1.1')
+TEST_FIP_RES_4 = fip_qos.FipResource('fip4', '2.2.2.2')
 
 HOSTNAME = 'myhost'
 
@@ -289,8 +293,9 @@ class FipQosExtensionTestCase(QosExtensionBaseTestCase):
                            TEST_QOS_FIP, 3333, 4444)],
                 any_order=True)
             self.fip_qos_ext.delete_router(self.context, self.router)
-            self.assertIsNone(
-                self.fip_qos_ext.fip_qos_map.router_floating_ips.get(
+            self.assertEqual(
+                set(),
+                self.fip_qos_ext.fip_qos_map.get_fips_by_router_id(
                     self.router_id))
             self.assertIsNone(
                 self.fip_qos_ext.fip_qos_map.ingress_ratelimits.get(
@@ -374,7 +379,7 @@ class FipQosExtensionTestCase(QosExtensionBaseTestCase):
     def _test_process_ip_rates(self, with_cache):
         rates = {'egress': {'rate': 333, 'burst': 444},
                  'ingress': {'rate': 111, 'burst': 222}}
-        fip = '123.123.123.123'
+        fip_res = fip_qos.FipResource('fip1', '123.123.123.123')
         device = mock.Mock()
         tc_wrapper = mock.Mock()
         with mock.patch.object(
@@ -383,7 +388,7 @@ class FipQosExtensionTestCase(QosExtensionBaseTestCase):
             with mock.patch.object(
                     self.fip_qos_ext, 'process_ip_rate_limit') as process_ip:
                 self.fip_qos_ext.process_ip_rates(
-                    fip, device, rates, with_cache=with_cache)
+                    fip_res, device, rates, with_cache=with_cache)
                 if with_cache:
                     self.assertEqual(2, process_ip.call_count)
                 else:
@@ -404,21 +409,83 @@ class RouterFipRateLimitMapsTestCase(base.BaseTestCase):
         super(RouterFipRateLimitMapsTestCase, self).setUp()
         self.policy_map = fip_qos.RouterFipRateLimitMaps()
 
-    def test_find_fip_router_id(self):
-        router_id = _uuid()
-        self.policy_map.router_floating_ips[router_id] = set([TEST_FIP,
-                                                              TEST_FIP2])
-        self.assertIsNone(self.policy_map.find_fip_router_id("8.8.8.8"))
-        self.assertEqual(router_id,
-                         self.policy_map.find_fip_router_id(TEST_FIP))
+    def _check_policy_map_fip(self, router_id, fip_res):
+        if router_id is None:
+            self.assertIsNone(self.policy_map.get_router_id_by_fip(fip_res))
+            self.assertTrue(fip_res not in self.policy_map._fips_2_router)
+            for router_fips in self.policy_map._router_2_fips.values():
+                self.assertTrue(fip_res not in router_fips)
+        else:
+            self.assertEqual(router_id,
+                             self.policy_map.get_router_id_by_fip(fip_res))
+            self.assertEqual(router_id,
+                             self.policy_map._fips_2_router[fip_res])
+            self.assertTrue(fip_res in
+                            self.policy_map._router_2_fips[router_id])
+
+    def test_get_router_id_by_fip(self):
+        router_id_1, router_id_2 = _uuid(), _uuid()
+        self.policy_map.set_fips(router_id_1, [TEST_FIP_RES_1, TEST_FIP_RES_2])
+        self.policy_map.set_fips(router_id_2, [TEST_FIP_RES_3, TEST_FIP_RES_4])
+        self._check_policy_map_fip(None, TEST_FIP_RES_NON_STORED)
+        self._check_policy_map_fip(router_id_1, TEST_FIP_RES_1)
+        self._check_policy_map_fip(router_id_1, TEST_FIP_RES_2)
+        self._check_policy_map_fip(router_id_2, TEST_FIP_RES_3)
+        self._check_policy_map_fip(router_id_2, TEST_FIP_RES_4)
+
+        # Remove TEST_FIP_RES_1.
+        self.policy_map.delete_fips([TEST_FIP_RES_1])
+        self._check_policy_map_fip(None, TEST_FIP_RES_NON_STORED)
+        self._check_policy_map_fip(None, TEST_FIP_RES_1)
+        self._check_policy_map_fip(router_id_1, TEST_FIP_RES_2)
+        self._check_policy_map_fip(router_id_2, TEST_FIP_RES_3)
+        self._check_policy_map_fip(router_id_2, TEST_FIP_RES_4)
+
+        # Remove TEST_FIP_RES_2 and TEST_FIP_RES_3.
+        self.policy_map.delete_fips([TEST_FIP_RES_2, TEST_FIP_RES_3])
+        self._check_policy_map_fip(None, TEST_FIP_RES_NON_STORED)
+        self._check_policy_map_fip(None, TEST_FIP_RES_1)
+        self._check_policy_map_fip(None, TEST_FIP_RES_2)
+        self._check_policy_map_fip(None, TEST_FIP_RES_3)
+        self._check_policy_map_fip(router_id_2, TEST_FIP_RES_4)
+
+        # Remove TEST_FIP_RES_4.
+        self.policy_map.delete_fips([TEST_FIP_RES_4])
+        self._check_policy_map_fip(None, TEST_FIP_RES_NON_STORED)
+        self._check_policy_map_fip(None, TEST_FIP_RES_1)
+        self._check_policy_map_fip(None, TEST_FIP_RES_2)
+        self._check_policy_map_fip(None, TEST_FIP_RES_3)
+        self._check_policy_map_fip(None, TEST_FIP_RES_4)
 
     def test_get_router_floating_ips(self):
-        router_id = _uuid()
-        test_ips = [TEST_FIP, TEST_FIP2]
-        self.policy_map.router_floating_ips[router_id] = set([TEST_FIP,
-                                                              TEST_FIP2])
-        get_ips = self.policy_map.get_router_floating_ips(router_id)
-        self.assertEqual(len(test_ips), len(get_ips))
+        router_id_1, router_id_2 = _uuid(), _uuid()
+        self.policy_map.set_fips(router_id_1, [TEST_FIP_RES_1, TEST_FIP_RES_2])
+        self.policy_map.set_fips(router_id_2, [TEST_FIP_RES_3, TEST_FIP_RES_4])
+        fips_1 = self.policy_map.get_fips_by_router_id(router_id_1)
+        self.assertEqual(2, len(fips_1))
+        fips_2 = self.policy_map.get_fips_by_router_id(router_id_2)
+        self.assertEqual(2, len(fips_2))
+
+        # Remove TEST_FIP_RES_1.
+        self.policy_map.delete_fips([TEST_FIP_RES_1])
+        fips_1 = self.policy_map.get_fips_by_router_id(router_id_1)
+        self.assertEqual(1, len(fips_1))
+        fips_2 = self.policy_map.get_fips_by_router_id(router_id_2)
+        self.assertEqual(2, len(fips_2))
+
+        # Remove TEST_FIP_RES_2 and TEST_FIP_RES_3.
+        self.policy_map.delete_fips([TEST_FIP_RES_2, TEST_FIP_RES_3])
+        fips_1 = self.policy_map.get_fips_by_router_id(router_id_1)
+        self.assertEqual(0, len(fips_1))
+        fips_2 = self.policy_map.get_fips_by_router_id(router_id_2)
+        self.assertEqual(1, len(fips_2))
+
+        # Remove TEST_FIP_RES_4.
+        self.policy_map.delete_fips([TEST_FIP_RES_4])
+        fips_1 = self.policy_map.get_fips_by_router_id(router_id_1)
+        self.assertEqual(0, len(fips_1))
+        fips_2 = self.policy_map.get_fips_by_router_id(router_id_2)
+        self.assertEqual(0, len(fips_2))
 
     def test_remove_fip_ratelimit_cache(self):
         fip = "1.1.1.1"

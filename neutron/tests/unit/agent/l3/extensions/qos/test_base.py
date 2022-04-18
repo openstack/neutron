@@ -51,7 +51,7 @@ class RateLimitMapsTestCase(base.BaseTestCase):
         self.assertEqual(TEST_POLICY,
                          self.policy_map.known_policies[TEST_POLICY.id])
         self.assertIn(TEST_RES_1,
-                      self.policy_map.qos_policy_resources[TEST_POLICY.id])
+                      self.policy_map.qos_policy_2_resources[TEST_POLICY.id])
 
     def test_get_resource_policy(self):
         self._set_resources()
@@ -72,11 +72,13 @@ class RateLimitMapsTestCase(base.BaseTestCase):
         self._set_resources()
         self.policy_map.clean_by_resource(TEST_RES_1)
         self.assertNotIn(TEST_POLICY.id, self.policy_map.known_policies)
-        self.assertNotIn(TEST_RES_1, self.policy_map.resource_policies)
+        self.assertNotIn(TEST_RES_1, self.policy_map.resource_2_qos_policies)
         self.assertIn(TEST_POLICY2.id, self.policy_map.known_policies)
 
-    def test_clean_by_resource_for_unknown_resource(self):
+    @mock.patch.object(qos_base, 'LOG')
+    def test_clean_by_resource_for_unknown_resource(self, mock_log):
         self.policy_map._clean_policy_info = mock.Mock()
         self.policy_map.clean_by_resource(TEST_RES_1)
-
-        self.policy_map._clean_policy_info.assert_not_called()
+        mock_log.debug.assert_called_once_with(
+            'L3 QoS extension did not have information on floating IP %s',
+            TEST_RES_1)
