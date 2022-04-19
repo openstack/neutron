@@ -1128,6 +1128,37 @@ class TestOvsNeutronAgent(object):
             self.agent.context, details['port_id'], self.agent.agent_id,
             self.agent.conf.host)
 
+    def test_treat_vif_port_wake_up_port(self):
+        details = mock.MagicMock()
+        vif_port = type('vif_port', (object,), {
+            "vif_id": "12",
+            "iface-id": "407a79e0-e0be-4b7d-92a6-513b2161011b",
+            "vif_mac": "fa:16:3e:68:46:7b",
+            "port_name": "qr-407a79e0-e0",
+            "ofport": 10,
+            "bridge_name": "br-int"})
+        with mock.patch.object(
+            self.agent, 'int_br', autospec=True
+        ) as int_br, mock.patch.object(
+            self.agent, '_set_port_vlan'
+        ) as set_vlan, mock.patch.object(
+            self.agent, "port_alive"
+        ) as port_alive:
+            int_br.db_get_val.return_value = {}
+            int_br.set_db_attribute.return_value = True
+            port_needs_binding = self.agent.treat_vif_port(
+                vif_port, details['port_id'],
+                details['network_id'],
+                details['network_type'],
+                details['physical_network'],
+                details['segmentation_id'],
+                True,
+                details['fixed_ips'],
+                details['device_owner'], True)
+        self.assertTrue(port_needs_binding)
+        set_vlan.assert_called_once_with(vif_port, 1)
+        port_alive.assert_called_once_with(vif_port)
+
     def test_bind_port_with_missing_network(self):
         vif_port = mock.Mock()
         vif_port.name.return_value = 'port'
