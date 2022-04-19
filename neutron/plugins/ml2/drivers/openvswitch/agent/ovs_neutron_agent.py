@@ -1177,41 +1177,6 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                      port_other_config)
         return True
 
-    def _add_port_tag_info(self, need_binding_ports):
-        port_names = [p['vif_port'].port_name for p in need_binding_ports]
-        port_info = self.int_br.get_ports_attributes(
-            "Port", columns=["name", "tag", "other_config"],
-            ports=port_names, if_exists=True)
-        info_by_port = {
-            x['name']: {
-                'tag': x['tag'],
-                'other_config': x['other_config'] or {}
-            }
-            for x in port_info
-        }
-        for port_detail in need_binding_ports:
-            try:
-                lvm = self.vlan_manager.get(port_detail['network_id'])
-            except vlanmanager.MappingNotFound:
-                continue
-            port = port_detail['vif_port']
-            try:
-                cur_info = info_by_port[port.port_name]
-            except KeyError:
-                continue
-            str_vlan = str(lvm.vlan)
-            other_config = cur_info['other_config']
-            if (cur_info['tag'] != lvm.vlan or
-                    other_config.get('tag') != str_vlan):
-                other_config['tag'] = str_vlan
-                self.int_br.set_db_attribute(
-                    "Port", port.port_name, "other_config", other_config)
-                # Uninitialized port has tag set to []
-                if cur_info['tag']:
-                    LOG.warning("Uninstall flows of ofport %s due to "
-                                "local vlan change.", port.ofport)
-                    self.int_br.uninstall_flows(in_port=port.ofport)
-
     def _bind_devices(self, need_binding_ports):
         devices_up = []
         devices_down = []
@@ -2193,7 +2158,6 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         # unnecessarily, (eg: when there are no IP address changes)
         added_ports = (port_info.get('added', set()) - skipped_devices -
                        binding_no_activated_devices - migrating_devices)
-        self._add_port_tag_info(need_binding_devices)
         self.process_install_ports_egress_flows(need_binding_devices)
         added_to_datapath = added_ports - devices_not_in_datapath
         self.sg_agent.setup_port_filters(added_to_datapath,
