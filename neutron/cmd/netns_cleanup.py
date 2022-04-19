@@ -66,6 +66,7 @@ def setup_conf():
     """
 
     conf = cfg.CONF
+    config.register_common_config_options()
     cmd.register_cmd_opts(cmd.netns_opts, conf)
     agent_config.register_interface_driver_opts_helper(conf)
     dhcp_config.register_agent_dhcp_opts(conf)

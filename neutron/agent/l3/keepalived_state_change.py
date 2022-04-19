@@ -166,6 +166,7 @@ class MonitorDaemon(daemon.Daemon):
 
 
 def configure(conf):
+    config.register_common_config_options()
     config.init(sys.argv[1:])
     conf.set_override('log_dir', cfg.CONF.conf_dir)
     conf.set_override('debug', True)

@@ -20,6 +20,7 @@ from oslo_utils import importutils
 
 from neutron._i18n import _
 from neutron.agent.common import utils
+from neutron.common import config as common_config
 from neutron.conf.agent import common as config
 from neutron.conf.plugins.ml2.drivers import ovs_conf
 from neutron.debug import debug_agent
@@ -86,5 +87,6 @@ class NeutronDebugShell(shell.NeutronShell):
 
 
 def main(argv=None):
+    common_config.register_common_config_options()
     return NeutronDebugShell(shell.NEUTRON_API_VERSION).run(
         argv or sys.argv[1:])

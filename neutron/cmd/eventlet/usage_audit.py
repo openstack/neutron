@@ -29,6 +29,7 @@ from neutron import manager
 
 
 def main():
+    config.register_common_config_options()
     config.init(sys.argv[1:])
     config.setup_logging()
 

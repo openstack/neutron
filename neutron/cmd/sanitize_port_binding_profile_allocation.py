@@ -19,6 +19,7 @@ from oslo_db import options as db_options
 from oslo_log import log as logging
 
 from neutron.api import converters as n_converters
+from neutron.common import config as common_config
 from neutron.objects import ports as port_obj
 from neutron.objects.qos import binding as qos_binding_obj
 from neutron.objects.qos import rule as qos_rule_obj
@@ -29,6 +30,7 @@ LOG = logging.getLogger(__name__)
 
 def setup_conf():
     conf = cfg.CONF
+    common_config.register_common_config_options()
     db_group, neutron_db_opts = db_options.list_opts()[0]
     cfg.CONF.register_cli_opts(neutron_db_opts, db_group)
     conf()

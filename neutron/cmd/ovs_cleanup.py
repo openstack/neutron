@@ -39,6 +39,7 @@ def setup_conf():
     """
 
     conf = cfg.CONF
+    config.register_common_config_options()
     cmd.register_cmd_opts(cmd.ovs_opts, conf)
     l3_config.register_l3_agent_config_opts(l3_config.OPTS, conf)
     agent_config.register_interface_driver_opts_helper(conf)

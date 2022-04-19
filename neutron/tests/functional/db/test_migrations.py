@@ -27,6 +27,7 @@ import sqlalchemy
 from sqlalchemy import event  # noqa
 from sqlalchemy.sql import ddl as sqla_ddl
 
+from neutron.common import config
 from neutron.db import migration as migration_root
 from neutron.db.migration.alembic_migrations import external
 from neutron.db.migration import cli as migration
@@ -35,7 +36,6 @@ from neutron.tests import base as test_base
 from neutron.tests.functional import base as functional_base
 from neutron.tests.unit import testlib_api
 
-cfg.CONF.import_opt('core_plugin', 'neutron.conf.common')
 
 CREATION_OPERATIONS = {
     'sqla': (sqla_ddl.CreateIndex,
@@ -143,6 +143,7 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
     TIMEOUT_SCALING_FACTOR = 4
 
     def setUp(self):
+        config.register_common_config_options()
         super(_TestModelsMigrations, self).setUp()
         self.cfg = self.useFixture(config_fixture.Config())
         self.cfg.config(core_plugin='ml2')

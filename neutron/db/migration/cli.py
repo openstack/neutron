@@ -27,6 +27,7 @@ from oslo_utils import fileutils
 from oslo_utils import importutils
 
 from neutron._i18n import _
+from neutron.common import config as common_config
 from neutron.conf.db import migration_cli
 from neutron.db import migration
 from neutron.db.migration.connection import DBConnection
@@ -651,6 +652,7 @@ def get_engine_config():
 
 
 def main():
+    common_config.register_common_config_options()
     # Interpret the config file for Python logging.
     # This line sets up loggers basically.
     logging_config.fileConfig(neutron_alembic_ini)

@@ -62,7 +62,6 @@ from neutron.tests import post_mortem_debug
 
 
 CONF = cfg.CONF
-CONF.import_opt('state_path', 'neutron.conf.common')
 
 ROOTDIR = os.path.dirname(__file__)
 ETCDIR = os.path.join(ROOTDIR, 'etc')
@@ -383,6 +382,7 @@ class BaseTestCase(DietTestCase):
         self.useFixture(lockutils.ExternalLockFixture())
         self.useFixture(fixture.APIDefinitionFixture())
 
+        config.register_common_config_options()
         cfg.CONF.set_override('state_path', self.get_default_temp_dir().path)
 
         self.addCleanup(CONF.reset)

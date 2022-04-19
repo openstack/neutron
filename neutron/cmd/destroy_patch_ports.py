@@ -78,6 +78,7 @@ class PatchPortCleaner(object):
 
 
 def main():
+    common_config.register_common_config_options()
     common_config.init(sys.argv[1:])
     ovs_conf.register_ovs_agent_opts()
     common_config.setup_logging()

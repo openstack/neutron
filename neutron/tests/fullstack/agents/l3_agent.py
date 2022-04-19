@@ -17,10 +17,12 @@ import sys
 
 from oslo_config import cfg  # noqa
 
+from neutron.common import config
 from neutron.common import eventlet_utils
 from neutron.tests.common.agents import l3_agent
 
 eventlet_utils.monkey_patch()
 
 if __name__ == "__main__":
+    config.register_common_config_options()
     sys.exit(l3_agent.main())
