@@ -49,7 +49,6 @@ Controller node configuration
       [DEFAULT]
       core_plugin = ml2
       service_plugins = router
-      allow_overlapping_ips = True
       router_distributed = True
       l3_ha = True
       l3_ha_net_cidr = 169.254.192.0/18

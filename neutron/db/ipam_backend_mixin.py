@@ -28,7 +28,6 @@ from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions as exc
 from neutron_lib.exceptions import address_scope as addr_scope_exc
 from neutron_lib.utils import net as net_utils
-from oslo_config import cfg
 from oslo_log import log as logging
 from sqlalchemy.orm import exc as orm_exc
 
@@ -238,11 +237,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             if cidr.prefixlen == 0:
                 err_msg = _("0 is not allowed as CIDR prefix length")
                 raise exc.InvalidInput(error_message=err_msg)
-        if cfg.CONF.allow_overlapping_ips:
-            subnet_list = [{'id': s.id, 'cidr': s.cidr}
-                           for s in network.subnets]
-        else:
-            subnet_list = subnet_obj.Subnet.get_subnet_cidrs(context)
+        subnet_list = [{'id': s.id, 'cidr': s.cidr} for s in network.subnets]
         for subnet in subnet_list:
             if ((netaddr.IPSet([subnet['cidr']]) & new_subnet_ipset) and
                     str(subnet['cidr']) != const.PROVISIONAL_IPV6_PD_PREFIX):
