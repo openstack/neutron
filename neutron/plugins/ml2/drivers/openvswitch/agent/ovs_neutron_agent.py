@@ -1380,6 +1380,17 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         if not lvm.vif_ports:
             self.reclaim_local_vlan(net_uuid)
 
+    def port_alive(self, port, log_errors=True):
+        cur_tag = self.int_br.db_get_val("Port", port.port_name, "tag",
+                                         log_errors=log_errors)
+        # Port normal vlan tag is set correctly, remove the drop flows
+        if cur_tag and cur_tag != constants.DEAD_VLAN_TAG:
+            self.int_br.uninstall_flows(
+                strict=True,
+                table_id=constants.LOCAL_SWITCHING,
+                priority=2,
+                in_port=port.ofport)
+
     def port_dead(self, port, log_errors=True):
         '''Once a port has no binding, put it on the "dead vlan".
 
@@ -1871,6 +1882,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                     vif_port, network_id, network_type,
                     physical_network, segmentation_id,
                     fixed_ips, device_owner, provisioning_needed)
+                self.port_alive(vif_port)
             else:
                 LOG.info("VIF port: %s admin state up disabled, "
                          "putting on the dead VLAN", vif_port.vif_id)
