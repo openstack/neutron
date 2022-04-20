@@ -45,6 +45,7 @@ from webob import exc
 
 from neutron.common.ovn import acl as ovn_acl
 from neutron.common.ovn import constants as ovn_const
+from neutron.common.ovn import exceptions as ovn_exceptions
 from neutron.common.ovn import hash_ring_manager
 from neutron.common.ovn import utils as ovn_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
@@ -1899,6 +1900,116 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         mock_notify_dhcp.assert_not_called()
         self.plugin.update_port_status.assert_called_once_with(
             fake_context, fake_port['id'], const.PORT_STATUS_ACTIVE)
+
+    @mock.patch.object(mech_driver.OVNMechanismDriver,
+                       '_is_port_provisioning_required', lambda *_: True)
+    @mock.patch.object(mech_driver.OVNMechanismDriver, '_notify_dhcp_updated')
+    @mock.patch.object(ovn_client.OVNClient, 'update_port')
+    def test_update_port_postcommit_live_migration_revision_mismatch_always(
+            self, mock_update_port, mock_notify_dhcp):
+        self.plugin.update_port_status = mock.Mock()
+        self.plugin.get_port = mock.Mock(return_value=mock.MagicMock())
+
+        fake_context = mock.MagicMock()
+        fake_port = fakes.FakePort.create_one_port(
+            attrs={
+                'status': const.PORT_STATUS_ACTIVE,
+                portbindings.PROFILE: {},
+                portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS}).info()
+        original_fake_port = fakes.FakePort.create_one_port(
+            attrs={
+                'status': const.PORT_STATUS_ACTIVE,
+                portbindings.PROFILE: {
+                    ovn_const.MIGRATING_ATTR: fake_port[portbindings.HOST_ID]},
+                portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS}).info()
+
+        fake_ctx = mock.Mock(current=fake_port, original=original_fake_port,
+                             _plugin_context=fake_context)
+        mock_update_port.side_effect = ovn_exceptions.RevisionConflict(
+            resource_id=fake_port['id'],
+            resource_type=ovn_const.TYPE_PORTS)
+
+        self.mech_driver.update_port_postcommit(fake_ctx)
+
+        self.plugin.update_port_status.assert_not_called()
+        self.plugin.get_port.assert_called_once_with(
+            mock.ANY, fake_port['id'])
+        self.assertEqual(2, mock_update_port.call_count)
+        mock_notify_dhcp.assert_called_with(fake_port['id'])
+
+    @mock.patch.object(mech_driver.OVNMechanismDriver,
+                       '_is_port_provisioning_required', lambda *_: True)
+    @mock.patch.object(mech_driver.OVNMechanismDriver, '_notify_dhcp_updated')
+    @mock.patch.object(ovn_client.OVNClient, 'update_port')
+    def test_update_port_postcommit_live_migration_revision_mismatch_once(
+            self, mock_update_port, mock_notify_dhcp):
+        self.plugin.update_port_status = mock.Mock()
+        self.plugin.get_port = mock.Mock(return_value=mock.MagicMock())
+
+        fake_context = mock.MagicMock()
+        fake_port = fakes.FakePort.create_one_port(
+            attrs={
+                'status': const.PORT_STATUS_ACTIVE,
+                portbindings.PROFILE: {},
+                portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS}).info()
+        original_fake_port = fakes.FakePort.create_one_port(
+            attrs={
+                'status': const.PORT_STATUS_ACTIVE,
+                portbindings.PROFILE: {
+                    ovn_const.MIGRATING_ATTR: fake_port[portbindings.HOST_ID]},
+                portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS}).info()
+
+        fake_ctx = mock.Mock(current=fake_port, original=original_fake_port,
+                             _plugin_context=fake_context)
+        mock_update_port.side_effect = [
+            ovn_exceptions.RevisionConflict(
+                resource_id=fake_port['id'],
+                resource_type=ovn_const.TYPE_PORTS),
+            None]
+
+        self.mech_driver.update_port_postcommit(fake_ctx)
+
+        self.plugin.update_port_status.assert_not_called()
+        self.plugin.get_port.assert_called_once_with(
+            mock.ANY, fake_port['id'])
+        self.assertEqual(2, mock_update_port.call_count)
+        mock_notify_dhcp.assert_called_with(fake_port['id'])
+
+    @mock.patch.object(mech_driver.OVNMechanismDriver,
+                       '_is_port_provisioning_required', lambda *_: True)
+    @mock.patch.object(mech_driver.OVNMechanismDriver, '_notify_dhcp_updated')
+    @mock.patch.object(ovn_client.OVNClient, 'update_port')
+    def test_update_port_postcommit_revision_mismatch_not_after_live_migration(
+            self, mock_update_port, mock_notify_dhcp):
+        self.plugin.update_port_status = mock.Mock()
+        self.plugin.get_port = mock.Mock(return_value=mock.MagicMock())
+
+        fake_context = mock.MagicMock()
+        fake_port = fakes.FakePort.create_one_port(
+            attrs={
+                'status': const.PORT_STATUS_ACTIVE,
+                portbindings.PROFILE: {},
+                portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS}).info()
+        original_fake_port = fakes.FakePort.create_one_port(
+            attrs={
+                'status': const.PORT_STATUS_DOWN,
+                portbindings.PROFILE: {},
+                portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS}).info()
+
+        fake_ctx = mock.Mock(current=fake_port, original=original_fake_port,
+                             _plugin_context=fake_context)
+        mock_update_port.side_effect = [
+            ovn_exceptions.RevisionConflict(
+                resource_id=fake_port['id'],
+                resource_type=ovn_const.TYPE_PORTS),
+            None]
+
+        self.mech_driver.update_port_postcommit(fake_ctx)
+
+        self.plugin.update_port_status.assert_not_called()
+        self.plugin.get_port.assert_not_called()
+        self.assertEqual(1, mock_update_port.call_count)
+        mock_notify_dhcp.assert_called_with(fake_port['id'])
 
     def _add_chassis(self, nb_cfg):
         chassis_private = mock.Mock()
