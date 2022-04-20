@@ -168,7 +168,6 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                         self.fake_floating_ip['port_id'],
                     ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: utils.ovn_name(
                         self.fake_floating_ip['router_id'])},
-                'options': {'stateless': 'true'}
             }))
         self.l3_inst = directory.get_plugin(plugin_constants.L3)
         self.lb_id = uuidutils.generate_uuid()
@@ -952,8 +951,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             logical_ip='10.0.0.10',
             external_ip='192.168.0.10',
             logical_port='port_id',
-            external_ids=expected_ext_ids,
-            options={'stateless': 'true'})
+            external_ids=expected_ext_ids)
 
     def test_create_floatingip_distributed(self):
         self.l3_inst._nb_ovn.is_col_present.return_value = True
@@ -977,8 +975,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             'neutron-router-id', type='dnat_and_snat', logical_ip='10.0.0.10',
             external_ip='192.168.0.10', external_mac='00:01:02:03:04:05',
             logical_port='port_id',
-            external_ids=expected_ext_ids,
-            options={'stateless': 'true'})
+            external_ids=expected_ext_ids)
 
     def test_create_floatingip_distributed_logical_port_down(self):
         # Check that when the port is down, the external_mac field is not
@@ -1006,8 +1003,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             'neutron-router-id', type='dnat_and_snat', logical_ip='10.0.0.10',
             external_ip='192.168.0.10',
             logical_port='port_id',
-            external_ids=expected_ext_ids,
-            options={'stateless': 'true'})
+            external_ids=expected_ext_ids)
 
     def test_create_floatingip_external_ip_present_in_nat_rule(self):
         self.l3_inst._nb_ovn.is_col_present.return_value = True
@@ -1032,8 +1028,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             logical_ip='10.0.0.10',
             external_ip='192.168.0.10',
             logical_port='port_id',
-            external_ids=expected_ext_ids,
-            options={'stateless': 'true'})
+            external_ids=expected_ext_ids)
 
     def test_create_floatingip_external_ip_present_type_snat(self):
         self.l3_inst._nb_ovn.is_col_present.return_value = True
@@ -1059,8 +1054,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             logical_ip='10.0.0.10',
             external_ip='192.168.0.10',
             logical_port='port_id',
-            external_ids=expected_ext_ids,
-            options={'stateless': 'true'})
+            external_ids=expected_ext_ids)
 
     def test_create_floatingip_lsp_external_id(self):
         foo_lport = fake_resources.FakeOvsdbRow.create_one_ovsdb_row()
@@ -1098,8 +1092,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             external_ip='192.168.0.10',
             logical_ip='10.0.0.10',
             type='dnat_and_snat',
-            external_ids=expected_ext_ids,
-            options={'stateless': 'true'})
+            external_ids=expected_ext_ids)
 
     def test_create_floatingip_lb_vip_fip(self):
         config.cfg.CONF.set_override(
@@ -1129,8 +1122,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             logical_ip='10.0.0.10',
             logical_port='port_id',
             type='dnat_and_snat',
-            external_ids=expected_ext_ids,
-            options={'stateless': 'true'})
+            external_ids=expected_ext_ids)
         self.l3_inst._nb_ovn.db_find_rows.assert_called_with(
             'NAT', ('external_ids', '=', {ovn_const.OVN_FIP_PORT_EXT_ID_KEY:
                                           self.member_lsp.name}))
@@ -1240,8 +1232,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             logical_ip='10.10.10.10',
             external_ip='192.168.0.10',
             logical_port='new-port_id',
-            external_ids=expected_ext_ids,
-            options={'stateless': 'true'})
+            external_ids=expected_ext_ids)
 
     @mock.patch('neutron.db.extraroute_db.ExtraRoute_dbonly_mixin.'
                 'update_floatingip')
@@ -1267,8 +1258,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             logical_ip='10.10.10.10',
             external_ip='192.168.0.10',
             logical_port='new-port_id',
-            external_ids=expected_ext_ids,
-            options={'stateless': 'true'})
+            external_ids=expected_ext_ids)
 
     @mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2.get_network')
     @mock.patch('neutron.db.extraroute_db.ExtraRoute_dbonly_mixin.'
@@ -1302,7 +1292,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             'neutron-new-router-id', type='dnat_and_snat',
             logical_ip='10.10.10.10', external_ip='192.168.0.10',
             external_mac='00:01:02:03:04:05', logical_port='new-port_id',
-            external_ids=expected_ext_ids, options={'stateless': 'true'})
+            external_ids=expected_ext_ids)
 
     @mock.patch('neutron.db.extraroute_db.ExtraRoute_dbonly_mixin.'
                 'update_floatingip')
@@ -1336,8 +1326,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             logical_ip='10.10.10.10',
             external_ip='192.168.0.10',
             logical_port='foo',
-            external_ids=expected_ext_ids,
-            options={'stateless': 'true'})
+            external_ids=expected_ext_ids)
 
     @mock.patch('neutron.db.extraroute_db.ExtraRoute_dbonly_mixin.'
                 'update_floatingip')
@@ -1373,8 +1362,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             logical_ip='10.10.10.10',
             external_ip='192.168.0.10',
             logical_port='port_id',
-            external_ids=expected_ext_ids,
-            options={'stateless': 'true'})
+            external_ids=expected_ext_ids)
 
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.get_floatingips')
     def test_disassociate_floatingips(self, gfs):
