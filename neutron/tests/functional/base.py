@@ -33,6 +33,7 @@ from oslo_utils import uuidutils
 
 from neutron.agent.linux import utils
 from neutron.api import extensions as exts
+from neutron.common import utils as n_utils
 from neutron.conf.agent import common as config
 from neutron.conf.agent import ovs_conf
 from neutron.conf.plugins.ml2 import config as ml2_config
@@ -276,6 +277,28 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
     def _start_ovn_northd(self):
         if not self.ovsdb_server_mgr:
             return
+
+        def wait_for_northd():
+            try:
+                self.nb_api.nb_global
+            except StopIteration:
+                LOG.debug("NB_Global is not ready yet")
+                return False
+
+            try:
+                next(iter(self.sb_api.db_list_rows('SB_Global').execute(
+                    check_error=True)))
+            except StopIteration:
+                LOG.debug("SB_Global is not ready yet")
+                return False
+            except KeyError:
+                # Maintenance worker doesn't register SB_Global therefore
+                # we don't need to wait for it
+                LOG.debug("SB_Global is not registered in this IDL")
+
+            return True
+
+        timeout = 20
         ovn_nb_db = self.ovsdb_server_mgr.get_ovsdb_connection_path('nb')
         ovn_sb_db = self.ovsdb_server_mgr.get_ovsdb_connection_path('sb')
         LOG.debug("Starting OVN northd")
@@ -284,6 +307,11 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
                               ovn_nb_db, ovn_sb_db,
                               protocol=self._ovsdb_protocol))
         LOG.debug("OVN northd started: %r", self.ovn_northd_mgr)
+        n_utils.wait_until_true(
+            wait_for_northd, timeout, sleep=1,
+            exception=Exception(
+                "ovn-northd didn't initialize OVN DBs in %d"
+                "seconds" % timeout))
 
     def _start_ovsdb_server(self):
         # Start 2 ovsdb-servers one each for OVN NB DB and OVN SB DB
