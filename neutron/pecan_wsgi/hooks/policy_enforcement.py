@@ -136,13 +136,17 @@ class PolicyHook(hooks.PecanHook):
                     pluralized=collection)
             except oslo_policy.PolicyNotAuthorized:
                 with excutils.save_and_reraise_exception() as ctxt:
+                    controller = utils.get_controller(state)
                     # If a tenant is modifying it's own object, it's safe to
                     # return a 403. Otherwise, pretend that it doesn't exist
                     # to avoid giving away information.
-                    controller = utils.get_controller(state)
+                    # It is also safe to return 403 if it's POST (CREATE)
+                    # request.
                     s_action = controller.plugin_handlers[controller.SHOW]
-                    if not policy.check(neutron_context, s_action, item,
-                                        pluralized=collection):
+                    c_action = controller.plugin_handlers[controller.CREATE]
+                    if (action != c_action and
+                            not policy.check(neutron_context, s_action, item,
+                                             pluralized=collection)):
                         ctxt.reraise = False
                 msg = _('The resource could not be found.')
                 raise webob.exc.HTTPNotFound(msg)
