@@ -804,8 +804,7 @@ class OVNClient(object):
                    'logical_ip': floatingip['fixed_ip_address'],
                    'external_ip': floatingip['floating_ip_address'],
                    'logical_port': floatingip['port_id'],
-                   'external_ids': ext_ids,
-                   'options': {'stateless': 'true'}}
+                   'external_ids': ext_ids}
 
         if ovn_conf.is_ovn_distributed_floating_ip():
             if self._nb_idl.lsp_get_up(floatingip['port_id']).execute():

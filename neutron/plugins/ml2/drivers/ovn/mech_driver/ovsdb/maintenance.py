@@ -276,11 +276,11 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
     # The migration will run just once per neutron-server instance. If the lock
     # is held by some other neutron-server instance in the cloud, we'll attempt
     # to perform the migration every 10 seconds until completed.
-    # TODO(ihrachys): Remove the migration to stateless fips at some point.
+    # TODO(ihrachys): Remove the migration to stateful fips in Z+1.
     @periodics.periodic(spacing=10, run_immediately=True)
     @rerun_on_schema_updates
-    def migrate_to_stateless_fips(self):
-        """Perform the migration from stateful to stateless Floating IPs. """
+    def migrate_to_stateful_fips(self):
+        """Perform the migration from stateless to stateful Floating IPs. """
         # Only the worker holding a valid lock within OVSDB will perform the
         # migration.
         if not self.has_lock:
@@ -290,7 +290,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         nb_sync = ovn_db_sync.OvnNbSynchronizer(
             self._ovn_client._plugin, self._nb_idl, self._ovn_client._sb_idl,
             None, None)
-        nb_sync.migrate_to_stateless_fips(admin_context)
+        nb_sync.migrate_to_stateful_fips(admin_context)
         raise periodics.NeverAgain()
 
     # The migration will run just once per neutron-server instance. If the lock

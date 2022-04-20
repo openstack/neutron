@@ -1,0 +1,8 @@
+---
+other:
+  - |
+    OVN driver reverted to using stateful NAT for floating IP implementation.
+    The previous switch to stateless didn't materialize the expected
+    performance benefits and instead introduced problems with potential
+    hardware offloading.
+
