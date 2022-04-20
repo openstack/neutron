@@ -2036,9 +2036,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
             scopes = {}
             for subnet in subnets_by_network[port['network_id']]:
-                scope = subnet['address_scope_id']
                 cidr = netaddr.IPNetwork(subnet['cidr'])
-                scopes[cidr.version] = scope
 
                 # If this subnet is used by the port (has a matching entry
                 # in the port's fixed_ips), then add this subnet to the
@@ -2052,6 +2050,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                'subnetpool_id': subnet['subnetpool_id']}
                 for fixed_ip in port['fixed_ips']:
                     if fixed_ip['subnet_id'] == subnet['id']:
+                        scopes[cidr.version] = subnet['address_scope_id']
                         port['subnets'].append(subnet_info)
                         prefixlen = cidr.prefixlen
                         fixed_ip['prefixlen'] = prefixlen

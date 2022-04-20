@@ -235,6 +235,43 @@ class TestL3_NAT_dbonly_mixin(
                     {k: subnets[2][k] for k in keys})
             self.assertEqual([reference], ports)
 
+    @mock.patch.object(l3_db.L3_NAT_dbonly_mixin,
+                       '_get_subnets_by_network_list')
+    def test__populate_ports_for_subnets_mixed_address_scopes(
+            self, get_subnets_by_network):
+        subnets = [{'id': mock.sentinel.subnet_id_a,
+                    'cidr': '10.180.0.0/24',
+                    'gateway_ip': mock.sentinel.gateway_ip_a,
+                    'dns_nameservers': mock.sentinel.dns_nameservers_a,
+                    'ipv6_ra_mode': mock.sentinel.ipv6_ra_mode_a,
+                    'subnetpool_id': mock.sentinel.subnetpool_id,
+                    'address_scope_id': mock.sentinel.address_scope_id},
+                   {'id': mock.sentinel.subnet_id_b,
+                    'cidr': '10.180.1.0/24',
+                    'gateway_ip': mock.sentinel.gateway_ip_b,
+                    'dns_nameservers': mock.sentinel.dns_nameservers_b,
+                    'ipv6_ra_mode': mock.sentinel.ipv6_ra_mode_b,
+                    'subnetpool_id': None,
+                    'address_scope_id': None}]
+        get_subnets_by_network.return_value = {'net_id': subnets}
+
+        ports = [{'network_id': 'net_id',
+                  'id': 'port_id_a',
+                  'device_owner': n_const.DEVICE_OWNER_ROUTER_GW,
+                  'fixed_ips': [{'subnet_id': mock.sentinel.subnet_id_a}]},
+                 {'network_id': 'net_id',
+                  'id': 'port_id_b',
+                  'device_owner': n_const.DEVICE_OWNER_ROUTER_GW,
+                  'fixed_ips': [{'subnet_id': mock.sentinel.subnet_id_b}]}]
+        with mock.patch.object(directory, 'get_plugin') as get_p:
+            get_p().get_networks.return_value = [{'id': 'net_id', 'mtu': 1446}]
+            self.db._populate_mtu_and_subnets_for_ports(mock.sentinel.context,
+                                                        ports)
+
+            self.assertEqual(mock.sentinel.address_scope_id,
+                             ports[0]['address_scopes'][n_const.IP_VERSION_4])
+            self.assertIsNone(ports[1]['address_scopes'][n_const.IP_VERSION_4])
+
     def test__get_sync_floating_ips_no_query(self):
         """Basic test that no query is performed if no router ids are passed"""
         db = l3_db.L3_NAT_dbonly_mixin()
