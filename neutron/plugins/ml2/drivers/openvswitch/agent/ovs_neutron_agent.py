@@ -52,7 +52,7 @@ from neutron.agent.common import ip_lib
 from neutron.agent.common import ovs_lib
 from neutron.agent.common import polling
 from neutron.agent.common import utils
-from neutron.agent.l2 import l2_agent_extensions_manager as ext_manager
+from neutron.agent.l2 import l2_agent_extensions_manager
 from neutron.agent import rpc as agent_rpc
 from neutron.agent import securitygroups_rpc as agent_sg_rpc
 from neutron.api.rpc.callbacks import resources
@@ -2876,11 +2876,11 @@ def validate_tunnel_config(tunnel_types, local_ip):
 
 def main(bridge_classes):
     ovs_capabilities.register()
-    ext_manager.register_opts(cfg.CONF)
+    l2_agent_extensions_manager.register_opts(cfg.CONF)
     agent_config.setup_privsep()
     service_conf.register_service_opts(service_conf.RPC_EXTRA_OPTS, cfg.CONF)
 
-    ext_mgr = ext_manager.L2AgentExtensionsManager(cfg.CONF)
+    ext_mgr = l2_agent_extensions_manager.L2AgentExtensionsManager(cfg.CONF)
 
     # now that all extensions registered their options, we can log them
     n_utils.log_opt_values(LOG)
