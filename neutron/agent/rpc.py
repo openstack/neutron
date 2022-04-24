@@ -342,9 +342,8 @@ class CacheBackedPluginApi(PluginApi):
             port_obj.bindings, constants.ACTIVE, raise_if_not_found=True,
             port_id=port_obj.id)
         migrating_to = migrating_to_host(port_obj.bindings)
-        if (not (migrating_to and cfg.CONF.nova.live_migration_events) and
-                port_obj.device_owner.startswith(
-                    constants.DEVICE_OWNER_COMPUTE_PREFIX) and
+        if (not migrating_to and port_obj.device_owner.startswith(
+                constants.DEVICE_OWNER_COMPUTE_PREFIX) and
                 binding[pb_ext.HOST] != host):
             LOG.debug("Device %s has no active binding in this host",
                       port_obj)

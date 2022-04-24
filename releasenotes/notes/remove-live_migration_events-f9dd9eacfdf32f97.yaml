@@ -1,0 +1,7 @@
+---
+upgrade:
+  - |
+    The ``live_migration_events`` configuration option is removed. Now Neutron
+    assumes this flag is always set. This configuration option depended on
+    the Nova patch
+    `only wait for plugtime events in pre-live-migration <https://review.opendev.org/c/openstack/nova/+/767368>`_.

@@ -369,8 +369,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         host_migrating = agent_rpc.migrating_to_host(
             getattr(port, 'port_bindings', []))
-        if (host_migrating and cfg.CONF.nova.live_migration_events and
-                self.nova_notifier):
+        if host_migrating and self.nova_notifier:
             send_nova_event = bool(trigger ==
                                    provisioning_blocks.L2_AGENT_ENTITY)
             with self.nova_notifier.context_enabled(send_nova_event):
