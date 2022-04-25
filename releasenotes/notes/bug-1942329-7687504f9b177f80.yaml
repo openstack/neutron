@@ -1,0 +1,14 @@
+---
+fixes:
+  - |
+    `1942329 <https://bugs.launchpad.net/neutron/+bug/1942329>`_
+    Port binding logic for direct-physical ports has been extended to allow
+    providing the MAC address of the physical device via the binding profile.
+    If it is provided then Neutron overwrites the value of the
+    ``device_mac_address`` field of the port object in the database with the
+    value from the active binding profile.
+    If there are ports bound before `the nova side of this fix is depolyed
+    <https://review.opendev.org/c/openstack/nova/+/829248>`_ then the VM using
+    the port needs to be moved or the port needs to be detached and re-attached
+    to force nova to provide the MAC address of the direct-physical port in the
+    port binding.

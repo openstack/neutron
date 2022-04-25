@@ -119,6 +119,13 @@ from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.db import segments_db
 from neutron.db import subnet_service_type_mixin
 from neutron.db import vlantransparent_db
+# TODO(gibi): replace the import with
+# from neutron_lib.api.definitions import port_mac_address_override
+# once https://review.opendev.org/c/openstack/neutron-lib/+/831935 merged and
+# neutron-lib is released
+from neutron.extensions import (
+    _port_mac_address_override as port_mac_address_override
+)
 from neutron.extensions import dhcpagentscheduler as dhcp_ext
 from neutron.extensions import filter_validation
 from neutron.extensions import security_groups_shared_filtering_lib
@@ -231,6 +238,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     pnap_def.ALIAS,
                                     pdp_def.ALIAS,
                                     quota_check_limit.ALIAS,
+                                    port_mac_address_override.ALIAS,
                                     ]
 
     # List of agent types for which all binding_failed ports should try to be
@@ -750,6 +758,37 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # Update PortContext's port dictionary to reflect the
                 # updated binding state.
                 self._update_port_dict_binding(port, cur_context_binding)
+
+                # In general the MAC address information flows fom the neutron
+                # port to the device in the backend. Except for direct-physical
+                # ports. In that case the MAC address flows from the physical
+                # device, the PF, to the neutron port. So when such a port is
+                # being bound to a host the port's MAC address needs to be
+                # updated.
+                # Nova puts the new MAC into the binding profile when
+                # requesting the binding either by creating it or by activating
+                # currently inactive one.
+                if (
+                        cur_context_binding.vnic_type ==
+                        portbindings.VNIC_DIRECT_PHYSICAL
+                ):
+                    profile = jsonutils.loads(cur_context_binding.profile)
+                    new_mac = profile.get('device_mac_address')
+                    # When the port is being unbound or the client removes the
+                    # MAC from the binding profile then the MAC of the port
+                    # needs to be reset. It is necessary to avoid the
+                    # duplicated MAC address issue when an unbound port is
+                    # still using the MAC of a physical device and another
+                    # port is being bound to that physical device.
+                    if not new_mac:
+                        new_mac = self._generate_macs()[0]
+                    old_mac = port_db.mac_address
+                    port_db.mac_address = new_mac
+                    LOG.debug(
+                        'The MAC address of the Port %s is updated from %s to '
+                        '%s due to committing a new port binding.',
+                        port_id, old_mac, new_mac
+                    )
 
                 # Update the port status if requested by the bound driver.
                 if (bind_context._binding_levels and

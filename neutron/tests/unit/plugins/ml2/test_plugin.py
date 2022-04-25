@@ -1955,7 +1955,7 @@ class TestMl2PluginOnly(Ml2PluginV2TestCase):
         plugin = directory.get_plugin()
         port = {'device_id': '123', 'device_owner': 'compute:nova'}
         new_attrs = ({'device_id': '', 'device_owner': ''} if unbinding else
-            {'name': 'new'})
+                     {'name': 'new'})
         binding = mock.Mock()
         binding.vnic_type = (
             portbindings.VNIC_DIRECT_PHYSICAL if direct_physical else

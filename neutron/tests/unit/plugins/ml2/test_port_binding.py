@@ -15,6 +15,7 @@
 
 from unittest import mock
 
+from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import portbindings_extended as pbe_ext
 from neutron_lib import constants as const
@@ -662,3 +663,179 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
                              response.status_int)
             self.assertTrue(exceptions.PortBindingError.__name__ in
                             response.text)
+
+    def _create_unbound_port(self):
+        with self.port() as port:
+            return port['port']
+
+    def _get_port_mac(self, port_id):
+        port = self._show('ports', port_id)['port']
+        return port[port_def.PORT_MAC_ADDRESS]
+
+    def _update_port_with_binding(
+        self, port_id, host, vnic_type, binding_profile_mac
+    ):
+        device_owner = f'{const.DEVICE_OWNER_COMPUTE_PREFIX}nova'
+        update_body = {
+            'port': {
+                'device_owner': device_owner,
+                'device_id': 'some-nova-instance',
+                'binding:vnic_type': vnic_type,
+                'binding:host_id': host,
+                'binding:profile': {},
+            }
+        }
+        if binding_profile_mac:
+            update_body['port']['binding:profile'] = {
+                'device_mac_address': binding_profile_mac
+            }
+
+        with mock.patch.object(
+                mechanism_test.TestMechanismDriver, '_check_port_context'
+        ):
+            req = self.new_update_request('ports', update_body, port_id)
+            self.assertEqual(200, req.get_response(self.api).status_int)
+
+    def test_bind_non_pf_port_with_mac_port_not_updated(self):
+        new_mac = 'b4:96:91:34:f4:aa'
+        port = self._create_unbound_port()
+        # Neutron generates a mac for each port created
+        generated_mac = port['mac_address']
+
+        # provide a new MAC in the binding for a normal port
+        self._update_port_with_binding(
+            port['id'],
+            self.host,
+            vnic_type=portbindings.VNIC_NORMAL,
+            binding_profile_mac=new_mac
+        )
+
+        # Neutron ignores the MAC in the binding for non PF ports so the
+        # generated MAC remains
+        self.assertEqual(generated_mac, self._get_port_mac(port['id']))
+
+    def test_bind_pf_port_with_mac_port_updated(self):
+        host1 = self.host
+        host_1_pf_mac = 'b4:96:91:34:f4:aa'
+        # this hostname is also accepted by the TestMechanismDriver
+        host2 = 'host-ovs-filter-active'
+        host_2_pf_mac = 'b4:96:91:34:f4:bb'
+        port = self._create_unbound_port()
+        # neutron generates a MAC for each port created
+        generated_mac = port[port_def.PORT_MAC_ADDRESS]
+
+        # Now lets bind the port as Nova to host1
+        # Nova, when binds a PF port, provides the current MAC in the
+        # binding profile
+        self._update_port_with_binding(
+            port['id'],
+            host1,
+            vnic_type=portbindings.VNIC_DIRECT_PHYSICAL,
+            binding_profile_mac=host_1_pf_mac
+        )
+
+        current_mac = self._get_port_mac(port['id'])
+        self.assertNotEqual(generated_mac, current_mac)
+        # we expect that Neutron updates the port's MAC based on the
+        # binding
+        self.assertEqual(host_1_pf_mac, current_mac)
+
+        # Now create a new, inactive binding on a different host with a
+        # different MAC
+        profile = {'device_mac_address': host_2_pf_mac}
+        kwargs = {
+            pbe_ext.PROFILE: profile,
+            pbe_ext.VNIC_TYPE: portbindings.VNIC_DIRECT_PHYSICAL,
+        }
+        self._make_port_binding(self.fmt, port['id'], host2, **kwargs)
+        # this should not change the MAC on the port as the new binding is
+        # inactive
+        self.assertEqual(host_1_pf_mac, self._get_port_mac(port['id']))
+
+        # Now activate the binding on host2
+        with mock.patch.object(
+                mechanism_test.TestMechanismDriver, '_check_port_context'
+        ):
+            self._activate_port_binding(port['id'], host2)
+
+        # Neutron should update the port MAC to the MAC in the host2 binding
+        self.assertEqual(host_2_pf_mac, self._get_port_mac(port['id']))
+
+        # Now activate the binding on host1 again
+        with mock.patch.object(
+                mechanism_test.TestMechanismDriver, '_check_port_context'
+        ):
+            self._activate_port_binding(port['id'], host1)
+
+        # Neutron should update the port MAC to the MAC in the host1 binding
+        self.assertEqual(host_1_pf_mac, self._get_port_mac(port['id']))
+
+        # Now delete the inactive binding
+        response = self._delete_port_binding(port['id'], host2)
+        self.assertEqual(webob.exc.HTTPNoContent.code, response.status_int)
+        # the MAC should not change
+        self.assertEqual(host_1_pf_mac, self._get_port_mac(port['id']))
+
+        # Now remove the MAC from the active binding profile
+        self._update_port_with_binding(
+            port['id'],
+            host1,
+            portbindings.VNIC_DIRECT_PHYSICAL,
+            binding_profile_mac=None,
+        )
+        # so the port should have a generated mac
+        generated_mac = self._get_port_mac(port['id'])
+        self.assertNotIn(
+            generated_mac,
+            {host_1_pf_mac, host_2_pf_mac}
+        )
+
+        # delete the remaining binding
+        response = self._delete_port_binding(port['id'], host1)
+        self.assertEqual(webob.exc.HTTPNoContent.code, response.status_int)
+        # the MAC should not change as it is already the generated MAC
+        self.assertEqual(generated_mac, self._get_port_mac(port['id']))
+
+    def test_pf_port_unbound_mac_reset(self):
+        host1 = self.host
+        host_1_pf_mac = 'b4:96:91:34:f4:aa'
+
+        port = self._create_unbound_port()
+        # neutron generates a MAC for each port created
+        generated_mac = port[port_def.PORT_MAC_ADDRESS]
+
+        # Now lets bind the port as Nova to host1
+        # Nova, when binds a PF port, provides the current MAC in the
+        # binding profile
+        self._update_port_with_binding(
+            port['id'],
+            host1,
+            vnic_type=portbindings.VNIC_DIRECT_PHYSICAL,
+            binding_profile_mac=host_1_pf_mac
+        )
+
+        current_mac = self._get_port_mac(port['id'])
+        self.assertNotEqual(generated_mac, current_mac)
+        # we expect that Neutron updates the port's MAC based on the
+        # binding
+        self.assertEqual(host_1_pf_mac, current_mac)
+
+        # Now unbound the port
+        update_body = {
+            'port': {
+                'device_owner': '',
+                'device_id': '',
+                'binding:host_id': None,
+                'binding:profile': {},
+            }
+        }
+
+        with mock.patch.object(
+                mechanism_test.TestMechanismDriver, '_check_port_context'
+        ):
+            req = self.new_update_request('ports', update_body, port['id'])
+            self.assertEqual(200, req.get_response(self.api).status_int)
+
+        # Neutron expected to reset the MAC to a generated one so that the
+        # physical function on host1 is now usable for other ports
+        self.assertNotEqual(host_1_pf_mac, self._get_port_mac(port['id']))
