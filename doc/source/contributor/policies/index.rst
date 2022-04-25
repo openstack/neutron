@@ -32,4 +32,3 @@ items.
    code-reviews
    release-checklist
    thirdparty-ci
-   gerrit-recheck

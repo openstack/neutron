@@ -47,6 +47,14 @@ Neutron Policies
 
    policies/index
 
+Gerrit Rechecks
+---------------
+
+.. toctree::
+   :maxdepth: 2
+
+   gerrit-recheck
+
 Neutron Stadium
 ---------------
 
