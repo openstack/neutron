@@ -23,7 +23,6 @@ from oslo_config import cfg
 
 from neutron._i18n import _
 from neutron.common import config
-from neutron.common import profiler
 
 # NOTE(annp): These environment variables are required for deploying
 # neutron-api under mod_wsgi. Currently, these variables are set as DevStack's
@@ -65,14 +64,8 @@ def _init_configuration():
 def boot_server(server_func):
     _init_configuration()
     try:
-        server_func()
+        return server_func()
     except KeyboardInterrupt:
         pass
     except RuntimeError as e:
         sys.exit(_("ERROR: %s") % e)
-
-
-def get_application():
-    _init_configuration()
-    profiler.setup('neutron-server', cfg.CONF.host)
-    return config.load_paste_app('neutron')
