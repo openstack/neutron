@@ -1,3 +1,7 @@
+#!/usr/bin/env python
+# Copyright (c) 2022, OVH SAS
+# All Rights Reserved.
+#
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
 #    a copy of the License at
@@ -10,19 +14,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron import server
-from neutron.server import api_eventlet
-from neutron.server import rpc_eventlet
-from neutron.server import wsgi_eventlet
+from oslo_config import cfg
+
+from neutron.common import config
+from neutron.common import profiler
 
 
-def main():
-    server.boot_server(wsgi_eventlet.eventlet_wsgi_server)
-
-
-def main_rpc_eventlet():
-    server.boot_server(rpc_eventlet.eventlet_rpc_server)
-
-
-def main_api_eventlet():
-    return server.boot_server(api_eventlet.eventlet_api_server)
+def eventlet_api_server():
+    profiler.setup('neutron-server', cfg.CONF.host)
+    return config.load_paste_app('neutron')
