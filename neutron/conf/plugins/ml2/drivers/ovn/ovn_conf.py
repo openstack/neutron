@@ -36,7 +36,12 @@ ovn_opts = [
                       'Use ssl:IP:PORT for SSL connection. The '
                       'ovn_nb_private_key, ovn_nb_certificate and '
                       'ovn_nb_ca_cert are mandatory.\n'
-                      'Use unix:FILE for unix domain socket connection.')),
+                      'Use unix:FILE for unix domain socket connection.\n'
+                      'Multiple connection can be specified by a comma '
+                      'separated string. See also: '
+                      'https://github.com/openvswitch/ovs/blob'
+                      '/ab4d3bfbef37c31331db5a9dbe7c22eb8d5e5e5f'
+                      '/python/ovs/db/idl.py#L215-L216')),
     cfg.StrOpt('ovn_nb_private_key',
                default='',
                help=_('The PEM file with private key for SSL connection to '
@@ -56,7 +61,12 @@ ovn_opts = [
                       'Use ssl:IP:PORT for SSL connection. The '
                       'ovn_sb_private_key, ovn_sb_certificate and '
                       'ovn_sb_ca_cert are mandatory.\n'
-                      'Use unix:FILE for unix domain socket connection.')),
+                      'Use unix:FILE for unix domain socket connection.\n'
+                      'Multiple connection can be specified by a comma '
+                      'separated string. See also: '
+                      'https://github.com/openvswitch/ovs/blob'
+                      '/ab4d3bfbef37c31331db5a9dbe7c22eb8d5e5e5f'
+                      '/python/ovs/db/idl.py#L215-L216')),
     cfg.StrOpt('ovn_sb_private_key',
                default='',
                help=_('The PEM file with private key for SSL connection to '
