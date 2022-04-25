@@ -1973,11 +1973,11 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 migrating_devices.add(device)
 
             if 'port_id' in details:
-                LOG.info("Port %(device)s updated. Details: %(details)s",
-                         {'device': device, 'details': details})
                 details['vif_port'] = port
                 details['local_vlan'] = self._get_net_local_vlan_or_none(
                     details['network_id'])
+                LOG.info("Port %(device)s updated. Details: %(details)s",
+                         {'device': device, 'details': details})
                 need_binding = self.treat_vif_port(port, details['port_id'],
                                                    details['network_id'],
                                                    details['network_type'],
