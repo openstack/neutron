@@ -21,6 +21,7 @@ from neutron_lib.api.definitions import l2_adjacency as l2adj_apidef
 from neutron_lib.api.definitions import port as port_apidef
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import segment as seg_apidef
+from neutron_lib.api.definitions import subnet_service_types
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import exceptions
 from neutron_lib.callbacks import registry
@@ -145,7 +146,7 @@ class SegmentTestPlugin(ml2_plugin.Ml2Plugin, db.SegmentDbMixin):
 
     supported_extension_aliases = [seg_apidef.ALIAS, portbindings.ALIAS,
                                    ipalloc_apidef.ALIAS,
-                                   "subnet-service-types"]
+                                   subnet_service_types.ALIAS]
 
 
 class TestSegmentNameDescription(SegmentTestCase):

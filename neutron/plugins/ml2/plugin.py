@@ -57,6 +57,7 @@ from neutron_lib.api.definitions import security_groups_remote_address_group
 from neutron_lib.api.definitions import stateful_security_group
 from neutron_lib.api.definitions import subnet as subnet_def
 from neutron_lib.api.definitions import subnet_onboard as subnet_onboard_def
+from neutron_lib.api.definitions import subnet_service_types
 from neutron_lib.api.definitions import subnetpool_prefix_ops \
     as subnetpool_prefix_ops_def
 from neutron_lib.api.definitions import vlantransparent as vlan_apidef
@@ -213,7 +214,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     network_availability_zone.ALIAS,
                                     availability_zone_filter.ALIAS,
                                     default_subnetpools.ALIAS,
-                                    "subnet-service-types",
+                                    subnet_service_types.ALIAS,
                                     ip_substring_port_filtering.ALIAS,
                                     security_groups_normalized_cidr.ALIAS,
                                     security_groups_port_filtering.ALIAS,
