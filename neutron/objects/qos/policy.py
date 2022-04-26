@@ -294,10 +294,10 @@ class QosPolicy(rbac_db.NeutronRbacObject):
             raise qos_exc.FloatingIPQosBindingNotFound(fip_id=fip_id,
                                                        policy_id=self.id)
 
-    def detach_router(self, router_id):
+    def detach_router(self, router_id, if_exists=False):
         deleted = binding.QosPolicyRouterGatewayIPBinding.delete_objects(
             self.obj_context, router_id=router_id)
-        if not deleted:
+        if not deleted and not if_exists:
             raise qos_exc.RouterQosBindingNotFound(router_id=router_id,
                                                    policy_id=self.id)
 
