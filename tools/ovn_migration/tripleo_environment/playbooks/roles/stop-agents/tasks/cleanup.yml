@@ -5,11 +5,15 @@
     state: stopped
     enabled: no
   become: yes
+  when:
+    - ansible_facts.services[item] is defined
+    - ansible_facts.services[item]["state"] == "running"
   loop:
     - "{{ service.healthcheck_timer_file }}"
     - "{{ service.healthcheck_service_file }}"
     - "{{ service.service_file }}"
 
+# If file is already deleted this won't fail
 - name: delete ml2 ovs systemd service files
   file:
     path: "{{ systemd_service_file_dir }}/{{ item }}"
