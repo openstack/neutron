@@ -246,7 +246,7 @@ class DhcpAgent(manager.Manager):
                 # allocation failure. When the subnet is updated with a new
                 # allocation pool or a port is  deleted to free up an IP, this
                 # will automatically be retried on the notification
-                self.schedule_resync(e, network.id)
+                self.schedule_resync(str(e), network.id)
             if (isinstance(e, oslo_messaging.RemoteError) and
                     e.exc_type == 'NetworkNotFound' or
                     isinstance(e, exceptions.NetworkNotFound)):
@@ -371,7 +371,7 @@ class DhcpAgent(manager.Manager):
                         net = "*"
                     LOG.debug("resync (%(network)s): %(reason)s",
                               {"reason": r, "network": net})
-                self.sync_state(reasons.keys())
+                self.sync_state(list(reasons.keys()))
 
     def periodic_resync(self):
         """Spawn a thread to periodically resync the dhcp state."""
