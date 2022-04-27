@@ -110,7 +110,7 @@ class QosAgentDriverTestCase(base.BaseTestCase):
                 direction=common_constants.INGRESS_DIRECTION))
         self.policy.rules = [self.egress_bandwidth_limit_rule,
                              self.ingress_bandwidth_limit_rule]
-        self.port = {'qos_policy_id': None, 'network_qos_policy_id': None,
+        self.port = {'qos_policy_id': None, 'qos_network_policy_id': None,
                      'device_owner': 'random-device-owner'}
 
         self.fake_rule = QosFakeRule(context=None, id=REALLY_FAKE_RULE_ID,

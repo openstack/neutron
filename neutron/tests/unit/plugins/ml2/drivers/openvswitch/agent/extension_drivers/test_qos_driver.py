@@ -114,7 +114,7 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
 
         return {'vif_port': FakeVifPort(),
                 'qos_policy_id': policy_id,
-                'network_qos_policy_id': None,
+                'qos_network_policy_id': None,
                 'port_id': uuidutils.generate_uuid(),
                 'device_owner': uuidutils.generate_uuid()}
 

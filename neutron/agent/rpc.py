@@ -26,6 +26,7 @@ from neutron_lib.callbacks import resources as callback_resources
 from neutron_lib import constants
 from neutron_lib.plugins import utils
 from neutron_lib import rpc as lib_rpc
+from neutron_lib.services.qos import constants as qos_consts
 from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
@@ -352,7 +353,7 @@ class CacheBackedPluginApi(PluginApi):
                     constants.NO_ACTIVE_BINDING: True}
         net = self.remote_resource_cache.get_resource_by_id(
             resources.NETWORK, port_obj.network_id)
-        net_qos_policy_id = net.qos_policy_id
+        qos_network_policy_id = net.qos_policy_id
         # match format of old RPC interface
         mac_addr = str(netaddr.EUI(str(port_obj.mac_address),
                                    dialect=netaddr.mac_unix_expanded))
@@ -376,8 +377,8 @@ class CacheBackedPluginApi(PluginApi):
                                       for o in port_obj.allowed_address_pairs],
             'port_security_enabled': getattr(port_obj.security,
                                              'port_security_enabled', True),
-            'qos_policy_id': port_obj.qos_policy_id,
-            'network_qos_policy_id': net_qos_policy_id,
+            qos_consts.QOS_POLICY_ID: port_obj.qos_policy_id,
+            qos_consts.QOS_NETWORK_POLICY_ID: qos_network_policy_id,
             'profile': binding.profile,
             'vif_type': binding.vif_type,
             'vnic_type': binding.vnic_type,

@@ -161,7 +161,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
             return {'device': device,
                     n_const.NO_ACTIVE_BINDING: True}
 
-        network_qos_policy_id = port_context.network._network.get(
+        qos_network_policy_id = port_context.network._network.get(
             qos_consts.QOS_POLICY_ID)
         entry = {'device': device,
                  'network_id': port['network_id'],
@@ -176,8 +176,8 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                  'device_owner': port['device_owner'],
                  'allowed_address_pairs': port['allowed_address_pairs'],
                  'port_security_enabled': port.get(psec.PORTSECURITY, True),
-                 'qos_policy_id': port.get(qos_consts.QOS_POLICY_ID),
-                 'network_qos_policy_id': network_qos_policy_id,
+                 qos_consts.QOS_POLICY_ID: port.get(qos_consts.QOS_POLICY_ID),
+                 qos_consts.QOS_NETWORK_POLICY_ID: qos_network_policy_id,
                  'profile': port[portbindings.PROFILE],
                  'propagate_uplink_status': port.get(
                      usp.PROPAGATE_UPLINK_STATUS, False)}
