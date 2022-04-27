@@ -471,10 +471,14 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             if not local_vlan:
                 continue
             net_uuid = local_vlan_map.get('net_uuid')
-            if (net_uuid and net_uuid not in self._local_vlan_hints and
-                    local_vlan != ovs_const.DEAD_VLAN_TAG):
-                self.available_local_vlans.remove(local_vlan)
-                self._local_vlan_hints[local_vlan_map['net_uuid']] = local_vlan
+            segmentation_id = local_vlan_map.get('segmentation_id')
+            if net_uuid:
+                # TODO(sahid): This key thing should be normalized.
+                key = "%s/%s" % (net_uuid, segmentation_id)
+                if (key not in self._local_vlan_hints and
+                        local_vlan != ovs_const.DEAD_VLAN_TAG):
+                    self.available_local_vlans.remove(local_vlan)
+                    self._local_vlan_hints[key] = local_vlan
 
     def _dispose_local_vlan_hints(self):
         self.available_local_vlans.update(self._local_vlan_hints.values())
@@ -989,7 +993,10 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         try:
             lvm = self.vlan_manager.get(net_uuid, segmentation_id)
         except vlanmanager.MappingNotFound:
-            lvid = self._local_vlan_hints.pop(net_uuid, None)
+            # TODO(sahid): This local_vlan_hints should have its own
+            # datastructure and model to be manipulated.
+            key = "%s/%s" % (net_uuid, segmentation_id)
+            lvid = self._local_vlan_hints.pop(key, None)
             if lvid is None:
                 if not self.available_local_vlans:
                     LOG.error("No local VLAN available for net-id=%s, "

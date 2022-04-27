@@ -315,7 +315,8 @@ class TestOvsNeutronAgent(object):
             self.agent._restore_local_vlan_map()
             expected_hints = {}
             if tag:
-                expected_hints[net_uuid] = tag
+                key = "%s/%s" % (net_uuid, segmentation_id)
+                expected_hints[key] = tag
             self.assertEqual(expected_hints, self.agent._local_vlan_hints)
             # make sure invalid and unassigned ports were skipped
             gpa.assert_has_calls([
