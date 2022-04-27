@@ -455,7 +455,7 @@ class TunnelTest(object):
         a = self._build_agent()
         a.available_local_vlans = set()
         a.vlan_manager.add(NET_UUID, *self.LVM_DATA)
-        a.reclaim_local_vlan(NET_UUID)
+        a.reclaim_local_vlan(NET_UUID, LS_ID)
         self.assertIn(self.LVM_DATA[0], a.available_local_vlans)
         self._verify_mock_calls()
 
@@ -475,7 +475,7 @@ class TunnelTest(object):
 
         a.available_local_vlans = set()
         a.vlan_manager.add(NET_UUID, *self.LVM_FLAT_DATA)
-        a.reclaim_local_vlan(NET_UUID)
+        a.reclaim_local_vlan(NET_UUID, LS_ID)
         self.assertIn(self.LVM_FLAT_DATA[0], a.available_local_vlans)
         self._verify_mock_calls()
 
@@ -495,7 +495,7 @@ class TunnelTest(object):
 
         a.available_local_vlans = set()
         a.vlan_manager.add(NET_UUID, *self.LVM_VLAN_DATA)
-        a.reclaim_local_vlan(NET_UUID)
+        a.reclaim_local_vlan(NET_UUID, LS_ID)
         self.assertIn(self.LVM_VLAN_DATA[0], a.available_local_vlans)
         self._verify_mock_calls()
 
@@ -528,7 +528,7 @@ class TunnelTest(object):
             a.vlan_manager.add(NET_UUID, *self.LVM_DATA)
             a.port_unbound(VIF_ID, NET_UUID)
 
-        reclaim_local_vlan.assert_called_once_with(NET_UUID)
+        reclaim_local_vlan.assert_called_once_with(NET_UUID, LS_ID)
         self._verify_mock_calls()
 
     def test_port_dead(self):

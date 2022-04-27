@@ -33,7 +33,7 @@ class TestL2populationRpcCallBackTunnelMixin(
 
     def test_get_agent_ports_non_existence_key_in_lvm(self):
         results = {}
-        self.vlan_manager.pop(self.lvms[1].net)
+        self.vlan_manager.pop(self.lvms[1].net, self.lvms[1].segid)
         for lvm, agent_ports in self.fakeagent.get_agent_ports(
                 self.fdb_entries1):
             results[lvm] = agent_ports

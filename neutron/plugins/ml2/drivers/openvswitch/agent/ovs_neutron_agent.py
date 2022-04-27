@@ -490,15 +490,20 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             return
 
         try:
-            lvm = self.vlan_manager.get(network['id'])
-        except vlanmanager.MappingNotFound:
+            segmentation_id_old, lvm = (
+                self.vlan_manager.update_segmentation_id(
+                    network['id'], network[provider_net.SEGMENTATION_ID]))
+        except vlanmanager.NotUniqMapping:
+            # There is a design issue, the RPC update network should not accept
+            # to update the segmentation id. We still support it if only one
+            # segment per network.
+            LOG.warning("Can't update segmentation id on no uniq segment "
+                        "for a network %s", network['id'])
             return
 
-        segmentation_id_old = lvm.segmentation_id
-        if segmentation_id_old == network[provider_net.SEGMENTATION_ID]:
+        if segmentation_id_old is None:
+            # The segmentation id did not changed.
             return
-        self.vlan_manager.update_segmentation_id(
-            network['id'], network[provider_net.SEGMENTATION_ID])
 
         lvid = lvm.vlan
         physical_network = network[provider_net.PHYSICAL_NETWORK]
@@ -716,9 +721,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
     def _add_network_ports(self, network_id, segmentation_id, port_id):
         self.network_ports[network_id][segmentation_id].add(port_id)
 
-    def _get_net_local_vlan_or_none(self, net_id):
+    def _get_net_local_vlan_or_none(self, net_id, segmentation_id):
         try:
-            return self.vlan_manager.get(net_id).vlan
+            return self.vlan_manager.get(net_id, segmentation_id).vlan
         except vlanmanager.MappingNotFound:
             return None
 
@@ -982,22 +987,25 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         tags available.
         """
         try:
-            lvm = self.vlan_manager.get(net_uuid)
+            lvm = self.vlan_manager.get(net_uuid, segmentation_id)
         except vlanmanager.MappingNotFound:
             lvid = self._local_vlan_hints.pop(net_uuid, None)
             if lvid is None:
                 if not self.available_local_vlans:
-                    LOG.error("No local VLAN available for net-id=%s",
-                              net_uuid)
+                    LOG.error("No local VLAN available for net-id=%s, "
+                              "seg-id=%s",
+                              net_uuid, segmentation_id)
                     return
                 lvid = self.available_local_vlans.pop()
             self.vlan_manager.add(
                 net_uuid, lvid, network_type, physical_network,
                 segmentation_id)
-            lvm = self.vlan_manager.get(net_uuid)
+            lvm = self.vlan_manager.get(net_uuid, segmentation_id)
             LOG.info(
-                "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s",
-                {'vlan_id': lvm.vlan, 'net_uuid': net_uuid})
+                "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s, "
+                "seg-id=%(seg_id)s",
+                {'vlan_id': lvm.vlan, 'net_uuid': net_uuid,
+                 'seg_id': segmentation_id})
 
         return lvm
 
@@ -1067,20 +1075,23 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                       {'network_type': network_type,
                        'net_uuid': net_uuid})
 
-    def reclaim_local_vlan(self, net_uuid):
+    def reclaim_local_vlan(self, net_uuid, segmentation_id):
         '''Reclaim a local VLAN.
 
         :param net_uuid: the network uuid associated with this vlan.
         '''
         try:
-            lvm = vlanmanager.LocalVlanManager().pop(net_uuid)
+            lvm = vlanmanager.LocalVlanManager().pop(
+                net_uuid, segmentation_id)
         except vlanmanager.MappingNotFound:
-            LOG.debug("Network %s not used on agent.", net_uuid)
+            LOG.debug("Network %s, for segmentation %s, not used on agent.",
+                      net_uuid, segmentation_id)
             return
 
         LOG.info("Reclaiming vlan = %(vlan_id)s from "
-                 "net-id = %(net_uuid)s",
-                 {'vlan_id': lvm.vlan, 'net_uuid': net_uuid})
+                 "net-id = %(net_uuid)s, seg-id = %(seg_id)s",
+                 {'vlan_id': lvm.vlan, 'net_uuid': net_uuid,
+                  'seg_id': segmentation_id})
 
         if lvm.network_type in ovs_const.TUNNEL_NETWORK_TYPES:
             if self.enable_tunneling:
@@ -1158,10 +1169,15 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                     restart or recreated physical bridges
                                     and requires to do local vlan provisioning
         '''
-        if net_uuid not in self.vlan_manager or provisioning_needed:
+        try:
+            lvm = self.vlan_manager.get(net_uuid, segmentation_id)
+        except vlanmanager.MappingNotFound:
+            lvm = None
+        if lvm is None or provisioning_needed:
             self.provision_local_vlan(net_uuid, network_type,
                                       physical_network, segmentation_id)
-        lvm = self.vlan_manager.get(net_uuid)
+            lvm = self.vlan_manager.get(net_uuid, segmentation_id)
+
         lvm.vif_ports[port.vif_id] = port
 
         self.dvr_agent.bind_port_to_dvr(port, lvm,
@@ -1201,7 +1217,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         tags_by_name = {x['name']: x['tag'] for x in port_info}
         for port_detail in need_binding_ports:
             try:
-                lvm = self.vlan_manager.get(port_detail['network_id'])
+                lvm = self.vlan_manager.get(port_detail['network_id'],
+                                            port_detail['segmentation_id'])
             except vlanmanager.MappingNotFound:
                 # network for port was deleted. skip this port since it
                 # will need to be handled as a DEAD port in the next scan
@@ -1322,13 +1339,21 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
     def _get_port_lvm_and_vif(self, vif_id, net_uuid=None):
         try:
-            net_uuid = net_uuid or self.vlan_manager.get_net_uuid(vif_id)
+            net_uuid, segmentation_id = (
+                self.vlan_manager.get_net_and_segmentation_id(
+                    vif_id, net_uuid=net_uuid))
+            lvm = self.vlan_manager.get(net_uuid, segmentation_id)
         except vlanmanager.VifIdNotFound:
             LOG.info('net_uuid %s not managed by VLAN manager',
                      net_uuid)
-            return None, None, None
-
-        lvm = self.vlan_manager.get(net_uuid)
+            if net_uuid:
+                # TODO(sahid); This needs to be fixed. It supposes a segment
+                # per network per host. Basically this code is to avoid
+                # changing logic which is not the aim of this commit.
+                segs = self.vlan_manager.get_segments(net_uuid)
+                lvm = self.vlan_manager.get(net_uuid, list(segs.keys())[0])
+            else:
+                return None, None, None
 
         if vif_id in lvm.vif_ports:
             vif_port = lvm.vif_ports[vif_id]
@@ -1352,9 +1377,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         if vif_port and vif_id in lvm.vif_ports:
             self.dvr_agent.unbind_port_from_dvr(vif_port, lvm)
         lvm.vif_ports.pop(vif_id, None)
-
         if not lvm.vif_ports:
-            self.reclaim_local_vlan(net_uuid)
+            self.reclaim_local_vlan(net_uuid, lvm.segmentation_id)
 
     def port_alive(self, port, log_errors=True):
         cur_tag = self.int_br.db_get_val("Port", port.port_name, "tag",
@@ -1811,21 +1835,23 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         """
         port_tags = self.int_br.get_port_tag_dict()
         changed_ports = set()
-        for lvm in self.vlan_manager:
-            for port in lvm.vif_ports.values():
-                if (
-                    port.port_name in port_tags and
-                    port_tags[port.port_name] != lvm.vlan
-                ):
-                    LOG.info(
-                        "Port '%(port_name)s' has lost "
-                        "its vlan tag '%(vlan_tag)d'! "
-                        "Current vlan tag on this port is '%(new_vlan_tag)s'.",
-                        {'port_name': port.port_name,
-                         'vlan_tag': lvm.vlan,
-                         'new_vlan_tag': port_tags[port.port_name]}
-                    )
-                    changed_ports.add(port.vif_id)
+        for vlan_mappings in self.vlan_manager:
+            for lvm in vlan_mappings.values():
+                for port in lvm.vif_ports.values():
+                    if (
+                        port.port_name in port_tags and
+                        port_tags[port.port_name] != lvm.vlan
+                    ):
+                        LOG.info(
+                            "Port '%(port_name)s' has lost "
+                            "its vlan tag '%(vlan_tag)d'! "
+                            "Current vlan tag on this port is "
+                            "'%(new_vlan_tag)s'.",
+                            {'port_name': port.port_name,
+                             'vlan_tag': lvm.vlan,
+                             'new_vlan_tag': port_tags[port.port_name]}
+                             )
+                        changed_ports.add(port.vif_id)
         if changed_ports:
             # explicitly mark these DOWN on the server since they have been
             # manipulated (likely a nova unplug/replug) and need to be rewired
@@ -1906,11 +1932,12 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         ofports = self.tun_br_ofports[tunnel_type].values()
         if ofports and not self.l2_pop:
             # Update flooding flows to include the new tunnel
-            for vlan_mapping in self.vlan_manager:
-                if vlan_mapping.network_type == tunnel_type:
-                    br.install_flood_to_tun(vlan_mapping.vlan,
-                                            vlan_mapping.segmentation_id,
-                                            ofports)
+            for vlan_mappings in self.vlan_manager:
+                for vlan_mapping in vlan_mappings.values():
+                    if vlan_mapping.network_type == tunnel_type:
+                        br.install_flood_to_tun(vlan_mapping.vlan,
+                                                vlan_mapping.segmentation_id,
+                                                ofports)
 
     def setup_tunnel_port(self, br, remote_ip, network_type):
         port_name = self.get_tunnel_name(
@@ -1926,19 +1953,21 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
 
     def cleanup_tunnel_port(self, br, tun_ofport, tunnel_type):
         # Check if this tunnel port is still used
-        for lvm in self.vlan_manager:
-            if tun_ofport in lvm.tun_ofports:
-                break
+        for vlan_mappings in self.vlan_manager:
+            for lvm in vlan_mappings.values():
+                if tun_ofport in lvm.tun_ofports:
+                    # still used
+                    return
         # If not, remove it
-        else:
-            items = list(self.tun_br_ofports[tunnel_type].items())
-            for remote_ip, ofport in items:
-                if ofport == tun_ofport:
-                    port_name = self.get_tunnel_name(
-                        tunnel_type, self.local_ip, remote_ip)
-                    br.delete_port(port_name)
-                    br.cleanup_tunnel_port(ofport)
-                    self.tun_br_ofports[tunnel_type].pop(remote_ip, None)
+        items = list(self.tun_br_ofports[tunnel_type].items())
+        for remote_ip, ofport in items:
+            if ofport == tun_ofport:
+                port_name = self.get_tunnel_name(
+                    tunnel_type, self.local_ip, remote_ip)
+                br.delete_port(port_name)
+                br.cleanup_tunnel_port(ofport)
+                self.tun_br_ofports[tunnel_type].pop(
+                    remote_ip, None)
 
     def treat_devices_added_or_updated(self, devices, provisioning_needed,
                                        re_added):
@@ -1984,7 +2013,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             if 'port_id' in details:
                 details['vif_port'] = port
                 details['local_vlan'] = self._get_net_local_vlan_or_none(
-                    details['network_id'])
+                    details['network_id'], details['segmentation_id'])
                 LOG.info("Port %(device)s updated. Details: %(details)s",
                          {'device': device, 'details': details})
                 need_binding = self.treat_vif_port(port, details['port_id'],
@@ -2233,7 +2262,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 if self.enable_local_ips and port['device_owner'].startswith(
                         n_const.DEVICE_OWNER_COMPUTE_PREFIX):
                     try:
-                        lvm = self.vlan_manager.get(port['network_id'])
+                        lvm = self.vlan_manager.get(
+                            port['network_id'], port['segmentation_id'])
                         self.int_br.setup_local_egress_flows(
                             port['vif_port'].ofport, lvm.vlan)
                     except Exception as err:
@@ -2250,7 +2280,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                   port['port_id'], err)
 
     def install_accepted_egress_direct_flow(self, port_detail, br_int):
-        lvm = self.vlan_manager.get(port_detail['network_id'])
+        lvm = self.vlan_manager.get(
+            port_detail['network_id'], port_detail['segmentation_id'])
         port = port_detail['vif_port']
 
         # Adding the local vlan to register 6 in case of MAC overlapping

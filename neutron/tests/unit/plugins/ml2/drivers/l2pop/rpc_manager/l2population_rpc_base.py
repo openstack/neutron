@@ -120,7 +120,8 @@ class TestL2populationRpcCallBackTunnelMixinBase(base.BaseTestCase):
                 self.lvms[i].vlan, self.type_gre, self.lvms[i].phys,
                 self.lvms[i].segid, {self.lvms[i].vif: self.lvms[i].port})
             setattr(self, 'lvm%d' % i,
-                    self.vlan_manager.get(self.lvms[i].net))
+                    self.vlan_manager.get(
+                        self.lvms[i].net, self.lvms[i].segid))
 
         self.upd_fdb_entry1_val = {
             self.lvms[0].net: {
