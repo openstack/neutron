@@ -13,6 +13,8 @@
 import webob.exc
 
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import subnet_service_types \
+    as subnet_service_types_apidef
 
 from neutron.db import db_base_plugin_v2
 from neutron.db import subnet_service_type_mixin
@@ -42,7 +44,8 @@ class SubnetServiceTypesExtensionTestPlugin(
     """Test plugin to mixin the subnet service_types extension.
     """
 
-    supported_extension_aliases = ["subnet-service-types", portbindings.ALIAS]
+    supported_extension_aliases = [subnet_service_types_apidef.ALIAS,
+                                   portbindings.ALIAS]
 
 
 class SubnetServiceTypesExtensionTestCase(
