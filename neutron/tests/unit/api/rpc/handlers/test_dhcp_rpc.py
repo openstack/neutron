@@ -206,15 +206,28 @@ class TestDhcpRpcCallback(base.BaseTestCase):
                            if subnet.get('segment_id') in segment_ids]
             else:
                 non_local_subnets = []
-            return {'id': network.id,
-                    'project_id': network.project_id,
-                    'tenant_id': network.project_id,
-                    'admin_state_up': network.admin_state_up,
-                    'ports': ports,
-                    'subnets': sorted(subnets, key=operator.itemgetter('id')),
-                    'non_local_subnets': sorted(non_local_subnets,
-                                                key=operator.itemgetter('id')),
-                    'mtu': network.mtu}
+            ret = {'id': network.id,
+                   'project_id': network.project_id,
+                   'tenant_id': network.project_id,
+                   'admin_state_up': network.admin_state_up,
+                   'ports': ports,
+                   'subnets': sorted(subnets, key=operator.itemgetter('id')),
+                   'non_local_subnets': sorted(non_local_subnets,
+                                               key=operator.itemgetter('id')),
+                   'mtu': network.mtu}
+            # Plugin segment is activated globally, the tests is asserting the
+            # return.
+            ret['segments'] = [{'id': segment.id,
+                                'network_id': segment.network_id,
+                                'name': segment.name,
+                                'network_type': segment.network_type,
+                                'physical_network': segment.physical_network,
+                                'segmentation_id': segment.segmentation_id,
+                                'is_dynamic': segment.is_dynamic,
+                                'segment_index': segment.segment_index,
+                                'hosts': segment.hosts
+                                } for segment in network.segments]
+            return ret
 
         def _make_subnet_dict(subnet):
             ret = {'id': subnet.id}
@@ -243,6 +256,8 @@ class TestDhcpRpcCallback(base.BaseTestCase):
         if segmented_network:
             network.segments = [mock.Mock(id='1', hosts=['host1']),
                                 mock.Mock(id='2', hosts=['host2'])]
+        else:
+            network.segments = []
 
         _kwargs = {'network_id': 'a', 'host': 'host1'}
         if network_info:
