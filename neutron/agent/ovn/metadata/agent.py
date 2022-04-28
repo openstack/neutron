@@ -24,7 +24,6 @@ from oslo_log import log
 from oslo_utils import netutils
 from ovsdbapp.backend.ovs_idl import event as row_event
 from ovsdbapp.backend.ovs_idl import vlog
-import tenacity
 
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
@@ -280,10 +279,7 @@ class MetadataAgent(object):
 
         self._proxy.wait()
 
-    @tenacity.retry(
-        wait=tenacity.wait_exponential(
-            max=config.get_ovn_ovsdb_retry_max_interval()),
-        reraise=True)
+    @ovn_utils.retry()
     def register_metadata_agent(self):
         # NOTE(lucasagomes): db_add() will not overwrite the UUID if
         # it's already set.

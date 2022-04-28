@@ -16,6 +16,7 @@
 from unittest import mock
 
 from neutron.common.ovn import constants
+from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.tests import base
 from neutron.tests.unit import fake_resources as fakes
@@ -25,6 +26,7 @@ from neutron_lib.api.definitions import portbindings
 class TestOVNClientBase(base.BaseTestCase):
 
     def setUp(self):
+        ovn_conf.register_opts()
         super(TestOVNClientBase, self).setUp()
         self.nb_idl = mock.MagicMock()
         self.sb_idl = mock.MagicMock()
