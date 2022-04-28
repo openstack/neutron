@@ -98,6 +98,23 @@ class AgentMechanismDriverBase(api.MechanismDriver, metaclass=abc.ABCMeta):
             LOG.debug("Refusing to bind due to unsupported vnic_type: %s",
                       vnic_type)
             return
+
+        allowed_binding_segments = []
+
+        subnets = self.get_subnets_from_fixed_ips(context)
+        if subnets:
+            # In case that fixed IPs is provided, filter segments per subnet
+            # that they belong to first.
+            for segment in context.segments_to_bind:
+                for subnet in subnets:
+                    seg_id = subnet.get('segment_id')
+                    # If subnet is not attached to any segment, let's use
+                    # default behavior.
+                    if seg_id is None or seg_id == segment[api.ID]:
+                        allowed_binding_segments.append(segment)
+        else:
+            allowed_binding_segments = context.segments_to_bind
+
         agents = context.host_agents(self.agent_type)
         if not agents:
             LOG.debug("Port %(pid)s on network %(network)s not bound, "
@@ -114,7 +131,7 @@ class AgentMechanismDriverBase(api.MechanismDriver, metaclass=abc.ABCMeta):
                     LOG.debug('Agent on host %s can not bind SmartNIC '
                               'port %s', agent['host'], context.current['id'])
                     continue
-                for segment in context.segments_to_bind:
+                for segment in allowed_binding_segments:
                     if self.try_to_bind_segment_for_agent(context, segment,
                                                           agent):
                         LOG.debug("Bound using segment: %s", segment)
@@ -123,6 +140,15 @@ class AgentMechanismDriverBase(api.MechanismDriver, metaclass=abc.ABCMeta):
                 LOG.warning("Refusing to bind port %(pid)s to dead agent: "
                             "%(agent)s",
                             {'pid': context.current['id'], 'agent': agent})
+
+    def get_subnets_from_fixed_ips(self, context):
+        subnets = []
+        for data in context.current.get('fixed_ips', []):
+            subnet_id = data.get('subnet_id')
+            if subnet_id:
+                subnets.append(context._plugin.get_subnet(
+                    context._plugin_context, subnet_id))
+        return subnets
 
     @abc.abstractmethod
     def try_to_bind_segment_for_agent(self, context, segment, agent):
