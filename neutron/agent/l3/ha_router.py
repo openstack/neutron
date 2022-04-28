@@ -63,6 +63,11 @@ class HaRouterNamespace(namespaces.RouterNamespace):
         super(HaRouterNamespace, self).create(ipv6_forwarding=False)
         # HA router namespaces should not have ip_nonlocal_bind enabled
         ip_lib.set_ip_nonlocal_bind_for_namespace(self.name, 0)
+        # Linux should not automatically assign link-local addr for HA routers
+        # They are managed by keepalived
+        ip_wrapper = ip_lib.IPWrapper(namespace=self.name)
+        cmd = ['sysctl', '-w', 'net.ipv6.conf.all.addr_gen_mode=1']
+        ip_wrapper.netns.execute(cmd, privsep_exec=True)
 
 
 class HaRouter(router.RouterInfo):

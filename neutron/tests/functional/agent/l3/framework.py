@@ -276,6 +276,19 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
     def _assert_external_device(self, router):
         self.assertTrue(self._check_external_device(router))
 
+    def _wait_until_addr_gen_mode_has_state(
+            self, ns_name, state):
+        ip_wrapper = ip_lib.IPWrapper(namespace=ns_name)
+
+        def _addr_gen_mode_state():
+            addr_gen_mode_state = ip_wrapper.netns.execute(
+                ['sysctl', '-b', 'net.ipv6.conf.all.addr_gen_mode'],
+                privsep_exec=True)
+            return (
+                state == int(addr_gen_mode_state))
+
+        common_utils.wait_until_true(_addr_gen_mode_state)
+
     def _wait_until_ipv6_accept_ra_has_state(
             self, ns_name, device_name, enabled):
         ip_wrapper = ip_lib.IPWrapper(namespace=ns_name)
