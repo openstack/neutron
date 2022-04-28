@@ -103,6 +103,7 @@ class TestOVNMechanismDriverBase(MechDriverSetupBase,
         cfg.CONF.set_override('vni_ranges',
                               ['1:65536'],
                               group='ml2_type_geneve')
+        ovn_conf.register_opts()
         ovn_conf.cfg.CONF.set_override('ovn_metadata_enabled', False,
                                        group='ovn')
         ovn_conf.cfg.CONF.set_override('dns_servers', ['8.8.8.8'],
@@ -2290,6 +2291,7 @@ class OVNMechanismDriverTestCase(MechDriverSetupBase,
     _mechanism_drivers = ['logger', 'ovn']
 
     def setUp(self):
+        ovn_conf.register_opts()
         cfg.CONF.set_override('global_physnet_mtu', 1550)
         cfg.CONF.set_override('tenant_network_types',
                               ['geneve'],

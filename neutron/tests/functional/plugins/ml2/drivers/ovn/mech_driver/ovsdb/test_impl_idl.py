@@ -22,6 +22,7 @@ from ovsdbapp.tests.functional import base
 from ovsdbapp.tests import utils
 
 from neutron.common.ovn import constants as ovn_const
+from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb \
     import impl_idl_ovn as impl
 from neutron.services.portforwarding import constants as pf_const
@@ -38,6 +39,7 @@ class BaseOvnIdlTest(n_base.BaseLoggingTestCase,
 
     def setUp(self):
         super(BaseOvnIdlTest, self).setUp()
+        ovn_conf.register_opts()
         self.api = impl.OvsdbSbOvnIdl(self.connection['OVN_Southbound'])
         self.nbapi = impl.OvsdbNbOvnIdl(self.connection['OVN_Northbound'])
         self.handler = ovsdb_event.RowEventHandler()

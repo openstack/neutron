@@ -137,6 +137,7 @@ class AgentNotifierApi(object):
 
 def setup_conf():
     conf = cfg.CONF
+    ovn_conf.register_opts()
     ml2_group, ml2_opts = neutron_options.list_ml2_conf_opts()[0]
     cfg.CONF.register_cli_opts(ml2_opts, ml2_group)
     cfg.CONF.register_cli_opts(securitygroups_rpc.security_group_opts,

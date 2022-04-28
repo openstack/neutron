@@ -37,6 +37,7 @@ from ovs.db import idl
 from ovsdbapp.backend.ovs_idl import connection
 from ovsdbapp.backend.ovs_idl import idlutils
 from ovsdbapp import constants as ovsdbapp_const
+import tenacity
 
 from neutron._i18n import _
 from neutron.common.ovn import constants
@@ -642,3 +643,14 @@ def is_port_external(port):
 
     return (vnic_type in constants.EXTERNAL_PORT_TYPES and
             constants.PORT_CAP_SWITCHDEV not in capabilities)
+
+
+def retry(max_=None):
+    def inner(func):
+        def wrapper(*args, **kwargs):
+            local_max = max_ or ovn_conf.get_ovn_ovsdb_retry_max_interval()
+            return tenacity.retry(
+                wait=tenacity.wait_exponential(max=local_max),
+                reraise=True)(func)(*args, **kwargs)
+        return wrapper
+    return inner
