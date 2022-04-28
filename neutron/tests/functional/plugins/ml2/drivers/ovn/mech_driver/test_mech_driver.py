@@ -731,6 +731,7 @@ class TestCreateDefaultDropPortGroup(base.BaseLoggingTestCase,
 
     def setUp(self):
         super(TestCreateDefaultDropPortGroup, self).setUp()
+        ovn_conf.register_opts()
         self.api = impl_idl_ovn.OvsdbNbOvnIdl(
             self.connection['OVN_Northbound'])
         self.addCleanup(self.api.pg_del(self.PG_NAME, if_exists=True).execute,

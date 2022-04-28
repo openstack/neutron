@@ -29,6 +29,7 @@ from oslo_utils import uuidutils
 
 from neutron.api import extensions
 from neutron.common.ovn import constants as ovn_const
+from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.core_extensions import qos as core_qos
 from neutron.db import l3_fip_qos
 from neutron.db import l3_gateway_ip_qos
@@ -76,6 +77,7 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
                  'test_qos.TestFloatingIPQoSL3NatServicePlugin')
 
     def setUp(self):
+        ovn_conf.register_opts()
         cfg.CONF.set_override('extension_drivers', self._extension_drivers,
                               group='ml2')
         cfg.CONF.set_override('enable_distributed_floating_ip', 'False',
