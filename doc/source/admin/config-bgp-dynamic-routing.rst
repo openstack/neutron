@@ -59,6 +59,11 @@ The example configuration involves the following components:
 
   * Router 3 contains IP addresses 203.0.113.13 and 198.51.100.1
 
+* One preexisting peering network 10.0.0.0/24 on the host running the
+  neutron BGP dynamic routing agent to facilitate BGP communication with its
+  peer. 10.0.0.1 is the address for the host and 10.0.0.2 the address for the
+  peer.
+
 .. note::
 
    The example configuration assumes sufficient knowledge about the
@@ -102,7 +107,7 @@ Agent nodes
        bgp_router_id = ROUTER_ID
 
     Replace ``ROUTER_ID`` with a suitable unique 32-bit number, typically an
-    IPv4 address on the host running the agent. For example, 192.0.2.2.
+    IPv4 address on the host running the agent. For example, 10.0.0.1.
 
 Verify service operation
 ------------------------
@@ -643,7 +648,7 @@ networks and floating IP addresses for instances using those networks.
 
    .. code-block:: console
 
-      $ openstack bgp peer create --peer-ip 192.0.2.1 \
+      $ openstack bgp peer create --peer-ip 10.0.0.2 \
         --remote-as REMOTE_AS bgppeer
       Created a new bgp_peer:
       +-----------+--------------------------------------+
@@ -652,7 +657,7 @@ networks and floating IP addresses for instances using those networks.
       | auth_type | none                                 |
       | id        | 35c89ca0-ac5a-4298-a815-0b073c2362e9 |
       | name      | bgppeer                              |
-      | peer_ip   | 192.0.2.1                            |
+      | peer_ip   | 10.0.0.2                             |
       | remote_as | 4321                                 |
       | tenant_id | b3ac05ef10bf441fbf4aa17f16ae1e6d     |
       +-----------+--------------------------------------+
