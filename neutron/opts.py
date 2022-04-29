@@ -342,7 +342,7 @@ def list_ovs_opts():
          neutron.conf.agent.securitygroups_rpc.security_group_opts),
         ('network_log',
          neutron.conf.services.logging.log_driver_opts),
-        ('DHCP',
+        ('dhcp',
          itertools.chain(
              neutron.conf.plugins.ml2.drivers.ovs_conf.dhcp_opts,
              neutron.conf.agent.common.DHCP_PROTOCOL_OPTS))
