@@ -1,0 +1,11 @@
+---
+fixes:
+  - |
+    For IPv4 subnets when dns_nameservers is not set in the subnet,
+    servers defined in 'ovn/dns_servers' config option or system's
+    resolv.conf are used, but for IPv6 subnets these are
+    not used. The same will now be used for IPv6 subnets too.
+    Additionally dns servers added in 'ovn/dns_servers' config
+    option or system's resolv.conf will be filtered as per
+    the subnet's IP version. For more info see the bug report
+    `1951816 <https://bugs.launchpad.net/neutron/+bug/1951816>`_.
