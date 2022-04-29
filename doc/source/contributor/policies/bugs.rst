@@ -72,7 +72,7 @@ moving down the resolution pipeline.
 
 During the period a member acts as bug deputy, he/she is expected to watch
 bugs filed against the Neutron projects (as listed above) and do a first
-screening to determine potential severity, tagging, logstash queries, other
+screening to determine potential severity, tagging, opensearch queries, other
 affected projects, affected releases, etc.
 
 From time to time bugs will be filed and auto-assigned by members of the
@@ -295,9 +295,10 @@ If the bug report is sound, move next:
   or document/question what it takes to mark the bug as fixed.
 * If the bug indicates test or gate failure, look at the failures for that
   test over time using
-  `OpenStack Logstash <http://logstash.openstack.org/#/dashboard/file/logstash.json>`_.
+  `OpenStack OpenSearch <https://opensearch.logs.openstack.org/_dashboards/app/discover?security_tenant=global>`_.
   This can help to validate whether the bug identifies an issue that is
   occurring all of the time, some of the time, or only for the bug submitter.
+  To use OpenSearch please check `documentation <https://docs.openstack.org/project-team-guide/testing.html#checking-status-of-other-job-results>`_.
 * If the bug is the result of a misuse of the system, mark the bug either
   as 'Won't fix', or 'Opinion' if you are still on the fence and need
   other people's input.

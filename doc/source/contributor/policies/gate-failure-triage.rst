@@ -9,9 +9,10 @@ Spotting Gate Failures
 This can be achieved using several tools:
 
 * `Grafana dashboard <https://grafana.opendev.org/d/f913631585/neutron-failure-rate>`_
-* `logstash <http://logstash.openstack.org/>`_
+* `OpenSearch <https://opensearch.logs.openstack.org/_dashboards/app/discover?security_tenant=global>`_
 
-For checking gate failures with logstash the following query will return failures for a specific job:
+For checking gate failures with opensearch please see `documentation <https://docs.openstack.org/project-team-guide/testing.html#checking-status-of-other-job-results>`_.
+The following query will return failures for a specific job:
 
 > build_status:FAILURE AND message:Finished  AND build_name:"check-tempest-dsvm-neutron" AND build_queue:"gate"
 
@@ -51,8 +52,8 @@ Troubleshooting Tempest jobs
     1. If there is a failure in devstack-gate-cleanup-host.txt it's likely to be an infra issue.
     2. If the failure is in devstacklog.txt it could a devstack, neutron, or infra issue.
 3. However, most of the time the failure is in one of the tempest tests. Take note of the error message and go to
-   logstash.
-4. On logstash, search for occurrences of this error message, and try to identify the root cause for the failure
+   opensearch.
+4. On opensearch, search for occurrences of this error message, and try to identify the root cause for the failure
    (see below).
 5. File a bug for this failure, and push an :ref:`Elastic Recheck Query <elastic-recheck-query>` for it.
 6. If you are confident with the area of this bug, and you have time, assign it to yourself; otherwise look for an
