@@ -23,6 +23,7 @@ from neutron.tests import base
 from neutron.tests.unit import fake_resources
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from neutron_lib import constants as const
 from neutron_lib.plugins import constants as plugin_constants
 from oslo_utils import uuidutils
@@ -189,10 +190,16 @@ class TestOVNPortForwarding(TestOVNPortForwardingBase):
                                               PORT_FORWARDING,
                                               events.AFTER_CREATE),
                      mock.call.mock_subscribe(mock.ANY,
+                                              resources.ROUTER_INTERFACE,
+                                              events.AFTER_CREATE),
+                     mock.call.mock_subscribe(mock.ANY,
                                               PORT_FORWARDING,
                                               events.AFTER_UPDATE),
                      mock.call.mock_subscribe(mock.ANY,
                                               PORT_FORWARDING,
+                                              events.AFTER_DELETE),
+                     mock.call.mock_subscribe(mock.ANY,
+                                              resources.ROUTER_INTERFACE,
                                               events.AFTER_DELETE)]
             mock_subscribe.assert_has_calls(calls)
 
