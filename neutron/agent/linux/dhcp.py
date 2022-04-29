@@ -233,6 +233,10 @@ class DhcpBase(object, metaclass=abc.ABCMeta):
         """True if the metadata-proxy should be enabled for the network."""
         raise NotImplementedError()
 
+    @abc.abstractmethod
+    def clean_devices(self, network):
+        """Request to clean unnecessary devices for the network"""
+
 
 class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
     PORTS = []
@@ -357,6 +361,10 @@ class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def spawn_process(self):
         pass
+
+    def clean_devices(self, network):
+        return self.device_manager.cleanup_stale_devices(
+            network, dhcp_port=None)
 
 
 class Dnsmasq(DhcpLocalProcess):
@@ -1676,7 +1684,7 @@ class DeviceManager(object):
         else:
             network.ports.append(port)
 
-    def _cleanup_stale_devices(self, network, dhcp_port):
+    def cleanup_stale_devices(self, network, dhcp_port):
         """Unplug unrelated or stale devices found in the namespace."""
         LOG.debug("Cleaning stale devices for network %s", network.id)
         skip_dev_name = (self.driver.get_device_name(dhcp_port)
@@ -1715,7 +1723,7 @@ class DeviceManager(object):
             with excutils.save_and_reraise_exception():
                 # clear everything out so we don't leave dangling interfaces
                 # if setup never succeeds in the future.
-                self._cleanup_stale_devices(network, dhcp_port=None)
+                self.cleanup_stale_devices(network, dhcp_port=None)
         self._update_dhcp_port(network, port)
         interface_name = self.get_interface_name(network, port)
 
@@ -1783,7 +1791,7 @@ class DeviceManager(object):
                             namespace=network.namespace)
 
         self._set_default_route(network, interface_name)
-        self._cleanup_stale_devices(network, port)
+        self.cleanup_stale_devices(network, port)
 
         return interface_name
 

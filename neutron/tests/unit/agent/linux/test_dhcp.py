@@ -1142,6 +1142,9 @@ class TestDhcpBase(TestBase):
             def reload_allocations(self):
                 pass
 
+            def clean_devices(self):
+                pass
+
             @property
             def active(self):
                 return True
