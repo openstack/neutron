@@ -184,6 +184,14 @@ Controller node
 
 #. Restart the ``neutron-server`` service.
 
+#. (Optional) Configure the Nova scheduler to filter based upon routed network
+   host aggregates. Without this option set, once ports are attached to
+   instances and have IP addresses assigned, Nova may schedule instances to
+   hosts which do not have access to the required segment. See the `Nova
+   configuration reference
+   <https://docs.openstack.org/nova/latest/configuration/config.html#scheduler.query_placement_for_routed_network_aggregates>`_
+   for more information.
+
 Network or compute nodes
 ------------------------
 
