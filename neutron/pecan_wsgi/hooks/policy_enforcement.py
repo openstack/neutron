@@ -134,7 +134,7 @@ class PolicyHook(hooks.PecanHook):
                 policy.enforce(
                     neutron_context, action, item,
                     pluralized=collection)
-            except oslo_policy.PolicyNotAuthorized:
+            except (oslo_policy.PolicyNotAuthorized, oslo_policy.InvalidScope):
                 with excutils.save_and_reraise_exception() as ctxt:
                     # If a tenant is modifying it's own object, it's safe to
                     # return a 403. Otherwise, pretend that it doesn't exist
@@ -187,7 +187,7 @@ class PolicyHook(hooks.PecanHook):
                         policy_method(neutron_context, action, item,
                                       plugin=plugin,
                                       pluralized=collection))]
-        except oslo_policy.PolicyNotAuthorized:
+        except (oslo_policy.PolicyNotAuthorized, oslo_policy.InvalidScope):
             # This exception must be explicitly caught as the exception
             # translation hook won't be called if an error occurs in the
             # 'after' handler.  Instead of raising an HTTPNotFound exception,
