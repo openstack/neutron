@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2020-10-10 20:44+0000\n"
+"POT-Creation-Date: 2022-04-29 17:06+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -19,22 +19,6 @@ msgstr ""
 "Generated-By: Babel 2.0\n"
 "X-Generator: Zanata 4.3.3\n"
 "Language-Team: Chinese (Taiwan)\n"
-
-#, python-format
-msgid ""
-"\n"
-"Command: %(cmd)s\n"
-"Exit code: %(code)s\n"
-"Stdin: %(stdin)s\n"
-"Stdout: %(stdout)s\n"
-"Stderr: %(stderr)s"
-msgstr ""
-"\n"
-"指令：%(cmd)s\n"
-"結束碼：%(code)s\n"
-"標準輸入：%(stdin)s\n"
-"標準輸出：%(stdout)s\n"
-"標準錯誤：%(stderr)s"
 
 #, python-format
 msgid ""
@@ -120,9 +104,6 @@ msgstr "已經設定了此 IP 系列的預設子網路儲存區。每個 IP 系�
 msgid "A metering driver must be specified"
 msgstr "必須指定計量驅動程式"
 
-msgid "Access to this resource was denied."
-msgstr "拒絕存取此資源。"
-
 msgid "Action to be executed when a child process dies"
 msgstr "子程序當掉時要執行的動作"
 
@@ -162,14 +143,6 @@ msgstr "容許自動將網路排程到 DHCP 代理程式。"
 
 msgid "Allow auto scheduling of routers to L3 agent."
 msgstr "容許自動將路由器排定到 L3 代理程式。"
-
-msgid ""
-"Allow overlapping IP support in Neutron. Attention: the following parameter "
-"MUST be set to False if Neutron is being used in conjunction with Nova "
-"security groups."
-msgstr ""
-"容許 Neutron 中的重疊 IP 支援。注意：如果將 Neutron 與 Nova 安全性群組一起使"
-"用，則必須將下列參數設為 False。"
 
 msgid "Allow running metadata proxy."
 msgstr "容許執行 meta 資料 Proxy。"
@@ -435,13 +408,6 @@ msgstr ""
 
 msgid ""
 "Comma-separated list of <vni_min>:<vni_max> tuples enumerating ranges of "
-"Geneve VNI IDs that are available for tenant network allocation"
-msgstr ""
-"<vni_min>:<vni_max> 值組的逗點區隔清單，用於列舉可用於承租人網路配置的 "
-"Geneve VNI ID 範圍"
-
-msgid ""
-"Comma-separated list of <vni_min>:<vni_max> tuples enumerating ranges of "
 "VXLAN VNI IDs that are available for tenant network allocation"
 msgstr ""
 "<vni_min>:<vni_max> 值組的逗點區隔清單，用於列舉可用於承租人網路配置的 VXLAN "
@@ -554,10 +520,6 @@ msgid "Delete the namespace by removing all devices."
 msgstr "透過移除所有裝置來刪除名稱空間。"
 
 #, python-format
-msgid "Deleting port %s"
-msgstr "正在刪除埠 %s"
-
-#, python-format
 msgid "Deployment error: %(reason)s."
 msgstr "部署錯誤：%(reason)s。"
 
@@ -664,19 +626,6 @@ msgstr ""
 "以使用此類代理程式的手動排程。"
 
 msgid ""
-"Enables IPv6 Prefix Delegation for automatic subnet CIDR allocation. Set to "
-"True to enable IPv6 Prefix Delegation for subnet allocation in a PD-capable "
-"environment. Users making subnet creation requests for IPv6 subnets without "
-"providing a CIDR or subnetpool ID will be given a CIDR via the Prefix "
-"Delegation mechanism. Note that enabling PD will override the behavior of "
-"the default IPv6 subnetpool."
-msgstr ""
-"針對自動子網路 CIDR 配置啟用 IPv6 字首委派。設為 True 可針對支援 PD 之環境中"
-"的子網路配置，啟用 IPv6 字首委派。將透過字首委派機制向針對 IPv6 子網路發出子"
-"網路建立要求但卻未提供 CIDR 或子網路儲存區 ID 的使用者，提供 CIDR。請注意，啟"
-"用 PD 將置換預設 IPv6 子網路儲存區的行為。"
-
-msgid ""
 "Enables the dnsmasq service to provide name resolution for instances via DNS "
 "resolvers on the host running the DHCP agent. Effectively removes the '--no-"
 "resolv' option from the dnsmasq process arguments. Adding custom DNS "
@@ -693,10 +642,6 @@ msgstr "嘗試執行作業時發生錯誤 %(reason)s。"
 #, python-format
 msgid "Error parsing dns address %s"
 msgstr "剖析 DNS 位址 %s 時發生錯誤"
-
-#, python-format
-msgid "Error while reading %s"
-msgstr "讀取 %s 時發生錯誤"
 
 #, python-format
 msgid ""
@@ -1040,16 +985,6 @@ msgid "List of <physical_network>:<physical_bridge>"
 msgstr "<physical_network>:<physical_bridge> 的清單"
 
 msgid ""
-"List of <physical_network>:<vlan_min>:<vlan_max> or <physical_network> "
-"specifying physical_network names usable for VLAN provider and tenant "
-"networks, as well as ranges of VLAN tags on each available for allocation to "
-"tenant networks."
-msgstr ""
-"<physical_network>:<vlan_min>:<vlan_max> 或 <physical_network> 的清單，指定可"
-"用於 VLAN 提供者及承租人網路的 physical_network 名稱，以及在每個可用於配置給"
-"承租人網路的 physical_network 上指定 VLAN標籤範圍。"
-
-msgid ""
 "List of network type driver entrypoints to be loaded from the neutron.ml2."
 "type_drivers namespace."
 msgstr ""
@@ -1361,17 +1296,11 @@ msgstr "OVS vhost 使用者 Socket 目錄。"
 msgid "Only admin can view or configure quota"
 msgstr "只有管理者才能檢視或配置配額"
 
-msgid "Only admin is authorized to access quotas for another tenant"
-msgstr "只有管理者才獲授權來存取另一個承租人的配額"
-
 msgid "Only admins can manipulate policies on objects they do not own"
 msgstr "只有管理者才可以操作不歸他們擁有之物件上的原則"
 
 msgid "Only allowed to update rules for one security profile at a time"
 msgstr "一次只容許更新一個安全設定檔的規則"
-
-msgid "Only remote_ip_prefix or remote_group_id may be provided."
-msgstr "只能提供 remote_ip_prefix 或 remote_group_id。"
 
 msgid ""
 "Ordered list of network_types to allocate as tenant networks. The default "
@@ -1522,6 +1451,12 @@ msgstr ""
 
 msgid "Request Failed: internal server error while processing your request."
 msgstr "要求失敗：處理要求時發生內部伺服器錯誤。"
+
+#, python-format
+msgid ""
+"Requested subnet with cidr: %(cidr)s for network: %(network_id)s overlaps "
+"with another subnet"
+msgstr "所要求的網路 %(network_id)s 子網路 (CIDR %(cidr)s) 與另一個子網路重疊"
 
 msgid ""
 "Reset flow table on start. Setting this to True will cause brief traffic "
@@ -1881,16 +1816,8 @@ msgid "URL to database"
 msgstr "資料庫 URL"
 
 #, python-format
-msgid "Unable to access %s"
-msgstr "無法存取 %s"
-
-#, python-format
 msgid "Unable to calculate %(address_type)s address because of:%(reason)s"
 msgstr "無法計算 %(address_type)s 位址，原因：%(reason)s"
-
-#, python-format
-msgid "Unable to convert value in %s"
-msgstr "無法轉換 %s 中的值"
 
 msgid "Unable to create the SNAT Interface Port"
 msgstr "無法建立「SNAT 介面埠」"
@@ -1902,10 +1829,6 @@ msgstr "無法判定 %s 的 MAC 位址"
 #, python-format
 msgid "Unable to find '%s' in request body"
 msgstr "在要求內文中找不到 '%s'"
-
-#, python-format
-msgid "Unable to find IP address %(ip_address)s on subnet %(subnet_id)s"
-msgstr "在子網路 %(subnet_id)s 上找不到 IP 位址 %(ip_address)s"
 
 #, python-format
 msgid "Unable to find resource name in %s"
@@ -2014,14 +1937,6 @@ msgid ""
 msgstr ""
 "列出系統上的名稱空間時，請使用根說明程式。視安全性配置而定，可能不需要這樣"
 "做。如果不需要根說明程式，請將此參數設為 False 以改進效能。"
-
-msgid ""
-"Use veths instead of patch ports to interconnect the integration bridge to "
-"physical networks. Support kernel without Open vSwitch patch port support so "
-"long as it is set to True."
-msgstr ""
-"使用 veths（而不使用修補程式埠）將整合橋接器交互連接至實體網路。只要將其設為 "
-"True，即可支援不含 Open vSwitch 修補程式埠支援的核心。"
 
 msgid ""
 "User (uid or name) running metadata proxy after its initialization (if "

@@ -17,7 +17,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2020-10-10 20:44+0000\n"
+"POT-Creation-Date: 2022-04-29 17:06+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -28,22 +28,6 @@ msgstr ""
 "Generated-By: Babel 2.0\n"
 "X-Generator: Zanata 4.3.3\n"
 "Language-Team: Japanese\n"
-
-#, python-format
-msgid ""
-"\n"
-"Command: %(cmd)s\n"
-"Exit code: %(code)s\n"
-"Stdin: %(stdin)s\n"
-"Stdout: %(stdout)s\n"
-"Stderr: %(stderr)s"
-msgstr ""
-"\n"
-"コマンド: %(cmd)s\n"
-"終了コード: %(code)s\n"
-"Stdin: %(stdin)s\n"
-"Stdout: %(stdout)s\n"
-"Stderr: %(stderr)s"
 
 #, python-format
 msgid ""
@@ -135,9 +119,6 @@ msgstr ""
 msgid "A metering driver must be specified"
 msgstr "計測ドライバーを指定する必要があります"
 
-msgid "Access to this resource was denied."
-msgstr "このリソースへのアクセスは拒否されました。"
-
 msgid "Action to be executed when a child process dies"
 msgstr "子プロセスが異常終了したときに実行されるアクション"
 
@@ -182,15 +163,6 @@ msgstr "DHCP エージェントに対するネットワークの自動スケジ�
 msgid "Allow auto scheduling of routers to L3 agent."
 msgstr ""
 "L3 エージェントに対するルーターの自動スケジューリングを許可してください。"
-
-msgid ""
-"Allow overlapping IP support in Neutron. Attention: the following parameter "
-"MUST be set to False if Neutron is being used in conjunction with Nova "
-"security groups."
-msgstr ""
-"Neutron で重複する IP のサポートを許容します。注意: Nova のセキュリティーグ"
-"ループとともに Neutron を使用する場合は、以下のパラメーターを必ず False に設"
-"定する必要があります。"
 
 msgid "Allow running metadata proxy."
 msgstr "メタデータプロキシーの実行を許可します。"
@@ -476,13 +448,6 @@ msgstr ""
 
 msgid ""
 "Comma-separated list of <vni_min>:<vni_max> tuples enumerating ranges of "
-"Geneve VNI IDs that are available for tenant network allocation"
-msgstr ""
-"テナントネットワークの割り当てに使用可能な Geneve VNI ID の範囲をエミュレート"
-"する、コンマで区切った <vni_min>:<vni_max> タプルのリスト。"
-
-msgid ""
-"Comma-separated list of <vni_min>:<vni_max> tuples enumerating ranges of "
 "VXLAN VNI IDs that are available for tenant network allocation"
 msgstr ""
 "テナントネットワークの割り当てに使用可能な VXLAN VNI ID の範囲を列挙する "
@@ -612,10 +577,6 @@ msgid "Delete the namespace by removing all devices."
 msgstr "すべてのデバイスを削除して、名前空間を削除します。"
 
 #, python-format
-msgid "Deleting port %s"
-msgstr "ポート %s を削除しています"
-
-#, python-format
 msgid "Deployment error: %(reason)s."
 msgstr "デプロイメントエラー: %(reason)s"
 
@@ -733,22 +694,6 @@ msgstr ""
 "手動スケジューリングが使用できます。"
 
 msgid ""
-"Enables IPv6 Prefix Delegation for automatic subnet CIDR allocation. Set to "
-"True to enable IPv6 Prefix Delegation for subnet allocation in a PD-capable "
-"environment. Users making subnet creation requests for IPv6 subnets without "
-"providing a CIDR or subnetpool ID will be given a CIDR via the Prefix "
-"Delegation mechanism. Note that enabling PD will override the behavior of "
-"the default IPv6 subnetpool."
-msgstr ""
-"自動的にサブネットの CIDR を割り当てるために IPv6 のプレフィックスデリゲー"
-"ションを有効化します。True に設定した場合、PD に対応した環境でのサブネットの"
-"割り当てのために、IPv6 のプレフィックスデリゲーションを有効化します。CIDR ま"
-"たはサブネットプールの ID を指定せずに IPv6 のサブネットの作成要求を行うユー"
-"ザーには、プレフィックスデリゲーションのメカニズム経由で CIDR が提供されま"
-"す。PD を有効化するとデフォルトの IPv6 サブネットプールの挙動がオーバーライド"
-"されることに注意してください。"
-
-msgid ""
 "Enables the dnsmasq service to provide name resolution for instances via DNS "
 "resolvers on the host running the DHCP agent. Effectively removes the '--no-"
 "resolv' option from the dnsmasq process arguments. Adding custom DNS "
@@ -766,10 +711,6 @@ msgstr "操作の試行中に発生したエラー %(reason)s。"
 #, python-format
 msgid "Error parsing dns address %s"
 msgstr "DNS アドレス %s の解析中にエラーが発生しました"
-
-#, python-format
-msgid "Error while reading %s"
-msgstr "%s の読み取り中にエラーが発生しました"
 
 #, python-format
 msgid ""
@@ -1149,17 +1090,6 @@ msgid "List of <physical_network>:<physical_bridge>"
 msgstr "<physical_network> のリスト: <physical_bridge>"
 
 msgid ""
-"List of <physical_network>:<vlan_min>:<vlan_max> or <physical_network> "
-"specifying physical_network names usable for VLAN provider and tenant "
-"networks, as well as ranges of VLAN tags on each available for allocation to "
-"tenant networks."
-msgstr ""
-"<physical_network>:<vlan_min>:<vlan_max> または <physical_network> のリスト。"
-"このリストには、VLAN プロバイダー/テナントネットワークに使用できる "
-"physical_network 名が指定されるだけでなく、テナントネットワークに割り振ること"
-"ができる各物理ネットワークの VLAN タグの範囲も指定されます。"
-
-msgid ""
 "List of network type driver entrypoints to be loaded from the neutron.ml2."
 "type_drivers namespace."
 msgstr ""
@@ -1500,9 +1430,6 @@ msgstr "OVS の vhost-user ソケットディレクトリー。"
 msgid "Only admin can view or configure quota"
 msgstr "admin のみが割り当て量を表示または構成できます"
 
-msgid "Only admin is authorized to access quotas for another tenant"
-msgstr "別のテナントの割り当て量へのアクセスが許可されているのは管理者のみです"
-
 msgid "Only admins can manipulate policies on objects they do not own"
 msgstr ""
 "自分がオーナーではないオブジェクトのポリシーを操作できるのは管理者に限られま"
@@ -1510,9 +1437,6 @@ msgstr ""
 
 msgid "Only allowed to update rules for one security profile at a time"
 msgstr "一度に 1 つのセキュリティープロファイルのルールのみを更新できます"
-
-msgid "Only remote_ip_prefix or remote_group_id may be provided."
-msgstr "remote_ip_prefix または remote_group_id のみを指定できます。"
 
 msgid ""
 "Ordered list of network_types to allocate as tenant networks. The default "
@@ -1676,6 +1600,14 @@ msgstr ""
 
 msgid "Request Failed: internal server error while processing your request."
 msgstr "要求が失敗しました。要求の処理中に内部サーバーエラーが発生しました。"
+
+#, python-format
+msgid ""
+"Requested subnet with cidr: %(cidr)s for network: %(network_id)s overlaps "
+"with another subnet"
+msgstr ""
+"ネットワーク %(network_id)s の CIDR %(cidr)s を持つ要求されたサブネットは、別"
+"のサブネットとオーバーラップしています"
 
 msgid ""
 "Reset flow table on start. Setting this to True will cause brief traffic "
@@ -2069,16 +2001,8 @@ msgid "URL to database"
 msgstr "データベースへの URL"
 
 #, python-format
-msgid "Unable to access %s"
-msgstr "%s にアクセスできません"
-
-#, python-format
 msgid "Unable to calculate %(address_type)s address because of:%(reason)s"
 msgstr "%(reason)s のため %(address_type)s アドレスを計算できません"
-
-#, python-format
-msgid "Unable to convert value in %s"
-msgstr "%s で値を変換できません"
 
 msgid "Unable to create the SNAT Interface Port"
 msgstr "SNAT インターフェースポートの作成ができません"
@@ -2090,11 +2014,6 @@ msgstr "%s の MAC アドレスを決定できません"
 #, python-format
 msgid "Unable to find '%s' in request body"
 msgstr "要求本体で '%s' が見つかりません"
-
-#, python-format
-msgid "Unable to find IP address %(ip_address)s on subnet %(subnet_id)s"
-msgstr ""
-"サブネット %(subnet_id)s 上で IP アドレス %(ip_address)s が見つかりません"
 
 #, python-format
 msgid "Unable to find resource name in %s"
@@ -2209,15 +2128,6 @@ msgstr ""
 "システム上の名前空間を一覧表示する際にはルートヘルパーを使用します。セキュリ"
 "ティー設定によっては、有効にする必要がない場合があります。ルートヘルパーが必"
 "要ない場合は、パフォーマンスを高めるためにこの値を False に設定します。"
-
-msgid ""
-"Use veths instead of patch ports to interconnect the integration bridge to "
-"physical networks. Support kernel without Open vSwitch patch port support so "
-"long as it is set to True."
-msgstr ""
-"patch port の代わりに veths を使用して、統合ブリッジを物理ネットワークに相互"
-"接続します。Open vSwitch の patch port のサポートが True に設定されている限"
-"り、当該サポートが存在しない場合でもカーネルをサポートします。"
 
 msgid ""
 "User (uid or name) running metadata proxy after its initialization (if "

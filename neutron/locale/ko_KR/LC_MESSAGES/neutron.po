@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2020-10-10 20:44+0000\n"
+"POT-Creation-Date: 2022-04-29 17:06+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -26,22 +26,6 @@ msgstr ""
 "Generated-By: Babel 2.0\n"
 "X-Generator: Zanata 4.3.3\n"
 "Language-Team: Korean (South Korea)\n"
-
-#, python-format
-msgid ""
-"\n"
-"Command: %(cmd)s\n"
-"Exit code: %(code)s\n"
-"Stdin: %(stdin)s\n"
-"Stdout: %(stdout)s\n"
-"Stderr: %(stderr)s"
-msgstr ""
-"\n"
-"명령: %(cmd)s\n"
-"종료 코드: %(code)s\n"
-"Stdin: %(stdin)s\n"
-"Stdout: %(stdout)s\n"
-"Stderr: %(stderr)s"
 
 #, python-format
 msgid ""
@@ -135,9 +119,6 @@ msgstr ""
 msgid "A metering driver must be specified"
 msgstr "측정 드라이버를 지정해야 함"
 
-msgid "Access to this resource was denied."
-msgstr "이 자원에 대한 액세스가 거부되었습니다."
-
 msgid "Action to be executed when a child process dies"
 msgstr "하위 프로세스가 정지될 때 조치가 실행됨"
 
@@ -178,14 +159,6 @@ msgstr "DHCP 에이전트에 대한 네트워크 자동 스케줄링을 허용�
 
 msgid "Allow auto scheduling of routers to L3 agent."
 msgstr "L3 에이전트에 대한 라우터 자동 스케줄링을 허용합니다."
-
-msgid ""
-"Allow overlapping IP support in Neutron. Attention: the following parameter "
-"MUST be set to False if Neutron is being used in conjunction with Nova "
-"security groups."
-msgstr ""
-"Neutron에서 중복 IP 지원을 허용합니다. 주의: Neutron을 Nova 보안 그룹과 함께 "
-"사용하는 경우 다음 매개변수를 False로 설정해야 합니다."
 
 msgid "Allow running metadata proxy."
 msgstr "메타데이터 프록시 실행을 허용합니다."
@@ -458,13 +431,6 @@ msgstr ""
 
 msgid ""
 "Comma-separated list of <vni_min>:<vni_max> tuples enumerating ranges of "
-"Geneve VNI IDs that are available for tenant network allocation"
-msgstr ""
-"테넌트 네트워크 할당에 사용 가능한 Geneve VNI ID의 범위를 열거하는 <vni_min>:"
-"<vni_max> 튜플의 쉼표로 구분된 목록입니다. "
-
-msgid ""
-"Comma-separated list of <vni_min>:<vni_max> tuples enumerating ranges of "
 "VXLAN VNI IDs that are available for tenant network allocation"
 msgstr ""
 "테넌트 네트워크 할당에 사용 가능한 VXLAN VNI ID의 범위를 열거한  <vni_min>:"
@@ -585,10 +551,6 @@ msgid "Delete the namespace by removing all devices."
 msgstr "모든 디바이스를 제거하여 네임스페이스를 삭제하십시오. "
 
 #, python-format
-msgid "Deleting port %s"
-msgstr "포트 %s 삭제 중"
-
-#, python-format
 msgid "Deployment error: %(reason)s."
 msgstr "배포 오류: %(reason)s."
 
@@ -700,20 +662,6 @@ msgstr ""
 "줄링을 사용할 수 있습니다."
 
 msgid ""
-"Enables IPv6 Prefix Delegation for automatic subnet CIDR allocation. Set to "
-"True to enable IPv6 Prefix Delegation for subnet allocation in a PD-capable "
-"environment. Users making subnet creation requests for IPv6 subnets without "
-"providing a CIDR or subnetpool ID will be given a CIDR via the Prefix "
-"Delegation mechanism. Note that enabling PD will override the behavior of "
-"the default IPv6 subnetpool."
-msgstr ""
-"지동 서브넷 CIDR 할당을 위해 IPV6 접두어 위임을 사용합니다. PD 가능 환경에서 "
-"서브넷 할당을 위해 IPv6 접두어 위임을 사용하려면 True로 설정합니다. 사용자가 "
-"CIDR 또는 subnetpool ID를 제공하지 않고 IPv6 서브넷의 서브넷 작성을 요청하면 "
-"접두어 위임 메커니즘을 통해 CIDR이 제공됩니다. PD를 사용하면 기본 IPv6 "
-"subnetpool의 동작이 재정의됩니다."
-
-msgid ""
 "Enables the dnsmasq service to provide name resolution for instances via DNS "
 "resolvers on the host running the DHCP agent. Effectively removes the '--no-"
 "resolv' option from the dnsmasq process arguments. Adding custom DNS "
@@ -731,10 +679,6 @@ msgstr "조작 시도 중 오류 %(reason)s이(가) 발생했습니다. "
 #, python-format
 msgid "Error parsing dns address %s"
 msgstr "DNS 주소 %s 구문 분석 오류"
-
-#, python-format
-msgid "Error while reading %s"
-msgstr "%s을(를) 읽는 중에 오류 발생"
 
 #, python-format
 msgid ""
@@ -1104,17 +1048,6 @@ msgid "List of <physical_network>:<physical_bridge>"
 msgstr "<physical_network>:<physical_bridge>의 목록"
 
 msgid ""
-"List of <physical_network>:<vlan_min>:<vlan_max> or <physical_network> "
-"specifying physical_network names usable for VLAN provider and tenant "
-"networks, as well as ranges of VLAN tags on each available for allocation to "
-"tenant networks."
-msgstr ""
-"테넌트 네트워크에 대한 할당에 사용할 수 있는 각 VLAN 태그의 범위 및VLAN 제공"
-"자와 테넌트 네트워크에 사용할 수 있는 실제 네트워크 이름을 지정하는  "
-"<physical_network>:<vlan_min>:<vlan_max> 또는 <physical_network>의 목록입니"
-"다."
-
-msgid ""
 "List of network type driver entrypoints to be loaded from the neutron.ml2."
 "type_drivers namespace."
 msgstr ""
@@ -1440,17 +1373,11 @@ msgstr "OVS vhost-사용자 소켓 디렉토리."
 msgid "Only admin can view or configure quota"
 msgstr "관리자만이 할당량을 보거나 구성할 수 있습니다. "
 
-msgid "Only admin is authorized to access quotas for another tenant"
-msgstr "관리자만 다른 테넌트의 할당량에 액세스할 수 있는 권한이 있음"
-
 msgid "Only admins can manipulate policies on objects they do not own"
 msgstr "소유하지 않은 오브젝트의 정책은 관리자만 조작할 수 있음"
 
 msgid "Only allowed to update rules for one security profile at a time"
 msgstr "한 번에 하나의 보안 프로파일에 대한 규칙만 업데이트하도록 허용됨"
-
-msgid "Only remote_ip_prefix or remote_group_id may be provided."
-msgstr "remote_ip_prefix 또는 remote_group_id만이 제공될 수 있습니다. "
 
 msgid ""
 "Ordered list of network_types to allocate as tenant networks. The default "
@@ -1608,6 +1535,13 @@ msgstr ""
 
 msgid "Request Failed: internal server error while processing your request."
 msgstr "요청 실패: 요청을 처리하는 중에 내부 서버 오류가 발생했습니다. "
+
+#, python-format
+msgid ""
+"Requested subnet with cidr: %(cidr)s for network: %(network_id)s overlaps "
+"with another subnet"
+msgstr ""
+"요청된 서브넷(%(network_id)s 네트워크의 cidr: %(cidr)s)이 다른 서브넷과 겹침"
 
 msgid ""
 "Reset flow table on start. Setting this to True will cause brief traffic "
@@ -1986,16 +1920,8 @@ msgid "URL to database"
 msgstr "데이터베이스에 대한 URL"
 
 #, python-format
-msgid "Unable to access %s"
-msgstr "%s에 액세스할 수 없음"
-
-#, python-format
 msgid "Unable to calculate %(address_type)s address because of:%(reason)s"
 msgstr "다음 원인으로 인해 %(address_type)s 주소를 계산할 수 없음: %(reason)s"
-
-#, python-format
-msgid "Unable to convert value in %s"
-msgstr "%s의 값을 변환할 수 없음"
 
 msgid "Unable to create the SNAT Interface Port"
 msgstr "SNAT 인터페이스 포트를 작성할 수 없음"
@@ -2007,10 +1933,6 @@ msgstr "%s의 맥 주소를 확인할 수 없습니다"
 #, python-format
 msgid "Unable to find '%s' in request body"
 msgstr "요청 본문에서 '%s'을(를) 찾을 수 없음"
-
-#, python-format
-msgid "Unable to find IP address %(ip_address)s on subnet %(subnet_id)s"
-msgstr "서브넷 %(subnet_id)s에서 IP 주소 %(ip_address)s을(를) 찾을 수 없음"
 
 #, python-format
 msgid "Unable to find resource name in %s"
@@ -2123,14 +2045,6 @@ msgstr ""
 "시스템에 네임스페이스를 나열할 때 루트 헬퍼를 사용하십시오. 보안 구성에 따라 "
 "이 작업은 필요하지 않을 수 있습니다. 루트 헬퍼가 필요하지 않으면 성능이 향상"
 "되도록 False로 설정하십시오."
-
-msgid ""
-"Use veths instead of patch ports to interconnect the integration bridge to "
-"physical networks. Support kernel without Open vSwitch patch port support so "
-"long as it is set to True."
-msgstr ""
-"패치 포트 대신 veth를 사용하여 통합 브릿지와 실제 브릿지를 상호연결하십시오. "
-"True로 설정된 경우에 한해 Open vSwitch 패치 포트가 없는 커널이 지원됩니다."
 
 msgid ""
 "User (uid or name) running metadata proxy after its initialization (if "

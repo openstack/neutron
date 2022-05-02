@@ -13,37 +13,23 @@
 # 陈展奇 <chenzq1604@163.com>, 2013-2014
 # 颜海峰 <yanheven@gmail.com>, 2014
 # Andreas Jaeger <jaegerandi@gmail.com>, 2016. #zanata
+# Research and Development Center UnitedStack <dev@unitedstack.com>, 2022. #zanata
 msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2020-10-10 20:44+0000\n"
+"POT-Creation-Date: 2022-04-29 17:06+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2016-04-12 05:55+0000\n"
-"Last-Translator: Copied by Zanata <copied-by-zanata@zanata.org>\n"
+"PO-Revision-Date: 2022-04-15 01:46+0000\n"
+"Last-Translator: Research and Development Center UnitedStack "
+"<dev@unitedstack.com>\n"
 "Language: zh_CN\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "Generated-By: Babel 2.0\n"
 "X-Generator: Zanata 4.3.3\n"
 "Language-Team: Chinese (China)\n"
-
-#, python-format
-msgid ""
-"\n"
-"Command: %(cmd)s\n"
-"Exit code: %(code)s\n"
-"Stdin: %(stdin)s\n"
-"Stdout: %(stdout)s\n"
-"Stderr: %(stderr)s"
-msgstr ""
-"\n"
-"命令：%(cmd)s\n"
-"退出代码：%(code)s\n"
-"标准输入：%(stdin)s\n"
-"标准输出：%(stdout)s\n"
-"标准错误：%(stderr)s"
 
 #, python-format
 msgid ""
@@ -128,9 +114,6 @@ msgstr "已对此 IP 系列设置缺省子网池。对于每个 IP 系列，只�
 msgid "A metering driver must be specified"
 msgstr "必须指定测量驱动程序"
 
-msgid "Access to this resource was denied."
-msgstr "访问该资源被拒绝。"
-
 msgid "Action to be executed when a child process dies"
 msgstr "当子进程终止时要执行的操作"
 
@@ -170,14 +153,6 @@ msgstr "允许自动对 DHCP 代理调度网络。"
 
 msgid "Allow auto scheduling of routers to L3 agent."
 msgstr "允许自动对 L3 代理调度路由器。"
-
-msgid ""
-"Allow overlapping IP support in Neutron. Attention: the following parameter "
-"MUST be set to False if Neutron is being used in conjunction with Nova "
-"security groups."
-msgstr ""
-"允许在 Neutron 中重叠 IP 支持。注意：如果将 Neutron 与 Nova 安全组配合使用，"
-"那么以下参数必须设置为 False。"
 
 msgid "Allow running metadata proxy."
 msgstr "允许运行 metadata代理"
@@ -330,6 +305,12 @@ msgstr "无法更新只读属性 %s"
 msgid "Certificate Authority public key (CA cert) file for ssl"
 msgstr "用于 SSL 的认证中心公用密钥（CA 证书）文件"
 
+msgid "Check conntrack installation"
+msgstr "检查 conntrack 安装"
+
+msgid "Check dhcp_release6 installation"
+msgstr "检查 dhcp_release6 安装"
+
 msgid "Check ebtables installation"
 msgstr "检查 ebtables 安装"
 
@@ -438,13 +419,6 @@ msgid ""
 msgstr ""
 "可用于租户网络分配的 GRE 隧道标识的 <tun_min>:<tun_max> 元组枚举范围的逗号分"
 "隔列表"
-
-msgid ""
-"Comma-separated list of <vni_min>:<vni_max> tuples enumerating ranges of "
-"Geneve VNI IDs that are available for tenant network allocation"
-msgstr ""
-"枚举可用于租户网络分配的 Geneve VNI 标识的范围的<vni_min>:<vni_max> 元组的逗"
-"号分隔列表"
 
 msgid ""
 "Comma-separated list of <vni_min>:<vni_max> tuples enumerating ranges of "
@@ -560,10 +534,6 @@ msgid "Delete the namespace by removing all devices."
 msgstr "请通过除去所有设备来删除名称空间。"
 
 #, python-format
-msgid "Deleting port %s"
-msgstr "正在删除端口 %s"
-
-#, python-format
 msgid "Deployment error: %(reason)s."
 msgstr "部署错误：%(reason)s。"
 
@@ -670,19 +640,6 @@ msgstr ""
 "么可以手动调度这样的代理。"
 
 msgid ""
-"Enables IPv6 Prefix Delegation for automatic subnet CIDR allocation. Set to "
-"True to enable IPv6 Prefix Delegation for subnet allocation in a PD-capable "
-"environment. Users making subnet creation requests for IPv6 subnets without "
-"providing a CIDR or subnetpool ID will be given a CIDR via the Prefix "
-"Delegation mechanism. Note that enabling PD will override the behavior of "
-"the default IPv6 subnetpool."
-msgstr ""
-"对自动子网 CIDR 分配启用 IPv6 前缀代理。设置为 True 将在支持 PD 的环境中对子"
-"网分配启用 IPv6 前缀代理。如果用户对 IPv6 子网发出创建子网请求但未提供 CIDR "
-"或子网池标识，那么系统将通过前缀代理机制为该用户提供 CIDR。请注意，启用 PD 将"
-"覆盖缺省 IPv6 子网池的行为。"
-
-msgid ""
 "Enables the dnsmasq service to provide name resolution for instances via DNS "
 "resolvers on the host running the DHCP agent. Effectively removes the '--no-"
 "resolv' option from the dnsmasq process arguments. Adding custom DNS "
@@ -699,10 +656,6 @@ msgstr "尝试执行该操作时发生错误 %(reason)s。"
 #, python-format
 msgid "Error parsing dns address %s"
 msgstr "解析 dns 地址 %s 时出错"
-
-#, python-format
-msgid "Error while reading %s"
-msgstr "读取 %s 时出错"
 
 #, python-format
 msgid ""
@@ -1046,16 +999,6 @@ msgid "List of <physical_network>:<physical_bridge>"
 msgstr "<physical_network>:<physical_bridge> 的列表"
 
 msgid ""
-"List of <physical_network>:<vlan_min>:<vlan_max> or <physical_network> "
-"specifying physical_network names usable for VLAN provider and tenant "
-"networks, as well as ranges of VLAN tags on each available for allocation to "
-"tenant networks."
-msgstr ""
-"为VLAN提供商和租户网络提供<physical_network>:<vlan_min>:<vlan_max> 或 "
-"<physical_network>专属物理网络名称，从事实现每个租户网络可以分配到相应的VLAN"
-"标识。"
-
-msgid ""
 "List of network type driver entrypoints to be loaded from the neutron.ml2."
 "type_drivers namespace."
 msgstr ""
@@ -1365,17 +1308,11 @@ msgstr "OVS vhost-user 套接字目录。"
 msgid "Only admin can view or configure quota"
 msgstr "只有管理员才能查看或配置配额"
 
-msgid "Only admin is authorized to access quotas for another tenant"
-msgstr "只有管理员才有权访问另一租户的配额"
-
 msgid "Only admins can manipulate policies on objects they do not own"
 msgstr "只有管理员才能处理针对并非他们所有的对象的策略"
 
 msgid "Only allowed to update rules for one security profile at a time"
 msgstr "一次仅允许为一个安全概要文件更新规则"
-
-msgid "Only remote_ip_prefix or remote_group_id may be provided."
-msgstr "只能提供 remote_ip_prefix 或 remote_group_id。"
 
 msgid ""
 "Ordered list of network_types to allocate as tenant networks. The default "
@@ -1528,6 +1465,13 @@ msgstr ""
 
 msgid "Request Failed: internal server error while processing your request."
 msgstr "请求失败：在处理请求时，发生内部服务器错误。"
+
+#, python-format
+msgid ""
+"Requested subnet with cidr: %(cidr)s for network: %(network_id)s overlaps "
+"with another subnet"
+msgstr ""
+"所请求创建子网的 cidr  %(cidr)s，与网络 %(network_id)s 中的某一子网重叠。"
 
 msgid ""
 "Reset flow table on start. Setting this to True will cause brief traffic "
@@ -1883,16 +1827,8 @@ msgid "URL to database"
 msgstr "指向数据库的 URL"
 
 #, python-format
-msgid "Unable to access %s"
-msgstr "无法访问 %s"
-
-#, python-format
 msgid "Unable to calculate %(address_type)s address because of:%(reason)s"
 msgstr "无法计算 %(address_type)s 地址，原因：%(reason)s"
-
-#, python-format
-msgid "Unable to convert value in %s"
-msgstr "无法转换 %s 中的值"
 
 msgid "Unable to create the SNAT Interface Port"
 msgstr "无法创建 SNAT 接口端口"
@@ -1906,10 +1842,6 @@ msgid "Unable to find '%s' in request body"
 msgstr "在请求主体中找不到“%s”"
 
 #, python-format
-msgid "Unable to find IP address %(ip_address)s on subnet %(subnet_id)s"
-msgstr "在子网 %(subnet_id)s 上找不到 IP 地址 %(ip_address)s"
-
-#, python-format
 msgid "Unable to find resource name in %s"
 msgstr "在%s中找不到源的名称"
 
@@ -1917,7 +1849,7 @@ msgstr "在%s中找不到源的名称"
 msgid ""
 "Unable to identify a target field from:%s. Match should be in the form "
 "%%(<field_name>)s"
-msgstr "无法从:%s中匹配目标域. 匹配应该使用以下形式%%(域名)s"
+msgstr "无法从%s中匹配目标域。匹配应该使用以下形式%%(<field_name>)s"
 
 msgid "Unable to provide external connectivity"
 msgstr "无法提供外部连接"
@@ -2015,14 +1947,6 @@ msgid ""
 msgstr ""
 "列示系统上的名称空间时使用 root helper。根据安全配置，这可能不是必需的。如果 "
 "root helper 不是必需的，请将其设置为 False 以改进性能。"
-
-msgid ""
-"Use veths instead of patch ports to interconnect the integration bridge to "
-"physical networks. Support kernel without Open vSwitch patch port support so "
-"long as it is set to True."
-msgstr ""
-"使用 veth 而不是接线端口以使集成网桥与物理网络互连。设置为 True 时支持不具备 "
-"Open vSwitch 接线端口支持的内核。"
 
 msgid ""
 "User (uid or name) running metadata proxy after its initialization (if "

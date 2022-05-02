@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2020-10-10 20:44+0000\n"
+"POT-Creation-Date: 2022-04-29 17:06+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -19,22 +19,6 @@ msgstr ""
 "Generated-By: Babel 2.0\n"
 "X-Generator: Zanata 4.3.3\n"
 "Language-Team: Italian\n"
-
-#, python-format
-msgid ""
-"\n"
-"Command: %(cmd)s\n"
-"Exit code: %(code)s\n"
-"Stdin: %(stdin)s\n"
-"Stdout: %(stdout)s\n"
-"Stderr: %(stderr)s"
-msgstr ""
-"\n"
-"Comando: %(cmd)s\n"
-"Codice di uscita: %(code)s\n"
-"Stdin: %(stdin)s\n"
-"Stdout: %(stdout)s\n"
-"Stderr: %(stderr)s"
 
 #, python-format
 msgid ""
@@ -126,9 +110,6 @@ msgstr ""
 msgid "A metering driver must be specified"
 msgstr "Specificare un driver di misurazione"
 
-msgid "Access to this resource was denied."
-msgstr "L'accesso a questa risorsa è stato negato."
-
 msgid "Action to be executed when a child process dies"
 msgstr "Azione da eseguire quando termina un processo child"
 
@@ -170,15 +151,6 @@ msgstr "Consenti pianificazione automatica delle reti nell'agent DHCP."
 
 msgid "Allow auto scheduling of routers to L3 agent."
 msgstr "Consenti pianificazione automatica dei router nell'agent L3."
-
-msgid ""
-"Allow overlapping IP support in Neutron. Attention: the following parameter "
-"MUST be set to False if Neutron is being used in conjunction with Nova "
-"security groups."
-msgstr ""
-"Consentire la sovrapposizione del supporto IP in Neutron. Attenzione: il "
-"seguente parametro DEVE essere impostato su False se Neutron viene "
-"utilizzato insieme ai gruppi di sicurezza Nova."
 
 msgid "Allow running metadata proxy."
 msgstr "Consenti l'esecuzione del proxy di metadati."
@@ -466,13 +438,6 @@ msgstr ""
 
 msgid ""
 "Comma-separated list of <vni_min>:<vni_max> tuples enumerating ranges of "
-"Geneve VNI IDs that are available for tenant network allocation"
-msgstr ""
-"Elenco separato da virgole di intervalli di enumerazione tuple <vni_min>:"
-"<vni_max> di ID VNI Geneve disponibili per l'assegnazione della rete titolare"
-
-msgid ""
-"Comma-separated list of <vni_min>:<vni_max> tuples enumerating ranges of "
 "VXLAN VNI IDs that are available for tenant network allocation"
 msgstr ""
 "Elenco separato da virgole di intervalli di enumerazione tuple <vni_min>:"
@@ -608,10 +573,6 @@ msgid "Delete the namespace by removing all devices."
 msgstr "Elimina lo spazio dei nomi rimuovendo tutti i dispositivi."
 
 #, python-format
-msgid "Deleting port %s"
-msgstr "Eliminazione della porta %s"
-
-#, python-format
 msgid "Deployment error: %(reason)s."
 msgstr "Errore di distribuzione: %(reason)s."
 
@@ -727,22 +688,6 @@ msgstr ""
 "opzione è impostata su True."
 
 msgid ""
-"Enables IPv6 Prefix Delegation for automatic subnet CIDR allocation. Set to "
-"True to enable IPv6 Prefix Delegation for subnet allocation in a PD-capable "
-"environment. Users making subnet creation requests for IPv6 subnets without "
-"providing a CIDR or subnetpool ID will be given a CIDR via the Prefix "
-"Delegation mechanism. Note that enabling PD will override the behavior of "
-"the default IPv6 subnetpool."
-msgstr ""
-"Abilita la delegazione del prefisso IPv6 per l'allocazione CIDR della "
-"sottorete automatica. Impostare su True per abilitare la delegazione del "
-"prefisso IPv6 per l'allocazione della sottorete in un ambiente con capacità "
-"PD. Gli utenti che effettuano richieste di creazione di una sottorete per le "
-"sottoreti IPv6 senza fornire un CIDR o un ID pool di sottorete riceveranno "
-"un CIDR mediante il meccanismo di delegazione del prefisso. L'abilitazione "
-"di PD sostituirà il comportamento del pool di sottorete IPv6 predefinito."
-
-msgid ""
 "Enables the dnsmasq service to provide name resolution for instances via DNS "
 "resolvers on the host running the DHCP agent. Effectively removes the '--no-"
 "resolv' option from the dnsmasq process arguments. Adding custom DNS "
@@ -761,10 +706,6 @@ msgstr "Errore %(reason)s durante l'operazione."
 #, python-format
 msgid "Error parsing dns address %s"
 msgstr "Errore durante l'analisi dell'indirizzo dns %s"
-
-#, python-format
-msgid "Error while reading %s"
-msgstr "Errore durante le lettura di %s"
 
 #, python-format
 msgid ""
@@ -1150,17 +1091,6 @@ msgid "List of <physical_network>:<physical_bridge>"
 msgstr "Elenco di <physical_network>:<physical_bridge>"
 
 msgid ""
-"List of <physical_network>:<vlan_min>:<vlan_max> or <physical_network> "
-"specifying physical_network names usable for VLAN provider and tenant "
-"networks, as well as ranges of VLAN tags on each available for allocation to "
-"tenant networks."
-msgstr ""
-"Elenco di <physical_network>:<vlan_min>:<vlan_max> o <physical_network> che "
-"specificano nomi physical_network utilizzabili per le reti tenant e provider "
-"VLAN, come anche gli intervalli di tag VLAN su ciascuno disponibile per "
-"l'assegnazione alle reti tenant."
-
-msgid ""
 "List of network type driver entrypoints to be loaded from the neutron.ml2."
 "type_drivers namespace."
 msgstr ""
@@ -1521,9 +1451,6 @@ msgstr "Directory socket vhost-user OVS."
 msgid "Only admin can view or configure quota"
 msgstr "Solo admin può visualizzare o configurare una quota"
 
-msgid "Only admin is authorized to access quotas for another tenant"
-msgstr "Solo l'admin è autorizzato ad accedere alle quote per un altro tenant"
-
 msgid "Only admins can manipulate policies on objects they do not own"
 msgstr ""
 "Solo gli admin possono gestire le politiche su oggetti che non possiedono"
@@ -1532,9 +1459,6 @@ msgid "Only allowed to update rules for one security profile at a time"
 msgstr ""
 "Al momento è consentito solo aggiornare le regole per un profilo di "
 "sicurezza."
-
-msgid "Only remote_ip_prefix or remote_group_id may be provided."
-msgstr "È possibile fornire solo remote_ip_prefix o remote_group_id."
 
 msgid ""
 "Ordered list of network_types to allocate as tenant networks. The default "
@@ -1702,6 +1626,14 @@ msgid "Request Failed: internal server error while processing your request."
 msgstr ""
 "Richiesta non riuscita: errore server interno durante l'elaborazione della "
 "richiesta."
+
+#, python-format
+msgid ""
+"Requested subnet with cidr: %(cidr)s for network: %(network_id)s overlaps "
+"with another subnet"
+msgstr ""
+"Sottorete richiesta con cidr: %(cidr)s per la rete: %(network_id)s si "
+"sovrappone con un'altra sottorete"
 
 msgid ""
 "Reset flow table on start. Setting this to True will cause brief traffic "
@@ -2095,17 +2027,9 @@ msgid "URL to database"
 msgstr "URL per il database"
 
 #, python-format
-msgid "Unable to access %s"
-msgstr "Impossibile accedere a %s"
-
-#, python-format
 msgid "Unable to calculate %(address_type)s address because of:%(reason)s"
 msgstr ""
 "Impossibile calcolare l'indirizzo %(address_type)s a causa di: %(reason)s"
-
-#, python-format
-msgid "Unable to convert value in %s"
-msgstr "Impossibile convertire il valore in %s"
 
 msgid "Unable to create the SNAT Interface Port"
 msgstr "Impossibile creare la porta dell'interfaccia SNAT"
@@ -2117,12 +2041,6 @@ msgstr "Impossibile determinare l'indirizzo mac per %s"
 #, python-format
 msgid "Unable to find '%s' in request body"
 msgstr "Impossibile trovare '%s' nel corpo della richiesta"
-
-#, python-format
-msgid "Unable to find IP address %(ip_address)s on subnet %(subnet_id)s"
-msgstr ""
-"Impossibile trovare l'indirizzo IP %(ip_address)s nella sottorete "
-"%(subnet_id)s"
 
 #, python-format
 msgid "Unable to find resource name in %s"
@@ -2238,15 +2156,6 @@ msgstr ""
 "operativo. Ciò potrebbe non essere richiesto in base alla configurazione di "
 "sicurezza. Se il root helper non è richiesto, impostare su False per un "
 "miglioramento delle prestazioni."
-
-msgid ""
-"Use veths instead of patch ports to interconnect the integration bridge to "
-"physical networks. Support kernel without Open vSwitch patch port support so "
-"long as it is set to True."
-msgstr ""
-"Utilizzare veths invece delle porte patch per interconnettere il bridge di "
-"integrazione alle reti fisiche. Supporta kernel senza supporto per porta "
-"patch Open vSwitch se impostato su True."
 
 msgid ""
 "User (uid or name) running metadata proxy after its initialization (if "
