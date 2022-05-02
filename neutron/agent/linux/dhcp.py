@@ -182,12 +182,13 @@ class NetModel(DictModel):
 class DhcpBase(object, metaclass=abc.ABCMeta):
 
     def __init__(self, conf, network, process_monitor,
-                 version=None, plugin=None):
+                 version=None, plugin=None, segment=None):
         self.conf = conf
         self.network = network
         self.process_monitor = process_monitor
         self.device_manager = DeviceManager(self.conf, plugin)
         self.version = version
+        self.segment = segment
 
     @abc.abstractmethod
     def enable(self):
@@ -241,13 +242,42 @@ class DhcpBase(object, metaclass=abc.ABCMeta):
 class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
     PORTS = []
 
+    # Track running interfaces.
+    _interfaces = set()
+
     def __init__(self, conf, network, process_monitor, version=None,
-                 plugin=None):
+                 plugin=None, segment=None):
         super(DhcpLocalProcess, self).__init__(conf, network, process_monitor,
-                                               version, plugin)
+                                               version, plugin, segment)
         self.confs_dir = self.get_confs_dir(conf)
-        self.network_conf_dir = os.path.join(self.confs_dir, network.id)
+        if self.segment:
+            # In case of multi-segments support we want a dns process per vlan.
+            self.network_conf_dir = os.path.join(
+                # NOTE(sahid): Path of dhcp conf will be /<segid>/<netid>. We
+                # don't do the opposite so we can clean /<netid>* when calling
+                # disable of the legacy port that is not taking care of
+                # segmentation.
+                self.confs_dir, str(self.segment.segmentation_id), network.id)
+        else:
+            self.network_conf_dir = os.path.join(self.confs_dir, network.id)
+
         fileutils.ensure_tree(self.network_conf_dir, mode=0o755)
+
+    @classmethod
+    def _add_running_interface(cls, interface):
+        """Safe method that add running interface"""
+        cls._interfaces.add(interface)
+
+    @classmethod
+    def _del_running_interface(cls, interface):
+        """Safe method that remove given interface"""
+        if interface in cls._interfaces:
+            cls._interfaces.remove(interface)
+
+    @classmethod
+    def _has_running_interfaces(cls):
+        """Safe method that remove given interface"""
+        return bool(cls._interfaces)
 
     @staticmethod
     def get_confs_dir(conf):
@@ -256,6 +286,14 @@ class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
     def get_conf_file_name(self, kind):
         """Returns the file name for a given kind of config file."""
         return os.path.join(self.network_conf_dir, kind)
+
+    def get_process_uuid(self):
+        if self.segment:
+            # NOTE(sahid): Keep the order to match directory path. This is used
+            # by external_process.ProcessManager to check whether the process
+            # is active.
+            return "%s/%s" % (self.segment.segmentation_id, self.network.id)
+        return self.network.id
 
     def _remove_config_files(self):
         shutil.rmtree(self.network_conf_dir, ignore_errors=True)
@@ -287,9 +325,11 @@ class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
 
             if self._enable_dhcp():
                 fileutils.ensure_tree(self.network_conf_dir, mode=0o755)
-                interface_name = self.device_manager.setup(self.network)
+                interface_name = self.device_manager.setup(
+                    self.network, self.segment)
                 self.interface_name = interface_name
                 self.spawn_process()
+                self._add_running_interface(self.interface_name)
             return True
         except exceptions.ProcessExecutionError as error:
             LOG.debug("Spawning DHCP process for network %s failed; "
@@ -299,7 +339,7 @@ class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
     def _get_process_manager(self, cmd_callback=None):
         return external_process.ProcessManager(
             conf=self.conf,
-            uuid=self.network.id,
+            uuid=self.get_process_uuid(),
             namespace=self.network.namespace,
             service=DNSMASQ_SERVICE_NAME,
             default_cmd_callback=cmd_callback,
@@ -312,22 +352,27 @@ class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
         self._get_process_manager().disable()
         if block:
             common_utils.wait_until_true(lambda: not self.active)
+        self._del_running_interface(self.interface_name)
         if not retain_port:
             self._destroy_namespace_and_port()
             self._remove_config_files()
 
     def _destroy_namespace_and_port(self):
+        segmentation_id = (
+            self.segment.segmentation_id if self.segment else None)
         try:
-            self.device_manager.destroy(self.network, self.interface_name)
+            self.device_manager.destroy(
+                self.network, self.interface_name, segmentation_id)
         except RuntimeError:
             LOG.warning('Failed trying to delete interface: %s',
                         self.interface_name)
-
-        try:
-            ip_lib.delete_network_namespace(self.network.namespace)
-        except RuntimeError:
-            LOG.warning('Failed trying to delete namespace: %s',
-                        self.network.namespace)
+        if not self._has_running_interfaces():
+            # Delete nm only if we don't serve different segmentation id.
+            try:
+                ip_lib.delete_network_namespace(self.network.namespace)
+            except RuntimeError:
+                LOG.warning('Failed trying to delete namespace: %s',
+                            self.network.namespace)
 
     def _get_value_from_conf_file(self, kind, converter=None):
         """A helper function to read a value from one of the state files."""
@@ -540,7 +585,7 @@ class Dnsmasq(DhcpLocalProcess):
 
         pm.enable(reload_cfg=reload_with_HUP, ensure_active=True)
 
-        self.process_monitor.register(uuid=self.network.id,
+        self.process_monitor.register(uuid=self.get_process_uuid(),
                                       service_name=DNSMASQ_SERVICE_NAME,
                                       monitored_process=pm)
 
@@ -1428,12 +1473,14 @@ class DeviceManager(object):
         """Return interface(device) name for use by the DHCP process."""
         return self.driver.get_device_name(port)
 
-    def get_device_id(self, network):
+    def get_device_id(self, network, segment=None):
         """Return a unique DHCP device ID for this host on the network."""
         # There could be more than one dhcp server per network, so create
         # a device id that combines host and network ids
+        segmentation_id = segment.segmentation_id if segment else None
         return common_utils.get_dhcp_agent_device_id(network.id,
-                                                     self.conf.host)
+                                                     self.conf.host,
+                                                     segmentation_id)
 
     def _set_default_route_ip_version(self, network, device_name, ip_version):
         device = ip_lib.IPDevice(device_name, namespace=network.namespace)
@@ -1634,11 +1681,11 @@ class DeviceManager(object):
                   {'dhcp_port': dhcp_port,
                    'updated_dhcp_port': updated_dhcp_port})
 
-    def setup_dhcp_port(self, network):
+    def setup_dhcp_port(self, network, segment=None):
         """Create/update DHCP port for the host if needed and return port."""
 
         # The ID that the DHCP port will have (or already has).
-        device_id = self.get_device_id(network)
+        device_id = self.get_device_id(network, segment)
 
         # Get the set of DHCP-enabled local subnets on this network.
         dhcp_subnets = {subnet.id: subnet for subnet in network.subnets
@@ -1715,10 +1762,10 @@ class DeviceManager(object):
                          namespace=network.namespace,
                          mtu=network.get('mtu'))
 
-    def setup(self, network):
+    def setup(self, network, segment=None):
         """Create and initialize a device for network's DHCP on this host."""
         try:
-            port = self.setup_dhcp_port(network)
+            port = self.setup_dhcp_port(network, segment)
         except Exception:
             with excutils.save_and_reraise_exception():
                 # clear everything out so we don't leave dangling interfaces
@@ -1803,7 +1850,7 @@ class DeviceManager(object):
         """Unplug device settings for the network's DHCP on this host."""
         self.driver.unplug(device_name, namespace=network.namespace)
 
-    def destroy(self, network, device_name):
+    def destroy(self, network, device_name, segment=None):
         """Destroy the device used for the network's DHCP on this host."""
         if device_name:
             self.unplug(device_name, network)
@@ -1811,7 +1858,7 @@ class DeviceManager(object):
             LOG.debug('No interface exists for network %s', network.id)
 
         self.plugin.release_dhcp_port(network.id,
-                                      self.get_device_id(network))
+                                      self.get_device_id(network, segment))
 
     def fill_dhcp_udp_checksums(self, namespace):
         """Ensure DHCP reply packets always have correct UDP checksums."""

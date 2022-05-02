@@ -14,6 +14,7 @@
 #    under the License.
 
 import collections
+import copy
 import functools
 import os
 import threading
@@ -198,9 +199,44 @@ class DhcpAgent(manager.Manager):
             eventlet.greenthread.sleep(self.conf.bulk_reload_interval)
 
     def call_driver(self, action, network, **action_kwargs):
+        sid_segment = {}
+        sid_subnets = collections.defaultdict(list)
+        if 'segments' in network and network.segments:
+            # In case of multi-segments network, let's group network per
+            # segments.  We can then create DHPC process per segmentation
+            # id. All subnets on a same network that are sharing the same
+            # segmentation id will be grouped.
+            for segment in network.segments:
+                sid_segment[segment.id] = segment
+            for subnet in network.subnets:
+                sid_subnets[subnet.get('segment_id')].append(subnet)
+        if sid_subnets:
+            ret = []
+            for seg_id, subnets in sid_subnets.items():
+
+                # TODO(sahid): This whole part should be removed in future.
+                segment = sid_segment.get(seg_id)
+                if segment and segment.segment_index == 0:
+                    if action in ['enable', 'disable']:
+                        self._call_driver(
+                            'disable', network, segment=None, block=True)
+
+                net_seg = copy.deepcopy(network)
+                net_seg.subnets = subnets
+                ret.append(self._call_driver(
+                    action, net_seg, segment=sid_segment.get(seg_id),
+                    **action_kwargs))
+            return all(ret)
+        else:
+            # In case subnets are not attached to segments. default behavior.
+            return self._call_driver(
+                action, network, **action_kwargs)
+
+    def _call_driver(self, action, network, segment=None, **action_kwargs):
         """Invoke an action on a DHCP driver instance."""
-        LOG.debug('Calling driver for network: %(net)s action: %(action)s',
-                  {'net': network.id, 'action': action})
+        LOG.debug('Calling driver for network: %(net)s/seg=%(seg)s '
+                  'action: %(action)s',
+                  {'net': network.id, 'action': action, 'seg': segment})
         if self.conf.bulk_reload_interval and action == 'reload_allocations':
             LOG.debug("Call deferred to bulk load")
             self._network_bulk_allocations[network.id] = True
@@ -214,7 +250,8 @@ class DhcpAgent(manager.Manager):
                                           network,
                                           self._process_monitor,
                                           self.dhcp_version,
-                                          self.plugin_rpc)
+                                          self.plugin_rpc,
+                                          segment)
             rv = getattr(driver, action)(**action_kwargs)
             if action == 'get_metadata_bind_interface':
                 return rv

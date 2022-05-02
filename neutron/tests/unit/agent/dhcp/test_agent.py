@@ -336,20 +336,23 @@ class TestDhcpAgent(base.BaseTestCase):
                     spawn_n.assert_called_once_with(mocks['_process_loop'])
 
     def test_call_driver(self):
-        network = mock.Mock()
+        network = mock.MagicMock()
         network.id = '1'
+        network.segments = None
         dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
         self.assertTrue(dhcp.call_driver('foo', network))
         self.driver.assert_called_once_with(cfg.CONF,
                                             mock.ANY,
                                             mock.ANY,
                                             mock.ANY,
-                                            mock.ANY)
+                                            mock.ANY,
+                                            None)
 
     def _test_call_driver_failure(self, exc=None,
                                   trace_level='exception', expected_sync=True):
-        network = mock.Mock()
+        network = mock.MagicMock()
         network.id = '1'
+        network.segments = None
         self.driver.return_value.foo.side_effect = exc or Exception
         dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
         with mock.patch.object(dhcp,
@@ -359,7 +362,8 @@ class TestDhcpAgent(base.BaseTestCase):
                                                 mock.ANY,
                                                 mock.ANY,
                                                 mock.ANY,
-                                                mock.ANY)
+                                                mock.ANY,
+                                                None)
             self.assertEqual(expected_sync, schedule_resync.called)
 
     def test_call_driver_ip_address_generation_failure(self):
@@ -387,7 +391,8 @@ class TestDhcpAgent(base.BaseTestCase):
             expected_sync=False)
 
     def test_call_driver_get_metadata_bind_interface_returns(self):
-        network = mock.Mock()
+        network = mock.MagicMock()
+        network.segments = None
         self.driver().get_metadata_bind_interface.return_value = 'iface0'
         agent = dhcp_agent.DhcpAgent(cfg.CONF)
         self.assertEqual(
