@@ -26,9 +26,6 @@
         - openstack-tox-py310: # from openstack-python3-zed-jobs template
             timeout: 3600
             irrelevant-files:  *irrelevant-files
-        - openstack-tox-lower-constraints:  # from openstack-tox-lower-constraints template
-            timeout: 3600
-            irrelevant-files:  *irrelevant-files
         - openstack-tox-cover:  # from openstack-cover-jobs template
             timeout: 4800
             irrelevant-files:  *irrelevant-files
@@ -46,9 +43,6 @@
             timeout: 3600
             irrelevant-files:  *irrelevant-files
         - openstack-tox-py39: # from openstack-python3-zed-jobs template
-            timeout: 3600
-            irrelevant-files:  *irrelevant-files
-        - openstack-tox-lower-constraints:  # from openstack-tox-lower-constraints template
             timeout: 3600
             irrelevant-files:  *irrelevant-files
 

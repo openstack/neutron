@@ -1,3 +1,7 @@
+# Requirements lower bounds listed here are our best effort to keep them up to
+# date but we do not test them so no guarantee of having them all correct. If
+# you find any incorrect lower bounds, let us know or propose a fix.
+
 # The order of packages is significant, because pip processes them in the order
 # of appearance. Changing the order has an impact on the overall integration
 # process, which may cause wedges in the gate later.
