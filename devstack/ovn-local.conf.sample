@@ -167,6 +167,10 @@ ENABLE_CHASSIS_AS_GW=True
 # script, please don't modify or remove, keep it before any post-config items
 #EXTRA_CONFIG
 
+[[post-config|$NEUTRON_CONF]]
+[DEFAULT]
+dns_domain = elvira.org
+
 [[post-config|$NOVA_CONF]]
 [scheduler]
 discover_hosts_in_cells_interval = 2

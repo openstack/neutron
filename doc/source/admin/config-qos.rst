@@ -34,6 +34,8 @@ QoS supported rule types are now available as ``VALID_RULE_TYPES`` in `QoS rule 
 
 * bandwidth_limit: Bandwidth limitations on networks, ports or floating IPs.
 
+* packet_rate_limit: Packet rate limitations on certain types of traffic.
+
 * dscp_marking: Marking network traffic with a DSCP value.
 
 * minimum_bandwidth: Minimum bandwidth constraints on certain types of traffic.
@@ -56,6 +58,7 @@ traffic directions (from the VM point of view).
      Rule \\ back end      Open vSwitch                  SR-IOV                   Linux bridge         OVN
     ====================  =============================  =======================  ===================  ===================
      Bandwidth limit       Egress \\ Ingress             Egress (1)               Egress \\ Ingress    Egress \\ Ingress
+     Packet rate limit     Egress \\ Ingress             -                        -                    -
      Minimum bandwidth     Egress \\ Ingress (2)         Egress \\ Ingress (2)    -                    -
      Minimum packet rate   -                             -                        -                    -
      DSCP marking          Egress                        -                        Egress               Egress
@@ -632,6 +635,60 @@ be used.
     | shared            | False                                |
     +-------------------+--------------------------------------+
 
+Create qos policy with packet rate limit rules:
+
+.. code-block:: console
+
+    $ openstack network qos policy create pps-limiter
+    +-------------+--------------------------------------+
+    | Field       | Value                                |
+    +-------------+--------------------------------------+
+    | description |                                      |
+    | id          | 97f0ac37-7dd6-4579-8359-3bef0751a505 |
+    | is_default  | False                                |
+    | name        | pps-limiter                          |
+    | project_id  | 1d70739f831b421fb38a27adb368fc17     |
+    | rules       | []                                   |
+    | shared      | False                                |
+    | tags        | []                                   |
+    +-------------+--------------------------------------+
+
+    $ openstack network qos rule create --max-kpps 1000 --max-burst-kpps 100 --ingress --type packet-rate-limit pps-limiter
+    +----------------+--------------------------------------+
+    | Field          | Value                                |
+    +----------------+--------------------------------------+
+    | direction      | ingress                              |
+    | id             | 4a1cb166-9661-48d7-bddb-00b7d75846cd |
+    | max_burst_kpps | 100                                  |
+    | max_kpps       | 1000                                 |
+    | name           | None                                 |
+    | project_id     |                                      |
+    +----------------+--------------------------------------+
+
+    $ openstack network qos rule create --max-kpps 1000 --max-burst-kpps 100 --egress --type packet-rate-limit pps-limiter
+    +----------------+--------------------------------------+
+    | Field          | Value                                |
+    +----------------+--------------------------------------+
+    | direction      | egress                               |
+    | id             | 6abd67f7-0bde-4ad3-ac54-b0a6103b0449 |
+    | max_burst_kpps | 100                                  |
+    | max_kpps       | 1000                                 |
+    | name           | None                                 |
+    | project_id     |                                      |
+    +----------------+--------------------------------------+
+
+.. note:: The unit for the rate and burst is kilo (1000) packets per second.
+
+Now apply the packet rate limit QoS policy to a Port:
+
+.. code-block:: console
+
+    $ openstack port set --qos-policy pps-limiter 251948bd-08e4-4569-a47f-ecbc1fd4af4d
+
+.. note:: Packet rate limit is only supported by the ml2 ovs driver. And it leverages
+          the meter actions of the ovs kernel datapath or the userspace ovs dpdk datapath.
+          The meter action is only supported when the datapath is in user mode
+          or ovs kernel datapath with kernerl version >= 4.15.
 
 Administrator enforcement
 -------------------------
