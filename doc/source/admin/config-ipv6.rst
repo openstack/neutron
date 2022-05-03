@@ -241,6 +241,22 @@ addressing and network information is provided to project instances:
 For the above two attributes to be effective, ``enable_dhcp`` of the
 subnet object must be set to True.
 
+.. warning::
+
+   When updating a network which already has bound ports with a subnet
+   in which Autonomous Address Configuration is enabled (Stateless Address
+   Auto Configuration, DHCPv6-stateless) the ports  will be updated with
+   the new address. This will not happen if the subnet is DHCPv6-stateful.
+   The same is true for the case when the ports are bound with an IPv6
+   subnet (the network has no other IPv4 subnet), and an IPv4 subnet
+   is added later, the ports will not be updated.
+
+   For more details see the bug
+   https://bugs.launchpad.net/neutron/+bug/1719806.
+
+   A workaround is to manually update the port with fixed_ips and add the
+   subnet in the request.
+
 Using SLAAC for addressing
 --------------------------
 
