@@ -1,0 +1,14 @@
+---
+features:
+  - |
+    Support for baremetal provisioning using OVN's built-in DHCP server
+    has been added for IPv4.
+upgrade:
+  - |
+    A new configuration option called
+    ``[ovn]/disable_ovn_dhcp_for_baremetal_ports`` has been added to
+    ML2/OVN for IPv4. Since PXE booting nodes can be very sensitive
+    depending on the hardware and some operators may prefer to use a
+    fully-fledged DHCP server instead of OVN's DHCP server this option
+    allows for disabling OVN's built-in DHCP server for baremetal ports
+    (vnic type "baremetal") when set to True. It defaults to False.

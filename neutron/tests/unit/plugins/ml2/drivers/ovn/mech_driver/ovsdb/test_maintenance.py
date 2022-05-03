@@ -616,3 +616,73 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         expected_calls = [mock.call('Logical_Router', lr0.uuid,
                                     ('external_ids', ext_ids))]
         nb_idl.db_set.assert_has_calls(expected_calls)
+
+    def _test_check_baremetal_ports_dhcp_options(self, dhcp_disabled=False):
+        cfg.CONF.set_override('disable_ovn_dhcp_for_baremetal_ports',
+                              dhcp_disabled, group='ovn')
+        self.fake_ovn_client.is_external_ports_supported.return_value = True
+        nb_idl = self.fake_ovn_client._nb_idl
+        self.fake_ovn_client._get_port_options.return_value = 'fake-port-opts'
+
+        port0 = {'id': 'port0'}
+        port1 = {'id': 'port1'}
+        port2 = {'id': 'port2'}
+        port3 = {'id': 'port3'}
+
+        self.fake_ovn_client._plugin.get_ports.return_value = [
+            port0, port1, port2, port3]
+
+        lsp0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'type': constants.LSP_TYPE_EXTERNAL,
+                   'name': 'lsp0',
+                   'dhcpv4_options': ['fake-uuid'],
+                   'dhcpv6_options': []})
+        lsp1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'type': constants.LSP_TYPE_EXTERNAL,
+                   'name': 'lsp1',
+                   'dhcpv4_options': [],
+                   'dhcpv6_options': []})
+        lsp2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'type': constants.LSP_TYPE_EXTERNAL,
+                   'name': 'lsp2',
+                   'dhcpv4_options': [],
+                   'dhcpv6_options': ['fake-uuid']})
+        lsp3 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'type': constants.LSP_TYPE_EXTERNAL,
+                   'name': 'lsp3',
+                   'dhcpv4_options': ['fake-uuid'],
+                   'dhcpv6_options': ['fake-uuid']})
+
+        nb_idl.lsp_get.return_value.execute.side_effect = [
+            lsp0, lsp1, lsp2, lsp3]
+
+        self.fake_ovn_client.update_port_dhcp_options.side_effect = [
+            (lsp0.dhcpv4_options, lsp0.dhcpv6_options),
+            (lsp1.dhcpv4_options, lsp1.dhcpv6_options),
+            (lsp2.dhcpv4_options, lsp2.dhcpv6_options),
+            (lsp3.dhcpv4_options, lsp3.dhcpv6_options)]
+
+        self.assertRaises(periodics.NeverAgain,
+                          self.periodic.check_baremetal_ports_dhcp_options)
+
+    def test_check_baremetal_ports_dhcp_options(self):
+        self._test_check_baremetal_ports_dhcp_options()
+        self.fake_ovn_client._nb_idl.set_lswitch_port.assert_called_once_with(
+            lport_name='port1', dhcpv4_options=['fake-uuid'],
+            dhcpv6_options=[], if_exists=False)
+
+    def test_check_baremetal_ports_dhcp_options_dhcp_disabled(self):
+        self._test_check_baremetal_ports_dhcp_options(dhcp_disabled=True)
+        expected_calls = [
+            mock.call(lport_name='port0',
+                      dhcpv4_options=['fake-uuid'],
+                      dhcpv6_options=[], if_exists=False),
+            mock.call(lport_name='port2',
+                      dhcpv4_options=[],
+                      dhcpv6_options=[], if_exists=False),
+            mock.call(lport_name='port3',
+                      dhcpv4_options=[],
+                      dhcpv6_options=['fake-uuid'], if_exists=False)]
+
+        self.fake_ovn_client._nb_idl.set_lswitch_port.assert_has_calls(
+            expected_calls)
