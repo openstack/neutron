@@ -846,12 +846,12 @@ class AgentWaitEvent(event.WaitEvent):
 
     ONETIME = False
 
-    def __init__(self, driver, chassis_names):
+    def __init__(self, driver, chassis_names, events=None, timeout=None):
         table = driver.agent_chassis_table
-        events = (self.ROW_CREATE,)
+        events = events or (self.ROW_CREATE,)
         self.chassis_names = chassis_names
-        super().__init__(events, table, None)
-        self.event_name = 'AgentWaitEvent'
+        super().__init__(events, table, None, timeout=timeout)
+        self.event_name = "AgentWaitEvent"
 
     def match_fn(self, event, row, old):
         return row.name in self.chassis_names
@@ -905,6 +905,21 @@ class TestAgentApi(base.TestOVNFunctionalBase):
             self.assertTrue(self.plugin.get_agent(self.context, agent_id))
 
     def test_agent_list(self):
+        agent_ids = [a['id'] for a in self.plugin.get_agents(
+            self.context, filters={'host': self.host})]
+        self.assertCountEqual(list(self.agent_types.values()), agent_ids)
+
+        # "ovn-controller" ends without deleting "Chassis" and
+        # "Chassis_Private" registers. If "Chassis" register is deleted,
+        # then Chassis_Private.chassis = []; both metadata and controller
+        # agents will still be present in the agent list.
+        agent_event = AgentWaitEvent(self.mech_driver, [self.chassis],
+                                     events=(event.RowEvent.ROW_UPDATE,),
+                                     timeout=1)
+        self.sb_api.idl.notify_handler.watch_event(agent_event)
+        self.sb_api.chassis_del(self.chassis, if_exists=True).execute(
+            check_error=False)
+        agent_event.wait()
         agent_ids = [a['id'] for a in self.plugin.get_agents(
             self.context, filters={'host': self.host})]
         self.assertCountEqual(list(self.agent_types.values()), agent_ids)

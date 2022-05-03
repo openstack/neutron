@@ -20,6 +20,12 @@ from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
 
 
+class DeletedChassis(object):
+    external_ids = {}
+    hostname = '("Chassis" register deleted)'
+    name = '("Chassis" register deleted)'
+
+
 class NeutronAgent(abc.ABC):
     types = {}
 
@@ -35,9 +41,12 @@ class NeutronAgent(abc.ABC):
     def get_chassis(chassis_private):
         try:
             return chassis_private.chassis[0]
-        except (AttributeError, IndexError):
+        except AttributeError:
             # No Chassis_Private support, just use Chassis
             return chassis_private
+        except IndexError:
+            # Chassis register has been deleted but not Chassis_Private.
+            return DeletedChassis
 
     @property
     def updated_at(self):
