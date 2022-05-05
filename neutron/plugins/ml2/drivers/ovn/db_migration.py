@@ -30,17 +30,17 @@ from neutron.objects import trunk as trunk_obj
 LOG = logging.getLogger(__name__)
 
 VIF_DETAILS_TO_REMOVE = (
-    pb_api.OVS_HYBRID_PLUG,
-    pb_api.VIF_DETAILS_BRIDGE_NAME)
+    pb_api.VIF_DETAILS_BRIDGE_NAME,
+)
 
 
 def migrate_neutron_database_to_ovn(plugin):
     """Change DB content from OVS to OVN mech driver.
 
      - Changes vxlan network type to Geneve and updates Geneve allocations.
-     - Removes unnecessary settings from port binding vif details, such as
-       connectivity, bridge_name and ovs_hybrid_plug, as they are not used by
-       OVN.
+     - Removes bridge name from port binding vif details to support operations
+       on instances with a trunk bridge.
+     - Updates the port profile for trunk ports.
     """
     ctx = n_context.get_admin_context()
     with db_api.CONTEXT_WRITER.using(ctx) as session:
