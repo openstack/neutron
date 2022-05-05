@@ -352,21 +352,13 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
         self.assertIn(constants.NO_ACTIVE_BINDING, entry)
 
     def test_get_device_details_migrating_to_host(self):
-        for live_migration_events, migrating_to in ((True, 'host2'),
-                                                    (False, 'irrelevant')):
-            cfg.CONF.set_override('live_migration_events',
-                                  live_migration_events, group='nova')
-            profile = jsonutils.dumps({'migrating_to': migrating_to})
-            self._port.bindings[0].profile = profile
-            self._api.remote_resource_cache.get_resource_by_id.side_effect = [
-                self._port, self._network]
-            entry = self._api.get_device_details(mock.ANY, self._port_id,
-                                                 mock.ANY, 'host2')
-            if live_migration_events:
-                self.assertEqual('host2', entry['migrating_to'])
-            else:
-                self.assertTrue(entry[constants.NO_ACTIVE_BINDING])
-                self.assertNotIn('migrating_to', entry)
+        profile = jsonutils.dumps({'migrating_to': 'host2'})
+        self._port.bindings[0].profile = profile
+        self._api.remote_resource_cache.get_resource_by_id.side_effect = [
+            self._port, self._network]
+        entry = self._api.get_device_details(mock.ANY, self._port_id,
+                                             mock.ANY, 'host2')
+        self.assertEqual('host2', entry['migrating_to'])
 
     @mock.patch('neutron.agent.resource_cache.RemoteResourceCache')
     def test_initialization_with_default_resources(self, rcache_class):
