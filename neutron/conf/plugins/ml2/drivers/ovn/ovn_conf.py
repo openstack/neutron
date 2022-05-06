@@ -209,8 +209,10 @@ ovn_opts = [
                        'br-int | grep "Check pkt length action".')),
 ]
 
-cfg.CONF.register_opts(ovn_opts, group='ovn')
-ovs_conf.register_ovs_agent_opts()
+
+def register_opts():
+    cfg.CONF.register_opts(ovn_opts, group='ovn')
+    ovs_conf.register_ovs_agent_opts()
 
 
 def list_opts():

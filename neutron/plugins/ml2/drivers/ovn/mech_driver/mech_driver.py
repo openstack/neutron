@@ -118,6 +118,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         # NOTE(lucasagomes): _clean_hash_ring() must be called before
         # self.subscribe() to avoid processes racing when adding or
         # deleting nodes from the Hash Ring during service initialization
+        ovn_conf.register_opts()
         self._clean_hash_ring()
         self._post_fork_event = threading.Event()
         if cfg.CONF.SECURITYGROUP.firewall_driver:
