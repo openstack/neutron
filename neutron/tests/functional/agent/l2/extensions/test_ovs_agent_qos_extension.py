@@ -104,7 +104,7 @@ class OVSAgentQoSExtensionTestFramework(base.OVSAgentTestFramework):
         port_dict = super(OVSAgentQoSExtensionTestFramework,
                           self)._create_test_port_dict()
         port_dict['qos_policy_id'] = policy_id
-        port_dict['network_qos_policy_id'] = None
+        port_dict['qos_network_policy_id'] = None
         return port_dict
 
     def _get_device_details(self, port, network):

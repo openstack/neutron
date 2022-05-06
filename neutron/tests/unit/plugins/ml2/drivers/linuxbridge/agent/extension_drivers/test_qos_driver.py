@@ -62,7 +62,7 @@ class QosLinuxbridgeAgentDriverTestCase(base.BaseTestCase):
 
     def _create_fake_port(self, policy_id):
         return {'qos_policy_id': policy_id,
-                'network_qos_policy_id': None,
+                'qos_network_policy_id': None,
                 'device': 'fake_tap'}
 
     def _dscp_mark_chain_name(self, device):

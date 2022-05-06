@@ -245,9 +245,9 @@ class QosAgentExtension(l2_extension.L2AgentExtension):
         Update events are handled in _handle_notification.
         """
         port_id = port['port_id']
-        port_qos_policy_id = port.get('qos_policy_id')
-        network_qos_policy_id = port.get('network_qos_policy_id')
-        qos_policy_id = port_qos_policy_id or network_qos_policy_id
+        port_qos_policy_id = port.get(qos_consts.QOS_POLICY_ID)
+        qos_network_policy_id = port.get(qos_consts.QOS_NETWORK_POLICY_ID)
+        qos_policy_id = port_qos_policy_id or qos_network_policy_id
         if qos_policy_id is None:
             self._process_reset_port(port)
             return
