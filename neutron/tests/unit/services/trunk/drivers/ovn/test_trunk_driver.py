@@ -37,7 +37,7 @@ class TestTrunkHandler(base.BaseTestCase):
         self.plugin_driver = mock.Mock()
         self.plugin_driver._plugin = mock.Mock()
         self.plugin_driver._plugin.update_port = mock.Mock()
-        self.plugin_driver._nb_ovn = fake_resources.FakeOvsdbNbOvnIdl()
+        self.plugin_driver.nb_ovn = fake_resources.FakeOvsdbNbOvnIdl()
         self.handler = trunk_driver.OVNTrunkHandler(self.plugin_driver)
         self.trunk_1 = mock.Mock()
         self.trunk_1.port_id = "trunk-1"
@@ -107,7 +107,7 @@ class TestTrunkHandler(base.BaseTestCase):
     def test_create_trunk(self):
         self.trunk_1.sub_ports = []
         self.handler.trunk_created(self.trunk_1)
-        self.plugin_driver._nb_ovn.set_lswitch_port.assert_not_called()
+        self.plugin_driver.nb_ovn.set_lswitch_port.assert_not_called()
         self.mock_update_pb.assert_not_called()
 
         self.trunk_1.sub_ports = [self.sub_port_1, self.sub_port_2]
@@ -132,13 +132,13 @@ class TestTrunkHandler(base.BaseTestCase):
                            tag=s_port.segmentation_id)
                  for trunk, s_port in [(self.trunk_1, self.sub_port_1),
                                        (self.trunk_1, self.sub_port_2)]]
-        self._assert_calls(self.plugin_driver._nb_ovn.set_lswitch_port, calls)
+        self._assert_calls(self.plugin_driver.nb_ovn.set_lswitch_port, calls)
         self.mock_clear_levels.assert_not_called()
 
     def test_create_trunk_port_not_found(self):
         self.trunk_1.sub_ports = [self.sub_port_4]
         self.handler.trunk_created(self.trunk_1)
-        self.plugin_driver._nb_ovn.set_lswitch_port.assert_not_called()
+        self.plugin_driver.nb_ovn.set_lswitch_port.assert_not_called()
         self.mock_update_pb.assert_not_called()
 
     def test_create_trunk_port_db_exception(self):
@@ -151,12 +151,12 @@ class TestTrunkHandler(base.BaseTestCase):
                        'vif_type': portbindings.VIF_TYPE_OVS},
             host='foo.com', port_id=self.sub_port_1.port_id)
         self.mock_port_update.assert_not_called()
-        self.plugin_driver._nb_ovn.set_lswitch_port.assert_not_called()
+        self.plugin_driver.nb_ovn.set_lswitch_port.assert_not_called()
 
     def test_delete_trunk(self):
         self.trunk_1.sub_ports = []
         self.handler.trunk_deleted(self.trunk_1)
-        self.plugin_driver._nb_ovn.set_lswitch_port.assert_not_called()
+        self.plugin_driver.nb_ovn.set_lswitch_port.assert_not_called()
         self.mock_update_pb.assert_not_called()
         self.mock_clear_levels.assert_not_called()
 
@@ -199,7 +199,7 @@ class TestTrunkHandler(base.BaseTestCase):
                            up=False)
                  for trunk, s_port in [(self.trunk_1, self.sub_port_1),
                                        (self.trunk_1, self.sub_port_2)]]
-        self._assert_calls(self.plugin_driver._nb_ovn.set_lswitch_port, calls)
+        self._assert_calls(self.plugin_driver.nb_ovn.set_lswitch_port, calls)
 
     def test_delete_trunk_key_not_found(self):
         self.sub_port_1_obj.bindings[0].profile.update({
@@ -227,12 +227,12 @@ class TestTrunkHandler(base.BaseTestCase):
                            tag=[],
                            up=False)
                  for trunk, s_port in [(self.trunk_1, self.sub_port_1)]]
-        self._assert_calls(self.plugin_driver._nb_ovn.set_lswitch_port, calls)
+        self._assert_calls(self.plugin_driver.nb_ovn.set_lswitch_port, calls)
 
     def test_delete_trunk_port_not_found(self):
         self.trunk_1.sub_ports = [self.sub_port_4]
         self.handler.trunk_deleted(self.trunk_1)
-        self.plugin_driver._nb_ovn.set_lswitch_port.assert_not_called()
+        self.plugin_driver.nb_ovn.set_lswitch_port.assert_not_called()
         self.mock_update_pb.assert_not_called()
         self.mock_clear_levels.assert_not_called()
 
@@ -245,7 +245,7 @@ class TestTrunkHandler(base.BaseTestCase):
                        'vif_type': portbindings.VIF_TYPE_UNBOUND},
             host='foo.com', port_id=self.sub_port_1.port_id)
         self.mock_port_update.assert_not_called()
-        self.plugin_driver._nb_ovn.set_lswitch_port.assert_not_called()
+        self.plugin_driver.nb_ovn.set_lswitch_port.assert_not_called()
         self.mock_clear_levels.assert_not_called()
 
     def test_subports_added(self):

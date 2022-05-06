@@ -74,7 +74,19 @@ OvnRevNumberRow = collections.namedtuple(
     'OvnRevNumberRow', ['created_at'])
 
 
-class TestOVNMechanismDriverBase(test_plugin.Ml2PluginV2TestCase):
+class MechDriverSetupBase:
+    def setUp(self):
+        super().setUp()
+        mm = directory.get_plugin().mechanism_manager
+        self.mech_driver = mm.mech_drivers['ovn'].obj
+        self.mech_driver.nb_ovn = fakes.FakeOvsdbNbOvnIdl()
+        self.mech_driver.sb_ovn = fakes.FakeOvsdbSbOvnIdl()
+        self.mech_driver._post_fork_event.set()
+        self.mech_driver._ovn_client._qos_driver = mock.Mock()
+
+
+class TestOVNMechanismDriverBase(MechDriverSetupBase,
+                                 test_plugin.Ml2PluginV2TestCase):
 
     _mechanism_drivers = ['logger', 'ovn']
     _extension_drivers = ['port_security', 'dns']
@@ -97,18 +109,13 @@ class TestOVNMechanismDriverBase(test_plugin.Ml2PluginV2TestCase):
         cfg.CONF.set_override('ovsdb_connection_timeout', 30, group='ovn')
         mock.patch.object(impl_idl_ovn.Backend, 'schema_helper').start()
         super().setUp()
-        mm = directory.get_plugin().mechanism_manager
-        self.mech_driver = mm.mech_drivers['ovn'].obj
         neutron_agent.AgentCache(self.mech_driver)
         # Because AgentCache is a singleton and we get a new mech_driver each
         # setUp(), override the AgentCache driver.
         neutron_agent.AgentCache().driver = self.mech_driver
 
-        self.mech_driver._nb_ovn = fakes.FakeOvsdbNbOvnIdl()
-        self.mech_driver._sb_ovn = fakes.FakeOvsdbSbOvnIdl()
-        self.mech_driver._ovn_client._qos_driver = mock.Mock()
-        self.nb_ovn = self.mech_driver._nb_ovn
-        self.sb_ovn = self.mech_driver._sb_ovn
+        self.nb_ovn = self.mech_driver.nb_ovn
+        self.sb_ovn = self.mech_driver.sb_ovn
 
         self.fake_subnet = fakes.FakeSubnet.create_one_subnet().info()
 
@@ -199,15 +206,15 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         self.assertEqual(2, m_ovsdb_api.get_port_group.call_count)
 
     def test__get_max_tunid_no_key_set(self):
-        self.mech_driver._nb_ovn.nb_global.options.get.return_value = None
+        self.mech_driver.nb_ovn.nb_global.options.get.return_value = None
         self.assertIsNone(self.mech_driver._get_max_tunid())
 
     def test__get_max_tunid_wrong_key_value(self):
-        self.mech_driver._nb_ovn.nb_global.options.get.return_value = '11wrong'
+        self.mech_driver.nb_ovn.nb_global.options.get.return_value = '11wrong'
         self.assertIsNone(self.mech_driver._get_max_tunid())
 
     def test__get_max_tunid_key_set(self):
-        self.mech_driver._nb_ovn.nb_global.options.get.return_value = '100'
+        self.mech_driver.nb_ovn.nb_global.options.get.return_value = '100'
         self.assertEqual(100, self.mech_driver._get_max_tunid())
 
     def _test__validate_network_segments_id_succeed(self, val):
@@ -216,7 +223,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             "segmentation_id": val,
             "physical_network": "physnet1",
         }
-        self.mech_driver._nb_ovn.nb_global.options.get.return_value = '200'
+        self.mech_driver.nb_ovn.nb_global.options.get.return_value = '200'
         self.mech_driver._validate_network_segments([segment])
 
     def test__validate_network_segments_id_below_max_limit(self):
@@ -1326,7 +1333,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             self.assertEqual(call_get_dhcp_opts, get_opts.called)
             self.assertEqual(
                 call_add_dhcp_opts,
-                self.mech_driver._nb_ovn.add_dhcp_options.called)
+                self.mech_driver.nb_ovn.add_dhcp_options.called)
 
     def test_add_subnet_dhcp_options_in_ovn(self):
         subnet = {'ip_version': const.IP_VERSION_4}
@@ -1364,7 +1371,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                   'gateway_ip': '10.0.0.1', 'enable_dhcp': True,
                   'dns_nameservers': [], 'host_routes': []}
         network = {'id': 'network-id', 'mtu': 1000}
-        txn = self.mech_driver._nb_ovn.transaction().__enter__.return_value
+        txn = self.mech_driver.nb_ovn.transaction().__enter__.return_value
         dhcp_option_command = mock.Mock()
         txn.add.return_value = dhcp_option_command
 
@@ -1407,8 +1414,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             'subnet-id', port_id=port_dhcp_options['external_ids']['port_id'],
             **port_dhcp_options) for port_dhcp_options in ports_dhcp_options])
         self.assertEqual(len(add_dhcp_calls),
-                         self.mech_driver._nb_ovn.add_dhcp_options.call_count)
-        self.mech_driver._nb_ovn.add_dhcp_options.assert_has_calls(
+                         self.mech_driver.nb_ovn.add_dhcp_options.call_count)
+        self.mech_driver.nb_ovn.add_dhcp_options.assert_has_calls(
             add_dhcp_calls, any_order=True)
 
         # Check setting lport rows
@@ -1419,8 +1426,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                          mock.call(lport_name='port-id-3',
                                    dhcpv4_options=dhcp_option_command)]
         self.assertEqual(len(set_lsp_calls),
-                         self.mech_driver._nb_ovn.set_lswitch_port.call_count)
-        self.mech_driver._nb_ovn.set_lswitch_port.assert_has_calls(
+                         self.mech_driver.nb_ovn.set_lswitch_port.call_count)
+        self.mech_driver.nb_ovn.set_lswitch_port.assert_has_calls(
             set_lsp_calls, any_order=True)
 
     @mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2, 'get_ports')
@@ -1443,7 +1450,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                   'ipv6_address_mode': 'dhcpv6-stateless',
                   'dns_nameservers': [], 'host_routes': []}
         network = {'id': 'network-id', 'mtu': 1000}
-        txn = self.mech_driver._nb_ovn.transaction().__enter__.return_value
+        txn = self.mech_driver.nb_ovn.transaction().__enter__.return_value
         dhcp_option_command = mock.Mock()
         txn.add.return_value = dhcp_option_command
 
@@ -1475,8 +1482,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             'subnet-id', port_id=port_dhcp_options['external_ids']['port_id'],
             **port_dhcp_options) for port_dhcp_options in ports_dhcp_options])
         self.assertEqual(len(add_dhcp_calls),
-                         self.mech_driver._nb_ovn.add_dhcp_options.call_count)
-        self.mech_driver._nb_ovn.add_dhcp_options.assert_has_calls(
+                         self.mech_driver.nb_ovn.add_dhcp_options.call_count)
+        self.mech_driver.nb_ovn.add_dhcp_options.assert_has_calls(
             add_dhcp_calls, any_order=True)
 
         # Check setting lport rows
@@ -1487,8 +1494,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                          mock.call(lport_name='port-id-3',
                                    dhcpv6_options=dhcp_option_command)]
         self.assertEqual(len(set_lsp_calls),
-                         self.mech_driver._nb_ovn.set_lswitch_port.call_count)
-        self.mech_driver._nb_ovn.set_lswitch_port.assert_has_calls(
+                         self.mech_driver.nb_ovn.set_lswitch_port.call_count)
+        self.mech_driver.nb_ovn.set_lswitch_port.assert_has_calls(
             set_lsp_calls, any_order=True)
 
     def test_enable_subnet_dhcp_options_in_ovn_ipv6_slaac(self):
@@ -1498,13 +1505,13 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
 
         self.mech_driver._ovn_client._enable_subnet_dhcp_options(
             subnet, network, mock.Mock())
-        self.mech_driver._nb_ovn.add_dhcp_options.assert_not_called()
-        self.mech_driver._nb_ovn.set_lswitch_port.assert_not_called()
+        self.mech_driver.nb_ovn.add_dhcp_options.assert_not_called()
+        self.mech_driver.nb_ovn.set_lswitch_port.assert_not_called()
 
     def _test_remove_subnet_dhcp_options_in_ovn(self, ip_version):
         opts = {'subnet': {'uuid': 'subnet-uuid'},
                 'ports': [{'uuid': 'port1-uuid'}]}
-        self.mech_driver._nb_ovn.get_subnet_dhcp_options.return_value = opts
+        self.mech_driver.nb_ovn.get_subnet_dhcp_options.return_value = opts
         self.mech_driver._ovn_client._remove_subnet_dhcp_options(
             'subnet-id', mock.Mock())
 
@@ -1512,8 +1519,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         delete_dhcp_calls = [mock.call('subnet-uuid'), mock.call('port1-uuid')]
         self.assertEqual(
             len(delete_dhcp_calls),
-            self.mech_driver._nb_ovn.delete_dhcp_options.call_count)
-        self.mech_driver._nb_ovn.delete_dhcp_options.assert_has_calls(
+            self.mech_driver.nb_ovn.delete_dhcp_options.call_count)
+        self.mech_driver.nb_ovn.delete_dhcp_options.assert_has_calls(
             delete_dhcp_calls, any_order=True)
 
     def test_remove_subnet_dhcp_options_in_ovn_ipv4(self):
@@ -1537,7 +1544,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 'dns_server': '{8.8.8.8}',
                 'lease_time': str(12 * 60 * 60),
                 'mtu': str(1000)}}, 'ports': []}
-        self.mech_driver._nb_ovn.get_subnet_dhcp_options.return_value =\
+        self.mech_driver.nb_ovn.get_subnet_dhcp_options.return_value =\
             orignal_options
 
         self.mech_driver._ovn_client._update_subnet_dhcp_options(
@@ -1552,7 +1559,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 'server_mac': '01:02:03:04:05:06',
                 'lease_time': str(12 * 60 * 60),
                 'mtu': str(1000)}}
-        self.mech_driver._nb_ovn.add_dhcp_options.assert_called_once_with(
+        self.mech_driver.nb_ovn.add_dhcp_options.assert_called_once_with(
             subnet['id'], **new_options)
 
     def test_update_subnet_dhcp_options_in_ovn_ipv4_not_change(self):
@@ -1570,12 +1577,12 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 'dns_server': '{8.8.8.8}',
                 'lease_time': str(12 * 60 * 60),
                 'mtu': str(1000)}}, 'ports': []}
-        self.mech_driver._nb_ovn.get_subnet_dhcp_options.return_value =\
+        self.mech_driver.nb_ovn.get_subnet_dhcp_options.return_value =\
             orignal_options
 
         self.mech_driver._ovn_client._update_subnet_dhcp_options(
             subnet, network, mock.Mock())
-        self.mech_driver._nb_ovn.add_dhcp_options.assert_not_called()
+        self.mech_driver.nb_ovn.add_dhcp_options.assert_not_called()
 
     def test_update_subnet_dhcp_options_in_ovn_ipv6(self):
         subnet = {'id': 'subnet-id', 'ip_version': 6, 'cidr': '10::0/64',
@@ -1589,7 +1596,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             'cidr': subnet['cidr'], 'options': {
                 'dhcpv6_stateless': 'true',
                 'server_id': '01:02:03:04:05:06'}}, 'ports': []}
-        self.mech_driver._nb_ovn.get_subnet_dhcp_options.return_value =\
+        self.mech_driver.nb_ovn.get_subnet_dhcp_options.return_value =\
             orignal_options
         self.mech_driver._ovn_client._update_subnet_dhcp_options(
             subnet, network, mock.Mock())
@@ -1601,7 +1608,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 'dhcpv6_stateless': 'true',
                 'dns_server': '{10::3}',
                 'server_id': '01:02:03:04:05:06'}}
-        self.mech_driver._nb_ovn.add_dhcp_options.assert_called_once_with(
+        self.mech_driver.nb_ovn.add_dhcp_options.assert_called_once_with(
             subnet['id'], **new_options)
 
     def test_update_subnet_dhcp_options_in_ovn_ipv6_not_change(self):
@@ -1615,12 +1622,12 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             'cidr': subnet['cidr'], 'options': {
                 'dhcpv6_stateless': 'true',
                 'server_id': '01:02:03:04:05:06'}}, 'ports': []}
-        self.mech_driver._nb_ovn.get_subnet_dhcp_options.return_value =\
+        self.mech_driver.nb_ovn.get_subnet_dhcp_options.return_value =\
             orignal_options
 
         self.mech_driver._ovn_client._update_subnet_dhcp_options(
             subnet, network, mock.Mock())
-        self.mech_driver._nb_ovn.add_dhcp_options.assert_not_called()
+        self.mech_driver.nb_ovn.add_dhcp_options.assert_not_called()
 
     def test_update_subnet_dhcp_options_in_ovn_ipv6_slaac(self):
         subnet = {'id': 'subnet-id', 'ip_version': 6, 'enable_dhcp': True,
@@ -1628,8 +1635,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         network = {'id': 'network-id'}
         self.mech_driver._ovn_client._update_subnet_dhcp_options(
             subnet, network, mock.Mock())
-        self.mech_driver._nb_ovn.get_subnet_dhcp_options.assert_not_called()
-        self.mech_driver._nb_ovn.add_dhcp_options.assert_not_called()
+        self.mech_driver.nb_ovn.get_subnet_dhcp_options.assert_not_called()
+        self.mech_driver.nb_ovn.add_dhcp_options.assert_not_called()
 
     def test_update_subnet_postcommit_ovn_do_nothing(self):
         context = fakes.FakeSubnetContext(
@@ -1674,7 +1681,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             umd.assert_called_once_with(mock.ANY, 'id', subnet=subnet)
 
     def test_update_subnet_postcommit_disable_dhcp(self):
-        self.mech_driver._nb_ovn.get_subnet_dhcp_options.return_value = {
+        self.mech_driver.nb_ovn.get_subnet_dhcp_options.return_value = {
             'subnet': mock.sentinel.subnet, 'ports': []}
         subnet = {'enable_dhcp': False, 'id': 'subnet_id', 'ip_version': 4,
                   'network_id': 'id'}
@@ -1690,7 +1697,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             umd.assert_called_once_with(mock.ANY, 'id', subnet=subnet)
 
     def test_update_subnet_postcommit_update_dhcp(self):
-        self.mech_driver._nb_ovn.get_subnet_dhcp_options.return_value = {
+        self.mech_driver.nb_ovn.get_subnet_dhcp_options.return_value = {
             'subnet': mock.sentinel.subnet, 'ports': []}
         subnet = {'enable_dhcp': True, 'id': 'subnet_id', 'ip_version': 4,
                   'network_id': 'id'}
@@ -2019,7 +2026,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         chassis_private = self._add_chassis(5)
         for agent_type in (ovn_const.OVN_CONTROLLER_AGENT,
                            ovn_const.OVN_METADATA_AGENT):
-            self.mech_driver._nb_ovn.nb_global.nb_cfg = 5
+            self.mech_driver.nb_ovn.nb_global.nb_cfg = 5
             agent = self._add_chassis_agent(5, agent_type, chassis_private)
             self.assertTrue(agent.alive, "Agent of type %s alive=%s" %
                                          (agent.agent_type, agent.alive))
@@ -2031,7 +2038,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         chassis_private = self._add_chassis(nb_cfg)
         for agent_type in (ovn_const.OVN_CONTROLLER_AGENT,
                            ovn_const.OVN_METADATA_AGENT):
-            self.mech_driver._nb_ovn.nb_global.nb_cfg = nb_cfg + 1
+            self.mech_driver.nb_ovn.nb_global.nb_cfg = nb_cfg + 1
             now = timeutils.utcnow()
             updated_at = now - datetime.timedelta(cfg.CONF.agent_down_time + 1)
             agent = self._add_chassis_agent(nb_cfg, agent_type,
@@ -2044,7 +2051,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         chassis_private = self._add_chassis(nb_cfg)
         for agent_type in (ovn_const.OVN_CONTROLLER_AGENT,
                            ovn_const.OVN_METADATA_AGENT):
-            self.mech_driver._nb_ovn.nb_global.nb_cfg = nb_cfg + 2
+            self.mech_driver.nb_ovn.nb_global.nb_cfg = nb_cfg + 2
             agent = self._add_chassis_agent(nb_cfg, agent_type,
                                             chassis_private)
             self.assertTrue(agent.alive, "Agent of type %s alive=%s" %
@@ -2055,7 +2062,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         chassis_private = self._add_chassis(nb_cfg)
         for agent_type in (ovn_const.OVN_CONTROLLER_AGENT,
                            ovn_const.OVN_METADATA_AGENT):
-            self.mech_driver._nb_ovn.nb_global.nb_cfg = nb_cfg + 2
+            self.mech_driver.nb_ovn.nb_global.nb_cfg = nb_cfg + 2
             now = timeutils.utcnow(with_timezone=True)
             updated_at = now - datetime.timedelta(cfg.CONF.agent_down_time + 1)
             agent = self._add_chassis_agent(nb_cfg, agent_type,
@@ -2212,7 +2219,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         self.assertEqual(sorted(expected_candidates), sorted(candidates))
 
 
-class OVNMechanismDriverTestCase(test_plugin.Ml2PluginV2TestCase):
+class OVNMechanismDriverTestCase(MechDriverSetupBase,
+                                 test_plugin.Ml2PluginV2TestCase):
     _mechanism_drivers = ['logger', 'ovn']
 
     def setUp(self):
@@ -2236,13 +2244,6 @@ class OVNMechanismDriverTestCase(test_plugin.Ml2PluginV2TestCase):
         self.driver.node_uuid = node_uuid
         self.driver.hash_ring_group = 'fake_hash_ring_group'
 
-        mm = directory.get_plugin().mechanism_manager
-        self.mech_driver = mm.mech_drivers['ovn'].obj
-        nb_ovn = fakes.FakeOvsdbNbOvnIdl()
-        sb_ovn = fakes.FakeOvsdbSbOvnIdl()
-        self.mech_driver._nb_ovn = nb_ovn
-        self.mech_driver._sb_ovn = sb_ovn
-        self.mech_driver._ovn_client._qos_driver = mock.Mock()
         self.mech_driver._insert_port_provisioning_block = mock.Mock()
         p = mock.patch.object(ovn_utils, 'get_revision_number', return_value=1)
         p.start()
@@ -2370,19 +2371,13 @@ class TestOVNMechanismDriverPortSecurity(
     pass
 
 
-class TestOVNMechanismDriverSegment(test_segment.HostSegmentMappingTestCase):
+class TestOVNMechanismDriverSegment(MechDriverSetupBase,
+                                    test_segment.HostSegmentMappingTestCase):
     _mechanism_drivers = ['logger', 'ovn']
 
     def setUp(self):
         mock.patch.object(impl_idl_ovn.Backend, 'schema_helper').start()
         super(TestOVNMechanismDriverSegment, self).setUp()
-        mm = directory.get_plugin().mechanism_manager
-        self.mech_driver = mm.mech_drivers['ovn'].obj
-        nb_ovn = fakes.FakeOvsdbNbOvnIdl()
-        sb_ovn = fakes.FakeOvsdbSbOvnIdl()
-        self.mech_driver._nb_ovn = nb_ovn
-        self.mech_driver._sb_ovn = sb_ovn
-        self.mech_driver._ovn_client._qos_driver = mock.Mock()
         p = mock.patch.object(ovn_utils, 'get_revision_number', return_value=1)
         p.start()
         self.addCleanup(p.stop)
@@ -2438,7 +2433,7 @@ class TestOVNMechanismDriverSegment(test_segment.HostSegmentMappingTestCase):
     def test_update_segment_host_mapping_with_new_segment(self):
         hostname_with_physnets = {'hostname1': ['phys_net1', 'phys_net2'],
                                   'hostname2': ['phys_net1']}
-        ovn_sb_api = self.mech_driver._sb_ovn
+        ovn_sb_api = self.mech_driver.sb_ovn
         ovn_sb_api.get_chassis_hostname_and_physnets.return_value = (
             hostname_with_physnets)
         self.mech_driver.subscribe()
@@ -2455,7 +2450,7 @@ class TestOVNMechanismDriverSegment(test_segment.HostSegmentMappingTestCase):
         self.assertFalse(set(segments_host_db2))
 
     def test_create_segment_create_localnet_port(self):
-        ovn_nb_api = self.mech_driver._nb_ovn
+        ovn_nb_api = self.mech_driver.nb_ovn
         with self.network() as network:
             net = network['network']
         new_segment = self._test_create_segment(
@@ -2490,7 +2485,7 @@ class TestOVNMechanismDriverSegment(test_segment.HostSegmentMappingTestCase):
         self.assertEqual(len(segments), 3)
 
     def test_delete_segment_delete_localnet_port(self):
-        ovn_nb_api = self.mech_driver._nb_ovn
+        ovn_nb_api = self.mech_driver.nb_ovn
         with self.network() as network:
             net = network['network']
         segment = self._test_create_segment(
@@ -2502,7 +2497,7 @@ class TestOVNMechanismDriverSegment(test_segment.HostSegmentMappingTestCase):
             lswitch_name=ovn_utils.ovn_name(net['id']))
 
     def test_delete_segment_delete_localnet_port_compat_name(self):
-        ovn_nb_api = self.mech_driver._nb_ovn
+        ovn_nb_api = self.mech_driver.nb_ovn
         with self.network() as network:
             net = network['network']
         seg_1 = self._test_create_segment(
@@ -2563,7 +2558,7 @@ class TestOVNMechanismDriverSegment(test_segment.HostSegmentMappingTestCase):
 
     def test_create_segments_subnet_metadata_ip_allocation(self):
         self._test_segments_helper()
-        ovn_nb_api = self.mech_driver._nb_ovn
+        ovn_nb_api = self.mech_driver.nb_ovn
 
         # Assert that metadata address has been allocated from previously
         # created subnet.
@@ -2616,7 +2611,7 @@ class TestOVNMechanismDriverSegment(test_segment.HostSegmentMappingTestCase):
 
     def test_create_delete_segment_distributed_service_port_not_touched(self):
         self._test_segments_helper()
-        ovn_nb_api = self.mech_driver._nb_ovn
+        ovn_nb_api = self.mech_driver.nb_ovn
 
         # Delete second subnet
         self._delete('subnets', self.sub_2['subnet']['id'])
@@ -3061,11 +3056,11 @@ class TestOVNMechanismDriverDHCPOptions(OVNMechanismDriverTestCase):
                 'options': {'server_id': '01:02:03:04:05:06',
                             'domain_search': 'foo-domain'}}
 
-        self.mech_driver._nb_ovn.add_dhcp_options.return_value = 'foo-val'
+        self.mech_driver.nb_ovn.add_dhcp_options.return_value = 'foo-val'
         dhcp_options = self.mech_driver._ovn_client._get_port_dhcp_options(
             port, ip_version)
         self.assertEqual({'cmd': 'foo-val'}, dhcp_options)
-        self.mech_driver._nb_ovn.add_dhcp_options.assert_called_once_with(
+        self.mech_driver.nb_ovn.add_dhcp_options.assert_called_once_with(
             'foo-subnet', port_id='foo-port', **expected_dhcp_options)
 
     def test__get_port_dhcp_options_port_dhcp_opts_set_v4(self):
@@ -3109,7 +3104,7 @@ class TestOVNMechanismDriverDHCPOptions(OVNMechanismDriverTestCase):
         # Since the port has no extra DHCPv4/v6 options defined, no new
         # DHCP_Options row should be created and logical switch port DHCPv4/v6
         # options should point to the subnet DHCPv4/v6 options.
-        self.mech_driver._nb_ovn.add_dhcp_options.assert_not_called()
+        self.mech_driver.nb_ovn.add_dhcp_options.assert_not_called()
 
     def test__get_port_dhcp_options_port_dhcp_opts_not_set_v4(self):
         self._test__get_port_dhcp_options_port_dhcp_opts_not_set(ip_version=4)
@@ -3146,7 +3141,7 @@ class TestOVNMechanismDriverDHCPOptions(OVNMechanismDriverTestCase):
             1,
             self.mech_driver._ovn_client._get_subnet_dhcp_options_for_port.
             call_count)
-        self.mech_driver._nb_ovn.add_dhcp_options.assert_not_called()
+        self.mech_driver.nb_ovn.add_dhcp_options.assert_not_called()
 
         # Set dhcp_disabled with ip_version specified by this test case to
         # true, no dhcp options will be get since it's dhcp_disabled now for
@@ -3162,7 +3157,7 @@ class TestOVNMechanismDriverDHCPOptions(OVNMechanismDriverTestCase):
             0,
             self.mech_driver._ovn_client._get_subnet_dhcp_options_for_port.
             call_count)
-        self.mech_driver._nb_ovn.add_dhcp_options.assert_not_called()
+        self.mech_driver.nb_ovn.add_dhcp_options.assert_not_called()
 
         # Set dhcp_disabled with ip_version specified by this test case to
         # false, and set dhcp_disabled with ip_version not in test to true.
@@ -3179,7 +3174,7 @@ class TestOVNMechanismDriverDHCPOptions(OVNMechanismDriverTestCase):
             1,
             self.mech_driver._ovn_client._get_subnet_dhcp_options_for_port.
             call_count)
-        self.mech_driver._nb_ovn.add_dhcp_options.assert_not_called()
+        self.mech_driver.nb_ovn.add_dhcp_options.assert_not_called()
 
     def test__get_port_dhcp_options_port_dhcp_disabled_v4(self):
         self._test__get_port_dhcp_options_port_dhcp_disabled(ip_version=4)
@@ -3213,7 +3208,7 @@ class TestOVNMechanismDriverDHCPOptions(OVNMechanismDriverTestCase):
                     ovn_const.DHCPV6_STATELESS_OPT: 'true'}}}
             return [fake_rows[row] for row in fake_rows if row in subnets]
 
-        self.mech_driver._nb_ovn.get_subnets_dhcp_options.side_effect = fake
+        self.mech_driver.nb_ovn.get_subnets_dhcp_options.side_effect = fake
 
         if ip_version == 4:
             expected_opts = 'foo' if enable_dhcp else None
@@ -3241,7 +3236,7 @@ class TestOVNMechanismDriverDHCPOptions(OVNMechanismDriverTestCase):
                                                      enable_dhcp=False)
 
 
-class TestOVNMechanismDriverSecurityGroup(
+class TestOVNMechanismDriverSecurityGroup(MechDriverSetupBase,
         test_security_group.Ml2SecurityGroupsTestCase):
     # This set of test cases is supplement to test_acl.py, the purpose is to
     # test acl methods invoking. Content correctness of args of acl methods
@@ -3259,13 +3254,6 @@ class TestOVNMechanismDriverSecurityGroup(
         cfg.CONF.set_override('dns_servers', ['8.8.8.8'], group='ovn')
         mock.patch.object(impl_idl_ovn.Backend, 'schema_helper').start()
         super(TestOVNMechanismDriverSecurityGroup, self).setUp()
-        mm = directory.get_plugin().mechanism_manager
-        self.mech_driver = mm.mech_drivers['ovn'].obj
-        nb_ovn = fakes.FakeOvsdbNbOvnIdl()
-        sb_ovn = fakes.FakeOvsdbSbOvnIdl()
-        self.mech_driver._nb_ovn = nb_ovn
-        self.mech_driver._sb_ovn = sb_ovn
-        self.mech_driver._ovn_client._qos_driver = mock.Mock()
         self.ctx = context.get_admin_context()
         revision_plugin.RevisionPlugin()
 
@@ -3311,7 +3299,7 @@ class TestOVNMechanismDriverSecurityGroup(
                       external_ids={'neutron:security_group_id': sg['id']},
                       name=expected_pg_name),
         ]
-        self.mech_driver._nb_ovn.pg_add.assert_has_calls(
+        self.mech_driver.nb_ovn.pg_add.assert_has_calls(
             expected_pg_add_calls)
 
     def test_delete_security_group(self):
@@ -3322,7 +3310,7 @@ class TestOVNMechanismDriverSecurityGroup(
         expected_pg_del_calls = [
             mock.call(if_exists=True, name=expected_pg_name),
         ]
-        self.mech_driver._nb_ovn.pg_del.assert_has_calls(
+        self.mech_driver.nb_ovn.pg_del.assert_has_calls(
             expected_pg_del_calls)
 
     def test_create_port(self):
@@ -3337,47 +3325,47 @@ class TestOVNMechanismDriverSecurityGroup(
                 mock.call('neutron_pg_drop', mock.ANY),
                 mock.call(expected_pg_name, mock.ANY)
             ]
-            self.mech_driver._nb_ovn.pg_add_ports.assert_has_calls(
+            self.mech_driver.nb_ovn.pg_add_ports.assert_has_calls(
                 expected_pg_add_ports_calls)
 
             # Assert add_acl() is not used anymore
-            self.assertFalse(self.mech_driver._nb_ovn.add_acl.called)
+            self.assertFalse(self.mech_driver.nb_ovn.add_acl.called)
 
     def test_create_port_with_sg_default_rules(self):
         with self.network() as n, self.subnet(n):
-            self.mech_driver._nb_ovn.pg_acl_add.reset_mock()
+            self.mech_driver.nb_ovn.pg_acl_add.reset_mock()
             sg = self._create_sg('sg')
             self._make_port(self.fmt, n['network']['id'],
                             security_groups=[sg['id']])
             # egress traffic for ipv4 and ipv6 is allowed by default
             self.assertEqual(
-                2, self.mech_driver._nb_ovn.pg_acl_add.call_count)
+                2, self.mech_driver.nb_ovn.pg_acl_add.call_count)
 
     def test_create_port_with_empty_sg(self):
         with self.network() as n, self.subnet(n):
-            self.mech_driver._nb_ovn.pg_acl_add.reset_mock()
+            self.mech_driver.nb_ovn.pg_acl_add.reset_mock()
             sg = self._create_empty_sg('sg')
             # Implicit egress rules for ipv4 and ipv6
-            self.assertEqual(2, self.mech_driver._nb_ovn.pg_acl_add.call_count)
-            self.mech_driver._nb_ovn.pg_acl_add.reset_mock()
-            self.mech_driver._nb_ovn.pg_add.reset_mock()
-            self.mech_driver._nb_ovn.pg_add_ports.reset_mock()
+            self.assertEqual(2, self.mech_driver.nb_ovn.pg_acl_add.call_count)
+            self.mech_driver.nb_ovn.pg_acl_add.reset_mock()
+            self.mech_driver.nb_ovn.pg_add.reset_mock()
+            self.mech_driver.nb_ovn.pg_add_ports.reset_mock()
 
             self._make_port(self.fmt, n['network']['id'],
                             security_groups=[sg['id']])
-            self.assertFalse(self.mech_driver._nb_ovn.pg_acl_add.called)
-            self.assertFalse(self.mech_driver._nb_ovn.pg_add.called)
-            self.assertEqual(1, self.mech_driver._nb_ovn.pg_add_ports.called)
+            self.assertFalse(self.mech_driver.nb_ovn.pg_acl_add.called)
+            self.assertFalse(self.mech_driver.nb_ovn.pg_add.called)
+            self.assertEqual(1, self.mech_driver.nb_ovn.pg_add_ports.called)
 
     def test_create_port_with_multi_sgs_duplicate_rules(self):
         with self.network() as n, self.subnet(n):
-            self.mech_driver._nb_ovn.pg_add.reset_mock()
+            self.mech_driver.nb_ovn.pg_add.reset_mock()
             sg1 = self._create_empty_sg('sg1')
             sg2 = self._create_empty_sg('sg2')
             self.assertEqual(
-                2, self.mech_driver._nb_ovn.pg_add.call_count)
+                2, self.mech_driver.nb_ovn.pg_add.call_count)
 
-            self.mech_driver._nb_ovn.pg_acl_add.reset_mock()
+            self.mech_driver.nb_ovn.pg_acl_add.reset_mock()
             self._create_sg_rule(sg1['id'], 'ingress', const.PROTO_NAME_TCP,
                                  port_range_min=22, port_range_max=23,
                                  remote_ip_prefix='20.0.0.0/24')
@@ -3385,13 +3373,13 @@ class TestOVNMechanismDriverSecurityGroup(
                                  port_range_min=22, port_range_max=23,
                                  remote_ip_prefix='20.0.0.0/24')
             self.assertEqual(
-                2, self.mech_driver._nb_ovn.pg_acl_add.call_count)
+                2, self.mech_driver.nb_ovn.pg_acl_add.call_count)
 
             self._make_port(self.fmt, n['network']['id'],
                             security_groups=[sg1['id'], sg2['id']])
             # Default drop group, two security groups
             self.assertEqual(
-                3, self.mech_driver._nb_ovn.pg_add_ports.call_count)
+                3, self.mech_driver.nb_ovn.pg_add_ports.call_count)
 
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
                 'ovn_client.OVNClient.is_external_ports_supported',
@@ -3399,7 +3387,7 @@ class TestOVNMechanismDriverSecurityGroup(
     def _test_create_port_with_vnic_type(self, vnic_type):
         fake_grp = 'fake-default-ha-group-uuid'
         row = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={'uuid': fake_grp})
-        self.mech_driver._nb_ovn.ha_chassis_group_get.return_value.\
+        self.mech_driver.nb_ovn.ha_chassis_group_get.return_value.\
             execute.return_value = row
 
         with self.network() as n, self.subnet(n):
@@ -3410,9 +3398,9 @@ class TestOVNMechanismDriverSecurityGroup(
 
             # Assert create_lswitch_port was called with the relevant
             # parameters
-            _, kwargs = self.mech_driver._nb_ovn.create_lswitch_port.call_args
+            _, kwargs = self.mech_driver.nb_ovn.create_lswitch_port.call_args
             self.assertEqual(
-                1, self.mech_driver._nb_ovn.create_lswitch_port.call_count)
+                1, self.mech_driver.nb_ovn.create_lswitch_port.call_count)
             self.assertEqual(ovn_const.LSP_TYPE_EXTERNAL, kwargs['type'])
             self.assertEqual(fake_grp, kwargs['ha_chassis_group'])
 
@@ -3441,7 +3429,7 @@ class TestOVNMechanismDriverSecurityGroup(
                                  remote_ip_prefix='30.0.0.0/24')
             data = {'port': {'security_groups': [sg1['id'], sg2['id']]}}
 
-            self.mech_driver._nb_ovn.pg_add_ports.reset_mock()
+            self.mech_driver.nb_ovn.pg_add_ports.reset_mock()
             req = self.new_update_request('ports', data, p['id'])
             req.get_response(self.api)
 
@@ -3456,17 +3444,17 @@ class TestOVNMechanismDriverSecurityGroup(
             self._make_port(self.fmt, n['network']['id'],
                             security_groups=[sg['id']])
 
-            self.mech_driver._nb_ovn.pg_acl_add.reset_mock()
+            self.mech_driver.nb_ovn.pg_acl_add.reset_mock()
             sg_r = self._create_sg_rule(sg['id'], 'ingress',
                                         const.PROTO_NAME_UDP,
                                         ethertype=const.IPv6)
             self.assertEqual(
-                1, self.mech_driver._nb_ovn.pg_acl_add.call_count)
+                1, self.mech_driver.nb_ovn.pg_acl_add.call_count)
 
-            self.mech_driver._nb_ovn.pg_acl_del.reset_mock()
+            self.mech_driver.nb_ovn.pg_acl_del.reset_mock()
             self._delete_sg_rule(sg_r['id'])
             self.assertEqual(
-                1, self.mech_driver._nb_ovn.pg_acl_del.call_count)
+                1, self.mech_driver.nb_ovn.pg_acl_del.call_count)
 
     def test_update_sg_duplicate_rule(self):
         with self.network() as n, self.subnet(n):
@@ -3479,21 +3467,21 @@ class TestOVNMechanismDriverSecurityGroup(
                             security_groups=[sg1['id'], sg2['id']])
             # One default drop rule, two SGs
             self.assertEqual(
-                3, self.mech_driver._nb_ovn.pg_add_ports.call_count)
+                3, self.mech_driver.nb_ovn.pg_add_ports.call_count)
 
-            self.mech_driver._nb_ovn.pg_acl_add.reset_mock()
+            self.mech_driver.nb_ovn.pg_acl_add.reset_mock()
             # Add a new duplicate rule to sg2. It's expected to be added.
             sg2_r = self._create_sg_rule(sg2['id'], 'ingress',
                                          const.PROTO_NAME_UDP,
                                          port_range_min=22, port_range_max=23)
             self.assertEqual(
-                1, self.mech_driver._nb_ovn.pg_acl_add.call_count)
+                1, self.mech_driver.nb_ovn.pg_acl_add.call_count)
 
-            self.mech_driver._nb_ovn.pg_acl_del.reset_mock()
+            self.mech_driver.nb_ovn.pg_acl_del.reset_mock()
             # Delete the duplicate rule. It's expected to be deleted.
             self._delete_sg_rule(sg2_r['id'])
             self.assertEqual(
-                1, self.mech_driver._nb_ovn.pg_acl_del.call_count)
+                1, self.mech_driver.nb_ovn.pg_acl_del.call_count)
 
     def test_update_sg_duplicate_rule_multi_ports(self):
         with self.network() as n, self.subnet(n):
@@ -3501,7 +3489,7 @@ class TestOVNMechanismDriverSecurityGroup(
             sg2 = self._create_empty_sg('sg2')
             sg3 = self._create_empty_sg('sg3')
 
-            self.mech_driver._nb_ovn.pg_acl_add.reset_mock()
+            self.mech_driver.nb_ovn.pg_acl_add.reset_mock()
             self._create_sg_rule(sg1['id'], 'ingress',
                                  const.PROTO_NAME_UDP,
                                  remote_group_id=sg3['id'])
@@ -3517,36 +3505,36 @@ class TestOVNMechanismDriverSecurityGroup(
 
             # No matter how many ports are there, there are two rules only
             self.assertEqual(
-                2, self.mech_driver._nb_ovn.pg_acl_add.call_count)
+                2, self.mech_driver.nb_ovn.pg_acl_add.call_count)
 
             # Add a rule to sg1 duplicate with sg2. It's expected to be added.
-            self.mech_driver._nb_ovn.pg_acl_add.reset_mock()
+            self.mech_driver.nb_ovn.pg_acl_add.reset_mock()
             sg1_r = self._create_sg_rule(sg1['id'], 'egress',
                                          const.PROTO_NAME_TCP,
                                          port_range_min=60, port_range_max=70)
             self.assertEqual(
-                1, self.mech_driver._nb_ovn.pg_acl_add.call_count)
+                1, self.mech_driver.nb_ovn.pg_acl_add.call_count)
 
             # Add a rule to sg2 duplicate with sg1 but not duplicate with sg3.
             # It's expected to be added as well.
-            self.mech_driver._nb_ovn.pg_acl_add.reset_mock()
+            self.mech_driver.nb_ovn.pg_acl_add.reset_mock()
             sg2_r = self._create_sg_rule(sg2['id'], 'ingress',
                                          const.PROTO_NAME_UDP,
                                          remote_group_id=sg3['id'])
             self.assertEqual(
-                1, self.mech_driver._nb_ovn.pg_acl_add.call_count)
+                1, self.mech_driver.nb_ovn.pg_acl_add.call_count)
 
             # Delete the duplicate rule in sg1. It's expected to be deleted.
-            self.mech_driver._nb_ovn.pg_acl_del.reset_mock()
+            self.mech_driver.nb_ovn.pg_acl_del.reset_mock()
             self._delete_sg_rule(sg1_r['id'])
             self.assertEqual(
-                1, self.mech_driver._nb_ovn.pg_acl_del.call_count)
+                1, self.mech_driver.nb_ovn.pg_acl_del.call_count)
 
             # Delete the duplicate rule in sg2. It's expected to be deleted.
-            self.mech_driver._nb_ovn.pg_acl_del.reset_mock()
+            self.mech_driver.nb_ovn.pg_acl_del.reset_mock()
             self._delete_sg_rule(sg2_r['id'])
             self.assertEqual(
-                1, self.mech_driver._nb_ovn.pg_acl_del.call_count)
+                1, self.mech_driver.nb_ovn.pg_acl_del.call_count)
 
     def test_delete_port_with_security_groups_port_doesnt_remove_pg(self):
         with self.network(set_context=True, tenant_id='test') as net1:
@@ -3556,30 +3544,26 @@ class TestOVNMechanismDriverSecurityGroup(
                     self.fmt, net1['network']['id'],
                     security_groups=[sg['id']])['port']
                 fake_lsp = fakes.FakeOVNPort.from_neutron_port(port)
-                self.mech_driver._nb_ovn.lookup.return_value = fake_lsp
-                self.mech_driver._nb_ovn.delete_lswitch_port.reset_mock()
-                self.mech_driver._nb_ovn.delete_acl.reset_mock()
+                self.mech_driver.nb_ovn.lookup.return_value = fake_lsp
+                self.mech_driver.nb_ovn.delete_lswitch_port.reset_mock()
+                self.mech_driver.nb_ovn.delete_acl.reset_mock()
                 self._delete('ports', port['id'])
                 self.assertEqual(
-                    1, self.mech_driver._nb_ovn.delete_lswitch_port.call_count)
-                self.assertFalse(self.mech_driver._nb_ovn.pg_del.called)
-                self.assertFalse(self.mech_driver._nb_ovn.delete_acl.called)
+                    1, self.mech_driver.nb_ovn.delete_lswitch_port.call_count)
+                self.assertFalse(self.mech_driver.nb_ovn.pg_del.called)
+                self.assertFalse(self.mech_driver.nb_ovn.delete_acl.called)
 
 
-class TestOVNMechanismDriverMetadataPort(test_plugin.Ml2PluginV2TestCase):
+class TestOVNMechanismDriverMetadataPort(MechDriverSetupBase,
+                                         test_plugin.Ml2PluginV2TestCase):
 
     _mechanism_drivers = ['logger', 'ovn']
 
     def setUp(self):
         mock.patch.object(impl_idl_ovn.Backend, 'schema_helper').start()
         super(TestOVNMechanismDriverMetadataPort, self).setUp()
-        mm = directory.get_plugin().mechanism_manager
-        self.mech_driver = mm.mech_drivers['ovn'].obj
-        self.mech_driver._nb_ovn = fakes.FakeOvsdbNbOvnIdl()
-        self.mech_driver._sb_ovn = fakes.FakeOvsdbSbOvnIdl()
-        self.mech_driver._ovn_client._qos_driver = mock.Mock()
-        self.nb_ovn = self.mech_driver._nb_ovn
-        self.sb_ovn = self.mech_driver._sb_ovn
+        self.nb_ovn = self.mech_driver.nb_ovn
+        self.sb_ovn = self.mech_driver.sb_ovn
         self.ctx = context.get_admin_context()
         ovn_conf.cfg.CONF.set_override('ovn_metadata_enabled', True,
                                        group='ovn')
