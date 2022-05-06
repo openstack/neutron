@@ -422,7 +422,7 @@ class MetadataAgent(object):
 
         :return: The metadata namespace name of this datapath
         """
-        LOG.debug("Provisioning metadata for network %s", net_name)
+        LOG.info("Provisioning metadata for network %s", net_name)
         port = self.sb_idl.get_metadata_port_network(datapath)
         # If there's no metadata port or it doesn't have a MAC or IP
         # addresses, then tear the namespace down if needed. This might happen
