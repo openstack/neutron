@@ -162,9 +162,9 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         net_segments = segments_db.get_networks_segments(context, ids)
         for network in networks:
             segments = net_segments[network['id']]
-            self._extend_network_dict_provider(network, segments)
+            self.extend_network_with_provider_segments(network, segments)
 
-    def _extend_network_dict_provider(self, network, segments):
+    def extend_network_with_provider_segments(self, network, segments):
         if not segments:
             LOG.debug("Network %s has no segments", network['id'])
             for attr in provider.ATTRIBUTES:
@@ -182,6 +182,22 @@ class TypeManager(stevedore.named.NamedExtensionManager):
                 api.PHYSICAL_NETWORK]
             network[provider.SEGMENTATION_ID] = segment[
                 api.SEGMENTATION_ID]
+
+    @staticmethod
+    def pop_segments_from_network(network):
+        multiple_segments = network.pop(mpnet_apidef.SEGMENTS, [])
+        if multiple_segments:
+            network_segments = multiple_segments
+        else:
+            network_segments = [
+                {provider_key: network.pop(provider_key)
+                for provider_key in provider.ATTRIBUTES}]
+
+        return (
+            [{api.NETWORK_TYPE: network_segment[provider.NETWORK_TYPE],
+             api.PHYSICAL_NETWORK: network_segment[provider.PHYSICAL_NETWORK],
+             api.SEGMENTATION_ID: network_segment[provider.SEGMENTATION_ID]}
+             for network_segment in network_segments])
 
     def initialize(self):
         for network_type, driver in self.drivers.items():
