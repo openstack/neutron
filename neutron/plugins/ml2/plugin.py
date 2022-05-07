@@ -2235,6 +2235,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         updated = False
         network = None
         port_id = port.id
+        LOG.debug("Current status of the port %s is: %s; "
+                  "New status is: %s", port_id, port.status, status)
         if ((port.status != status and
                 port['device_owner'] != const.DEVICE_OWNER_DVR_INTERFACE) or
                 port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE):
