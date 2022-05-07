@@ -353,12 +353,14 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         # This test checks that the VIP "Port_Binding" register gets the type
         # and the corresponding "virtual-parents".
         self._check_port_binding_type(vip['id'], ovn_const.LSP_TYPE_VIRTUAL)
+        self._check_port_virtual_parents(vip['id'], port['id'])
         mock_update_vip_host.assert_not_called()
 
         data = {'port': {'allowed_address_pairs': []}}
         req = self.new_update_request('ports', data, port['id'])
         req.get_response(self.api)
         self._check_port_binding_type(vip['id'], '')
+        self._check_port_virtual_parents(vip['id'], None)
         mock_update_vip_host.assert_called_once_with(vip['id'], None)
 
 
