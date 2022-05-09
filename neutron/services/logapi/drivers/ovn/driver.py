@@ -154,13 +154,19 @@ class OVNDriver(base.DriverBase):
                 ovn_const.ACL_ACTION_ALLOW}
 
     def _remove_acls_log(self, pgs, ovn_txn, log_name=None):
-        acl_changes, acl_visits = 0, 0
+        acl_absents, acl_changes, acl_visits = 0, 0, 0
         for pg in pgs:
             for acl_uuid in pg["acls"]:
                 acl_visits += 1
+                acl = self.ovn_nb.lookup("ACL", acl_uuid, default=None)
+                # Log message if ACL is not found, as deleted concurrently
+                if acl is None:
+                    LOG.debug("ACL %s not found, deleted concurrently",
+                              acl_uuid)
+                    acl_absents += 1
+                    continue
                 # skip acls used by a different network log
                 if log_name:
-                    acl = self.ovn_nb.lookup("ACL", acl_uuid)
                     if acl.name and acl.name[0] != log_name:
                         continue
                 ovn_txn.add(self.ovn_nb.db_set(
@@ -171,10 +177,10 @@ class OVNDriver(base.DriverBase):
                     ("severity", [])
                 ))
                 acl_changes += 1
-        msg = "Cleared %d (out of %d visited) ACLs"
+        msg = "Cleared %d, Not found %d (out of %d visited) ACLs"
         if log_name:
             msg += " for network log {}".format(log_name)
-        LOG.info(msg, acl_changes, acl_visits)
+        LOG.info(msg, acl_changes, acl_absents, acl_visits)
 
     def _set_acls_log(self, pgs, ovn_txn, actions_enabled, log_name):
         acl_changes, acl_visits = 0, 0
