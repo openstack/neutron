@@ -121,7 +121,7 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         network = network_obj.Network(
             self.ctx, id=uuidutils.generate_uuid(), project_id=self.project_id)
         network.create()
-        router_gw_port = self._create_one_port(random.randint(1, 10000),
+        router_gw_port = self._create_one_port(random.randint(10**6, 10**7),
                                                network.id)
         router = router_obj.Router(self.ctx, id=uuidutils.generate_uuid(),
                                    gw_port_id=router_gw_port.id)
