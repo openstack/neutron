@@ -270,11 +270,33 @@ class TestOVNDriver(base.BaseTestCase):
         pg_dict = self._fake_pg_dict(acls=['acl1', 'acl2'])
         self._log_driver._remove_acls_log([pg_dict], self._nb_ovn.transaction)
         info_args, _info_kwargs = m_info.call_args_list[0]
-        self.assertIn('Cleared %d (out of %d visited) ACLs', info_args[0])
-        self._nb_ovn.lookup.assert_not_called()
+        self.assertIn('Cleared %d, Not found %d (out of %d visited) ACLs',
+                      info_args[0])
+        self._nb_ovn.lookup.assert_has_calls([
+            mock.call('ACL', 'acl1', default=None),
+            mock.call('ACL', 'acl2', default=None)])
         self.assertEqual(len(pg_dict["acls"]), info_args[1])
-        self.assertEqual(len(pg_dict["acls"]), info_args[2])
+        self.assertEqual(len(pg_dict["acls"]) - 2, info_args[2])
+        self.assertEqual(len(pg_dict["acls"]), info_args[3])
         self.assertEqual(len(pg_dict["acls"]), self._nb_ovn.db_set.call_count)
+
+    @mock.patch.object(ovn_driver.LOG, 'info')
+    def test__remove_acls_log_missing_acls(self, m_info):
+        pg_dict = self._fake_pg_dict(acls=['acl1', 'acl2', 'acl3'])
+
+        def _mock_lookup(_pg_table, acl_uuid, default):
+            if acl_uuid == 'acl3':
+                return None
+            return self._fake_acl()
+
+        self._nb_ovn.lookup.side_effect = _mock_lookup
+        self._log_driver._remove_acls_log([pg_dict], self._nb_ovn.transaction)
+        info_args, _info_kwargs = m_info.call_args_list[0]
+        self.assertEqual(len(pg_dict["acls"]) - 1, info_args[1])
+        self.assertEqual(len(pg_dict["acls"]) - 2, info_args[2])
+        self.assertEqual(len(pg_dict["acls"]), info_args[3])
+        self.assertEqual(len(pg_dict["acls"]) - 1,
+                         self._nb_ovn.db_set.call_count)
 
     @mock.patch.object(ovn_driver.LOG, 'info')
     def test__remove_acls_log_with_log_name(self, m_info):
@@ -282,7 +304,7 @@ class TestOVNDriver(base.BaseTestCase):
         log_name = 'test_obj_name'
         used_name = 'test_used_name'
 
-        def _mock_lookup(_pg_table, acl_uuid):
+        def _mock_lookup(_pg_table, acl_uuid, default):
             if acl_uuid == 'acl2':
                 return self._fake_acl(name=used_name)
             return self._fake_acl(name=log_name)
@@ -291,10 +313,12 @@ class TestOVNDriver(base.BaseTestCase):
         self._log_driver._remove_acls_log([pg_dict], self._nb_ovn.transaction,
                                           log_name)
         info_args, _info_kwargs = m_info.call_args_list[0]
-        self.assertIn('Cleared %d (out of %d visited) ACLs', info_args[0])
+        self.assertIn('Cleared %d, Not found %d (out of %d visited) ACLs',
+                      info_args[0])
         self.assertIn('for network log {}'.format(log_name), info_args[0])
         self.assertEqual(len(pg_dict["acls"]) - 1, info_args[1])
-        self.assertEqual(len(pg_dict["acls"]), info_args[2])
+        self.assertEqual(len(pg_dict["acls"]) - 4, info_args[2])
+        self.assertEqual(len(pg_dict["acls"]), info_args[3])
         self.assertEqual(len(pg_dict["acls"]) - 1,
                          self._nb_ovn.db_set.call_count)
 
