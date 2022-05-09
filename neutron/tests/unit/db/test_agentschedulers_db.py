@@ -1472,6 +1472,11 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
 
         self._remove_network_from_dhcp_agent(hosta_id,
                                              network_id)
+        # Call it second time, it should be already deleted so should 409 be
+        # returned this time
+        self._remove_network_from_dhcp_agent(
+            hosta_id, network_id,
+            expected_code=exc.HTTPConflict.code)
         self.dhcp_notifier_cast.assert_called_with(
                 mock.ANY, 'network_delete_end',
                 {'network_id': network_id,
