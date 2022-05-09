@@ -38,6 +38,7 @@ from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib import constants as n_const
 from neutron_lib import context as n_context
 from neutron_lib.db import api as db_api
+from neutron_lib.services.qos import constants as qos_consts
 from neutron_lib.services.trunk import constants as trunk_constants
 from neutron_lib.utils import helpers
 from oslo_config import cfg
@@ -1046,3 +1047,15 @@ def is_session_active(session):
     if not (session.dirty or session.deleted or session.new):
         return False
     return True
+
+
+def effective_qos_policy_id(resource):
+    """Return the resource effective QoS policy
+
+    If the resource does not have any QoS policy reference, returns the
+    QoS policy inherited from the network (if exists).
+    :param resource: [dict] resource with QoS policies
+    :return: [str] resource QoS policy ID or network QoS policy ID
+    """
+    return (resource.get(qos_consts.QOS_POLICY_ID) or
+            resource.get(qos_consts.QOS_NETWORK_POLICY_ID))

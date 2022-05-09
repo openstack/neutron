@@ -1555,12 +1555,14 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         _network.create()
         return _network
 
-    def _create_test_network_id(self):
+    def _create_test_network_id(self, qos_policy_id=None):
         return self._create_test_network(
-            "test-network-%s" % helpers.get_random_string(4)).id
+            name="test-network-%s" % helpers.get_random_string(4),
+            qos_policy_id=qos_policy_id).id
 
-    def _create_external_network_id(self):
-        test_network_id = self._create_test_network_id()
+    def _create_external_network_id(self, qos_policy_id=None):
+        test_network_id = self._create_test_network_id(
+            qos_policy_id=qos_policy_id)
         ext_net = net_obj.ExternalNetwork(self.context,
             network_id=test_network_id)
         ext_net.create()
@@ -1639,9 +1641,9 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         segment.create()
         return segment.id
 
-    def _create_test_router_id(self, router_id=None):
+    def _create_test_router_id(self, router_id=None, name=None):
         attrs = {
-            'name': 'test_router',
+            'name': name or 'test_router',
         }
         if router_id:
             attrs['id'] = router_id

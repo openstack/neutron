@@ -141,3 +141,26 @@ class QosPolicyRouterGatewayIPBinding(base.NeutronDbObject,
     primary_keys = ['policy_id', 'router_id']
     fields_no_update = ['policy_id', 'router_id']
     _bound_model_id = db_model.router_id
+
+    @classmethod
+    @db_api.CONTEXT_READER
+    def get_routers_by_network_id(cls, context, network_id, policy_id=None):
+        """Return the routers that have a network as GW, filtered by QoS policy
+
+        This method returns the routers that have a gateway port on this
+        network. If "policy_id" is defined, it will return those routers that
+        have a gateway IP QoS policy associated. If "policy_id" is None, this
+        method will return only those routers that doesn't have any gateway
+        IP QoS policy associated.
+        """
+        query = context.session.query(models_l3.Router).filter(
+            models_l3.Router.gw_port_id == models_v2.Port.id,
+            models_v2.Port.network_id == network_id)
+        if policy_id:
+            query = query.filter(exists().where(and_(
+                cls.db_model.router_id == models_l3.Router.id,
+                cls.db_model.policy_id == policy_id)))
+        else:
+            query = query.filter(~exists().where(
+                cls.db_model.router_id == models_l3.Router.id))
+        return query.all()

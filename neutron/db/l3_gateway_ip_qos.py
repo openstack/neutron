@@ -39,11 +39,17 @@ class L3_gw_ip_qos_dbonly_mixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
     @staticmethod
     @resource_extend.extends([l3_apidef.ROUTERS])
     def _extend_router_dict_gw_qos(router_res, router_db):
-        if router_db.gw_port_id and router_db.get('qos_policy_binding'):
-            policy_id = router_db.qos_policy_binding.policy_id
-            router_res[l3_apidef.EXTERNAL_GW_INFO].update(
-                {qos_consts.QOS_POLICY_ID: policy_id})
+        if router_db.gw_port and (
+                router_db.qos_policy_binding or
+                router_db.gw_port.qos_network_policy_binding):
+            qos_bind = router_db.qos_policy_binding
+            qos_net_bind = router_db.gw_port.qos_network_policy_binding
+            policy_id = qos_bind.policy_id if qos_bind else None
+            net_policy_id = qos_net_bind.policy_id if qos_net_bind else None
+            router_res[l3_apidef.EXTERNAL_GW_INFO].update({
+                qos_consts.QOS_POLICY_ID: policy_id})
             router_res[qos_consts.QOS_POLICY_ID] = policy_id
+            router_res[qos_consts.QOS_NETWORK_POLICY_ID] = net_policy_id
 
     @property
     def _is_gw_ip_qos_supported(self):
