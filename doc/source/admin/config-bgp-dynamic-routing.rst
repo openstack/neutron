@@ -718,7 +718,7 @@ Schedule the BGP speaker to an agent
 
    .. code-block:: console
 
-      $ openstack bgp speaker show dragents bgpspeaker
+      $ openstack bgp dragent list --bgp-speaker bgpspeaker
       +--------------------------------------+------------+-------+-------+
       | ID                                   | Host       | State | Alive |
       +--------------------------------------+------------+-------+-------+
@@ -877,7 +877,7 @@ more operational agents.
       $ openstack bgp dragent add speaker 1a2d33bb-9321-30a2-76ab-22eff3d2f56a bgpspeaker
       Associated BGP speaker bgpspeaker to the Dynamic Routing agent.
 
-      $ openstack bgp speaker show dragents bgpspeaker
+      $ openstack bgp dragent list --bgp-speaker bgpspeaker
       +--------------------------------------+---------+-------+-------+
       | ID                                   | Host    | State | Alive |
       +--------------------------------------+---------+-------+-------+
