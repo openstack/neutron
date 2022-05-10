@@ -57,8 +57,8 @@ class OVNPortForwardingHandler(object):
         rtr_name = 'neutron-{}'.format(pf_obj.router_id)
         return lb_name, vip, [internal_ip], rtr_name
 
-    def _get_lbs_and_ls(self, nb_ovn, payload):
-        rtr_name = ovn_utils.ovn_name(payload.resource_id)
+    def _get_lbs_and_ls(self, nb_ovn, **kwargs):
+        rtr_name = ovn_utils.ovn_name(kwargs['router_id'])
         ovn_lr = nb_ovn.get_lrouter(rtr_name)
         if ovn_lr:
             ext_id_key = ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY
@@ -66,7 +66,7 @@ class OVNPortForwardingHandler(object):
             lr_lbs = [lr for lr in ovn_lr.load_balancer
                       if lr.external_ids.get(ext_id_key) ==
                       pf_const.PORT_FORWARDING_PLUGIN]
-            r_port = payload.metadata.get('port')
+            r_port = kwargs['port']
 
             if r_port:
                 ls_name = ovn_utils.ovn_name(r_port['network_id'])
@@ -75,14 +75,14 @@ class OVNPortForwardingHandler(object):
                 return lr_lbs, ls_lbs, ls_name
         return [], [], None
 
-    def _add_lb_on_ls(self, ovn_txn, nb_ovn, payload):
-        lr_lbs, ls_lbs, ls_name = self._get_lbs_and_ls(nb_ovn, payload)
+    def _add_lb_on_ls(self, ovn_txn, nb_ovn, **kwargs):
+        lr_lbs, ls_lbs, ls_name = self._get_lbs_and_ls(nb_ovn, **kwargs)
         for lb in lr_lbs:
             if lb not in ls_lbs:
                 ovn_txn.add(nb_ovn.ls_lb_add(ls_name, lb.name, may_exist=True))
 
-    def _del_lb_on_ls(self, ovn_txn, nb_ovn, payload):
-        lr_lbs, ls_lbs, ls_name = self._get_lbs_and_ls(nb_ovn, payload)
+    def _del_lb_on_ls(self, ovn_txn, nb_ovn, **kwargs):
+        lr_lbs, ls_lbs, ls_name = self._get_lbs_and_ls(nb_ovn, **kwargs)
         for lb in lr_lbs:
             if lb in ls_lbs:
                 ovn_txn.add(nb_ovn.ls_lb_del(ls_name, lb.name))
@@ -328,17 +328,17 @@ class OVNPortForwarding(object):
         for lb_name in self._handler.lb_names(fip_id):
             ovn_txn.add(ovn_nb.lb_del(lb_name, vip=None, if_exists=True))
 
-    def _handle_lb_on_ls(self, _resource, event_type, _pf_plugin, payload):
-        if not payload:
+    def _handle_lb_on_ls(self, _resource, event_type, _pf_plugin, **kwargs):
+        if not kwargs['router_id']:
             return
-        ovn_nb = self._l3_plugin._nb_ovn
+        ovn_nb = self._l3_plugin._ovn
         with ovn_nb.transaction(check_error=True) as ovn_txn:
             if event_type == events.AFTER_CREATE:
                 self._handler._add_lb_on_ls(ovn_txn, ovn_nb,
-                                            payload)
+                                            **kwargs)
             if event_type == events.AFTER_DELETE:
                 self._handler._del_lb_on_ls(ovn_txn, ovn_nb,
-                                            payload)
+                                            **kwargs)
 
     @staticmethod
     def ovn_lb_protocol(pf_protocol):
