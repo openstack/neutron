@@ -1,0 +1,11 @@
+---
+features:
+  - |
+    Added a new configuration variable, in ``[OVS]`` section, to control
+    the OVS OpenFlow rule processing operations when using the OVS native
+    firewall driver (``securitygroup.firewall_driver=openvswitch``):
+
+    * ``openflow_processed_per_port``: by default "False". If enabled, all
+      OpenFlow rules associated to a port will be processed at once, in a
+      single transaction. If disabled, the flows will be processed in batches
+      of "AGENT_RES_PROCESSING_STEP=100" number of OpenFlow rules.

@@ -44,6 +44,15 @@ OPTS = [
                        'unregistered multicast packets to all ports. '
                        'The switch will send unregistered multicast packets '
                        'only to ports connected to multicast routers.')),
+    cfg.BoolOpt('openflow_processed_per_port',
+                default=False,
+                help=_('If enabled, all OpenFlow rules associated to a port '
+                       'are processed at once, in one single transaction. '
+                       'That avoids possible inconsistencies during OVS agent '
+                       'restart and port updates. '
+                       'If disabled, the flows will be processed in batches '
+                       'of "openflow_number_processing_step" number of '
+                       'OpenFlow rules.')),
 ]
 
 
