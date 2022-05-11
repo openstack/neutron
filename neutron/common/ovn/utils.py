@@ -159,6 +159,10 @@ def validate_port_extra_dhcp_opts(port):
         invalid_ipv6=invalid[const.IP_VERSION_6] if failed else [])
 
 
+def is_dhcp_option_quoted(opt_value):
+    return opt_value.startswith('"') and opt_value.endswith('"')
+
+
 def get_lsp_dhcp_opts(port, ip_version):
     # Get dhcp options from Neutron port, for setting DHCP_Options row
     # in OVN.
@@ -192,6 +196,9 @@ def get_lsp_dhcp_opts(port, ip_version):
                 continue
 
             opt = mapping[edo['opt_name']]
+            if (opt in constants.OVN_STR_TYPE_DHCP_OPTS and
+                    not is_dhcp_option_quoted(edo['opt_value'])):
+                edo['opt_value'] = '"%s"' % edo['opt_value']
             lsp_dhcp_opts[opt] = edo['opt_value']
 
     return (lsp_dhcp_disabled, lsp_dhcp_opts)

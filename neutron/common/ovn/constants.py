@@ -173,6 +173,14 @@ SUPPORTED_DHCP_OPTS_MAPPING = {
         '23': 'dns_server'},
 }
 
+# OVN string type DHCP options
+OVN_STR_TYPE_DHCP_OPTS = [
+    'domain_name',
+    'bootfile_name',
+    'path_prefix',
+    'wpad',
+    'tftp_server']
+
 # Special option for disabling DHCP via extra DHCP options
 DHCP_DISABLED_OPT = 'dhcp_disabled'
 

@@ -362,7 +362,7 @@ class TestNBDbResources(base.TestOVNFunctionalBase):
                         'mtu': str(n1['network']['mtu']),
                         'router': subnet['gateway_ip'],
                         'ip_forward_enable': '1',
-                        'tftp_server': '10.0.0.100',
+                        'tftp_server': '"10.0.0.100"',
                         'domain_name': '"%s"' % cfg.CONF.dns_domain,
                         'dns_server': '20.20.20.20'}}
         expected_dhcp_v4_options_rows['v4-' + p2['port']['id']] = \
@@ -426,7 +426,7 @@ class TestNBDbResources(base.TestOVNFunctionalBase):
                         'dns_server': '{10.10.10.10}',
                         'mtu': str(n1['network']['mtu']),
                         'router': subnet['gateway_ip'],
-                        'tftp_server': '100.0.0.100'}}
+                        'tftp_server': '"100.0.0.100"'}}
         expected_dhcp_v4_options_rows['v4-' + p4['port']['id']] = \
             expected_dhcp_options_rows['v4-' + p4['port']['id']]
         expected_dhcp_v6_options_rows['v6-' + p4['port']['id']] = \
@@ -694,7 +694,7 @@ class TestNBDbResources(base.TestOVNFunctionalBase):
                         'dns_server': '{10.10.10.10}',
                         'mtu': '1200',
                         'router': subnet['gateway_ip'],
-                        'tftp_server': '8.8.8.8'}}
+                        'tftp_server': '"8.8.8.8"'}}
         self._verify_dhcp_option_rows(expected_dhcp_options_rows)
         self._verify_dhcp_option_row_for_port(
             p1['id'], expected_dhcp_options_rows['v4-' + p1['id']],
