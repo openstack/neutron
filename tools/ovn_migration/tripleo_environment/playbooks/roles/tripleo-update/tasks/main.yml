@@ -15,10 +15,10 @@
   shell: >
     set -o pipefail &&
     {{ ovn_migration_temp_dir }}/generate-ovn-extras.sh
-  changed_when: False
+  args:
+    creates: $HOME/ovn-extras.yaml
 
 - name: Updating the overcloud stack with OVN services
   shell: >
     set -o pipefail &&
     {{ overcloud_ovn_deploy_script }} 2>&1 > {{ overcloud_ovn_deploy_script }}.log
-  changed_when: true
