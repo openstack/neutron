@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import distutils
 import enum
 import re
 import shutil
@@ -244,11 +243,12 @@ def dnsmasq_version_supported():
         env = {'LC_ALL': 'C'}
         out = agent_utils.execute(cmd, addl_env=env)
         m = re.search(r"version (\d+\.\d+)", out)
-        ver = distutils.version.StrictVersion(m.group(1) if m else '0.0')
-        if ver < distutils.version.StrictVersion(MINIMUM_DNSMASQ_VERSION):
+        ver = versionutils.convert_version_to_tuple(m.group(1) if m else '0.0')
+        if ver < versionutils.convert_version_to_tuple(
+                MINIMUM_DNSMASQ_VERSION):
             return False
         if (cfg.CONF.dnsmasq_enable_addr6_list is True and
-                ver < distutils.version.StrictVersion(
+                ver < versionutils.convert_version_to_tuple(
                     DNSMASQ_VERSION_HOST_ADDR6_LIST)):
             LOG.warning('Support for multiple IPv6 addresses in host '
                         'entries was introduced in dnsmasq version '

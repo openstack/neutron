@@ -13,7 +13,6 @@
 #    under the License.
 
 import datetime
-from distutils import version
 import functools
 import math
 import os
@@ -24,6 +23,7 @@ from neutron_lib.agent import topics
 from neutron_lib import constants
 from neutron_lib import context
 from oslo_utils import timeutils
+from packaging import version
 
 import neutron
 from neutron.agent.common import ovs_lib
@@ -223,9 +223,8 @@ def skip_if_ovs_older_than(ovs_version):
         @functools.wraps(f)
         def check_ovs_and_skip(test):
             ovs = ovs_lib.BaseOVS()
-            current_ovs_version = version.StrictVersion(
-                ovs.config['ovs_version'])
-            if current_ovs_version < version.StrictVersion(ovs_version):
+            current_ovs_version = version.Version(ovs.config['ovs_version'])
+            if current_ovs_version < version.Version(ovs_version):
                 test.skipTest("This test requires OVS version %s or higher." %
                               ovs_version)
             return f(test)

@@ -13,9 +13,9 @@
 #    under the License.
 
 import datetime
-from distutils import spawn
 import os
 import re
+import shutil
 import signal
 
 import fixtures
@@ -64,7 +64,7 @@ class ProcessFixture(fixtures.Fixture):
         run_as_root = bool(self.namespace)
         exec_name = (self.exec_name
                      if run_as_root
-                     else spawn.find_executable(self.exec_name))
+                     else shutil.which(self.exec_name))
         cmd = [exec_name, '--log-dir', log_dir, '--log-file', log_file]
         for filename in self.config_filenames:
             cmd += ['--config-file', filename]
@@ -206,7 +206,7 @@ class OVSAgentFixture(ServiceFixture):
         self.process_fixture = self.useFixture(ProcessFixture(
             test_name=self.test_name,
             process_name=constants.AGENT_PROCESS_OVS,
-            exec_name=spawn.find_executable(
+            exec_name=shutil.which(
                 'ovs_agent.py',
                 path=os.path.join(fullstack_base.ROOTDIR, CMD_FOLDER)),
             config_filenames=config_filenames,
@@ -227,7 +227,7 @@ class PlacementFixture(fixtures.Fixture):
         self.process_fixture = self.useFixture(ProcessFixture(
             test_name=self.test_name,
             process_name='placement',
-            exec_name=spawn.find_executable(
+            exec_name=shutil.which(
                 'placement.py', path=os.path.join(fullstack_base.ROOTDIR,
                                                   'servers')
             ),
@@ -313,7 +313,7 @@ class L3AgentFixture(ServiceFixture):
         if self.namespace:
             exec_name = 'l3_agent.py'
         else:
-            exec_name = spawn.find_executable(
+            exec_name = shutil.which(
                 'l3_agent.py',
                 path=os.path.join(fullstack_base.ROOTDIR, CMD_FOLDER))
 
@@ -354,7 +354,7 @@ class DhcpAgentFixture(fixtures.Fixture):
         if self.namespace:
             exec_name = 'dhcp_agent.py'
         else:
-            exec_name = spawn.find_executable(
+            exec_name = shutil.which(
                 'dhcp_agent.py',
                 path=os.path.join(fullstack_base.ROOTDIR, CMD_FOLDER))
 
