@@ -322,7 +322,7 @@ class OVNPortForwarding(object):
     def _handle_lb_on_ls(self, _resource, event_type, _pf_plugin, payload):
         if not payload:
             return
-        ovn_nb = self._l3_plugin._nb_ovn
+        ovn_nb = self._l3_plugin._ovn
         with ovn_nb.transaction(check_error=True) as ovn_txn:
             if event_type == events.AFTER_CREATE:
                 self._handler._add_lb_on_ls(ovn_txn, ovn_nb,
