@@ -43,6 +43,7 @@ from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import idlutils
 from webob import exc
 
+from neutron.common import config
 from neutron.common.ovn import acl as ovn_acl
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import exceptions as ovn_exceptions
@@ -76,6 +77,7 @@ OvnRevNumberRow = collections.namedtuple(
 
 class MechDriverSetupBase:
     def setUp(self):
+        config.register_common_config_options()
         super().setUp()
         mm = directory.get_plugin().mechanism_manager
         self.mech_driver = mm.mech_drivers['ovn'].obj
