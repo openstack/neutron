@@ -455,23 +455,24 @@ class TestConjIPFlowManager(base.BaseTestCase):
             self.manager.add(self.vlan_tag, 'sg', 'remote_id',
                              constants.INGRESS_DIRECTION, constants.IPv4, 3)
             self.manager.update_flows_for_vlan(self.vlan_tag, 'ofport1')
-        self.assertEqual(self.driver._add_flow.call_args_list,
-            [mock.call(actions='conjunction(16,1/2)', ct_state='+est-rel-rpl',
-                       dl_type=2048, nw_src='10.22.3.4/32', priority=70,
-                       reg_net=self.vlan_tag, table=82,
-                       flow_group_id='ofport1'),
-             mock.call(actions='conjunction(17,1/2)', ct_state='+new-est',
-                       dl_type=2048, nw_src='10.22.3.4/32', priority=70,
-                       reg_net=self.vlan_tag, table=82,
-                       flow_group_id='ofport1'),
-             mock.call(actions='conjunction(22,1/2)', ct_state='+est-rel-rpl',
-                       dl_type=2048, nw_src='10.22.3.4/32', priority=73,
-                       reg_net=self.vlan_tag, table=82,
-                       flow_group_id='ofport1'),
-             mock.call(actions='conjunction(23,1/2)', ct_state='+new-est',
-                       dl_type=2048, nw_src='10.22.3.4/32', priority=73,
-                       reg_net=self.vlan_tag, table=82,
-                       flow_group_id='ofport1')])
+        calls = [
+            mock.call(actions='conjunction(16,1/2)', ct_state='+est-rel-rpl',
+                      dl_type=2048, nw_src='10.22.3.4/32', priority=70,
+                      reg_net=self.vlan_tag, table=82,
+                      flow_group_id='ofport1'),
+            mock.call(actions='conjunction(17,1/2)', ct_state='+new-est',
+                      dl_type=2048, nw_src='10.22.3.4/32', priority=70,
+                      reg_net=self.vlan_tag, table=82,
+                      flow_group_id='ofport1'),
+            mock.call(actions='conjunction(22,1/2)', ct_state='+est-rel-rpl',
+                      dl_type=2048, nw_src='10.22.3.4/32', priority=73,
+                      reg_net=self.vlan_tag, table=82,
+                      flow_group_id='ofport1'),
+            mock.call(actions='conjunction(23,1/2)', ct_state='+new-est',
+                      dl_type=2048, nw_src='10.22.3.4/32', priority=73,
+                      reg_net=self.vlan_tag, table=82,
+                      flow_group_id='ofport1')]
+        self.assertEqual(self.driver._add_flow.call_args_list, calls)
 
     def _sg_removed(self, sg_name):
         with mock.patch.object(self.manager.conj_id_map,
