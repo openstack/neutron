@@ -12,6 +12,7 @@
 #    under the License.
 #
 
+import abc
 import collections
 import copy
 import datetime
@@ -75,7 +76,7 @@ OvnRevNumberRow = collections.namedtuple(
     'OvnRevNumberRow', ['created_at'])
 
 
-class MechDriverSetupBase:
+class MechDriverSetupBase(abc.ABC):
     def setUp(self):
         config.register_common_config_options()
         super().setUp()
