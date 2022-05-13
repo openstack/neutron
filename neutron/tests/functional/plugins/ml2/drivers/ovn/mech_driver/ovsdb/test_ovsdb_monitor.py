@@ -405,19 +405,30 @@ class TestAgentMonitor(base.TestOVNFunctionalBase):
                 type(neutron_agent.AgentCache()[self.chassis_name]))
 
     def test_agent_updated_at_use_nb_cfg_timestamp(self):
+        def check_agent_ts():
+            agent = neutron_agent.AgentCache()[self.chassis_name]
+            chassis_ts = self.sb_api.db_get(
+                'Chassis_Private', self.chassis_name,
+                'nb_cfg_timestamp').execute(check_error=True)
+            updated_at = datetime.datetime.fromtimestamp(
+                int(chassis_ts / 1000), datetime.timezone.utc)
+            return agent.updated_at == updated_at
+
         if not self.sb_api.is_table_present('Chassis_Private'):
             self.skipTest('Ovn sb not support Chassis_Private')
         timestamp = timeutils.utcnow_ts()
         nb_cfg_timestamp = timestamp * 1000
-        updated_at = datetime.datetime.fromtimestamp(
-            timestamp, datetime.timezone.utc)
         self.sb_api.db_set('Chassis_Private', self.chassis_name, (
             'nb_cfg_timestamp', nb_cfg_timestamp)).execute(check_error=True)
-        n_utils.wait_until_true(lambda:
-                neutron_agent.AgentCache()[self.chassis_name].
-                chassis_private.nb_cfg_timestamp == nb_cfg_timestamp)
-        agent = neutron_agent.AgentCache()[self.chassis_name]
-        self.assertEqual(updated_at, agent.updated_at)
+        try:
+            n_utils.wait_until_true(check_agent_ts, timeout=5)
+        except n_utils.WaitTimeout:
+            agent = neutron_agent.AgentCache()[self.chassis_name]
+            chassis_ts = self.sb_api.db_get(
+                'Chassis_Private', self.chassis_name,
+                'nb_cfg_timestamp').execute(check_error=True)
+            self.fail('Chassis timestamp: %s, agent updated_at: %s' %
+                      (chassis_ts, str(agent.updated_at)))
 
 
 class TestOvnIdlProbeInterval(base.TestOVNFunctionalBase):
