@@ -11,7 +11,6 @@
       - publish-openstack-docs-pti
       - periodic-stable-jobs
       - check-requirements
-      - integrated-gate-networking
       - release-notes-jobs-python3
     check:
       jobs:
@@ -38,6 +37,10 @@
               - ^tox.ini$
         - networking-ovn-tempest-dsvm-ovs-release:
             irrelevant-files: *tempest-irrelevant-files
+        - tempest-integrated-networking
+        - openstacksdk-functional-devstack
+        - grenade:
+            irrelevant-files: *tempest-irrelevant-files
         - grenade-py3:
             irrelevant-files: *tempest-irrelevant-files
         - neutron-tempest-ipv6-only
@@ -53,6 +56,10 @@
         - neutron-grenade-dvr-multinode
         - neutron-grenade
         - neutron-tempest-slow-py3
+        - tempest-integrated-networking
+        - openstacksdk-functional-devstack
+        - grenade:
+            irrelevant-files: *tempest-irrelevant-files
         - grenade-py3:
             irrelevant-files: *tempest-irrelevant-files
         - neutron-tempest-ipv6-only
