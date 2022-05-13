@@ -404,6 +404,16 @@ class PortBindingChassisEvent(row_event.RowEvent):
         self.event_name = 'PortBindingChassisEvent'
 
     def run(self, event, row, old):
+        if len(old._data) == 1 and 'external_ids' in old._data:
+            # NOTE: since [1], the NB logical_router_port.external_ids are
+            # copied into the SB port_binding.external_ids. If only the
+            # external_ids are changed, this event should be dismissed or it
+            # will trigger the Neutron NB update (that will trigger the core
+            # SB update and therefore an infinite loop).
+            # [1] https://www.mail-archive.com/ovs-dev@openvswitch.org/
+            #     msg62836.html
+            return
+
         if not utils.is_ovn_l3(self.l3_plugin):
             return
         router = host = None
