@@ -301,19 +301,19 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                              states=(new_router,)))
         return new_router
 
+    @db_api.CONTEXT_WRITER
     def _update_router_db(self, context, router_id, data):
         """Update the DB object."""
-        with db_api.CONTEXT_WRITER.using(context):
-            router_db = self._get_router(context, router_id)
-            old_router = self._make_router_dict(router_db)
-            if data:
-                router_db.update(self._get_stripped_router(data))
-            registry.publish(resources.ROUTER, events.PRECOMMIT_UPDATE, self,
-                             payload=events.DBEventPayload(
-                                 context, request_body=data,
-                                 states=(old_router,), resource_id=router_id,
-                                 desired_state=router_db))
-            return router_db
+        router_db = self._get_router(context, router_id)
+        old_router = self._make_router_dict(router_db)
+        if data:
+            router_db.update(self._get_stripped_router(data))
+        registry.publish(resources.ROUTER, events.PRECOMMIT_UPDATE, self,
+                         payload=events.DBEventPayload(
+                             context, request_body=data,
+                             states=(old_router,), resource_id=router_id,
+                             desired_state=router_db))
+        return router_db
 
     @db_api.retry_if_session_inactive()
     def update_router(self, context, id, router):
@@ -456,23 +456,23 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                              metadata=metadata,
                              resource_id=router_id))
 
+    @db_api.CONTEXT_WRITER
     def _delete_router_gw_port_db(self, context, router, request_body):
-        with db_api.CONTEXT_WRITER.using(context):
-            router.gw_port = None
-            if router not in context.session:
-                context.session.add(router)
-            try:
-                registry.publish(resources.ROUTER_GATEWAY,
-                                 events.BEFORE_DELETE, self,
-                                 payload=events.DBEventPayload(
-                                     context, states=(router,),
-                                     request_body=request_body,
-                                     resource_id=router.id))
-            except exceptions.CallbackFailure as e:
-                # NOTE(armax): preserve old check's behavior
-                if len(e.errors) == 1:
-                    raise e.errors[0].error
-                raise l3_exc.RouterInUse(router_id=router.id, reason=e)
+        router.gw_port = None
+        if router not in context.session:
+            context.session.add(router)
+        try:
+            registry.publish(resources.ROUTER_GATEWAY,
+                             events.BEFORE_DELETE, self,
+                             payload=events.DBEventPayload(
+                                 context, states=(router,),
+                                 request_body=request_body,
+                                 resource_id=router.id))
+        except exceptions.CallbackFailure as e:
+            # NOTE(armax): preserve old check's behavior
+            if len(e.errors) == 1:
+                raise e.errors[0].error
+            raise l3_exc.RouterInUse(router_id=router.id, reason=e)
 
     def _create_gw_port(self, context, router_id, router, new_network_id,
                         ext_ips):
@@ -761,43 +761,43 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                        {'port': port['id'], 'subnet': subnet_id})
                 raise n_exc.BadRequest(resource='router', msg=msg)
 
+    @db_api.CONTEXT_READER
     def _validate_router_port_info(self, context, router, port_id):
-        with db_api.CONTEXT_READER.using(context):
-            # check again within transaction to mitigate race
-            port = self._check_router_port(context, port_id, router.id)
+        # check again within transaction to mitigate race
+        port = self._check_router_port(context, port_id, router.id)
 
-            # Only allow one router port with IPv6 subnets per network id
-            if self._port_has_ipv6_address(port):
-                for existing_port in (rp.port for rp in router.attached_ports):
-                    if (existing_port['network_id'] == port['network_id'] and
-                            self._port_has_ipv6_address(existing_port)):
-                        msg = _("Cannot have multiple router ports with the "
-                                "same network id if both contain IPv6 "
-                                "subnets. Existing port %(p)s has IPv6 "
-                                "subnet(s) and network id %(nid)s")
-                        raise n_exc.BadRequest(resource='router', msg=msg % {
-                            'p': existing_port['id'],
-                            'nid': existing_port['network_id']})
+        # Only allow one router port with IPv6 subnets per network id
+        if self._port_has_ipv6_address(port):
+            for existing_port in (rp.port for rp in router.attached_ports):
+                if (existing_port['network_id'] == port['network_id'] and
+                        self._port_has_ipv6_address(existing_port)):
+                    msg = _("Cannot have multiple router ports with the "
+                            "same network id if both contain IPv6 "
+                            "subnets. Existing port %(p)s has IPv6 "
+                            "subnet(s) and network id %(nid)s")
+                    raise n_exc.BadRequest(resource='router', msg=msg % {
+                        'p': existing_port['id'],
+                        'nid': existing_port['network_id']})
 
-            fixed_ips = list(port['fixed_ips'])
-            subnets = []
-            for fixed_ip in fixed_ips:
-                subnet = self._core_plugin.get_subnet(context,
-                                                      fixed_ip['subnet_id'])
-                subnets.append(subnet)
+        fixed_ips = list(port['fixed_ips'])
+        subnets = []
+        for fixed_ip in fixed_ips:
+            subnet = self._core_plugin.get_subnet(context,
+                                                  fixed_ip['subnet_id'])
+            subnets.append(subnet)
 
-            if subnets:
-                self._check_for_dup_router_subnets(context, router,
-                                                   port['network_id'],
-                                                   subnets)
+        if subnets:
+            self._check_for_dup_router_subnets(context, router,
+                                               port['network_id'],
+                                               subnets)
 
-            # Keep the restriction against multiple IPv4 subnets
-            if len([s for s in subnets if s['ip_version'] == 4]) > 1:
-                msg = _("Cannot have multiple "
-                        "IPv4 subnets on router port")
-                raise n_exc.BadRequest(resource='router', msg=msg)
-            self._validate_port_in_range_or_admin(context, subnets, port)
-            return port, subnets
+        # Keep the restriction against multiple IPv4 subnets
+        if len([s for s in subnets if s['ip_version'] == 4]) > 1:
+            msg = _("Cannot have multiple "
+                    "IPv4 subnets on router port")
+            raise n_exc.BadRequest(resource='router', msg=msg)
+        self._validate_port_in_range_or_admin(context, subnets, port)
+        return port, subnets
 
     def _notify_attaching_interface(self, context, router_db, port,
                                     interface_info):
@@ -2018,12 +2018,13 @@ class L3RpcNotifierMixin(object):
             return
         network_id = updated['network_id']
         subnet_id = updated['id']
-        query = context.session.query(models_v2.Port.device_id).filter_by(
-                    network_id=network_id,
-                    device_owner=DEVICE_OWNER_ROUTER_GW)
-        query = query.join(models_v2.Port.fixed_ips).filter(
-                    models_v2.IPAllocation.subnet_id == subnet_id)
-        router_ids = set(port.device_id for port in query)
+        with db_api.CONTEXT_READER.using(context):
+            query = context.session.query(models_v2.Port.device_id).filter_by(
+                        network_id=network_id,
+                        device_owner=DEVICE_OWNER_ROUTER_GW)
+            query = query.join(models_v2.Port.fixed_ips).filter(
+                        models_v2.IPAllocation.subnet_id == subnet_id)
+            router_ids = set(port.device_id for port in query)
         for router_id in router_ids:
             l3plugin.notify_router_updated(context, router_id)
 
