@@ -326,12 +326,6 @@ def _add_segment_host_mapping_for_segment(resource, event, trigger,
                                           payload=None):
     context = payload.context
     segment = payload.latest_state
-    if not context.session.is_active:
-        # The session might be in partial rollback state, due to errors in
-        # peer callback. In that case, there is no need to add the mapping.
-        # Just return here.
-        return
-
     if not segment.physical_network:
         return
     cp = directory.get_plugin()
