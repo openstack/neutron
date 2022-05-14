@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Forbid the creation of a duplicate NDP proxy entry on the same router,
+    since the IP address of a router is unique and an IPv6 address only needs
+    one NDP proxy.

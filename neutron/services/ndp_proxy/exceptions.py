@@ -37,7 +37,7 @@ class AddressScopeConflict(n_exc.Conflict):
 
 
 class RouterGatewayNotValid(n_exc.Conflict):
-    message = _("Can not enable ndp proxy no "
+    message = _("Can not enable ndp proxy on "
                 "router %(router_id)s, %(reason)s.")
 
 
@@ -62,4 +62,4 @@ class RouterIPv6GatewayInUse(n_exc.Conflict):
 
 
 class NDPProxyNotFound(n_exc.NotFound):
-    message = _("NDP proxy %(id)s could not be found.")
+    message = _("Ndp proxy %(id)s could not be found.")

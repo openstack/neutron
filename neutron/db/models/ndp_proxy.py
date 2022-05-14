@@ -28,6 +28,12 @@ class NDPProxy(standard_attr.HasStandardAttributes,
                model_base.HasProject):
 
     __tablename__ = 'ndp_proxies'
+    __table_args__ = (
+        sa.UniqueConstraint(
+            'router_id', 'ip_address',
+            name='uniq_ndp_proxy0router_id0ip_address'),
+        model_base.BASEV2.__table_args__
+    )
 
     name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
     router_id = sa.Column(sa.String(db_const.UUID_FIELD_SIZE),
