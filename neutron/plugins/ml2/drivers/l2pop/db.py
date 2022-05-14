@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron_lib import constants as const
+from neutron_lib.db import api as db_api
 from oslo_serialization import jsonutils
 from oslo_utils import timeutils
 from sqlalchemy import orm
@@ -100,6 +101,7 @@ def _get_ha_router_interface_ids(context, network_id):
     return query.from_self(models_v2.Port.id).distinct()
 
 
+@db_api.CONTEXT_READER
 def get_nondistributed_active_network_ports(context, network_id):
     query = _get_active_network_ports(context, network_id)
     # Exclude DVR and HA router interfaces
@@ -111,7 +113,7 @@ def get_nondistributed_active_network_ports(context, network_id):
             if get_agent_ip(agent)]
 
 
-def get_dvr_active_network_ports(context, network_id):
+def _get_dvr_active_network_ports(context, network_id):
     query = context.session.query(ml2_models.DistributedPortBinding,
                                   agent_model.Agent)
     query = query.join(agent_model.Agent,
@@ -128,12 +130,13 @@ def get_dvr_active_network_ports(context, network_id):
             if get_agent_ip(agent)]
 
 
+@db_api.CONTEXT_READER
 def get_distributed_active_network_ports(context, network_id):
-    return (get_dvr_active_network_ports(context, network_id) +
-            get_ha_active_network_ports(context, network_id))
+    return (_get_dvr_active_network_ports(context, network_id) +
+            _get_ha_active_network_ports(context, network_id))
 
 
-def get_ha_active_network_ports(context, network_id):
+def _get_ha_active_network_ports(context, network_id):
     agents = get_ha_agents(context, network_id=network_id)
     return [(None, agent) for agent in agents]
 
@@ -149,6 +152,7 @@ def get_ha_agents_by_router_id(context, router_id):
     return get_ha_agents(context, router_id=router_id)
 
 
+@db_api.CONTEXT_READER
 def get_agent_network_active_port_count(context, agent_host,
                                         network_id):
     query = context.session.query(models_v2.Port)
@@ -162,7 +166,7 @@ def get_agent_network_active_port_count(context, agent_host,
 
     ha_iface_ids_query = _get_ha_router_interface_ids(context, network_id)
     query1 = query1.filter(models_v2.Port.id.notin_(ha_iface_ids_query))
-    ha_port_count = get_ha_router_active_port_count(
+    ha_port_count = _get_ha_router_active_port_count(
         context, agent_host, network_id)
 
     query2 = query.join(ml2_models.DistributedPortBinding)
@@ -173,10 +177,10 @@ def get_agent_network_active_port_count(context, agent_host,
                            const.DEVICE_OWNER_DVR_INTERFACE,
                            ml2_models.DistributedPortBinding.host ==
                            agent_host)
-    return (query1.count() + query2.count() + ha_port_count)
+    return query1.count() + query2.count() + ha_port_count
 
 
-def get_ha_router_active_port_count(context, agent_host, network_id):
+def _get_ha_router_active_port_count(context, agent_host, network_id):
     # Return num of HA router interfaces on the given network and host
     query = _ha_router_interfaces_on_network_query(context, network_id)
     query = query.filter(models_v2.Port.status == const.PORT_STATUS_ACTIVE)
