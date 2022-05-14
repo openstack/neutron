@@ -136,6 +136,10 @@ class OVNTrunkHandler(object):
         LOG.debug("Done unsetting parent for subport %s", subport.port_id)
 
     def trunk_created(self, trunk):
+        # Check if parent port is handled by OVN.
+        if not self.plugin_driver.nb_ovn.lookup('Logical_Switch_Port',
+                                                trunk.port_id, default=None):
+            return
         if trunk.sub_ports:
             self._set_sub_ports(trunk.port_id, trunk.sub_ports)
         trunk.update(status=trunk_consts.TRUNK_ACTIVE_STATUS)
@@ -145,11 +149,19 @@ class OVNTrunkHandler(object):
             self._unset_sub_ports(trunk.sub_ports)
 
     def subports_added(self, trunk, subports):
+        # Check if parent port is handled by OVN.
+        if not self.plugin_driver.nb_ovn.lookup('Logical_Switch_Port',
+                                                trunk.port_id, default=None):
+            return
         if subports:
             self._set_sub_ports(trunk.port_id, subports)
         trunk.update(status=trunk_consts.TRUNK_ACTIVE_STATUS)
 
     def subports_deleted(self, trunk, subports):
+        # Check if parent port is handled by OVN.
+        if not self.plugin_driver.nb_ovn.lookup('Logical_Switch_Port',
+                                                trunk.port_id, default=None):
+            return
         if subports:
             self._unset_sub_ports(subports)
         trunk.update(status=trunk_consts.TRUNK_ACTIVE_STATUS)
