@@ -50,6 +50,7 @@ from neutron.api import api_common
 from neutron.api import extensions
 from neutron.api.v2 import router
 from neutron.common import ipv6_utils
+from neutron.common.ovn import utils as ovn_utils
 from neutron.common import test_lib
 from neutron.common import utils
 from neutron.conf import policies
@@ -63,7 +64,6 @@ from neutron.ipam.drivers.neutrondb_ipam import driver as ipam_driver
 from neutron.ipam import exceptions as ipam_exc
 from neutron.objects import network as network_obj
 from neutron.objects import router as l3_obj
-from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron import policy
 from neutron import quota
 from neutron.quota import resource_registry
@@ -1067,8 +1067,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
     def setUp(self, **kwargs):
         super().setUp(**kwargs)
         self.mock_vp_parents = mock.patch.object(
-            ovn_client.OVNClient, 'get_virtual_port_parents',
-            return_value=None).start()
+            ovn_utils, 'get_virtual_port_parents', return_value=None).start()
 
     def test_create_port_json(self):
         keys = [('admin_state_up', True), ('status', self.port_create_status)]
