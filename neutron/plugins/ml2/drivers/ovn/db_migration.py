@@ -70,29 +70,29 @@ def migrate_neutron_database_to_ovn(plugin):
             break
 
         for port_id, host in diff:
-            with db_api.CONTEXT_WRITER.using(ctx):
-                pb = port_obj.PortBinding.get_object(ctx, port_id=port_id,
-                                                     host=host)
-                if not pb or not pb.vif_details:
-                    continue
+            try:
+                with db_api.CONTEXT_WRITER.using(ctx):
+                    pb = port_obj.PortBinding.get_object(ctx, port_id=port_id,
+                                                         host=host)
+                    if not pb or not pb.vif_details:
+                        continue
 
-                vif_details = pb.vif_details.copy()
-                for detail in VIF_DETAILS_TO_REMOVE:
-                    try:
-                        del vif_details[detail]
-                    except KeyError:
-                        pass
-                if vif_details == pb.vif_details:
-                    continue
+                    vif_details = pb.vif_details.copy()
+                    for detail in VIF_DETAILS_TO_REMOVE:
+                        try:
+                            del vif_details[detail]
+                        except KeyError:
+                            pass
+                    if vif_details == pb.vif_details:
+                        continue
 
-                pb.vif_details = vif_details
-                try:
+                    pb.vif_details = vif_details
                     pb.update()
-                except (exceptions.ObjectNotFound,
-                        sqla_exc.StaleDataError,
-                        db_exc.DBDeadlock):
-                    # The PortBinding register has been already modified.
-                    pb_missed.add(port_id)
+            except (exceptions.ObjectNotFound,
+                    sqla_exc.StaleDataError,
+                    db_exc.DBDeadlock):
+                # The PortBinding register has been already modified.
+                pb_missed.add(port_id)
 
         pb_updated.update(diff)
 
