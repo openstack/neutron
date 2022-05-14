@@ -371,6 +371,13 @@ def get_ovn_port_addresses(ovn_port):
     return list(set(addresses + port_security))
 
 
+def get_virtual_port_parents(nb_idl, virtual_ip, network_id, port_id):
+    ls = nb_idl.ls_get(ovn_name(network_id)).execute(check_error=True)
+    return [lsp.name for lsp in ls.ports
+            if lsp.name != port_id and
+            virtual_ip in get_ovn_port_addresses(lsp)]
+
+
 def sort_ips_by_version(addresses):
     ip_map = {'ip4': [], 'ip6': []}
     for addr in addresses:

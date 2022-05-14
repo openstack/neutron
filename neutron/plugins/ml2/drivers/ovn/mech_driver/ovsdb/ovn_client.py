@@ -214,13 +214,6 @@ class OVNClient(object):
             external_ids=subnet_dhcp_options['external_ids'])
         return {'cmd': add_dhcp_opts_cmd}
 
-    def get_virtual_port_parents(self, virtual_ip, port):
-        ls = self._nb_idl.ls_get(utils.ovn_name(port['network_id'])).execute(
-            check_error=True)
-        return [lsp.name for lsp in ls.ports
-                if lsp.name != port['id'] and
-                virtual_ip in utils.get_ovn_port_addresses(lsp)]
-
     def _get_port_options(self, port):
         context = n_context.get_admin_context()
         binding_prof = utils.validate_and_get_data_from_binding_profile(port)
@@ -255,7 +248,8 @@ class OVNClient(object):
                                          subnet['cidr'].split('/')[1])
 
                 # Check if the port being created is a virtual port
-                parents = self.get_virtual_port_parents(ip_addr, port)
+                parents = utils.get_virtual_port_parents(
+                    self._nb_idl, ip_addr, port['network_id'], port['id'])
                 if not parents:
                     continue
 

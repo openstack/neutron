@@ -559,3 +559,22 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         expected_calls = [mock.call('QoS', qoses1[0].uuid,
                                     ('external_ids', external_ids))]
         nb_idl.db_set.assert_has_calls(expected_calls)
+
+    @mock.patch.object(utils, 'get_virtual_port_parents',
+                       return_value=[mock.ANY])
+    def test_update_port_virtual_type(self, *args):
+        nb_idl = self.fake_ovn_client._nb_idl
+        lsp0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'lsp0', 'type': ''})
+        lsp1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'lsp1', 'type': constants.LSP_TYPE_VIRTUAL})
+        port0 = {'fixed_ips': [{'ip_address': mock.ANY}],
+                 'network_id': mock.ANY, 'id': mock.ANY}
+        nb_idl.lsp_list.return_value.execute.return_value = (lsp0, lsp1)
+        self.fake_ovn_client._plugin.get_port.return_value = port0
+
+        self.assertRaises(
+            periodics.NeverAgain, self.periodic.update_port_virtual_type)
+        expected_calls = [mock.call('Logical_Switch_Port', lsp0.uuid,
+                                    ('type', constants.LSP_TYPE_VIRTUAL))]
+        nb_idl.db_set.assert_has_calls(expected_calls)
