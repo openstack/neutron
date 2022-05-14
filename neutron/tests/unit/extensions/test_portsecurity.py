@@ -25,11 +25,11 @@ from neutron_lib.exceptions import port_security as psec_exc
 from neutron_lib.plugins import directory
 from webob import exc
 
+from neutron.common.ovn import utils as ovn_utils
 from neutron.db import db_base_plugin_v2
 from neutron.db import portsecurity_db
 from neutron.db import securitygroups_db
 from neutron.extensions import securitygroup as ext_sg
-from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron import quota
 from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_securitygroup
@@ -188,8 +188,7 @@ class TestPortSecurity(PortSecurityDBTestCase):
         self.mock_quota_make_res = make_res.start()
         self.mock_quota_commit_res = commit_res.start()
         self.mock_vp_parents = mock.patch.object(
-            ovn_client.OVNClient, 'get_virtual_port_parents',
-            return_value=None).start()
+            ovn_utils, 'get_virtual_port_parents', return_value=None).start()
 
     def test_create_network_with_portsecurity_mac(self):
         res = self._create_network('json', 'net1', True)
