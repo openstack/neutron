@@ -14,6 +14,7 @@
 # limitations under the License.
 
 import copy
+from unittest import mock
 
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api import validators
@@ -24,6 +25,7 @@ from neutron_lib.exceptions import port_security as psec_exc
 from neutron_lib.plugins import directory
 from webob import exc
 
+from neutron.common.ovn import utils as ovn_utils
 from neutron.db import db_base_plugin_v2
 from neutron.db import portsecurity_db
 from neutron.db import securitygroups_db
@@ -177,6 +179,12 @@ class PortSecurityDBTestCase(PortSecurityTestCase):
 
 
 class TestPortSecurity(PortSecurityDBTestCase):
+
+    def setUp(self, plugin=None, service_plugins=None):
+        super().setUp(plugin)
+        self.mock_vp_parents = mock.patch.object(
+            ovn_utils, 'get_virtual_port_parents', return_value=None).start()
+
     def test_create_network_with_portsecurity_mac(self):
         res = self._create_network('json', 'net1', True)
         net = self.deserialize('json', res)

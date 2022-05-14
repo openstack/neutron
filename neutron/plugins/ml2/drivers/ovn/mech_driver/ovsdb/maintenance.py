@@ -759,6 +759,39 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                     txn.add(cmd)
         raise periodics.NeverAgain()
 
+    # TODO(ralonsoh): Remove this in the Z+4 cycle
+    @periodics.periodic(spacing=600, run_immediately=True)
+    def update_port_virtual_type(self):
+        """Set type=virtual to those ports with parents
+        Before LP#1973276, any virtual port with "device_owner" defined, lost
+        its type=virtual. This task restores the type for those ports updated
+        before the fix https://review.opendev.org/c/openstack/neutron/+/841711.
+        """
+        if not self.has_lock:
+            return
+
+        context = n_context.get_admin_context()
+        cmds = []
+        for lsp in self._nb_idl.lsp_list().execute(check_error=True):
+            if lsp.type != '':
+                continue
+
+            port = self._ovn_client._plugin.get_port(context, lsp.name)
+            for ip in port.get('fixed_ips', []):
+                if utils.get_virtual_port_parents(
+                        self._nb_idl, ip['ip_address'], port['network_id'],
+                        port['id']):
+                    cmds.append(self._nb_idl.db_set(
+                        'Logical_Switch_Port', lsp.uuid,
+                        ('type', ovn_const.LSP_TYPE_VIRTUAL)))
+                    break
+
+        if cmds:
+            with self._nb_idl.transaction(check_error=True) as txn:
+                for cmd in cmds:
+                    txn.add(cmd)
+        raise periodics.NeverAgain()
+
 
 class HashRingHealthCheckPeriodics(object):
 
