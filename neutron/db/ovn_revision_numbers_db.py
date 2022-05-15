@@ -136,17 +136,18 @@ def _ensure_revision_row_exist(context, resource, resource_type, std_attr_id):
     # deal with objects that already existed before the sync work. I believe
     # that we can remove this method after few development cycles. Or,
     # if we decide to make a migration script as well.
-    with db_api.CONTEXT_READER.using(context):
-        if not context.session.query(ovn_models.OVNRevisionNumbers).filter_by(
-                resource_uuid=resource['id'],
-                resource_type=resource_type).one_or_none():
-            LOG.warning(
-                'No revision row found for %(res_uuid)s (type: '
-                '%(res_type)s) when bumping the revision number. '
-                'Creating one.', {'res_uuid': resource['id'],
-                                  'res_type': resource_type})
-            create_initial_revision(context, resource['id'], resource_type,
-                                    std_attr_id=std_attr_id)
+    if context.session.query(ovn_models.OVNRevisionNumbers).filter_by(
+            resource_uuid=resource['id'],
+            resource_type=resource_type).one_or_none():
+        return
+
+    LOG.warning(
+        'No revision row found for %(res_uuid)s (type: '
+        '%(res_type)s) when bumping the revision number. '
+        'Creating one.', {'res_uuid': resource['id'],
+                          'res_type': resource_type})
+    create_initial_revision(context, resource['id'], resource_type,
+                            std_attr_id=std_attr_id)
 
 
 @db_api.retry_if_session_inactive()
