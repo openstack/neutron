@@ -413,6 +413,11 @@ configuration. Either or both the ``peer_address`` and the
 addressing modes and router modes described above should not impact
 support.
 
+FWaaS
+-----
+
+FWaaS allows creation of IPv6 based rules.
+
 NAT & Floating IPs
 ------------------
 
