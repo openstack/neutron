@@ -23,14 +23,14 @@ from oslo_utils import uuidutils
 # Common database operation implementations
 def _get_filter_query(obj_cls, context, query_field=None, query_limit=None,
                       **kwargs):
-    with obj_cls.db_context_reader(context):
-        filters = _kwargs_to_filters(**kwargs)
-        query = model_query.get_collection_query(
-            context, obj_cls.db_model, filters, limit=query_limit,
-            field=query_field)
-        return query
+    filters = _kwargs_to_filters(**kwargs)
+    query = model_query.get_collection_query(
+        context, obj_cls.db_model, filters, limit=query_limit,
+        field=query_field)
+    return query
 
 
+@db_api.CONTEXT_READER
 def get_object(obj_cls, context, **kwargs):
     return _get_filter_query(obj_cls, context, **kwargs).first()
 
