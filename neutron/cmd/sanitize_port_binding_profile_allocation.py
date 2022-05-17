@@ -12,13 +12,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api import converters
 from neutron_lib import context
 from neutron_lib.db import api as db_api
 from oslo_config import cfg
 from oslo_db import options as db_options
 from oslo_log import log as logging
 
-from neutron.api import converters as n_converters
 from neutron.common import config as common_config
 from neutron.objects import ports as port_obj
 from neutron.objects.qos import binding as qos_binding_obj
@@ -82,7 +82,7 @@ def main():
                 continue
 
             port_binding.profile = {'allocation':
-                n_converters.convert_to_sanitized_binding_profile_allocation(
+                converters.convert_to_sanitized_binding_profile_allocation(
                     allocation, port_binding.port_id, min_bw_rules)}
             LOG.info('Port %s updated, New binding-profile.allocation format: '
                      '%s', port_binding.port_id, port_binding.profile)
