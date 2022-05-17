@@ -109,7 +109,7 @@ class RouterExtraAttributes(base.NeutronDbObject):
 
     @classmethod
     @db_api.CONTEXT_READER
-    def get_router_agents_count(cls, context):
+    def get_router_agents_count(cls, context, ha=False, less_than=0):
         # TODO(sshank): This is pulled out from l3_agentschedulers_db.py
         # until a way to handle joins is figured out.
         binding_model = rb_model.RouterL3AgentBinding
@@ -121,9 +121,12 @@ class RouterExtraAttributes(base.NeutronDbObject):
                           l3_attrs.RouterExtraAttributes.router_id).
                      join(l3.Router).
                      group_by(binding_model.router_id).subquery())
-
-        query = (context.session.query(l3.Router, sub_query.c.count).
-                 outerjoin(sub_query))
+        count = func.coalesce(sub_query.c.count, 0)
+        query = (context.session.query(l3.Router, count).
+                 outerjoin(sub_query).join(l3_attrs.RouterExtraAttributes).
+                 filter(l3_attrs.RouterExtraAttributes.ha == ha))
+        if less_than > 0:
+            query = query.filter(count < less_than)
 
         return list(query)
 

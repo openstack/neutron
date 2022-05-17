@@ -397,12 +397,12 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         return {'agents': [self._make_agent_dict(agent)
                            for agent in agents]}
 
-    def get_routers_l3_agents_count(self, context):
+    def get_routers_l3_agents_count(self, context, ha=False, less_than=0):
         """Return a map between routers and agent counts for all routers."""
         # TODO(sshank): This portion needs Router OVO integration when it is
         # merged.
         l3_model_list = l3_objs.RouterExtraAttributes.get_router_agents_count(
-            context)
+            context, ha=ha, less_than=less_than)
         return [(self._make_router_dict(router_model),
                  agent_count if agent_count else 0)
                 for router_model, agent_count in l3_model_list]

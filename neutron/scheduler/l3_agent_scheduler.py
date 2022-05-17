@@ -103,11 +103,18 @@ class L3Scheduler(object, metaclass=abc.ABCMeta):
         underscheduled_routers = []
         max_agents_for_ha = plugin.get_number_of_agents_for_scheduling(context)
 
-        for router, count in plugin.get_routers_l3_agents_count(context):
-            if (count < 1 or
-                    router.get('ha', False) and count < max_agents_for_ha):
-                # Either the router was un-scheduled (scheduled to 0 agents),
-                # or it's an HA router and it was under-scheduled (scheduled to
+        # since working out a unified SQL is hard for both regular and
+        # ha routers. Split its up and run queries separately
+        for router, count in plugin.get_routers_l3_agents_count(
+                context, ha=False, less_than=1):
+            if count < 1:
+                # the router was un-scheduled (scheduled to 0 agents),
+                underscheduled_routers.append(router)
+
+        for router, count in plugin.get_routers_l3_agents_count(
+                context, ha=True, less_than=max_agents_for_ha):
+            if count < max_agents_for_ha:
+                # it's an HA router and it was under-scheduled (scheduled to
                 # less than max_agents_for_ha). Either way, it should be added
                 # to the list of routers we want to handle.
                 underscheduled_routers.append(router)
