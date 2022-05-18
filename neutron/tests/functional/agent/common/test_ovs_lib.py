@@ -509,7 +509,8 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         external_ids = {'port': str(self.port_id),
                         'type': qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH,
                         'queue-num': str(queue_num)}
-        other_config = {'min-rate': '1700000'}
+        other_config = {'min-rate': '1700000',
+                        'max-rate': str(ovs_lib.OVS_MAX_RATE)}
         expected = {'_uuid': queue_id,
                     'external_ids': external_ids,
                     'other_config': other_config}

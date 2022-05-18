@@ -73,6 +73,7 @@ _SENTINEL = object()
 
 CTRL_RATE_LIMIT_MIN = 100
 CTRL_BURST_LIMIT_MIN = 25
+OVS_MAX_RATE = 2 ** 35 - 1
 
 # TODO(slaweq): move this to neutron_lib.constants
 TYPE_GRE_IP6 = 'ip6gre'
@@ -1046,14 +1047,17 @@ class OVSBridge(BaseOVS):
 
     def _update_queue(self, port_id, queue_num, queue_type, max_kbps=None,
                       max_burst_kbps=None, min_kbps=None):
-        other_config = {}
+        queue = self._find_queue(port_id, _type=queue_type)
+        other_config = dict(queue['other_config']) if queue else {}
+
         if max_kbps:
             other_config['max-rate'] = str(int(max_kbps) * p_const.SI_BASE)
             other_config['burst'] = str(int(max_burst_kbps) * p_const.SI_BASE)
         if min_kbps:
             other_config['min-rate'] = str(min_kbps * p_const.SI_BASE)
+            if 'max-rate' not in other_config:
+                other_config['max-rate'] = str(OVS_MAX_RATE)
 
-        queue = self._find_queue(port_id, _type=queue_type)
         if queue and queue['_uuid']:
             if queue['other_config'] != other_config:
                 self.set_db_attribute('Queue', queue['_uuid'], 'other_config',
@@ -1126,11 +1130,13 @@ class OVSBridge(BaseOVS):
         if not qos_id:
             external_ids = {'id': rule_type_id,
                             '_type': rule_type}
+            other_config = {'max-rate': str(OVS_MAX_RATE)}
             self.ovsdb.db_create(
                 'QoS',
                 type='linux-htb',
                 queues=queues,
-                external_ids=external_ids).execute(check_error=True)
+                external_ids=external_ids,
+                other_config=other_config).execute(check_error=True)
             qos_id, _ = self._find_qos(rule_type_id, rule_type)
         else:
             self.clear_db_attribute('QoS', qos_id, 'queues')
