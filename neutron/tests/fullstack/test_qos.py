@@ -779,7 +779,8 @@ class TestMinBwQoSOvs(_TestMinBwQoS, base.BaseFullStackTestCase):
 
         # Check QoS policy and Queue rule.
         qos, queue = self._find_agent_qos_and_queue(vm_qos)
-        self.assertEqual({'min-rate': str(MIN_BANDWIDTH * 1000)},
+        self.assertEqual({'min-rate': str(MIN_BANDWIDTH * 1000),
+                          'max-rate': str(ovs_lib.OVS_MAX_RATE)},
                          queue.other_config)
         queues = vm_qos.bridge._list_queues(port=vm_qos.neutron_port['id'])
         self.assertEqual(1, len(queues))
