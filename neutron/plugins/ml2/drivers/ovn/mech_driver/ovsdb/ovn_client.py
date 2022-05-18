@@ -299,13 +299,15 @@ class OVNClient(object):
                                          subnet['cidr'].split('/')[1])
 
                 # Check if the port being created is a virtual port
-                if not port['device_owner']:
-                    parents = self.get_virtual_port_parents(ip_addr, port)
-                    if parents:
-                        port_type = ovn_const.LSP_TYPE_VIRTUAL
-                        options[ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY] = ip_addr
-                        options[ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY] = (
-                            ','.join(parents))
+                parents = self.get_virtual_port_parents(ip_addr, port)
+                if not parents:
+                    continue
+
+                port_type = ovn_const.LSP_TYPE_VIRTUAL
+                options[ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY] = ip_addr
+                options[ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY] = (
+                    ','.join(parents))
+                break
 
             # Metadata port.
             if port['device_owner'] == const.DEVICE_OWNER_DISTRIBUTED:
