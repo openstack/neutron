@@ -477,7 +477,8 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
                         six.u('type'): six.u(
                             qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH),
                         six.u('queue-num'): six.u(str(queue_num))}
-        other_config = {six.u('min-rate'): six.u('1700000')}
+        other_config = {six.u('min-rate'): six.u('1700000'),
+                        six.u('max-rate'): six.u(str(ovs_lib.OVS_MAX_RATE))}
         expected = {'_uuid': queue_id,
                     'external_ids': external_ids,
                     'other_config': other_config}
