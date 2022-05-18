@@ -209,7 +209,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                         'lease_time': str(12 * 60 * 60),
                         'mtu': str(n1['network']['mtu']),
                         'router': n1_s1['subnet']['gateway_ip'],
-                        'tftp_server': '20.0.0.20',
+                        'tftp_server': '"20.0.0.20"',
                         'domain_name': '"ovn.test"',
                         'dns_server': '8.8.8.8'}})
                 self.expected_dhcp_options_rows.append({
@@ -256,7 +256,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                                 'lease_time': str(3 * 60 * 60),
                                 'mtu': str(n1['network']['mtu'] / 2),
                                 'router': '10.0.0.254',
-                                'tftp_server': '20.0.0.234',
+                                'tftp_server': '"20.0.0.234"',
                                 'domain_name': '"ovn.test"',
                                 'dns_server': '8.8.8.8'},
                     'external_ids': {'subnet_id': n1_s1['subnet']['id'],
@@ -279,7 +279,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                         'lease_time': str(12 * 60 * 60),
                         'mtu': str(n1['network']['mtu']),
                         'router': n1_s1['subnet']['gateway_ip'],
-                        'tftp_server': '20.0.0.20',
+                        'tftp_server': '"20.0.0.20"',
                         'domain_name': '"ovn.test"',
                         'dns_server': '8.8.8.8'}})
                 self.expected_dhcp_options_rows.append({
@@ -340,7 +340,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                         'lease_time': str(12 * 60 * 60),
                         'mtu': str(n1['network']['mtu']),
                         'router': n2_s1['subnet']['gateway_ip'],
-                        'tftp_server': '20.0.0.20',
+                        'tftp_server': '"20.0.0.20"',
                         'domain_name': '"ovn.test"',
                         'dns_server': '8.8.8.8'}})
         self.missed_dhcp_options.extend([
@@ -717,7 +717,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                         'lease_time': str(3 * 60 * 60),
                         'mtu': str(n3['network']['mtu'] / 2),
                         'router': '30.0.0.254',
-                        'tftp_server': '30.0.0.234',
+                        'tftp_server': '"30.0.0.234"',
                         'dns_server': '8.8.8.8'},
             'external_ids': {'subnet_id': n3_s1['subnet']['id'],
                              'port_id': fake_port_id1}}
