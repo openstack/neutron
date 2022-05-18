@@ -88,6 +88,87 @@ not true and there may be slight differences between those drivers.
 | (please check [3]_ for details)        |                       | rule.                 |
 +----------------------------------------+-----------------------+-----------------------+
 
+Open Flow rules processing considerations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The native Open vSwitch firewall driver increases the number of Open Flow rules
+to be installed in the integration bridge, that could be up to thousands of
+entries, depending on the number or rules, rule type and number of ports in the
+compute node.
+
+By default, these rules are written into the integration bridge in batches. The
+``_constants.AGENT_RES_PROCESSING_STEP`` constant defines how many rules are
+written in a single operation. It is set to 100.
+
+As seen in `LP#1934917 <https://bugs.launchpad.net/neutron/+bug/1934917>`_,
+during the Open Flow processing (that could be better displayed during the OVS
+agent initial transient period), there could be some inconsistencies in the
+port rules. In order to avoid them, the configuration variable
+``OVS.openflow_processed_per_port`` allows to process all Open Flow rules
+related to a single port in a single transaction.
+
+The following script provides a tool to measure, in each deployment, the
+processing time when using ``OVS.openflow_processed_per_port`` or
+the default ``_constants.AGENT_RES_PROCESSING_STEP``:
+
+.. code-block:: bash
+
+    # (1) Create a network with a single IPv4 subnet
+    openstack network create net-scale
+    openstack subnet create --subnet-range 10.250.0.0/16 --network net-scale snet-scale
+
+    # (2) Create 400 ports bound to one host
+    for i in {1..400}
+    do
+        openstack port create \
+          --security-group <security_group_id> \
+          --device-owner testing:scale \
+          --binding-profile host_id=<compute_node_host_name> \
+          --network net-scale test-large-scale-port-$i
+    done
+
+    # (3) Create 1000 security group rules, belonging to the same security
+    #     group <security_group_id>
+    for i in {3000..4000}
+    do
+      curl -g -i -X POST http://controller:9696/v2.0/security-group-rules \
+      -H "User-Agent: python-neutronclient" -H "Content-Type: application/json" \
+      -H "Accept: application/json" -H "X-Auth-Token: <token>" \
+      -d '{
+      "security_group_rule": {
+        "direction": "ingress", "protocol": "tcp",
+        "ethertype": "IPv4", "port_range_max": "'$i'",
+        "port_range_min": "3000",
+        "security_group_id": <security_group_id>}
+      }' 2>&1 > /dev/null
+    done
+
+    # (4) Setup the port to the host <compute_node_host_name>
+    # "grep" the test port list into file port_list.
+    $ for p in `openstack port list -f value -c id -c name -c mac_address -c fixed_ips | grep test-large-scale-port`
+      do
+          mac=`echo $p | cut -f3 -d" "`
+          ip_addr=`echo $p | cut -f7 -d" " | cut -f2 -d"'"`
+          dev_id=`echo $p | cut -f1 -d" " | cut -b 1-11`
+          dev_name="tp-$dev_id"
+          echo "===" $mac "===" $ip_addr "===" $dev_id "===" $dev_name
+          ovs-vsctl  --may-exist add-port br-int ${dev_name} -- set Interface \
+            ${dev_name} type=internal \
+            -- set Interface ${dev_name} external-ids:attached-mac="${mac}" \
+            -- set Interface ${dev_name} external-ids:iface-id="${p}" \
+            -- set Interface ${dev_name} external-ids:iface-status=active
+          sleep 0.2
+
+          ip link set dev ${dev_name} address ${mac}
+          ip addr add ${ip_addr} dev ${dev_name}
+          ip link set ${dev_name} up
+      done
+
+    # (5) Restart the OVS agent and check that all flows are in place.
+    # (6) Check the OVS agent restart time, checking the "iteration" time and
+    #     number.
+
+
 References
 ~~~~~~~~~~
 

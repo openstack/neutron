@@ -51,7 +51,7 @@ OPTS = [
                        'That avoids possible inconsistencies during OVS agent '
                        'restart and port updates. '
                        'If disabled, the flows will be processed in batches '
-                       'of "openflow_number_processing_step" number of '
+                       'of ``_constants.AGENT_RES_PROCESSING_STEP`` number of '
                        'OpenFlow rules.')),
 ]
 
