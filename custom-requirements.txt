@@ -34,4 +34,5 @@ git+https://github.com/sapcc/openstack-uwsgi-middleware.git@main#egg=uwsgi-middl
 -e git+https://github.com/sapcc/networking-nsx-t.git@stable/ussuri-m3#egg=networking_nsxv3
 -e git+https://github.com/sapcc/networking-bgpvpn@stable/ussuri-m3#egg=networking-bgpvpn
 -e git+https://github.com/sapcc/networking-interconnection@stable/ussuri-m3#egg=networking_interconnection
+-e git+https://github.com/sapcc/networking-ccloud@stable/ussuri-m3#egg=networking_ccloud
 
