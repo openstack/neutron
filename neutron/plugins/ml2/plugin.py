@@ -1848,7 +1848,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     self.update_address_pairs_on_port(context, id, port,
                                                       original_port,
                                                       updated_port))
-            need_port_update_notify |= self.update_security_group_on_port(
+            need_port_update_notify |= self._update_security_group_on_port(
                 context, id, port, original_port, updated_port)
             network = self.get_network(context, original_port['network_id'])
             need_port_update_notify |= self._update_extra_dhcp_opts_on_port(
