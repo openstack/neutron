@@ -13,8 +13,8 @@
 #    under the License.
 
 
-from distutils import spawn
 import os
+import shutil
 
 import fixtures
 import psutil
@@ -64,7 +64,7 @@ class OvnNorthd(DaemonProcessFixture):
     def start(self):
         # start the ovn-northd
         ovn_northd_cmd = [
-            spawn.find_executable('ovn-northd'), '-vconsole:off',
+            shutil.which('ovn-northd'), '-vconsole:off',
             '--detach',
             '--ovnnb-db=%s' % self.ovn_nb_db,
             '--ovnsb-db=%s' % self.ovn_sb_db,
@@ -141,11 +141,11 @@ class OvsdbServer(DaemonProcessFixture):
 
     def _init_ovsdb_pki(self):
         os.chdir(self.temp_dir)
-        pki_init_cmd = [spawn.find_executable('ovs-pki'), 'init',
+        pki_init_cmd = [shutil.which('ovs-pki'), 'init',
                         '-d', self.temp_dir, '-l',
                         os.path.join(self.temp_dir, 'pki.log'), '--force']
         utils.execute(pki_init_cmd)
-        pki_req_sign = [spawn.find_executable('ovs-pki'), 'req+sign', 'ovn',
+        pki_req_sign = [shutil.which('ovs-pki'), 'req+sign', 'ovn',
                         'controller', '-d', self.temp_dir, '-l',
                         os.path.join(self.temp_dir, 'pki.log'), '--force']
         utils.execute(pki_req_sign)
@@ -161,14 +161,14 @@ class OvsdbServer(DaemonProcessFixture):
         pki_done = False
         for ovsdb_process in self.ovsdb_server_processes:
             # create the db from the schema using ovsdb-tool
-            ovsdb_tool_cmd = [spawn.find_executable('ovsdb-tool'),
+            ovsdb_tool_cmd = [shutil.which('ovsdb-tool'),
                               'create', ovsdb_process['db_path'],
                               ovsdb_process['schema_path']]
             utils.execute(ovsdb_tool_cmd)
 
             # start the ovsdb-server
             ovsdb_server_cmd = [
-                spawn.find_executable('ovsdb-server'), '-vconsole:off',
+                shutil.which('ovsdb-server'), '-vconsole:off',
                 '--detach',
                 '--pidfile=%s' % os.path.join(
                     self.temp_dir, ovsdb_process['pidfile']),
@@ -190,7 +190,7 @@ class OvsdbServer(DaemonProcessFixture):
             obj, _ = utils.create_process(ovsdb_server_cmd)
             obj.communicate()
 
-            conn_cmd = [spawn.find_executable(ovsdb_process['ctl_cmd']),
+            conn_cmd = [shutil.which(ovsdb_process['ctl_cmd']),
                         '--db=unix:%s' % ovsdb_process['remote_path'],
                         'set-connection',
                         'p%s:%s:%s' % (ovsdb_process['protocol'],

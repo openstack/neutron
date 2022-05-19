@@ -12,8 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from distutils import spawn
 import itertools
+import shutil
 
 import netaddr
 from oslo_log import log as logging
@@ -59,7 +59,7 @@ class FakeFullstackMachinesList(list):
 
 class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
     NO_RESOLV_CONF_DHCLIENT_SCRIPT_PATH = (
-        spawn.find_executable(FULLSTACK_DHCLIENT_SCRIPT))
+        shutil.which(FULLSTACK_DHCLIENT_SCRIPT))
 
     def __init__(self, host, network_id, tenant_id, safe_client,
                  neutron_port=None, bridge_name=None, use_dhcp=False,
