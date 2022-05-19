@@ -20,6 +20,8 @@ from unittest import mock
 from neutron_lib.api.definitions import rbac_security_groups as rbac_sg_def
 from neutron_lib.api.definitions import security_groups_remote_address_group \
     as sgag_def
+from neutron_lib.api.definitions import security_groups_shared_filtering \
+    as sg_shared_filter_def
 from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib import context
@@ -36,8 +38,6 @@ from neutron.db import address_group_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import securitygroups_db
 from neutron.extensions import address_group as ext_ag
-from neutron.extensions import security_groups_shared_filtering_lib \
-    as sg_shared_filter_def
 from neutron.extensions import securitygroup as ext_sg
 from neutron.extensions import standardattrdescription
 from neutron.tests import base

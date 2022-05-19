@@ -62,6 +62,7 @@ from neutron_lib.api.definitions import rbac_security_groups
 from neutron_lib.api.definitions import router_availability_zone as raz_def
 from neutron_lib.api.definitions import security_groups_normalized_cidr
 from neutron_lib.api.definitions import security_groups_remote_address_group
+from neutron_lib.api.definitions import security_groups_shared_filtering
 from neutron_lib.api.definitions import segment as seg_def
 from neutron_lib.api.definitions import sorting
 from neutron_lib.api.definitions import stateful_security_group
@@ -72,7 +73,6 @@ from neutron_lib.api.definitions import vlantransparent
 from neutron_lib import constants
 
 from neutron.extensions import quotasv2_detail
-from neutron.extensions import security_groups_shared_filtering_lib
 
 # NOTE(russellb) This remains in its own file (vs constants.py) because we want
 # to be able to easily import it and export the info without any dependencies
@@ -140,7 +140,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     'security-group',
     security_groups_normalized_cidr.ALIAS,
     security_groups_remote_address_group.ALIAS,
-    security_groups_shared_filtering_lib.ALIAS,
+    security_groups_shared_filtering.ALIAS,
     stateful_security_group.ALIAS,
     'standard-attr-description',
     constants.SUBNET_ALLOCATION_EXT_ALIAS,
