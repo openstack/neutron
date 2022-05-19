@@ -64,6 +64,7 @@ from neutron.ipam.drivers.neutrondb_ipam import driver as ipam_driver
 from neutron.ipam import exceptions as ipam_exc
 from neutron.objects import network as network_obj
 from neutron.objects import router as l3_obj
+from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron import policy
 from neutron import quota
 from neutron.quota import resource_registry
@@ -1076,6 +1077,12 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
         super().setUp(**kwargs)
         self.mock_vp_parents = mock.patch.object(
             ovn_utils, 'get_virtual_port_parents', return_value=None).start()
+        self._max_bind_tries_stored = ml2_plugin.MAX_BIND_TRIES
+        ml2_plugin.MAX_BIND_TRIES = 1
+        self.addCleanup(self._cleanup)
+
+    def _cleanup(self):
+        ml2_plugin.MAX_BIND_TRIES = self._max_bind_tries_stored
 
     def test_create_port_json(self):
         keys = [('admin_state_up', True), ('status', self.port_create_status)]
