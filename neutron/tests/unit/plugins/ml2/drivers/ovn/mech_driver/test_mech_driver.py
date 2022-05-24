@@ -2738,7 +2738,9 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
                          segment_id=self.seg_2['id']) as subnet:
             self.sub_2 = subnet
 
-    def test_create_segments_subnet_metadata_ip_allocation(self):
+    @mock.patch.object(ovn_client.OVNClient, 'get_virtual_port_parents',
+                       return_value=[])
+    def test_create_segments_subnet_metadata_ip_allocation(self, *args):
         self._test_segments_helper()
         ovn_nb_api = self.mech_driver.nb_ovn
 
@@ -3810,7 +3812,9 @@ class TestOVNMechanismDriverMetadataPort(MechDriverSetupBase,
             with self.network():
                 self.assertEqual(0, self.nb_ovn.create_lswitch_port.call_count)
 
-    def test_metadata_ip_on_subnet_create(self):
+    @mock.patch.object(ovn_client.OVNClient, 'get_virtual_port_parents',
+                       return_value=[])
+    def test_metadata_ip_on_subnet_create(self, *args):
         """Check metadata port update.
 
         Check that the metadata port is updated with a new IP address when a
@@ -3980,26 +3984,24 @@ class TestOVNVVirtualPort(OVNMechanismDriverTestCase):
             self, mock_get_parents, mock_determine_bind_host):
         fake_parents = ['parent-0', 'parent-1']
         mock_get_parents.return_value = fake_parents
-        port = {'id': 'virt-port',
-                'mac_address': '00:00:00:00:00:00',
-                'device_owner': '',
-                'network_id': self.net['id'],
-                'fixed_ips': [{'subnet_id': self.subnet['id'],
-                               'ip_address': '10.0.0.55'}]}
-        port_info = self.mech_driver._ovn_client._get_port_options(
-            port)
-        self.assertEqual(ovn_const.LSP_TYPE_VIRTUAL, port_info.type)
-        self.assertEqual(
-            '10.0.0.55',
-            port_info.options[ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY])
-        self.assertIn(
-            'parent-0',
-            port_info.options[
-                ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY])
-        self.assertIn(
-            'parent-1',
-            port_info.options[
-                ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY])
+        for device_owner in ('', 'myVIPowner'):
+            port = {'id': 'virt-port',
+                    'mac_address': '00:00:00:00:00:00',
+                    'device_owner': device_owner,
+                    'network_id': self.net['id'],
+                    'fixed_ips': [{'subnet_id': self.subnet['id'],
+                                   'ip_address': '10.0.0.55'}]}
+            port_info = self.mech_driver._ovn_client._get_port_options(port)
+            self.assertEqual(ovn_const.LSP_TYPE_VIRTUAL, port_info.type)
+            self.assertEqual(
+                '10.0.0.55',
+                port_info.options[ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY])
+            self.assertIn(
+                'parent-0',
+                port_info.options[ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY])
+            self.assertIn(
+                'parent-1',
+                port_info.options[ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY])
 
     @mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2, 'get_ports')
     def _test_set_unset_virtual_port_type(self, mock_get_ports, unset=False):
