@@ -54,6 +54,7 @@ from neutron_lib.api.definitions import rbac_subnetpool
 from neutron_lib.api.definitions import security_groups_normalized_cidr
 from neutron_lib.api.definitions import security_groups_port_filtering
 from neutron_lib.api.definitions import security_groups_remote_address_group
+from neutron_lib.api.definitions import security_groups_shared_filtering
 from neutron_lib.api.definitions import stateful_security_group
 from neutron_lib.api.definitions import subnet as subnet_def
 from neutron_lib.api.definitions import subnet_onboard as subnet_onboard_def
@@ -129,7 +130,6 @@ from neutron.extensions import (
 )
 from neutron.extensions import dhcpagentscheduler as dhcp_ext
 from neutron.extensions import filter_validation
-from neutron.extensions import security_groups_shared_filtering_lib
 from neutron.extensions import vlantransparent
 from neutron.ipam import exceptions as ipam_exc
 from neutron.objects import base as base_obj
@@ -226,7 +226,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     security_groups_normalized_cidr.ALIAS,
                                     security_groups_port_filtering.ALIAS,
                                     security_groups_remote_address_group.ALIAS,
-                                    security_groups_shared_filtering_lib.ALIAS,
+                                    security_groups_shared_filtering.ALIAS,
                                     empty_string_filtering.ALIAS,
                                     filter_apidef.ALIAS,
                                     port_mac_address_regenerate.ALIAS,

@@ -21,6 +21,8 @@ from neutron_lib.api.definitions import rbac_security_groups as rbac_sg_apidef
 from neutron_lib.api.definitions import security_groups_normalized_cidr
 from neutron_lib.api.definitions import security_groups_remote_address_group \
     as sgag_def
+from neutron_lib.api.definitions import security_groups_shared_filtering \
+    as sg_shared_filtering
 from neutron_lib.api.definitions import stateful_security_group as stateful_sg
 from oslo_concurrency import lockutils
 from oslo_config import cfg
@@ -28,8 +30,6 @@ from oslo_log import log as logging
 
 from neutron.agent import firewall
 from neutron.conf.agent import securitygroups_rpc as sc_cfg
-from neutron.extensions import security_groups_shared_filtering_lib \
-    as sg_shared_filtering
 
 
 LOG = logging.getLogger(__name__)

@@ -10,12 +10,12 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import security_groups_shared_filtering \
+    as apidef
 from neutron_lib.api import extensions
-
-from neutron.extensions import security_groups_shared_filtering_lib
 
 
 class Security_groups_shared_filtering(extensions.APIExtensionDescriptor):
     """Extension class supporting filtering SGs depend on the shared field."""
 
-    api_definition = security_groups_shared_filtering_lib
+    api_definition = apidef
