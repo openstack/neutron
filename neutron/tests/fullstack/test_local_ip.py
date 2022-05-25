@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import time
+
 from neutron_lib import constants
 from oslo_utils import uuidutils
 
@@ -119,5 +121,9 @@ class LocalIPTestCase(base.BaseFullStackTestCase):
         # VM on different host shouldn't have access to this Local IP
         vms[2].assert_no_ping(local_ip['local_ip_address'])
 
+        # NOTE(ykarel): response comes from local_ip assigned to vm0,
+        # as a workaround sleep for arp cache expiry. It requires
+        # fix in Local IP feature
+        time.sleep(31)
         # check that VMs can still access each other with fixed IPs
         vms.ping_all()
