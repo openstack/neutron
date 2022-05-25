@@ -141,6 +141,11 @@
       Functional testing for a FIPS enabled Centos 8 system
     vars:
       enable_fips: True
+      # NOTE(ykarel) Remove MYSQL_GATHER_PERFORMANCE and
+      # tox_environment when this job switches to centos-9-stream
+      MYSQL_GATHER_PERFORMANCE: false
+      tox_environment:
+        TOX_PYTHON: python3.8
       devstack_localrc:
         ISCSI_CHAP_ALGORITHMS: SHA3-256,SHA256
         Q_BUILD_OVS_FROM_GIT: true
@@ -153,6 +158,11 @@
       Functional testing for a FIPS enabled Centos 8 system
     vars:
       enable_fips: True
+      # NOTE(ykarel) Remove MYSQL_GATHER_PERFORMANCE and
+      # tox_environment when this job switches to centos-9-stream
+      MYSQL_GATHER_PERFORMANCE: false
+      tox_environment:
+        TOX_PYTHON: python3.8
       devstack_localrc:
         ISCSI_CHAP_ALGORITHMS: SHA3-256,SHA256
         Q_BUILD_OVS_FROM_GIT: true

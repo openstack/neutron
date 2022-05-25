@@ -20,6 +20,7 @@
         INSTALL_OVN={{ INSTALL_OVN }}
         # This is DB USER used in e.g. pgsql db
         DATABASE_USER=openstack_citest
+        MYSQL_GATHER_PERFORMANCE={{ MYSQL_GATHER_PERFORMANCE | default(true) }}
 
         source $DEVSTACK_PATH/functions
         source $DEVSTACK_PATH/lib/neutron_plugins/ovn_agent
@@ -34,6 +35,9 @@
             # NOTE(slaweq) On Fedora/CentOS systems make sure that SELinux is
             # not in enforcing mode
             sudo setenforce 0
+            if [[ $os_VENDOR == "CentOSStream" && $os_RELEASE -eq 8 ]]; then
+                install_package python3.8 python38-devel
+            fi
         fi
 
         configure_host_for_func_testing
