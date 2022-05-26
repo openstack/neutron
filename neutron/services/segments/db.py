@@ -28,6 +28,7 @@ from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import helpers as log_helpers
+from oslo_log import log as logging
 from oslo_utils import uuidutils
 
 from neutron.common import utils
@@ -38,6 +39,7 @@ from neutron.objects import network
 from neutron.services.segments import exceptions
 
 
+LOG = logging.getLogger(__name__)
 _USER_CONFIGURED_SEGMENT_PLUGIN = None
 FOR_NET_DELETE = 'for_net_delete'
 
@@ -228,14 +230,18 @@ def update_segment_host_mapping(context, host, current_segment_ids):
             context, host=host)
         previous_segment_ids = {
             seg_host['segment_id'] for seg_host in segment_host_mapping}
-        for segment_id in current_segment_ids - previous_segment_ids:
+        segment_ids = current_segment_ids - previous_segment_ids
+        for segment_id in segment_ids:
             network.SegmentHostMapping(
                 context, segment_id=segment_id, host=host).create()
+        LOG.debug('Segments %s mapped to the host %s', segment_ids, host)
         stale_segment_ids = previous_segment_ids - current_segment_ids
         if stale_segment_ids:
             for entry in segment_host_mapping:
                 if entry.segment_id in stale_segment_ids:
                     entry.delete()
+                    LOG.debug('Segment %s unmapped from host %s',
+                              entry.segment_id, entry.host)
 
 
 def get_hosts_mapped_with_segments(context):
@@ -285,6 +291,7 @@ def map_segment_to_hosts(context, segment_id, hosts):
         for host in hosts:
             network.SegmentHostMapping(
                 context, segment_id=segment_id, host=host).create()
+    LOG.debug('Segment %s mapped to the hosts %s', segment_id, hosts)
 
 
 def _update_segment_host_mapping_for_agent(resource, event, trigger,
