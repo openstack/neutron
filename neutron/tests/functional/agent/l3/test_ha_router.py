@@ -353,6 +353,37 @@ class L3HATestCase(framework.L3AgentTestFramework):
         self.assertEqual(0, ip_nonlocal_bind_value)
 
     @testtools.skipUnless(netutils.is_ipv6_enabled(), "IPv6 is not enabled")
+    def test_ha_router_addr_gen_mode(self):
+        router_info = self.generate_router_info(enable_ha=True)
+        router_info[constants.HA_INTERFACE_KEY]['status'] = (
+            constants.PORT_STATUS_DOWN)
+        router = self.manage_router(self.agent, router_info)
+        external_port = router.get_ex_gw_port()
+        external_device_name = router.get_external_device_name(
+            external_port['id'])
+
+        def check_gw_lla_status(expected):
+            lladdr = ip_lib.get_ipv6_lladdr(
+                external_port['mac_address'])
+            exists = ip_lib.device_exists_with_ips_and_mac(
+                external_device_name, [lladdr],
+                external_port['mac_address'], router.ns_name)
+            self.assertEqual(expected, exists)
+
+        self.wait_until_ha_router_has_state(router, 'backup')
+        self._wait_until_addr_gen_mode_has_state(
+            router.ns_name, 1)
+        check_gw_lla_status(False)
+
+        router.router[constants.HA_INTERFACE_KEY]['status'] = (
+            constants.PORT_STATUS_ACTIVE)
+        self.agent._process_updated_router(router.router)
+        self.wait_until_ha_router_has_state(router, 'primary')
+        self._wait_until_addr_gen_mode_has_state(
+            router.ns_name, 1)
+        check_gw_lla_status(True)
+
+    @testtools.skipUnless(netutils.is_ipv6_enabled(), "IPv6 is not enabled")
     def test_ha_router_namespace_has_ipv6_forwarding_disabled(self):
         router_info = self.generate_router_info(enable_ha=True)
         router_info[constants.HA_INTERFACE_KEY]['status'] = (
