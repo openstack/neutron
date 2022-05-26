@@ -244,7 +244,7 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
         fdb_network_ports = l2pop_db.get_nondistributed_active_network_ports(
             self.ctx, TEST_NETWORK_ID)
         self.assertEqual(0, len(fdb_network_ports))
-        ha_ports = l2pop_db.get_ha_active_network_ports(
+        ha_ports = l2pop_db._get_ha_active_network_ports(
             self.ctx, TEST_NETWORK_ID)
         self.assertEqual(2, len(ha_ports))
 
