@@ -1,0 +1,4 @@
+---
+features:
+  - |
+    OVN mechanism driver refuses to bind a port to a dead agent.
