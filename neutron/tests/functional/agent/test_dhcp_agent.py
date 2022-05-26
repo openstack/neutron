@@ -22,6 +22,7 @@ import fixtures
 import netaddr
 from neutron_lib import constants as lib_const
 from oslo_config import fixture as fixture_config
+from oslo_log import log as logging
 from oslo_utils import uuidutils
 
 from neutron.agent.common import ovs_lib
@@ -38,6 +39,8 @@ from neutron.conf.agent import common as config
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import helpers
 from neutron.tests.functional import base
+
+LOG = logging.getLogger(__name__)
 
 
 class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
@@ -204,7 +207,9 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
 
     def _ip_list_for_vif(self, vif_name, namespace):
         ip_device = ip_lib.IPDevice(vif_name, namespace)
-        return ip_device.addr.list(ip_version=lib_const.IP_VERSION_4)
+        res = ip_device.addr.list(ip_version=lib_const.IP_VERSION_4)
+        LOG.debug("IP addr list of %s: %s", vif_name, res)
+        return res
 
     def _get_network_port_for_allocation_test(self):
         network = self.network_dict_for_dhcp()
