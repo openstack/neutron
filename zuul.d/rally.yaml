@@ -52,7 +52,7 @@
       - openstack/rally-openstack
       - openstack/osprofiler
     irrelevant-files:
-      - ^(test-|)requirements.txt$
+      - ^test-requirements.txt$
       - ^releasenotes/.*$
       - ^doc/.*$
       - ^setup.cfg$
@@ -87,7 +87,7 @@
       - name: openstack/rally
       - name: openstack/rally-openstack
     irrelevant-files:
-      - ^(test-|)requirements.txt$
+      - ^test-requirements.txt$
       - ^releasenotes/.*$
       - ^doc/.*$
       - ^setup.cfg$

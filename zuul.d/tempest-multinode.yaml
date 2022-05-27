@@ -9,7 +9,7 @@
       - openstack/tempest
     pre-run: playbooks/dvr-multinode-scenario-pre-run.yaml
     irrelevant-files: &openvswitch-irrelevant-files
-      - ^(test-|)requirements.txt$
+      - ^test-requirements.txt$
       - ^releasenotes/.*$
       - ^doc/.*$
       - ^setup.cfg$
@@ -322,7 +322,7 @@
       - openstack/neutron-tempest-plugin
       - openstack/tempest
     irrelevant-files: &ovn-irrelevant-files
-      - ^(test-|)requirements.txt$
+      - ^test-requirements.txt$
       - ^releasenotes/.*$
       - ^doc/.*$
       - ^setup.cfg$

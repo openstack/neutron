@@ -18,7 +18,7 @@
           - 'tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_network_basic_ops'
         use_os_tempest: true
     irrelevant-files:
-      - ^(test-|)requirements.txt$
+      - ^test-requirements.txt$
       - ^releasenotes/.*$
       - ^doc/.*$
       - ^setup.cfg$
@@ -45,7 +45,7 @@
       nodes: 1ctlr
       featureset: '010'
     irrelevant-files:
-      - ^(test-|)requirements.txt$
+      - ^test-requirements.txt$
       - ^releasenotes/.*$
       - ^doc/.*$
       - ^setup.cfg$
