@@ -5,7 +5,7 @@
       - openstack/grenade
       - openstack/neutron
     irrelevant-files: &openvswitch-irrelevant-files
-      - ^(test-|)requirements.txt$
+      - ^test-requirements.txt$
       - ^releasenotes/.*$
       - ^doc/.*$
       - ^setup.cfg$
@@ -165,7 +165,7 @@
     parent: grenade-multinode
     timeout: 9000
     irrelevant-files:
-      - ^(test-|)requirements.txt$
+      - ^test-requirements.txt$
       - ^releasenotes/.*$
       - ^doc/.*$
       - ^setup.cfg$

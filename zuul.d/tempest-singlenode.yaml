@@ -54,7 +54,7 @@
       devstack_localrc:
         Q_AGENT: openvswitch
     irrelevant-files: &openvswitch-irrelevant-files
-      - ^(test-|)requirements.txt$
+      - ^test-requirements.txt$
       - ^.*\.conf\.sample$
       - ^.*\.rst$
       - ^doc/.*$
@@ -105,7 +105,7 @@
       devstack_localrc:
         Q_AGENT: linuxbridge
     irrelevant-files:
-      - ^(test-|)requirements.txt$
+      - ^test-requirements.txt$
       - ^.*\.conf\.sample$
       - ^.*\.rst$
       - ^doc/.*$
@@ -225,7 +225,7 @@
         s-object: false
         s-proxy: false
     irrelevant-files: &tempest-db-irrelevant-files
-      - ^(test-|)requirements.txt$
+      - ^test-requirements.txt$
       - ^.*\.conf\.sample$
       - ^.*\.rst$
       - ^doc/.*$
@@ -297,7 +297,7 @@
         s-object: false
         s-proxy: false
     irrelevant-files:
-      - ^(test-|)requirements.txt$
+      - ^test-requirements.txt$
       - ^.*\.conf\.sample$
       - ^.*\.rst$
       - ^doc/.*$
@@ -376,7 +376,7 @@
             agent:
               debug_iptables_rules: True
     irrelevant-files: &irrelevant-files
-      - ^(test-|)requirements.txt$
+      - ^test-requirements.txt$
       - ^.*\.conf\.sample$
       - ^.*\.rst$
       - ^doc/.*$
@@ -483,7 +483,7 @@
         c-vol: false
         cinder: false
     irrelevant-files: &ovn-irrelevant-files
-      - ^(test-|)requirements.txt$
+      - ^test-requirements.txt$
       - ^releasenotes/.*$
       - ^doc/.*$
       - ^setup.cfg$

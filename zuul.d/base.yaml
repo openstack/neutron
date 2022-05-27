@@ -68,7 +68,6 @@
         # tox.ini file
         '{{ devstack_base_dir }}/logs/dsvm-fullstack-logs': logs
     irrelevant-files:
-      - ^(test-|)requirements.txt$
       - ^releasenotes/.*$
       - ^doc/.*$
       - ^setup.cfg$
