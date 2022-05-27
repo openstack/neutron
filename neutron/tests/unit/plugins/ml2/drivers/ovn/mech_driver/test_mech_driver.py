@@ -3970,7 +3970,7 @@ class TestOVNVtepPortBinding(OVNMechanismDriverTestCase):
             with self.subnet(n):
                 self._create_port(self.fmt, n['network']['id'],
                                   arg_list=(OVN_PROFILE,),
-                                  expected_res_status=400,
+                                  expected_res_status=404,
                                   **binding)
 
     def test_create_port_with_vtep_options_and_check_vtep_keys(self):
