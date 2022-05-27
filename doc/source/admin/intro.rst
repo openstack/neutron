@@ -70,3 +70,4 @@ components:
    intro-network-namespaces
    intro-nat
    intro-os-networking
+   fwaas
