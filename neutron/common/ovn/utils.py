@@ -255,6 +255,11 @@ def validate_and_get_data_from_binding_profile(port):
                 ) % constants.PORT_CAP_PARAM
         raise n_exc.InvalidInput(error_message=msg)
 
+    # Note that only the keys mentioned in each parameter set, as defined in
+    # constants.OVN_PORT_BINDING_PROFILE_PARAMS, will be evaluated.
+    #
+    # Any surplus keys provided by Nova will be ignored and pruned from the
+    # Dict returned by this function.
     for pbp_param_set in constants.OVN_PORT_BINDING_PROFILE_PARAMS:
         if pbp_param_set.vnic_type:
             if pbp_param_set.vnic_type != vnic_type:
@@ -270,12 +275,9 @@ def validate_and_get_data_from_binding_profile(port):
                 pass
         if len(param_dict) == 0:
             continue
-        if len(param_dict) != len(param_keys):
+        if param_keys - binding_profile.keys():
             msg = _('Invalid binding:profile. %s are all '
                     'required.') % param_keys
-            raise n_exc.InvalidInput(error_message=msg)
-        if (len(binding_profile) != len(param_keys)):
-            msg = _('Invalid binding:profile. too many parameters')
             raise n_exc.InvalidInput(error_message=msg)
         break
 
