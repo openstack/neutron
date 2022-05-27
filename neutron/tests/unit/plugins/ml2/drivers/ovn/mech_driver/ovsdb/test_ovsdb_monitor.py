@@ -165,6 +165,7 @@ class TestOvnDbNotifyHandler(base.BaseTestCase):
 class TestOvnConnection(base.BaseTestCase):
 
     def setUp(self):
+        ovn_conf.register_opts()
         super(TestOvnConnection, self).setUp()
 
     @mock.patch.object(idlutils, 'get_schema_helper')
