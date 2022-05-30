@@ -57,6 +57,7 @@ from neutron.db import l3_hamode_db
 from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.extensions import l3
+from neutron.objects import network as network_obj
 from neutron.services.revisions import revision_plugin
 from neutron.tests import base
 from neutron.tests.unit.api import test_extensions
@@ -1319,6 +1320,26 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                                   None,
                                                   expected_code=err_code,
                                                   tenant_id=router_tenant_id)
+
+    def test_router_add_interface_by_subnet_other_tenant_subnet_rbac_shared(
+        self,
+    ):
+        router_tenant_id = _uuid()
+        with mock.patch.object(network_obj.NetworkRBAC, "get_projects") as g:
+            with self.router(
+                tenant_id=router_tenant_id, set_context=True
+            ) as r:
+                with self.network(shared=True) as n:
+                    with self.subnet(network=n) as s:
+                        g.return_value = [router_tenant_id]
+                        self._router_interface_action(
+                            "add",
+                            r["router"]["id"],
+                            s["subnet"]["id"],
+                            None,
+                            expected_code=exc.HTTPOk.code,
+                            tenant_id=router_tenant_id,
+                        )
 
     def _test_router_add_interface_by_port_allocation_pool(
             self, out_of_pool=False, router_action_as_admin=False,

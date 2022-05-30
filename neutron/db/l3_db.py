@@ -54,6 +54,7 @@ from neutron.db import standardattrdescription_db as st_attr
 from neutron.extensions import l3
 from neutron.extensions import segment as segment_ext
 from neutron.objects import base as base_obj
+from neutron.objects import network as network_obj
 from neutron.objects import port_forwarding
 from neutron.objects import ports as port_obj
 from neutron.objects import router as l3_obj
@@ -856,9 +857,24 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             msg = _('Subnet for router interface must have a gateway IP')
             raise n_exc.BadRequest(resource='router', msg=msg)
         if subnet['project_id'] != context.project_id and not context.is_admin:
-            msg = (_('Cannot add interface to router because subnet %s is not '
-                     'owned by project making the request') % subnet_id)
-            raise n_exc.BadRequest(resource='router', msg=msg)
+            # NOTE(amorin): check if network is RBAC or globaly shared
+            # globaly shared --> disallow adding interface (see LP-1757482)
+            # RBAC shared --> allow adding interface (see LP-1975603)
+            elevated = context.elevated()
+
+            with db_api.CONTEXT_READER.using(elevated):
+                rbac_allowed_projects = network_obj.NetworkRBAC.get_projects(
+                    elevated, object_id=subnet['network_id'],
+                    action='access_as_shared',
+                    target_project=context.project_id)
+
+                # Fail if the current project_id is NOT in the allowed
+                # projects
+                if context.project_id not in rbac_allowed_projects:
+                    msg = (_('Cannot add interface to router because subnet '
+                             '%s is not owned by project making the request')
+                          % subnet_id)
+                    raise n_exc.BadRequest(resource='router', msg=msg)
         self._validate_subnet_address_mode(subnet)
         self._check_for_dup_router_subnets(context, router,
                                            subnet['network_id'], [subnet])
