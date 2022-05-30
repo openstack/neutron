@@ -2563,7 +2563,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 original_network=original_network)
             self.mechanism_manager.update_network_precommit(mech_context)
 
-        if event in [events.AFTER_CREATE, events.AFTER_DELETE]:
+        elif event in [events.AFTER_CREATE, events.AFTER_DELETE]:
             mech_context = driver_context.NetworkContext(
                 self, context, network,
                 original_network=network)

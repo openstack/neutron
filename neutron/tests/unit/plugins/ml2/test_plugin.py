@@ -3654,7 +3654,7 @@ class TestML2Segments(Ml2PluginV2TestCase):
         physical_network = self.physnet
         segmentation_id = 2
 
-        network_segments = [{pnet.NETWORK_TYPE: 'vlan',
+        network_segments = [{pnet.NETWORK_TYPE: network_type,
                              pnet.PHYSICAL_NETWORK: self.physnet2,
                              pnet.SEGMENTATION_ID: 1},
                             {pnet.NETWORK_TYPE: network_type,
@@ -3683,10 +3683,10 @@ class TestML2Segments(Ml2PluginV2TestCase):
         physical_network = self.physnet
         segmentation_id = 3
 
-        network_segments = [{pnet.NETWORK_TYPE: 'vlan',
+        network_segments = [{pnet.NETWORK_TYPE: network_type,
                              pnet.PHYSICAL_NETWORK: self.physnet2,
                              pnet.SEGMENTATION_ID: 1},
-                            {pnet.NETWORK_TYPE: 'vlan',
+                            {pnet.NETWORK_TYPE: network_type,
                              pnet.PHYSICAL_NETWORK: self.physnet3,
                              pnet.SEGMENTATION_ID: 2},
                             {pnet.NETWORK_TYPE: network_type,
