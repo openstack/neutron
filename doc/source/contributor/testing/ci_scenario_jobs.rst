@@ -38,25 +38,25 @@ Below is a summary of those jobs.
     | Job name                                     | Run tests                        | python  | nodes | L2 agent    | firewall        | L3 agent | L3 HA | L3 DVR | enable_dvr | Run in gate |
     |                                              |                                  | version |       |             | driver          | mode     |       |        |            | queue       |
     +==============================================+==================================+=========+=======+=============+=================+==========+=======+========+============+=============+
-    |neutron-tempest-plugin-api                    |neutron_tempest_plugin.api        |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | Yes         |
-    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-tempest-plugin-designate-scenario     |neutron_tempest_plugin.scenario.\ |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | No          |
     |                                              |test_dns_integration              |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-tempest-plugin-scenario-linuxbridge   |neutron_tempest_plugin.scenario   |   3.6   |   1   | linuxbridge | iptables        | ha       | False | False  | False      | Yes         |
+    |neutron-tempest-plugin-linuxbridge            |neutron_tempest_plugin.api        |   3.6   |   1   | linuxbridge | iptables        | ha       | False | False  | False      | Yes         |
+    |                                              |neutron_tempest_plugin.scenario   |         |       |             |                 |          |       |        |            |             |
     |                                              |tempest.api.compute.servers.\     |         |       |             |                 |          |       |        |            |             |
     |                                              |    test_attach_interfaces        |         |       |             |                 |          |       |        |            |             |
     |                                              |tempest.api.compute.servers.\     |         |       |             |                 |          |       |        |            |             |
     |                                              |    test_multiple_create          |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-tempest-plugin-scenario-openvswitch   |neutron_tempest_plugin.scenario   |   3.6   |   1   | openvswitch | openvswitch     | ha       | False | False  | False      | Yes         |
+    |neutron-tempest-plugin-openvswitch            |neutron_tempest_plugin.api        |   3.6   |   1   | openvswitch | openvswitch     | ha       | False | False  | False      | Yes         |
+    |                                              |neutron_tempest_plugin.scenario   |         |       |             |                 |          |       |        |            |             |
     |                                              |tempest.api.compute.servers.\     |         |       |             |                 |          |       |        |            |             |
     |                                              |    test_attach_interfaces        |         |       |             |                 |          |       |        |            |             |
     |                                              |tempest.api.compute.servers.\     |         |       |             |                 |          |       |        |            |             |
     |                                              |    test_multiple_create          |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-tempest-plugin-scenario-openvswitch-\ |neutron_tempest_plugin.scenario   |   3.6   |   1   | openvswitch | iptables_hybrid | ha       | False | False  | False      | Yes         |
-    |  iptables_hybrid                             |                                  |         |       |             |                 |          |       |        |            |             |
+    |neutron-tempest-plugin-openvswitch-\          |neutron_tempest_plugin.api        |   3.6   |   1   | openvswitch | iptables_hybrid | ha       | False | False  | False      | Yes         |
+    |  iptables_hybrid                             |neutron_tempest_plugin.scenario   |         |         |       |             |                 |          |       |        |            |             |
     |                                              |tempest.api.compute.servers.\     |         |       |             |                 |          |       |        |            |             |
     |                                              |    test_attach_interfaces        |         |       |             |                 |          |       |        |            |             |
     |                                              |tempest.api.compute.servers.\     |         |       |             |                 |          |       |        |            |             |
