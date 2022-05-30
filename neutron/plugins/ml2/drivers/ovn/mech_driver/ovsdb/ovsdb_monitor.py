@@ -230,6 +230,47 @@ class ChassisEvent(row_event.RowEvent):
         self.handle_ha_chassis_group_changes(event, row, old)
 
 
+class PortBindingChassisUpdateEvent(row_event.RowEvent):
+    """Event for matching a port moving chassis
+
+    If the LSP is up and the Port_Binding chassis has just changed,
+    there is a good chance the host died without cleaning up the chassis
+    column on the Port_Binding. The port never goes down, so we won't
+    see update the driver with the LogicalSwitchPortUpdateUpEvent which
+    only monitors for transitions from DOWN to UP.
+    """
+
+    def __init__(self, driver):
+        self.driver = driver
+        table = 'Port_Binding'
+        events = (self.ROW_UPDATE,)
+        super(PortBindingChassisUpdateEvent, self).__init__(
+            events, table, None)
+        self.event_name = self.__class__.__name__
+
+    def match_fn(self, event, row, old=None):
+        # NOTE(twilson) ROW_UPDATE events always pass old, but chassis will
+        # only be set if chassis has changed
+        old_chassis = getattr(old, 'chassis', None)
+        if not (row.chassis and old_chassis) or row.chassis == old_chassis:
+            return False
+        if row.type == ovn_const.OVN_CHASSIS_REDIRECT:
+            return False
+        try:
+            lsp = self.driver.nb_ovn.lookup('Logical_Switch_Port',
+                                            row.logical_port)
+        except idlutils.RowNotFound:
+            LOG.warning("Logical Switch Port %(port)s not found for "
+                        "Port_Binding %(binding)s",
+                        {'port': row.logical_port, 'binding': row.uuid})
+            return False
+
+        return bool(lsp.up)
+
+    def run(self, event, row, old=None):
+        self.driver.set_port_status_up(row.logical_port)
+
+
 class ChassisAgentEvent(BaseEvent):
     GLOBAL = True
 
@@ -377,8 +418,8 @@ class PortBindingChassisEvent(row_event.RowEvent):
             router, host)
 
 
-class PortBindingCreateUpEvent(row_event.RowEvent):
-    """Row create event - Port_Binding 'up' = True.
+class LogicalSwitchPortCreateUpEvent(row_event.RowEvent):
+    """Row create event - Logical_Switch_Port 'up' = True.
 
     On connection, we get a dump of all ports, so if there is a neutron
     port that is down that has since been activated, we'll catch it here.
@@ -387,200 +428,73 @@ class PortBindingCreateUpEvent(row_event.RowEvent):
 
     def __init__(self, driver):
         self.driver = driver
-        table = 'Port_Binding'
+        table = 'Logical_Switch_Port'
         events = (self.ROW_CREATE,)
-        super().__init__(events, table, None)
-        self.event_name = 'PortBindingCreateUpEvent'
-
-    def match_fn(self, event, row, old):
-        if row.type in (ovn_const.PB_TYPE_VIRTUAL,
-                        ovn_const.OVN_CHASSIS_REDIRECT):
-            # NOTE(ltomasbo): Skipping virtual ports as they are not being
-            # set to ACTIVE
-            # NOTE(ltomasbo): No need to handle cr ports
-            return False
-        if row.type == ovn_const.PB_TYPE_PATCH:
-            # NOTE(ltomasbo): Only handle the logical_switch_port side,
-            # not the router side.
-            if (row.logical_port.startswith('lrp-') or
-                    row.logical_port.startswith('cr-lrp')):
-                return False
-            return True
-        # TODO(ltomasbo): Remove the checkings for 'up' column once minimal
-        # ovn version has it (v21.03.0). The match_fn can be then replaced
-        # by different init method above:
-        # super().__init__(
-        #     events, table, (('up', '=', True), ('type', '=', ''),))
-        if hasattr(row, 'up'):
-            # NOTE(ltomasbo): Due to bug in core ovn not setting the up field
-            # to DOWN in some cases (for example subports detachment from
-            # trunks), we need to also check the chassis is set to claim the
-            # port as ACTIVE
-            return row.chassis and bool(row.up[0])
-        elif row.chassis:
-            return True
-        return False
+        super(LogicalSwitchPortCreateUpEvent, self).__init__(
+            events, table, (('up', '=', True),))
+        self.event_name = 'LogicalSwitchPortCreateUpEvent'
 
     def run(self, event, row, old):
-        self.driver.set_port_status_up(row.logical_port)
+        self.driver.set_port_status_up(row.name)
 
 
-class PortBindingCreateDownEvent(row_event.RowEvent):
-    """Row create event - Port_Binding 'up' = False
+class LogicalSwitchPortCreateDownEvent(row_event.RowEvent):
+    """Row create event - Logical_Switch_Port 'up' = False
 
     On connection, we get a dump of all ports, so if there is a neutron
     port that is up that has since been deactivated, we'll catch it here.
     This event will not be generated for new ports getting created.
     """
-
     def __init__(self, driver):
         self.driver = driver
-        table = 'Port_Binding'
+        table = 'Logical_Switch_Port'
         events = (self.ROW_CREATE,)
-        super().__init__(events, table, None)
-        self.event_name = 'PortBindingCreateDownEvent'
-
-    def match_fn(self, event, row, old):
-        if row.type in [ovn_const.PB_TYPE_VIRTUAL, ovn_const.PB_TYPE_PATCH,
-                        ovn_const.OVN_CHASSIS_REDIRECT]:
-            # NOTE(ltomasbo): Skipping as virtual ports are not being set to
-            # ACTIVE
-            # Patch ports are set to UP on creation, no need to update
-            # No need to handle cr ports
-            return False
-
-        # TODO(ltomasbo): Remove the checkings for 'up' column once minimal
-        # ovn version has it (v21.03.0). The match_fn can be then replaced
-        # by different init method above:
-        # super().__init__(
-        #     events, table, (('up', '=', False), ('type', '=', ''),))
-        if hasattr(row, 'up'):
-            # NOTE(ltomasbo): Due to bug in core ovn not setting the up field
-            # to DOWN in some cases (for example subports detachment from
-            # trunks), we need to also check if the chassis is unset to set
-            # the port as DOWN
-            return not row.chassis or not bool(row.up[0])
-        elif not row.chassis:
-            return True
-        return False
+        super(LogicalSwitchPortCreateDownEvent, self).__init__(
+            events, table, (('up', '=', False),))
+        self.event_name = 'LogicalSwitchPortCreateDownEvent'
 
     def run(self, event, row, old):
-        self.driver.set_port_status_down(row.logical_port)
+        self.driver.set_port_status_down(row.name)
 
 
-class PortBindingUpdateUpEvent(row_event.RowEvent):
-    """Row update event - Port_Binding 'up' going from False to True
+class LogicalSwitchPortUpdateUpEvent(row_event.RowEvent):
+    """Row update event - Logical_Switch_Port 'up' going from False to True
 
     This happens when the VM goes up.
-    New value of Port_Binding 'up' will be True and the old value will
-    be False. Or if that column does not exists, the chassis will be set
-    and the old chassis value will be empty.
+    New value of Logical_Switch_Port 'up' will be True and the old value will
+    be False.
     """
-
     def __init__(self, driver):
         self.driver = driver
-        table = 'Port_Binding'
+        table = 'Logical_Switch_Port'
         events = (self.ROW_UPDATE,)
-        super().__init__(events, table, None)
-        self.event_name = 'PortBindingUpdateUpEvent'
-
-    def match_fn(self, event, row, old):
-        if row.type in (ovn_const.PB_TYPE_VIRTUAL,
-                        ovn_const.OVN_CHASSIS_REDIRECT):
-            # NOTE(ltomasbo): Skipping virtual ports as they are not being
-            # set to ACTIVE
-            # NOTE(ltomasbo): No need to handle cr ports
-            return False
-        if row.type == ovn_const.PB_TYPE_PATCH:
-            # NOTE(ltomasbo): Only handle the logical_switch_port side,
-            # not the router side.
-            if (row.logical_port.startswith('lrp-') or
-                    row.logical_port.startswith('cr-lrp')):
-                return False
-            try:
-                if old.mac:
-                    # NOTE(ltomasbo): only execute it once (the first update
-                    # event for this port), as you don't need to set it to
-                    # active several time
-                    return True
-            except AttributeError:
-                return False
-            return False
-        # TODO(ltomasbo): Remove the checkings for 'up' column once minimal
-        # ovn version has it (v21.03.0). The match_fn can be then replaced
-        # by different init method above:
-        # super().__init__(
-        #     events, table, (('up', '=', True), ('type', '=', '')),
-        #     old_conditions=(('up', '=', False),))
-        try:
-            if hasattr(row, 'up'):
-                # NOTE(ltomasbo): Due to bug in core ovn not setting the up
-                # field to DOWN in some cases (for example subports detachment
-                # from trunks), we need to also check the chassis is set to
-                # claim the port as ACTIVE
-                return (bool(row.up[0]) and not bool(old.up[0]) and
-                        row.chassis)
-            elif row.chassis and not old.chassis:
-                return True
-        except AttributeError:
-            # NOTE(ltomasbo): do not process if there is no old up/chassis
-            # information
-            return False
-        return False
+        super(LogicalSwitchPortUpdateUpEvent, self).__init__(
+            events, table, (('up', '=', True),),
+            old_conditions=(('up', '=', False),))
+        self.event_name = 'LogicalSwitchPortUpdateUpEvent'
 
     def run(self, event, row, old):
-        self.driver.set_port_status_up(row.logical_port)
+        self.driver.set_port_status_up(row.name)
 
 
-class PortBindingUpdateDownEvent(row_event.RowEvent):
-    """Row update event - Port_Binding 'up' going from True to False
+class LogicalSwitchPortUpdateDownEvent(row_event.RowEvent):
+    """Row update event - Logical_Switch_Port 'up' going from True to False
 
     This happens when the VM goes down.
-    New value of Port_Binding 'up' will be False and the old value will
-    be True. Or if that column does not exists, the chassis will be unset
-    and the old chassis will be set.
+    New value of Logical_Switch_Port 'up' will be False and the old value will
+    be True.
     """
-
     def __init__(self, driver):
         self.driver = driver
-        table = 'Port_Binding'
+        table = 'Logical_Switch_Port'
         events = (self.ROW_UPDATE,)
-        super().__init__(events, table, None)
-        self.event_name = 'PortBindingUpdateDownEvent'
-
-    def match_fn(self, event, row, old):
-        if row.type in [ovn_const.PB_TYPE_VIRTUAL, ovn_const.PB_TYPE_PATCH,
-                        ovn_const.OVN_CHASSIS_REDIRECT]:
-            # NOTE(ltomasbo): Skipping as virtual ports are not being set to
-            # ACTIVE
-            # Patch ports are meant to be always UP, after creation, no need
-            # to update
-            # No need to handle cr ports
-            return False
-        # TODO(ltomasbo): Remove the checkings for 'up' column once minimal
-        # ovn version has it (v21.03.0). The match_fn can be then replaced
-        # by different init method above:
-        # super().__init__(
-        #     events, table, (('up', '=', False), ('type', '=', '')),
-        #     old_conditions=(('up', '=', True),))
-        try:
-            if hasattr(row, 'up'):
-                # NOTE(ltomasbo): Due to bug in core ovn not setting the up
-                # field to DOWN in some cases (for example subports detachment
-                # from trunks), we need to also check if the chassis is being
-                # unset to set the port as DOWN
-                return ((not bool(row.up[0]) and bool(old.up[0])) or
-                        (not row.chassis and old.chassis))
-            elif not row.chassis and old.chassis:
-                return True
-        except AttributeError:
-            # NOTE(ltomasbo): do not process if there is no old up/chassis
-            # information
-            return False
-        return False
+        super(LogicalSwitchPortUpdateDownEvent, self).__init__(
+            events, table, (('up', '=', False),),
+            old_conditions=(('up', '=', True),))
+        self.event_name = 'LogicalSwitchPortUpdateDownEvent'
 
     def run(self, event, row, old):
-        self.driver.set_port_status_down(row.logical_port)
+        self.driver.set_port_status_down(row.name)
 
 
 class PortBindingUpdateVirtualPortsEvent(row_event.RowEvent):
@@ -828,9 +742,17 @@ class OvnNbIdl(OvnIdlDistributedLock):
 
     def __init__(self, driver, remote, schema):
         super(OvnNbIdl, self).__init__(driver, remote, schema)
+        self._lsp_update_up_event = LogicalSwitchPortUpdateUpEvent(driver)
+        self._lsp_update_down_event = LogicalSwitchPortUpdateDownEvent(driver)
+        self._lsp_create_up_event = LogicalSwitchPortCreateUpEvent(driver)
+        self._lsp_create_down_event = LogicalSwitchPortCreateDownEvent(driver)
         self._fip_create_delete_event = FIPAddDeleteEvent(driver)
 
-        self.notify_handler.watch_events([self._fip_create_delete_event])
+        self.notify_handler.watch_events([self._lsp_create_up_event,
+                                          self._lsp_create_down_event,
+                                          self._lsp_update_up_event,
+                                          self._lsp_update_down_event,
+                                          self._fip_create_delete_event])
 
     @classmethod
     def from_server(cls, connection_string, helper, driver):
@@ -838,25 +760,34 @@ class OvnNbIdl(OvnIdlDistributedLock):
         helper.register_all()
         return cls(driver, connection_string, helper)
 
+    def unwatch_logical_switch_port_create_events(self):
+        """Unwatch the logical switch port create events.
+
+        When the ovs idl client connects to the ovsdb-server, it gets
+        a dump of all logical switch ports as events and we need to process
+        them at start up.
+        After the startup, there is no need to watch these events.
+        So unwatch these events.
+        """
+        self.notify_handler.unwatch_events([self._lsp_create_up_event,
+                                            self._lsp_create_down_event])
+        self._lsp_create_up_event = None
+        self._lsp_create_down_event = None
+
+    def post_connect(self):
+        self.unwatch_logical_switch_port_create_events()
+
 
 class OvnSbIdl(OvnIdlDistributedLock):
 
     def __init__(self, driver, remote, schema, **kwargs):
         super(OvnSbIdl, self).__init__(driver, remote, schema, **kwargs)
-
-        self._pb_create_up_event = PortBindingCreateUpEvent(driver)
-        self._pb_create_down_event = PortBindingCreateDownEvent(driver)
-
         self.notify_handler.watch_events([
             ChassisAgentDeleteEvent(self.driver),
             ChassisAgentDownEvent(self.driver),
             ChassisAgentWriteEvent(self.driver),
             ChassisAgentTypeChangeEvent(self.driver),
             ChassisMetadataAgentWriteEvent(self.driver),
-            self._pb_create_up_event,
-            self._pb_create_down_event,
-            PortBindingUpdateUpEvent(driver),
-            PortBindingUpdateDownEvent(driver),
             PortBindingUpdateVirtualPortsEvent(driver),
         ])
 
@@ -889,23 +820,8 @@ class OvnSbIdl(OvnIdlDistributedLock):
         self._chassis_event = ChassisEvent(self.driver)
         self._portbinding_event = PortBindingChassisEvent(self.driver)
         self.notify_handler.watch_events(
-            [self._chassis_event, self._portbinding_event])
-
-        self.unwatch_port_binding_create_events()
-
-    def unwatch_port_binding_create_events(self):
-        """Unwatch the port binding create events.
-
-        When the ovs idl client connects to the ovsdb-server, it gets
-        a dump of all port binding events and we need to process
-        them at start up.
-        After the startup, there is no need to watch these events.
-        So unwatch these events.
-        """
-        self.notify_handler.unwatch_events([self._pb_create_up_event,
-                                            self._pb_create_down_event])
-        self._pb_create_up_event = None
-        self._pb_create_down_event = None
+            [self._chassis_event, self._portbinding_event,
+             PortBindingChassisUpdateEvent(self.driver)])
 
 
 class OvnInitPGNbIdl(OvnIdl):
