@@ -46,6 +46,7 @@ dvr_mac_db.register_db_dvr_mac_opts()
 l3_dvr_db.register_db_l3_dvr_opts()
 
 
+@db_api.CONTEXT_READER
 def get_ports_query_by_subnet_and_ip(context, subnet, ip_addresses=None):
     query = context.session.query(models_v2.Port)
     query = query.join(models_v2.IPAllocation)
@@ -55,7 +56,7 @@ def get_ports_query_by_subnet_and_ip(context, subnet, ip_addresses=None):
     if ip_addresses:
         query = query.filter(
             models_v2.IPAllocation.ip_address.in_(ip_addresses))
-    return query
+    return query.all()
 
 
 @registry.has_registry_receivers
@@ -214,9 +215,8 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
             else:
                 ip_address = subnet_info['gateway_ip']
 
-            query = get_ports_query_by_subnet_and_ip(
+            internal_gateway_ports = get_ports_query_by_subnet_and_ip(
                 context, subnet, [ip_address])
-            internal_gateway_ports = query.all()
 
             if not internal_gateway_ports:
                 LOG.error("Could not retrieve gateway port "

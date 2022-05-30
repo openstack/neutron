@@ -436,6 +436,7 @@ class DVRResourceOperationHandler(object):
             self.l3plugin.l3_rpc_notifier.delete_fipnamespace_for_ext_net(
                 payload.context, payload.resource_id)
 
+    @db_api.CONTEXT_READER
     def _get_ports_for_allowed_address_pair_ip(self, context, network_id,
                                                fixed_ip):
         """Return all active ports associated with the allowed_addr_pair ip."""
@@ -1428,8 +1429,8 @@ class L3_NAT_with_dvr_db_mixin(_DVRAgentInterfaceMixin,
         return False
 
     def get_ports_under_dvr_connected_subnet(self, context, subnet_id):
-        query = dvr_mac_db.get_ports_query_by_subnet_and_ip(context, subnet_id)
-        ports = [p for p in query.all() if is_port_bound(p)]
+        ports = dvr_mac_db.get_ports_query_by_subnet_and_ip(context, subnet_id)
+        ports = [p for p in ports if is_port_bound(p)]
         # TODO(slaweq): if there would be way to pass to neutron-lib only
         # list of extensions which actually should be processed, than setting
         # process_extensions=True below could avoid that second loop and

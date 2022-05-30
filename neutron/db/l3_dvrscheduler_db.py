@@ -19,6 +19,7 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as n_const
+from neutron_lib.db import api as db_api
 from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
@@ -348,6 +349,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                   {'router_id': router_id, 'dvr_hosts': dvr_hosts})
         return dvr_hosts
 
+    @db_api.CONTEXT_READER
     def _get_dvr_hosts_for_subnets(self, context, subnet_ids):
         """Get a list of hosts with DVR servicable ports on subnet_ids."""
         host_dvr_dhcp = cfg.CONF.host_dvr_for_dhcp
@@ -367,6 +369,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         hosts = [item[0] for item in query if item[0] != '']
         return hosts
 
+    @db_api.CONTEXT_READER
     def _get_dvr_subnet_ids_on_host_query(self, context, host):
         host_dvr_dhcp = cfg.CONF.host_dvr_for_dhcp
         query = context.session.query(
@@ -382,6 +385,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         query = query.filter(owner_filter)
         return query
 
+    @db_api.CONTEXT_READER
     def _get_dvr_router_ids_for_host(self, context, host):
         subnet_ids_on_host_query = self._get_dvr_subnet_ids_on_host_query(
             context, host)
@@ -395,6 +399,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         LOG.debug('DVR routers on host %s: %s', host, router_ids)
         return router_ids
 
+    @db_api.CONTEXT_READER
     def _get_other_dvr_router_ids_connected_router(self, context, router_id):
         # TODO(slaweq): move this method to RouterPort OVO object
         subnet_ids = self.get_subnet_ids_on_router(context, router_id)
@@ -466,6 +471,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         return list(result_set)
 
     @log_helpers.log_method_call
+    @db_api.CONTEXT_READER
     def _check_dvr_serviceable_ports_on_host(self, context, host, subnet_ids):
         """Check for existence of dvr serviceable ports on host
 
