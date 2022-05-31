@@ -87,7 +87,7 @@ class PlacementReportPlugin(service_base.ServicePluginBase):
             # buggy behavior. There we assumed DEFAULT.host is the same as the
             # hypervisor name, which is true in many deployments, but not
             # always. (In nova terminology: The compute host's DEFAULT.host is
-            # not neccessarily the same as the compute node name. We may even
+            # not necessarily the same as the compute node name. We may even
             # have multiple compute nodes behind a compute host.)
             # TODO(bence romsics): This else branch can be removed when we no
             # longer want to support pre-Ussuri agents.
@@ -219,7 +219,7 @@ class PlacementReportPlugin(service_base.ServicePluginBase):
             LOG.warning(
                 "The mechanism driver claims agent type supports "
                 "placement reports, but the agent does not report "
-                "'resoure_provider_bandwidths' in its configurations. "
+                "'resource_provider_bandwidths' in its configurations. "
                 "host: %(host)s, type: %(type)s",
                 {'host': agent['agent_type'],
                  'type': agent['host']})
