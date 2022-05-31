@@ -35,6 +35,8 @@
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
       - ^neutron/plugins/ml2/drivers/ovn/.*$
       - ^vagrant/.*$
+      - ^roles/.*functional.*$
+      - ^playbooks/.*functional.*$
       - ^zuul.d/(?!(project)).*\.yaml
 
 - job:
@@ -71,5 +73,7 @@
       - ^neutron/plugins/ml2/drivers/macvtap/.*$
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
       - ^neutron/scheduler/.*$
+      - ^roles/.*functional.*$
+      - ^playbooks/.*functional.*$
       - ^vagrant/.*$
       - ^zuul.d/(?!(project)).*\.yaml
