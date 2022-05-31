@@ -316,7 +316,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
                 'add', self.router1_id,
                 sub1['subnet']['id'], None)
             # Invalid address: the adress not belong to the port
-            err_msg = ("The address 2001::10:22 is invaild, reason: "
+            err_msg = ("The address 2001::10:22 is invalid, reason: "
                        "This address not belong to the "
                        "port %s.") % port1['port']['id']
             self._create_ndp_proxy(
@@ -325,7 +325,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
                 expected_code=exc.HTTPBadRequest.code,
                 expected_message=err_msg)
             # The subnet of specified address don't connect to router
-            err_msg = ("The address 2001::9:12 is invaild, reason: "
+            err_msg = ("The address 2001::9:12 is invalid, reason: "
                        "This address cannot reach the "
                        "router %s.") % self.router1_id
             self._create_ndp_proxy(

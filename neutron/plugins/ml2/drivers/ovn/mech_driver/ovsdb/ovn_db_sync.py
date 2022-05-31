@@ -916,7 +916,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                 if self.mode == SYNC_MODE_REPAIR:
                     try:
                         # Create the missing port in both Neutron and OVN.
-                        LOG.warning('Creating missing metadadata port in '
+                        LOG.warning('Creating missing metadata port in '
                                     'Neutron and OVN for network %s',
                                     net['id'])
                         self._ovn_client.create_metadata_port(ctx, net)

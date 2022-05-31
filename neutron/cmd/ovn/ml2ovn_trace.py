@@ -220,7 +220,7 @@ class ObjEqValueParam(click.ParamType):
         try:
             return self.types[obj](value, self.direction, ctx)
         except KeyError:
-            self.fail(f"Unkown object type {obj!r}", param, ctx)
+            self.fail(f"Unknown object type {obj!r}", param, ctx)
 
 
 class ToFromParam(ObjEqValueParam):

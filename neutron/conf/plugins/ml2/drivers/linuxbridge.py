@@ -62,7 +62,7 @@ vxlan_opts = [
                        "default, the Linux kernel doesn't use the IANA "
                        "assigned standard value, so if you want to use it, "
                        "this option must be set to 4789. It is not set by "
-                       "default because of backward compatibiltiy.")),
+                       "default because of backward compatibility.")),
     cfg.BoolOpt('l2_population', default=False,
                 help=_("Extension to use alongside ml2 plugin's l2population "
                        "mechanism driver. It enables the plugin to populate "

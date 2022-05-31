@@ -52,7 +52,7 @@ class PortUnreachableRouter(n_exc.Conflict):
 
 
 class InvalidAddress(n_exc.BadRequest):
-    message = _("The address %(address)s is invaild, reason: %(reason)s.")
+    message = _("The address %(address)s is invalid, reason: %(reason)s.")
 
 
 class RouterIPv6GatewayInUse(n_exc.Conflict):

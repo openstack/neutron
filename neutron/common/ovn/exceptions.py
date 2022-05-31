@@ -25,7 +25,7 @@ class RevisionConflict(n_exc.NeutronException):
 
 
 class UnknownResourceType(n_exc.NeutronException):
-    message = _('Uknown resource type: %(resource_type)s')
+    message = _('Unknown resource type: %(resource_type)s')
 
 
 class StandardAttributeIDNotFound(n_exc.NeutronException):

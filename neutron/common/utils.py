@@ -232,7 +232,7 @@ def is_fip_serviced(device_owner):
 def ip_to_cidr(ip, prefix=None):
     """Convert an ip with no prefix to cidr notation
 
-    :param ip: An ipv4 or ipv6 address.  Convertable to netaddr.IPNetwork.
+    :param ip: An ipv4 or ipv6 address.  Convertible to netaddr.IPNetwork.
     :param prefix: Optional prefix.  If None, the default 32 will be used for
         ipv4 and 128 for ipv6.
     """
@@ -321,7 +321,7 @@ def ip_version_from_int(ip_version_int):
 
 
 def get_network_length(ip_version):
-    """Returns the network length depeding on the IP version"""
+    """Returns the network length depending on the IP version"""
     return (n_const.IPv4_BITS if ip_version == n_const.IP_VERSION_4
             else n_const.IPv6_BITS)
 
