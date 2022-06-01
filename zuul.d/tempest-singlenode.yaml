@@ -586,10 +586,10 @@
         OVS_BRANCH: master
 
 - job:
-    name: neutron-ovn-tempest-ovs-master-fedora
-    description: Job testing for devstack/tempest testing Neutron with ovn driver and OVN master branch and Fedora
+    name: neutron-ovn-tempest-ovs-master-centos-9-stream
+    description: Job testing for devstack/tempest testing Neutron with ovn driver and OVN master branch and CentOS 9-Stream
     parent: neutron-ovn-tempest-ovs-master
-    nodeset: devstack-single-node-fedora-latest
+    nodeset: devstack-single-node-centos-9-stream
     vars:
       zuul_copy_output:
         '{{ devstack_base_dir }}/data/ovs': 'logs'

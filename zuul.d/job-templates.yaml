@@ -73,7 +73,7 @@
         - neutron-ovn-tempest-mariadb-full
         - neutron-ovn-tempest-ovs-release
         - neutron-ovn-tempest-ovs-release-ipv6-only
-        - neutron-ovn-tempest-ovs-master-fedora
+        - neutron-ovn-tempest-ovs-master-centos-9-stream
         - neutron-ovn-tempest-with-neutron-lib-master
         - neutron-ovs-tempest-fips
         - neutron-ovn-tempest-ovs-release-fips
@@ -115,7 +115,7 @@
         - neutron-ovn-tempest-mariadb-full
         - neutron-ovn-tempest-ovs-release
         - neutron-ovn-tempest-ovs-release-ipv6-only
-        - neutron-ovn-tempest-ovs-master-fedora
+        - neutron-ovn-tempest-ovs-master-centos-9-stream
         - neutron-ovn-tempest-with-neutron-lib-master
         - neutron-ovs-tempest-fips
         - neutron-ovn-tempest-ovs-release-fips
