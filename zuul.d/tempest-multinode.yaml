@@ -34,6 +34,8 @@
       - ^neutron/services/trunk/drivers/ovn/.*$
       - ^neutron/cmd/ovn/.*$
       - ^neutron/common/ovn/.*$
+      - ^roles/.*functional.*$
+      - ^playbooks/.*functional.*$
       - ^vagrant/.*$
       - ^zuul.d/(?!(project)).*\.yaml
     vars:
@@ -361,6 +363,8 @@
       - ^neutron/services/trunk/drivers/linuxbridge/.*$
       - ^neutron/services/trunk/drivers/openvswitch/.*$
       - ^neutron/scheduler/.*$
+      - ^roles/.*functional.*$
+      - ^playbooks/.*functional.*$
       - ^zuul.d/(?!(project)).*\.yaml
     roles:
       - zuul: zuul/zuul-jobs

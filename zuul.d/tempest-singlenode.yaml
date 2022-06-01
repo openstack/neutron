@@ -80,6 +80,8 @@
       - ^neutron/services/trunk/drivers/ovn/.*$
       - ^neutron/cmd/ovn/.*$
       - ^neutron/common/ovn/.*$
+      - ^roles/.*functional.*$
+      - ^playbooks/.*functional.*$
       - ^zuul.d/(?!(project)).*\.yaml
 
 - job:
@@ -133,6 +135,8 @@
       - ^neutron/services/trunk/drivers/ovn/.*$
       - ^neutron/cmd/ovn/.*$
       - ^neutron/common/ovn/.*$
+      - ^roles/.*functional.*$
+      - ^playbooks/.*functional.*$
       - ^zuul.d/(?!(project)).*\.yaml
 
 # TODO(ralonsoh): remove this duplicated definition when "devstack" and "nova"
@@ -238,6 +242,8 @@
       - ^vagrant/.*$
       - ^neutron/agent/.*$
       - ^neutron/plugins/ml2/drivers/.*$
+      - ^roles/.*functional.*$
+      - ^playbooks/.*functional.*$
       - ^zuul.d/(?!(project)).*\.yaml
 
 - job:
@@ -312,6 +318,8 @@
       - ^neutron/plugins/ml2/drivers/linuxbridge/.*$
       - ^neutron/plugins/ml2/drivers/macvtap/.*$
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
+      - ^roles/.*functional.*$
+      - ^playbooks/.*functional.*$
       - ^zuul.d/(?!(project)).*\.yaml
 
 - job:
@@ -387,6 +395,8 @@
       - ^tools/.*$
       - ^tox.ini$
       - ^vagrant/.*$
+      - ^roles/.*functional.*$
+      - ^playbooks/.*functional.*$
       - ^zuul.d/(?!(project)).*\.yaml
 
 - job:
@@ -513,6 +523,8 @@
       - ^neutron/services/trunk/drivers/linuxbridge/.*$
       - ^neutron/services/trunk/drivers/openvswitch/.*$
       - ^neutron/scheduler/.*$
+      - ^roles/.*functional.*$
+      - ^playbooks/.*functional.*$
       - ^zuul.d/(?!(project)).*\.yaml
 
 # TODO(slaweq): move this to be multinode job when it will be possible in Zuul
