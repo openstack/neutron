@@ -40,6 +40,7 @@ podman start ovn_controller
 # Delete ovs bridges - br-tun and br-migration
 ovs-vsctl --if-exists del-br {{ tunnel_bridge }}
 ovs-vsctl --if-exists del-br br-migration
+ovs-vsctl --if-exists del-port br-int patch-tun
 
 for br in $(ovs-vsctl list-br | egrep 'br-mig-[0-9]+'); do
    ovs-vsctl --if-exists del-br $br
