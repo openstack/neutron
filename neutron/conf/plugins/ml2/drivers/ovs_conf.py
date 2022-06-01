@@ -171,6 +171,15 @@ ovs_opts = [
                help=_("The inactivity_probe interval in seconds for the local "
                       "switch connection to the controller. "
                       "A value of 0 disables inactivity probes.")),
+    cfg.BoolOpt('openflow_processed_per_port',
+                default=False,
+                help=_('If enabled, all OpenFlow rules associated to a port '
+                       'are processed at once, in one single transaction. '
+                       'That avoids possible inconsistencies during OVS agent '
+                       'restart and port updates. '
+                       'If disabled, the flows will be processed in batches '
+                       'of ``_constants.AGENT_RES_PROCESSING_STEP`` number of '
+                       'OpenFlow rules.')),
 ]
 
 agent_opts = [
