@@ -13,6 +13,7 @@
 #
 
 import abc
+import copy
 import datetime
 
 from oslo_config import cfg
@@ -229,7 +230,10 @@ class AgentCache:
         self.driver = driver
 
     def __iter__(self):
-        return iter(self.agents.values())
+        # Copying self.agents will avoid any issue during the iteration if an
+        # agent is added or deleted.
+        _agents = copy.copy(self.agents)
+        return iter(_agents.values())
 
     def __getitem__(self, key):
         return self.agents[key]
@@ -253,12 +257,12 @@ class AgentCache:
         agent_ids = {cls.id_from_chassis_private(chassis_private)
                      for cls in NeutronAgent.types.values()}
         # Return the cached agents of agent_ids whose keys are in the cache
-        return (self.agents[id_] for id_ in agent_ids & self.agents.keys())
+        return (agent for agent in self if agent.agent_id in agent_ids)
 
     def get_agents(self, filters=None):
         filters = filters or {}
         agent_list = []
-        for agent in self.agents.values():
+        for agent in self:
             agent_dict = agent.as_dict()
             if all(agent_dict[k] in v for k, v in filters.items()):
                 agent_list.append(agent)
