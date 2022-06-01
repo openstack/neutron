@@ -42,16 +42,21 @@
 
 - name: Clean neutron datapath security groups from iptables
   shell: |
-    iptables-save > /tmp/iptables-before-cleanup
+    {{ iptables_exec }}-save > /tmp/iptables-before-cleanup
     cat /tmp/iptables-before-cleanup | grep -v neutron-openvswi | \
         grep -v neutron-filter > /tmp/iptables-after-cleanup
 
     if ! cmp /tmp/iptables-before-cleanup /tmp/iptables-after-cleanup
     then
-      cat /tmp/iptables-after-cleanup | iptables-restore
+      cat /tmp/iptables-after-cleanup | {{ iptables_exec }}-restore
       echo "Security groups cleaned"
     fi
   register: out
+  with_items:
+    - iptables
+    - ip6tables
+  loop_control:
+    loop_var: iptables_exec
   changed_when: "'Security groups cleaned' in out.stdout"
 
 - name: Cleanup neutron datapath resources
