@@ -40,6 +40,7 @@ from neutron.common import utils as common_utils
 from neutron.conf.agent import common as agent_config
 from neutron.conf.agent.l3 import config as l3_config
 from neutron.conf import common as common_config
+from neutron.tests import base as test_base
 from neutron.tests.common import l3_test_common
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
@@ -703,8 +704,8 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         ha_device = ip_lib.IPDevice(device_name, router.ha_namespace)
         ha_device.link.set_down()
 
-    @staticmethod
-    def wait_until_ha_router_has_state(router, expected_state):
+    @test_base.unstable_test("bug 1956958")
+    def wait_until_ha_router_has_state(self, router, expected_state):
 
         def router_has_expected_state():
             state = router.ha_state
