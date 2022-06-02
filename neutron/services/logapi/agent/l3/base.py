@@ -40,9 +40,9 @@ class L3LoggingExtensionBase(object):
     def consume_api(self, agent_api):
         self.agent_api = agent_api
 
-    def _load_driver_cls(self, namesapce, driver_name):
+    def _load_driver_cls(self, namespace, driver_name):
         return manager.NeutronManager.load_class_for_provider(
-            namesapce, driver_name)
+            namespace, driver_name)
 
     def _register_rpc_consumers(self):
         registry.register(

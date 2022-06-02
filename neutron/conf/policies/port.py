@@ -70,7 +70,7 @@ rules = [
             base.RULE_NET_OWNER
         ),
         scope_types=['project'],
-        description='Specify ``device_owner`` attribute when creting a port',
+        description='Specify ``device_owner`` attribute when creating a port',
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_port:device_owner',

@@ -99,7 +99,7 @@ class OVNDriver(base.DriverBase):
         of the meter. Current implementation needs only one 'fair' meter row
         which is then referred by multiple ACL rows.
 
-        :param ovn_txn: ovn nortbound idl transaction.
+        :param ovn_txn: ovn northbound idl transaction.
 
         """
         meter = self.ovn_nb.db_find_rows(

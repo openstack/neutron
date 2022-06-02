@@ -379,14 +379,14 @@ class CoreChecks(base.BaseChecks):
             if mac != converters.convert_to_sanitized_mac_address(mac):
                 return upgradecheck.Result(
                     upgradecheck.Code.WARNING,
-                    _("There port MAC addresses not correctly formated in the"
-                      "database. The script "
+                    _("There are port MAC addresses not correctly formatted "
+                      "in the database. The script "
                       "neutron-sanitize-port-mac-addresses should be "
-                      "executed"))
+                      "executed."))
 
         return upgradecheck.Result(
             upgradecheck.Code.SUCCESS,
-            _("All port MAC addresses are correctly formated in the "
+            _("All port MAC addresses are correctly formatted in the "
               "database."))
 
     @staticmethod
@@ -436,13 +436,13 @@ class CoreChecks(base.BaseChecks):
                 return upgradecheck.Result(
                     upgradecheck.Code.FAILURE,
                     _("ml2_port_bindings.profile rows are not correctly "
-                      "formated in the database. The script "
+                      "formatted in the database. The script "
                       "neutron-sanitize-port-binding-profile-allocation "
                       "should be executed"))
 
         return upgradecheck.Result(
             upgradecheck.Code.SUCCESS,
-            _("All ml2_port_bindings.profile rows are correctly formated in "
+            _("All ml2_port_bindings.profile rows are correctly formatted in "
               "the database."))
 
     @staticmethod
