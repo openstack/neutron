@@ -207,6 +207,12 @@ ovn_opts = [
                        'or by checking the output of the following command: \n'
                        'ovs-appctl -t ovs-vswitchd dpif/show-dp-features '
                        'br-int | grep "Check pkt length action".')),
+    cfg.BoolOpt('disable_ovn_dhcp_for_baremetal_ports',
+                default=False,
+                help=_('Disable OVN\'s built-in DHCP for baremetal ports '
+                       '(VNIC type "baremetal"). This alllow operators to '
+                       'plug their own DHCP server of choice for PXE booting '
+                       'baremetal nodes. Defaults to False.')),
 ]
 
 
@@ -316,3 +322,7 @@ def is_ovn_emit_need_to_frag_enabled():
 
 def is_igmp_snooping_enabled():
     return cfg.CONF.OVS.igmp_snooping_enable
+
+
+def is_ovn_dhcp_disabled_for_baremetal():
+    return cfg.CONF.ovn.disable_ovn_dhcp_for_baremetal_ports

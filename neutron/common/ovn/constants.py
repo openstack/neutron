@@ -11,6 +11,7 @@
 #    under the License.
 
 import collections
+import copy
 import re
 import uuid
 
@@ -131,10 +132,11 @@ SUPPORTED_DHCP_OPTS_MAPPING = {
         'T1': 'T1',
         'T2': 'T2',
         'bootfile-name': 'bootfile_name',
+        'bootfile-name-alt': 'bootfile_name_alt',
         'wpad': 'wpad',
         'path-prefix': 'path_prefix',
         'tftp-server-address': 'tftp_server_address',
-        'server-ip-address': 'tftp_server_address',
+        'server-ip-address': 'next_server',
         '1': 'netmask',
         '3': 'router',
         '6': 'dns_server',
@@ -175,10 +177,20 @@ SUPPORTED_DHCP_OPTS_MAPPING = {
         '23': 'dns_server'},
 }
 
+# Baremetal specific DHCP options for VNIC_BAREMETAL ports
+SUPPORTED_BM_DHCP_OPTS_MAPPING = copy.deepcopy(
+    SUPPORTED_DHCP_OPTS_MAPPING)
+SUPPORTED_BM_DHCP_OPTS_MAPPING[4].update({
+    'tag:ipxe,bootfile-name': 'bootfile_name',
+    'tag:ipxe,67': 'bootfile_name',
+    'tag:!ipxe,bootfile-name': 'bootfile_name_alt',
+    'tag:!ipxe,67': 'bootfile_name_alt'})
+
 # OVN string type DHCP options
 OVN_STR_TYPE_DHCP_OPTS = [
     'domain_name',
     'bootfile_name',
+    'bootfile_name_alt',
     'path_prefix',
     'wpad',
     'tftp_server']

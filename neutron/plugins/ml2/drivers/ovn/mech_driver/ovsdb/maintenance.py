@@ -20,6 +20,7 @@ import re
 import threading
 
 from futurist import periodics
+from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib import constants as n_const
 from neutron_lib import context as n_context
@@ -728,6 +729,58 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
             with self._nb_idl.transaction(check_error=True) as txn:
                 for cmd in cmds:
                     txn.add(cmd)
+        raise periodics.NeverAgain()
+
+    # A static spacing value is used here, but this method will only run
+    # once per lock due to the use of periodics.NeverAgain().
+    @periodics.periodic(spacing=600, run_immediately=True)
+    def check_baremetal_ports_dhcp_options(self):
+        """Update baremetal ports DHCP options
+
+        Update baremetal ports DHCP options based on the
+        "disable_ovn_dhcp_for_baremetal_ports" configuration option.
+        """
+        # If external ports is not supported stop running
+        # this periodic task
+        if not self._ovn_client.is_external_ports_supported():
+            raise periodics.NeverAgain()
+
+        if not self.has_lock:
+            return
+
+        context = n_context.get_admin_context()
+        ports = self._ovn_client._plugin.get_ports(
+            context,
+            filters={portbindings.VNIC_TYPE: portbindings.VNIC_BAREMETAL})
+        if not ports:
+            raise periodics.NeverAgain()
+
+        with self._nb_idl.transaction(check_error=True) as txn:
+            for port in ports:
+                lsp = self._nb_idl.lsp_get(port['id']).execute(
+                    check_error=True)
+                if not lsp:
+                    continue
+
+                update_dhcp = False
+                if ovn_conf.is_ovn_dhcp_disabled_for_baremetal():
+                    if lsp.dhcpv4_options or lsp.dhcpv6_options:
+                        update_dhcp = True
+                else:
+                    if not lsp.dhcpv4_options and not lsp.dhcpv6_options:
+                        update_dhcp = True
+
+                if update_dhcp:
+                    port_info = self._ovn_client._get_port_options(port)
+                    dhcpv4_options, dhcpv6_options = (
+                        self._ovn_client.update_port_dhcp_options(
+                            port_info, txn))
+                    txn.add(self._nb_idl.set_lswitch_port(
+                                lport_name=port['id'],
+                                dhcpv4_options=dhcpv4_options,
+                                dhcpv6_options=dhcpv6_options,
+                                if_exists=False))
+
         raise periodics.NeverAgain()
 
 

@@ -446,6 +446,24 @@ class OVNClient(object):
 
         return ha_ch_grp.uuid
 
+    def update_port_dhcp_options(self, port_info, txn):
+        dhcpv4_options = []
+        dhcpv6_options = []
+        if not port_info.dhcpv4_options:
+            dhcpv4_options = []
+        elif 'cmd' in port_info.dhcpv4_options:
+            dhcpv4_options = txn.add(port_info.dhcpv4_options['cmd'])
+        else:
+            dhcpv4_options = [port_info.dhcpv4_options['uuid']]
+        if not port_info.dhcpv6_options:
+            dhcpv6_options = []
+        elif 'cmd' in port_info.dhcpv6_options:
+            dhcpv6_options = txn.add(port_info.dhcpv6_options['cmd'])
+        else:
+            dhcpv6_options = [port_info.dhcpv6_options['uuid']]
+
+        return (dhcpv4_options, dhcpv6_options)
+
     def create_port(self, context, port):
         if utils.is_lsp_ignored(port):
             return
@@ -476,18 +494,8 @@ class OVNClient(object):
             'Logical_Switch', 'name', lswitch_name)
 
         with self._nb_idl.transaction(check_error=True) as txn:
-            if not port_info.dhcpv4_options:
-                dhcpv4_options = []
-            elif 'cmd' in port_info.dhcpv4_options:
-                dhcpv4_options = txn.add(port_info.dhcpv4_options['cmd'])
-            else:
-                dhcpv4_options = [port_info.dhcpv4_options['uuid']]
-            if not port_info.dhcpv6_options:
-                dhcpv6_options = []
-            elif 'cmd' in port_info.dhcpv6_options:
-                dhcpv6_options = txn.add(port_info.dhcpv6_options['cmd'])
-            else:
-                dhcpv6_options = [port_info.dhcpv6_options['uuid']]
+            dhcpv4_options, dhcpv6_options = self.update_port_dhcp_options(
+                port_info, txn=txn)
             # The lport_name *must* be neutron port['id'].  It must match the
             # iface-id set in the Interfaces table of the Open_vSwitch
             # database which nova sets to be the port ID.
@@ -606,18 +614,9 @@ class OVNClient(object):
             else:
                 columns_dict['type'] = port_info.type
                 columns_dict['addresses'] = port_info.addresses
-            if not port_info.dhcpv4_options:
-                dhcpv4_options = []
-            elif 'cmd' in port_info.dhcpv4_options:
-                dhcpv4_options = txn.add(port_info.dhcpv4_options['cmd'])
-            else:
-                dhcpv4_options = [port_info.dhcpv4_options['uuid']]
-            if not port_info.dhcpv6_options:
-                dhcpv6_options = []
-            elif 'cmd' in port_info.dhcpv6_options:
-                dhcpv6_options = txn.add(port_info.dhcpv6_options['cmd'])
-            else:
-                dhcpv6_options = [port_info.dhcpv6_options['uuid']]
+
+            dhcpv4_options, dhcpv6_options = self.update_port_dhcp_options(
+                port_info, txn=txn)
 
             if self.is_metadata_port(port):
                 context = n_context.get_admin_context()

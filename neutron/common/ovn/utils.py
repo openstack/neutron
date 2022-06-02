@@ -139,6 +139,12 @@ def validate_port_extra_dhcp_opts(port):
     :param port: A neutron port.
     :returns: A PortExtraDHCPValidation object.
     """
+    # Get the right option mappings according to the port's vnic_type
+    vnic_type = port.get(portbindings.VNIC_TYPE, portbindings.VNIC_NORMAL)
+    mapping = constants.SUPPORTED_DHCP_OPTS_MAPPING
+    if vnic_type == portbindings.VNIC_BAREMETAL:
+        mapping = constants.SUPPORTED_BM_DHCP_OPTS_MAPPING
+
     invalid = {const.IP_VERSION_4: [], const.IP_VERSION_6: []}
     failed = False
     for edo in port.get(edo_ext.EXTRADHCPOPTS, []):
@@ -151,7 +157,7 @@ def validate_port_extra_dhcp_opts(port):
             failed = False
             break
 
-        if opt_name not in constants.SUPPORTED_DHCP_OPTS_MAPPING[ip_version]:
+        if opt_name not in mapping[ip_version]:
             invalid[ip_version].append(opt_name)
             failed = True
 
@@ -171,14 +177,16 @@ def get_lsp_dhcp_opts(port, ip_version):
     lsp_dhcp_disabled = False
     lsp_dhcp_opts = {}
     vnic_type = port.get(portbindings.VNIC_TYPE, portbindings.VNIC_NORMAL)
+    is_baremetal = vnic_type == portbindings.VNIC_BAREMETAL
 
-    # NOTE(lucasagomes): Baremetal does not yet work with OVN's built-in
-    # DHCP server, disable it for now
-    if (is_network_device_port(port) or
-            vnic_type == portbindings.VNIC_BAREMETAL):
+    if is_network_device_port(port):
+        lsp_dhcp_disabled = True
+    elif is_baremetal and ovn_conf.is_ovn_dhcp_disabled_for_baremetal():
         lsp_dhcp_disabled = True
     else:
-        mapping = constants.SUPPORTED_DHCP_OPTS_MAPPING[ip_version]
+        mapping = (constants.SUPPORTED_BM_DHCP_OPTS_MAPPING[ip_version]
+                   if is_baremetal else
+                   constants.SUPPORTED_DHCP_OPTS_MAPPING[ip_version])
         for edo in port.get(edo_ext.EXTRADHCPOPTS, []):
             if edo['ip_version'] != ip_version:
                 continue
