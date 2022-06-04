@@ -11,13 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# TODO(gibi): replace the import with
-# from neutron_lib.api.definitions import port_mac_address_override
-# once https://review.opendev.org/c/openstack/neutron-lib/+/831935 merged and
-# neutron-lib is released
-from neutron.extensions import (
-    _port_mac_address_override as port_mac_address_override
-)
+from neutron_lib.api.definitions import port_mac_address_override
 from neutron_lib.api import extensions as api_extensions
 
 
