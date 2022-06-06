@@ -25,7 +25,8 @@ Neutron Database Layer
 ======================
 
 This section contains some common information that will be useful for
-developers that need to do some db changes.
+developers that need to do some database changes as well as to execute queries
+using the oslo.db API.
 
 Difference between 'default' and 'server_default' parameters for columns
 ------------------------------------------------------------------------
@@ -103,3 +104,107 @@ can be added directly to the 'standardattribute' table. For things that will
 frequently be NULL for most entries (e.g. a column to store an error reason),
 a new table should be added and joined to in a query to prevent a bunch of
 NULL entries in the database.
+
+
+Session handling
+----------------
+
+The main information reference is in `Usage <https://opendev.org/openstack/oslo.db/src/branch/master/doc/source/user/usage.rst>`_,
+that provides an initial picture of how to use oslo.db in Neutron. Any request
+call to the Neutron server API must have a "neutron_context" parameter, that is
+an instance of `Context <https://opendev.org/openstack/neutron-lib/src/tag/2.21.0/neutron_lib/context.py#L142>`_.
+This context holds a `sqlalchemy.orm.session.Session` instance that "manages
+persistence operations for ORM-mapped objects" (from SQLAlchemy documentation).
+A `Session` establishes all conversations with the database and represents a
+"holding zone" for all loaded or associated objects during its lifespan.
+
+A `Session` instance establishes a transaction to the database using the
+defined `Engine`. This transaction represents an SQL transaction that is "a
+logical unit of work that contains one or more SQL statements". Regardless of
+the number of statements this transaction may have, the execution is atomic; if
+the transaction fails, any previous SQL statement already executed that implies
+a change in the database is undone (rollback).
+
+
+Database transactions
+---------------------
+
+Any Neutron database operation, regardless of the type and the amount, should
+be executed inside a transaction. There are two type of transactions:
+
+* Reader: for reading operations.
+* Writer: for any operation that implies a change in the database, like a
+  register creation, modification or deletion.
+
+
+The neutron-lib library provides an API wrapper for the oslo.db operations.
+The `CONTEXT_READER` and `CONTEXT_WRITER` context managers can be used both
+as decorators or context managers. For example:
+
+.. code-block:: python
+
+    from neutron_lib.db import api as db_api
+    from neutron.db import models_v2
+
+    def get_ports(context, network_id):
+        with db_api.CONTEXT_READER.using(context):
+            query = context.session.query(models_v2.Port)
+            query.filter(models_v2.Port.network_id == network_id)
+            return query.all()
+
+    @db_api.CONTEXT_WRITER
+    def delete_port(context, port_id)
+        query = context.session.query(models_v2.Port)
+        query.filter(models_v2.Port.id == port_id)
+        query.delete()
+
+
+The transaction contexts can be nested. For example, if inside a context a
+decorated method is called, the current transaction is preserved. There is only
+one exception on this rule: a reader context cannot be upgraded to writer. That
+means inside a reader context it is not possible to start a writer context. The
+following exception will be raised:
+
+.. code-block:: python
+
+    TypeError: Can't upgrade a READER transaction to a WRITER mid-transaction
+
+
+Another consideration that must be taken when implementing/reviewing new code
+is that, as commented before, a transaction is an atomic operation on the
+database. If the database layer (SQLAlchemy, oslo.db) returns a database
+exception, the current active transaction should end. In other words, we can
+catch, if needed, the exception raised and retry any needed operation, but any
+further database command should be executed in a new context. This is needed to
+allow the context wrapper (writer, reader) to properly finish the operation,
+for example rolling back the already executed commands. Check the patch
+`<https://review.opendev.org/c/openstack/neutron/+/843263>`_ as an example of
+how to handle database exceptions.
+
+
+Retry decorators
+----------------
+
+This is an appendix for
+:doc:`/contributor/internals/retries`
+
+This is also related to the previous section. The neutron-lib library provides
+a decorator called `retry_if_session_inactive` that can be used to retry
+any method if the context session is not active; in other words, there is no
+active transaction when the method is called. The session is retrieved from
+the "context" parameter passed into the method (it is a must to have this
+parameter in the method signature).
+
+This retry decorator can be used along with a transaction decorator but the
+retry decorator must be declared before the context one. If we first declare
+the database context (writer or reader) and then the retry decorator, the retry
+context would be always called from inside an active transaction making it
+useless. An example of a good implementation (first the retry decorator and
+then the reader one):
+
+.. code-block:: python
+
+    @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_READER
+    def get_ports_count(self, context, filters=None):
+        return self._get_ports_query(context, filters).count()
