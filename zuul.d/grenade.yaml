@@ -329,9 +329,9 @@
       specific releases as prescribed by our process.
     vars:
       # Move this forward when master changes to a new skip-level-allowed
-      # target release. Right now, this is wallaby because master is yoga.
+      # target release. Right now, this is xena because master is zed.
       # When master is A, this should become yoga, and so forth.
-      grenade_from_branch: stable/wallaby
+      grenade_from_branch: stable/xena
       grenade_localrc:
         NOVA_ENABLE_UPGRADE_WORKAROUND: True
 
@@ -343,8 +343,8 @@
       specific releases as prescribed by our process.
     vars:
       # Move this forward when master changes to a new skip-level-allowed
-      # target release. Right now, this is wallaby because master is yoga.
+      # target release. Right now, this is xena because master is zed.
       # When master is A, this should become yoga, and so forth.
-      grenade_from_branch: stable/wallaby
+      grenade_from_branch: stable/xena
       grenade_localrc:
         NOVA_ENABLE_UPGRADE_WORKAROUND: True
