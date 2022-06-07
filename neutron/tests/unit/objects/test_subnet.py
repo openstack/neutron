@@ -268,6 +268,26 @@ class SubnetDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         self.assertEqual([service_type_obj.service_type],
                          obj1.service_types)
 
+    def test_find_candidate_subnets(self):
+        network = self._create_test_network()
+        subnet_data = dict(self.obj_fields[0])
+        subnet_data['network_id'] = network['id']
+        subnet_net = self._make_object(subnet_data)
+        subnet2_data = dict(self.obj_fields[0])
+        subnet2_data['id'] = uuidutils.generate_uuid()
+        subnet2_data['network_id'] = network['id']
+        subnet2_net = self._make_object(subnet2_data)
+        subnet_net.create()
+        subnet2_net.create()
+        fixed_ips = [
+            {'subnet_id': subnet_data['id'], 'ip_address': '10.0.0.2'},
+            {'subnet_id': subnet2_data['id'], 'ip_address': '10.0.1.2'}]
+        candidate_subnet = subnet.Subnet.find_candidate_subnets(
+            self.context, network['id'], None, None, True, fixed_ips)
+        self.assertEqual(2, len(candidate_subnet))
+        self.assertNotEqual(
+            candidate_subnet[0]['id'], candidate_subnet[1]['id'])
+
 
 class NetworkSubnetLockTestCase(obj_test_base.BaseObjectIfaceTestCase):
 
