@@ -1727,6 +1727,65 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 context.current, context.network.current, mock.ANY)
             umd.assert_called_once_with(mock.ANY, 'id', subnet=subnet)
 
+    def test__get_port_options(self):
+        with mock.patch.object(self.mech_driver._plugin, 'get_subnets') as \
+                mock_get_subnets:
+            port = {'id': 'virt-port',
+                    'mac_address': '00:00:00:00:00:00',
+                    'device_owner': 'device_owner',
+                    'network_id': 'foo',
+                    'fixed_ips': [{'subnet_id': 'subnet-1',
+                                   'ip_address': '10.0.0.55'},
+                                  {'subnet_id': 'subnet-2',
+                                   'ip_address': '10.0.1.55'},
+                                  ]}
+            subnet_ids = [
+                ip['subnet_id']
+                for ip in port.get('fixed_ips')
+            ]
+            self.mech_driver._ovn_client._get_port_options(port)
+            mock_get_subnets.assert_called_once_with(
+                mock.ANY,
+                filters={'id': subnet_ids})
+
+    def test_update_port(self):
+        with mock.patch.object(
+                self.mech_driver._ovn_client, 'is_metadata_port') as \
+                mock_is_metadata_port, \
+                mock.patch.object(self.mech_driver._plugin, 'get_subnets') as \
+                mock_get_subnets, \
+                mock.patch.object(self.mech_driver._plugin, 'get_network') as \
+                mock_get_network:
+            net_attrs = {az_def.AZ_HINTS: ['az0', 'az1', 'az2']}
+            fake_net = (
+                fakes.FakeNetwork.create_one_network(attrs=net_attrs).info())
+            port = {'id': 'virt-port',
+                    'mac_address': '00:00:00:00:00:00',
+                    'name': 'port-foo',
+                    'device_id': 'device_id-foo',
+                    'project_id': 'project_id-foo',
+                    'device_owner': 'device_owner',
+                    'network_id': 'foo',
+                    'admin_state_up': True,
+                    'fixed_ips': [{'subnet_id': 'subnet-1',
+                                   'ip_address': '10.0.0.55'},
+                                  {'subnet_id': 'subnet-2',
+                                   'ip_address': '10.0.1.55'},
+                                  ]}
+            subnet_ids = [
+                ip['subnet_id']
+                for ip in port.get('fixed_ips')
+            ]
+
+            mock_is_metadata_port.return_value = [True]
+            mock_get_network.return_value = fake_net
+            self.mech_driver._ovn_client.update_port(
+                self.context, port)
+            self.assertEqual(mock_get_subnets.call_count, 2)
+            mock_get_subnets.assert_called_with(
+                mock.ANY,
+                filters={'id': subnet_ids})
+
     def test_update_metadata_port_with_subnet(self):
         ovn_conf.cfg.CONF.set_override('ovn_metadata_enabled', True,
                                        group='ovn')
