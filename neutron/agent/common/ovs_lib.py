@@ -1029,9 +1029,14 @@ class OVSBridge(BaseOVS):
                     self._min_bw_qos_id,
                     qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH,
                     qos_id=qos_id, queues=qos_queues)
-            self.ovsdb.db_clear('Port', port_id, 'qos').execute(
-                check_error=False)
-            if not qos_queues:
+            else:
+                # Find the physical bridge interface with the QoS assigned and
+                # unset it.
+                for port in self.ovsdb.db_find(
+                        'Port', ('qos', '=', qos_id),
+                        columns=['_uuid', 'qos']).execute(check_error=True):
+                    self.ovsdb.db_clear('Port', port['_uuid'],
+                                        'qos').execute(check_error=True)
                 self._delete_qos(qos_id)
             self._delete_queue(
                 queue['_uuid'], qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH)
