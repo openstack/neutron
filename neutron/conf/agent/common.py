@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
 import shlex
 
 from oslo_config import cfg
@@ -171,31 +170,6 @@ DHCP_PROTOCOL_OPTS = [
                help=_("DHCP rebinding time T2 (in seconds). If set to 0, it "
                       "will default to 7/8 of the lease time.")),
 ]
-
-
-def get_log_args(conf, log_file_name, **kwargs):
-    cmd_args = []
-    if conf.debug:
-        cmd_args.append('--debug')
-    if (conf.log_dir or conf.log_file):
-        cmd_args.append('--log-file=%s' % log_file_name)
-        log_dir = None
-        if conf.log_dir and conf.log_file:
-            log_dir = os.path.dirname(
-                os.path.join(conf.log_dir, conf.log_file))
-        elif conf.log_dir:
-            log_dir = conf.log_dir
-        elif conf.log_file:
-            log_dir = os.path.dirname(conf.log_file)
-        if log_dir:
-            cmd_args.append('--log-dir=%s' % log_dir)
-    else:
-        if conf.use_syslog:
-            cmd_args.append('--use-syslog')
-            if conf.syslog_log_facility:
-                cmd_args.append(
-                    '--syslog-log-facility=%s' % conf.syslog_log_facility)
-    return cmd_args
 
 
 def register_external_process_opts(cfg=cfg.CONF):
