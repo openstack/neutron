@@ -36,6 +36,7 @@ from oslo_config import cfg
 from oslo_utils import uuidutils
 import webob.exc
 
+from neutron.conf import experimental as c_experimental
 from neutron.conf.plugins.ml2 import config as ml2_config
 from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron.db import agents_db
@@ -873,6 +874,11 @@ class TestMl2HostSegmentMappingOVS(HostSegmentMappingTestCase):
 
 class TestMl2HostSegmentMappingLinuxBridge(TestMl2HostSegmentMappingOVS):
     _mechanism_drivers = ['linuxbridge', 'logger']
+
+    def setUp(self, plugin=None):
+        cfg.CONF.set_override(c_experimental.EXPERIMENTAL_LINUXBRIDGE, True,
+                              group=c_experimental.EXPERIMENTAL_CFG_GROUP)
+        super(TestMl2HostSegmentMappingLinuxBridge, self).setUp(plugin=plugin)
 
     def _register_agent(self, host, mappings=None, plugin=None):
         helpers.register_linuxbridge_agent(host=host,

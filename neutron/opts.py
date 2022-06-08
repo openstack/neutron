@@ -37,6 +37,7 @@ import neutron.conf.db.l3_agentschedulers_db
 import neutron.conf.db.l3_dvr_db
 import neutron.conf.db.l3_gwmode_db
 import neutron.conf.db.l3_hamode_db
+import neutron.conf.experimental
 import neutron.conf.extensions.allowedaddresspairs
 import neutron.conf.extensions.conntrack_helper
 import neutron.conf.plugins.ml2.config
@@ -360,4 +361,12 @@ def list_sriov_agent_opts():
          sriov_nic_opts),
         ('agent',
          neutron.conf.agent.agent_extensions_manager.AGENT_EXT_MANAGER_OPTS)
+    ]
+
+
+def list_experimental_opts():
+    return [
+        (neutron.conf.experimental.EXPERIMENTAL_CFG_GROUP,
+         itertools.chain(neutron.conf.experimental.experimental_opts)
+         ),
     ]

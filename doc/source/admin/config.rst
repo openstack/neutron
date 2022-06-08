@@ -18,6 +18,7 @@ Configuration
    config-dns-int-ext-serv
    config-dns-res
    config-dvr-ha-snat
+   config-experimental-framework
    config-fip-port-forwardings
    config-ipam
    config-ipv6
