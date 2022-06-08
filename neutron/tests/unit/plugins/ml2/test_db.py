@@ -385,6 +385,26 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
             self.ctx.session.add(record)
             return record
 
+    def _setup_port_binding_level(self, network_id, port_id, host_id,
+                                  level=0, driver='openvswitch'):
+        with db_api.CONTEXT_WRITER.using(self.ctx):
+            record = models.PortBindingLevel(
+                port_id=port_id,
+                host=host_id,
+                level=level,
+                driver=driver,
+                segment_id=network_id)
+            self.ctx.session.add(record)
+            return record
+
+    def _setup_neutron_network_segment(self, segment_id, network_id):
+        with db_api.CONTEXT_WRITER.using(self.ctx):
+            segment = network_obj.NetworkSegment(
+                self.ctx,
+                id=segment_id, network_id=network_id,
+                network_type=constants.TYPE_FLAT)
+            segment.create()
+
     def test_ensure_distributed_port_binding_deals_with_db_duplicate(self):
         network_id = uuidutils.generate_uuid()
         port_id = uuidutils.generate_uuid()
@@ -428,16 +448,43 @@ class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
 
     def test_delete_distributed_port_binding_if_stale(self):
         network_id = uuidutils.generate_uuid()
+        segment_id = uuidutils.generate_uuid()
         port_id = uuidutils.generate_uuid()
+        host_id = 'foo_host_id'
         self._setup_neutron_network(network_id, [port_id])
-        binding = self._setup_distributed_binding(
-            network_id, port_id, None, 'foo_host_id')
+        self._setup_neutron_network_segment(segment_id, network_id)
 
-        ml2_db.delete_distributed_port_binding_if_stale(self.ctx,
-                                                        binding)
+        binding = self._setup_distributed_binding(
+            network_id, port_id, None, host_id)
+        binding_levels = self._setup_port_binding_level(
+            segment_id, port_id, host_id)
+
+        ml2_db.delete_distributed_port_binding_if_stale(
+            self.ctx, binding)
         count = (self.ctx.session.query(models.DistributedPortBinding).
-            filter_by(port_id=binding.port_id).count())
+                 filter_by(port_id=binding.port_id, host=host_id).count())
         self.assertFalse(count)
+
+        count = (self.ctx.session.query(models.PortBindingLevel).
+                 filter_by(port_id=binding_levels.port_id,
+                           host=host_id).count())
+        self.assertFalse(count)
+
+    def test_update_distributed_port_binding_by_host(self):
+        network_id = uuidutils.generate_uuid()
+        router_id = uuidutils.generate_uuid()
+        port_id = uuidutils.generate_uuid()
+        host_id = 'foo_host_id'
+        self._setup_neutron_network(network_id, [port_id])
+
+        binding = self._setup_distributed_binding(
+            network_id, port_id, router_id, host_id)
+
+        ml2_db.update_distributed_port_binding_by_host(
+            self.ctx, binding.port_id, host_id, None)
+        binding = (self.ctx.session.query(models.DistributedPortBinding).
+                   filter_by(port_id=port_id, host=host_id).one())
+        self.assertFalse(binding.router_id)
 
     def test_get_distributed_port_binding_by_host_not_found(self):
         port = ml2_db.get_distributed_port_binding_by_host(
