@@ -141,6 +141,13 @@ def delete_distributed_port_binding_if_stale(context, binding):
         with db_api.CONTEXT_WRITER.using(context):
             LOG.debug("Distributed port: Deleting binding %s", binding)
             context.session.delete(binding)
+            for bindlv in (context.session.query(models.PortBindingLevel).
+                    filter_by(port_id=binding.port_id, host=binding.host)):
+                context.session.delete(bindlv)
+            LOG.debug("For port %(port_id)s, host %(host)s, "
+                      "cleared binding levels",
+                      {'port_id': binding.port_id,
+                       'host': binding.host})
 
 
 def get_port(context, port_id):
@@ -274,6 +281,17 @@ def get_distributed_port_binding_by_host(context, port_id, host):
         LOG.debug("No binding for distributed port %(port_id)s with host "
                   "%(host)s", {'port_id': port_id, 'host': host})
     return binding
+
+
+def update_distributed_port_binding_by_host(context, port_id, host, router_id):
+    with db_api.CONTEXT_WRITER.using(context):
+        bindings = (
+            context.session.query(models.DistributedPortBinding).
+            filter(models.DistributedPortBinding.port_id.startswith(port_id),
+                   models.DistributedPortBinding.host == host).all())
+        for binding in bindings or []:
+            binding['router_id'] = router_id or None
+            binding.update(binding)
 
 
 def get_distributed_port_bindings(context, port_id):
