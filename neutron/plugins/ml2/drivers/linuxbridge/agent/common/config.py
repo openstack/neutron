@@ -13,6 +13,7 @@
 #    under the License.
 
 from neutron.conf.plugins.ml2.drivers import linuxbridge
+from neutron.plugins.ml2.drivers.agent import config as cagt_config  # noqa
 
 
 linuxbridge.register_linuxbridge_opts()

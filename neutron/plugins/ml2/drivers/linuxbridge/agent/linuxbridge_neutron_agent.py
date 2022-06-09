@@ -44,7 +44,6 @@ from neutron.conf.agent import common as agent_config
 from neutron.conf import service as service_conf
 from neutron.plugins.ml2.drivers.agent import _agent_manager_base as amb
 from neutron.plugins.ml2.drivers.agent import _common_agent as ca
-from neutron.plugins.ml2.drivers.agent import config as cagt_config  # noqa
 from neutron.plugins.ml2.drivers.l2pop.rpc_manager \
     import l2population_rpc as l2pop_rpc
 from neutron.plugins.ml2.drivers.linuxbridge.agent import arp_protect
