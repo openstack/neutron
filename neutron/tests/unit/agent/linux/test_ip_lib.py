@@ -27,6 +27,7 @@ import pyroute2
 from pyroute2.netlink.rtnl import ifinfmsg
 from pyroute2.netlink.rtnl import ndmsg
 from pyroute2 import NetlinkError
+from pyroute2 import netns
 import testtools
 
 from neutron.agent.common import utils  # noqa
@@ -201,7 +202,7 @@ class TestIpWrapper(base.BaseTestCase):
             netns_name='foo')
         self.assertEqual([], ip_lib.IPWrapper(namespace='foo').get_devices())
 
-    @mock.patch.object(pyroute2.netns, 'listnetns')
+    @mock.patch.object(netns, 'listnetns')
     @mock.patch.object(priv_lib, 'list_netns')
     def test_get_namespaces_non_root(self, priv_listnetns, listnetns):
         self.config(group='AGENT', use_helper_for_ns_read=False)
@@ -214,7 +215,7 @@ class TestIpWrapper(base.BaseTestCase):
         self.assertEqual(1, listnetns.call_count)
         self.assertFalse(priv_listnetns.called)
 
-    @mock.patch.object(pyroute2.netns, 'listnetns')
+    @mock.patch.object(netns, 'listnetns')
     @mock.patch.object(priv_lib, 'list_netns')
     def test_get_namespaces_root(self, priv_listnetns, listnetns):
         self.config(group='AGENT', use_helper_for_ns_read=True)
