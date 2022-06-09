@@ -38,27 +38,26 @@ class NeutronAgent(abc.ABC):
         # Register the subclasses to be looked up by their type
         NeutronAgent.types[cls.agent_type] = cls
 
-    def __init__(self, chassis_private, driver, updated_at=None):
+    def __init__(self, chassis_private, driver):
         self.driver = driver
         self.set_down = False
-        self.update(chassis_private, updated_at)
+        self.update(chassis_private)
 
-    def update(self, chassis_private, updated_at=None, clear_down=False):
+    def update(self, chassis_private, clear_down=False):
         self.chassis_private = chassis_private
-        if not updated_at:
-            # When use the Chassis_Private table for agents health check,
-            # chassis_private has attribute nb_cfg_timestamp.
-            # nb_cfg_timestamp: the timestamp when ovn-controller finishes
-            # processing the change corresponding to nb_cfg(
-            # https://www.ovn.org/support/dist-docs/ovn-sb.5.html).
-            # it can better reflect the status of chassis.
-            # nb_cfg_timestamp is milliseconds, need to convert to datetime.
-            if hasattr(chassis_private, 'nb_cfg_timestamp'):
-                updated_at = datetime.datetime.fromtimestamp(
-                    chassis_private.nb_cfg_timestamp / 1000,
-                    datetime.timezone.utc)
-            else:
-                updated_at = timeutils.utcnow(with_timezone=True)
+        # When use the Chassis_Private table for agents health check,
+        # chassis_private has attribute nb_cfg_timestamp.
+        # nb_cfg_timestamp: the timestamp when ovn-controller finishes
+        # processing the change corresponding to nb_cfg(
+        # https://www.ovn.org/support/dist-docs/ovn-sb.5.html).
+        # it can better reflect the status of chassis.
+        # nb_cfg_timestamp is milliseconds, need to convert to datetime.
+        if hasattr(chassis_private, 'nb_cfg_timestamp'):
+            updated_at = datetime.datetime.fromtimestamp(
+                chassis_private.nb_cfg_timestamp / 1000,
+                datetime.timezone.utc)
+        else:
+            updated_at = timeutils.utcnow(with_timezone=True)
         self.updated_at = updated_at
         if clear_down:
             self.set_down = False
@@ -112,8 +111,8 @@ class NeutronAgent(abc.ABC):
         return False
 
     @classmethod
-    def from_type(cls, _type, chassis_private, driver, updated_at=None):
-        return cls.types[_type](chassis_private, driver, updated_at)
+    def from_type(cls, _type, chassis_private, driver):
+        return cls.types[_type](chassis_private, driver)
 
     @property
     @abc.abstractmethod
@@ -141,7 +140,7 @@ class ControllerAgent(NeutronAgent):
     binary = 'ovn-controller'
 
     @staticmethod  # it is by default, but this makes pep8 happy
-    def __new__(cls, chassis_private, driver, updated_at=None):
+    def __new__(cls, chassis_private, driver):
         external_ids = cls.chassis_from_private(chassis_private).external_ids
         if ('enable-chassis-as-gw' in
                 external_ids.get('ovn-cms-options', [])):
@@ -165,8 +164,8 @@ class ControllerAgent(NeutronAgent):
         return self.chassis_private.external_ids.get(
             ovn_const.OVN_AGENT_DESC_KEY, '')
 
-    def update(self, chassis_private, updated_at=None, clear_down=False):
-        super().update(chassis_private, updated_at, clear_down)
+    def update(self, chassis_private, clear_down=False):
+        super().update(chassis_private, clear_down)
         external_ids = self.chassis_from_private(chassis_private).external_ids
         if 'enable-chassis-as-gw' in external_ids.get('ovn-cms-options', []):
             self.__class__ = ControllerGatewayAgent
@@ -175,8 +174,8 @@ class ControllerAgent(NeutronAgent):
 class ControllerGatewayAgent(ControllerAgent):
     agent_type = ovn_const.OVN_CONTROLLER_GW_AGENT
 
-    def update(self, chassis_private, updated_at=None, clear_down=False):
-        super().update(chassis_private, updated_at, clear_down)
+    def update(self, chassis_private, clear_down=False):
+        super().update(chassis_private, clear_down)
         external_ids = self.chassis_from_private(chassis_private).external_ids
         if ('enable-chassis-as-gw' not in
                 external_ids.get('ovn-cms-options', [])):
@@ -238,14 +237,13 @@ class AgentCache:
     def __getitem__(self, key):
         return self.agents[key]
 
-    def update(self, agent_type, row, updated_at=None, clear_down=False):
+    def update(self, agent_type, row, clear_down=False):
         cls = NeutronAgent.types[agent_type]
         try:
             agent = self.agents[cls.id_from_chassis_private(row)]
-            agent.update(row, updated_at=updated_at, clear_down=clear_down)
+            agent.update(row, clear_down=clear_down)
         except KeyError:
-            agent = NeutronAgent.from_type(agent_type, row, self.driver,
-                                           updated_at=updated_at)
+            agent = NeutronAgent.from_type(agent_type, row, self.driver)
             self.agents[agent.agent_id] = agent
         return agent
 
