@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
+
 from eventlet import greenthread
 import netaddr
 from netaddr.strategy import eui48
@@ -2448,7 +2450,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         try:
             self._notify_mechanism_driver_for_segment_change(
-                event, context, network_id)
+                event, context, segment)
         except ml2_exc.MechanismDriverError:
             with excutils.save_and_reraise_exception():
                 LOG.error("mechanism_manager error occurred when "
@@ -2456,15 +2458,53 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                           "'%(segment)s'",
                           {'event': event, 'segment': segment['id']})
 
+    def _build_original_network(self, event, network, changed_segment):
+        """Constructs a copy of the given network where the given
+        segment will be either removed(precommit_create) or added
+        (precommit_delete) to the copied network
+        """
+
+        network_copy = copy.deepcopy(network)
+        network_segments = managers.TypeManager()\
+            .pop_segments_from_network(network_copy)
+
+        if event == events.PRECOMMIT_CREATE:
+            network_segments = [network_segment
+                for network_segment in network_segments
+                # A segment popped from a network could have its
+                # segmentation_id set to None if the segment
+                # beeing created is partial.
+                if not ((network_segment[api.SEGMENTATION_ID] ==
+                    changed_segment[api.SEGMENTATION_ID] or
+                    network_segment[api.SEGMENTATION_ID] is None) and
+                    network_segment[api.NETWORK_TYPE] ==
+                    changed_segment[api.NETWORK_TYPE] and
+                    network_segment[api.PHYSICAL_NETWORK] ==
+                    changed_segment[api.PHYSICAL_NETWORK])]
+        elif event == events.PRECOMMIT_DELETE:
+            network_segments.append(changed_segment)
+
+        self.type_manager.extend_network_with_provider_segments(
+            network_copy, network_segments)
+
+        return network_copy
+
     def _notify_mechanism_driver_for_segment_change(self, event,
-                                                    context, network_id):
-        network_with_segments = self.get_network(context, network_id)
-        mech_context = driver_context.NetworkContext(
-            self, context, network_with_segments,
-            original_network=network_with_segments)
+                                                    context, segment):
+        network = self.get_network(context, segment['network_id'])
+
         if event in [events.PRECOMMIT_CREATE, events.PRECOMMIT_DELETE]:
+            original_network = self._build_original_network(
+                event, network, segment)
+            mech_context = driver_context.NetworkContext(
+                self, context, network,
+                original_network=original_network)
             self.mechanism_manager.update_network_precommit(mech_context)
-        elif event in [events.AFTER_CREATE, events.AFTER_DELETE]:
+
+        if event in [events.AFTER_CREATE, events.AFTER_DELETE]:
+            mech_context = driver_context.NetworkContext(
+                self, context, network,
+                original_network=network)
             self.mechanism_manager.update_network_postcommit(mech_context)
 
     @staticmethod

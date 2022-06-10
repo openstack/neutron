@@ -3587,3 +3587,90 @@ class TestML2Segments(Ml2PluginV2TestCase):
                                   resource_id=segment['id']))
             exist_port = self._show('ports', port['port']['id'])
             self.assertEqual(port['port']['id'], exist_port['port']['id'])
+
+    def test_precommit_create_builds_single_segment_original_network(self):
+        event = events.PRECOMMIT_CREATE
+        network_type = 'vlan'
+        physical_network = self.physnet
+        segmentation_id = 2
+
+        network_segments = [{pnet.NETWORK_TYPE: 'vlan',
+                             pnet.PHYSICAL_NETWORK: self.physnet2,
+                             pnet.SEGMENTATION_ID: 1},
+                            {pnet.NETWORK_TYPE: network_type,
+                             pnet.PHYSICAL_NETWORK: physical_network,
+                             pnet.SEGMENTATION_ID: segmentation_id}]
+
+        new_segment = {driver_api.NETWORK_TYPE: network_type,
+                       driver_api.PHYSICAL_NETWORK: physical_network,
+                       driver_api.SEGMENTATION_ID: segmentation_id}
+
+        with self.network(**{'arg_list': (mpnet_apidef.SEGMENTS, ),
+                             mpnet_apidef.SEGMENTS: network_segments})\
+                as test_network:
+            multisegment_network = test_network['network']
+            observed_network = self.driver._build_original_network(
+                event, multisegment_network, new_segment)
+            # Should become a single segment network
+            self.assertNotIn(mpnet_apidef.SEGMENTS, observed_network)
+            # Where new segment in not part of the network
+            self.assertNotEqual(segmentation_id,
+                observed_network[pnet.SEGMENTATION_ID])
+
+    def test_precommit_create_builds_multisegment_original_network(self):
+        event = events.PRECOMMIT_CREATE
+        network_type = 'vlan'
+        physical_network = self.physnet
+        segmentation_id = 3
+
+        network_segments = [{pnet.NETWORK_TYPE: 'vlan',
+                             pnet.PHYSICAL_NETWORK: self.physnet2,
+                             pnet.SEGMENTATION_ID: 1},
+                            {pnet.NETWORK_TYPE: 'vlan',
+                             pnet.PHYSICAL_NETWORK: self.physnet2,
+                             pnet.SEGMENTATION_ID: 2},
+                            {pnet.NETWORK_TYPE: network_type,
+                             pnet.PHYSICAL_NETWORK: physical_network,
+                             pnet.SEGMENTATION_ID: segmentation_id}]
+
+        new_segment = {driver_api.NETWORK_TYPE: network_type,
+                       driver_api.PHYSICAL_NETWORK: physical_network,
+                       driver_api.SEGMENTATION_ID: segmentation_id}
+
+        with self.network(**{'arg_list': (mpnet_apidef.SEGMENTS, ),
+                             mpnet_apidef.SEGMENTS: network_segments})\
+                as test_network:
+            multisegment_network = test_network['network']
+            observed_network = self.driver._build_original_network(
+                event, multisegment_network, new_segment)
+            # Should remain a multisegment network
+            self.assertIn(mpnet_apidef.SEGMENTS, observed_network)
+            # Where new segment in not part of the multisegment
+            self.assertNotIn(network_segments[2],
+                observed_network[mpnet_apidef.SEGMENTS])
+
+    def test_precommit_delete_builds_multisegment_original_network(self):
+        event = events.PRECOMMIT_DELETE
+        network_type = 'vlan'
+        physical_network = self.physnet
+        segmentation_id = 2
+
+        deleted_segment = {driver_api.NETWORK_TYPE: network_type,
+                           driver_api.PHYSICAL_NETWORK: physical_network,
+                           driver_api.SEGMENTATION_ID: segmentation_id}
+
+        expected_segment = {pnet.NETWORK_TYPE: network_type,
+                            pnet.PHYSICAL_NETWORK: physical_network,
+                            pnet.SEGMENTATION_ID: segmentation_id}
+
+        with self.network() as test_network:
+            # network() implicitaly creates a single segment
+            single_segment_network = test_network['network']
+            observed_network = self.driver._build_original_network(
+                event, single_segment_network, deleted_segment)
+            # Should become a multisegment network
+            self.assertIn(mpnet_apidef.SEGMENTS, observed_network)
+            self.assertEqual(2, len(observed_network[mpnet_apidef.SEGMENTS]))
+            # Where new segment is part of segments
+            self.assertIn(expected_segment,
+                observed_network[mpnet_apidef.SEGMENTS])
