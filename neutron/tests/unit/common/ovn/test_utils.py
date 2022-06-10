@@ -531,7 +531,7 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
             constants.OVNPortBindingProfileParamSet(
                 {
                     'key': [str],
-                    'other_key': [str],
+                    'other_key': [int],
                     'third_key': [str]
                 },
                 self.VNIC_FAKE_OTHER, constants.PORT_CAP_SWITCHDEV),
@@ -647,6 +647,24 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
                  constants.OVN_PORT_BINDING_PROFILE: expect}),
             expect)
 
+    def test_valid_input_surplus_keys(self):
+        # Confirm that extra keys are allowed
+        binding_profile = {
+            constants.PORT_CAP_PARAM: [constants.PORT_CAP_SWITCHDEV],
+            'pci_vendor_info': 'dead:beef',
+            'pci_slot': '0000:ca:fe.42',
+            'physical_network': 'physnet1',
+            'optional_information_provided_by_nova': 'not_consumed_by_neutron',
+        }
+        expect = binding_profile.copy()
+        del(expect[constants.PORT_CAP_PARAM])
+        del(expect['optional_information_provided_by_nova'])
+        self.assertDictEqual(
+            expect,
+            utils.validate_and_get_data_from_binding_profile(
+                {portbindings.VNIC_TYPE: portbindings.VNIC_DIRECT,
+                 constants.OVN_PORT_BINDING_PROFILE: binding_profile}))
+
     def test_unknown_profile_items_pruned(self):
         # Confirm that unknown profile items are pruned
         self.assertEqual(
@@ -684,36 +702,41 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
 
     def test_overlapping_param_set_different_vnic_type(self):
         # Confirm overlapping param sets discerned by vnic_type
-        expect = {
+        binding_profile = {
             'key': 'value',
             'other_key': 'value',
         }
-        # This param set is not valid for VNIC_FAKE_NORMAL
-        self.assertRaises(
-            neutron_lib.exceptions.InvalidInput,
-            utils.validate_and_get_data_from_binding_profile,
-            {portbindings.VNIC_TYPE: self.VNIC_FAKE_NORMAL,
-             constants.OVN_PORT_BINDING_PROFILE: expect})
+        # This param set is valid for VNIC_FAKE_NORMAL with 'other_key' pruned.
+        expect = binding_profile.copy()
+        del(expect['other_key'])
+        self.assertDictEqual(
+            expect,
+            utils.validate_and_get_data_from_binding_profile(
+                {portbindings.VNIC_TYPE: self.VNIC_FAKE_NORMAL,
+                 constants.OVN_PORT_BINDING_PROFILE: binding_profile}))
         # It is valid for VNIC_FAKE_OTHER
+        expect = binding_profile.copy()
         self.assertDictEqual(
             expect,
             utils.validate_and_get_data_from_binding_profile(
                 {portbindings.VNIC_TYPE: self.VNIC_FAKE_OTHER,
-                 constants.OVN_PORT_BINDING_PROFILE: expect}))
+                 constants.OVN_PORT_BINDING_PROFILE: binding_profile}))
 
     def test_overlapping_param_set_different_vnic_type_and_capability(self):
         # Confirm overlapping param sets discerned by vnic_type and capability
-        expect = {
+        binding_profile = {
             'key': 'value',
-            'other_key': 'value',
+            'other_key': 42,
             'third_key': 'value',
         }
         # This param set is not valid for VNIC_FAKE_OTHER without capability
+        expect = binding_profile.copy()
+        del(expect['third_key'])
         self.assertRaises(
             neutron_lib.exceptions.InvalidInput,
             utils.validate_and_get_data_from_binding_profile,
             {portbindings.VNIC_TYPE: self.VNIC_FAKE_OTHER,
-             constants.OVN_PORT_BINDING_PROFILE: expect})
+             constants.OVN_PORT_BINDING_PROFILE: binding_profile})
         # This param set is also not valid as the capabilities do not match
         binding_profile = {
             constants.PORT_CAP_PARAM: ['fake-capability'],
@@ -730,7 +753,7 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
         binding_profile = {
             constants.PORT_CAP_PARAM: [constants.PORT_CAP_SWITCHDEV],
             'key': 'value',
-            'other_key': 'value',
+            'other_key': 42,
             'third_key': 'value',
         }
         expect = binding_profile.copy()
