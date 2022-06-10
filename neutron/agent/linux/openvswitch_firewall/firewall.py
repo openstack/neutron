@@ -1612,4 +1612,4 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             # will not match with the ip flow's cookie so OVS won't actually
             # delete the flow
             flow['cookie'] = ovs_lib.COOKIE_ANY
-            self._delete_flows(deferred=False, **flow)
+            self._delete_flows(**flow)
