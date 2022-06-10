@@ -93,6 +93,8 @@ class MechDriverSetupBase(abc.ABC):
         agent1 = self._add_agent('agent1')
         neutron_agent.AgentCache().get_agents = mock.Mock()
         neutron_agent.AgentCache().get_agents.return_value = [agent1]
+        self.mock_vp_parents = mock.patch.object(
+            ovn_utils, 'get_virtual_port_parents', return_value=None).start()
 
     def _add_chassis(self, nb_cfg, name=None):
         chassis_private = mock.Mock()
@@ -176,9 +178,6 @@ class TestOVNMechanismDriverBase(MechDriverSetupBase,
         p = mock.patch.object(ovn_revision_numbers_db, 'bump_revision')
         p.start()
         self.addCleanup(p.stop)
-        self.mock_vp_parents = mock.patch.object(
-            ovn_client.OVNClient, 'get_virtual_port_parents',
-            return_value=None).start()
 
     def test_delete_mac_binding_entries(self):
         self.config(group='ovn', ovn_sb_private_key=None)
@@ -205,12 +204,6 @@ class TestOVNMechanismDriverBase(MechDriverSetupBase,
 
 
 class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
-
-    def setUp(self):
-        super().setUp()
-        self.mock_vp_parents = mock.patch.object(
-            ovn_client.OVNClient, 'get_virtual_port_parents',
-            return_value=None).start()
 
     @mock.patch.object(ovsdb_monitor.OvnInitPGNbIdl, 'from_server')
     @mock.patch.object(ovsdb_monitor, 'short_living_ovsdb_api')
@@ -2479,9 +2472,6 @@ class OVNMechanismDriverTestCase(MechDriverSetupBase,
         p = mock.patch.object(ovn_utils, 'get_revision_number', return_value=1)
         p.start()
         self.addCleanup(p.stop)
-        self.mock_vp_parents = mock.patch.object(
-            ovn_client.OVNClient, 'get_virtual_port_parents',
-            return_value=None).start()
 
 
 class TestOVNMechanismDriverBasicGet(test_plugin.TestMl2BasicGet,
@@ -2793,9 +2783,7 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
                          segment_id=self.seg_2['id']) as subnet:
             self.sub_2 = subnet
 
-    @mock.patch.object(ovn_client.OVNClient, 'get_virtual_port_parents',
-                       return_value=[])
-    def test_create_segments_subnet_metadata_ip_allocation(self, *args):
+    def test_create_segments_subnet_metadata_ip_allocation(self):
         self._test_segments_helper()
         ovn_nb_api = self.mech_driver.nb_ovn
 
@@ -3498,9 +3486,6 @@ class TestOVNMechanismDriverSecurityGroup(MechDriverSetupBase,
         super(TestOVNMechanismDriverSecurityGroup, self).setUp()
         self.ctx = context.get_admin_context()
         revision_plugin.RevisionPlugin()
-        self.mock_vp_parents = mock.patch.object(
-            ovn_client.OVNClient, 'get_virtual_port_parents',
-            return_value=None).start()
 
     def _delete_default_sg_rules(self, security_group_id):
         res = self._list(
@@ -3867,9 +3852,7 @@ class TestOVNMechanismDriverMetadataPort(MechDriverSetupBase,
             with self.network():
                 self.assertEqual(0, self.nb_ovn.create_lswitch_port.call_count)
 
-    @mock.patch.object(ovn_client.OVNClient, 'get_virtual_port_parents',
-                       return_value=[])
-    def test_metadata_ip_on_subnet_create(self, *args):
+    def test_metadata_ip_on_subnet_create(self):
         """Check metadata port update.
 
         Check that the metadata port is updated with a new IP address when a
@@ -4034,11 +4017,9 @@ class TestOVNVVirtualPort(OVNMechanismDriverTestCase):
             '10.0.0.1', '10.0.0.0/24')['subnet']
 
     @mock.patch.object(ovn_client.OVNClient, 'determine_bind_host')
-    @mock.patch.object(ovn_client.OVNClient, 'get_virtual_port_parents')
-    def test_create_port_with_virtual_type_and_options(
-            self, mock_get_parents, mock_determine_bind_host):
+    def test_create_port_with_virtual_type_and_options(self, *args):
         fake_parents = ['parent-0', 'parent-1']
-        mock_get_parents.return_value = fake_parents
+        self.mock_vp_parents.return_value = fake_parents
         for device_owner in ('', 'myVIPowner'):
             port = {'id': 'virt-port',
                     'mac_address': '00:00:00:00:00:00',
