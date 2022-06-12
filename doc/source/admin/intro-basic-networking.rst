@@ -84,7 +84,7 @@ are connected to the same switch but on different VLANs do not see
 each other's traffic. OpenStack is able to take advantage of VLANs to
 isolate the traffic of different projects, even if the projects happen
 to have instances running on the same compute host. Each VLAN has an
-associated numerical ID, between 1 and 4095. We say "VLAN 15" to refer
+associated numerical ID, between 1 and 4094. We say "VLAN 15" to refer
 to the VLAN with a numerical ID of 15.
 
 To understand how VLANs work, let's consider VLAN applications in a
