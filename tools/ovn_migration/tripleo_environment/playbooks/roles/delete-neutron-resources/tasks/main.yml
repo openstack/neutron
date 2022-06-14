@@ -19,4 +19,3 @@
   shell: >
     {{ ovn_migration_temp_dir_del }}/delete-neutron-resources.sh 2>&1 >
     {{ ovn_migration_temp_dir_del }}/delete-neutron-resources.sh.log
-  changed_when: true
