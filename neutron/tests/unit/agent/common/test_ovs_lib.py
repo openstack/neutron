@@ -25,6 +25,8 @@ from neutron.agent.common import ovs_lib
 from neutron.agent.common import utils
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import constants as p_const
+from neutron.plugins.ml2.drivers.openvswitch.agent.common \
+    import exceptions as ovs_exc
 from neutron.tests import base
 
 
@@ -229,6 +231,85 @@ class OVS_Lib_Test(base.BaseTestCase):
             db_add.assert_has_calls([
                 mock.call('Bridge', self.BR_NAME,
                           'protocols', p_const.OPENFLOW13)])
+
+    def test_get_port_tag_by_name(self):
+        self.br = ovs_lib.OVSBridge(self.BR_NAME)
+        port_name = "fake-port"
+        with mock.patch.object(self.br, 'db_get_val') as db_get_val:
+            self.br.get_port_tag_by_name(port_name)
+            db_get_val.assert_called_once_with(
+                'Port', port_name, 'other_config')
+
+    def test_get_value_from_other_config(self):
+        self.br = ovs_lib.OVSBridge(self.BR_NAME)
+        value = "test_value"
+        other_config = {"test_key": value}
+        port_name = "fake-port"
+        with mock.patch.object(self.br, 'db_get_val') as db_get_val:
+            db_get_val.return_value = other_config
+            v = self.br.get_value_from_other_config(port_name, "test_key")
+            self.assertEqual(value, v)
+
+    def test_get_value_from_other_config_value_error(self):
+        self.br = ovs_lib.OVSBridge(self.BR_NAME)
+        value = "test_value"
+        other_config = {"test_key": value}
+        port_name = "fake-port"
+        with mock.patch.object(self.br, 'db_get_val') as db_get_val:
+            db_get_val.return_value = other_config
+            self.assertRaises(ovs_exc.OVSDBPortError,
+                              self.br.get_value_from_other_config,
+                              port_name, "test_key", int)
+
+    def test_get_value_from_other_config_not_found(self):
+        self.br = ovs_lib.OVSBridge(self.BR_NAME)
+        value = "test_value"
+        other_config = {"test_key": value}
+        port_name = "fake-port"
+        with mock.patch.object(self.br, 'db_get_val') as db_get_val:
+            db_get_val.return_value = other_config
+            self.assertIsNone(
+                self.br.get_value_from_other_config(
+                    port_name, "key_not_exist"))
+
+    def test_set_value_to_other_config(self):
+        self.br = ovs_lib.OVSBridge(self.BR_NAME)
+        value = "test_value"
+        other_config = {"test_key": value}
+        port_name = "fake-port"
+        with mock.patch.object(self.br, 'db_get_val') as db_get_val, \
+                mock.patch.object(self.br.ovsdb, 'db_set') as set_db:
+            new_key = "new_key"
+            new_value = "new_value"
+            db_get_val.return_value = other_config
+            self.br.set_value_to_other_config(port_name, key=new_key,
+                                              value=new_value)
+
+            db_get_val.assert_called_once_with('Port', port_name,
+                                               'other_config')
+            other_config.update({new_key: new_value})
+            set_db.assert_called_once_with(
+                'Port', port_name, ('other_config', other_config))
+
+    def test_remove_value_from_other_config(self):
+        self.br = ovs_lib.OVSBridge(self.BR_NAME)
+        old_key = "old_key"
+        old_value = "old_value"
+        other_config = {old_key: old_value}
+        port_name = "fake-port"
+
+        with mock.patch.object(self.br, 'db_get_val') as db_get_val, \
+                mock.patch.object(self.br.ovsdb, 'db_clear') as db_clear, \
+                mock.patch.object(self.br.ovsdb, 'db_set') as set_db:
+            db_get_val.return_value = other_config
+            self.br.remove_value_from_other_config(port_name, key=old_key)
+
+            db_get_val.assert_called_once_with('Port', port_name,
+                                               'other_config')
+            db_clear.assert_called_once_with(
+                'Port', port_name, "other_config")
+            set_db.assert_called_once_with(
+                'Port', port_name, ('other_config', {}))
 
     def test_add_flow_timeout_set(self):
         flow_dict = collections.OrderedDict([
