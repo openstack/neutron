@@ -36,6 +36,14 @@ SUPPORTED_RULES = {
         qos_consts.DIRECTION: {
             'type:values': constants.VALID_DIRECTIONS}
     },
+    qos_consts.RULE_TYPE_PACKET_RATE_LIMIT: {
+        qos_consts.MAX_KPPS: {
+            'type:range': [0, db_consts.DB_INTEGER_MAX_VALUE]},
+        qos_consts.MAX_BURST_KPPS: {
+            'type:range': [0, db_consts.DB_INTEGER_MAX_VALUE]},
+        qos_consts.DIRECTION: {
+            'type:values': constants.VALID_DIRECTIONS}
+    },
     qos_consts.RULE_TYPE_DSCP_MARKING: {
         qos_consts.DSCP_MARK: {'type:values': constants.VALID_DSCP_MARKS}
     },
