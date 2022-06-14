@@ -174,7 +174,8 @@ class NDPProxyPlugin(l3_ndp_proxy.NDPProxyBase):
         context = payload.context
         router_db = payload.metadata['router_db']
         request_body = payload.states[0]
-        ndp_proxy_state = request_body[l3_ext_ndp_proxy.ENABLE_NDP_PROXY]
+        ndp_proxy_state = request_body.get(
+            l3_ext_ndp_proxy.ENABLE_NDP_PROXY, lib_consts.ATTR_NOT_SPECIFIED)
         ext_gw_info = request_body.get('external_gateway_info')
 
         if not ext_gw_info and ndp_proxy_state is True:
