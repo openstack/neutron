@@ -236,7 +236,7 @@ class IpLibTestCase(base.BaseTestCase):
         # NICs in the CI servers.
         vf_info = []
         for idx in range(3):
-            vf_info.append(pyroute2.netlink.nlmsg_base())
+            vf_info.append(netlink.nlmsg_base())
             mac_info = {'mac': 'mac_%s' % idx, 'vf': idx}
             link_state = {'link_state': idx}  # see SR-IOV pci_lib.LinkState
             rates = {'max_tx_rate': idx * 1000, 'min_tx_rate': idx * 500}
@@ -244,11 +244,11 @@ class IpLibTestCase(base.BaseTestCase):
                 {'attrs': [('IFLA_VF_MAC', mac_info),
                            ('IFLA_VF_LINK_STATE', link_state),
                            ('IFLA_VF_RATE', rates)]})
-        vfinfo_list = pyroute2.netlink.nlmsg_base()
+        vfinfo_list = netlink.nlmsg_base()
         vfinfo_list.setvalue({'attrs': [('IFLA_VF_INFO', vf_info[0]),
                                         ('IFLA_VF_INFO', vf_info[1]),
                                         ('IFLA_VF_INFO', vf_info[2])]})
-        value = pyroute2.netlink.nlmsg_base()
+        value = netlink.nlmsg_base()
         value.setvalue({'attrs': [('IFLA_NUM_VF', 3),
                                   ('IFLA_VFINFO_LIST', vfinfo_list)]})
         client_mode = priv_lib.privileged.default.client_mode
