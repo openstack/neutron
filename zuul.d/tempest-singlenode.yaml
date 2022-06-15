@@ -609,6 +609,7 @@
       Scenario testing for a FIPS enabled Centos 9 system
     pre-run: playbooks/enable-fips.yaml
     vars:
+      nslookup_target: 'opendev.org'
       configure_swap_size: 4096
       devstack_services:
         br-ex-tcpdump: true
@@ -628,6 +629,7 @@
       Scenario testing for a FIPS enabled Centos 9 system
     pre-run: playbooks/enable-fips.yaml
     vars:
+      nslookup_target: 'opendev.org'
       configure_swap_size: 4096
       devstack_local_conf:
         test-config:
