@@ -698,12 +698,6 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 port_set.remove(port_id)
                 break
 
-    def _get_port_local_vlan(self, port_id):
-        for network_id, port_set in self.network_ports.items():
-            if port_id in port_set:
-                lvm = self.vlan_manager.get(network_id)
-                return lvm.vlan
-
     def _get_net_local_vlan_or_none(self, net_id):
         try:
             return self.vlan_manager.get(net_id).vlan
