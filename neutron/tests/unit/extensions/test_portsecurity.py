@@ -116,8 +116,8 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         p[ext_sg.SECURITYGROUPS] = [sg['id'] for sg in sgs] if sgs else None
 
         if (p.get(ext_sg.SECURITYGROUPS) and p[psec.PORTSECURITY]):
-            self._process_port_create_security_group(
-                context, p, sgs)
+            with db_api.CONTEXT_WRITER.using(context):
+                self._process_port_create_security_group(context, p, sgs)
 
         return port['port']
 

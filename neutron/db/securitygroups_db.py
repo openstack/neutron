@@ -356,13 +356,13 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                'security_group_id': security_group['security_group_id']}
         return db_utils.resource_fields(res, fields)
 
-    @db_api.retry_if_session_inactive()
     def _create_port_security_group_binding(self, context, port_id,
                                             security_group_id):
-        with db_api.CONTEXT_WRITER.using(context):
-            db = sg_models.SecurityGroupPortBinding(
-                port_id=port_id, security_group_id=security_group_id)
-            context.session.add(db)
+        # This method must be called from inside an active DB writer
+        # transaction.
+        db = sg_models.SecurityGroupPortBinding(
+            port_id=port_id, security_group_id=security_group_id)
+        context.session.add(db)
 
     def _get_port_security_group_bindings(self, context,
                                           filters=None, fields=None):
@@ -892,6 +892,8 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
 
     def _process_port_create_security_group(self, context, port,
                                             security_groups):
+        # This method must be called from inside an active DB writer
+        # transaction.
         self._validate_sgs_for_port(security_groups)
         if validators.is_attr_set(security_groups):
             for sg in security_groups:
@@ -1016,13 +1018,14 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             return True
         return False
 
-    def update_security_group_on_port(self, context, id, port,
-                                      original_port, updated_port):
+    def _update_security_group_on_port(self, context, id, port,
+                                       original_port, updated_port):
         """Update security groups on port.
 
         This method returns a flag which indicates request notification
         is required and does not perform notification itself.
         It is because another changes for the port may require notification.
+        This method must be called from inside an active DB writer transaction.
         """
         need_notify = False
         port_updates = port['port']

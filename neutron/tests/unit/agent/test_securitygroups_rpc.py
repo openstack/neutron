@@ -142,7 +142,7 @@ class SecurityGroupRpcTestPlugin(test_sg.SecurityGroupTestPlugin,
         updated_port = super(SecurityGroupRpcTestPlugin,
                              self).update_port(context, id, port)
         self.devices[id] = updated_port
-        self.update_security_group_on_port(
+        self._update_security_group_on_port(
             context, id, port, original_port, updated_port)
         return updated_port
 

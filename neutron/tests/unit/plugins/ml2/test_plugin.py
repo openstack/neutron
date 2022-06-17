@@ -1786,8 +1786,9 @@ fixed_ips=ip_address_substr%%3D%s&fixed_ips=ip_address%%3D%s
             sg = sg_dbMixin.create_security_group(ctx, temp_sg)
             sg_dbMixin._delete_port_security_group_bindings(
                 ctx, port2['port']['id'])
-            sg_dbMixin._create_port_security_group_binding(
-                ctx, port2['port']['id'], sg['id'])
+            with db_api.CONTEXT_WRITER.using(ctx):
+                sg_dbMixin._create_port_security_group_binding(
+                    ctx, port2['port']['id'], sg['id'])
             port2['port']['security_groups'][0] = sg['id']
             query_params = "security_groups=%s&id=%s" % (
                            port1['port']['security_groups'][0],
