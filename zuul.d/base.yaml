@@ -115,6 +115,12 @@
       - openstack/neutron-lib
 
 - job:
+    name: neutron-fullstack-with-pyroute2-master
+    parent: neutron-fullstack
+    required-projects:
+      - name: github.com/svinota/pyroute2
+
+- job:
     name: neutron-functional-with-uwsgi
     parent: neutron-functional
     vars:
@@ -149,6 +155,12 @@
       devstack_localrc:
         ISCSI_CHAP_ALGORITHMS: SHA3-256,SHA256
         Q_BUILD_OVS_FROM_GIT: true
+
+- job:
+    name: neutron-functional-with-pyroute2-master
+    parent: neutron-functional
+    required-projects:
+      - name: github.com/svinota/pyroute2
 
 - job:
     name: neutron-fullstack-with-uwsgi-fips
