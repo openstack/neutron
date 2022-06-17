@@ -741,8 +741,8 @@ def _make_pyroute2_route_args(namespace, ip_version, cidr, device, via, table,
 
 @privileged.default.entrypoint
 def add_ip_route(namespace, cidr, ip_version, device=None, via=None,
-                 table=None, metric=None, scope=None, proto='static',
-                 **kwargs):
+                 table=None, metric=None, scope=None,
+                 proto=rtnl.rt_proto['static'], **kwargs):
     """Add an IP route"""
     kwargs.update(_make_pyroute2_route_args(
         namespace, ip_version, cidr, device, via, table, metric, scope,
@@ -766,7 +766,8 @@ def add_ip_route(namespace, cidr, ip_version, device=None, via=None,
 def list_ip_routes(namespace, ip_version, device=None, table=None, **kwargs):
     """List IP routes"""
     kwargs.update(_make_pyroute2_route_args(
-        namespace, ip_version, None, device, None, table, None, None, None))
+        namespace, ip_version, None, device, None, table, None, 'universe',
+        None))
     try:
         with get_iproute(namespace) as ip:
             return make_serializable(ip.route('show', **kwargs))
