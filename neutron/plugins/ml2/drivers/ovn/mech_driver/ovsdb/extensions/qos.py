@@ -150,13 +150,18 @@ class OVNClientQosExtension(object):
         ovn_qos_rule = {'switch': lswitch_name, 'direction': direction,
                         'priority': OVN_QOS_DEFAULT_RULE_PRIORITY,
                         'match': match}
-        if fip_id:
-            ovn_qos_rule['external_ids'] = {
-                ovn_const.OVN_FIP_EXT_ID_KEY: fip_id}
 
         if delete:
             # Any specific rule parameter is left undefined.
             return ovn_qos_rule
+
+        # All OVN QoS rules have an external ID reference to the port or the
+        # FIP that are attached to.
+        if fip_id:
+            key, value = ovn_const.OVN_FIP_EXT_ID_KEY, fip_id
+        else:
+            key, value = ovn_const.OVN_PORT_EXT_ID_KEY, port_id
+        ovn_qos_rule['external_ids'] = {key: value}
 
         for rule_type, rule in rules.items():
             if rule_type == qos_consts.RULE_TYPE_BANDWIDTH_LIMIT:

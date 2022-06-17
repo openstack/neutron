@@ -19,6 +19,7 @@ from futurist import periodics
 from neutron_lib import context
 from neutron_lib.db import api as db_api
 from oslo_config import cfg
+from oslo_utils import uuidutils
 
 from neutron.common.ovn import constants
 from neutron.common.ovn import utils
@@ -535,3 +536,26 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
             mock.call('Logical_Router_Port', 'lrp-port1', ('options', opt))]
         self.fake_ovn_client._nb_idl.db_set.assert_has_calls(
             expected_calls)
+
+    def test_update_port_qos_with_external_ids_reference(self):
+        nb_idl = self.fake_ovn_client._nb_idl
+        lrs = [fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'lr%s' % idx}) for idx in range(3)]
+        uuid1 = uuidutils.generate_uuid()
+        qoses1 = [fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'external_ids': {}, 'match': 'inport == "%s"' % uuid1})]
+        qoses2 = [fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'external_ids': {constants.OVN_PORT_EXT_ID_KEY: uuid1},
+                   'match': 'inport == "%s"' % uuid1})]
+        qoses3 = []
+        nb_idl.ls_list.return_value.execute.return_value = lrs
+        nb_idl.qos_list.return_value.execute.side_effect = [qoses1, qoses2,
+                                                            qoses3]
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.periodic.update_port_qos_with_external_ids_reference)
+
+        external_ids = {constants.OVN_PORT_EXT_ID_KEY: uuid1}
+        expected_calls = [mock.call('QoS', qoses1[0].uuid,
+                                    ('external_ids', external_ids))]
+        nb_idl.db_set.assert_has_calls(expected_calls)
