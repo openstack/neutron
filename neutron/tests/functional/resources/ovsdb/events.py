@@ -18,6 +18,8 @@ import threading
 from ovsdbapp.backend.ovs_idl import event
 from ovsdbapp.tests.functional.schema.ovn_southbound import event as test_event
 
+from neutron.common.ovn import constants as ovn_const
+
 
 class WaitForCrLrpPortBindingEvent(event.RowEvent):
     event_name = 'WaitForCrLrpPortBindingEvent'
@@ -63,3 +65,12 @@ class WaitForUpdatePortBindingEvent(test_event.WaitForPortBindingEvent):
             (('logical_port', '=', port),
              ('mac', '=', mac)),
             timeout=timeout)
+
+
+class WaitForCreatePortBindingEventPerType(event.WaitEvent):
+    event_name = 'WaitForCreatePortBindingEventPerType'
+
+    def __init__(self, port_type=ovn_const.OVN_CHASSIS_REDIRECT,
+                 timeout=5):
+        super().__init__((self.ROW_CREATE,), 'Port_Binding',
+                         (('type', '=', port_type),), timeout=timeout)
