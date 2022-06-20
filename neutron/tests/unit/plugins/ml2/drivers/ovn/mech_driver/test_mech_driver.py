@@ -121,7 +121,7 @@ class TestOVNMechanismDriver(test_plugin.Ml2PluginV2TestCase):
         p.start()
         self.addCleanup(p.stop)
         self._virtual_port_parents = mock.patch.object(
-            ovn_client.OVNClient, 'get_virtual_port_parents', return_value=[])
+            ovn_utils, 'get_virtual_port_parents', return_value=[])
         self.virtual_port_parents = self._virtual_port_parents.start()
 
     def test_delete_mac_binding_entries(self):
@@ -2147,7 +2147,7 @@ class OVNMechanismDriverTestCase(test_plugin.Ml2PluginV2TestCase):
         p.start()
         self.addCleanup(p.stop)
         self._virtual_port_parents = mock.patch.object(
-            ovn_client.OVNClient, 'get_virtual_port_parents', return_value=[])
+            ovn_utils, 'get_virtual_port_parents', return_value=[])
         self.virtual_port_parents = self._virtual_port_parents.start()
 
 
@@ -2289,7 +2289,7 @@ class TestOVNMechanismDriverSegment(test_segment.HostSegmentMappingTestCase):
         self.addCleanup(p.stop)
         self.context = context.get_admin_context()
         self._virtual_port_parents = mock.patch.object(
-            ovn_client.OVNClient, 'get_virtual_port_parents', return_value=[])
+            ovn_utils, 'get_virtual_port_parents', return_value=[])
         self.virtual_port_parents = self._virtual_port_parents.start()
 
     def _test_segment_host_mapping(self):
@@ -3167,7 +3167,7 @@ class TestOVNMechanismDriverSecurityGroup(
         self.ctx = context.get_admin_context()
         revision_plugin.RevisionPlugin()
         self._virtual_port_parents = mock.patch.object(
-            ovn_client.OVNClient, 'get_virtual_port_parents', return_value=[])
+            ovn_utils, 'get_virtual_port_parents', return_value=[])
         self.virtual_port_parents = self._virtual_port_parents.start()
 
     def _delete_default_sg_rules(self, security_group_id):
@@ -3490,7 +3490,7 @@ class TestOVNMechanismDriverMetadataPort(test_plugin.Ml2PluginV2TestCase):
         p.start()
         self.addCleanup(p.stop)
         self._virtual_port_parents = mock.patch.object(
-            ovn_client.OVNClient, 'get_virtual_port_parents', return_value=[])
+            ovn_utils, 'get_virtual_port_parents', return_value=[])
         self.virtual_port_parents = self._virtual_port_parents.start()
 
     def _create_fake_dhcp_port(self, device_id):
@@ -3695,10 +3695,12 @@ class TestOVNVVirtualPort(OVNMechanismDriverTestCase):
         self.subnet = self._make_subnet(
             self.fmt, {'network': self.net},
             '10.0.0.1', '10.0.0.0/24')['subnet']
+        self.mock_vp_parents = mock.patch.object(
+            ovn_utils, 'get_virtual_port_parents', return_value=None).start()
 
     def test_create_port_with_virtual_type_and_options(self):
         fake_parents = ['parent-0', 'parent-1']
-        self.virtual_port_parents.return_value = fake_parents
+        self.mock_vp_parents.return_value = fake_parents
         for device_owner in ('', 'myVIPowner'):
             port = {'id': 'virt-port',
                     'mac_address': '00:00:00:00:00:00',
