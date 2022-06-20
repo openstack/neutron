@@ -42,6 +42,7 @@ from neutron_lib.api.definitions import network_mtu as mtu_apidef
 from neutron_lib.api.definitions import network_mtu_writable as mtuw_apidef
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import port_device_profile as pdp_def
+from neutron_lib.api.definitions import port_mac_address_override
 from neutron_lib.api.definitions import port_mac_address_regenerate
 from neutron_lib.api.definitions import port_numa_affinity_policy as pnap_def
 from neutron_lib.api.definitions import port_security as psec
@@ -123,13 +124,6 @@ from neutron.db import securitygroups_rpc_base as sg_db_rpc
 from neutron.db import segments_db
 from neutron.db import subnet_service_type_mixin
 from neutron.db import vlantransparent_db
-# TODO(gibi): replace the import with
-# from neutron_lib.api.definitions import port_mac_address_override
-# once https://review.opendev.org/c/openstack/neutron-lib/+/831935 merged and
-# neutron-lib is released
-from neutron.extensions import (
-    _port_mac_address_override as port_mac_address_override
-)
 from neutron.extensions import dhcpagentscheduler as dhcp_ext
 from neutron.extensions import filter_validation
 from neutron.extensions import vlantransparent
