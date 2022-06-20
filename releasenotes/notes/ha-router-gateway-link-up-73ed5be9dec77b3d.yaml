@@ -1,0 +1,7 @@
+---
+other:
+  - |
+    From now on, gateway interface will be kept up on all nodes where HA
+    router is hosted, regardless of their state (active or standby).
+    For more information see bug
+    `1952907 <https://bugs.launchpad.net/neutron/+bug/1952907>`_.
