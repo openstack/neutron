@@ -84,7 +84,7 @@ class MechDriverSetupBase:
         self.mech_driver._post_fork_event.set()
         self.mech_driver._ovn_client._qos_driver = mock.Mock()
         self._virtual_port_parents = mock.patch.object(
-            ovn_client.OVNClient, 'get_virtual_port_parents', return_value=[])
+            ovn_utils, 'get_virtual_port_parents', return_value=[])
         self.virtual_port_parents = self._virtual_port_parents.start()
 
 
