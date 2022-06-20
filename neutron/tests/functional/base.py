@@ -384,9 +384,17 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         self._start_ovn_northd()
 
     def add_fake_chassis(self, host, physical_nets=None, external_ids=None,
-                         name=None):
+                         name=None, enable_chassis_as_gw=False):
+        def append_cms_options(ext_ids, value):
+            if 'ovn-cms-options' not in ext_ids:
+                ext_ids['ovn-cms-options'] = value
+            else:
+                ext_ids['ovn-cms-options'] += ',' + value
+
         physical_nets = physical_nets or []
         external_ids = external_ids or {}
+        if enable_chassis_as_gw:
+            append_cms_options(external_ids, 'enable-chassis-as-gw')
 
         bridge_mapping = ",".join(["%s:br-provider%s" % (phys_net, i)
                                   for i, phys_net in enumerate(physical_nets)])

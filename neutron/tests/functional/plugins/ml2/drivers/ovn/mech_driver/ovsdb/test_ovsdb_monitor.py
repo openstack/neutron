@@ -17,6 +17,7 @@ from unittest import mock
 
 import fixtures as og_fixtures
 from neutron_lib.api.definitions import allowedaddresspairs
+from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
@@ -24,7 +25,6 @@ from oslo_concurrency import processutils
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import event
 from ovsdbapp.backend.ovs_idl import idlutils
-
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils as n_utils
@@ -34,8 +34,11 @@ from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver import mech_driver
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
 from neutron.tests.functional import base
+from neutron.tests.functional.resources.ovsdb import events as test_events
 from neutron.tests.functional.resources.ovsdb import fixtures
 from neutron.tests.functional.resources import process
+from neutron.tests.unit.api import test_extensions
+from neutron.tests.unit.extensions import test_l3
 
 
 class WaitForDataPathBindingCreateEvent(event.WaitEvent):
@@ -359,6 +362,64 @@ class TestNBDbMonitorOverTcp(TestNBDbMonitor):
 class TestNBDbMonitorOverSsl(TestNBDbMonitor):
     def get_ovsdb_server_protocol(self):
         return 'ssl'
+
+
+class TestSBDbMonitor(base.TestOVNFunctionalBase, test_l3.L3NatTestCaseMixin):
+
+    def setUp(self, **kwargs):
+        super().setUp(**kwargs)
+        self.chassis = self.add_fake_chassis('ovs-host1',
+                                             enable_chassis_as_gw=True)
+        self.l3_plugin = directory.get_plugin(plugin_constants.L3)
+        ext_mgr = test_l3.L3TestExtensionManager()
+        self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
+        self.handler = event.RowEventHandler()
+        self.sb_api.idl.notify = self.handler.notify
+
+    def _find_port_binding(self, port_type):
+        rows = self.sb_api.db_find_rows(
+            'Port_Binding', ('type', '=', port_type)).execute(check_error=True)
+        return rows[0] if rows else None
+
+    def test_router_port_binding(self):
+        # This test will check the router GW port creation and binding.
+        def check_ext_ids():
+            pb = self._find_port_binding(ovn_const.OVN_CHASSIS_REDIRECT)
+            _, lrp = list(
+                self.nb_api.tables['Logical_Router_Port'].rows.data.items())[0]
+            if pb.external_ids == {}:
+                # The current version of OVN installed in FT CI could not have
+                # [1]. In this case, the Port_Binding.external_ids value is an
+                # empty dictionary.
+                # [1]https://www.mail-archive.com/ovs-dev@openvswitch.org/
+                #    msg62836.html
+                return True
+            return lrp.external_ids == pb.external_ids
+
+        kwargs = {'arg_list': (external_net.EXTERNAL,),
+                  external_net.EXTERNAL: True}
+        ext_net = self._make_network(self.fmt, 'ext_net', True, **kwargs)
+        self._make_subnet(self.fmt, ext_net, '10.251.0.1', '10.251.0.0/24',
+                          enable_dhcp=True)
+        router = self._make_router(self.fmt, self._tenant_id)
+        row_event = test_events.WaitForCreatePortBindingEventPerType()
+        self.handler.watch_event(row_event)
+        self._add_external_gateway_to_router(router['router']['id'],
+                                             ext_net['network']['id'])
+        self.assertTrue(row_event.wait())
+
+        # Check SB pb.external_ids == NB lrp.external_ids
+        port_binding = self._find_port_binding(ovn_const.OVN_CHASSIS_REDIRECT)
+        self.sb_api.db_set('Port_Binding', port_binding.uuid,
+                           ('up', True)).execute(check_error=True)
+        try:
+            n_utils.wait_until_true(check_ext_ids, timeout=5)
+        except n_utils.WaitTimeout:
+            pb = self._find_port_binding(ovn_const.OVN_CHASSIS_REDIRECT)
+            _, lrp = list(
+                self.nb_api.tables['Logical_Router_Port'].rows.data.items())[0]
+            self.fail('pb.ext_ids: %s  --  lrp.ext_ids: %s' %
+                      (pb.external_ids, lrp.external_ids))
 
 
 class TestAgentMonitor(base.TestOVNFunctionalBase):
