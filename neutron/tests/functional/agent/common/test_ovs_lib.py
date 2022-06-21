@@ -126,14 +126,15 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
                 return None
         return qoses
 
-    def _create_bridge(self):
-        self.ovs.ovsdb.add_br(self.br_name).execute()
-        self.elements_to_clean['bridges'].append(self.br_name)
+    def _create_bridge(self, br_name=None):
+        br_name = br_name or self.br_name
+        self.ovs.ovsdb.add_br(br_name).execute()
+        self.elements_to_clean['bridges'].append(br_name)
 
-    def _create_port(self, port_name):
+    def _create_port(self, port_name, br_name=None):
         row_event = WaitForPortCreateEvent(port_name)
         self.ovs.ovsdb.idl.notify_handler.watch_event(row_event)
-        self.ovs.ovsdb.add_port(self.br_name, port_name).execute(
+        self.ovs.ovsdb.add_port(br_name or self.br_name, port_name).execute(
             check_error=True)
         self.assertTrue(row_event.wait())
 
@@ -527,6 +528,15 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
             rule_type_id=self.ovs._min_bw_qos_id)
         self._check_value({'_uuid': qos_id}, self._list_qos, qos_id,
                           keys_to_check=['_uuid'])
+
+        # Assign the QoS policy to the physical bridge interface. This QoS
+        # must be unset once the minimum bandwidth queue is removed.
+        br_phy = ('br-phy-' + uuidutils.generate_uuid())[:6]
+        ext_port = ('phy-' + uuidutils.generate_uuid())[:9]
+        self._create_bridge(br_name=br_phy)
+        self._create_port(ext_port, br_name=br_phy)
+        self.ovs._set_port_qos(ext_port, qos_id=qos_id)
+
         qos = self._list_qos(qos_id)
         self.assertEqual(queue_id_1, qos['queues'][1].uuid)
         self.assertEqual(queue_id_2, qos['queues'][2].uuid)
@@ -537,9 +547,16 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         qos = self._list_qos(qos_id)
         self.assertEqual(1, len(qos['queues']))
         self.assertEqual(queue_id_1, qos['queues'][1].uuid)
+        ports_with_qos = self.ovs.ovsdb.db_find(
+            'Port', ('qos', '=', qos_id)).execute(check_error=True)
+        self.assertEqual(1, len(ports_with_qos))
+        self.assertEqual(ext_port, ports_with_qos[0]['name'])
 
         self.ovs.delete_minimum_bandwidth_queue(neutron_port_id_1)
         self.assertIsNone(self._list_qos(qos_id))
+        ports_with_qos = self.ovs.ovsdb.db_find(
+            'Port', ('qos', '=', qos_id)).execute(check_error=True)
+        self.assertEqual(0, len(ports_with_qos))
 
     def test_delete_minimum_bandwidth_queue_no_qos_found(self):
         queue_id, neutron_port_id = self._create_queue(queue_num=1)
