@@ -16,6 +16,7 @@
 from unittest import mock
 
 from neutron_lib import context
+from neutron_lib.plugins.ml2 import ovs_constants
 from oslo_utils import uuidutils
 
 from neutron.api.rpc.callbacks.consumer import registry
@@ -24,7 +25,6 @@ from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.plugins.ml2.drivers.openvswitch.agent import (
     ovs_agent_extension_api as ovs_ext_api)
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native import (
     ovs_bridge)
 from neutron.services.logapi.agent import log_extension as log_ext
@@ -71,7 +71,7 @@ class LoggingExtensionTestCase(LoggingExtensionBaseTestCase):
     def setUp(self):
         super(LoggingExtensionTestCase, self).setUp()
         self.agent_ext.initialize(
-            self.connection, constants.EXTENSION_DRIVER_TYPE)
+            self.connection, ovs_constants.EXTENSION_DRIVER_TYPE)
         self.log_driver = mock.Mock()
         log_driver_object = FakeLogDriver()
         self.log_driver.defer_apply.side_effect = log_driver_object.defer_apply
@@ -124,7 +124,7 @@ class LoggingExtensionInitializeTestCase(LoggingExtensionBaseTestCase):
     @mock.patch.object(resources_rpc, 'ResourcesPushRpcCallback')
     def test_initialize_subscribed_to_rpc(self, rpc_mock, subscribe_mock):
         self.agent_ext.initialize(
-            self.connection, constants.EXTENSION_DRIVER_TYPE)
+            self.connection, ovs_constants.EXTENSION_DRIVER_TYPE)
         self.connection.create_consumer.assert_has_calls(
             [mock.call(
                 resources_rpc.resource_type_versioned_topic(resource_type),

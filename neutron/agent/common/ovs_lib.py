@@ -22,6 +22,7 @@ import uuid
 
 from neutron_lib import constants as p_const
 from neutron_lib import exceptions
+from neutron_lib.plugins.ml2 import ovs_constants
 from neutron_lib.services.qos import constants as qos_constants
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -40,8 +41,6 @@ from neutron.agent.ovsdb import impl_idl
 from neutron.common import _constants as common_constants
 from neutron.common import utils as common_utils
 from neutron.conf.agent import ovs_conf
-from neutron.plugins.ml2.drivers.openvswitch.agent.common \
-    import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent.common \
     import exceptions as ovs_exc
 
@@ -156,7 +155,7 @@ class BaseOVS(object):
                 raise
 
     def add_bridge(self, bridge_name,
-                   datapath_type=constants.OVS_DATAPATH_SYSTEM):
+                   datapath_type=ovs_constants.OVS_DATAPATH_SYSTEM):
         br = OVSBridge(bridge_name, datapath_type=datapath_type)
         br.create()
         return br
@@ -225,12 +224,12 @@ class BaseOVS(object):
 
 # Map from version string to on-the-wire protocol version encoding:
 OF_PROTOCOL_TO_VERSION = {
-    constants.OPENFLOW10: 1,
-    constants.OPENFLOW11: 2,
-    constants.OPENFLOW12: 3,
-    constants.OPENFLOW13: 4,
-    constants.OPENFLOW14: 5,
-    constants.OPENFLOW15: 6,
+    ovs_constants.OPENFLOW10: 1,
+    ovs_constants.OPENFLOW11: 2,
+    ovs_constants.OPENFLOW12: 3,
+    ovs_constants.OPENFLOW13: 4,
+    ovs_constants.OPENFLOW14: 5,
+    ovs_constants.OPENFLOW15: 6,
 }
 
 
@@ -244,18 +243,21 @@ def version_from_protocol(protocol):
 
 
 class OVSBridge(BaseOVS):
-    def __init__(self, br_name, datapath_type=constants.OVS_DATAPATH_SYSTEM):
+    def __init__(self, br_name,
+                 datapath_type=ovs_constants.OVS_DATAPATH_SYSTEM):
         super(OVSBridge, self).__init__()
         self.br_name = br_name
         self.datapath_type = datapath_type
         self._default_cookie = generate_random_cookie()
-        self._highest_protocol_needed = constants.OPENFLOW10
+        self._highest_protocol_needed = ovs_constants.OPENFLOW10
         self._min_bw_qos_id = uuidutils.generate_uuid()
         # TODO(jlibosva): Revert initial_protocols once launchpad bug 1852221
         #                 is fixed and new openvswitch containing the fix is
         #                 released.
         self.initial_protocols = {
-            constants.OPENFLOW10, constants.OPENFLOW13, constants.OPENFLOW14}
+            ovs_constants.OPENFLOW10,
+            ovs_constants.OPENFLOW13,
+            ovs_constants.OPENFLOW14}
         self.initial_protocols.add(self._highest_protocol_needed)
         self._flows_per_port = cfg.CONF.OVS.openflow_processed_per_port
 
@@ -395,7 +397,7 @@ class OVSBridge(BaseOVS):
         # may trigger issues on ovs-vswitchd related to the
         # datapath flow revalidator thread, see lp#1767422
         txn.add(self.ovsdb.db_set(
-            'Port', port_name, ('tag', constants.DEAD_VLAN_TAG)))
+            'Port', port_name, ('tag', ovs_constants.DEAD_VLAN_TAG)))
         # Just setting 'tag' to 4095 is not enough to prevent any traffic
         # to/from new port because "access" ports do not have 802.1Q header
         # and hence are not matched by default 4095-dropping rule.
@@ -409,7 +411,7 @@ class OVSBridge(BaseOVS):
         txn.add(self.ovsdb.db_set(
             'Port', port_name, ('vlan_mode', 'trunk')))
         txn.add(self.ovsdb.db_set(
-            'Port', port_name, ('trunks', constants.DEAD_VLAN_TAG)))
+            'Port', port_name, ('trunks', ovs_constants.DEAD_VLAN_TAG)))
 
     def delete_port(self, port_name):
         self.ovsdb.del_port(port_name, self.br_name).execute()
@@ -851,12 +853,12 @@ class OVSBridge(BaseOVS):
         # we can try to use same reg4 for both OF rules, this one and the one
         # which sets pkt_mark for minimum bandwidth and play with bitmask
         self.add_flow(
-            table=constants.LOCAL_SWITCHING,
+            table=ovs_constants.LOCAL_SWITCHING,
             reg3=0,
             priority=200,
             actions=("set_queue:%s,load:1->NXM_NX_REG3[0],"
                      "resubmit(,%s)" % (QOS_DEFAULT_QUEUE,
-                                        constants.LOCAL_SWITCHING)))
+                                        ovs_constants.LOCAL_SWITCHING)))
 
     def _update_ingress_bw_limit_for_port(
             self, port_name, max_kbps, max_burst_kbps):
@@ -896,7 +898,7 @@ class OVSBridge(BaseOVS):
     def update_ingress_bw_limit_for_port(self, port_name, max_kbps,
                                          max_burst_kbps):
         port_type = self._get_port_val(port_name, "type")
-        if port_type in constants.OVS_DPDK_PORT_TYPES:
+        if port_type in ovs_constants.OVS_DPDK_PORT_TYPES:
             self._update_ingress_bw_limit_for_dpdk_port(
                 port_name, max_kbps, max_burst_kbps)
         else:
@@ -990,12 +992,13 @@ class OVSBridge(BaseOVS):
         # load 1 to reg4), then goto table 0 again. The packet will be handled
         # as usual when the second visit to table 0.
         self.add_flow(
-            table=constants.LOCAL_SWITCHING,
+            table=ovs_constants.LOCAL_SWITCHING,
             in_port=queue_num,
             reg4=0,
             priority=200,
             actions=("set_field:%s->pkt_mark,load:1->NXM_NX_REG4[0],"
-                     "resubmit(,%s)" % (queue_num, constants.LOCAL_SWITCHING)))
+                     "resubmit(,%s)" % (queue_num,
+                                        ovs_constants.LOCAL_SWITCHING)))
 
     def set_queue_for_minimum_bandwidth(self, queue_num):
         # reg4 is used to memoize if queue was set or not. If it is first visit
@@ -1015,7 +1018,7 @@ class OVSBridge(BaseOVS):
 
     def _unset_pkt_mark_for_minimum_bandwidth(self, queue_num):
         self.delete_flows(
-            table=constants.LOCAL_SWITCHING,
+            table=ovs_constants.LOCAL_SWITCHING,
             in_port=queue_num,
             reg4=0)
 

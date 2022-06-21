@@ -15,12 +15,11 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib import constants
+from neutron_lib.plugins.ml2 import ovs_constants as agent_consts
 from neutron_lib.services.trunk import constants as trunk_consts
 from oslo_config import cfg
 from oslo_log import log as logging
 
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
-    constants as agent_consts)
 from neutron.services.trunk.drivers import base
 from neutron.services.trunk.drivers.openvswitch import utils
 

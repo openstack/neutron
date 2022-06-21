@@ -15,9 +15,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.plugins.ml2 import ovs_constants as constants
 from os_ken.lib.packet import ether_types
 
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
     import br_dvr_process
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \

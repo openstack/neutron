@@ -12,10 +12,11 @@
 
 import collections
 
+from neutron_lib.plugins.ml2 import ovs_constants
+
 from neutron.cmd import ovs_cleanup
 from neutron.common import utils
 from neutron.conf.agent import cmd
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base
 
@@ -46,7 +47,7 @@ class TestOVSCLIConfig(base.BaseOVSLinuxTestCase):
         # set skippable vif to be skipped
         int_br.ovsdb.db_set(
             'Interface', skip[int_br][0],
-            ('external_ids', {constants.SKIP_CLEANUP: "True"})
+            ('external_ids', {ovs_constants.SKIP_CLEANUP: "True"})
         ).execute(check_error=True)
         device_name = utils.get_rand_name()
         skip[int_br].append(device_name)

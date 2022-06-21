@@ -17,12 +17,11 @@ import collections
 
 import netaddr
 from neutron_lib import constants as n_consts
+from neutron_lib.plugins.ml2 import ovs_constants as ovs_consts
 
 from neutron._i18n import _
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.common import utils
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
-        as ovs_consts
 
 CT_STATES = [
     ovsfw_consts.OF_STATE_ESTABLISHED_NOT_REPLY,

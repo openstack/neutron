@@ -14,6 +14,7 @@
 #    under the License.
 
 from neutron_lib import constants as n_const
+from neutron_lib.plugins.ml2 import ovs_constants
 from oslo_config import cfg
 from oslo_serialization import jsonutils
 from testtools.content import text_content
@@ -23,7 +24,6 @@ from neutron.agent.common import utils
 from neutron.agent.linux import ip_lib
 from neutron.cmd.sanity import checks
 from neutron.common import utils as common_utils
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent \
     import ovs_neutron_agent as ovsagt
 from neutron.tests.common import base as common_base
@@ -249,10 +249,10 @@ class ARPSpoofTestCase(OVSAgentTestBase):
 class CanaryTableTestCase(OVSAgentTestBase):
     def test_canary_table(self):
         self.br_int.uninstall_flows(cookie=ovs_lib.COOKIE_ANY)
-        self.assertEqual(constants.OVS_RESTARTED,
+        self.assertEqual(ovs_constants.OVS_RESTARTED,
                          self.br_int.check_canary_table())
         self.br_int.setup_canary_table()
-        self.assertEqual(constants.OVS_NORMAL,
+        self.assertEqual(ovs_constants.OVS_NORMAL,
                          self.br_int.check_canary_table())
 
 

@@ -15,11 +15,10 @@
 import re
 
 from neutron_lib import constants
+from neutron_lib.plugins.ml2 import ovs_constants as ovs_const
 from oslo_utils import uuidutils
 
 from neutron.common import utils
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
-    constants as ovs_const)
 from neutron.tests.common import net_helpers
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment

@@ -15,6 +15,7 @@
 
 import sys
 
+from neutron_lib.plugins.ml2 import ovs_constants
 from neutron_lib.plugins import utils as p_utils
 from neutron_lib.utils import helpers
 from oslo_config import cfg
@@ -24,16 +25,15 @@ from neutron.agent.common import ovs_lib
 from neutron.common import config as common_config
 from neutron.conf.agent import common as agent_config
 from neutron.conf.plugins.ml2.drivers import ovs_conf
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 
 LOG = logging.getLogger(__name__)
 
 
 def get_patch_port_names(bridge_name):
     int_if_name = p_utils.get_interface_name(
-        bridge_name, prefix=constants.PEER_INTEGRATION_PREFIX)
+        bridge_name, prefix=ovs_constants.PEER_INTEGRATION_PREFIX)
     phys_if_name = p_utils.get_interface_name(
-        bridge_name, prefix=constants.PEER_PHYSICAL_PREFIX)
+        bridge_name, prefix=ovs_constants.PEER_PHYSICAL_PREFIX)
 
     return int_if_name, phys_if_name
 
@@ -74,7 +74,8 @@ class PatchPortCleaner(object):
         """
         LOG.debug("Get configured flows for integration bridge %s",
                   self.int_br.br_name)
-        return bool(self.int_br.dump_flows_for(table=constants.CANARY_TABLE))
+        return bool(
+            self.int_br.dump_flows_for(table=ovs_constants.CANARY_TABLE))
 
 
 def main():

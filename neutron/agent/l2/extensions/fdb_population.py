@@ -17,6 +17,7 @@ import sys
 
 from neutron_lib.agent import l2_extension
 from neutron_lib import constants
+from neutron_lib.plugins.ml2 import ovs_constants
 from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -27,8 +28,6 @@ from neutron.agent.linux import bridge_lib
 from neutron.conf.agent import l2_ext_fdb_population
 from neutron.plugins.ml2.drivers.linuxbridge.agent.common import (
      constants as linux_bridge_constants)
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
-     constants as ovs_constants)
 
 l2_ext_fdb_population.register_fdb_population_opts()
 

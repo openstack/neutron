@@ -17,6 +17,7 @@ import copy
 from unittest import mock
 
 from neutron_lib import constants
+from neutron_lib.plugins.ml2 import ovs_constants
 from neutron_lib.utils import helpers
 from oslo_config import cfg
 from pyroute2.netlink import exceptions as netlink_exceptions
@@ -26,8 +27,6 @@ from neutron.agent.l2.extensions.fdb_population import (
 from neutron.agent.linux import bridge_lib
 from neutron.plugins.ml2.drivers.linuxbridge.agent.common import (
      constants as linux_bridge_constants)
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
-     constants as ovs_constants)
 from neutron.tests import base
 
 

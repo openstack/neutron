@@ -21,6 +21,7 @@ from neutron_lib.agent import l2_extension
 from neutron_lib.callbacks import events as lib_events
 from neutron_lib.callbacks import registry as lib_registry
 from neutron_lib import context as lib_ctx
+from neutron_lib.plugins.ml2 import ovs_constants
 from os_ken.lib.packet import ether_types
 from os_ken.lib.packet import in_proto as ip_proto
 from oslo_config import cfg
@@ -32,8 +33,6 @@ from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.plugins.ml2.drivers.openvswitch.agent import (
     ovs_neutron_agent as ovs_agent)
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
-     constants as ovs_constants)
 
 LOG = logging.getLogger(__name__)
 

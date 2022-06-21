@@ -20,6 +20,7 @@ from unittest import mock
 import eventlet
 import fixtures
 from neutron_lib import constants as n_const
+from neutron_lib.plugins.ml2 import ovs_constants
 from neutron_lib.utils import net
 from oslo_config import cfg
 from oslo_utils import uuidutils
@@ -34,7 +35,6 @@ from neutron.conf.agent import ovs_conf as ovs_agent_config
 from neutron.conf import common as common_config
 from neutron.conf.plugins.ml2.drivers import agent
 from neutron.conf.plugins.ml2.drivers import ovs_conf
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants
 from neutron.plugins.ml2.drivers.openvswitch.agent.extension_drivers \
     import qos_driver as ovs_qos_driver
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
@@ -228,7 +228,7 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase, OVSOFControllerHelper):
         utils.wait_until_true(
             polling_manager._monitor.is_active)
         agent.check_ovs_status = mock.Mock(
-            return_value=constants.OVS_NORMAL)
+            return_value=ovs_constants.OVS_NORMAL)
         self.agent_thread = eventlet.spawn(agent.rpc_loop,
                                            polling_manager)
 

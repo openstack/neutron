@@ -15,12 +15,11 @@
 from unittest import mock
 
 from neutron_lib import constants
+from neutron_lib.plugins.ml2 import ovs_constants as ovs_consts
 
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.agent.linux.openvswitch_firewall import firewall as ovsfw
 from neutron.agent.linux.openvswitch_firewall import rules
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
-        as ovs_consts
 from neutron.tests import base
 
 TESTING_VLAN_TAG = 1

@@ -16,6 +16,7 @@
 import collections
 
 from neutron_lib import constants as lib_const
+from neutron_lib.plugins.ml2 import ovs_constants as ovs_consts
 from neutron_lib.services.logapi import constants as log_const
 from os_ken.base import app_manager
 from os_ken.lib.packet import packet
@@ -27,8 +28,6 @@ from oslo_log import log as logging
 from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.agent.linux.openvswitch_firewall import firewall as ovsfw
 from neutron.agent.linux.openvswitch_firewall import rules
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import constants \
-        as ovs_consts
 from neutron.services.logapi.agent import log_extension as log_ext
 from neutron.services.logapi.common import exceptions as log_exc
 from neutron.services.logapi.drivers.openvswitch import log_oskenapp

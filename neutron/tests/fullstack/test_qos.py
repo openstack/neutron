@@ -15,6 +15,7 @@
 import functools
 
 from neutron_lib import constants
+from neutron_lib.plugins.ml2 import ovs_constants as ovs_constants
 from neutron_lib.services.qos import constants as qos_consts
 from neutronclient.common import exceptions
 from oslo_utils import uuidutils
@@ -33,8 +34,6 @@ from neutron.conf.plugins.ml2.drivers import linuxbridge as \
     linuxbridge_agent_config
 from neutron.plugins.ml2.drivers.linuxbridge.agent import \
     linuxbridge_neutron_agent as linuxbridge_agent
-from neutron.plugins.ml2.drivers.openvswitch.agent.common \
-    import constants as ovs_constants
 from neutron.services.qos.drivers.linuxbridge import driver as lb_drv
 from neutron.services.qos.drivers.openvswitch import driver as ovs_drv
 

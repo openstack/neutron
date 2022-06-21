@@ -17,12 +17,11 @@ import functools
 import fixtures
 import netaddr
 from neutron_lib import constants
+from neutron_lib.plugins.ml2 import ovs_constants as ovs_consts
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
 from neutron.common import utils as common_utils
-from neutron.plugins.ml2.drivers.openvswitch.agent.common import (
-    constants as ovs_consts)
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 
