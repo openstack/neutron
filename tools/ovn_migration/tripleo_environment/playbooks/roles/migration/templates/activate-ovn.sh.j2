@@ -28,13 +28,6 @@ ovs-vsctl del-controller {{ ovn_bridge }}
 # Activate ovn-controller by configuring integration bridge
 ovs-vsctl set open . external_ids:ovn-bridge={{ ovn_bridge }}
 
-# WORKAROUND for https://bugzilla.redhat.com/show_bug.cgi?id=1782834
-# By restarting ovs-vswitchd process, new connection is made based
-# on the protocols values set in OVS database. OVS 2.13 by default
-# implements OpenFlow protocols up to 1.5 and 1.5 is the one that
-# is required by ovn-controller.
-systemctl restart openvswitch
-
 podman start ovn_controller
 
 # Delete ovs bridges - br-tun and br-migration
