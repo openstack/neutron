@@ -140,6 +140,7 @@
     description: |
       Functional testing for a FIPS enabled Centos 8 system
     vars:
+      nslookup_target: 'opendev.org'
       enable_fips: True
       # NOTE(ykarel) Remove MYSQL_GATHER_PERFORMANCE and
       # tox_environment when this job switches to centos-9-stream
@@ -157,6 +158,7 @@
     description: |
       Functional testing for a FIPS enabled Centos 8 system
     vars:
+      nslookup_target: 'opendev.org'
       enable_fips: True
       # NOTE(ykarel) Remove MYSQL_GATHER_PERFORMANCE and
       # tox_environment when this job switches to centos-9-stream
