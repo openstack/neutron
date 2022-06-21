@@ -364,12 +364,17 @@ class Subnet(base.NeutronDbObject):
         :raises: FixedIpsSubnetsNotOnSameSegment
         """
         segment_ids = []
+        subnets = query.all()
+
         for fixed_ip in fixed_ips:
             subnet = None
             if 'subnet_id' in fixed_ip:
                 try:
-                    subnet = query.filter(
-                        cls.db_model.id == fixed_ip['subnet_id']).all()[0]
+                    subnet = [
+                        sub
+                        for sub in subnets
+                        if sub['id'] == fixed_ip['subnet_id']
+                    ][0]
                 except IndexError:
                     # NOTE(hjensas): The subnet is invalid for the network,
                     # return all subnets. This will be detected in following
@@ -378,7 +383,7 @@ class Subnet(base.NeutronDbObject):
             elif 'ip_address' in fixed_ip:
                 ip = netaddr.IPNetwork(fixed_ip['ip_address'])
 
-                for s in query.all():
+                for s in subnets:
                     if ip in netaddr.IPNetwork(s.cidr):
                         subnet = s
                         break

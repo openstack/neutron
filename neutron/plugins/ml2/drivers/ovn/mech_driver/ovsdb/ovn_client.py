@@ -237,27 +237,46 @@ class OVNClient(object):
             parent_name = binding_prof.get('parent_name', [])
             tag = binding_prof.get('tag', [])
             address = port['mac_address']
-            for ip in port.get('fixed_ips', []):
-                try:
-                    subnet = self._plugin.get_subnet(context, ip['subnet_id'])
-                except n_exc.SubnetNotFound:
-                    continue
-                ip_addr = ip['ip_address']
-                address += ' ' + ip_addr
-                cidrs += ' {}/{}'.format(ip['ip_address'],
-                                         subnet['cidr'].split('/')[1])
 
-                # Check if the port being created is a virtual port
-                parents = utils.get_virtual_port_parents(
-                    self._nb_idl, ip_addr, port['network_id'], port['id'])
-                if not parents:
-                    continue
+            ip_subnets = port.get('fixed_ips', [])
+            subnet_ids = [
+                ip['subnet_id']
+                for ip in ip_subnets
+                if 'subnet_id' in ip
+            ]
+            subnets = self._plugin.get_subnets(
+                    context, filters={'id': subnet_ids})
+            if subnets:
+                for ip in ip_subnets:
+                    ip_addr = ip['ip_address']
+                    address += ' ' + ip_addr
+                    subnet = None
 
-                port_type = ovn_const.LSP_TYPE_VIRTUAL
-                options[ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY] = ip_addr
-                options[ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY] = (
-                    ','.join(parents))
-                break
+                    try:
+                        subnet = [
+                            sub
+                            for sub in subnets
+                            if sub["id"] == ip["subnet_id"]
+                        ][0]
+                    except IndexError:
+                        LOG.debug('Subnet not found for ip address %s',
+                                  ip_addr)
+                        continue
+
+                    cidrs += ' {}/{}'.format(ip['ip_address'],
+                                             subnet['cidr'].split('/')[1])
+
+                    # Check if the port being created is a virtual port
+                    parents = utils.get_virtual_port_parents(
+                        self._nb_idl, ip_addr, port['network_id'], port['id'])
+                    if not parents:
+                        continue
+
+                    port_type = ovn_const.LSP_TYPE_VIRTUAL
+                    options[ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY] = ip_addr
+                    options[ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY] = (
+                        ','.join(parents))
+                    break
 
             # Only adjust the OVN type if the port is not owned by Neutron
             # DHCP agents.
@@ -565,9 +584,14 @@ class OVNClient(object):
             if self.is_metadata_port(port):
                 context = n_context.get_admin_context()
                 network = self._plugin.get_network(context, port['network_id'])
-                subnet_ids = set(_ip['subnet_id'] for _ip in port['fixed_ips'])
-                for subnet_id in subnet_ids:
-                    subnet = self._plugin.get_subnet(context, subnet_id)
+                subnet_ids = [
+                    _ip['subnet_id']
+                    for _ip in port['fixed_ips']
+                    if 'subnet_id' in _ip
+                ]
+
+                for subnet in self._plugin.get_subnets(
+                        context, filters={'id': subnet_ids}):
                     if not subnet['enable_dhcp']:
                         continue
                     self._update_subnet_dhcp_options(subnet, network, txn)
