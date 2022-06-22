@@ -34,6 +34,7 @@ PROXY_CONFIG_DIR = "ovn-metadata-proxy"
 _HAPROXY_CONFIG_TEMPLATE = """
 global
     log         /dev/log local0 %(log_level)s
+    log-tag     %(log_tag)s
     user        %(user)s
     group       %(group)s
     maxconn     1024
@@ -82,6 +83,12 @@ class HaproxyConfigurator(object):
         self.pidfile = pid_file
         self.log_level = (
             'debug' if logging.is_debug_enabled(cfg.CONF) else 'info')
+        # log-tag will cause entries to have the string pre-pended, so use
+        # the uuid haproxy will be started with.  Additionally, if it
+        # starts with "haproxy" then things will get logged to
+        # /var/log/haproxy.log on Debian distros, instead of to syslog.
+        uuid = network_id or router_id
+        self.log_tag = 'haproxy-{}-{}'.format(METADATA_SERVICE_NAME, uuid)
 
     def create_config_file(self):
         """Create the config file for haproxy."""
@@ -111,7 +118,8 @@ class HaproxyConfigurator(object):
             'user': username,
             'group': groupname,
             'pidfile': self.pidfile,
-            'log_level': self.log_level
+            'log_level': self.log_level,
+            'log_tag': self.log_tag
         }
         if self.network_id:
             cfg_info['res_type'] = 'Network'

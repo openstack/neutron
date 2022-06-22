@@ -86,6 +86,9 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 'haproxy',
                 '-f', cfg_file]
 
+            log_tag = 'haproxy-{}-{}'.format(
+                metadata_driver.METADATA_SERVICE_NAME, datapath_id)
+
             cfg_contents = metadata_driver._HAPROXY_CONFIG_TEMPLATE % {
                 'user': self.EUNAME,
                 'group': self.EGNAME,
@@ -95,7 +98,8 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 'res_type': 'Network',
                 'res_id': datapath_id,
                 'pidfile': self.PIDFILE,
-                'log_level': 'debug'}
+                'log_level': 'debug',
+                'log_tag': log_tag}
 
             mock_open.assert_has_calls([
                 mock.call(cfg_file, 'w'),
