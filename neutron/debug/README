@@ -23,7 +23,7 @@ probe-create <net-id>
    modify network and subnet if you want to probe. For example, you need to be admin user if you
    want to probe external network.
 
-probe-delete <port-id>  Delete probe - delete port then uplug
+probe-delete <port-id>  Delete probe - delete port then unplug
 probe-exec <port-id> 'command'    Exec commands on the namespace of the probe
 `probe-exec <port-id>` 'interactive command' Exec interactive command (eg, ssh)
 

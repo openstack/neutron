@@ -360,12 +360,12 @@ def get_revision_number(resource, resource_type):
 
 
 def remove_macs_from_lsp_addresses(addresses):
-    """Remove the mac addreses from the Logical_Switch_Port addresses column.
+    """Remove the mac addresses from the Logical_Switch_Port addresses column.
 
     :param addresses: The list of addresses from the Logical_Switch_Port.
         Example: ["80:fa:5b:06:72:b7 158.36.44.22",
                   "ff:ff:ff:ff:ff:ff 10.0.0.2"]
-    :returns: A list of IP addesses (v4 and v6)
+    :returns: A list of IP addresses (v4 and v6)
     """
     ip_list = []
     for addr in addresses:
@@ -379,7 +379,7 @@ def get_allowed_address_pairs_ip_addresses(port):
     """Return a list of IP addresses from port's allowed_address_pairs.
 
     :param port: A neutron port
-    :returns: A list of IP addesses (v4 and v6)
+    :returns: A list of IP addresses (v4 and v6)
     """
     return [x['ip_address'] for x in port.get('allowed_address_pairs', [])
             if 'ip_address' in x]
@@ -392,7 +392,7 @@ def get_allowed_address_pairs_ip_addresses_from_ovn_port(ovn_port):
     allowed_address_pairs column using the data in the OVN port.
 
     :param ovn_port: A OVN port
-    :returns: A list of IP addesses (v4 and v6)
+    :returns: A list of IP addresses (v4 and v6)
     """
     addresses = remove_macs_from_lsp_addresses(ovn_port.addresses)
     port_security = remove_macs_from_lsp_addresses(ovn_port.port_security)

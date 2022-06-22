@@ -63,7 +63,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
     def _safe_rollback(self, func, *args, **kwargs):
         """Calls rollback actions and catch all exceptions.
 
-        All exceptions are catched and logged here to prevent rewriting
+        All exceptions are caught and logged here to prevent rewriting
         original exception that triggered rollback action.
         """
         try:
@@ -184,7 +184,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
     def deallocate_ips_from_port(self, context, port, ips):
         """Deallocate set of ips from port.
 
-        Deallocate IP addresses previosly allocated for given port.
+        Deallocate IP addresses previously allocated for given port.
         Format of the ips:
             [{
                 "ip_address": IP.ADDRESS,
