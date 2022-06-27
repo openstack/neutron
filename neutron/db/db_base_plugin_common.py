@@ -109,7 +109,7 @@ class DbBasePluginCommon(object):
 
     @db_api.CONTEXT_READER
     def _is_mac_in_use(self, context, network_id, mac_address):
-        return port_obj.Port.objects_exist(context, network_id=network_id,
+        return port_obj.Port.objects_exist(context,
                                            mac_address=mac_address)
 
     @staticmethod

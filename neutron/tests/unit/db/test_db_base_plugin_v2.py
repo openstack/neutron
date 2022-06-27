@@ -1899,7 +1899,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             mac2 = '00:22:00:44:00:66'  # other mac, same network
             self.assertFalse(self.plugin._is_mac_in_use(ctx, net_id, mac2))
             net_id2 = port['port']['id']  # other net uuid, same mac
-            self.assertFalse(self.plugin._is_mac_in_use(ctx, net_id2, mac))
+            self.assertTrue(self.plugin._is_mac_in_use(ctx, net_id2, mac))
 
     def test_requested_duplicate_ip(self):
         with self.subnet() as subnet:
