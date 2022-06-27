@@ -14,7 +14,6 @@
 #    under the License.
 
 import copy
-import types
 import uuid
 
 from keystoneauth1 import exceptions as ks_exc
@@ -41,7 +40,6 @@ from neutron_lib import context
 from neutron_lib.db import api as db_api
 from neutron_lib.db import resource_extend
 from neutron_lib import exceptions as lib_exc
-from neutron_lib.exceptions import placement as place_exc
 from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.placement import client as pl_client
 from neutron_lib.placement import utils as pl_utils
@@ -65,53 +63,6 @@ from neutron.services.qos.drivers import manager
 
 
 LOG = logging.getLogger(__name__)
-
-
-# TODO(przszc): Move this function to n-lib
-def update_qos_allocation(self, consumer_uuid, alloc_diff):
-    """Update allocation for QoS minimum bandwidth consumer
-
-    :param consumer_uuid: The uuid of the consumer, in case of bound port
-                            owned by a VM, the VM uuid.
-    :param alloc_diff: A dict which contains RP UUIDs as keys and
-                        corresponding fields to update for the allocation
-                        under the given resource provider.
-    """
-    for i in range(pl_client.GENERATION_CONFLICT_RETRIES):
-        body = self.list_allocations(consumer_uuid)
-        if not body['allocations']:
-            raise place_exc.PlacementAllocationRemoved(consumer=consumer_uuid)
-        # Count new values based on the diff in alloc_diff
-        for rp_uuid, diff in alloc_diff.items():
-            if rp_uuid not in body['allocations']:
-                raise place_exc.PlacementAllocationRpNotExists(
-                    resource_provider=rp_uuid, consumer=consumer_uuid)
-            for drctn, value in diff.items():
-                orig_value = (body['allocations'][rp_uuid][
-                    'resources'].get(drctn, 0))
-                new_value = orig_value + value
-                if new_value > 0:
-                    body['allocations'][rp_uuid]['resources'][
-                        drctn] = new_value
-                else:
-                    # Remove the resource class if the new value is 0
-                    resources = body['allocations'][rp_uuid]['resources']
-                    resources.pop(drctn, None)
-
-        # Remove RPs without any resources
-        body['allocations'] = {
-            rp: alloc for rp, alloc in body['allocations'].items()
-            if alloc.get('resources')}
-        try:
-            # Update allocations has no return body, but leave the loop
-            return self.update_allocation(consumer_uuid, body)
-        except ks_exc.Conflict as e:
-            resp = e.response.json()
-            if resp['errors'][0]['code'] == 'placement.concurrent_update':
-                continue
-            raise
-    raise place_exc.PlacementAllocationGenerationConflict(
-        consumer=consumer_uuid)
 
 
 @resource_extend.has_resource_extenders
@@ -146,8 +97,6 @@ class QoSPlugin(qos.QoSPluginBase):
         super(QoSPlugin, self).__init__()
         self.driver_manager = manager.QosServiceDriverManager()
         self._placement_client = pl_client.PlacementAPIClient(cfg.CONF)
-        self._placement_client.update_qos_allocation = types.MethodType(
-            update_qos_allocation, self._placement_client)
 
         callbacks_registry.subscribe(
             self._validate_create_port_callback,
