@@ -812,7 +812,7 @@ class IpMonitorTestCase(testscenarios.WithScenarios,
              'name': self.devices[4]}]
         self._check_read_file(ip_addresses)
 
-    def test_interface_added_after_initilization(self):
+    def test_interface_added_after_initialization(self):
         for device in self.devices[:len(self.devices) - 1]:
             self.ip_wrapper.add_dummy(device)
         utils.wait_until_true(lambda: self._read_file({}), timeout=30)

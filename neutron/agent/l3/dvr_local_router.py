@@ -220,9 +220,9 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             self.fip_ns.deallocate_rule_priority(floating_ip)
         else:
             LOG.error('Floating IP %s not stored in this agent. Because of '
-                      'the initilization method "_load_used_fip_information", '
-                      'all floating IPs should be memoized in the local '
-                      'memory.', floating_ip)
+                      'the initialization method '
+                      '"_load_used_fip_information", all floating IPs should '
+                      'be memoized in the local memory.', floating_ip)
 
     def floating_ip_removed_dist(self, fip_cidr):
         """Remove floating IP from FIP namespace."""

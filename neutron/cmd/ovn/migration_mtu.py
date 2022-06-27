@@ -116,7 +116,7 @@ def update_network_mtu():
                         network.provider_network_type])
                 conn.network.set_tags(network, new_tags)
         except Exception as e:
-            print("Exception occured while updating the MTU:" + str(e))
+            print("Exception occurred while updating the MTU:" + str(e))
             return False
     return True
 

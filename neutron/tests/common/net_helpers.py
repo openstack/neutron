@@ -363,7 +363,7 @@ class RootHelperProcess(subprocess.Popen):
                 pass
             msg = ("Process %(cmd)s hasn't been spawned in %(seconds)d "
                    "seconds. Return code: %(ret_code)s, stdout: %(stdout)s, "
-                   "sdterr: %(stderr)s" %
+                   "stderr: %(stderr)s" %
                    {'cmd': self.cmd, 'seconds': timeout,
                     'ret_code': self.returncode, 'stdout': stdout,
                     'stderr': stderr})
@@ -568,7 +568,7 @@ class NetcatTester(object):
             self.server_process.writeline(message)
             message = self.client_process.read_stdout(READ_TIMEOUT).strip()
         except ConnectionError as e:
-            LOG.debug("Error: %s occured during connectivity test.", e)
+            LOG.debug("Error: %s occurred during connectivity test.", e)
             message = ""
 
         return message == testing_string

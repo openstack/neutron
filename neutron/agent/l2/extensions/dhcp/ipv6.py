@@ -326,7 +326,7 @@ class DHCPIPv6Responder(dhcp_base.DHCPResponderBase):
         pkt_dhcp = pkt.get_protocol(dhcp6.dhcp6)
         dhcp_req_state = DHCPV6_TYPE_MAP.get(pkt_dhcp.msg_type)
         if not dhcp_req_state:
-            LOG.warning("DHCP controller received DHCPv6 with unkown "
+            LOG.warning("DHCP controller received DHCPv6 with unknown "
                         "type: %s from port: %s",
                         pkt_dhcp.msg_type, ofport)
             return
