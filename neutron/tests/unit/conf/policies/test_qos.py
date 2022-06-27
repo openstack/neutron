@@ -521,6 +521,164 @@ class ProjectReaderQosBandwidthLimitRuleTests(
         self.context = self.project_reader_ctx
 
 
+class SystemAdminQosPacketRateLimitRuleTests(QosRulesAPITestCase):
+
+    def setUp(self):
+        super(SystemAdminQosPacketRateLimitRuleTests, self).setUp()
+        self.context = self.system_admin_ctx
+
+    def test_get_policy_packet_rate_limit_rule(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_policy_packet_rate_limit_rule',
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_policy_packet_rate_limit_rule',
+            self.alt_target)
+
+    def test_create_policy_packet_rate_limit_rule(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_policy_packet_rate_limit_rule',
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_policy_packet_rate_limit_rule',
+            self.alt_target)
+
+    def test_update_policy_packet_rate_limit_rule(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_policy_packet_rate_limit_rule',
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_policy_packet_rate_limit_rule',
+            self.alt_target)
+
+    def test_delete_policy_packet_rate_limit_rule(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_policy_packet_rate_limit_rule',
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_policy_packet_rate_limit_rule',
+            self.alt_target)
+
+
+class ProjectAdminQosPacketRateLimitRuleTests(QosRulesAPITestCase):
+
+    def setUp(self):
+        super(ProjectAdminQosPacketRateLimitRuleTests, self).setUp()
+        self.context = self.project_admin_ctx
+
+    def test_get_policy_packet_rate_limit_rule(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_policy_packet_rate_limit_rule',
+                           self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_policy_packet_rate_limit_rule',
+            self.alt_target)
+
+    def test_create_policy_packet_rate_limit_rule(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_policy_packet_rate_limit_rule',
+                           self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_policy_packet_rate_limit_rule',
+            self.alt_target)
+
+    def test_update_policy_packet_rate_limit_rule(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_policy_packet_rate_limit_rule',
+                           self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_policy_packet_rate_limit_rule',
+            self.alt_target)
+
+    def test_delete_policy_packet_rate_limit_rule(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'delete_policy_packet_rate_limit_rule',
+                           self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_policy_packet_rate_limit_rule',
+            self.alt_target)
+
+
+class ProjectMemberQosPacketRateLimitRuleTests(
+        ProjectAdminQosPacketRateLimitRuleTests):
+
+    def setUp(self):
+        super(ProjectMemberQosPacketRateLimitRuleTests, self).setUp()
+        self.context = self.project_member_ctx
+
+    def test_create_policy_packet_rate_limit_rule(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_policy_packet_rate_limit_rule',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_policy_packet_rate_limit_rule',
+            self.alt_target)
+
+    def test_update_policy_packet_rate_limit_rule(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_policy_packet_rate_limit_rule',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_policy_packet_rate_limit_rule',
+            self.alt_target)
+
+    def test_delete_policy_packet_rate_limit_rule(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_policy_packet_rate_limit_rule',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_policy_packet_rate_limit_rule',
+            self.alt_target)
+
+
+class ProjectReaderQosPacketRateLimitRuleTests(
+        ProjectMemberQosPacketRateLimitRuleTests):
+
+    def setUp(self):
+        super(ProjectReaderQosPacketRateLimitRuleTests, self).setUp()
+        self.context = self.project_reader_ctx
+
+
 class SystemAdminQosDSCPMarkingRuleTests(QosRulesAPITestCase):
 
     def setUp(self):
