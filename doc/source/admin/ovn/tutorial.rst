@@ -7,4 +7,4 @@ OpenStack and OVN Tutorial
 The OVN project documentation includes an in depth tutorial of using OVN with
 OpenStack.
 
-`OpenStack and OVN Tutorial <https://github.com/ovn-org/ovn/blob/master/Documentation/tutorials/ovn-openstack.rst>`_
+`OpenStack and OVN Tutorial <https://docs.ovn.org/en/latest/tutorials/ovn-openstack.html>`_
