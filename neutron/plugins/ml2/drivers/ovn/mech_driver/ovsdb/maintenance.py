@@ -35,6 +35,7 @@ from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_hash_ring_db as hash_ring_db
 from neutron.db import ovn_revision_numbers_db as revision_numbers_db
+from neutron.objects import ports as ports_obj
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
 
 
@@ -749,9 +750,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
             return
 
         context = n_context.get_admin_context()
+        ports = ports_obj.Port.get_ports_by_vnic_type_and_host(
+            context, portbindings.VNIC_BAREMETAL)
         ports = self._ovn_client._plugin.get_ports(
-            context,
-            filters={portbindings.VNIC_TYPE: portbindings.VNIC_BAREMETAL})
+            context, filters={'id': [p.id for p in ports]})
         if not ports:
             raise periodics.NeverAgain()
 

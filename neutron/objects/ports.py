@@ -684,13 +684,12 @@ class Port(base.NeutronDbObject):
 
     @classmethod
     @db_api.CONTEXT_READER
-    def get_ports_by_vnic_type_and_host(
-            cls, context, vnic_type, host):
+    def get_ports_by_vnic_type_and_host(cls, context, vnic_type, host=None):
         query = context.session.query(models_v2.Port).join(
             ml2_models.PortBinding)
-        query = query.filter(
-            ml2_models.PortBinding.vnic_type == vnic_type,
-            ml2_models.PortBinding.host == host)
+        query = query.filter(ml2_models.PortBinding.vnic_type == vnic_type)
+        if host:
+            query = query.filter(ml2_models.PortBinding.host == host)
         return [cls._load_object(context, db_obj) for db_obj in query.all()]
 
     @classmethod
