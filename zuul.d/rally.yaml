@@ -1,6 +1,8 @@
 - job:
     name: neutron-ovs-rally-task
     parent: rally-task-neutron
+    # Make non-voting until https://bugs.launchpad.net/rally/+bug/1980055 fixes
+    voting: false
     timeout: 10800
     vars:
       devstack_localrc:
