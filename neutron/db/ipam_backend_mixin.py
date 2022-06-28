@@ -265,11 +265,14 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                 raise exc.InvalidInput(error_message=err_msg)
 
     def _validate_network_subnetpools(self, network, subnet_ip_version,
-                                      new_subnetpool, network_scope):
-        """Validate all subnets on the given network have been allocated from
+                                      new_subnetpool, network_scope,
+                                      strict_subnet_pool_checking=False):
+        """If address scopes are used, validate that all subnets on the
+           given network participate in the same address scope or have no
+           subnet pool set. If strict checking is enabled, validate
+           all subnets on the given network have been allocated from
            the same subnet pool as new_subnetpool if no address scope is
-           used. If address scopes are used, validate that all subnets on the
-           given network participate in the same address scope.
+           used. 
         """
         # 'new_subnetpool' might just be the Prefix Delegation ID
         ipv6_pd_subnetpool = new_subnetpool == const.IPV6_PD_POOL_ID
@@ -290,13 +293,14 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                         subnet.subnetpool_id != const.IPV6_PD_POOL_ID):
                     raise exc.NetworkSubnetPoolAffinityError()
             else:
-                if new_subnetpool:
-                    # In this case we have the new subnetpool object, so
-                    # we can check the ID and IP version.
-                    if (subnet.subnetpool_id != new_subnetpool.id and
-                            subnet.ip_version == new_subnetpool.ip_version and
-                            not network_scope):
-                        raise exc.NetworkSubnetPoolAffinityError()
+                if strict_subnet_pool_checking:
+                    if new_subnetpool:
+                        # In this case we have the new subnetpool object, so
+                        # we can check the ID and IP version.
+                        if (subnet.subnetpool_id != new_subnetpool.id and
+                                subnet.ip_version == new_subnetpool.ip_version and
+                                not network_scope):
+                            raise exc.NetworkSubnetPoolAffinityError()
 
     def validate_allocation_pools(self, ip_pools, subnet_cidr):
         """Validate IP allocation pools.
