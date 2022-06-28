@@ -257,10 +257,9 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
 
     def _validate_network_subnetpools(self, network, subnet_ip_version,
                                       new_subnetpool, network_scope):
-        """Validate all subnets on the given network have been allocated from
-           the same subnet pool as new_subnetpool if no address scope is
-           used. If address scopes are used, validate that all subnets on the
-           given network participate in the same address scope.
+        """If address scopes are used, validate that all subnets on the
+           given network participate in the same address scope or have no
+           subnet pool set.
         """
         # 'new_subnetpool' might just be the Prefix Delegation ID
         ipv6_pd_subnetpool = new_subnetpool == const.IPV6_PD_POOL_ID
@@ -281,13 +280,10 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                         subnet.subnetpool_id != const.IPV6_PD_POOL_ID):
                     raise exc.NetworkSubnetPoolAffinityError()
             else:
-                if new_subnetpool:
-                    # In this case we have the new subnetpool object, so
-                    # we can check the ID and IP version.
-                    if (subnet.subnetpool_id != new_subnetpool.id and
-                            subnet.ip_version == new_subnetpool.ip_version and
-                            not network_scope):
-                        raise exc.NetworkSubnetPoolAffinityError()
+                if (subnet.ip_version == const.IP_VERSION_6 and
+                        subnet.subnetpool_id == const.IPV6_PD_POOL_ID and
+                        not ipv6_pd_subnetpool):
+                    raise exc.NetworkSubnetPoolAffinityError()
 
     def validate_allocation_pools(self, ip_pools, subnet_cidr):
         """Validate IP allocation pools.
