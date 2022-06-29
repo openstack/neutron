@@ -47,8 +47,7 @@ def get_inspector():
     if _INSPECTOR:
         return _INSPECTOR
     else:
-        bind = op.get_bind()
-        _INSPECTOR = sa.engine.reflection.Inspector.from_engine(bind)
+        _INSPECTOR = sa.inspect(op.get_bind())
 
     return _INSPECTOR
 

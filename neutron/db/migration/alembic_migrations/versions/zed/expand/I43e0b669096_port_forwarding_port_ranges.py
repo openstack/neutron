@@ -85,7 +85,7 @@ def upgrade():
 
 
 def clear_constraints_and_foreign():
-    inspect = sa.engine.reflection.Inspector.from_engine(op.get_bind())
+    inspect = sa.inspect(op.get_bind())
     foreign_keys = inspect.get_foreign_keys(PF_TABLE_NAME)
     migration.remove_foreign_keys(PF_TABLE_NAME,
                                   foreign_keys)
