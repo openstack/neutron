@@ -361,13 +361,7 @@ Validate Open vSwitch hardware offloading
 
    .. code-block:: bash
 
-      # openstack server create --flavor m1.small --image mellanox_fedora --nic port-id=direct_port1 vm1
-
-
-   .. note::
-
-      In this example, we used Mellanox Image with NIC Drivers that can be downloaded from
-      http://www.mellanox.com/repository/solutions/openstack/images/mellanox_eth.img
+      # openstack server create --flavor m1.small --image cloud_image --nic port-id=direct_port1 vm1
 
 
 #. Repeat steps above and create a second instance on 'Second Compute Node'
