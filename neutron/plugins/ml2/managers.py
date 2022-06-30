@@ -285,8 +285,7 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         self.validate_provider_segment(segment)
 
         # Reserve segment in type driver
-        with db_api.CONTEXT_WRITER.using(context):
-            return self.reserve_provider_segment(context, segment)
+        return self.reserve_provider_segment(context, segment)
 
     def is_partial_segment(self, segment):
         network_type = segment[api.NETWORK_TYPE]
