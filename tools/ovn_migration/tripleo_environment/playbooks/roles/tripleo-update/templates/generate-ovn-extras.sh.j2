@@ -3,6 +3,6 @@ set -x
 
 cat > $HOME/ovn-extras.yaml << EOF
 parameter_defaults:
-  OVNIntegrationBridge: "{{ ovn_bridge }}"
+  OVNIntegrationBridge: "br-migration"
   ForceNeutronDriverUpdate: true
 EOF
