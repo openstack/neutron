@@ -46,11 +46,11 @@ class Floating_ip_port_forwarding(api_extensions.APIExtensionDescriptor):
                 apidef.SUB_RESOURCE_ATTRIBUTE_MAP))
 
         resources = resource_helper.build_resource_info(
-                plural_mappings,
-                apidef.RESOURCE_ATTRIBUTE_MAP,
-                plugin_consts.PORTFORWARDING,
-                translate_name=True,
-                allow_bulk=True)
+                        plural_mappings,
+                        apidef.RESOURCE_ATTRIBUTE_MAP,
+                        plugin_consts.PORTFORWARDING,
+                        translate_name=True,
+                        allow_bulk=True)
 
         plugin = directory.get_plugin(plugin_consts.PORTFORWARDING)
 

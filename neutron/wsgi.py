@@ -148,7 +148,7 @@ class Server(object):
                         eventlet.sleep(0.1)
         if not sock:
             raise RuntimeError(_("Could not bind to %(host)s:%(port)s "
-                               "after trying for %(time)d seconds") %
+                                 "after trying for %(time)d seconds") %
                                {'host': host,
                                 'port': port,
                                 'time': CONF.retry_until_window})

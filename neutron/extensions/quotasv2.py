@@ -86,10 +86,11 @@ class QuotaSetsController(wsgi.Controller):
         context = request.context
         if id != context.project_id:
             validate_policy(context, "get_quota")
-        return {self._resource_name: self._driver.get_default_quotas(
-                   context=context,
-                   resources=resource_registry.get_all_resources(),
-                   project_id=id)}
+        return {self._resource_name:
+                self._driver.get_default_quotas(
+                    context=context,
+                    resources=resource_registry.get_all_resources(),
+                    project_id=id)}
 
     def create(self, request, body=None):
         msg = _('POST requests are not supported on this resource.')

@@ -264,7 +264,7 @@ class TrackedResource(BaseResource):
                   {'project_id': project_id, 'resource': self.name})
         in_use = context.session.query(
             self._model_class.project_id).filter_by(
-            project_id=project_id).count()
+                project_id=project_id).count()
         # Update quota usage
         return self._resync(context, project_id, in_use)
 
@@ -295,7 +295,7 @@ class TrackedResource(BaseResource):
                                   'project_id': project_id})
             in_use = context.session.query(
                 self._model_class.project_id).filter_by(
-                project_id=project_id).count()
+                    project_id=project_id).count()
 
             # Update quota usage, if requested (by default do not do that, as
             # typically one counts before adding a record, and that would mark

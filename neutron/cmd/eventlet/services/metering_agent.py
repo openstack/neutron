@@ -18,7 +18,7 @@ from neutron_lib import constants
 
 def main():
     proctitle = "%s (%s)" % (
-            constants.AGENT_PROCESS_METERING, setproctitle.getproctitle())
+        constants.AGENT_PROCESS_METERING, setproctitle.getproctitle())
     setproctitle.setproctitle(proctitle)
 
     metering_agent.main()

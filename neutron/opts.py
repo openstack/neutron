@@ -157,7 +157,7 @@ def list_db_opts():
              neutron.conf.db.extraroute_db.EXTRA_ROUTE_OPTS,
              neutron.conf.db.l3_gwmode_db.L3GWMODE_OPTS,
              neutron.conf.agent.database.agentschedulers_db
-                    .AGENTS_SCHEDULER_OPTS,
+             .AGENTS_SCHEDULER_OPTS,
              neutron.conf.db.dvr_mac_db.DVR_MAC_ADDRESS_OPTS,
              neutron.conf.db.l3_dvr_db.ROUTER_DISTRIBUTED_OPTS,
              neutron.conf.db.l3_agentschedulers_db.L3_AGENTS_SCHEDULER_OPTS,
@@ -180,7 +180,7 @@ def list_opts():
          ),
         (neutron.conf.common.NOVA_CONF_SECTION,
          itertools.chain(
-              neutron.conf.common.nova_opts)
+             neutron.conf.common.nova_opts)
          ),
         (neutron.conf.common.IRONIC_CONF_SECTION,
          itertools.chain(

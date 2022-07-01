@@ -32,11 +32,11 @@ class Floatingip_pools(api_extensions.APIExtensionDescriptor):
             {}, itertools.chain(apidef.RESOURCE_ATTRIBUTE_MAP))
 
         resources = resource_helper.build_resource_info(
-                                                plural_mappings,
-                                                apidef.RESOURCE_ATTRIBUTE_MAP,
-                                                constants.L3,
-                                                translate_name=True,
-                                                allow_bulk=True)
+                        plural_mappings,
+                        apidef.RESOURCE_ATTRIBUTE_MAP,
+                        constants.L3,
+                        translate_name=True,
+                        allow_bulk=True)
 
         return resources
 

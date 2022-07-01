@@ -18,7 +18,7 @@ from neutron_lib import constants
 
 def main():
     proctitle = "%s (%s)" % (
-            constants.AGENT_PROCESS_OVN_METADATA, setproctitle.getproctitle())
+        constants.AGENT_PROCESS_OVN_METADATA, setproctitle.getproctitle())
     setproctitle.setproctitle(proctitle)
 
     metadata_agent.main()

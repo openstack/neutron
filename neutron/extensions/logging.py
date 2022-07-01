@@ -40,11 +40,11 @@ class Logging(api_extensions.APIExtensionDescriptor):
             {}, itertools.chain(apidef.RESOURCE_ATTRIBUTE_MAP))
 
         resources = resource_helper.build_resource_info(
-                                                plural_mappings,
-                                                apidef.RESOURCE_ATTRIBUTE_MAP,
-                                                plugin_const.LOG_API,
-                                                translate_name=True,
-                                                allow_bulk=True)
+                        plural_mappings,
+                        apidef.RESOURCE_ATTRIBUTE_MAP,
+                        plugin_const.LOG_API,
+                        translate_name=True,
+                        allow_bulk=True)
 
         return resources
 

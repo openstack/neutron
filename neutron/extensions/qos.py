@@ -48,11 +48,11 @@ class Qos(api_extensions.APIExtensionDescriptor):
                 apidef.SUB_RESOURCE_ATTRIBUTE_MAP))
 
         resources = resource_helper.build_resource_info(
-                plural_mappings,
-                apidef.RESOURCE_ATTRIBUTE_MAP,
-                constants.QOS,
-                translate_name=True,
-                allow_bulk=True)
+                        plural_mappings,
+                        apidef.RESOURCE_ATTRIBUTE_MAP,
+                        constants.QOS,
+                        translate_name=True,
+                        allow_bulk=True)
 
         plugin = directory.get_plugin(constants.QOS)
         for collection_name in apidef.SUB_RESOURCE_ATTRIBUTE_MAP:
@@ -95,14 +95,14 @@ class QoSPluginBase(service_base.ServicePluginBase, metaclass=abc.ABCMeta):
     # Patterns used to call method proxies for all policy-rule-specific
     # method calls (see __getattr__ docstring, below).
     qos_rule_method_patterns = [
-            re.compile(
-                r"^((create|update|delete)_policy_(?P<rule_type>.*)_rule)$"),
-            re.compile(
-                r"^(get_policy_(?P<rule_type>.*)_(rules|rule))$"),
-            # The following entry handles rule alias calls
-            re.compile(
-                r"^((update|delete|get)_alias_(?P<rule_type>.*)_rule)$"),
-                               ]
+        re.compile(
+            r"^((create|update|delete)_policy_(?P<rule_type>.*)_rule)$"),
+        re.compile(
+            r"^(get_policy_(?P<rule_type>.*)_(rules|rule))$"),
+        # The following entry handles rule alias calls
+        re.compile(
+            r"^((update|delete|get)_alias_(?P<rule_type>.*)_rule)$"),
+                ]
 
     def __getattr__(self, attrib):
         """Implement method proxies for all policy-rule-specific requests. For

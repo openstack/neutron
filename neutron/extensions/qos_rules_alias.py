@@ -27,7 +27,7 @@ class Qos_rules_alias(api_extensions.APIExtensionDescriptor):
     def get_resources(cls):
         """Returns Ext Resources."""
         plural_mappings = resource_helper.build_plural_mappings(
-                {}, apidef.RESOURCE_ATTRIBUTE_MAP)
+            {}, apidef.RESOURCE_ATTRIBUTE_MAP)
 
         return resource_helper.build_resource_info(
             plural_mappings,
