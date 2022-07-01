@@ -354,6 +354,8 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         req.get_response(self.api)
         self._check_port_binding_type(vip['id'], '')
         self._check_port_virtual_parents(vip['id'], None)
+        n_utils.wait_until_true(lambda: mock_update_vip_host.called,
+                                timeout=10)
         mock_update_vip_host.assert_called_once_with(vip['id'], None)
 
 
