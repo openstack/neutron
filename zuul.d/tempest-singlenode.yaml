@@ -611,12 +611,6 @@
     vars:
       nslookup_target: 'opendev.org'
       configure_swap_size: 4096
-      # TODO(ykarel): remove AttachInterfacesTestJSON and test_hotplug_nic from the
-      # blacklist when fixed libvirt version is available in CentOS 9-Stream
-      # https://bugzilla.redhat.com/show_bug.cgi?id=2092856
-      tempest_exclude_regex: "\
-          (^tempest.api.compute.servers.test_attach_interfaces.AttachInterfacesTestJSON)|\
-          (^tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_hotplug_nic)"
       devstack_services:
         br-ex-tcpdump: true
         br-int-flows: true
@@ -637,12 +631,6 @@
     vars:
       nslookup_target: 'opendev.org'
       configure_swap_size: 4096
-      # TODO(ykarel): remove AttachInterfacesTestJSON and test_hotplug_nic from the
-      # blacklist when fixed libvirt version is available in CentOS 9-Stream
-      # https://bugzilla.redhat.com/show_bug.cgi?id=2092856
-      tempest_exclude_regex: "\
-          (^tempest.api.compute.servers.test_attach_interfaces.AttachInterfacesTestJSON)|\
-          (^tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_hotplug_nic)"
       devstack_local_conf:
         test-config:
           "$TEMPEST_CONFIG":
