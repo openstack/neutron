@@ -1843,6 +1843,59 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 mock.ANY,
                 filters={'id': subnet_ids})
 
+    def test__get_port_options_migrating_additional_chassis_missing(self):
+        port = {
+            'id': 'virt-port',
+            'mac_address': '00:00:00:00:00:00',
+            'device_owner': 'device_owner',
+            'network_id': 'foo',
+            'fixed_ips': [],
+            portbindings.HOST_ID: 'fake-src',
+            portbindings.PROFILE: {
+                ovn_const.MIGRATING_ATTR: 'fake-dest',
+            }
+        }
+        options = self.mech_driver._ovn_client._get_port_options(port)
+        self.assertNotIn('activation-strategy', options.options)
+        self.assertEqual('fake-src', options.options['requested-chassis'])
+
+    def test__get_port_options_migrating_additional_chassis_present(self):
+        port = {
+            'id': 'virt-port',
+            'mac_address': '00:00:00:00:00:00',
+            'device_owner': 'device_owner',
+            'network_id': 'foo',
+            'fixed_ips': [],
+            portbindings.HOST_ID: 'fake-src',
+            portbindings.PROFILE: {
+                ovn_const.MIGRATING_ATTR: 'fake-dest',
+            }
+        }
+        with mock.patch.object(
+                self.mech_driver._ovn_client._sb_idl, 'is_col_present',
+                return_value=True):
+            options = self.mech_driver._ovn_client._get_port_options(port)
+        self.assertEqual('rarp', options.options['activation-strategy'])
+        self.assertEqual('fake-src,fake-dest',
+                         options.options['requested-chassis'])
+
+    def test__get_port_options_not_migrating_additional_chassis_present(self):
+        port = {
+            'id': 'virt-port',
+            'mac_address': '00:00:00:00:00:00',
+            'device_owner': 'device_owner',
+            'network_id': 'foo',
+            'fixed_ips': [],
+            portbindings.HOST_ID: 'fake-src',
+        }
+        with mock.patch.object(
+                self.mech_driver._ovn_client._sb_idl, 'is_col_present',
+                return_value=True):
+            options = self.mech_driver._ovn_client._get_port_options(port)
+        self.assertNotIn('activation-strategy', options.options)
+        self.assertEqual('fake-src',
+                         options.options['requested-chassis'])
+
     def test_update_port(self):
         with mock.patch.object(
                 self.mech_driver._ovn_client, 'is_metadata_port') as \
