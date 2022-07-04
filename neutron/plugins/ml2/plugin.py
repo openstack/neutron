@@ -785,8 +785,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 if update_binding_levels:
                     db.clear_binding_levels(plugin_context, port_id,
                                             cur_binding.host)
-                    db.set_binding_levels(plugin_context,
-                                          bind_context._binding_levels)
+                    with db_api.exc_to_retry(os_db_exception.DBReferenceError):
+                        db.set_binding_levels(plugin_context,
+                                              bind_context._binding_levels)
                     # Expire the "binding_levels" and fetch them into the port.
                     plugin_context.session.flush()
                     getattr(port_db, 'binding_levels')
