@@ -569,10 +569,6 @@
     name: neutron-ovn-tempest-ovs-release-ipv6-only
     description: Job testing for devstack/tempest testing Neutron with ovn driver and latest released OVN branch in an IPv6-only deployment
     parent: neutron-ovn-tempest-ovs-ipv6-only-base
-    vars:
-      # TODO(slaweq): remove test_reboot_server_hard from the blacklist when
-      # when bug https://bugs.launchpad.net/neutron/+bug/1906490 will be fixed
-      tempest_exclude_regex: "(^tempest.api.compute.servers.test_server_actions.ServerActionsTestJSON.test_reboot_server_hard)"
 
 - job:
     name: neutron-ovn-tempest-ovs-release
