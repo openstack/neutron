@@ -53,7 +53,7 @@ Limitations
 * If you mix ports with and without bandwidth guarantees on the same physical
   interface then the ports without a guarantee may starve. Therefore mixing
   them is not recommended. Instead it is recommended to separate them by
-  :nova-doc:`Nova host aggregates <user/aggregates>`.
+  :nova-doc:`Nova host aggregates <admin/aggregates>`.
 
 * Changing the guarantee of a QoS policy (adding/deleting a
   ``minimum_bandwidth`` rule, or changing the ``min_kbps`` field of a
