@@ -1,0 +1,19 @@
+---
+prelude: >
+    Introduce the experimental features framework.
+features:
+  - |
+    Some Neutron features are not supported due to lack of resources or
+    technical expertise to maintain them. As they arise, those features will
+    be marked as experimental by the Neutron core team.
+    Deployers will be able to continue using experimental features by
+    explicitly enabling them in the 'experimental' section of neutron.conf.
+    The ML2 linuxbridge driver is the first feature to be marked as
+    experimental. To continue using it, deployers have to set to True the
+    'linuxbridge' option in the 'experimental' section of neutron.conf.
+deprecations:
+  - |
+    The ML2 linuxbridge agent has been marked as experimental due to lack
+    of resources to maintain it. To continue using it, deployers have to set
+    to True the 'linuxbridge' option in the 'experimental' section of
+    neutron.conf

@@ -17,6 +17,8 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 
 from neutron.agent import securitygroups_rpc
+from neutron.common import experimental
+from neutron.conf import experimental as c_experimental
 from neutron.plugins.ml2.drivers import mech_agent
 from neutron.services.qos.drivers.linuxbridge import driver as lb_qos_driver
 
@@ -32,6 +34,8 @@ class LinuxbridgeMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
     """
 
     def __init__(self):
+        experimental.validate_experimental_enabled(
+            c_experimental.EXPERIMENTAL_LINUXBRIDGE)
         sg_enabled = securitygroups_rpc.is_firewall_enabled()
         vif_details = {portbindings.CAP_PORT_FILTER: sg_enabled,
                        portbindings.VIF_DETAILS_CONNECTIVITY:

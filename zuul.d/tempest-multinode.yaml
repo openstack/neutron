@@ -178,7 +178,7 @@
         DEFAULT_IMAGE_NAME: cirros-0.5.1-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.5.1-x86_64-uec.tar.gz
         Q_ML2_TENANT_NETWORK_TYPE: vxlan
-        Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch,linuxbridge
+        Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
         Q_AGENT: openvswitch
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git

@@ -10,7 +10,7 @@
         OSPROFILER_COLLECTOR: redis
         OSPROFILER_HMAC_KEYS: "neutron-hmac-key-used-in-zuul-ci"
         Q_ML2_TENANT_NETWORK_TYPE: vxlan
-        Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch,linuxbridge
+        Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
         Q_AGENT: openvswitch
         KEYSTONE_ADMIN_ENDPOINT: true
       rally_task: rally-jobs/task-neutron.yaml

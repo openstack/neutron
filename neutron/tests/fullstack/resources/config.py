@@ -97,6 +97,9 @@ class NeutronConfigFixture(ConfigFixture):
             'quotas': {
                 'quota_driver': env_desc.quota_driver
             },
+            'experimental': {
+                'linuxbridge': str(env_desc.allow_experimental_linuxbridge)
+            },
         })
 
         if use_local_apipaste:
