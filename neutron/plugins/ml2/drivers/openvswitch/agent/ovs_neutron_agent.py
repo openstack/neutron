@@ -207,7 +207,14 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         # Stores integration bridge smartnic ports data
         self.current_smartnic_ports_map = {}
 
-        self.network_ports = collections.defaultdict(set)
+        # Data structure that is storing ports which belong to a segmentation
+        # id of a network.
+        # Example: {net1: {seg1: {port1, port2, },
+        #                  seg2: {port3, }},
+        #           net2: {seg3: {port4, port5, }}}
+        self.network_ports = collections.defaultdict(
+            lambda: collections.defaultdict(set))
+
         # keeps association between ports and ofports to detect ofport change
         self.vifname_to_ofport_map = {}
         # Stores newly created bridges
@@ -668,15 +675,19 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         network = self.plugin_rpc.get_network_details(
             self.context, network_id, self.agent_id, self.conf.host)
         self._update_network_segmentation_id(network)
-        for port_id in self.network_ports[network_id]:
-            # notifications could arrive out of order, if the port is deleted
-            # we don't want to update it anymore
-            if port_id not in self.deleted_ports:
-                self.updated_ports.add(port_id)
-        LOG.debug("network_update message processed for network "
-                  "%(network_id)s, with ports: %(ports)s",
-                  {'network_id': network_id,
-                   'ports': self.network_ports[network_id]})
+        for seg_id, port_ids in self.network_ports[network_id].items():
+            for port_id in port_ids:
+                # notifications could arrive out of order, if the port is
+                # deleted we don't want to update it anymore
+                if port_id not in self.deleted_ports:
+                    self.updated_ports.add(port_id)
+                    LOG.debug("network_update message processed for network "
+                              "%(network_id)s, tag: %(tag)s, "
+                              "with ports: %(ports)s",
+                              {'network_id': network_id,
+                               'segmentation_id': seg_id,
+                               'ports': self.network_ports[
+                                   network_id][seg_id]})
 
     @profiler.trace("rpc")
     def binding_deactivate(self, context, **kwargs):
@@ -693,10 +704,17 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         self.activated_bindings.add(port_id)
 
     def _clean_network_ports(self, port_id):
-        for port_set in self.network_ports.values():
-            if port_id in port_set:
-                port_set.remove(port_id)
-                break
+        # TODO(sahid): We should certainly have at least the net-id passed to
+        # the RPC port_delete so we can refine the whole datastruture to handle
+        # deleted ports with at least the network id.
+        for data in self.network_ports.values():
+            for port_set in data.values():
+                if port_id in port_set:
+                    port_set.remove(port_id)
+                    break
+
+    def _add_network_ports(self, network_id, segmentation_id, port_id):
+        self.network_ports[network_id][segmentation_id].add(port_id)
 
     def _get_net_local_vlan_or_none(self, net_id):
         try:
@@ -1983,7 +2001,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 if need_binding:
                     need_binding_devices.append(details)
                 self._update_port_network(details['port_id'],
-                                          details['network_id'])
+                                          details['network_id'],
+                                          details['segmentation_id'])
                 if details['device'] in re_added:
                     self.ext_manager.delete_port(self.context, details)
                 if device not in devices_not_in_datapath:
@@ -2007,9 +2026,10 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 need_binding_devices, failed_devices, devices_not_in_datapath,
                 migrating_devices)
 
-    def _update_port_network(self, port_id, network_id):
+    def _update_port_network(self, port_id, network_id, segmentation_id):
+        # TODO(sahid): This clean_network_ports should accept a net-id/seg_id.
         self._clean_network_ports(port_id)
-        self.network_ports[network_id].add(port_id)
+        self._add_network_ports(network_id, segmentation_id, port_id)
 
     def treat_ancillary_devices_added(self, devices):
         devices_details_list = (

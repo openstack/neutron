@@ -68,6 +68,9 @@ TEST_PORT_ID3 = 'port-id-3'
 TEST_NETWORK_ID1 = 'net-id-1'
 TEST_NETWORK_ID2 = 'net-id-2'
 
+TEST_SEGMENTATION_ID1 = 'seg-id-1'
+TEST_SEGMENTATION_ID2 = 'seg-id-2'
+
 TEST_MTU = 7824
 
 DEVICE_OWNER_COMPUTE = n_const.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
@@ -1391,7 +1394,8 @@ class TestOvsNeutronAgent(object):
         self.assertEqual(set([port['id']]), self.agent.deleted_ports)
 
     def test_process_deleted_ports_cleans_network_ports(self):
-        self.agent._update_port_network(TEST_PORT_ID1, TEST_NETWORK_ID1)
+        self.agent._update_port_network(
+            TEST_PORT_ID1, TEST_NETWORK_ID1, TEST_SEGMENTATION_ID1)
         self.agent.port_delete(context=None, port_id=TEST_PORT_ID1)
         self.agent.sg_agent = mock.Mock()
         self.agent.int_br = mock.Mock()
@@ -1402,14 +1406,17 @@ class TestOvsNeutronAgent(object):
 
         self.agent.int_br.deferred = mock.Mock(side_effect=bridge_deferred)
         self.agent.process_deleted_ports(port_info={})
-        self.assertEqual(set(), self.agent.network_ports[TEST_NETWORK_ID1])
+        self.assertEqual(
+            set(), self.agent.network_ports[
+                TEST_NETWORK_ID1][TEST_SEGMENTATION_ID1])
 
     def test_network_update(self):
         """Network update marks port for update. """
         network = {'id': TEST_NETWORK_ID1}
         port = {'id': TEST_PORT_ID1, 'network_id': network['id']}
 
-        self.agent._update_port_network(port['id'], port['network_id'])
+        self.agent._update_port_network(
+            port['id'], port['network_id'], TEST_SEGMENTATION_ID1)
         with mock.patch.object(self.agent.plugin_rpc, 'get_network_details'), \
                 mock.patch.object(self.agent,
                                   '_update_network_segmentation_id'):
@@ -1425,7 +1432,8 @@ class TestOvsNeutronAgent(object):
         network = {'id': TEST_NETWORK_ID1}
         port = {'id': TEST_PORT_ID1, 'network_id': network['id']}
 
-        self.agent._update_port_network(port['id'], port['network_id'])
+        self.agent._update_port_network(
+            port['id'], port['network_id'], TEST_SEGMENTATION_ID1)
         self.agent.port_delete(context=None, port_id=port['id'])
         with mock.patch.object(self.agent.plugin_rpc, 'get_network_details'), \
                 mock.patch.object(self.agent,
@@ -1435,15 +1443,21 @@ class TestOvsNeutronAgent(object):
 
     def test_update_port_network(self):
         """Ensure ports are associated and moved across networks correctly."""
-        self.agent._update_port_network(TEST_PORT_ID1, TEST_NETWORK_ID1)
-        self.agent._update_port_network(TEST_PORT_ID2, TEST_NETWORK_ID1)
-        self.agent._update_port_network(TEST_PORT_ID3, TEST_NETWORK_ID2)
-        self.agent._update_port_network(TEST_PORT_ID1, TEST_NETWORK_ID2)
+        self.agent._update_port_network(
+            TEST_PORT_ID1, TEST_NETWORK_ID1, TEST_SEGMENTATION_ID1)
+        self.agent._update_port_network(
+            TEST_PORT_ID2, TEST_NETWORK_ID1, TEST_SEGMENTATION_ID2)
+        self.agent._update_port_network(
+            TEST_PORT_ID3, TEST_NETWORK_ID2, TEST_SEGMENTATION_ID1)
+        self.agent._update_port_network(
+            TEST_PORT_ID1, TEST_NETWORK_ID2, TEST_SEGMENTATION_ID1)
 
         self.assertEqual(set([TEST_PORT_ID2]),
-                         self.agent.network_ports[TEST_NETWORK_ID1])
+                         self.agent.network_ports[TEST_NETWORK_ID1][
+                             TEST_SEGMENTATION_ID2])
         self.assertEqual(set([TEST_PORT_ID1, TEST_PORT_ID3]),
-                         self.agent.network_ports[TEST_NETWORK_ID2])
+                         self.agent.network_ports[TEST_NETWORK_ID2][
+                             TEST_SEGMENTATION_ID1])
 
     def test_port_delete(self):
         vif = FakeVif()
