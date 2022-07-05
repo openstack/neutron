@@ -25,7 +25,7 @@ class Qos_pps_minimum_rule(api_extensions.APIExtensionDescriptor):
     @classmethod
     def get_resources(cls):
         plural_mappings = resource_helper.build_plural_mappings(
-                {}, apidef.SUB_RESOURCE_ATTRIBUTE_MAP)
+            {}, apidef.SUB_RESOURCE_ATTRIBUTE_MAP)
 
         return resource_helper.build_resource_info(
             plural_mappings,

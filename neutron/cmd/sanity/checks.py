@@ -274,7 +274,7 @@ def ovs_qos_direct_port_supported():
         ver = versionutils.convert_version_to_tuple(matched_version.group(1) if
                                                     matched_version else '0.0')
         minver = versionutils.convert_version_to_tuple(
-                 DIRECT_PORT_QOS_MIN_OVS_VERSION)
+            DIRECT_PORT_QOS_MIN_OVS_VERSION)
         if ver < minver:
             return False
     except (OSError, RuntimeError, ValueError) as e:
@@ -590,7 +590,7 @@ def ovn_nb_db_schema_port_group_supported():
     try:
         ver = _get_ovn_version(OVNCheckType.nb_db_schema)
         minver = versionutils.convert_version_to_tuple(
-                 OVN_NB_DB_SCHEMA_PORT_GROUP)
+            OVN_NB_DB_SCHEMA_PORT_GROUP)
         if ver < minver:
             return False
     except (OSError, RuntimeError, ValueError) as e:
@@ -604,7 +604,7 @@ def ovn_nb_db_schema_stateless_nat_supported():
     try:
         ver = _get_ovn_version(OVNCheckType.nb_db_schema)
         minver = versionutils.convert_version_to_tuple(
-                 OVN_NB_DB_SCHEMA_STATELESS_NAT)
+            OVN_NB_DB_SCHEMA_STATELESS_NAT)
         if ver < minver:
             return False
     except (OSError, RuntimeError, ValueError) as e:
@@ -618,7 +618,7 @@ def ovn_sb_db_schema_virtual_port_supported():
     try:
         ver = _get_ovn_version(OVNCheckType.sb_db_schema)
         minver = versionutils.convert_version_to_tuple(
-                 OVN_SB_DB_SCHEMA_VIRTUAL_PORT)
+            OVN_SB_DB_SCHEMA_VIRTUAL_PORT)
         if ver < minver:
             return False
     except (OSError, RuntimeError, ValueError) as e:

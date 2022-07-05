@@ -145,8 +145,7 @@ def get_fip_per_network_without_qos_policies(network_id):
     query = query.filter(and_(
         ~exists().where(qos_models.QosFIPPolicyBinding.fip_id ==
                         l3_models.FloatingIP.id),
-        l3_models.FloatingIP.floating_network_id == network_id)
-    )
+        l3_models.FloatingIP.floating_network_id == network_id))
     return query.count()
 
 

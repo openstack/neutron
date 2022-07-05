@@ -35,11 +35,11 @@ class L3_ndp_proxy(api_extensions.APIExtensionDescriptor):
         plural_mappings = resource_helper.build_plural_mappings(
             special_mappings, apidef.RESOURCE_ATTRIBUTE_MAP)
         return resource_helper.build_resource_info(
-                plural_mappings,
-                apidef.RESOURCE_ATTRIBUTE_MAP,
-                plugin_consts.NDPPROXY,
-                translate_name=True,
-                allow_bulk=True)
+            plural_mappings,
+            apidef.RESOURCE_ATTRIBUTE_MAP,
+            plugin_consts.NDPPROXY,
+            translate_name=True,
+            allow_bulk=True)
 
 
 class NDPProxyBase(service_base.ServicePluginBase):

@@ -440,12 +440,12 @@ def enable_tests_from_config():
     if cfg.CONF.SECURITYGROUP.enable_security_group:
         cfg.CONF.set_default('ip6tables_installed', True)
     if cfg.CONF.SECURITYGROUP.firewall_driver in (
-        'iptables',
-        'iptables_hybrid',
-        ('neutron.agent.linux.iptables_firewall.'
-         'IptablesFirewallDriver'),
-        ('neutron.agent.linux.iptables_firewall.'
-         'OVSHybridIptablesFirewallDriver'),
+            'iptables',
+            'iptables_hybrid',
+            ('neutron.agent.linux.iptables_firewall.'
+             'IptablesFirewallDriver'),
+            ('neutron.agent.linux.iptables_firewall.'
+             'OVSHybridIptablesFirewallDriver'),
     ):
         cfg.CONF.set_default('bridge_firewalling', True)
     if cfg.CONF.SRIOV_NIC.physical_device_mappings:

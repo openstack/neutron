@@ -21,7 +21,7 @@ from neutron_lib import constants
 
 def main():
     proctitle = "%s (%s)" % (
-            constants.AGENT_PROCESS_OVS, setproctitle.getproctitle())
+        constants.AGENT_PROCESS_OVS, setproctitle.getproctitle())
     setproctitle.setproctitle(proctitle)
 
     agent_main.main()
