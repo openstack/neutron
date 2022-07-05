@@ -22,6 +22,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as n_const
 from neutron_lib import context as n_context
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import availability_zone as az_exc
 from neutron_lib.plugins import constants as plugin_constants
@@ -288,10 +289,16 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         return fip
 
     def update_floatingip_status(self, context, floatingip_id, status):
-        fip = super(OVNL3RouterPlugin, self).update_floatingip_status(
+        fip = self.update_floatingip_status_retry(
             context, floatingip_id, status)
         self._ovn_client.update_floatingip_status(context, fip)
         return fip
+
+    @db_api.retry_if_session_inactive()
+    def update_floatingip_status_retry(self, context, floatingip_id, status):
+        with db_api.CONTEXT_WRITER.using(context):
+            return super(OVNL3RouterPlugin, self).update_floatingip_status(
+                context, floatingip_id, status)
 
     def disassociate_floatingips(self, context, port_id, do_notify=True):
         fips = self.get_floatingips(context.elevated(),
