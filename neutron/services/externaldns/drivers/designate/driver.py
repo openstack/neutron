@@ -144,6 +144,8 @@ class Designate(driver.ExternalDNSService):
                               ' assuming it exists.',
                               in_addr_zone_name)
                     pass
+                except d_exc.OverQuota:
+                    raise dns_exc.ExternalDNSOverQuota(resource='zone')
                 designate_admin.recordsets.create(in_addr_zone_name,
                                                   in_addr_name, 'PTR',
                                                   [recordset_name])
