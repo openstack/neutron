@@ -396,7 +396,7 @@ class TestRouter(base.TestOVNFunctionalBase):
         def fake_select(*args, **kwargs):
             self.assertCountEqual(self.candidates, kwargs['candidates'])
             # We are not interested in further processing, let us return
-            # INVALID_CHASSIS to avoid erros
+            # INVALID_CHASSIS to avoid errors
             return [ovn_const.OVN_GATEWAY_INVALID_CHASSIS]
 
         with mock.patch.object(ovn_client._ovn_scheduler, 'select',

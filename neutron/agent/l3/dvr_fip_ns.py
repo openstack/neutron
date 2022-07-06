@@ -162,7 +162,7 @@ class FipNamespace(namespaces.Namespace):
                                       'FIP namespace failed')
 
     def _create_gateway_port(self, ex_gw_port, interface_name):
-        """Create namespace, request port creationg from Plugin,
+        """Create namespace, request port creation from Plugin,
            then configure Floating IP gateway port.
         """
         self.create()
@@ -442,7 +442,7 @@ class FipNamespace(namespaces.Namespace):
         self._add_cidr_to_device(rtr_2_fip_dev, str(rtr_2_fip))
         self._add_cidr_to_device(fip_2_rtr_dev, str(fip_2_rtr))
 
-        # Add permanant ARP entries on each side of veth pair
+        # Add permanent ARP entries on each side of veth pair
         rtr_2_fip_dev.neigh.add(common_utils.cidr_to_ip(fip_2_rtr),
                                 fip_2_rtr_dev.link.address)
         fip_2_rtr_dev.neigh.add(common_utils.cidr_to_ip(rtr_2_fip),

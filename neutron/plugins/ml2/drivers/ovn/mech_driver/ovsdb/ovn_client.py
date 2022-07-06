@@ -337,8 +337,8 @@ class OVNClient(object):
             port_security, new_macs = (
                 self._get_allowed_addresses_from_port(port))
             # TODO(egarciar): OVN supports MAC learning from v21.03. This
-            # if-else block is stated so as to keep compability with older OVN
-            # versions and should be removed in the future.
+            # if-else block is stated so as to keep compatibility with older
+            # OVN versions and should be removed in the future.
             if self._sb_idl.is_table_present('FDB'):
                 if (port_security or port_type or dhcpv4_options or
                         dhcpv6_options):
@@ -1005,7 +1005,7 @@ class OVNClient(object):
                                         'NAT', nat.uuid, 'logical_port')])
                             else:
                                 # NOTE(mjozefcz): The FIP from LB VIP is
-                                # dissassociated now. We can decentralize
+                                # disassociated now. We can decentralize
                                 # member FIPs now.
                                 LOG.warning(
                                     "Port %s is configured as a member "
@@ -2445,7 +2445,7 @@ class OVNClient(object):
                 port_dns_records[fqdn] = dns_assignment['ip_address']
             else:
                 port_dns_records[fqdn] += " " + dns_assignment['ip_address']
-            # Add reverse DNS enteries for port only for fqdn
+            # Add reverse DNS entries for port only for fqdn
             for ip in port_dns_records[fqdn].split(" "):
                 ptr_record = netaddr.IPAddress(ip).reverse_dns.rstrip(".")
                 port_dns_records[ptr_record] = fqdn

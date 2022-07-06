@@ -132,7 +132,7 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
         self.assertEqual(4, len(ovn_hash_ring_db.get_active_nodes(
             self.admin_ctx, interval=60, group_name=HASH_RING_TEST_GROUP)))
 
-        # Substract 60 seconds from utcnow() and touch the nodes from our host
+        # Subtract 60 seconds from utcnow() and touch the nodes from our host
         time.sleep(1)
         fake_utcnow = timeutils.utcnow() - datetime.timedelta(seconds=60)
         with mock.patch.object(timeutils, 'utcnow') as mock_utcnow:

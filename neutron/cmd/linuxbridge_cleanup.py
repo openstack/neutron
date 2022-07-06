@@ -62,8 +62,8 @@ def main():
     """Main method for cleaning up empty linux bridges.
 
     This tool deletes every empty linux bridge managed by linuxbridge agent
-    (brq.* linux bridges) except thes ones defined using bridge_mappings option
-    in section LINUX_BRIDGE (created by deployers).
+    (brq.* linux bridges) except these ones defined using bridge_mappings
+    option in section LINUX_BRIDGE (created by deployers).
 
     This tool should not be called during an instance create, migrate, etc. as
     it can delete a linux bridge about to be used by nova.

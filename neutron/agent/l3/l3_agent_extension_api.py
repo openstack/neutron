@@ -72,6 +72,6 @@ class L3AgentExtensionAPI(object):
 
     def register_router(self, features, router_cls):
         """Register router class with the given features. This is for the
-        plugin to ovrride with their own ``router_info`` class.
+        plugin to override with their own ``router_info`` class.
         """
         self._router_factory.register(features, router_cls)

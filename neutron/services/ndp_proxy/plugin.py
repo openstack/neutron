@@ -329,7 +329,7 @@ class NDPProxyPlugin(l3_ndp_proxy.NDPProxyBase):
         internal_address_scope = self._check_port(
             context, port_dict, ndp_proxy, router_ports)
         # If the external network and internal network not belong to same
-        # adddress scope, the packets can't be forwarded by route. So, in
+        # address scope, the packets can't be forwarded by route. So, in
         # this case we should forbid to create ndp proxy entry.
         if ext_address_scope != internal_address_scope:
             raise exc.AddressScopeConflict(

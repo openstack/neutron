@@ -130,7 +130,7 @@ class TestOvnDbNotifyHandler(base.BaseTestCase):
 
 # class TestOvnBaseConnection(base.TestCase):
 #
-# Each test is being deleted, but for reviewers sake I wanted to exaplain why:
+# Each test is being deleted, but for reviewers sake I wanted to explain why:
 #
 #     @mock.patch.object(idlutils, 'get_schema_helper')
 #     def testget_schema_helper_success(self, mock_gsh):

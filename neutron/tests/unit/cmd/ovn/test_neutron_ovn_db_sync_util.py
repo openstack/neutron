@@ -21,7 +21,7 @@ from neutron.tests import base
 class TestNeutronOVNDBSyncUtil(base.BaseTestCase):
 
     def test_setup_conf(self):
-        # the code under test will fail because of the cfg.conf alredy being
+        # the code under test will fail because of the cfg.conf already being
         # initialized by the BaseTestCase setUp method. Reset.
         cfg.CONF.reset()
         util.setup_conf()

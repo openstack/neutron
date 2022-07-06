@@ -86,7 +86,7 @@ def is_port_bound(port):
 class DVRResourceOperationHandler(object):
     """Contains callbacks for DVR operations.
 
-    This can be implemented as a mixin or can be intantiated as a stand-alone
+    This can be implemented as a mixin or can be instantiated as a stand-alone
     object. Either way, it will subscribe itself to the relevant L3 events and
     use the plugin directory to find the L3 plugin to make calls to it as
     necessary.

@@ -26,7 +26,7 @@ from neutron.tests.unit.plugins.ml2.extensions import test_dns_integration
 PROJECT_ID = uuidutils.generate_uuid()
 
 
-class DNSDomainKeyworkdsTestCase(
+class DNSDomainKeywordsTestCase(
         test_dns_integration.DNSIntegrationTestCase):
 
     _extension_drivers = ['dns_domain_keywords']
@@ -126,7 +126,7 @@ class DNSDomainKeyworkdsTestCase(
                          current_dns_domain=None, previous_dns_domain=None):
         current_dns_domain = current_dns_domain or self._expected_dns_domain
         previous_dns_domain = previous_dns_domain or self._expected_dns_domain
-        super(DNSDomainKeyworkdsTestCase, self)._verify_port_dns(
+        super(DNSDomainKeywordsTestCase, self)._verify_port_dns(
             port=port, dns_data_db=dns_data_db, dns_name=dns_name,
             dns_domain=dns_domain, ptr_zones=ptr_zones,
             delete_records=delete_records, provider_net=provider_net,

@@ -157,7 +157,7 @@ The workflow for the life an RFE in Launchpad is as follows:
 * In either case (a spec being required or not), once the discussion has
   happened and there is positive consensus on the RFE, the report is 'approved',
   and its tag will move from `rfe-triaged` to `rfe-approved`.
-* An RFE can be occasionaly marked as 'rfe-postponed' if the team identifies
+* An RFE can be occasionally marked as 'rfe-postponed' if the team identifies
   a dependency between the proposed RFE and other pending tasks that prevent
   the RFE from being worked on immediately.
 * Once an RFE is approved, it needs volunteers. Approved RFEs that do not have an

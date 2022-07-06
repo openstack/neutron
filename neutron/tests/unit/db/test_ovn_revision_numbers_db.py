@@ -112,7 +112,7 @@ class TestRevisionNumber(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         except Exception as exc:
             if type(exc) is not db_exc.DBDuplicateEntry:
                 self.fail("create_initial_revision with the same parameters "
-                          "should have raisen a DBDuplicateEntry exception")
+                          "should have raised a DBDuplicateEntry exception")
 
         with db_api.CONTEXT_WRITER.using(self.ctx):
             args = (self.net['id'], ovn_rn_db.TYPE_NETWORKS)

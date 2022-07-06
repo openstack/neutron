@@ -229,7 +229,7 @@ class IpamSubnetGroup(driver.SubnetGroup):
            to try to allocate an IP from each subnet in turn, one by one.  This
            implementation preserves that behavior so that existing drivers work
            as they did before while giving them the opportunity to optimize it
-           by overridding the implementation.
+           by overriding the implementation.
         '''
         for subnet_id in self._subnet_ids:
             try:

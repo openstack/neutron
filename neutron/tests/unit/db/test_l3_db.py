@@ -379,7 +379,7 @@ class TestL3_NAT_dbonly_mixin(
 
     def test__create_gw_port(self):
         # NOTE(slaweq): this test is probably wrong
-        # returing dict as gw_port breaks test later in L334 in
+        # returning dict as gw_port breaks test later in L334 in
         # neutron.db.l3_db file
         router_id = '2afb8434-7380-43a2-913f-ba3a5ad5f349'
         router = l3_models.Router(id=router_id)

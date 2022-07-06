@@ -44,7 +44,7 @@ class FdbPopulationAgentExtension(
     http://events.linuxfoundation.org/sites/events/files/slides/LinuxConJapan2014_makita_0.pdf
     """
 
-    # FDB udpates are triggered for ports with a certain device_owner only:
+    # FDB updates are triggered for ports with a certain device_owner only:
     # - device owner "compute": updates the FDB with normal port instances,
     #       required in order to enable communication between
     #       SR-IOV direct port instances and normal port instance.

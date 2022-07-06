@@ -45,7 +45,7 @@ class IpamSubnetManager(object):
         associates it with its neutron identifier, if specified.
 
         :param context: neutron api request context
-        :returns: the idenfier of created IPAM subnet
+        :returns: the identifier of created IPAM subnet
         """
         if not self._ipam_subnet_id:
             self._ipam_subnet_id = uuidutils.generate_uuid()

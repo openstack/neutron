@@ -107,7 +107,7 @@ class ProjectAdminTests(AutoAllocatedTopologyAPITestCase):
         )
 
     def test_delete_topology(self):
-        # Project members can delete topolies inside project, but not outside
+        # Project members can delete topologies inside project, but not outside
         # project
         self.assertTrue(
             policy.enforce(self.context, DELETE_POLICY, self.target)

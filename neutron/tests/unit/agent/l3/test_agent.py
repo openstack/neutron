@@ -4150,7 +4150,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router = l3_test_common.prepare_router_data(enable_ha=True)
         router[lib_constants.HA_INTERFACE_KEY] = None
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
-        # an early failure of an HA router initiailization shouldn't try
+        # an early failure of an HA router initialization shouldn't try
         # and cleanup a state change monitor process that was never spawned.
         # Cannot use self.assertRaises(Exception, ...) as that causes an H202
         # pep8 failure.

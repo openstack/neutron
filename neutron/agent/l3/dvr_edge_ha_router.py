@@ -69,7 +69,7 @@ class DvrEdgeHaRouter(dvr_edge_router.DvrEdgeRouter,
                             prefix=router_info.INTERNAL_DEV_PREFIX)
         self._clear_vips(interface_name)
         # NOTE(slaweq): qr- interface is not in ha_namespace but in qrouter
-        # namespace in case of dvr ha ruter
+        # namespace in case of dvr ha router
         self._disable_ipv6_addressing_on_interface(
             interface_name, namespace=self.ns_name)
         for ip_cidr in ip_cidrs:

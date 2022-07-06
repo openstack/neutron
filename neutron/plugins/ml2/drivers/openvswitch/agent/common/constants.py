@@ -41,7 +41,7 @@ TUNNEL_NETWORK_TYPES = [p_const.TYPE_GRE, p_const.TYPE_VXLAN,
 
 LOCAL_SWITCHING = 0
 
-# The pyhsical network types of support DVR router
+# The physical network types of support DVR router
 DVR_PHYSICAL_NETWORK_TYPES = [p_const.TYPE_VLAN, p_const.TYPE_FLAT]
 
 # Various tables for DVR use of integration bridge flows

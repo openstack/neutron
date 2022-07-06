@@ -2530,7 +2530,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 for network_segment in network_segments
                 # A segment popped from a network could have its
                 # segmentation_id set to None if the segment
-                # beeing created is partial.
+                # being created is partial.
                 if not ((network_segment[api.SEGMENTATION_ID] ==
                     changed_segment[api.SEGMENTATION_ID] or
                     network_segment[api.SEGMENTATION_ID] is None) and

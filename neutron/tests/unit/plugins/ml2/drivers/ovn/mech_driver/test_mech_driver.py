@@ -237,7 +237,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         idl.neutron_pg_drop_event.wait.return_value = True
         result = self.mech_driver._create_neutron_pg_drop()
         idl.neutron_pg_drop_event.wait.assert_called_once()
-        # If sommething else creates the port group, just return
+        # If something else creates the port group, just return
         self.assertIsNone(result)
 
     @mock.patch.object(ovsdb_monitor.OvnInitPGNbIdl, 'from_server')

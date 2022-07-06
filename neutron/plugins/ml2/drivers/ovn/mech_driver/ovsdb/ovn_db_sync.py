@@ -1003,7 +1003,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                             {'network': db_network,
                              'segment': db_segment,
                              'lswitch': lswitch['name']})
-                # Delete orhpaned provnet ports
+                # Delete orphaned provnet ports
                 for provnet_port in lswitch['provnet_ports']:
                     if provnet_port in segments_provnet_port_names:
                         continue

@@ -6800,7 +6800,7 @@ class DbModelMixin(object):
         In this test we start an update of the name on a model in an eventlet
         coroutine where it will be blocked before it can commit the results.
         Then while it is blocked, we will update the description of the model
-        in the foregound and ensure that this results in the coroutine
+        in the foreground and ensure that this results in the coroutine
         receiving a StaleDataError as expected.
         """
         lock = functools.partial(lockutils.lock, uuidutils.generate_uuid())

@@ -158,7 +158,7 @@ class ConntrackHelperExtensionTestCase(ConntrackHelperExtensionBaseTestCase):
 
     @mock.patch.object(iptables_manager.IptablesTable, 'add_rule')
     @mock.patch.object(iptables_manager.IptablesTable, 'add_chain')
-    def test_update_roter(self, mock_add_chain, mock_add_rule):
+    def test_update_router(self, mock_add_chain, mock_add_rule):
         self.cth_ext.add_router(self.context, self.router)
         mock_add_chain.reset_mock()
         mock_add_rule.reset_mock()

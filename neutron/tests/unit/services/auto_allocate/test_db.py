@@ -254,7 +254,7 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
                 subnets=provisioning_exception.subnets
             )
 
-    def test__build_topology_provisioning_error_no_toplogy(self):
+    def test__build_topology_provisioning_error_no_topology(self):
         provisioning_exception = exceptions.UnknownProvisioningError(
             db_exc.DBError)
         self._test__build_topology(

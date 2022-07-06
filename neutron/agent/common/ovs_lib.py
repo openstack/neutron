@@ -630,7 +630,7 @@ class OVSBridge(BaseOVS):
         options['local_ip'] = local_ip
         options['in_key'] = 'flow'
         options['out_key'] = 'flow'
-        # NOTE(moshele): pkt_mark is not upported when using ovs hw-offload,
+        # NOTE(moshele): pkt_mark is not supported when using ovs hw-offload,
         # therefore avoid clear mark on encapsulating packets when it's
         # enabled
         if not self.is_hw_offload_enabled:

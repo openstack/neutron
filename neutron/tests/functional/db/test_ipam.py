@@ -127,7 +127,7 @@ class IpamTestCase(testlib_api.SqlTestCase):
         self.assert_ip_alloc_matches(ip_alloc_expected)
         self.assert_ip_alloc_pool_matches(ip_alloc_pool_expected)
 
-    def test_allocate_ip_exausted_pool(self):
+    def test_allocate_ip_exhausted_pool(self):
         # available from .2 up to .6 -> 5
         for i in range(1, 6):
             self._create_port(uuidutils.generate_uuid())

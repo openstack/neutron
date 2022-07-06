@@ -118,7 +118,7 @@ class RemoteResourceCache(object):
         If the attribute on the object is a list, each value is checked if it
         is in the list.
 
-        The values in the dicionary for a single key are matched in an OR
+        The values in the dictionary for a single key are matched in an OR
         fashion.
         """
         self._flood_cache_for_query(rtype, **filters)

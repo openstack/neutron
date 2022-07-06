@@ -1045,7 +1045,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
             self.assertCountEqual(expected_dhcpv6_options_ports_ids,
                                   monitor_lport_ids_dhcpv6_enabled)
 
-            # Check if unknow address is set for the expected lports.
+            # Check if unknown address is set for the expected lports.
             for row in (
                     self.nb_api.tables['Logical_Switch_Port'].rows.values()):
                 if row.name in self.expected_ports_with_unknown_addr:

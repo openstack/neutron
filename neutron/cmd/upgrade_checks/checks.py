@@ -312,10 +312,10 @@ class CoreChecks(base.BaseChecks):
     def nic_switch_agent_min_kernel_check(checker):
         # TODO(adrianc): This was introduced in U release, consider removing
         # in 1-2 cycles.
-        # Background: Issue with old kernel is appernet in CentOS 7 and older.
+        # Background: Issue with old kernel is apparent in CentOS 7 and older.
         # U release is the first release that moves from CentOS-7 to CentOS-8,
         # this was added as a "heads-up" for operators to make sure min kernel
-        # requirement is fullfiled.
+        # requirement is fulfilled.
         if not cfg.CONF.database.connection:
             return upgradecheck.Result(
                 upgradecheck.Code.WARNING,

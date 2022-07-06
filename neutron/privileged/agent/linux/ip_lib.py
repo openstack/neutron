@@ -551,7 +551,7 @@ def remove_netns(name, **kwargs):
 def list_netns(**kwargs):
     """List network namespaces.
 
-    Caller requires raised priveleges to list namespaces
+    Caller requires raised privileges to list namespaces
     """
     return netns.listnetns(**kwargs)
 

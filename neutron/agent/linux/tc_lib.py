@@ -302,7 +302,7 @@ class TcCommand(ip_lib.IPDevice):
     def _add_policy_filter(self, bw_limit, burst_limit,
                            qdisc_id=INGRESS_QDISC_ID):
         # NOTE(slaweq): it is made in exactly same way how openvswitch is doing
-        # it when configuing ingress traffic limit on port. It can be found in
+        # it when configuring ingress traffic limit on port. It can be found in
         # lib/netdev-linux.c#L4698 in openvswitch sources:
         add_tc_filter_policy(self.name, qdisc_id, bw_limit, burst_limit,
                              MAX_MTU_VALUE, 'drop', priority=49)

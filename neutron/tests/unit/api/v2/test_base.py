@@ -1345,13 +1345,13 @@ class NotificationTest(APIv2TestBase):
 
         self.assertEqual(expected_code, res.status_int)
 
-    def test_network_create_notifer(self):
+    def test_network_create_notifier(self):
         self._resource_op_notifier('create', 'network')
 
-    def test_network_delete_notifer(self):
+    def test_network_delete_notifier(self):
         self._resource_op_notifier('delete', 'network')
 
-    def test_network_update_notifer(self):
+    def test_network_update_notifier(self):
         self._resource_op_notifier('update', 'network')
 
 

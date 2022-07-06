@@ -100,7 +100,7 @@ class L3AgentNDPProxyTestFramework(framework.L3AgentTestFramework):
         res = ip_wrapper.netns.execute(cmd)
         proxies = []
         for proxy in res.split('\n'):
-            # Exclute null line
+            # Exclude null line
             if proxy:
                 proxy_list = proxy.split(' ')
                 if interface_name in proxy_list:

@@ -624,7 +624,7 @@ class Ml2OvnIdlBase(connection.OvsdbIdl):
 
     def set_table_condition(self, table_name, condition):
         # Prior to ovs commit 46d44cf3be0, self.cond_change() doesn't work here
-        # but after that commit, setting table.condtion doesn't work.
+        # but after that commit, setting table.condition doesn't work.
         if hasattr(ovs_idl_mod, 'ConditionState'):
             self.cond_change(table_name, condition)
         else:

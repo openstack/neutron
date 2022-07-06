@@ -61,7 +61,7 @@ class OVNMechanismDriver(mech_driver.OVNMechanismDriver):
     def _clean_hash_ring(self):
         """Don't clean the hash ring.
 
-        If this method was not overriden, cleanup would be performed when
+        If this method was not overridden, cleanup would be performed when
         calling the db sync and running neutron server would lose all the nodes
         from the ring.
         """
@@ -132,7 +132,7 @@ class AgentNotifierApi(object):
         pass
 
     def security_groups_provider_updated(self, context,
-                                         devices_to_udpate=None):
+                                         devices_to_update=None):
         pass
 
 

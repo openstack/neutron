@@ -639,7 +639,7 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
 
             # NOTE(bno1): Sometimes a router is added before its namespaces are
             # created. The metering agent has to periodically check if the
-            # namespaces for the missing iptables managers have appearead and
+            # namespaces for the missing iptables managers have appeared and
             # create the managers for them. When a new manager is created, the
             # metering rules have to be added to it.
             if rm.create_iptables_managers():

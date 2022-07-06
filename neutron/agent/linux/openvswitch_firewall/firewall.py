@@ -274,9 +274,9 @@ class ConjIdMap(object):
 
     def __init__(self, int_br):
         self.id_map = collections.defaultdict(self._conj_id_factory)
-        # Stores the set of conjuntion IDs used for each unique tuple
+        # Stores the set of conjunction IDs used for each unique tuple
         # (sg_id, remote_id, direction, ethertype). Each tuple
-        # can have up to 8 conjuntion IDs (see ConjIPFlowManager.add()).
+        # can have up to 8 conjunction IDs (see ConjIPFlowManager.add()).
         self.id_map_group = collections.defaultdict(set)
         self.id_free = collections.deque()
         self._max_id = self._init_max_id(int_br)

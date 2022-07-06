@@ -91,7 +91,7 @@ class TestSegmentationId(BaseSegmentationIdTest):
         self.safe_client.create_port(self.project_id, network['id'])
         # Port failed to bind
         self.safe_client.create_port(self.project_id, network['id'],
-                                     "non-exisiting-host")
+                                     "non-existing-host")
 
         self._update_segmentation_id(network)
 

@@ -200,7 +200,7 @@ class AgentMechanismDriverBase(api.MechanismDriver, metaclass=abc.ABCMeta):
         :param context: PortContext instance describing the port
         :returns: True for responsible, False for not responsible
 
-        An agent based mechanism driver is reponsible for a resource provider
+        An agent based mechanism driver is responsible for a resource provider
         if an agent of it is responsible for that resource provider. An agent
         reports responsibility by including the resource provider in the
         configurations field of the agent heartbeat.

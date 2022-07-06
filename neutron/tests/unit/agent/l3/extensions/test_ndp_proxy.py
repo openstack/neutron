@@ -263,10 +263,10 @@ class NDPProxyExtensionDVRTestCase(
         self.assertEqual(expected_calls, self.delete_route.mock_calls)
         proxy_cmd = ['ip', '-6', 'neigh', 'del',
                      'proxy', '2002::1:5', 'dev', self.agent_ext_dvice]
-        expceted_calls = [
+        expected_calls = [
             mock.call(namespace=self.namespace),
             mock.call().netns.execute(proxy_cmd, privsep_exec=True)]
-        self.assertEqual(expceted_calls, self.ip_wrapper.mock_calls)
+        self.assertEqual(expected_calls, self.ip_wrapper.mock_calls)
 
 
 class NDPProxyExtensionLegacyDVRNoExternalTestCaseBase(

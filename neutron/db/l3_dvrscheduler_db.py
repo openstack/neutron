@@ -351,7 +351,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
 
     @db_api.CONTEXT_READER
     def _get_dvr_hosts_for_subnets(self, context, subnet_ids):
-        """Get a list of hosts with DVR servicable ports on subnet_ids."""
+        """Get a list of hosts with DVR serviceable ports on subnet_ids."""
         host_dvr_dhcp = cfg.CONF.host_dvr_for_dhcp
         Binding = ml2_models.PortBinding
         Port = models_v2.Port

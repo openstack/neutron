@@ -2212,7 +2212,7 @@ class GetObjectClassByModelTestCase(UniqueObjectBase):
             self.registered_object.db_model)
         self.assertIs(self.registered_object, found_obj)
 
-    def test_not_registed_object_raises_exception(self):
+    def test_not_registered_object_raises_exception(self):
         with testtools.ExpectedException(o_exc.NeutronDbObjectNotFoundByModel):
             base.get_object_class_by_model(self.not_registered_object.db_model)
 

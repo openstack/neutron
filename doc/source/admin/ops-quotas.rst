@@ -349,7 +349,7 @@ the default set of quotas are enforced for all projects, so no
 
 .. note::
 
-   Listing defualt quotas with the OpenStack command line client will
+   Listing default quotas with the OpenStack command line client will
    provide all quotas for networking and other services. Previously,
    the :command:`neutron quota-show --tenant_id` would list only networking
    quotas.

@@ -92,7 +92,7 @@ class L3_gw_ip_qos_dbonly_mixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
         if not info or qos_consts.QOS_POLICY_ID not in info:
             # An explicit 'None' for `qos_policy_id` indicates to clear
             # the router gateway IP policy. So if info does not have
-            # the key `qos_polcy_id`, we can not decide what behavior
+            # the key `qos_policy_id`, we can not decide what behavior
             # to be done, then directly return here.
             return
 

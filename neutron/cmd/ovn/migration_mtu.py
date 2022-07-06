@@ -45,7 +45,7 @@ def get_connection():
     by domain name or domain ID. If none of the domain selection variables are
     set the tool will default to use the domain with literal ID of 'default'.
 
-    To select domain by name set both of these envornment variables:
+    To select domain by name set both of these environment variables:
 
         OS_USER_DOMAIN_NAME    Name of domain to authenticate to
         OS_PROJECT_DOMAIN_NAME Name of domain for authorization

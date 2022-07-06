@@ -127,7 +127,7 @@ def check_assertisinstance(logical_line, filename):
 
 @core.flake8ext
 def check_assertequal_for_httpcode(logical_line, filename):
-    """N332 - Enforce correct oredering for httpcode in assertEqual."""
+    """N332 - Enforce correct ordering for httpcode in assertEqual."""
     msg = ("N332: Use assertEqual(expected_http_code, observed_http_code) "
            "instead of assertEqual(observed_http_code, expected_http_code)")
     if 'neutron/tests/' in filename:

@@ -351,7 +351,7 @@ class FipQosAgentExtension(qos_base.L3QosAgentExtensionBase,
                 # node), because floating IP qos rates may have been
                 # processed in dvr snat-namespace, so here the cache was
                 # already set. We just install the rules to the device in
-                # qrouter-namesapce.
+                # qrouter-namespace.
                 self.process_ip_rates(
                     fip_res, dvr_fip_device, rates, with_cache=False)
 

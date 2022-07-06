@@ -131,7 +131,7 @@ class Subnet(object, metaclass=abc.ABCMeta):
 
     A subnet would typically be associated with a network but may not be.  It
     could represent a dynamically routed IP address space in which case the
-    normal network and broadcast addresses would be useable.  It should always
+    normal network and broadcast addresses would be usable.  It should always
     be a routable block of addresses and representable in CIDR notation.
     """
 

@@ -39,7 +39,7 @@ class FakeAgentMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
 
     NOTE(yamamoto): This is a modified copy of ofagent mechanism driver as
     of writing this.  There's no need to keep this synced with the "real"
-    ofagent mechansim driver or its agent.
+    ofagent mechanism driver or its agent.
     """
 
     def __init__(self):

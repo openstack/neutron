@@ -53,7 +53,7 @@ class DHCPIPv4Responder(dhcp_base.DHCPResponderBase):
         default_route = self.get_bin_route(constants.IPv4_ANY, gateway)
         bin_routes += default_route
 
-        # For some VMs they may need the metadate IP's route, we move
+        # For some VMs they may need the metadata IP's route, we move
         # the destination to gateway IP.
         if gateway:
             meta_route = self.get_bin_route(

@@ -65,7 +65,7 @@ RPC_RES_PROCESSING_STEP = 20
 # Do not move this constant to neutron-lib, since it is temporary
 IPTABLES_RANDOM_FULLY_VERSION = '1.6.0'
 
-# Segmentation ID pool; DB select limit to improve the performace.
+# Segmentation ID pool; DB select limit to improve the performance.
 IDPOOL_SELECT_SIZE = 100
 
 # Ports with the following 'device_owner' values will not prevent

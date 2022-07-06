@@ -211,7 +211,7 @@ class DbQuotaDriver(nlib_quota_api.QuotaDriverAPI):
         requested_resources = deltas.keys()
         with db_api.CONTEXT_WRITER.using(context):
             # "get_project_quotas" needs in input a dictionary mapping resource
-            # name to BaseResosurce instances so that the default quota can be
+            # name to BaseResource instances so that the default quota can be
             # retrieved
             current_limits = self.get_project_quotas(
                 context, resources, project_id)

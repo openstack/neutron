@@ -23,7 +23,7 @@ class BaseChecks(object, metaclass=abc.ABCMeta):
     neutron-status CLI tool should inherit from this class.
 
     Each check method have to accept neutron.cmd.status.Checker
-    class as an argument because all checkes will be run in context of
+    class as an argument because all checks will be run in context of
     this class.
     """
 

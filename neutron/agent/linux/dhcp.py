@@ -679,7 +679,7 @@ class Dnsmasq(DhcpLocalProcess):
 
         In dnsmasq it is not possible to configure two dhcp-host
         entries mapped to a single client mac address with IP
-        addresses in the same subnet. When recieving a requst
+        addresses in the same subnet. When receiving a request
         dnsmasq will match on the first entry in it's config,
         and lease that address. The second entry will never be
         used.

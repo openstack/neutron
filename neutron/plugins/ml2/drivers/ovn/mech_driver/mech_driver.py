@@ -1129,7 +1129,7 @@ class OVNMechanismDriver(api.MechanismDriver):
             # NOTE(lucasagomes): Router ports in OVN is never bound
             # to a host given their decentralized nature. By calling
             # provisioning_complete() - as above - don't do it for us
-            # becasue the router ports are unbind so, for OVN we are
+            # because the router ports are unbind so, for OVN we are
             # forcing the status here. Maybe it's something that we can
             # change in core Neutron in the future.
             db_port = ml2_db.get_port(admin_context, port_id)

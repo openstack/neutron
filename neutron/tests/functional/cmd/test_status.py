@@ -39,7 +39,7 @@ class StatusTest(base.BaseLoggingTestCase):
         |   api_workers and rpc_workers.                                 |
         +----------------------------------------------------------------+
 
-        Error codes which migh be returned by this command:
+        Error codes which might be returned by this command:
         - Code.SUCCESS,
         - Code.WARNING,
         - Code.FAILURE

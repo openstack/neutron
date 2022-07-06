@@ -341,7 +341,7 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
 
         # NOTE(mjozefcz): We can find occasional functional test
         # failures because of low timeout value - set it to 30
-        # seconds, should be enought. More info: 1868110
+        # seconds, should be enough. More info: 1868110
         cfg.CONF.set_override(
             'ovsdb_connection_timeout', 30,
             'ovn')

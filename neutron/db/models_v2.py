@@ -38,7 +38,7 @@ class HasInUse(object):
     "in_use". Writing any value on this DB parameter will lock the container
     register. At the end of the DB transaction, the DB engine will check if
     this register was modified or deleted. In such case, the transaction will
-    fail and won't be commited.
+    fail and won't be committed.
 
     "lock_register" is the method to write the register "in_use" column.
     Because the lifespan of this DB lock is the DB transaction, there isn't an
