@@ -1,0 +1,10 @@
+---
+features:
+  - |
+    A new script to remove the duplicated port bindings was added. This script
+    will list all ``ml2_port_bindings`` records in the database, finding those
+    ones with the same port ID. Then the script removes those ones with
+    status=INACTIVE. This script is useful to remove those leftovers that
+    remain in the database after a failed live migration. It is important to
+    remark that this script should not be executed during any live migration
+    process.
