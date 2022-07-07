@@ -64,22 +64,14 @@ The following manufacturers are known to work:
 - QLogic
 - Broadcom
 
-For information on **Mellanox SR-IOV Ethernet ConnectX cards**, see:
+For information on **Mellanox SR-IOV Ethernet ConnectX cards**, see the
+`Mellanox: How To Configure SR-IOV VFs on ConnectX-4 or newer <https://support.mellanox.com/s/article/HowTo-Configure-SR-IOV-for-ConnectX-4-ConnectX-5-ConnectX-6-with-KVM-Ethernet>`_.
 
-- `Mellanox: How To Configure SR-IOV VFs on ConnectX-4 or newer <https://community.mellanox.com/s/article/HowTo-Configure-SR-IOV-for-ConnectX-4-ConnectX-5-ConnectX-6-with-KVM-Ethernet>`_.
-- `Mellanox: How To Configure SR-IOV VFs on ConnectX-3/ConnectX-3 Pro <https://community.mellanox.com/docs/DOC-1484>`_.
+For information on **QLogic SR-IOV Ethernet cards**, see the
+`User's Guide OpenStack Deployment with SR-IOV Configuration <http://www.qlogic.com/solutions/Documents/UsersGuide_OpenStack_SR-IOV.pdf>`_.
 
-For information on **QLogic SR-IOV Ethernet cards**, see:
-
-- `User's Guide OpenStack Deployment with SR-IOV Configuration <http://www.qlogic.com/solutions/Documents/UsersGuide_OpenStack_SR-IOV.pdf>`_.
-
-For information on **Broadcom NetXtreme-E Series Ethernet cards**, see the
-`Broadcom NetXtreme-C/NetXtreme-E User Guide
-<https://docs.broadcom.com/docs/NetXtreme-UG>`_.
-
-For information on **Broadcom NetXtreme-S Series Ethernet cards**, see the
-`Broadcom NetXtreme-S Product Page
-<https://www.broadcom.com/products/ethernet-connectivity/smartnic/bcm58800>`_.
+For information on **Broadcom NetXtreme Series Ethernet cards**, see the
+`Broadcom NetXtreme Product Page <https://www.broadcom.com/products/ethernet-connectivity/network-adapters>`_.
 
 Using SR-IOV interfaces
 ~~~~~~~~~~~~~~~~~~~~~~~
