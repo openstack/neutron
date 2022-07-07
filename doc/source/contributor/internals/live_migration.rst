@@ -172,6 +172,27 @@ after migration finished. During this time window, the instance might not be
 reachable via the network. This should be solved with bug
 https://bugs.launchpad.net/nova/+bug/1605016
 
+Error recovery
+--------------
+
+If the Live Migration fails, Nova will revert the operation. That implies
+deleting any object created in the database or in the destination compute
+node. However, in some cases have been reported the presence of `duplicated
+port bindings per port <https://bugs.launchpad.net/neutron/+bug/1979072>`_.
+In this state, the port cannot be migrated until the inactive port binding
+(the failed destination host port binding) has been deleted.
+
+To this end, the script ``neutron-remove-duplicated-port-bindings`` has been
+created. This script finds all duplicated port binding (that means, all port
+bindings that point to the same port) and deletes the inactive one.
+
+.. note::
+
+   This script cannot be executed while a Live Migration or a cross cell Cold
+   Migration. The script will delete the inactive port binding and will break
+   the process.
+
+
 Flow Diagram
 ------------
 

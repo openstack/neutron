@@ -238,3 +238,16 @@ ironic_opts = [
 
 def register_ironic_opts(cfg=cfg.CONF):
     cfg.register_opts(ironic_opts, group=IRONIC_CONF_SECTION)
+
+
+CLI_SCRIPT_SECTION = 'cli_script'
+
+cli_script_options = [
+    cfg.BoolOpt('dry_run', default=False,
+                help=_('Dry-run execution of the CLI script. No change will '
+                       'be performed on the system.')),
+]
+
+
+def register_cli_script_opts(cfg=cfg.CONF):
+    cfg.register_opts(cli_script_options, group=CLI_SCRIPT_SECTION)
