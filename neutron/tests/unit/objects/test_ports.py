@@ -53,6 +53,17 @@ class PortBindingDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
                                   BasePortBindingDbObjectTestCase):
     _test_class = ports.PortBinding
 
+    def test_get_duplicated_port_bindings(self):
+        port_id = self._create_test_port_id()
+        self.update_obj_fields({'port_id': port_id},
+                               objs=[self.objs[0], self.objs[1]])
+        for i in range(3):
+            _obj = self._make_object(self.obj_fields[i])
+            _obj.create()
+        dup_pb = ports.PortBinding.get_duplicated_port_bindings(self.context)
+        self.assertEqual(1, len(dup_pb))
+        self.assertEqual(port_id, dup_pb[0].port_id)
+
 
 class DistributedPortBindingIfaceObjTestCase(
         obj_test_base.BaseObjectIfaceTestCase):
