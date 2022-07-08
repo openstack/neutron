@@ -1551,7 +1551,6 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             context, id, floatingip)
         return floatingip
 
-    @db_api.retry_if_session_inactive()
     def update_floatingip_status(self, context, floatingip_id, status):
         """Update operational status for floating IP in neutron DB."""
         return l3_obj.FloatingIP.update_object(
