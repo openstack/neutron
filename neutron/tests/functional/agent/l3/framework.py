@@ -32,7 +32,6 @@ from neutron.agent.l3 import namespaces
 from neutron.agent.l3 import router_info as l3_router_info
 from neutron.agent import l3_agent as l3_agent_main
 from neutron.agent.linux import external_process
-from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import keepalived
 from neutron.agent.metadata import driver as metadata_driver
@@ -409,28 +408,8 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
 
     def manage_router(self, agent, router):
         self.addCleanup(agent._safe_router_removed, router['id'])
-
-        # NOTE(mangelajo): Neutron functional for l3 don't rely on openvswitch
-        #                  agent tagging ports, and all ports remain untagged
-        #                  during test execution.
-        #                  Workaround related to lp#1767422 plugs new ports as
-        #                  dead vlan (4095) to avoid issues, we need to remove
-        #                  such tag during functional l3 testing.
-        original_plug_new = interface.OVSInterfaceDriver.plug_new
-
-        def new_ovs_plug(self, *args, **kwargs):
-            original_plug_new(self, *args, **kwargs)
-            bridge = (kwargs.get('bridge') or args[4] or
-                      self.conf.OVS.integration_bridge)
-            device_name = kwargs.get('device_name') or args[2]
-            ovsbr = ovs_lib.OVSBridge(bridge)
-            ovsbr.clear_db_attribute('Port', device_name, 'tag')
-
-        with mock.patch(OVS_INTERFACE_DRIVER + '.plug_new', autospec=True) as (
-                ovs_plug), \
-                mock.patch.object(dvr_local_router.DvrLocalRouter,
-                                  '_load_used_fip_information'):
-            ovs_plug.side_effect = new_ovs_plug
+        with mock.patch.object(dvr_local_router.DvrLocalRouter,
+                               '_load_used_fip_information'):
             agent._process_added_router(router)
 
         return agent.router_info[router['id']]
