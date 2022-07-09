@@ -1302,8 +1302,12 @@ def _exist_ip_rule(rules, ip, iif, table, priority, to):
     return True
 
 
-def add_ip_rule(namespace, ip, iif=None, table=None, priority=None, to=None):
+def add_ip_rule(namespace, ip, iif=None, table=IP_RULE_TABLES['default'],
+                priority=None, to=None):
     """Create an IP rule in a namespace
+
+    "table" parameter cannot be an empty value (None). By default, this method
+    will assign "IP_RULE_TABLES['default']" value if None is passed.
 
     :param namespace: (string) namespace name
     :param ip: (string) source IP or CIDR address (IPv4, IPv6)
@@ -1312,6 +1316,7 @@ def add_ip_rule(namespace, ip, iif=None, table=None, priority=None, to=None):
     :param priority: (Optional) (string, int) rule priority
     :param to: (Optional) (string) destination IP or CIDR address (IPv4, IPv6)
     """
+    table = table if table is not None else IP_RULE_TABLES['default']
     ip_version = common_utils.get_ip_version(ip)
     rules = list_ip_rules(namespace, ip_version)
     if _exist_ip_rule(rules, ip, iif, table, priority, to):

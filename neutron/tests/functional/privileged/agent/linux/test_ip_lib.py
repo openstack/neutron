@@ -321,13 +321,15 @@ class RuleTestCase(functional_base.BaseSudoTestCase):
             ip_lenght = common_utils.get_network_length(ip_version)
             ip_family = common_utils.get_socket_address_family(ip_version)
             priv_ip_lib.add_ip_rule(self.namespace, src=ip_address,
-                                    src_len=ip_lenght, family=ip_family)
+                                    src_len=ip_lenght, family=ip_family,
+                                    table=ip_lib.IP_RULE_TABLES['default'])
             rules = ip_lib.list_ip_rules(self.namespace, ip_version)
             self._check_rules(rules, ['from'], [ip_address],
                               '"from" IP address %s' % ip_address)
 
             priv_ip_lib.delete_ip_rule(self.namespace, family=ip_family,
-                                       src=ip_address, src_len=ip_lenght)
+                                       src=ip_address, src_len=ip_lenght,
+                                       table=ip_lib.IP_RULE_TABLES['default'])
             rules = ip_lib.list_ip_rules(self.namespace, ip_version)
             self.assertFalse(
                 self._check_rules(rules, ['from'], [ip_address],
@@ -378,7 +380,8 @@ class RuleTestCase(functional_base.BaseSudoTestCase):
             ip_family = common_utils.get_socket_address_family(ip_version)
             priv_ip_lib.add_ip_rule(self.namespace, priority=priority,
                                     src=ip_address, src_len=ip_lenght,
-                                    family=ip_family)
+                                    family=ip_family,
+                                    table=ip_lib.IP_RULE_TABLES['default'])
             rules = ip_lib.list_ip_rules(self.namespace, ip_version)
             self._check_rules(
                 rules, ['priority', 'from'], [str(priority), ip_address],
@@ -387,7 +390,8 @@ class RuleTestCase(functional_base.BaseSudoTestCase):
 
             priv_ip_lib.delete_ip_rule(self.namespace, priority=priority,
                                        src=ip_address, src_len=ip_lenght,
-                                       family=ip_family)
+                                       family=ip_family,
+                                       table=ip_lib.IP_RULE_TABLES['default'])
             rules = ip_lib.list_ip_rules(self.namespace, ip_version)
             self.assertFalse(
                 self._check_rules(rules, ['priority', 'from'],
@@ -420,14 +424,16 @@ class RuleTestCase(functional_base.BaseSudoTestCase):
     def test_add_rule_exists(self):
         iif = 'iif_device_1'
         priv_ip_lib.create_interface(iif, self.namespace, 'dummy')
-        priv_ip_lib.add_ip_rule(self.namespace, iifname=iif)
+        priv_ip_lib.add_ip_rule(self.namespace, iifname=iif,
+                                table=ip_lib.IP_RULE_TABLES['default'])
         rules = ip_lib.list_ip_rules(self.namespace, 4)
         self._check_rules(rules, ['iif'], [iif], 'iif name %s' % iif)
         self.assertEqual(4, len(rules))
 
         # pyroute2.netlink.exceptions.NetlinkError(17, 'File exists')
         # exception is catch.
-        priv_ip_lib.add_ip_rule(self.namespace, iifname=iif)
+        priv_ip_lib.add_ip_rule(self.namespace, iifname=iif,
+                                table=ip_lib.IP_RULE_TABLES['default'])
         rules = ip_lib.list_ip_rules(self.namespace, 4)
         self._check_rules(rules, ['iif'], [iif], 'iif name %s' % iif)
         self.assertEqual(4, len(rules))
