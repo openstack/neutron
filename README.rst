@@ -19,7 +19,10 @@ To learn more about neutron:
   * Release notes: https://docs.openstack.org/releasenotes/neutron/index.html
   * Source: https://opendev.org/openstack/neutron
 
+If you would like to contribute to Neutron, please read the file
+`CONTRIBUTING.rst <CONTRIBUTING.rst>`__ or see the Neutron contributor guide:
+
+    https://docs.openstack.org/neutron/latest/contributor/contributing.html
+
 Get in touch via `email <mailto:openstack-discuss@lists.openstack.org>`_. Use
 [Neutron] in your subject.
-
-To learn how to contribute, please read the CONTRIBUTING.rst file.
