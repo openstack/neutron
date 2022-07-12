@@ -200,6 +200,7 @@ def main():
             'neutron.services.ovn_l3.plugin.OVNL3RouterPlugin',
             'neutron.services.segments.plugin.Plugin',
             'port_forwarding',
+            'qos'
         ]
     else:
         LOG.error('Invalid core plugin : ["%s"].', cfg.CONF.core_plugin)

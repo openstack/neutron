@@ -46,15 +46,8 @@ QOS_RULES_2 = {
 
 QOS_RULES_3 = {
     constants.INGRESS_DIRECTION: {
-        qos_constants.RULE_TYPE_BANDWIDTH_LIMIT: QOS_RULE_BW_1,
-        qos_constants.RULE_TYPE_DSCP_MARKING: QOS_RULE_DSCP_1}
+        qos_constants.RULE_TYPE_BANDWIDTH_LIMIT: QOS_RULE_BW_1}
 }
-
-
-class _OVNClient(object):
-
-    def __init__(self, nd_idl):
-        self._nb_idl = nd_idl
 
 
 class TestOVNClientQosExtension(base.TestOVNFunctionalBase):
@@ -63,8 +56,8 @@ class TestOVNClientQosExtension(base.TestOVNFunctionalBase):
         super(TestOVNClientQosExtension, self).setUp(
             maintenance_worker=maintenance_worker)
         self._add_logical_switch()
-        _ovn_client = _OVNClient(self.nb_api)
-        self.qos_driver = qos_extension.OVNClientQosExtension(_ovn_client)
+        self.qos_driver = qos_extension.OVNClientQosExtension(
+            nb_idl=self.nb_api)
         self.gw_port_id = 'gw_port_id'
         self._mock_get_router = mock.patch.object(l3_db.L3_NAT_dbonly_mixin,
                                                   '_get_router')
@@ -93,7 +86,7 @@ class TestOVNClientQosExtension(base.TestOVNFunctionalBase):
             fip_id=fip_id, ip_address=ip_address)
 
         with self.nb_api.transaction(check_error=True):
-            ls = self.qos_driver._driver._nb_idl.lookup(
+            ls = self.qos_driver.nb_idl.lookup(
                 'Logical_Switch', ovn_utils.ovn_name(self.network_1))
             self.assertEqual(len(rules), len(ls.qos_rules))
             for rule in ls.qos_rules:
@@ -116,7 +109,10 @@ class TestOVNClientQosExtension(base.TestOVNFunctionalBase):
 
         def update_and_check(qos_rules):
             with self.nb_api.transaction(check_error=True) as txn:
-                self.mock_qos_rules.return_value = qos_rules
+                _qos_rules = copy.deepcopy(qos_rules)
+                for direction in constants.VALID_DIRECTIONS:
+                    _qos_rules[direction] = _qos_rules.get(direction, {})
+                self.mock_qos_rules.return_value = _qos_rules
                 self.qos_driver._update_port_qos_rules(
                     txn, port, self.network_1, 'qos1', None)
             self._check_rules(qos_rules, port, self.network_1)
@@ -128,7 +124,10 @@ class TestOVNClientQosExtension(base.TestOVNFunctionalBase):
 
     def _update_fip_and_check(self, fip, qos_rules):
         with self.nb_api.transaction(check_error=True) as txn:
-            self.mock_qos_rules.return_value = qos_rules
+            _qos_rules = copy.deepcopy(qos_rules)
+            for direction in constants.VALID_DIRECTIONS:
+                _qos_rules[direction] = _qos_rules.get(direction, {})
+            self.mock_qos_rules.return_value = _qos_rules
             self.qos_driver.update_floatingip(txn, fip)
         self._check_rules(qos_rules, self.gw_port_id, self.network_1,
                           fip_id='fip_id', ip_address='1.2.3.4')
