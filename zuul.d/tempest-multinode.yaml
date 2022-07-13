@@ -160,12 +160,6 @@
                 availability_zone: nova
                 debug_iptables_rules: True
 
-# TODO(ralonsoh): remove this duplicated definition when "devstack",
-# "tempest" and "nova" adopt the new name.
-- job:
-    name: neutron-tempest-dvr-ha-multinode-full
-    parent: neutron-ovs-tempest-dvr-ha-multinode-full
-
 - job:
     name: neutron-ovs-tempest-multinode-full
     parent: tempest-multinode-full-py3
