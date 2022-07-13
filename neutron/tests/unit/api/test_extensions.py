@@ -102,8 +102,8 @@ class FakePluginWithExtension(service_base.ServicePluginBase):
 class ExtensionPathTest(base.BaseTestCase):
 
     def setUp(self):
-        self.base_path = extensions.get_extensions_path()
         super(ExtensionPathTest, self).setUp()
+        self.base_path = extensions.get_extensions_path()
 
     def test_get_extensions_path_with_plugins(self):
         cfg.CONF.set_override('api_extensions_path',

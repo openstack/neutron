@@ -14,7 +14,7 @@
 #    under the License.
 
 import collections
-import imp
+from importlib import util as imp_util
 import os
 
 from keystoneauth1 import loading as ks_loading
@@ -451,7 +451,9 @@ class ExtensionManager(object):
                 mod_name, file_ext = os.path.splitext(os.path.split(f)[-1])
                 ext_path = os.path.join(path, f)
                 if file_ext.lower() == '.py' and not mod_name.startswith('_'):
-                    mod = imp.load_source(mod_name, ext_path)
+                    spec = imp_util.spec_from_file_location(mod_name, ext_path)
+                    mod = imp_util.module_from_spec(spec)
+                    spec.loader.exec_module(mod)
                     ext_name = mod_name.capitalize()
                     new_ext_class = getattr(mod, ext_name, None)
                     if not new_ext_class:

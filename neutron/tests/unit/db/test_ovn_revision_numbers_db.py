@@ -134,6 +134,21 @@ class TestMaintenancePlugin(test_securitygroup.SecurityGroupTestPlugin,
                                    sgag_def.ALIAS]
 
 
+# Needed to extend resources for revision number tests, this is the
+# least invasive way
+class TestExtensionManager(extensions.PluginAwareExtensionManager):
+
+    def get_resources(self):
+        resources = super(TestExtensionManager, self).get_resources()
+        sg_ext_mgr = test_securitygroup.SecurityGroupTestExtensionManager
+        sg_resources = sg_ext_mgr.get_resources(self)
+        sg_resources_collection_names = [
+            res.collection for res in sg_resources]
+        resources = [r for r in resources
+                     if r.collection not in sg_resources_collection_names]
+        return resources + sg_resources
+
+
 class TestRevisionNumberMaintenance(test_securitygroup.SecurityGroupsTestCase,
                                     test_l3.L3NatTestCaseMixin):
 
@@ -141,13 +156,13 @@ class TestRevisionNumberMaintenance(test_securitygroup.SecurityGroupsTestCase,
         service_plugins = {
             'router':
             'neutron.tests.unit.extensions.test_l3.TestL3NatServicePlugin'}
+        super(TestRevisionNumberMaintenance, self).setUp(
+              plugin=PLUGIN_CLASS, service_plugins=service_plugins)
         l3_plugin = test_l3.TestL3NatServicePlugin()
         sec_plugin = test_securitygroup.SecurityGroupTestPlugin()
-        ext_mgr = extensions.PluginAwareExtensionManager(
+        ext_mgr = TestExtensionManager(
             EXTENSIONS_PATH, {'router': l3_plugin, 'sec': sec_plugin}
         )
-        super(TestRevisionNumberMaintenance, self).setUp(
-            plugin=PLUGIN_CLASS, service_plugins=service_plugins)
         app = config.load_paste_app('extensions_test_app')
         self.ext_api = extensions.ExtensionMiddleware(app, ext_mgr=ext_mgr)
         self.session = db_api.get_writer_session()
