@@ -53,9 +53,11 @@
         - neutron-functional
         - neutron-functional-with-uwsgi-fips
         - neutron-functional-with-uwsgi-with-neutron-lib-master
+        - neutron-functional-with-pyroute2-master
         - neutron-fullstack
         - neutron-fullstack-with-uwsgi-fips
         - neutron-fullstack-with-uwsgi-with-neutron-lib-master
+        - neutron-fullstack-with-pyroute2-master
         - neutron-ovn-grenade-multinode
         - neutron-ovn-grenade-multinode-tick-tick:
             voting: false
@@ -102,8 +104,10 @@
       jobs:
         - neutron-functional
         - neutron-functional-with-uwsgi-fips
+        - neutron-functional-with-pyroute2-master
         - neutron-fullstack
         - neutron-fullstack-with-uwsgi-fips
+        - neutron-fullstack-with-pyroute2-master
         - neutron-ovs-tempest-slow
         - neutron-ovn-tempest-slow
         - neutron-ovs-tempest-with-os-ken-master
