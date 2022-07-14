@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    Core OVN now can set the destination host on the logical switch port
+    during a live migration. That allows to prepare the destination host
+    earlier, achieving a quicker live migration and a lower downtime during
+    the switch between hosts. Neutron includes this information in the
+    port options.
