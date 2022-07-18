@@ -882,7 +882,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         return self.tun_br_ofports[network_type].get(remote_ip)
 
     def fdb_add(self, context, fdb_entries):
-        LOG.debug("fdb_add received")
+        LOG.debug("fdb_add received, fdb_entries=%s", fdb_entries)
         for lvm, agent_ports in self.get_agent_ports(fdb_entries):
             agent_ports.pop(self.local_ip, None)
             if len(agent_ports):
@@ -890,7 +890,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                  agent_ports, self._tunnel_port_lookup)
 
     def fdb_remove(self, context, fdb_entries):
-        LOG.debug("fdb_remove received")
+        LOG.debug("fdb_remove received, fdb_entries=%s", fdb_entries)
         for lvm, agent_ports in self.get_agent_ports(fdb_entries):
             agent_ports.pop(self.local_ip, None)
             if len(agent_ports):
@@ -931,7 +931,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             br.delete_unicast_to_tun(lvm.vlan, port_info.mac_address)
 
     def _fdb_chg_ip(self, context, fdb_entries):
-        LOG.debug("update chg_ip received")
+        LOG.debug("update chg_ip received, fdb_entries=%s", fdb_entries)
         self.fdb_chg_ip_tun(context, self.tun_br, fdb_entries, self.local_ip)
 
     def setup_entry_for_arp_reply(self, br, action, local_vid, mac_address,
