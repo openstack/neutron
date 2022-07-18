@@ -1848,10 +1848,10 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         # for being treated. If that does not happen, it is a potential
         # error condition of which operators should be aware
         port_needs_binding = True
-        if not vif_port.ofport:
-            LOG.warning("VIF port: %s has no ofport configured, "
-                        "and might not be able to transmit",
-                        vif_port.vif_id)
+        if not vif_port.ofport or vif_port.ofport == ovs_lib.INVALID_OFPORT:
+            LOG.error("VIF port: %s has no ofport configured or is invalid, "
+                      "and might not be able to transmit. (ofport=%s)",
+                      vif_port.vif_id, vif_port.ofport)
         if vif_port:
             if admin_state_up:
                 port_needs_binding = self.port_bound(
