@@ -12,7 +12,6 @@
       tempest_concurrency: 4
       devstack_localrc:
         Q_ML2_TENANT_NETWORK_TYPE: vxlan
-        Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch,linuxbridge
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
@@ -53,6 +52,7 @@
     vars:
       devstack_localrc:
         Q_AGENT: openvswitch
+        Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
     irrelevant-files: &openvswitch-irrelevant-files
       - ^test-requirements.txt$
       - ^.*\.conf\.sample$
@@ -106,6 +106,7 @@
     vars:
       devstack_localrc:
         Q_AGENT: linuxbridge
+        Q_ML2_PLUGIN_MECHANISM_DRIVERS: linuxbridge
       devstack_local_conf:
         post-config:
           "/$NEUTRON_CORE_PLUGIN_CONF":
