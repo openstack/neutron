@@ -247,7 +247,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
     def test_enable_ndp_proxy_without_external_gateway(self):
         with self.router() as router:
             router_id = router['router']['id']
-            err_msg = ("Can not enable ndp proxy no router %s, The router has "
+            err_msg = ("Can not enable ndp proxy on router %s, The router has "
                        "no external gateway or the external gateway port has "
                        "no IPv6 address.") % router_id
             self._update_router(router_id, {'enable_ndp_proxy': True},
@@ -260,7 +260,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
             self._update_router(
                 router_id,
                 {'external_gateway_info': {'network_id': self.ext_net_id}})
-            err_msg = ("Can not enable ndp proxy no router %s, The router's "
+            err_msg = ("Can not enable ndp proxy on router %s, The router's "
                        "external gateway will be unset.") % router_id
             self._update_router(
                 router_id,
@@ -516,3 +516,10 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
             self.assertTrue(router_dict['router']['enable_ndp_proxy'])
             self._create_ndp_proxy(
                 router_id, port_id)
+
+    def test_create_ndp_proxy_with_duplicated(self):
+        with self.port(self.private_subnet) as port1:
+            self._create_ndp_proxy(self.router1_id, port1['port']['id'])
+            self._create_ndp_proxy(
+                self.router1_id, port1['port']['id'],
+                expected_code=exc.HTTPConflict.code)
