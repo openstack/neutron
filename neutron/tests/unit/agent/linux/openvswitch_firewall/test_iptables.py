@@ -73,14 +73,18 @@ class TestHelper(base.BaseTestCase):
         self.helper.int_br.get_port_name_list.return_value = [
             'tap1234', 'qvo-1234', 'tap9876', 'qvo-fghfhfh']
         self.helper.int_br.db_get_val.return_value = {'foo': 'bar'}
-        self.helper.load_driver_if_needed()
-        self.assertIsNotNone(self.helper.iptables_driver)
+        with mock.patch.object(iptables_firewall.IptablesFirewallDriver,
+             '_check_netfilter_for_bridges'):
+            self.helper.load_driver_if_needed()
+            self.assertIsNotNone(self.helper.iptables_driver)
 
     def test_get_iptables_driver_instance_has_correct_instance(self):
-        instance = iptables.get_iptables_driver_instance()
-        self.assertIsInstance(
-            instance,
-            iptables_firewall.OVSHybridIptablesFirewallDriver)
+        with mock.patch.object(iptables_firewall.IptablesFirewallDriver,
+             '_check_netfilter_for_bridges'):
+            instance = iptables.get_iptables_driver_instance()
+            self.assertIsInstance(
+                instance,
+                iptables_firewall.OVSHybridIptablesFirewallDriver)
 
     def test_cleanup_port_last_port_marks_cleaned(self):
         self.helper.iptables_driver = mock.Mock()
@@ -111,7 +115,9 @@ class TestHybridIptablesHelper(base.BaseTestCase):
         with mock.patch.object(iptables_firewall.IptablesFirewallDriver,
                 '_remove_conntrack_entries_from_port_deleted') as rcefpd, \
              mock.patch("neutron.agent.linux.ip_conntrack.IpConntrackManager"
-                        "._populate_initial_zone_map"):
+                        "._populate_initial_zone_map"), \
+             mock.patch.object(iptables_firewall.IptablesFirewallDriver,
+                               '_check_netfilter_for_bridges'):
             firewall = iptables.get_iptables_driver_instance()
             firewall._remove_conntrack_entries_from_port_deleted(None)
             rcefpd.assert_not_called()
