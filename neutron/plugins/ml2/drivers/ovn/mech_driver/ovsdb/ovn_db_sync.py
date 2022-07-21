@@ -1240,7 +1240,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
             for port in self.core_plugin.get_ports(ctx):
                 if not ovn_qos_ext.port_effective_qos_policy_id(port)[0]:
                     continue
-                ovn_qos_ext.create_port(txn, port)
+                ovn_qos_ext.create_port(txn, port, None)
 
         LOG.debug('Port QoS policies migration task finished')
 

@@ -199,6 +199,34 @@ class SetLSwitchPortCommand(command.BaseCommand):
             setattr(port, col, val)
 
 
+class UpdateLSwitchPortQosOptionsCommand(command.BaseCommand):
+    def __init__(self, api, lport, if_exists, **qos):
+        super().__init__(api)
+        self.lport = lport
+        self.if_exists = if_exists
+        self.qos = qos
+
+    def run_idl(self, txn):
+        if isinstance(self.lport, command.BaseCommand):
+            port_id = self.lport.result
+        else:
+            port_id = self.lport.uuid
+
+        try:
+            port = self.api.lookup('Logical_Switch_Port', port_id)
+        except idlutils.RowNotFound:
+            if self.if_exists:
+                return
+            raise RuntimeError(_('Logical Switch Port %s does not exist') %
+                               port_id)
+
+        for key, value in self.qos.items():
+            if value is None:
+                port.delkey('options', key)
+            else:
+                port.setkey('options', key, value)
+
+
 class DelLSwitchPortCommand(command.BaseCommand):
     def __init__(self, api, lport, lswitch, if_exists):
         super(DelLSwitchPortCommand, self).__init__(api)

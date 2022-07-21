@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    Added support for QoS minimum bandwidth rules (egress only) in ML2/OVN.
+    OVN supports setting these rule types in the logical switch ports since
+    `release 22.06.0 <https://www.ovn.org/en/releases/release_22.06.0/>`_.

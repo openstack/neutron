@@ -17,7 +17,9 @@ from unittest import mock
 
 from neutron_lib import constants
 from neutron_lib.services.qos import constants as qos_constants
+from ovsdbapp.backend.ovs_idl import idlutils
 
+from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
 from neutron.db import l3_db
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions \
@@ -29,6 +31,16 @@ QOS_RULE_BW_1 = {'max_kbps': 200, 'max_burst_kbps': 100}
 QOS_RULE_BW_2 = {'max_kbps': 300}
 QOS_RULE_DSCP_1 = {'dscp_mark': 16}
 QOS_RULE_DSCP_2 = {'dscp_mark': 20}
+QOS_RULE_MINBW_1 = {'min_kbps': 500}
+
+QOS_RULES_0 = {
+    constants.EGRESS_DIRECTION: {
+        qos_constants.RULE_TYPE_BANDWIDTH_LIMIT: QOS_RULE_BW_1,
+        qos_constants.RULE_TYPE_DSCP_MARKING: QOS_RULE_DSCP_1,
+        qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH: QOS_RULE_MINBW_1},
+    constants.INGRESS_DIRECTION: {
+        qos_constants.RULE_TYPE_BANDWIDTH_LIMIT: QOS_RULE_BW_2}
+}
 
 QOS_RULES_1 = {
     constants.EGRESS_DIRECTION: {
@@ -75,6 +87,12 @@ class TestOVNClientQosExtension(base.TestOVNFunctionalBase):
         with self.nb_api.transaction(check_error=True) as txn:
             txn.add(self.nb_api.ls_add(ovn_utils.ovn_name(self.network_1)))
 
+    def _add_logical_switch_port(self, port_id):
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.lsp_add(
+                ovn_utils.ovn_name(self.network_1), port_id,
+                options={'requested-chassis': 'compute1'}))
+
     def _check_rules(self, rules, port_id, network_id, fip_id=None,
                      ip_address=None):
         egress_ovn_rule = self.qos_driver._ovn_qos_rule(
@@ -88,6 +106,16 @@ class TestOVNClientQosExtension(base.TestOVNFunctionalBase):
         with self.nb_api.transaction(check_error=True):
             ls = self.qos_driver.nb_idl.lookup(
                 'Logical_Switch', ovn_utils.ovn_name(self.network_1))
+            try:
+                lsp = self.qos_driver.nb_idl.lsp_get(port_id).execute(
+                    check_error=True)
+            except idlutils.RowNotFound:
+                # A LSP is created only in the tests that apply QoS rules to
+                # an internal port. Any L3 QoS test (router gateway port or
+                # floating IP), won't have a LSP associated and won't check
+                # min-rate rules.
+                pass
+
             self.assertEqual(len(rules), len(ls.qos_rules))
             for rule in ls.qos_rules:
                 ref_rule = (egress_ovn_rule if rule.direction == 'from-lport'
@@ -103,9 +131,15 @@ class TestOVNClientQosExtension(base.TestOVNFunctionalBase):
                 self.assertIn(port_id, rule.match)
                 self.assertEqual(action, rule.action)
                 self.assertEqual(bandwidth, rule.bandwidth)
+            min_rate = rules.get(constants.EGRESS_DIRECTION, {}).get(
+                qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH)
+            if min_rate is not None:
+                min_ovn = lsp.options.get(ovn_const.LSP_OPTIONS_QOS_MIN_RATE)
+                self.assertEqual(str(min_rate['min_kbps']), min_ovn)
 
     def test__update_port_qos_rules(self):
         port = 'port1'
+        self._add_logical_switch_port(port)
 
         def update_and_check(qos_rules):
             with self.nb_api.transaction(check_error=True) as txn:
@@ -117,6 +151,7 @@ class TestOVNClientQosExtension(base.TestOVNFunctionalBase):
                     txn, port, self.network_1, 'qos1', None)
             self._check_rules(qos_rules, port, self.network_1)
 
+        update_and_check(QOS_RULES_0)
         update_and_check(QOS_RULES_1)
         update_and_check(QOS_RULES_2)
         update_and_check(QOS_RULES_3)
