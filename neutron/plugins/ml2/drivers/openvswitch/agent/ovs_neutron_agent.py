@@ -1843,33 +1843,31 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
     def treat_vif_port(self, vif_port, port_id, network_id, network_type,
                        physical_network, segmentation_id, admin_state_up,
                        fixed_ips, device_owner, provisioning_needed):
-        # When this function is called for a port, the port should have
-        # an OVS ofport configured, as only these ports were considered
-        # for being treated. If that does not happen, it is a potential
-        # error condition of which operators should be aware
         port_needs_binding = True
-        if not vif_port.ofport or vif_port.ofport == ovs_lib.INVALID_OFPORT:
-            LOG.error("VIF port: %s has no ofport configured or is invalid, "
-                      "and might not be able to transmit. (ofport=%s)",
-                      vif_port.vif_id, vif_port.ofport)
-        if vif_port:
-            if admin_state_up:
-                port_needs_binding = self.port_bound(
-                    vif_port, network_id, network_type,
-                    physical_network, segmentation_id,
-                    fixed_ips, device_owner, provisioning_needed)
-                self.port_alive(vif_port)
-            else:
-                LOG.info("VIF port: %s admin state up disabled, "
-                         "putting on the dead VLAN", vif_port.vif_id)
-
-                self.port_dead(vif_port)
-                self.plugin_rpc.update_device_down(
-                    self.context, port_id, self.agent_id,
-                    self.conf.host)
-                port_needs_binding = False
+        if (not vif_port.ofport or
+                vif_port.ofport == ovs_lib.INVALID_OFPORT):
+            # When this function is called for a port, the port should have
+            # an OVS ofport configured, as only these ports were considered
+            # for being treated. If that does not happen, it is a potential
+            # error condition of which operators should be aware
+            LOG.error("VIF port: %s has no ofport configured or is "
+                      "invalid, and might not be able to transmit. "
+                      "(ofport=%s)", vif_port.vif_id, vif_port.ofport)
+        if admin_state_up:
+            port_needs_binding = self.port_bound(
+                vif_port, network_id, network_type,
+                physical_network, segmentation_id,
+                fixed_ips, device_owner, provisioning_needed)
+            self.port_alive(vif_port)
         else:
-            LOG.debug("No VIF port for port %s defined on agent.", port_id)
+            LOG.info("VIF port: %s admin state up disabled, "
+                     "putting on the dead VLAN", vif_port.vif_id)
+
+            self.port_dead(vif_port)
+            self.plugin_rpc.update_device_down(
+                self.context, port_id, self.agent_id,
+                self.conf.host)
+            port_needs_binding = False
         return port_needs_binding
 
     def _setup_tunnel_port(self, br, port_name, remote_ip, tunnel_type):
