@@ -36,6 +36,7 @@ from neutron.agent.common import ovs_lib
 from neutron.agent.common import polling
 from neutron.agent.common import utils
 from neutron.agent.linux import ip_lib
+from neutron.agent.linux import iptables_firewall
 from neutron.agent.linux import utils as linux_utils
 from neutron.api.rpc.callbacks import resources
 from neutron.objects.ports import Port
@@ -150,7 +151,9 @@ class TestOvsNeutronAgent(object):
                                   'setup_ancillary_bridges',
                                   return_value=[]),\
                 mock.patch('neutron.agent.linux.ip_lib.get_device_mac',
-                           return_value='00:00:00:00:00:01'),\
+                           return_value='00:00:00:00:00:01'), \
+                mock.patch.object(iptables_firewall.IptablesFirewallDriver,
+                                  '_check_netfilter_for_bridges'), \
                 mock.patch(
                     'neutron.agent.common.ovs_lib.BaseOVS.get_bridges'),\
                 mock.patch('oslo_service.loopingcall.FixedIntervalLoopingCall',
