@@ -1,0 +1,4 @@
+---
+other:
+  - |
+    Add support for the ``address-group`` in the OVN mechanism driver.

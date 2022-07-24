@@ -197,6 +197,15 @@ def ovn_pg_addrset_name(sg_id, ip_version):
     return ('pg-%s-%s' % (sg_id, ip_version)).replace('-', '_')
 
 
+def ovn_ag_addrset_name(ag_id, ip_version):
+    # The name of the address set for the given address group id and ip
+    # version. The format is:
+    #   ag-<address group uuid>-<ip version>
+    # with all '-' replaced with '_'. This replacement is necessary
+    # because OVN doesn't support '-' in an address set name.
+    return ('ag-%s-%s' % (ag_id, ip_version)).replace('-', '_')
+
+
 def ovn_port_group_name(sg_id):
     # The name of the port group for the given security group id.
     # The format is: pg-<security group uuid>.
@@ -485,6 +494,7 @@ def get_revision_number(resource, resource_type):
                          constants.TYPE_ROUTERS,
                          constants.TYPE_ROUTER_PORTS,
                          constants.TYPE_SECURITY_GROUPS,
+                         constants.TYPE_ADDRESS_GROUPS,
                          constants.TYPE_FLOATINGIPS, constants.TYPE_SUBNETS):
         return resource['revision_number']
     else:

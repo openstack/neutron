@@ -2577,6 +2577,84 @@ class OVNClient(object):
         db_rev.delete_revision(
             context, rule['id'], ovn_const.TYPE_SECURITY_GROUP_RULES)
 
+    def _checkout_ip_list(self, addresses):
+        """Return address map for addresses.
+
+        This method will check out ipv4 and ipv6 address list from the
+        given address list.
+        Eg. if addresses = ["192.168.2.2/32", "2001:db8::/32"], it will
+        return {"4":["192.168.2.2/32"], "6":["2001:db8::/32"]}.
+
+        :param addresses: address list.
+        """
+        if not addresses:
+            addresses = []
+        ip_addresses = [netaddr.IPNetwork(ip)
+                        for ip in addresses]
+        addr_map = {const.IP_VERSION_4: [], const.IP_VERSION_6: []}
+        for addr in ip_addresses:
+            addr_map[addr.version].append(str(addr.cidr))
+        return addr_map
+
+    def create_address_group(self, context, address_group):
+        addr_map_all = self._checkout_ip_list(
+            address_group.get('addresses'))
+        external_ids = {ovn_const.OVN_ADDRESS_GROUP_ID_KEY:
+                        address_group['id'],
+                        ovn_const.OVN_REV_NUM_EXT_ID_KEY: str(
+                            utils.get_revision_number(
+                                address_group,
+                                ovn_const.TYPE_ADDRESS_GROUPS))
+                        }
+        attrs = [('external_ids', external_ids),]
+        for ip_version in const.IP_ALLOWED_VERSIONS:
+            as_name = utils.ovn_ag_addrset_name(address_group['id'],
+                                                'ip' + str(ip_version))
+            with self._nb_idl.transaction(check_error=True) as txn:
+                txn.add(self._nb_idl.address_set_add(
+                    as_name, addresses=addr_map_all[ip_version],
+                    may_exist=True))
+                txn.add(self._nb_idl.db_set(
+                    'Address_Set', as_name, *attrs))
+        db_rev.bump_revision(
+            context, address_group, ovn_const.TYPE_ADDRESS_GROUPS)
+
+    def update_address_group(self, context, address_group):
+        addr_map_db = self._checkout_ip_list(address_group['addresses'])
+        for ip_version in const.IP_ALLOWED_VERSIONS:
+            as_name = utils.ovn_ag_addrset_name(address_group['id'],
+                                                'ip' + str(ip_version))
+            check_rev_cmd = self._nb_idl.check_revision_number(
+                as_name, address_group, ovn_const.TYPE_ADDRESS_GROUPS)
+            with self._nb_idl.transaction(check_error=True) as txn:
+                txn.add(check_rev_cmd)
+                # For add/remove addresses
+                addr_ovn = self._nb_idl.get_address_set(as_name)[0].addresses
+                added = set(addr_map_db[ip_version]) - set(addr_ovn)
+                removed = set(addr_ovn) - set(addr_map_db[ip_version])
+                txn.add(self._nb_idl.address_set_add_addresses(
+                    as_name,
+                    added
+                ))
+                txn.add(self._nb_idl.address_set_remove_addresses(
+                    as_name,
+                    removed
+                ))
+        if check_rev_cmd.result == ovn_const.TXN_COMMITTED:
+            db_rev.bump_revision(
+                context, address_group, ovn_const.TYPE_ADDRESS_GROUPS)
+
+    def delete_address_group(self, context, address_group_id):
+        ipv4_as_name = utils.ovn_ag_addrset_name(address_group_id, 'ip4')
+        ipv6_as_name = utils.ovn_ag_addrset_name(address_group_id, 'ip6')
+        with self._nb_idl.transaction(check_error=True) as txn:
+            txn.add(self._nb_idl.address_set_del(
+                ipv4_as_name, if_exists=True))
+            txn.add(self._nb_idl.address_set_del(
+                ipv6_as_name, if_exists=True))
+        db_rev.delete_revision(
+            context, address_group_id, ovn_const.TYPE_ADDRESS_GROUPS)
+
     def _find_metadata_port(self, context, network_id):
         if not ovn_conf.is_ovn_metadata_enabled():
             return

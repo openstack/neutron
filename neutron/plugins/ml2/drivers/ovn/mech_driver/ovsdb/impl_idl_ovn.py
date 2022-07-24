@@ -834,6 +834,14 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
             pg_name = utils.ovn_port_group_name(pg_name)
         return self.lookup('Port_Group', pg_name, default=None)
 
+    def get_address_set(self, as_name):
+        if uuidutils.is_uuid_like(as_name):
+            as_name_v4 = utils.ovn_ag_addrset_name(as_name, 'ip4')
+            as_name_v6 = utils.ovn_ag_addrset_name(as_name, 'ip6')
+            return (self.lookup('Address_Set', as_name_v4, default=None),
+                    self.lookup('Address_Set', as_name_v6, default=None))
+        return self.lookup('Address_Set', as_name, default=None), None
+
     def get_sg_port_groups(self):
         """Returns OVN port groups used as Neutron Security Groups.
 
