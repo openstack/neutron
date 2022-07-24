@@ -257,7 +257,7 @@ class OVNMechanismDriver(api.MechanismDriver):
                            resources.SEGMENT,
                            events.AFTER_DELETE)
 
-        # Handle security group/rule notifications
+        # Handle security group/rule or address group notifications
         if self.sg_enabled:
             registry.subscribe(self._create_security_group_precommit,
                                resources.SECURITY_GROUP,
@@ -283,6 +283,15 @@ class OVNMechanismDriver(api.MechanismDriver):
             registry.subscribe(self._process_sg_rule_notification,
                                resources.SECURITY_GROUP_RULE,
                                events.BEFORE_DELETE)
+            registry.subscribe(self._process_ag_notification,
+                               resources.ADDRESS_GROUP,
+                               events.AFTER_CREATE)
+            registry.subscribe(self._process_ag_notification,
+                               resources.ADDRESS_GROUP,
+                               events.AFTER_UPDATE)
+            registry.subscribe(self._process_ag_notification,
+                               resources.ADDRESS_GROUP,
+                               events.AFTER_DELETE)
 
     def _remove_node_from_hash_ring(self, *args, **kwargs):
         # The node_uuid attribute will be empty for worker types
@@ -501,6 +510,25 @@ class OVNMechanismDriver(api.MechanismDriver):
             if _rules_equal(sg_rule, rule):
                 return True
         return False
+
+    def _process_ag_notification(
+            self, resource, event, trigger, payload):
+        context = payload.context
+        address_group = payload.latest_state
+        address_group_id = payload.resource_id
+        if event == events.AFTER_CREATE:
+            ovn_revision_numbers_db.create_initial_revision(
+                context, address_group_id, ovn_const.TYPE_ADDRESS_GROUPS,
+                std_attr_id=address_group['standard_attr_id'])
+            self._ovn_client.create_address_group(
+                context, address_group)
+        elif event == events.AFTER_UPDATE:
+            self._ovn_client.update_address_group(
+                context, address_group)
+        elif event == events.AFTER_DELETE:
+            self._ovn_client.delete_address_group(
+                context,
+                address_group_id)
 
     def _is_network_type_supported(self, network_type):
         return (network_type in [const.TYPE_LOCAL,

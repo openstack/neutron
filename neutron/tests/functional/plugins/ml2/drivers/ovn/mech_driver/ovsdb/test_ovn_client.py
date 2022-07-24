@@ -232,3 +232,44 @@ class TestOVNClient(testlib_api.MySQLTestCaseMixin,
                                                   net_ext['network']['id'])
                     req.get_response(self.api)
                     check_gw_lrp_mtu(router_id, 1350)
+
+    def test_process_address_group(self):
+        def _find_address_set_for_ag():
+            as_v4 = self.nb_api.lookup(
+                'Address_Set',
+                ovn_utils.ovn_ag_addrset_name(
+                    ag['id'], 'ip' + str(constants.IP_VERSION_4)),
+                default=None)
+            as_v6 = self.nb_api.lookup(
+                'Address_Set',
+                ovn_utils.ovn_ag_addrset_name(
+                    ag['id'], 'ip' + str(constants.IP_VERSION_6)),
+                default=None)
+            return as_v4, as_v6
+
+        ovn_client = self.mech_driver._ovn_client
+        ag_args = {'project_id': 'project_1',
+                   'name': 'test_address_group',
+                   'description': 'test address group',
+                   'addresses': ['192.168.2.2/32',
+                                 '2001:db8::/32']}
+        ag = self.plugin.create_address_group(self.context,
+                                              {'address_group': ag_args})
+        self.assertIsNotNone(_find_address_set_for_ag()[0])
+        self.assertIsNotNone(_find_address_set_for_ag()[1])
+
+        # Call the create_address_group again to ensure that the create
+        # command automatically checks for existing Address_Set
+        ovn_client.create_address_group(self.context, ag)
+
+        # Update the address group
+        ag['addresses'] = ['20.0.0.1/32', '2002:db8::/32']
+        ovn_client.update_address_group(self.context, ag)
+        as_v4_new = _find_address_set_for_ag()[0]
+        as_v6_new = _find_address_set_for_ag()[1]
+        self.assertEqual(['20.0.0.1/32'], as_v4_new.addresses)
+        self.assertEqual(['2002:db8::/32'], as_v6_new.addresses)
+
+        # Delete the address group
+        ovn_client.delete_address_group(self.context, ag['id'])
+        self.assertEqual((None, None), _find_address_set_for_ag())

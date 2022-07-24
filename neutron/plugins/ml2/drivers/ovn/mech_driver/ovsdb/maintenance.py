@@ -208,6 +208,13 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                 'ovn_update': self._ovn_client.update_router,
                 'ovn_delete': self._ovn_client.delete_router,
             },
+            ovn_const.TYPE_ADDRESS_GROUPS: {
+                'neutron_get': self._ovn_client._plugin.get_address_group,
+                'ovn_get': self._nb_idl.get_address_set,
+                'ovn_create': self._ovn_client.create_address_group,
+                'ovn_update': self._ovn_client.update_address_group,
+                'ovn_delete': self._ovn_client.delete_address_group,
+            },
             ovn_const.TYPE_SECURITY_GROUPS: {
                 'neutron_get': self._ovn_client._plugin.get_security_group,
                 'ovn_get': self._nb_idl.get_port_group,
@@ -277,6 +284,29 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                     # supposed to be.
                     revision_numbers_db.bump_revision(context, n_obj,
                                                       row.resource_type)
+                elif row.resource_type == ovn_const.TYPE_ADDRESS_GROUPS:
+                    need_bump = False
+                    for obj in ovn_obj:
+                        if not obj:
+                            # NOTE(liushy): We create two Address_Sets for
+                            # one Address_Group at one ovn_create func.
+                            res_map['ovn_create'](context, n_obj)
+                            need_bump = False
+                            break
+                        ext_ids = getattr(obj, 'external_ids', {})
+                        ovn_revision = int(ext_ids.get(
+                            ovn_const.OVN_REV_NUM_EXT_ID_KEY, -1))
+                        # NOTE(liushy): We have created two Address_Sets
+                        # for one Address_Group, and we update both of
+                        # them at one ovn_update func.
+                        if ovn_revision != n_obj['revision_number']:
+                            res_map['ovn_update'](context, n_obj)
+                            need_bump = False
+                            break
+                        need_bump = True
+                    if need_bump:
+                        revision_numbers_db.bump_revision(context, n_obj,
+                                                          row.resource_type)
                 else:
                     ext_ids = getattr(ovn_obj, 'external_ids', {})
                     ovn_revision = int(ext_ids.get(
