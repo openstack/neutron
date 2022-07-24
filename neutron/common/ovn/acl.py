@@ -233,6 +233,16 @@ def acl_remote_group_id(r, ip_version):
     return ' && %s.%s == $%s' % (ip_version, src_or_dst, addrset_name)
 
 
+def acl_remote_address_group_id(r, ip_version):
+    if not r.get('remote_address_group_id'):
+        return ''
+
+    src_or_dst = 'src' if r['direction'] == const.INGRESS_DIRECTION else 'dst'
+    addrset_name = utils.ovn_ag_addrset_name(r['remote_address_group_id'],
+                                             ip_version)
+    return ' && %s.%s == $%s' % (ip_version, src_or_dst, addrset_name)
+
+
 def _add_sg_rule_acl_for_port_group(port_group, stateful, r):
     # Update the match based on which direction this rule is for (ingress
     # or egress).
@@ -247,6 +257,9 @@ def _add_sg_rule_acl_for_port_group(port_group, stateful, r):
 
     # Update the match if remote group id was specified.
     match += acl_remote_group_id(r, ip_version)
+
+    # Update the match if remote address group id was specified.
+    match += acl_remote_address_group_id(r, ip_version)
 
     # Update the match for the protocol (tcp, udp, icmp) and port/type
     # range if specified.

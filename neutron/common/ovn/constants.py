@@ -56,6 +56,7 @@ OVN_PORT_BINDING_PROFILE = portbindings.PROFILE
 OVN_HOST_ID_EXT_ID_KEY = 'neutron:host_id'
 OVN_LRSR_EXT_ID_KEY = 'neutron:is_static_route'
 OVN_FIP_DISTRIBUTED_KEY = 'neutron:fip-distributed'
+OVN_ADDRESS_GROUP_ID_KEY = 'neutron:address_group_id'
 
 MIGRATING_ATTR = 'migrating_to'
 OVN_ROUTER_PORT_OPTION_KEYS = ['router-port', 'nat-addresses',
@@ -263,6 +264,7 @@ TYPE_ROUTER_PORTS = 'router_ports'
 TYPE_SECURITY_GROUPS = 'security_groups'
 TYPE_FLOATINGIPS = 'floatingips'
 TYPE_SUBNETS = 'subnets'
+TYPE_ADDRESS_GROUPS = 'address_groups'
 
 _TYPES_PRIORITY_ORDER = (
     TYPE_NETWORKS,
@@ -272,6 +274,7 @@ _TYPES_PRIORITY_ORDER = (
     TYPE_PORTS,
     TYPE_ROUTER_PORTS,
     TYPE_FLOATINGIPS,
+    TYPE_ADDRESS_GROUPS,
     TYPE_SECURITY_GROUP_RULES)
 
 DB_CONSISTENCY_CHECK_INTERVAL = 300  # 5 minutes
