@@ -175,10 +175,15 @@ In release Stein the following agent-based ML2 mechanism drivers are
 supported:
 
 * Open vSwitch (``openvswitch``) vnic_types: ``normal``, ``direct``
-* SR-IOV (``sriovnicswitch``) vnic_types: ``direct``, ``macvtap``
+* SR-IOV (``sriovnicswitch``) vnic_types: ``direct``, ``macvtap``, ``direct-physical``
+* OVN (``ovn``) vnic_types: ``normal``
 
-From the Yoga release the ``direct-physical`` vnic_type is now marked supported
-for the SR-IOV (``sriovnicswitch``) agent.
+.. note::
+
+  SR-IOV (``sriovnicswitch``) agent does not handle ``direct-physical`` ports. However
+  the agent can report the bandwidth capacity of a network device that will be used
+  by a ``direct-physical`` port.
+
 
 neutron-server config
 ~~~~~~~~~~~~~~~~~~~~~
@@ -424,6 +429,12 @@ For details please see `slides 13-15
 of a (pre-release) demo that was presented on the Berlin Summit in November
 2018.
 
+Since Yoga, the ``resource_request`` attribute of the port changed. With the
+extension ``port-resource-request-groups``, Neutron informs that the blob
+passed to Nova can contain several bandwidth requests. Please check
+`resource_request sanitization
+<https://docs.openstack.org/neutron/latest/admin/config-qos-min-pps.html#neutron-db-sanitization>`_.
+
 Sample usage
 ------------
 
@@ -654,6 +665,11 @@ Links
     <https://specs.openstack.org/openstack/nova-specs/specs/stein/approved/bandwidth-resource-provider.html>`__
   * `on review.opendev.org
     <https://review.opendev.org/502306>`__
+
+* Nova spec: QoS minimum guaranteed packet rate
+
+  * `on specs.openstack.org
+    <https://specs.openstack.org/openstack/nova-specs/specs/yoga/implemented/qos-minimum-guaranteed-packet-rate.html>`__
 
 * Relevant OpenStack Networking API references
 
