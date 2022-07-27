@@ -560,6 +560,12 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
 
     def test_delete_metering_label_does_not_clear_router_tenant_id(self):
         tenant_id = '654f6b9d-0f36-4ae5-bd1b-01616794ca60'
+        # TODO(ralonsoh): to investigate why the context in [1] has some value
+        # in session.transaction._connections, while during a normal operation,
+        # the ._connections value is empty.
+        # [1]https://github.com/openstack/neutron/blob/
+        # 1b9e9a6c2ccf7f9bc06429f53e5126f356ae3d4a/neutron/api/v2/base.py#L563
+        self.ctx.GUARD_TRANSACTION = False
         with self.metering_label(tenant_id=tenant_id) as metering_label:
             with self.router(tenant_id=tenant_id, set_context=True) as r:
                 router = self._show('routers', r['router']['id'])

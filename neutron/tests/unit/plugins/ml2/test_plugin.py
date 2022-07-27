@@ -53,6 +53,7 @@ from neutron.db import provisioning_blocks
 from neutron.db import securitygroups_db as sg_db
 from neutron.db import segments_db
 from neutron.objects import base as base_obj
+from neutron.objects import network as network_obj
 from neutron.objects import ports as port_obj
 from neutron.objects import router as l3_obj
 from neutron.plugins.ml2.common import constants as ml2_consts
@@ -3483,6 +3484,7 @@ class TestTransactionGuard(Ml2PluginV2TestCase):
         plugin = directory.get_plugin()
         ctx = context.get_admin_context()
         with db_api.CONTEXT_WRITER.using(ctx):
+            network_obj.Network(ctx).create()
             with testtools.ExpectedException(RuntimeError):
                 plugin.delete_network(ctx, 'id')
 
@@ -3490,6 +3492,7 @@ class TestTransactionGuard(Ml2PluginV2TestCase):
         plugin = directory.get_plugin()
         ctx = context.get_admin_context()
         with db_api.CONTEXT_WRITER.using(ctx):
+            network_obj.Network(ctx).create()
             with testtools.ExpectedException(RuntimeError):
                 plugin.delete_subnet(ctx, 'id')
 
