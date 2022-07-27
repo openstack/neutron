@@ -27,7 +27,6 @@ from oslo_log import log as logging
 
 from neutron.api.rpc.callbacks import events as rpc_events
 from neutron.api.rpc.handlers import resources_rpc
-from neutron.common import utils
 from neutron.objects import address_group
 from neutron.objects import network
 from neutron.objects import ports
@@ -79,7 +78,7 @@ class _ObjectChangeHandler(object):
         event transaction semantics are violated by other parts of
         the code.
         """
-        if not utils.is_session_active(context.session):
+        if not db_api.is_session_active(context.session):
             return False
         if not self._semantic_warned:
             stack = traceback.extract_stack()

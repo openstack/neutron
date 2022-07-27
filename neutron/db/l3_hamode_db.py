@@ -45,7 +45,6 @@ from sqlalchemy import exc as sql_exc
 from sqlalchemy import orm
 
 from neutron._i18n import _
-from neutron.common import utils
 from neutron.conf.db import l3_hamode_db
 from neutron.db import _utils as db_utils
 from neutron.db.availability_zone import router as router_az_db
@@ -288,7 +287,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         # the exception will mangle the state, cause the delete call to fail,
         # and end up relying on the DB rollback to remove the port instead of
         # proper delete_port call.
-        if utils.is_session_active(context.session):
+        if db_api.is_session_active(context.session):
             raise RuntimeError(_('add_ha_port cannot be called inside of a '
                                  'transaction.'))
         args = {'tenant_id': '',

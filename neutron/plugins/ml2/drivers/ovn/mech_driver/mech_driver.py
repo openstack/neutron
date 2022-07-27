@@ -31,6 +31,7 @@ from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as const
 from neutron_lib import context as n_context
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import availability_zone as az_exc
 from neutron_lib.placement import utils as place_utils
@@ -50,7 +51,6 @@ from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import exceptions as ovn_exceptions
 from neutron.common.ovn import extensions as ovn_extensions
 from neutron.common.ovn import utils as ovn_utils
-from neutron.common import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_hash_ring_db
 from neutron.db import ovn_revision_numbers_db
@@ -636,7 +636,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         """
         # FIXME(lucasagomes): We can delete this conditional after
         # https://bugs.launchpad.net/neutron/+bug/1739798 is fixed.
-        if utils.is_session_active(context._plugin_context.session):
+        if db_api.is_session_active(context._plugin_context.session):
             return
         self._ovn_client.update_network(
             context._plugin_context, context.current,
