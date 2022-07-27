@@ -280,7 +280,7 @@ class TestDbQuotaDriver(testlib_api.SqlTestCase,
             self.resource_2:
                 TestCountableResource(self.resource_2, _count_resource)}
 
-    def test_get_detailed_project_quotas_multiple_resource(self):
+    def test_get_detailed_tenant_quotas_multiple_resource(self):
         resources = self._create_resources()
         self.plugin.update_quota_limit(self.context, self.project_1,
                                        self.resource_1, 6)

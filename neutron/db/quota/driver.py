@@ -74,10 +74,9 @@ class DbQuotaDriver(quota_api.QuotaDriverAPI):
 
         return tenant_quota
 
-    @staticmethod
     @db_api.retry_if_session_inactive()
-    def get_detailed_tenant_quotas(context, resources, tenant_id):
-        """Given a list of resources and a sepecific tenant, retrieve
+    def get_detailed_tenant_quotas(self, context, resources, tenant_id):
+        """Given a list of resources and a specific tenant, retrieve
         the detailed quotas (limit, used, reserved).
         :param context: The request context, for access checks.
         :param resources: A dictionary of the registered resource keys.
@@ -89,8 +88,7 @@ class DbQuotaDriver(quota_api.QuotaDriverAPI):
         tenant_quota_ext = {}
         for key, resource in resources.items():
             if isinstance(resource, res.TrackedResource):
-                used = resource.count_used(context, tenant_id,
-                                           resync_usage=False)
+                used = self.get_resource_count(context, tenant_id, resource)
             else:
                 # NOTE(ihrachys) .count won't use the plugin we pass, but we
                 # pass it regardless to keep the quota driver API intact
@@ -317,6 +315,11 @@ class DbQuotaDriver(quota_api.QuotaDriverAPI):
 
         return tracked_resource.count(context, None, project_id,
                                       resync_usage=False)
+
+    @staticmethod
+    def get_resource_count(context, tenant_id, tracked_resource):
+        return tracked_resource.count_used(context, tenant_id,
+                                           resync_usage=False)
 
     def quota_limit_check(self, context, project_id, resources, deltas):
         # Ensure no value is less than zero
