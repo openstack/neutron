@@ -850,12 +850,28 @@ def _get_rules_by_chain(rules):
     return by_chain
 
 
+def _ensure_all_mac_addresses_are_uppercase(rules):
+    new_rules = []
+    lowercase_mac_regex = re.compile(r"(?:[0-9a-f]{2}[:]){5}(?:[0-9a-f]{2})")
+    callback = lambda pat: pat.group(0).upper()
+    for rule in rules:
+        new_rules.append(re.sub(lowercase_mac_regex, callback, rule))
+    return new_rules
+
+
 def _generate_chain_diff_iptables_commands(chain, old_chain_rules,
                                            new_chain_rules):
     # keep track of the old index because we have to insert rules
     # in the right position
     old_index = 1
     statements = []
+    # NOTE(slaweq): Different operating systems may return MAC addresses in the
+    # itables-save's output in lowercase or uppercase. As
+    # neutron.agent.linux.iptables_firewall module always keeps rules with MAC
+    # addresses with uppercase, we need to ensure here that all rules are
+    # stored in the same way
+    old_chain_rules = _ensure_all_mac_addresses_are_uppercase(old_chain_rules)
+    new_chain_rules = _ensure_all_mac_addresses_are_uppercase(new_chain_rules)
     for line in difflib.ndiff(old_chain_rules, new_chain_rules):
         if line.startswith('?'):
             # skip ? because that's a guide string for intraline differences
