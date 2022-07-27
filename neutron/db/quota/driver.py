@@ -76,9 +76,8 @@ class DbQuotaDriver(nlib_quota_api.QuotaDriverAPI):
 
         return project_quota
 
-    @staticmethod
     @db_api.retry_if_session_inactive()
-    def get_detailed_project_quotas(context, resources, project_id):
+    def get_detailed_project_quotas(self, context, resources, project_id):
         """Given a list of resources and a specific project, retrieve
         the detailed quotas (limit, used, reserved).
         :param context: The request context, for access checks.
@@ -92,8 +91,7 @@ class DbQuotaDriver(nlib_quota_api.QuotaDriverAPI):
         project_quota_ext = {}
         for key, resource in resources.items():
             if isinstance(resource, res.TrackedResource):
-                used = resource.count_used(context, project_id,
-                                           resync_usage=False)
+                used = self.get_resource_count(context, project_id, resource)
             else:
                 # NOTE(ihrachys) .count won't use the plugin we pass, but we
                 # pass it regardless to keep the quota driver API intact
@@ -318,6 +316,11 @@ class DbQuotaDriver(nlib_quota_api.QuotaDriverAPI):
 
         return tracked_resource.count(context, None, project_id,
                                       resync_usage=False)
+
+    @staticmethod
+    def get_resource_count(context, project_id, tracked_resource):
+        return tracked_resource.count_used(context, project_id,
+                                           resync_usage=False)
 
     def quota_limit_check(self, context, project_id, resources, deltas):
         # Ensure no value is less than zero
