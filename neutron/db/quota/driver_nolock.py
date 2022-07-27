@@ -93,6 +93,10 @@ class DbQuotaNoLockDriver(quota_driver.DbQuotaDriver):
                                       count_db_registers=True)
 
     @staticmethod
+    def get_resource_count(context, project_id, tracked_resource):
+        return tracked_resource.count_db_registers(context, project_id)
+
+    @staticmethod
     def get_workers():
         interval = quota_api.RESERVATION_EXPIRATION_TIMEOUT
         method = DbQuotaNoLockDriver._remove_expired_reservations

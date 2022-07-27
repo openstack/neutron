@@ -60,9 +60,7 @@ class QuotaSetsController(wsgi.Controller):
     def __init__(self, plugin):
         self._resource_name = RESOURCE_NAME
         self._plugin = plugin
-        self._driver = importutils.import_class(
-            cfg.CONF.QUOTAS.quota_driver
-        )
+        self._driver = importutils.import_class(cfg.CONF.QUOTAS.quota_driver)()
         self._update_extended_attributes = True
 
     def _update_attributes(self):

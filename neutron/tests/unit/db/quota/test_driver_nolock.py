@@ -15,18 +15,33 @@
 
 import itertools
 
+import netaddr
+from neutron_lib import constants
+from neutron_lib import context
 from neutron_lib.db import api as db_api
 
+from neutron.db import db_base_plugin_v2 as base_plugin
+from neutron.db import models_v2
 from neutron.db.quota import api as quota_api
 from neutron.db.quota import driver_nolock
+from neutron.objects import network as network_obj
+from neutron.objects import ports as port_obj
 from neutron.objects import quota as quota_obj
+from neutron.objects import subnet as subnet_obj
+from neutron.quota import resource as quota_resource
 from neutron.tests.unit.db.quota import test_driver
+
+
+class FakePlugin(base_plugin.NeutronDbPluginV2,
+                 driver_nolock.DbQuotaNoLockDriver):
+    """A fake plugin class containing all DB methods."""
 
 
 class TestDbQuotaDriverNoLock(test_driver.TestDbQuotaDriver):
 
     def setUp(self):
         super(TestDbQuotaDriverNoLock, self).setUp()
+        self.plugin = FakePlugin()
         self.quota_driver = driver_nolock.DbQuotaNoLockDriver()
 
     @staticmethod
@@ -60,3 +75,66 @@ class TestDbQuotaDriverNoLock(test_driver.TestDbQuotaDriver):
         self.quota_driver._remove_expired_reservations()
         res = quota_obj.Reservation.get_objects(self.context)
         self.assertEqual([], res)
+
+    def test_get_detailed_project_quotas_resource(self):
+        user_ctx = context.Context(user_id=self.project_1,
+                                   tenant_id=self.project_1)
+        tracked_resource = quota_resource.TrackedResource(
+            'network', models_v2.Network, 'quota_network')
+        res = {'network': tracked_resource}
+        self.plugin.update_quota_limit(user_ctx, self.project_1, 'network', 20)
+        self.quota_driver.make_reservation(user_ctx, self.project_1, res,
+                                           {'network': 5}, self.plugin)
+        with db_api.CONTEXT_WRITER.using(user_ctx):
+            network_obj.Network(user_ctx, project_id=self.project_1).create()
+
+        detailed_quota = self.plugin.get_detailed_project_quotas(
+            user_ctx, res, self.project_1)
+        reference = {'network': {'limit': 20, 'used': 1, 'reserved': 5}}
+        self.assertEqual(reference, detailed_quota)
+
+    @staticmethod
+    def _create_tracked_resources():
+        return {
+            'network': quota_resource.TrackedResource(
+                'network', models_v2.Network, 'quota_network'),
+            'subnet': quota_resource.TrackedResource(
+                'subnet', models_v2.Subnet, 'quota_subnet'),
+            'port': quota_resource.TrackedResource(
+                'port', models_v2.Port, 'quota_port'),
+        }
+
+    def test_get_detailed_project_quotas_multiple_resource(self):
+        resources = self._create_tracked_resources()
+        for project_id in self.projects:
+            user_ctx = context.Context(user_id=project_id,
+                                       tenant_id=project_id)
+            self.plugin.update_quota_limit(
+                user_ctx, project_id, 'network', 101)
+            self.plugin.update_quota_limit(user_ctx, project_id, 'subnet', 102)
+            self.plugin.update_quota_limit(user_ctx, project_id, 'port', 103)
+
+            with db_api.CONTEXT_WRITER.using(user_ctx):
+                net = network_obj.Network(
+                    user_ctx, project_id=project_id)
+                net.create()
+                subnet_obj.Subnet(
+                    user_ctx, project_id=project_id, network_id=net.id,
+                    ip_version=constants.IP_VERSION_4,
+                    cidr=netaddr.IPNetwork('1.2.3.0/24')).create()
+                port_obj.Port(
+                    user_ctx, project_id=project_id,
+                    network_id=net.id,
+                    mac_address=netaddr.EUI('ca:fe:ca:fe:ca:fe'),
+                    admin_state_up=False, status='DOWN', device_id='',
+                    device_owner='').create()
+
+        reference = {'network': {'limit': 101, 'used': 1, 'reserved': 0},
+                     'subnet': {'limit': 102, 'used': 1, 'reserved': 0},
+                     'port': {'limit': 103, 'used': 1, 'reserved': 0}}
+        for project_id in self.projects:
+            user_ctx = context.Context(user_id=project_id,
+                                       tenant_id=project_id)
+            returned = self.plugin.get_detailed_project_quotas(
+                user_ctx, resources, project_id)
+            self.assertEqual(reference, returned)
