@@ -54,7 +54,8 @@
         - neutron-tempest-iptables_hybrid
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
-        - neutron-grenade
+        # TODO(tkajinam): Add this job back when we make it voting again.
+        #- neutron-grenade
         - neutron-tempest-slow-py3
         - tempest-integrated-networking
         - openstacksdk-functional-devstack
@@ -516,6 +517,7 @@
       - openstack/devstack-gate
       - openstack/neutron
     irrelevant-files: *tempest-irrelevant-files
+    voting: false
 
 - job:
     name: neutron-tempest-postgres-full
