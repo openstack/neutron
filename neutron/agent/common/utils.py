@@ -16,9 +16,11 @@
 import os
 import socket
 
+from eventlet import patcher
 from neutron_lib.utils import runtime
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import eventletutils
 from oslo_utils import timeutils
 
 from neutron.conf.agent import common as config
@@ -70,6 +72,37 @@ def is_agent_down(heart_beat_time):
                                    cfg.CONF.agent_down_time)
 
 
+class _SocketWrapper():
+    """Determines if socket module is patched by eventlet
+    and unpatches it.
+
+    If python standard library socket module is patched, it will request
+    an unpached version of the socket module. The sole purpose of this
+    class is to workaround eventlet bug
+    https://github.com/eventlet/eventlet/issues/764 and for the
+    class to be used with get_hypervisor_hostname. This class also helps
+    with socket mocks as it abstracts eventlet under the hood module
+    imports which can be tricky to target with mocks.
+    TODO(mtomaska): This class(workaround) can be removed once eventlet
+    issue is resolved.
+    """
+    def __init__(self):
+        if eventletutils.is_monkey_patched(socket.__name__):
+            LOG.debug("Std library socket module is patched by eventlet. "
+                      "Requesting std library socket module from eventlet.")
+            self._socket = patcher.original(socket.__name__)
+        else:
+            LOG.debug("Std library socket module is not patched by eventlet. "
+                      "Using socket module as imported from std library.")
+            self._socket = socket
+
+    def getaddrinfo(self, host, port, family, flags):
+        return self._socket.getaddrinfo(host=host,
+                                        port=port,
+                                        family=family,
+                                        flags=flags)
+
+
 def get_hypervisor_hostname():
     """Get hypervisor hostname
 
@@ -81,18 +114,21 @@ def get_hypervisor_hostname():
             '.' in hypervisor_hostname):
         return hypervisor_hostname
 
+    _socket_wrap = _SocketWrapper()
     try:
-        addrinfo = socket.getaddrinfo(host=hypervisor_hostname,
-                                      port=None,
-                                      family=socket.AF_UNSPEC,
-                                      flags=socket.AI_CANONNAME)
+        addrinfo = _socket_wrap.getaddrinfo(host=hypervisor_hostname,
+                                            port=None,
+                                            family=socket.AF_UNSPEC,
+                                            flags=socket.AI_CANONNAME)
         # getaddrinfo returns a list of 5-tuples with;
         #     (family, type, proto, canonname, sockaddr)
         if (addrinfo and addrinfo[0][3] and
                 not addrinfo[0][3].startswith('localhost')):
             return addrinfo[0][3]
-    except OSError:
-        pass
+    except OSError as os_err:
+        LOG.warning("Error: %s, occured while querying for fqdn. "
+                    "get_hypervisor_hostname will just "
+                    "return %s", os_err, hypervisor_hostname)
 
     return hypervisor_hostname
 
@@ -102,15 +138,13 @@ def default_rp_hypervisors(hypervisors, device_mappings,
                            default_hypervisor=None):
     """Fill config option 'resource_provider_hypervisors' with defaults.
 
-    Default hypervisor names to socket.gethostname() unless default_hypervisor
-    is set.
-
     :param hypervisors: Config option 'resource_provider_hypervisors'
         as parsed by oslo.config, that is a dict with keys of physical devices
         and values of hypervisor names.
     :param device_mappings: Device mappings standardized to the list-valued
         format.
-    :param default_hypervisor: Default hypervisor hostname.
+    :param default_hypervisor: Default hypervisor hostname. If not set,
+        it tries to default to fully qualified domain name (fqdn)
     """
     _default_hypervisor = default_hypervisor or get_hypervisor_hostname()
 
