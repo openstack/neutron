@@ -281,6 +281,10 @@ class L2populationMechanismDriver(api.MechanismDriver):
                         agent_host)
             return
 
+        segment = context.bottom_bound_segment
+        if not self._validate_segment(segment, port['id'], agent):
+            return
+
         network_id = port['network_id']
 
         agent_active_ports = l2pop_db.get_agent_network_active_port_count(
@@ -288,9 +292,6 @@ class L2populationMechanismDriver(api.MechanismDriver):
         LOG.debug("host: %s, agent_active_ports: %s, refresh_tunnels: %s",
                   agent_host, agent_active_ports, refresh_tunnels)
         agent_ip = l2pop_db.get_agent_ip(agent)
-        segment = context.bottom_bound_segment
-        if not self._validate_segment(segment, port['id'], agent):
-            return
         other_fdb_entries = self._get_fdb_entries_template(
             segment, agent_ip, network_id)
         other_fdb_ports = other_fdb_entries[network_id]['ports']
@@ -327,11 +328,6 @@ class L2populationMechanismDriver(api.MechanismDriver):
         if not agent_host:
             return
 
-        network_id = port['network_id']
-
-        agent_active_ports = l2pop_db.get_agent_network_active_port_count(
-            context, agent_host, network_id)
-
         agent = l2pop_db.get_agent_by_host(context,
                                            agent_host)
         if not agent:
@@ -340,6 +336,11 @@ class L2populationMechanismDriver(api.MechanismDriver):
             return
         if not self._validate_segment(segment, port['id'], agent):
             return
+
+        network_id = port['network_id']
+
+        agent_active_ports = l2pop_db.get_agent_network_active_port_count(
+            context, agent_host, network_id)
 
         agent_ip = l2pop_db.get_agent_ip(agent)
         other_fdb_entries = self._get_fdb_entries_template(
