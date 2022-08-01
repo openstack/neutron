@@ -63,6 +63,10 @@ class DbQuotaDriverNull(nlib_quota_api.QuotaDriverAPI):
         return 0
 
     @staticmethod
+    def get_resource_count(context, project_id, tracked_resource):
+        return 0
+
+    @staticmethod
     def quota_limit_check(context, project_id, resources, deltas):
         pass
 

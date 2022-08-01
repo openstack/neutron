@@ -334,13 +334,13 @@ class TrackedResource(BaseResource):
         CountableResource instances.
         """
         if count_db_registers:
-            count = self._count_db_registers(context, project_id)
+            count = self.count_db_registers(context, project_id)
         else:
             count = self.count_used(context, project_id, resync_usage)
 
         return count + self.count_reserved(context, project_id)
 
-    def _count_db_registers(self, context, project_id):
+    def count_db_registers(self, context, project_id):
         """Return the existing resources (self._model_class) in a project.
 
         The query executed must be as fast as possible. To avoid retrieving all
