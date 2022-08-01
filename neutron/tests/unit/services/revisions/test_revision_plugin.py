@@ -191,6 +191,22 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
             new_rev = response['port']['revision_number']
             self.assertGreater(new_rev, rev)
 
+    def test_network_description_bumps_revision(self):
+        with self.network() as net:
+            rev = net['network']['revision_number']
+            data = {'network': {'description': 'Test Description'}}
+            response = self._update('networks', net['network']['id'], data)
+            new_rev = response['network']['revision_number']
+            self.assertEqual(rev + 1, new_rev)
+
+    def test_subnet_description_bumps_revision(self):
+        with self.subnet() as subnet:
+            rev = subnet['subnet']['revision_number']
+            data = {'subnet': {'description': 'Test Description'}}
+            response = self._update('subnets', subnet['subnet']['id'], data)
+            new_rev = response['subnet']['revision_number']
+            self.assertEqual(rev + 1, new_rev)
+
     def test_security_group_rule_ops_bump_security_group(self):
         s = {'security_group': {'tenant_id': 'some_tenant', 'name': '',
                                 'description': 's'}}
