@@ -284,17 +284,41 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
                              payload=events.DBEventPayload(mock.Mock()))
             self.assertEqual([res], self.notifier._unsubscribed_resources)
 
-    def test__only_status_changed(self):
+    def test__notification_is_needed(self):
         p1 = {'id': 1, 'status': 'DOWN', 'updated_at': '10:00:00',
-              'revision_number': 1}
+              'revision_number': 1,
+              'fixed_ips': [{'ip_address': '10.0.0.10', 'subnet_id': 'aaa'}],
+              'mac_address': 'aa:bb:cc:dd:ee:ff'}
         p2 = dict(p1)
         p2['status'] = 'ACTIVE'
         p2['revision_number'] = 2
         p2['updated_at'] = '10:00:01'
-        self.assertTrue(self.notifier._only_status_changed(p1, p2))
+        self.assertFalse(self.notifier._notification_is_needed(p1, p2))
+
         p2['name'] = 'test'
-        self.assertFalse(self.notifier._only_status_changed(p1, p2))
-        p1['name'] = 'test'
-        self.assertTrue(self.notifier._only_status_changed(p1, p2))
-        p1['name'] = 'test1'
-        self.assertFalse(self.notifier._only_status_changed(p1, p2))
+        self.assertFalse(self.notifier._notification_is_needed(p1, p2))
+        p2.pop('name')
+
+        p2['mac_address'] = '11:22:33:44:55:66'
+        self.assertTrue(self.notifier._notification_is_needed(p1, p2))
+        p2['mac_address'] = p1['mac_address']
+
+        p2['fixed_ips'] = [{'ip_address': '10.0.0.11', 'subnet_id': 'aaa'}]
+        self.assertTrue(self.notifier._notification_is_needed(p1, p2))
+        p2['fixed_ips'] = p1['fixed_ips']
+
+        p2['extra_dhcp_opts'] = 'some-test-opt'
+        self.assertTrue(self.notifier._notification_is_needed(p1, p2))
+        p2.pop('extra_dhcp_opts')
+
+        p2['dns_name'] = 'test-dns-name'
+        self.assertTrue(self.notifier._notification_is_needed(p1, p2))
+        p2.pop('dns_name')
+
+        p2['dns_assignment'] = 'test-dns-assignment'
+        self.assertTrue(self.notifier._notification_is_needed(p1, p2))
+        p2.pop('dns_assignment')
+
+        p2['dns_domain'] = 'test-dns-domain'
+        self.assertTrue(self.notifier._notification_is_needed(p1, p2))
+        p2.pop('dns_domain')
