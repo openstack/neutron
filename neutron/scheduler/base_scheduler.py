@@ -38,7 +38,7 @@ class BaseScheduler(object, metaclass=abc.ABCMeta):
     def schedule(self, plugin, context, resource):
         """Select and bind agents to a given resource."""
         if not self.resource_filter:
-            return
+            return []
         # filter the agents that can host the resource
         filtered_agents_dict = self.resource_filter.filter_agents(
             plugin, context, resource)
