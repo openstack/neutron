@@ -54,8 +54,7 @@
         - neutron-tempest-iptables_hybrid
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
-        # TODO(tkajinam): Add this job back when we make it voting again.
-        #- neutron-grenade
+        - neutron-grenade
         - neutron-tempest-slow-py3
         - tempest-integrated-networking
         - openstacksdk-functional-devstack
@@ -508,16 +507,28 @@
 
 - job:
     name: neutron-grenade
-    parent: legacy-dsvm-base
-    run: playbooks/legacy/neutron-grenade/run.yaml
-    post-run: playbooks/legacy/neutron-grenade/post.yaml
+    parent: grenade
     timeout: 10800
     required-projects:
       - openstack/grenade
-      - openstack/devstack-gate
       - openstack/neutron
     irrelevant-files: *tempest-irrelevant-files
-    voting: false
+    vars:
+      devstack_services:
+        etcd: false
+        br-ex-tcpdump: true
+        br-int-flows: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
+        # Swift services
+        s-account: false
+        s-container: false
+        s-object: false
+        s-proxy: false
 
 - job:
     name: neutron-tempest-postgres-full
