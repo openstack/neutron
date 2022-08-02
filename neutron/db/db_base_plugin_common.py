@@ -110,9 +110,12 @@ class DbBasePluginCommon(object):
         return [next(mac_maker) for x in range(mac_count)]
 
     @db_api.CONTEXT_READER
-    def _is_mac_in_use(self, context, network_id, mac_address):
-        return port_obj.Port.objects_exist(context, network_id=network_id,
-                                           mac_address=mac_address)
+    def _is_mac_in_use(self, context, network_id, mac_address,
+                       globally_unique=False):
+        kwargs = dict(mac_address=mac_address)
+        if not globally_unique:
+            kwargs['network_id'] = network_id
+        return port_obj.Port.objects_exist(context, **kwargs)
 
     @staticmethod
     def _delete_ip_allocation(context, network_id, subnet_id, ip_address):

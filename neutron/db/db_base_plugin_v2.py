@@ -1520,14 +1520,14 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         mac_address = port_data.pop('mac_address', None)
         if mac_address:
             if self._is_mac_in_use(context, port_data['network_id'],
-                                   mac_address):
+                                   mac_address, globally_unique=True):
                 raise exc.MacAddressInUse(net_id=port_data['network_id'],
                                           mac=mac_address)
         else:
             while True:
                 mac_address = self._generate_macs()[0]
                 if not self._is_mac_in_use(context, port_data['network_id'],
-                                           mac_address):
+                                           mac_address, globally_unique=True):
                     break
 
         db_port = models_v2.Port(mac_address=mac_address, **port_data)
