@@ -484,7 +484,7 @@ class LogicalSwitchPortUpdateUpEvent(row_event.RowEvent):
         events = (self.ROW_UPDATE,)
         super(LogicalSwitchPortUpdateUpEvent, self).__init__(
             events, table, (('up', '=', True),),
-            old_conditions=(('up', '=', False),))
+            old_conditions=(('up', '!=', True),))
         self.event_name = 'LogicalSwitchPortUpdateUpEvent'
 
     def run(self, event, row, old):
