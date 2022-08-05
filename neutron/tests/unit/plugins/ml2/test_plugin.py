@@ -2999,7 +2999,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         res = network_req.get_response(self.api)
         self.assertEqual(400, res.status_int)
 
-    def test_create_network_duplicate_partial_segments_fail(self):
+    def test_create_network_duplicate_partial_segments(self):
         data = {'network': {'name': 'net1',
                             mpnet_apidef.SEGMENTS:
                             [{pnet.NETWORK_TYPE: 'vlan',
@@ -3011,7 +3011,7 @@ class TestMultiSegmentNetworks(Ml2PluginV2TestCase):
         retry_fixture.setUp()
         network_req = self.new_create_request('networks', data)
         res = network_req.get_response(self.api)
-        self.assertEqual(409, res.status_int)
+        self.assertEqual(201, res.status_int)
 
     def test_release_network_segments(self):
         data = {'network': {'name': 'net1',
