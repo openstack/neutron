@@ -242,6 +242,9 @@ class OVNMechanismDriver(api.MechanismDriver):
             registry.subscribe(self._create_security_group,
                                resources.SECURITY_GROUP,
                                events.AFTER_CREATE)
+            registry.subscribe(self._delete_security_group_precommit,
+                               resources.SECURITY_GROUP,
+                               events.PRECOMMIT_DELETE)
             registry.subscribe(self._delete_security_group,
                                resources.SECURITY_GROUP,
                                events.AFTER_DELETE)
@@ -416,6 +419,14 @@ class OVNMechanismDriver(api.MechanismDriver):
         security_group = payload.latest_state
         self._ovn_client.create_security_group(context,
                                                security_group)
+
+    def _delete_security_group_precommit(self, resource, event, trigger,
+                                         payload):
+        context = n_context.get_admin_context()
+        security_group_id = payload.resource_id
+        for sg_rule in self._plugin.get_security_group_rules(
+                context, filters={'remote_group_id': [security_group_id]}):
+            self._ovn_client.delete_security_group_rule(context, sg_rule)
 
     def _delete_security_group(self, resource, event, trigger, payload):
         context = payload.context
