@@ -25,11 +25,11 @@ class ExtraDhcpOpt(base.NeutronDbObject):
     db_model = models.ExtraDhcpOpt
 
     fields = {
-         'id': common_types.UUIDField(),
-         'port_id': common_types.UUIDField(),
-         'opt_name': obj_fields.StringField(),
-         'opt_value': obj_fields.StringField(),
-         'ip_version': obj_fields.IntegerField(),
+        'id': common_types.UUIDField(),
+        'port_id': common_types.UUIDField(),
+        'opt_name': obj_fields.StringField(),
+        'opt_value': obj_fields.StringField(),
+        'ip_version': obj_fields.IntegerField(),
     }
 
     fields_no_update = ['port_id']

@@ -67,7 +67,7 @@ class QosPolicyPortBinding(base.NeutronDbObject, _QosPolicyBindingMixin):
         else:
             query = query.filter(~exists().where(
                 cls.db_model.port_id == models_v2.Port.id)).filter(
-                models_v2.Port.network_id == network_id)
+                    models_v2.Port.network_id == network_id)
         return query.all()
 
 

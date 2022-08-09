@@ -119,8 +119,7 @@ class NetworkSegmentRange(base.NeutronDbObject):
             query = self.obj_context.session.query(alloc_segmentation_id)
             query = query.filter(and_(
                 alloc_segmentation_id >= self.minimum,
-                alloc_segmentation_id <= self.maximum),
-                not_(allocated))
+                alloc_segmentation_id <= self.maximum), not_(allocated))
             if self.network_type == constants.TYPE_VLAN:
                 alloc_available = query.filter(
                     model.physical_network == self.physical_network).all()
@@ -141,9 +140,8 @@ class NetworkSegmentRange(base.NeutronDbObject):
                 self.physical_network,
                 segments_model.NetworkSegment.segmentation_id >= self.minimum,
                 segments_model.NetworkSegment.segmentation_id <= self.maximum))
-                .filter(
-                    segments_model.NetworkSegment.network_id ==
-                    models_v2.Network.id)).all()
+                          .filter(segments_model.NetworkSegment.network_id ==
+                                  models_v2.Network.id)).all()
         return dict(alloc_used)
 
     @classmethod

@@ -87,10 +87,10 @@ def check_min_pps_rule_conflict(policy, rule_obj):
             # Check if we are mixing directionless and direction-oriented QoS
             # minimum packet rate rules
             if getattr(rule_obj, "direction", None) and (
-                     (rule_obj.direction == n_consts.ANY_DIRECTION and
-                      rule.direction in n_consts.VALID_DIRECTIONS) or
-                     (rule_obj.direction in n_consts.VALID_DIRECTIONS and
-                      rule.direction == n_consts.ANY_DIRECTION)):
+                    (rule_obj.direction == n_consts.ANY_DIRECTION and
+                     rule.direction in n_consts.VALID_DIRECTIONS) or
+                    (rule_obj.direction in n_consts.VALID_DIRECTIONS and
+                     rule.direction == n_consts.ANY_DIRECTION)):
                 raise qos_exc.QoSRuleParameterConflict(
                     rule_value=rule_obj.direction,
                     policy_id=policy["id"],

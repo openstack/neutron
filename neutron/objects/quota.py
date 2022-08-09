@@ -93,8 +93,7 @@ class Reservation(base.NeutronDbObject):
             models.Reservation.expiration,
             sql.func.cast(
                 sql.func.sum(models.ResourceDelta.amount),
-                sqltypes.Integer)).join(
-            models.Reservation)
+                sqltypes.Integer)).join(models.Reservation)
         if expired:
             exp_expr = (models.Reservation.expiration < now)
         else:
@@ -103,8 +102,8 @@ class Reservation(base.NeutronDbObject):
             models.Reservation.project_id == project_id,
             models.ResourceDelta.resource.in_(resources),
             exp_expr)).group_by(
-            models.ResourceDelta.resource,
-            models.Reservation.expiration)
+                models.ResourceDelta.resource,
+                models.Reservation.expiration)
         return dict((resource, total_reserved)
                     for (resource, exp, total_reserved) in resv_query)
 

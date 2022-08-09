@@ -67,7 +67,7 @@ class AllowedAddressPair(base.NeutronDbObject):
     def get_allowed_address_pairs_for_ports(cls, context, port_ids):
         with db_api.CONTEXT_READER.using(context):
             query = context.session.query(models.AllowedAddressPair).filter(
-                    models.AllowedAddressPair.port_id.in_(port_ids))
+                models.AllowedAddressPair.port_id.in_(port_ids))
             pairs = [cls._load_object(context, db_obj)
                      for db_obj in query.all()]
         return pairs
