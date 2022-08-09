@@ -262,10 +262,6 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         with db_api.CONTEXT_WRITER.using(context):
             # pass security_group_rule_ids to ensure
             # consistency with deleted rules
-            # get security_group_bindings and security_group one more time
-            # so that they will be attached for session where sg will be
-            # deleted
-            ports = self._get_port_security_group_bindings(context, filters)
             sg = self._get_security_group(context, id)
             sgr_ids = [r['id'] for r in sg.rules]
             sec_group = self._make_security_group_dict(sg)

@@ -63,7 +63,8 @@ class SecurityGroupPortBinding(model_base.BASEV2):
                                       ondelete='CASCADE'),
                         primary_key=True)
     security_group_id = sa.Column(sa.String(36),
-                                  sa.ForeignKey("securitygroups.id"),
+                                  sa.ForeignKey("securitygroups.id",
+                                                ondelete='CASCADE'),
                                   primary_key=True)
     revises_on_change = ('ports', )
     # Add a relationship to the Port model in order to instruct SQLAlchemy to
