@@ -284,13 +284,9 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         int_ports = self._core_plugin.get_ports(
             context.elevated(), filters=filter_rtr)
         for port in int_ports:
-            dvr_binding = (ml2_db.
-                           get_distributed_port_binding_by_host(
-                               context, port['id'], port_host))
-            if dvr_binding:
-                # unbind this port from router
-                dvr_binding['router_id'] = None
-                dvr_binding.update(dvr_binding)
+            # unbind this port from router
+            ml2_db.update_distributed_port_binding_by_host(
+                context, port['id'], port_host, None)
 
     def _get_active_l3_agent_routers_sync_data(self, context, host, agent,
                                                router_ids):
