@@ -314,7 +314,7 @@ def create_interface(ifname, namespace, kind, **kwargs):
             if physical_interface:
                 link_key = "vxlan_link" if kind == "vxlan" else "link"
                 kwargs[link_key] = get_link_id(physical_interface, namespace)
-            return ip.link("add", ifname=ifname, kind=kind, **kwargs)
+            ip.link("add", ifname=ifname, kind=kind, **kwargs)
     except netlink_exceptions.NetlinkError as e:
         if e.code == errno.EEXIST:
             raise InterfaceAlreadyExists(device=ifname)
@@ -345,36 +345,35 @@ def interface_exists(ifname, namespace):
 def set_link_flags(device, namespace, flags):
     link = _run_iproute_link("get", device, namespace)[0]
     new_flags = flags | link['flags']
-    return _run_iproute_link("set", device, namespace, flags=new_flags)
+    _run_iproute_link("set", device, namespace, flags=new_flags)
 
 
 @privileged.link_cmd.entrypoint
 def set_link_attribute(device, namespace, **attributes):
-    return _run_iproute_link("set", device, namespace, **attributes)
+    _run_iproute_link("set", device, namespace, **attributes)
 
 
 @privileged.link_cmd.entrypoint
 def set_link_vf_feature(device, namespace, vf_config):
-    return _run_iproute_link("set", device, namespace=namespace, vf=vf_config)
+    _run_iproute_link("set", device, namespace=namespace, vf=vf_config)
 
 
 @privileged.link_cmd.entrypoint
 def set_link_bridge_forward_delay(device, forward_delay, namespace=None):
-    return _run_iproute_link('set', device, namespace=namespace,
-                             kind='bridge', br_forward_delay=forward_delay)
+    _run_iproute_link('set', device, namespace=namespace, kind='bridge',
+                      br_forward_delay=forward_delay)
 
 
 @privileged.link_cmd.entrypoint
 def set_link_bridge_stp(device, stp, namespace=None):
-    return _run_iproute_link('set', device, namespace=namespace,
-                             kind='bridge', br_stp_state=stp)
+    _run_iproute_link('set', device, namespace=namespace, kind='bridge',
+                      br_stp_state=stp)
 
 
 @privileged.link_cmd.entrypoint
 def set_link_bridge_master(device, bridge, namespace=None):
     bridge_idx = get_link_id(bridge, namespace) if bridge else 0
-    return _run_iproute_link('set', device, namespace=namespace,
-                             master=bridge_idx)
+    _run_iproute_link('set', device, namespace=namespace, master=bridge_idx)
 
 
 @tenacity.retry(
@@ -829,26 +828,26 @@ def _command_bridge_fdb(command, mac, device, dst_ip=None, namespace=None,
 @privileged.default.entrypoint
 def add_bridge_fdb(mac, device, dst_ip=None, namespace=None, **kwargs):
     """Add a FDB entry"""
-    return _command_bridge_fdb('add', mac, device, dst_ip=dst_ip,
-                               namespace=namespace, **kwargs)
+    _command_bridge_fdb('add', mac, device, dst_ip=dst_ip,
+                        namespace=namespace, **kwargs)
 
 
 @privileged.default.entrypoint
 def append_bridge_fdb(mac, device, dst_ip=None, namespace=None, **kwargs):
     """Add a FDB entry"""
-    return _command_bridge_fdb('append', mac, device, dst_ip=dst_ip,
-                               namespace=namespace, **kwargs)
+    _command_bridge_fdb('append', mac, device, dst_ip=dst_ip,
+                        namespace=namespace, **kwargs)
 
 
 @privileged.default.entrypoint
 def replace_bridge_fdb(mac, device, dst_ip=None, namespace=None, **kwargs):
     """Add a FDB entry"""
-    return _command_bridge_fdb('replace', mac, device, dst_ip=dst_ip,
-                               namespace=namespace, **kwargs)
+    _command_bridge_fdb('replace', mac, device, dst_ip=dst_ip,
+                        namespace=namespace, **kwargs)
 
 
 @privileged.default.entrypoint
 def delete_bridge_fdb(mac, device, dst_ip=None, namespace=None, **kwargs):
     """Add a FDB entry"""
-    return _command_bridge_fdb('del', mac, device, dst_ip=dst_ip,
-                               namespace=namespace, **kwargs)
+    _command_bridge_fdb('del', mac, device, dst_ip=dst_ip,
+                        namespace=namespace, **kwargs)

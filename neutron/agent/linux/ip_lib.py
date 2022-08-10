@@ -526,8 +526,8 @@ class IpLinkCommand(IpDeviceCommandBase):
         return privileged.get_link_vfs(self.name, self._parent.namespace)
 
     def set_vf_feature(self, vf_config):
-        return privileged.set_link_vf_feature(
-            self.name, self._parent.namespace, vf_config)
+        privileged.set_link_vf_feature(self.name, self._parent.namespace,
+                                       vf_config)
 
 
 class IpAddrCommand(IpDeviceCommandBase):
