@@ -21,9 +21,11 @@ import os
 import re
 import sys
 
-import click
-
+from cliff import app
+from cliff import command
+from cliff import commandmanager
 import download_gerrit_change
+
 
 root_dir = os.path.dirname(os.path.realpath(__file__))
 Migration = namedtuple('Migration', 'from_repo to_repo')
@@ -80,30 +82,55 @@ def open_output(filename=None):
             fh.close()
 
 
-@click.command()
-@click.option('-i', '--input_patch', prompt='Input patch file or gerrit id',
-              help='input_patch patch file or gerrit change')
-@click.option('-o', '--output_patch', default='-',
-              help='Output patch file. Default: stdout')
-@click.option('-m', '--mapfile',
-              default=os.path.join(root_dir, 'migrate_names.txt'),
-              show_default=True,
-              type=click.Path(),
-              help='Data file that specifies mapping to be applied to input')
-@click.option('--reverse/--no-reverse',
-              default=False,
-              help='Map filenames from networking-ovn to Neutron repo')
-def cli(input_patch, output_patch, mapfile, reverse):
-    dirmaps = read_mapfile(mapfile)
-    if reverse:
+class Config(command.Command):
+    def get_parser(self, prog_name):
+        parser = super().get_parser(prog_name)
+        parser.add_argument(
+            '-i', '--input_patch', required=True,
+            help='input_patch patch file or gerrit change')
+        parser.add_argument(
+            '-o', '--output_patch', default='-',
+            help='Output patch file. Default: stdout')
+        parser.add_argument(
+            '-m', '--mapfile',
+            default=os.path.join(root_dir, 'migrate_names.txt'),
+            help='Data file that specifies mapping to be applied to input')
+        reverse_group = parser.add_mutually_exclusive_group()
+        reverse_group.add_argument(
+            '--reverse',
+            action='store_true',
+            default=False,
+            help='Verify server certificate (default)',
+        )
+        reverse_group.add_argument(
+            '--no-reverse',
+            action='store_true',
+            help='Disable server certificate verification',
+        )
+        return parser
+
+    def take_action(self, parsed_args):
+        pass
+
+
+def cli():
+    my_app = app.App(
+        description='Migrate names between repositories',
+        version='1.0.0',
+        command_manager=commandmanager.CommandManager('mycli.cli'))
+    cmd = Config(my_app, None)
+    parser = cmd.get_parser('migrate_names')
+    parsed_args = parser.parse_args(sys.argv[1:])
+    dirmaps = read_mapfile(parsed_args.mapfile)
+    if parsed_args.reverse:
         dirmaps = [Migration(two, one) for one, two in dirmaps]
-    if os.path.isfile(input_patch):
-        with open(input_patch, 'r') as input_fd:
+    if os.path.isfile(parsed_args.input_patch):
+        with open(parsed_args.input_patch, 'r') as input_fd:
             patch_content = ''.join(input_fd.readlines())
     else:
-        patch_content = download_gerrit_change.fetch(input_patch)
+        patch_content = download_gerrit_change.fetch(parsed_args.input_patch)
 
-    with open_output(output_patch) as output_fd:
+    with open_output(parsed_args.output_patch) as output_fd:
         parse_input(dirmaps, patch_content, output_fd)
 
 
