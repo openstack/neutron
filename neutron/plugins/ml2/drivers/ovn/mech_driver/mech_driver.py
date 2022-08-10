@@ -47,7 +47,6 @@ from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import exceptions as ovn_exceptions
 from neutron.common.ovn import extensions as ovn_extensions
 from neutron.common.ovn import utils as ovn_utils
-from neutron.common import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_hash_ring_db
 from neutron.db import ovn_revision_numbers_db
@@ -620,10 +619,6 @@ class OVNMechanismDriver(api.MechanismDriver):
         network state.  It is up to the mechanism driver to ignore
         state or state changes that it does not know or care about.
         """
-        # FIXME(lucasagomes): We can delete this conditional after
-        # https://bugs.launchpad.net/neutron/+bug/1739798 is fixed.
-        if utils.is_session_active(context._plugin_context.session):
-            return
         self._ovn_client.update_network(
             context._plugin_context, context.current,
             original_network=context.original)
