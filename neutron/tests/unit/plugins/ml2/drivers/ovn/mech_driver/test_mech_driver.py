@@ -32,6 +32,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants as const
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
+from neutron_lib.placement import utils as place_utils
 from neutron_lib.plugins import directory
 from neutron_lib.tests import tools
 from neutron_lib.utils import net as n_net
@@ -65,12 +66,15 @@ from neutron.plugins.ml2.drivers import type_geneve  # noqa
 from neutron.services.revisions import revision_plugin
 from neutron.tests.unit.extensions import test_segment
 from neutron.tests.unit import fake_resources as fakes
+from neutron.tests.unit.plugins.ml2 import _test_mech_agent as test_mech_agent
 from neutron.tests.unit.plugins.ml2 import test_ext_portsecurity
 from neutron.tests.unit.plugins.ml2 import test_plugin
 from neutron.tests.unit.plugins.ml2 import test_security_group
 
 
 OVN_PROFILE = ovn_const.OVN_PORT_BINDING_PROFILE
+CLASS_PLACEMENT_REPORT = ('neutron.services.placement_report.plugin.'
+                          'PlacementReportPlugin')
 
 OvnRevNumberRow = collections.namedtuple(
     'OvnRevNumberRow', ['created_at'])
@@ -158,6 +162,9 @@ class TestOVNMechanismDriverBase(MechDriverSetupBase,
 
         self.nb_ovn = self.mech_driver.nb_ovn
         self.sb_ovn = self.mech_driver.sb_ovn
+        self.rp_ns = self.mech_driver.resource_provider_uuid5_namespace
+        self.placement_ext = self.mech_driver._ovn_client.placement_extension
+        self.placement_ext._reset(self.placement_ext._driver)
 
         self.fake_subnet = fakes.FakeSubnet.create_one_subnet().info()
 
@@ -178,6 +185,11 @@ class TestOVNMechanismDriverBase(MechDriverSetupBase,
         p = mock.patch.object(ovn_revision_numbers_db, 'bump_revision')
         p.start()
         self.addCleanup(p.stop)
+
+    def get_additional_service_plugins(self):
+        p = super().get_additional_service_plugins()
+        p.update({'placement_report': CLASS_PLACEMENT_REPORT})
+        return p
 
     def test_delete_mac_binding_entries(self):
         self.config(group='ovn', ovn_sb_private_key=None)
@@ -2549,6 +2561,88 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             mock.call(ha_ch_grp_name, ch3.name, priority=mock.ANY)]
         self.nb_ovn.ha_chassis_group_add_chassis.assert_has_calls(
             expected_calls, any_order=True)
+
+    @mock.patch.object(mech_driver, 'LOG')
+    def test_responsible_for_ports_allocation(self, mock_log):
+        rp1 = str(place_utils.device_resource_provider_uuid(
+            namespace=self.rp_ns, host='compute1', device='br-ext1'))
+        allocation = {'rp_group1': rp1}
+        context = test_mech_agent.FakePortContext(
+            'agent', 'agents', 'segments', profile={'allocation': allocation})
+        chassis = fakes.FakeChassis.create(
+            az_list=['az2'], chassis_as_gw=True,
+            bridge_mappings=['public1:br-ext1', 'public2:br-ext2',
+                             'public3:br-ext3'],
+            rp_bandwidths=['br-ext1:1000:2000', 'br-ext2:3000:4000'],
+            rp_inventory_defaults={'allocation_ratio': 1.0, 'min_unit': 5},
+            rp_hypervisors=['br-ext1:compute1', 'br-ext2:compute2'])
+        self.placement_ext._driver._sb_idl.chassis_list.return_value.execute. \
+            return_value = [chassis]
+        with mock.patch.object(self.placement_ext, 'name2uuid') as \
+                mock_name2uuid:
+            mock_name2uuid.return_value = {'compute1': 'uuid_compute1',
+                                           'compute2': 'uuid_compute2'}
+            self.assertTrue(
+                self.mech_driver.responsible_for_ports_allocation(context))
+        mock_log.debug.assert_called_once_with(
+            'Chassis %s is reponsible of the resource provider %s',
+            chassis.name, mock.ANY)
+
+    def test_responsible_for_ports_allocation_hostname_not_present(self):
+        rp1 = str(place_utils.device_resource_provider_uuid(
+            namespace=self.rp_ns, host='compute1', device='br-ext1'))
+        allocation = {'rp_group1': rp1}
+        context = test_mech_agent.FakePortContext(
+            'agent', 'agents', 'segments', profile={'allocation': allocation})
+        # "compute1" is not present in "rp_hypervisors"
+        chassis = fakes.FakeChassis.create(
+            az_list=['az2'], chassis_as_gw=True,
+            bridge_mappings=['public1:br-ext1', 'public2:br-ext2',
+                             'public3:br-ext3'],
+            rp_bandwidths=['br-ext1:1000:2000', 'br-ext2:3000:4000'],
+            rp_inventory_defaults={'allocation_ratio': 1.0, 'min_unit': 5},
+            rp_hypervisors=['br-ext2:compute2'])
+        self.placement_ext._driver._sb_idl.chassis_list.return_value.execute. \
+            return_value = [chassis]
+        with mock.patch.object(self.placement_ext, 'name2uuid') as \
+                mock_name2uuid:
+            mock_name2uuid.return_value = {'compute2': 'uuid_compute2'}
+        self.assertFalse(
+            self.mech_driver.responsible_for_ports_allocation(context))
+
+    @mock.patch.object(mech_driver, 'LOG')
+    def test_responsible_for_ports_allocation_multiple_chassis(self, mock_log):
+        rp1 = str(place_utils.device_resource_provider_uuid(
+            namespace=self.rp_ns, host='compute1', device='br-ext1'))
+        allocation = {'rp_group1': rp1}
+        context = test_mech_agent.FakePortContext(
+            'agent', 'agents', 'segments', profile={'allocation': allocation})
+        chassis = []
+        for _ in range(2):
+            chassis.append(fakes.FakeChassis.create(
+                az_list=['az2'], chassis_as_gw=True,
+                bridge_mappings=['public1:br-ext1', 'public2:br-ext2',
+                                 'public3:br-ext3'],
+                rp_bandwidths=['br-ext1:1000:2000', 'br-ext2:3000:4000'],
+                rp_inventory_defaults={'allocation_ratio': 1.0, 'min_unit': 5},
+                rp_hypervisors=['br-ext1:compute1', 'br-ext2:compute2']))
+        self.placement_ext._driver._sb_idl.chassis_list.return_value.execute. \
+            return_value = chassis
+        with mock.patch.object(self.placement_ext, 'name2uuid') as \
+                mock_name2uuid:
+            mock_name2uuid.return_value = {'compute1': 'uuid_compute1',
+                                           'compute2': 'uuid_compute2'}
+            self.assertFalse(
+                self.mech_driver.responsible_for_ports_allocation(context))
+        mock_log.error.assert_called_once()
+
+    def test_responsible_for_ports_allocation_no_chassis(self):
+        rp1 = str(place_utils.device_resource_provider_uuid(
+            namespace=self.rp_ns, host='host0', device='eth1'))
+        context = test_mech_agent.FakePortContext(
+            'agent', 'agents', 'segments', profile={'allocation': rp1})
+        self.assertFalse(
+            self.mech_driver.responsible_for_ports_allocation(context))
 
 
 class OVNMechanismDriverTestCase(MechDriverSetupBase,
