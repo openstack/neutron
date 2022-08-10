@@ -197,6 +197,20 @@ class IpLibTestCase(IpLibTestFramework):
             for expected_rule in expected_rules[ip_version]:
                 self.assertNotIn(expected_rule, rules)
 
+    def test_add_ip_rule_default_table(self):
+        attr = self.generate_device_details()
+        device = self.manage_device(attr)
+        test_cases = {
+            constants.IP_VERSION_4: {'ip': '1.1.1.1', 'to': '8.8.8.0/24'},
+            constants.IP_VERSION_6: {'ip': 'abcd::1', 'to': '1234::/64'}
+        }
+        for ip_version, rule in test_cases.items():
+            ip_lib.add_ip_rule(namespace=device.namespace, **rule)
+            rules = ip_lib.list_ip_rules(device.namespace, ip_version)
+            for _rule in rules:
+                if _rule['from'] == rule['ip'] and _rule['to'] == rule['to']:
+                    self.assertEqual('default', _rule['table'])
+
     def test_device_exists(self):
         attr = self.generate_device_details()
 
