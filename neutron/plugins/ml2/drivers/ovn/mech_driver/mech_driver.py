@@ -630,10 +630,6 @@ class OVNMechanismDriver(api.MechanismDriver):
         network state.  It is up to the mechanism driver to ignore
         state or state changes that it does not know or care about.
         """
-        # FIXME(lucasagomes): We can delete this conditional after
-        # https://bugs.launchpad.net/neutron/+bug/1739798 is fixed.
-        if context._plugin_context.session.is_active:
-            return
         self._ovn_client.update_network(
             context._plugin_context, context.current,
             original_network=context.original)
