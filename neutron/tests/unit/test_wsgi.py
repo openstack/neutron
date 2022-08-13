@@ -579,7 +579,7 @@ class JSONDeserializerTest(base.BaseTestCase):
                          deserializer.deserialize(data))
 
     def test_json_with_unicode(self):
-        data = b'{"a": "\u7f51\u7edc"}'
+        data = b'{"a": "\\u7f51\\u7edc"}'
         as_dict = {'body': {'a': '\u7f51\u7edc'}}
         deserializer = wsgi.JSONDeserializer()
         self.assertEqual(as_dict,
