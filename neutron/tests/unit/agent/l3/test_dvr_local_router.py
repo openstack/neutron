@@ -287,6 +287,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
         self.assertFalse(ri.floating_forward_rules(fip))
 
     def test_floating_forward_rules(self):
+        self.utils_exec.return_value = "iptables v1.6.2 (legacy)"
         router = mock.MagicMock()
         router.get.return_value = [{'host': HOSTNAME},
                                    {'host': mock.sentinel.otherhost}]
