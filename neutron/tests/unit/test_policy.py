@@ -227,7 +227,7 @@ class PolicyTestCase(base.BaseTestCase):
         action = "get_example:only_project_user_allowed"
         target = {'project_id': 'some-project'}
         system_admin_ctx = context.Context(
-            user="fake",
+            user_id="fake",
             roles=['admin', 'member', 'reader'],
             system_scope='all')
         self.assertRaises(
