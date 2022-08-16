@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from concurrent import futures
 from unittest import mock
 
 from neutron_lib.api.definitions import portbindings
@@ -560,6 +561,23 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         retrieved_inactive_binding = utils.get_port_binding_by_status_and_host(
             retrieved_bindings, const.INACTIVE)
         self._assert_unbound_port_binding(retrieved_inactive_binding)
+
+    def test_activate_port_binding_concurrency(self):
+        port, _ = self._create_port_and_binding()
+        with mock.patch.object(mechanism_test.TestMechanismDriver,
+                               '_check_port_context'):
+            with futures.ThreadPoolExecutor() as executor:
+                f1 = executor.submit(
+                    self._activate_port_binding, port['id'], self.host)
+                f2 = executor.submit(
+                    self._activate_port_binding, port['id'], self.host)
+                result_1 = f1.result()
+                result_2 = f2.result()
+
+        # One request should be successful and the other should receive a
+        # HTTPConflict. The order is arbitrary.
+        self.assertEqual({webob.exc.HTTPConflict.code, webob.exc.HTTPOk.code},
+                         {result_1.status_int, result_2.status_int})
 
     def test_activate_port_binding_for_non_compute_owner(self):
         port, new_binding = self._create_port_and_binding()

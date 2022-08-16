@@ -694,6 +694,14 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # transaction that completed before the deletion.
                 LOG.debug("Port %s has been deleted concurrently", port_id)
                 return orig_context, False, False
+
+            if (new_binding.status == const.INACTIVE and
+                    new_binding.host == cur_binding.host):
+                # The binding is already active on the target host,
+                # probably because of a concurrent activate request.
+                raise exc.PortBindingAlreadyActive(port_id=port_id,
+                                                   host=new_binding.host)
+
             # Since the mechanism driver bind_port() calls must be made
             # outside a DB transaction locking the port state, it is
             # possible (but unlikely) that the port's state could change
