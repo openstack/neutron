@@ -1,0 +1,10 @@
+---
+fixes:
+  - |
+    `1986003 <https://bugs.launchpad.net/neutron/+bug/1986003>`_
+    Fixed an issue with concurrent requests to activate the same port binding
+    where one of the requests returned a 500 Internal Server Error.
+    With the fix one request will return successfully and the other will
+    return a 409 Conflict (Binding already active).
+    This fixes errors in nova live-migrations where those concurrent requests
+    might be sent. Nova handles the 409/Conflict response gracefully.
