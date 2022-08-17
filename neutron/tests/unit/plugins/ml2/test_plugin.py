@@ -524,6 +524,37 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
                  portbindings.VIF_TYPE_BINDING_FAILED],
                 negative_search=True)
 
+    @mock.patch.object(ml2_plugin, 'isinstance')
+    @mock.patch.object(port_obj.Port, 'check_network_ports_by_binding_types')
+    def test__update_segmentation_id_non_AgentMechanismDriverBase(
+            self, mock_check_network, mock_isinstance):
+        plugin = directory.get_plugin()
+
+        mock_check_network.return_value = False
+        mock_isinstance.return_value = False
+        mock_update_net_segment = mock.patch.object(
+            plugin.type_manager, 'update_network_segment').start()
+
+        fake_vif_types = ['fake-vif-type0', 'fake-vif-type1']
+        fake_driver = mock.Mock()
+        fake_driver.obj.get_supported_vif_types.return_value = (
+            fake_vif_types)
+        fake_driver.obj.provider_network_attribute_updates_supported.\
+            return_value = {pnet.SEGMENTATION_ID: 1000}
+        plugin.mechanism_manager.ordered_mech_drivers = [fake_driver]
+
+        with self.network() as net:
+            net_data = {pnet.SEGMENTATION_ID: 1000}
+            plugin._update_segmentation_id(self.context, net['network'],
+                                           net_data)
+
+            # Assert the new method get_supported_vif_types() has been called
+            fake_driver.obj.get_supported_vif_types.assert_called_once_with()
+
+            # Assert the update method has been called
+            mock_update_net_segment.assert_called_once_with(
+                self.context, net['network'], net_data, mock.ANY)
+
     def test_update_network_with_empty_body(self):
         with self.network() as network:
             network_id = network["network"]["id"]
