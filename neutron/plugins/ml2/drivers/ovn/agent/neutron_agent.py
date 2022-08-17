@@ -82,7 +82,7 @@ class NeutronAgent(abc.ABC):
         return {
             'binary': self.binary,
             'host': self.chassis.hostname,
-            'heartbeat_timestamp': timeutils.utcnow(),
+            'heartbeat_timestamp': self.updated_at,
             'availability_zone': ', '.join(
                 ovn_utils.get_chassis_availability_zones(self.chassis)),
             'topic': 'n/a',
