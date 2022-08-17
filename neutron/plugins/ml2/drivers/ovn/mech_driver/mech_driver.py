@@ -951,7 +951,9 @@ class OVNMechanismDriver(api.MechanismDriver):
         # OVN chassis information is needed to ensure a valid port bind.
         # Collect port binding data and refuse binding if the OVN chassis
         # cannot be found or is dead.
-        agents = n_agent.AgentCache().get_agents({'host': context.host})
+        agents = n_agent.AgentCache().get_agents(
+            {'host': context.host,
+             'agent_type': ovn_const.OVN_CONTROLLER_TYPES})
         if not agents:
             LOG.warning('Refusing to bind port %(port_id)s due to '
                         'no OVN chassis for host: %(host)s',

@@ -1194,7 +1194,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             fake_port, fake_host, fake_segments)
         self.mech_driver.bind_port(fake_port_context)
         neutron_agent.AgentCache().get_agents.assert_called_once_with(
-            {'host': fake_host})
+            {'host': fake_host,
+             'agent_type': ovn_const.OVN_CONTROLLER_TYPES})
         fake_port_context.set_binding.assert_not_called()
 
     def test_bind_port_host_not_found(self):
@@ -1224,7 +1225,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             fake_port, fake_host, fake_segments)
         self.mech_driver.bind_port(fake_port_context)
         neutron_agent.AgentCache().get_agents.assert_called_once_with(
-            {'host': fake_host})
+            {'host': fake_host,
+             'agent_type': ovn_const.OVN_CONTROLLER_TYPES})
         fake_port_context.set_binding.assert_called_once_with(
             fake_segments[0]['id'],
             portbindings.VIF_TYPE_OVS,
@@ -1239,7 +1241,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             fake_port, fake_host, fake_segments)
         self.mech_driver.bind_port(fake_port_context)
         neutron_agent.AgentCache().get_agents.assert_called_once_with(
-            {'host': fake_host})
+            {'host': fake_host,
+             'agent_type': ovn_const.OVN_CONTROLLER_TYPES})
         fake_port_context.set_binding.assert_called_once_with(
             fake_segments[0]['id'],
             portbindings.VIF_TYPE_OVS,
@@ -1260,7 +1263,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             fake_port, fake_host, fake_segments)
         self.mech_driver.bind_port(fake_port_context)
         neutron_agent.AgentCache().get_agents.assert_called_once_with(
-            {'host': fake_host})
+            {'host': fake_host,
+             'agent_type': ovn_const.OVN_CONTROLLER_TYPES})
         fake_port_context.set_binding.assert_called_once_with(
             fake_segments[0]['id'],
             portbindings.VIF_TYPE_OVS,
