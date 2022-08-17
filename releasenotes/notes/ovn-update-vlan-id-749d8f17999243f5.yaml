@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    Fixes an issue in the ML2/OVN driver where the network
+    segment tag was not being updated in the OVN Northbound
+    database. For more information, see bug `1944708
+    <https://bugs.launchpad.net/neutron/+bug/1944708>`_.
