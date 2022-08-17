@@ -1040,7 +1040,8 @@ def is_session_active(session):
     behaviour, this method checks if there is a transaction created and if
     the transaction has any active connection against the database server.
     """
-    if session.autocommit:  # old behaviour, to be removed with sqlalchemy 2.0
+    if getattr(session, 'autocommit', None):
+        # old behaviour, to be removed with sqlalchemy 2.0
         return session.is_active
     if not session.transaction:
         return False

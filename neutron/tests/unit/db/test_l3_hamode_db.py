@@ -46,6 +46,7 @@ from neutron.db import agents_db
 from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_hamode_db
 from neutron.objects import l3_hamode
+from neutron.objects import network as network_obj
 from neutron import quota
 from neutron.scheduler import l3_agent_scheduler
 from neutron.services.revisions import revision_plugin
@@ -601,6 +602,7 @@ class L3HATestCase(L3HATestFramework):
     def test_add_ha_port_subtransactions_blocked(self):
         ctx = self.admin_ctx
         with db_api.CONTEXT_WRITER.using(ctx):
+            network_obj.Network(ctx).create()
             self.assertRaises(RuntimeError, self.plugin.add_ha_port,
                               ctx, 'id', 'id', 'id')
 
