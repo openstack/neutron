@@ -223,12 +223,12 @@ class IPAllocation(base.NeutronDbObject):
             alloc_db = (context.session.query(models_v2.IPAllocation).
                         filter_by(subnet_id=subnet_id).join(models_v2.Port).
                         filter(~models_v2.Port.device_owner.
-                        in_(device_owner)).first())
+                               in_(device_owner)).first())
         else:
             alloc_db = (context.session.query(models_v2.IPAllocation).
                         filter_by(subnet_id=subnet_id).join(models_v2.Port).
                         filter(models_v2.Port.device_owner.
-                        in_(device_owner)).first())
+                               in_(device_owner)).first())
         if exclude and alloc_db:
             return super(IPAllocation, cls)._load_object(context, alloc_db)
         if alloc_db:
@@ -723,7 +723,7 @@ class Port(base.NeutronDbObject):
         """Return ports with fixed IPs in a subnet"""
         return context.session.query(models_v2.Port).filter(
             models_v2.IPAllocation.port_id == models_v2.Port.id).filter(
-            models_v2.IPAllocation.subnet_id == subnet_id).all()
+                models_v2.IPAllocation.subnet_id == subnet_id).all()
 
     @classmethod
     def get_port_from_mac_and_pci_slot(cls, context, device_mac,

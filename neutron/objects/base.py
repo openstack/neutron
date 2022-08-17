@@ -868,7 +868,7 @@ class NeutronDbObject(NeutronObject, metaclass=DeclarativeObject):
                     parent=clsname, child=objclass.__name__)
             if len(foreign_keys.keys()) > 1:
                 raise o_exc.NeutronSyntheticFieldMultipleForeignKeys(
-                        field=field)
+                    field=field)
 
             synthetic_field_db_name = (
                 self.fields_need_translation.get(field, field))
@@ -981,5 +981,4 @@ class NeutronDbObject(NeutronObject, metaclass=DeclarativeObject):
             cls.validate_filters(**kwargs)
         # Succeed if at least a single object matches; no need to fetch more
         return bool(obj_db_api.count(
-            cls, context, query_limit=1, **cls.modify_fields_to_db(kwargs))
-        )
+            cls, context, query_limit=1, **cls.modify_fields_to_db(kwargs)))

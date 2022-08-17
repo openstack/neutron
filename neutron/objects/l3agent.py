@@ -36,7 +36,7 @@ class RouterL3AgentBinding(base.NeutronDbObject):
         'router_id': common_types.UUIDField(),
         'l3_agent_id': common_types.UUIDField(),
         'binding_index': obj_fields.IntegerField(
-                             default=l3agent.LOWEST_BINDING_INDEX),
+            default=l3agent.LOWEST_BINDING_INDEX),
     }
 
     # TODO(ihrachys) return OVO objects not models
@@ -52,16 +52,15 @@ class RouterL3AgentBinding(base.NeutronDbObject):
     @classmethod
     @db_api.CONTEXT_READER
     def get_down_router_bindings(cls, context, cutoff):
-        query = (context.session.query(
-                 l3agent.RouterL3AgentBinding).
+        query = (context.session.query(l3agent.RouterL3AgentBinding).
                  join(agent_model.Agent).
                  filter(agent_model.Agent.heartbeat_timestamp < cutoff,
-                 agent_model.Agent.admin_state_up).outerjoin(
-                     l3_attrs.RouterExtraAttributes,
-                     l3_attrs.RouterExtraAttributes.router_id ==
-                 l3agent.RouterL3AgentBinding.router_id).filter(
-                 l3_attrs.RouterExtraAttributes.ha.in_([sql.false(),
-                                                        sql.null()])))
+                        agent_model.Agent.admin_state_up).outerjoin(
+                            l3_attrs.RouterExtraAttributes,
+                            l3_attrs.RouterExtraAttributes.router_id ==
+                            l3agent.RouterL3AgentBinding.router_id).filter(
+                                l3_attrs.RouterExtraAttributes.ha.in_(
+                                    [sql.false(), sql.null()])))
         bindings = [cls._load_object(context, db_obj) for db_obj in
                     query.all()]
         return bindings

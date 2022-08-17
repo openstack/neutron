@@ -53,7 +53,7 @@ class QosRuleType(base.NeutronObject):
         drivers_obj = [QosRuleTypeDriver(
             name=driver['name'],
             supported_parameters=driver['supported_parameters'])
-            for driver in drivers]
+                       for driver in drivers]
 
         return cls(type=rule_type_name, drivers=drivers_obj)
 
@@ -67,7 +67,7 @@ class QosRuleType(base.NeutronObject):
 
         rule_types = directory.get_plugin(
             alias=constants.QOS).supported_rule_types(
-            all_supported=all_supported, all_rules=all_rules)
+                all_supported=all_supported, all_rules=all_rules)
         return [cls(type=type_) for type_ in rule_types]
 
     # we don't receive context because we don't need db access at all

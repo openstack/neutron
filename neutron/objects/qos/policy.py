@@ -342,11 +342,11 @@ class QosPolicy(rbac_db.NeutronRbacObject):
 
     @classmethod
     def _get_bound_project_ids(cls, session, binding_db, bound_db,
-                              binding_db_id_column, policy_id):
+                               binding_db_id_column, policy_id):
         return list(itertools.chain.from_iterable(
             session.query(bound_db.project_id).join(
                 binding_db, bound_db.id == binding_db_id_column).filter(
-                binding_db.policy_id == policy_id).all()))
+                    binding_db.policy_id == policy_id).all()))
 
     @classmethod
     def get_bound_project_ids(cls, context, policy_id):

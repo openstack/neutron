@@ -106,9 +106,9 @@ class Agent(base.NeutronDbObject):
                     rb_model.RouterL3AgentBinding.router_id
                 ).label('count')).outerjoin(
                     rb_model.RouterL3AgentBinding).group_by(
-                    agent_model.Agent,
-                    rb_model.RouterL3AgentBinding
-                    .l3_agent_id).order_by('count')
+                        agent_model.Agent,
+                        rb_model.RouterL3AgentBinding
+                        .l3_agent_id).order_by('count')
             res = query.filter(agent_model.Agent.id.in_(agent_ids)).first()
         agent_obj = cls._load_object(context, res[0])
         return agent_obj
@@ -117,12 +117,11 @@ class Agent(base.NeutronDbObject):
     def get_l3_agents_ordered_by_num_routers(cls, context, agent_ids):
         with cls.db_context_reader(context):
             query = (context.session.query(agent_model.Agent, func.count(
-                rb_model.RouterL3AgentBinding.router_id)
-                .label('count')).
-                outerjoin(rb_model.RouterL3AgentBinding).
-                group_by(agent_model.Agent).
-                filter(agent_model.Agent.id.in_(agent_ids)).
-                order_by('count'))
+                rb_model.RouterL3AgentBinding.router_id).label('count')).
+                     outerjoin(rb_model.RouterL3AgentBinding).
+                     group_by(agent_model.Agent).
+                     filter(agent_model.Agent.id.in_(agent_ids)).
+                     order_by('count'))
             return [cls._load_object(context, record[0]) for record in query]
 
     @classmethod
@@ -157,10 +156,9 @@ class Agent(base.NeutronDbObject):
     @db_api.CONTEXT_READER
     def get_agents_by_availability_zones_and_agent_type(
             cls, context, agent_type, availability_zones):
-        query = context.session.query(
-            agent_model.Agent).filter_by(
+        query = context.session.query(agent_model.Agent).filter_by(
             agent_type=agent_type).group_by(
-            agent_model.Agent.availability_zone)
+                agent_model.Agent.availability_zone)
         query = query.filter(
             agent_model.Agent.availability_zone.in_(availability_zones)).all()
         agents = [cls._load_object(context, record) for record in query]

@@ -251,13 +251,12 @@ class Subnet(base.NeutronDbObject):
             object_data = db_obj.get('dns_publish_fixed_ip', None)
         else:
             object_data = SubnetDNSPublishFixedIP.get_objects(
-                    self.obj_context,
-                    subnet_id=self.id)
+                self.obj_context,
+                subnet_id=self.id)
 
         dns_publish_fixed_ip = False
         if object_data:
-            dns_publish_fixed_ip = object_data.get(
-                    'dns_publish_fixed_ip')
+            dns_publish_fixed_ip = object_data.get('dns_publish_fixed_ip')
         setattr(self, 'dns_publish_fixed_ip', dns_publish_fixed_ip)
         self.obj_reset_changes(['dns_publish_fixed_ip'])
 
@@ -358,7 +357,7 @@ class Subnet(base.NeutronDbObject):
 
     @classmethod
     def _query_filter_by_fixed_ips_segment(cls, query, fixed_ips,
-            allow_multiple_segments=False):
+                                           allow_multiple_segments=False):
         """Excludes subnets not on the same segment as fixed_ips
 
         :raises: FixedIpsSubnetsNotOnSameSegment
@@ -509,8 +508,8 @@ class Subnet(base.NeutronDbObject):
         if ignored_service_type:
             service_type_model = SubnetServiceType.db_model
             query = query.filter(~exists().where(and_(
-                     cls.db_model.id == service_type_model.subnet_id,
-                     service_type_model.service_type == ignored_service_type)))
+                cls.db_model.id == service_type_model.subnet_id,
+                service_type_model.service_type == ignored_service_type)))
 
         # (zigo): When a subnet is created, at this point in the code,
         # its service_types aren't populated in the subnet_service_types

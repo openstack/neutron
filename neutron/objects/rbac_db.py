@@ -69,10 +69,10 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
         # session
         rbac_db_model = rbac_db_cls.db_model
         return (db_utils.model_query(context, rbac_db_model).filter(
-                and_(rbac_db_model.object_id == obj_id,
-                     rbac_db_model.action == models.ACCESS_SHARED,
-                     rbac_db_model.target_project.in_(
-                         ['*', project_id]))).count() != 0)
+            and_(rbac_db_model.object_id == obj_id,
+                 rbac_db_model.action == models.ACCESS_SHARED,
+                 rbac_db_model.target_project.in_(
+                     ['*', project_id]))).count() != 0)
 
     @classmethod
     def is_shared_with_project(cls, context, obj_id, project_id):
@@ -100,9 +100,9 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
         rbac_db_model = cls.rbac_db_cls.db_model
         return set(itertools.chain.from_iterable(context.session.query(
             rbac_db_model.target_project).filter(
-            and_(rbac_db_model.object_id == obj_id,
-                 rbac_db_model.action == models.ACCESS_SHARED,
-                 rbac_db_model.target_project != '*'))))
+                and_(rbac_db_model.object_id == obj_id,
+                     rbac_db_model.action == models.ACCESS_SHARED,
+                     rbac_db_model.target_project != '*'))))
 
     @classmethod
     @db_api.CONTEXT_READER
@@ -132,7 +132,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
         # for the wildcard we need to query all of the rbac entries to
         # see if any allow the object sharing
         other_target_projects = cls._get_projects_with_shared_access_to_db_obj(
-                ctx_admin, obj_id)
+            ctx_admin, obj_id)
         if not bound_project_ids.issubset(other_target_projects):
             raise_policy_in_use()
 
