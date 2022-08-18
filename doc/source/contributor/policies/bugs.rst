@@ -451,6 +451,8 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+--------------------------+
 | ovsdb-lib_                    | A bug affecting OVSDB library           | Terry Wilson             |
 +-------------------------------+-----------------------------------------+--------------------------+
+| pyroute2_                     | A bug affecting pyroute2 library        | Rodolfo Alonso Hernandez |
++-------------------------------+-----------------------------------------+--------------------------+
 | qos_                          | A bug affecting ML2/QoS                 | Rodolfo Alonso Hernandez |
 +-------------------------------+-----------------------------------------+--------------------------+
 | rfe_                          | Feature enhancements being screened     | Drivers Team             |
@@ -466,6 +468,8 @@ more will be added over time if needed.
 | sg-fw_                        | A bug affecting security groups         | Brian Haley              |
 +-------------------------------+-----------------------------------------+--------------------------+
 | sriov-pci-pt_                 | A bug affecting Sriov/PCI PassThrough   | Moshe Levi               |
++-------------------------------+-----------------------------------------+--------------------------+
+| stable_                       | A bug affecting only stable branches    | Bernard Cafarelli        |
 +-------------------------------+-----------------------------------------+--------------------------+
 | tempest_                      | A bug in tempest subtree tests          | Rodolfo Alonso Hernandez |
 +-------------------------------+-----------------------------------------+--------------------------+
@@ -752,6 +756,14 @@ OVSDB Lib
 
 .. _qos:
 
+pyroute2
+++++++++
+
+* `Pyroute2 Lib - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=pyroute2>`_
+* `Pyroute2 Lib - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=pyroute2>`_
+
+.. _pyroute2:
+
 QoS
 +++
 
@@ -813,6 +825,14 @@ SG-FW
 * `Security groups - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=sg-fw>`_
 
 .. _tempest:
+
+Stable
+++++++
+
+* `Stable - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=stable>`_
+* `Stable - In progress bugs <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=stable>`_
+
+.. _stable:
 
 Tempest
 +++++++
