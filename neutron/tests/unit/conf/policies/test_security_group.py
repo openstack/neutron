@@ -80,8 +80,6 @@ class SystemAdminSecurityGroupTests(SecurityGroupAPITestCase):
 class SystemMemberSecurityGroupTests(SystemAdminSecurityGroupTests):
 
     def setUp(self):
-        self.skipTest("SYSTEM_MEMBER persona isn't supported in phase1 of the "
-                      "community goal")
         super(SystemMemberSecurityGroupTests, self).setUp()
         self.context = self.system_member_ctx
 
@@ -89,8 +87,6 @@ class SystemMemberSecurityGroupTests(SystemAdminSecurityGroupTests):
 class SystemReaderSecurityGroupTests(SystemMemberSecurityGroupTests):
 
     def setUp(self):
-        self.skipTest("SYSTEM_READER persona isn't supported in phase1 of the "
-                      "community goal")
         super(SystemReaderSecurityGroupTests, self).setUp()
         self.context = self.system_reader_ctx
 
@@ -242,8 +238,6 @@ class SystemAdminSecurityGroupRuleTests(SecurityGroupRuleAPITestCase):
 class SystemMemberSecurityGroupRuleTests(SystemAdminSecurityGroupRuleTests):
 
     def setUp(self):
-        self.skipTest("SYSTEM_MEMBER persona isn't supported in phase1 of the "
-                      "community goal")
         super(SystemMemberSecurityGroupRuleTests, self).setUp()
         self.context = self.system_member_ctx
 
@@ -251,8 +245,6 @@ class SystemMemberSecurityGroupRuleTests(SystemAdminSecurityGroupRuleTests):
 class SystemReaderSecurityGroupRuleTests(SystemMemberSecurityGroupRuleTests):
 
     def setUp(self):
-        self.skipTest("SYSTEM_READER persona isn't supported in phase1 of the "
-                      "community goal")
         super(SystemReaderSecurityGroupRuleTests, self).setUp()
         self.context = self.system_reader_ctx
 

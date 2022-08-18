@@ -72,8 +72,6 @@ class SystemAdminQosPolicyTests(QosPolicyAPITestCase):
 class SystemMemberQosPolicyTests(SystemAdminQosPolicyTests):
 
     def setUp(self):
-        self.skipTest("SYSTEM_MEMBER persona isn't supported in phase1 of the "
-                      "community goal")
         super(SystemMemberQosPolicyTests, self).setUp()
         self.context = self.system_member_ctx
 
@@ -81,8 +79,6 @@ class SystemMemberQosPolicyTests(SystemAdminQosPolicyTests):
 class SystemReaderQosPolicyTests(SystemMemberQosPolicyTests):
 
     def setUp(self):
-        self.skipTest("SYSTEM_READER persona isn't supported in phase1 of the "
-                      "community goal")
         super(SystemReaderQosPolicyTests, self).setUp()
         self.context = self.system_reader_ctx
 
@@ -174,15 +170,15 @@ class SystemAdminQosRuleTypeTests(QosRuleTypeAPITestCase):
         self.context = self.system_admin_ctx
 
     def test_get_rule_type(self):
-        self.assertTrue(
-            policy.enforce(self.context, 'get_rule_type', self.target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_rule_type', self.target)
 
 
 class SystemMemberQosRuleTypeTests(SystemAdminQosRuleTypeTests):
 
     def setUp(self):
-        self.skipTest("SYSTEM_MEMBER persona isn't supported in phase1 of the "
-                      "community goal")
         super(SystemMemberQosRuleTypeTests, self).setUp()
         self.context = self.system_member_ctx
 
@@ -190,8 +186,6 @@ class SystemMemberQosRuleTypeTests(SystemAdminQosRuleTypeTests):
 class SystemReaderQosRuleTypeTests(SystemMemberQosRuleTypeTests):
 
     def setUp(self):
-        self.skipTest("SYSTEM_READER persona isn't supported in phase1 of the "
-                      "community goal")
         super(SystemReaderQosRuleTypeTests, self).setUp()
         self.context = self.system_reader_ctx
 
@@ -345,8 +339,6 @@ class SystemMemberQosBandwidthLimitRuleTests(
         SystemAdminQosBandwidthLimitRuleTests):
 
     def setUp(self):
-        self.skipTest("SYSTEM_MEMBER persona isn't supported in phase1 of the "
-                      "community goal")
         super(SystemMemberQosBandwidthLimitRuleTests, self).setUp()
         self.context = self.system_member_ctx
 
@@ -355,8 +347,6 @@ class SystemReaderQosBandwidthLimitRuleTests(
         SystemMemberQosBandwidthLimitRuleTests):
 
     def setUp(self):
-        self.skipTest("SYSTEM_READER persona isn't supported in phase1 of the "
-                      "community goal")
         super(SystemReaderQosBandwidthLimitRuleTests, self).setUp()
         self.context = self.system_reader_ctx
 
@@ -773,8 +763,6 @@ class SystemAdminQosDSCPMarkingRuleTests(QosRulesAPITestCase):
 class SystemMemberQosDSCPMarkingRuleTests(SystemAdminQosDSCPMarkingRuleTests):
 
     def setUp(self):
-        self.skipTest("SYSTEM_MEMBER persona isn't supported in phase1 of the "
-                      "community goal")
         super(SystemMemberQosDSCPMarkingRuleTests, self).setUp()
         self.context = self.system_member_ctx
 
@@ -782,8 +770,6 @@ class SystemMemberQosDSCPMarkingRuleTests(SystemAdminQosDSCPMarkingRuleTests):
 class SystemReaderQosDSCPMarkingRuleTests(SystemMemberQosDSCPMarkingRuleTests):
 
     def setUp(self):
-        self.skipTest("SYSTEM_READER persona isn't supported in phase1 of the "
-                      "community goal")
         super(SystemReaderQosDSCPMarkingRuleTests, self).setUp()
         self.context = self.system_reader_ctx
 
@@ -1043,8 +1029,6 @@ class SystemMemberQosMinimumBandwidthRuleTests(
         SystemAdminQosMinimumBandwidthRuleTests):
 
     def setUp(self):
-        self.skipTest("SYSTEM_MEMBER persona isn't supported in phase1 of the "
-                      "community goal")
         super(SystemMemberQosMinimumBandwidthRuleTests, self).setUp()
         self.context = self.system_member_ctx
 
@@ -1053,8 +1037,6 @@ class SystemReaderQosMinimumBandwidthRuleTests(
         SystemMemberQosMinimumBandwidthRuleTests):
 
     def setUp(self):
-        self.skipTest("SYSTEM_READER persona isn't supported in phase1 of the "
-                      "community goal")
         super(SystemReaderQosMinimumBandwidthRuleTests, self).setUp()
         self.context = self.system_reader_ctx
 
@@ -1314,8 +1296,6 @@ class SystemMemberQosMinimumPacketRateRuleTests(
         SystemAdminQosMinimumPacketRateRuleTests):
 
     def setUp(self):
-        self.skipTest("SYSTEM_MEMBER persona isn't supported in phase1 of the "
-                      "community goal")
         super(SystemMemberQosMinimumPacketRateRuleTests, self).setUp()
         self.context = self.system_member_ctx
 
@@ -1324,8 +1304,6 @@ class SystemReaderQosMinimumPacketRateRuleTests(
         SystemMemberQosMinimumPacketRateRuleTests):
 
     def setUp(self):
-        self.skipTest("SYSTEM_READER persona isn't supported in phase1 of the "
-                      "community goal")
         super(SystemReaderQosMinimumPacketRateRuleTests, self).setUp()
         self.context = self.system_reader_ctx
 

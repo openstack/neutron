@@ -16,7 +16,7 @@ from oslo_policy import policy
 from neutron.conf.policies import base
 
 DEPRECATED_REASON = """
-The QoS API now supports system scope and default roles.
+The QoS API now supports project scope and default roles.
 """
 
 
@@ -97,7 +97,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_rule_type',
         check_str=base.ADMIN,
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         description='Get available QoS rule types',
         operations=[
             {

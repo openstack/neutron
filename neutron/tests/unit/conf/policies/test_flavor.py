@@ -33,6 +33,77 @@ class SystemAdminTests(FlavorAPITestCase):
         self.context = self.system_admin_ctx
 
     def test_create_flavor(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_flavor', self.target)
+
+    def test_update_flavor(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_flavor', self.target)
+
+    def test_delete_flavor(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_flavor', self.target)
+
+    def test_create_service_profile(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_service_profile', self.target)
+
+    def test_update_service_profile(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_service_profile', self.target)
+
+    def test_delete_service_profile(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_service_profile', self.target)
+
+    def test_create_flavor_service_profile(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_flavor_service_profile',
+            self.target)
+
+    def test_delete_flavor_service_profile(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_flavor_service_profile',
+            self.target)
+
+
+class SystemMemberTests(FlavorAPITestCase):
+
+    def setUp(self):
+        super(SystemMemberTests, self).setUp()
+        self.context = self.system_member_ctx
+
+
+class SystemReaderTests(SystemMemberTests):
+
+    def setUp(self):
+        super(SystemReaderTests, self).setUp()
+        self.context = self.system_reader_ctx
+
+
+class ProjectAdminTests(FlavorAPITestCase):
+
+    def setUp(self):
+        super(ProjectAdminTests, self).setUp()
+        self.context = self.project_admin_ctx
+
+    def test_create_flavor(self):
         self.assertTrue(
             policy.enforce(self.context,
                            'create_flavor', self.target))
@@ -81,23 +152,17 @@ class SystemAdminTests(FlavorAPITestCase):
                            'delete_flavor_service_profile', self.target))
 
 
-class SystemMemberTests(FlavorAPITestCase):
+class ProjectMemberTests(ProjectAdminTests):
 
     def setUp(self):
-        self.skipTest("SYSTEM_MEMBER persona isn't supported in phase1 of the "
-                      "community goal")
-        super(SystemMemberTests, self).setUp()
-        self.context = self.system_member_ctx
+        super(ProjectMemberTests, self).setUp()
+        self.context = self.project_member_ctx
 
     def test_create_flavor(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'create_flavor', self.target)
-
-    def test_get_flavor(self):
-        self.assertTrue(
-            policy.enforce(self.context, 'get_flavor', self.target))
 
     def test_update_flavor(self):
         self.assertRaises(
@@ -118,8 +183,10 @@ class SystemMemberTests(FlavorAPITestCase):
             self.context, 'create_service_profile', self.target)
 
     def test_get_service_profile(self):
-        self.assertTrue(
-            policy.enforce(self.context, 'get_service_profile', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_service_profile', self.target)
 
     def test_update_service_profile(self):
         self.assertRaises(
@@ -146,79 +213,6 @@ class SystemMemberTests(FlavorAPITestCase):
             policy.enforce,
             self.context, 'delete_flavor_service_profile',
             self.target)
-
-
-class SystemReaderTests(SystemMemberTests):
-
-    def setUp(self):
-        self.skipTest("SYSTEM_READER persona isn't supported in phase1 of the "
-                      "community goal")
-        super(SystemReaderTests, self).setUp()
-        self.context = self.system_reader_ctx
-
-
-class ProjectAdminTests(FlavorAPITestCase):
-
-    def setUp(self):
-        super(ProjectAdminTests, self).setUp()
-        self.context = self.project_admin_ctx
-
-    def test_create_flavor(self):
-        self.assertRaises(
-            base_policy.InvalidScope,
-            policy.enforce,
-            self.context, 'create_flavor', self.target)
-
-    def test_update_flavor(self):
-        self.assertRaises(
-            base_policy.InvalidScope,
-            policy.enforce,
-            self.context, 'update_flavor', self.target)
-
-    def test_delete_flavor(self):
-        self.assertRaises(
-            base_policy.InvalidScope,
-            policy.enforce,
-            self.context, 'delete_flavor', self.target)
-
-    def test_create_service_profile(self):
-        self.assertRaises(
-            base_policy.InvalidScope,
-            policy.enforce,
-            self.context, 'create_service_profile', self.target)
-
-    def test_update_service_profile(self):
-        self.assertRaises(
-            base_policy.InvalidScope,
-            policy.enforce,
-            self.context, 'update_service_profile', self.target)
-
-    def test_delete_service_profile(self):
-        self.assertRaises(
-            base_policy.InvalidScope,
-            policy.enforce,
-            self.context, 'delete_service_profile', self.target)
-
-    def test_create_flavor_service_profile(self):
-        self.assertRaises(
-            base_policy.InvalidScope,
-            policy.enforce,
-            self.context, 'create_flavor_service_profile',
-            self.target)
-
-    def test_delete_flavor_service_profile(self):
-        self.assertRaises(
-            base_policy.InvalidScope,
-            policy.enforce,
-            self.context, 'delete_flavor_service_profile',
-            self.target)
-
-
-class ProjectMemberTests(ProjectAdminTests):
-
-    def setUp(self):
-        super(ProjectMemberTests, self).setUp()
-        self.context = self.project_member_ctx
 
 
 class ProjectReaderTests(ProjectMemberTests):

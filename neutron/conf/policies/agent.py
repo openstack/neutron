@@ -20,7 +20,7 @@ COLLECTION_PATH = '/agents'
 RESOURCE_PATH = '/agents/{id}'
 
 DEPRECATION_REASON = (
-    "The Agent API now supports system scope and default roles.")
+    "The Agent API now supports project scope and default roles.")
 
 rules = [
     policy.DocumentedRuleDefault(
@@ -37,7 +37,7 @@ rules = [
                 'path': RESOURCE_PATH,
             },
         ],
-        scope_types=['system'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_agent',
             check_str=base.RULE_ADMIN_ONLY,
@@ -54,7 +54,7 @@ rules = [
                 'path': RESOURCE_PATH,
             },
         ],
-        scope_types=['system'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='update_agent',
             check_str=base.RULE_ADMIN_ONLY,
@@ -71,7 +71,7 @@ rules = [
                 'path': RESOURCE_PATH,
             },
         ],
-        scope_types=['system'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_agent',
             check_str=base.RULE_ADMIN_ONLY,
@@ -88,7 +88,7 @@ rules = [
                 'path': '/agents/{agent_id}/dhcp-networks',
             },
         ],
-        scope_types=['system'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='create_dhcp-network',
             check_str=base.RULE_ADMIN_ONLY,
@@ -105,7 +105,7 @@ rules = [
                 'path': '/agents/{agent_id}/dhcp-networks',
             },
         ],
-        scope_types=['system'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_dhcp-networks',
             check_str=base.RULE_ADMIN_ONLY,
@@ -122,7 +122,7 @@ rules = [
                 'path': '/agents/{agent_id}/dhcp-networks/{network_id}',
             },
         ],
-        scope_types=['system'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_dhcp-network',
             check_str=base.RULE_ADMIN_ONLY,
@@ -139,7 +139,7 @@ rules = [
                 'path': '/agents/{agent_id}/l3-routers',
             },
         ],
-        scope_types=['system'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='create_l3-router',
             check_str=base.RULE_ADMIN_ONLY,
@@ -156,7 +156,7 @@ rules = [
                 'path': '/agents/{agent_id}/l3-routers',
             },
         ],
-        scope_types=['system'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_l3-routers',
             check_str=base.RULE_ADMIN_ONLY,
@@ -173,7 +173,7 @@ rules = [
                 'path': '/agents/{agent_id}/l3-routers/{router_id}',
             },
         ],
-        scope_types=['system'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_l3-router',
             check_str=base.RULE_ADMIN_ONLY,
@@ -190,7 +190,7 @@ rules = [
                 'path': '/networks/{network_id}/dhcp-agents',
             },
         ],
-        scope_types=['system'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_dhcp-agents',
             check_str=base.RULE_ADMIN_ONLY,
@@ -207,7 +207,7 @@ rules = [
                 'path': '/routers/{router_id}/l3-agents',
             },
         ],
-        scope_types=['system'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_l3-agents',
             check_str=base.RULE_ADMIN_ONLY,

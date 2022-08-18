@@ -33,69 +33,6 @@ class SystemAdminTests(NetworkSegmentRangeAPITestCase):
         self.context = self.system_admin_ctx
 
     def test_create_network_segment_range(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'create_network_segment_range', self.target))
-
-    def test_get_network_segment_range(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'get_network_segment_range', self.target))
-
-    def test_update_network_segment_range(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'update_network_segment_range', self.target))
-
-    def test_delete_network_segment_range(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'delete_network_segment_range', self.target))
-
-
-class SystemMemberTests(SystemAdminTests):
-
-    def setUp(self):
-        self.skipTest("SYSTEM_MEMBER persona isn't supported in phase1 of the "
-                      "community goal")
-        super(SystemMemberTests, self).setUp()
-        self.context = self.system_member_ctx
-
-    def test_create_network_segment_range(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'create_network_segment_range', self.target)
-
-    def test_update_network_segment_range(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'update_network_segment_range', self.target)
-
-    def test_delete_network_segment_range(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'delete_network_segment_range', self.target)
-
-
-class SystemReaderTests(SystemMemberTests):
-
-    def setUp(self):
-        self.skipTest("SYSTEM_READER persona isn't supported in phase1 of the "
-                      "community goal")
-        super(SystemReaderTests, self).setUp()
-        self.context = self.system_reader_ctx
-
-
-class ProjectAdminTests(NetworkSegmentRangeAPITestCase):
-
-    def setUp(self):
-        super(ProjectAdminTests, self).setUp()
-        self.context = self.project_admin_ctx
-
-    def test_create_network_segment_range(self):
         self.assertRaises(
             base_policy.InvalidScope,
             policy.enforce,
@@ -120,11 +57,76 @@ class ProjectAdminTests(NetworkSegmentRangeAPITestCase):
             self.context, 'delete_network_segment_range', self.target)
 
 
+class SystemMemberTests(SystemAdminTests):
+
+    def setUp(self):
+        super(SystemMemberTests, self).setUp()
+        self.context = self.system_member_ctx
+
+
+class SystemReaderTests(SystemMemberTests):
+
+    def setUp(self):
+        super(SystemReaderTests, self).setUp()
+        self.context = self.system_reader_ctx
+
+
+class ProjectAdminTests(NetworkSegmentRangeAPITestCase):
+
+    def setUp(self):
+        super(ProjectAdminTests, self).setUp()
+        self.context = self.project_admin_ctx
+
+    def test_create_network_segment_range(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_network_segment_range', self.target))
+
+    def test_get_network_segment_range(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_network_segment_range', self.target))
+
+    def test_update_network_segment_range(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_network_segment_range', self.target))
+
+    def test_delete_network_segment_range(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'delete_network_segment_range', self.target))
+
+
 class ProjectMemberTests(ProjectAdminTests):
 
     def setUp(self):
         super(ProjectMemberTests, self).setUp()
         self.context = self.project_member_ctx
+
+    def test_create_network_segment_range(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_network_segment_range', self.target)
+
+    def test_get_network_segment_range(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_network_segment_range', self.target)
+
+    def test_update_network_segment_range(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_network_segment_range', self.target)
+
+    def test_delete_network_segment_range(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_network_segment_range', self.target)
 
 
 class ProjectReaderTests(ProjectMemberTests):

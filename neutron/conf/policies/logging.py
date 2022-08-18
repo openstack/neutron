@@ -17,7 +17,7 @@ from neutron.conf.policies import base
 
 
 DEPRECATED_REASON = """
-The logging API now supports system scope and default roles.
+The logging API now supports project scope and default roles.
 """
 
 COLLECTION_PATH = '/log/logs'
@@ -28,7 +28,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_loggable_resource',
         check_str=base.ADMIN,
-        scope_types=['system'],
+        scope_types=['project'],
         description='Get loggable resources',
         operations=[
             {
@@ -45,7 +45,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='create_log',
         check_str=base.ADMIN,
-        scope_types=['system'],
+        scope_types=['project'],
         description='Create a network log',
         operations=[
             {
@@ -62,7 +62,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_log',
         check_str=base.ADMIN,
-        scope_types=['system'],
+        scope_types=['project'],
         description='Get a network log',
         operations=[
             {
@@ -83,7 +83,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='update_log',
         check_str=base.ADMIN,
-        scope_types=['system'],
+        scope_types=['project'],
         description='Update a network log',
         operations=[
             {
@@ -100,7 +100,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='delete_log',
         check_str=base.ADMIN,
-        scope_types=['system'],
+        scope_types=['project'],
         description='Delete a network log',
         operations=[
             {
