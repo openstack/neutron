@@ -42,13 +42,13 @@ class _TestIsSessionActive(testlib_api.SqlTestCase):
     def test_1(self):
         context = n_context.Context(user_id=None, tenant_id=None,
                                     is_admin=True, overwrite=False)
-        self.assertFalse(utils.is_session_active(context.session))
+        self.assertFalse(db_api.is_session_active(context.session))
         with db_api.CONTEXT_WRITER.using(context):
             net = models_v2.Network(id=uuidutils.generate_uuid())
             context.session.add(net)
-            self.assertTrue(utils.is_session_active(context.session))
+            self.assertTrue(db_api.is_session_active(context.session))
 
-        self.assertFalse(utils.is_session_active(context.session))
+        self.assertFalse(db_api.is_session_active(context.session))
 
 
 class TestIsSessionActivePostgreSQL(testlib_api.PostgreSQLTestCaseMixin,
