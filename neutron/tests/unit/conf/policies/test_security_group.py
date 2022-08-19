@@ -91,10 +91,10 @@ class SystemReaderSecurityGroupTests(SystemMemberSecurityGroupTests):
         self.context = self.system_reader_ctx
 
 
-class ProjectAdminSecurityGroupTests(SecurityGroupAPITestCase):
+class AdminSecurityGroupTests(SecurityGroupAPITestCase):
 
     def setUp(self):
-        super(ProjectAdminSecurityGroupTests, self).setUp()
+        super(AdminSecurityGroupTests, self).setUp()
         self.context = self.project_admin_ctx
 
     def test_create_security_group(self):
@@ -130,7 +130,7 @@ class ProjectAdminSecurityGroupTests(SecurityGroupAPITestCase):
             self.context, 'delete_security_group', self.alt_target)
 
 
-class ProjectMemberSecurityGroupTests(ProjectAdminSecurityGroupTests):
+class ProjectMemberSecurityGroupTests(AdminSecurityGroupTests):
 
     def setUp(self):
         super(ProjectMemberSecurityGroupTests, self).setUp()
@@ -249,10 +249,10 @@ class SystemReaderSecurityGroupRuleTests(SystemMemberSecurityGroupRuleTests):
         self.context = self.system_reader_ctx
 
 
-class ProjectAdminSecurityGroupRuleTests(SecurityGroupRuleAPITestCase):
+class AdminSecurityGroupRuleTests(SecurityGroupRuleAPITestCase):
 
     def setUp(self):
-        super(ProjectAdminSecurityGroupRuleTests, self).setUp()
+        super(AdminSecurityGroupRuleTests, self).setUp()
         self.context = self.project_admin_ctx
 
     def test_create_security_group_rule(self):
@@ -294,7 +294,7 @@ class ProjectAdminSecurityGroupRuleTests(SecurityGroupRuleAPITestCase):
             self.context, 'delete_security_group_rule', self.alt_target)
 
 
-class ProjectMemberSecurityGroupRuleTests(ProjectAdminSecurityGroupRuleTests):
+class ProjectMemberSecurityGroupRuleTests(AdminSecurityGroupRuleTests):
 
     def setUp(self):
         super(ProjectMemberSecurityGroupRuleTests, self).setUp()

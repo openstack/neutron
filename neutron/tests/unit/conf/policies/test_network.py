@@ -314,10 +314,10 @@ class SystemReaderTests(SystemMemberTests):
         self.context = self.system_reader_ctx
 
 
-class ProjectAdminTests(NetworkAPITestCase):
+class AdminTests(NetworkAPITestCase):
 
     def setUp(self):
-        super(ProjectAdminTests, self).setUp()
+        super(AdminTests, self).setUp()
         self.context = self.project_admin_ctx
 
     def test_create_network(self):
@@ -533,7 +533,7 @@ class ProjectAdminTests(NetworkAPITestCase):
             policy.enforce(self.context, 'delete_network', self.alt_target))
 
 
-class ProjectMemberTests(ProjectAdminTests):
+class ProjectMemberTests(AdminTests):
 
     def setUp(self):
         super(ProjectMemberTests, self).setUp()

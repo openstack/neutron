@@ -118,10 +118,10 @@ class SystemReaderTests(SystemMemberTests):
         self.context = self.system_reader_ctx
 
 
-class ProjectAdminTests(RbacAPITestCase):
+class AdminTests(RbacAPITestCase):
 
     def setUp(self):
-        super(ProjectAdminTests, self).setUp()
+        super(AdminTests, self).setUp()
         self.context = self.project_admin_ctx
 
     def test_create_rbac_policy(self):
@@ -170,7 +170,7 @@ class ProjectAdminTests(RbacAPITestCase):
                 self.context, 'delete_rbac_policy', self.alt_target))
 
 
-class ProjectMemberTests(ProjectAdminTests):
+class ProjectMemberTests(AdminTests):
 
     def setUp(self):
         super(ProjectMemberTests, self).setUp()

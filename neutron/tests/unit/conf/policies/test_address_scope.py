@@ -108,10 +108,10 @@ class SystemReaderTests(SystemMemberTests):
         self.context = self.system_reader_ctx
 
 
-class ProjectAdminTests(AddressScopeAPITestCase):
+class AdminTests(AddressScopeAPITestCase):
 
     def setUp(self):
-        super(ProjectAdminTests, self).setUp()
+        super(AdminTests, self).setUp()
         self.context = self.project_admin_ctx
 
     def test_create_address_scope(self):
@@ -158,7 +158,7 @@ class ProjectAdminTests(AddressScopeAPITestCase):
                 self.context, 'delete_address_scope', self.alt_target))
 
 
-class ProjectMemberTests(ProjectAdminTests):
+class ProjectMemberTests(AdminTests):
 
     def setUp(self):
         super(ProjectMemberTests, self).setUp()

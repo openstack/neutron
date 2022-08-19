@@ -53,10 +53,10 @@ class SystemReaderTests(SystemMemberTests):
         self.context = self.system_member_ctx
 
 
-class ProjectAdminTests(NetworkIPAvailabilityAPITestCase):
+class AdminTests(NetworkIPAvailabilityAPITestCase):
 
     def setUp(self):
-        super(ProjectAdminTests, self).setUp()
+        super(AdminTests, self).setUp()
         self.context = self.project_admin_ctx
 
     def test_get_network_ip_availability(self):
@@ -65,7 +65,7 @@ class ProjectAdminTests(NetworkIPAvailabilityAPITestCase):
                            self.target))
 
 
-class ProjectMemberTests(ProjectAdminTests):
+class ProjectMemberTests(AdminTests):
 
     def setUp(self):
         super(ProjectMemberTests, self).setUp()
