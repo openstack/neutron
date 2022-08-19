@@ -70,6 +70,8 @@ from neutron_lib.api.definitions import subnet_dns_publish_fixed_ip
 from neutron_lib.api.definitions import subnet_service_types
 from neutron_lib.api.definitions import trunk
 from neutron_lib.api.definitions import vlantransparent
+from neutron_lib.api.definitions import vpn
+from neutron_lib.api.definitions import vpn_endpoint_groups
 from neutron_lib import constants
 
 from neutron.extensions import quotasv2_detail
@@ -155,4 +157,6 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     floating_ip_port_forwarding.ALIAS,
     vlantransparent.ALIAS,
     logging.ALIAS,
+    vpn.ALIAS,
+    vpn_endpoint_groups.ALIAS,
 ]
