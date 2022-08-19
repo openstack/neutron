@@ -21,6 +21,7 @@ from neutron_lib.api.definitions import trunk_details
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
+from neutron_lib import constants as const
 from neutron_lib import context
 from neutron_lib.db import api as db_api
 from neutron_lib.db import resource_extend
@@ -451,12 +452,19 @@ class TrunkPlugin(service_base.ServicePluginBase):
         original_port = kwargs['original_port']
         orig_vif_type = original_port.get(portbindings.VIF_TYPE)
         new_vif_type = updated_port.get(portbindings.VIF_TYPE)
+        orig_status = original_port.get('status')
+        new_status = updated_port.get('status')
         vif_type_changed = orig_vif_type != new_vif_type
+        trunk_id = trunk_details['trunk_id']
         if vif_type_changed and new_vif_type == portbindings.VIF_TYPE_UNBOUND:
-            trunk_id = trunk_details['trunk_id']
             # NOTE(status_police) Trunk status goes to DOWN when the parent
             # port is unbound. This means there are no more physical resources
             # associated with the logical resource.
             self.update_trunk(
                 context, trunk_id,
                 {'trunk': {'status': constants.TRUNK_DOWN_STATUS}})
+        elif new_status == const.PORT_STATUS_ACTIVE and \
+                new_status != orig_status:
+            self.update_trunk(
+                context, trunk_id,
+                {'trunk': {'status': constants.TRUNK_ACTIVE_STATUS}})
