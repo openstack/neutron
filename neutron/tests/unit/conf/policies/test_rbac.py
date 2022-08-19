@@ -127,15 +127,69 @@ class ProjectAdminTests(RbacAPITestCase):
     def test_create_rbac_policy(self):
         self.assertTrue(
             policy.enforce(self.context, 'create_rbac_policy', self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'create_rbac_policy', self.alt_target))
+
+    def test_create_rbac_policy_target_tenant(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'create_rbac_policy:target_tenant', self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'create_rbac_policy:alt_target_tenant', self.target))
+
+    def test_update_rbac_policy(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'update_rbac_policy', self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'update_rbac_policy', self.alt_target))
+
+    def test_update_rbac_policy_target_tenant(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'update_rbac_policy:target_tenant', self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'update_rbac_policy:alt_target_tenant', self.target))
+
+    def test_get_rbac_policy(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'get_rbac_policy', self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'get_rbac_policy', self.alt_target))
+
+    def test_delete_rbac_policy(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_rbac_policy', self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'delete_rbac_policy', self.alt_target))
+
+
+class ProjectMemberTests(ProjectAdminTests):
+
+    def setUp(self):
+        super(ProjectMemberTests, self).setUp()
+        self.context = self.project_member_ctx
+
+    def test_create_rbac_policy(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'create_rbac_policy', self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'create_rbac_policy', self.alt_target)
 
     def test_create_rbac_policy_target_tenant(self):
-        self.assertTrue(
-            policy.enforce(
-                self.context, 'create_rbac_policy:target_tenant', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_rbac_policy:target_tenant',
+            self.wildcard_target)
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
@@ -151,9 +205,11 @@ class ProjectAdminTests(RbacAPITestCase):
             self.context, 'update_rbac_policy', self.alt_target)
 
     def test_update_rbac_policy_target_tenant(self):
-        self.assertTrue(
-            policy.enforce(
-                self.context, 'update_rbac_policy:target_tenant', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_rbac_policy:target_tenant',
+            self.wildcard_target)
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
@@ -175,37 +231,6 @@ class ProjectAdminTests(RbacAPITestCase):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'delete_rbac_policy', self.alt_target)
-
-
-class ProjectMemberTests(ProjectAdminTests):
-
-    def setUp(self):
-        super(ProjectMemberTests, self).setUp()
-        self.context = self.project_member_ctx
-
-    def test_create_rbac_policy_target_tenant(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'create_rbac_policy:target_tenant',
-            self.wildcard_target)
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'create_rbac_policy:target_tenant',
-            self.wildcard_alt_target)
-
-    def test_update_rbac_policy_target_tenant(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'update_rbac_policy:target_tenant',
-            self.wildcard_target)
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'update_rbac_policy:target_tenant',
-            self.wildcard_alt_target)
 
 
 class ProjectReaderTests(ProjectMemberTests):

@@ -45,7 +45,9 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='create_network',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description='Create a network',
         operations=ACTION_POST,
@@ -57,7 +59,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_network:shared',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Create a shared network',
         operations=ACTION_POST,
@@ -69,7 +71,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_network:router:external',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Create an external network',
         operations=ACTION_POST,
@@ -81,7 +83,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_network:is_default',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Specify ``is_default`` attribute when creating a network',
         operations=ACTION_POST,
@@ -93,7 +95,9 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_network:port_security_enabled',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description=(
             'Specify ``port_security_enabled`` '
@@ -108,7 +112,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_network:segments',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Specify ``segments`` attribute when creating a network',
         operations=ACTION_POST,
@@ -120,7 +124,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_network:provider:network_type',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description=(
             'Specify ``provider:network_type`` '
@@ -135,7 +139,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_network:provider:physical_network',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description=(
             'Specify ``provider:physical_network`` '
@@ -150,7 +154,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_network:provider:segmentation_id',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description=(
             'Specify ``provider:segmentation_id`` when creating a network'
@@ -166,6 +170,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_network',
         check_str=base.policy_or(
+            base.ADMIN,
             base.PROJECT_READER,
             'rule:shared',
             'rule:external',
@@ -186,7 +191,9 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_network:router:external',
-        check_str=base.PROJECT_READER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_READER),
         scope_types=['project'],
         description='Get ``router:external`` attribute of a network',
         operations=ACTION_GET,
@@ -198,7 +205,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_network:segments',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Get ``segments`` attribute of a network',
         operations=ACTION_GET,
@@ -210,7 +217,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_network:provider:network_type',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Get ``provider:network_type`` attribute of a network',
         operations=ACTION_GET,
@@ -222,7 +229,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_network:provider:physical_network',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Get ``provider:physical_network`` attribute of a network',
         operations=ACTION_GET,
@@ -234,7 +241,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_network:provider:segmentation_id',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Get ``provider:segmentation_id`` attribute of a network',
         operations=ACTION_GET,
@@ -247,7 +254,9 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='update_network',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description='Update a network',
         operations=ACTION_PUT,
@@ -259,7 +268,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_network:segments',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Update ``segments`` attribute of a network',
         operations=ACTION_PUT,
@@ -271,7 +280,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_network:shared',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Update ``shared`` attribute of a network',
         operations=ACTION_PUT,
@@ -283,7 +292,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_network:provider:network_type',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Update ``provider:network_type`` attribute of a network',
         operations=ACTION_PUT,
@@ -295,7 +304,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_network:provider:physical_network',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description=(
             'Update ``provider:physical_network`` '
@@ -310,7 +319,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_network:provider:segmentation_id',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description=(
             'Update ``provider:segmentation_id`` '
@@ -325,7 +334,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_network:router:external',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Update ``router:external`` attribute of a network',
         operations=ACTION_PUT,
@@ -337,7 +346,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_network:is_default',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Update ``is_default`` attribute of a network',
         operations=ACTION_PUT,
@@ -349,7 +358,9 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_network:port_security_enabled',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description='Update ``port_security_enabled`` attribute of a network',
         operations=ACTION_PUT,
@@ -362,7 +373,9 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='delete_network',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description='Delete a network',
         operations=ACTION_DELETE,

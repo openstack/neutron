@@ -51,7 +51,9 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='create_port',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description='Create a port',
         operations=ACTION_POST,
@@ -65,7 +67,7 @@ rules = [
         name='create_port:device_owner',
         check_str=base.policy_or(
             'not rule:network_device',
-            base.PROJECT_ADMIN,
+            base.ADMIN,
             base.RULE_ADVSVC,
             base.RULE_NET_OWNER
         ),
@@ -86,7 +88,7 @@ rules = [
         check_str=base.policy_or(
             base.RULE_ADVSVC,
             base.RULE_NET_OWNER,
-            base.PROJECT_ADMIN),
+            base.ADMIN),
         scope_types=['project'],
         description='Specify ``mac_address`` attribute when creating a port',
         operations=ACTION_POST,
@@ -103,7 +105,7 @@ rules = [
         check_str=base.policy_or(
             base.RULE_ADVSVC,
             base.RULE_NET_OWNER,
-            base.PROJECT_ADMIN,
+            base.ADMIN,
             'rule:shared'),
         scope_types=['project'],
         description='Specify ``fixed_ips`` information when creating a port',
@@ -122,7 +124,7 @@ rules = [
         check_str=base.policy_or(
             base.RULE_ADVSVC,
             base.RULE_NET_OWNER,
-            base.PROJECT_ADMIN),
+            base.ADMIN),
         scope_types=['project'],
         description='Specify IP address in ``fixed_ips`` when creating a port',
         operations=ACTION_POST,
@@ -139,7 +141,7 @@ rules = [
         check_str=base.policy_or(
             base.RULE_ADVSVC,
             base.RULE_NET_OWNER,
-            base.PROJECT_ADMIN,
+            base.ADMIN,
             'rule:shared'),
         scope_types=['project'],
         description='Specify subnet ID in ``fixed_ips`` when creating a port',
@@ -158,7 +160,7 @@ rules = [
         check_str=base.policy_or(
             base.RULE_ADVSVC,
             base.RULE_NET_OWNER,
-            base.PROJECT_ADMIN),
+            base.ADMIN),
         scope_types=['project'],
         description=(
             'Specify ``port_security_enabled`` '
@@ -175,7 +177,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_port:binding:host_id',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description=(
             'Specify ``binding:host_id`` '
@@ -190,7 +192,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_port:binding:profile',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description=(
             'Specify ``binding:profile`` attribute '
@@ -205,7 +207,9 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_port:binding:vnic_type',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description=(
             'Specify ``binding:vnic_type`` '
@@ -221,7 +225,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='create_port:allowed_address_pairs',
         check_str=base.policy_or(
-            base.PROJECT_ADMIN,
+            base.ADMIN,
             base.RULE_NET_OWNER),
         scope_types=['project'],
         description=(
@@ -238,7 +242,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='create_port:allowed_address_pairs:mac_address',
         check_str=base.policy_or(
-            base.PROJECT_ADMIN,
+            base.ADMIN,
             base.RULE_NET_OWNER),
         scope_types=['project'],
         description=(
@@ -255,7 +259,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='create_port:allowed_address_pairs:ip_address',
         check_str=base.policy_or(
-            base.PROJECT_ADMIN,
+            base.ADMIN,
             base.RULE_NET_OWNER),
         scope_types=['project'],
         description=(
@@ -273,6 +277,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_port',
         check_str=base.policy_or(
+            base.ADMIN,
             base.RULE_ADVSVC,
             base.PROJECT_READER
         ),
@@ -289,7 +294,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_port:binding:vif_type',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Get ``binding:vif_type`` attribute of a port',
         operations=ACTION_GET,
@@ -301,7 +306,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_port:binding:vif_details',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Get ``binding:vif_details`` attribute of a port',
         operations=ACTION_GET,
@@ -313,7 +318,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_port:binding:host_id',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Get ``binding:host_id`` attribute of a port',
         operations=ACTION_GET,
@@ -325,7 +330,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_port:binding:profile',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Get ``binding:profile`` attribute of a port',
         operations=ACTION_GET,
@@ -337,7 +342,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_port:resource_request',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Get ``resource_request`` attribute of a port',
         operations=ACTION_GET,
@@ -353,6 +358,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='update_port',
         check_str=base.policy_or(
+            base.ADMIN,
             base.PROJECT_MEMBER,
             base.RULE_ADVSVC
         ),
@@ -373,7 +379,7 @@ rules = [
             'not rule:network_device',
             base.RULE_ADVSVC,
             base.RULE_NET_OWNER,
-            base.PROJECT_ADMIN
+            base.ADMIN
         ),
         scope_types=['project'],
         description='Update ``device_owner`` attribute of a port',
@@ -390,7 +396,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='update_port:mac_address',
         check_str=base.policy_or(
-            base.PROJECT_ADMIN,
+            base.ADMIN,
             base.RULE_ADVSVC
         ),
         scope_types=['project'],
@@ -409,7 +415,7 @@ rules = [
         check_str=base.policy_or(
             base.RULE_ADVSVC,
             base.RULE_NET_OWNER,
-            base.PROJECT_ADMIN
+            base.ADMIN
         ),
         scope_types=['project'],
         description='Specify ``fixed_ips`` information when updating a port',
@@ -427,7 +433,7 @@ rules = [
         check_str=base.policy_or(
             base.RULE_ADVSVC,
             base.RULE_NET_OWNER,
-            base.PROJECT_ADMIN
+            base.ADMIN
         ),
         scope_types=['project'],
         description=(
@@ -448,7 +454,7 @@ rules = [
         check_str=base.policy_or(
             base.RULE_ADVSVC,
             base.RULE_NET_OWNER,
-            base.PROJECT_ADMIN,
+            base.ADMIN,
             'rule:shared'
         ),
         scope_types=['project'],
@@ -471,7 +477,7 @@ rules = [
         check_str=base.policy_or(
             base.RULE_ADVSVC,
             base.RULE_NET_OWNER,
-            base.PROJECT_ADMIN
+            base.ADMIN
         ),
         scope_types=['project'],
         description='Update ``port_security_enabled`` attribute of a port',
@@ -486,7 +492,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_port:binding:host_id',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Update ``binding:host_id`` attribute of a port',
         operations=ACTION_PUT,
@@ -498,7 +504,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_port:binding:profile',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Update ``binding:profile`` attribute of a port',
         operations=ACTION_PUT,
@@ -511,6 +517,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='update_port:binding:vnic_type',
         check_str=base.policy_or(
+            base.ADMIN,
             base.PROJECT_MEMBER,
             base.RULE_ADVSVC
         ),
@@ -528,7 +535,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='update_port:allowed_address_pairs',
         check_str=base.policy_or(
-            base.PROJECT_ADMIN,
+            base.ADMIN,
             base.RULE_NET_OWNER),
         scope_types=['project'],
         description='Update ``allowed_address_pairs`` attribute of a port',
@@ -542,7 +549,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='update_port:allowed_address_pairs:mac_address',
         check_str=base.policy_or(
-            base.PROJECT_ADMIN,
+            base.ADMIN,
             base.RULE_NET_OWNER),
         scope_types=['project'],
         description=(
@@ -559,7 +566,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='update_port:allowed_address_pairs:ip_address',
         check_str=base.policy_or(
-            base.PROJECT_ADMIN,
+            base.ADMIN,
             base.RULE_NET_OWNER),
         scope_types=['project'],
         description=(
@@ -576,7 +583,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='update_port:data_plane_status',
         check_str=base.policy_or(
-            base.PROJECT_ADMIN,
+            base.ADMIN,
             'role:data_plane_integrator'),
         scope_types=['project'],
         description='Update ``data_plane_status`` attribute of a port',
@@ -591,6 +598,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='delete_port',
         check_str=base.policy_or(
+            base.ADMIN,
             base.RULE_ADVSVC,
             base.PROJECT_MEMBER
         ),

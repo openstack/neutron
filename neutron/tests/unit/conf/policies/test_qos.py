@@ -92,30 +92,26 @@ class ProjectAdminQosPolicyTests(QosPolicyAPITestCase):
     def test_get_policy(self):
         self.assertTrue(
             policy.enforce(self.context, 'get_policy', self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, 'get_policy', self.alt_target)
+        self.assertTrue(
+            policy.enforce(self.context, 'get_policy', self.alt_target))
 
     def test_create_policy(self):
         self.assertTrue(
             policy.enforce(self.context, 'create_policy', self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, 'create_policy', self.alt_target)
+        self.assertTrue(
+            policy.enforce(self.context, 'create_policy', self.alt_target))
 
     def test_update_policy(self):
         self.assertTrue(
             policy.enforce(self.context, 'update_policy', self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, 'update_policy', self.alt_target)
+        self.assertTrue(
+            policy.enforce(self.context, 'update_policy', self.alt_target))
 
     def test_delete_policy(self):
         self.assertTrue(
             policy.enforce(self.context, 'delete_policy', self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, 'delete_policy', self.alt_target)
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_policy', self.alt_target))
 
 
 class ProjectMemberQosPolicyTests(ProjectAdminQosPolicyTests):
@@ -123,6 +119,13 @@ class ProjectMemberQosPolicyTests(ProjectAdminQosPolicyTests):
     def setUp(self):
         super(ProjectMemberQosPolicyTests, self).setUp()
         self.context = self.project_member_ctx
+
+    def test_get_policy(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'get_policy', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'get_policy', self.alt_target)
 
     def test_create_policy(self):
         self.assertRaises(
@@ -362,6 +365,84 @@ class ProjectAdminQosBandwidthLimitRuleTests(QosRulesAPITestCase):
             policy.enforce(self.context,
                            'get_policy_bandwidth_limit_rule',
                            self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_policy_bandwidth_limit_rule',
+                           self.alt_target))
+
+        # And the same for aliases
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_alias_bandwidth_limit_rule',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_alias_bandwidth_limit_rule',
+                           self.alt_target))
+
+    def test_create_policy_bandwidth_limit_rule(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_policy_bandwidth_limit_rule',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_policy_bandwidth_limit_rule',
+                           self.alt_target))
+
+    def test_update_policy_bandwidth_limit_rule(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_policy_bandwidth_limit_rule',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_policy_bandwidth_limit_rule',
+                           self.alt_target))
+
+        # And the same for aliases
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_alias_bandwidth_limit_rule',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_alias_bandwidth_limit_rule',
+                           self.alt_target))
+
+    def test_delete_policy_bandwidth_limit_rule(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'delete_policy_bandwidth_limit_rule',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'delete_policy_bandwidth_limit_rule',
+                           self.alt_target))
+
+        # And the same for aliases
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'delete_alias_bandwidth_limit_rule',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'delete_alias_bandwidth_limit_rule',
+                           self.alt_target))
+
+
+class ProjectMemberQosBandwidthLimitRuleTests(
+        ProjectAdminQosBandwidthLimitRuleTests):
+
+    def setUp(self):
+        super(ProjectMemberQosBandwidthLimitRuleTests, self).setUp()
+        self.context = self.project_member_ctx
+
+    def test_get_policy_bandwidth_limit_rule(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_policy_bandwidth_limit_rule',
+                           self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
@@ -378,69 +459,6 @@ class ProjectAdminQosBandwidthLimitRuleTests(QosRulesAPITestCase):
             policy.enforce,
             self.context, 'get_alias_bandwidth_limit_rule',
             self.alt_target)
-
-    def test_create_policy_bandwidth_limit_rule(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'create_policy_bandwidth_limit_rule',
-                           self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'create_policy_bandwidth_limit_rule',
-            self.alt_target)
-
-    def test_update_policy_bandwidth_limit_rule(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'update_policy_bandwidth_limit_rule',
-                           self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'update_policy_bandwidth_limit_rule',
-            self.alt_target)
-
-        # And the same for aliases
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'update_alias_bandwidth_limit_rule',
-                           self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'update_alias_bandwidth_limit_rule',
-            self.alt_target)
-
-    def test_delete_policy_bandwidth_limit_rule(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'delete_policy_bandwidth_limit_rule',
-                           self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'delete_policy_bandwidth_limit_rule',
-            self.alt_target)
-
-        # And the same for aliases
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'delete_alias_bandwidth_limit_rule',
-                           self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'delete_alias_bandwidth_limit_rule',
-            self.alt_target)
-
-
-class ProjectMemberQosBandwidthLimitRuleTests(
-        ProjectAdminQosBandwidthLimitRuleTests):
-
-    def setUp(self):
-        super(ProjectMemberQosBandwidthLimitRuleTests, self).setUp()
-        self.context = self.project_member_ctx
 
     def test_create_policy_bandwidth_limit_rule(self):
         self.assertRaises(
@@ -577,44 +595,40 @@ class ProjectAdminQosPacketRateLimitRuleTests(QosRulesAPITestCase):
             policy.enforce(self.context,
                            'get_policy_packet_rate_limit_rule',
                            self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'get_policy_packet_rate_limit_rule',
-            self.alt_target)
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_policy_packet_rate_limit_rule',
+                           self.alt_target))
 
     def test_create_policy_packet_rate_limit_rule(self):
         self.assertTrue(
             policy.enforce(self.context,
                            'create_policy_packet_rate_limit_rule',
                            self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'create_policy_packet_rate_limit_rule',
-            self.alt_target)
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_policy_packet_rate_limit_rule',
+                           self.alt_target))
 
     def test_update_policy_packet_rate_limit_rule(self):
         self.assertTrue(
             policy.enforce(self.context,
                            'update_policy_packet_rate_limit_rule',
                            self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'update_policy_packet_rate_limit_rule',
-            self.alt_target)
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_policy_packet_rate_limit_rule',
+                           self.alt_target))
 
     def test_delete_policy_packet_rate_limit_rule(self):
         self.assertTrue(
             policy.enforce(self.context,
                            'delete_policy_packet_rate_limit_rule',
                            self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'delete_policy_packet_rate_limit_rule',
-            self.alt_target)
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'delete_policy_packet_rate_limit_rule',
+                           self.alt_target))
 
 
 class ProjectMemberQosPacketRateLimitRuleTests(
@@ -623,6 +637,17 @@ class ProjectMemberQosPacketRateLimitRuleTests(
     def setUp(self):
         super(ProjectMemberQosPacketRateLimitRuleTests, self).setUp()
         self.context = self.project_member_ctx
+
+    def test_get_policy_packet_rate_limit_rule(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_policy_packet_rate_limit_rule',
+                           self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_policy_packet_rate_limit_rule',
+            self.alt_target)
 
     def test_create_policy_packet_rate_limit_rule(self):
         self.assertRaises(
@@ -785,6 +810,84 @@ class ProjectAdminQosDSCPMarkingRuleTests(QosRulesAPITestCase):
             policy.enforce(self.context,
                            'get_policy_dscp_marking_rule',
                            self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_policy_dscp_marking_rule',
+                           self.alt_target))
+
+        # And the same for aliases
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_alias_dscp_marking_rule',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_alias_dscp_marking_rule',
+                           self.alt_target))
+
+    def test_create_policy_dscp_marking_rule(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_policy_dscp_marking_rule',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_policy_dscp_marking_rule',
+                           self.alt_target))
+
+    def test_update_policy_dscp_marking_rule(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_policy_dscp_marking_rule',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_policy_dscp_marking_rule',
+                           self.alt_target))
+
+        # And the same for aliases
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_alias_dscp_marking_rule',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_alias_dscp_marking_rule',
+                           self.alt_target))
+
+    def test_delete_policy_dscp_marking_rule(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'delete_policy_dscp_marking_rule',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'delete_policy_dscp_marking_rule',
+                           self.alt_target))
+
+        # And the same for aliases
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_alias_dscp_marking_rule',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_alias_dscp_marking_rule',
+                           self.alt_target))
+
+
+class ProjectMemberQosDSCPMarkingRuleTests(
+        ProjectAdminQosDSCPMarkingRuleTests):
+
+    def setUp(self):
+        super(ProjectMemberQosDSCPMarkingRuleTests, self).setUp()
+        self.context = self.project_member_ctx
+
+    def test_get_policy_dscp_marking_rule(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_policy_dscp_marking_rule',
+                           self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
@@ -801,69 +904,6 @@ class ProjectAdminQosDSCPMarkingRuleTests(QosRulesAPITestCase):
             policy.enforce,
             self.context, 'get_alias_dscp_marking_rule',
             self.alt_target)
-
-    def test_create_policy_dscp_marking_rule(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'create_policy_dscp_marking_rule',
-                           self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'create_policy_dscp_marking_rule',
-            self.alt_target)
-
-    def test_update_policy_dscp_marking_rule(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'update_policy_dscp_marking_rule',
-                           self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'update_policy_dscp_marking_rule',
-            self.alt_target)
-
-        # And the same for aliases
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'update_alias_dscp_marking_rule',
-                           self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'update_alias_dscp_marking_rule',
-            self.alt_target)
-
-    def test_delete_policy_dscp_marking_rule(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'delete_policy_dscp_marking_rule',
-                           self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'delete_policy_dscp_marking_rule',
-            self.alt_target)
-
-        # And the same for aliases
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'update_alias_dscp_marking_rule',
-                           self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'delete_alias_dscp_marking_rule',
-            self.alt_target)
-
-
-class ProjectMemberQosDSCPMarkingRuleTests(
-        ProjectAdminQosDSCPMarkingRuleTests):
-
-    def setUp(self):
-        super(ProjectMemberQosDSCPMarkingRuleTests, self).setUp()
-        self.context = self.project_member_ctx
 
     def test_create_policy_dscp_marking_rule(self):
         self.assertRaises(
@@ -1052,6 +1092,84 @@ class ProjectAdminQosMinimumBandwidthRuleTests(QosRulesAPITestCase):
             policy.enforce(
                 self.context, 'get_policy_minimum_bandwidth_rule',
                 self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'get_policy_minimum_bandwidth_rule',
+                self.alt_target))
+
+        # And the same for aliases
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'get_alias_minimum_bandwidth_rule',
+                self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'get_alias_minimum_bandwidth_rule',
+                self.alt_target))
+
+    def test_create_policy_minimum_bandwidth_rule(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'create_policy_minimum_bandwidth_rule',
+                self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'create_policy_minimum_bandwidth_rule',
+                self.alt_target))
+
+    def test_update_policy_minimum_bandwidth_rule(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'update_policy_minimum_bandwidth_rule',
+                self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'update_policy_minimum_bandwidth_rule',
+                self.alt_target))
+
+        # And the same for aliases
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'update_alias_minimum_bandwidth_rule',
+                self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'update_alias_minimum_bandwidth_rule',
+                self.alt_target))
+
+    def test_delete_policy_minimum_bandwidth_rule(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'delete_policy_minimum_bandwidth_rule',
+                self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'delete_policy_minimum_bandwidth_rule',
+                self.alt_target))
+
+        # And the same for aliases
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'delete_alias_minimum_bandwidth_rule',
+                self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'delete_alias_minimum_bandwidth_rule',
+                self.alt_target))
+
+
+class ProjectMemberQosMinimumBandwidthRuleTests(
+        ProjectAdminQosMinimumBandwidthRuleTests):
+
+    def setUp(self):
+        super(ProjectMemberQosMinimumBandwidthRuleTests, self).setUp()
+        self.context = self.project_member_ctx
+
+    def test_get_policy_minimum_bandwidth_rule(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'get_policy_minimum_bandwidth_rule',
+                self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
@@ -1068,69 +1186,6 @@ class ProjectAdminQosMinimumBandwidthRuleTests(QosRulesAPITestCase):
             policy.enforce,
             self.context, 'get_alias_minimum_bandwidth_rule',
             self.alt_target)
-
-    def test_create_policy_minimum_bandwidth_rule(self):
-        self.assertTrue(
-            policy.enforce(
-                self.context, 'create_policy_minimum_bandwidth_rule',
-                self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'create_policy_minimum_bandwidth_rule',
-            self.alt_target)
-
-    def test_update_policy_minimum_bandwidth_rule(self):
-        self.assertTrue(
-            policy.enforce(
-                self.context, 'update_policy_minimum_bandwidth_rule',
-                self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'update_policy_minimum_bandwidth_rule',
-            self.alt_target)
-
-        # And the same for aliases
-        self.assertTrue(
-            policy.enforce(
-                self.context, 'update_alias_minimum_bandwidth_rule',
-                self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'update_alias_minimum_bandwidth_rule',
-            self.alt_target)
-
-    def test_delete_policy_minimum_bandwidth_rule(self):
-        self.assertTrue(
-            policy.enforce(
-                self.context, 'delete_policy_minimum_bandwidth_rule',
-                self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'delete_policy_minimum_bandwidth_rule',
-            self.alt_target)
-
-        # And the same for aliases
-        self.assertTrue(
-            policy.enforce(
-                self.context, 'delete_alias_minimum_bandwidth_rule',
-                self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'delete_alias_minimum_bandwidth_rule',
-            self.alt_target)
-
-
-class ProjectMemberQosMinimumBandwidthRuleTests(
-        ProjectAdminQosMinimumBandwidthRuleTests):
-
-    def setUp(self):
-        super(ProjectMemberQosMinimumBandwidthRuleTests, self).setUp()
-        self.context = self.project_member_ctx
 
     def test_create_policy_minimum_bandwidth_rule(self):
         self.assertRaises(
@@ -1221,12 +1276,12 @@ class SystemAdminQosMinimumPacketRateRuleTests(QosRulesAPITestCase):
 
         # And the same for aliases
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'get_alias_minimum_packet_rate_rule',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'get_alias_minimum_packet_rate_rule',
             self.alt_target)
@@ -1257,12 +1312,12 @@ class SystemAdminQosMinimumPacketRateRuleTests(QosRulesAPITestCase):
 
         # And the same for aliases
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'get_alias_minimum_packet_rate_rule',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'get_alias_minimum_packet_rate_rule',
             self.alt_target)
@@ -1281,12 +1336,12 @@ class SystemAdminQosMinimumPacketRateRuleTests(QosRulesAPITestCase):
 
         # And the same for aliases
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'delete_alias_minimum_packet_rate_rule',
             self.target)
         self.assertRaises(
-            base_policy.PolicyNotAuthorized,
+            base_policy.InvalidScope,
             policy.enforce,
             self.context, 'delete_alias_minimum_packet_rate_rule',
             self.alt_target)
@@ -1319,6 +1374,74 @@ class ProjectAdminQosMinimumPacketRateRuleTests(QosRulesAPITestCase):
             policy.enforce(self.context,
                            'get_policy_minimum_packet_rate_rule',
                            self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_policy_minimum_packet_rate_rule',
+                           self.alt_target))
+
+        # And the same for aliases
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_alias_minimum_packet_rate_rule',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_alias_minimum_packet_rate_rule',
+                           self.alt_target))
+
+    def test_create_policy_minimum_packet_rate_rule(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_policy_minimum_packet_rate_rule',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_policy_minimum_packet_rate_rule',
+                           self.alt_target))
+
+    def test_update_policy_minimum_packet_rate_rule(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_policy_minimum_packet_rate_rule',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_policy_minimum_packet_rate_rule',
+                           self.alt_target))
+
+        # And the same for aliases
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_alias_minimum_packet_rate_rule',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_alias_minimum_packet_rate_rule',
+                           self.alt_target))
+
+    def test_delete_policy_minimum_packet_rate_rule(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'delete_policy_minimum_packet_rate_rule',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'delete_policy_minimum_packet_rate_rule',
+                           self.alt_target))
+
+
+class ProjectMemberQosMinimumPacketRateRuleTests(
+        ProjectAdminQosMinimumPacketRateRuleTests):
+
+    def setUp(self):
+        super(ProjectMemberQosMinimumPacketRateRuleTests, self).setUp()
+        self.context = self.project_member_ctx
+
+    def test_get_policy_minimum_packet_rate_rule(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_policy_minimum_packet_rate_rule',
+                           self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
@@ -1335,58 +1458,6 @@ class ProjectAdminQosMinimumPacketRateRuleTests(QosRulesAPITestCase):
             policy.enforce,
             self.context, 'get_alias_minimum_packet_rate_rule',
             self.alt_target)
-
-    def test_create_policy_minimum_packet_rate_rule(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'create_policy_minimum_packet_rate_rule',
-                           self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'create_policy_minimum_packet_rate_rule',
-            self.alt_target)
-
-    def test_update_policy_minimum_packet_rate_rule(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'update_policy_minimum_packet_rate_rule',
-                           self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'update_policy_minimum_packet_rate_rule',
-            self.alt_target)
-
-        # And the same for aliases
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'update_alias_minimum_packet_rate_rule',
-                           self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'update_alias_minimum_packet_rate_rule',
-            self.alt_target)
-
-    def test_delete_policy_minimum_packet_rate_rule(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'delete_policy_minimum_packet_rate_rule',
-                           self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'delete_policy_minimum_packet_rate_rule',
-            self.alt_target)
-
-
-class ProjectMemberQosMinimumPacketRateRuleTests(
-        ProjectAdminQosMinimumPacketRateRuleTests):
-
-    def setUp(self):
-        super(ProjectMemberQosMinimumPacketRateRuleTests, self).setUp()
-        self.context = self.project_member_ctx
 
     def test_create_policy_minimum_packet_rate_rule(self):
         self.assertRaises(

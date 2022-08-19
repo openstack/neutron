@@ -33,7 +33,9 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_subnetpool',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description='Create a subnetpool',
         operations=[
@@ -50,7 +52,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_subnetpool:shared',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Create a shared subnetpool',
         operations=[
@@ -67,7 +69,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_subnetpool:is_default',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description=(
             'Specify ``is_default`` attribute when creating a subnetpool'
@@ -87,6 +89,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_subnetpool',
         check_str=base.policy_or(
+            base.ADMIN,
             base.PROJECT_READER,
             'rule:shared_subnetpools'
         ),
@@ -112,7 +115,9 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_subnetpool',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description='Update a subnetpool',
         operations=[
@@ -129,7 +134,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_subnetpool:is_default',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Update ``is_default`` attribute of a subnetpool',
         operations=[
@@ -146,7 +151,9 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_subnetpool',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description='Delete a subnetpool',
         operations=[
@@ -163,7 +170,9 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='onboard_network_subnets',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description='Onboard existing subnet into a subnetpool',
         operations=[
@@ -180,7 +189,9 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='add_prefixes',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description='Add prefixes to a subnetpool',
         operations=[
@@ -197,7 +208,9 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='remove_prefixes',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description='Remove unallocated prefixes from a subnetpool',
         operations=[
