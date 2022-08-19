@@ -269,10 +269,10 @@ class SystemReaderTests(SystemMemberTests):
         self.context = self.system_reader_ctx
 
 
-class ProjectAdminTests(RouterAPITestCase):
+class AdminTests(RouterAPITestCase):
 
     def setUp(self):
-        super(ProjectAdminTests, self).setUp()
+        super(AdminTests, self).setUp()
         self.context = self.project_admin_ctx
 
     def test_create_router(self):
@@ -442,7 +442,7 @@ class ProjectAdminTests(RouterAPITestCase):
                            'remove_router_interface', self.alt_target))
 
 
-class ProjectMemberTests(ProjectAdminTests):
+class ProjectMemberTests(AdminTests):
 
     def setUp(self):
         super(ProjectMemberTests, self).setUp()
@@ -819,10 +819,10 @@ class SystemReaderExtrarouteTests(SystemMemberExtrarouteTests):
         self.context = self.system_reader_ctx
 
 
-class ProjectAdminExtrarouteTests(ExtrarouteAPITestCase):
+class AdminExtrarouteTests(ExtrarouteAPITestCase):
 
     def setUp(self):
-        super(ProjectAdminExtrarouteTests, self).setUp()
+        super(AdminExtrarouteTests, self).setUp()
         self.context = self.project_admin_ctx
 
     def test_add_extraroute(self):
@@ -839,7 +839,7 @@ class ProjectAdminExtrarouteTests(ExtrarouteAPITestCase):
                 self.context, 'remove_extraroutes', self.alt_target))
 
 
-class ProjectMemberExtrarouteTests(ProjectAdminExtrarouteTests):
+class ProjectMemberExtrarouteTests(AdminExtrarouteTests):
 
     def setUp(self):
         super(ProjectMemberExtrarouteTests, self).setUp()

@@ -72,10 +72,10 @@ class SystemReaderTests(SystemMemberTests):
         self.context = self.system_reader_ctx
 
 
-class ProjectAdminTests(LoggingAPITestCase):
+class AdminTests(LoggingAPITestCase):
 
     def setUp(self):
-        super(ProjectAdminTests, self).setUp()
+        super(AdminTests, self).setUp()
         self.context = self.project_admin_ctx
 
     def test_get_loggable_resource(self):
@@ -99,7 +99,7 @@ class ProjectAdminTests(LoggingAPITestCase):
             policy.enforce(self.context, 'delete_log', self.target))
 
 
-class ProjectMemberTests(ProjectAdminTests):
+class ProjectMemberTests(AdminTests):
 
     def setUp(self):
         super(ProjectMemberTests, self).setUp()

@@ -78,10 +78,10 @@ class SystemReaderTests(SystemMemberTests):
         self.context = self.system_reader_ctx
 
 
-class ProjectAdminTests(QuoatsAPITestCase):
+class AdminTests(QuoatsAPITestCase):
 
     def setUp(self):
-        super(ProjectAdminTests, self).setUp()
+        super(AdminTests, self).setUp()
         self.context = self.project_admin_ctx
 
     def test_get_quota(self):
@@ -103,7 +103,7 @@ class ProjectAdminTests(QuoatsAPITestCase):
             policy.enforce(self.context, 'delete_quota', self.alt_target))
 
 
-class ProjectMemberTests(ProjectAdminTests):
+class ProjectMemberTests(AdminTests):
 
     def setUp(self):
         super(ProjectMemberTests, self).setUp()

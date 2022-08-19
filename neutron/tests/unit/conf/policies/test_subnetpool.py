@@ -148,10 +148,10 @@ class SystemReaderTests(SystemMemberTests):
         self.context = self.system_reader_ctx
 
 
-class ProjectAdminTests(SubnetpoolAPITestCase):
+class AdminTests(SubnetpoolAPITestCase):
 
     def setUp(self):
-        super(ProjectAdminTests, self).setUp()
+        super(AdminTests, self).setUp()
         self.context = self.project_admin_ctx
 
     def test_create_subnetpool(self):
@@ -223,7 +223,7 @@ class ProjectAdminTests(SubnetpoolAPITestCase):
             policy.enforce(self.context, 'remove_prefixes', self.alt_target))
 
 
-class ProjectMemberTests(ProjectAdminTests):
+class ProjectMemberTests(AdminTests):
 
     def setUp(self):
         super(ProjectMemberTests, self).setUp()

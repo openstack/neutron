@@ -53,10 +53,10 @@ class SystemReaderTests(SystemAdminTests):
         self.context = self.system_reader_ctx
 
 
-class ProjectAdminTests(FloatingipPoolsAPITestCase):
+class AdminTests(FloatingipPoolsAPITestCase):
 
     def setUp(self):
-        super(ProjectAdminTests, self).setUp()
+        super(AdminTests, self).setUp()
         self.alt_target = {'project_id': self.alt_project_id}
         self.context = self.project_admin_ctx
 
@@ -72,14 +72,14 @@ class ProjectAdminTests(FloatingipPoolsAPITestCase):
             self.context, 'get_floatingip_pool', self.alt_target)
 
 
-class ProjectMemberTests(ProjectAdminTests):
+class ProjectMemberTests(AdminTests):
 
     def setUp(self):
         super(ProjectMemberTests, self).setUp()
         self.context = self.project_member_ctx
 
 
-class ProjectReaderTests(ProjectAdminTests):
+class ProjectReaderTests(AdminTests):
 
     def setUp(self):
         super(ProjectReaderTests, self).setUp()

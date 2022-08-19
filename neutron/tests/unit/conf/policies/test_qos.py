@@ -83,10 +83,10 @@ class SystemReaderQosPolicyTests(SystemMemberQosPolicyTests):
         self.context = self.system_reader_ctx
 
 
-class ProjectAdminQosPolicyTests(QosPolicyAPITestCase):
+class AdminQosPolicyTests(QosPolicyAPITestCase):
 
     def setUp(self):
-        super(ProjectAdminQosPolicyTests, self).setUp()
+        super(AdminQosPolicyTests, self).setUp()
         self.context = self.project_admin_ctx
 
     def test_get_policy(self):
@@ -114,7 +114,7 @@ class ProjectAdminQosPolicyTests(QosPolicyAPITestCase):
             policy.enforce(self.context, 'delete_policy', self.alt_target))
 
 
-class ProjectMemberQosPolicyTests(ProjectAdminQosPolicyTests):
+class ProjectMemberQosPolicyTests(AdminQosPolicyTests):
 
     def setUp(self):
         super(ProjectMemberQosPolicyTests, self).setUp()
@@ -193,10 +193,10 @@ class SystemReaderQosRuleTypeTests(SystemMemberQosRuleTypeTests):
         self.context = self.system_reader_ctx
 
 
-class ProjectAdminQosRuleTypeTests(QosRuleTypeAPITestCase):
+class AdminQosRuleTypeTests(QosRuleTypeAPITestCase):
 
     def setUp(self):
-        super(ProjectAdminQosRuleTypeTests, self).setUp()
+        super(AdminQosRuleTypeTests, self).setUp()
         self.context = self.project_admin_ctx
 
     def test_get_rule_type(self):
@@ -204,7 +204,7 @@ class ProjectAdminQosRuleTypeTests(QosRuleTypeAPITestCase):
             policy.enforce(self.context, 'get_rule_type', self.target))
 
 
-class ProjectMemberQosRuleTypeTests(ProjectAdminQosRuleTypeTests):
+class ProjectMemberQosRuleTypeTests(AdminQosRuleTypeTests):
 
     def setUp(self):
         super(ProjectMemberQosRuleTypeTests, self).setUp()
@@ -354,10 +354,10 @@ class SystemReaderQosBandwidthLimitRuleTests(
         self.context = self.system_reader_ctx
 
 
-class ProjectAdminQosBandwidthLimitRuleTests(QosRulesAPITestCase):
+class AdminQosBandwidthLimitRuleTests(QosRulesAPITestCase):
 
     def setUp(self):
-        super(ProjectAdminQosBandwidthLimitRuleTests, self).setUp()
+        super(AdminQosBandwidthLimitRuleTests, self).setUp()
         self.context = self.project_admin_ctx
 
     def test_get_policy_bandwidth_limit_rule(self):
@@ -432,7 +432,7 @@ class ProjectAdminQosBandwidthLimitRuleTests(QosRulesAPITestCase):
 
 
 class ProjectMemberQosBandwidthLimitRuleTests(
-        ProjectAdminQosBandwidthLimitRuleTests):
+        AdminQosBandwidthLimitRuleTests):
 
     def setUp(self):
         super(ProjectMemberQosBandwidthLimitRuleTests, self).setUp()
@@ -584,10 +584,10 @@ class SystemAdminQosPacketRateLimitRuleTests(QosRulesAPITestCase):
             self.alt_target)
 
 
-class ProjectAdminQosPacketRateLimitRuleTests(QosRulesAPITestCase):
+class AdminQosPacketRateLimitRuleTests(QosRulesAPITestCase):
 
     def setUp(self):
-        super(ProjectAdminQosPacketRateLimitRuleTests, self).setUp()
+        super(AdminQosPacketRateLimitRuleTests, self).setUp()
         self.context = self.project_admin_ctx
 
     def test_get_policy_packet_rate_limit_rule(self):
@@ -632,7 +632,7 @@ class ProjectAdminQosPacketRateLimitRuleTests(QosRulesAPITestCase):
 
 
 class ProjectMemberQosPacketRateLimitRuleTests(
-        ProjectAdminQosPacketRateLimitRuleTests):
+        AdminQosPacketRateLimitRuleTests):
 
     def setUp(self):
         super(ProjectMemberQosPacketRateLimitRuleTests, self).setUp()
@@ -799,10 +799,10 @@ class SystemReaderQosDSCPMarkingRuleTests(SystemMemberQosDSCPMarkingRuleTests):
         self.context = self.system_reader_ctx
 
 
-class ProjectAdminQosDSCPMarkingRuleTests(QosRulesAPITestCase):
+class AdminQosDSCPMarkingRuleTests(QosRulesAPITestCase):
 
     def setUp(self):
-        super(ProjectAdminQosDSCPMarkingRuleTests, self).setUp()
+        super(AdminQosDSCPMarkingRuleTests, self).setUp()
         self.context = self.project_admin_ctx
 
     def test_get_policy_dscp_marking_rule(self):
@@ -877,7 +877,7 @@ class ProjectAdminQosDSCPMarkingRuleTests(QosRulesAPITestCase):
 
 
 class ProjectMemberQosDSCPMarkingRuleTests(
-        ProjectAdminQosDSCPMarkingRuleTests):
+        AdminQosDSCPMarkingRuleTests):
 
     def setUp(self):
         super(ProjectMemberQosDSCPMarkingRuleTests, self).setUp()
@@ -1081,10 +1081,10 @@ class SystemReaderQosMinimumBandwidthRuleTests(
         self.context = self.system_reader_ctx
 
 
-class ProjectAdminQosMinimumBandwidthRuleTests(QosRulesAPITestCase):
+class AdminQosMinimumBandwidthRuleTests(QosRulesAPITestCase):
 
     def setUp(self):
-        super(ProjectAdminQosMinimumBandwidthRuleTests, self).setUp()
+        super(AdminQosMinimumBandwidthRuleTests, self).setUp()
         self.context = self.project_admin_ctx
 
     def test_get_policy_minimum_bandwidth_rule(self):
@@ -1159,7 +1159,7 @@ class ProjectAdminQosMinimumBandwidthRuleTests(QosRulesAPITestCase):
 
 
 class ProjectMemberQosMinimumBandwidthRuleTests(
-        ProjectAdminQosMinimumBandwidthRuleTests):
+        AdminQosMinimumBandwidthRuleTests):
 
     def setUp(self):
         super(ProjectMemberQosMinimumBandwidthRuleTests, self).setUp()
@@ -1363,10 +1363,10 @@ class SystemReaderQosMinimumPacketRateRuleTests(
         self.context = self.system_reader_ctx
 
 
-class ProjectAdminQosMinimumPacketRateRuleTests(QosRulesAPITestCase):
+class AdminQosMinimumPacketRateRuleTests(QosRulesAPITestCase):
 
     def setUp(self):
-        super(ProjectAdminQosMinimumPacketRateRuleTests, self).setUp()
+        super(AdminQosMinimumPacketRateRuleTests, self).setUp()
         self.context = self.project_admin_ctx
 
     def test_get_policy_minimum_packet_rate_rule(self):
@@ -1431,7 +1431,7 @@ class ProjectAdminQosMinimumPacketRateRuleTests(QosRulesAPITestCase):
 
 
 class ProjectMemberQosMinimumPacketRateRuleTests(
-        ProjectAdminQosMinimumPacketRateRuleTests):
+        AdminQosMinimumPacketRateRuleTests):
 
     def setUp(self):
         super(ProjectMemberQosMinimumPacketRateRuleTests, self).setUp()
