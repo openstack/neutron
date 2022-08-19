@@ -911,8 +911,13 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                     db_ports.pop(port['id'])
 
             if self.mode == SYNC_MODE_REPAIR:
-                # Make sure that this port has an IP address in all the subnets
-                self._ovn_client.update_metadata_port(ctx, net['id'])
+                try:
+                    # Make sure that this port has an IP address in all the
+                    # subnets
+                    self._ovn_client.update_metadata_port(ctx, net['id'])
+                except n_exc.IpAddressGenerationFailure:
+                    LOG.error('Could not allocate IP addresses for '
+                              'metadata port in network %s', net['id'])
         LOG.debug('OVN sync metadata ports finished')
 
     def sync_networks_ports_and_dhcp_opts(self, ctx):
