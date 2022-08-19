@@ -33,15 +33,15 @@ class SystemAdminTests(AvailabilityZoneAPITestCase):
         self.context = self.system_admin_ctx
 
     def test_get_availability_zone(self):
-        self.assertTrue(
-            policy.enforce(self.context, "get_availability_zone", self.target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, "get_availability_zone", self.target)
 
 
 class SystemMemberTests(SystemAdminTests):
 
     def setUp(self):
-        self.skipTest("SYSTEM_MEMBER persona isn't supported in phase1 of the "
-                      "community goal")
         super(SystemMemberTests, self).setUp()
         self.context = self.system_member_ctx
 
@@ -49,8 +49,6 @@ class SystemMemberTests(SystemAdminTests):
 class SystemReaderTests(SystemMemberTests):
 
     def setUp(self):
-        self.skipTest("SYSTEM_READER persona isn't supported in phase1 of the "
-                      "community goal")
         super(SystemReaderTests, self).setUp()
         self.context = self.system_reader_ctx
 
@@ -62,10 +60,8 @@ class ProjectAdminTests(AvailabilityZoneAPITestCase):
         self.context = self.project_admin_ctx
 
     def test_get_availability_zone(self):
-        self.assertRaises(
-            base_policy.InvalidScope,
-            policy.enforce,
-            self.context, "get_availability_zone", self.target)
+        self.assertTrue(
+            policy.enforce(self.context, "get_availability_zone", self.target))
 
 
 class ProjectMemberTests(ProjectAdminTests):
@@ -73,6 +69,12 @@ class ProjectMemberTests(ProjectAdminTests):
     def setUp(self):
         super(ProjectMemberTests, self).setUp()
         self.context = self.project_member_ctx
+
+    def test_get_availability_zone(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "get_availability_zone", self.target)
 
 
 class ProjectReaderTests(ProjectMemberTests):

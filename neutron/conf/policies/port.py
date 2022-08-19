@@ -16,7 +16,7 @@ from oslo_policy import policy
 from neutron.conf.policies import base
 
 DEPRECATED_REASON = (
-    "The port API now supports system scope and default roles.")
+    "The port API now supports project scope and default roles.")
 
 
 COLLECTION_PATH = '/ports'

@@ -17,7 +17,7 @@ from neutron.conf.policies import base
 
 
 DEPRECATION_REASON = (
-    "The Service Providers API now supports system scope and default roles.")
+    "The Service Providers API now supports project scope and default roles.")
 
 rules = [
     policy.DocumentedRuleDefault(
@@ -34,7 +34,7 @@ rules = [
                 'path': '/service-providers',
             },
         ],
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_service_provider',
             check_str=base.RULE_ANY,

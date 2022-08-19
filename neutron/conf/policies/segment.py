@@ -16,7 +16,7 @@ from oslo_policy import policy
 from neutron.conf.policies import base
 
 DEPRECATED_REASON = (
-    "The segment API now supports system scope and default roles.")
+    "The segment API now supports project scope and default roles.")
 
 COLLECTION_PATH = '/segments'
 RESOURCE_PATH = '/segments/{id}'
@@ -26,7 +26,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='create_segment',
         check_str=base.ADMIN,
-        scope_types=['system'],
+        scope_types=['project'],
         description='Create a segment',
         operations=[
             {
@@ -43,7 +43,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_segment',
         check_str=base.ADMIN,
-        scope_types=['system'],
+        scope_types=['project'],
         description='Get a segment',
         operations=[
             {
@@ -64,7 +64,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='update_segment',
         check_str=base.ADMIN,
-        scope_types=['system'],
+        scope_types=['project'],
         description='Update a segment',
         operations=[
             {
@@ -81,7 +81,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='delete_segment',
         check_str=base.ADMIN,
-        scope_types=['system'],
+        scope_types=['project'],
         description='Delete a segment',
         operations=[
             {

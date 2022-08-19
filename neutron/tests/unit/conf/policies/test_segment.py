@@ -33,65 +33,6 @@ class SystemAdminTests(SegmentAPITestCase):
         self.context = self.system_admin_ctx
 
     def test_create_segment(self):
-        self.assertTrue(
-            policy.enforce(self.context, 'create_segment', self.target))
-
-    def test_get_segment(self):
-        self.assertTrue(
-            policy.enforce(self.context, 'get_segment', self.target))
-
-    def test_update_segment(self):
-        self.assertTrue(
-            policy.enforce(self.context, 'update_segment', self.target))
-
-    def test_delete_segment(self):
-        self.assertTrue(
-            policy.enforce(self.context, 'delete_segment', self.target))
-
-
-class SystemMemberTests(SystemAdminTests):
-
-    def setUp(self):
-        self.skipTest("SYSTEM_MEMBER persona isn't supported in phase1 of the "
-                      "community goal")
-        super(SystemMemberTests, self).setUp()
-        self.context = self.system_member_ctx
-
-    def test_create_segment(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'create_segment', self.target)
-
-    def test_update_segment(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'update_segment', self.target)
-
-    def test_delete_segment(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'delete_segment', self.target)
-
-
-class SystemReaderTests(SystemMemberTests):
-
-    def setUp(self):
-        self.skipTest("SYSTEM_READER persona isn't supported in phase1 of the "
-                      "community goal")
-        super(SystemReaderTests, self).setUp()
-        self.context = self.system_reader_ctx
-
-
-class ProjectAdminTests(SegmentAPITestCase):
-
-    def setUp(self):
-        super(ProjectAdminTests, self).setUp()
-        self.context = self.project_admin_ctx
-
-    def test_create_segment(self):
         self.assertRaises(
             base_policy.InvalidScope,
             policy.enforce,
@@ -116,11 +57,72 @@ class ProjectAdminTests(SegmentAPITestCase):
             self.context, 'delete_segment', self.target)
 
 
+class SystemMemberTests(SystemAdminTests):
+
+    def setUp(self):
+        super(SystemMemberTests, self).setUp()
+        self.context = self.system_member_ctx
+
+
+class SystemReaderTests(SystemMemberTests):
+
+    def setUp(self):
+        super(SystemReaderTests, self).setUp()
+        self.context = self.system_reader_ctx
+
+
+class ProjectAdminTests(SegmentAPITestCase):
+
+    def setUp(self):
+        super(ProjectAdminTests, self).setUp()
+        self.context = self.project_admin_ctx
+
+    def test_create_segment(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'create_segment', self.target))
+
+    def test_get_segment(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'get_segment', self.target))
+
+    def test_update_segment(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'update_segment', self.target))
+
+    def test_delete_segment(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_segment', self.target))
+
+
 class ProjectMemberTests(ProjectAdminTests):
 
     def setUp(self):
         super(ProjectMemberTests, self).setUp()
         self.context = self.project_member_ctx
+
+    def test_create_segment(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_segment', self.target)
+
+    def test_get_segment(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_segment', self.target)
+
+    def test_update_segment(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_segment', self.target)
+
+    def test_delete_segment(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_segment', self.target)
 
 
 class ProjectReaderTests(ProjectMemberTests):

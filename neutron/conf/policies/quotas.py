@@ -16,7 +16,7 @@ from oslo_policy import policy
 from neutron.conf.policies import base
 
 DEPRECATED_REASON = """
-The quotas API now supports system scope and default roles.
+The quotas API now supports project scope and default roles.
 """
 
 
@@ -28,7 +28,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_quota',
         check_str=base.ADMIN,
-        scope_types=['system'],
+        scope_types=['project'],
         description='Get a resource quota',
         operations=[
             {
@@ -49,7 +49,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='update_quota',
         check_str=base.ADMIN,
-        scope_types=['system'],
+        scope_types=['project'],
         description='Update a resource quota',
         operations=[
             {
@@ -66,7 +66,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='delete_quota',
         check_str=base.ADMIN,
-        scope_types=['system'],
+        scope_types=['project'],
         description='Delete a resource quota',
         operations=[
             {

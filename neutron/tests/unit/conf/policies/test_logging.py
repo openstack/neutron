@@ -33,74 +33,6 @@ class SystemAdminTests(LoggingAPITestCase):
         self.context = self.system_admin_ctx
 
     def test_get_loggable_resource(self):
-        self.assertTrue(
-            policy.enforce(self.context, 'get_loggable_resource', self.target))
-
-    def test_create_log(self):
-        self.assertTrue(
-            policy.enforce(self.context, 'create_log', self.target))
-
-    def test_get_log(self):
-        self.assertTrue(
-            policy.enforce(self.context, 'get_log', self.target))
-
-    def test_update_log(self):
-        self.assertTrue(
-            policy.enforce(self.context, 'update_log', self.target))
-
-    def test_delete_log(self):
-        self.assertTrue(
-            policy.enforce(self.context, 'delete_log', self.target))
-
-
-class SystemMemberTests(LoggingAPITestCase):
-
-    def setUp(self):
-        self.skipTest("SYSTEM_MEMBER persona isn't supported in phase1 of the "
-                      "community goal")
-        super(SystemMemberTests, self).setUp()
-        self.context = self.system_member_ctx
-
-    def test_get_loggable_resource(self):
-        self.assertTrue(
-            policy.enforce(self.context, 'get_loggable_resource', self.target))
-
-    def test_create_log(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, 'create_log', self.target)
-
-    def test_get_log(self):
-        self.assertTrue(
-            policy.enforce(self.context, 'get_log', self.target))
-
-    def test_update_log(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, 'update_log', self.target)
-
-    def test_delete_log(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, 'delete_log', self.target)
-
-
-class SystemReaderTests(SystemMemberTests):
-
-    def setUp(self):
-        self.skipTest("SYSTEM_READER persona isn't supported in phase1 of the "
-                      "community goal")
-        super(SystemReaderTests, self).setUp()
-        self.context = self.system_reader_ctx
-
-
-class ProjectAdminTests(LoggingAPITestCase):
-
-    def setUp(self):
-        super(ProjectAdminTests, self).setUp()
-        self.context = self.project_admin_ctx
-
-    def test_get_loggable_resource(self):
         self.assertRaises(
             base_policy.InvalidScope,
             policy.enforce, self.context, 'get_loggable_resource', self.target)
@@ -126,11 +58,77 @@ class ProjectAdminTests(LoggingAPITestCase):
             policy.enforce, self.context, 'delete_log', self.target)
 
 
+class SystemMemberTests(LoggingAPITestCase):
+
+    def setUp(self):
+        super(SystemMemberTests, self).setUp()
+        self.context = self.system_member_ctx
+
+
+class SystemReaderTests(SystemMemberTests):
+
+    def setUp(self):
+        super(SystemReaderTests, self).setUp()
+        self.context = self.system_reader_ctx
+
+
+class ProjectAdminTests(LoggingAPITestCase):
+
+    def setUp(self):
+        super(ProjectAdminTests, self).setUp()
+        self.context = self.project_admin_ctx
+
+    def test_get_loggable_resource(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'get_loggable_resource', self.target))
+
+    def test_create_log(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'create_log', self.target))
+
+    def test_get_log(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'get_log', self.target))
+
+    def test_update_log(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'update_log', self.target))
+
+    def test_delete_log(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_log', self.target))
+
+
 class ProjectMemberTests(ProjectAdminTests):
 
     def setUp(self):
         super(ProjectMemberTests, self).setUp()
         self.context = self.project_member_ctx
+
+    def test_get_loggable_resource(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'get_loggable_resource', self.target)
+
+    def test_create_log(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'create_log', self.target)
+
+    def test_get_log(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'get_log', self.target)
+
+    def test_update_log(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'update_log', self.target)
+
+    def test_delete_log(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'delete_log', self.target)
 
 
 class ProjectReaderTests(ProjectMemberTests):

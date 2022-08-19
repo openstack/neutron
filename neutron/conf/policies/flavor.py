@@ -24,7 +24,7 @@ ASSOC_COLLECTION_PATH = '/flavors/{flavor_id}/service_profiles'
 ASSOC_RESOURCE_PATH = '/flavors/{flavor_id}/service_profiles/{profile_id}'
 
 DEPRECATION_REASON = (
-    "The flavor API now supports system scope and default roles.")
+    "The flavor API now supports project scope and default roles.")
 
 
 rules = [
@@ -38,7 +38,7 @@ rules = [
                 'path': FLAVOR_COLLECTION_PATH,
             },
         ],
-        scope_types=['system'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='create_flavor',
             check_str=base.RULE_ADMIN_ONLY,
@@ -59,7 +59,7 @@ rules = [
                 'path': FLAVOR_RESOURCE_PATH,
             },
         ],
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_flavor',
             check_str=base.RULE_ANY,
@@ -76,7 +76,7 @@ rules = [
                 'path': FLAVOR_RESOURCE_PATH,
             },
         ],
-        scope_types=['system'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='update_flavor',
             check_str=base.RULE_ADMIN_ONLY,
@@ -93,7 +93,7 @@ rules = [
                 'path': FLAVOR_RESOURCE_PATH,
             },
         ],
-        scope_types=['system'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_flavor',
             check_str=base.RULE_ADMIN_ONLY,
@@ -111,7 +111,7 @@ rules = [
                 'path': PROFILE_COLLECTION_PATH,
             },
         ],
-        scope_types=['system'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='create_service_profile',
             check_str=base.RULE_ADMIN_ONLY,
@@ -132,7 +132,7 @@ rules = [
                 'path': PROFILE_RESOURCE_PATH,
             },
         ],
-        scope_types=['system'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_service_profile',
             check_str=base.RULE_ADMIN_ONLY,
@@ -149,7 +149,7 @@ rules = [
                 'path': PROFILE_RESOURCE_PATH,
             },
         ],
-        scope_types=['system'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='update_service_profile',
             check_str=base.RULE_ADMIN_ONLY,
@@ -166,7 +166,7 @@ rules = [
                 'path': PROFILE_RESOURCE_PATH,
             },
         ],
-        scope_types=['system'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_service_profile',
             check_str=base.RULE_ADMIN_ONLY,
@@ -182,7 +182,7 @@ rules = [
             'There is no corresponding GET operations in API currently. '
             'This rule is currently referred only in the DELETE '
             'of flavor_service_profile.'),
-        scope_types=['system', 'project'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_flavor_service_profile',
             check_str=base.RULE_ANY,
@@ -199,7 +199,7 @@ rules = [
                 'path': ASSOC_COLLECTION_PATH,
             },
         ],
-        scope_types=['system'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='create_flavor_service_profile',
             check_str=base.RULE_ADMIN_ONLY,
@@ -216,7 +216,7 @@ rules = [
                 'path': ASSOC_RESOURCE_PATH,
             },
         ],
-        scope_types=['system'],
+        scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_flavor_service_profile',
             check_str=base.RULE_ADMIN_ONLY,

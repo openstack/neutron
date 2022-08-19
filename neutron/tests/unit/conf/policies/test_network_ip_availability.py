@@ -33,16 +33,15 @@ class SystemAdminTests(NetworkIPAvailabilityAPITestCase):
         self.context = self.system_admin_ctx
 
     def test_get_network_ip_availability(self):
-        self.assertTrue(
-            policy.enforce(self.context, 'get_network_ip_availability',
-                           self.target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_network_ip_availability', self.target)
 
 
 class SystemMemberTests(SystemAdminTests):
 
     def setUp(self):
-        self.skipTest("SYSTEM_MEMBER persona isn't supported in phase1 of the "
-                      "community goal")
         super(SystemMemberTests, self).setUp()
         self.context = self.system_member_ctx
 
@@ -50,8 +49,6 @@ class SystemMemberTests(SystemAdminTests):
 class SystemReaderTests(SystemMemberTests):
 
     def setUp(self):
-        self.skipTest("SYSTEM_READER persona isn't supported in phase1 of the "
-                      "community goal")
         super(SystemReaderTests, self).setUp()
         self.context = self.system_member_ctx
 
@@ -63,10 +60,9 @@ class ProjectAdminTests(NetworkIPAvailabilityAPITestCase):
         self.context = self.project_admin_ctx
 
     def test_get_network_ip_availability(self):
-        self.assertRaises(
-            base_policy.InvalidScope,
-            policy.enforce,
-            self.context, 'get_network_ip_availability', self.target)
+        self.assertTrue(
+            policy.enforce(self.context, 'get_network_ip_availability',
+                           self.target))
 
 
 class ProjectMemberTests(ProjectAdminTests):
@@ -74,6 +70,12 @@ class ProjectMemberTests(ProjectAdminTests):
     def setUp(self):
         super(ProjectMemberTests, self).setUp()
         self.context = self.project_member_ctx
+
+    def test_get_network_ip_availability(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_network_ip_availability', self.target)
 
 
 class ProjectReaderTests(ProjectMemberTests):

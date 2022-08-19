@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from oslo_policy import policy as base_policy
+
 from neutron import policy
 from neutron.tests.unit.conf.policies import test_base as base
 
@@ -31,15 +33,15 @@ class SystemAdminTests(ServiceTypeAPITestCase):
         self.context = self.system_admin_ctx
 
     def test_get_service_provider(self):
-        self.assertTrue(
-            policy.enforce(self.context, 'get_service_provider', self.target))
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_service_provider', self.target)
 
 
 class SystemMemberTests(SystemAdminTests):
 
     def setUp(self):
-        self.skipTest("SYSTEM_MEMBER persona isn't supported in phase1 of the "
-                      "community goal")
         super(SystemMemberTests, self).setUp()
         self.context = self.system_member_ctx
 
@@ -47,8 +49,6 @@ class SystemMemberTests(SystemAdminTests):
 class SystemReaderTests(SystemMemberTests):
 
     def setUp(self):
-        self.skipTest("SYSTEM_READER persona isn't supported in phase1 of the "
-                      "community goal")
         super(SystemReaderTests, self).setUp()
         self.context = self.system_reader_ctx
 
