@@ -39,7 +39,9 @@ ACTION_GET = [
 rules = [
     policy.DocumentedRuleDefault(
         name='create_router',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description='Create a router',
         operations=ACTION_POST,
@@ -51,7 +53,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_router:distributed',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Specify ``distributed`` attribute when creating a router',
         operations=ACTION_POST,
@@ -63,7 +65,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_router:ha',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Specify ``ha`` attribute when creating a router',
         operations=ACTION_POST,
@@ -75,7 +77,9 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_router:external_gateway_info',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description=('Specify ``external_gateway_info`` '
                      'information when creating a router'),
@@ -88,7 +92,9 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_router:external_gateway_info:network_id',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description=('Specify ``network_id`` in ``external_gateway_info`` '
                      'information when creating a router'),
@@ -101,7 +107,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_router:external_gateway_info:enable_snat',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description=('Specify ``enable_snat`` in ``external_gateway_info`` '
                      'information when creating a router'),
@@ -114,7 +120,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_router:external_gateway_info:external_fixed_ips',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description=('Specify ``external_fixed_ips`` in '
                      '``external_gateway_info`` information when creating a '
@@ -129,7 +135,9 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='get_router',
-        check_str=base.PROJECT_READER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_READER),
         scope_types=['project'],
         description='Get a router',
         operations=ACTION_GET,
@@ -141,7 +149,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_router:distributed',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Get ``distributed`` attribute of a router',
         operations=ACTION_GET,
@@ -153,7 +161,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_router:ha',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Get ``ha`` attribute of a router',
         operations=ACTION_GET,
@@ -166,7 +174,9 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='update_router',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description='Update a router',
         operations=ACTION_PUT,
@@ -178,7 +188,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_router:distributed',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Update ``distributed`` attribute of a router',
         operations=ACTION_PUT,
@@ -190,7 +200,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_router:ha',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Update ``ha`` attribute of a router',
         operations=ACTION_PUT,
@@ -202,7 +212,9 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_router:external_gateway_info',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description='Update ``external_gateway_info`` information of a router',
         operations=ACTION_PUT,
@@ -214,7 +226,9 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_router:external_gateway_info:network_id',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description=('Update ``network_id`` attribute of '
                      '``external_gateway_info`` information of a router'),
@@ -227,7 +241,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_router:external_gateway_info:enable_snat',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description=('Update ``enable_snat`` attribute of '
                      '``external_gateway_info`` information of a router'),
@@ -240,7 +254,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_router:external_gateway_info:external_fixed_ips',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description=('Update ``external_fixed_ips`` attribute of '
                      '``external_gateway_info`` information of a router'),
@@ -254,7 +268,9 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='delete_router',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description='Delete a router',
         operations=ACTION_DELETE,
@@ -267,7 +283,9 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='add_router_interface',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description='Add an interface to a router',
         operations=[
@@ -284,7 +302,9 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='remove_router_interface',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description='Remove an interface from a router',
         operations=[
@@ -301,7 +321,9 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='add_extraroutes',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description='Add extra route to a router',
         operations=[
@@ -318,7 +340,9 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='remove_extraroutes',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description='Remove extra route from a router',
         operations=[

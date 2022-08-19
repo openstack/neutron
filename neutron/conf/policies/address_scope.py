@@ -31,7 +31,9 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_address_scope',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         description='Create an address scope',
         operations=[
             {
@@ -48,7 +50,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_address_scope:shared',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         description='Create a shared address scope',
         operations=[
             {
@@ -65,8 +67,10 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_address_scope',
-        check_str=base.policy_or(base.PROJECT_READER,
-                                 'rule:shared_address_scopes'),
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_READER,
+            'rule:shared_address_scopes'),
         description='Get an address scope',
         operations=[
             {
@@ -88,7 +92,9 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_address_scope',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         description='Update an address scope',
         operations=[
             {
@@ -105,7 +111,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_address_scope:shared',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         description='Update ``shared`` attribute of an address scope',
         operations=[
             {
@@ -122,7 +128,9 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_address_scope',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.policy_or(
+            base.ADMIN,
+            base.PROJECT_MEMBER),
         description='Delete an address scope',
         operations=[
             {

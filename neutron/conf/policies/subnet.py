@@ -40,6 +40,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='create_subnet',
         check_str=base.policy_or(
+            base.ADMIN,
             base.PROJECT_MEMBER,
             base.RULE_NET_OWNER),
         scope_types=['project'],
@@ -53,7 +54,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_subnet:segment_id',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description=(
             'Specify ``segment_id`` attribute when creating a subnet'
@@ -67,7 +68,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_subnet:service_types',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description=(
             'Specify ``service_types`` attribute when creating a subnet'
@@ -82,6 +83,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_subnet',
         check_str=base.policy_or(
+            base.ADMIN,
             base.PROJECT_READER,
             'rule:shared'),
         scope_types=['project'],
@@ -97,7 +99,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_subnet:segment_id',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Get ``segment_id`` attribute of a subnet',
         operations=ACTION_GET,
@@ -110,6 +112,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='update_subnet',
         check_str=base.policy_or(
+            base.ADMIN,
             base.PROJECT_MEMBER,
             base.RULE_NET_OWNER),
         scope_types=['project'],
@@ -123,7 +126,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_subnet:segment_id',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Update ``segment_id`` attribute of a subnet',
         operations=ACTION_PUT,
@@ -135,7 +138,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_subnet:service_types',
-        check_str=base.PROJECT_ADMIN,
+        check_str=base.ADMIN,
         scope_types=['project'],
         description='Update ``service_types`` attribute of a subnet',
         operations=ACTION_PUT,
@@ -148,6 +151,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='delete_subnet',
         check_str=base.policy_or(
+            base.ADMIN,
             base.PROJECT_MEMBER,
             base.RULE_NET_OWNER),
         scope_types=['project'],
