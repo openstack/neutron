@@ -497,6 +497,10 @@ class IptablesManager(object):
         version = self._get_version()
         self.__class__._random_fully = utils.is_version_greater_equal(
             version, n_const.IPTABLES_RANDOM_FULLY_VERSION)
+
+        self._random_fully = self._random_fully and \
+            cfg.CONF.AGENT.use_random_fully
+
         return self._random_fully
 
     @property
