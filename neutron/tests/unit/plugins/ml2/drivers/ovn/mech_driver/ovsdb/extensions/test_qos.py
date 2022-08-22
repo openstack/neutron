@@ -49,6 +49,7 @@ QOS_RULE_BW_2 = {'max_kbps': 300}
 QOS_RULE_DSCP_1 = {'dscp_mark': 16}
 QOS_RULE_DSCP_2 = {'dscp_mark': 20}
 QOS_RULE_MINBW_1 = {'min_kbps': 500}
+QOS_RULE_MINBW_2 = {'min_kbps': 700}
 
 
 class _Context(object):
@@ -202,18 +203,25 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
             rule_obj.QosBandwidthLimitRule(
                 direction=constants.INGRESS_DIRECTION, **QOS_RULE_BW_2),
             rule_obj.QosDscpMarkingRule(**QOS_RULE_DSCP_1),
-            rule_obj.QosMinimumBandwidthRule(**QOS_RULE_MINBW_1)]
+            rule_obj.QosMinimumBandwidthRule(
+                direction=constants.EGRESS_DIRECTION, **QOS_RULE_MINBW_1),
+            rule_obj.QosMinimumBandwidthRule(
+                direction=constants.INGRESS_DIRECTION, **QOS_RULE_MINBW_2),
+        ]
         mock_get_rules.return_value = rules
         expected = {
             constants.EGRESS_DIRECTION: {
                 qos_constants.RULE_TYPE_BANDWIDTH_LIMIT: QOS_RULE_BW_1,
-                qos_constants.RULE_TYPE_DSCP_MARKING: QOS_RULE_DSCP_1},
+                qos_constants.RULE_TYPE_DSCP_MARKING: QOS_RULE_DSCP_1,
+                qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH: QOS_RULE_MINBW_1},
             constants.INGRESS_DIRECTION: {
                 qos_constants.RULE_TYPE_BANDWIDTH_LIMIT: QOS_RULE_BW_2}
         }
         self.assertEqual(expected, self.qos_driver._qos_rules(mock.ANY,
                                                               'policy_id1'))
-        mock_warning.assert_not_called()
+        mock_warning.assert_called_once_with(
+            'ML2/OVN QoS driver does not support minimum bandwidth rules '
+            'enforcement with ingress direction')
 
     @mock.patch.object(rule_obj, 'get_rules')
     def test__qos_rules_no_rules(self, mock_get_rules):
@@ -317,14 +325,16 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         original_port.qos_policy_id = self.qos_policies[0].id
         self.qos_driver.update_port(mock.ANY, port, original_port)
         self.mock_rules.assert_called_once_with(
-            mock.ANY, port.id, port.network_id, None, None)
+            mock.ANY, port.id, port.network_id, None, None, lsp=None,
+            port_deleted=False)
 
         # Change from port policy (qos_policy0) to network policy (qos_policy1)
         self.mock_rules.reset_mock()
         port.qos_network_policy_id = self.qos_policies[1].id
         self.qos_driver.update_port(mock.ANY, port, original_port)
         self.mock_rules.assert_called_once_with(
-            mock.ANY, port.id, port.network_id, self.qos_policies[1].id, None)
+            mock.ANY, port.id, port.network_id, self.qos_policies[1].id, None,
+            lsp=None, port_deleted=False)
 
         # No change (qos_policy0)
         self.mock_rules.reset_mock()
@@ -345,7 +355,8 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         # Reset (no policy)
         self.qos_driver.update_port(mock.ANY, port, original_port, reset=True)
         self.mock_rules.assert_called_once_with(
-            mock.ANY, port.id, port.network_id, None, None)
+            mock.ANY, port.id, port.network_id, None, None, lsp=None,
+            port_deleted=False)
 
         # Reset (qos_policy0, regardless of being the same a in the previous
         # state)
@@ -354,7 +365,8 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
         original_port.qos_policy_id = self.qos_policies[1].id
         self.qos_driver.update_port(mock.ANY, port, original_port, reset=True)
         self.mock_rules.assert_called_once_with(
-            mock.ANY, port.id, port.network_id, self.qos_policies[0].id, None)
+            mock.ANY, port.id, port.network_id, self.qos_policies[0].id, None,
+            lsp=None, port_deleted=False)
 
         # External port, OVN QoS extension does not apply.
         self.mock_rules.reset_mock()
@@ -374,7 +386,8 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
 
         # Assert that rules are deleted
         self.mock_rules.assert_called_once_with(
-            mock.ANY, self.ports[1].id, self.ports[1].network_id, None, None)
+            mock.ANY, self.ports[1].id, self.ports[1].network_id, None, None,
+            lsp=None, port_deleted=True)
 
     def test_update_network(self):
         """Test update network (internal ports).
@@ -554,10 +567,17 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
                 mock.patch.object(self.qos_driver, 'update_router') as \
                 mock_update_router:
             self.qos_driver.update_policy(self.ctx, self.qos_policies[0])
-        updated_ports = [self.ports[1], self.ports[3], self.ports[4]]
+        # Ports updated from "update_port": self.ports[1], self.ports[4]
+        updated_ports = [self.ports[1], self.ports[4]]
         calls = [mock.call(self.txn, port.id, port.network_id,
-                           self.qos_policies[0].id, mock_qos_rules)
+                           self.qos_policies[0].id, mock_qos_rules,
+                           lsp=None, port_deleted=False)
                  for port in updated_ports]
+        # Port updated from "update_network": self.ports[3]
+        calls.append(mock.call(self.txn, self.ports[3].id,
+                               self.ports[3].network_id,
+                               self.qos_policies[0].id, mock_qos_rules))
+
         # We can't ensure the call order because we are not enforcing any order
         # when retrieving the port and the network list.
         self.mock_rules.assert_has_calls(calls, any_order=True)

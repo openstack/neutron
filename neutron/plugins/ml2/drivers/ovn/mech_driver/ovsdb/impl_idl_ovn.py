@@ -281,6 +281,10 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         return cmd.SetLSwitchPortCommand(self, lport_name,
                                          if_exists, **columns)
 
+    def update_lswitch_qos_options(self, port, if_exists=True, **qos):
+        return cmd.UpdateLSwitchPortQosOptionsCommand(self, port, if_exists,
+                                                      **qos)
+
     def delete_lswitch_port(self, lport_name=None, lswitch_name=None,
                             ext_id=None, if_exists=True):
         if lport_name is not None:

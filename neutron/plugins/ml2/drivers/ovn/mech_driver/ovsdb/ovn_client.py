@@ -584,7 +584,7 @@ class OVNClient(object):
             if self.is_dns_required_for_port(port):
                 self.add_txns_to_sync_port_dns_records(txn, port)
 
-            self._qos_driver.create_port(txn, port)
+            self._qos_driver.create_port(txn, port, port_cmd)
 
         db_rev.bump_revision(context, port, ovn_const.TYPE_PORTS)
 
