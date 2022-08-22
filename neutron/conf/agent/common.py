@@ -139,6 +139,9 @@ IPTABLES_OPTS = [
                        "of iptables-save. This option should not be turned "
                        "on for production systems because it imposes a "
                        "performance penalty.")),
+    cfg.BoolOpt('use_random_fully',
+                default=True,
+                help=_("Use random-fully in SNAT masquerade rules.")),
 ]
 
 PROCESS_MONITOR_OPTS = [
