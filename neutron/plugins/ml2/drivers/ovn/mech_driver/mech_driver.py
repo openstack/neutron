@@ -984,7 +984,9 @@ class OVNMechanismDriver(api.MechanismDriver):
             LOG.error('Validation of binding profile unexpectedly failed '
                       'while attempting to bind port %s', port['id'])
             raise e
-        agents = n_agent.AgentCache().get_agents({'host': bind_host})
+        agents = n_agent.AgentCache().get_agents(
+            {'host': bind_host,
+             'agent_type': ovn_const.OVN_CONTROLLER_TYPES})
         if not agents:
             LOG.warning('Refusing to bind port %(port_id)s due to '
                         'no OVN chassis for host: %(host)s',
