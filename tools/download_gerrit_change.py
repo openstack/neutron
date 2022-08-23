@@ -16,8 +16,11 @@
 #    under the License.
 
 import base64
+import sys
 
-import click
+from cliff import app
+from cliff import command
+from cliff import commandmanager
 import requests
 
 GERRIT_URL = 'https://review.opendev.org/'
@@ -38,22 +41,37 @@ def fetch(change, output_patch=None, url=GERRIT_URL, timeout=TIMEOUT):
     return str(message_bytes, 'utf-8')
 
 
-@click.command()
-@click.argument('gerrit_change', nargs=1, type=click.INT)
-@click.option('-o', '--output_patch',
-              help='Output patch file  [default: stdout]')
-@click.option('-g', '--gerrit_url',
-              default=GERRIT_URL,
-              show_default=True,
-              help='The url to Gerrit server')
-@click.option('-t', '--timeout',
-              default=TIMEOUT,
-              show_default=True,
-              type=click.INT,
-              help='Timeout, in seconds')
-def cli(gerrit_change, output_patch, gerrit_url, timeout):
-    message = fetch(gerrit_change, output_patch, gerrit_url, timeout)
-    if not output_patch or output_patch == '-':
+class Config(command.Command):
+    def get_parser(self, prog_name):
+        parser = super().get_parser(prog_name)
+        parser.add_argument('gerrit_change', help='Gerrit change')
+        parser.add_argument(
+            '-o', '--output_patch', default='-',
+            help='Output patch file  [default: stdout]')
+        parser.add_argument(
+            '-g', '--gerrit_url', default=GERRIT_URL,
+            help='The url to Gerrit server')
+        parser.add_argument(
+            '-t', '--timeout', default=TIMEOUT,
+            help='Verify server certificate (default)',
+        )
+        return parser
+
+    def take_action(self, parsed_args):
+        pass
+
+
+def cli():
+    my_app = app.App(
+        description='Download a gerrit change',
+        version='1.0.0',
+        command_manager=commandmanager.CommandManager('mycli.cli'))
+    cmd = Config(my_app, None)
+    parser = cmd.get_parser('migrate_names')
+    parsed_args = parser.parse_args(sys.argv[1:])
+    message = fetch(parsed_args.gerrit_change, parsed_args.output_patch,
+                    parsed_args.gerrit_url, parsed_args.timeout)
+    if not parsed_args.output_patch or parsed_args.output_patch == '-':
         print(message)
 
 
