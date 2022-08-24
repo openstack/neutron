@@ -64,6 +64,10 @@ at [1]_.
     [ovn]
     dns_servers = 203.0.113.8, 198.51.100.53
 
+* IPv6 NDP proxy
+
+  The NDP proxy functionality for IPv6 addresses is not supported by OVN.
+
 References
 ----------
 
