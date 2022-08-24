@@ -20,6 +20,7 @@ from neutron_lib.utils import net as net_utils
 from oslo_log import log as logging
 from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
+import sqlalchemy
 from sqlalchemy import and_
 
 from neutron.common import _constants
@@ -101,6 +102,13 @@ class PortBinding(PortBindingBase):
                 cls.db_model.vnic_type == vnic_type,
                 cls.db_model.status == status))
             return query.all()
+
+    @classmethod
+    @db_api.CONTEXT_READER
+    def get_duplicated_port_bindings(cls, context):
+        return context.session.query(
+            cls.db_model).group_by(
+            cls.db_model.port_id).having(sqlalchemy.func.count() > 1).all()
 
 
 @base.NeutronObjectRegistry.register

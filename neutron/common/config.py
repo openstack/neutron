@@ -87,6 +87,9 @@ def register_common_config_options():
                                              common_config.IRONIC_CONF_SECTION)
     common_config.register_ironic_opts()
 
+    # Register the CLI script configuration options.
+    common_config.register_cli_script_opts()
+
     _COMMON_OPTIONS_ALREADY_REGISTERED = True
 
 
