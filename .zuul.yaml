@@ -20,10 +20,7 @@
         - neutron-rally-task
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
-        - neutron-grenade-multinode
-        - neutron-grenade-dvr-multinode
         - neutron-tempest-iptables_hybrid
-        - neutron-grenade
         - tempest-full:
             timeout: 10800
             # We don't run the job on things like neutron docs-only changes
@@ -41,8 +38,6 @@
             timeout: 10800
             irrelevant-files: *tempest-irrelevant-files
         - neutron-tempest-slow-py3
-        - grenade-py3:
-            irrelevant-files: *tempest-irrelevant-files
     gate:
       jobs:
         - neutron-functional
@@ -51,16 +46,11 @@
         - neutron-tempest-dvr
         - neutron-tempest-linuxbridge
         - neutron-tempest-iptables_hybrid
-        - neutron-grenade-multinode
-        - neutron-grenade-dvr-multinode
-        - neutron-grenade
         - tempest-full:
             timeout: 10800
         - tempest-full-py3:
             timeout: 10800
         - neutron-tempest-slow-py3
-        - grenade-py3:
-            irrelevant-files: *tempest-irrelevant-files
     periodic:
       jobs:
         - neutron-functional
@@ -82,11 +72,6 @@
             irrelevant-files: *tempest-irrelevant-files
         - openstacksdk-functional-devstack-networking:
             voting: false
-
-        # TODO(slaweq): we should consider to convert this job to "non-legacy"
-        # one and move it to check queue, at least as non-voting
-        - legacy-grenade-dsvm-neutron-linuxbridge-multinode:
-            irrelevant-files: *tempest-irrelevant-files
 
         - legacy-tempest-dsvm-neutron-full-centos-7:
             irrelevant-files: *tempest-irrelevant-files
@@ -214,30 +199,6 @@
       - ^tox.ini$
 
 - job:
-    name: neutron-grenade-multinode
-    parent: legacy-dsvm-base-multinode
-    run: playbooks/legacy/neutron-grenade-multinode/run.yaml
-    post-run: playbooks/legacy/neutron-grenade-multinode/post.yaml
-    timeout: 10800
-    required-projects:
-      - openstack/grenade
-      - openstack/devstack-gate
-      - openstack/neutron
-    irrelevant-files: *tempest-irrelevant-files
-
-- job:
-    name: neutron-grenade-dvr-multinode
-    parent: legacy-dsvm-base-multinode
-    run: playbooks/legacy/neutron-grenade-dvr-multinode/run.yaml
-    post-run: playbooks/legacy/neutron-grenade-dvr-multinode/post.yaml
-    timeout: 7500
-    required-projects:
-      - openstack/grenade
-      - openstack/devstack-gate
-      - openstack/neutron
-    irrelevant-files: *tempest-irrelevant-files
-
-- job:
     name: neutron-tempest-dvr-ha-multinode-full
     parent: tempest-multinode-full
     nodeset: openstack-three-node-bionic
@@ -363,18 +324,6 @@
               agent_availability_zone: nova
               image_is_advanced: true
               available_type_drivers: flat,geneve,vlan,gre,local,vxlan
-    irrelevant-files: *tempest-irrelevant-files
-
-- job:
-    name: neutron-grenade
-    parent: legacy-dsvm-base
-    run: playbooks/legacy/neutron-grenade/run.yaml
-    post-run: playbooks/legacy/neutron-grenade/post.yaml
-    timeout: 10800
-    required-projects:
-      - openstack/grenade
-      - openstack/devstack-gate
-      - openstack/neutron
     irrelevant-files: *tempest-irrelevant-files
 
 - job:
