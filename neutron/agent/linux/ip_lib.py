@@ -1544,8 +1544,10 @@ def list_ip_routes(namespace, ip_version, scope=None, via=None, table=None,
             return get_attr(device, 'IFLA_IFNAME')
 
     def get_proto(proto_number):
-        if proto_number in rtnl.rt_proto:
+        if isinstance(proto_number, int) and proto_number in rtnl.rt_proto:
             return rtnl.rt_proto[proto_number]
+        elif isinstance(proto_number, str) and proto_number.isnumeric():
+            return rtnl.rt_proto[int(proto_number)]
         elif str(proto_number) in constants.IP_PROTOCOL_NUM_TO_NAME_MAP:
             return constants.IP_PROTOCOL_NUM_TO_NAME_MAP[str(proto_number)]
 
