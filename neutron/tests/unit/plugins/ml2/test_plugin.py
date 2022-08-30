@@ -47,6 +47,7 @@ import testtools
 import webob
 
 from neutron._i18n import _
+from neutron.agent import rpc as agent_rpc
 from neutron.common import utils
 from neutron.db import agents_db
 from neutron.db import provisioning_blocks
@@ -1111,6 +1112,32 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                                      payload=events.DBEventPayload(
                                          self.context, resource_id=port_id))
         self.assertFalse(ups.called)
+
+    @staticmethod
+    def _set_max_provisioning_tries():
+        ml2_plugin.MAX_PROVISIONING_TRIES = ml2_plugin.MAX_BIND_TRIES
+
+    @mock.patch.object(agent_rpc, 'migrating_to_host', return_value=None)
+    @mock.patch('neutron.plugins.ml2.plugin.db.get_port')
+    @mock.patch.object(p_utils, 'get_port_binding_by_status_and_host')
+    def test__port_provisioned_port_retry_port_binding_unbound(
+            self, mock_get_pb, mock_get_port, *args):
+        self.addCleanup(self._set_max_provisioning_tries)
+        ml2_plugin.MAX_PROVISIONING_TRIES = 2
+        plugin = directory.get_plugin()
+        port_id = 'fake_port_id'
+        port = mock.Mock(id=port_id, admin_state_up=True)
+        mock_get_port.return_value = port
+        with mock.patch.object(plugin, 'update_port_status') as mock_pstatus:
+            pb1 = mock.MagicMock(vif_type=portbindings.VIF_TYPE_UNBOUND)
+            pb2 = mock.MagicMock(vif_type=portbindings.VIF_TYPE_OVS)
+            pb2.__iter__.return_value = []
+            mock_get_pb.side_effect = [pb1, pb2]
+            plugin._port_provisioned('port', 'evt', 'trigger',
+                                     payload=events.DBEventPayload(
+                                         self.context, resource_id=port_id))
+            mock_pstatus.assert_called_once_with(self.context, port_id,
+                                                 constants.PORT_STATUS_ACTIVE)
 
     def test_port_after_create_outside_transaction(self):
         self.tx_open = True
