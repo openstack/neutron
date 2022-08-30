@@ -143,6 +143,7 @@ from neutron.services.segments import plugin as segments_plugin
 LOG = log.getLogger(__name__)
 
 MAX_BIND_TRIES = 10
+MAX_PROVISIONING_TRIES = MAX_BIND_TRIES
 
 
 SERVICE_PLUGINS_REQUIRED_DRIVERS = {
@@ -327,37 +328,55 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                        [provisioning_blocks.PROVISIONING_COMPLETE])
     def _port_provisioned(self, rtype, event, trigger, payload=None):
         port_id = payload.resource_id
-        port = db.get_port(payload.context, port_id)
-        port_binding = p_utils.get_port_binding_by_status_and_host(
-            getattr(port, 'port_bindings', []), const.ACTIVE)
-        if not port or not port_binding:
-            LOG.debug("Port %s was deleted so its status cannot be updated.",
-                      port_id)
-            return
-        if port_binding.vif_type in (portbindings.VIF_TYPE_BINDING_FAILED,
-                                     portbindings.VIF_TYPE_UNBOUND):
-            # NOTE(kevinbenton): we hit here when a port is created without
-            # a host ID and the dhcp agent notifies that its wiring is done
-            LOG.debug("Port %s cannot update to ACTIVE because it "
-                      "is not bound.", port_id)
-            return
-        else:
-            # port is bound, but we have to check for new provisioning blocks
-            # one last time to detect the case where we were triggered by an
-            # unbound port and the port became bound with new provisioning
-            # blocks before 'get_port' was called above
-            if provisioning_blocks.is_object_blocked(payload.context, port_id,
-                                                     resources.PORT):
-                LOG.debug("Port %s had new provisioning blocks added so it "
-                          "will not transition to active.", port_id)
+        for count in range(1, MAX_PROVISIONING_TRIES + 1):
+            LOG.info('Attempt %(count)s to provision port %(port)s',
+                     {'count': count, 'port': port_id})
+            port = db.get_port(payload.context, port_id)
+            port_bindings = getattr(port, 'port_bindings', [])
+            port_binding = p_utils.get_port_binding_by_status_and_host(
+                port_bindings, const.ACTIVE)
+
+            if not port or not port_binding:
+                LOG.debug("Port %s was deleted so its status cannot be "
+                          "updated.", port_id)
                 return
+
+            if port_binding.vif_type == portbindings.VIF_TYPE_BINDING_FAILED:
+                LOG.debug('Port %s cannot update to ACTIVE because it failed.',
+                          port_id)
+                return
+
+            if port_binding.vif_type == portbindings.VIF_TYPE_UNBOUND:
+                # NOTE(kevinbenton): we hit here when a port is created without
+                # a host ID and the dhcp agent notifies that its wiring is done
+                LOG.debug('Port %s cannot update to ACTIVE because it '
+                          'is not bound.', port_id)
+                if count == MAX_PROVISIONING_TRIES:
+                    return
+
+                # Wait 0.5 seconds before checking again if the port is bound.
+                # We could hit this during a live-migration.
+                greenthread.sleep(0.5)
+                continue
+
+            break
+
+        # port is bound, but we have to check for new provisioning blocks
+        # one last time to detect the case where we were triggered by an
+        # unbound port and the port became bound with new provisioning
+        # blocks before 'get_port' was called above
+        if provisioning_blocks.is_object_blocked(payload.context, port_id,
+                                                 resources.PORT):
+            LOG.debug("Port %s had new provisioning blocks added so it "
+                      "will not transition to active.", port_id)
+            return
+
         if not port.admin_state_up:
             LOG.debug("Port %s is administratively disabled so it will "
                       "not transition to active.", port_id)
             return
 
-        host_migrating = agent_rpc.migrating_to_host(
-            getattr(port, 'port_bindings', []))
+        host_migrating = agent_rpc.migrating_to_host(port_bindings)
         if (host_migrating and cfg.CONF.nova.live_migration_events and
                 self.nova_notifier):
             send_nova_event = bool(trigger ==
