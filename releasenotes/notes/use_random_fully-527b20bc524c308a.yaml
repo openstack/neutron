@@ -1,0 +1,15 @@
+---
+features:
+  - |
+    Add ``use_random_fully`` setting to allow an operator to disable
+    the iptables random-fully property on an iptable rules.
+issues:
+  - |
+    If the ``use_random_fully`` setting is disabled, it will prevent
+    random fully from being used and if there're 2 guests in different
+    networks using the same source_ip and source_port and they try to
+    reach the same dest_ip and dest_port, packets might be dropped in
+    the kernel do to the racy tuple generation .   Disabling this
+    setting should only be done if source_port is really important such
+    as in network firewall ACLs and that the source_ip are never repeating
+    within the platform.
