@@ -147,6 +147,14 @@ Perform the following steps in the undercloud
      during migration to ensure a synchronized MTU switch across the networks.
      Default: 30
 
+   * CREATE_BACKUP - Flag to create a backup of the controllers that can be
+     used as a revert mechanism.
+     Default: True
+
+   * BACKUP_MIGRATION_IP - Only used if CREATE_BACKUP is enabled, IP of the
+     server that will be used as a NFS server to store the backup.
+     Default: 192.168.24.1
+
    .. warning::
 
       Please note that VALIDATE_MIGRATION requires enough quota (2

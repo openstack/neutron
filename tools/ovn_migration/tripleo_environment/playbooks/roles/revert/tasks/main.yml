@@ -1,0 +1,29 @@
+---
+- name: Stop ovn containers
+  become: yes
+  shell: |
+    for agent in $(podman ps -a --format {% raw %}"{{.ID}}"{% endraw %} --filter "name=(ovn_.*|ovnmeta)"); do
+        echo "Cleaning up agent $agent"
+        podman rm -f $agent
+    done
+
+- name: Clean OVN netns
+  become: yes
+  shell: |
+    for netns in $(ip netns ls | grep ovnmeta | cut -d' ' -f1); do
+        echo "delete netns $netns"
+        ip netns del $netns
+    done
+
+- name: Delete OVN ports
+  become: yes
+  shell: |
+    for port in $(ovs-vsctl list interface | grep ^name | grep 'ovn-\|patch-provnet\|patch-br-int-to' | cut -d':' -f2); do
+        echo "Removing port $port"
+        ovs-vsctl del-port $port
+    done
+
+- name: Revert cleanup completed.
+  debug:
+    msg: Revert cleanup done, please run overcloud deploy with the OVS configuration.
+
