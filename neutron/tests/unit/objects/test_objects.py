@@ -41,7 +41,7 @@ object_data = {
     'ExternalNetwork': '1.0-53d885e033cb931f9bb3bdd6bbe3f0ce',
     'DvrFipGatewayPortAgentBinding': '1.0-ee2af3296265a5463de0bc3695b35b51',
     'DVRMacAddress': '1.0-d3c61a8338d20da74db2364d4d6554f2',
-    'ExtraDhcpOpt': '1.0-632f689cbeb36328995a7aed1d0a78d3',
+    'ExtraDhcpOpt': '1.1-8f5639ccbe4eb2173a185183d34c01e7',
     'FlatAllocation': '1.0-bf666f24f4642b047eeca62311fbcb41',
     'Flavor': '1.0-82194de5c9aafce08e8527bb7977f5c6',
     'FlavorServiceProfileBinding': '1.0-a2c8731e16cefdac4571f80abf1f8930',
