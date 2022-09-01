@@ -49,15 +49,38 @@ class RevisionPlugin(service_base.ServicePluginBase):
         db_api.sqla_listen(se.Session, 'after_rollback',
                            self._clear_rev_bumped_flags)
 
+    def _get_objects_to_bump_revision(self, dirty_objects):
+        all_std_attr_objects = []
+        objects_to_bump_revision = []
+        for dirty_object in dirty_objects:
+            if isinstance(dirty_object, standard_attr.HasStandardAttributes):
+                objects_to_bump_revision.append(dirty_object)
+            elif isinstance(dirty_object, standard_attr.StandardAttribute):
+                all_std_attr_objects.append(dirty_object)
+
+        # Now as we have all objects divided into 2 groups, we need to ensure
+        # that we don't have revision number for the same one in both groups.
+        # It may happen e.g. for the Subnet object, as during update of Subnet,
+        # both Subnet and StandardAttribute objects of that subnet are dirty.
+        # But for example for Network, when only description is changed, only
+        # StandardAttribute object is in the dirty objects set.
+        std_attr_ids = [o.standard_attr_id for o in objects_to_bump_revision]
+
+        # NOTE(slaweq): StandardAttribute objects which have "description"
+        # field modified, should have revision bumped too
+        objects_to_bump_revision += [
+            o for o in all_std_attr_objects
+            if ('description' not in o._sa_instance_state.unmodified and
+                o.id not in std_attr_ids)]
+
+        return objects_to_bump_revision
+
     def bump_revisions(self, session, context, instances):
         self._enforce_if_match_constraints(session)
-        # bump revision number for any updated objects in the session
+        # bump revision number for updated objects in the session
         self._bump_obj_revisions(
             session,
-            [
-                obj for obj in session.dirty
-                if isinstance(obj, standard_attr.HasStandardAttributes)]
-        )
+            self._get_objects_to_bump_revision(session.dirty))
 
         # see if any created/updated/deleted objects bump the revision
         # of another object
