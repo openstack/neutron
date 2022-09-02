@@ -536,8 +536,15 @@ class IpAddrCommand(IpDeviceCommandBase):
         add_ip_address(cidr, self.name, self._parent.namespace, scope,
                        add_broadcast)
 
+    def add_multiple(self, cidrs, scope='global', add_broadcast=True):
+        add_ip_addresses(cidrs, self.name, self._parent.namespace, scope,
+                         add_broadcast)
+
     def delete(self, cidr):
         delete_ip_address(cidr, self.name, self._parent.namespace)
+
+    def delete_multiple(self, cidrs):
+        delete_ip_addresses(cidrs, self.name, self._parent.namespace)
 
     def flush(self, ip_version):
         flush_ip_addresses(ip_version, self.name, self._parent.namespace)
@@ -814,13 +821,25 @@ def add_ip_address(cidr, device, namespace=None, scope='global',
     """
     net = netaddr.IPNetwork(cidr)
     broadcast = None
-    if add_broadcast and net.version == 4:
-        # NOTE(slaweq): in case if cidr is /32 net.broadcast is None so
-        # same IP address as cidr should be set as broadcast
-        broadcast = str(net.broadcast or net.ip)
+    if add_broadcast:
+        broadcast = common_utils.cidr_broadcast_address_alternative(cidr)
     privileged.add_ip_address(
         net.version, str(net.ip), net.prefixlen,
         device, namespace, scope, broadcast)
+
+
+def add_ip_addresses(cidrs, device, namespace=None, scope='global',
+                     add_broadcast=True):
+    """Add multiple IP addresses.
+
+    :param cidrs: A list of IP addresses to add, in CIDR notation
+    :param device: Device name to use in adding address
+    :param namespace: The name of the namespace in which to add the address
+    :param scope: scope of address being added
+    :param add_broadcast: should broadcast address be added
+    """
+    privileged.add_ip_addresses(
+        cidrs, device, namespace, scope, add_broadcast)
 
 
 def delete_ip_address(cidr, device, namespace=None):
@@ -833,6 +852,16 @@ def delete_ip_address(cidr, device, namespace=None):
     net = netaddr.IPNetwork(cidr)
     privileged.delete_ip_address(
         net.version, str(net.ip), net.prefixlen, device, namespace)
+
+
+def delete_ip_addresses(cidrs, device, namespace=None):
+    """Delete multiple IP address.
+
+    :param cidrs: A list of IP addresses to delete, in CIDR notation
+    :param device: Device name to use in deleting address
+    :param namespace: The name of the namespace in which to delete the address
+    """
+    privileged.delete_ip_addresses(cidrs, device, namespace)
 
 
 def flush_ip_addresses(ip_version, device, namespace=None):

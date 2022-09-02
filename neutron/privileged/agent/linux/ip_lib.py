@@ -14,6 +14,7 @@ import errno
 import os
 import socket
 
+import netaddr
 from neutron_lib import constants
 from oslo_log import log as logging
 import pyroute2
@@ -27,6 +28,7 @@ from pyroute2 import netns  # pylint: disable=no-name-in-module
 import tenacity
 
 from neutron._i18n import _
+from neutron.common import utils as common_utils
 from neutron import privileged
 from neutron.privileged.agent import linux as priv_linux
 
@@ -273,6 +275,32 @@ def add_ip_address(ip_version, ip, prefixlen, device, namespace, scope,
 
 
 @privileged.default.entrypoint
+def add_ip_addresses(cidrs, device, namespace, scope,
+                     add_broadcast=True):
+    for cidr in cidrs:
+        net = netaddr.IPNetwork(cidr)
+        ip = str(net.ip)
+        prefixlen = net.prefixlen
+        family = _IP_VERSION_FAMILY_MAP[net.version]
+        broadcast = None
+        if add_broadcast:
+            broadcast = common_utils.cidr_broadcast_address_alternative(cidr)
+        try:
+            _run_iproute_addr('add',
+                              device,
+                              namespace,
+                              address=ip,
+                              mask=prefixlen,
+                              family=family,
+                              broadcast=broadcast,
+                              scope=get_scope_name(scope))
+        except netlink_exceptions.NetlinkError as e:
+            if e.code == errno.EEXIST:
+                raise IpAddressAlreadyExists(ip=ip, device=device)
+            raise
+
+
+@privileged.default.entrypoint
 def delete_ip_address(ip_version, ip, prefixlen, device, namespace):
     family = _IP_VERSION_FAMILY_MAP[ip_version]
     try:
@@ -290,6 +318,31 @@ def delete_ip_address(ip_version, ip, prefixlen, device, namespace):
         if e.code == errno.EADDRNOTAVAIL:
             return
         raise
+
+
+@privileged.default.entrypoint
+def delete_ip_addresses(cidrs, device, namespace):
+    for cidr in cidrs:
+        net = netaddr.IPNetwork(cidr)
+        ip = str(net.ip)
+        prefixlen = net.prefixlen
+        family = _IP_VERSION_FAMILY_MAP[net.version]
+        try:
+            _run_iproute_addr("delete",
+                              device,
+                              namespace,
+                              address=ip,
+                              mask=prefixlen,
+                              family=family)
+        except netlink_exceptions.NetlinkError as e:
+            # when trying to delete a non-existent IP address, pyroute2 raises
+            # NetlinkError with code EADDRNOTAVAIL (99, 'Cannot assign
+            # requested address')
+            # this shouldn't raise an error
+            if e.code == errno.EADDRNOTAVAIL:
+                pass
+            else:
+                raise
 
 
 @privileged.default.entrypoint

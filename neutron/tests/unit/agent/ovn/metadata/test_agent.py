@@ -231,7 +231,8 @@ class TestMetadataAgent(base.BaseTestCase):
                 mock.patch.object(ip_link, 'set_up') as link_set_up,\
                 mock.patch.object(ip_link, 'set_address') as link_set_addr,\
                 mock.patch.object(ip_addr, 'list', return_value=[]),\
-                mock.patch.object(ip_addr, 'add') as ip_addr_add,\
+                mock.patch.object(
+                    ip_addr, 'add_multiple') as ip_addr_add_multiple,\
                 mock.patch.object(
                     ip_wrap, 'add_veth',
                     return_value=[ip_lib.IPDevice('ip1'),
@@ -261,12 +262,9 @@ class TestMetadataAgent(base.BaseTestCase):
                 'br-int', 'veth_0')
             self.agent.ovs_idl.db_set.assert_called_once_with(
                 'Interface', 'veth_0', ('external_ids', {'iface-id': 'port'}))
-            # Check that the metadata port has the IP addresses properly
-            # configured and that IPv6 address has been skipped.
-            expected_calls = [mock.call('10.0.0.1/23'),
-                              mock.call(n_const.METADATA_CIDR)]
-            self.assertEqual(sorted(expected_calls),
-                             sorted(ip_addr_add.call_args_list))
+            expected_call = [n_const.METADATA_CIDR, '10.0.0.1/23']
+            self.assertCountEqual(expected_call,
+                                  ip_addr_add_multiple.call_args.args[0])
             # Check that metadata proxy has been spawned
             spawn_mdp.assert_called_once_with(
                 mock.ANY, 'namespace', 80, mock.ANY,
