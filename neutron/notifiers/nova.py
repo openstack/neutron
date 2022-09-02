@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+
+from keystoneauth1 import exceptions as ks_exceptions
 from keystoneauth1 import loading as ks_loading
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
@@ -29,6 +31,7 @@ from oslo_context import context as common_context
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 from sqlalchemy.orm import attributes as sql_attr
+import tenacity
 
 from neutron.notifiers import batch_notifier
 
@@ -242,6 +245,12 @@ class Notifier(object):
              'tag': port.id})
         self.send_port_status(None, None, port)
 
+    @tenacity.retry(
+        retry=tenacity.retry_if_exception_type(
+            ks_exceptions.RetriableConnectionFailure),
+        wait=tenacity.wait_exponential(multiplier=0.01, max=1),
+        stop=tenacity.stop_after_delay(1),
+        after=tenacity.after_log(LOG, logging.DEBUG))
     def send_events(self, batched_events):
         LOG.debug("Sending events: %s", batched_events)
         novaclient = self._get_nova_client()
@@ -251,6 +260,10 @@ class Notifier(object):
         except nova_exceptions.NotFound:
             LOG.debug("Nova returned NotFound for event: %s",
                       batched_events)
+        except ks_exceptions.RetriableConnectionFailure:
+            raise
+            # next clause handles all exceptions
+            # so reraise for retry decorator
         except Exception:
             LOG.exception("Failed to notify nova on events: %s",
                           batched_events)
