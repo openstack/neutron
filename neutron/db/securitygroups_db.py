@@ -930,6 +930,10 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
 
         :returns: the default security group id for given tenant.
         """
+        # Do not allow a tenant to create a default SG for another one.
+        # See Bug 1987410.
+        if tenant_id != context.tenant_id and not context.is_admin:
+            return
         if not extensions.is_extension_supported(self, 'security-group'):
             return
         default_group_id = self._get_default_sg_id(context, tenant_id)

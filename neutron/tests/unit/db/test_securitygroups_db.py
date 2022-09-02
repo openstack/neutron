@@ -660,3 +660,15 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             self.mixin._ensure_default_security_group(self.ctx, 'tenant_1')
             create_sg.assert_not_called()
             get_default_sg_id.assert_not_called()
+
+    def test__ensure_default_security_group_tenant_mismatch(self):
+        with mock.patch.object(
+                self.mixin, '_get_default_sg_id') as get_default_sg_id,\
+                mock.patch.object(
+                        self.mixin, 'create_security_group') as create_sg:
+            context = mock.Mock()
+            context.tenant_id = 'tenant_0'
+            context.is_admin = False
+            self.mixin._ensure_default_security_group(context, 'tenant_1')
+            create_sg.assert_not_called()
+            get_default_sg_id.assert_not_called()
