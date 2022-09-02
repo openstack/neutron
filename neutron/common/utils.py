@@ -137,13 +137,15 @@ def log_opt_values(log):
     cfg.CONF.log_opt_values(log, logging.DEBUG)
 
 
-def get_dhcp_agent_device_id(network_id, host):
+def get_dhcp_agent_device_id(network_id, host, segmentation_id=None):
     # Split host so as to always use only the hostname and
     # not the domain name. This will guarantee consistency
     # whether a local hostname or an fqdn is passed in.
     local_hostname = host.split('.')[0]
     host_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, str(local_hostname))
-    return 'dhcp%s-%s' % (host_uuid, network_id)
+    if not segmentation_id:
+        return 'dhcp%s-%s' % (host_uuid, network_id)
+    return 'dhcp%s-%s-%s' % (host_uuid, network_id, segmentation_id)
 
 
 def is_dns_servers_any_address(dns_servers, ip_version):
