@@ -13,6 +13,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from collections import defaultdict
+
 from neutron_lib import exceptions
 
 from neutron._i18n import _
@@ -24,11 +26,17 @@ class VifIdNotFound(exceptions.NeutronException):
 
 
 class MappingAlreadyExists(exceptions.NeutronException):
-    message = _('VLAN mapping for network with id %(net_id)s already exists')
+    message = _('VLAN mapping for network with id %(net_id)s and '
+                'segmentation id %(seg_id)s already exists')
 
 
 class MappingNotFound(exceptions.NeutronException):
-    message = _('Mapping for network %(net_id)s not found.')
+    message = _('Mapping VLAN for network %(net_id)s with segmentation id '
+                '%(seg_id)s not found.')
+
+
+class NotUniqMapping(exceptions.NeutronException):
+    message = _('Mapping VLAN for network %(net_id)s should be unique.')
 
 
 class LocalVLANMapping(object):
@@ -71,7 +79,7 @@ class LocalVlanManager(object):
 
     def __init__(self):
         if not hasattr(self, 'mapping'):
-            self.mapping = {}
+            self.mapping = defaultdict(dict)
 
     def __contains__(self, key):
         return key in self.mapping
@@ -86,31 +94,55 @@ class LocalVlanManager(object):
 
     def add(self, net_id, vlan, network_type, physical_network,
             segmentation_id, vif_ports=None):
-        if net_id in self.mapping:
-            raise MappingAlreadyExists(net_id=net_id)
-        self.mapping[net_id] = LocalVLANMapping(
+        try:
+            if self.get(net_id, segmentation_id):
+                raise MappingAlreadyExists(
+                    net_id=net_id, seg_id=segmentation_id)
+        except MappingNotFound:
+            pass
+        self.mapping[net_id][segmentation_id] = LocalVLANMapping(
             vlan, network_type, physical_network, segmentation_id, vif_ports)
 
-    def get_net_uuid(self, vif_id):
-        for network_id, vlan_mapping in self.mapping.items():
-            if vif_id in vlan_mapping.vif_ports:
-                return network_id
+    def get_net_and_segmentation_id(self, vif_id, net_uuid=None):
+        # TODO(sahid): We should improve algorithm if net_uuid is passed.
+        for network_id, vlan_mappings in self.mapping.items():
+            for segmentation_id, vlan_mapping in vlan_mappings.items():
+                if vif_id in vlan_mapping.vif_ports:
+                    return network_id, segmentation_id
         raise VifIdNotFound(vif_id=vif_id)
 
-    def get(self, net_id):
-        try:
-            return self.mapping[net_id]
-        except KeyError:
-            raise MappingNotFound(net_id=net_id)
+    def get(self, net_id, segmentation_id):
+        if net_id in self.mapping and segmentation_id in self.mapping[net_id]:
+            return self.mapping[net_id][segmentation_id]
+        raise MappingNotFound(net_id=net_id, seg_id=segmentation_id)
 
-    def pop(self, net_id):
-        try:
-            return self.mapping.pop(net_id)
-        except KeyError:
-            raise MappingNotFound(net_id=net_id)
+    def get_segments(self, net_id):
+        if net_id not in self.mapping:
+            raise MappingNotFound(net_id=net_id, seg_id="<all>")
+        return self.mapping[net_id]
+
+    def pop(self, net_id, segmentation_id):
+        if self.get(net_id, segmentation_id):
+            ret = self.mapping[net_id].pop(segmentation_id)
+            # if it's the last seg id for a network, let's removed the network
+            # entry as-well.
+            if len(self.mapping[net_id]) == 0:
+                del self.mapping[net_id]
+            return ret
 
     def update_segmentation_id(self, net_id, segmentation_id):
-        try:
-            self.mapping[net_id].segmentation_id = segmentation_id
-        except KeyError:
-            raise MappingNotFound(net_id=net_id)
+        """Returns tuple with segmentation id, lvm in success or None, None"""
+        if len(self.get_segments(net_id)) != 1:
+            # Update of segmentation id can work only if network has one
+            # segment. This is a design issue that should be fixed in
+            # future. We should not accept segmentation update for a network.
+            raise NotUniqMapping(net_id=net_id)
+        mapping = list(self.mapping[net_id].values())[0]
+        if mapping.segmentation_id == segmentation_id:
+            # No need to update
+            return None, None
+        old = mapping.segmentation_id
+        del self.mapping[net_id][old]
+        mapping.segmentation_id = segmentation_id
+        self.mapping[net_id][segmentation_id] = mapping
+        return old, mapping

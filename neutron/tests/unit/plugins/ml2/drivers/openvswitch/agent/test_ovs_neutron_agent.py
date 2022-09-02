@@ -69,8 +69,10 @@ TEST_PORT_ID3 = 'port-id-3'
 TEST_NETWORK_ID1 = 'net-id-1'
 TEST_NETWORK_ID2 = 'net-id-2'
 
-TEST_SEGMENTATION_ID1 = 'seg-id-1'
-TEST_SEGMENTATION_ID2 = 'seg-id-2'
+# Currently it's only accepted to have one segmentation per network. In future
+# we will accept more.
+TEST_SEG_NET1_ID1 = 'net-id-1-seg-id-1'
+TEST_SEG_NET2_ID1 = 'net-id-2-seg-id-1'
 
 TEST_MTU = 7824
 
@@ -189,7 +191,7 @@ class TestOvsNeutronAgent(object):
                 int_br.db_get_val.return_value = db_get_val
                 int_br.set_db_attribute.return_value = True
                 needs_binding = self.agent.port_bound(
-                    port, net_uuid, 'local', None, None,
+                    port, net_uuid, 'local', None, 'seg1',
                     fixed_ips, DEVICE_OWNER_COMPUTE, False)
         if db_get_val is None:
             int_br.assert_not_called()
@@ -198,6 +200,7 @@ class TestOvsNeutronAgent(object):
             vlan_mapping = {'net_uuid': net_uuid,
                             'network_type': 'local',
                             'physical_network': 'None',
+                            'segmentation_id': 'seg1',
                             'tag': str(new_local_vlan)}
             set_vlan.assert_called_once_with(port, new_local_vlan)
             int_br.set_db_attribute.assert_called_once_with(
@@ -700,7 +703,7 @@ class TestOvsNeutronAgent(object):
     def test_bind_devices(self):
         devices_up = ['tap1']
         devices_down = ['tap2']
-        self.agent.vlan_manager.mapping["net1"] = mock.Mock()
+        self.agent.vlan_manager.mapping["net1"]['seg1'] = mock.Mock()
         ovs_db_list = [{'name': 'tap1', 'tag': []},
                        {'name': 'tap2', 'tag': []}]
         vif_port1 = mock.Mock()
@@ -709,10 +712,12 @@ class TestOvsNeutronAgent(object):
         vif_port2.port_name = 'tap2'
         port_details = [
             {'network_id': 'net1', 'vif_port': vif_port1,
+             'segmentation_id': 'seg1',
              'device': devices_up[0],
              'device_owner': 'network:dhcp',
              'admin_state_up': True},
             {'network_id': 'net1', 'vif_port': vif_port2,
+             'segmentation_id': 'seg1',
              'device': devices_down[0],
              'device_owner': 'network:dhcp',
              'admin_state_up': False}]
@@ -737,11 +742,13 @@ class TestOvsNeutronAgent(object):
         self.agent.vlan_manager.add('fake_network', 1,
                                     n_const.TYPE_VXLAN, None, 1)
         ovs_db_list = [{'name': 'fake_device', 'tag': []}]
-        self.agent.vlan_manager.get('fake_network').tun_ofports = tun_ofports
+        self.agent.vlan_manager.get(
+            'fake_network', 1).tun_ofports = tun_ofports
         vif_port = mock.Mock()
         vif_port.port_name = 'fake_device'
         vif_port.ofport = 1
         need_binding_ports = [{'network_id': 'fake_network',
+                               'segmentation_id': 1,
                                'vif_port': vif_port,
                                'device': 'fake_device',
                                'admin_state_up': True}]
@@ -774,6 +781,7 @@ class TestOvsNeutronAgent(object):
         vif_port.port_name = 'fake_device'
         vif_port.ofport = 1
         need_binding_ports = [{'network_id': 'fake_network',
+                               'segmentation_id': 1,
                                'vif_port': vif_port,
                                'device': 'fake_device',
                                'admin_state_up': True}]
@@ -1093,6 +1101,7 @@ class TestOvsNeutronAgent(object):
         vif_port = mock.Mock()
         vif_port.name.return_value = 'port'
         self.agent._bind_devices([{'network_id': 'non-existent',
+                                   'segmentation_id': 'seg1',
                                    'vif_port': vif_port}])
 
     def _test_process_network_ports(self, port_info, skipped_devices=None,
@@ -1398,7 +1407,7 @@ class TestOvsNeutronAgent(object):
 
     def test_process_deleted_ports_cleans_network_ports(self):
         self.agent._update_port_network(
-            TEST_PORT_ID1, TEST_NETWORK_ID1, TEST_SEGMENTATION_ID1)
+            TEST_PORT_ID1, TEST_NETWORK_ID1, TEST_SEG_NET1_ID1)
         self.agent.port_delete(context=None, port_id=TEST_PORT_ID1)
         self.agent.sg_agent = mock.Mock()
         self.agent.int_br = mock.Mock()
@@ -1411,7 +1420,7 @@ class TestOvsNeutronAgent(object):
         self.agent.process_deleted_ports(port_info={})
         self.assertEqual(
             set(), self.agent.network_ports[
-                TEST_NETWORK_ID1][TEST_SEGMENTATION_ID1])
+                TEST_NETWORK_ID1][TEST_SEG_NET1_ID1])
 
     def test_network_update(self):
         """Network update marks port for update. """
@@ -1419,7 +1428,7 @@ class TestOvsNeutronAgent(object):
         port = {'id': TEST_PORT_ID1, 'network_id': network['id']}
 
         self.agent._update_port_network(
-            port['id'], port['network_id'], TEST_SEGMENTATION_ID1)
+            port['id'], port['network_id'], TEST_SEG_NET1_ID1)
         with mock.patch.object(self.agent.plugin_rpc, 'get_network_details'), \
                 mock.patch.object(self.agent,
                                   '_update_network_segmentation_id'):
@@ -1436,7 +1445,7 @@ class TestOvsNeutronAgent(object):
         port = {'id': TEST_PORT_ID1, 'network_id': network['id']}
 
         self.agent._update_port_network(
-            port['id'], port['network_id'], TEST_SEGMENTATION_ID1)
+            port['id'], port['network_id'], TEST_SEG_NET1_ID1)
         self.agent.port_delete(context=None, port_id=port['id'])
         with mock.patch.object(self.agent.plugin_rpc, 'get_network_details'), \
                 mock.patch.object(self.agent,
@@ -1447,20 +1456,20 @@ class TestOvsNeutronAgent(object):
     def test_update_port_network(self):
         """Ensure ports are associated and moved across networks correctly."""
         self.agent._update_port_network(
-            TEST_PORT_ID1, TEST_NETWORK_ID1, TEST_SEGMENTATION_ID1)
+            TEST_PORT_ID1, TEST_NETWORK_ID1, TEST_SEG_NET1_ID1)
         self.agent._update_port_network(
-            TEST_PORT_ID2, TEST_NETWORK_ID1, TEST_SEGMENTATION_ID2)
+            TEST_PORT_ID2, TEST_NETWORK_ID1, TEST_SEG_NET1_ID1)
         self.agent._update_port_network(
-            TEST_PORT_ID3, TEST_NETWORK_ID2, TEST_SEGMENTATION_ID1)
+            TEST_PORT_ID3, TEST_NETWORK_ID2, TEST_SEG_NET2_ID1)
         self.agent._update_port_network(
-            TEST_PORT_ID1, TEST_NETWORK_ID2, TEST_SEGMENTATION_ID1)
+            TEST_PORT_ID1, TEST_NETWORK_ID2, TEST_SEG_NET2_ID1)
 
         self.assertEqual(set([TEST_PORT_ID2]),
                          self.agent.network_ports[TEST_NETWORK_ID1][
-                             TEST_SEGMENTATION_ID2])
+                             TEST_SEG_NET1_ID1])
         self.assertEqual(set([TEST_PORT_ID1, TEST_PORT_ID3]),
                          self.agent.network_ports[TEST_NETWORK_ID2][
-                             TEST_SEGMENTATION_ID1])
+                             TEST_SEG_NET2_ID1])
 
     def test_port_delete(self):
         vif = FakeVif()
@@ -1802,9 +1811,11 @@ class TestOvsNeutronAgent(object):
         with mock.patch.object(self.agent, "reclaim_local_vlan") as reclvl_fn:
             self.agent.enable_tunneling = True
             lvm = mock.Mock()
+            lvm.network_id = "netuid12345"
+            lvm.segmentation_id = "seg1"
             lvm.network_type = "gre"
             lvm.vif_ports = {"vif1": mock.Mock()}
-            self.agent.vlan_manager.mapping["netuid12345"] = lvm
+            self.agent.vlan_manager.mapping["netuid12345"]['seg1'] = lvm
             self.agent.port_unbound("vif1", "netuid12345")
             self.assertTrue(reclvl_fn.called)
 
@@ -1827,7 +1838,8 @@ class TestOvsNeutronAgent(object):
         lvm2.vlan = 'vlan2'
         lvm2.segmentation_id = 'seg2'
         lvm2.tun_ofports = set(['1', '2'])
-        self.agent.vlan_manager.mapping = {'net1': lvm1, 'net2': lvm2}
+        self.agent.vlan_manager.mapping = {'net1': {"seg1": lvm1},
+                                           'net2': {"seg2": lvm2}}
         self.agent.tun_br_ofports = {'gre':
                                      {'1.1.1.1': '1', '2.2.2.2': '2'}}
         self.agent.arp_responder_enabled = True
@@ -1870,7 +1882,7 @@ class TestOvsNeutronAgent(object):
         self._prepare_l2_pop_ofports()
         fdb_entry = {'net1':
                      {'network_type': 'gre',
-                      'segment_id': 'tun1',
+                      'segment_id': 'seg1',
                       'ports':
                       {'2.2.2.2':
                        [l2pop_rpc.PortInfo(FAKE_MAC, FAKE_IP1),
@@ -1895,7 +1907,7 @@ class TestOvsNeutronAgent(object):
         self._prepare_l2_pop_ofports()
         fdb_entry = {'net2':
                      {'network_type': 'gre',
-                      'segment_id': 'tun2',
+                      'segment_id': 'seg2',
                       'ports':
                       {'2.2.2.2':
                        [l2pop_rpc.PortInfo(FAKE_MAC, FAKE_IP1),
@@ -1915,7 +1927,7 @@ class TestOvsNeutronAgent(object):
         self._prepare_l2_pop_ofports()
         fdb_entry = {'net1':
                      {'network_type': 'gre',
-                      'segment_id': 'tun1',
+                      'segment_id': 'seg1',
                       'ports': {'1.1.1.1': [l2pop_rpc.PortInfo(FAKE_MAC,
                                                                FAKE_IP1)]}}}
         with mock.patch.object(self.agent, 'tun_br', autospec=True) as tun_br,\
@@ -1933,7 +1945,7 @@ class TestOvsNeutronAgent(object):
         self._prepare_l2_pop_ofports()
         fdb_entry = {'net2':
                      {'network_type': 'gre',
-                      'segment_id': 'tun2',
+                      'segment_id': 'seg2',
                       'ports': {'2.2.2.2': [n_const.FLOODING_ENTRY]}}}
         with mock.patch.object(self.agent, 'tun_br', autospec=True) as tun_br:
             self.agent.fdb_remove(None, fdb_entry)
@@ -1972,22 +1984,21 @@ class TestOvsNeutronAgent(object):
         self.agent.l2_pop = True
         self.agent.enable_tunneling = True
         with mock.patch.object(self.agent, 'tun_br', autospec=True) as tun_br:
-            self.agent.reclaim_local_vlan('net1')
+            self.agent.reclaim_local_vlan('net1', 'seg1')
             tun_br.cleanup_tunnel_port.assert_not_called()
 
         with mock.patch.object(self.mod_agent.LOG, 'debug') as log_debug_fn:
-            self.agent.reclaim_local_vlan('net999')
+            self.agent.reclaim_local_vlan('net999', 'seg999')
             log_debug_fn.assert_called_once_with(
-                'Network %s not used on agent.',
-                'net999',
-            )
+                'Network %s, for segmentation %s, not used on agent.',
+                'net999', 'seg999')
 
     def test_recl_lv_port_to_remove(self):
         self._prepare_l2_pop_ofports()
         self.agent.l2_pop = True
         self.agent.enable_tunneling = True
         with mock.patch.object(self.agent, 'tun_br', autospec=True) as tun_br:
-            self.agent.reclaim_local_vlan('net2')
+            self.agent.reclaim_local_vlan('net2', 'seg2')
             tun_br.delete_port.assert_called_once_with('gre-02020202')
 
     def _test_ext_br_recreated(self, setup_bridges_side_effect):
@@ -2671,9 +2682,10 @@ class TestOvsNeutronAgent(object):
                    provider_net.NETWORK_TYPE: n_const.TYPE_VLAN,
                    provider_net.PHYSICAL_NETWORK: 'default_network'}
         with mock.patch.object(self.agent.vlan_manager,
-                               'update_segmentation_id') as mock_update_segid:
+                               'update_segmentation_id',
+                               return_value=(None, None)) as mock_update_segid:
             self.agent._update_network_segmentation_id(network)
-            mock_update_segid.assert_not_called()
+            mock_update_segid.assert_called_once_with('my-net-uuid', 1005)
 
     def test__update_network_segmentation_id_segmentation_id_not_updated(self):
         network = {'id': 'my-net-uuid',
@@ -2683,9 +2695,10 @@ class TestOvsNeutronAgent(object):
         self.agent.vlan_manager.add('my-net-uuid', 5, n_const.TYPE_VLAN,
                                     'provider_net', 1005, None)
         with mock.patch.object(self.agent.vlan_manager,
-                               'update_segmentation_id') as mock_update_segid:
+                               'update_segmentation_id',
+                               return_value=(None, None)) as mock_update_segid:
             self.agent._update_network_segmentation_id(network)
-            mock_update_segid.assert_not_called()
+            mock_update_segid.assert_called_once_with('my-net-uuid', 1005)
 
     def test__update_network_segmentation_id_multisegments(self):
         network = {'id': 'my-net-uuid',
@@ -3232,7 +3245,8 @@ class TestOvsDvrNeutronAgent(object):
                 n_const.DEVICE_OWNER_DVR_INTERFACE, False)
             phy_ofp = self.agent.dvr_agent.phys_ofports[physical_network]
             int_ofp = self.agent.dvr_agent.int_ofports[physical_network]
-            lvid = self.agent.vlan_manager.get(self._net_uuid).vlan
+            lvid = self.agent.vlan_manager.get(
+                self._net_uuid, segmentation_id).vlan
             expected_on_phys_br = [
                 mock.call.provision_local_vlan(
                     port=phy_ofp,
@@ -3329,7 +3343,8 @@ class TestOvsDvrNeutronAgent(object):
                 self._port, self._net_uuid, network_type,
                 physical_network, segmentation_id, self._fixed_ips,
                 n_const.DEVICE_OWNER_DVR_INTERFACE, False)
-            lvid = self.agent.vlan_manager.get(self._net_uuid).vlan
+            lvid = self.agent.vlan_manager.get(
+                self._net_uuid, self._segmentation_id).vlan
             expected_on_int_br = self._expected_port_bound(
                 self._port, lvid)
             if ip_version == n_const.IP_VERSION_4:
@@ -3418,7 +3433,8 @@ class TestOvsDvrNeutronAgent(object):
     def test_port_bound_for_dvr_with_csnat_ports(self):
         self._setup_for_dvr_test()
         int_br, tun_br = self._port_bound_for_dvr_with_csnat_ports()
-        lvid = self.agent.vlan_manager.get(self._net_uuid).vlan
+        lvid = self.agent.vlan_manager.get(
+            self._net_uuid, self._segmentation_id).vlan
         expected_on_int_br = [
             mock.call.install_dvr_to_src_mac(
                 network_type='vxlan',
@@ -3433,7 +3449,7 @@ class TestOvsDvrNeutronAgent(object):
             mock.call.provision_local_vlan(
                 network_type='vxlan',
                 lvid=lvid,
-                segmentation_id=None,
+                segmentation_id=self._segmentation_id,
                 distributed=True,
             ),
         ]
@@ -3471,7 +3487,8 @@ class TestOvsDvrNeutronAgent(object):
         # simulate a replug
         self._port.ofport = 12
         int_br, tun_br = self._port_bound_for_dvr_with_csnat_ports()
-        lvid = self.agent.vlan_manager.get(self._net_uuid).vlan
+        lvid = self.agent.vlan_manager.get(
+            self._net_uuid, self._segmentation_id).vlan
         expected_on_int_br = [
             mock.call.delete_dvr_to_src_mac(
                 network_type='vxlan',
@@ -3517,7 +3534,7 @@ class TestOvsDvrNeutronAgent(object):
                 mock.patch.object(self.agent.dvr_agent, 'tun_br', new=tun_br):
             self.agent.port_bound(
                 self._port, self._net_uuid, 'vxlan',
-                None, None, self._fixed_ips,
+                None, self._segmentation_id, self._fixed_ips,
                 n_const.DEVICE_OWNER_ROUTER_SNAT,
                 False)
         return int_br, tun_br
@@ -3537,7 +3554,7 @@ class TestOvsDvrNeutronAgent(object):
                 mock.patch.object(self.agent.dvr_agent, 'tun_br', new=tun_br):
             self.agent.port_bound(
                 self._port, self._net_uuid, 'vxlan',
-                None, None, self._fixed_ips,
+                None, self._segmentation_id, self._fixed_ips,
                 n_const.DEVICE_OWNER_ROUTER_SNAT,
                 False)
             int_br.install_dvr_to_src_mac.assert_not_called()
@@ -3603,7 +3620,8 @@ class TestOvsDvrNeutronAgent(object):
                 physical_network, segmentation_id, self._fixed_ips,
                 n_const.DEVICE_OWNER_DVR_INTERFACE, False)
 
-            lvid = self.agent.vlan_manager.get(self._net_uuid).vlan
+            lvid = self.agent.vlan_manager.get(
+                self._net_uuid, self._segmentation_id).vlan
 
             # Bound non-gateway port
             self.agent.port_bound(
@@ -3751,16 +3769,19 @@ class TestOvsDvrNeutronAgent(object):
             else:
                 self.agent.port_bound(
                     self._port, self._net_uuid, 'vxlan',
-                    None, None, self._fixed_ips,
+                    None, self._segmentation_id, self._fixed_ips,
                     n_const.DEVICE_OWNER_DVR_INTERFACE,
                     False)
-                lvid = self.agent.vlan_manager.get(self._net_uuid).vlan
+                lvid = self.agent.vlan_manager.get(
+                    self._net_uuid, self._segmentation_id).vlan
                 int_br.assert_has_calls(
                     self._expected_port_bound(self._port, lvid),
                     any_order=True)
                 expected_on_tun_br = [
-                    mock.call.provision_local_vlan(network_type='vxlan',
-                        lvid=lvid, segmentation_id=None, distributed=True),
+                    mock.call.provision_local_vlan(
+                        network_type='vxlan',
+                        lvid=lvid, segmentation_id=self._segmentation_id,
+                        distributed=True),
                 ] + self._expected_install_dvr_process(
                     port=self._port,
                     lvid=lvid,
@@ -3792,7 +3813,8 @@ class TestOvsDvrNeutronAgent(object):
             failed_devices = {'added': set(), 'removed': set()}
             failed_devices['removed'] = self.agent.treat_devices_removed(
                 [self._port.vif_id])
-            lvid = self.agent.vlan_manager.get(self._net_uuid).vlan
+            lvid = self.agent.vlan_manager.get(
+                self._net_uuid, self._segmentation_id).vlan
             if ip_version == n_const.IP_VERSION_4:
                 expected = [
                     mock.call.delete_dvr_process_ipv4(
@@ -3857,16 +3879,17 @@ class TestOvsDvrNeutronAgent(object):
                 mock.patch.object(self.agent.dvr_agent, 'tun_br', new=tun_br):
             self.agent.port_bound(
                 self._port, self._net_uuid, 'vxlan',
-                None, None, self._fixed_ips,
+                None, self._segmentation_id, self._fixed_ips,
                 n_const.DEVICE_OWNER_DVR_INTERFACE,
                 False)
-            lvid = self.agent.vlan_manager.get(self._net_uuid).vlan
+            lvid = self.agent.vlan_manager.get(
+                self._net_uuid, self._segmentation_id).vlan
             int_br.assert_has_calls(
                 self._expected_port_bound(self._port, lvid), any_order=True)
             expected_on_tun_br = [
                 mock.call.provision_local_vlan(
                     network_type='vxlan',
-                    segmentation_id=None,
+                    segmentation_id=self._segmentation_id,
                     lvid=lvid,
                     distributed=True),
             ] + self._expected_install_dvr_process(
@@ -3879,7 +3902,7 @@ class TestOvsDvrNeutronAgent(object):
             tun_br.reset_mock()
             self.agent.port_bound(self._compute_port,
                                   self._net_uuid, 'vxlan',
-                                  None, None,
+                                  None, self._segmentation_id,
                                   self._compute_fixed_ips,
                                   device_owner, False)
             int_br.assert_has_calls(
@@ -3958,10 +3981,11 @@ class TestOvsDvrNeutronAgent(object):
                 mock.patch.object(self.agent.dvr_agent, 'tun_br', new=tun_br):
             self.agent.port_bound(
                 self._port, self._net_uuid, 'vxlan',
-                None, None, self._fixed_ips,
+                None, self._segmentation_id, self._fixed_ips,
                 n_const.DEVICE_OWNER_ROUTER_SNAT,
                 False)
-            lvid = self.agent.vlan_manager.get(self._net_uuid).vlan
+            lvid = self.agent.vlan_manager.get(
+                self._net_uuid, self._segmentation_id).vlan
             expected_on_int_br = [
                 mock.call.install_dvr_to_src_mac(
                     network_type='vxlan',
@@ -3976,7 +4000,7 @@ class TestOvsDvrNeutronAgent(object):
                 mock.call.provision_local_vlan(
                     network_type='vxlan',
                     lvid=lvid,
-                    segmentation_id=None,
+                    segmentation_id=self._segmentation_id,
                     distributed=True,
                 ),
             ]

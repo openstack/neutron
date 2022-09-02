@@ -232,7 +232,8 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin,
         vlan_manager = vlanmanager.LocalVlanManager()
         for network_id, values in fdb_entries.items():
             try:
-                lvm = vlan_manager.get(network_id)
+                lvm = vlan_manager.get(
+                    network_id, values.get('segment_id'))
             except vlanmanager.MappingNotFound:
                 continue
             agent_ports = values.get('ports')
@@ -307,22 +308,23 @@ class L2populationRpcCallBackTunnelMixin(L2populationRpcCallBackMixin,
         vlan_manager = vlanmanager.LocalVlanManager()
         for network_id, agent_ports in fdb_entries.items():
             try:
-                lvm = vlan_manager.get(network_id)
+                lvms = vlan_manager.get_segments(network_id)
             except vlanmanager.MappingNotFound:
                 continue
 
-            for agent_ip, state in agent_ports.items():
-                if agent_ip == local_ip:
-                    continue
+            for lvm in lvms.values():
+                for agent_ip, state in agent_ports.items():
+                    if agent_ip == local_ip:
+                        continue
 
-                after = state.get('after', [])
-                for mac_ip in after:
-                    self.setup_entry_for_arp_reply(br, 'add', lvm.vlan,
-                                                   mac_ip.mac_address,
-                                                   mac_ip.ip_address)
+                    after = state.get('after', [])
+                    for mac_ip in after:
+                        self.setup_entry_for_arp_reply(br, 'add', lvm.vlan,
+                                                       mac_ip.mac_address,
+                                                       mac_ip.ip_address)
 
-                before = state.get('before', [])
-                for mac_ip in before:
-                    self.setup_entry_for_arp_reply(br, 'remove', lvm.vlan,
-                                                   mac_ip.mac_address,
-                                                   mac_ip.ip_address)
+                    before = state.get('before', [])
+                    for mac_ip in before:
+                        self.setup_entry_for_arp_reply(br, 'remove', lvm.vlan,
+                                                       mac_ip.mac_address,
+                                                       mac_ip.ip_address)
