@@ -75,10 +75,12 @@ class DhcpRpcCallback(object):
     #     1.7 - Add get_networks
     #     1.8 - Add get_dhcp_port
     #     1.9 - get_network_info returns info with only DHCP enabled subnets
+    #     1.10 - get_network_info returns segments details when plugin is
+    #            enabled
 
     target = oslo_messaging.Target(
         namespace=constants.RPC_NAMESPACE_DHCP_PLUGIN,
-        version='1.9')
+        version='1.10')
 
     def _get_active_networks(self, context, **kwargs):
         """Retrieve and return a list of the active networks."""
@@ -229,15 +231,27 @@ class DhcpRpcCallback(object):
         # the order changes.
         # TODO(ralonsoh): in Z+, remove "tenant_id" parameter. DHCP agents
         # should read only "project_id".
-        return {'id': network.id,
-                'project_id': network.project_id,
-                'tenant_id': network.project_id,
-                'admin_state_up': network.admin_state_up,
-                'subnets': sorted(subnets, key=operator.itemgetter('id')),
-                'non_local_subnets': sorted(nonlocal_subnets,
-                                            key=operator.itemgetter('id')),
-                'ports': ports,
-                'mtu': network.mtu}
+        ret = {'id': network.id,
+               'project_id': network.project_id,
+               'tenant_id': network.project_id,
+               'admin_state_up': network.admin_state_up,
+               'subnets': sorted(subnets, key=operator.itemgetter('id')),
+               'non_local_subnets': sorted(nonlocal_subnets,
+                                           key=operator.itemgetter('id')),
+               'ports': ports,
+               'mtu': network.mtu}
+        if seg_plug:
+            ret['segments'] = [{
+                'id': segment.id,
+                'network_id': segment.network_id,
+                'name': segment.name,
+                'network_type': segment.network_type,
+                'physical_network': segment.physical_network,
+                'segmentation_id': segment.segmentation_id,
+                'is_dynamic': segment.is_dynamic,
+                'segment_index': segment.segment_index,
+                'hosts': segment.hosts} for segment in network.segments]
+        return ret
 
     @db_api.retry_db_errors
     def release_dhcp_port(self, context, **kwargs):
