@@ -65,7 +65,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                     cookie=self.stamp,
                     instructions=[
                         ofpp.OFPInstructionGotoTable(
-                            table_id=ovs_constants.TRANSIENT_TABLE),
+                            table_id=BANDWIDTH_RATE_LIMIT),
                     ],
                     match=ofpp.OFPMatch(),
                     priority=0,
@@ -76,11 +76,19 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                     dp,
                     cookie=self.stamp,
                     instructions=[
+                        ofpp.OFPInstructionGotoTable(
+                            table_id=ovs_constants.TRANSIENT_TABLE),
+                    ],
+                    match=ofpp.OFPMatch(),
+                    priority=0,
+                    table_id=BANDWIDTH_RATE_LIMIT),
+                active_bundle=None),
+            call._send_msg(ofpp.OFPFlowMod(dp,
+                cookie=self.stamp,
+                instructions=[
                         ofpp.OFPInstructionActions(
                             ofp.OFPIT_APPLY_ACTIONS, [
-                                ofpp.OFPActionOutput(ofp.OFPP_NORMAL, 0)
-                            ]),
-                    ],
+                                ofpp.OFPActionOutput(ofp.OFPP_NORMAL, 0)])],
                     match=ofpp.OFPMatch(),
                     priority=1,
                     table_id=ovs_constants.TRANSIENT_TABLE),

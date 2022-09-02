@@ -287,6 +287,24 @@ class OVSMeterQoSDriver:
                                       self.meter_cache_pps,
                                       type_=comm_consts.METER_FLAG_PPS)
 
+    def _delete_meter_bandwidth_rate_limit(self, port_id, direction):
+        self._delete_meter_rate_limit(port_id, direction, self.meter_cache_bps,
+                                      type_=comm_consts.METER_FLAG_BPS)
+
+    def _update_meter_bandwidth_rate_limit(self, vif_port, rule, direction):
+        max_kbps = rule.max_kbps
+        max_burst_kbps = rule.max_burst_kbps or 0
+        LOG.debug("Update port %(port)s %(direction)s meter bandwidth limit "
+                  "with rate: %(rate)s, burst: %(burst)s",
+                  {"port": vif_port.vif_id,
+                   "direction": direction,
+                   "rate": max_kbps,
+                   "burst": max_burst_kbps})
+        self._update_meter_rate_limit(vif_port, direction,
+                                      max_kbps, max_burst_kbps,
+                                      self.meter_cache_bps,
+                                      type_=comm_consts.METER_FLAG_BPS)
+
 
 class QosOVSAgentDriver(qos.QosLinuxAgentDriver,
                         OVSMeterQoSDriver):
@@ -320,6 +338,8 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver,
         self.cookie = self.br_int.default_cookie
         self._qos_bandwidth_initialize()
         self.meter_cache_pps = MeterRuleManager(self.br_int)
+        self.meter_cache_bps = MeterRuleManager(
+            self.br_int, type_=comm_consts.METER_FLAG_BPS)
 
     def create_bandwidth_limit(self, port, rule):
         self.update_bandwidth_limit(port, rule)
@@ -353,7 +373,12 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver,
                       port_id)
             return
         vif_port = vif_port or port.get('vif_port')
-        self.br_int.delete_egress_bw_limit_for_port(vif_port.port_name)
+
+        if cfg.CONF.OVS.qos_meter_bandwidth:
+            self._delete_meter_bandwidth_rate_limit(
+                port_id, direction=constants.EGRESS_DIRECTION)
+        else:
+            self.br_int.delete_egress_bw_limit_for_port(vif_port.port_name)
 
     def delete_bandwidth_limit_ingress(self, port):
         port_id = port.get('port_id')
@@ -368,7 +393,12 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver,
                       port_id)
             return
         vif_port = vif_port or port.get('vif_port')
-        self.br_int.delete_ingress_bw_limit_for_port(vif_port.port_name)
+
+        if cfg.CONF.OVS.qos_meter_bandwidth:
+            self._delete_meter_bandwidth_rate_limit(
+                port_id, direction=constants.INGRESS_DIRECTION)
+        else:
+            self.br_int.delete_ingress_bw_limit_for_port(vif_port.port_name)
 
     def create_dscp_marking(self, port, rule):
         self.update_dscp_marking(port, rule)
@@ -408,20 +438,28 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver,
         # ovs accepts only integer values of burst:
         max_burst_kbps = int(self._get_egress_burst_value(rule))
 
-        self.br_int.create_egress_bw_limit_for_port(vif_port.port_name,
-                                                    max_kbps,
-                                                    max_burst_kbps)
+        if cfg.CONF.OVS.qos_meter_bandwidth:
+            self._update_meter_bandwidth_rate_limit(
+                vif_port, rule, direction=constants.EGRESS_DIRECTION)
+        else:
+            self.br_int.create_egress_bw_limit_for_port(vif_port.port_name,
+                                                        max_kbps,
+                                                        max_burst_kbps)
 
     def _update_ingress_bandwidth_limit(self, vif_port, rule):
         port_name = vif_port.port_name
         max_kbps = rule.max_kbps or 0
         max_burst_kbps = rule.max_burst_kbps or 0
 
-        self.br_int.update_ingress_bw_limit_for_port(
-            port_name,
-            max_kbps,
-            max_burst_kbps
-        )
+        if cfg.CONF.OVS.qos_meter_bandwidth:
+            self._update_meter_bandwidth_rate_limit(
+                vif_port, rule, direction=constants.INGRESS_DIRECTION)
+        else:
+            self.br_int.update_ingress_bw_limit_for_port(
+                port_name,
+                max_kbps,
+                max_burst_kbps
+            )
 
     def create_minimum_bandwidth(self, port, rule):
         self.update_minimum_bandwidth(port, rule)

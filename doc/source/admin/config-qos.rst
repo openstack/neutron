@@ -233,6 +233,15 @@ On the network and compute nodes:
       [agent]
       extensions = qos
 
+#. Optionally, for Neutron openvswitch agent, set the ``qos_meter_bandwidth``
+   in the ``[ovs]`` section to enable the OVS meter bandwith limit.
+   For example:
+
+   .. code-block:: ini
+
+      [ovs]
+      qos_meter_bandwidth = True
+
 #. Optionally, in order to enable QoS for floating IPs, set the ``extensions``
    option in the ``[agent]`` section of ``/etc/neutron/l3_agent.ini`` to
    include ``fip_qos``. If ``dvr`` is enabled, this has to be done for all the
