@@ -14,10 +14,10 @@
 
 import datetime
 
+from neutron_lib.db import api as db_api
 from oslo_utils import uuidutils
 
 from neutron.objects import quota
-from neutron.tests import base as test_base
 from neutron.tests.unit.objects import test_base as obj_test_base
 from neutron.tests.unit import testlib_api
 
@@ -59,18 +59,20 @@ class ReservationDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         reservation.create()
         return reservation
 
-    @test_base.unstable_test('bug/1988604')
     def test_delete_expired(self):
         dt = datetime.datetime.utcnow()
         resources = {'goals': 2, 'assists': 1}
         exp_date1 = datetime.datetime(2016, 3, 31, 14, 30)
-        res1 = self._create_test_reservation(resources, exp_date1)
         exp_date2 = datetime.datetime(2015, 3, 31, 14, 30)
-        res2 = self._create_test_reservation(resources, exp_date2)
-        self.assertEqual(2, self._test_class.delete_expired(
-            self.context, dt, None))
-        objs = self._test_class.get_objects(self.context,
-            id=[res1.id, res2.id])
+        with db_api.CONTEXT_WRITER.using(self.context):
+            res1 = self._create_test_reservation(resources, exp_date1)
+            res2 = self._create_test_reservation(resources, exp_date2)
+        with db_api.CONTEXT_WRITER.using(self.context):
+            self.assertEqual(2, self._test_class.delete_expired(
+                self.context, dt, None))
+        with db_api.CONTEXT_READER.using(self.context):
+            objs = self._test_class.get_objects(self.context,
+                id=[res1.id, res2.id])
         self.assertEqual([], objs)
 
     def test_reservation_synthetic_field(self):
