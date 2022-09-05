@@ -17,6 +17,7 @@ import queue
 from unittest import mock
 
 import eventlet
+from keystoneauth1 import exceptions as ks_exc
 from neutron_lib import constants as n_const
 from neutron_lib import context as n_ctx
 from neutron_lib import exceptions as n_exc
@@ -247,6 +248,14 @@ class TestNovaNotify(base.BaseTestCase):
         mock_client.server_external_events.create.return_value = (
             nova_exceptions.NotFound)
         self.nova_notifier.send_events([])
+
+    @mock.patch('novaclient.client.Client')
+    def test_nova_send_events_raises_connect_exc(self, mock_client):
+        create = mock_client().server_external_events.create
+        create.side_effect = (
+            ks_exc.ConnectFailure, ks_exc.ConnectTimeout, [])
+        self.nova_notifier.send_events([])
+        self.assertEqual(3, create.call_count)
 
     @mock.patch('novaclient.client.Client')
     def test_nova_send_events_raises(self, mock_client):
