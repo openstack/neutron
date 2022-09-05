@@ -1,0 +1,2 @@
+logs_path: "/opt/stack/logs/dsvm-functional-logs"
+log_archive_file_name: "/opt/stack/logs/dsvm-functional-logs.tar.gz"

@@ -50,10 +50,10 @@
       tox_envlist: dsvm-functional-gate
       tox_constraints_file: '{{ ansible_user_dir }}/src/opendev.org/openstack/requirements/upper-constraints.txt'
       zuul_copy_output:
-        # We need to copy directory with logs to have it in job artifacts also,
+        # We need to copy archive with logs to have it in job artifacts also,
         # /opt/stack/logs is default logs directory defined in neutron's
         # tox.ini file
-        '{{ devstack_base_dir }}/logs/dsvm-functional-logs': logs
+        '/opt/stack/logs/dsvm-functional-logs.tar.gz': logs
 
 - job:
     name: neutron-fullstack
@@ -62,11 +62,13 @@
       tox_envlist: dsvm-fullstack-gate
       Q_BUILD_OVS_FROM_GIT: False
       INSTALL_OVN: False
+      logs_path: '/opt/stack/logs/dsvm-fullstack-logs'
+      log_archive_file_name: '/opt/stack/logs/dsvm-fullstack-logs.tar.gz'
       zuul_copy_output:
-        # We need to copy directory with logs to have it in job artifacts also,
+        # We need to copy archive with logs to have it in job artifacts also,
         # /opt/stack/logs is default logs directory defined in neutron's
         # tox.ini file
-        '{{ devstack_base_dir }}/logs/dsvm-fullstack-logs': logs
+        '/opt/stack/logs/dsvm-fullstack-logs.tar.gz': logs
     irrelevant-files:
       - ^releasenotes/.*$
       - ^doc/.*$

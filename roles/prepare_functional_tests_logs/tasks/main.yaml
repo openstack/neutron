@@ -1,0 +1,13 @@
+- name: Prepare logs archive {{ log_archive_file_name }}
+  become: yes
+  shell:
+    cmd: |
+      /usr/bin/tar -czf {{ log_archive_file_name }} {{ logs_path }}
+
+- name: Set {{ log_archive_file_name }} ownership
+  become: yes
+  file:
+    path: "{{ log_archive_file_name }}"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: 0775
