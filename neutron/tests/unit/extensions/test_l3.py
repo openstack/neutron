@@ -388,6 +388,9 @@ class L3NatTestCaseMixin(object):
                 data['router'][arg] = kwargs[arg]
         if 'distributed' in kwargs:
             data['router']['distributed'] = bool(kwargs['distributed'])
+        if 'enable_ndp_proxy' in kwargs:
+            data['router']['enable_ndp_proxy'] = \
+                bool(kwargs['enable_ndp_proxy'])
         router_req = self.new_create_request('routers', data, fmt)
         if set_context and tenant_id:
             # create a specific auth context for this request
