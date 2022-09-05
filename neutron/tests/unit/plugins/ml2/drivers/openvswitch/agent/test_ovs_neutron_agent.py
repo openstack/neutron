@@ -2049,9 +2049,13 @@ class TestOvsNeutronAgent(object):
                 mock.patch.object(self.agent, 'rpc_loop') as mock_loop, \
                 mock.patch.dict(self.agent.phys_brs, {'physnet0': ex_br_mock},
                                 clear=True), \
+                mock.patch.object(
+                    self.agent.plugin_rpc,
+                    'stop') as rpc_stop, \
                 mock.patch.object(self.agent.ovs.ovsdb, 'idl_monitor') as \
                 mock_idl_monitor:
             self.agent.daemon_loop()
+            rpc_stop.assert_called_once()
         mock_get_pm.assert_called_with(
             True, ovs_constants.DEFAULT_OVSDBMON_RESPAWN, bridge_names=[],
             ovs=self.agent.ovs)
@@ -2399,6 +2403,9 @@ class TestOvsNeutronAgent(object):
                 mock.patch.object(
                     self.mod_agent.OVSNeutronAgent,
                     '_check_and_handle_signal') as check_and_handle_signal, \
+                mock.patch.object(
+                    self.agent.plugin_rpc,
+                    'stop') as rpc_stop, \
                 mock.patch.object(self.agent.ovs.ovsdb, 'idl_monitor'):
             process_network_ports.side_effect = Exception("Trigger resync")
             check_ovs_status.return_value = ovs_constants.OVS_NORMAL
@@ -2406,6 +2413,7 @@ class TestOvsNeutronAgent(object):
             self.agent.daemon_loop()
             self.assertTrue(update_stale.called)
             cleanup.assert_not_called()
+            rpc_stop.assert_called_once()
 
     def test_set_rpc_timeout(self):
         with mock.patch.object(n_rpc.BackingOffClient,

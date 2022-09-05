@@ -2850,6 +2850,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 bridge_names=bridge_names,
                 ovs=self.ovs) as pm:
             self.rpc_loop(polling_manager=pm)
+        if self.plugin_rpc:
+            self.plugin_rpc.stop()
 
     def _handle_sigterm(self, signum, frame):
         self.catch_sigterm = True

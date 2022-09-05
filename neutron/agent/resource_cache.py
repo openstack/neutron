@@ -49,6 +49,9 @@ class RemoteResourceCache(object):
     def start_watcher(self):
         self._watcher = RemoteResourceWatcher(self)
 
+    def stop_watcher(self):
+        self._watcher.stop()
+
     def get_resource_by_id(self, rtype, obj_id, agent_restarted=False):
         """Returns None if it doesn't exist."""
         if obj_id in self._deleted_ids_by_type[rtype]:
@@ -263,3 +266,6 @@ class RemoteResourceWatcher(object):
             else:
                 # creates and updates are treated equally
                 self.rcache.record_resource_update(context, rtype, r)
+
+    def stop(self):
+        self._connection.close()
