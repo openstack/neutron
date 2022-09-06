@@ -49,12 +49,15 @@ class TestL3PorForwardingServicePlugin(test_l3.TestL3NatServicePlugin,
 
 
 def _get_expected(ref):
-    want_fields = [apidef.INTERNAL_IP_ADDRESS, apidef.PROTOCOL,
-                   apidef.INTERNAL_PORT, apidef.EXTERNAL_PORT]
+    want_fields = [apidef.ID, apidef.INTERNAL_IP_ADDRESS, apidef.PROTOCOL,
+                   apidef.INTERNAL_PORT, apidef.EXTERNAL_PORT,
+                   apidef.INTERNAL_PORT_ID]
     expect = {
         key: value
         for key, value in ref[apidef.RESOURCE_NAME].items()
         if key in want_fields}
+    if apidef.ID not in expect:
+        expect[apidef.ID] = mock.ANY
     return expect
 
 

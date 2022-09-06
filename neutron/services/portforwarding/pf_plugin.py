@@ -110,8 +110,9 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
     @staticmethod
     @resource_extend.extends([l3.FLOATINGIPS])
     def _extend_floatingip_dict(result_dict, db):
-        fields = [apidef.INTERNAL_IP_ADDRESS, apidef.PROTOCOL,
-                  apidef.INTERNAL_PORT, apidef.EXTERNAL_PORT]
+        fields = [apidef.ID, apidef.INTERNAL_IP_ADDRESS, apidef.PROTOCOL,
+                  apidef.INTERNAL_PORT, apidef.EXTERNAL_PORT,
+                  apidef.INTERNAL_PORT_ID]
         result_dict[apidef.COLLECTION_NAME] = []
         if db.port_forwardings:
             port_forwarding_result = []
