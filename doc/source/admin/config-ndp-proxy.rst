@@ -96,11 +96,129 @@ To configure NDP proxy, take the following steps:
 User workflow
 ~~~~~~~~~~~~~
 
-Assume the admin operator already prepared an IPv6 subnetpool:
-``test-subnetpool``, its CIDR is 2001:db8::/96.
-
 The basic steps to publish an IPv6 address to an external
 network (such as: public network) are the following:
+
+.. note::
+
+   In order to prevent potential
+   `security risk <https://bugs.launchpad.net/neutron/+bug/1987410>`_,
+   the `ndp proxy` feature require that use `address scope` to ensure the
+   uniqueness of the IPv6 address which published to external
+
+#. Create an IPv6 address scope
+
+   .. code-block:: console
+
+     $ openstack address scope create test-ipv6-as --ip-version 6
+     +------------+--------------------------------------+
+     | Field      | Value                                |
+     +------------+--------------------------------------+
+     | id         | 24761ec5-b659-4358-b9ab-495ead15fa7a |
+     | ip_version | 6                                    |
+     | name       | test-ipv6-as                         |
+     | project_id | bcb0c7a5338b4a46959e47971c58f0f1     |
+     | shared     | False                                |
+     +------------+--------------------------------------+
+
+#. Create an IPv6 subnet pool
+
+   .. code-block:: console
+
+     $ openstack subnet pool create test-subnetpool --address-scope test-ipv6-as \
+             --pool-prefix 2001:db8::/96 --default-prefix-length 112
+     +-------------------+--------------------------------------+
+     | Field             | Value                                |
+     +-------------------+--------------------------------------+
+     | address_scope_id  | 24761ec5-b659-4358-b9ab-495ead15fa7a |
+     | created_at        | 2022-09-05T06:16:31Z                 |
+     | default_prefixlen | 112                                  |
+     | default_quota     | None                                 |
+     | description       |                                      |
+     | id                | 4af07f59-45b8-424d-98c5-35d20ba61526 |
+     | ip_version        | 6                                    |
+     | is_default        | False                                |
+     | max_prefixlen     | 128                                  |
+     | min_prefixlen     | 64                                   |
+     | name              | test-subnetpool                      |
+     | prefixes          | 2001:db8::/96                        |
+     | project_id        | bcb0c7a5338b4a46959e47971c58f0f1     |
+     | revision_number   | 0                                    |
+     | shared            | False                                |
+     | tags              |                                      |
+     | updated_at        | 2022-01-01T06:42:08Z                 |
+     +-------------------+--------------------------------------+
+
+#. Create an external network
+
+   .. code-block:: console
+
+     $ openstack network create --external --provider-network-type flat \
+           --provider-physical-network public public
+     +---------------------------+--------------------------------------+
+     | Field                     | Value                                |
+     +---------------------------+--------------------------------------+
+     | admin_state_up            | UP                                   |
+     | availability_zone_hints   |                                      |
+     | availability_zones        |                                      |
+     | created_at                | 2022-09-05T06:18:31Z                 |
+     | description               |                                      |
+     | dns_domain                | None                                 |
+     | id                        | 98b0f468-7be0-4530-919d-c4d9417c3abf |
+     | ipv4_address_scope        | None                                 |
+     | ipv6_address_scope        | None                                 |
+     | is_default                | False                                |
+     | is_vlan_transparent       | None                                 |
+     | mtu                       | 1500                                 |
+     | name                      | public                               |
+     | port_security_enabled     | True                                 |
+     | project_id                | bcb0c7a5338b4a46959e47971c58f0f1     |
+     | provider:network_type     | flat                                 |
+     | provider:physical_network | public                               |
+     | provider:segmentation_id  | None                                 |
+     | qos_policy_id             | None                                 |
+     | revision_number           | 1                                    |
+     | router:external           | External                             |
+     | segments                  | None                                 |
+     | shared                    | False                                |
+     | status                    | ACTIVE                               |
+     | subnets                   |                                      |
+     | tags                      |                                      |
+     | updated_at                | 2022-01-01T06:45:08Z                 |
+     +---------------------------+--------------------------------------+
+
+#. Create an external subnet
+
+   .. code-block:: console
+
+      $ openstack subnet create --network public --subnet-pool test-subnetpool \
+              --prefix-length 112 --ip-version 6 --no-dhcp ext-sub
+       +----------------------+--------------------------------------+
+      | Field                | Value                                |
+      +----------------------+--------------------------------------+
+      | allocation_pools     | 2001:db8::2-2001:db8::ffff           |
+      | cidr                 | 2001:db8::/112                       |
+      | created_at           | 2022-09-05T06:21:37Z                 |
+      | description          |                                      |
+      | dns_nameservers      |                                      |
+      | dns_publish_fixed_ip | None                                 |
+      | enable_dhcp          | False                                |
+      | gateway_ip           | 2001:db8::1                          |
+      | host_routes          |                                      |
+      | id                   | ec11de28-9b84-4cee-b6a1-0ed56135bcd8 |
+      | ip_version           | 6                                    |
+      | ipv6_address_mode    | None                                 |
+      | ipv6_ra_mode         | None                                 |
+      | name                 | ext-sub                              |
+      | network_id           | 98b0f468-7be0-4530-919d-c4d9417c3abf |
+      | project_id           | bcb0c7a5338b4a46959e47971c58f0f1     |
+      | revision_number      | 0                                    |
+      | segment_id           | None                                 |
+      | service_types        |                                      |
+      | subnetpool_id        | 4af07f59-45b8-424d-98c5-35d20ba61526 |
+      | tags                 |                                      |
+      | updated_at           | 2022-01-01T06:47:08Z                 |
+      +----------------------+--------------------------------------+
 
 #. Create a router:
 
@@ -200,14 +318,14 @@ network (such as: public network) are the following:
       +----------------------+--------------------------------------+
       | Field                | Value                                |
       +----------------------+--------------------------------------+
-      | allocation_pools     | 2001:db8::2-2001:db8::ffff           |
-      | cidr                 | 2001:db8::/112                       |
-      | created_at           | 2022-01-02T08:20:26Z                 |
+      | allocation_pools     | 2001:db8::1:2-2001:db8::1:ffff       |
+      | cidr                 | 2001:db8::1:0/112                    |
+      | created_at           | 2022-09-05T06:24:13Z                 |
       | description          |                                      |
       | dns_nameservers      |                                      |
       | dns_publish_fixed_ip | None                                 |
       | enable_dhcp          | True                                 |
-      | gateway_ip           | 2001:db8::1                          |
+      | gateway_ip           | 2001:db8::1:1                        |
       | host_routes          |                                      |
       | id                   | 9bcf194c-d44f-4e6f-90da-98510ddef283 |
       | ip_version           | 6                                    |
@@ -219,7 +337,7 @@ network (such as: public network) are the following:
       | revision_number      | 0                                    |
       | segment_id           | None                                 |
       | service_types        |                                      |
-      | subnetpool_id        | 73c5311c-6750-43f5-9a69-b50c1c5694fd |
+      | subnetpool_id        | 4af07f59-45b8-424d-98c5-35d20ba61526 |
       | tags                 |                                      |
       | updated_at           | 2022-01-02T08:20:26Z                 |
       +----------------------+--------------------------------------+
@@ -272,11 +390,11 @@ network (such as: public network) are the following:
    .. code-block:: console
 
       $ openstack port list --server test-server
-      +--------------------------------------+------+-------------------+------------------------------------------------------------------------------+--------+
-      | ID                                   | Name | MAC Address       | Fixed IP Addresses                                                           | Status |
-      +--------------------------------------+------+-------------------+------------------------------------------------------------------------------+--------+
-      | bdd64aa0-437a-4db6-bbca-99869426c908 |      | fa:16:3e:ac:15:b8 | ip_address='2001:db8::284', subnet_id='9bcf194c-d44f-4e6f-90da-98510ddef283' | ACTIVE |
-      +--------------------------------------+------+-------------------+------------------------------------------------------------------------------+--------+
+      +--------------------------------------+------+-------------------+--------------------------------------------------------------------------------+--------+
+      | ID                                   | Name | MAC Address       | Fixed IP Addresses                                                             | Status |
+      +--------------------------------------+------+-------------------+--------------------------------------------------------------------------------+--------+
+      | bdd64aa0-437a-4db6-bbca-99869426c908 |      | fa:16:3e:ac:15:b8 | ip_address='2001:db8::1:284', subnet_id='9bcf194c-d44f-4e6f-90da-98510ddef283' | ACTIVE |
+      +--------------------------------------+------+-------------------+--------------------------------------------------------------------------------+--------+
 
    Create NDP proxy for the port
 
@@ -289,7 +407,7 @@ network (such as: public network) are the following:
       | created_at      | 2022-01-02T08:25:31Z                 |
       | description     |                                      |
       | id              | 73889fee-e322-443f-941e-142e4fc5f898 |
-      | ip_address      | 2001:db8::284                        |
+      | ip_address      | 2001:db8::1:284                      |
       | name            | test-np                              |
       | port_id         | bdd64aa0-437a-4db6-bbca-99869426c908 |
       | project_id      | bcb0c7a5338b4a46959e47971c58f0f1     |
@@ -302,10 +420,10 @@ network (such as: public network) are the following:
 
    .. code-block:: console
 
-      $ ping 2001:db8::284
-      PING 2001:db8::284(2001:db8::284) 56 data bytes
-      64 bytes from 2001:db8::284: icmp_seq=1 ttl=64 time=0.365 ms
-      64 bytes from 2001:db8::284: icmp_seq=2 ttl=64 time=0.385 ms
+      $ ping 2001:db8::1:284
+      PING 2001:db8::1:284(2001:db8::1:284) 56 data bytes
+      64 bytes from 2001:db8::1:284: icmp_seq=1 ttl=64 time=0.365 ms
+      64 bytes from 2001:db8::1:284: icmp_seq=2 ttl=64 time=0.385 ms
 
    .. note::
 

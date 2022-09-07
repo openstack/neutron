@@ -78,7 +78,16 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
               ext_mgr=ext_mgr, service_plugins=svc_plugins, plugin=plugin)
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
 
-        self.ext_net = self._make_network(self.fmt, 'ext-net', True)
+        self.address_scope_id = self._make_address_scope(
+            self.fmt, constants.IP_VERSION_6,
+            **{'tenant_id': self.tenant_id})['address_scope']['id']
+        self.subnetpool_id = self._make_subnetpool(
+            self.fmt, ['2001::0/96'],
+            **{'address_scope_id': self.address_scope_id,
+               'default_prefixlen': 112, 'tenant_id': self.tenant_id,
+               'name': "test-ipv6-pool"})['subnetpool']['id']
+        self.ext_net = self._make_network(
+            self.fmt, 'ext-net', True)
         self.ext_net_id = self.ext_net['network']['id']
         self._set_net_external(self.ext_net_id)
         self._ext_subnet_v4 = self._make_subnet(
@@ -87,6 +96,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
         self._ext_subnet_v4_id = self._ext_subnet_v4['subnet']['id']
         self._ext_subnet_v6 = self._make_subnet(
             self.fmt, self.ext_net, gateway="2001::1:1",
+            subnetpool_id=self.subnetpool_id,
             cidr="2001::1:0/112",
             ip_version=constants.IP_VERSION_6,
             ipv6_ra_mode=constants.DHCPV6_STATEFUL,
@@ -97,6 +107,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
         self.private_net = self._make_network(self.fmt, 'private-net', True)
         self.private_subnet = self._make_subnet(
             self.fmt, self.private_net, gateway="2001::2:1",
+            subnetpool_id=self.subnetpool_id,
             cidr="2001::2:0/112",
             ip_version=constants.IP_VERSION_6,
             ipv6_ra_mode=constants.DHCPV6_STATEFUL,
@@ -249,10 +260,39 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
             router_id = router['router']['id']
             err_msg = ("Can not enable ndp proxy on router %s, The router has "
                        "no external gateway or the external gateway port has "
-                       "no IPv6 address.") % router_id
+                       "no IPv6 address or IPv6 address scope.") % router_id
             self._update_router(router_id, {'enable_ndp_proxy': True},
                 expected_code=exc.HTTPConflict.code,
                 expected_message=err_msg)
+
+    def test_enable_ndp_proxy_without_address_scope(self):
+        with self.network() as ext_net, \
+            self.subnet(
+                cidr='2001::12:0/112',
+                ip_version=constants.IP_VERSION_6,
+                ipv6_ra_mode=constants.DHCPV6_STATEFUL,
+                ipv6_address_mode=constants.DHCPV6_STATEFUL):
+            self._set_net_external(ext_net['network']['id'])
+            res = self._make_router(
+                self.fmt, self.tenant_id,
+                external_gateway_info={'network_id': ext_net['network']['id']},
+                **{'enable_ndp_proxy': True})
+            expected_msg = (
+                "The external network %s don't support IPv6 ndp proxy, the "
+                "network has no IPv6 subnets or has no IPv6 address "
+                "scope.") % ext_net['network']['id']
+            self.assertTrue(expected_msg in res['NeutronError']['message'])
+            router = self._make_router(
+                self.fmt, self.tenant_id,
+                external_gateway_info={'network_id': ext_net['network']['id']})
+            expected_msg = (
+                "Can not enable ndp proxy on router %s, The router has no "
+                "external gateway or the external gateway port has no IPv6 "
+                "address or IPv6 address scope.") % router['router']['id']
+            self._update_router(
+                router['router']['id'], {'enable_ndp_proxy': True},
+                expected_code=exc.HTTPConflict.code,
+                expected_message=expected_msg)
 
     def test_delete_router_gateway_with_enable_ndp_proxy(self):
         with self.router() as router:
@@ -281,6 +321,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
 
     def test_create_ndp_proxy_with_invalid_port(self):
         with self.subnet(
+            subnetpool_id=self.subnetpool_id,
             cidr='2001::8:0/112',
             ip_version=constants.IP_VERSION_6,
             ipv6_ra_mode=constants.DHCPV6_STATEFUL,
@@ -290,6 +331,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
                     ip_version=constants.IP_VERSION_6,
                     ipv6_ra_mode=constants.DHCPV6_STATEFUL,
                     ipv6_address_mode=constants.DHCPV6_STATEFUL,
+                    subnetpool_id=self.subnetpool_id,
                     cidr='2001::9:0/112') as sub2, \
                 self.subnet(self.private_net) as sub3, \
                 self.port(sub1) as port1, \
@@ -349,6 +391,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
 
     def test_create_ndp_proxy_with_invalid_router(self):
         with self.subnet(
+            subnetpool_id=self.subnetpool_id,
             cidr='2001::8:0/112',
             ipv6_ra_mode=constants.DHCPV6_STATEFUL,
             ipv6_address_mode=constants.DHCPV6_STATEFUL,
@@ -405,7 +448,8 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
         with self.subnet(ip_version=constants.IP_VERSION_6,
                     ipv6_ra_mode=constants.DHCPV6_STATEFUL,
                     ipv6_address_mode=constants.DHCPV6_STATEFUL,
-                    cidr='2001::50:1:0/112') as subnet, \
+                    subnetpool_id=self.subnetpool_id,
+                    cidr='2001::50:0/112') as subnet, \
                 self.port(subnet) as port:
             subnet_id = subnet['subnet']['id']
             port_id = port['port']['id']
@@ -445,9 +489,10 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
             port_id = port['port']['id']
             self._router_interface_action(
                 'add', self.router1_id, subnet_id, None)
-            err_msg = ("The IPv6 address scope None of external network "
+            err_msg = ("The IPv6 address scope %s of external network "
                        "conflict with internal network's IPv6 address "
-                       "scope %s.") % addr_scope['address_scope']['id']
+                       "scope %s.") % (self.address_scope_id,
+                                       addr_scope['address_scope']['id'])
             self._create_ndp_proxy(
                 self.router1_id, port_id,
                 expected_code=exc.HTTPConflict.code,
@@ -496,6 +541,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
     def test_enable_ndp_proxy_by_default_conf_option(self):
         cfg.CONF.set_override("enable_ndp_proxy_by_default", True)
         with self.subnet(
+            subnetpool_id=self.subnetpool_id,
             cidr='2001::8:0/112',
             ipv6_ra_mode=constants.DHCPV6_STATEFUL,
             ipv6_address_mode=constants.DHCPV6_STATEFUL,

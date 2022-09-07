@@ -75,11 +75,7 @@ class NDPProxyPlugin(l3_ndp_proxy.NDPProxyBase):
         # parameter is always False.
         enable_ndp_proxy = False
         if result_dict.get(l3_apidef.EXTERNAL_GW_INFO, None):
-            # For already existed routers (created before this plugin
-            # enabled), they have no ndp_proxy_state object.
-            if not router_db.ndp_proxy_state:
-                enable_ndp_proxy = cfg.CONF.enable_ndp_proxy_by_default
-            else:
+            if router_db.ndp_proxy_state:
                 enable_ndp_proxy = router_db.ndp_proxy_state.enable_ndp_proxy
         result_dict[l3_ext_ndp_proxy.ENABLE_NDP_PROXY] = enable_ndp_proxy
 
@@ -148,6 +144,8 @@ class NDPProxyPlugin(l3_ndp_proxy.NDPProxyBase):
         if not gw_port_id:
             return False
         port_dict = self.core_plugin.get_port(context.elevated(), gw_port_id)
+        if not self._check_ext_gw_network(context, port_dict['network_id']):
+            return False
         v6_fixed_ips = [
             fixed_ip for fixed_ip in port_dict['fixed_ips']
             if (netaddr.IPNetwork(fixed_ip['ip_address']).version == V6)]
@@ -158,6 +156,9 @@ class NDPProxyPlugin(l3_ndp_proxy.NDPProxyBase):
         return False
 
     def _check_ext_gw_network(self, context, network_id):
+        network = self.core_plugin.get_network(context, network_id)
+        if not network.get('ipv6_address_scope'):
+            return False
         ext_subnets = self.core_plugin.get_subnets(
             context.elevated(), filters={'network_id': network_id})
         has_ipv6_subnet = False
@@ -197,7 +198,7 @@ class NDPProxyPlugin(l3_ndp_proxy.NDPProxyBase):
             if not ext_gw_support_ndp and ndp_proxy_state is True:
                 reason = _("The external network %s don't support "
                            "IPv6 ndp proxy, the network has no IPv6 "
-                           "subnets.") % network_id
+                           "subnets or has no IPv6 address scope") % network_id
                 raise exc.RouterGatewayNotValid(
                     router_id=router_db.id, reason=reason)
             if ndp_proxy_state == lib_consts.ATTR_NOT_SPECIFIED:
@@ -217,16 +218,20 @@ class NDPProxyPlugin(l3_ndp_proxy.NDPProxyBase):
         ndp_proxy_state = request_body.get(
             l3_ext_ndp_proxy.ENABLE_NDP_PROXY,
             lib_consts.ATTR_NOT_SPECIFIED)
-        if ndp_proxy_state == lib_consts.ATTR_NOT_SPECIFIED:
-            return
-        if self._gateway_is_valid(context, router_db['gw_port_id']):
-            self._ensure_router_ndp_proxy_state_model(
-                context, router_db, ndp_proxy_state)
-        elif ndp_proxy_state:
+        gw_support_ndp = self._gateway_is_valid(
+            context, router_db['gw_port_id'])
+        if ndp_proxy_state is True and not gw_support_ndp:
             reason = _("The router has no external gateway or the external "
-                       "gateway port has no IPv6 address")
+                       "gateway port has no IPv6 address or IPv6 address "
+                       "scope")
             raise exc.RouterGatewayNotValid(
                 router_id=router_db.id, reason=reason)
+        if ndp_proxy_state == lib_consts.ATTR_NOT_SPECIFIED:
+            self._ensure_router_ndp_proxy_state_model(
+                context, router_db, gw_support_ndp)
+        else:
+            self._ensure_router_ndp_proxy_state_model(
+                context, router_db, ndp_proxy_state)
 
     @registry.receives(resources.ROUTER_INTERFACE, [events.BEFORE_DELETE])
     def _check_router_remove_subnet_request(self, resource, event,
