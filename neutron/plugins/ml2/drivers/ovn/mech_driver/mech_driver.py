@@ -213,6 +213,10 @@ class OVNMechanismDriver(api.MechanismDriver):
                 portbindings.CAP_PORT_FILTER: self.sg_enabled,
                 portbindings.VIF_DETAILS_CONNECTIVITY: self.connectivity,
             },
+            portbindings.VIF_TYPE_AGILIO_OVS: {
+                portbindings.CAP_PORT_FILTER: self.sg_enabled,
+                portbindings.VIF_DETAILS_CONNECTIVITY: self.connectivity,
+            },
             portbindings.VIF_TYPE_VHOST_USER: {
                 portbindings.CAP_PORT_FILTER: False,
                 portbindings.VHOST_USER_MODE:
@@ -1021,6 +1025,17 @@ class OVNMechanismDriver(api.MechanismDriver):
                     vif_details = dict(self.vif_details[vif_type])
                     vif_details[portbindings.VHOST_USER_SOCKET] = (
                         vhost_user_socket)
+                elif (vnic_type == portbindings.VNIC_VIRTIO_FORWARDER):
+                    vhost_user_socket = ovn_utils.ovn_vhu_sockpath(
+                        ovn_conf.get_ovn_vhost_sock_dir(), port['id'])
+                    vif_type = portbindings.VIF_TYPE_AGILIO_OVS
+                    port[portbindings.VIF_DETAILS].update({
+                        portbindings.VHOST_USER_SOCKET: vhost_user_socket})
+                    vif_details = dict(self.vif_details[vif_type])
+                    vif_details[portbindings.VHOST_USER_SOCKET] = (
+                        vhost_user_socket)
+                    vif_details[portbindings.VHOST_USER_MODE] = (
+                        portbindings.VHOST_USER_MODE_CLIENT)
                 else:
                     vif_type = portbindings.VIF_TYPE_OVS
                     vif_details = self.vif_details[vif_type]
