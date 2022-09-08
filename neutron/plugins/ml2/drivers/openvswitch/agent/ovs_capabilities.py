@@ -21,3 +21,9 @@ def register():
     """Register OVS capabilities."""
     # Add capabilities to be loaded during agent initialization
     capabilities.register(driver.init_handler, constants.AGENT_TYPE_OVS)
+
+
+def unregister():
+    """Unregister OVS capabilities."""
+    # To cleanup oslo.messaging queues
+    driver.unregister()

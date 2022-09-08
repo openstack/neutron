@@ -53,6 +53,9 @@ class TrunkSkeleton(object):
         self._connection.create_consumer(topic, endpoints, fanout=True)
         self._connection.consume_in_threads()
 
+    def unregister(self):
+        self._connection.close()
+
     @abc.abstractmethod
     def handle_trunks(self, context, resource_type, trunks, event_type):
         """Handle trunk events."""
