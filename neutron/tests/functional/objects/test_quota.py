@@ -16,6 +16,7 @@
 import datetime
 
 from neutron_lib import context
+from neutron_lib.db import api as db_api
 from oslo_utils import uuidutils
 
 from neutron.objects import quota
@@ -55,9 +56,10 @@ class _ReservationSql(testlib_api.SqlTestCase):
         res = self._get_reservation(res.id)
         self.assertEqual(1, len(res.resource_deltas))
         self.assertEqual(res_delta, res.resource_deltas[0])
-        res_map = quota.Reservation.get_total_reservations_map(
-            self.context, datetime.datetime.utcnow(), res.project_id,
-            resources, True)
+        with db_api.CONTEXT_READER.using(self.context):
+            res_map = quota.Reservation.get_total_reservations_map(
+                self.context, datetime.datetime.utcnow(), res.project_id,
+                resources, True)
         self.assertEqual({'port': 100}, res_map)
         self.assertIsInstance(res_map['port'], int)
 

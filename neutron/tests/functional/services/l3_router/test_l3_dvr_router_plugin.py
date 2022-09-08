@@ -21,6 +21,7 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
+from neutron_lib.db import api as db_api
 
 from neutron_lib import constants
 from neutron_lib import context
@@ -1730,6 +1731,13 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                                  agents['agents'][0]['id'])
                 self.assertFalse(remove_mock.called)
 
+    def _verify_dvr_subnet_ids_on_host(self, host, expected):
+        with db_api.CONTEXT_READER.using(self.context):
+            subnet_ids = [item[0] for item in
+                          self.l3_plugin._get_dvr_subnet_ids_on_host_query(
+                              self.context, host)]
+        self.assertEqual(expected, set(subnet_ids))
+
     def test__get_dvr_subnet_ids_on_host_query(self):
         with self.subnet(cidr='20.0.0.0/24') as subnet1,\
                 self.subnet(cidr='30.0.0.0/24') as subnet2,\
@@ -1746,57 +1754,39 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                 as p4:
             host = 'host1'
 
-            subnet_ids = [item[0] for item in
-                          self.l3_plugin._get_dvr_subnet_ids_on_host_query(
-                              self.context, host)]
-            self.assertEqual([], subnet_ids)
+            self._verify_dvr_subnet_ids_on_host(host, set([]))
 
             self.core_plugin.update_port(
                 self.context, p1['port']['id'],
                 {'port': {portbindings.HOST_ID: host}})
             expected = {subnet1['subnet']['id']}
-            subnet_ids = [item[0] for item in
-                          self.l3_plugin._get_dvr_subnet_ids_on_host_query(
-                              self.context, host)]
-            self.assertEqual(expected, set(subnet_ids))
+            self._verify_dvr_subnet_ids_on_host(host, expected)
 
             self.core_plugin.update_port(
                 self.context, p2['port']['id'],
                 {'port': {portbindings.HOST_ID: host}})
             expected.add(subnet2['subnet']['id'])
-            subnet_ids = [item[0] for item in
-                          self.l3_plugin._get_dvr_subnet_ids_on_host_query(
-                              self.context, host)]
-            self.assertEqual(expected, set(subnet_ids))
+            self._verify_dvr_subnet_ids_on_host(host, expected)
 
             self.core_plugin.update_port(
                 self.context, p3['port']['id'],
                 {'port': {portbindings.HOST_ID: host}})
             # p3 is non dvr serviceable so no subnet3 expected
-            subnet_ids = [item[0] for item in
-                          self.l3_plugin._get_dvr_subnet_ids_on_host_query(
-                              self.context, host)]
-            self.assertEqual(expected, set(subnet_ids))
+            self._verify_dvr_subnet_ids_on_host(host, expected)
 
             other_host = 'other' + host
             self.core_plugin.update_port(
                 self.context, p4['port']['id'],
                 {'port': {portbindings.HOST_ID: other_host}})
             # p4 is on other host so no subnet3 expected
-            subnet_ids = [item[0] for item in
-                          self.l3_plugin._get_dvr_subnet_ids_on_host_query(
-                              self.context, host)]
-            self.assertEqual(expected, set(subnet_ids))
+            self._verify_dvr_subnet_ids_on_host(host, expected)
 
             self.core_plugin.update_port(
                 self.context, p4['port']['id'],
                 {'port': {portbindings.HOST_ID: host}})
             # finally p4 is on the right host so subnet3 is expected
             expected.add(subnet3['subnet']['id'])
-            subnet_ids = [item[0] for item in
-                          self.l3_plugin._get_dvr_subnet_ids_on_host_query(
-                              self.context, host)]
-            self.assertEqual(expected, set(subnet_ids))
+            self._verify_dvr_subnet_ids_on_host(host, expected)
 
     def test__get_dvr_router_ids_for_host(self):
         router1 = self._create_router()
