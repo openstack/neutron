@@ -12,11 +12,10 @@
 
 from neutron_lib import context as n_context
 from neutron_lib.db import api as db_api
-from oslo_utils import uuidutils
 import testtools
 
 from neutron.common import utils
-from neutron.db import models_v2
+from neutron.objects import network as network_obj
 from neutron.tests.functional import base
 from neutron.tests.unit import testlib_api
 
@@ -44,8 +43,7 @@ class _TestIsSessionActive(testlib_api.SqlTestCase):
                                     is_admin=True, overwrite=False)
         self.assertFalse(db_api.is_session_active(context.session))
         with db_api.CONTEXT_WRITER.using(context):
-            net = models_v2.Network(id=uuidutils.generate_uuid())
-            context.session.add(net)
+            network_obj.Network(context).create()
             self.assertTrue(db_api.is_session_active(context.session))
 
         self.assertFalse(db_api.is_session_active(context.session))
