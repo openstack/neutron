@@ -101,10 +101,10 @@ network (such as: public network) are the following:
 
 .. note::
 
-   In order to prevent potential
+   In order to prevent a potential
    `security risk <https://bugs.launchpad.net/neutron/+bug/1987410>`_,
-   the `ndp proxy` feature require that use `address scope` to ensure the
-   uniqueness of the IPv6 address which published to external
+   the NDP proxy feature requires that an IPv6 address scope be used to
+   ensure the uniqueness of the IPv6 address which is published externally.
 
 #. Create an IPv6 address scope
 
@@ -400,7 +400,7 @@ network (such as: public network) are the following:
 
    .. code-block:: console
 
-      $ openstack network ndp proxy create --router test-router --port bdd64aa0-437a-4db6-bbca-99869426c908 test-np
+      $ openstack router ndp proxy create test-router --port bdd64aa0-437a-4db6-bbca-99869426c908 --name test-np
       +-----------------+--------------------------------------+
       | Field           | Value                                |
       +-----------------+--------------------------------------+
