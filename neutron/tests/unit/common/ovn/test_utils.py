@@ -373,22 +373,6 @@ class TestDHCPUtils(base.BaseTestCase):
         self.assertEqual(expected_options, options)
 
 
-class TestConnectionConfigToTargetString(base.BaseTestCase):
-
-    def test_strings(self):
-        config_target = (
-            ('ssl:1.2.3.4:5678', 'pssl:5678:1.2.3.4'),
-            ('tcp:1.2.3.4:5678', 'ptcp:5678:1.2.3.4'),
-            ('ssl:[::1]:5678', 'pssl:5678:[::1]'),
-            ('tcp:[::1]:5678', 'ptcp:5678:[::1]'),
-            ('unix:/var/run/ovs/db.sock', 'punix:/var/run/ovs/db.sock'),
-            ('wrong_value', None))
-
-        for config, target in config_target:
-            output = utils.connection_config_to_target_string(config)
-            self.assertEqual(target, output)
-
-
 class TestGetDhcpDnsServers(base.BaseTestCase):
 
     def test_ipv4(self):
