@@ -22,6 +22,7 @@ from oslo_utils import uuidutils
 
 from neutron.agent.l3 import ha_router
 from neutron.agent.l3 import router_info
+from neutron.common import utils as common_utils
 from neutron.tests import base
 from neutron.tests.common import l3_test_common
 
@@ -137,21 +138,27 @@ class TestBasicRouterOperations(base.BaseTestCase):
         mock_pm.disable.assert_called_once_with(
             sig=str(int(signal.SIGTERM)))
 
-    def test_destroy_state_change_monitor_force(self):
+    @mock.patch.object(common_utils, 'wait_until_true')
+    @mock.patch.object(ha_router.HaRouter,
+                       '_get_state_change_monitor_process_manager')
+    def test_destroy_state_change_monitor_force(self, m_get_state,
+                                                mock_wait_until):
         ri = self._create_router(mock.MagicMock())
         # need a port for destroy_state_change_monitor() to call PM code
         ri.ha_port = {'id': _uuid()}
-        with mock.patch.object(ri,
-                               '_get_state_change_monitor_process_manager')\
-                as m_get_state:
-            mock_pm = m_get_state.return_value
-            mock_pm.active = False
-            with mock.patch.object(ha_router, 'SIGTERM_TIMEOUT', 0):
-                ri.destroy_state_change_monitor(mock_pm)
+        mock_pm = m_get_state.return_value
+        mock_pm.active = False
+        mock_wait_until.side_effect = common_utils.WaitTimeout
 
-        calls = ["sig='str(%d)'" % signal.SIGTERM,
-                 "sig='str(%d)'" % signal.SIGKILL]
-        mock_pm.disable.has_calls(calls)
+        ri.destroy_state_change_monitor(mock_pm)
+
+        m_get_state.assert_called_once_with()
+        mock_pm.unregister.assert_called_once_with(
+            self.router_id, ha_router.IP_MONITOR_PROCESS_SERVICE)
+        mock_wait_until.assert_called_once_with(mock.ANY, timeout=10)
+        mock_pm.disable.assert_has_calls([
+            mock.call(sig=str(int(signal.SIGTERM))),
+            mock.call(sig=str(int(signal.SIGKILL)))])
 
     def _test_ha_state(self, read_return, expected):
         ri = self._create_router(mock.MagicMock())
