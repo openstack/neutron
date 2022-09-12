@@ -100,3 +100,9 @@ def init_handler(resource, event, trigger, payload=None):
     manager = trunk_manager.TrunkManager(trigger.int_br)
     handler = ovsdb_handler.OVSDBHandler(manager)
     TRUNK_SKELETON = OVSTrunkSkeleton(handler)
+
+
+def unregister():
+    """Cleanup fanout queues"""
+    global TRUNK_SKELETON
+    TRUNK_SKELETON.unregister()

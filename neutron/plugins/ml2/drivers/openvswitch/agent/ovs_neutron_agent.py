@@ -2957,3 +2957,4 @@ def main(bridge_classes):
             LOG.error("%s agent terminated!", e)
             sys.exit(1)
     agent.daemon_loop()
+    ovs_capabilities.unregister()
