@@ -398,6 +398,9 @@ class CacheBackedPluginApi(PluginApi):
         rcache.start_watcher()
         self.remote_resource_cache = rcache
 
+    def stop(self):
+        self.remote_resource_cache.stop_watcher()
+
 
 # TODO(ralonsoh): move this method to neutron_lib.plugins.utils
 def migrating_to_host(bindings, host=None):
