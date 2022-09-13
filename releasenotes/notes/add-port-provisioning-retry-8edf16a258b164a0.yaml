@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    After the port is considered as provisioned, the Nova port binding update
+    could have not been received, leaving the port as not bound. Now the
+    port provisioning method has an active wait that will retry several times,
+    waiting for the port binding update. If received, the port status will be
+    set as active if the admin state flag is set.
