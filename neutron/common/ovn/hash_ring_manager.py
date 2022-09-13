@@ -35,6 +35,8 @@ class HashRingManager(object):
         self._last_time_loaded = None
         self._check_hashring_startup = True
         self._group = group_name
+        # Flag to rate limit the caching log
+        self._prev_num_nodes = -1
         self.admin_ctx = context.get_admin_context()
 
     @property
@@ -56,11 +58,18 @@ class HashRingManager(object):
             self.admin_ctx,
             constants.HASH_RING_CACHE_TIMEOUT, self._group, from_host=True)
 
-        if len(nodes) >= api_workers:
-            LOG.debug("Allow caching, nodes %s>=%s", len(nodes), api_workers)
+        num_nodes = len(nodes)
+        if num_nodes >= api_workers:
+            LOG.debug("Allow caching, nodes %s>=%s", num_nodes, api_workers)
             self._check_hashring_startup = False
             return False
-        LOG.debug("Disallow caching, nodes %s<%s", len(nodes), api_workers)
+
+        # NOTE(lucasagomes): We only log when the number of connected
+        # nodes are different to prevent this message from being spammed
+        if self._prev_num_nodes != num_nodes:
+            LOG.debug("Disallow caching, nodes %s<%s", num_nodes, api_workers)
+            self._prev_num_nodes = num_nodes
+
         return True
 
     def _load_hash_ring(self, refresh=False):
