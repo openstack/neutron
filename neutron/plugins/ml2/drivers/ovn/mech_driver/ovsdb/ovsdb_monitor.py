@@ -815,7 +815,6 @@ class OvnSbIdl(OvnIdlDistributedLock):
         helper.register_table('Encap')
         helper.register_table('Port_Binding')
         helper.register_table('Datapath_Binding')
-        helper.register_table('Connection')
         helper.register_columns('SB_Global', ['external_ids'])
         try:
             return cls(driver, connection_string, helper, leader_only=False)
