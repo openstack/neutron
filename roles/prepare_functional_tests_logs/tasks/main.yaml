@@ -1,8 +1,14 @@
+- name: Check if {{ logs_path }} exists
+  stat:
+    path: "{{ logs_path }}"
+  register: logs_path_info
+
 - name: Prepare logs archive {{ log_archive_file_name }}
   become: yes
   shell:
     cmd: |
       /usr/bin/tar -czf {{ log_archive_file_name }} {{ logs_path }}
+  when: logs_path_info.stat.exists
 
 - name: Set {{ log_archive_file_name }} ownership
   become: yes
@@ -11,3 +17,4 @@
     owner: "{{ ansible_user }}"
     group: "{{ ansible_user }}"
     mode: 0775
+  when: logs_path_info.stat.exists
