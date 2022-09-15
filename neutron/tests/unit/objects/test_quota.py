@@ -17,6 +17,7 @@ import datetime
 from oslo_utils import uuidutils
 
 from neutron.objects import quota
+from neutron.tests import base as test_base
 from neutron.tests.unit.objects import test_base as obj_test_base
 from neutron.tests.unit import testlib_api
 
@@ -58,6 +59,7 @@ class ReservationDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         reservation.create()
         return reservation
 
+    @test_base.unstable_test('bug/1988604')
     def test_delete_expired(self):
         dt = datetime.datetime.utcnow()
         resources = {'goals': 2, 'assists': 1}
