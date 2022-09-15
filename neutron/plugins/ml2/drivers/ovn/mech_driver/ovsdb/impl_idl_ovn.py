@@ -49,10 +49,10 @@ LOG = log.getLogger(__name__)
 def wait_for_change(idl_, timeout, seqno=None):
     if seqno is None:
         seqno = idl_.change_seqno
-        while idl_.change_seqno == seqno and not idl_.run():
-            poller = idlutils.poller.Poller()
-            idl_.wait(poller)
-            poller.block()
+    while idl_.change_seqno == seqno and not idl_.run():
+        poller = idlutils.poller.Poller()
+        idl_.wait(poller)
+        poller.block()
 
 
 idlutils.wait_for_change = wait_for_change
