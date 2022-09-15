@@ -97,6 +97,9 @@
         - neutron-linuxbridge-tempest-plugin-scenario-nftables
         - neutron-ovs-tempest-plugin-scenario-iptables_hybrid-nftables
         - devstack-enforce-scope
+        - openstack-tox-py39-with-oslo-master:
+            timeout: 3600
+            irrelevant-files:  *irrelevant-files
 
 - project-template:
     name: neutron-periodic-jobs
