@@ -117,7 +117,12 @@ if [[ "$1" == "stack" ]]; then
             if is_service_enabled br-ex-tcpdump ; then
                 # tcpdump monitor on br-ex for ARP, reverse ARP and ICMP v4 / v6 packets
                 sudo ip link set dev $PUBLIC_BRIDGE up
-                run_process br-ex-tcpdump "/usr/sbin/tcpdump -i $PUBLIC_BRIDGE arp or rarp or icmp or icmp6 -enlX" "$STACK_GROUP" root
+                if [[ "$os_CODENAME" == "jammy" ]]; then
+                    TCPDUMP=/usr/bin/tcpdump
+                else
+                    TCPDUMP=/usr/sbin/tcpdump
+                fi
+                run_process br-ex-tcpdump "$TCPDUMP -i $PUBLIC_BRIDGE arp or rarp or icmp or icmp6 -enlX" "$STACK_GROUP" root
             fi
 
             if is_service_enabled br-int-flows ; then
