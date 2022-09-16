@@ -5,11 +5,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Neutron Release Notes\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-06-21 19:30+0000\n"
+"POT-Creation-Date: 2022-09-15 15:38+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2022-06-13 07:51+0000\n"
+"PO-Revision-Date: 2022-09-15 09:01+0000\n"
 "Last-Translator: Andi Chandler <andi@gowling.com>\n"
 "Language-Team: English (United Kingdom)\n"
 "Language: en_GB\n"
@@ -89,8 +89,8 @@ msgstr "12.1.0"
 msgid "12.1.1"
 msgstr "12.1.1"
 
-msgid "12.1.1-140"
-msgstr "12.1.1-140"
+msgid "12.1.1-141"
+msgstr "12.1.1-141"
 
 msgid "13.0.0"
 msgstr "13.0.0"
@@ -113,8 +113,8 @@ msgstr "13.0.6"
 msgid "13.0.7"
 msgstr "13.0.7"
 
-msgid "13.0.7-117"
-msgstr "13.0.7-117"
+msgid "13.0.7-118"
+msgstr "13.0.7-118"
 
 msgid "14.0.0"
 msgstr "14.0.0"
@@ -149,8 +149,8 @@ msgstr "14.4.1"
 msgid "14.4.2"
 msgstr "14.4.2"
 
-msgid "14.4.2-51"
-msgstr "14.4.2-51"
+msgid "14.4.2-53"
+msgstr "14.4.2-53"
 
 msgid "15.0.0"
 msgstr "15.0.0"
@@ -176,6 +176,9 @@ msgstr "15.3.1"
 msgid "15.3.4"
 msgstr "15.3.4"
 
+msgid "15.3.4-97"
+msgstr "15.3.4-97"
+
 msgid "16.0.0"
 msgstr "16.0.0"
 
@@ -196,6 +199,84 @@ msgstr "16.3.2"
 
 msgid "16.4.0"
 msgstr "16.4.0"
+
+msgid "16.4.1"
+msgstr "16.4.1"
+
+msgid "16.4.2-98"
+msgstr "16.4.2-98"
+
+msgid "17.0.0"
+msgstr "17.0.0"
+
+msgid "17.1.0"
+msgstr "17.1.0"
+
+msgid "17.1.1"
+msgstr "17.1.1"
+
+msgid "17.1.2"
+msgstr "17.1.2"
+
+msgid "17.2.0"
+msgstr "17.2.0"
+
+msgid "17.2.1"
+msgstr "17.2.1"
+
+msgid "17.3.0"
+msgstr "17.3.0"
+
+msgid "17.4.0"
+msgstr "17.4.0"
+
+msgid "17.4.1-26"
+msgstr "17.4.1-26"
+
+msgid "18.0.0"
+msgstr "18.0.0"
+
+msgid "18.1.0"
+msgstr "18.1.0"
+
+msgid "18.1.1"
+msgstr "18.1.1"
+
+msgid "18.2.0"
+msgstr "18.2.0"
+
+msgid "18.3.0"
+msgstr "18.3.0"
+
+msgid "18.5.0-14"
+msgstr "18.5.0-14"
+
+msgid "19.0.0"
+msgstr "19.0.0"
+
+msgid "19.1.0"
+msgstr "19.1.0"
+
+msgid "19.2.0"
+msgstr "19.2.0"
+
+msgid "19.3.0"
+msgstr "19.3.0"
+
+msgid "19.4.0-16"
+msgstr "19.4.0-16"
+
+msgid "20.0.0"
+msgstr "20.0.0"
+
+msgid "20.0.0.0rc1-310"
+msgstr "20.0.0.0rc1-310"
+
+msgid "20.2.0"
+msgstr "20.2.0"
+
+msgid "20.2.0-20"
+msgstr "20.2.0-20"
 
 msgid "7.0.1"
 msgstr "7.0.1"
@@ -262,8 +343,24 @@ msgstr ""
 "information, see bug `1865036 <https://bugs.launchpad.net/neutron/"
 "+bug/1865036>`_."
 
+msgid ""
+"A compute owned port can have one active binding and many inactive bindings."
+msgstr ""
+"A compute owned port can have one active binding and many inactive bindings."
+
 msgid "A floating IP can have many ``port_forwardings``."
 msgstr "A floating IP can have many ``port_forwardings``."
+
+msgid ""
+"A list of IPv6 addresses for a dhcp-host entry in the dnsmasq DHCP agent "
+"driver can be configured. This solves problems with failing boot process "
+"when only one IP address is available. See `#1861032 <https://bugs.launchpad."
+"net/neutron/+bug/1861032>`_) for details about the issue."
+msgstr ""
+"A list of IPv6 addresses for a DHCP-host entry in the dnsmasq DHCP agent "
+"driver can be configured. This solves problems with failing boot process "
+"when only one IP address is available. See `#1861032 <https://bugs.launchpad."
+"net/neutron/+bug/1861032>`_) for details about the issue."
 
 msgid ""
 "Avoid modifying an existing release note file even though it is related to "
@@ -349,8 +446,37 @@ msgstr "Ussuri Series Release Notes"
 msgid "Victoria Series Release Notes"
 msgstr "Victoria Series Release Notes"
 
+msgid "Wallaby Series Release Notes"
+msgstr "Wallaby Series Release Notes"
+
 msgid "Writing release notes"
 msgstr "Writing release notes"
+
+msgid "Xena Series Release Notes"
+msgstr "Xena Series Release Notes"
+
+msgid "Yoga Series Release Notes"
+msgstr "Yoga Series Release Notes"
+
+msgid ""
+"``openflow_processed_per_port``: by default \"False\". If enabled, all "
+"OpenFlow rules associated to a port will be processed at once, in a single "
+"transaction. If disabled, the flows will be processed in batches of "
+"\"AGENT_RES_PROCESSING_STEP=100\" number of OpenFlow rules."
+msgstr ""
+"``openflow_processed_per_port``: by default \"False\". If enabled, all "
+"OpenFlow rules associated to a port will be processed at once, in a single "
+"transaction. If disabled, the flows will be processed in batches of "
+"\"AGENT_RES_PROCESSING_STEP=100\" number of OpenFlow rules."
+
+msgid ""
+"if security groups are desired, the use of the stateful OVS firewall is "
+"required, however that prevents the use of the DPDK datapath for OVS "
+"versions 2.5 or lower."
+msgstr ""
+"if security groups are desired, the use of the stateful OVS firewall is "
+"required, however, that prevents the use of the DPDK datapath for OVS "
+"versions 2.5 or lower."
 
 msgid ""
 "max_fixed_ips_per_port has been deprecated and will be removed in the Newton "
