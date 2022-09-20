@@ -22,6 +22,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import keepalived
 from neutron.common import utils as common_utils
 from neutron.conf.agent.l3 import config as l3_config
+from neutron.conf.agent.l3 import ha as ha_config
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import helpers
 from neutron.tests.functional import base
@@ -35,7 +36,8 @@ class KeepalivedManagerTestCase(base.BaseSudoTestCase,
     def setUp(self):
         super().setUp()
         l3_config.register_l3_agent_config_opts(l3_config.OPTS, cfg.CONF)
-        cfg.CONF.set_override('check_child_processes_interval', 1, 'AGENT')
+        ha_config.register_l3_agent_ha_opts()
+        self.config(check_child_processes_interval=1, group='AGENT')
 
         self.expected_config = self._get_config()
         self.process_monitor = external_process.ProcessMonitor(cfg.CONF,

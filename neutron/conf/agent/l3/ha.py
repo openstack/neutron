@@ -54,6 +54,41 @@ OPTS = [
                       'as primary, and a primary election will be repeated '
                       'in a round-robin fashion, until one of the routers '
                       'restores the gateway connection.')),
+    cfg.BoolOpt('ha_conntrackd_enabled',
+                default=False,
+                help=_("Enable conntrackd to synchronize connection "
+                       "tracking states between HA routers.")),
+    cfg.IntOpt('ha_conntrackd_hashsize',
+               default=32768,
+               help=_('Number of buckets in the cache hashtable')),
+    cfg.IntOpt('ha_conntrackd_hashlimit',
+               default=131072,
+               help=_('Maximum number of conntracks')),
+    cfg.IntOpt('ha_conntrackd_unix_backlog',
+               default=20,
+               help=_('Unix socket backlog')),
+    cfg.IntOpt('ha_conntrackd_socketbuffersize',
+               default=262142,
+               help=_('Socket buffer size for events')),
+    cfg.IntOpt('ha_conntrackd_socketbuffersize_max_grown',
+               default=655355,
+               help=_('Maximum size of socket buffer')),
+    cfg.StrOpt('ha_conntrackd_ipv4_mcast_addr',
+               default='225.0.0.50',
+               help=_('Multicast address: The address that you use as '
+                      'destination in the synchronization messages')),
+    cfg.IntOpt('ha_conntrackd_group',
+               default=3780,
+               help=_('The multicast base port number. The generated virtual '
+                      'router ID added to this value.')),
+    cfg.IntOpt('ha_conntrackd_sndsocketbuffer',
+               default=24985600,
+               help=_('Buffer used to enqueue the packets that are going '
+                      'to be transmitted')),
+    cfg.IntOpt('ha_conntrackd_rcvsocketbuffer',
+               default=24985600,
+               help=_('Buffer used to enqueue the packets that the socket '
+                      'is pending to handle')),
 ]
 
 

@@ -35,6 +35,7 @@ from oslo_utils import excutils
 from oslo_utils import fileutils
 import psutil
 
+from neutron._i18n import _
 from neutron.api import wsgi
 from neutron.common import utils
 from neutron.conf.agent import common as config
@@ -179,6 +180,20 @@ def find_child_pids(pid, recursive=False):
         for child in child_pids:
             child_pids += find_child_pids(child, recursive=True)
     return child_pids
+
+
+def find_pid_by_cmd(cmd):
+    """Retrieve a list of the pids by their cmd."""
+    pids = execute(['pgrep', '-f', cmd], log_fail_as_error=False).split()
+
+    if len(pids) > 1:
+        raise RuntimeError(
+            _('%i processes for "%s" found.' % (len(pids), cmd))
+        )
+    if pids == []:
+        raise RuntimeError(_('No process for "%s" found.' % cmd))
+
+    return pids[0]
 
 
 def find_parent_pid(pid):

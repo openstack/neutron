@@ -24,6 +24,7 @@ from oslo_log import log as logging
 
 from neutron.agent.l3 import namespaces
 from neutron.agent.l3 import router_info as router
+from neutron.agent.linux import conntrackd
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import keepalived
@@ -82,6 +83,7 @@ class HaRouter(router.RouterInfo):
         self.keepalived_manager = None
         self._ha_state = None
         self._ha_state_path = None
+        self.conntrackd_manager = None
 
     def create_router_namespace_object(
             self, router_id, agent_conf, iface_driver, use_ipv6):
@@ -161,10 +163,30 @@ class HaRouter(router.RouterInfo):
         super().initialize(process_monitor)
 
         self.set_ha_port()
+        self._init_conntrackd_manager(process_monitor)
         self._init_keepalived_manager(process_monitor)
         self._check_and_set_real_state()
         self.ha_network_added()
         self.spawn_state_change_monitor(process_monitor)
+
+    def _get_ha_port_fixed_ip_with_subnet(self, subnet):
+        for fixed_ip in self.ha_port.get('fixed_ips', []):
+            if fixed_ip['subnet_id'] == subnet['id']:
+                return fixed_ip['ip_address']
+        return None
+
+    def _get_conntrackd_ipv4_interface(self):
+        return self.ha_port['fixed_ips'][0]['ip_address']
+
+    def _init_conntrackd_manager(self, process_monitor):
+        self.conntrackd_manager = conntrackd.ConntrackdManager(
+            self.router['id'],
+            process_monitor,
+            self.agent_conf,
+            self._get_conntrackd_ipv4_interface(),
+            self.ha_vr_id,
+            self.get_ha_device_name(),
+            namespace=self.ha_namespace)
 
     def _init_keepalived_manager(self, process_monitor):
         self.keepalived_manager = keepalived.KeepalivedManager(
@@ -185,6 +207,9 @@ class HaRouter(router.RouterInfo):
         interface_name = self.get_ha_device_name()
         subnets = self.ha_port.get('subnets', [])
         ha_port_cidrs = [subnet['cidr'] for subnet in subnets]
+        notify_script = (self.agent_conf.ha_conntrackd_enabled and
+                         self.conntrackd_manager.get_ha_script_path() or
+                         None)
         instance = keepalived.KeepalivedInstance(
             'BACKUP',
             interface_name,
@@ -195,7 +220,9 @@ class HaRouter(router.RouterInfo):
             priority=self.ha_priority,
             vrrp_health_check_interval=(
                 self.agent_conf.ha_vrrp_health_check_interval),
-            ha_conf_dir=self.keepalived_manager.get_conf_dir())
+            ha_conf_dir=self.keepalived_manager.get_conf_dir(),
+            notify_script=notify_script,
+        )
         instance.track_interfaces.append(interface_name)
 
         if self.agent_conf.ha_vrrp_auth_password:
@@ -206,20 +233,31 @@ class HaRouter(router.RouterInfo):
 
         config.add_instance(instance)
 
+    def _disable_manager(self, manager, remove_config):
+        if not manager:
+            LOG.debug('Error while disabling manager for %s - no manager',
+                      self.router_id)
+            return
+        manager.disable()
+
+        if remove_config:
+            conf_dir = manager.get_conf_dir()
+            try:
+                shutil.rmtree(conf_dir)
+            except FileNotFoundError:
+                pass
+
     def enable_keepalived(self):
         self.keepalived_manager.spawn()
 
-    def disable_keepalived(self):
-        if not self.keepalived_manager:
-            LOG.debug('Error while disabling keepalived for %s - no manager',
-                      self.router_id)
-            return
-        self.keepalived_manager.disable()
-        conf_dir = self.keepalived_manager.get_conf_dir()
-        try:
-            shutil.rmtree(conf_dir)
-        except FileNotFoundError:
-            pass
+    def disable_keepalived(self, remove_config=True):
+        self._disable_manager(self.keepalived_manager, remove_config)
+
+    def enable_conntrackd(self):
+        self.conntrackd_manager.spawn()
+
+    def disable_conntrackd(self, remove_config=True):
+        self._disable_manager(self.conntrackd_manager, remove_config)
 
     def _get_keepalived_instance(self):
         return self.keepalived_manager.config.get_instance(self.ha_vr_id)
@@ -521,7 +559,16 @@ class HaRouter(router.RouterInfo):
     def delete(self):
         if self.process_monitor:
             self.destroy_state_change_monitor(self.process_monitor)
-        self.disable_keepalived()
+
+        # Only remove the conf_dir after keepalived and conntrackd have been
+        # disabled. They share the same configuration directory.
+        self.disable_keepalived(
+            remove_config=not self.agent_conf.ha_conntrackd_enabled,
+        )
+
+        if self.agent_conf.ha_conntrackd_enabled:
+            self.disable_conntrackd(remove_config=True)
+
         self.ha_network_removed()
         super().delete()
 
@@ -546,6 +593,11 @@ class HaRouter(router.RouterInfo):
                    "port": self.ha_port})
         if (self.ha_port and
                 self.ha_port['status'] == n_consts.PORT_STATUS_ACTIVE):
+            # Conntrackd needs to be enabled first, otherwise the keepalived
+            # script would try to start it (possibly with the wrong
+            # configuration).
+            if self.agent_conf.ha_conntrackd_enabled:
+                self.enable_conntrackd()
             self.enable_keepalived()
 
     @runtime.synchronized('enable_radvd')
