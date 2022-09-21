@@ -228,6 +228,10 @@
         s-container: false
         s-object: false
         s-proxy: false
+      zuul_copy_output:
+        '/var/log/ovn': 'logs'
+        '/var/log/openvswitch': 'logs'
+        '/var/lib/ovn': 'logs'
     irrelevant-files: &tempest-db-irrelevant-files
       - ^test-requirements.txt$
       - ^.*\.conf\.sample$
@@ -272,6 +276,10 @@
         s-container: false
         s-object: false
         s-proxy: false
+      zuul_copy_output:
+        '/var/log/ovn': 'logs'
+        '/var/log/openvswitch': 'logs'
+        '/var/lib/ovn': 'logs'
     # NOTE(ralonsoh): once MariaDB default version in Ubuntu is bumped to
     # >10.1, this workaround can be removed (bug 1855912)
     pre-run: playbooks/add_mariadb_repo.yaml
@@ -347,6 +355,10 @@
         s-container: false
         s-object: false
         s-proxy: false
+      zuul_copy_output:
+        '/var/log/ovn': 'logs'
+        '/var/log/openvswitch': 'logs'
+        '/var/lib/ovn': 'logs'
 
 - job:
     name: neutron-ovs-tempest-with-neutron-lib-master
@@ -383,6 +395,10 @@
           $NEUTRON_L3_CONF:
             agent:
               debug_iptables_rules: True
+      zuul_copy_output:
+        '/var/log/ovn': 'logs'
+        '/var/log/openvswitch': 'logs'
+        '/var/lib/ovn': 'logs'
     irrelevant-files: &irrelevant-files
       - ^test-requirements.txt$
       - ^.*\.conf\.sample$
@@ -554,6 +570,10 @@
         s-container: false
         s-object: false
         s-proxy: false
+      zuul_copy_output:
+        '/var/log/ovn': 'logs'
+        '/var/log/openvswitch': 'logs'
+        '/var/lib/ovn': 'logs'
     irrelevant-files: *ovn-irrelevant-files
 
 - job:
