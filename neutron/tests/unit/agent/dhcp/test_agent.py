@@ -1043,18 +1043,38 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
 
     def test_enable_isolated_metadata_proxy_with_metadata_network_ipv6(self):
         network = copy.deepcopy(fake_meta_network)
-        network.ports = [fake_dhcp_port]
+        dhcp_port_this_host = copy.deepcopy(fake_dhcp_port)
+        dhcp_port_this_host.device_id = utils.get_dhcp_agent_device_id(
+            network.id, self.dhcp.conf.host)
+        network.ports = [dhcp_port_this_host]
         self._test_enable_isolated_metadata_proxy_ipv6(network)
 
     def test_enable_isolated_metadata_proxy_with_metadata_network_dvr_ipv6(
             self):
         network = copy.deepcopy(fake_meta_dvr_network)
-        network.ports = [fake_dhcp_port]
+        dhcp_port_this_host = copy.deepcopy(fake_dhcp_port)
+        dhcp_port_this_host.device_id = utils.get_dhcp_agent_device_id(
+            network.id, self.dhcp.conf.host)
+        network.ports = [dhcp_port_this_host]
         self._test_enable_isolated_metadata_proxy_ipv6(network)
 
     def test_enable_isolated_metadata_proxy_with_dist_network_ipv6(self):
         network = copy.deepcopy(fake_dist_network)
-        network.ports = [fake_dhcp_port]
+        dhcp_port_this_host = copy.deepcopy(fake_dhcp_port)
+        dhcp_port_this_host.device_id = utils.get_dhcp_agent_device_id(
+            network.id, self.dhcp.conf.host)
+        network.ports = [dhcp_port_this_host]
+        self._test_enable_isolated_metadata_proxy_ipv6(network)
+
+    def test_enable_isolated_metadata_proxy_with_2_agents_network_ipv6(self):
+        network = copy.deepcopy(fake_meta_network)
+        dhcp_port_this_host = copy.deepcopy(fake_dhcp_port)
+        dhcp_port_this_host.device_id = utils.get_dhcp_agent_device_id(
+            network.id, self.dhcp.conf.host)
+        dhcp_port_other_host = copy.deepcopy(fake_dhcp_port)
+        dhcp_port_other_host.device_id = utils.get_dhcp_agent_device_id(
+            network.id, 'otherhostname')
+        network.ports = [dhcp_port_this_host, dhcp_port_other_host]
         self._test_enable_isolated_metadata_proxy_ipv6(network)
 
     def _test_disable_isolated_metadata_proxy(self, network):
