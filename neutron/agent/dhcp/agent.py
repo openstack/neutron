@@ -796,7 +796,7 @@ class DhcpAgent(manager.Manager):
                         'get_metadata_bind_interface', network, port=p)
                     for p in network.ports
                     if (p.device_owner == constants.DEVICE_OWNER_DHCP and
-                        p.admin_state_up)
+                        p.admin_state_up and self._is_port_on_this_agent(p))
                 ]
                 if len(dhcp_ifaces) == 1:
                     kwargs['bind_interface'] = dhcp_ifaces[0]
