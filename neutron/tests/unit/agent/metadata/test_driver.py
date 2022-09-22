@@ -81,6 +81,12 @@ class TestMetadataDriverProcess(base.BaseTestCase):
     METADATA_PORT = 8080
     METADATA_SOCKET = '/socket/path'
     PIDFILE = 'pidfile'
+    RATE_LIMIT_CONFIG = {
+        'base_window_duration': 10,
+        'base_query_rate_limit': 5,
+        'burst_window_duration': 1,
+        'burst_query_rate_limit': 10,
+    }
 
     def setUp(self):
         super(TestMetadataDriverProcess, self).setUp()
@@ -101,6 +107,9 @@ class TestMetadataDriverProcess(base.BaseTestCase):
         l3_config.register_l3_agent_config_opts(l3_config.OPTS, cfg.CONF)
         ha_conf.register_l3_agent_ha_opts()
         meta_conf.register_meta_conf_opts(meta_conf.SHARED_OPTS, cfg.CONF)
+        meta_conf.register_meta_conf_opts(
+            meta_conf.METADATA_RATE_LIMITING_OPTS, cfg.CONF,
+            group=meta_conf.RATE_LIMITING_GROUP)
 
     def test_after_router_updated_called_on_agent_process_update(self):
         with mock.patch.object(metadata_driver, 'after_router_updated') as f,\
@@ -142,7 +151,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
             agent._process_updated_router(router)
             f.assert_not_called()
 
-    def _test_spawn_metadata_proxy(self, dad_failed=False):
+    def _test_spawn_metadata_proxy(self, dad_failed=False, rate_limited=False):
         router_id = _uuid()
         router_ns = 'qrouter-%s' % router_id
         service_name = 'haproxy'
@@ -202,7 +211,8 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                        "-" + router_id)
             bind_v6_line = 'bind %s:%s interface %s' % (
                 self.METADATA_DEFAULT_IPV6, self.METADATA_PORT, 'fake-if')
-            cfg_contents = metadata_driver._HAPROXY_CONFIG_TEMPLATE % {
+
+            expected_params = {
                 'user': self.EUNAME,
                 'group': self.EGNAME,
                 'host': self.METADATA_DEFAULT_IP,
@@ -222,9 +232,25 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                                                  'fake-if',
                                                  namespace=router_ns)
             else:
+                if rate_limited:
+                    expected_params.update(self.RATE_LIMIT_CONFIG,
+                                           stick_table_expire=10,
+                                           ip_version='ip')
+                    expected_config_template = (
+                        comm_meta.METADATA_HAPROXY_GLOBAL +
+                        comm_meta.RATE_LIMITED_CONFIG_TEMPLATE +
+                        metadata_driver._HEADER_CONFIG_TEMPLATE)
+                else:
+                    expected_config_template = (
+                        comm_meta.METADATA_HAPROXY_GLOBAL +
+                        metadata_driver._UNLIMITED_CONFIG_TEMPLATE +
+                        metadata_driver._HEADER_CONFIG_TEMPLATE)
+
                 mock_open.assert_has_calls([
                     mock.call(cfg_file, 'w'),
-                    mock.call().write(cfg_contents)], any_order=True)
+                    mock.call().write(expected_config_template %
+                                      expected_params)],
+                                           any_order=True)
 
                 env = {ep.PROCESS_TAG: service_name + '-' + router_id}
                 ip_mock.assert_has_calls([
@@ -241,6 +267,20 @@ class TestMetadataDriverProcess(base.BaseTestCase):
     def test_spawn_metadata_proxy(self):
         self._test_spawn_metadata_proxy()
 
+    def test_spawn_rate_limited_metadata_proxy(self):
+        cfg.CONF.set_override('rate_limit_enabled', True,
+                              group=meta_conf.RATE_LIMITING_GROUP)
+        for k, v in self.RATE_LIMIT_CONFIG.items():
+            cfg.CONF.set_override(k, v, group=meta_conf.RATE_LIMITING_GROUP)
+
+        return self._test_spawn_metadata_proxy(rate_limited=True)
+
+    def test_metadata_proxy_conf_parse_ip_versions(self):
+        self.assertEqual('4', comm_meta.parse_ip_versions(['4']))
+        self.assertEqual('6', comm_meta.parse_ip_versions(['6']))
+        self.assertIsNone(comm_meta.parse_ip_versions(['4', '6']))
+        self.assertIsNone(comm_meta.parse_ip_versions(['5', '6']))
+
     def test_spawn_metadata_proxy_dad_failed(self):
         self._test_spawn_metadata_proxy(dad_failed=True)
 
@@ -251,7 +291,8 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                                                          mock.ANY, mock.ANY,
                                                          self.EUNAME,
                                                          self.EGNAME,
-                                                         mock.ANY, mock.ANY)
+                                                         mock.ANY, mock.ANY,
+                                                         mock.ANY)
             self.assertRaises(comm_meta.InvalidUserOrGroupException,
                               config.create_config_file)
 
@@ -264,7 +305,8 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                                                          mock.ANY, mock.ANY,
                                                          self.EUNAME,
                                                          self.EGNAME,
-                                                         mock.ANY, mock.ANY)
+                                                         mock.ANY, mock.ANY,
+                                                         mock.ANY)
             self.assertRaises(comm_meta.InvalidUserOrGroupException,
                               config.create_config_file)
 

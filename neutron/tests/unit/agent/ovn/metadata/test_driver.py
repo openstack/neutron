@@ -41,15 +41,35 @@ class TestMetadataDriverProcess(base.BaseTestCase):
     METADATA_PORT = 8080
     METADATA_SOCKET = '/socket/path'
     PIDFILE = 'pidfile'
+    RATE_LIMIT_CONFIG = {
+        'base_window_duration': 10,
+        'base_query_rate_limit': 5,
+        'burst_window_duration': 1,
+        'burst_query_rate_limit': 10,
+    }
 
     def setUp(self):
         super(TestMetadataDriverProcess, self).setUp()
         mock.patch('eventlet.spawn').start()
 
         ovn_meta_conf.register_meta_conf_opts(meta_conf.SHARED_OPTS, cfg.CONF)
+        ovn_meta_conf.register_meta_conf_opts(
+            meta_conf.METADATA_RATE_LIMITING_OPTS, cfg.CONF,
+            group=meta_conf.RATE_LIMITING_GROUP)
         ovn_conf.register_opts()
 
     def test_spawn_metadata_proxy(self):
+        return self._test_spawn_metadata_proxy(rate_limited=False)
+
+    def test_spawn_rate_limited_metadata_proxy(self):
+        cfg.CONF.set_override('rate_limit_enabled', True,
+                              group=meta_conf.RATE_LIMITING_GROUP)
+        for k, v in self.RATE_LIMIT_CONFIG.items():
+            cfg.CONF.set_override(k, v, group=meta_conf.RATE_LIMITING_GROUP)
+
+        return self._test_spawn_metadata_proxy(rate_limited=True)
+
+    def _test_spawn_metadata_proxy(self, rate_limited=False):
         datapath_id = _uuid()
         metadata_ns = metadata_agent.NS_PREFIX + datapath_id
         ip_class_path = 'neutron.agent.linux.ip_lib.IPWrapper'
@@ -93,7 +113,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 service_name, metadata_driver.METADATA_SERVICE_NAME,
                 datapath_id)
 
-            cfg_contents = metadata_driver._HAPROXY_CONFIG_TEMPLATE % {
+            expected_params = {
                 'user': self.EUNAME,
                 'group': self.EGNAME,
                 'host': self.METADATA_DEFAULT_IP,
@@ -103,8 +123,24 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 'res_id': datapath_id,
                 'pidfile': self.PIDFILE,
                 'log_level': 'debug',
-                'log_tag': log_tag}
+                'log_tag': log_tag,
+                'bind_v6_line': ''}
 
+            if rate_limited:
+                expected_params.update(self.RATE_LIMIT_CONFIG,
+                                       stick_table_expire=10,
+                                       ip_version='ip')
+                expected_config_template = (
+                    comm_meta.METADATA_HAPROXY_GLOBAL +
+                    comm_meta.RATE_LIMITED_CONFIG_TEMPLATE +
+                    metadata_driver._HEADER_CONFIG_TEMPLATE)
+            else:
+                expected_config_template = (
+                    comm_meta.METADATA_HAPROXY_GLOBAL +
+                    metadata_driver._UNLIMITED_CONFIG_TEMPLATE +
+                    metadata_driver._HEADER_CONFIG_TEMPLATE)
+
+            cfg_contents = expected_config_template % expected_params
             mock_open.assert_has_calls([
                 mock.call(cfg_file, 'w'),
                 mock.call().write(cfg_contents)],
@@ -123,7 +159,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                                                          mock.ANY, mock.ANY,
                                                          mock.ANY, self.EUNAME,
                                                          self.EGNAME, mock.ANY,
-                                                         mock.ANY)
+                                                         mock.ANY, mock.ANY)
             self.assertRaises(comm_meta.InvalidUserOrGroupException,
                               config.create_config_file)
 
@@ -135,6 +171,6 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                                                          mock.ANY, mock.ANY,
                                                          mock.ANY, self.EUNAME,
                                                          self.EGNAME, mock.ANY,
-                                                         mock.ANY)
+                                                         mock.ANY, mock.ANY)
             self.assertRaises(comm_meta.InvalidUserOrGroupException,
                               config.create_config_file)

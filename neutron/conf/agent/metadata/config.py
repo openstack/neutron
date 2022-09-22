@@ -21,6 +21,7 @@ USER_MODE = 'user'
 GROUP_MODE = 'group'
 ALL_MODE = 'all'
 SOCKET_MODES = (DEDUCE_MODE, USER_MODE, GROUP_MODE, ALL_MODE)
+RATE_LIMITING_GROUP = 'metadata_rate_limiting'
 
 SHARED_OPTS = [
     cfg.StrOpt('metadata_proxy_socket',
@@ -103,5 +104,37 @@ UNIX_DOMAIN_METADATA_PROXY_OPTS = [
 ]
 
 
-def register_meta_conf_opts(opts, cfg=cfg.CONF):
-    cfg.register_opts(opts)
+METADATA_RATE_LIMITING_OPTS = [
+    cfg.BoolOpt('rate_limit_enabled',
+                default=False,
+                help=_('Enable rate limiting on the metadata API.')),
+    cfg.ListOpt('ip_versions',
+                default=['4'],
+                help=_('Comma separated list of the metadata address IP '
+                       'versions (4, 6) for which rate limiting will be '
+                       'enabled. The default is to rate limit only for the '
+                       'metadata IPv4 address. NOTE: at the moment, the open '
+                       'source version of HAProxy only allows us to rate '
+                       'limit for IPv4 or IPv6, but not both at the same '
+                       'time.')),
+    cfg.IntOpt('base_window_duration',
+               default=10,
+               help=_("Duration (seconds) of the base window on the "
+                      "metadata API.")),
+    cfg.IntOpt('base_query_rate_limit',
+               default=10,
+               help=_("Max number of queries to accept during the base "
+                      "window.")),
+    cfg.IntOpt('burst_window_duration',
+               default=10,
+               help=_("Duration (seconds) of the burst window on the "
+                      "metadata API.")),
+    cfg.IntOpt('burst_query_rate_limit',
+               default=10,
+               help=_("Max number of queries to accept during the burst "
+                      "window.")),
+]
+
+
+def register_meta_conf_opts(opts, cfg=cfg.CONF, group=None):
+    cfg.register_opts(opts, group=group)
