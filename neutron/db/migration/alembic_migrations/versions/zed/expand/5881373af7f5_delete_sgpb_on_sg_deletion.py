@@ -30,6 +30,9 @@ Create Date: 2022-08-10 07:17:00.360917
 revision = '5881373af7f5'
 down_revision = '21ff98fabab1'
 
+# milestone identifier, used by neutron-db-manage
+neutron_milestone = [migration.ZED]
+
 TABLE_NAME = 'securitygroupportbindings'
 
 

@@ -37,6 +37,7 @@ WALLABY = 'wallaby'
 XENA = 'xena'
 YOGA = 'yoga'
 ZED = 'zed'
+ANTELOPE = 'antelope'
 
 NEUTRON_MILESTONES = [
     # earlier milestones were not tagged
@@ -54,6 +55,7 @@ NEUTRON_MILESTONES = [
     WALLABY,
     XENA,
     YOGA,
+    ANTELOPE,
     # Do not add the milestone until the end of the release
 ]
 
