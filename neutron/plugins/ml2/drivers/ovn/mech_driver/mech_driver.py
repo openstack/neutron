@@ -1203,8 +1203,7 @@ class OVNMechanismDriver(api.MechanismDriver):
             return False
 
         br_map = agent.get('configurations', {}).get('bridge-mappings', '')
-        mapping_dict = helpers.parse_mappings(br_map.split(','),
-                                              unique_values=False)
+        mapping_dict = helpers.parse_mappings(br_map.split(','))
         return segment['physical_network'] in mapping_dict
 
     def patch_plugin_merge(self, method_name, new_fn, op=operator.add):

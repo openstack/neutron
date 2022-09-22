@@ -3089,6 +3089,11 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
         self.assertTrue(
             self.mech_driver.check_segment_for_agent(segment, agent))
 
+        agent['configurations'] = {
+            'bridge-mappings': 'physnet1:br-ex1,physnet1:br-ex2'}
+        self.assertRaises(ValueError, self.mech_driver.check_segment_for_agent,
+            segment, agent)
+
 
 @mock.patch.object(n_net, 'get_random_mac', lambda *_: '01:02:03:04:05:06')
 class TestOVNMechanismDriverDHCPOptions(OVNMechanismDriverTestCase):
