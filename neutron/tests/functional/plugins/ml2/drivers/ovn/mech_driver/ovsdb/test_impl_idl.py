@@ -52,11 +52,11 @@ class TestSbApi(BaseOvnIdlTest):
         super(TestSbApi, self).setUp()
         self.data = {
             'chassis': [
-                {'external_ids': {'ovn-bridge-mappings':
+                {'other_config': {'ovn-bridge-mappings':
                                   'public:br-ex,private:br-0'}},
-                {'external_ids': {'ovn-bridge-mappings':
+                {'other_config': {'ovn-bridge-mappings':
                                   'public:br-ex,public2:br-ex2'}},
-                {'external_ids': {'ovn-bridge-mappings':
+                {'other_config': {'ovn-bridge-mappings':
                                   'public:br-ex'}},
             ]
         }
@@ -70,7 +70,7 @@ class TestSbApi(BaseOvnIdlTest):
                 txn.add(self.api.chassis_add(
                     chassis['name'], ['geneve'], chassis['hostname'],
                     hostname=chassis['hostname'],
-                    external_ids=chassis['external_ids']))
+                    other_config=chassis['other_config']))
 
     def test_get_chassis_hostname_and_physnets(self):
         mapping = self.api.get_chassis_hostname_and_physnets()
@@ -97,7 +97,7 @@ class TestSbApi(BaseOvnIdlTest):
     def test_multiple_physnets_in_one_bridge(self):
         self.data = {
             'chassis': [
-                {'external_ids': {'ovn-bridge-mappings': 'p1:br-ex,p2:br-ex'}}
+                {'other_config': {'ovn-bridge-mappings': 'p1:br-ex,p2:br-ex'}}
             ]
         }
         self.load_test_data()

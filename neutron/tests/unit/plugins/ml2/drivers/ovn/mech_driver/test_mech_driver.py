@@ -105,6 +105,7 @@ class MechDriverSetupBase:
                 chassis_private.nb_cfg_timestamp, mock.Mock):
             del chassis_private.nb_cfg_timestamp
         chassis_private.external_ids = {}
+        chassis_private.other_config = {}
         if agent_type == ovn_const.OVN_METADATA_AGENT:
             chassis_private.external_ids.update({
                 ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY: nb_cfg,
