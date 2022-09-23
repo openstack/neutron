@@ -59,12 +59,12 @@ class TestPortBinding(base.TestOVNFunctionalBase):
         self.add_fake_chassis(self.ovs_host)
         self.add_fake_chassis(
             self.dpdk_host,
-            external_ids={'datapath-type': 'netdev',
+            other_config={'datapath-type': 'netdev',
                           'iface-types': 'dummy,dummy-internal,dpdkvhostuser'})
 
         self.add_fake_chassis(
             self.invalid_dpdk_host,
-            external_ids={'datapath-type': 'netdev',
+            other_config={'datapath-type': 'netdev',
                           'iface-types': 'dummy,dummy-internal,geneve,vxlan'})
         self.n1 = self._make_network(self.fmt, 'n1', True)
         res = self._create_subnet(self.fmt, self.n1['network']['id'],

@@ -827,20 +827,24 @@ class FakeChassis(object):
         if chassis_as_gw:
             cms_opts.append(ovn_const.CMS_OPT_CHASSIS_AS_GW)
 
-        external_ids = {}
+        # NOTE(ralonsoh): LP#1990229, once min OVN version >= 20.06, the CMS
+        # options and the bridge mappings should be stored only in
+        # "other_config".
+        other_config = {}
         if cms_opts:
-            external_ids[ovn_const.OVN_CMS_OPTIONS] = ','.join(cms_opts)
+            other_config[ovn_const.OVN_CMS_OPTIONS] = ','.join(cms_opts)
 
-        attrs = {
+        chassis_attrs = {
             'encaps': [],
-            'external_ids': external_ids,
+            'external_ids': '',
             'hostname': '',
             'name': uuidutils.generate_uuid(),
             'nb_cfg': 0,
-            'other_config': {},
+            'other_config': other_config,
             'transport_zones': [],
             'vtep_logical_switches': []}
 
         # Overwrite default attributes.
-        attrs.update(attrs)
-        return type('Chassis', (object, ), attrs)
+        if attrs:
+            chassis_attrs.update(attrs)
+        return type('Chassis', (object, ), chassis_attrs)
