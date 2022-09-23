@@ -43,7 +43,7 @@ limits are currently not enforced on RPC interfaces listening on the AMQP
 bus.
 
 Plugin and ML2 drivers are not supposed to enforce quotas for resources they
-manage. However, the subnet_allocation [1]_ extension is an exception and will
+manage. However, the ``subnet_allocation`` [1]_ extension is an exception and will
 be discussed below.
 
 The quota management and enforcement mechanisms discussed here apply to every
@@ -55,14 +55,14 @@ High Level View
 
 There are two main components in the Neutron quota system:
 
- * The Quota API extensions.
- * The Quota Engine.
+* The Quota API extensions.
+* The Quota Engine.
 
 Both components rely on a quota driver. The neutron codebase currently defines
 three quota drivers:
 
- * neutron.db.quota.driver.DbQuotaDriver
- * neutron.db.quota.driver_nolock.DbQuotaNoLockDriver (default)
+* ``neutron.db.quota.driver.DbQuotaDriver``
+* ``neutron.db.quota.driver_nolock.DbQuotaNoLockDriver`` (default)
 
 The ``DbQuotaNoLockDriver`` is the default quota driver, defined in the
 configuration option ``quota_driver``.
@@ -107,23 +107,23 @@ delete operations are implemented by the usual index, show, update and
 delete methods. These method simply call into the quota driver for either
 fetching project quotas or updating them.
 
-The _update_attributes method is called only once in the controller lifetime.
+The ``_update_attributes`` method is called only once in the controller lifetime.
 This method dynamically updates Neutron's resource attribute map [4]_ so that
 an attribute is added for every resource managed by the quota engine.
 Request authorisation is performed in this controller, and only 'admin' users
 are allowed to modify quotas for projects. As the neutron policy engine is not
 used, it is not possible to configure which users should be allowed to manage
-quotas using policy.yaml.
+quotas using ``policy.yaml``.
 
 The driver operations dealing with quota management are:
 
- * delete_tenant_quota, which simply removes all entries from the 'quotas'
-   table for a given project identifier;
- * update_quota_limit, which adds or updates an entry in the 'quotas' project
-   for a given project identifier and a given resource name;
- * _get_quotas, which fetches limits for a set of resource and a given project
-   identifier
- * _get_all_quotas, which behaves like _get_quotas, but for all projects.
+* ``delete_tenant_quota``, which simply removes all entries from the 'quotas'
+  table for a given project identifier;
+* ``update_quota_limit``, which adds or updates an entry in the 'quotas' project
+  for a given project identifier and a given resource name;
+* ``_get_quotas``, which fetches limits for a set of resource and a given project
+  identifier
+* ``_get_all_quotas``, which behaves like ``_get_quotas``, but for all projects.
 
 
 Resource Usage Info
@@ -131,29 +131,29 @@ Resource Usage Info
 
 Neutron has two ways of tracking resource usage info:
 
- * CountableResource, where resource usage is calculated every time quotas
-   limits are enforced by counting rows in the resource table or resources
-   tables and reservations for that resource.
- * TrackedResource, depends on the selected driver:
+* ``CountableResource``, where resource usage is calculated every time quotas
+  limits are enforced by counting rows in the resource table or resources
+  tables and reservations for that resource.
+* ``TrackedResource``, depends on the selected driver:
 
-   * DbQuotaDriver: the resource usage relies on a specific table tracking
-     usage data, and performs explicitly counting only when the data in this
-     table are not in sync with actual used and reserved resources.
-   * DbQuotaNoLockDriver: the resource usage is counted directly from the
-     database table associated to the resource. In this new driver,
-     CountableResource and TrackedResource could look similar but
-     TrackedResource depends on one single database model (table) and the
-     resource count is done directly on this table only.
+  * ``DbQuotaDriver``: the resource usage relies on a specific table tracking
+    usage data, and performs explicitly counting only when the data in this
+    table are not in sync with actual used and reserved resources.
+  * ``DbQuotaNoLockDriver``: the resource usage is counted directly from the
+    database table associated to the resource. In this new driver,
+    ``CountableResource`` and ``TrackedResource`` could look similar but
+    ``TrackedResource`` depends on one single database model (table) and the
+    resource count is done directly on this table only.
 
-Another difference between CountableResource and TrackedResource is that the
-former invokes a plugin method to count resources. CountableResource should be
+Another difference between ``CountableResource`` and ``TrackedResource`` is that the
+former invokes a plugin method to count resources. ``CountableResource`` should be
 therefore employed for plugins which do not leverage the Neutron database.
 The actual class that the Neutron quota engine will use is determined by the
-track_quota_usage variable in the quota configuration section. If True,
-TrackedResource instances will be created, otherwise the quota engine will
-use CountableResource instances.
-Resource creation is performed by the create_resource_instance factory method
-in the neutron.quota.resource module.
+``track_quota_usage`` variable in the quota configuration section. If ``True``,
+``TrackedResource`` instances will be created, otherwise the quota engine will
+use ``CountableResource`` instances.
+Resource creation is performed by the ``create_resource_instance`` factory method
+in the ``neutron.quota.resource`` module.
 
 DbQuotaDriver description
 -------------------------
@@ -161,10 +161,10 @@ DbQuotaDriver description
 From a performance perspective, having a table tracking resource usage
 has some advantages, albeit not fundamental. Indeed the time required for
 executing queries to explicitly count objects will increase with the number of
-records in the table. On the other hand, using TrackedResource will fetch a
+records in the table. On the other hand, using ``TrackedResource`` will fetch a
 single record, but has the drawback of having to execute an UPDATE statement
 once the operation is completed.
-Nevertheless, CountableResource instances do not simply perform a SELECT query
+Nevertheless, ``CountableResource`` instances do not simply perform a SELECT query
 on the relevant table for a resource, but invoke a plugin method, which might
 execute several statements and sometimes even interacts with the backend
 before returning.
@@ -179,7 +179,7 @@ While a RESTful API request is the most common one, resources can be created
 by RPC handlers listing on the AMQP bus, such as those which create DHCP
 ports, or by plugin operations, such as those which create router ports.
 
-To this aim, TrackedResource instances are initialised with a reference to
+To this aim, ``TrackedResource`` instances are initialised with a reference to
 the model class for the resource for which they track usage data. During
 object initialisation, SqlAlchemy event handlers are installed for this class.
 The event handler is executed after a record is inserted or deleted.
@@ -189,10 +189,10 @@ it will be synchronised counting resource usage from the database.
 Even if this solution has some drawbacks, listed in the 'exceptions and
 caveats' section, it is more reliable than solutions such as:
 
- * Updating the usage counters with the new 'correct' value every time an
-   operation completes.
- * Having a periodic task synchronising quota usage data with actual data in
-   the Neutron DB.
+* Updating the usage counters with the new 'correct' value every time an
+  operation completes.
+* Having a periodic task synchronising quota usage data with actual data in
+  the Neutron DB.
 
 
 DbQuotaNoLockDriver description
@@ -201,7 +201,7 @@ DbQuotaNoLockDriver description
 The strategy of this quota driver is the opposite to ``DbQuotaDriver``.
 Instead of tracking the usage quota of each resource in a specific table,
 this driver retrieves the used resources directly form the database.
-Each TrackedResource is linked to a database table that stores the tracked
+Each ``TrackedResource`` is linked to a database table that stores the tracked
 resources. This driver claims that a trivial query on the resource table,
 filtering by project ID, is faster than attending to the DB events and tracking
 the quota usage in an independent table.
@@ -210,13 +210,13 @@ This driver relays on the database engine transactionality isolation. Each
 time a new resource is requested, the quota driver opens a database transaction
 to:
 
- * Clean up the expired reservations. The amount of expired reservations is
-   always limited because of the short timeout set (2 minutes).
- * Retrieve the used resources for a specific project. This query retrieves
-   only the "project_id" column of the resource to avoid backref requests; that
-   limits the scope of the query and speeds up it.
- * Retrieve the reserved resources, created by other concurrent operations.
- * If there is enough quota, create a new reservation register.
+* Clean up the expired reservations. The amount of expired reservations is
+  always limited because of the short timeout set (2 minutes).
+* Retrieve the used resources for a specific project. This query retrieves
+  only the "project_id" column of the resource to avoid backref requests; that
+  limits the scope of the query and speeds up it.
+* Retrieve the reserved resources, created by other concurrent operations.
+* If there is enough quota, create a new reservation register.
 
 Those operations, executed in the same transaction, are fast enough to avoid
 another concurrent resource reservation, exceeding the available quota. At the
@@ -227,33 +227,33 @@ the chances of overcommiting resources over the quota limits are low. Neutron
 does not enforce quota in such way that a quota limit violation could never
 occur [5]_.
 
-Regardless of whether CountableResource or TrackedResource is used, the quota
-engine always invokes its count() method to retrieve resource usage.
+Regardless of whether ``CountableResource`` or ``TrackedResource`` is used, the quota
+engine always invokes its ``count()`` method to retrieve resource usage.
 Therefore, from the perspective of the Quota engine there is absolutely no
-difference between CountableResource and TrackedResource.
+difference between ``CountableResource`` and ``TrackedResource``.
 
 Quota Enforcement in DbQuotaDriver
 ----------------------------------
 
 Before dispatching a request to the plugin, the Neutron 'base' controller [6]_
 attempts to make a reservation for requested resource(s).
-Reservations are made by calling the make_reservation method in
-neutron.quota.QuotaEngine.
+Reservations are made by calling the ``make_reservation`` method in
+``neutron.quota.QuotaEngine``.
 The process of making a reservation is fairly straightforward:
 
- * Get current resource usages. This is achieved by invoking the count method
-   on every requested resource, and then retrieving the amount of reserved
-   resources.
- * Fetch current quota limits for requested resources, by invoking the
-   _get_project_quotas method.
- * Fetch expired reservations for selected resources. This amount will be
-   subtracted from resource usage. As in most cases there won't be any
-   expired reservation, this approach actually requires less DB operations than
-   doing a sum of non-expired, reserved resources for each request.
- * For each resource calculate its headroom, and verify the requested
-   amount of resource is less than the headroom.
- * If the above is true for all resource, the reservation is saved in the DB,
-   otherwise an OverQuotaLimit exception is raised.
+* Get current resource usages. This is achieved by invoking the count method
+  on every requested resource, and then retrieving the amount of reserved
+  resources.
+* Fetch current quota limits for requested resources, by invoking the
+  ``_get_project_quotas`` method.
+* Fetch expired reservations for selected resources. This amount will be
+  subtracted from resource usage. As in most cases there won't be any
+  expired reservation, this approach actually requires less DB operations than
+  doing a sum of non-expired, reserved resources for each request.
+* For each resource calculate its headroom, and verify the requested
+  amount of resource is less than the headroom.
+* If the above is true for all resource, the reservation is saved in the DB,
+  otherwise an ``OverQuotaLimit`` exception is raised.
 
 The quota engine is able to make a reservation for multiple resources.
 However, it is worth noting that because of the current structure of the
@@ -266,11 +266,11 @@ In order to ensure correct operations, a row-level lock is acquired in
 the transaction which creates the reservation. The lock is acquired when
 reading usage data. In case of write-set certification failures,
 which can occur in active/active clusters such as MySQL galera, the decorator
-neutron_lib.db.api.retry_db_errors will retry the transaction if a DBDeadLock
+``neutron_lib.db.api.retry_db_errors`` will retry the transaction if a DBDeadLock
 exception is raised.
 While non-locking approaches are possible, it has been found out that, since
 a non-locking algorithms increases the chances of collision, the cost of
-handling a DBDeadlock is still lower than the cost of retrying the operation
+handling a ``DBDeadlock`` is still lower than the cost of retrying the operation
 when a collision is detected. A study in this direction was conducted for
 IP allocation operations, but the same principles apply here as well [7]_.
 Nevertheless, moving away for DB-level locks is something that must happen
@@ -280,11 +280,12 @@ Committing and cancelling a reservation is as simple as deleting the
 reservation itself. When a reservation is committed, the resources which
 were committed are now stored in the database, so the reservation itself
 should be deleted. The Neutron quota engine simply removes the record when
-cancelling a reservation (ie: the request failed to complete), and also
-marks quota usage info as dirty when the reservation is committed (ie:
+cancelling a reservation (i.e. the request failed to complete), and also
+marks quota usage info as dirty when the reservation is committed (i.e.
 the request completed correctly).
 Reservations are committed or cancelled by respectively calling the
-commit_reservation and cancel_reservation methods in neutron.quota.QuotaEngine.
+``commit_reservation`` and ``cancel_reservation`` methods in
+``neutron.quota.QuotaEngine``.
 
 Reservations are not perennial. Eternal reservation would eventually exhaust
 projects' quotas because they would never be removed when an API worker crashes
@@ -314,16 +315,17 @@ argument must be a resource name, and the value of the argument must be
 a DB model class. For example:
 
 ::
- @resource_registry.tracked_resources(network=models_v2.Network,
+
+  @resource_registry.tracked_resources(network=models_v2.Network,
                                       port=models_v2.Port,
                                       subnet=models_v2.Subnet,
                                       subnetpool=models_v2.SubnetPool)
 
 Will ensure network, port, subnet and subnetpool resources are tracked.
 In theory, it is possible to use this decorator multiple times, and not
-exclusively to __init__ methods. However, this would eventually lead to
+exclusively to ``__init__`` methods. However, this would eventually lead to
 code readability and maintainability problems, so developers are strongly
-encourage to apply this decorator exclusively to the plugin's __init__
+encourage to apply this decorator exclusively to the plugin's ``__init__``
 method (or any other method which is called by the plugin only once
 during its initialization).
 
@@ -350,41 +352,41 @@ Exceptions and Caveats
 
 Please be aware of the following limitations of the quota enforcement engine:
 
- * Subnet allocation from subnet pools, in particularly shared pools, is also
-   subject to quota limit checks. However this checks are not enforced by the
-   quota engine, but trough a mechanism implemented in the
-   neutron.ipam.subnetalloc module. This is because the Quota engine is not
-   able to satisfy the requirements for quotas on subnet allocation.
- * The quota engine also provides a limit_check routine which enforces quota
-   checks without creating reservations. This way of doing quota enforcement
-   is extremely unreliable and superseded by the reservation mechanism. It
-   has not been removed to ensure off-tree plugins and extensions which leverage
-   are not broken.
- * SqlAlchemy events might not be the most reliable way for detecting changes
-   in resource usage. Since the event mechanism monitors the data model class,
-   it is paramount for a correct quota enforcement, that resources are always
-   created and deleted using object relational mappings. For instance, deleting
-   a resource with a query.delete call, will not trigger the event. SQLAlchemy
-   events should be considered as a temporary measure adopted as Neutron lacks
-   persistent API objects.
- * As CountableResource instance do not track usage data, when making a
-   reservation no write-intent lock is acquired. Therefore the quota engine
-   with CountableResource is not concurrency-safe.
- * The mechanism for specifying for which resources enable usage tracking
-   relies on the fact that the plugin is loaded before quota-limited resources
-   are registered. For this reason it is not possible to validate whether a
-   resource actually exists or not when enabling tracking for it. Developers
-   should pay particular attention into ensuring resource names are correctly
-   specified.
- * The code assumes usage trackers are a trusted source of truth: if they
-   report a usage counter and the dirty bit is not set, that counter is
-   correct. If it's dirty than surely that counter is out of sync.
-   This is not very robust, as there might be issues upon restart when toggling
-   the use_tracked_resources configuration variable, as stale counters might be
-   trusted upon for making reservations. Also, the same situation might occur
-   if a server crashes after the API operation is completed but before the
-   reservation is committed, as the actual resource usage is changed but
-   the corresponding usage tracker is not marked as dirty.
+* Subnet allocation from subnet pools, in particularly shared pools, is also
+  subject to quota limit checks. However this checks are not enforced by the
+  quota engine, but trough a mechanism implemented in the
+  ``neutron.ipam.subnetalloc`` module. This is because the quota engine is not
+  able to satisfy the requirements for quotas on subnet allocation.
+* The quota engine also provides a ``limit_check`` routine which enforces quota
+  checks without creating reservations. This way of doing quota enforcement
+  is extremely unreliable and superseded by the reservation mechanism. It
+  has not been removed to ensure off-tree plugins and extensions which leverage
+  are not broken.
+* SqlAlchemy events might not be the most reliable way for detecting changes
+  in resource usage. Since the event mechanism monitors the data model class,
+  it is paramount for a correct quota enforcement, that resources are always
+  created and deleted using object relational mappings. For instance, deleting
+  a resource with a ``query.delete`` call will not trigger the event. SQLAlchemy
+  events should be considered as a temporary measure adopted as Neutron lacks
+  persistent API objects.
+* As ``CountableResource`` instance do not track usage data, when making a
+  reservation no write-intent lock is acquired. Therefore the quota engine
+  with ``CountableResource`` is not concurrency-safe.
+* The mechanism for specifying for which resources enable usage tracking
+  relies on the fact that the plugin is loaded before quota-limited resources
+  are registered. For this reason it is not possible to validate whether a
+  resource actually exists or not when enabling tracking for it. Developers
+  should pay particular attention into ensuring resource names are correctly
+  specified.
+* The code assumes usage trackers are a trusted source of truth: if they
+  report a usage counter and the dirty bit is not set, that counter is
+  correct. If it's dirty than surely that counter is out of sync.
+  This is not very robust, as there might be issues upon restart when toggling
+  the use_tracked_resources configuration variable, as stale counters might be
+  trusted upon for making reservations. Also, the same situation might occur
+  if a server crashes after the API operation is completed but before the
+  reservation is committed, as the actual resource usage is changed but
+  the corresponding usage tracker is not marked as dirty.
 
 References
 ----------
