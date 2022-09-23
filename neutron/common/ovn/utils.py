@@ -576,8 +576,8 @@ def compute_address_pairs_diff(ovn_port, neutron_port):
 
 def get_ovn_cms_options(chassis):
     """Return the list of CMS options in a Chassis."""
-    return [opt.strip() for opt in chassis.external_ids.get(
-            constants.OVN_CMS_OPTIONS, '').split(',')]
+    return [opt.strip() for opt in chassis.other_config.get(
+        constants.OVN_CMS_OPTIONS, '').split(',')]
 
 
 def is_gateway_chassis(chassis):
