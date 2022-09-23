@@ -1,0 +1,10 @@
+---
+other:
+  - |
+    Since OVN 20.06, the "Chassis" register configuration is stored in the
+    "other_config" field and replicated into "external_ids". This replication
+    is stopped in OVN 22.09. The ML2/OVN plugin tries to retrieve the "Chassis"
+    configuration from the "other_config" field first; if this field does not
+    exist (in OVN versions before 20.06), the plugin will use "external_ids"
+    field instead. Neutron will be compatible with the different OVN versions
+    (with and without "other_config" field).

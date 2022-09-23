@@ -122,21 +122,31 @@ class ChassisEvent(row_event.RowEvent):
     def match_fn(self, event, row, old):
         if event != self.ROW_UPDATE:
             return True
-        # NOTE(lucasgomes): If the external_ids column wasn't updated
-        # (meaning, Chassis "gateway" status didn't change) just returns
-        if not hasattr(old, 'external_ids') and event == self.ROW_UPDATE:
-            return
-        if (old.external_ids.get('ovn-bridge-mappings') !=
-                row.external_ids.get('ovn-bridge-mappings')):
+        # NOTE(ralonsoh): LP#1990229 to be removed when min OVN version is
+        # 22.09
+        other_config = ('other_config' if hasattr(row, 'other_config') else
+                        'external_ids')
+        # NOTE(lucasgomes): If the other_config/external_ids column wasn't
+        # updated (meaning, Chassis "gateway" status didn't change) just
+        # returns
+        if not hasattr(old, other_config) and event == self.ROW_UPDATE:
+            return False
+        old_br_mappings = utils.get_ovn_chassis_other_config(old).get(
+            'ovn-bridge-mappings')
+        new_br_mappings = utils.get_ovn_chassis_other_config(row).get(
+            'ovn-bridge-mappings')
+        if old_br_mappings != new_br_mappings:
             return True
+
         f = utils.is_gateway_chassis
         return f(old) != f(row)
 
     def run(self, event, row, old):
         host = row.hostname
         phy_nets = []
+        new_other_config = utils.get_ovn_chassis_other_config(row)
         if event != self.ROW_DELETE:
-            bridge_mappings = row.external_ids.get('ovn-bridge-mappings', '')
+            bridge_mappings = new_other_config.get('ovn-bridge-mappings', '')
             mapping_dict = helpers.parse_mappings(bridge_mappings.split(','))
             phy_nets = list(mapping_dict)
 
@@ -151,9 +161,10 @@ class ChassisEvent(row_event.RowEvent):
             if event == self.ROW_DELETE:
                 kwargs['event_from_chassis'] = row.name
             elif event == self.ROW_UPDATE:
-                old_mappings = old.external_ids.get('ovn-bridge-mappings',
+                old_other_config = utils.get_ovn_chassis_other_config(old)
+                old_mappings = old_other_config.get('ovn-bridge-mappings',
                                                     set()) or set()
-                new_mappings = row.external_ids.get('ovn-bridge-mappings',
+                new_mappings = new_other_config.get('ovn-bridge-mappings',
                                                     set()) or set()
                 if old_mappings:
                     old_mappings = set(old_mappings.split(','))
@@ -282,11 +293,17 @@ class ChassisAgentTypeChangeEvent(ChassisEvent):
     events = (BaseEvent.ROW_UPDATE,)
 
     def match_fn(self, event, row, old=None):
-        if not getattr(old, 'external_ids', False):
+        # NOTE(ralonsoh): LP#1990229 to be removed when min OVN version is
+        # 22.09
+        other_config = ('other_config' if hasattr(row, 'other_config') else
+                        'external_ids')
+        if not getattr(old, other_config, False):
             return False
-        agent_type_change = n_agent.NeutronAgent.chassis_from_private(
-                row).external_ids.get('ovn-cms-options', []) != (
-                        old.external_ids.get('ovn-cms-options', []))
+        chassis = n_agent.NeutronAgent.chassis_from_private(row)
+        new_other_config = utils.get_ovn_chassis_other_config(chassis)
+        old_other_config = utils.get_ovn_chassis_other_config(old)
+        agent_type_change = new_other_config.get('ovn-cms-options', []) != (
+            old_other_config.get('ovn-cms-options', []))
         return agent_type_change
 
     def run(self, event, row, old):
