@@ -423,7 +423,8 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         self._start_ovn_northd()
 
     def add_fake_chassis(self, host, physical_nets=None, external_ids=None,
-                         name=None, azs=None, enable_chassis_as_gw=False):
+                         name=None, azs=None, enable_chassis_as_gw=False,
+                         other_config=None):
         def append_cms_options(ext_ids, value):
             if 'ovn-cms-options' not in ext_ids:
                 ext_ids['ovn-cms-options'] = value
@@ -432,19 +433,20 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
 
         physical_nets = physical_nets or []
         external_ids = external_ids or {}
+        other_config = other_config or {}
         if azs is None:
             azs = ['ovn']
         if azs:
-            append_cms_options(external_ids, 'availability-zones=')
-            external_ids['ovn-cms-options'] += ':'.join(azs)
+            append_cms_options(other_config, 'availability-zones=')
+            other_config['ovn-cms-options'] += ':'.join(azs)
         if enable_chassis_as_gw:
-            append_cms_options(external_ids, 'enable-chassis-as-gw')
+            append_cms_options(other_config, 'enable-chassis-as-gw')
 
         bridge_mapping = ",".join(["%s:br-provider%s" % (phys_net, i)
                                   for i, phys_net in enumerate(physical_nets)])
         if name is None:
             name = uuidutils.generate_uuid()
-        external_ids['ovn-bridge-mappings'] = bridge_mapping
+        other_config['ovn-bridge-mappings'] = bridge_mapping
         # We'll be using different IP addresses every time for the Encap of
         # the fake chassis as the SB schema doesn't allow to have two entries
         # with same (ip,type) pairs as of OVS 2.11. This shouldn't have any
@@ -455,7 +457,8 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         self._counter += 1
         chassis = self.sb_api.chassis_add(
             name, ['geneve'], '172.24.4.%d' % self._counter,
-            external_ids=external_ids, hostname=host).execute(check_error=True)
+            external_ids=external_ids, hostname=host,
+            other_config=other_config).execute(check_error=True)
         if self.sb_api.is_table_present('Chassis_Private'):
             nb_cfg_timestamp = timeutils.utcnow_ts() * 1000
             self.sb_api.db_create(

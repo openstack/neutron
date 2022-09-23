@@ -66,16 +66,16 @@ class TestPortBinding(base.TestOVNFunctionalBase):
         self.add_fake_chassis(self.ovs_host)
         self.add_fake_chassis(
             self.dpdk_host,
-            external_ids={'datapath-type': 'netdev',
+            other_config={'datapath-type': 'netdev',
                           'iface-types': 'dummy,dummy-internal,dpdkvhostuser'})
 
         self.add_fake_chassis(
             self.invalid_dpdk_host,
-            external_ids={'datapath-type': 'netdev',
+            other_config={'datapath-type': 'netdev',
                           'iface-types': 'dummy,dummy-internal,geneve,vxlan'})
         self.add_fake_chassis(
             self.smartnic_dpu_host,
-            external_ids={ovn_const.OVN_CMS_OPTIONS: '{}={}'.format(
+            other_config={ovn_const.OVN_CMS_OPTIONS: '{}={}'.format(
                 ovn_const.CMS_OPT_CARD_SERIAL_NUMBER,
                 self.smartnic_dpu_serial)})
         self.n1 = self._make_network(self.fmt, 'n1', True)

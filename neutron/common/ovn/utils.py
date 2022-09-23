@@ -641,8 +641,8 @@ def compute_address_pairs_diff(ovn_port, neutron_port):
 
 def get_ovn_cms_options(chassis):
     """Return the list of CMS options in a Chassis."""
-    return [opt.strip() for opt in chassis.external_ids.get(
-            constants.OVN_CMS_OPTIONS, '').split(',')]
+    return [opt.strip() for opt in get_ovn_chassis_other_config(chassis).get(
+        constants.OVN_CMS_OPTIONS, '').split(',')]
 
 
 def is_gateway_chassis(chassis):
@@ -831,3 +831,11 @@ def create_neutron_pg_drop():
         }]
 
     OvsdbClientTransactCommand.run(command)
+
+
+def get_ovn_chassis_other_config(chassis):
+    # NOTE(ralonsoh): LP#1990229 to be removed when min OVN version is 22.09
+    try:
+        return chassis.other_config
+    except AttributeError:
+        return chassis.external_ids
