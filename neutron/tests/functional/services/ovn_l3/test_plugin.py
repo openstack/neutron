@@ -135,7 +135,7 @@ class TestRouter(base.TestOVNFunctionalBase):
         # Test if chassis3 is selected as candidate or not.
         self.chassis3 = self.add_fake_chassis(
             'ovs-host3', physical_nets=['physnet1'],
-            external_ids={'ovn-cms-options': 'enable-chassis-as-gw'})
+            other_config={'ovn-cms-options': 'enable-chassis-as-gw'})
         self._check_gateway_chassis_candidates([self.chassis3])
 
     def test_gateway_chassis_with_cms_and_no_bridge_mappings(self):
@@ -143,7 +143,7 @@ class TestRouter(base.TestOVNFunctionalBase):
         # chassis3 is having enable-chassis-as-gw, but no bridge mappings.
         self.chassis3 = self.add_fake_chassis(
             'ovs-host3',
-            external_ids={'ovn-cms-options': 'enable-chassis-as-gw'})
+            other_config={'ovn-cms-options': 'enable-chassis-as-gw'})
         ovn_client = self.l3_plugin._ovn_client
         ext1 = self._create_ext_network(
             'ext1', 'vlan', 'physnet1', 1, "10.0.0.1", "10.0.0.0/24")
@@ -170,11 +170,11 @@ class TestRouter(base.TestOVNFunctionalBase):
         # Test if chassis3 is selected as candidate or not.
         self.chassis3 = self.add_fake_chassis(
             'ovs-host3', physical_nets=['physnet1'],
-            external_ids={'ovn-cms-options': 'enable-chassis-as-gw'},
+            other_config={'ovn-cms-options': 'enable-chassis-as-gw'},
             azs=['ovn'])
         self.chassis4 = self.add_fake_chassis(
             'ovs-host4', physical_nets=['physnet1'],
-            external_ids={'ovn-cms-options': 'enable-chassis-as-gw'},
+            other_config={'ovn-cms-options': 'enable-chassis-as-gw'},
             azs=['ovn2'])
         self._check_gateway_chassis_candidates([self.chassis3],
                                                router_az_hints=['ovn'])
@@ -186,10 +186,10 @@ class TestRouter(base.TestOVNFunctionalBase):
         # add chassis4 is having azs [ovn2], not match routers az_hints [ovn]
         self.chassis3 = self.add_fake_chassis(
             'ovs-host3', physical_nets=['physnet1'],
-            external_ids={'ovn-cms-options': 'enable-chassis-as-gw'})
+            other_config={'ovn-cms-options': 'enable-chassis-as-gw'})
         self.chassis4 = self.add_fake_chassis(
             'ovs-host4', physical_nets=['physnet1'],
-            external_ids={'ovn-cms-options': 'enable-chassis-as-gw'},
+            other_config={'ovn-cms-options': 'enable-chassis-as-gw'},
             azs=['ovn2'])
         ovn_client = self.l3_plugin._ovn_client
         ext1 = self._create_ext_network(
@@ -535,7 +535,7 @@ class TestRouter(base.TestOVNFunctionalBase):
             self.skipTest('L3 HA not supported')
         ovn_client = self.l3_plugin._ovn_client
         chassis4 = self.add_fake_chassis(
-            'ovs-host4', physical_nets=['physnet4'], external_ids={
+            'ovs-host4', physical_nets=['physnet4'], other_config={
                 'ovn-cms-options': 'enable-chassis-as-gw'})
         ovn_client._ovn_scheduler = l3_sched.OVNGatewayLeastLoadedScheduler()
         ext1 = self._create_ext_network(
@@ -567,7 +567,7 @@ class TestRouter(base.TestOVNFunctionalBase):
 
         # Add another chassis as a gateway chassis
         chassis5 = self.add_fake_chassis(
-            'ovs-host5', physical_nets=['physnet4'], external_ids={
+            'ovs-host5', physical_nets=['physnet4'], other_config={
                 'ovn-cms-options': 'enable-chassis-as-gw'})
         # Add a node as compute node. Compute node wont be
         # used to schedule the router gateway ports therefore
@@ -597,8 +597,7 @@ class TestRouter(base.TestOVNFunctionalBase):
             chassis_list.append(
                 self.add_fake_chassis(
                     'ovs-host%s' % i, physical_nets=['physnet1'],
-                    external_ids={
-                        'ovn-cms-options': 'enable-chassis-as-gw'}))
+                    other_config={'ovn-cms-options': 'enable-chassis-as-gw'}))
 
         ext1 = self._create_ext_network(
             'ext1', 'vlan', 'physnet1', 1, "10.0.0.1", "10.0.0.0/24")
