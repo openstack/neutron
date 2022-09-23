@@ -26,7 +26,6 @@ from neutron_lib import constants as n_const
 from neutron_lib import context as n_context
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
-from oslo_db import exception as db_exc
 from oslo_log import log
 from oslo_utils import timeutils
 from ovsdbapp.backend.ovs_idl import event as row_event
@@ -822,9 +821,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
 class HashRingHealthCheckPeriodics(object):
 
-    def __init__(self, group, created_time):
+    def __init__(self, group):
         self._group = group
-        self._created_time = created_time
         self.ctx = n_context.get_admin_context()
 
     @periodics.periodic(spacing=ovn_const.HASH_RING_TOUCH_INTERVAL)
@@ -833,16 +831,3 @@ class HashRingHealthCheckPeriodics(object):
         # here because we want the maintenance tasks from each instance to
         # execute this task.
         hash_ring_db.touch_nodes_from_host(self.ctx, self._group)
-
-    @periodics.periodic(spacing=ovn_const.HASH_RING_CLEANUP_INTERVAL)
-    def clean_up_hash_ring_nodes(self):
-        try:
-            hash_ring_db.remove_nodes_from_host(
-                self.ctx, self._group, created_before=self._created_time)
-        except db_exc.DBError as exc:
-            LOG.info('The "ovn_hash_ring" table was not cleaned; the '
-                     'operation will be retried. Error: %s',
-                     str(exc))
-            return
-
-        raise periodics.NeverAgain()

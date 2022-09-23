@@ -237,7 +237,6 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
     def _create_workers(self, row_event, worker_num):
         self.mech_driver.nb_ovn.idl.notify_handler.watch_event(row_event)
         worker_list = [self.mech_driver.nb_ovn]
-        init_time = timeutils.utcnow()
 
         # Create 10 fake workers
         for _ in range(worker_num):
@@ -246,8 +245,7 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
                 self.context, ovn_const.HASH_RING_ML2_GROUP, node_uuid)
             fake_driver = mock.MagicMock(
                 node_uuid=node_uuid,
-                hash_ring_group=ovn_const.HASH_RING_ML2_GROUP,
-                init_time=init_time)
+                hash_ring_group=ovn_const.HASH_RING_ML2_GROUP)
             _idl = ovsdb_monitor.OvnNbIdl.from_server(
                 self.ovsdb_server_mgr.get_ovsdb_connection_path(),
                 self.nb_api.schema_helper, fake_driver)
@@ -267,8 +265,7 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
             len(db_hash_ring.get_active_nodes(
                 self.context,
                 interval=ovn_const.HASH_RING_NODES_TIMEOUT,
-                group_name=ovn_const.HASH_RING_ML2_GROUP,
-                created_at=self.mech_driver.init_time)))
+                group_name=ovn_const.HASH_RING_ML2_GROUP)))
 
         return worker_list
 

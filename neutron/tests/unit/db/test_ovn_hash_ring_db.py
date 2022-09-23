@@ -121,7 +121,6 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
         self.assertEqual(node_db.created_at, node_db.updated_at)
 
     def test_active_nodes(self):
-        created_at = timeutils.utcnow()
         self._add_nodes_and_assert_exists(count=3)
 
         # Add another node from a different host
@@ -131,8 +130,7 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
 
         # Assert all nodes are active (within 60 seconds)
         self.assertEqual(4, len(ovn_hash_ring_db.get_active_nodes(
-            self.admin_ctx, interval=60, group_name=HASH_RING_TEST_GROUP,
-            created_at=created_at)))
+            self.admin_ctx, interval=60, group_name=HASH_RING_TEST_GROUP)))
 
         # Subtract 60 seconds from utcnow() and touch the nodes from our host
         time.sleep(1)
@@ -145,13 +143,11 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
         # Now assert that all nodes from our host are seeing as offline.
         # Only the node from another host should be active
         active_nodes = ovn_hash_ring_db.get_active_nodes(
-            self.admin_ctx, interval=60, group_name=HASH_RING_TEST_GROUP,
-            created_at=created_at)
+            self.admin_ctx, interval=60, group_name=HASH_RING_TEST_GROUP)
         self.assertEqual(1, len(active_nodes))
         self.assertEqual(another_host_node, active_nodes[0].node_uuid)
 
     def test_active_nodes_from_host(self):
-        created_at = timeutils.utcnow()
         self._add_nodes_and_assert_exists(count=3)
 
         # Add another node from a different host
@@ -163,7 +159,7 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
         # Assert only the 3 nodes from this host is returned
         active_nodes = ovn_hash_ring_db.get_active_nodes(
             self.admin_ctx, interval=60, group_name=HASH_RING_TEST_GROUP,
-            from_host=True, created_at=created_at)
+            from_host=True)
         self.assertEqual(3, len(active_nodes))
         self.assertNotIn(another_host_id, active_nodes)
 
@@ -189,21 +185,18 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
             self.assertEqual(node_db.created_at, node_db.updated_at)
 
     def test_active_nodes_different_groups(self):
-        created_at = timeutils.utcnow()
         another_group = 'another_test_group'
         self._add_nodes_and_assert_exists(count=3)
         self._add_nodes_and_assert_exists(count=2, group_name=another_group)
 
         active_nodes = ovn_hash_ring_db.get_active_nodes(
-            self.admin_ctx, interval=60, group_name=HASH_RING_TEST_GROUP,
-            created_at=created_at)
+            self.admin_ctx, interval=60, group_name=HASH_RING_TEST_GROUP)
         self.assertEqual(3, len(active_nodes))
         for node in active_nodes:
             self.assertEqual(HASH_RING_TEST_GROUP, node.group_name)
 
         active_nodes = ovn_hash_ring_db.get_active_nodes(
-            self.admin_ctx, interval=60, group_name=another_group,
-            created_at=created_at)
+            self.admin_ctx, interval=60, group_name=another_group)
         self.assertEqual(2, len(active_nodes))
         for node in active_nodes:
             self.assertEqual(another_group, node.group_name)

@@ -13,22 +13,17 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import datetime
 from unittest import mock
 
 from futurist import periodics
 from neutron_lib import context
 from neutron_lib.db import api as db_api
 from oslo_config import cfg
-from oslo_utils import timeutils
 from oslo_utils import uuidutils
 
 from neutron.common.ovn import constants
 from neutron.common.ovn import utils
-from neutron.conf import common as common_conf
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
-from neutron.db.models import ovn as ovn_models
-from neutron.db import ovn_hash_ring_db
 from neutron.db import ovn_revision_numbers_db
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import maintenance
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
@@ -710,49 +705,3 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         expected_calls = [mock.call('Logical_Switch_Port', lsp0.uuid,
                                     ('type', constants.LSP_TYPE_VIRTUAL))]
         nb_idl.db_set.assert_has_calls(expected_calls)
-
-
-class TestHashRingHealthCheckPeriodics(testlib_api.SqlTestCaseLight):
-
-    def setUp(self):
-        super().setUp()
-        common_conf.register_core_common_config_opts()
-        self.ctx = context.get_admin_context()
-        self.group = uuidutils.generate_uuid()
-        self.created_time = timeutils.utcnow()
-        self.hr_check_periodics = maintenance.HashRingHealthCheckPeriodics(
-            self.group, self.created_time)
-
-    def test_clean_up_hash_ring_nodes(self):
-        num_nodes = 10
-        utc_zero = datetime.datetime.fromtimestamp(0)
-        # This loop will create "ovn_hash_ring" registers from
-        # utcnow - (num_nodes/2) to utcnow + (num_nodes/2) - 1. That means
-        # we'll have old/stale registers and new registers.
-        for idx in range(- int(num_nodes / 2), int(num_nodes / 2)):
-            _uuid = ovn_hash_ring_db.add_node(self.ctx, self.group)
-            new_time = self.created_time + datetime.timedelta(seconds=idx)
-            with db_api.CONTEXT_WRITER.using(self.ctx):
-                self.ctx.session.query(ovn_models.OVNHashRing).filter(
-                    ovn_models.OVNHashRing.node_uuid == _uuid).update(
-                        {'updated_at': new_time, 'created_at': new_time})
-
-        all_nodes = ovn_hash_ring_db.get_active_nodes(
-            self.ctx, 10, self.group, utc_zero)
-        # "num_nodes" registers created
-        self.assertEqual(num_nodes, len(all_nodes))
-        # Only "num_nodes/2" registers are active (created_at is updated)
-        active_nodes = ovn_hash_ring_db.get_active_nodes(
-            self.ctx, 10, self.group, self.created_time)
-        self.assertEqual(int(num_nodes / 2), len(active_nodes))
-
-        self.assertRaises(periodics.NeverAgain,
-                          self.hr_check_periodics.clean_up_hash_ring_nodes)
-        all_nodes = ovn_hash_ring_db.get_active_nodes(
-            self.ctx, 10, self.group, utc_zero)
-        # Only active registers remain in the table.
-        self.assertEqual(int(num_nodes / 2), len(all_nodes))
-        # Only active registers remain in the table.
-        active_nodes = ovn_hash_ring_db.get_active_nodes(
-            self.ctx, 10, self.group, self.created_time)
-        self.assertEqual(int(num_nodes / 2), len(active_nodes))

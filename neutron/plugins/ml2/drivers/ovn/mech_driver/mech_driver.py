@@ -120,9 +120,12 @@ class OVNMechanismDriver(api.MechanismDriver):
         self._maintenance_thread = None
         self.node_uuid = None
         self.hash_ring_group = ovn_const.HASH_RING_ML2_GROUP
-        self.init_time = timeutils.utcnow()
         self.sg_enabled = ovn_acl.is_sg_enabled()
+        # NOTE(lucasagomes): _clean_hash_ring() must be called before
+        # self.subscribe() to avoid processes racing when adding or
+        # deleting nodes from the Hash Ring during service initialization
         ovn_conf.register_opts()
+        self._clean_hash_ring()
         self._post_fork_event = threading.Event()
         if cfg.CONF.SECURITYGROUP.firewall_driver:
             LOG.warning('Firewall driver configuration is ignored')
@@ -391,7 +394,7 @@ class OVNMechanismDriver(api.MechanismDriver):
                 maintenance.DBInconsistenciesPeriodics(self._ovn_client))
             self._maintenance_thread.add_periodics(
                 maintenance.HashRingHealthCheckPeriodics(
-                    self.hash_ring_group, self.init_time))
+                    self.hash_ring_group))
             self._maintenance_thread.start()
 
     def _create_security_group_precommit(self, resource, event, trigger,

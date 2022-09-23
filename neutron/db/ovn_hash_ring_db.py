@@ -37,19 +37,11 @@ def add_node(context, group_name, node_uuid=None):
     return node_uuid
 
 
-@db_api.CONTEXT_WRITER
-def remove_nodes_from_host(context, group_name, created_before=None):
-    query = context.session.query(ovn_models.OVNHashRing).filter(
-        ovn_models.OVNHashRing.hostname == CONF.host,
-        ovn_models.OVNHashRing.group_name == group_name)
-    if created_before:
-        query = query.filter(
-            ovn_models.OVNHashRing.created_at < created_before)
-    # NOTE(ralonsoh): with "synchronize_session=False", the SQL action will
-    # be performed after the transaction commit. However, SQLAlchemy won't
-    # try to find those registers in the active session and won't update
-    # it after the deletion. This is the most efficient execution.
-    query.delete(synchronize_session=False)
+def remove_nodes_from_host(context, group_name):
+    with db_api.CONTEXT_WRITER.using(context):
+        context.session.query(ovn_models.OVNHashRing).filter(
+            ovn_models.OVNHashRing.hostname == CONF.host,
+            ovn_models.OVNHashRing.group_name == group_name).delete()
 
 
 def _touch(context, **filter_args):
@@ -66,12 +58,10 @@ def touch_node(context, node_uuid):
     _touch(context, node_uuid=node_uuid)
 
 
-def get_active_nodes(context, interval, group_name, created_at,
-                     from_host=False):
+def get_active_nodes(context, interval, group_name, from_host=False):
     limit = timeutils.utcnow() - datetime.timedelta(seconds=interval)
     with db_api.CONTEXT_READER.using(context):
         query = context.session.query(ovn_models.OVNHashRing).filter(
-            ovn_models.OVNHashRing.created_at >= created_at,
             ovn_models.OVNHashRing.updated_at >= limit,
             ovn_models.OVNHashRing.group_name == group_name)
         if from_host:
