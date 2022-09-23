@@ -126,7 +126,7 @@ ignore-iface-methods=
 # Deprecated modules which should not be used, separated by a comma
 deprecated-modules=
 # should use oslo_serialization.jsonutils
- json
+ json,
  six
 
 [TYPECHECK]
