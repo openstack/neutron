@@ -514,6 +514,93 @@ class TestL3_NAT_dbonly_mixin(
             self.assertIsNone(
                 self.db._validate_gw_info(mock.ANY, info, [], router))
 
+    def test__raise_on_subnets_overlap_does_not_raise(self):
+        subnets = [
+            {'id': uuidutils.generate_uuid(),
+             'cidr': '10.1.0.0/24'},
+            {'id': uuidutils.generate_uuid(),
+             'cidr': '10.2.0.0/24'}]
+        self.db._raise_on_subnets_overlap(subnets[0], subnets[1])
+
+    def test__raise_on_subnets_overlap_raises(self):
+        subnets = [
+            {'id': uuidutils.generate_uuid(),
+             'cidr': '10.1.0.0/20'},
+            {'id': uuidutils.generate_uuid(),
+             'cidr': '10.1.10.0/24'}]
+        self.assertRaises(
+            n_exc.BadRequest, self.db._raise_on_subnets_overlap, subnets[0],
+            subnets[1])
+
+    def test__validate_one_router_ipv6_port_per_network(self):
+        port = models_v2.Port(
+                id=uuidutils.generate_uuid(),
+                network_id='foo_network',
+                fixed_ips=[models_v2.IPAllocation(
+                    ip_address=str(netaddr.IPNetwork(
+                        '2001:db8::/32').ip + 1),
+                    subnet_id='foo_subnet')])
+        rports = [l3_models.RouterPort(router_id='foo_router', port=port)]
+        router = l3_models.Router(
+            id='foo_router', attached_ports=rports, route_list=[],
+            gw_port_id=None)
+        new_port = models_v2.Port(
+                id=uuidutils.generate_uuid(),
+                network_id='foo_network2',
+                fixed_ips=[models_v2.IPAllocation(
+                    ip_address=str(netaddr.IPNetwork(
+                        '2001:db8::/32').ip + 2),
+                    subnet_id='foo_subnet')])
+        self.db._validate_one_router_ipv6_port_per_network(
+            router, new_port)
+
+    def test__validate_one_router_ipv6_port_per_network_mix_ipv4_ipv6(self):
+        port = models_v2.Port(
+                id=uuidutils.generate_uuid(),
+                network_id='foo_network',
+                fixed_ips=[models_v2.IPAllocation(
+                    ip_address=str(netaddr.IPNetwork(
+                        '10.1.10.0/24').ip + 1),
+                    subnet_id='foo_subnet')])
+        rports = [l3_models.RouterPort(router_id='foo_router', port=port)]
+        router = l3_models.Router(
+            id='foo_router', attached_ports=rports, route_list=[],
+            gw_port_id=None)
+        new_port = models_v2.Port(
+                id=uuidutils.generate_uuid(),
+                network_id='foo_network',
+                fixed_ips=[models_v2.IPAllocation(
+                    ip_address=str(netaddr.IPNetwork(
+                        '2001:db8::/32').ip + 2),
+                    subnet_id='foo_subnet')])
+        self.db._validate_one_router_ipv6_port_per_network(
+            router, new_port)
+
+    def test__validate_one_router_ipv6_port_per_network_failed(self):
+        port = models_v2.Port(
+                id=uuidutils.generate_uuid(),
+                network_id='foo_network',
+                fixed_ips=[models_v2.IPAllocation(
+                    ip_address=str(netaddr.IPNetwork(
+                        '2001:db8::/32').ip + 1),
+                    subnet_id='foo_subnet')])
+        rports = [l3_models.RouterPort(router_id='foo_router', port=port)]
+        router = l3_models.Router(
+            id='foo_router', attached_ports=rports, route_list=[],
+            gw_port_id=None)
+        new_port = models_v2.Port(
+                id=uuidutils.generate_uuid(),
+                network_id='foo_network',
+                fixed_ips=[models_v2.IPAllocation(
+                    ip_address=str(netaddr.IPNetwork(
+                        '2001:db8::/32').ip + 2),
+                    subnet_id='foo_subnet')])
+        self.assertRaises(
+            n_exc.BadRequest,
+            self.db._validate_one_router_ipv6_port_per_network,
+            router,
+            new_port)
+
 
 class L3_NAT_db_mixin(base.BaseTestCase):
     def setUp(self):
@@ -696,6 +783,56 @@ class L3TestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                                            interface_info)
         mock_log.warning.not_called_once()
         self._check_routerports((True, False))
+
+    @mock.patch.object(l3_db.L3_NAT_dbonly_mixin,
+                       '_check_for_dup_router_subnets')
+    @mock.patch.object(l3_db.L3_NAT_dbonly_mixin,
+                       '_raise_on_subnets_overlap')
+    def test_add_router_interface_by_port_overlap_detected(
+            self, mock_raise_on_subnets_overlap, mock_check_dup):
+        # NOTE(froyo): On a normal behaviour this overlapping would be detected
+        # by _check_for_dup_router_subnets, in order to evalue the code
+        # implemented to cover the race condition when two ports are added
+        # simultaneously using colliding cidrs we need to "fake" this method
+        # to overpass it and check we achieve the code part that cover the case
+        mock_check_dup.return_value = True
+        network2 = self.create_network('network2')
+        subnet = self.create_subnet(network2, '1.1.1.1', '1.1.1.0/24')
+        ipa = str(netaddr.IPNetwork(subnet['subnet']['cidr']).ip + 10)
+        fixed_ips = [{'subnet_id': subnet['subnet']['id'], 'ip_address': ipa}]
+        port = self.create_port(
+                network2['network']['id'], {'fixed_ips': fixed_ips})
+        self.mixin.add_router_interface(
+            self.ctx, self.router['id'],
+            interface_info={'port_id': port['port']['id']})
+        mock_raise_on_subnets_overlap.assert_not_called()
+        self.mixin.add_router_interface(
+            self.ctx, self.router['id'],
+            interface_info={'port_id': self.ports[0]['port']['id']})
+        mock_raise_on_subnets_overlap.assert_called_once()
+
+    @mock.patch.object(l3_db.L3_NAT_dbonly_mixin,
+                       '_check_for_dup_router_subnets')
+    @mock.patch.object(l3_db.L3_NAT_dbonly_mixin,
+                       '_raise_on_subnets_overlap')
+    def test_add_router_interface_by_subnet_overlap_detected(
+            self, mock_raise_on_subnets_overlap, mock_check_dup):
+        # NOTE(froyo): On a normal behaviour this overlapping would be detected
+        # by _check_for_dup_router_subnets, in order to evalue the code
+        # implemented to cover the race condition when two ports are added
+        # simultaneously using colliding cidrs we need to "fake" this method
+        # to overpass it and check we achieve the code part that cover the case
+        mock_check_dup.return_value = True
+        network2 = self.create_network('network2')
+        subnet = self.create_subnet(network2, '1.1.1.1', '1.1.1.0/24')
+        self.mixin.add_router_interface(
+            self.ctx, self.router['id'],
+            interface_info={'subnet_id': subnet['subnet']['id']})
+        mock_raise_on_subnets_overlap.assert_not_called()
+        self.mixin.add_router_interface(
+            self.ctx, self.router['id'],
+            interface_info={'subnet_id': self.subnets[0]['subnet']['id']})
+        mock_raise_on_subnets_overlap.assert_called_once()
 
     @mock.patch.object(port_obj, 'LOG')
     def test_remove_router_interface_by_subnet_removed_rport(self, mock_log):

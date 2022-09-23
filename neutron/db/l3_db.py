@@ -13,6 +13,7 @@
 #    under the License.
 
 import functools
+import itertools
 import random
 
 import netaddr
@@ -563,6 +564,23 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         ip_address_change = not ip_addresses == new_ip_addresses
         return ip_address_change
 
+    def _raise_on_subnets_overlap(self, subnet_1, subnet_2):
+        cidr = subnet_1['cidr']
+        ipnet = netaddr.IPNetwork(cidr)
+        new_cidr = subnet_2['cidr']
+        new_ipnet = netaddr.IPNetwork(new_cidr)
+        match1 = netaddr.all_matching_cidrs(new_ipnet, [cidr])
+        match2 = netaddr.all_matching_cidrs(ipnet, [new_cidr])
+        if match1 or match2:
+            data = {'subnet_cidr': new_cidr,
+                    'subnet_id': subnet_2['id'],
+                    'cidr': cidr,
+                    'sub_id': subnet_1['id']}
+            msg = (_("Cidr %(subnet_cidr)s of subnet "
+                     "%(subnet_id)s overlaps with cidr %(cidr)s "
+                     "of subnet %(sub_id)s") % data)
+            raise n_exc.BadRequest(resource='router', msg=msg)
+
     def _ensure_router_not_in_use(self, context, router_id):
         """Ensure that no internal network interface is attached
         to the router.
@@ -669,22 +687,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         subnets = self._core_plugin.get_subnets(context.elevated(),
                                                 filters=id_filter)
         for sub in subnets:
-            cidr = sub['cidr']
-            ipnet = netaddr.IPNetwork(cidr)
             for s in new_subnets:
-                new_cidr = s['cidr']
-                new_ipnet = netaddr.IPNetwork(new_cidr)
-                match1 = netaddr.all_matching_cidrs(new_ipnet, [cidr])
-                match2 = netaddr.all_matching_cidrs(ipnet, [new_cidr])
-                if match1 or match2:
-                    data = {'subnet_cidr': new_cidr,
-                            'subnet_id': s['id'],
-                            'cidr': cidr,
-                            'sub_id': sub['id']}
-                    msg = (_("Cidr %(subnet_cidr)s of subnet "
-                             "%(subnet_id)s overlaps with cidr %(cidr)s "
-                             "of subnet %(sub_id)s") % data)
-                    raise n_exc.BadRequest(resource='router', msg=msg)
+                self._raise_on_subnets_overlap(sub, s)
 
     def _get_device_owner(self, context, router=None):
         """Get device_owner for the specified router."""
@@ -765,17 +769,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             port = self._check_router_port(context, port_id, router.id)
 
             # Only allow one router port with IPv6 subnets per network id
-            if self._port_has_ipv6_address(port):
-                for existing_port in (rp.port for rp in router.attached_ports):
-                    if (existing_port['network_id'] == port['network_id'] and
-                            self._port_has_ipv6_address(existing_port)):
-                        msg = _("Cannot have multiple router ports with the "
-                                "same network id if both contain IPv6 "
-                                "subnets. Existing port %(p)s has IPv6 "
-                                "subnet(s) and network id %(nid)s")
-                        raise n_exc.BadRequest(resource='router', msg=msg % {
-                            'p': existing_port['id'],
-                            'nid': existing_port['network_id']})
+            self._validate_one_router_ipv6_port_per_network(router, port)
 
             fixed_ips = list(port['fixed_ips'])
             subnets = []
@@ -840,6 +834,20 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         for fixed_ip in port['fixed_ips']:
             if netaddr.IPNetwork(fixed_ip['ip_address']).version == 6:
                 return True
+
+    def _validate_one_router_ipv6_port_per_network(self, router, port):
+        if self._port_has_ipv6_address(port):
+            for existing_port in (rp.port for rp in router.attached_ports):
+                if (existing_port["id"] != port["id"] and
+                    existing_port["network_id"] == port["network_id"] and
+                        self._port_has_ipv6_address(existing_port)):
+                    msg = _("Router already contains IPv6 port %(p)s "
+                        "belonging to network id %(nid)s. Only one IPv6 port "
+                        "from the same network subnet can be connected to a "
+                        "router.")
+                    raise n_exc.BadRequest(resource='router', msg=msg % {
+                        'p': existing_port['id'],
+                        'nid': existing_port['network_id']})
 
     def _find_ipv6_router_port_by_network(self, context, router, net_id):
         router_dev_owner = self._get_device_owner(context, router)
@@ -959,7 +967,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                                  port=port,
                                                  interface_info=interface_info)
                 self._add_router_port(
-                    context, port['id'], router.id, device_owner)
+                    context, port['id'], router, device_owner)
 
         gw_ips = []
         gw_network_id = None
@@ -987,18 +995,58 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             subnets[-1]['id'], [subnet['id'] for subnet in subnets])
 
     @db_api.retry_if_session_inactive()
-    def _add_router_port(self, context, port_id, router_id, device_owner):
+    def _add_router_port(self, context, port_id, router, device_owner):
         l3_obj.RouterPort(
             context,
             port_id=port_id,
-            router_id=router_id,
+            router_id=router.id,
             port_type=device_owner
         ).create()
+
+        # NOTE(froyo): Check after create the RouterPort if we have generated
+        # an overlapping. Like creation of port is an ML2 plugin command it
+        # runs in an isolated transaction so we could not control there the
+        # addition of ports to different subnets that collides in cidrs. So
+        # make the check here an trigger the overlaping that will remove all
+        # created items.
+        router_ports = l3_obj.RouterPort.get_objects(
+            context, router_id=router.id)
+
+        if len(router_ports) > 1:
+            subnets_id = []
+            for rp in router_ports:
+                port = port_obj.Port.get_object(context.elevated(),
+                                                id=rp.port_id)
+                if port:
+                    # Only allow one router port with IPv6 subnets per network
+                    # id
+                    self._validate_one_router_ipv6_port_per_network(
+                        router, port)
+                    subnets_id.extend([fixed_ip['subnet_id']
+                                       for fixed_ip in port['fixed_ips']])
+                else:
+                    raise l3_exc.RouterInterfaceNotFound(
+                        router_id=router.id, port_id=rp.port_id)
+
+            if subnets_id:
+                id_filter = {'id': subnets_id}
+                subnets = self._core_plugin.get_subnets(context.elevated(),
+                                                        filters=id_filter)
+
+                # Ignore temporary Prefix Delegation CIDRs
+                subnets = [
+                    s
+                    for s in subnets
+                    if s["cidr"] != constants.PROVISIONAL_IPV6_PD_PREFIX
+                ]
+                for sub1, sub2 in itertools.combinations(subnets, 2):
+                    self._raise_on_subnets_overlap(sub1, sub2)
+
         # Update owner after actual process again in order to
         # make sure the records in routerports table and ports
         # table are consistent.
         self._core_plugin.update_port(
-            context, port_id, {'port': {'device_id': router_id,
+            context, port_id, {'port': {'device_id': router.id,
                                         'device_owner': device_owner}})
 
     def _check_router_interface_not_in_use(self, router_id, subnet):
