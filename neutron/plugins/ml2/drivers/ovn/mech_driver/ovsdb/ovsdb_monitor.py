@@ -688,7 +688,7 @@ class OvnIdlDistributedLock(BaseOvnIdl):
         self.notify_handler = OvnDbNotifyHandler(driver)
         self._node_uuid = self.driver.node_uuid
         self._hash_ring = hash_ring_manager.HashRingManager(
-            self.driver.hash_ring_group)
+            self.driver.hash_ring_group, self.driver.init_time)
         self._last_touch = None
         # This is a map of tables that may be new after OVN database is updated
         self._tables_to_register = {

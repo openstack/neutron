@@ -33,8 +33,9 @@ class TestHashRingManager(testlib_api.SqlTestCaseLight):
 
     def setUp(self):
         super(TestHashRingManager, self).setUp()
+        init_time = timeutils.utcnow()
         self.hash_ring_manager = hash_ring_manager.HashRingManager(
-            HASH_RING_TEST_GROUP)
+            HASH_RING_TEST_GROUP, init_time)
         self.admin_ctx = context.get_admin_context()
 
     def _verify_hashes(self, hash_dict):
