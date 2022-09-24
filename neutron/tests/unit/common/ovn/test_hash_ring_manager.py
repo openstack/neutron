@@ -110,13 +110,22 @@ class TestHashRingManager(testlib_api.SqlTestCaseLight):
         # The ring should re-balance and as it was before
         self._verify_hashes(hash_dict_before)
 
+    @mock.patch.object(hash_ring_manager.LOG, 'debug')
     @mock.patch.object(service, '_get_api_workers', return_value=2)
-    def test__wait_startup_before_caching(self, api_workers):
+    def test__wait_startup_before_caching(self, api_workers, mock_log):
         db_hash_ring.add_node(self.admin_ctx, HASH_RING_TEST_GROUP, 'node-1')
 
         # Assert it will return True until until we equal api_workers
         self.assertTrue(self.hash_ring_manager._wait_startup_before_caching)
         self.assertTrue(self.hash_ring_manager._check_hashring_startup)
+
+        # Call it again with the same number of workers to test the
+        # log rating
+        self.assertTrue(self.hash_ring_manager._wait_startup_before_caching)
+        self.assertTrue(self.hash_ring_manager._check_hashring_startup)
+
+        # Assert the cache message has been logged only once
+        self.assertEqual(1, mock_log.call_count)
 
         db_hash_ring.add_node(self.admin_ctx, HASH_RING_TEST_GROUP, 'node-2')
 
