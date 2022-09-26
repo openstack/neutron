@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Add support for deleting ML2/OVN agents. Previously, deleting an agent
+    would return a Bad Request error. In addition to deleting the agent,
+    this change also drastically improves the scalability of the ML2/OVN
+    agent handling code.

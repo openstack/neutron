@@ -21,6 +21,7 @@ import netaddr
 
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
+from neutron_lib.exceptions import agent as agent_exc
 from oslo_config import cfg
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import event
@@ -992,6 +993,12 @@ class TestAgentApi(base.TestOVNFunctionalBase):
         agent_ids = [a['id'] for a in self.plugin.get_agents(
             self.context, filters={'host': self.host})]
         self.assertCountEqual(list(self.agent_types.values()), agent_ids)
+
+    def test_agent_delete(self):
+        for agent_id in self.agent_types.values():
+            self.plugin.delete_agent(self.context, agent_id)
+            self.assertRaises(agent_exc.AgentNotFound, self.plugin.get_agent,
+                              self.context, agent_id)
 
 
 class ConnectionInactivityProbeSetEvent(event.WaitEvent):
