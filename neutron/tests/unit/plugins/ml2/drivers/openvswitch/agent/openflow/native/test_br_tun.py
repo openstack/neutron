@@ -381,6 +381,43 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
+    def _test_get_flood_to_tun_ofports(self, vlan_to_check):
+        (dp, ofp, ofpp) = self._get_dp()
+        vlan = 3333 | ofp.OFPVID_PRESENT
+        tun_id = 2222
+        ports = [11, 44, 22, 33]
+
+        class FakeInstruction:
+            def __init__(self, actions):
+                self.actions = actions
+
+        class FakeFlow:
+            def __init__(self, vlan, tun_id, ports):
+                self.match = {'vlan_vid': vlan}
+                actions = []
+                for p in ports:
+                    m = mock.Mock(spec=ofpp.OFPActionOutput)
+                    m.port = p
+                    actions.append(m)
+                self.instructions = [FakeInstruction(actions)]
+
+        fake_flow = FakeFlow(vlan, tun_id, ports)
+        with mock.patch.object(self.br, 'dump_flows') as dump_flows:
+            dump_flows.return_value = [fake_flow]
+            ret = self.br.get_flood_to_tun_ofports(vlan_to_check)
+
+            return ret
+
+    def test_get_flood_to_tun_ofports_with_vlan(self):
+        ret = self._test_get_flood_to_tun_ofports(3333)
+        expected = {33, 11, 44, 22}
+        self.assertEqual(expected, ret)
+
+    def test_get_flood_to_tun_ofports_with_wrong_vlan(self):
+        ret = self._test_get_flood_to_tun_ofports(3334)
+        expected = set()
+        self.assertEqual(expected, ret)
+
     def test_install_unicast_to_tun(self):
         vlan = 3333
         port = 55

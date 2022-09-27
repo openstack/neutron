@@ -279,7 +279,9 @@ class TestOvsNeutronAgent(object):
         for tag in exception:
             self.assertNotIn(tag, available_vlan)
 
-    def _test_restore_local_vlan_maps(self, tag, segmentation_id='1'):
+    def _test_restore_local_vlan_maps(self, tag, segmentation_id='1',
+            tun_ofports=None):
+        tun_ofports = tun_ofports or set()
         port = mock.Mock()
         port.port_name = 'fake_port'
         net_uuid = 'fake_network_id'
@@ -312,12 +314,17 @@ class TestOvsNeutronAgent(object):
 
         with mock.patch.object(self.agent.int_br,
                                'get_ports_attributes',
-                               side_effect=[get_interfaces, get_ports]) as gpa:
+                               side_effect=[get_interfaces,
+                                   get_ports]) as gpa,\
+                mock.patch.object(self.agent.tun_br,
+                                  'get_flood_to_tun_ofports') as gftto:
+            gftto.return_value = tun_ofports
             self.agent._restore_local_vlan_map()
             expected_hints = {}
             if tag:
-                key = "%s/%s" % (net_uuid, segmentation_id)
-                expected_hints[key] = tag
+                key = f"{net_uuid}/{segmentation_id}"
+                expected_hints[key] = {'vlan': tag,
+                                       'tun_ofports': tun_ofports}
             self.assertEqual(expected_hints, self.agent._local_vlan_hints)
             # make sure invalid and unassigned ports were skipped
             gpa.assert_has_calls([
@@ -336,6 +343,9 @@ class TestOvsNeutronAgent(object):
 
     def test_restore_local_vlan_map_segmentation_id_compat(self):
         self._test_restore_local_vlan_maps(2, segmentation_id='None')
+
+    def test_restore_local_vlan_map_tun_ofports(self):
+        self._test_restore_local_vlan_maps(2, tun_ofports={2, 3})
 
     def test_check_agent_configurations_for_dvr_raises(self):
         self.agent.enable_distributed_routing = True
@@ -2486,6 +2496,97 @@ class TestOvsNeutronAgent(object):
             cleanup.assert_not_called()
             rpc_stop.assert_called_once()
 
+    def _test_rpc_loop_hints(self, devices, failed_devices, hints):
+        devices_details = []
+        vifs = {}
+        for device in devices:
+            details = {
+                'admin_state_up': True,
+                'port_id': mock.Mock(),
+                'device': device,
+                'network_id': device + 'net',
+                'physical_network': 'physnet42',
+                'segmentation_id': '4242',
+                'network_type': n_const.TYPE_LOCAL,
+                'fixed_ips': [{
+                    'subnet_id': '8a66d0cc-2950-dead-beef-d090140d3607',
+                    'ip_address': '1.1.1.1'}],
+                'device_owner': DEVICE_OWNER_COMPUTE,
+            }
+            devices_details.append(details)
+            vifs[device] = FakeVif()
+        port_info = {'current': set(),
+                     'added': set(devices + failed_devices)}
+
+        with mock.patch.object(
+                    self.agent,
+                    'process_port_info') as process_port_info, \
+                mock.patch.object(
+                    self.agent,
+                    '_check_and_handle_signal', side_effect=[True, False]), \
+                mock.patch.object(
+                    self.agent,
+                    'check_ovs_status',
+                    return_value=ovs_constants.OVS_RESTARTED), \
+                mock.patch.object(
+                    self.agent,
+                    '_handle_ovs_restart'), \
+                mock.patch.object(
+                    self.agent,
+                    'cleanup_stale_flows'), \
+                mock.patch.object(
+                    self.agent.plugin_rpc,
+                    'get_devices_details_list_and_failed_devices') as gddl, \
+                mock.patch.object(
+                    self.agent.int_br,
+                    'get_vifs_by_ids') as get_vifs_by_ids:
+            # Simulate a restart
+            self.agent.fullsync = True
+            self.agent._local_vlan_hints = hints
+
+            # Populate fake info
+            process_port_info.return_value = (port_info, set(), 0, set())
+            gddl.return_value = {
+                'devices': devices_details,
+                'failed_devices': failed_devices,
+            }
+            get_vifs_by_ids.return_value = vifs
+
+            # Run the rpc_loop
+            self.agent.rpc_loop(polling_manager=mock.Mock())
+
+    def test_rpc_loop_hints_all_used(self):
+        devices = ['tap1234', 'tap2345']
+        failed_devices = []
+        hints = {'tap1234net/4242': {"vlan": 42, "tun_ofports": set()},
+                 'tap2345net/4242': {"vlan": 43, "tun_ofports": set()}}
+        self._test_rpc_loop_hints(
+            devices=devices, failed_devices=failed_devices, hints=hints)
+
+        # Assert that we do not have any value in the hints
+        self.assertEqual(0, len(self.agent._local_vlan_hints))
+
+    def test_rpc_loop_hints_one_left(self):
+        devices = ['tap1234']
+        failed_devices = []
+        hints = {'tap1234net/4242': {"vlan": 42, "tun_ofports": set()},
+                 'tap2345net/4242': {"vlan": 43, "tun_ofports": set()}}
+        self._test_rpc_loop_hints(
+            devices=devices, failed_devices=failed_devices, hints=hints)
+
+        # Assert that we have one value left in the hints
+        self.assertEqual(1, len(self.agent._local_vlan_hints))
+
+    def test_rpc_loop_hints_with_failed_devices(self):
+        devices = ['tap1234']
+        failed_devices = ['tap2345']
+        hints = {'tap1234net/4242': {"vlan": 42, "tun_ofports": set()},
+                 'tap2345net/4242': {"vlan": 43, "tun_ofports": set()}}
+        self._test_rpc_loop_hints(
+            devices=devices, failed_devices=failed_devices, hints=hints)
+
+        # Assert that we have one value left in the hints
+        self.assertEqual(1, len(self.agent._local_vlan_hints))
     def test_set_rpc_timeout(self):
         with mock.patch.object(n_rpc.BackingOffClient,
                                'set_max_timeout') as smt:

@@ -489,11 +489,17 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 if (key not in self._local_vlan_hints and
                         local_vlan != ovs_const.DEAD_VLAN_TAG):
                     self.available_local_vlans.remove(local_vlan)
-                    self._local_vlan_hints[key] = local_vlan
-
-    def _dispose_local_vlan_hints(self):
-        self.available_local_vlans.update(self._local_vlan_hints.values())
-        self._local_vlan_hints = {}
+                    # Restore the br-tun flood output ports
+                    # See LP #1978088
+                    tun_ofports = self.tun_br.get_flood_to_tun_ofports(
+                        local_vlan)
+                    self._local_vlan_hints[key] = {
+                        'vlan': local_vlan,
+                        'tun_ofports': tun_ofports}
+            else:
+                LOG.warning("While restoring the local VLAN map from OVS, "
+                            "port %s was listed without a network "
+                            "associated.", port.port_name)
 
     def _reset_tunnel_ofports(self):
         self.tun_br_ofports = {n_const.TYPE_GENEVE: {},
@@ -1015,8 +1021,11 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         except vlanmanager.MappingNotFound:
             # TODO(sahid): This local_vlan_hints should have its own
             # datastructure and model to be manipulated.
-            key = "%s/%s" % (net_uuid, segmentation_id)
-            lvid = self._local_vlan_hints.pop(key, None)
+            key = f"{net_uuid}/{segmentation_id}"
+            data = self._local_vlan_hints.pop(
+                key, {'vlan': None, 'tun_ofports': set()})
+            lvid = data['vlan']
+            tun_ofports = data['tun_ofports']
             if lvid is None:
                 if not self.available_local_vlans:
                     LOG.error("No local VLAN available for net-id=%s, "
@@ -1026,7 +1035,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 lvid = self.available_local_vlans.pop()
             self.vlan_manager.add(
                 net_uuid, lvid, network_type, physical_network,
-                segmentation_id)
+                segmentation_id, tun_ofports=tun_ofports)
             lvm = self.vlan_manager.get(net_uuid, segmentation_id)
             LOG.info(
                 "Assigning %(vlan_id)s as local vlan for net-id=%(net_uuid)s, "
@@ -1055,7 +1064,10 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         if network_type in ovs_const.TUNNEL_NETWORK_TYPES:
             if self.enable_tunneling:
                 # outbound broadcast/multicast
-                ofports = list(self.tun_br_ofports[network_type].values())
+                ofports = sorted(list(set(
+                    list(self.tun_br_ofports[network_type].values()) +
+                    list(lvm.tun_ofports)
+                )))
                 if ofports:
                     self.tun_br.install_flood_to_tun(lvid,
                                                      segmentation_id,
