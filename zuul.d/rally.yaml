@@ -54,6 +54,7 @@
       - openstack/rally-openstack
       - openstack/osprofiler
     irrelevant-files:
+      - ^\.pylintrc$
       - ^test-requirements.txt$
       - ^releasenotes/.*$
       - ^doc/.*$
@@ -91,6 +92,7 @@
       - name: openstack/rally
       - name: openstack/rally-openstack
     irrelevant-files:
+      - ^\.pylintrc$
       - ^test-requirements.txt$
       - ^releasenotes/.*$
       - ^doc/.*$

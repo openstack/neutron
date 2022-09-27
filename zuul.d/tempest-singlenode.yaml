@@ -54,6 +54,7 @@
         Q_AGENT: openvswitch
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
     irrelevant-files: &openvswitch-irrelevant-files
+      - ^\.pylintrc$
       - ^test-requirements.txt$
       - ^.*\.conf\.sample$
       - ^.*\.rst$
@@ -113,6 +114,7 @@
             experimental:
               linuxbridge: true
     irrelevant-files:
+      - ^\.pylintrc$
       - ^test-requirements.txt$
       - ^.*\.conf\.sample$
       - ^.*\.rst$
@@ -233,6 +235,7 @@
         '/var/log/openvswitch': 'logs'
         '/var/lib/ovn': 'logs'
     irrelevant-files: &tempest-db-irrelevant-files
+      - ^\.pylintrc$
       - ^test-requirements.txt$
       - ^.*\.conf\.sample$
       - ^.*\.rst$
@@ -311,6 +314,7 @@
         s-object: false
         s-proxy: false
     irrelevant-files:
+      - ^\.pylintrc$
       - ^test-requirements.txt$
       - ^.*\.conf\.sample$
       - ^.*\.rst$
@@ -400,6 +404,7 @@
         '/var/log/openvswitch': 'logs'
         '/var/lib/ovn': 'logs'
     irrelevant-files: &irrelevant-files
+      - ^\.pylintrc$
       - ^test-requirements.txt$
       - ^.*\.conf\.sample$
       - ^.*\.rst$
@@ -509,6 +514,7 @@
         c-vol: false
         cinder: false
     irrelevant-files: &ovn-irrelevant-files
+      - ^\.pylintrc$
       - ^test-requirements.txt$
       - ^releasenotes/.*$
       - ^doc/.*$

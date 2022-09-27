@@ -13,6 +13,7 @@
     run: playbooks/run_functional_job.yaml
     post-run: playbooks/post_functional_job.yaml
     irrelevant-files: &irrelevant-files
+      - ^\.pylintrc$
       - ^.*\.conf\.sample$
       - ^.*\.rst$
       - ^doc/.*$
@@ -70,6 +71,7 @@
         # tox.ini file
         '/opt/stack/logs/dsvm-fullstack-logs.tar.gz': logs
     irrelevant-files:
+      - ^\.pylintrc$
       - ^releasenotes/.*$
       - ^doc/.*$
       - ^setup.cfg$

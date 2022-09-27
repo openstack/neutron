@@ -18,6 +18,7 @@
           - 'tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_network_basic_ops'
         use_os_tempest: true
     irrelevant-files:
+      - ^\.pylintrc$
       - ^test-requirements.txt$
       - ^releasenotes/.*$
       - ^doc/.*$
@@ -47,6 +48,7 @@
       nodes: 1ctlr
       featureset: '010'
     irrelevant-files:
+      - ^\.pylintrc$
       - ^test-requirements.txt$
       - ^releasenotes/.*$
       - ^doc/.*$
