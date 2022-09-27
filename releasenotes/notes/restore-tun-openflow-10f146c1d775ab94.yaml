@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    When OVS agent is restarting, it is now correctly restoring the tunnel
+    outputs openflow rules so tunnels are still working correctly between
+    computes. See `bug 1978088
+    <https://bugs.launchpad.net/neutron/+bug/1978088>`__ for details.

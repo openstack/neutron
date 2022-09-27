@@ -156,10 +156,57 @@ def extract_vlan_id(flows):
                 return int(after_mod.partition(',')[0])
 
 
+def extract_ofports(flows):
+    if flows:
+        flow_list = flows.splitlines()
+        for flow in flow_list:
+            if 'dl_vlan' in flow:
+                actions = flow.partition('actions=')[2]
+                outputs = set()
+                for action in actions.split(','):
+                    if 'output' in action:
+                        outputs.add(int(action.partition(':')[2]))
+                return outputs
+
+
+def extract_br_tun_cookie(bridge):
+    flows = bridge.dump_flows_for_table(ovs_constants.FLOOD_TO_TUN)
+    if flows:
+        flow_list = flows.splitlines()
+        for flow in flow_list:
+            if 'cookie' in flow:
+                cookie = flow.split(',')[0].partition('cookie=')[2]
+                return cookie
+
+
 def wait_for_mod_vlan_id_applied(bridge, expected_vlan_id):
     def _vlan_id_rule_applied():
-        flows = bridge.dump_flows_for(table='0')
+        flows = bridge.dump_flows_for_table(0)
         vlan_id = extract_vlan_id(flows)
         return vlan_id == expected_vlan_id
 
     common_utils.wait_until_true(_vlan_id_rule_applied)
+
+
+def wait_for_br_tun_flow_added(bridge, expected_output):
+    def _lookup():
+        flows = bridge.dump_flows_for_table(ovs_constants.FLOOD_TO_TUN)
+        output = extract_ofports(flows)
+        return output == expected_output
+
+    common_utils.wait_until_true(_lookup)
+
+
+def wait_for_br_tun_cleanup_flows(bridge, cookie):
+    def _lookup():
+        flows = bridge.dump_flows_for_table(ovs_constants.FLOOD_TO_TUN)
+        if flows:
+            flow_list = flows.splitlines()
+            for flow in flow_list:
+                # Return false until we get rid of
+                # dl_vlan flows
+                if cookie in flow:
+                    return False
+        return True
+
+    common_utils.wait_until_true(_lookup)

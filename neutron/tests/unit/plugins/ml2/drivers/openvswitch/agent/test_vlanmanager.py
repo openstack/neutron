@@ -142,3 +142,15 @@ class TestLocalVlanManager(base.BaseTestCase):
         with testtools.ExpectedException(vlanmanager.NotUniqMapping):
             self.vlan_manager.update_segmentation_id(
                 'net_id-not-uniq', 1003)
+
+    def test_add_with_tun_ofports(self):
+        self.vlan_manager.add('net_id', 'vlan_id', 'vlan', 'phys_net',
+                              1001, None, {2, 3})
+        self.assertEqual({2, 3}, self.vlan_manager.get(
+            'net_id', 1001).tun_ofports)
+
+    def test_add_without_tun_ofports(self):
+        self.vlan_manager.add('net_id', 'vlan_id', 'vlan', 'phys_net',
+                              1001, None)
+        self.assertEqual(set(), self.vlan_manager.get(
+            'net_id', 1001).tun_ofports)

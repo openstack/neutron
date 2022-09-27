@@ -179,6 +179,23 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
         match = self._flood_to_tun_match(ofp, ofpp, vlan)
         self.uninstall_flows(table_id=constants.FLOOD_TO_TUN, match=match)
 
+    def get_flood_to_tun_ofports(self, vlan):
+        (_dp, ofp, ofpp) = self._get_dp()
+        ofports = set()
+        # Walk through flows on br-tun and extract the output actions if
+        # vlan matches
+        for flow in self.dump_flows(table_id=constants.FLOOD_TO_TUN):
+            # os_ken offer us a match method to compare flows
+            matches = dict(flow.match.items())
+            if (matches.get('vlan_vid') and
+                    matches['vlan_vid'] == vlan | ofp.OFPVID_PRESENT):
+                # extract output actions from this flow
+                for inst in flow.instructions:
+                    for action in inst.actions:
+                        if isinstance(action, ofpp.OFPActionOutput):
+                            ofports.add(action.port)
+        return ofports
+
     @staticmethod
     def _unicast_to_tun_match(ofp, ofpp, vlan, mac):
         return ofpp.OFPMatch(vlan_vid=vlan | ofp.OFPVID_PRESENT, eth_dst=mac)
