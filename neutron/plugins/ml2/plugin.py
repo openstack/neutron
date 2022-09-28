@@ -355,7 +355,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # a host ID and the dhcp agent notifies that its wiring is done
                 LOG.debug('Port %s cannot update to ACTIVE because it '
                           'is not bound.', port_id)
-                if count == MAX_PROVISIONING_TRIES:
+                owner = port.device_owner
+                if (count == MAX_PROVISIONING_TRIES or not
+                        owner.startswith(const.DEVICE_OWNER_COMPUTE_PREFIX)):
                     return
 
                 # Wait 0.5 seconds before checking again if the port is bound.
