@@ -14,6 +14,7 @@
 
 import collections
 import functools
+from random import randint
 import re
 import threading
 import uuid
@@ -21,6 +22,7 @@ import uuid
 import netaddr
 from neutron_lib import constants as n_const
 from oslo_concurrency import lockutils
+from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import netutils
 from ovsdbapp.backend.ovs_idl import event as row_event
@@ -35,10 +37,12 @@ from neutron.agent.ovn.metadata import server as metadata_server
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
 from neutron.common import utils
+from neutron.conf.agent.database import agents_db
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as config
 
 
 LOG = log.getLogger(__name__)
+agents_db.register_db_agents_opts()
 _SYNC_STATE_LOCK = lockutils.ReaderWriterLock()
 CHASSIS_METADATA_LOCK = 'chassis_metadata_lock'
 
@@ -186,14 +190,27 @@ class SbGlobalUpdateEvent(row_event.RowEvent):
         events = (self.ROW_UPDATE,)
         super(SbGlobalUpdateEvent, self).__init__(events, table, None)
         self.event_name = self.__class__.__name__
+        self.first_run = True
 
     def run(self, event, row, old):
-        table = ('Chassis_Private' if self.agent.has_chassis_private
-                 else 'Chassis')
-        self.agent.sb_idl.db_set(
-            table, self.agent.chassis, ('external_ids', {
-                ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY:
-                    str(row.nb_cfg)})).execute()
+
+        def _update_chassis(self, row):
+            table = ('Chassis_Private' if self.agent.has_chassis_private
+                     else 'Chassis')
+            self.agent.sb_idl.db_set(
+                table, self.agent.chassis, ('external_ids', {
+                    ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY:
+                        str(row.nb_cfg)})).execute()
+
+        if self.first_run:
+            interval = 0
+            self.first_run = False
+        else:
+            interval = randint(0, cfg.CONF.agent_down_time // 2)
+
+        LOG.debug("Delaying updating chassis table for %s seconds", interval)
+        timer = threading.Timer(interval, _update_chassis, [self, row])
+        timer.start()
 
 
 class MetadataAgent(object):
