@@ -179,7 +179,7 @@ functionality. However, the following plug-ins already have built-in L3
 capabilities:
 
 -  Big Switch/Floodlight plug-in, which supports both the open source
-   `Floodlight <http://www.projectfloodlight.org/floodlight/>`__
+   `Floodlight <https://github.com/floodlight/floodlight>`__
    controller and the proprietary Big Switch controller.
 
    .. note::
