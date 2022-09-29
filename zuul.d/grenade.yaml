@@ -5,6 +5,7 @@
       - openstack/grenade
       - openstack/neutron
     irrelevant-files: &openvswitch-irrelevant-files
+      - ^\.pylintrc$
       - ^test-requirements.txt$
       - ^releasenotes/.*$
       - ^doc/.*$
@@ -167,6 +168,7 @@
     parent: grenade-multinode
     timeout: 9000
     irrelevant-files:
+      - ^\.pylintrc$
       - ^test-requirements.txt$
       - ^releasenotes/.*$
       - ^doc/.*$
