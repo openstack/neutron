@@ -23,10 +23,10 @@ from neutron_lib import exceptions as n_exc
 from neutron_lib.objects import utils as obj_utils
 from neutron_lib.plugins import constants as plugin_consts
 from neutron_lib.plugins import directory
-
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from oslo_utils import excutils
+from oslo_utils import netutils
 
 from neutron.common import ipv6_utils
 from neutron.db import ipam_backend_mixin
@@ -272,6 +272,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                                                 p["network_id"],
                                                 p['fixed_ips'],
                                                 p['device_owner'],
+                                                p['mac_address'],
                                                 subnets)
         else:
             ips = []
@@ -304,7 +305,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         return ips
 
     def _test_fixed_ips_for_port(self, context, network_id, fixed_ips,
-                                 device_owner, subnets):
+                                 device_owner, mac_address, subnets):
         """Test fixed IPs for port.
 
         Check that configured subnets are valid prior to allocating any
@@ -325,8 +326,11 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
                     subnet['cidr'] != constants.PROVISIONAL_IPV6_PD_PREFIX):
                 if (is_auto_addr_subnet and device_owner not in
                         constants.ROUTER_INTERFACE_OWNERS):
-                    raise ipam_exc.AllocationOnAutoAddressSubnet(
-                        ip=fixed['ip_address'], subnet_id=subnet['id'])
+                    eui64_ip = netutils.get_ipv6_addr_by_EUI64(
+                        subnet['cidr'], mac_address)
+                    if eui64_ip != netaddr.IPAddress(fixed['ip_address']):
+                        raise ipam_exc.AllocationOnAutoAddressSubnet(
+                            ip=fixed['ip_address'], subnet_id=subnet['id'])
                 fixed_ip_list.append({'subnet_id': subnet['id'],
                                       'ip_address': fixed['ip_address']})
             else:
@@ -383,7 +387,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         # Check if the IP's to add are OK
         to_add = self._test_fixed_ips_for_port(
             context, port['network_id'], changes.add,
-            port['device_owner'], subnets)
+            port['device_owner'], port['mac_address'], subnets)
 
         if port['device_owner'] not in constants.ROUTER_INTERFACE_OWNERS:
             to_add += self._update_ips_for_pd_subnet(
