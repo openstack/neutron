@@ -63,9 +63,11 @@ class TestIpamSubnetPool(UseIpamMixin, test_db_base.TestSubnetPoolsV2):
 
 
 class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
-    def setUp(self):
+    def setUp(self, plugin=None):
+        if not plugin:
+            plugin = 'neutron.tests.unit.db.test_ipam_backend_mixin.TestPlugin'
+        super(TestDbBasePluginIpam, self).setUp(plugin=plugin)
         cfg.CONF.set_override("ipam_driver", 'internal')
-        super(TestDbBasePluginIpam, self).setUp()
         self.tenant_id = uuidutils.generate_uuid()
         self.subnet_id = uuidutils.generate_uuid()
         self.admin_context = ncontext.get_admin_context()
