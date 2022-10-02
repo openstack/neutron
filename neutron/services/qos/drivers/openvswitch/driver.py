@@ -20,8 +20,6 @@ from neutron_lib.services.qos import base
 from neutron_lib.services.qos import constants as qos_consts
 from oslo_log import log as logging
 
-from neutron.objects import network as network_object
-
 
 LOG = logging.getLogger(__name__)
 
@@ -75,17 +73,6 @@ class OVSDriver(base.DriverBase):
 
     def validate_rule_for_port(self, context, rule, port):
         return self.validate_rule_for_network(context, rule, port.network_id)
-
-    def validate_rule_for_network(self, context, rule, network_id):
-        # Minimum-bandwidth rule is only supported on networks whose
-        # first segment is backed by a physnet.
-        if rule.rule_type == qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH:
-            net = network_object.Network.get_object(
-                context, id=network_id)
-            physnet = net.segments[0].physical_network
-            if physnet is None:
-                return False
-        return True
 
 
 def register():

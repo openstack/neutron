@@ -16,6 +16,8 @@ from unittest import mock
 import uuid
 
 from neutron.agent.common import placement_report
+from neutron.common import _constants as n_const
+from neutron.conf.plugins.ml2 import config as ml2_config
 from neutron.tests import base
 
 
@@ -43,6 +45,7 @@ class DeferredCallTestCase(base.BaseTestCase):
 class PlacementStateTestCase(base.BaseTestCase):
 
     def setUp(self):
+        ml2_config.register_ml2_plugin_opts()
         super(PlacementStateTestCase, self).setUp()
         self.client_mock = mock.Mock()
         self.driver_uuid_namespace = uuid.UUID(
@@ -61,6 +64,10 @@ class PlacementStateTestCase(base.BaseTestCase):
             'hypervisor_rps': {
                 'eth0': {'name': 'fakehost', 'uuid': self.hypervisor1_rp_uuid},
                 'eth1': {'name': 'fakehost', 'uuid': self.hypervisor1_rp_uuid},
+                # NOTE(ralonsoh): use the 'rp_tunnelled' n-lib constant once
+                # merged.
+                'rp_tunnelled': {'name': 'fakehost',
+                                 'uuid': self.hypervisor1_rp_uuid},
             },
             'device_mappings': {},
             'supported_vnic_types': [],
@@ -195,6 +202,7 @@ class PlacementStateTestCase(base.BaseTestCase):
             },
             'rp_bandwidths': {
                 'eth0': {'egress': 1, 'ingress': 1},
+                'rp_tunnelled': {'egress': 2, 'ingress': 3},
             },
             'supported_vnic_types': ['normal'],
         })
@@ -211,6 +219,13 @@ class PlacementStateTestCase(base.BaseTestCase):
                     '1ea6f823-bcf2-5dc5-9bee-4ee6177a6451'),
                 traits=mock.ANY),
 
+            # uuid -v5 '00000000-0000-0000-0000-000000000001' \
+            # 'fakehost:rp_tunnelled'
+            mock.call(
+                resource_provider_uuid=uuid.UUID(
+                    '357001cb-88b4-5e1d-ae6e-85b238a7a83e'),
+                traits=mock.ANY),
+
             # uuid -v5 '00000000-0000-0000-0000-000000000001' 'fakehost'
             mock.call(
                 resource_provider_uuid=uuid.UUID(
@@ -223,8 +238,9 @@ class PlacementStateTestCase(base.BaseTestCase):
         actual_traits = [set(args[1]['traits']) for args in
             self.client_mock.update_resource_provider_traits.call_args_list]
         self.assertEqual(
-            [set(['CUSTOM_PHYSNET_PHYSNET0', 'CUSTOM_VNIC_TYPE_NORMAL']),
-             set(['CUSTOM_VNIC_TYPE_NORMAL'])],
+            [{'CUSTOM_PHYSNET_PHYSNET0', 'CUSTOM_VNIC_TYPE_NORMAL'},
+             {n_const.TRAIT_NETWORK_TUNNEL, 'CUSTOM_VNIC_TYPE_NORMAL'},
+             {'CUSTOM_VNIC_TYPE_NORMAL'}],
             actual_traits)
 
     def test_deferred_update_resource_provider_inventories_bw(self):

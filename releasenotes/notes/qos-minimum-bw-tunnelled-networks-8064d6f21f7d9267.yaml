@@ -1,0 +1,10 @@
+---
+features:
+  - |
+    ML2/OVS and ML2/OVN now support modelling tunnelled networks in the
+    Placement API. The "tunnelled_network_rp_name" configuration option
+    defines the resource provider name used to represent all tunnelled
+    networks in a compute node (by default "rp_tunnelled"). If this string
+    is present in the "resource_provider_bandwidths" dictionary, the
+    corresponding mechanism driver will create a resource provider for
+    the overlay traffic.

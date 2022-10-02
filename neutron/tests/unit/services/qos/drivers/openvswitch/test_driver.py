@@ -27,12 +27,14 @@ class TestOVSDriver(base.BaseQosTestCase):
         super(TestOVSDriver, self).setUp()
         self.driver = driver.OVSDriver.create()
 
-    def test_validate_min_bw_rule_vs_physnet_non_physnet(self):
-        scenarios = [
-            ({'physical_network': 'fake physnet'}, self.assertTrue),
-            ({}, self.assertFalse),
-        ]
-        for segment_kwargs, test_method in scenarios:
+    def test_validate_min_bw_rule(self):
+        # Minimum bandwidth rules are now allowed for tunnelled networks since
+        # LP#1991965. The ML2/OVS backend cannot enforce them but Placement can
+        # schedule a VM using this information.
+        scenarios = [{'physical_network': 'fake physnet'},
+                     {},
+                     ]
+        for segment_kwargs in scenarios:
             segment = network_object.NetworkSegment(**segment_kwargs)
             net = network_object.Network(mock.Mock(), segments=[segment])
             rule = mock.Mock()
@@ -41,7 +43,7 @@ class TestOVSDriver(base.BaseQosTestCase):
             with mock.patch(
                     'neutron.objects.network.Network.get_object',
                     return_value=net):
-                test_method(self.driver.validate_rule_for_port(
+                self.assertTrue(self.driver.validate_rule_for_port(
                     mock.Mock(), rule, port))
-                test_method(self.driver.validate_rule_for_network(
+                self.assertTrue(self.driver.validate_rule_for_network(
                     mock.Mock(), rule, network_id=mock.Mock()))

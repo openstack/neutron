@@ -33,6 +33,7 @@ from neutron.common import utils
 from neutron.conf.agent import common as agent_config
 from neutron.conf.agent import ovs_conf as ovs_agent_config
 from neutron.conf import common as common_config
+from neutron.conf.plugins.ml2 import config as ml2_config
 from neutron.conf.plugins.ml2.drivers import agent
 from neutron.conf.plugins.ml2.drivers import ovs_conf
 from neutron.plugins.ml2.drivers.openvswitch.agent.extension_drivers \
@@ -140,6 +141,7 @@ class OVSAgentTestFramework(base.BaseOVSLinuxTestCase, OVSOFControllerHelper):
         agent_config.register_agent_state_opts_helper(config)
         ovs_agent_config.register_ovs_agent_opts(config)
         ext_manager.register_opts(config)
+        ml2_config.register_ml2_plugin_opts(cfg=config)
         return config
 
     def _configure_agent(self):

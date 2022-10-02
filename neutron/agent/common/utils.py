@@ -135,7 +135,8 @@ def get_hypervisor_hostname():
 
 # TODO(bence romsics): rehome this to neutron_lib.placement.utils
 def default_rp_hypervisors(hypervisors, device_mappings,
-                           default_hypervisor=None):
+                           default_hypervisor=None,
+                           tunnelled_network_rp_name=None):
     """Fill config option 'resource_provider_hypervisors' with defaults.
 
     :param hypervisors: Config option 'resource_provider_hypervisors'
@@ -145,14 +146,13 @@ def default_rp_hypervisors(hypervisors, device_mappings,
         format.
     :param default_hypervisor: Default hypervisor hostname. If not set,
         it tries to default to fully qualified domain name (fqdn)
+    :param tunnelled_network_rp_name: the resource provider name for tunnelled
+        networks; if present, it will be added to the devices list.
     """
     _default_hypervisor = default_hypervisor or get_hypervisor_hostname()
-
-    rv = {}
-    for _physnet, devices in device_mappings.items():
-        for device in devices:
-            if device in hypervisors:
-                rv[device] = hypervisors[device]
-            else:
-                rv[device] = _default_hypervisor
-    return rv
+    # device_mappings = {'physnet1': ['br-phy1'], 'physnet2': ['br-phy2'], ...}
+    devices = {dev for devs in device_mappings.values() for dev in devs}
+    if tunnelled_network_rp_name:
+        devices.add(tunnelled_network_rp_name)
+    return {device: hypervisors.get(device) or _default_hypervisor
+            for device in devices}

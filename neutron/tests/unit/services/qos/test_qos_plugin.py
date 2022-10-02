@@ -15,6 +15,7 @@ from unittest import mock
 
 from keystoneauth1 import exceptions as ks_exc
 import netaddr
+from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import qos
 from neutron_lib.callbacks import events
 from neutron_lib import constants as lib_constants
@@ -23,6 +24,7 @@ from neutron_lib import exceptions as lib_exc
 from neutron_lib.exceptions import placement as pl_exc
 from neutron_lib.exceptions import qos as qos_exc
 from neutron_lib.objects import utils as obj_utils
+from neutron_lib.placement import utils as pl_utils
 from neutron_lib.plugins import constants as plugins_constants
 from neutron_lib.plugins import directory
 from neutron_lib.services.qos import constants as qos_consts
@@ -32,6 +34,7 @@ from oslo_config import cfg
 from oslo_utils import uuidutils
 import webob.exc
 
+from neutron.common import _constants as n_const
 from neutron.exceptions import qos as neutron_qos_exc
 from neutron.extensions import qos_pps_minimum_rule_alias
 from neutron.extensions import qos_rules_alias
@@ -83,6 +86,7 @@ class TestQosPlugin(base.BaseQosTestCase):
 
         self.ctxt = context.Context('fake_user', 'fake_tenant')
         self.admin_ctxt = context.get_admin_context()
+        self.default_uuid = 'fake_uuid'
 
         self.policy_data = {
             'policy': {'id': uuidutils.generate_uuid(),
@@ -129,6 +133,9 @@ class TestQosPlugin(base.BaseQosTestCase):
         self.min_pps_rule = rule_object.QosMinimumPacketRateRule(
             self.ctxt, **self.rule_data['minimum_packet_rate_rule'])
 
+        self._rp_tun_name = cfg.CONF.ml2.tunnelled_network_rp_name
+        self._rp_tun_trait = n_const.TRAIT_NETWORK_TUNNEL
+
     def _validate_driver_params(self, method_name, ctxt):
         call_args = self.qos_plugin.driver_manager.call.call_args[0]
         self.assertTrue(self.qos_plugin.driver_manager.call.called)
@@ -172,7 +179,7 @@ class TestQosPlugin(base.BaseQosTestCase):
                     return_value=min_pps_rules), \
                 mock.patch(
                     'uuid.uuid5',
-                    return_value='fake_uuid',
+                    return_value=self.default_uuid,
                     side_effect=request_groups_uuids):
             return qos_plugin.QoSPlugin._extend_port_resource_request(
                 port_res, self.port)
@@ -333,34 +340,33 @@ class TestQosPlugin(base.BaseQosTestCase):
 
         port = self._create_and_extend_port([self.min_bw_rule],
                                             physical_network=None)
-        self.assertIsNone(port.get('resource_request'))
+        expected = {
+            'request_groups': [{'id': self.default_uuid,
+                                'required': [self._rp_tun_trait,
+                                             'CUSTOM_VNIC_TYPE_NORMAL'],
+                                'resources': {
+                                    orc.NET_BW_EGR_KILOBIT_PER_SEC: 10}}],
+            'same_subtree': [self.default_uuid]}
+        self.assertEqual(expected, port['resource_request'])
 
     def test__extend_port_resource_request_mix_rules_non_provider_net(self):
         self.min_bw_rule.direction = lib_constants.EGRESS_DIRECTION
 
-        port = self._create_and_extend_port([self.min_bw_rule],
-                                            [self.min_pps_rule],
-                                            physical_network=None)
-        self.assertEqual(
-            1,
-            len(port['resource_request']['request_groups'])
-        )
-        self.assertEqual(
-            'fake_uuid',
-            port['resource_request']['request_groups'][0]['id']
-        )
-        self.assertEqual(
-            ['CUSTOM_VNIC_TYPE_NORMAL'],
-            port['resource_request']['request_groups'][0]['required']
-        )
-        self.assertEqual(
-            {orc.NET_PACKET_RATE_KILOPACKET_PER_SEC: 10},
-            port['resource_request']['request_groups'][0]['resources'],
-        )
-        self.assertEqual(
-            ['fake_uuid'],
-            port['resource_request']['same_subtree'],
-        )
+        port = self._create_and_extend_port(
+            [self.min_bw_rule], [self.min_pps_rule], physical_network=None,
+            request_groups_uuids=['fake_uuid0', 'fake_uuid1'])
+        request_groups = [
+            {'id': 'fake_uuid0',
+             'required': [self._rp_tun_trait,
+                          'CUSTOM_VNIC_TYPE_NORMAL'],
+             'resources': {orc.NET_BW_EGR_KILOBIT_PER_SEC: 10}},
+            {'id': 'fake_uuid1',
+             'required': ['CUSTOM_VNIC_TYPE_NORMAL'],
+             'resources': {orc.NET_PACKET_RATE_KILOPACKET_PER_SEC: 10}}]
+        expected = {
+            'request_groups': request_groups,
+            'same_subtree': ['fake_uuid0', 'fake_uuid1']}
+        self.assertEqual(expected, port['resource_request'])
 
     def test__extend_port_resource_request_bulk_min_bw_rule(self):
         self.min_bw_rule.direction = lib_constants.EGRESS_DIRECTION
@@ -1843,6 +1849,24 @@ class TestQosPlugin(base.BaseQosTestCase):
             lib_exc.NotAuthorized,
             self.qos_plugin.get_rule_type,
             self.ctxt, qos_consts.RULE_TYPE_MINIMUM_PACKET_RATE)
+
+    def test__get_min_bw_traits(self):
+        vnic_type = portbindings.VNIC_NORMAL
+        segments = [None]
+        ret = self.qos_plugin._get_min_bw_traits(vnic_type, segments)
+        self.assertEqual([], ret)
+
+        segments = [mock.Mock(physical_network=None)]
+        ret = self.qos_plugin._get_min_bw_traits(vnic_type, segments)
+        # NOTE(ralonsoh): once implemented, use the neutron-lib method to
+        # generate the tunnelled networks trait.
+        self.assertEqual([self._rp_tun_trait,
+                          pl_utils.vnic_type_trait(vnic_type)], ret)
+
+        segments = [mock.Mock(physical_network='physnet_1')]
+        ret = self.qos_plugin._get_min_bw_traits(vnic_type, segments)
+        self.assertEqual([pl_utils.physnet_trait('physnet_1'),
+                          pl_utils.vnic_type_trait(vnic_type)], ret)
 
 
 class QoSRuleAliasTestExtensionManager(object):

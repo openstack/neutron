@@ -21,6 +21,7 @@ from neutron_lib.placement import utils as placement_utils
 from neutron_lib.plugins import constants as plugins_constants
 from neutron_lib.plugins import directory
 from neutron_lib.utils import helpers
+from oslo_config import cfg
 from oslo_log import log as logging
 from ovsdbapp.backend.ovs_idl import event as row_event
 
@@ -174,6 +175,7 @@ class OVNClientPlacementExtension(object):
         self._plugin = None
         self.uuid_ns = ovn_const.OVN_RP_UUID
         self.supported_vnic_types = ovn_const.OVN_SUPPORTED_VNIC_TYPES
+        self._rp_tun_name = cfg.CONF.ml2.tunnelled_network_rp_name
 
     @property
     def placement_plugin(self):
@@ -247,6 +249,13 @@ class OVNClientPlacementExtension(object):
         LOG.debug('Building placement options for chassis %s: %s',
                   chassis.name, cms_options)
         hypervisor_rps = {}
+
+        # ML2/OVN can also track tunnelled networks bandwidth. The key
+        # RP_TUNNELLED must be defined in "resource_provider_bandwidths" and
+        # "resource_provider_hypervisors". E.g.:
+        #   ovn-cms-options =
+        #     resource_provider_bandwidths=br-ex:100:200;rp_tunnelled:300:400
+        #     resource_provider_hypervisors=br-ex:host1,rp_tunnelled:host1
         for device, hyperv in cms_options[ovn_const.RP_HYPERVISORS].items():
             try:
                 hypervisor_rps[device] = {'name': hyperv,
@@ -254,7 +263,12 @@ class OVNClientPlacementExtension(object):
             except (KeyError, AttributeError):
                 continue
 
-        bridges = set(itertools.chain(*bridge_mappings.values()))
+        rp_devices = set(itertools.chain(*bridge_mappings.values()))
+        # If "ml2.tunnelled_network_rp_name" is present in configured resource
+        # providers, that means this ML2/OVN host will track the tunnelled
+        # networks available bandwidth.
+        if self._rp_tun_name in hypervisor_rps:
+            rp_devices.add(self._rp_tun_name)
         # Remove "cms_options[RP_BANDWIDTHS]" not present in "hypervisor_rps"
         # and "bridge_mappings". If we don't have a way to match the RP bridge
         # with a host ("hypervisor_rps") or a way to match the RP bridge with
@@ -262,8 +276,8 @@ class OVNClientPlacementExtension(object):
         rp_bw = cms_options[n_const.RP_BANDWIDTHS]
         if rp_bw:
             cms_options[n_const.RP_BANDWIDTHS] = {
-                device: bw for device, bw in rp_bw.items() if
-                device in hypervisor_rps and device in bridges}
+                rp_device: bw for rp_device, bw in rp_bw.items() if
+                rp_device in hypervisor_rps and rp_device in rp_devices}
 
         # NOTE(ralonsoh): OVN only reports min BW RPs; packet processing RPs
         # will be added in a future implementation. If no RP_BANDWIDTHS values
