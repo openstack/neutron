@@ -41,6 +41,7 @@ def add_model_for_resource(resource, model):
 
 
 @db_api.retry_if_session_inactive()
+@db_api.CONTEXT_WRITER
 def add_provisioning_component(context, object_id, object_type, entity):
     """Adds a provisioning block by an entity to a given object.
 
