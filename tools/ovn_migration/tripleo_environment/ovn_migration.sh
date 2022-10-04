@@ -40,6 +40,8 @@ LANG=C
 : ${SERVER_USER_NAME:=cirros}
 : ${VALIDATE_MIGRATION:=True}
 : ${DHCP_RENEWAL_TIME:=30}
+: ${CREATE_BACKUP:=True}
+: ${BACKUP_MIGRATION_IP:=192.168.24.1} # TODO: Document this new var
 
 
 check_for_necessary_files() {
@@ -50,11 +52,14 @@ check_for_necessary_files() {
     fi
 
     # Check if the user has generated overcloud-deploy-ovn.sh file
+    # With correct permissions
     # If it is not generated. Exit
-    if [ ! -e $OVERCLOUD_OVN_DEPLOY_SCRIPT ]; then
+    if [ ! -x $OVERCLOUD_OVN_DEPLOY_SCRIPT ]; then
         echo "overcloud deploy migration script :" \
-             "$OVERCLOUD_OVN_DEPLOY_SCRIPT is not present. Please" \
-             "make sure you create that file before running this script."
+             "$OVERCLOUD_OVN_DEPLOY_SCRIPT is not present" \
+             "or execution permission is missing. Please" \
+             "make sure you create that file with correct" \
+             "permissions before running this script."
         exit 1
     fi
 
@@ -94,6 +99,17 @@ check_for_necessary_files() {
                  "as \" -e \$HOME/ovn-extras.yaml\""
         fi
         exit 1
+    fi
+    # Check if backup is enabled
+    if [[ $CREATE_BACKUP = True ]]; then
+        # Check if backup server is reachable
+        ping -c4 $BACKUP_MIGRATION_IP
+        if [[ $? -eq 1 ]]; then
+            echo -e "It is not possible to reach the backup migration server IP" \
+                    "($BACKUP_MIGRATION_IP). Make sure this IP is accessible before" \
+                    "starting the migration." \
+                    "Change this value by doing: export BACKUP_MIGRATION_IP=x.x.x.x"
+        fi
     fi
 }
 
@@ -295,13 +311,22 @@ reduce_network_mtu () {
 start_migration() {
     source $STACKRC_FILE
     echo "Starting the Migration"
+    local inventory_file="$OOO_WORKDIR/$STACK_NAME/config-download/$STACK_NAME/tripleo-ansible-inventory.yaml"
+    if ! test -f $inventory_file; then
+        inventory_file=''
+    fi
     ansible-playbook  -vv $OPT_WORKDIR/playbooks/ovn-migration.yml \
     -i hosts_for_migration -e working_dir=$OPT_WORKDIR \
     -e public_network_name=$PUBLIC_NETWORK_NAME \
     -e image_name=$IMAGE_NAME \
+    -e undercloud_node_user=$UNDERCLOUD_NODE_USER \
     -e overcloud_ovn_deploy_script=$OVERCLOUD_OVN_DEPLOY_SCRIPT \
-    -e server_user_name=$SERVER_USER_NAME        \
-    -e overcloudrc=$OVERCLOUDRC_FILE             \
+    -e server_user_name=$SERVER_USER_NAME \
+    -e overcloudrc=$OVERCLOUDRC_FILE \
+    -e stackrc=$STACKRC_FILE \
+    -e backup_migration_ip=$BACKUP_MIGRATION_IP \
+    -e create_backup=$CREATE_BACKUP \
+    -e ansible_inventory=$inventory_file \
     -e validate_migration=$VALIDATE_MIGRATION $*
 
     rc=$?
