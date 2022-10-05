@@ -8,12 +8,6 @@ It is not a complete list, but is enough to be used as a starting point for
 implementors working on closing these gaps. A TODO list for OVN is located
 at [1]_.
 
-* QoS Minimum Bandwidth support
-
-  Currently ML2/OVS supports QoS Minimum Bandwidth limiting, but it is
-  not supported in OVN.
-  The work on this is in progress. Details can be found at [2]_ and [3]_.
-
 * BGP support
 
   Neutron-dynamic-routing supports making a tenant subnet routable via BGP, and
@@ -32,13 +26,13 @@ at [1]_.
 * QoS minimum bandwidth allocation in Placement API
 
   ML2/OVN integration with the Nova placement API to provide guaranteed
-  minimum bandwidth for ports [4]_. Work in progress, see [5]_
+  minimum bandwidth for ports [2]_. Work in progress, see [3]_
 
 * IPv6 Prefix Delegation
 
   Currently ML2/OVN doesn't implement IPv6 prefix delegation. OVN logical
-  routers have this capability implemented in [6]_ and we have an open RFE to
-  fill this gap [7]_.
+  routers have this capability implemented in [4]_ and we have an open RFE to
+  fill this gap [5]_.
 
 * East/West Fragmentation
 
@@ -52,12 +46,12 @@ at [1]_.
   from instances to reach the DHCP agent. For OVN this traffic has to be explicitly
   allowed by security group rules attached to the instance. Note that the default
   security group does allow all outgoing traffic, so this only becomes relevant
-  when using custom security groups [8]_. Proposed patch is [9]_ but it
+  when using custom security groups [6]_. Proposed patch is [7]_ but it
   needs to be revived and updated.
 
 * DNS resolution for instances
 
-  OVN cannot use the host's networking for DNS resolution, so Case 2b in [10]_ can
+  OVN cannot use the host's networking for DNS resolution, so Case 2b in [8]_ can
   only be used when additional DHCP agents are deployed. For Case 2a a different
   configuration option has to be used in ``ml2_conf.ini``::
 
@@ -72,12 +66,10 @@ References
 ----------
 
 .. [1] https://github.com/ovn-org/ovn/blob/master/TODO.rst
-.. [2] https://bugzilla.redhat.com/show_bug.cgi?id=2060310
-.. [3] https://review.opendev.org/c/openstack/neutron/+/842292
-.. [4] https://specs.openstack.org/openstack/neutron-specs/specs/rocky/minimum-bandwidth-allocation-placement-api.html
-.. [5] https://review.opendev.org/c/openstack/neutron/+/786478
-.. [6] https://patchwork.ozlabs.org/project/openvswitch/patch/6aec0fb280f610a2083fbb6c61e251b1d237b21f.1576840560.git.lorenzo.bianconi@redhat.com/
-.. [7] https://bugs.launchpad.net/neutron/+bug/1895972
-.. [8] https://bugs.launchpad.net/neutron/+bug/1926515
-.. [9] https://review.opendev.org/c/openstack/neutron/+/788594
-.. [10] https://docs.openstack.org/neutron/latest/admin/config-dns-res.html
+.. [2] https://specs.openstack.org/openstack/neutron-specs/specs/rocky/minimum-bandwidth-allocation-placement-api.html
+.. [3] https://review.opendev.org/c/openstack/neutron/+/786478
+.. [4] https://patchwork.ozlabs.org/project/openvswitch/patch/6aec0fb280f610a2083fbb6c61e251b1d237b21f.1576840560.git.lorenzo.bianconi@redhat.com/
+.. [5] https://bugs.launchpad.net/neutron/+bug/1895972
+.. [6] https://bugs.launchpad.net/neutron/+bug/1926515
+.. [7] https://review.opendev.org/c/openstack/neutron/+/788594
+.. [8] https://docs.openstack.org/neutron/latest/admin/config-dns-res.html
