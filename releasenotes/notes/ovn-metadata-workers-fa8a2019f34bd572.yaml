@@ -1,0 +1,9 @@
+---
+upgrade:
+  - |
+    The default value for the ``metadata_workers`` configuration option
+    has changed to 0 for the ML2/OVN driver. Since `[OVN] Allow to execute
+    "MetadataProxyHandler" in a local thread <https://review.opendev.org/c/openstack/neutron/+/861649>`_,
+    the OVN metadata proxy handler can be spawned in the same process of
+    the OVN metadata agent, in a local thread. That reduces the number of
+    OVN SB database connections to one. 
