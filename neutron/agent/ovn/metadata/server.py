@@ -223,8 +223,7 @@ class UnixDomainMetadataProxy(object):
             'neutron-ovn-metadata-agent')
         # Set the default metadata_workers if not yet set in the config file
         md_workers = self.conf.metadata_workers
-        if md_workers is None:
-            md_workers = 2
+        md_workers = 0 if md_workers is None else md_workers
         sb_idl = self.sb_idl if md_workers == 0 else None
         self.server.start(MetadataProxyHandler(self.conf, self.chassis,
                                                sb_idl),
