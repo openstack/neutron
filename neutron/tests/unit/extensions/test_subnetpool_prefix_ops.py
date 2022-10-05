@@ -206,7 +206,7 @@ class SubnetpoolPrefixOpsTestBase(object):
         subnetpool = subnetpool_obj.SubnetPool.get_object(
                                                  self.context,
                                                  id=subnetpool_id)
-        current_prefix_set = netaddr.IPSet([x for x in subnetpool.prefixes])
+        current_prefix_set = netaddr.IPSet(list(subnetpool.prefixes))
         expected_prefix_set = netaddr.IPSet(expected_prefixes)
         excluded_prefix_set = netaddr.IPSet(excluded_prefixes)
         self.assertTrue(expected_prefix_set.issubset(current_prefix_set))

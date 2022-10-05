@@ -100,7 +100,7 @@ class TestExclusiveResourceProcessor(base.BaseTestCase):
         for update in not_primary.updates():
             raise Exception("Only the primary should process a resource")
 
-        self.assertEqual(2, len([i for i in primary.updates()]))
+        self.assertEqual(2, len(list(primary.updates())))
 
     def test_hit_retry_limit(self):
         tries = 1

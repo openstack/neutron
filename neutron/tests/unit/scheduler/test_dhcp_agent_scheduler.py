@@ -528,7 +528,7 @@ class TestNetworksFailover(TestDhcpSchedulerBaseTestCase,
 
         with mock.patch.object(self, 'agent_starting_up',
                                side_effect=[True, False]):
-            res = [b for b in self._filter_bindings(None, bindings_objs)]
+            res = list(self._filter_bindings(None, bindings_objs))
             # once per each agent id1 and id2
             self.assertEqual(2, len(res))
             res_ids = [b.network_id for b in res]

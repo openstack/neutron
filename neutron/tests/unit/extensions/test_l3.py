@@ -4066,7 +4066,7 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
         with mock.patch(l3_rpc_agent_api_str):
             plugin = directory.get_plugin(plugin_constants.L3)
             notifyApi = plugin.l3_rpc_notifier
-            kargs = [item for item in args]
+            kargs = list(args)
             kargs.append(notifyApi)
             target_func(*kargs)
 
