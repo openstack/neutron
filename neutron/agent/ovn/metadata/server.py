@@ -44,10 +44,10 @@ MODE_MAP = {
 
 class MetadataProxyHandler(object):
 
-    def __init__(self, conf, chassis):
+    def __init__(self, conf, chassis, sb_idl):
         self.conf = conf
         self.chassis = chassis
-        self._sb_idl = None
+        self._sb_idl = sb_idl
         self._post_fork_event = threading.Event()
         self.subscribe()
 
@@ -193,9 +193,10 @@ class MetadataProxyHandler(object):
 
 class UnixDomainMetadataProxy(object):
 
-    def __init__(self, conf, chassis):
+    def __init__(self, conf, chassis, sb_idl=None):
         self.conf = conf
         self.chassis = chassis
+        self.sb_idl = sb_idl
         agent_utils.ensure_directory_exists_without_file(
             cfg.CONF.metadata_proxy_socket)
 
@@ -224,7 +225,9 @@ class UnixDomainMetadataProxy(object):
         md_workers = self.conf.metadata_workers
         if md_workers is None:
             md_workers = 2
-        self.server.start(MetadataProxyHandler(self.conf, self.chassis),
+        sb_idl = self.sb_idl if md_workers == 0 else None
+        self.server.start(MetadataProxyHandler(self.conf, self.chassis,
+                                               sb_idl),
                           self.conf.metadata_proxy_socket,
                           workers=md_workers,
                           backlog=self.conf.metadata_backlog,

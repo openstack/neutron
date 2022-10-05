@@ -241,11 +241,6 @@ class MetadataAgent(object):
         self.ovs_idl = ovsdb.MetadataAgentOvsIdl().start()
         self._load_config()
 
-        # Launch the server that will act as a proxy between the VM's and Nova.
-        proxy = metadata_server.UnixDomainMetadataProxy(self.conf,
-                self.chassis)
-        proxy.run()
-
         tables = ('Encap', 'Port_Binding', 'Datapath_Binding', 'SB_Global',
                   'Chassis')
         events = (PortBindingChassisCreatedEvent(self),
@@ -271,13 +266,18 @@ class MetadataAgent(object):
         # Now IDL connections can be safely used.
         self._post_fork_event.set()
 
+        # Launch the server that will act as a proxy between the VM's and Nova.
+        self._proxy = metadata_server.UnixDomainMetadataProxy(
+            self.conf, self.chassis, sb_idl=self.sb_idl)
+        self._proxy.run()
+
         # Do the initial sync.
         self.sync()
 
         # Register the agent with its corresponding Chassis
         self.register_metadata_agent()
 
-        proxy.wait()
+        self._proxy.wait()
 
     @ovn_utils.retry()
     def register_metadata_agent(self):
