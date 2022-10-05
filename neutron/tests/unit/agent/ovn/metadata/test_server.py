@@ -55,8 +55,8 @@ class TestMetadataProxyHandler(base.BaseTestCase):
         self.useFixture(self.fake_conf_fixture)
         self.log_p = mock.patch.object(agent, 'LOG')
         self.log = self.log_p.start()
-        self.handler = agent.MetadataProxyHandler(self.fake_conf, 'chassis1')
-        self.handler.sb_idl = mock.Mock()
+        self.handler = agent.MetadataProxyHandler(self.fake_conf, 'chassis1',
+                                                  mock.Mock())
         self.handler._post_fork_event.set()
 
     def test_call(self):
