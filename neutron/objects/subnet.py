@@ -349,7 +349,7 @@ class Subnet(base.NeutronDbObject):
         segment_ids = {subnet.segment_id
                        for subnet, mapping in results
                        if mapping}
-        if 1 < len(segment_ids):
+        if len(segment_ids) > 1:
             raise segment_exc.HostConnectedToMultipleSegments(
                 host=host, network_id=network_id)
 
@@ -395,7 +395,7 @@ class Subnet(base.NeutronDbObject):
             if subnet and subnet.segment_id not in segment_ids:
                 segment_ids.append(subnet.segment_id)
 
-            if 1 < len(segment_ids) and not allow_multiple_segments:
+            if len(segment_ids) > 1 and not allow_multiple_segments:
                 raise segment_exc.FixedIpsSubnetsNotOnSameSegment()
 
         if allow_multiple_segments:

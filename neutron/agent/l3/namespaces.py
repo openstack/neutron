@@ -45,7 +45,7 @@ def get_prefix_from_ns_name(ns_name):
     :returns: The prefix ending with a '-' or None if there is no '-'
     """
     dash_index = ns_name.find('-')
-    if 0 <= dash_index:
+    if dash_index >= 0:
         return ns_name[:dash_index + 1]
 
 
@@ -56,7 +56,7 @@ def get_id_from_ns_name(ns_name):
     :returns: Identifier or None if there is no - to end the prefix
     """
     dash_index = ns_name.find('-')
-    if 0 <= dash_index:
+    if dash_index >= 0:
         return ns_name[dash_index + 1:]
 
 

@@ -292,7 +292,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
 
         num_acls_to_add = len(neutron_acls)
         num_acls_to_remove = len(ovn_acls) + num_acls_to_remove_from_ls
-        if 0 != num_acls_to_add or 0 != num_acls_to_remove:
+        if num_acls_to_add != 0 or num_acls_to_remove != 0:
             LOG.warning('ACLs-to-be-added %(add)d '
                         'ACLs-to-be-removed %(remove)d',
                         {'add': num_acls_to_add,

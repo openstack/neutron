@@ -68,7 +68,7 @@ class SubnetRequest(object, metaclass=abc.ABCMeta):
                 if previous and pool.first <= previous.last:
                     raise ValueError(_("Ranges must not overlap"))
                 previous = pool
-            if 1 < len(allocation_pools):
+            if len(allocation_pools) > 1:
                 # Checks that all the ranges are in the same IP version.
                 # IPRange sorts first by ip version so we can get by with just
                 # checking the first and the last range having sorted them

@@ -705,7 +705,7 @@ class OvnIdlDistributedLock(BaseOvnIdl):
 
             self.update_tables(tables, row.schema[0])
 
-            if 'Chassis_Private' == self.driver.agent_chassis_table:
+            if self.driver.agent_chassis_table == 'Chassis_Private':
                 if 'Chassis_Private' not in self.tables:
                     self.driver.agent_chassis_table = 'Chassis'
             else:
