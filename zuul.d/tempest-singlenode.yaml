@@ -560,6 +560,9 @@
         CIRROS_VERSION: 0.5.1
         DEFAULT_IMAGE_NAME: cirros-0.5.1-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.5.1-x86_64-uec.tar.gz
+        OVN_BUILD_FROM_SOURCE: True
+        OVN_BRANCH: "v21.06.0"
+        OVS_BRANCH: "a4b04276ab5934d087669ff2d191a23931335c87"
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:

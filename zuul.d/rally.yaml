@@ -170,6 +170,9 @@
         ENABLE_CHASSIS_AS_GW: true
         OVN_L3_CREATE_PUBLIC_NETWORK: true
         KEYSTONE_ADMIN_ENDPOINT: true
+        OVN_BUILD_FROM_SOURCE: True
+        OVN_BRANCH: "v21.06.0"
+        OVS_BRANCH: "a4b04276ab5934d087669ff2d191a23931335c87"
       devstack_local_conf:
         post-config:
           "${RALLY_CONF_DIR}/${RALLY_CONF_FILE}":
