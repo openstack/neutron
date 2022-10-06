@@ -847,7 +847,7 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
         return cls(conn)
 
     def _get_chassis_physnets(self, chassis):
-        bridge_mappings = chassis.other_config.get('ovn-bridge-mappings', '')
+        bridge_mappings = chassis.external_ids.get('ovn-bridge-mappings', '')
         mapping_dict = helpers.parse_mappings(bridge_mappings.split(','))
         return list(mapping_dict.keys())
 
@@ -865,7 +865,7 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
         return [ch.name if name_only else ch
                 for ch in self.chassis_list().execute(check_error=True)
                 if ovn_const.CMS_OPT_CHASSIS_AS_GW in
-                ch.other_config.get(ovn_const.OVN_CMS_OPTIONS, '').split(',')]
+                ch.external_ids.get(ovn_const.OVN_CMS_OPTIONS, '').split(',')]
 
     def get_chassis_and_physnets(self):
         chassis_info_dict = {}
@@ -890,8 +890,8 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
             if ('{}={}'
                 .format(ovn_const.CMS_OPT_CARD_SERIAL_NUMBER,
                         card_serial_number)
-                    in ch.other_config.get(ovn_const.OVN_CMS_OPTIONS,
-                                           '').split(',')):
+                    in ch.external_ids.get(
+                        ovn_const.OVN_CMS_OPTIONS, '').split(',')):
                 return ch
         msg = _('Chassis with %s %s %s does not exist'
                 ) % (ovn_const.OVN_CMS_OPTIONS,

@@ -820,7 +820,7 @@ class TestSBImplIdlOvnBase(TestDBImplIdlOvn):
         'chassis': [
             {
                 'hostname': 'fake-smartnic-dpu-chassis.fqdn',
-                'other_config': {
+                'external_ids': {
                     ovn_const.OVN_CMS_OPTIONS: (
                         'firstoption,'
                         'card-serial-number=fake-serial,'
