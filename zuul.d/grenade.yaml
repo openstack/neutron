@@ -318,7 +318,7 @@
             OVN_DBS_LOG_LEVEL: dbg
 
 - job:
-    name: neutron-ovs-grenade-multinode-tick-tick
+    name: neutron-ovs-grenade-multinode-skip-level
     parent: neutron-ovs-grenade-multinode
     description: |
       Grenade job that skips a release, validating that deployers can skip
@@ -335,7 +335,7 @@
         NOVA_ENABLE_UPGRADE_WORKAROUND: True
 
 - job:
-    name: neutron-ovn-grenade-multinode-tick-tick
+    name: neutron-ovn-grenade-multinode-skip-level
     parent: neutron-ovn-grenade-multinode
     description: |
       Grenade job that skips a release, validating that deployers can skip
