@@ -42,7 +42,7 @@ def _parse_ovn_cms_options(chassis):
 
 
 def _parse_bridge_mappings(chassis):
-    bridge_mappings = chassis.other_config.get('ovn-bridge-mappings', '')
+    bridge_mappings = chassis.external_ids.get('ovn-bridge-mappings', '')
     bridge_mappings = helpers.parse_mappings(bridge_mappings.split(','),
                                              unique_values=False)
     return {k: [v] for k, v in bridge_mappings.items()}

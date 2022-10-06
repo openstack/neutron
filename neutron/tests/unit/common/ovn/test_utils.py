@@ -59,31 +59,33 @@ class TestUtils(base.BaseTestCase):
 
     def test_is_gateway_chassis(self):
         chassis = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
-            'other_config': {'ovn-cms-options': 'enable-chassis-as-gw'}})
+            'external_ids': {'ovn-cms-options': 'enable-chassis-as-gw'}})
         non_gw_chassis_0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
-            'other_config': {'ovn-cms-options': ''}})
-        non_gw_chassis_1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
-            'other_config': {}})
+            'external_ids': {'ovn-cms-options': ''}})
+        non_gw_chassis_1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={})
+        non_gw_chassis_2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
+            'external_ids': {}})
 
         self.assertTrue(utils.is_gateway_chassis(chassis))
         self.assertFalse(utils.is_gateway_chassis(non_gw_chassis_0))
         self.assertFalse(utils.is_gateway_chassis(non_gw_chassis_1))
+        self.assertFalse(utils.is_gateway_chassis(non_gw_chassis_2))
 
     def test_get_chassis_availability_zones_no_azs(self):
         chassis = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
-            'other_config': {'ovn-cms-options': 'enable-chassis-as-gw'}})
+            'external_ids': {'ovn-cms-options': 'enable-chassis-as-gw'}})
         self.assertEqual(set(), utils.get_chassis_availability_zones(chassis))
 
     def test_get_chassis_availability_zones_one_az(self):
         chassis = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
-            'other_config': {'ovn-cms-options':
+            'external_ids': {'ovn-cms-options':
                              'enable-chassis-as-gw,availability-zones=az0'}})
         self.assertEqual(
             {'az0'}, utils.get_chassis_availability_zones(chassis))
 
     def test_get_chassis_availability_zones_multiple_az(self):
         chassis = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
-            'other_config': {
+            'external_ids': {
                 'ovn-cms-options':
                 'enable-chassis-as-gw,availability-zones=az0:az1 :az2:: :'}})
         self.assertEqual(
@@ -92,7 +94,7 @@ class TestUtils(base.BaseTestCase):
 
     def test_get_chassis_availability_zones_malformed(self):
         chassis = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
-            'other_config': {'ovn-cms-options':
+            'external_ids': {'ovn-cms-options':
                              'enable-chassis-as-gw,availability-zones:az0'}})
         self.assertEqual(
             set(), utils.get_chassis_availability_zones(chassis))
@@ -151,16 +153,16 @@ class TestUtils(base.BaseTestCase):
     def test_get_chassis_in_azs(self):
         ch0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
             'name': 'ch0',
-            'other_config': {
+            'external_ids': {
                 'ovn-cms-options':
                 'enable-chassis-as-gw,availability-zones=az0:az1:az2'}})
         ch1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
             'name': 'ch1',
-            'other_config': {
+            'external_ids': {
                 'ovn-cms-options': 'enable-chassis-as-gw'}})
         ch2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
             'name': 'ch2',
-            'other_config': {
+            'external_ids': {
                 'ovn-cms-options':
                 'enable-chassis-as-gw,availability-zones=az1:az5'}})
 
@@ -178,21 +180,21 @@ class TestUtils(base.BaseTestCase):
     def test_get_gateway_chassis_without_azs(self):
         ch0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
             'name': 'ch0',
-            'other_config': {
+            'external_ids': {
                 'ovn-cms-options':
                 'enable-chassis-as-gw,availability-zones=az0:az1:az2'}})
         ch1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
             'name': 'ch1',
-            'other_config': {
+            'external_ids': {
                 'ovn-cms-options': 'enable-chassis-as-gw'}})
         ch2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
             'name': 'ch2',
-            'other_config': {
+            'external_ids': {
                 'ovn-cms-options':
                 'enable-chassis-as-gw,availability-zones=az1:az5'}})
         ch3 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
             'name': 'ch3',
-            'other_config': {}})
+            'external_ids': {}})
 
         chassis_list = [ch0, ch1, ch2, ch3]
         self.assertEqual(

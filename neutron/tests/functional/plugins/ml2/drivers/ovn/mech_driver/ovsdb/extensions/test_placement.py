@@ -72,7 +72,7 @@ class TestOVNClientQosExtension(base.TestOVNFunctionalBase):
         self.mock_send_batch = mock.patch.object(
             placement_extension, '_send_deferred_batch').start()
 
-    def _build_other_config(self, bandwidths, inventory_defaults, hypervisors):
+    def _build_external_ids(self, bandwidths, inventory_defaults, hypervisors):
         options = []
         if bandwidths:
             options.append(n_const.RP_BANDWIDTHS + '=' + bandwidths)
@@ -85,17 +85,17 @@ class TestOVNClientQosExtension(base.TestOVNFunctionalBase):
 
     def _create_chassis(self, host, name, physical_nets=None, bandwidths=None,
                         inventory_defaults=None, hypervisors=None):
-        other_config = self._build_other_config(bandwidths, inventory_defaults,
+        external_ids = self._build_external_ids(bandwidths, inventory_defaults,
                                                 hypervisors)
         self.add_fake_chassis(host, physical_nets=physical_nets,
-                              other_config=other_config, name=name)
+                              external_ids=external_ids, name=name)
 
     def _update_chassis(self, name, bandwidths=None, inventory_defaults=None,
                         hypervisors=None):
-        other_config = self._build_other_config(bandwidths, inventory_defaults,
+        external_ids = self._build_external_ids(bandwidths, inventory_defaults,
                                                 hypervisors)
         self.sb_api.db_set(
-            'Chassis', name, ('other_config', other_config)
+            'Chassis', name, ('external_ids', external_ids)
         ).execute(check_error=True)
 
     def _check_placement_config(self, expected_chassis):

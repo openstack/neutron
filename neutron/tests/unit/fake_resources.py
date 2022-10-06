@@ -877,23 +877,20 @@ class FakeChassis(object):
             cms_opts.append('%s=%s' % (ovn_const.CMS_OPT_CARD_SERIAL_NUMBER,
                                        card_serial_number))
 
-        # NOTE(ralonsoh): LP#1990229, once min OVN version >= 20.06, the CMS
-        # options and the bridge mappings should be stored only in
-        # "other_config".
-        other_config = {}
+        external_ids = {}
         if cms_opts:
-            other_config[ovn_const.OVN_CMS_OPTIONS] = ','.join(cms_opts)
+            external_ids[ovn_const.OVN_CMS_OPTIONS] = ','.join(cms_opts)
 
         if bridge_mappings:
-            other_config['ovn-bridge-mappings'] = ','.join(bridge_mappings)
+            external_ids['ovn-bridge-mappings'] = ','.join(bridge_mappings)
 
         chassis_attrs = {
             'encaps': [],
-            'external_ids': '',
+            'external_ids': external_ids,
             'hostname': '',
             'name': uuidutils.generate_uuid(),
             'nb_cfg': 0,
-            'other_config': other_config,
+            'other_config': {},
             'transport_zones': [],
             'vtep_logical_switches': []}
 

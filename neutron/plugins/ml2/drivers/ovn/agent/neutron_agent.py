@@ -89,7 +89,7 @@ class NeutronAgent(abc.ABC):
             'configurations': {
                 'chassis_name': self.chassis.name,
                 'bridge-mappings':
-                    self.chassis.other_config.get('ovn-bridge-mappings', '')},
+                    self.chassis.external_ids.get('ovn-bridge-mappings', '')},
             'start_flag': True,
             'agent_type': self.agent_type,
             'id': self.agent_id,
@@ -141,8 +141,9 @@ class ControllerAgent(NeutronAgent):
 
     @staticmethod  # it is by default, but this makes pep8 happy
     def __new__(cls, chassis_private, driver):
-        other_config = cls.chassis_from_private(chassis_private).other_config
-        if 'enable-chassis-as-gw' in other_config.get('ovn-cms-options', []):
+        external_ids = cls.chassis_from_private(chassis_private).external_ids
+        if ('enable-chassis-as-gw' in
+                external_ids.get('ovn-cms-options', [])):
             cls = ControllerGatewayAgent
         return super().__new__(cls)
 
@@ -165,8 +166,8 @@ class ControllerAgent(NeutronAgent):
 
     def update(self, chassis_private, clear_down=False):
         super().update(chassis_private, clear_down)
-        other_config = self.chassis_from_private(chassis_private).other_config
-        if 'enable-chassis-as-gw' in other_config.get('ovn-cms-options', []):
+        external_ids = self.chassis_from_private(chassis_private).external_ids
+        if 'enable-chassis-as-gw' in external_ids.get('ovn-cms-options', []):
             self.__class__ = ControllerGatewayAgent
 
 
@@ -175,9 +176,9 @@ class ControllerGatewayAgent(ControllerAgent):
 
     def update(self, chassis_private, clear_down=False):
         super().update(chassis_private, clear_down)
-        other_config = self.chassis_from_private(chassis_private).other_config
+        external_ids = self.chassis_from_private(chassis_private).external_ids
         if ('enable-chassis-as-gw' not in
-                other_config.get('ovn-cms-options', [])):
+                external_ids.get('ovn-cms-options', [])):
             self.__class__ = ControllerAgent
 
 

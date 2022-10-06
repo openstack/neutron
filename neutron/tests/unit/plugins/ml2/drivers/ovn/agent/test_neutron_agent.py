@@ -31,7 +31,7 @@ class AgentCacheTestCase(base.BaseTestCase):
         self.names_ref = []
         for i in range(10):  # Add 10 agents.
             chassis_private = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-                attrs={'name': 'chassis' + str(i), 'other_config': {}})
+                attrs={'name': 'chassis' + str(i)})
             self.agent_cache.update(ovn_const.OVN_CONTROLLER_AGENT,
                                     chassis_private)
             self.names_ref.append('chassis' + str(i))
