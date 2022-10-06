@@ -371,6 +371,42 @@
       - openstack/neutron-lib
 
 - job:
+    name: neutron-ovs-tempest-with-oslo-master
+    parent: neutron-ovs-tempest-base
+    description: |
+      Job testing for devstack/tempest testing Neutron with OVS driver.
+      This job installs all oslo libraries from source.
+    required-projects:
+      - openstack/automaton
+      - openstack/debtcollector
+      - openstack/futurist
+      - openstack/osprofiler
+      - openstack/oslo.cache
+      - openstack/oslo.concurrency
+      - openstack/oslo.config
+      - openstack/oslo.context
+      - openstack/oslo.db
+      - openstack/oslo.i18n
+      - openstack/oslo.log
+      - openstack/oslo.messaging
+      - openstack/oslo.middleware
+      - openstack/oslo.policy
+      - openstack/oslo.privsep
+      - openstack/oslo.reports
+      - openstack/oslo.rootwrap
+      - openstack/oslo.serialization
+      - openstack/oslo.service
+      - openstack/oslo.utils
+      - openstack/oslo.versionedobjects
+      - openstack/oslo.vmware
+      - openstack/oslotest
+      - openstack/pycadf
+      - openstack/stevedore
+      - openstack/taskflow
+      - openstack/tooz
+      - openstack/pbr
+
+- job:
     name: neutron-ovn-tempest-with-uwsgi
     parent: tempest-integrated-networking
     description: Run neutron Tempest tests with uwsgi
@@ -570,6 +606,44 @@
         OVN_BUILD_FROM_SOURCE: True
         OVN_BRANCH: main
         OVS_BRANCH: master
+
+- job:
+    name: neutron-ovn-tempest-ovs-release-with-oslo-master
+    description: |
+      Job testing for devstack/tempest testing Neutron with OVN driver.
+      This job installs all oslo libraries from source.
+    parent: neutron-ovn-tempest-ovs-release
+    required-projects:
+      - openstack/neutron
+      - openstack/tempest
+      - openstack/automaton
+      - openstack/debtcollector
+      - openstack/futurist
+      - openstack/osprofiler
+      - openstack/oslo.cache
+      - openstack/oslo.concurrency
+      - openstack/oslo.config
+      - openstack/oslo.context
+      - openstack/oslo.db
+      - openstack/oslo.i18n
+      - openstack/oslo.log
+      - openstack/oslo.messaging
+      - openstack/oslo.middleware
+      - openstack/oslo.policy
+      - openstack/oslo.privsep
+      - openstack/oslo.reports
+      - openstack/oslo.rootwrap
+      - openstack/oslo.serialization
+      - openstack/oslo.service
+      - openstack/oslo.utils
+      - openstack/oslo.versionedobjects
+      - openstack/oslo.vmware
+      - openstack/oslotest
+      - openstack/pycadf
+      - openstack/stevedore
+      - openstack/taskflow
+      - openstack/tooz
+      - openstack/pbr
 
 - job:
     name: neutron-ovn-tempest-ovs-master-centos-9-stream

@@ -98,6 +98,9 @@
         - openstack-tox-py39-with-oslo-master:
             timeout: 3600
             irrelevant-files:  *irrelevant-files
+        - neutron-functional-with-oslo-master
+        - neutron-ovs-tempest-with-oslo-master
+        - neutron-ovn-tempest-ovs-release-with-oslo-master
 
 - project-template:
     name: neutron-periodic-jobs
@@ -134,3 +137,9 @@
         - neutron-linuxbridge-tempest-plugin-scenario-nftables
         - neutron-ovs-tempest-plugin-scenario-iptables_hybrid-nftables
         - devstack-enforce-scope
+        - openstack-tox-py39-with-oslo-master:
+            timeout: 3600
+            irrelevant-files:  *irrelevant-files
+        - neutron-functional-with-oslo-master
+        - neutron-ovs-tempest-with-oslo-master
+        - neutron-ovn-tempest-ovs-release-with-oslo-master
