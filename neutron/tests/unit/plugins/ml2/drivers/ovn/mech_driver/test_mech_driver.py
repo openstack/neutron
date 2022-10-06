@@ -3670,6 +3670,7 @@ class TestOVNMechanismDriverSecurityGroup(MechDriverSetupBase,
     _extension_drivers = ['port_security']
 
     def setUp(self):
+        ovn_conf.register_opts()
         cfg.CONF.set_override('extension_drivers',
                               self._extension_drivers,
                               group='ml2')
