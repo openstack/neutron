@@ -556,7 +556,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
         range_b = list(map(int, str(range_b).split(':')))
 
         invalid_port = next((port for port in (range_a + range_b)
-                             if 65535 < port or port < 1), None)
+                             if port > 65535 or port < 1), None)
 
         if invalid_port:
             raise lib_exc.BadRequest(resource=apidef.RESOURCE_NAME,
