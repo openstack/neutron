@@ -2048,6 +2048,26 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     @utils.transaction_guard
     @db_api.retry_if_session_inactive()
     def delete_port(self, context, id, l3_port_check=True):
+
+        def handle_distributed_port_bindings(mech_contexts):
+            bindings = db.get_distributed_port_bindings(context, id)
+            for bind in bindings:
+                levels = db.get_binding_level_objs(context, id, bind.host)
+                metadata['bind'] = bind
+                metadata['levels'] = levels
+                registry.publish(resources.PORT,
+                                 events.PRECOMMIT_DELETE,
+                                 self,
+                                 payload=events.DBEventPayload(
+                                     context,
+                                     resource_id=id,
+                                     metadata=metadata,
+                                     states=(port,)))
+                mech_context = driver_context.PortContext(
+                    self, context, port, network, bind, levels)
+                self.mechanism_manager.delete_port_precommit(mech_context)
+                mech_contexts.append(mech_context)
+
         try:
             port_db = self._get_port(context, id)
             port = self._make_port_dict(port_db)
@@ -2062,8 +2082,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         with db_api.CONTEXT_WRITER.using(context):
             binding = p_utils.get_port_binding_by_status_and_host(
-                port_db.port_bindings, const.ACTIVE,
-                raise_if_not_found=True, port_id=id)
+                port_db.port_bindings, const.ACTIVE, port_id=id)
 
             network = self.get_network(context, port['network_id'])
             bound_mech_contexts = []
@@ -2071,39 +2090,30 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             metadata = {'network': network,
                         'port_db': port_db,
                         'bindings': binding}
-            if device_owner == const.DEVICE_OWNER_DVR_INTERFACE:
-                bindings = db.get_distributed_port_bindings(context,
-                                                            id)
-                for bind in bindings:
-                    levels = db.get_binding_level_objs(context, id, bind.host)
-                    metadata['bind'] = bind
+
+            if not binding:
+                LOG.warning('The port %s has no binding information, the '
+                            '"ml2_port_bindings" register is not present', id)
+                if device_owner == const.DEVICE_OWNER_DVR_INTERFACE:
+                    handle_distributed_port_bindings(bound_mech_contexts)
+            else:
+                if device_owner == const.DEVICE_OWNER_DVR_INTERFACE:
+                    handle_distributed_port_bindings(bound_mech_contexts)
+                else:
+                    levels = db.get_binding_level_objs(context, id,
+                                                       binding.host)
+                    metadata['bind'] = None
                     metadata['levels'] = levels
-                    registry.publish(resources.PORT,
-                                     events.PRECOMMIT_DELETE,
-                                     self,
-                                     payload=events.DBEventPayload(
+                    registry.publish(resources.PORT, events.PRECOMMIT_DELETE,
+                                     self, payload=events.DBEventPayload(
                                          context,
                                          resource_id=id,
                                          metadata=metadata,
                                          states=(port,)))
                     mech_context = driver_context.PortContext(
-                        self, context, port, network, bind, levels)
+                        self, context, port, network, binding, levels)
                     self.mechanism_manager.delete_port_precommit(mech_context)
                     bound_mech_contexts.append(mech_context)
-            else:
-                levels = db.get_binding_level_objs(context, id, binding.host)
-                metadata['bind'] = None
-                metadata['levels'] = levels
-                registry.publish(resources.PORT, events.PRECOMMIT_DELETE, self,
-                                 payload=events.DBEventPayload(
-                                     context,
-                                     resource_id=id,
-                                     metadata=metadata,
-                                     states=(port,)))
-                mech_context = driver_context.PortContext(
-                    self, context, port, network, binding, levels)
-                self.mechanism_manager.delete_port_precommit(mech_context)
-                bound_mech_contexts.append(mech_context)
             if l3plugin:
                 router_ids = l3plugin.disassociate_floatingips(
                     context, id, do_notify=False)

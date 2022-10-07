@@ -13,11 +13,16 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from unittest import mock
+
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.db import api as db_api
 
 from neutron.db import agents_db
+from neutron.plugins.ml2 import models
+from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron.tests.common import helpers
 from neutron.tests.unit.plugins.ml2 import base as ml2_test_base
 
@@ -32,6 +37,12 @@ class TestMl2PortBinding(ml2_test_base.ML2TestFramework,
         self.admin_context = context.get_admin_context()
         self.host_args = {portbindings.HOST_ID: helpers.HOST,
                           'admin_state_up': True}
+        self._max_bind_retries = ml2_plugin.MAX_BIND_TRIES
+        ml2_plugin.MAX_BIND_TRIES = 1
+        self.addCleanup(self._restore_max_bind_retries)
+
+    def _restore_max_bind_retries(self):
+        ml2_plugin.MAX_BIND_TRIES = self._max_bind_retries
 
     def test_port_bind_successfully(self):
         helpers.register_ovs_agent(host=helpers.HOST)
@@ -70,3 +81,31 @@ class TestMl2PortBinding(ml2_test_base.ML2TestFramework,
                                      portbindings.VIF_TYPE_OVS)
                     self.assertEqual(bound_context.current['binding:vif_type'],
                                      portbindings.VIF_TYPE_OVS)
+
+    @mock.patch.object(ml2_plugin, 'LOG')
+    def test_delete_port_no_binding_register(self, mock_log):
+        with self.network() as network:
+            with self.subnet(network=network) as subnet:
+                with self.port(
+                        subnet=subnet, device_owner=DEVICE_OWNER_COMPUTE,
+                        arg_list=(portbindings.HOST_ID, 'admin_state_up',),
+                        **self.host_args) as port:
+                    pass
+
+        port_id = port['port']['id']
+        ports = self._list('ports')['ports']
+        self.assertEqual(1, len(ports))
+        self.assertEqual(port_id, ports[0]['id'])
+        with db_api.CONTEXT_WRITER.using(self.context):
+            port_binding = self.context.session.query(
+                models.PortBinding).filter(
+                models.PortBinding.port_id == port_id).one()
+            self.context.session.delete(port_binding)
+
+        req = self.new_delete_request('ports', port['port']['id'])
+        req.get_response(self.api)
+        ports = self._list('ports')['ports']
+        self.assertEqual(0, len(ports))
+        mock_log.warning.assert_called_once_with(
+            'The port %s has no binding information, the "ml2_port_bindings" '
+            'register is not present', port_id)
