@@ -556,56 +556,6 @@
       - ^playbooks/.*functional.*$
       - ^zuul.d/(?!(project)).*\.yaml
 
-# TODO(slaweq): move this to be multinode job when it will be possible in Zuul
-- job:
-    name: neutron-ovn-tempest-ipv6-only
-    parent: tempest-ipv6-only
-    timeout: 10800
-    vars:
-      tox_envlist: integrated-network
-      devstack_localrc:
-        CIRROS_VERSION: 0.5.1
-        DEFAULT_IMAGE_NAME: cirros-0.5.1-x86_64-uec
-        DEFAULT_IMAGE_FILE_NAME: cirros-0.5.1-x86_64-uec.tar.gz
-        OVN_BUILD_FROM_SOURCE: True
-        OVN_BRANCH: "v21.06.0"
-        OVS_BRANCH: "a4b04276ab5934d087669ff2d191a23931335c87"
-      devstack_plugins:
-        neutron: https://opendev.org/openstack/neutron.git
-      devstack_services:
-        br-ex-tcpdump: true
-        br-int-flows: true
-        # Cinder services
-        c-api: false
-        c-bak: false
-        c-sch: false
-        c-vol: false
-        cinder: false
-        # Swift services
-        s-account: false
-        s-container: false
-        s-object: false
-        s-proxy: false
-      zuul_copy_output:
-        '/var/log/ovn': 'logs'
-        '/var/log/openvswitch': 'logs'
-        '/var/lib/ovn': 'logs'
-    irrelevant-files: *ovn-irrelevant-files
-
-- job:
-    name: neutron-ovn-tempest-ovs-ipv6-only-base
-    description: Base job for devstack/tempest to test Neutron with ovn driver in an IPv6-only deployment
-    parent: devstack-tempest-ipv6
-    timeout: 10800
-    irrelevant-files: *ovn-irrelevant-files
-    required-projects: *ovn-base-required-projects
-    vars: *ovn-base-vars
-
-- job:
-    name: neutron-ovn-tempest-ovs-release-ipv6-only
-    description: Job testing for devstack/tempest testing Neutron with ovn driver and latest released OVN branch in an IPv6-only deployment
-    parent: neutron-ovn-tempest-ovs-ipv6-only-base
-
 - job:
     name: neutron-ovn-tempest-ovs-release
     description: Job testing for devstack/tempest testing Neutron with ovn driver and latest OVN version provided by the packages released in the operating system this job is deployed on
@@ -652,7 +602,6 @@
             validation:
               ssh_key_type: 'ecdsa'
 
-
 - job:
     name: neutron-ovn-tempest-ovs-release-fips
     parent: neutron-ovn-tempest-ovs-release
@@ -668,3 +617,50 @@
           "$TEMPEST_CONFIG":
             validation:
               ssh_key_type: 'ecdsa'
+
+# TODO(slaweq): move this to be multinode job when it will be possible in Zuul
+- job:
+    name: neutron-ovn-tempest-ipv6-only-base
+    abstract: true
+    parent: tempest-ipv6-only
+    timeout: 10800
+    vars:
+      tox_envlist: integrated-network
+      devstack_localrc:
+        CIRROS_VERSION: 0.5.1
+        DEFAULT_IMAGE_NAME: cirros-0.5.1-x86_64-uec
+        DEFAULT_IMAGE_FILE_NAME: cirros-0.5.1-x86_64-uec.tar.gz
+      devstack_plugins:
+        neutron: https://opendev.org/openstack/neutron.git
+      devstack_services:
+        br-ex-tcpdump: true
+        br-int-flows: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
+        # Swift services
+        s-account: false
+        s-container: false
+        s-object: false
+        s-proxy: false
+      zuul_copy_output:
+        '/var/log/ovn': 'logs'
+        '/var/log/openvswitch': 'logs'
+        '/var/lib/ovn': 'logs'
+    irrelevant-files: *ovn-irrelevant-files
+
+- job:
+    name: neutron-ovn-tempest-ipv6-only-ovs-release
+    parent: neutron-ovn-tempest-ipv6-only-base
+
+- job:
+    name: neutron-ovn-tempest-ipv6-only-ovs-master
+    parent: neutron-ovn-tempest-ipv6-only-base
+    vars:
+      devstack_localrc:
+        OVN_BUILD_FROM_SOURCE: True
+        OVN_BRANCH: "main"
+        OVS_BRANCH: "master"

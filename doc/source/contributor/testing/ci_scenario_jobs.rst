@@ -82,11 +82,9 @@ Below is a summary of those jobs.
     |neutron-ovn-tempest-ovs-release               |tempest.api (without slow tests)  |   3.6   |   1   | ovn         | ovn             | ---      | False | False  | True       | Yes         |
     |                                              |tempest.scenario                  |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-ovn-tempest-ipv6-only                 |tempest smoke + IPv6 tests        |   3.6   |   1   | ovn         | ovn             | ---      | False | False  | True       | Yes         |
+    |neutron-ovn-tempest-ipv6-only-ovs-release     |tempest.api (without slow tests)  |   3.6   |   1   | ovn         | ovn             | ---      | False | False  | True       | Yes         |
     |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
     |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-ovn-tempest-ovs-release-ipv6-only     | tempest smoke + IPv6 tests       |   3.6   |   1   | ovn         | ovn             | ---      | False | False  | True       | Yes         |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
 
 Grenade jobs running in Neutron CI
@@ -140,6 +138,10 @@ Currently we have in that queue jobs like listed below.
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-tempest-with-uwsgi-loki               |tempest.api (without slow tests)  |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | No          |
     |(non-voting)                                  |tempest.scenario                  |         |       |             |                 |          |       |        |            |             |
+    |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
+    |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
+    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-ovn-tempest-ipv6-only-ovs-master      |tempest.api (without slow tests)  |   3.6   |   1   | ovn         | ovn             | ---      | False | False  | True       | Yes         |
     |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
     |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
