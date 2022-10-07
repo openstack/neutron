@@ -207,7 +207,10 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
             return []
 
         admin_context = context.elevated()
-        port_host = deleted_port[portbindings.HOST_ID]
+        port_host = deleted_port.get(portbindings.HOST_ID)
+        if not port_host:
+            return []
+
         subnet_ids = [ip['subnet_id'] for ip in deleted_port['fixed_ips']]
         router_ids = self.get_dvr_routers_by_subnet_ids(admin_context,
                                                         subnet_ids)
