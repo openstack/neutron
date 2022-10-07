@@ -574,13 +574,14 @@ and Neutron with DevStack and then run the following command,
 from the tempest directory: ::
 
     $ export DEVSTACK_GATE_TEMPEST_REGEX="neutron"
-    $ tox -e all-plugin $DEVSTACK_GATE_TEMPEST_REGEX
+    $ tox -e venv-tempest -- pip install (path to the neutron-tempest-plugin directory)
+    $ tox -e all -- $DEVSTACK_GATE_TEMPEST_REGEX
 
 If you want to limit the amount of tests, or run an individual test,
 you can do, for instance: ::
 
-    $ tox -e all-plugin neutron_tempest_plugin.api.admin.test_routers_ha
-    $ tox -e all-plugin neutron_tempest_plugin.api.test_qos.QosTestJSON.test_create_policy
+    $ tox -e all -- neutron_tempest_plugin.api.admin.test_routers_ha
+    $ tox -e all -- neutron_tempest_plugin.api.test_qos.QosTestJSON.test_create_policy
 
 If you want to use special config for Neutron, like use advanced images (Ubuntu
 or CentOS) testing advanced features, you may need to add config
