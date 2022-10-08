@@ -59,8 +59,8 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         self.qos_driver.br_int.get_dp = mock.Mock(return_value=(mock.Mock(),
                                                                 mock.Mock(),
                                                                 mock.Mock()))
-        self.qos_driver.meter_cache.br_int = self.qos_driver.br_int
-        self.qos_driver.meter_cache.max_meter = 65535
+        self.qos_driver.meter_cache_pps.br_int = self.qos_driver.br_int
+        self.qos_driver.meter_cache_pps.max_meter = 65535
         self.qos_driver.br_int.list_meter_features = mock.Mock(
             return_value=[{"max_meter": 65535,
                            "band_types": 2,
@@ -182,16 +182,20 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
 
         self.create_meter.assert_has_calls(
             [mock.call(mock.ANY, self.rules[2].max_kpps * 1000,
-             burst=self.rules[2].max_burst_kpps * 1000),
+             burst=self.rules[2].max_burst_kpps * 1000,
+             type_=comm_consts.METER_FLAG_PPS),
              mock.call(mock.ANY, self.rules[3].max_kpps * 1000,
-             burst=self.rules[3].max_burst_kpps * 1000)])
+             burst=self.rules[3].max_burst_kpps * 1000,
+             type_=comm_consts.METER_FLAG_PPS)])
         self.apply_meter_to_port.assert_has_calls(
             [mock.call(mock.ANY, constants.EGRESS_DIRECTION,
                        "aa:bb:cc:dd:ee:ff",
-                       in_port=111),
+                       in_port=111,
+                       type_=comm_consts.METER_FLAG_PPS),
              mock.call(mock.ANY, constants.INGRESS_DIRECTION,
                        "aa:bb:cc:dd:ee:ff",
-                       local_vlan=1)])
+                       local_vlan=1,
+                       type_=comm_consts.METER_FLAG_PPS)])
 
     def test_create_existing_rules(self):
         self.qos_driver.create(self.port, self.qos_policy)
@@ -223,10 +227,12 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         self.remove_meter_from_port.assert_has_calls(
             [mock.call(constants.EGRESS_DIRECTION,
                        "aa:bb:cc:dd:ee:ff",
-                       in_port=111),
+                       in_port=111,
+                       type_=comm_consts.METER_FLAG_PPS),
              mock.call(constants.INGRESS_DIRECTION,
                        "aa:bb:cc:dd:ee:ff",
-                       local_vlan=1)])
+                       local_vlan=1,
+                       type_=comm_consts.METER_FLAG_PPS)])
 
     def _test_delete_rules_no_policy(self):
         self.qos_driver.delete(self.port)
@@ -344,16 +350,20 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
 
         self.create_meter.assert_has_calls(
             [mock.call(mock.ANY, self.rules[2].max_kpps * 1000,
-             burst=self.rules[2].max_burst_kpps * 1000),
+             burst=self.rules[2].max_burst_kpps * 1000,
+             type_=comm_consts.METER_FLAG_PPS),
              mock.call(mock.ANY, self.rules[3].max_kpps * 1000,
-             burst=self.rules[3].max_burst_kpps * 1000)])
+             burst=self.rules[3].max_burst_kpps * 1000,
+             type_=comm_consts.METER_FLAG_PPS)])
         self.apply_meter_to_port.assert_has_calls(
             [mock.call(mock.ANY, constants.EGRESS_DIRECTION,
                        "aa:bb:cc:dd:ee:ff",
-                       in_port=111),
+                       in_port=111,
+                       type_=comm_consts.METER_FLAG_PPS),
              mock.call(mock.ANY, constants.INGRESS_DIRECTION,
                        "aa:bb:cc:dd:ee:ff",
-                       local_vlan=1)])
+                       local_vlan=1,
+                       type_=comm_consts.METER_FLAG_PPS)])
 
     def _assert_dscp_rule_create_updated(self):
         # Assert install_instructions is the last call
