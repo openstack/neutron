@@ -1422,8 +1422,8 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             self.dhcp._process_resource_update()
             self.cache.assert_has_calls(
                 [mock.call.get_port_by_id(fake_port2.id),
-                 mock.call.add_to_deleted_ports(fake_port2.id),
                  mock.call.get_network_by_id(fake_network.id),
+                 mock.call.add_to_deleted_ports(fake_port2.id),
                  mock.call.remove_port(fake_port2)])
             self.call_driver.assert_has_calls(
                 [mock.call.call_driver('reload_allocations', fake_network)])
@@ -1441,8 +1441,8 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             self.dhcp._process_resource_update()
             self.cache.assert_has_calls(
                 [mock.call.get_port_by_id(fake_port2.id),
-                 mock.call.add_to_deleted_ports(fake_port2.id),
                  mock.call.get_network_by_id(fake_network.id),
+                 mock.call.add_to_deleted_ports(fake_port2.id),
                  mock.call.remove_port(fake_port2)])
             self.call_driver.assert_has_calls(
                 [mock.call.call_driver('reload_allocations', fake_network)])
@@ -1452,12 +1452,14 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         payload = dict(port_id='unknown', network_id='unknown',
                        priority=FAKE_PRIORITY)
         self.cache.get_port_by_id.return_value = None
+        self.cache.get_network_by_id.return_value = fake_network
 
         self.dhcp.port_delete_end(None, payload)
         self.dhcp._process_resource_update()
 
         self.cache.assert_has_calls([mock.call.get_port_by_id('unknown')])
-        self.assertEqual(self.call_driver.call_count, 0)
+        self.call_driver.assert_has_calls(
+            [mock.call.call_driver('clean_devices', fake_network)])
 
     def test_port_delete_end_agents_port(self):
         port = dhcp.DictModel(copy.deepcopy(fake_port1))
@@ -1882,7 +1884,7 @@ class TestDeviceManager(base.BaseTestCase):
 
         dh = dhcp.DeviceManager(cfg.CONF, plugin)
         dh._set_default_route = mock.Mock()
-        dh._cleanup_stale_devices = mock.Mock()
+        dh.cleanup_stale_devices = mock.Mock()
         interface_name = dh.setup(net)
 
         self.assertEqual('tap12345678-12', interface_name)
@@ -1960,7 +1962,7 @@ class TestDeviceManager(base.BaseTestCase):
             net = copy.deepcopy(fake_network)
             plugin.create_dhcp_port.side_effect = exceptions.Conflict()
             dh = dhcp.DeviceManager(cfg.CONF, plugin)
-            clean = mock.patch.object(dh, '_cleanup_stale_devices').start()
+            clean = mock.patch.object(dh, 'cleanup_stale_devices').start()
             with testtools.ExpectedException(exceptions.Conflict):
                 dh.setup(net)
             clean.assert_called_once_with(net, dhcp_port=None)
@@ -1993,7 +1995,7 @@ class TestDeviceManager(base.BaseTestCase):
         self.mock_driver.get_device_name.return_value = 'tap12345678-12'
         dh = dhcp.DeviceManager(cfg.CONF, plugin)
         dh._set_default_route = mock.Mock()
-        dh._cleanup_stale_devices = mock.Mock()
+        dh.cleanup_stale_devices = mock.Mock()
         dh.driver = mock.Mock()
         dh.driver.plug.side_effect = OSError()
         net = copy.deepcopy(fake_network)

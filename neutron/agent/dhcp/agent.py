@@ -685,10 +685,12 @@ class DhcpAgent(manager.Manager):
     def _port_delete(self, payload):
         port_id = payload['port_id']
         port = self.cache.get_port_by_id(port_id)
+        network = self.cache.get_network_by_id(payload['network_id'])
         self.cache.add_to_deleted_ports(port_id)
         if not port:
+            # Let's ensure that we clean namespace from stale devices
+            self.call_driver('clean_devices', network)
             return
-        network = self.cache.get_network_by_id(port.network_id)
         self.cache.remove_port(port)
         if self._is_port_on_this_agent(port):
             # the agent's port has been deleted. disable the service
