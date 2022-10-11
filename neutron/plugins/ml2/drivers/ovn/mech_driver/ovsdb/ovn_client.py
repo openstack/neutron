@@ -32,7 +32,6 @@ from neutron_lib.plugins import directory
 from neutron_lib.plugins import utils as p_utils
 from neutron_lib.utils import helpers
 from neutron_lib.utils import net as n_net
-from oslo_concurrency import processutils
 from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import excutils
@@ -1539,16 +1538,16 @@ class OVNClient(object):
         is refer to patch:
         https://review.opendev.org/c/openstack/neutron/+/812805
         """
-        cmd = ['ovsdb-client', 'transact', ovn_conf.get_ovn_sb_connection(),
-               '--timeout', str(ovn_conf.get_ovn_ovsdb_timeout())]
-        if ovn_conf.get_ovn_sb_private_key():
-            cmd += ['-p', ovn_conf.get_ovn_sb_private_key(), '-c',
-                    ovn_conf.get_ovn_sb_certificate(), '-C',
-                    ovn_conf.get_ovn_sb_ca_cert()]
-        cmd += ['["OVN_Southbound", {"op": "delete", "table": "MAC_Binding", '
-                '"where": [["mac", "==", "%s"]]}]' % mac]
-        return processutils.execute(*cmd,
-                                    log_errors=processutils.LOG_FINAL_ERROR)
+        cmd = [
+            "OVN_Southbound", {
+                "op": "delete",
+                "table": "MAC_Binding",
+                "where": [
+                    ["mac", "==", mac]
+                ]
+            }
+        ]
+        return utils.OvsdbClientTransactCommand.run(cmd)
 
     def _delete_lrouter_port(self, context, port_id, router_id=None, txn=None):
         """Delete a logical router port."""
