@@ -72,7 +72,6 @@
         - neutron-ovs-tempest-with-os-ken-master
         - neutron-ovn-tempest-postgres-full
         - neutron-ovn-tempest-mariadb-full
-        - neutron-ovn-tempest-ovs-release
         - neutron-ovn-tempest-ovs-release-ipv6-only
         - neutron-ovn-tempest-ovs-master-centos-9-stream
         - neutron-ovn-tempest-with-neutron-lib-master

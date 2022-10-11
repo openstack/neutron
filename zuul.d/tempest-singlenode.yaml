@@ -462,6 +462,13 @@
         BUILD_TIMEOUT: 784
         ENABLE_TLS: True
         OVN_IGMP_SNOOPING_ENABLE: True
+        # Don't change that value in the base job's definition.
+        # It should by default use OVS and OVN provided in the packages by the
+        # distribution used by the job.
+        # In case when there is need for a job which will install OVS/OVN from
+        # sources, new job, inheriting from this one, should be created and
+        # that option should be overwritten there.
+        OVN_BUILD_FROM_SOURCE: False
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron
       zuul_copy_output:
@@ -601,7 +608,7 @@
 
 - job:
     name: neutron-ovn-tempest-ovs-release
-    description: Job testing for devstack/tempest testing Neutron with ovn driver and latest released OVN branch
+    description: Job testing for devstack/tempest testing Neutron with ovn driver and latest OVN version provided by the packages released in the operating system this job is deployed on
     parent: neutron-ovn-base
 
 - job:
