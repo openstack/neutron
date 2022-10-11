@@ -13,7 +13,6 @@
 #    under the License.
 
 import abc
-import contextlib
 import datetime
 
 from neutron_lib import context as neutron_context
@@ -581,17 +580,6 @@ class FIPAddDeleteEvent(row_event.RowEvent):
         self.driver.delete_mac_binding_entries(row.external_ip)
 
 
-class NeutronPgDropPortGroupCreated(row_event.WaitEvent):
-    """WaitEvent for neutron_pg_drop Create event."""
-    def __init__(self, timeout=None):
-        table = 'Port_Group'
-        events = (self.ROW_CREATE,)
-        conditions = (('name', '=', ovn_const.OVN_DROP_PORT_GROUP_NAME),)
-        super(NeutronPgDropPortGroupCreated, self).__init__(
-            events, table, conditions, timeout=timeout)
-        self.event_name = 'PortGroupCreated'
-
-
 class OvnDbNotifyHandler(row_event.RowEventHandler):
     def __init__(self, driver):
         self.driver = driver
@@ -835,56 +823,6 @@ class OvnSbIdl(OvnIdlDistributedLock):
         self.notify_handler.watch_events(
             [self._chassis_event, self._portbinding_event,
              PortBindingChassisUpdateEvent(self.driver)])
-
-
-class OvnInitPGNbIdl(OvnIdl):
-    """Very limited OVN NB IDL.
-
-    This IDL is intended to be used only in initialization phase with short
-    living DB connections.
-    """
-
-    tables = ['Port_Group', 'Logical_Switch_Port', 'ACL']
-
-    def __init__(self, driver, remote, schema):
-        super(OvnInitPGNbIdl, self).__init__(driver, remote, schema)
-        self.set_table_condition(
-            'Port_Group', [['name', '==', ovn_const.OVN_DROP_PORT_GROUP_NAME]])
-        self.neutron_pg_drop_event = NeutronPgDropPortGroupCreated(
-                timeout=ovn_conf.get_ovn_ovsdb_timeout())
-        self.notify_handler.watch_event(self.neutron_pg_drop_event)
-
-    def notify(self, event, row, updates=None):
-        # Go ahead and process events even if the lock is contended so we can
-        # know that some other server has created the drop group
-        self.notify_handler.notify(event, row, updates)
-
-    @classmethod
-    def from_server(cls, connection_string, helper, driver, pg_only=False):
-        if pg_only:
-            helper.register_table('Port_Group')
-        else:
-            for table in cls.tables:
-                helper.register_table(table)
-
-        return cls(driver, connection_string, helper)
-
-
-@contextlib.contextmanager
-def short_living_ovsdb_api(api_class, idl):
-    """Context manager for short living connections to the database.
-
-    :param api_class: Class implementing the database calls
-                      (e.g. from the impl_idl module)
-    :param idl: An instance of IDL class (e.g. instance of OvnNbIdl)
-    """
-    conn = connection.Connection(
-        idl, timeout=ovn_conf.get_ovn_ovsdb_timeout())
-    api = api_class(conn)
-    try:
-        yield api
-    finally:
-        api.ovsdb_connection.stop()
 
 
 def _check_and_set_ssl_files(schema_name):
