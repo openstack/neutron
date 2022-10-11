@@ -441,9 +441,8 @@ class TestAgentMonitor(base.TestOVNFunctionalBase):
             chassis_name, self.mech_driver.agent_chassis_table)
         self.mech_driver.sb_ovn.idl.notify_handler.watch_event(row_event)
         self.chassis_name = self.add_fake_chassis(
-            self.FAKE_CHASSIS_HOST,
-            external_ids={'ovn-cms-options': 'enable-chassis-as-gw'},
-            name=chassis_name)
+            self.FAKE_CHASSIS_HOST, name=chassis_name,
+            enable_chassis_as_gw=True)
         self.assertTrue(row_event.wait())
         n_utils.wait_until_true(
             lambda: len(list(neutron_agent.AgentCache())) == 1)
@@ -451,11 +450,11 @@ class TestAgentMonitor(base.TestOVNFunctionalBase):
     def test_agent_change_controller(self):
         self.assertEqual(neutron_agent.ControllerGatewayAgent,
                 type(neutron_agent.AgentCache()[self.chassis_name]))
-        self.sb_api.db_set('Chassis', self.chassis_name, ('external_ids',
+        self.sb_api.db_set('Chassis', self.chassis_name, ('other_config',
                 {'ovn-cms-options': ''})).execute(check_error=True)
         n_utils.wait_until_true(lambda:
                 neutron_agent.AgentCache()[self.chassis_name].
-                chassis.external_ids['ovn-cms-options'] == '')
+                chassis.other_config['ovn-cms-options'] == '')
         self.assertEqual(neutron_agent.ControllerAgent,
                 type(neutron_agent.AgentCache()[self.chassis_name]))
 
