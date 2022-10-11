@@ -1677,19 +1677,23 @@ class DeviceManager(object):
             network.ports.append(port)
 
     def _cleanup_stale_devices(self, network, dhcp_port):
-        """Unplug any devices found in the namespace except for dhcp_port."""
+        """Unplug unrelated or stale devices found in the namespace."""
         LOG.debug("Cleaning stale devices for network %s", network.id)
         skip_dev_name = (self.driver.get_device_name(dhcp_port)
                          if dhcp_port else None)
         ns_ip = ip_lib.IPWrapper(namespace=network.namespace)
         if not ns_ip.netns.exists(network.namespace):
             return
-        for d in ns_ip.get_devices():
-            # delete all devices except current active DHCP port device
-            if d.name != skip_dev_name:
-                LOG.debug("Found stale device %s, deleting", d.name)
+
+        db_ports = {self.get_interface_name(network, port)
+                    for port in network.ports}
+        hw_ports = {d.name for d in ns_ip.get_devices()}
+
+        for dev_name in hw_ports - db_ports:
+            if dev_name != skip_dev_name:
+                LOG.debug("Found stale device %s, deleting", dev_name)
                 try:
-                    self.unplug(d.name, network)
+                    self.unplug(dev_name, network)
                 except Exception:
                     LOG.exception("Exception during stale "
                                   "dhcp device cleanup")
