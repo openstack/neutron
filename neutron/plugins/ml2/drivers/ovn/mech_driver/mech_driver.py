@@ -119,10 +119,6 @@ class OVNMechanismDriver(api.MechanismDriver):
         self.node_uuid = None
         self.hash_ring_group = ovn_const.HASH_RING_ML2_GROUP
         self.sg_enabled = ovn_acl.is_sg_enabled()
-        # NOTE(lucasagomes): _clean_hash_ring() must be called before
-        # self.subscribe() to avoid processes racing when adding or
-        # deleting nodes from the Hash Ring during service initialization
-        self._clean_hash_ring()
         self._post_fork_event = threading.Event()
         if cfg.CONF.SECURITYGROUP.firewall_driver:
             LOG.warning('Firewall driver configuration is ignored')
@@ -344,8 +340,19 @@ class OVNMechanismDriver(api.MechanismDriver):
                                 service.RpcWorker)
 
     @lockutils.synchronized('hash_ring_probe_lock', external=True)
-    def _start_hash_ring_probe(self):
+    def _setup_hash_ring(self):
+        """Setup the hash ring.
+
+        The first worker to acquire the lock is responsible for cleaning
+        the hash ring from previous runs as well as start the probing
+        thread for this host. Subsequently workers just need to register
+        themselves to the hash ring.
+        """
+        admin_context = n_context.get_admin_context()
         if not self._hash_ring_probe_event.is_set():
+            self._clean_hash_ring()
+            self.node_uuid = ovn_hash_ring_db.add_node(admin_context,
+                                                       self.hash_ring_group)
             self._hash_ring_thread = maintenance.MaintenanceThread()
             self._hash_ring_thread.add_periodics(
                 maintenance.HashRingHealthCheckPeriodics(
@@ -353,6 +360,9 @@ class OVNMechanismDriver(api.MechanismDriver):
             self._hash_ring_thread.start()
             LOG.info("Hash Ring probing thread has started")
             self._hash_ring_probe_event.set()
+        else:
+            self.node_uuid = ovn_hash_ring_db.add_node(admin_context,
+                                                       self.hash_ring_group)
 
     def post_fork_initialize(self, resource, event, trigger, payload=None):
         # Initialize API/Maintenance workers with OVN IDL connections
@@ -364,10 +374,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         self._ovn_client_inst = None
 
         if worker_class == neutron.wsgi.WorkerService:
-            admin_context = n_context.get_admin_context()
-            self.node_uuid = ovn_hash_ring_db.add_node(admin_context,
-                                                       self.hash_ring_group)
-            self._start_hash_ring_probe()
+            self._setup_hash_ring()
 
         n_agent.AgentCache(self)  # Initialize singleton agent cache
         self.nb_ovn, self.sb_ovn = impl_idl_ovn.get_ovn_idls(self, trigger)
