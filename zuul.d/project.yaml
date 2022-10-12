@@ -25,7 +25,7 @@
         - neutron-ovs-tempest-multinode-full
         - neutron-ovs-tempest-dvr-ha-multinode-full
         - neutron-ovn-tempest-ovs-release
-        - neutron-ovn-tempest-ipv6-only
+        - neutron-ovn-tempest-ipv6-only-ovs-release
         - neutron-ovn-rally-task:
             voting: false
     gate:
@@ -35,5 +35,4 @@
         - neutron-ovs-tempest-multinode-full
         - neutron-ovs-grenade-multinode
         - neutron-ovs-grenade-dvr-multinode
-        - neutron-ovn-tempest-ovs-release
-        - neutron-ovn-tempest-ipv6-only
+        - neutron-ovn-tempest-ipv6-only-ovs-release
