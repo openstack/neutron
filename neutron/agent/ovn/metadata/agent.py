@@ -18,6 +18,7 @@ import re
 import threading
 import uuid
 
+import netaddr
 from neutron_lib import constants as n_const
 from oslo_concurrency import lockutils
 from oslo_log import log
@@ -46,7 +47,8 @@ MAC_PATTERN = re.compile(r'([0-9A-F]{2}[:-]){5}([0-9A-F]{2})', re.I)
 OVN_VIF_PORT_TYPES = ("", "external", )
 
 MetadataPortInfo = collections.namedtuple('MetadataPortInfo', ['mac',
-                                                               'ip_addresses'])
+                                                               'ip_addresses',
+                                                               'logical_port'])
 
 OVN_METADATA_UUID_NAMESPACE = uuid.UUID('d34bf9f6-da32-4871-9af8-15a4626b41ab')
 
@@ -87,7 +89,7 @@ class PortBindingChassisEvent(row_event.RowEvent):
                 net_name = ovn_utils.get_network_name_from_datapath(
                         row.datapath)
                 LOG.info(self.LOG_MSG, row.logical_port, net_name)
-                self.agent.update_datapath(str(row.datapath.uuid), net_name)
+                self.agent.provision_datapath(row.datapath)
             except ConfigException:
                 # We're now in the reader lock mode, we need to exit the
                 # context and then use writer lock
@@ -315,11 +317,12 @@ class MetadataAgent(object):
                         "br-int instead.")
             return 'br-int'
 
-    def get_networks(self):
+    def get_networks_datapaths(self):
+        """Return a set of datapath objects of the VIF ports on the current
+        chassis.
+        """
         ports = self.sb_idl.get_ports_on_chassis(self.chassis)
-        return {(str(p.datapath.uuid),
-            ovn_utils.get_network_name_from_datapath(p.datapath))
-            for p in self._vif_ports(ports)}
+        return set(p.datapath for p in self._vif_ports(ports))
 
     @_sync_lock
     def sync(self):
@@ -334,10 +337,10 @@ class MetadataAgent(object):
         system_namespaces = tuple(
             ns.decode('utf-8') if isinstance(ns, bytes) else ns
             for ns in ip_lib.list_network_namespaces())
-        nets = self.get_networks()
+        net_datapaths = self.get_networks_datapaths()
         metadata_namespaces = [
-            self._get_namespace_name(net[1])
-            for net in nets
+            self._get_namespace_name(str(datapath.uuid))
+            for datapath in net_datapaths
         ]
         unused_namespaces = [ns for ns in system_namespaces if
                              ns.startswith(NS_PREFIX) and
@@ -347,7 +350,8 @@ class MetadataAgent(object):
 
         # now that all obsolete namespaces are cleaned up, deploy required
         # networks
-        self.ensure_all_networks_provisioned(nets)
+        for datapath in net_datapaths:
+            self.provision_datapath(datapath)
 
     @staticmethod
     def _get_veth_name(datapath):
@@ -390,25 +394,6 @@ class MetadataAgent(object):
 
         ip.garbage_collect_namespace()
 
-    def update_datapath(self, datapath, net_name):
-        """Update the metadata service for this datapath.
-
-        This function will:
-        * Provision the namespace if it wasn't already in place.
-        * Update the namespace if it was already serving metadata (for example,
-          after binding/unbinding the first/last port of a subnet in our
-          chassis).
-        * Tear down the namespace if there are no more ports in our chassis
-          for this datapath.
-        """
-        ports = self.sb_idl.get_ports_on_chassis(self.chassis)
-        datapath_ports = [p for p in self._vif_ports(ports) if
-                          str(p.datapath.uuid) == datapath]
-        if datapath_ports:
-            self.provision_datapath(datapath, net_name)
-        else:
-            self.teardown_datapath(net_name)
-
     def _ensure_datapath_checksum(self, namespace):
         """Ensure the correct checksum in the metadata packets in DPDK bridges
 
@@ -428,22 +413,75 @@ class MetadataAgent(object):
         iptables_mgr.ipv4['mangle'].add_rule('POSTROUTING', rule, wrap=False)
         iptables_mgr.apply()
 
-    def provision_datapath(self, datapath, net_name):
-        """Provision the datapath so that it can serve metadata.
+    def _get_port_ips(self, port):
+        # Retrieve IPs from the port mac column which is in form
+        # ["<port_mac> <ip1> <ip2> ... <ipN>"]
+        mac_field_attrs = port.mac[0].split()
+        ips = mac_field_attrs[1:]
+        if not ips:
+            LOG.debug("Port %s IP addresses were not retrieved from the "
+                      "Port_Binding MAC column %s", port.uuid, mac_field_attrs)
+        return ips
 
-        This function will create the namespace and VETH pair if needed
-        and assign the IP addresses to the interface corresponding to the
-        metadata port of the network. It will also remove existing IP
-        addresses that are no longer needed.
+    def _active_subnets_cidrs(self, datapath_ports_ips, metadata_port_cidrs):
+        active_subnets_cidrs = set()
+        # Prepopulate a dictionary where each metadata_port_cidr(string) maps
+        # to its netaddr.IPNetwork object. This is so we dont have to
+        # reconstruct IPNetwork objects repeatedly in the for loop
+        metadata_cidrs_to_network_objects = {
+            metadata_port_cidr: netaddr.IPNetwork(metadata_port_cidr)
+            for metadata_port_cidr in metadata_port_cidrs
+        }
+
+        for datapath_port_ip in datapath_ports_ips:
+            ip_obj = netaddr.IPAddress(datapath_port_ip)
+            for metadata_cidr, metadata_cidr_obj in \
+                    metadata_cidrs_to_network_objects.items():
+                if ip_obj in metadata_cidr_obj:
+                    active_subnets_cidrs.add(metadata_cidr)
+                    break
+        return active_subnets_cidrs
+
+    def _process_cidrs(self, current_namespace_cidrs,
+            datapath_ports_ips, metadata_port_subnet_cidrs):
+        active_subnets_cidrs = self._active_subnets_cidrs(
+            datapath_ports_ips, metadata_port_subnet_cidrs)
+
+        cidrs_to_add = active_subnets_cidrs - current_namespace_cidrs
+
+        if n_const.METADATA_CIDR not in current_namespace_cidrs:
+            cidrs_to_add.add(n_const.METADATA_CIDR)
+        else:
+            active_subnets_cidrs.add(n_const.METADATA_CIDR)
+
+        cidrs_to_delete = current_namespace_cidrs - active_subnets_cidrs
+
+        return cidrs_to_add, cidrs_to_delete
+
+    def _get_provision_params(self, datapath):
+        """Performs datapath preprovision checks and returns paremeters
+        needed to provision namespace.
+
+        Function will confirm that:
+        1. Datapath metadata port has valid MAC and subnet CIDRs
+        2. There are datapath port IPs
+
+        If any of those rules are not valid the nemaspace for the
+        provided datapath will be tore down.
+        If successful, returns datapath's network name, ports IPs
+        and meta port info
         """
-        LOG.info("Provisioning metadata for network %s", net_name)
-        port = self.sb_idl.get_metadata_port_network(datapath)
+        net_name = ovn_utils.get_network_name_from_datapath(datapath)
+        datapath_uuid = str(datapath.uuid)
+
+        metadata_port = self.sb_idl.get_metadata_port_network(datapath_uuid)
         # If there's no metadata port or it doesn't have a MAC or IP
         # addresses, then tear the namespace down if needed. This might happen
         # when there are no subnets yet created so metadata port doesn't have
         # an IP address.
-        if not (port and port.mac and
-                port.external_ids.get(ovn_const.OVN_CIDRS_EXT_ID_KEY, None)):
+        if not (metadata_port and metadata_port.mac and
+                metadata_port.external_ids.get(
+                    ovn_const.OVN_CIDRS_EXT_ID_KEY, None)):
             LOG.debug("There is no metadata port for network %s or it has no "
                       "MAC or IP addresses configured, tearing the namespace "
                       "down if needed", net_name)
@@ -451,9 +489,7 @@ class MetadataAgent(object):
             return
 
         # First entry of the mac field must be the MAC address.
-        match = MAC_PATTERN.match(port.mac[0].split(' ')[0])
-        # If it is not, we can't provision the namespace. Tear it down if
-        # needed and log the error.
+        match = MAC_PATTERN.match(metadata_port.mac[0].split(' ')[0])
         if not match:
             LOG.error("Metadata port for network %s doesn't have a MAC "
                       "address, tearing the namespace down if needed",
@@ -463,10 +499,44 @@ class MetadataAgent(object):
 
         mac = match.group()
         ip_addresses = set(
-            port.external_ids[ovn_const.OVN_CIDRS_EXT_ID_KEY].split(' '))
-        ip_addresses.add(n_const.METADATA_CIDR)
-        metadata_port = MetadataPortInfo(mac, ip_addresses)
+            metadata_port.external_ids[
+                ovn_const.OVN_CIDRS_EXT_ID_KEY].split(' '))
+        metadata_port_info = MetadataPortInfo(mac, ip_addresses,
+                                              metadata_port.logical_port)
 
+        chassis_ports = self.sb_idl.get_ports_on_chassis(self.chassis)
+        datapath_ports_ips = []
+        for chassis_port in self._vif_ports(chassis_ports):
+            if str(chassis_port.datapath.uuid) == datapath_uuid:
+                datapath_ports_ips.extend(self._get_port_ips(chassis_port))
+
+        if not datapath_ports_ips:
+            LOG.debug("No valid VIF ports were found for network %s, "
+                      "tearing the namespace down if needed", net_name)
+            self.teardown_datapath(net_name)
+            return
+
+        return net_name, datapath_ports_ips, metadata_port_info
+
+    def provision_datapath(self, datapath):
+        """Provision the datapath so that it can serve metadata.
+
+        This function will create the namespace and VETH pair if needed
+        and assign the IP addresses to the interface corresponding to the
+        metadata port of the network. It will also remove existing IP from
+        the namespace if they are no longer needed.
+
+        :param datapath: datapath object.
+        :return: The metadata namespace name for the datapath or None
+                 if namespace was not provisioned
+        """
+
+        provision_params = self._get_provision_params(datapath)
+        if not provision_params:
+            return
+        net_name, datapath_ports_ips, metadata_port_info = provision_params
+
+        LOG.info("Provisioning metadata for network %s", net_name)
         # Create the VETH pair if it's not created. Also the add_veth function
         # will create the namespace for us.
         namespace = self._get_namespace_name(net_name)
@@ -491,22 +561,24 @@ class MetadataAgent(object):
         ip2.link.set_up()
 
         # Configure the MAC address.
-        ip2.link.set_address(metadata_port.mac)
-        dev_info = ip2.addr.list()
+        ip2.link.set_address(metadata_port_info.mac)
 
-        # Configure the IP addresses on the VETH pair and remove those
-        # that we no longer need.
-        current_cidrs = {dev['cidr'] for dev in dev_info}
-        for ipaddr in current_cidrs - metadata_port.ip_addresses:
-            ip2.addr.delete(ipaddr)
-        for ipaddr in metadata_port.ip_addresses - current_cidrs:
+        cidrs_to_add, cidrs_to_delete = self._process_cidrs(
+            {dev['cidr'] for dev in ip2.addr.list()},
+            datapath_ports_ips,
+            metadata_port_info.ip_addresses
+        )
+        # Delete any non active addresses from the network namespace
+        for cidr in cidrs_to_delete:
+            ip2.addr.delete(cidr)
+        for cidr in cidrs_to_add:
             # NOTE(dalvarez): metadata only works on IPv4. We're doing this
             # extra check here because it could be that the metadata port has
             # an IPv6 address if there's an IPv6 subnet with SLAAC in its
             # network. Neutron IPAM will autoallocate an IPv6 address for every
             # port in the network.
-            if utils.get_ip_version(ipaddr) == 4:
-                ip2.addr.add(ipaddr)
+            if utils.get_ip_version(cidr) == n_const.IP_VERSION_4:
+                ip2.addr.add(cidr)
 
         # Check that this port is not attached to any other OVS bridge. This
         # can happen when the OVN bridge changes (for example, during a
@@ -531,7 +603,8 @@ class MetadataAgent(object):
                               veth_name[0]).execute()
         self.ovs_idl.db_set(
             'Interface', veth_name[0],
-            ('external_ids', {'iface-id': port.logical_port})).execute()
+            ('external_ids', {'iface-id':
+                              metadata_port_info.logical_port})).execute()
 
         # Ensure the correct checksum in the metadata traffic.
         self._ensure_datapath_checksum(namespace)
@@ -541,14 +614,3 @@ class MetadataAgent(object):
             self._process_monitor, namespace, n_const.METADATA_PORT,
             self.conf, bind_address=n_const.METADATA_V4_IP,
             network_id=net_name)
-
-    def ensure_all_networks_provisioned(self, nets):
-        """Ensure that all requested datapaths are provisioned.
-
-        This function will make sure that requested datapaths have their
-        namespaces, VETH pair and OVS ports created and metadata proxies are up
-        and running.
-        """
-        # Make sure that all those datapaths are serving metadata
-        for datapath, net_name in nets:
-            self.provision_datapath(datapath, net_name)
