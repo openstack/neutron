@@ -691,7 +691,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 if port_id not in self.deleted_ports:
                     self.updated_ports.add(port_id)
                     LOG.debug("network_update message processed for network "
-                              "%(network_id)s, tag: %(tag)s, "
+                              "%(network_id)s, tag: %(segmentation_id)s, "
                               "with ports: %(ports)s",
                               {'network_id': network_id,
                                'segmentation_id': seg_id,
