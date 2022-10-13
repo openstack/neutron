@@ -60,8 +60,6 @@
         - neutron-fullstack-with-uwsgi-with-neutron-lib-master
         - neutron-fullstack-with-pyroute2-master
         - neutron-ovn-grenade-multinode
-        - neutron-ovn-grenade-multinode-tick-tick:
-            voting: false
         - neutron-ovn-tempest-with-uwsgi-loki
         - neutron-ovn-tempest-full-multinode-ovs-master
         - neutron-ovn-tempest-ovs-master
@@ -121,7 +119,6 @@
         - neutron-ovn-tempest-with-neutron-lib-master
         - neutron-ovs-tempest-fips
         - neutron-ovn-tempest-ovs-release-fips
-        - neutron-ovs-grenade-multinode-tick-tick
         - devstack-tobiko-neutron:
             voting: true
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa

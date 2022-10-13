@@ -20,6 +20,10 @@
         - neutron-functional-with-uwsgi
         - neutron-fullstack-with-uwsgi
         - neutron-ovs-grenade-multinode
+        - neutron-ovs-grenade-multinode-tick-tick:
+            voting: false
+        - neutron-ovn-grenade-multinode-tick-tick:
+            voting: false
         - neutron-ovs-grenade-dvr-multinode
         - neutron-ovs-tempest-multinode-full
         - neutron-ovs-tempest-dvr-ha-multinode-full
