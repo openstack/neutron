@@ -28,7 +28,10 @@ then
     flavor_name="ovn-migration-{{ resource_suffix }}"
 fi
 
-openstack keypair create ovn-migration-{{ resource_suffix }} --private-key {{ ovn_migration_temp_dir }}/ovn_migration_ssh_key
+# Cirros doesn't support RSA key (Default on rhel 9) ecsda should be used
+ssh-keygen -t ecdsa {{ ovn_migration_temp_dir }}/ovn_migration_ssh_key -q -N ""
+
+openstack keypair create ovn-migration-{{ resource_suffix }} --public-key {{ ovn_migration_temp_dir }}/ovn_migration_ssh_key.pub
 
 openstack security group create ovn-migration-sg-{{ resource_suffix }}
 
