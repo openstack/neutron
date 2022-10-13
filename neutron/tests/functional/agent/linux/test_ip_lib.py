@@ -27,7 +27,6 @@ from oslo_serialization import jsonutils
 from oslo_utils import importutils
 from oslo_utils import uuidutils
 from pyroute2.iproute import linux as iproute_linux
-import testscenarios
 import testtools
 
 from neutron.agent.common import async_process
@@ -740,19 +739,13 @@ class NamespaceTestCase(functional_base.BaseSudoTestCase):
                                                          try_is_ready=True))
 
 
-class IpMonitorTestCase(testscenarios.WithScenarios,
-                        functional_base.BaseLoggingTestCase):
-
-    scenarios = [
-        ('namespace', {'namespace': 'ns_' + uuidutils.generate_uuid()}),
-        ('no_namespace', {'namespace': None})
-    ]
+class IpMonitorTestCase(functional_base.BaseLoggingTestCase):
 
     def setUp(self):
         super(IpMonitorTestCase, self).setUp()
         self.addCleanup(self._cleanup)
-        if self.namespace:
-            priv_ip_lib.create_netns(self.namespace)
+        self.namespace = 'ns_' + uuidutils.generate_uuid()
+        priv_ip_lib.create_netns(self.namespace)
         self.devices = [('int_' + uuidutils.generate_uuid())[
                         :constants.DEVICE_NAME_MAX_LEN] for _ in range(5)]
         self.ip_wrapper = ip_lib.IPWrapper(self.namespace)
@@ -762,14 +755,7 @@ class IpMonitorTestCase(testscenarios.WithScenarios,
 
     def _cleanup(self):
         self.proc.stop(kill_timeout=10, kill_signal=signal.SIGTERM)
-        if self.namespace:
-            priv_ip_lib.remove_netns(self.namespace)
-        else:
-            for device in self.devices:
-                try:
-                    priv_ip_lib.delete_interface(device, self.namespace)
-                except priv_ip_lib.NetworkInterfaceNotFound:
-                    pass
+        priv_ip_lib.remove_netns(self.namespace)
 
     @staticmethod
     def _normalize_module_name(name):
