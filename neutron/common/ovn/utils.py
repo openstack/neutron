@@ -27,6 +27,7 @@ from neutron_lib import context as n_context
 from neutron_lib import exceptions as n_exc
 from neutron_lib.plugins import directory
 from neutron_lib.utils import net as n_utils
+from oslo_concurrency import processutils
 from oslo_config import cfg
 from oslo_log import log
 from oslo_serialization import jsonutils
@@ -54,6 +55,70 @@ AddrPairsDiff = collections.namedtuple(
 
 PortExtraDHCPValidation = collections.namedtuple(
     'PortExtraDHCPValidation', ['failed', 'invalid_ipv4', 'invalid_ipv6'])
+
+
+class OvsdbClientCommand(object):
+    _CONNECTION = 0
+    _PRIVATE_KEY = 1
+    _CERTIFICATE = 2
+    _CA_AUTHORITY = 3
+
+    OVN_Northbound = "OVN_Northbound"
+    OVN_Southbound = "OVN_Southbound"
+
+    _db_settings = {
+        OVN_Northbound: {
+            _CONNECTION: ovn_conf.get_ovn_nb_connection,
+            _PRIVATE_KEY: ovn_conf.get_ovn_nb_private_key,
+            _CERTIFICATE: ovn_conf.get_ovn_nb_certificate,
+            _CA_AUTHORITY: ovn_conf.get_ovn_nb_ca_cert,
+        },
+        OVN_Southbound: {
+            _CONNECTION: ovn_conf.get_ovn_sb_connection,
+            _PRIVATE_KEY: ovn_conf.get_ovn_sb_private_key,
+            _CERTIFICATE: ovn_conf.get_ovn_sb_certificate,
+            _CA_AUTHORITY: ovn_conf.get_ovn_sb_ca_cert,
+        },
+    }
+
+    @classmethod
+    def run(cls, command):
+        """Run custom ovsdb protocol command.
+
+        :param command: JSON object of ovsdb protocol command
+        """
+        try:
+            db = command[0]
+        except IndexError:
+            raise KeyError(
+                _("%s or %s schema must be specified in the command %s" % (
+                    cls.OVN_Northbound, cls.OVN_Southbound, command)))
+
+        if db not in (cls.OVN_Northbound, cls.OVN_Southbound):
+            raise KeyError(
+                _("%s or %s schema must be specified in the command %s" % (
+                    cls.OVN_Northbound, cls.OVN_Southbound, command)))
+
+        cmd = ['ovsdb-client',
+               cls.COMMAND,
+               cls._db_settings[db][cls._CONNECTION](),
+               '--timeout',
+               str(ovn_conf.get_ovn_ovsdb_timeout())]
+
+        if cls._db_settings[db][cls._PRIVATE_KEY]():
+            cmd += ['-p', cls._db_settings[db][cls._PRIVATE_KEY](),
+                    '-c', cls._db_settings[db][cls._CERTIFICATE](),
+                    '-C', cls._db_settings[db][cls._CA_AUTHORITY]()]
+
+        cmd.append(jsonutils.dumps(command))
+
+        return processutils.execute(
+            *cmd,
+            log_errors=processutils.LOG_FINAL_ERROR)
+
+
+class OvsdbClientTransactCommand(OvsdbClientCommand):
+    COMMAND = 'transact'
 
 
 def ovn_name(id):
@@ -713,3 +778,56 @@ def retry(max_=None):
                 reraise=True)(func)(*args, **kwargs)
         return wrapper
     return inner
+
+
+def create_neutron_pg_drop():
+    """Create neutron_pg_drop Port Group.
+
+    It uses ovsdb-client to send to server transact command using ovsdb
+    protocol that checks if the neutron_pg_drop row exists. If it exists
+    it times out immediatelly. If it doesn't exist then it creates the
+    Port_Group and default ACLs to drop all ingress and egress traffic.
+    """
+    command = [
+        "OVN_Northbound", {
+            "op": "wait",
+            "timeout": 0,
+            "table": "Port_Group",
+            "where": [
+                ["name", "==", constants.OVN_DROP_PORT_GROUP_NAME]
+            ],
+            "until": "==",
+            "rows": []
+        }, {
+            "op": "insert",
+            "table": "ACL",
+            "row": {
+                "action": "drop",
+                "direction": "to-lport",
+                "match": "outport == @neutron_pg_drop && ip",
+                "priority": 1001
+            },
+            "uuid-name": "droptoport"
+        }, {
+            "op": "insert",
+            "table": "ACL",
+            "row": {
+                "action": "drop",
+                "direction": "from-lport",
+                "match": "inport == @neutron_pg_drop && ip",
+                "priority": 1001
+            },
+            "uuid-name": "dropfromport"
+        }, {
+            "op": "insert",
+            "table": "Port_Group",
+            "row": {
+                "name": constants.OVN_DROP_PORT_GROUP_NAME,
+                "acls": ["set", [
+                    ["named-uuid", "droptoport"],
+                    ["named-uuid", "dropfromport"]
+                ]]
+            }
+        }]
+
+    OvsdbClientTransactCommand.run(command)
