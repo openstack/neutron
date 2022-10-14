@@ -14,7 +14,6 @@
 #    under the License.
 
 import collections
-import uuid
 
 import mock
 from neutron_lib import constants as const
@@ -135,6 +134,15 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         self.assertSetEqual(controllers, set(self.br.get_controller()))
         self.br.del_controller()
         self.assertEqual([], self.br.get_controller())
+
+    def test_disable_in_band(self):
+        self.br.disable_in_band()
+        br_other_config = self.ovs.ovsdb.db_find(
+            'Bridge', ('name', '=', self.br.br_name), columns=['other_config']
+        ).execute()[0]['other_config']
+        self.assertEqual(
+            'true',
+            br_other_config.get('disable-in-band', '').lower())
 
     def test_non_index_queries(self):
         controllers = ['tcp:127.0.0.1:6633']
@@ -390,33 +398,6 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         self.assertSetEqual(nonvifs, set(self.br.get_port_name_list()))
         self.br.delete_ports(all_ports=True)
         self.assertEqual(len(self.br.get_port_name_list()), 0)
-
-    def test_set_controller_connection_mode(self):
-        controllers = ['tcp:192.0.2.0:6633']
-        self._set_controllers_connection_mode(controllers)
-
-    def test_set_multi_controllers_connection_mode(self):
-        controllers = ['tcp:192.0.2.0:6633', 'tcp:192.0.2.1:55']
-        self._set_controllers_connection_mode(controllers)
-
-    def _set_controllers_connection_mode(self, controllers):
-        self.br.set_controller(controllers)
-        self.assertEqual(sorted(controllers), sorted(self.br.get_controller()))
-        self.br.set_controllers_connection_mode('out-of-band')
-        self._assert_controllers_connection_mode('out-of-band')
-        self.br.del_controller()
-        self.assertEqual([], self.br.get_controller())
-
-    def _assert_controllers_connection_mode(self, connection_mode):
-        controllers = self.br.db_get_val('Bridge', self.br.br_name,
-                                         'controller')
-        controllers = [controllers] if isinstance(
-            controllers, uuid.UUID) else controllers
-        for controller in controllers:
-            self.assertEqual(connection_mode,
-                             self.br.db_get_val('Controller',
-                                                controller,
-                                                'connection_mode'))
 
     def test_egress_bw_limit(self):
         port_name, _ = self.create_ovs_port()
