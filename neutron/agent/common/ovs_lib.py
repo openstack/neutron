@@ -260,6 +260,18 @@ class OVSBridge(BaseOVS):
     def set_agent_uuid_stamp(self, val):
         self._default_cookie = val
 
+    def disable_in_band(self):
+        """Disable in-band remote management for the bridge.
+
+        That configuration will apply to all controllers configured for the
+        bridge.
+        """
+        other_config = {
+            'disable-in-band': 'true'}
+        self.ovsdb.db_set(
+            'Bridge', self.br_name,
+            ('other_config', other_config)).execute(check_error=True)
+
     def set_controller(self, controllers):
         self.ovsdb.set_controller(self.br_name,
                                   controllers).execute(check_error=True)
@@ -747,13 +759,6 @@ class OVSBridge(BaseOVS):
         else:
             msg = _('Unable to determine mac address for %s') % self.br_name
             raise Exception(msg)
-
-    def set_controllers_connection_mode(self, connection_mode):
-        """Set bridge controllers connection mode.
-
-        :param connection_mode: "out-of-band" or "in-band"
-        """
-        self.set_controller_field('connection_mode', connection_mode)
 
     def set_controllers_inactivity_probe(self, interval):
         """Set bridge controllers inactivity probe interval.
