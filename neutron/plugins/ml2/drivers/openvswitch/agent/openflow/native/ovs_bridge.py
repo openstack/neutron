@@ -71,18 +71,8 @@ class OVSAgentBridge(ofswitch.OpenFlowSwitchMixin,
                     self._cached_dpid = new_dpid
 
     def setup_controllers(self, conf):
-        url = ipv6_utils.valid_ipv6_url(conf.OVS.of_listen_address,
-                                        conf.OVS.of_listen_port)
-        controller = "tcp:" + url
-        existing_controllers = self.get_controller()
-        if controller not in existing_controllers:
-            LOG.debug("Setting controller %s for bridge %s.",
-                      controller, self.br_name)
-            self.set_controller([controller])
-
-        self.add_protocols(ovs_consts.OPENFLOW13)
-        # NOTE(ivc): Force "out-of-band" controller connection mode (see
-        # "In-Band Control" [1]).
+        # NOTE(slaweq): Disable remote in-band management for all controllers
+        # in the bridge
         #
         # By default openvswitch uses "in-band" controller connection mode
         # which adds hidden OpenFlow rules (only visible by issuing ovs-appctl
@@ -94,8 +84,26 @@ class OVSAgentBridge(ofswitch.OpenFlowSwitchMixin,
         # br-int and br-tun must be configured with the "out-of-band"
         # controller connection mode.
         #
+        # Setting connection_mode for controllers should be done in single
+        # transaction together with controllers setup but it will be easier to
+        # disable in-band remote management for bridge which
+        # effectively means that this configurations will applied to all
+        # controllers in the bridge
+        #
         # [1] https://github.com/openvswitch/ovs/blob/master/DESIGN.md
-        self.set_controllers_connection_mode("out-of-band")
+        # [2] https://bugzilla.redhat.com/show_bug.cgi?id=2134772
+        self.disable_in_band()
+
+        url = ipv6_utils.valid_ipv6_url(conf.OVS.of_listen_address,
+                                        conf.OVS.of_listen_port)
+        controller = "tcp:" + url
+        existing_controllers = self.get_controller()
+        if controller not in existing_controllers:
+            LOG.debug("Setting controller %s for bridge %s.",
+                      controller, self.br_name)
+            self.set_controller([controller])
+
+        self.add_protocols(ovs_consts.OPENFLOW13)
         self.set_controllers_inactivity_probe(conf.OVS.of_inactivity_probe)
 
     def drop_port(self, in_port):
