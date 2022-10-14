@@ -147,10 +147,9 @@ class OVSBridgeTestBase(ovs_test_base.OVSOSKenTestBase):
         m_set_controller = mock.patch.object(self.br, 'set_controller')
         m_set_probe = mock.patch.object(self.br,
                                         'set_controllers_inactivity_probe')
-        m_set_ccm = mock.patch.object(self.br,
-                                      'set_controllers_connection_mode')
+        m_disable_in_band = mock.patch.object(self.br, 'disable_in_band')
 
-        with m_set_ccm as set_ccm, \
+        with m_disable_in_band as disable_in_band, \
                 m_add_protocols as add_protocols, \
                 m_set_controller as set_controller, \
                 m_get_controller as get_controller, \
@@ -163,7 +162,7 @@ class OVSBridgeTestBase(ovs_test_base.OVSOSKenTestBase):
                 set_controller.assert_not_called()
             else:
                 set_controller.assert_called_once_with(["tcp:127.0.0.1:6633"])
-            set_ccm.assert_called_once_with("out-of-band")
+            disable_in_band.assert_called_once_with()
             add_protocols.assert_called_once_with(
                 constants.OPENFLOW10, constants.OPENFLOW13)
 
