@@ -1304,9 +1304,19 @@ class L3HAModeDbTestCase(L3HATestFramework):
             self.plugin.list_active_sync_routers_on_active_l3_agent(
                 self.admin_ctx, self.agent1['host'], [router['id']]))[0]
 
-        # ensure_host_set_on_ports binds an unbound port
         callback = l3_rpc.L3RpcCallback()
         callback._l3plugin = self.plugin
+        # First ensure that port is not bound if router is not active on any
+        # agent
+        callback._ensure_host_set_on_ports(
+            self.admin_ctx, self.agent1['host'], [router])
+        port = self._get_first_interface(router['id'])
+        self.assertEqual('', port[portbindings.HOST_ID])
+
+        # Now update router to be active on agent1
+        # and ensure_host_set_on_ports binds an unbound port
+        self.plugin.update_routers_states(
+            self.admin_ctx, {router['id']: 'active'}, self.agent1['host'])
         callback._ensure_host_set_on_ports(
             self.admin_ctx, self.agent1['host'], [router])
         port = self._get_first_interface(router['id'])
