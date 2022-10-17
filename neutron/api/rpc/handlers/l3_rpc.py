@@ -224,22 +224,21 @@ class L3RpcCallback(object):
                     active_host = (
                         self.l3plugin.get_active_host_for_ha_router(
                             context, router_id))
-                    if active_host:
-                        host = active_host
-                    # If there is currently no active router instance (For
-                    # example it's a new router), the host that requested
-                    # the routers (Essentially a random host) will do. The
-                    # port binding will be corrected when an active is
-                    # elected.
+                    if not active_host:
+                        LOG.debug("Router %(router)s is not active on any "
+                                  "host. Port %(port)s will not be updated "
+                                  "now.",
+                                  {'router': router_id, 'port': port['id']})
+                        return
                     try:
                         LOG.debug("Updating router %(router)s port %(port)s "
                                   "binding host %(host)s",
                                   {"router": router_id, "port": port['id'],
-                                   "host": host})
+                                   "host": active_host})
                         self.plugin.update_port(
                             context,
                             port['id'],
-                            {'port': {portbindings.HOST_ID: host}})
+                            {'port': {portbindings.HOST_ID: active_host}})
                     except exceptions.PortNotFound:
                         LOG.debug("Port %(port)s not found while updating "
                                   "agent binding for router %(router)s.",
