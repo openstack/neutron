@@ -64,11 +64,11 @@ The following manufacturers are known to work:
 - QLogic
 - Broadcom
 
-For information on **Mellanox SR-IOV Ethernet ConnectX cards**, see:
-- `Mellanox: How To Configure SR-IOV VFs on ConnectX-4 or newer <https://support.mellanox.com/s/article/HowTo-Configure-SR-IOV-for-ConnectX-4-ConnectX-5-ConnectX-6-with-KVM-Ethernet>`_.
+For information on **Mellanox SR-IOV Ethernet ConnectX cards**, see the
+`Mellanox: How To Configure SR-IOV VFs on ConnectX-4 or newer <https://support.mellanox.com/s/article/HowTo-Configure-SR-IOV-for-ConnectX-4-ConnectX-5-ConnectX-6-with-KVM-Ethernet>`_.
 
-For information on **QLogic SR-IOV Ethernet cards**, see:
-- `User's Guide OpenStack Deployment with SR-IOV Configuration <http://www.qlogic.com/solutions/Documents/UsersGuide_OpenStack_SR-IOV.pdf>`_.
+For information on **QLogic SR-IOV Ethernet cards**, see the
+`User's Guide OpenStack Deployment with SR-IOV Configuration <http://www.qlogic.com/solutions/Documents/UsersGuide_OpenStack_SR-IOV.pdf>`_.
 
 For information on **Broadcom NetXtreme Series Ethernet cards**, see the
 `Broadcom NetXtreme Product Page <https://www.broadcom.com/products/ethernet-connectivity/network-adapters>`_.
