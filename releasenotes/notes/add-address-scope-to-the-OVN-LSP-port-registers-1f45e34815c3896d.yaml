@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    Address scope is now added to all OVN LSP port registers in the
+    northbound. Northd then writes the address scope from the northbound to
+    the southbound so it can be used there by the ovn-bgp-agent.

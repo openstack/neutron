@@ -576,6 +576,47 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
         raise periodics.NeverAgain()
 
+    # TODO(czesla): Remove this in the A+4 cycle
+    # A static spacing value is used here, but this method will only run
+    # once per lock due to the use of periodics.NeverAgain().
+    @periodics.periodic(spacing=600, run_immediately=True)
+    def check_port_has_address_scope(self):
+        if not self.has_lock:
+            return
+
+        ports = self._nb_idl.db_find_rows(
+            "Logical_Switch_Port", ("type", "!=", ovn_const.LSP_TYPE_LOCALNET)
+        ).execute(check_error=True)
+
+        context = n_context.get_admin_context()
+        with self._nb_idl.transaction(check_error=True) as txn:
+            for port in ports:
+                if (
+                    port.external_ids.get(
+                        ovn_const.OVN_SUBNET_POOL_EXT_ADDR_SCOPE4_KEY
+                    ) is None or
+                    port.external_ids.get(
+                        ovn_const.OVN_SUBNET_POOL_EXT_ADDR_SCOPE6_KEY
+                    ) is None
+                ):
+                    try:
+                        port_neutron = self._ovn_client._plugin.get_port(
+                            context, port.name
+                        )
+
+                        port_info, external_ids = (
+                            self._ovn_client.get_external_ids_from_port(
+                                port_neutron)
+                        )
+                        txn.add(self._nb_idl.set_lswitch_port(
+                            port.name, external_ids=external_ids))
+                    except n_exc.PortNotFound:
+                        # The sync function will fix this port
+                        pass
+                    except Exception:
+                        LOG.exception('Failed to update port %s', port.name)
+        raise periodics.NeverAgain()
+
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
     @periodics.periodic(spacing=600, run_immediately=True)

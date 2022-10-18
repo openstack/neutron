@@ -1664,6 +1664,62 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 mock.ANY,
                 filters={'id': subnet_ids})
 
+    def test__get_port_options_with_addr_scope(self):
+        with mock.patch.object(
+            self.mech_driver._plugin, "get_subnets"
+        ) as mock_get_subnets, mock.patch.object(
+            self.mech_driver._plugin,
+            "get_subnetpool",
+        ) as mock_get_subnetpool:
+            port = {
+                "id": "virt-port",
+                "mac_address": "00:00:00:00:00:00",
+                "device_owner": "device_owner",
+                "network_id": "foo",
+                "fixed_ips": [
+                    {"subnet_id": "subnet-1", "ip_address": "10.0.0.55"},
+                    {"subnet_id": "subnet-2", "ip_address": "aef0::4"},
+                ],
+            }
+
+            subnet_ids = [ip["subnet_id"] for ip in port.get("fixed_ips")]
+            mock_get_subnets.return_value = [
+                {
+                    "id": "subnet-1",
+                    "subnetpool_id": "subnetpool1",
+                    "cidr": "10.0.0.0/24",
+                },
+                {
+                    "id": "subnet-2",
+                    "subnetpool_id": "subnetpool2",
+                    "cidr": "aef0::/64",
+                },
+            ]
+            mock_get_subnetpool.side_effect = [
+                {
+                    "ip_version": const.IP_VERSION_4,
+                    "address_scope_id": "address_scope_v4",
+                },
+                {
+                    "ip_version": const.IP_VERSION_6,
+                    "address_scope_id": "address_scope_v6",
+                },
+            ]
+            options = self.mech_driver._ovn_client._get_port_options(port)
+            mock_get_subnets.assert_called_once_with(
+                mock.ANY, filters={"id": subnet_ids}
+            )
+
+            expected_calls = [
+                mock.call(mock.ANY, id="subnetpool1"),
+                mock.call(mock.ANY, id="subnetpool2"),
+            ]
+
+            mock_get_subnetpool.assert_has_calls(expected_calls)
+
+            self.assertEqual("address_scope_v4", options.address4_scope_id)
+            self.assertEqual("address_scope_v6", options.address6_scope_id)
+
     def test_update_port(self):
         with mock.patch.object(
                 self.mech_driver._ovn_client, 'is_metadata_port') as \
