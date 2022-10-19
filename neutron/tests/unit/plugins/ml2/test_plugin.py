@@ -2197,6 +2197,25 @@ class TestMl2PluginOnly(Ml2PluginV2TestCase):
                                                          host=host,
                                                          port_id=port_id)
 
+    def test__validate_port_supports_multiple_bindings(self):
+        plugin = directory.get_plugin()
+        device_owner_raises = {
+            'manila:share': False,
+            'compute:host': False,
+            'network:router': True,
+            'fake:device': True,
+        }
+
+        for device_owner, raises in device_owner_raises.items():
+            port = {'id': 'fake_port_id', 'device_owner': device_owner}
+            if raises:
+                self.assertRaises(
+                    exc.BadRequest,
+                    plugin._validate_port_supports_multiple_bindings,
+                    port)
+            else:
+                plugin._validate_port_supports_multiple_bindings(port)
+
 
 class Test_GetNetworkMtu(Ml2PluginV2TestCase):
 

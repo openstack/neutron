@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    Manila owned ports can now have multiple port bindings associated in order
+    to support nondisruptive Manila share server migration across physical
+    networks.

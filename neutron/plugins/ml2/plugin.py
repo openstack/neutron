@@ -2611,11 +2611,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.mechanism_manager.update_network_postcommit(mech_context)
 
     @staticmethod
-    def _validate_compute_port(port):
-        if not port['device_owner'].startswith(
-                const.DEVICE_OWNER_COMPUTE_PREFIX):
+    def _validate_port_supports_multiple_bindings(port):
+        if not port['device_owner'].startswith((
+                const.DEVICE_OWNER_COMPUTE_PREFIX,
+                ml2_consts.DEVICE_OWNER_MANILA_PREFIX)):
             msg = _('Invalid port %s. Operation only valid on compute '
-                    'ports') % port['id']
+                    'and shared filesystem ports') % port['id']
             raise exc.BadRequest(resource='port', msg=msg)
 
     def _make_port_binding_dict(self, binding, fields=None):
@@ -2655,7 +2656,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         attrs = binding[pbe_ext.RESOURCE_NAME]
         with db_api.CONTEXT_WRITER.using(context):
             port_db = self._get_port(context, port_id)
-            self._validate_compute_port(port_db)
+            self._validate_port_supports_multiple_bindings(port_db)
             if self._get_binding_for_host(port_db.port_bindings,
                                           attrs[pbe_ext.HOST]):
                 raise exc.PortBindingAlreadyExists(
@@ -2703,7 +2704,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         port = ports_obj.Port.get_object(context, id=port_id)
         if not port:
             raise exc.PortNotFound(port_id=port_id)
-        self._validate_compute_port(port)
+        self._validate_port_supports_multiple_bindings(port)
         filters = filters or {}
         pager = base_obj.Pager(sorts, limit, page_reverse, marker)
         bindings = ports_obj.PortBinding.get_objects(
@@ -2718,7 +2719,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         port = ports_obj.Port.get_object(context, id=port_id)
         if not port:
             raise exc.PortNotFound(port_id=port_id)
-        self._validate_compute_port(port)
+        self._validate_port_supports_multiple_bindings(port)
         binding = ports_obj.PortBinding.get_object(context, host=host,
                                                    port_id=port_id)
         if not binding:
@@ -2736,7 +2737,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         attrs = binding[pbe_ext.RESOURCE_NAME]
         with db_api.CONTEXT_WRITER.using(context):
             port_db = self._get_port(context, port_id)
-            self._validate_compute_port(port_db)
+            self._validate_port_supports_multiple_bindings(port_db)
             original_binding = self._get_binding_for_host(
                 port_db.port_bindings, host)
             if not original_binding:
@@ -2773,7 +2774,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             if isinstance(port_id, dict):
                 port_id = port_id['port_id']
             port_db = self._get_port(context, port_id)
-            self._validate_compute_port(port_db)
+            self._validate_port_supports_multiple_bindings(port_db)
             active_binding = p_utils.get_port_binding_by_status_and_host(
                 port_db.port_bindings, const.ACTIVE)
             if host == (active_binding and active_binding.host):
