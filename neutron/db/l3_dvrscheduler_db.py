@@ -324,7 +324,8 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         get a set of hosts where all dvr serviceable ports on those subnets
         are bound
         """
-        subnet_ids = self.get_subnet_ids_on_router(context, router_id)
+        subnet_ids = self.get_subnet_ids_on_router(context, router_id,
+            keep_gateway_port=False)
         hosts = self._get_dvr_hosts_for_subnets(context, subnet_ids)
         LOG.debug('Hosts for router %s: %s', router_id, hosts)
         return hosts
