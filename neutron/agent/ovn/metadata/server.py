@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import hashlib
-import hmac
 import threading
 import urllib
 
@@ -22,13 +20,13 @@ from neutron.agent.linux import utils as agent_utils
 from neutron.agent.ovn.metadata import ovsdb
 from neutron.common import ipv6_utils
 from neutron.common.ovn import constants as ovn_const
+from neutron.common import utils as common_utils
 from neutron.conf.agent.metadata import config
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from oslo_config import cfg
 from oslo_log import log as logging
-from oslo_utils import encodeutils
 import requests
 import webob
 
@@ -125,7 +123,8 @@ class MetadataProxyHandler(object):
             'X-Forwarded-For': req.headers.get('X-Forwarded-For'),
             'X-Instance-ID': instance_id,
             'X-Tenant-ID': tenant_id,
-            'X-Instance-ID-Signature': self._sign_instance_id(instance_id)
+            'X-Instance-ID-Signature': common_utils.sign_instance_id(
+                self.conf, instance_id)
         }
 
         nova_host_port = ipv6_utils.valid_ipv6_url(
@@ -183,12 +182,6 @@ class MetadataProxyHandler(object):
         else:
             raise Exception(_('Unexpected response code: %s') %
                             resp.status_code)
-
-    def _sign_instance_id(self, instance_id):
-        secret = self.conf.metadata_proxy_shared_secret
-        secret = encodeutils.to_utf8(secret)
-        instance_id = encodeutils.to_utf8(instance_id)
-        return hmac.new(secret, instance_id, hashlib.sha256).hexdigest()
 
 
 class UnixDomainMetadataProxy(object):

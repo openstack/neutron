@@ -23,6 +23,7 @@ import webob
 
 from neutron.agent.linux import utils as agent_utils
 from neutron.agent.ovn.metadata import server as agent
+from neutron.common import utils as common_utils
 from neutron.conf.agent.metadata import config as meta_conf
 from neutron.conf.agent.ovn.metadata import config as ovn_meta_conf
 from neutron.tests import base
@@ -148,7 +149,7 @@ class TestMetadataProxyHandler(base.BaseTestCase):
         resp.status.__str__.side_effect = AttributeError
         resp.content = 'content'
         req.response = resp
-        with mock.patch.object(self.handler, '_sign_instance_id') as sign:
+        with mock.patch.object(common_utils, 'sign_instance_id') as sign:
             sign.return_value = 'signed'
             with mock.patch('requests.request') as mock_request:
                 resp.headers = {'content-type': 'text/plain'}
@@ -203,12 +204,6 @@ class TestMetadataProxyHandler(base.BaseTestCase):
     def test_proxy_request_other_code(self):
         with testtools.ExpectedException(Exception):
             self._proxy_request_test_helper(302)
-
-    def test_sign_instance_id(self):
-        self.assertEqual(
-            self.handler._sign_instance_id('foo'),
-            '773ba44693c7553d6ee20f61ea5d2757a9a4f4a44d2841ae4e95b52e4cd62db4'
-        )
 
 
 class TestUnixDomainMetadataProxy(base.BaseTestCase):

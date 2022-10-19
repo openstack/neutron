@@ -19,6 +19,8 @@
 """Utilities and helper functions."""
 
 import functools
+import hashlib
+import hmac
 import importlib
 import os
 import os.path
@@ -44,6 +46,7 @@ from neutron_lib.utils import helpers
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 from oslo_log import log as logging
+from oslo_utils import encodeutils
 from oslo_utils import excutils
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
@@ -1041,3 +1044,10 @@ def effective_qos_policy_id(resource):
     """
     return (resource.get(qos_consts.QOS_POLICY_ID) or
             resource.get(qos_consts.QOS_NETWORK_POLICY_ID))
+
+
+def sign_instance_id(conf, instance_id):
+    secret = conf.metadata_proxy_shared_secret
+    secret = encodeutils.to_utf8(secret)
+    instance_id = encodeutils.to_utf8(instance_id)
+    return hmac.new(secret, instance_id, hashlib.sha256).hexdigest()

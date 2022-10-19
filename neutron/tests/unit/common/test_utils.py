@@ -625,3 +625,14 @@ class SkipDecoratorTestCase(base.BaseTestCase):
             raise AttributeError()
 
         self.assertRaises(AttributeError, raise_attribute_error)
+
+
+class SignatureTestCase(base.BaseTestCase):
+
+    def test_sign_instance_id(self):
+        conf = mock.Mock()
+        conf.metadata_proxy_shared_secret = 'secret'
+        self.assertEqual(
+            '773ba44693c7553d6ee20f61ea5d2757a9a4f4a44d2841ae4e95b52e4cd62db4',
+            utils.sign_instance_id(conf, 'foo')
+        )
