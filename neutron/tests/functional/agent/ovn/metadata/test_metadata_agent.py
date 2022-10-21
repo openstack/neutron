@@ -87,18 +87,17 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
 
         ovn_sb_db = self.ovsdb_server_mgr.get_ovsdb_connection_path('sb')
         conf.set_override('ovn_sb_connection', ovn_sb_db, group='ovn')
-
-        # We don't need the HA proxy server running for now
-        p = mock.patch.object(metadata_server, 'UnixDomainMetadataProxy')
-        p.start()
-        self.addCleanup(p.stop)
+        conf.set_override('metadata_workers', '0')
 
         self.chassis_name = self.add_fake_chassis(self.FAKE_CHASSIS_HOST)
         mock.patch.object(agent.MetadataAgent,
                           '_get_own_chassis_name',
                           return_value=self.chassis_name).start()
         agt = agent.MetadataAgent(conf)
-        agt.start()
+        with mock.patch.object(metadata_server.UnixDomainMetadataProxy,
+                               'wait'):
+            agt.start()
+
         # Metadata agent will open connections to OVS and SB databases.
         # Close connections to them when the test ends,
         self.addCleanup(agt.ovs_idl.ovsdb_connection.stop)
@@ -338,3 +337,9 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
         else:
             self.fail('Rule not found in "mangle" table, in namespace %s' %
                       namespace)
+
+    def test_metadata_proxy_handler_idl(self):
+        # This test relies on the configuration option metadata_workers=0
+        proxy_sb_idl = self.agent._proxy.server._server._application.sb_idl
+        agent_sb_idl = self.agent.sb_idl
+        self.assertEqual(agent_sb_idl, proxy_sb_idl)
