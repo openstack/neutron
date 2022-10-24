@@ -562,6 +562,12 @@
     parent: neutron-ovn-base
 
 - job:
+    name: neutron-ovn-tempest-ovs-release-ubuntu-old
+    description: Job testing for devstack/tempest testing Neutron with ovn driver and previously supported (old) version of the Ubuntu operating system
+    parent: neutron-ovn-base
+    nodeset: openstack-single-node-focal
+
+- job:
     name: neutron-ovn-tempest-ovs-master
     description: Job testing for devstack/tempest testing Neutron with ovn driver and OVN master branch
     parent: neutron-ovn-base
