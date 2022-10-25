@@ -56,7 +56,7 @@ Below is a summary of those jobs.
     |                                              |    test_multiple_create          |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-tempest-plugin-openvswitch-\          |neutron_tempest_plugin.api        |   1   | openvswitch | iptables_hybrid | ha       | False | False  | False      | Yes         |
-    |  iptables_hybrid                             |neutron_tempest_plugin.scenario   |         |       |             |                 |          |       |        |            |             |
+    |  iptables_hybrid                             |neutron_tempest_plugin.scenario   |       |             |                 |          |       |        |            |             |
     |                                              |tempest.api.compute.servers.\     |       |             |                 |          |       |        |            |             |
     |                                              |    test_attach_interfaces        |       |             |                 |          |       |        |            |             |
     |                                              |tempest.api.compute.servers.\     |       |             |                 |          |       |        |            |             |
@@ -79,7 +79,7 @@ Below is a summary of those jobs.
     +----------------------------------------------+----------------------------------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-ovs-tempest-slow                      |tempest slow tests                |   2   | openvswitch | openvswitch     | legacy   | False | False  | True       | Yes         |
     +----------------------------------------------+----------------------------------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-ovn-tempest-ovs-release               |tempest.api (without slow tests)  |   1   | ovn         | ovn             | ---      | False | False  | True       | Yes         |
+    |tempest-integrated-networking                 |tempest.api (without slow tests)  |   1   | ovn         | ovn             | ---      | False | False  | True       | Yes         |
     |                                              |tempest.scenario                  |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-ovn-tempest-ipv6-only-ovs-release     |tempest.api (without slow tests)  |   1   | ovn         | ovn             | ---      | False | False  | True       | Yes         |
