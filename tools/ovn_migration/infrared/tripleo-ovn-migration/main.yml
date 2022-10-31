@@ -7,7 +7,7 @@
         yum:
             name:
               - python3-virtualenv
-              - python3-neutron-ovn-migration-tool
+              - openstack-neutron-ovn-migration-tool
             state: present
 
       - name: Set host_key_checking to False in ansible.cfg
