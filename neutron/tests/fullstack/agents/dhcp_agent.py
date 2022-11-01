@@ -60,11 +60,12 @@ def monkeypatch_dhcplocalprocess_init():
     original_init = linux_dhcp.DhcpLocalProcess.__init__
 
     def new_init(self, conf, network, process_monitor, version=None,
-                 plugin=None):
+                 plugin=None, segment=None):
         network_copy = copy.deepcopy(network)
         network_copy.id = "%s%s" % (network.id, cfg.CONF.test_namespace_suffix)
         original_init(
-            self, conf, network_copy, process_monitor, version, plugin)
+            self, conf, network_copy, process_monitor, version, plugin,
+            segment)
         self.network = network
 
     linux_dhcp.DhcpLocalProcess.__init__ = new_init

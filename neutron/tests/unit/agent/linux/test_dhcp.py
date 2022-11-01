@@ -1198,7 +1198,8 @@ class TestDhcpLocalProcess(TestBase):
 
             self.mock_mgr.assert_has_calls(
                 [mock.call(self.conf, None),
-                 mock.call().setup(mock.ANY)])
+                 mock.call().setup(mock.ANY, None),
+                 mock.call().setup(mock.ANY, None)])
             self.assertEqual(2, mocks['interface_name'].__set__.call_count)
             ensure_dir.assert_has_calls([
                 mock.call(
@@ -1223,7 +1224,7 @@ class TestDhcpLocalProcess(TestBase):
                             'delete_network_namespace') as delete_ns:
                 lp.disable()
             lp.device_manager.destroy.assert_called_once_with(
-                network, 'tap0')
+                network, 'tap0', None)
             self._assert_disabled(lp)
 
         delete_ns.assert_called_with('qdhcp-ns')
@@ -1265,7 +1266,8 @@ class TestDhcpLocalProcess(TestBase):
                         'delete_network_namespace') as delete_ns:
             lp.disable(retain_port=False)
 
-        expected = [mock.call.DeviceManager().destroy(mock.ANY, mock.ANY),
+        expected = [mock.call.DeviceManager().destroy(mock.ANY, mock.ANY,
+                                                      mock.ANY),
                     mock.call.rmtree(mock.ANY, ignore_errors=True)]
         parent.assert_has_calls(expected)
         delete_ns.assert_called_with('qdhcp-ns')
@@ -3353,7 +3355,7 @@ class TestDeviceManager(TestConfBase):
                                                     reserved_port_2]
 
         with testtools.ExpectedException(oslo_messaging.RemoteError):
-            dh.setup_dhcp_port(fake_network)
+            dh.setup_dhcp_port(fake_network, None)
 
 
 class TestDictModel(base.BaseTestCase):
