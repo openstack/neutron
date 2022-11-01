@@ -168,6 +168,46 @@
       - name: github.com/svinota/pyroute2
 
 - job:
+    name: neutron-functional-with-oslo-master
+    parent: neutron-functional
+    description: |
+      This job installs all oslo libraries from source and executes the
+      Neutron functional tests.
+    # NOTE(ralonsoh): the list of required projects is retrieved from
+    # "openstack-tox-with-oslo-master-base" job.
+    # TODO(ralonsoh): push a patch to "openstack-zuul-jobs" to create
+    # a list reference of the required projects for "-oslo-master" jobs.
+    required-projects:
+      - openstack/automaton
+      - openstack/debtcollector
+      - openstack/futurist
+      - openstack/osprofiler
+      - openstack/oslo.cache
+      - openstack/oslo.concurrency
+      - openstack/oslo.config
+      - openstack/oslo.context
+      - openstack/oslo.db
+      - openstack/oslo.i18n
+      - openstack/oslo.log
+      - openstack/oslo.messaging
+      - openstack/oslo.middleware
+      - openstack/oslo.policy
+      - openstack/oslo.privsep
+      - openstack/oslo.reports
+      - openstack/oslo.rootwrap
+      - openstack/oslo.serialization
+      - openstack/oslo.service
+      - openstack/oslo.utils
+      - openstack/oslo.versionedobjects
+      - openstack/oslo.vmware
+      - openstack/oslotest
+      - openstack/pycadf
+      - openstack/stevedore
+      - openstack/taskflow
+      - openstack/tooz
+      - openstack/pbr
+
+- job:
     name: neutron-fullstack-with-uwsgi-fips
     parent: neutron-fullstack-with-uwsgi
     nodeset: devstack-single-node-centos-8-stream
