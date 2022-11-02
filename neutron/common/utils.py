@@ -929,7 +929,7 @@ def spawn_n(func, *args, **kwargs):
 def timecost(f):
     call_id = uuidutils.generate_uuid()
     message_base = ("Time-cost: call %(call_id)s function %(fname)s ") % {
-                    "call_id": call_id, "fname": f.__name__}
+        "call_id": call_id, "fname": f.__name__}
     end_message = (message_base + "took %(seconds).3fs seconds to run")
 
     @timeutils.time_it(LOG, message=end_message, min_duration=None)
