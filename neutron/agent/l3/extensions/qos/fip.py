@@ -241,12 +241,13 @@ class FipQosAgentExtension(qos_base.L3QosAgentExtensionBase,
             self.fip_qos_map.clean_by_resource(fip_res)
             # process_ip_rate_limit will treat value 0 as
             # cleaning the tc filters if exits or no action.
-            return {constants.INGRESS_DIRECTION: {
-                        "rate": qos_base.IP_DEFAULT_RATE,
-                        "burst": qos_base.IP_DEFAULT_BURST},
-                    constants.EGRESS_DIRECTION: {
-                        "rate": qos_base.IP_DEFAULT_RATE,
-                        "burst": qos_base.IP_DEFAULT_BURST}}
+            return {
+                constants.INGRESS_DIRECTION: {
+                    "rate": qos_base.IP_DEFAULT_RATE,
+                    "burst": qos_base.IP_DEFAULT_BURST},
+                constants.EGRESS_DIRECTION: {
+                    "rate": qos_base.IP_DEFAULT_RATE,
+                    "burst": qos_base.IP_DEFAULT_BURST}}
         policy = self.resource_rpc.pull(
             context, resources.QOS_POLICY, policy_id)
         self.fip_qos_map.set_resource_policy(fip_res, policy)

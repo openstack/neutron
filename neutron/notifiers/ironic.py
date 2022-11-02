@@ -99,8 +99,8 @@ class Notifier(object):
                                         n_const.PORT_STATUS_ERROR]):
             port_event = 'unbind_port'
         elif (original_port_status == n_const.PORT_STATUS_DOWN and
-                current_port_status in [n_const.PORT_STATUS_ACTIVE,
-                                        n_const.PORT_STATUS_ERROR]):
+              current_port_status in [n_const.PORT_STATUS_ACTIVE,
+                                      n_const.PORT_STATUS_ERROR]):
             port_event = 'bind_port'
         LOG.debug('Queuing event for {event_type} for port {port} '
                   'for status {status}.'.format(event_type=port_event,

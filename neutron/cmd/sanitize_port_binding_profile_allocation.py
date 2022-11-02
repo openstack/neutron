@@ -81,7 +81,8 @@ def main():
                     qos_port_binding.policy_id)
                 continue
 
-            port_binding.profile = {'allocation':
+            port_binding.profile = {
+                'allocation':
                 converters.convert_to_sanitized_binding_profile_allocation(
                     allocation, port_binding.port_id, min_bw_rules)}
             LOG.info('Port %s updated, New binding-profile.allocation format: '

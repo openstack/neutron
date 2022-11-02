@@ -77,11 +77,13 @@ class SriovNicSwitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
                          vnic_type_prohibit_list=prohibit_list)
 
         # NOTE(ndipanov): PF passthrough requires a different vif type
+        def _vif_type(vtype):
+            return (portbindings.VIF_TYPE_HOSTDEV_PHY
+                    if vtype == portbindings.VNIC_DIRECT_PHYSICAL
+                    else portbindings.VIF_TYPE_HW_VEB)
+
         self.vnic_type_for_vif_type = (
-            {vtype: portbindings.VIF_TYPE_HOSTDEV_PHY
-                if vtype == portbindings.VNIC_DIRECT_PHYSICAL
-                else portbindings.VIF_TYPE_HW_VEB
-             for vtype in self.supported_vnic_types})
+            {vtype: _vif_type(vtype) for vtype in self.supported_vnic_types})
         self.vif_details = vif_details
         sriov_qos_driver.register()
 

@@ -335,8 +335,8 @@ class OVNDriver(base.DriverBase):
             self._remove_acls_log(acls_to_remove, ovn_txn)
         else:
             all_events = set([log.event for log in other_logs
-                if (not log.resource_id or
-                    log.resource_id == log_obj.resource_id)])
+                              if (not log.resource_id or
+                                  log.resource_id == log_obj.resource_id)])
             if (log_const.ALL_EVENT not in all_events and
                     log_obj.event not in all_events):
                 self._remove_acls_log(pgs, ovn_txn)

@@ -142,7 +142,7 @@ class CollectionsController(utils.NeutronPecanController):
         if 'parent_id' in request.context:
             lister_args.append(request.context['parent_id'])
         return {self.collection: self.plugin_lister(*lister_args,
-                **query_params)}
+                                                    **query_params)}
 
     @utils.when(index, method='HEAD')
     @utils.when(index, method='PATCH')

@@ -108,7 +108,7 @@ class PortBinding(PortBindingBase):
     def get_duplicated_port_bindings(cls, context):
         return context.session.query(
             cls.db_model).group_by(
-            cls.db_model.port_id).having(sqlalchemy.func.count() > 1).all()
+                cls.db_model.port_id).having(sqlalchemy.func.count() > 1).all()
 
 
 @base.NeutronObjectRegistry.register
