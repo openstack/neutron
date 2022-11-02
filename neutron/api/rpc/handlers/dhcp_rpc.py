@@ -313,7 +313,7 @@ class DhcpRpcCallback(object):
             old_port = plugin.get_port(context, port['id'])
             if (old_port['device_id'] !=
                     constants.DEVICE_ID_RESERVED_DHCP_PORT and
-                old_port['device_id'] !=
+                    old_port['device_id'] !=
                     utils.get_dhcp_agent_device_id(network_id, host)):
                 return
             if not self._is_dhcp_agent_hosting_network(plugin, context, host,

@@ -192,9 +192,9 @@ class L3RpcCallback(object):
             portbindings.VIF_TYPE_BINDING_FAILED,
             portbindings.VIF_TYPE_UNBOUND)
         if (port and host is not None and
-            (port.get('device_owner') !=
-             constants.DEVICE_OWNER_DVR_INTERFACE and
-             port.get(portbindings.HOST_ID) != host or not_bound)):
+                (port.get('device_owner') !=
+                 constants.DEVICE_OWNER_DVR_INTERFACE and
+                 port.get(portbindings.HOST_ID) != host or not_bound)):
 
             # Ports owned by non-HA routers are bound again if they're
             # already bound but the router moved to another host.
@@ -335,10 +335,10 @@ class L3RpcCallback(object):
 
         updated_subnets = []
         for subnet_id, prefix in subnets.items():
-            updated_subnets.append(self.plugin.update_subnet(
-                                        context,
-                                        subnet_id,
-                                        {'subnet': {'cidr': prefix}}))
+            updated_subnets.append(
+                self.plugin.update_subnet(context,
+                                          subnet_id,
+                                          {'subnet': {'cidr': prefix}}))
         return updated_subnets
 
     @db_api.retry_db_errors

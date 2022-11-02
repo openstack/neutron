@@ -236,10 +236,11 @@ class ResourcesPushRpcApi(object):
         resources_by_type = self._classify_resources_by_type(resource_list)
         LOG.debug(
             "Pushing event %s for resources: %s", event_type,
-            {t: ["ID=%s,revision_number=%s" % (
-                     getattr(obj, 'id', None),
-                     getattr(obj, 'revision_number', None))
-                 for obj in resources_by_type[t]]
+            {t:
+             ["ID=%s,revision_number=%s" % (
+                 getattr(obj, 'id', None),
+                 getattr(obj, 'revision_number', None))
+              for obj in resources_by_type[t]]
              for t in resources_by_type})
         for resource_type, type_resources in resources_by_type.items():
             self._push(context, resource_type, type_resources, event_type)

@@ -330,7 +330,7 @@ class Controller(object):
                 request.context, obj_list[0])
         collection = {self._collection:
                       [self._filter_attributes(
-                           obj, fields_to_strip=fields_to_strip)
+                          obj, fields_to_strip=fields_to_strip)
                        for obj in obj_list]}
         pagination_links = pagination_helper.get_links(obj_list)
         if pagination_links:
@@ -550,9 +550,10 @@ class Controller(object):
             # should be removed because of authZ policies
             fields_to_strip = self._exclude_attributes_by_policy(
                 request.context, objs[0])
-            return notify({self._collection: [self._filter_attributes(
-                obj, fields_to_strip=fields_to_strip)
-                for obj in objs]})
+            return notify({self._collection:
+                           [self._filter_attributes(
+                               obj, fields_to_strip=fields_to_strip)
+                            for obj in objs]})
         else:
             if self._collection in body:
                 # Emulate atomic bulk behavior
