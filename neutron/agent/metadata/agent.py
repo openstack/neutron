@@ -357,7 +357,7 @@ class UnixDomainMetadataProxy(object):
 
     def run(self):
         server = agent_utils.UnixDomainWSGIServer(
-                     constants.AGENT_PROCESS_METADATA)
+            constants.AGENT_PROCESS_METADATA)
         # Set the default metadata_workers if not yet set in the config file
         md_workers = self.conf.metadata_workers
         if md_workers is None:

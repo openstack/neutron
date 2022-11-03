@@ -202,7 +202,7 @@ class LocalIPAgentExtension(l2_extension.L2AgentExtension):
             dl_type="0x{:04x}".format(ether_types.ETH_TYPE_IP),
             actions='mod_dl_dst:{:s},'
                     'ct(commit,table={:d},zone={:d},nat(dst={:s}))'.format(
-                mac, ovs_constants.TRANSIENT_TABLE, vlan, dest_ip)
+                        mac, ovs_constants.TRANSIENT_TABLE, vlan, dest_ip)
         )
         self.int_br.add_flow(
             table=ovs_constants.LOCAL_IP_TABLE,

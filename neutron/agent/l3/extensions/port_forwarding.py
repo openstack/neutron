@@ -191,7 +191,7 @@ class PortForwardingAgentExtension(l3_extension.L3AgentExtension):
             internal_port = internal_port + internal_port_one_to_one_mask
 
         are_ranges_different = (int(internal_end) - int(internal_start)) - (
-                int(external_end) - int(external_start))
+            int(external_end) - int(external_start))
         if are_ranges_different and not (
                 is_single_internal_port or is_single_external_port):
             LOG.warning("Port forwarding rule with different internal "
@@ -203,7 +203,7 @@ class PortForwardingAgentExtension(l3_extension.L3AgentExtension):
     def _rule_apply(self, iptables_manager, port_forwarding, rule_tag):
         iptables_manager.ipv4['nat'].clear_rules_by_tag(rule_tag)
         if DEFAULT_PORT_FORWARDING_CHAIN not in iptables_manager.ipv4[
-             'nat'].chains:
+                'nat'].chains:
             self._install_default_rules(iptables_manager)
 
         for chain, rule in self._get_fip_rules(

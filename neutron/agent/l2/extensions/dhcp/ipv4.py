@@ -115,7 +115,7 @@ class DHCPIPv4Responder(dhcp_base.DHCPResponderBase):
         if dns_nameservers:
             option_list.append(
                 dhcp.option(tag=dhcp.DHCP_DNS_SERVER_ADDR_OPT,
-                value=self.get_bin_dns(dns_nameservers)))
+                            value=self.get_bin_dns(dns_nameservers)))
         if cfg.CONF.dns_domain:
             option_list.append(
                 dhcp.option(tag=dhcp.DHCP_DOMAIN_NAME_OPT,

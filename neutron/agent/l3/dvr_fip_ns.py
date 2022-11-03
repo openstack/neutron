@@ -351,7 +351,7 @@ class FipNamespace(namespaces.Namespace):
             gw_ip = subnet.get('gateway_ip')
             if gw_ip:
                 is_gateway_not_in_subnet = not ipam_utils.check_subnet_ip(
-                                                subnet.get('cidr'), gw_ip)
+                    subnet.get('cidr'), gw_ip)
                 if is_gateway_not_in_subnet:
                     ipd.route.add_route(gw_ip, scope='link')
                 self._add_default_gateway_for_fip(gw_ip, ipd, tbl_index)
@@ -454,7 +454,7 @@ class FipNamespace(namespaces.Namespace):
         # add default route for the link local interface
         rtr_2_fip_dev.route.add_gateway(str(fip_2_rtr.ip), table=FIP_RT_TBL)
         v6_gateway = common_utils.cidr_to_ip(
-                ip_lib.get_ipv6_lladdr(fip_2_rtr_dev.link.address))
+            ip_lib.get_ipv6_lladdr(fip_2_rtr_dev.link.address))
         rtr_2_fip_dev.route.add_gateway(v6_gateway)
 
     def scan_fip_ports(self, ri):

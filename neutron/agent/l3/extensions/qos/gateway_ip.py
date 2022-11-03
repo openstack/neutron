@@ -75,7 +75,7 @@ class RouterGatewayIPQosAgentExtension(qos_base.L3QosAgentExtensionBase,
         if old_qos_policy:
             if self._policy_rules_modified(old_qos_policy, qos_policy):
                 router_ids = self.gateway_ip_qos_map.get_resources(
-                        qos_policy)
+                    qos_policy)
                 for router_id in list(router_ids):
                     self._process_router_gateway_after_policy_update(
                         router_id, qos_policy)

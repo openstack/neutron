@@ -712,7 +712,7 @@ class Dnsmasq(DhcpLocalProcess):
         for fip in fixed_ips:
             if (fip.subnet_id in v6_nets and
                     v6_nets[fip.subnet_id].ipv6_address_mode == (
-                            constants.DHCPV6_STATEFUL)):
+                        constants.DHCPV6_STATEFUL)):
                 if fip.subnet_id not in by_subnet:
                     by_subnet.update({fip.subnet_id: []})
                 by_subnet[fip.subnet_id].append(fip.ip_address)
@@ -1202,8 +1202,8 @@ class Dnsmasq(DhcpLocalProcess):
             addr_mode = getattr(subnet, 'ipv6_address_mode', None)
             segment_id = getattr(subnet, 'segment_id', None)
             if (not subnet.enable_dhcp or
-                (subnet.ip_version == 6 and
-                 addr_mode == constants.IPV6_SLAAC)):
+                    (subnet.ip_version == 6 and
+                     addr_mode == constants.IPV6_SLAAC)):
                 continue
             if subnet.dns_nameservers:
                 if common_utils.is_dns_servers_any_address(
@@ -1249,7 +1249,7 @@ class Dnsmasq(DhcpLocalProcess):
 
             if ((self.conf.force_metadata or
                  (isolated_subnets[subnet.id] and
-                     self.conf.enable_isolated_metadata)) and
+                  self.conf.enable_isolated_metadata)) and
                     subnet.ip_version == 4):
                 subnet_dhcp_ip = subnet_to_interface_ip.get(subnet.id)
                 if subnet_dhcp_ip:
@@ -1521,7 +1521,7 @@ class DeviceManager(object):
                 # gateway being replaced, if it is outside the subnet
                 is_old_gateway_not_in_subnet = (gateway and
                                                 not ipam_utils.check_subnet_ip(
-                                                        subnet.cidr, gateway))
+                                                    subnet.cidr, gateway))
                 if is_old_gateway_not_in_subnet:
                     onlink = device.route.list_onlink_routes(ip_version)
                     existing_onlink_routes = set(r['cidr'] for r in onlink)
@@ -1530,8 +1530,8 @@ class DeviceManager(object):
 
                 is_new_gateway_not_in_subnet = (subnet.gateway_ip and
                                                 not ipam_utils.check_subnet_ip(
-                                                        subnet.cidr,
-                                                        subnet.gateway_ip))
+                                                    subnet.cidr,
+                                                    subnet.gateway_ip))
                 if is_new_gateway_not_in_subnet:
                     device.route.add_route(subnet.gateway_ip, scope='link')
                 device.route.add_gateway(subnet.gateway_ip)

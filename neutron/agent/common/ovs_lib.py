@@ -222,8 +222,8 @@ class BaseOVS(object):
     @property
     def is_hw_offload_enabled(self):
         if self._hw_offload is None:
-            self._hw_offload = self.config.get('other_config',
-                                   {}).get('hw-offload', '').lower() == 'true'
+            self._hw_offload = self.config.get('other_config', {}).get(
+                'hw-offload', '').lower() == 'true'
         return self._hw_offload
 
 
@@ -1167,7 +1167,7 @@ class OVSBridge(BaseOVS):
         queues = self.ovsdb.db_list(
             'Queue',
             columns=['_uuid', 'external_ids', 'other_config']).execute(
-            check_error=True)
+                check_error=True)
         if port:
             queues = [queue for queue in queues
                       if queue['external_ids'].get('port') == str(port)]

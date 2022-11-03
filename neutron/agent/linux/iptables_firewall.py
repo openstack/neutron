@@ -510,7 +510,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         else:
             mac_ipv6_pairs.append((mac, ip_address))
             lla = str(netutils.get_ipv6_addr_by_EUI64(
-                    constants.IPv6_LLA_PREFIX, mac))
+                constants.IPv6_LLA_PREFIX, mac))
             if (mac, lla) not in mac_ipv6_pairs:
                 # only add once so we don't generate duplicate rules
                 mac_ipv6_pairs.append((mac, lla))
