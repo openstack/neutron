@@ -207,11 +207,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         try:
             with db_api.CONTEXT_READER.using(context):
                 ret = self._make_security_group_dict(self._get_security_group(
-                                                     context, id,
-                                                     fields=fields),
-                                                     fields)
+                    context, id, fields=fields), fields)
                 if (fields is None or len(fields) == 0 or
-                   'security_group_rules' in fields):
+                        'security_group_rules' in fields):
                     rules = self.get_security_group_rules(
                         context_lib.get_admin_context(),
                         {'security_group_id': [id]})
@@ -311,13 +309,13 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             sg.update()
             sg_dict = self._make_security_group_dict(sg)
             self._registry_publish(
-                    resources.SECURITY_GROUP,
-                    events.PRECOMMIT_UPDATE,
-                    exc_cls=ext_sg.SecurityGroupConflict,
-                    payload=events.DBEventPayload(
-                        context, request_body=s,
-                        states=(original_security_group,),
-                        resource_id=id, desired_state=sg_dict))
+                resources.SECURITY_GROUP,
+                events.PRECOMMIT_UPDATE,
+                exc_cls=ext_sg.SecurityGroupConflict,
+                payload=events.DBEventPayload(
+                    context, request_body=s,
+                    states=(original_security_group,),
+                    resource_id=id, desired_state=sg_dict))
         registry.publish(resources.SECURITY_GROUP, events.AFTER_UPDATE, self,
                          payload=events.DBEventPayload(
                              context, request_body=s,
@@ -411,9 +409,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         res = self._create_security_group_rule(context, security_group_rule)
         registry.publish(resources.SECURITY_GROUP_RULE, events.AFTER_CREATE,
                          self, payload=events.DBEventPayload(
-                                   context,
-                                   resource_id=res['id'],
-                                   states=(res,)))
+                             context,
+                             resource_id=res['id'],
+                             states=(res,)))
 
         return res
 
@@ -592,7 +590,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                                 str(constants.PROTO_NUM_IPV6_ROUTE)]:
             if rule['ethertype'] == constants.IPv4:
                 raise ext_sg.SecurityGroupEthertypeConflictWithProtocol(
-                        ethertype=rule['ethertype'], protocol=rule['protocol'])
+                    ethertype=rule['ethertype'], protocol=rule['protocol'])
 
     def _validate_single_tenant_and_group(self, security_group_rules):
         """Check that all rules belong to the same security group and tenant
@@ -725,7 +723,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                 return none_char
             elif key == 'protocol':
                 return str(self._get_ip_proto_name_and_num(
-                               value, ethertype=rule.get('ethertype')))
+                    value, ethertype=rule.get('ethertype')))
             return str(value)
 
         comparison_keys = [
@@ -1001,9 +999,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         is either [] or not is_attr_set, otherwise return False
         """
         if (ext_sg.SECURITYGROUPS in port['port'] and
-            not (validators.is_attr_set(
-                     port['port'][ext_sg.SECURITYGROUPS]) and
-                 port['port'][ext_sg.SECURITYGROUPS] != [])):
+                not (validators.is_attr_set(
+                    port['port'][ext_sg.SECURITYGROUPS]) and
+                     port['port'][ext_sg.SECURITYGROUPS] != [])):
             return True
         return False
 
@@ -1013,8 +1011,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         This method is called both for port create and port update.
         """
         if (ext_sg.SECURITYGROUPS in port['port'] and
-            (validators.is_attr_set(port['port'][ext_sg.SECURITYGROUPS]) and
-             port['port'][ext_sg.SECURITYGROUPS] != [])):
+                (validators.is_attr_set(
+                    port['port'][ext_sg.SECURITYGROUPS]) and
+                 port['port'][ext_sg.SECURITYGROUPS] != [])):
             return True
         return False
 
@@ -1030,9 +1029,9 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         need_notify = False
         port_updates = port['port']
         if (ext_sg.SECURITYGROUPS in port_updates and
-            not helpers.compare_elements(
-                original_port.get(ext_sg.SECURITYGROUPS),
-                port_updates[ext_sg.SECURITYGROUPS])):
+                not helpers.compare_elements(
+                    original_port.get(ext_sg.SECURITYGROUPS),
+                    port_updates[ext_sg.SECURITYGROUPS])):
             # delete the port binding and read it with the new rules
             sgs = self._get_security_groups_on_port(context, port)
             port_updates[ext_sg.SECURITYGROUPS] = [sg.id for sg in sgs]

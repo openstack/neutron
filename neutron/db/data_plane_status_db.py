@@ -47,4 +47,4 @@ class DataPlaneStatusMixin(object):
 
         if port_db.get(dps_lib.DATA_PLANE_STATUS):
             port_res[dps_lib.DATA_PLANE_STATUS] = (
-                        port_db[dps_lib.DATA_PLANE_STATUS].data_plane_status)
+                port_db[dps_lib.DATA_PLANE_STATUS].data_plane_status)

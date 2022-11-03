@@ -325,7 +325,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         are bound
         """
         subnet_ids = self.get_subnet_ids_on_router(context, router_id,
-            keep_gateway_port=False)
+                                                   keep_gateway_port=False)
         hosts = self._get_dvr_hosts_for_subnets(context, subnet_ids)
         LOG.debug('Hosts for router %s: %s', router_id, hosts)
         return hosts
@@ -420,7 +420,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                                   with_dvr=True):
         result_set = set(super(L3_DVRsch_db_mixin,
                                self)._get_router_ids_for_agent(
-            context, agent_db, router_ids, with_dvr))
+                                   context, agent_db, router_ids, with_dvr))
         if not with_dvr:
             return result_set
         LOG.debug("Routers %(router_ids)s bound to L3 agent in host %(host)s",
@@ -435,9 +435,9 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
         # dvr routers are not explicitly scheduled to agents on hosts with
         # dvr serviceable ports, so need special handling
         if (self._get_agent_mode(agent_db) in
-            [n_const.L3_AGENT_MODE_DVR,
-             n_const.L3_AGENT_MODE_DVR_NO_EXTERNAL,
-             n_const.L3_AGENT_MODE_DVR_SNAT]):
+                [n_const.L3_AGENT_MODE_DVR,
+                 n_const.L3_AGENT_MODE_DVR_NO_EXTERNAL,
+                 n_const.L3_AGENT_MODE_DVR_SNAT]):
             dvr_routers = self._get_dvr_router_ids_for_host(context,
                                                             agent_db['host'])
             if not router_ids:
@@ -448,10 +448,10 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                         context, router_id, keep_gateway_port=False)
                     if (subnet_ids and (
                             self._check_dvr_serviceable_ports_on_host(
-                                    context, agent_db['host'],
-                                    list(subnet_ids)) or
+                                context, agent_db['host'],
+                                list(subnet_ids)) or
                             self._is_router_related_to_dvr_routers(
-                                    context, router_id, dvr_routers))):
+                                context, router_id, dvr_routers))):
                         result_set.add(router_id)
 
             LOG.debug("Routers %(router_ids)s are scheduled or have "
@@ -557,7 +557,7 @@ def _notify_port_delete(event, resource, trigger, payload):
     context = payload.context
     port = payload.latest_state
     get_related_hosts_info = payload.metadata.get(
-                                 "get_related_hosts_info", True)
+        "get_related_hosts_info", True)
     l3plugin = directory.get_plugin(plugin_constants.L3)
     if port:
         port_host = port.get(portbindings.HOST_ID)
@@ -605,7 +605,7 @@ def _notify_l3_agent_port_update(resource, event, trigger, payload):
             dest_host = new_port_profile.get('migrating_to')
         if is_new_port_binding_changed or is_bound_port_moved or dest_host:
             fips = l3plugin._get_floatingips_by_port_id(
-                    context, port_id=original_port['id'])
+                context, port_id=original_port['id'])
             fip = fips[0] if fips else None
             if fip:
                 fip_router_id = fip['router_id']

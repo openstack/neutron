@@ -37,8 +37,8 @@ class QuotaUsageInfo(collections.namedtuple(
 
 
 class ReservationInfo(collections.namedtuple(
-    'ReservationInfo', ['reservation_id', 'project_id',
-                        'expiration', 'deltas'])):
+        'ReservationInfo', ['reservation_id', 'project_id',
+                            'expiration', 'deltas'])):
     """Information about a resource reservation."""
 
 
@@ -176,7 +176,7 @@ def create_reservation(context, project_id, deltas, expiration=None):
     # This method is usually called from within another transaction.
     # Consider using begin_nested
     expiration = expiration or (
-            utcnow() + datetime.timedelta(0, RESERVATION_EXPIRATION_TIMEOUT))
+        utcnow() + datetime.timedelta(0, RESERVATION_EXPIRATION_TIMEOUT))
     delta_objs = []
     for (resource, delta) in deltas.items():
         delta_objs.append(quota_obj.ResourceDelta(

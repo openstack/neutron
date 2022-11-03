@@ -155,7 +155,7 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
                                              subnet):
         super(ExtraRoute_dbonly_mixin,
               self)._confirm_router_interface_not_in_use(
-            context, router_id, subnet)
+                  context, router_id, subnet)
         subnet_cidr = netaddr.IPNetwork(subnet['cidr'])
         extra_routes = self._get_extra_routes_by_router_id(context, router_id)
         for route in extra_routes:
@@ -224,8 +224,8 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
                 context,
                 router_id,
                 {'router':
-                    {'routes':
-                        self._add_extra_routes(old_routes, routes)}})
+                 {'routes':
+                  self._add_extra_routes(old_routes, routes)}})
             return {'router': router}
 
     @db_api.retry_if_session_inactive()
@@ -241,8 +241,8 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
                 context,
                 router_id,
                 {'router':
-                    {'routes':
-                        self._remove_extra_routes(old_routes, routes)}})
+                 {'routes':
+                  self._remove_extra_routes(old_routes, routes)}})
             return {'router': router}
 
 

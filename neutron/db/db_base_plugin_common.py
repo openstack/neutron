@@ -168,7 +168,7 @@ class DbBasePluginCommon(object):
         if isinstance(subnet, subnet_obj.Subnet):
             res['cidr'] = str(subnet.cidr)
             res['allocation_pools'] = [{'start': str(pool.start),
-                                       'end': str(pool.end)}
+                                        'end': str(pool.end)}
                                        for pool in subnet.allocation_pools]
             res['host_routes'] = [{'destination': str(route.destination),
                                    'nexthop': str(route.nexthop)}
@@ -182,7 +182,7 @@ class DbBasePluginCommon(object):
         else:
             res['cidr'] = subnet['cidr']
             res['allocation_pools'] = [{'start': pool['first_ip'],
-                                       'end': pool['last_ip']}
+                                        'end': pool['last_ip']}
                                        for pool in subnet['allocation_pools']]
             res['host_routes'] = [{'destination': route['destination'],
                                    'nexthop': route['nexthop']}

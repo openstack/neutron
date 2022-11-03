@@ -156,7 +156,7 @@ def get_revision_row(context, resource_uuid):
         with db_api.CONTEXT_READER.using(context):
             return context.session.query(
                 ovn_models.OVNRevisionNumbers).filter_by(
-                resource_uuid=resource_uuid).one()
+                    resource_uuid=resource_uuid).one()
     except exc.NoResultFound:
         pass
 
