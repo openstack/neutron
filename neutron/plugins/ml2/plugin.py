@@ -20,6 +20,7 @@ import netaddr
 from netaddr.strategy import eui48
 from neutron_lib.agent import constants as agent_consts
 from neutron_lib.agent import topics
+from neutron_lib.api import converters
 from neutron_lib.api.definitions import address_group as addrgrp_def
 from neutron_lib.api.definitions import address_scope
 from neutron_lib.api.definitions import agent as agent_apidef
@@ -1596,10 +1597,35 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         return bound_context.current
 
-    def allocate_ips_for_ports(self, context, ports):
+    def allocate_macs_and_ips_for_ports(self, context, ports):
+        macs = self._generate_macs(len(ports))
+        network_cache = dict()
         for port in ports:
             port['port']['id'] = (
                 port['port'].get('id') or uuidutils.generate_uuid())
+
+            network_id = port['port'].get('network_id')
+            if network_id not in network_cache:
+                network = self.get_network(context, network_id)
+                network_cache[network_id] = network
+
+            raw_mac_address = port['port'].get('mac_address',
+                                               const.ATTR_NOT_SPECIFIED)
+            if raw_mac_address is const.ATTR_NOT_SPECIFIED:
+                raw_mac_address = macs.pop()
+            elif self._is_mac_in_use(context, network_id, raw_mac_address):
+                raise exc.MacAddressInUse(net_id=network_id,
+                                          mac=raw_mac_address)
+            eui_mac_address = converters.convert_to_sanitized_mac_address(
+                raw_mac_address)
+            # Create the Port object
+            # Note: netaddr has an issue with using the correct dialect when
+            # the input for EUI is another EUI object, see:
+            # https://github.com/netaddr/netaddr/issues/250
+            # TODO(lajoskatona): remove this once
+            # https://review.opendev.org/c/openstack/neutron-lib/+/865517 is
+            # released.
+            port['port']['mac_address'] = str(eui_mac_address)
 
             # Call IPAM to allocate IP addresses
             try:
@@ -1610,7 +1636,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             except ipam_exc.DeferIpam:
                 port['ip_allocation'] = (ipalloc_apidef.
                                          IP_ALLOCATION_DEFERRED)
-        return ports
+        return ports, network_cache
 
     @utils.transaction_guard
     def create_port_bulk(self, context, ports):
@@ -1618,10 +1644,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         for port in port_list:
             self._before_create_port(context, port)
 
-        port_list = self.allocate_ips_for_ports(context, port_list)
+        port_list, net_cache = self.allocate_macs_and_ips_for_ports(
+            context, port_list)
 
         try:
-            return self._create_port_bulk(context, port_list)
+            return self._create_port_bulk(context, port_list, net_cache)
         except Exception:
             with excutils.save_and_reraise_exception():
                 # If any issue happened allocated IP addresses needs to be
@@ -1631,17 +1658,16 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                         context, port, port['ipams'])
 
     @db_api.retry_if_session_inactive()
-    def _create_port_bulk(self, context, port_list):
+    def _create_port_bulk(self, context, port_list, network_cache):
         # TODO(njohnston): Break this up into smaller functions.
         port_data = []
-        network_cache = dict()
-        macs = self._generate_macs(len(port_list))
         with db_api.CONTEXT_WRITER.using(context):
             for port in port_list:
                 # Set up the port request dict
                 pdata = port.get('port')
                 project_id = pdata.get('project_id') or pdata.get('tenant_id')
                 security_group_ids = pdata.get('security_groups')
+                network_id = pdata.get('network_id')
                 if security_group_ids is const.ATTR_NOT_SPECIFIED:
                     security_group_ids = None
                 else:
@@ -1653,7 +1679,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 bulk_port_data = dict(
                     project_id=project_id,
                     name=pdata.get('name'),
-                    network_id=pdata.get('network_id'),
+                    network_id=network_id,
                     admin_state_up=pdata.get('admin_state_up'),
                     status=pdata.get('status',
                         const.PORT_STATUS_ACTIVE),
@@ -1661,31 +1687,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     device_owner=pdata.get('device_owner'),
                     description=pdata.get('description'))
 
-                # Ensure that the networks exist.
-                network_id = pdata.get('network_id')
-                if network_id not in network_cache:
-                    network = self.get_network(context, network_id)
-                    network_cache[network_id] = network
-                else:
-                    network = network_cache[network_id]
+                network = network_cache[network_id]
 
-                # Determine the MAC address
-                raw_mac_address = pdata.get('mac_address',
-                    const.ATTR_NOT_SPECIFIED)
-                if raw_mac_address is const.ATTR_NOT_SPECIFIED:
-                    raw_mac_address = macs.pop()
-                elif self._is_mac_in_use(context, network_id, raw_mac_address):
-                    raise exc.MacAddressInUse(net_id=network_id,
-                                              mac=raw_mac_address)
-                eui_mac_address = netaddr.EUI(raw_mac_address,
-                                              dialect=eui48.mac_unix_expanded)
-                port['port']['mac_address'] = str(eui_mac_address)
-
-                # Create the Port object
-                db_port_obj = ports_obj.Port(context,
-                                            mac_address=eui_mac_address,
-                                            id=port['port']['id'],
-                                            **bulk_port_data)
+                db_port_obj = ports_obj.Port(
+                    context,
+                    mac_address=netaddr.EUI(port['port']['mac_address'],
+                                            dialect=eui48.mac_unix_expanded),
+                    id=port['port']['id'], **bulk_port_data)
                 db_port_obj.create()
 
                 # Call IPAM to store allocated IP addresses
