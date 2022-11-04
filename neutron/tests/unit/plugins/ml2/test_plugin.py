@@ -42,6 +42,7 @@ from neutron_lib.plugins.ml2 import api as driver_api
 from neutron_lib.plugins import utils as p_utils
 from oslo_config import cfg
 from oslo_db import exception as db_exc
+from oslo_utils import netutils
 from oslo_utils import uuidutils
 import testtools
 import webob
@@ -50,6 +51,7 @@ from neutron._i18n import _
 from neutron.agent import rpc as agent_rpc
 from neutron.common import utils
 from neutron.db import agents_db
+from neutron.db import ipam_pluggable_backend
 from neutron.db import provisioning_blocks
 from neutron.db import securitygroups_db as sg_db
 from neutron.db import segments_db
@@ -1587,6 +1589,97 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                     res, 'ports', webob.exc.HTTPServerError.code)
 
                 self.assertEqual(2, deallocate_mock.call_count)
+
+    def test_create_ports_bulk_ip_allocation_without_mac(self):
+        ctx = context.get_admin_context()
+        plugin = directory.get_plugin()
+        fake_prefix = '2001:db8::/64'
+        fake_gateway = 'fe80::1'
+        with self.network() as net:
+            with self.subnet(net,
+                             gateway_ip=fake_gateway,
+                             cidr=fake_prefix,
+                             ip_version=constants.IP_VERSION_6,
+                             ipv6_ra_mode='slaac',
+                             ipv6_address_mode='slaac') as snet_v6,\
+                    mock.patch.object(plugin, '_before_create_port'),\
+                    mock.patch.object(plugin, 'get_network') as mock_getnet,\
+                    mock.patch.object(
+                        ipam_pluggable_backend.IpamPluggableBackend,
+                        '_ipam_get_subnets') as fcs:
+                fcs.return_value = [snet_v6['subnet']]
+                mock_getnet.return_value = net['network']
+                net_id = net['network']['id']
+                ports = {
+                    'ports': [{'port': {'network_id': net_id,
+                                        'admin_state_up': True,
+                                        'name': 'test_0',
+                                        'mac_address':
+                                            constants.ATTR_NOT_SPECIFIED,
+                                        'fixed_ips':
+                                            constants.ATTR_NOT_SPECIFIED,
+                                        'device_owner': '',
+                                        'device_id': '',
+                                        'security_groups':
+                                            constants.ATTR_NOT_SPECIFIED,
+                                        'project_id':
+                                            snet_v6['subnet']['project_id'],
+                                        'tenant_id':
+                                            snet_v6['subnet']['tenant_id']}},
+                              {'port': {'network_id': net_id,
+                                        'admin_state_up': True,
+                                        'name': 'test_1',
+                                        'mac_address':
+                                            constants.ATTR_NOT_SPECIFIED,
+                                        'fixed_ips':
+                                            constants.ATTR_NOT_SPECIFIED,
+                                        'device_owner': '',
+                                        'device_id': '',
+                                        'security_groups':
+                                            constants.ATTR_NOT_SPECIFIED,
+                                        'project_id':
+                                            snet_v6['subnet']['project_id'],
+                                        'tenant_id':
+                                            snet_v6['subnet']['tenant_id']}}
+                              ]}
+                b_ports = self.plugin.create_port_bulk(
+                    ctx, ports)
+                self.assertEqual(len(ports['ports']), len(b_ports))
+                for port in b_ports:
+                    self.assertIsNotNone(port['fixed_ips'][0]['ip_address'])
+                    self.assertTrue(
+                        netutils.is_valid_ipv6(
+                            port['fixed_ips'][0]['ip_address']))
+                self.assertEqual(1, mock_getnet.call_count)
+
+    def test_create_ports_bulk_ip_allocation_without_mac_no_net(self):
+        ctx = context.get_admin_context()
+        plugin = directory.get_plugin()
+        project_id = uuidutils.generate_uuid()
+        net_id = uuidutils.generate_uuid()
+        with mock.patch.object(plugin, '_before_create_port'),\
+                mock.patch.object(ipam_pluggable_backend.IpamPluggableBackend,
+                                  '_ipam_get_subnets'):
+            ports = {
+                'ports': [{'port': {'network_id': net_id,
+                                    'admin_state_up': True,
+                                    'name': 'test_0',
+                                    'mac_address':
+                                        constants.ATTR_NOT_SPECIFIED,
+                                    'fixed_ips':
+                                        constants.ATTR_NOT_SPECIFIED,
+                                    'device_owner': '',
+                                    'device_id': '',
+                                    'security_groups':
+                                        constants.ATTR_NOT_SPECIFIED,
+                                    'project_id': project_id,
+                                    'tenant_id': project_id}}
+                          ]}
+            self.assertRaises(
+                exc.NetworkNotFound,
+                self.plugin.create_port_bulk,
+                ctx, ports
+            )
 
     def test_delete_port_no_notify_in_disassociate_floatingips(self):
         ctx = context.get_admin_context()
