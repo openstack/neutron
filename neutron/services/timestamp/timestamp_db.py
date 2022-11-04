@@ -47,8 +47,8 @@ def _change_since_result_filter_hook(query, filters):
     query = query.join(standard_attr.StandardAttribute,
                        target_model_class.standard_attr_id ==
                        standard_attr.StandardAttribute.id).filter(
-                       standard_attr.StandardAttribute.updated_at >=
-                       changed_since)
+                           standard_attr.StandardAttribute.updated_at >=
+                           changed_since)
     return query
 
 

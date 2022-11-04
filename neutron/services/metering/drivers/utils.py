@@ -32,7 +32,7 @@ def load_metering_driver(plugin, conf):
 
     try:
         loaded_class = runtime.load_class_by_alias_or_classname(
-                METERING_NAMESPACE, conf.driver)
+            METERING_NAMESPACE, conf.driver)
         return loaded_class(plugin, conf)
     except ImportError:
         LOG.error("Error loading metering driver '%s'", conf.driver)

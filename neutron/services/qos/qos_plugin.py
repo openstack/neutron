@@ -153,11 +153,11 @@ class QoSPlugin(qos.QoSPluginBase):
             qos_id, port_db.id, port_res[portbindings.VNIC_TYPE],
             port_db.network_id)
         min_pps_request_group = QoSPlugin._get_min_pps_request_group(
-                qos_id, port_db.id, port_res[portbindings.VNIC_TYPE])
+            qos_id, port_db.id, port_res[portbindings.VNIC_TYPE])
 
         port_res['resource_request'] = (
             QoSPlugin._get_resource_request(min_bw_request_group,
-                min_pps_request_group))
+                                            min_pps_request_group))
         return port_res
 
     @staticmethod
@@ -310,7 +310,7 @@ class QoSPlugin(qos.QoSPluginBase):
 
             port_res['resource_request'] = (
                 QoSPlugin._get_resource_request(min_bw_request_group,
-                    min_pps_request_group))
+                                                min_pps_request_group))
 
         return ports_res
 
@@ -350,12 +350,12 @@ class QoSPlugin(qos.QoSPluginBase):
         orig_port = payload.states[0]
         port = payload.latest_state
         original_policy_id = (orig_port.get(qos_consts.QOS_POLICY_ID) or
-            orig_port.get(qos_consts.QOS_NETWORK_POLICY_ID))
+                              orig_port.get(qos_consts.QOS_NETWORK_POLICY_ID))
         if (qos_consts.QOS_POLICY_ID not in port and
                 qos_consts.QOS_NETWORK_POLICY_ID not in port):
             return
         policy_id = (port.get(qos_consts.QOS_POLICY_ID) or
-            port.get(qos_consts.QOS_NETWORK_POLICY_ID))
+                     port.get(qos_consts.QOS_NETWORK_POLICY_ID))
 
         if policy_id == original_policy_id:
             return
@@ -432,13 +432,13 @@ class QoSPlugin(qos.QoSPluginBase):
             for rc, value in translated_rule.items():
                 if (rc == orc.NET_PACKET_RATE_KILOPACKET_PER_SEC and
                         (orc.NET_PACKET_RATE_IGR_KILOPACKET_PER_SEC in
-                            alloc_diff[rp_uuid] or
-                        orc.NET_PACKET_RATE_EGR_KILOPACKET_PER_SEC in
-                            alloc_diff[rp_uuid]) or
+                         alloc_diff[rp_uuid] or
+                         orc.NET_PACKET_RATE_EGR_KILOPACKET_PER_SEC in
+                         alloc_diff[rp_uuid]) or
                         (rc in (orc.NET_PACKET_RATE_IGR_KILOPACKET_PER_SEC,
-                            orc.NET_PACKET_RATE_EGR_KILOPACKET_PER_SEC) and
-                        orc.NET_PACKET_RATE_KILOPACKET_PER_SEC in
-                            alloc_diff[rp_uuid])):
+                                orc.NET_PACKET_RATE_EGR_KILOPACKET_PER_SEC) and
+                         orc.NET_PACKET_RATE_KILOPACKET_PER_SEC in
+                         alloc_diff[rp_uuid])):
                     raise NotImplementedError(_(
                         'Changing from direction-less QoS minimum packet rate '
                         'rule to a direction-oriented minimum packet rate rule'
@@ -506,10 +506,12 @@ class QoSPlugin(qos.QoSPluginBase):
             desired_rules = desired_policy.get('rules')
 
         # Filter out rules that can't have resources allocated in Placement
-        original_rules = [r for r in original_rules
+        original_rules = [
+            r for r in original_rules
             if (isinstance(r, (rule_object.QosMinimumBandwidthRule,
                                rule_object.QosMinimumPacketRateRule)))]
-        desired_rules = [r for r in desired_rules
+        desired_rules = [
+            r for r in desired_rules
             if (isinstance(r, (rule_object.QosMinimumBandwidthRule,
                                rule_object.QosMinimumPacketRateRule)))]
         if not original_rules and not desired_rules:
@@ -552,7 +554,7 @@ class QoSPlugin(qos.QoSPluginBase):
         # port yet. We don't know if Placement API call is going to succeed.
         updated_allocation, rule_type_to_rp_map = (
             self._get_updated_port_allocation(orig_port, original_rules,
-                desired_rules))
+                                              desired_rules))
         alloc_diff = self._prepare_allocation_needs(orig_port,
                                                     rule_type_to_rp_map,
                                                     original_rules,
@@ -622,22 +624,24 @@ class QoSPlugin(qos.QoSPluginBase):
             return
 
         original_policy = policy_object.QosPolicy.get_object(
-                context.elevated(), id=original_policy_id)
+            context.elevated(), id=original_policy_id)
         policy = policy_object.QosPolicy.get_object(
-                context.elevated(), id=policy_id)
+            context.elevated(), id=policy_id)
         ports = ports_object.Port.get_objects(
-                context, network_id=updated_network['id'])
+            context, network_id=updated_network['id'])
 
         # Filter compute bound ports without overwritten QoS policy
-        ports = [port for port in ports if (port.qos_policy_id is None and
-            nl_constants.DEVICE_OWNER_COMPUTE_PREFIX in port['device_owner'])]
+        ports = [port for port in ports
+                 if (port.qos_policy_id is None and
+                     nl_constants.DEVICE_OWNER_COMPUTE_PREFIX in
+                     port['device_owner'])]
 
         for port in ports:
             # Use _make_port_dict() to load extension data
             port_dict = trigger._make_port_dict(port)
             updated_port_attrs = {}
             self._change_placement_allocation(
-                    original_policy, policy, port_dict, updated_port_attrs)
+                original_policy, policy, port_dict, updated_port_attrs)
             for port_binding in port.bindings:
                 port_binding.profile = updated_port_attrs.get(
                     'binding:profile', {})
@@ -661,7 +665,7 @@ class QoSPlugin(qos.QoSPluginBase):
             context, policy, network_id=updated_network['id'])
 
         ports = ports_object.Port.get_objects(
-                context, network_id=updated_network['id'])
+            context, network_id=updated_network['id'])
         # Filter only this ports which don't have overwritten policy
         ports = [
             port for port in ports if port.qos_policy_id is None

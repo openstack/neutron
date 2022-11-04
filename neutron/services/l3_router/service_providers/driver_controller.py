@@ -48,7 +48,7 @@ class DriverController(object):
         self.l3_plugin = l3_plugin
         self._stm = st_db.ServiceTypeManager.get_instance()
         self._stm.add_provider_configuration(
-                plugin_constants.L3, _LegacyPlusProviderConfiguration())
+            plugin_constants.L3, _LegacyPlusProviderConfiguration())
         self._load_drivers()
 
     def _load_drivers(self):
@@ -255,7 +255,7 @@ class _LegacyPlusProviderConfiguration(
         # If an operator has setup explicit values that conflict with these,
         # the operator defined values will take priority.
         super(_LegacyPlusProviderConfiguration, self).__init__(
-              svc_type=plugin_constants.L3)
+            svc_type=plugin_constants.L3)
         for name, driver in (('dvrha', 'dvrha.DvrHaDriver'),
                              ('dvr', 'dvr.DvrDriver'), ('ha', 'ha.HaDriver'),
                              ('single_node', 'single_node.SingleNodeDriver')):

@@ -122,7 +122,7 @@ class OVNPortForwardingHandler(object):
             for ls_name in ovn_lss:
                 try:
                     ovn_txn.add(nb_ovn.ls_lb_add(ls_name, lb_name,
-                        may_exist=True))
+                                                 may_exist=True))
                 except idlutils.RowNotFound:
                     # If one or more logical_switches are deleted
                     # log warning for those and continue with the rest.
@@ -233,8 +233,8 @@ class OVNPortForwarding(object):
         """
         check_rev_tuples = []
         for lb_name in self._handler.lb_names(fip_id):
-            check_rev_cmd = ovn_nb.check_revision_number(lb_name, fip_obj,
-                ovn_const.TYPE_FLOATINGIPS, if_exists=True)
+            check_rev_cmd = ovn_nb.check_revision_number(
+                lb_name, fip_obj, ovn_const.TYPE_FLOATINGIPS, if_exists=True)
             ovn_txn.add(check_rev_cmd)
             check_rev_tuples.append((check_rev_cmd, fip_obj))
         return check_rev_tuples
@@ -256,15 +256,15 @@ class OVNPortForwarding(object):
                 self._handler.port_forwarding_created(ovn_txn, ovn_nb,
                                                       payload.latest_state)
                 self._l3_plugin.update_floatingip_status(
-                        context, payload.latest_state.floatingip_id,
-                        const.FLOATINGIP_STATUS_ACTIVE)
+                    context, payload.latest_state.floatingip_id,
+                    const.FLOATINGIP_STATUS_ACTIVE)
             elif event_type == events.AFTER_UPDATE:
                 self._handler.port_forwarding_updated(
                     ovn_txn, ovn_nb,
                     payload.latest_state, payload.states[0])
             elif event_type == events.AFTER_DELETE:
                 pfs = _pf_plugin.get_floatingip_port_forwardings(
-                          context, payload.states[0].floatingip_id)
+                    context, payload.states[0].floatingip_id)
                 self._handler.port_forwarding_deleted(ovn_txn, ovn_nb,
                                                       payload.states[0])
                 if not pfs:

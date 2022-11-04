@@ -236,7 +236,7 @@ class OVSDBHandler(object):
             return []
         try:
             ports = bridge.get_ports_attributes(
-                            'Interface', columns=['name', 'external_ids'])
+                'Interface', columns=['name', 'external_ids'])
             return [
                 self.trunk_manager.get_port_uuid_from_external_ids(port)
                 for port in ports if is_subport(port['name'])

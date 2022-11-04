@@ -209,7 +209,7 @@ class RevisionPlugin(service_base.ServicePluginBase):
                 # well.
                 standard_attr.StandardAttribute.revision_number:
                 standard_attr.StandardAttribute.revision_number + 1},
-                synchronize_session=False)
+                     synchronize_session=False)
 
             # run a SELECT to get back the new values we just generated.
             # if MySQL supported RETURNING, we could get these numbers

@@ -34,8 +34,8 @@ def _get_ports_attached_to_sg(context, sg_id):
     with db_api.CONTEXT_READER.using(context):
         ports = context.session.query(
             sg_db.SecurityGroupPortBinding.port_id).filter(
-            sg_db.SecurityGroupPortBinding.security_group_id ==
-            sg_id).all()
+                sg_db.SecurityGroupPortBinding.security_group_id ==
+                sg_id).all()
     return [port for (port,) in ports]
 
 
@@ -47,8 +47,9 @@ def _get_ports_filter_in_tenant(context, tenant_id):
         with db_api.CONTEXT_READER.using(context):
             ports = context.session.query(
                 sg_db.SecurityGroupPortBinding.port_id).join(
-                sg_db.SecurityGroup, sg_db.SecurityGroup.id == sg_id).filter(
-                sg_db.SecurityGroup.project_id == tenant_id).all()
+                    sg_db.SecurityGroup,
+                    sg_db.SecurityGroup.id == sg_id).filter(
+                        sg_db.SecurityGroup.project_id == tenant_id).all()
             return list({port for (port,) in ports})
     except orm_exc.NoResultFound:
         return []
@@ -60,7 +61,7 @@ def _get_sgs_attached_to_port(context, port_id):
     with db_api.CONTEXT_READER.using(context):
         sg_ids = context.session.query(
             sg_db.SecurityGroupPortBinding.security_group_id).filter(
-            sg_db.SecurityGroupPortBinding.port_id == port_id).all()
+                sg_db.SecurityGroupPortBinding.port_id == port_id).all()
     return [sg_id for (sg_id, ) in sg_ids]
 
 
@@ -203,7 +204,7 @@ def get_logs_bound_sg(context, sg_id=None, project_id=None, port_id=None,
                 if sg_id in port.security_group_ids:
                     log_resources.append(log_obj)
             elif (not log_obj.resource_id and not log_obj.target_id and
-                    not exclusive):
+                  not exclusive):
                 log_resources.append(log_obj)
         elif port_id and log_obj.target_id and log_obj.target_id == port_id:
             log_resources.append(log_obj)

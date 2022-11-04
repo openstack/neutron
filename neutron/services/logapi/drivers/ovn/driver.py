@@ -58,7 +58,7 @@ class OVNDriver(base.DriverBase):
             requires_rpc=False)
         self._log_plugin_property = None
         self.meter_name = (
-                cfg.CONF.network_log.local_output_log_base or "acl_log_meter")
+            cfg.CONF.network_log.local_output_log_base or "acl_log_meter")
 
     @staticmethod
     def network_logging_supported(ovn_nb):
@@ -225,16 +225,16 @@ class OVNDriver(base.DriverBase):
             if log_obj.event == log_const.ALL_EVENT:
                 return self._pgs_all()
             try:
-                pg_drop = self.ovn_nb.lookup("Port_Group",
-                    ovn_const.OVN_DROP_PORT_GROUP_NAME)
+                pg_drop = self.ovn_nb.lookup(
+                    "Port_Group", ovn_const.OVN_DROP_PORT_GROUP_NAME)
                 # No sg, no port, DROP: return DROP pg
                 if log_obj.event == log_const.DROP_EVENT:
                     return [{"name": pg_drop.name,
-                        "acls": [r.uuid for r in pg_drop.acls]}]
+                             "acls": [r.uuid for r in pg_drop.acls]}]
                 # No sg, no port, ACCEPT: return all except DROP pg
                 pgs = self._pgs_all()
                 pgs.remove({"name": pg_drop.name,
-                    "acls": [r.uuid for r in pg_drop.acls]})
+                            "acls": [r.uuid for r in pg_drop.acls]})
                 return pgs
             except idlutils.RowNotFound:
                 pass

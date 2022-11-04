@@ -103,16 +103,16 @@ class MeteringPlugin(metering_db.MeteringDbMixin):
             metering_label_rule, "destination_ip_prefix")
 
         if metering_label_rule.get("remote_ip_prefix"):
-            if metering_label_rule.get("source_ip_prefix") or \
-                    metering_label_rule.get("destination_ip_prefix"):
+            if (metering_label_rule.get("source_ip_prefix") or
+                    metering_label_rule.get("destination_ip_prefix")):
                 raise neutron_exc.Invalid(
                     "Cannot use 'remote-ip-prefix' in conjunction "
                     "with 'source-ip-prefix' or 'destination-ip-prefix'.")
 
-        none_ip_prefix_informed = not metering_label_rule.get(
-            'remote_ip_prefix') and not metering_label_rule.get(
-            'source_ip_prefix') and not metering_label_rule.get(
-            'destination_ip_prefix')
+        none_ip_prefix_informed = (
+            not metering_label_rule.get('remote_ip_prefix') and
+            not metering_label_rule.get('source_ip_prefix') and
+            not metering_label_rule.get('destination_ip_prefix'))
 
         if none_ip_prefix_informed:
             raise neutron_exc.Invalid(

@@ -311,9 +311,9 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                     "not suitable for internal neutron port "
                     "%(internal_port_id)s, as its fixed_ips are "
                     "%(fixed_ips)s") % {
-                    'internal_ip_address': internal_ip_address,
-                    'internal_port_id': internal_port['id'],
-                    'fixed_ips': v4_fixed_ips}
+                        'internal_ip_address': internal_ip_address,
+                        'internal_port_id': internal_port['id'],
+                        'fixed_ips': v4_fixed_ips}
                 raise lib_exc.BadRequest(resource=apidef.RESOURCE_NAME,
                                          msg=message)
 
@@ -329,10 +329,10 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                 "subnet %(internal_subnet_id)s. Cannot set "
                 "Port forwarding for port %(internal_port_id)s with "
                 "Floating IP %(port_forwarding_id)s") % {
-                'external_net_id': external_network_id,
-                'internal_subnet_id': internal_subnet_id,
-                'internal_port_id': internal_port_id,
-                'port_forwarding_id': fip_obj.id}
+                    'external_net_id': external_network_id,
+                    'internal_subnet_id': internal_subnet_id,
+                    'internal_port_id': internal_port_id,
+                    'port_forwarding_id': fip_obj.id}
             raise lib_exc.BadRequest(resource=apidef.RESOURCE_NAME,
                                      msg=message)
 
@@ -386,7 +386,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
             except obj_exc.NeutronDbObjectDuplicateEntry:
                 (__,
                  conflict_params) = self._find_existing_port_forwarding(
-                    context, floatingip_id, port_forwarding)
+                     context, floatingip_id, port_forwarding)
                 message = _("A duplicate port forwarding entry with same "
                             "attributes already exists, conflicting "
                             "values are %s") % conflict_params
@@ -434,11 +434,12 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                 internal_port = port_forwarding.get('internal_port')
                 if any([internal_ip_address, internal_port]):
                     port_forwarding.update({
-                        'internal_ip_address': internal_ip_address
-                        if internal_ip_address else
-                        str(pf_obj.internal_ip_address),
-                        'internal_port': internal_port if internal_port else
-                        pf_obj.internal_port
+                        'internal_ip_address':
+                            internal_ip_address if internal_ip_address else
+                            str(pf_obj.internal_ip_address),
+                        'internal_port':
+                            internal_port if internal_port else
+                            pf_obj.internal_port
                     })
                 pf_obj.update_fields(port_forwarding, reset_changes=True)
                 self._check_port_forwarding_update(context, pf_obj)
@@ -580,16 +581,17 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                             "internal_ip_address: %(internal_ip_address)s, "
                             "internal_port: %(internal_port)s "
                             "already exists") % {
-                    'floatingip_id': fip_obj.id,
-                    'internal_ip_address': pf_dict['internal_ip_address'],
-                    'internal_port': pf_dict['internal_port']}
+                                'floatingip_id': fip_obj.id,
+                                'internal_ip_address':
+                                    pf_dict['internal_ip_address'],
+                                'internal_port': pf_dict['internal_port']}
             else:
                 message = _("The Floating IP %(floatingip_id)s had been set "
                             "on router %(router_id)s, the internal Neutron "
                             "port %(internal_port_id)s can not reach it") % {
-                    'floatingip_id': fip_obj.id,
-                    'router_id': fip_obj.router_id,
-                    'internal_port_id': internal_port_id}
+                                'floatingip_id': fip_obj.id,
+                                'router_id': fip_obj.router_id,
+                                'internal_port_id': internal_port_id}
             raise lib_exc.BadRequest(resource=apidef.RESOURCE_NAME,
                                      msg=message)
 
