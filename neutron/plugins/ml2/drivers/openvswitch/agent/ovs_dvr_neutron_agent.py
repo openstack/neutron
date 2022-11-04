@@ -307,7 +307,7 @@ class OVSDVRNeutronAgent(object):
 
     def _add_arp_dvr_mac_for_phys_br(self, physical_network, mac):
         self.int_br.add_dvr_gateway_mac_arp_vlan(
-                mac=mac, port=self.int_ofports[physical_network])
+            mac=mac, port=self.int_ofports[physical_network])
 
     def _remove_dvr_mac_for_phys_br(self, physical_network, mac):
         # REVISIT(yamamoto): match in_port as well?
@@ -322,7 +322,7 @@ class OVSDVRNeutronAgent(object):
 
     def _add_arp_dvr_mac_for_tun_br(self, mac):
         self.int_br.add_dvr_gateway_mac_arp_tun(
-                mac=mac, port=self.patch_tun_ofport)
+            mac=mac, port=self.patch_tun_ofport)
 
     def _remove_dvr_mac_for_tun_br(self, mac):
         self.int_br.remove_dvr_mac_tun(mac=mac, port=self.patch_tun_ofport)

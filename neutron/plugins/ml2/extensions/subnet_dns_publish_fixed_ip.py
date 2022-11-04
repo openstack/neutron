@@ -55,9 +55,9 @@ class SubnetDNSPublishFixedIPExtensionDriver(
 
         if flag:
             subnet_obj.SubnetDNSPublishFixedIP(
-                    plugin_context,
-                    subnet_id=db_data['id'],
-                    dns_publish_fixed_ip=flag).create()
+                plugin_context,
+                subnet_id=db_data['id'],
+                dns_publish_fixed_ip=flag).create()
         db_data[sn_dns.DNS_PUBLISH_FIXED_IP] = flag
 
     def process_update_subnet(self, plugin_context, request_data, db_data):
@@ -72,12 +72,12 @@ class SubnetDNSPublishFixedIPExtensionDriver(
         subnet_id = db_data['id']
         if new_value:
             subnet_obj.SubnetDNSPublishFixedIP(
-                    plugin_context,
-                    subnet_id=subnet_id,
-                    dns_publish_fixed_ip=new_value).create()
+                plugin_context,
+                subnet_id=subnet_id,
+                dns_publish_fixed_ip=new_value).create()
         else:
             sn_obj = subnet_obj.SubnetDNSPublishFixedIP.get_object(
-                    plugin_context,
-                    subnet_id=subnet_id)
+                plugin_context,
+                subnet_id=subnet_id)
             sn_obj.delete()
         db_data[sn_dns.DNS_PUBLISH_FIXED_IP] = new_value

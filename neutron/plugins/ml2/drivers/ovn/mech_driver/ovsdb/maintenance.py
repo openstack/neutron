@@ -778,10 +778,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                         self._ovn_client.update_port_dhcp_options(
                             port_info, txn))
                     txn.add(self._nb_idl.set_lswitch_port(
-                                lport_name=port['id'],
-                                dhcpv4_options=dhcpv4_options,
-                                dhcpv6_options=dhcpv6_options,
-                                if_exists=False))
+                        lport_name=port['id'],
+                        dhcpv4_options=dhcpv4_options,
+                        dhcpv6_options=dhcpv6_options,
+                        if_exists=False))
 
         raise periodics.NeverAgain()
 

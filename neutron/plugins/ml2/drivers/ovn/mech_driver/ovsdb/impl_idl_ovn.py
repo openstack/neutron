@@ -295,11 +295,11 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
                                  "delete by lport-name"))
 
     def get_all_stateless_fip_nats(self):
-        cmd = self.db_find('NAT',
+        cmd = self.db_find(
+            'NAT',
             ('external_ids', '!=', {ovn_const.OVN_FIP_EXT_ID_KEY: ''}),
             ('options', '=', {'stateless': 'true'}),
-            ('type', '=', 'dnat_and_snat')
-        )
+            ('type', '=', 'dnat_and_snat'))
         return cmd.execute(check_error=True)
 
     def get_all_logical_switches_with_ports(self):
@@ -730,7 +730,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         rc = self.db_find_rows('Load_Balancer', (
             'external_ids', '=',
             {ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY:
-                pf_const.PORT_FORWARDING_PLUGIN,
+             pf_const.PORT_FORWARDING_PLUGIN,
              ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: lrouter_name}))
         return [ovn_obj for ovn_obj in rc.execute(check_error=True)
                 if ovn_const.OVN_FIP_EXT_ID_KEY in ovn_obj.external_ids]
@@ -742,7 +742,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         result = self.db_find('Load_Balancer', (
             'external_ids', '=',
             {ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY:
-                pf_const.PORT_FORWARDING_PLUGIN,
+             pf_const.PORT_FORWARDING_PLUGIN,
              ovn_const.OVN_FIP_EXT_ID_KEY: fip_id})).execute(check_error=True)
         return result[0] if result else None
 
@@ -758,8 +758,8 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
 
         for nat in self.get_lrouter_nat_rules(utils.ovn_name(router_id)):
             if (nat['type'] == 'dnat_and_snat' and
-               nat['logical_ip'] == logical_ip and
-               nat['external_ip'] == external_ip):
+                    nat['logical_ip'] == logical_ip and
+                    nat['external_ip'] == external_ip):
                 return nat
 
     def check_revision_number(self, name, resource, resource_type,
@@ -803,7 +803,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         for row in self._tables['Port_Group'].rows.values():
             name = getattr(row, 'name')
             if not (ovn_const.OVN_SG_EXT_ID_KEY in row.external_ids or
-               name == ovn_const.OVN_DROP_PORT_GROUP_NAME):
+                    name == ovn_const.OVN_DROP_PORT_GROUP_NAME):
                 continue
             data = {}
             for row_key in getattr(row, "_data", {}):
@@ -890,8 +890,8 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
                                                     card_serial_number):
         for ch in self.chassis_list().execute(check_error=True):
             if ('{}={}'
-                .format(ovn_const.CMS_OPT_CARD_SERIAL_NUMBER,
-                        card_serial_number)
+                    .format(ovn_const.CMS_OPT_CARD_SERIAL_NUMBER,
+                            card_serial_number)
                     in utils.get_ovn_chassis_other_config(ch).get(
                         ovn_const.OVN_CMS_OPTIONS, '').split(',')):
                 return ch

@@ -132,7 +132,7 @@ class PciOsWrapper(object):
             with open(cls.NUMVFS_PATH % dev_name) as f:
                 numvfs = int(f.read())
                 LOG.debug("Number of VFs configured on device %s: %s",
-                    dev_name, numvfs)
+                          dev_name, numvfs)
                 return numvfs
         except IOError:
             LOG.warning("Error reading sriov_numvfs file for device %s, "

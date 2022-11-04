@@ -276,8 +276,8 @@ class AgentMechanismDriverBase(api.MechanismDriver, metaclass=abc.ABCMeta):
                     "host %(host)s reports being responsible for resource "
                     "provider %(rsc_provider)s: %(agents)s",
                     {'host': context.current['binding:host_id'],
-                    'rsc_provider': allocation[group],
-                    'agents': [agent['id'] for agent in agents]})
+                     'rsc_provider': allocation[group],
+                     'agents': [agent['id'] for agent in agents]})
                 return False
             else:
                 # not responsible, must be somebody else

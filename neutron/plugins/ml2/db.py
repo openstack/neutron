@@ -121,7 +121,8 @@ def delete_distributed_port_binding_if_stale(context, binding):
             LOG.debug("Distributed port: Deleting binding %s", binding)
             context.session.delete(binding)
             for bindlv in (context.session.query(models.PortBindingLevel).
-                    filter_by(port_id=binding.port_id, host=binding.host)):
+                           filter_by(port_id=binding.port_id,
+                                     host=binding.host)):
                 context.session.delete(bindlv)
             LOG.debug("For port %(port_id)s, host %(host)s, "
                       "cleared binding levels",
@@ -271,7 +272,7 @@ def get_distributed_port_bindings(context, port_id):
     with db_api.CONTEXT_READER.using(context):
         bindings = (context.session.query(models.DistributedPortBinding).
                     filter(models.DistributedPortBinding.port_id.startswith(
-                           port_id)).all())
+                        port_id)).all())
     if not bindings:
         LOG.debug("No bindings for distributed port %s", port_id)
     return bindings
@@ -345,7 +346,7 @@ def _prevent_segment_delete_with_port_bound(resource, event, trigger,
 
     if auto_delete_port_ids:
         LOG.debug("Auto-deleting dhcp port(s) on segment %s: %s",
-            payload.resource_id, ", ".join(auto_delete_port_ids))
+                  payload.resource_id, ", ".join(auto_delete_port_ids))
         plugin = directory.get_plugin()
     for port_id in auto_delete_port_ids:
         try:
