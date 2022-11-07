@@ -445,8 +445,8 @@ def remove_macs_from_lsp_addresses(addresses):
     ip_list = []
     for addr in addresses:
         ip_list.extend([x for x in addr.split() if
-                       (netutils.is_valid_ipv4(x) or
-                        netutils.is_valid_ipv6(x))])
+                        (netutils.is_valid_ipv4(x) or
+                         netutils.is_valid_ipv6(x))])
     return ip_list
 
 
@@ -476,9 +476,9 @@ def get_allowed_address_pairs_ip_addresses_from_ovn_port(ovn_port):
 
 def get_ovn_port_security_groups(ovn_port, skip_trusted_port=True):
     info = {'security_groups': ovn_port.external_ids.get(
-            constants.OVN_SG_IDS_EXT_ID_KEY, '').split(),
+                constants.OVN_SG_IDS_EXT_ID_KEY, '').split(),
             'device_owner': ovn_port.external_ids.get(
-            constants.OVN_DEVICE_OWNER_EXT_ID_KEY, '')}
+                constants.OVN_DEVICE_OWNER_EXT_ID_KEY, '')}
     return get_lsp_security_groups(info, skip_trusted_port=skip_trusted_port)
 
 

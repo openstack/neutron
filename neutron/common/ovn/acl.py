@@ -306,7 +306,7 @@ def update_acls_for_security_group(plugin,
     else:
         ovn.pg_acl_del(acl['port_group'], acl['direction'],
                        acl['priority'], acl['match']).execute(
-            check_error=True)
+                           check_error=True)
 
 
 def filter_acl_dict(acl, extra_fields=None):

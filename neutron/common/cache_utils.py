@@ -107,8 +107,8 @@ class cache_method_results(object):
             raise NotImplementedError(
                 _("Instance of class %(module)s.%(class)s must contain _cache "
                   "attribute") % {
-                    'module': target_self.__module__,
-                    'class': target_self_cls_name})
+                      'module': target_self.__module__,
+                      'class': target_self_cls_name})
         if not target_self._cache:
             if self._first_call:
                 LOG.debug("Instance of class %(module)s.%(class)s doesn't "
