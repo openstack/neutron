@@ -250,7 +250,7 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
                 if not get_excepted_elements:
                     continue
                 explanation = getattr(get_excepted_elements, '__doc__', "")
-                if len(explanation) < 1:
+                if not explanation:
                     self.fail("%s() requires docstring with explanation" %
                               '.'.join([m.module.__name__,
                                         get_excepted_elements.__name__]))
