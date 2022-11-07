@@ -140,8 +140,9 @@ class OVNGatewayLeastLoadedScheduler(OVNGatewayScheduler):
 
     def _select_gateway_chassis(self, nb_idl, candidates):
         chassis_bindings = nb_idl.get_all_chassis_gateway_bindings(candidates)
-        return [chassis for chassis, load in sorted(chassis_bindings.items(),
-                key=OVNGatewayLeastLoadedScheduler._get_chassis_load)]
+        return [chassis for chassis, load in
+                sorted(chassis_bindings.items(),
+                       key=OVNGatewayLeastLoadedScheduler._get_chassis_load)]
 
 
 OVN_SCHEDULER_STR_TO_CLASS = {

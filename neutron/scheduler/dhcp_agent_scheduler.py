@@ -217,9 +217,9 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
             agent_id = agent.id
             try:
                 network.NetworkDhcpAgentBinding(
-                     context, dhcp_agent_id=agent_id,
-                     network_id=network_id,
-                     binding_index=binding_index).create()
+                    context, dhcp_agent_id=agent_id,
+                    network_id=network_id,
+                    binding_index=binding_index).create()
             except exceptions.NeutronDbObjectDuplicateEntry:
                 # it's totally ok, someone just did our job!
                 bound_agents.remove(agent)
@@ -243,7 +243,7 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
         hosted_agents: A list of agents which already hosts the network.
         """
         agents_dict = self._get_network_hostable_dhcp_agents(
-                                    plugin, context, network)
+            plugin, context, network)
         if not agents_dict['hostable_agents'] or agents_dict['n_agents'] <= 0:
             return {'n_agents': 0, 'hostable_agents': [],
                     'hosted_agents': agents_dict['hosted_agents']}
