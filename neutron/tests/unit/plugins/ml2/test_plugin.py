@@ -1126,7 +1126,9 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
         ml2_plugin.MAX_PROVISIONING_TRIES = 2
         plugin = directory.get_plugin()
         port_id = 'fake_port_id'
-        port = mock.Mock(id=port_id, admin_state_up=True)
+        device_owner = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'nova'
+        port = mock.Mock(id=port_id, admin_state_up=True,
+                         device_owner=device_owner)
         mock_get_port.return_value = port
         with mock.patch.object(plugin, 'update_port_status') as mock_pstatus:
             pb1 = mock.MagicMock(vif_type=portbindings.VIF_TYPE_UNBOUND)
@@ -1138,6 +1140,23 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                                          self.context, resource_id=port_id))
             mock_pstatus.assert_called_once_with(self.context, port_id,
                                                  constants.PORT_STATUS_ACTIVE)
+
+    @mock.patch('neutron.plugins.ml2.plugin.db.get_port')
+    @mock.patch.object(p_utils, 'get_port_binding_by_status_and_host')
+    def test__port_provisioned_port_retry_port_binding_unbound_no_vm_port(
+            self, mock_get_pb, mock_get_port):
+        plugin = directory.get_plugin()
+        port_id = 'fake_port_id'
+        port = mock.Mock(id=port_id, admin_state_up=True,
+                         device_owner='other_value')
+        mock_get_port.return_value = port
+        with mock.patch.object(plugin, 'update_port_status') as mock_pstatus:
+            pb1 = mock.MagicMock(vif_type=portbindings.VIF_TYPE_UNBOUND)
+            mock_get_pb.return_value = pb1
+            plugin._port_provisioned('port', 'evt', 'trigger',
+                                     payload=events.DBEventPayload(
+                                         self.context, resource_id=port_id))
+            mock_pstatus.assert_not_called()
 
     def test_port_after_create_outside_transaction(self):
         self.tx_open = True
