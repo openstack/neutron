@@ -166,10 +166,10 @@
                   set -o pipefail &&
                   {{ ovn_migration_working_dir }}/start-ovn-migration.sh generate-inventory 2>&1 > {{ ovn_migration_working_dir}}/generate-inventory.log
 
-            - name: Set MTU T1
+            - name: Set DHCP T1 timer
               shell:
                   set -o pipefail &&
-                  {{ ovn_migration_working_dir }}/start-ovn-migration.sh setup-mtu-t1 2>&1 > {{ ovn_migration_working_dir}}/setup-mtu-t1.log
+                  {{ ovn_migration_working_dir }}/start-ovn-migration.sh reduce-dhcp-t1 2>&1 > {{ ovn_migration_working_dir}}/reduce-dhcp-t1.log
 
             - name: Reduce mtu of the pre migration networks
               shell:
