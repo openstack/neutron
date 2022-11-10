@@ -21,9 +21,9 @@ adjustments, prepare the environment for the procedure.
 
 Subsequent steps start the migration via Ansible.
 
-Plan for a 24-hour wait after the setup-mtu-t1 step to allow VMs to catch up
-with the new MTU size. The default neutron ML2/OVS configuration has a
-dhcp_lease_duration of 86400 seconds (24h).
+Plan for a 24-hour wait after the reduce-dhcp-t1 step to allow VMs to catch up
+with the new MTU size from the DHCP server. The default neutron ML2/OVS
+configuration has a dhcp_lease_duration of 86400 seconds (24h).
 
 Also, if there are instances using static IP assignment, the administrator
 should be ready to update the MTU of those instances to the new value of 8
@@ -182,11 +182,11 @@ Perform the following steps in the undercloud
    with the migration playbooks.
 
 
-6. Run ``ovn_migration.sh setup-mtu-t1``
+6. Run ``ovn_migration.sh reduce-dhcp-t1``
 
    .. code-block:: console
 
-      $ ovn_migration.sh setup-mtu-t1
+      $ ovn_migration.sh reduce-dhcp-t1
 
 
    This lowers the T1 parameter
