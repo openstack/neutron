@@ -238,7 +238,7 @@ EOF
     cat hosts_for_migration
     echo "***************************************"
     echo "Generated the inventory file - hosts_for_migration"
-    echo "Please review the file before running the next command - setup-mtu-t1"
+    echo "Please review the file before running the next command - reduce-dhcp-t1"
 }
 
 # Check if source inventory exists
@@ -283,7 +283,7 @@ oc_check_network_mtu() {
     return $?
 }
 
-setup_mtu_t1() {
+reduce_dhcp_t1() {
     # Run the ansible playbook to reduce the DHCP T1 parameter in
     # dhcp_agent.ini in all the overcloud nodes where dhcp agent is running.
     ansible-playbook  -vv $OPT_WORKDIR/playbooks/reduce-dhcp-renewal-time.yml \
@@ -349,7 +349,7 @@ complete details. This script needs to be run in 5 steps.
 
            Generates the inventory file
 
- Step 2 -> ovn_migration.sh setup-mtu-t1
+ Step 2 -> ovn_migration.sh reduce-dhcp-t1 (deprecated name setup-mtu-t1)
 
            Sets the DHCP renewal T1 to 30 seconds. After this step you will
            need to wait at least 24h for the change to be propagated to all
@@ -386,9 +386,13 @@ case $command in
         ret_val=$?
         ;;
 
-    setup-mtu-t1)
+    reduce-dhcp-t1 | setup-mtu-t1)
+        if [[ $command = 'setup-mtu-t1' ]]; then
+            echo -e "Warning: setup-mtu-t1 argument was renamed."\
+                    "Use reduce-dhcp-t1 argument instead."
+        fi
         check_for_necessary_files
-        setup_mtu_t1
+        reduce_dhcp_t1
         ret_val=$?;;
 
     reduce-mtu)
