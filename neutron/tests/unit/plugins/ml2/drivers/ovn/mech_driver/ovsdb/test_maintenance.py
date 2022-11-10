@@ -24,6 +24,7 @@ from oslo_utils import uuidutils
 from neutron.common.ovn import constants
 from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
+from neutron.db.models import ovn as ovn_models
 from neutron.db import ovn_revision_numbers_db
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import maintenance
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
@@ -294,6 +295,17 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
 
     def test_fix_security_group_create_version_mismatch(self):
         self._test_fix_security_group_create(revision_number=2)
+
+    @mock.patch.object(maintenance, 'LOG')
+    def test__fix_create_update_no_sttd_attr(self, mock_log):
+        row_net = ovn_models.OVNRevisionNumbers(
+            standard_attr_id=1, resource_uuid=2,
+            resource_type=constants.TYPE_NETWORKS)
+        self.fake_ovn_client._plugin.get_network.return_value = {
+            'id': 'net_id', 'revision_number': 1}
+        self.periodic._fix_create_update(self.ctx, row_net)
+        mock_log.error.assert_called_once_with(
+            'Standard attribute ID not found for object ID %s', 'net_id')
 
     def test__create_lrouter_port(self):
         port = {'id': 'port-id',

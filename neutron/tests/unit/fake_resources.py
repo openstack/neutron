@@ -483,7 +483,7 @@ class FakePort(object):
         fake_uuid = uuidutils.generate_uuid()
         port_attrs = {
             'admin_state_up': True,
-            'allowed_address_pairs': [{}],
+            'allowed_address_pairs': [],
             'binding:host_id': 'binding-host-id-' + fake_uuid,
             'binding:profile': {},
             'binding:vif_details': {},
