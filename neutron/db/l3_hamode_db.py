@@ -379,7 +379,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         router_db = payload.metadata['router_db']
         is_ha = self._is_ha(router)
         router['ha'] = is_ha
-        self.set_extra_attr_value(context, router_db, 'ha', is_ha)
+        self.set_extra_attr_value(router_db, 'ha', is_ha)
         if not is_ha:
             return
         # This will throw an exception if there aren't enough agents to
@@ -453,14 +453,14 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             payload.desired_state.extra_attributes.ha_vr_id = None
         if (payload.request_body.get('distributed') or
                 payload.states[0]['distributed']):
-            self.set_extra_attr_value(payload.context, payload.desired_state,
+            self.set_extra_attr_value(payload.desired_state,
                                       'ha', requested_ha_state)
             return
         self._migrate_router_ports(
              payload.context, payload.desired_state,
              old_owner=old_owner, new_owner=new_owner)
         self.set_extra_attr_value(
-            payload.context, payload.desired_state, 'ha', requested_ha_state)
+            payload.desired_state, 'ha', requested_ha_state)
 
     @registry.receives(resources.ROUTER, [events.AFTER_UPDATE],
                        priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)

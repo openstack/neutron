@@ -37,6 +37,7 @@ import webob.exc
 from neutron.db import extraroute_db
 from neutron.db import l3_db
 from neutron.db.models import l3 as l3_models
+from neutron.db.models import l3_attrs
 from neutron.db import models_v2
 from neutron.extensions import segment as segment_ext
 from neutron.objects import base as base_obj
@@ -731,6 +732,20 @@ class L3TestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                           self.mixin, payload=mock.ANY),
             ]
             mock_publish.assert_has_calls(expected_calls)
+
+    def test_create_router_extra_attr(self):
+        router_args = {'router': {'name': 'foo_router',
+                                  'admin_state_up': True,
+                                  'tenant_id': 'foo_tenant'}
+                       }
+        router_dict = self.create_router(router_args)
+        with db_api.CONTEXT_READER.using(self.ctx) as session:
+            r_extra_attrs = session.query(
+                l3_attrs.RouterExtraAttributes).filter(
+                    l3_attrs.RouterExtraAttributes.router_id ==
+                    router_dict['id']).all()
+        self.assertEqual(1, len(r_extra_attrs))
+        self.assertEqual(router_dict['id'], r_extra_attrs[0].router_id)
 
     def test_update_router_notify(self):
         with mock.patch.object(l3_db.registry, 'publish') as mock_publish:
