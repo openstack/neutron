@@ -23,6 +23,7 @@ from neutron_lib.utils import net as net_utils
 from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 from sqlalchemy import func
+from sqlalchemy import sql
 
 from neutron.db.models import dvr as dvr_models
 from neutron.db.models import l3
@@ -277,6 +278,16 @@ class Router(base.NeutronDbObject):
         _target_version = versionutils.convert_version_to_tuple(target_version)
         if _target_version < (1, 1):
             primitive.pop('qos_policy_id', None)
+
+    @staticmethod
+    @db_api.CONTEXT_READER
+    def get_router_ids_without_router_std_attrs(context):
+        r_attrs = l3_attrs.RouterExtraAttributes
+        query = context.session.query(l3.Router)
+        query = query.join(r_attrs, r_attrs.router_id == l3.Router.id,
+                           isouter=True)
+        query = query.filter(r_attrs.router_id == sql.null())
+        return [r.id for r in query.all()]
 
 
 @base.NeutronObjectRegistry.register
