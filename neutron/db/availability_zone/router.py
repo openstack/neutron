@@ -45,5 +45,5 @@ class RouterAvailabilityZoneMixin(l3_attrs_db.ExtraAttributesMixin):
         if az_def.AZ_HINTS in router:
             self.validate_availability_zones(context, 'router',
                                              router[az_def.AZ_HINTS])
-            self.set_extra_attr_value(context, router_db, az_def.AZ_HINTS,
+            self.set_extra_attr_value(router_db, az_def.AZ_HINTS,
                                       router[az_def.AZ_HINTS])

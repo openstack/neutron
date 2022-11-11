@@ -45,24 +45,20 @@ class ExtraAttributesMixin(object):
             from_db = info.get('transform_from_db', lambda x: x)
             router_res[name] = from_db(extra_attrs.get(name, info['default']))
 
-    def _ensure_extra_attr_model(self, context, router_db):
-        if not router_db['extra_attributes']:
-            kwargs = {k: v['default'] for k, v in get_attr_info().items()}
-            kwargs['router_id'] = router_db['id']
-            new = l3_attrs.RouterExtraAttributes(**kwargs)
-            context.session.add(new)
-            router_db['extra_attributes'] = new
+    @staticmethod
+    def add_extra_attr(context, router_db):
+        kwargs = {k: v['default'] for k, v in get_attr_info().items()}
+        kwargs['router_id'] = router_db['id']
+        new = l3_attrs.RouterExtraAttributes(**kwargs)
+        context.session.add(new)
+        router_db['extra_attributes'] = new
 
-    def set_extra_attr_value(self, context, router_db, key, value):
-        if not context.session.is_active:
-            raise RuntimeError(_("set_extra_attr_value cannot be called "
-                                 "out of a transaction."))
-
+    @staticmethod
+    def set_extra_attr_value(router_db, key, value):
         # set a single value explicitly
         if key in get_attr_info():
             info = get_attr_info()[key]
             to_db = info.get('transform_to_db', lambda x: x)
-            self._ensure_extra_attr_model(context, router_db)
             router_db['extra_attributes'].update({key: to_db(value)})
             return
         raise RuntimeError(_("Tried to set a key '%s' that doesn't exist "

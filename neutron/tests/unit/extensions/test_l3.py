@@ -615,9 +615,15 @@ class ExtraAttributesMixinTestCase(testlib_api.SqlTestCase):
         self.mixin = l3_attrs_db.ExtraAttributesMixin()
         directory.add_plugin(plugin_constants.L3, self.mixin)
         self.ctx = context.get_admin_context()
-        self.router = l3_models.Router()
-        with db_api.CONTEXT_WRITER.using(self.ctx):
-            self.ctx.session.add(self.router)
+        self.router = self._new_router(self.ctx)
+
+    @staticmethod
+    @db_api.CONTEXT_WRITER
+    def _new_router(ctx):
+        router = l3_models.Router()
+        ctx.session.add(router)
+        l3_attrs_db.ExtraAttributesMixin.add_extra_attr(ctx, router)
+        return router
 
     def _get_default_api_values(self):
         return {k: v.get('transform_from_db', lambda x: x)(v['default'])
@@ -626,13 +632,11 @@ class ExtraAttributesMixinTestCase(testlib_api.SqlTestCase):
     def test_set_extra_attr_key_bad(self):
         with testtools.ExpectedException(RuntimeError):
             with db_api.CONTEXT_WRITER.using(self.ctx):
-                self.mixin.set_extra_attr_value(self.ctx, self.router,
-                                                'bad', 'value')
+                self.mixin.set_extra_attr_value(self.router, 'bad', 'value')
 
     def test_set_attrs_and_extend_no_transaction(self):
         with testtools.ExpectedException(RuntimeError):
-            self.mixin.set_extra_attr_value(self.ctx, self.router,
-                                            'ha_vr_id', 99)
+            self.mixin.set_extra_attr_value(self.router, 'mysterious_key', 99)
 
     def test__extend_extra_router_dict_defaults(self):
         rdict = {}
@@ -641,9 +645,8 @@ class ExtraAttributesMixinTestCase(testlib_api.SqlTestCase):
 
     def test_set_attrs_and_extend(self):
         with db_api.CONTEXT_WRITER.using(self.ctx):
-            self.mixin.set_extra_attr_value(self.ctx, self.router,
-                                            'ha_vr_id', 99)
-            self.mixin.set_extra_attr_value(self.ctx, self.router,
+            self.mixin.set_extra_attr_value(self.router, 'ha_vr_id', 99)
+            self.mixin.set_extra_attr_value(self.router,
                                             'availability_zone_hints',
                                             ['x', 'y', 'z'])
             expected = self._get_default_api_values()
@@ -653,7 +656,7 @@ class ExtraAttributesMixinTestCase(testlib_api.SqlTestCase):
             self.mixin._extend_extra_router_dict(rdict, self.router)
             self.assertEqual(expected, rdict)
 
-            self.mixin.set_extra_attr_value(self.ctx, self.router,
+            self.mixin.set_extra_attr_value(self.router,
                                             'availability_zone_hints',
                                             ['z', 'y', 'z'])
             expected['availability_zone_hints'] = ['z', 'y', 'z']
