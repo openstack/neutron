@@ -14,7 +14,7 @@ Install the components
 
 .. code-block:: console
 
-   # yum install openstack-neutron-linuxbridge ebtables ipset
+   # yum install openstack-neutron-openvswitch
 
 .. end
 
@@ -157,8 +157,8 @@ Finalize installation
 
    .. code-block:: console
 
-      # systemctl enable neutron-linuxbridge-agent.service
-      # systemctl start neutron-linuxbridge-agent.service
+      # systemctl enable neutron-openvswitch-agent.service
+      # systemctl start neutron-openvswitch-agent.service
 
    .. end
 

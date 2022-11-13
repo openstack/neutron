@@ -304,11 +304,11 @@ Finalize installation
    .. code-block:: console
 
       # systemctl enable openstack-neutron.service \
-        openstack-neutron-linuxbridge-agent.service \
+        openstack-neutron-openvswitch-agent.service \
         openstack-neutron-dhcp-agent.service \
         openstack-neutron-metadata-agent.service
       # systemctl start openstack-neutron.service \
-        openstack-neutron-linuxbridge-agent.service \
+        openstack-neutron-openvswitch-agent.service \
         openstack-neutron-dhcp-agent.service \
         openstack-neutron-metadata-agent.service
 

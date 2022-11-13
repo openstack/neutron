@@ -9,7 +9,7 @@ Install the components
 
 .. code-block:: console
 
-   # apt install neutron-linuxbridge-agent
+   # apt install neutron-openvswitch-agent
 
 .. end
 
@@ -154,7 +154,7 @@ Finalize installation
 
    .. code-block:: console
 
-      # service neutron-linuxbridge-agent restart
+      # service neutron-openvswitch-agent restart
 
    .. end
 

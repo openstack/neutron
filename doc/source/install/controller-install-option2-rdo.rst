@@ -11,7 +11,7 @@ Install the components
 .. code-block:: console
 
    # yum install openstack-neutron openstack-neutron-ml2 \
-     openstack-neutron-linuxbridge ebtables
+     openstack-neutron-openvswitch ebtables
 
 .. end
 
@@ -181,7 +181,7 @@ and switching) virtual networking infrastructure for instances.
 
        [ml2]
        # ...
-       mechanism_drivers = linuxbridge,l2population
+       mechanism_drivers = openvswitch,l2population
 
     .. end
 
@@ -229,35 +229,23 @@ and switching) virtual networking infrastructure for instances.
 
     .. end
 
-  * In the ``[securitygroup]`` section, enable ipset to increase
-    efficiency of security group rules:
-
-    .. path /etc/neutron/plugins/ml2/ml2_conf.ini
-    .. code-block:: ini
-
-       [securitygroup]
-       # ...
-       enable_ipset = true
-
-    .. end
-
-Configure the Linux bridge agent
+Configure the Open vSwitch agent
 --------------------------------
 
 The Linux bridge agent builds layer-2 (bridging and switching) virtual
 networking infrastructure for instances and handles security groups.
 
-* Edit the ``/etc/neutron/plugins/ml2/linuxbridge_agent.ini`` file and
+* Edit the ``/etc/neutron/plugins/ml2/openvswitch_agent.ini`` file and
   complete the following actions:
 
-  * In the ``[linux_bridge]`` section, map the provider virtual network to the
+  * In the ``[ovs]`` section, map the provider virtual network to the
     provider physical network interface:
 
-    .. path /etc/neutron/plugins/ml2/linuxbridge_agent.ini
+    .. path /etc/neutron/plugins/ml2/openvswitch_agent.ini
     .. code-block:: ini
 
-       [linux_bridge]
-       physical_interface_mappings = provider:PROVIDER_INTERFACE_NAME
+       [ovs]
+       bridge_mappings = provider:PROVIDER_INTERFACE_NAME
 
     .. end
 
@@ -269,11 +257,10 @@ networking infrastructure for instances and handles security groups.
     IP address of the physical network interface that handles overlay
     networks, and enable layer-2 population:
 
-    .. path /etc/neutron/plugins/ml2/linuxbridge_agent.ini
+    .. path /etc/neutron/plugins/ml2/openvswitch_agent.ini
     .. code-block:: ini
 
        [vxlan]
-       enable_vxlan = true
        local_ip = OVERLAY_INTERFACE_IP_ADDRESS
        l2_population = true
 
@@ -287,20 +274,22 @@ networking infrastructure for instances and handles security groups.
     :doc:`environment-networking-rdo` for more information.
 
   * In the ``[securitygroup]`` section, enable security groups and
-    configure the Linux bridge iptables firewall driver:
+    configure the Open vSwitch native or the hybrid iptables firewall driver:
 
-    .. path /etc/neutron/plugins/ml2/linuxbridge_agent.ini
+    .. path /etc/neutron/plugins/ml2/openvswitch_agent.ini
     .. code-block:: ini
 
        [securitygroup]
        # ...
        enable_security_group = true
-       firewall_driver = neutron.agent.linux.iptables_firewall.IptablesFirewallDriver
+       firewall_driver = openvswitch
+       #firewall_driver = iptables_hybrid
 
     .. end
 
-  * Ensure your Linux operating system kernel supports network bridge filters
-    by verifying all the following ``sysctl`` values are set to ``1``:
+  * In the case of using the hybrid iptables firewall driver, ensure your
+    Linux operating system kernel supports network bridge filters by verifying
+    all the following ``sysctl`` values are set to ``1``:
 
     .. code-block:: ini
 
@@ -322,14 +311,14 @@ self-service virtual networks.
 * Edit the ``/etc/neutron/l3_agent.ini`` file and complete the following
   actions:
 
-  * In the ``[DEFAULT]`` section, configure the Linux bridge interface driver:
+  * In the ``[DEFAULT]`` section, configure the Open vSwitch interface driver:
 
     .. path /etc/neutron/l3_agent.ini
     .. code-block:: ini
 
        [DEFAULT]
        # ...
-       interface_driver = linuxbridge
+       interface_driver = openvswitch
 
     .. end
 
@@ -341,7 +330,7 @@ The DHCP agent provides DHCP services for virtual networks.
 * Edit the ``/etc/neutron/dhcp_agent.ini`` file and complete the following
   actions:
 
-  * In the ``[DEFAULT]`` section, configure the Linux bridge interface driver,
+  * In the ``[DEFAULT]`` section, configure the Open vSwitch interface driver,
     Dnsmasq DHCP driver, and enable isolated metadata so instances on provider
     networks can access metadata over the network:
 
@@ -350,7 +339,7 @@ The DHCP agent provides DHCP services for virtual networks.
 
        [DEFAULT]
        # ...
-       interface_driver = linuxbridge
+       interface_driver = openvswitch
        dhcp_driver = neutron.agent.linux.dhcp.Dnsmasq
        enable_isolated_metadata = true
 

@@ -315,10 +315,10 @@ Finalize installation
    .. code-block:: console
 
       # systemctl enable neutron-server.service \
-        neutron-linuxbridge-agent.service neutron-dhcp-agent.service \
+        neutron-openvswitch-agent.service neutron-dhcp-agent.service \
         neutron-metadata-agent.service
       # systemctl start neutron-server.service \
-        neutron-linuxbridge-agent.service neutron-dhcp-agent.service \
+        neutron-openvswitch-agent.service neutron-dhcp-agent.service \
         neutron-metadata-agent.service
 
    .. end

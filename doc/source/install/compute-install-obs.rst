@@ -12,7 +12,7 @@ Install the components
 .. code-block:: console
 
    # zypper install --no-recommends \
-     openstack-neutron-linuxbridge-agent bridge-utils
+     openstack-neutron-openvswitch-agent bridge-utils
 
 .. end
 
@@ -162,13 +162,13 @@ Finalize installation
 
    .. end
 
-#. Start the Linux Bridge agent and configure it to start when the
+#. Start the Open vSwitch agent and configure it to start when the
    system boots:
 
    .. code-block:: console
 
-      # systemctl enable openstack-neutron-linuxbridge-agent.service
-      # systemctl start openstack-neutron-linuxbridge-agent.service
+      # systemctl enable openstack-neutron-openvswitch-agent.service
+      # systemctl start openstack-neutron-openvswitch-agent.service
 
    .. end
 
