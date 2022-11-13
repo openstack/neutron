@@ -49,6 +49,42 @@
       jobs:
         - neutron-ovn-grenade-multinode
         - neutron-ovn-tempest-with-uwsgi-loki
+        - tempest-integrated-networking:
+            irrelevant-files:
+              - ^\.pylintrc$
+              - ^test-requirements.txt$
+              - ^releasenotes/.*$
+              - ^doc/.*$
+              - ^setup.cfg$
+              - ^.*\.conf\.sample$
+              - ^.*\.rst$
+              - ^neutron/locale/.*$
+              - ^neutron/tests/.*$
+              - ^tools/.*$
+              - ^tox.ini$
+              - ^neutron/agent/dhcp/.*$
+              - ^neutron/agent/l2/.*$
+              - ^neutron/agent/l3/.*$
+              - ^neutron/agent/metadata/.*$
+              - ^neutron/agent/windows/.*$
+              - ^neutron/agent/dhcp_agent.py
+              - ^neutron/agent/l3_agent.py
+              - ^neutron/agent/metadata_agent.py
+              - ^neutron/agent/resource_cache.py
+              - ^neutron/agent/rpc.py
+              - ^neutron/agent/securitygroup_rpc.py
+              - ^neutron/plugins/ml2/drivers/linuxbridge/.*$
+              - ^neutron/plugins/ml2/drivers/openvswitch/.*$
+              - ^neutron/plugins/ml2/drivers/macvtap/.*$
+              - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
+              - ^neutron/services/qos/drivers/linuxbridge/.*$
+              - ^neutron/services/qos/drivers/openvswitch/.*$
+              - ^neutron/services/trunk/drivers/linuxbridge/.*$
+              - ^neutron/services/trunk/drivers/openvswitch/.*$
+              - ^neutron/scheduler/.*$
+              - ^roles/.*functional.*$
+              - ^playbooks/.*functional.*$
+              - ^zuul.d/(?!(project)).*\.yaml
 
 - project-template:
     name: neutron-periodic-jobs
