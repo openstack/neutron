@@ -153,7 +153,7 @@ class ClientFixture(fixtures.Fixture):
                       cidr=None, gateway_ip=None, name=None, enable_dhcp=True,
                       ipv6_address_mode='slaac', ipv6_ra_mode='slaac',
                       subnetpool_id=None, ip_version=None,
-                      host_routes=None):
+                      host_routes=None, segment=None):
         resource_type = 'subnet'
 
         name = name or utils.get_rand_name(prefix=resource_type)
@@ -173,6 +173,8 @@ class ClientFixture(fixtures.Fixture):
             spec['cidr'] = cidr
         if host_routes:
             spec['host_routes'] = host_routes
+        if segment:
+            spec['segment_id'] = segment
 
         return self._create_resource(resource_type, spec)
 
