@@ -100,10 +100,10 @@ class SecurityGroupServerNotifierRpcMixin(sg_db.SecurityGroupDbMixin):
         """
         need_notify = False
         if (original_port['fixed_ips'] != updated_port['fixed_ips'] or
-            original_port['mac_address'] != updated_port['mac_address'] or
-            not helpers.compare_elements(
-                original_port.get(ext_sg.SECURITYGROUPS),
-                updated_port.get(ext_sg.SECURITYGROUPS))):
+                original_port['mac_address'] != updated_port['mac_address'] or
+                not helpers.compare_elements(
+                    original_port.get(ext_sg.SECURITYGROUPS),
+                    updated_port.get(ext_sg.SECURITYGROUPS))):
             need_notify = True
         return need_notify
 
@@ -189,8 +189,8 @@ class SecurityGroupInfoAPIMixin(object):
 
             if remote_gid:
                 if (remote_gid
-                    not in sg_info['devices'][port_id][
-                        'security_group_source_groups']):
+                        not in sg_info['devices'][port_id][
+                            'security_group_source_groups']):
                     sg_info['devices'][port_id][
                         'security_group_source_groups'].append(remote_gid)
                 if remote_gid not in remote_security_group_info:
@@ -200,11 +200,11 @@ class SecurityGroupInfoAPIMixin(object):
                     remote_security_group_info[remote_gid][ethertype] = set()
             elif remote_ag_id:
                 if (remote_ag_id
-                    not in sg_info['devices'][port_id][
-                        'security_group_remote_address_groups']):
+                        not in sg_info['devices'][port_id][
+                            'security_group_remote_address_groups']):
                     sg_info['devices'][port_id][
                         'security_group_remote_address_groups'].append(
-                        remote_ag_id)
+                            remote_ag_id)
                 if remote_ag_id not in remote_address_group_info:
                     remote_address_group_info[remote_ag_id] = {}
                 if ethertype not in remote_address_group_info[remote_ag_id]:

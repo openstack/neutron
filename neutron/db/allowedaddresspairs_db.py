@@ -103,7 +103,7 @@ class AllowedAddressPairsMixin(object):
 
     def _has_address_pairs(self, port):
         return (validators.is_attr_set(
-                    port['port'][addr_apidef.ADDRESS_PAIRS]) and
+            port['port'][addr_apidef.ADDRESS_PAIRS]) and
                 port['port'][addr_apidef.ADDRESS_PAIRS] != [])
 
     def _check_update_has_allowed_address_pairs(self, port):

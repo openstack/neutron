@@ -72,7 +72,7 @@ class L3_gw_ip_qos_dbonly_mixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
         # Calls superclass, pass router db object for avoiding re-loading
         router = super(L3_gw_ip_qos_dbonly_mixin,
                        self)._update_router_gw_info(
-            context, router_id, info, request_body, router)
+                           context, router_id, info, request_body, router)
 
         if not self._is_gw_ip_qos_supported:
             return router

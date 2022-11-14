@@ -219,7 +219,7 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         agent_dead_limit = datetime.timedelta(
             seconds=self.agent_dead_limit_seconds())
         network_count = network.NetworkDhcpAgentBinding.count(
-                context, dhcp_agent_id=agent['id'])
+            context, dhcp_agent_id=agent['id'])
         # amount of networks assigned to agent affect amount of time we give
         # it so startup. Tests show that it's more or less sage to assume
         # that DHCP agent processes each network in less than 2 seconds.
@@ -367,7 +367,7 @@ class DhcpAgentSchedulerDbMixin(dhcpagentscheduler
         # get all the NDAB objects, which will also fetch (from DB)
         # the related dhcp_agent objects because of the synthetic field
         bindings = network.NetworkDhcpAgentBinding.get_objects(
-                       context, network_id=network_ids)
+            context, network_id=network_ids)
         # get the already fetched dhcp_agent objects
         agent_objs = [binding.db_obj.dhcp_agent for binding in bindings]
         # filter the dhcp_agent objects on admin_state_up

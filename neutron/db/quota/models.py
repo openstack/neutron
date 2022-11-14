@@ -51,8 +51,7 @@ class Quota(model_base.BASEV2, model_base.HasId, model_base.HasProject):
         'project_id',
         'resource',
         name='uniq_quotas0project_id0resource'),
-        model_base.BASEV2.__table_args__
-    )
+                      model_base.BASEV2.__table_args__)
 
 
 class QuotaUsage(model_base.BASEV2, model_base.HasProjectPrimaryKeyIndex):

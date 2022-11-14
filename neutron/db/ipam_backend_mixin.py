@@ -196,7 +196,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
         return updated_types
 
     def update_db_subnet(self, context, subnet_id, s, oldpools,
-            subnet_obj=None):
+                         subnet_obj=None):
         changes = {}
         if "dns_nameservers" in s:
             changes['dns_nameservers'] = (
@@ -243,8 +243,8 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                     str(subnet['cidr']) != const.PROVISIONAL_IPV6_PD_PREFIX):
                 # don't give out details of the overlapping subnet
                 err_msg = (_("Requested subnet with cidr: %(cidr)s for "
-                           "network: %(network_id)s overlaps with another "
-                           "subnet") %
+                             "network: %(network_id)s overlaps with another "
+                             "subnet") %
                            {'cidr': new_subnet_cidr,
                             'network_id': network.id})
                 LOG.info("Validation for CIDR: %(new_cidr)s failed - "
@@ -369,9 +369,9 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             to_create_subnet_id = None
 
         segments = subnet_obj.Subnet.get_subnet_segment_ids(
-                    context, network_id,
-                    ignored_service_type=const.DEVICE_OWNER_ROUTED,
-                    subnet_id=to_create_subnet_id)
+            context, network_id,
+            ignored_service_type=const.DEVICE_OWNER_ROUTED,
+            subnet_id=to_create_subnet_id)
 
         associated_segments = set(segments)
         if None in associated_segments and len(associated_segments) > 1:
@@ -427,9 +427,9 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                 raise exc.InvalidInput(error_message=msg)
             # Ensure that the IP is valid on the subnet
             if ('ip_address' in fixed and
-                not ipam_utils.check_subnet_ip(subnet['cidr'],
-                                               fixed['ip_address'],
-                                               fixed['device_owner'])):
+                    not ipam_utils.check_subnet_ip(subnet['cidr'],
+                                                   fixed['ip_address'],
+                                                   fixed['device_owner'])):
                 raise exc.InvalidIpForSubnet(ip_address=fixed['ip_address'])
             return subnet
 

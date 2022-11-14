@@ -64,9 +64,10 @@ _IS_ADMIN_STATE_DOWN_NECESSARY = None
 def is_admin_state_down_necessary():
     global _IS_ADMIN_STATE_DOWN_NECESSARY
     if _IS_ADMIN_STATE_DOWN_NECESSARY is None:
-        _IS_ADMIN_STATE_DOWN_NECESSARY = \
-            router_admin_state_down_before_update.ALIAS in (extensions.
-                    PluginAwareExtensionManager.get_instance().extensions)
+        _IS_ADMIN_STATE_DOWN_NECESSARY = (
+            router_admin_state_down_before_update.ALIAS in (
+                extensions.PluginAwareExtensionManager.get_instance().
+                extensions))
     return _IS_ADMIN_STATE_DOWN_NECESSARY
 
 
@@ -621,8 +622,8 @@ class DVRResourceOperationHandler(object):
             if cs_port:
                 fixed_ips = (
                     [fixedip for fixedip in
-                        cs_port['fixed_ips']
-                        if fixedip['subnet_id'] != subnet_id])
+                     cs_port['fixed_ips']
+                     if fixedip['subnet_id'] != subnet_id])
 
                 if len(fixed_ips) == len(cs_port['fixed_ips']):
                     # The subnet being detached from router is not part of
@@ -1039,9 +1040,9 @@ class _DVRAgentInterfaceMixin(object):
                         # agent on re-syncs then we need to add the appropriate
                         # port['agent'] before updating the dict.
                         if (l3_agent_mode == (
-                            const.L3_AGENT_MODE_DVR_NO_EXTERNAL) and
-                            requesting_agent_mode == (
-                                const.L3_AGENT_MODE_DVR_NO_EXTERNAL)):
+                                const.L3_AGENT_MODE_DVR_NO_EXTERNAL) and
+                                requesting_agent_mode == (
+                                    const.L3_AGENT_MODE_DVR_NO_EXTERNAL)):
                             port['agent'] = (
                                 const.L3_AGENT_MODE_DVR_NO_EXTERNAL)
 
@@ -1053,9 +1054,9 @@ class _DVRAgentInterfaceMixin(object):
                         # the portbinding host resides in dvr_no_external
                         # agent then include the port.
                         if (l3_agent_mode == (
-                            const.L3_AGENT_MODE_DVR_NO_EXTERNAL) and
-                            requesting_agent_mode == (
-                                const.L3_AGENT_MODE_DVR_SNAT)):
+                                const.L3_AGENT_MODE_DVR_NO_EXTERNAL) and
+                                requesting_agent_mode == (
+                                    const.L3_AGENT_MODE_DVR_SNAT)):
                             port['agent'] = (
                                 const.L3_AGENT_MODE_DVR_NO_EXTERNAL)
                             port_dict.update({port['id']: port})

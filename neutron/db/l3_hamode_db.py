@@ -389,7 +389,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             # net was deleted, throw a retry to start over to create another
             raise db_exc.RetryRequest(
                 l3ha_exc.HANetworkConcurrentDeletion(
-                        tenant_id=router['tenant_id']))
+                    tenant_id=router['tenant_id']))
 
     @registry.receives(resources.ROUTER, [events.AFTER_CREATE],
                        priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
@@ -456,8 +456,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                                       'ha', requested_ha_state)
             return
         self._migrate_router_ports(
-             payload.context, payload.desired_state,
-             old_owner=old_owner, new_owner=new_owner)
+            payload.context, payload.desired_state,
+            old_owner=old_owner, new_owner=new_owner)
         self.set_extra_attr_value(
             payload.context, payload.desired_state, 'ha', requested_ha_state)
 

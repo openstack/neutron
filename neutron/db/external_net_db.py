@@ -136,7 +136,7 @@ class External_net_db_mixin(object):
             net_obj.ExternalNetwork.delete_objects(
                 context, network_id=net_id)
             net_obj.NetworkRBAC.delete_objects(
-                    context, object_id=net_id, action='access_as_external')
+                context, object_id=net_id, action='access_as_external')
             net_data[extnet_apidef.EXTERNAL] = False
 
     def _process_l3_delete(self, context, network_id):

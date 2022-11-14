@@ -63,13 +63,13 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
     def reschedule_routers_from_down_agents(self):
         """Reschedule routers from down l3 agents if admin state is up."""
         self.reschedule_resources_from_down_agents(
-                agent_type='L3',
-                get_down_bindings=self.get_down_router_bindings,
-                agent_id_attr='l3_agent_id',
-                resource_id_attr='router_id',
-                resource_name='router',
-                reschedule_resource=self.reschedule_router,
-                rescheduling_failed=l3agentscheduler.RouterReschedulingFailed)
+            agent_type='L3',
+            get_down_bindings=self.get_down_router_bindings,
+            agent_id_attr='l3_agent_id',
+            resource_id_attr='router_id',
+            resource_name='router',
+            reschedule_resource=self.reschedule_router,
+            rescheduling_failed=l3agentscheduler.RouterReschedulingFailed)
 
     def get_down_router_bindings(self, context, agent_dead_limit):
         cutoff = self.get_cutoff_time(agent_dead_limit)
@@ -225,7 +225,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
 
     def _unbind_router(self, context, router_id, agent_id):
         rb_obj.RouterL3AgentBinding.delete_objects(
-                context, router_id=router_id, l3_agent_id=agent_id)
+            context, router_id=router_id, l3_agent_id=agent_id)
 
     def _unschedule_router(self, context, router_id, agents_ids):
         with db_api.CONTEXT_WRITER.using(context):
@@ -284,7 +284,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
 
     def list_routers_on_l3_agent(self, context, agent_id):
         binding_objs = rb_obj.RouterL3AgentBinding.get_objects(
-                context, l3_agent_id=agent_id)
+            context, l3_agent_id=agent_id)
 
         router_ids = [item.router_id for item in binding_objs]
         if router_ids:
@@ -366,7 +366,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         if not router_ids:
             return []
         record_objs = rb_obj.RouterL3AgentBinding.get_objects(
-                context, router_id=router_ids)
+            context, router_id=router_ids)
         if admin_state_up is not None:
             l3_agents = ag_obj.Agent.get_objects(
                 context,
@@ -456,7 +456,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
             agent_mode = agent_conf.get(constants.L3_AGENT_MODE,
                                         constants.L3_AGENT_MODE_LEGACY)
             if (agent_mode == constants.L3_AGENT_MODE_DVR or
-                agent_mode == constants.L3_AGENT_MODE_DVR_NO_EXTERNAL or
+                    agent_mode == constants.L3_AGENT_MODE_DVR_NO_EXTERNAL or
                     (agent_mode == constants.L3_AGENT_MODE_LEGACY and
                      is_router_distributed)):
                 continue
@@ -494,7 +494,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         if not agent_ids:
             return None
         agents = ag_obj.Agent.get_l3_agent_with_min_routers(
-                context, agent_ids)
+            context, agent_ids)
         return agents
 
     def get_hosts_to_notify(self, context, router_id):
@@ -519,7 +519,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
 
         pager = base_obj.Pager(sorts=[('binding_index', True)])
         bindings = rb_obj.RouterL3AgentBinding.get_objects(
-                context, _pager=pager, router_id=router_id)
+            context, _pager=pager, router_id=router_id)
         return base_scheduler.get_vacant_binding_index(
             num_agents, bindings, rb_model.LOWEST_BINDING_INDEX,
             force_scheduling=is_manual_scheduling)

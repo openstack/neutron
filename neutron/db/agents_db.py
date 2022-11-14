@@ -146,7 +146,7 @@ class AgentAvailabilityZoneMixin(az_ext.AvailabilityZonePluginBase):
                      'name': k[0], 'resource': k[1],
                      'tenant_id': context.tenant_id}
                     for k, v in self._list_availability_zones(
-                                               context, filters).items()
+                        context, filters).items()
                     if not filter_states or v in filter_states]
         else:
             # NOTE(hichihara): 'tenant_id' is dummy for policy check.
@@ -155,7 +155,7 @@ class AgentAvailabilityZoneMixin(az_ext.AvailabilityZonePluginBase):
                      'name': k[0], 'resource': k[1],
                      'tenant_id': context.tenant_id}
                     for k, v in self._list_availability_zones(
-                                               context, filters).items()]
+                        context, filters).items()]
 
     @db_api.retry_if_session_inactive()
     def validate_availability_zones(self, context, resource_type,

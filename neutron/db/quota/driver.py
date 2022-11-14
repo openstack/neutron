@@ -66,7 +66,7 @@ class DbQuotaDriver(nlib_quota_api.QuotaDriverAPI):
 
         # init with defaults
         project_quota = dict((key, resource.default)
-                            for key, resource in resources.items())
+                             for key, resource in resources.items())
 
         # update with project specific limits
         quota_objs = quota_obj.Quota.get_objects(context,
@@ -135,7 +135,7 @@ class DbQuotaDriver(nlib_quota_api.QuotaDriverAPI):
         resourcekey2: ...
         """
         project_default = dict((key, resource.default)
-                              for key, resource in resources.items())
+                               for key, resource in resources.items())
 
         all_project_quotas = {}
 

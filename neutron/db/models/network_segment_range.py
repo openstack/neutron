@@ -49,7 +49,7 @@ class NetworkSegmentRange(standard_attr.HasStandardAttributes,
         constants.TYPE_GRE,
         constants.TYPE_GENEVE,
         name='network_segment_range_network_type'),
-        nullable=False)
+                             nullable=False)
 
     # network segment range physical network, only applicable for VLAN.
     physical_network = sa.Column(sa.String(64))

@@ -95,13 +95,9 @@ def _contracts(context, directive, phase):
 def _alter_column(context, directive, phase):
     is_expand = phase == 'expand'
 
-    if is_expand and (
-        directive.modify_nullable is True
-    ):
+    if is_expand and directive.modify_nullable is True:
         return directive
-    elif not is_expand and (
-        directive.modify_nullable is False
-    ):
+    elif not is_expand and directive.modify_nullable is False:
         return directive
     else:
         raise NotImplementedError(

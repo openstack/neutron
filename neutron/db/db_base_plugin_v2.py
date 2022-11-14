@@ -239,7 +239,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         with db_api.CONTEXT_READER.using(elevated):
             ports = model_query.query_with_hooks(
                 elevated, models_v2.Port).filter(
-                models_v2.Port.network_id == network_id)
+                    models_v2.Port.network_id == network_id)
             if tenant_id == '*':
                 # for the wildcard we need to get all of the rbac entries to
                 # see if any allow the remaining ports on the network.
@@ -476,8 +476,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def _ensure_network_not_in_use(self, context, net_id):
         non_auto_ports = context.session.query(
             models_v2.Port.id).filter_by(network_id=net_id).filter(
-            ~models_v2.Port.device_owner.in_(
-                _constants.AUTO_DELETE_PORT_OWNERS))
+                ~models_v2.Port.device_owner.in_(
+                    _constants.AUTO_DELETE_PORT_OWNERS))
         if non_auto_ports.count():
             ports = [port.id for port in non_auto_ports.all()]
             reason = _("There are one or more ports still in use on the "
@@ -493,8 +493,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             self._ensure_network_not_in_use(context, id)
             auto_delete_port_ids = [p.id for p in context.session.query(
                 models_v2.Port.id).filter_by(network_id=id).filter(
-                models_v2.Port.device_owner.in_(
-                    _constants.AUTO_DELETE_PORT_OWNERS))]
+                    models_v2.Port.device_owner.in_(
+                        _constants.AUTO_DELETE_PORT_OWNERS))]
         for port_id in auto_delete_port_ids:
             try:
                 self.delete_port(context.elevated(), port_id)
@@ -748,7 +748,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 fips[0]['ip_address']).version == subnet['ip_version']:
             return
         external_gateway_info['external_fixed_ips'].append(
-                                     {'subnet_id': subnet['id']})
+            {'subnet_id': subnet['id']})
         info = {'router': {'external_gateway_info': external_gateway_info}}
         l3plugin.update_router(ctx_admin, router_id, info)
 
@@ -1053,7 +1053,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         # Do not allow a subnet to be deleted if a router is attached to it
         sid = subnet['id']
         self._subnet_check_ip_allocations_internal_router_ports(
-                context, sid)
+            context, sid)
         is_auto_addr_subnet = ipv6_utils.is_auto_address_subnet(subnet)
         if not is_auto_addr_subnet:
             # we only automatically remove IP addresses from user ports if
@@ -1354,9 +1354,9 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             raise exc.SubnetPoolNotFound(subnetpool_id=id)
 
         subnets_to_onboard = subnet_obj.Subnet.get_objects(
-                                             context,
-                                             network_id=network_id,
-                                             ip_version=subnetpool.ip_version)
+            context,
+            network_id=network_id,
+            ip_version=subnetpool.ip_version)
 
         self._onboard_network_subnets(context, subnets_to_onboard, subnetpool)
 
@@ -1378,8 +1378,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                                  subnetpool):
         allocated_prefix_set = netaddr.IPSet(
             [x.cidr for x in subnet_obj.Subnet.get_objects(
-                                                context,
-                                                subnetpool_id=subnetpool.id)])
+                context,
+                subnetpool_id=subnetpool.id)])
         prefixes_to_add = []
 
         for subnet in subnets_to_onboard:
@@ -1405,8 +1405,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
     def _check_mac_addr_update(self, context, port, new_mac, device_owner):
         if (device_owner and
-            device_owner.startswith(
-                constants.DEVICE_OWNER_NETWORK_PREFIX)):
+                device_owner.startswith(
+                    constants.DEVICE_OWNER_NETWORK_PREFIX)):
             raise exc.UnsupportedPortDeviceOwner(
                 op=_("mac address update"), port_id=id,
                 device_owner=device_owner)

@@ -110,8 +110,8 @@ class IpAvailabilityMixin(object):
         query = query.outerjoin(mod.Subnet,
                                 mod.Network.id == mod.Subnet.network_id)
         query = query.outerjoin(
-                mod.IPAllocationPool,
-                mod.Subnet.id == mod.IPAllocationPool.subnet_id)
+            mod.IPAllocationPool,
+            mod.Subnet.id == mod.IPAllocationPool.subnet_id)
         return cls._adjust_query_for_filters(query, filters)
 
     @classmethod
@@ -130,13 +130,13 @@ class IpAvailabilityMixin(object):
             # Add IPAllocationPool data
             if row.last_ip:
                 pool_total = netaddr.IPRange(
-                        netaddr.IPAddress(row.first_ip),
-                        netaddr.IPAddress(row.last_ip)).size
+                    netaddr.IPAddress(row.first_ip),
+                    netaddr.IPAddress(row.last_ip)).size
                 cur_total = subnet_totals_dict.get(row.subnet_id, 0)
                 subnet_totals_dict[row.subnet_id] = cur_total + pool_total
             else:
                 subnet_totals_dict[row.subnet_id] = netaddr.IPNetwork(
-                        row.cidr, version=row.ip_version).size
+                    row.cidr, version=row.ip_version).size
 
         return subnet_totals_dict
 
