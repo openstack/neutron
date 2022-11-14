@@ -485,13 +485,6 @@ addresses are generated using an EUI64-based value.
 Other types of guests might have similar configuration options, please
 consult your distribution documentation for more information.
 
-There are no provisions for an IPv6-based metadata service similar to what is
-provided for IPv4. In the case of dual-stacked guests though it is always
-possible to use the IPv4 metadata service instead. IPv6-only guests will have
-to use another method for metadata injection such as using a configuration
-drive, which is described in the Nova documentation on
-`config-drive <https://docs.openstack.org/nova/latest/user/config-drive.html>`__.
-
 Unlike IPv4, the MTU of a given network can be conveyed in both the Router
 Advertisement messages sent by the router, as well as in DHCP messages.
 
