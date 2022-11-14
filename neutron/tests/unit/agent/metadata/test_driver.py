@@ -24,6 +24,7 @@ from oslo_utils import uuidutils
 
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import router_info
+from neutron.agent.linux import external_process as ep
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import utils as linux_utils
 from neutron.agent.metadata import driver as metadata_driver
@@ -142,6 +143,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
     def test_spawn_metadata_proxy(self):
         router_id = _uuid()
         router_ns = 'qrouter-%s' % router_id
+        service_name = 'haproxy'
         ip_class_path = 'neutron.agent.linux.ip_lib.IPWrapper'
 
         cfg.CONF.set_override('metadata_proxy_user', self.EUNAME)
@@ -181,7 +183,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 router_id=router_id)
 
             netns_execute_args = [
-                'haproxy',
+                service_name,
                 '-f', cfg_file]
 
             log_tag = ("haproxy-" + metadata_driver.METADATA_SERVICE_NAME +
@@ -205,9 +207,10 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 mock.call().write(cfg_contents)],
                                        any_order=True)
 
+            env = {ep.PROCESS_TAG: service_name + '-' + router_id}
             ip_mock.assert_has_calls([
                 mock.call(namespace=router_ns),
-                mock.call().netns.execute(netns_execute_args, addl_env=None,
+                mock.call().netns.execute(netns_execute_args, addl_env=env,
                                           run_as_root=True)
             ])
 

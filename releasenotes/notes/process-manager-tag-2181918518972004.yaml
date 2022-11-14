@@ -1,0 +1,8 @@
+---
+other:
+  - |
+    The ``ProcessManager`` class will now, by default, add an environment
+    variable when starting a new process. This default tag is named
+    "PROCESS_TAG" and will contain a unique identifier for this specific
+    process. It could be used, for example, by TripleO to univocally tag
+    any new container spawned and find it using the same tag.

@@ -20,6 +20,7 @@ from neutron_lib import fixture as lib_fixtures
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
+from neutron.agent.linux import external_process as ep
 from neutron.agent.ovn.metadata import agent as metadata_agent
 from neutron.agent.ovn.metadata import driver as metadata_driver
 from neutron.common import metadata as comm_meta
@@ -52,6 +53,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
         datapath_id = _uuid()
         metadata_ns = metadata_agent.NS_PREFIX + datapath_id
         ip_class_path = 'neutron.agent.linux.ip_lib.IPWrapper'
+        service_name = 'haproxy'
 
         cfg.CONF.set_override('metadata_proxy_user', self.EUNAME)
         cfg.CONF.set_override('metadata_proxy_group', self.EGNAME)
@@ -84,11 +86,12 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 network_id=datapath_id)
 
             netns_execute_args = [
-                'haproxy',
+                service_name,
                 '-f', cfg_file]
 
-            log_tag = 'haproxy-{}-{}'.format(
-                metadata_driver.METADATA_SERVICE_NAME, datapath_id)
+            log_tag = '{}-{}-{}'.format(
+                service_name, metadata_driver.METADATA_SERVICE_NAME,
+                datapath_id)
 
             cfg_contents = metadata_driver._HAPROXY_CONFIG_TEMPLATE % {
                 'user': self.EUNAME,
@@ -107,9 +110,10 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 mock.call().write(cfg_contents)],
                 any_order=True)
 
+            env = {ep.PROCESS_TAG: service_name + '-' + datapath_id}
             ip_mock.assert_has_calls([
                 mock.call(namespace=metadata_ns),
-                mock.call().netns.execute(netns_execute_args, addl_env=None,
+                mock.call().netns.execute(netns_execute_args, addl_env=env,
                                           run_as_root=True)
             ])
 

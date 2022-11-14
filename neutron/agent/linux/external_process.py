@@ -30,6 +30,8 @@ from neutron.conf.agent import common as agent_cfg
 
 
 LOG = logging.getLogger(__name__)
+PROCESS_TAG = 'PROCESS_TAG'
+DEFAULT_SERVICE_NAME = 'default-service'
 
 
 agent_cfg.register_external_process_opts()
@@ -61,7 +63,6 @@ class ProcessManager(MonitoredProcess):
         self.uuid = uuid
         self.namespace = namespace
         self.default_cmd_callback = default_cmd_callback
-        self.cmd_addl_env = cmd_addl_env
         self.pids_path = pids_path or self.conf.external_pids
         self.pid_file = pid_file
         self.run_as_root = run_as_root or self.namespace is not None
@@ -73,7 +74,11 @@ class ProcessManager(MonitoredProcess):
             self.service = service
         else:
             self.service_pid_fname = 'pid'
-            self.service = 'default-service'
+            self.service = DEFAULT_SERVICE_NAME
+
+        process_tag = '%s-%s' % (self.service, self.uuid)
+        self.cmd_addl_env = cmd_addl_env or {}
+        self.cmd_addl_env[PROCESS_TAG] = process_tag
 
         fileutils.ensure_tree(os.path.dirname(self.get_pid_file_name()),
                               mode=0o755)
@@ -110,7 +115,8 @@ class ProcessManager(MonitoredProcess):
                                          privsep_exec=True)
             else:
                 cmd = self.get_kill_cmd(sig, pid)
-                utils.execute(cmd, run_as_root=self.run_as_root,
+                utils.execute(cmd, addl_env=self.cmd_addl_env,
+                              run_as_root=self.run_as_root,
                               privsep_exec=True)
                 # In the case of shutting down, remove the pid file
                 if sig == '9':
