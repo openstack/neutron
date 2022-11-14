@@ -660,8 +660,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             network=network, address=str(mac))
 
     def _add_port_to_updated_smartnic_ports(self, mac, vif_name, iface_id,
-                        vif_type, vm_uuid='',
-                        mtu=None):
+                                            vif_type, vm_uuid='', mtu=None):
         if mtu is None:
             mtu = plugin_utils.get_deployment_physnet_mtu()
         self.updated_smartnic_ports.append({
@@ -815,10 +814,10 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         def _process_removed_ports(removed_ports):
             for ovs_port in removed_ports:
                 self._add_port_to_updated_smartnic_ports(
-                        ovs_port['vif_mac'],
-                        ovs_port['vif_name'],
-                        ovs_port['vif_id'],
-                        portbindings.VIF_TYPE_UNBOUND)
+                    ovs_port['vif_mac'],
+                    ovs_port['vif_name'],
+                    ovs_port['vif_id'],
+                    portbindings.VIF_TYPE_UNBOUND)
 
         _process_removed_ports(removed_ports)
         _process_added_ports(added_ports)
@@ -1324,8 +1323,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                           if netaddr.IPNetwork(ip).version == 6}
         # Allow neighbor advertisements for LLA address.
         ipv6_addresses |= {str(netutils.get_ipv6_addr_by_EUI64(
-                               n_const.IPv6_LLA_PREFIX, mac))
-                           for mac in mac_addresses}
+            n_const.IPv6_LLA_PREFIX, mac)) for mac in mac_addresses}
         if not has_zero_prefixlen_address(ipv6_addresses):
             # Install protection only when prefix is not zero because a /0
             # prefix allows any address anyway and the nd_target can only
@@ -1845,10 +1843,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         for vlan_mappings in self.vlan_manager:
             for lvm in vlan_mappings.values():
                 for port in lvm.vif_ports.values():
-                    if (
-                        port.port_name in port_tags and
-                        port_tags[port.port_name] != lvm.vlan
-                    ):
+                    if (port.port_name in port_tags and
+                            port_tags[port.port_name] != lvm.vlan):
                         LOG.info(
                             "Port '%(port_name)s' has lost "
                             "its vlan tag '%(vlan_tag)d'! "
@@ -1856,8 +1852,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                             "'%(new_vlan_tag)s'.",
                             {'port_name': port.port_name,
                              'vlan_tag': lvm.vlan,
-                             'new_vlan_tag': port_tags[port.port_name]}
-                             )
+                             'new_vlan_tag': port_tags[port.port_name]})
                         changed_ports.add(port.vif_id)
         if changed_ports:
             # explicitly mark these DOWN on the server since they have been
@@ -2184,8 +2179,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             (skipped_devices, binding_no_activated_devices,
              need_binding_devices, failed_devices['added'],
              devices_not_in_datapath, migrating_devices) = (
-                self.treat_devices_added_or_updated(
-                    devices_added_updated, provisioning_needed, re_added))
+                 self.treat_devices_added_or_updated(
+                     devices_added_updated, provisioning_needed, re_added))
             LOG.info("process_network_ports - iteration:%(iter_num)d - "
                      "treat_devices_added_or_updated completed. "
                      "Skipped %(num_skipped)d and no activated binding "
@@ -2638,8 +2633,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             failed_devices_retries_map):
         (new_failed_devices_retries_map, devices_not_to_retry,
          ancillary_devices_not_to_retry) = self._get_devices_not_to_retry(
-            failed_devices, failed_ancillary_devices,
-            failed_devices_retries_map)
+             failed_devices, failed_ancillary_devices,
+             failed_devices_retries_map)
         self._remove_devices_not_to_retry(
             failed_devices, failed_ancillary_devices, devices_not_to_retry,
             ancillary_devices_not_to_retry)
@@ -2761,10 +2756,10 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                     self.activated_bindings = set()
                     (port_info, ancillary_port_info, consecutive_resyncs,
                      ports_not_ready_yet) = (self.process_port_info(
-                            start, polling_manager, sync, ovs_restarted,
-                            ports, ancillary_ports, updated_ports_copy,
-                            consecutive_resyncs, ports_not_ready_yet,
-                            failed_devices, failed_ancillary_devices))
+                         start, polling_manager, sync, ovs_restarted,
+                         ports, ancillary_ports, updated_ports_copy,
+                         consecutive_resyncs, ports_not_ready_yet,
+                         failed_devices, failed_ancillary_devices))
                     sync = False
                     self.process_deleted_ports(port_info)
                     self.process_deactivated_bindings(port_info)
@@ -2787,7 +2782,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                         LOG.debug("Starting to process devices in:%s",
                                   port_info)
                         provisioning_needed = (
-                                ovs_restarted or bridges_recreated)
+                            ovs_restarted or bridges_recreated)
                         failed_devices = self.process_network_ports(
                             port_info, provisioning_needed)
                         LOG.info("Agent rpc_loop - iteration:%(iter_num)d - "
@@ -2892,16 +2887,16 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                                "in both the Agent and Server side."))
 
     def _get_network_mtu(self, network_id):
-        port_network = self.plugin_rpc.get_network_details(self.context,
-                network_id, self.agent_id, self.conf.host)
+        port_network = self.plugin_rpc.get_network_details(
+            self.context, network_id, self.agent_id, self.conf.host)
         return port_network['mtu']
 
     def _validate_rp_pkt_processing_cfg(self):
         if self.rp_pp_with_direction and self.rp_pp_without_direction:
             raise ValueError(_(
                 '%s and %s configuration options are mutually exclusive.') %
-                (n_const.RP_PP_WITHOUT_DIRECTION,
-                 n_const.RP_PP_WITH_DIRECTION))
+                             (n_const.RP_PP_WITHOUT_DIRECTION,
+                              n_const.RP_PP_WITH_DIRECTION))
 
 
 def validate_local_ip(local_ip):

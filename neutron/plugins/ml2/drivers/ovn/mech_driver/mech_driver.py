@@ -132,8 +132,8 @@ class OVNMechanismDriver(api.MechanismDriver):
                 OVN_MIN_GENEVE_MAX_HEADER_SIZE):
             LOG.critical('Geneve max_header_size set too low for OVN '
                          '(%d vs %d)',
-                      cfg.CONF.ml2_type_geneve.max_header_size,
-                      OVN_MIN_GENEVE_MAX_HEADER_SIZE)
+                         cfg.CONF.ml2_type_geneve.max_header_size,
+                         OVN_MIN_GENEVE_MAX_HEADER_SIZE)
             raise SystemExit(1)
         self._setup_vif_port_bindings()
         if impl_idl_ovn.OvsdbSbOvnIdl.schema_has_table('Chassis_Private'):
@@ -642,8 +642,10 @@ class OVNMechanismDriver(api.MechanismDriver):
         ipv6_opts = ', '.join(result.invalid_ipv6)
         LOG.info('The following extra DHCP options for port %(port_id)s '
                  'are not supported by OVN. IPv4: "%(ipv4_opts)s" and '
-                 'IPv6: "%(ipv6_opts)s"', {'port_id': port['id'],
-                 'ipv4_opts': ipv4_opts, 'ipv6_opts': ipv6_opts})
+                 'IPv6: "%(ipv6_opts)s"',
+                 {'port_id': port['id'],
+                  'ipv4_opts': ipv4_opts,
+                  'ipv6_opts': ipv6_opts})
 
     def create_port_precommit(self, context):
         """Allocate resources for a new port.
@@ -961,7 +963,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         if not agents:
             LOG.warning('Refusing to bind port %(port_id)s due to '
                         'no OVN chassis for host: %(host)s',
-                      {'port_id': port['id'], 'host': bind_host})
+                        {'port_id': port['id'], 'host': bind_host})
             return
         agent = agents[0]
         if not agent.alive:
@@ -1065,8 +1067,8 @@ class OVNMechanismDriver(api.MechanismDriver):
         if not nat['external_ids'].get(ovn_const.OVN_FIP_EXT_MAC_KEY):
             self.nb_ovn.db_set('NAT', nat['_uuid'],
                                ('external_ids',
-                               {ovn_const.OVN_FIP_EXT_MAC_KEY:
-                                nat['external_mac']})).execute()
+                                {ovn_const.OVN_FIP_EXT_MAC_KEY:
+                                 nat['external_mac']})).execute()
 
         if up and ovn_conf.is_ovn_distributed_floating_ip():
             mac = nat['external_ids'][ovn_const.OVN_FIP_EXT_MAC_KEY]
@@ -1075,13 +1077,13 @@ class OVNMechanismDriver(api.MechanismDriver):
                           port_id, mac)
                 self.nb_ovn.db_set(
                     'NAT', nat['_uuid'], ('external_mac', mac)).execute(
-                    check_error=True)
+                        check_error=True)
         else:
             if nat['external_mac']:
                 LOG.debug("Clearing up external_mac of port %s", port_id)
                 self.nb_ovn.db_clear(
                     'NAT', nat['_uuid'], 'external_mac').execute(
-                    check_error=True)
+                        check_error=True)
 
     def _should_notify_nova(self, db_port):
         # NOTE(twilson) It is possible for a test to override a config option

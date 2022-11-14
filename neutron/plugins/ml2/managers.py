@@ -191,12 +191,12 @@ class TypeManager(stevedore.named.NamedExtensionManager):
         else:
             network_segments = [
                 {provider_key: network.pop(provider_key)
-                for provider_key in provider.ATTRIBUTES}]
+                 for provider_key in provider.ATTRIBUTES}]
 
         return (
             [{api.NETWORK_TYPE: network_segment[provider.NETWORK_TYPE],
-             api.PHYSICAL_NETWORK: network_segment[provider.PHYSICAL_NETWORK],
-             api.SEGMENTATION_ID: network_segment[provider.SEGMENTATION_ID]}
+              api.PHYSICAL_NETWORK: network_segment[provider.PHYSICAL_NETWORK],
+              api.SEGMENTATION_ID: network_segment[provider.SEGMENTATION_ID]}
              for network_segment in network_segments])
 
     def initialize(self):

@@ -219,11 +219,11 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                 continue
             try:
                 devices.append(self._get_device_details(
-                               rpc_context,
-                               agent_id=kwargs.get('agent_id'),
-                               host=host,
-                               device=device,
-                               port_context=bound_contexts[device]))
+                    rpc_context,
+                    agent_id=kwargs.get('agent_id'),
+                    host=host,
+                    device=device,
+                    port_context=bound_contexts[device]))
             except Exception:
                 LOG.exception("Failed to get details for device %s",
                               device)
@@ -359,14 +359,14 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
         """
         plugin = directory.get_plugin()
         l2pop_driver = plugin.mechanism_manager.mech_drivers.get(
-                'l2population')
+            'l2population')
         if not l2pop_driver:
             return
         port = ml2_db.get_port(rpc_context, port_id)
         if not port:
             return
         port_context = plugin.get_bound_port_context(
-                rpc_context, port_id, host)
+            rpc_context, port_id, host)
         if not port_context:
             # port deleted
             return

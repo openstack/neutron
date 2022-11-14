@@ -361,7 +361,8 @@ class OVNClientQosExtension(object):
             updated_fip_ids.add(floatingip['id'])
 
         for router in (qos_binding.QosPolicyRouterGatewayIPBinding.
-                get_routers_by_network_id(admin_context, network['id'])):
+                       get_routers_by_network_id(admin_context,
+                                                 network['id'])):
             router_dict = self._plugin_l3._make_router_dict(router)
             self.update_router(txn, router_dict)
             updated_router_ids.add(router.id)

@@ -482,10 +482,10 @@ class TunnelRpcCallbackMixin(object):
             return entry
         else:
             msg = (_("Network type value %(type)s not supported, "
-                    "host: %(host)s with tunnel IP: %(ip)s") %
-                    {'type': tunnel_type,
-                     'host': host or 'legacy mode (no host provided by agent)',
-                     'ip': tunnel_ip})
+                     "host: %(host)s with tunnel IP: %(ip)s") %
+                   {'type': tunnel_type,
+                    'host': host or 'legacy mode (no host provided by agent)',
+                    'ip': tunnel_ip})
             raise exc.InvalidInput(error_message=msg)
 
 

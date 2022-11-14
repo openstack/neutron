@@ -231,8 +231,8 @@ class OpenFlowSwitchMixin(object):
         (dp, ofp, ofpp) = self._get_dp()
         match = self._match(ofp, ofpp, match, **match_kwargs)
         if isinstance(instructions, str):
-            debtcollector.deprecate("Use of string instruction is "
-                "deprecated", removal_version='U')
+            debtcollector.deprecate(
+                "Use of string instruction is deprecated", removal_version='U')
             jsonlist = ofctl_string.ofp_instruction_from_str(
                 ofp, instructions)
             instructions = ofproto_parser.ofp_instruction_from_jsondict(

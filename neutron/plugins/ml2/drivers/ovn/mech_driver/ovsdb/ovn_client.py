@@ -288,7 +288,7 @@ class OVNClient(object):
                 if 'subnet_id' in ip
             ]
             subnets = self._plugin.get_subnets(
-                    context, filters={'id': subnet_ids})
+                context, filters={'id': subnet_ids})
             if subnets:
                 for ip in ip_subnets:
                     ip_addr = ip['ip_address']
@@ -380,7 +380,7 @@ class OVNClient(object):
                                                'additional_chassis'):
                     mdst = port.get(
                         portbindings.PROFILE, {}).get(
-                        ovn_const.MIGRATING_ATTR)
+                            ovn_const.MIGRATING_ATTR)
                     if mdst:
                         # Let OVN know that the port should be configured on
                         # destination too
@@ -432,8 +432,9 @@ class OVNClient(object):
         ha_ch_grp = self._nb_idl.ha_chassis_group_get(
             ha_ch_grp_name).execute(check_error=True)
         txn.add(self._nb_idl.db_set(
-            'HA_Chassis_Group', ha_ch_grp_name, ('external_ids',
-            {ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: ','.join(az_hints)})))
+            'HA_Chassis_Group', ha_ch_grp_name,
+            ('external_ids',
+             {ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: ','.join(az_hints)})))
 
         # Get the chassis belonging to the AZ hints
         ch_list = self._sb_idl.get_gateway_chassis_from_cms_options(
@@ -448,7 +449,7 @@ class OVNClient(object):
         ch_to_del = all_ch - az_chassis
         for ch in ch_to_del:
             txn.add(self._nb_idl.ha_chassis_group_del_chassis(
-                    ha_ch_grp_name, ch, if_exists=True))
+                ha_ch_grp_name, ch, if_exists=True))
 
         # Find the highest priority chassis in the HA Chassis Group. If
         # it exists and still belongs to the same AZ, keep it as the highest
@@ -459,8 +460,8 @@ class OVNClient(object):
         priority = ovn_const.HA_CHASSIS_GROUP_HIGHEST_PRIORITY
         if high_prio_ch and high_prio_ch.chassis_name in az_chassis:
             txn.add(self._nb_idl.ha_chassis_group_add_chassis(
-                    ha_ch_grp_name, high_prio_ch.chassis_name,
-                    priority=priority))
+                ha_ch_grp_name, high_prio_ch.chassis_name,
+                priority=priority))
             az_chassis.remove(high_prio_ch.chassis_name)
             priority -= 1
 
@@ -469,7 +470,7 @@ class OVNClient(object):
         # Chassis as the highest priority one.
         for ch in random.sample(list(az_chassis), len(az_chassis)):
             txn.add(self._nb_idl.ha_chassis_group_add_chassis(
-                    ha_ch_grp_name, ch, priority=priority))
+                ha_ch_grp_name, ch, priority=priority))
             priority -= 1
 
         return ha_ch_grp.uuid
@@ -553,8 +554,8 @@ class OVNClient(object):
             # bound, has no device_owner and it is OVN LB VIP port.
             # For more details check related bug #1789686.
             if (port.get('name').startswith(ovn_const.LB_VIP_PORT_PREFIX) and
-                not port.get('device_owner') and
-                port.get(portbindings.VIF_TYPE) ==
+                    not port.get('device_owner') and
+                    port.get(portbindings.VIF_TYPE) ==
                     portbindings.VIF_TYPE_UNBOUND):
                 kwargs['addresses'] = []
 
@@ -672,8 +673,8 @@ class OVNClient(object):
             # bound, has no device_owner and it is OVN LB VIP port.
             # For more details check related bug #1789686.
             if (port.get('name').startswith(ovn_const.LB_VIP_PORT_PREFIX) and
-                not port.get('device_owner') and
-                port.get(portbindings.VIF_TYPE) ==
+                    not port.get('device_owner') and
+                    port.get(portbindings.VIF_TYPE) ==
                     portbindings.VIF_TYPE_UNBOUND):
                 columns_dict['addresses'] = []
 
@@ -707,17 +708,17 @@ class OVNClient(object):
             # without extra dhcp options and security group, while updating
             # includes the new attributes setting to port.
             txn.add(self._nb_idl.set_lswitch_port(
-                    lport_name=port['id'],
-                    external_ids=external_ids,
-                    parent_name=port_info.parent_name,
-                    tag=port_info.tag,
-                    options=port_info.options,
-                    enabled=port['admin_state_up'],
-                    port_security=port_info.port_security,
-                    dhcpv4_options=dhcpv4_options,
-                    dhcpv6_options=dhcpv6_options,
-                    if_exists=False,
-                    **columns_dict))
+                lport_name=port['id'],
+                external_ids=external_ids,
+                parent_name=port_info.parent_name,
+                tag=port_info.tag,
+                options=port_info.options,
+                enabled=port['admin_state_up'],
+                port_security=port_info.port_security,
+                dhcpv4_options=dhcpv4_options,
+                dhcpv6_options=dhcpv6_options,
+                if_exists=False,
+                **columns_dict))
 
             # Determine if security groups or fixed IPs are updated.
             old_sg_ids = set(utils.get_ovn_port_security_groups(ovn_port))
@@ -738,7 +739,7 @@ class OVNClient(object):
             # port_security is disabled, or it's a trusted port, then
             # allow all traffic.
             elif ((not new_sg_ids and
-                  not utils.is_port_security_enabled(port)) or
+                   not utils.is_port_security_enabled(port)) or
                   utils.is_lsp_trusted(port)):
                 self._del_port_from_drop_port_group(port['id'], txn)
 
@@ -1034,9 +1035,9 @@ class OVNClient(object):
 
     def _delete_floatingip(self, fip, lrouter, txn=None):
         commands = [self._nb_idl.delete_nat_rule_in_lrouter(
-                    lrouter, type='dnat_and_snat',
-                    logical_ip=fip['logical_ip'],
-                    external_ip=fip['external_ip'])]
+            lrouter, type='dnat_and_snat',
+            logical_ip=fip['logical_ip'],
+            external_ip=fip['external_ip'])]
         try:
             port_id = (
                 fip['external_ids'].get(ovn_const.OVN_FIP_PORT_EXT_ID_KEY))
@@ -1552,11 +1553,11 @@ class OVNClient(object):
                 LOG.debug("Router %s not found", port['device_id'])
             else:
                 network_ids = {port['network_id'] for port in router_ports}
-                for net in self._plugin.get_networks(admin_context,
-                                            filters={'id': network_ids}):
+                for net in self._plugin.get_networks(
+                        admin_context, filters={'id': network_ids}):
                     if net['mtu'] > network['mtu']:
                         options[ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION] = str(
-                                network['mtu'])
+                            network['mtu'])
                         break
         return options
 
@@ -1631,8 +1632,8 @@ class OVNClient(object):
                         cidr = subnet['cidr']
 
                 if ovn_conf.is_ovn_emit_need_to_frag_enabled():
-                    provider_net = self._plugin.get_network(context,
-                            router[l3.EXTERNAL_GW_INFO]['network_id'])
+                    provider_net = self._plugin.get_network(
+                        context, router[l3.EXTERNAL_GW_INFO]['network_id'])
                     self.set_gateway_mtu(context, provider_net)
 
                 if utils.is_snat_enabled(router) and cidr:
@@ -1760,8 +1761,8 @@ class OVNClient(object):
 
             if (ovn_conf.is_ovn_emit_need_to_frag_enabled() and
                     router.get('gw_port_id')):
-                provider_net = self._plugin.get_network(context,
-                            router[l3.EXTERNAL_GW_INFO]['network_id'])
+                provider_net = self._plugin.get_network(
+                    context, router[l3.EXTERNAL_GW_INFO]['network_id'])
                 self.set_gateway_mtu(context, provider_net, txn=txn)
 
             cidr = None
@@ -1839,8 +1840,8 @@ class OVNClient(object):
                     break
 
         cmd = self._nb_idl.delete_lswitch_port(
-                lport_name=port_to_del,
-                lswitch_name=utils.ovn_name(network_id))
+            lport_name=port_to_del,
+            lswitch_name=utils.ovn_name(network_id))
         self._transaction([cmd])
 
     def _gen_network_parameters(self, network):
@@ -2090,7 +2091,7 @@ class OVNClient(object):
 
         # Add subnet host_routes to 'classless_static_route' dhcp option
         routes.extend(['%s,%s' % (route['destination'], route['nexthop'])
-                      for route in subnet['host_routes']])
+                       for route in subnet['host_routes']])
 
         if routes:
             # if there are static routes, then we need to add the
@@ -2171,12 +2172,11 @@ class OVNClient(object):
                     **port_dhcp_options))
             columns = ({'dhcpv6_options': lsp_dhcp_options} if
                        subnet['ip_version'] == const.IP_VERSION_6 else {
-                       'dhcpv4_options': lsp_dhcp_options})
+                           'dhcpv4_options': lsp_dhcp_options})
 
             # Set lsp DHCP options
             txn.add(self._nb_idl.set_lswitch_port(
-                    lport_name=port['id'],
-                    **columns))
+                lport_name=port['id'], **columns))
 
     def _update_subnet_dhcp_options(self, subnet, network, txn):
         if utils.is_dhcp_options_ignored(subnet):
@@ -2285,7 +2285,7 @@ class OVNClient(object):
 
     def _add_port_to_drop_port_group(self, port, txn):
         txn.add(self._nb_idl.pg_add_ports(ovn_const.OVN_DROP_PORT_GROUP_NAME,
-                port))
+                                          port))
 
     def _del_port_from_drop_port_group(self, port, txn):
         pg_name = ovn_const.OVN_DROP_PORT_GROUP_NAME
@@ -2424,7 +2424,7 @@ class OVNClient(object):
     def is_dns_required_for_port(self, port):
         try:
             if not all([port['dns_name'], port['dns_assignment'],
-                       port['device_id']]):
+                        port['device_id']]):
                 return False
         except KeyError:
             # Possible that dns extension is not enabled.
@@ -2499,7 +2499,7 @@ class OVNClient(object):
         for hostname, ips in records_to_add.items():
             if ls_dns_record.records.get(hostname) != ips:
                 txn.add(self._nb_idl.dns_add_record(
-                        ls_dns_record.uuid, hostname, ips))
+                    ls_dns_record.uuid, hostname, ips))
 
     def add_txns_to_remove_port_dns_records(self, txn, port):
         lswitch_name = utils.ovn_name(port['network_id'])
@@ -2531,9 +2531,9 @@ class OVNClient(object):
         for hostname in hostnames:
             if ls_dns_record.records.get(hostname):
                 txn.add(self._nb_idl.dns_remove_record(
-                        ls_dns_record.uuid, hostname, if_exists=True))
+                    ls_dns_record.uuid, hostname, if_exists=True))
         for ip in ips:
             ptr_record = netaddr.IPAddress(ip).reverse_dns.rstrip(".")
             if ls_dns_record.records.get(ptr_record):
                 txn.add(self._nb_idl.dns_remove_record(
-                        ls_dns_record.uuid, ptr_record, if_exists=True))
+                    ls_dns_record.uuid, ptr_record, if_exists=True))
