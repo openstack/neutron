@@ -205,7 +205,8 @@ class QuotaEngine(object):
 
         return res.count(context, *args, **kwargs)
 
-    def make_reservation(self, context, tenant_id, deltas, plugin):
+    def make_reservation(self, context, tenant_id, deltas, plugin,
+                         raise_exception=True):
         # Verify that resources are managed by the quota engine
         # Ensure no value is less than zero
         unders = [key for key, val in deltas.items() if val < 0]
@@ -220,8 +221,10 @@ class QuotaEngine(object):
         unknown_resources = requested_resources - managed_resources
 
         if unknown_resources:
-            raise exceptions.QuotaResourceUnknown(
-                unknown=sorted(unknown_resources))
+            if raise_exception:
+                raise exceptions.QuotaResourceUnknown(
+                    unknown=sorted(unknown_resources))
+            return
         # FIXME(salv-orlando): There should be no reason for sending all the
         # resource in the registry to the quota driver, but as other driver
         # APIs request them, this will be sorted out with a different patch.
