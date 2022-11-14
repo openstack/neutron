@@ -416,7 +416,7 @@ class _TestMetadataProxyHandlerCacheMixin(object):
         resp.status.__str__.side_effect = AttributeError
         resp.content = 'content'
         req.response = resp
-        with mock.patch.object(self.handler, '_sign_instance_id') as sign:
+        with mock.patch.object(utils, 'sign_instance_id') as sign:
             sign.return_value = 'signed'
             with mock.patch('requests.request') as mock_request:
                 resp.headers = {'content-type': 'text/plain'}
@@ -471,12 +471,6 @@ class _TestMetadataProxyHandlerCacheMixin(object):
     def test_proxy_request_other_code(self):
         with testtools.ExpectedException(Exception):
             self._proxy_request_test_helper(302)
-
-    def test_sign_instance_id(self):
-        self.assertEqual(
-            '773ba44693c7553d6ee20f61ea5d2757a9a4f4a44d2841ae4e95b52e4cd62db4',
-            self.handler._sign_instance_id('foo')
-        )
 
 
 class TestMetadataProxyHandlerNewCache(TestMetadataProxyHandlerBase,
