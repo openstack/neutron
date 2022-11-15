@@ -9,7 +9,7 @@ For more information on how to configure networking on your
 distribution, see the `SLES 12
 <https://www.suse.com/documentation/sles-12/book_sle_admin/data/sec_basicnet_manconf.html>`__
 or `openSUSE
-<https://doc.opensuse.org/documentation/leap/reference/html/book.opensuse.reference/cha.network.html>`__
+<https://doc.opensuse.org/documentation/leap/reference/html/book-reference/cha-network.html>`__
 documentation.
 
 All nodes require Internet access for administrative purposes such as package
