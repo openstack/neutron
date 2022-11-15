@@ -464,8 +464,8 @@ def convert_exception_to_http_exc(e, faults, language):
                 for c in converted_exceptions:
                     c_body = jsonutils.loads(c.body)
                     err = ('HTTP %s %s: %s' % (
-                           c.code, c_body['NeutronError']['type'],
-                           c_body['NeutronError']['message']))
+                        c.code, c_body['NeutronError']['type'],
+                        c_body['NeutronError']['message']))
                     inner_error_strings.append(err)
                 new_exception.msg = "\n".join(inner_error_strings)
                 return convert_exception_to_http_exc(
