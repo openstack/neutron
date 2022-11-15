@@ -45,7 +45,7 @@ def check_gateway_invalid_in_subnet(cidr, gateway):
     # check since we don't have gateway's subnet cidr.
     return (ip in net and
             (net.version == constants.IP_VERSION_4 and
-            ip in (net.network, net[-1])))
+             ip in (net.network, net[-1])))
 
 
 def generate_pools(cidr, gateway_ip):

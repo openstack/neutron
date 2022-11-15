@@ -70,7 +70,7 @@ class SubnetAllocator(driver.Pool):
             count = query.update({'hash': new_hash})
         if not count:
             raise db_exc.RetryRequest(exceptions.SubnetPoolInUse(
-                                      subnet_pool_id=self._subnetpool['id']))
+                subnet_pool_id=self._subnetpool['id']))
 
     def _get_allocated_cidrs(self):
         with db_api.CONTEXT_READER.using(self._context):
@@ -108,7 +108,7 @@ class SubnetAllocator(driver.Pool):
 
     def _check_subnetpool_tenant_quota(self, tenant_id, prefixlen):
         quota_unit = self._sp_helper.ip_version_subnetpool_quota_unit(
-                                               self._subnetpool['ip_version'])
+            self._subnetpool['ip_version'])
         quota = self._subnetpool.get('default_quota')
 
         if quota:
@@ -166,12 +166,12 @@ class SubnetAllocator(driver.Pool):
         min_prefixlen = int(self._subnetpool['min_prefixlen'])
         if request.prefixlen > max_prefixlen:
             raise exceptions.MaxPrefixSubnetAllocationError(
-                              prefixlen=request.prefixlen,
-                              max_prefixlen=max_prefixlen)
+                prefixlen=request.prefixlen,
+                max_prefixlen=max_prefixlen)
         if request.prefixlen < min_prefixlen:
             raise exceptions.MinPrefixSubnetAllocationError(
-                              prefixlen=request.prefixlen,
-                              min_prefixlen=min_prefixlen)
+                prefixlen=request.prefixlen,
+                min_prefixlen=min_prefixlen)
 
         if isinstance(request, ipam_req.AnySubnetRequest):
             return self._allocate_any_subnet(request)
@@ -388,19 +388,19 @@ class SubnetPoolHelper(object):
                 prefix=min_prefixlen, version=4)
         if min_prefixlen > max_prefixlen:
             raise exceptions.IllegalSubnetPoolPrefixBounds(
-                                             prefix_type='min_prefixlen',
-                                             prefixlen=min_prefixlen,
-                                             base_prefix_type='max_prefixlen',
-                                             base_prefixlen=max_prefixlen)
+                prefix_type='min_prefixlen',
+                prefixlen=min_prefixlen,
+                base_prefix_type='max_prefixlen',
+                base_prefixlen=max_prefixlen)
 
     def validate_max_prefixlen(self, prefixlen, ip_version):
         max = self._PREFIX_VERSION_INFO[ip_version]['max_prefixlen']
         if prefixlen > max:
             raise exceptions.IllegalSubnetPoolPrefixBounds(
-                                            prefix_type='max_prefixlen',
-                                            prefixlen=prefixlen,
-                                            base_prefix_type='ip_version_max',
-                                            base_prefixlen=max)
+                prefix_type='max_prefixlen',
+                prefixlen=prefixlen,
+                base_prefix_type='ip_version_max',
+                base_prefixlen=max)
 
     def validate_default_prefixlen(self,
                                    min_prefixlen,
@@ -408,16 +408,16 @@ class SubnetPoolHelper(object):
                                    default_prefixlen):
         if default_prefixlen < min_prefixlen:
             raise exceptions.IllegalSubnetPoolPrefixBounds(
-                                             prefix_type='default_prefixlen',
-                                             prefixlen=default_prefixlen,
-                                             base_prefix_type='min_prefixlen',
-                                             base_prefixlen=min_prefixlen)
+                prefix_type='default_prefixlen',
+                prefixlen=default_prefixlen,
+                base_prefix_type='min_prefixlen',
+                base_prefixlen=min_prefixlen)
         if default_prefixlen > max_prefixlen:
             raise exceptions.IllegalSubnetPoolPrefixBounds(
-                                             prefix_type='default_prefixlen',
-                                             prefixlen=default_prefixlen,
-                                             base_prefix_type='max_prefixlen',
-                                             base_prefixlen=max_prefixlen)
+                prefix_type='default_prefixlen',
+                prefixlen=default_prefixlen,
+                base_prefix_type='max_prefixlen',
+                base_prefixlen=max_prefixlen)
 
     def wildcard(self, ip_version):
         return self._PREFIX_VERSION_INFO[ip_version]['wildcard']

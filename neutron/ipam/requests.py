@@ -105,11 +105,11 @@ class SubnetRequest(object, metaclass=abc.ABCMeta):
         if self.allocation_pools:
             if subnet_cidr.version != self.allocation_pools[0].version:
                 raise ipam_exc.IpamValueInvalid(_(
-                                "allocation_pools use the wrong ip version"))
+                    "allocation_pools use the wrong ip version"))
             for pool in self.allocation_pools:
                 if pool not in subnet_cidr:
                     raise ipam_exc.IpamValueInvalid(_(
-                                "allocation_pools are not in the subnet"))
+                        "allocation_pools are not in the subnet"))
 
     @staticmethod
     def _validate_gateway_ip_in_subnet(subnet_cidr, gateway_ip):
