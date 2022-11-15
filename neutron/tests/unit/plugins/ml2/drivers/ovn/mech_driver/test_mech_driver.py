@@ -2707,6 +2707,7 @@ class TestOVNMechanismDriverSubnetsV2(test_plugin.TestMl2SubnetsV2,
                                       OVNMechanismDriverTestCase):
 
     def setUp(self):
+        ovn_conf.register_opts()
         # Disable metadata so that we don't interfere with existing tests
         # in Neutron tree. Doing this because some of the tests assume that
         # first IP address in a subnet will be available and this is not true
@@ -2760,6 +2761,7 @@ class TestOVNMechanismDriverPortsV2(test_plugin.TestMl2PortsV2,
                                     OVNMechanismDriverTestCase):
 
     def setUp(self):
+        ovn_conf.register_opts()
         # Disable metadata so that we don't interfere with existing tests
         # in Neutron tree. Doing this because some of the tests assume that
         # first IP address in a subnet will be available and this is not true
