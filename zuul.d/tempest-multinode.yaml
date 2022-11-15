@@ -167,6 +167,10 @@
     timeout: 10800
     irrelevant-files: *openvswitch-irrelevant-files
     vars:
+      # NOTE(ralonsoh): to be removed once LP#1997025 is fixed.
+      tempest_exclude_regex: "\
+          (^tempest.api.compute.admin.test_live_migration.LiveAutoBlockMigrationV225Test.test_live_migration_with_trunk)|\
+          (^tempest.api.compute.admin.test_live_migration.LiveMigrationTest.test_live_migration_with_trunk)"
       tox_envlist: integrated-network
       devstack_localrc:
         CIRROS_VERSION: 0.5.1
