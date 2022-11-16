@@ -17,6 +17,7 @@ classless-static-route     classless_static_route
 default-ttl                default_ttl
 dns-server                 dns_server
 domain-name                domain_name
+domain-search              domain_search_list
 ethernet-encap             ethernet_encap
 ip-forward-enable          ip_forward_enable
 lease-time                 lease_time
@@ -67,6 +68,7 @@ wpad                       wpad
 59                         T2
 66                         tftp_server
 67                         bootfile_name
+119                        domain_search_list
 121                        classless_static_route
 150                        tftp_server_address
 210                        path_prefix
