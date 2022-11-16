@@ -91,6 +91,18 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                     securitygroup.SecurityGroupConflict):
                 self.mixin.create_security_group(self.ctx, secgroup)
 
+    def test_create_security_group_no_quota(self):
+        with mock.patch.object(self.mixin, '_registry_notify'):
+            self.mock_quota_make_res.return_value = None
+            self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
+            self.mock_quota_commit_res.assert_not_called()
+
+            self.mock_quota_make_res.return_value = mock.Mock(
+                reservation_id='res_id')
+            self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
+            self.mock_quota_commit_res.assert_called_once_with(self.ctx,
+                                                               'res_id')
+
     def test_delete_security_group_in_use(self):
         with mock.patch.object(self.mixin,
                                '_get_port_security_group_bindings'),\
