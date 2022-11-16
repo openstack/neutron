@@ -113,6 +113,7 @@ SUPPORTED_DHCP_OPTS_MAPPING = {
         'log-server': 'log_server',
         'lpr-server': 'lpr_server',
         'domain-name': 'domain_name',
+        'domain-search': 'domain_search_list',
         'swap-server': 'swap_server',
         'policy-filter': 'policy_filter',
         'router-solicitation': 'router_solicitation',
@@ -164,6 +165,7 @@ SUPPORTED_DHCP_OPTS_MAPPING = {
         '58': 'T1',
         '59': 'T2',
         '67': 'bootfile_name',
+        '119': 'domain_search_list',
         '252': 'wpad',
         '210': 'path_prefix',
         '150': 'tftp_server_address'},
@@ -189,6 +191,7 @@ SUPPORTED_BM_DHCP_OPTS_MAPPING[4].update({
 # OVN string type DHCP options
 OVN_STR_TYPE_DHCP_OPTS = [
     'domain_name',
+    'domain_search_list',
     'bootfile_name',
     'bootfile_name_alt',
     'path_prefix',
