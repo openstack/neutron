@@ -372,6 +372,20 @@ class TestDHCPUtils(base.BaseTestCase):
                             'bootfile_name': '"homer_simpson.bin"'}
         self.assertEqual(expected_options, options)
 
+    def test_get_lsp_dhcp_opts_for_domain_search(self):
+        opt = {'opt_name': 'domain-search',
+               'opt_value': 'openstack.org,ovn.org',
+               'ip_version': 4}
+        port = {portbindings.VNIC_TYPE: portbindings.VNIC_NORMAL,
+                edo_ext.EXTRADHCPOPTS: [opt]}
+
+        dhcp_disabled, options = utils.get_lsp_dhcp_opts(port, 4)
+        self.assertFalse(dhcp_disabled)
+        # Assert option got translated to "domain_search_list" and
+        # the value is a string (double-quoted)
+        expected_options = {'domain_search_list': '"openstack.org,ovn.org"'}
+        self.assertEqual(expected_options, options)
+
 
 class TestGetDhcpDnsServers(base.BaseTestCase):
 
