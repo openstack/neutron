@@ -18,6 +18,7 @@ from os import path
 import fixtures
 import mock
 from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as n_const
 from oslo_config import cfg
 
@@ -271,6 +272,20 @@ class TestDHCPUtils(base.BaseTestCase):
         expected_options = {'tftp_server_address': '10.0.0.1',
                             'ntp_server': '10.0.2.1',
                             'bootfile_name': '"homer_simpson.bin"'}
+        self.assertEqual(expected_options, options)
+
+    def test_get_lsp_dhcp_opts_for_domain_search(self):
+        opt = {'opt_name': 'domain-search',
+               'opt_value': 'openstack.org,ovn.org',
+               'ip_version': 4}
+        port = {portbindings.VNIC_TYPE: portbindings.VNIC_NORMAL,
+                edo_ext.EXTRADHCPOPTS: [opt]}
+
+        dhcp_disabled, options = utils.get_lsp_dhcp_opts(port, 4)
+        self.assertFalse(dhcp_disabled)
+        # Assert option got translated to "domain_search_list" and
+        # the value is a string (double-quoted)
+        expected_options = {'domain_search_list': '"openstack.org,ovn.org"'}
         self.assertEqual(expected_options, options)
 
 
