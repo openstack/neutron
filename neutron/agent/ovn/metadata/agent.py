@@ -43,7 +43,7 @@ CHASSIS_METADATA_LOCK = 'chassis_metadata_lock'
 
 NS_PREFIX = 'ovnmeta-'
 MAC_PATTERN = re.compile(r'([0-9A-F]{2}[:-]){5}([0-9A-F]{2})', re.I)
-OVN_VIF_PORT_TYPES = ("", "external", )
+OVN_VIF_PORT_TYPES = ("", "external", ovn_const.LSP_TYPE_LOCALPORT, )
 
 MetadataPortInfo = collections.namedtuple('MetadataPortInfo', ['mac',
                                                                'ip_addresses'])
@@ -82,6 +82,20 @@ class PortBindingChassisEvent(row_event.RowEvent):
         resync = False
         if row.type not in OVN_VIF_PORT_TYPES:
             return
+        if row.type == ovn_const.LSP_TYPE_LOCALPORT:
+            new_ext_ids = row.external_ids
+            old_ext_ids = old.external_ids
+            device_id = row.external_ids.get(
+                ovn_const.OVN_DEVID_EXT_ID_KEY, "")
+            if not device_id.startswith(NS_PREFIX):
+                return
+            new_cidrs = new_ext_ids.get(ovn_const.OVN_CIDRS_EXT_ID_KEY, "")
+            old_cidrs = old_ext_ids.get(ovn_const.OVN_CIDRS_EXT_ID_KEY, "")
+            # If old_cidrs is "", it is create event,
+            # nothing needs to be done.
+            # If old_cidrs equals new_cidrs, the ip does not change.
+            if old_cidrs in ("", new_cidrs, ):
+                return
         with _SYNC_STATE_LOCK.read_lock():
             try:
                 net_name = ovn_utils.get_network_name_from_datapath(
@@ -94,6 +108,24 @@ class PortBindingChassisEvent(row_event.RowEvent):
                 resync = True
         if resync:
             self.agent.resync()
+
+
+class PortBindingMetaPortUpdatedEvent(PortBindingChassisEvent):
+    LOG_MSG = "Metadata Port %s in datapath %s updated."
+
+    def __init__(self, metadata_agent):
+        events = (self.ROW_UPDATE,)
+        super(PortBindingMetaPortUpdatedEvent, self).__init__(
+            metadata_agent, events)
+
+    def match_fn(self, event, row, old):
+        if row.type == ovn_const.LSP_TYPE_LOCALPORT:
+            if hasattr(row, 'external_ids') and hasattr(old, 'external_ids'):
+                device_id = row.external_ids.get(
+                    ovn_const.OVN_DEVID_EXT_ID_KEY, "")
+                if device_id.startswith(NS_PREFIX):
+                    return True
+        return False
 
 
 class PortBindingChassisCreatedEvent(PortBindingChassisEvent):
@@ -245,7 +277,8 @@ class MetadataAgent(object):
                   'Chassis')
         events = (PortBindingChassisCreatedEvent(self),
                   PortBindingChassisDeletedEvent(self),
-                  SbGlobalUpdateEvent(self))
+                  SbGlobalUpdateEvent(self),
+                  PortBindingMetaPortUpdatedEvent(self))
 
         # TODO(lucasagomes): Remove this in the future. Try to register
         # the Chassis_Private table, if not present, fallback to the normal

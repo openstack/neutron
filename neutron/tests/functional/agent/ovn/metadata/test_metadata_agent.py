@@ -141,7 +141,19 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
                 type=ovn_const.LSP_TYPE_LOCALPORT,
                 addresses='AA:AA:AA:AA:AA:AA 192.168.122.123',
                 external_ids={
-                    ovn_const.OVN_CIDRS_EXT_ID_KEY: '192.168.122.123/24'}))
+                    ovn_const.OVN_CIDRS_EXT_ID_KEY: '192.168.122.123/24',
+                    ovn_const.OVN_DEVID_EXT_ID_KEY: 'ovnmeta-' + lswitch_name
+                }))
+        return mdt_port_name
+
+    def _update_metadata_port_ip(self, metadata_port_name):
+        external_ids = {
+            ovn_const.OVN_CIDRS_EXT_ID_KEY: "192.168.122.2/24",
+            ovn_const.OVN_DEVID_EXT_ID_KEY:
+                'ovnmeta-' + uuidutils.generate_uuid()
+        }
+        self.nb_api.set_lswitch_port(lport_name=metadata_port_name,
+                                     external_ids=external_ids).execute()
 
     def _create_logical_switch_port(self, type_=None):
         lswitch_name = 'ovn-' + uuidutils.generate_uuid()
@@ -192,16 +204,25 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
 
         n_utils.wait_until_true(check_mock_pbinding, timeout=10, exception=exc)
 
-    def _test_agent_events(self, delete, type_=None):
+    def _test_agent_events(self, delete, type_=None, update=False):
         m_pb_created = mock.patch.object(
             agent.PortBindingChassisCreatedEvent, 'run').start()
         m_pb_deleted = mock.patch.object(
             agent.PortBindingChassisDeletedEvent, 'run').start()
+        m_pb_updated = mock.patch.object(
+            agent.PortBindingMetaPortUpdatedEvent, 'run').start()
 
         lswitchport_name, lswitch_name = self._create_logical_switch_port(
             type_)
         self.sb_api.lsp_bind(lswitchport_name, self.chassis_name).execute(
             check_error=True, log_errors=True)
+        if update and type_ == ovn_const.LSP_TYPE_LOCALPORT:
+            with self.nb_api.transaction(
+                    check_error=True, log_errors=True) as txn:
+                mdt_port_name = self._create_metadata_port(txn, lswitch_name)
+            self.sb_api.lsp_bind(mdt_port_name, self.chassis_name).execute(
+                check_error=True, log_errors=True)
+            self._update_metadata_port_ip(mdt_port_name)
 
         def pb_created():
             if m_pb_created.call_count < 1:
@@ -218,6 +239,31 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
             exception=Exception(
                 "PortBindingChassisCreatedEvent didn't happen on port "
                 "binding."))
+
+        def pb_updated():
+            if m_pb_updated.call_count < 1:
+                return False
+            args = m_pb_updated.call_args[0]
+            self.assertEqual('update', args[0])
+            self.assertTrue(args[1].external_ids)
+            self.assertTrue(args[2].external_ids)
+            device_id = args[1].external_ids.get(
+                ovn_const.OVN_DEVID_EXT_ID_KEY, "")
+            self.assertTrue(device_id.startswith("ovnmeta-"))
+            new_cidrs = args[1].external_ids.get(
+                ovn_const.OVN_CIDRS_EXT_ID_KEY, "")
+            old_cidrs = args[2].external_ids.get(
+                ovn_const.OVN_CIDRS_EXT_ID_KEY, "")
+            self.assertNotEqual(new_cidrs, old_cidrs)
+            self.assertNotEqual(old_cidrs, "")
+            return True
+        if update and type_ == ovn_const.LSP_TYPE_LOCALPORT:
+            n_utils.wait_until_true(
+                pb_updated,
+                timeout=10,
+                exception=Exception(
+                    "PortBindingMetaPortUpdatedEvent didn't happen on "
+                    "metadata port ip address updated."))
 
         if delete:
             self.nb_api.delete_lswitch_port(
@@ -289,6 +335,10 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
             check_for_metadata,
             timeout=10,
             exception=exc)
+
+    def test_agent_metadata_port_ip_update_event(self):
+        self._test_agent_events(
+            delete=False, type_=ovn_const.LSP_TYPE_LOCALPORT, update=True)
 
     def test_metadata_agent_only_monitors_own_chassis(self):
         # We already have the fake chassis which we should be monitoring, so
