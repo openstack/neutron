@@ -2069,7 +2069,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 portbindings.PROFILE: {ovn_const.MIGRATING_ATTR: 'foo'},
                 portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS}).info()
         fake_ctx = mock.Mock(current=fake_port, original=fake_port,
-                             _plugin_context=fake_context)
+                             plugin_context=fake_context)
 
         self.mech_driver.update_port_postcommit(fake_ctx)
 
@@ -2101,7 +2101,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS}).info()
 
         fake_ctx = mock.Mock(current=fake_port, original=original_fake_port,
-                             _plugin_context=fake_context)
+                             plugin_context=fake_context)
         mock_update_port.side_effect = ovn_exceptions.RevisionConflict(
             resource_id=fake_port['id'],
             resource_type=ovn_const.TYPE_PORTS)
@@ -2137,7 +2137,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS}).info()
 
         fake_ctx = mock.Mock(current=fake_port, original=original_fake_port,
-                             _plugin_context=fake_context)
+                             plugin_context=fake_context)
         mock_update_port.side_effect = [
             ovn_exceptions.RevisionConflict(
                 resource_id=fake_port['id'],
@@ -2174,7 +2174,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS}).info()
 
         fake_ctx = mock.Mock(current=fake_port, original=original_fake_port,
-                             _plugin_context=fake_context)
+                             plugin_context=fake_context)
         mock_update_port.side_effect = [
             ovn_exceptions.RevisionConflict(
                 resource_id=fake_port['id'],
@@ -2317,7 +2317,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 # Let's update the MTU to something different
                 network['network']['mtu'] = new_mtu
                 fake_ctx = mock.MagicMock(current=network['network'])
-                fake_ctx._plugin_context.session.is_active = False
+                fake_ctx.plugin_context.session.is_active = False
 
                 self.mech_driver.update_network_postcommit(fake_ctx)
 

@@ -337,6 +337,10 @@ class FakeNetworkContext(object):
         self._plugin_context = mock.MagicMock()
 
     @property
+    def plugin_context(self):
+        return self._plugin_context
+
+    @property
     def current(self):
         return self.fake_network
 
@@ -355,6 +359,10 @@ class FakeSubnetContext(object):
         self.fake_original_subnet = original_subnet
         self.fake_network = FakeNetworkContext(network, None)
         self._plugin_context = mock.MagicMock()
+
+    @property
+    def plugin_context(self):
+        return self._plugin_context
 
     @property
     def current(self):

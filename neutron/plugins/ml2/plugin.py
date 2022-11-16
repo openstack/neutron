@@ -511,7 +511,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def _clear_port_binding(self, mech_context, binding, port, original_host):
         binding.vif_type = portbindings.VIF_TYPE_UNBOUND
         binding.vif_details = ''
-        db.clear_binding_levels(mech_context._plugin_context, port['id'],
+        db.clear_binding_levels(mech_context.plugin_context, port['id'],
                                 original_host)
         mech_context._clear_binding_levels()
 
@@ -547,7 +547,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return changes, original_host
 
     def _process_port_binding(self, mech_context, attrs):
-        plugin_context = mech_context._plugin_context
+        plugin_context = mech_context.plugin_context
         binding = mech_context._binding
         port = mech_context.current
         changes, original_host = self._process_port_binding_attributes(binding,
@@ -559,7 +559,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                      original_host)
             port['status'] = const.PORT_STATUS_DOWN
             super(Ml2Plugin, self).update_port(
-                mech_context._plugin_context, port['id'],
+                mech_context.plugin_context, port['id'],
                 {port_def.RESOURCE_NAME: {'status': const.PORT_STATUS_DOWN}})
 
         if port['device_owner'] == const.DEVICE_OWNER_DVR_INTERFACE:
@@ -649,7 +649,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         )
         self._update_port_dict_binding(port, new_binding)
         new_context = driver_context.PortContext(
-            self, orig_context._plugin_context, port,
+            self, orig_context.plugin_context, port,
             orig_context.network.current, new_binding, None,
             original_port=orig_context.original)
 
@@ -661,7 +661,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def _commit_port_binding(self, orig_context, bind_context,
                              need_notify, update_binding_levels=True):
         port_id = orig_context.current['id']
-        plugin_context = orig_context._plugin_context
+        plugin_context = orig_context.plugin_context
         port = orig_context.current
         original_port = orig_context.current
         orig_binding = orig_context._binding
@@ -952,7 +952,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                       "port %(port_id)s on network %(network_id)s",
                       {'port_id': port['id'], 'network_id': network['id']})
             return
-        self.notifier.port_update(mech_context._plugin_context, port,
+        self.notifier.port_update(mech_context.plugin_context, port,
                                   segment[api.NETWORK_TYPE],
                                   segment[api.SEGMENTATION_ID],
                                   segment[api.PHYSICAL_NETWORK])
@@ -1971,7 +1971,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return bound_context.current
 
     def _process_distributed_port_binding(self, mech_context, context, attrs):
-        plugin_context = mech_context._plugin_context
+        plugin_context = mech_context.plugin_context
         binding = mech_context._binding
         port = mech_context.current
         port_id = port['id']
@@ -2634,12 +2634,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                      original_host)
             port_dict['status'] = const.PORT_STATUS_DOWN
             super(Ml2Plugin, self).update_port(
-                mech_context._plugin_context, port_dict['id'],
+                mech_context.plugin_context, port_dict['id'],
                 {port_def.RESOURCE_NAME: {'status': const.PORT_STATUS_DOWN}})
         self._update_port_dict_binding(port_dict,
                                        mech_context._binding)
         mech_context._binding.persist_state_to_session(
-            mech_context._plugin_context.session)
+            mech_context.plugin_context.session)
 
     @utils.transaction_guard
     @db_api.retry_if_session_inactive()

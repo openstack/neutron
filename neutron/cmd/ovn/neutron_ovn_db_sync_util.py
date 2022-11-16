@@ -74,7 +74,7 @@ class OVNMechanismDriver(mech_driver.OVNMechanismDriver):
 
     def create_port_postcommit(self, context):
         port = context.current
-        self.ovn_client.create_port(context._plugin_context, port)
+        self.ovn_client.create_port(context.plugin_context, port)
 
     def update_port_precommit(self, context):
         pass
@@ -82,7 +82,7 @@ class OVNMechanismDriver(mech_driver.OVNMechanismDriver):
     def update_port_postcommit(self, context):
         port = context.current
         original_port = context.original
-        self.ovn_client.update_port(context._plugin_context, port,
+        self.ovn_client.update_port(context.plugin_context, port,
                                     original_port)
 
     def delete_port_precommit(self, context):
@@ -91,9 +91,7 @@ class OVNMechanismDriver(mech_driver.OVNMechanismDriver):
     def delete_port_postcommit(self, context):
         port = copy.deepcopy(context.current)
         port['network'] = context.network.current
-        # FIXME(lucasagomes): PortContext does not have a session, therefore
-        # we need to use the _plugin_context attribute.
-        self.ovn_client.delete_port(context._plugin_context, port['id'])
+        self.ovn_client.delete_port(context.plugin_context, port['id'])
 
 
 class AgentNotifierApi(object):
