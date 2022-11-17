@@ -16,15 +16,18 @@ from unittest import mock
 
 from neutron_lib import constants as n_const
 from neutron_lib.plugins import constants as plugins_constants
+from oslo_utils import uuidutils
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils as common_utils
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions \
     import placement as placement_extension
 from neutron.tests.functional import base
+from neutron.tests.functional.plugins.ml2.drivers.ovn.mech_driver.ovsdb \
+    import test_ovsdb_monitor
 
 
-class TestOVNClientQosExtension(base.TestOVNFunctionalBase):
+class TestOVNClientPlacementExtension(base.TestOVNFunctionalBase):
 
     EMPTY_CHASSIS = {n_const.RP_BANDWIDTHS: {},
                      n_const.RP_INVENTORY_DEFAULTS: {},
@@ -186,3 +189,39 @@ class TestOVNClientQosExtension(base.TestOVNFunctionalBase):
             inventory_defaults='allocation_ratio:1.1;min_unit:1',
             hypervisors='br-provider0:host2')
         self._check_placement_config({**self.CHASSIS1, **self.CHASSIS2_B})
+
+    @mock.patch.object(placement_extension, '_send_deferred_batch')
+    def test_chassis_bandwidth_config_event(self, mock_send_placement):
+        ch_host = 'fake-chassis-host'
+        ch_name = uuidutils.generate_uuid()
+        ch_event = test_ovsdb_monitor.WaitForChassisPrivateCreateEvent(
+            ch_name, self.mech_driver.agent_chassis_table)
+        self.mech_driver.sb_ovn.idl.notify_handler.watch_event(ch_event)
+        self.chassis_name = self.add_fake_chassis(ch_host, name=ch_name)
+        self.assertTrue(ch_event.wait())
+        common_utils.wait_until_true(lambda: mock_send_placement.called,
+                                     timeout=2)
+        mock_send_placement.reset_mock()
+
+        # Once the chassis registger has been created, this new event will
+        # catch any chassis BW update.
+        self._update_chassis(
+            ch_name,
+            bandwidths='br-provider0:3000:4000',
+            inventory_defaults='allocation_ratio:3.0;min_unit:1',
+            hypervisors='br-provider0:host2')
+        common_utils.wait_until_true(lambda: mock_send_placement.called,
+                                     timeout=2)
+        mock_send_placement.reset_mock()
+
+        # The chassis BW information is written again without any change.
+        # That should not trigger the placement update.
+        self._update_chassis(
+            ch_name,
+            bandwidths='br-provider0:3000:4000',
+            inventory_defaults='allocation_ratio:3.0;min_unit:1',
+            hypervisors='br-provider0:host2')
+        self.assertRaises(common_utils.WaitTimeout,
+                          common_utils.wait_until_true,
+                          lambda: mock_send_placement.called,
+                          timeout=2)
