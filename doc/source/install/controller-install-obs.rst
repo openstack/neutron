@@ -249,8 +249,8 @@ Configure the Compute service to use the Networking service
        # ...
        auth_url = http://controller:5000
        auth_type = password
-       project_domain_name = default
-       user_domain_name = default
+       project_domain_name = Default
+       user_domain_name = Default
        region_name = RegionOne
        project_name = service
        username = neutron
