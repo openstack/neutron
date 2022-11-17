@@ -19,7 +19,7 @@ OpenStack Networking plug-ins and agents
   vendor and technologies used in the particular cloud. OpenStack
   Networking ships with plug-ins and agents for Cisco virtual and
   physical switches, NEC OpenFlow products, Open vSwitch, Linux
-  bridging, and the VMware NSX product.
+  bridging, Open Virtual Network (OVN) and the VMware NSX product.
 
   The common agents are L3 (layer 3), DHCP (dynamic host IP
   addressing), and a plug-in agent.
