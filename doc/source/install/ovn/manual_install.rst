@@ -201,6 +201,23 @@ primary node. See the :doc:`/ovn/faq/index` for more information.
         The default for ``max_header_size``, ``30``, is too low for OVN.
         OVN requires at least ``38``.
 
+   * Optionally, enable support for VXLAN type networks. Because of limited
+     space in VXLAN VNI to pass over the needed information that requires
+     OVN to identify a packet, the header size to contain the segmentation ID
+     is reduced to 12 bits, that allows a maximum number of 4096 networks.
+     The same limitation applies to the number of ports in each network, that
+     are also identified with a 12 bits header chunk, limiting their number
+     to 4096 ports. Please check [1]_ for more information.
+
+     .. code-block:: ini
+
+        [ml2]
+        ...
+        type_drivers = geneve,vxlan
+
+        [ml2_type_vxlan]
+        vni_ranges = 1001:1100
+
    * Optionally, enable support for VLAN provider and self-service
      networks on one or more physical networks. If you specify only
      the physical network, only administrative (privileged) users can
@@ -354,3 +371,8 @@ Verify operation
 
       # ovn-sbctl show
         <output>
+
+References
+----------
+
+.. [1] https://mail.openvswitch.org/pipermail/ovs-dev/2020-September/375189.html
