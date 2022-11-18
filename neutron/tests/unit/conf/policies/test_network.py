@@ -140,18 +140,6 @@ class SystemAdminTests(NetworkAPITestCase):
             self.context, 'get_network',
             self.alt_target)
 
-    def test_get_network_external(self):
-        self.assertRaises(
-            base_policy.InvalidScope,
-            policy.enforce,
-            self.context, 'get_network:router:external',
-            self.target)
-        self.assertRaises(
-            base_policy.InvalidScope,
-            policy.enforce,
-            self.context, 'get_network:router:external',
-            self.alt_target)
-
     def test_get_network_segments(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -403,22 +391,6 @@ class AdminTests(NetworkAPITestCase):
         self.assertTrue(
             policy.enforce(self.context, 'get_network', self.alt_target))
 
-    def test_get_network_external(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'get_network:router:external', self.target))
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'get_network:router:external', self.alt_target))
-
-    def test_get_network_segments(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'get_network:segments', self.target))
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'get_network:segments', self.alt_target))
-
     def test_get_network_provider_network_type(self):
         self.assertTrue(
             policy.enforce(self.context,
@@ -640,15 +612,6 @@ class ProjectMemberTests(AdminTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'get_network', self.alt_target)
-
-    def test_get_network_external(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'get_network:router:external', self.target))
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'get_network:router:external', self.alt_target)
 
     def test_get_network_segments(self):
         self.assertRaises(
