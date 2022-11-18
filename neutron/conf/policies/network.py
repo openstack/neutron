@@ -190,20 +190,6 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
-        name='get_network:router:external',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_READER),
-        scope_types=['project'],
-        description='Get ``router:external`` attribute of a network',
-        operations=ACTION_GET,
-        deprecated_rule=policy.DeprecatedRule(
-            name='get_network:router:external',
-            check_str=base.RULE_ANY,
-            deprecated_reason=DEPRECATED_REASON,
-            deprecated_since=versionutils.deprecated.WALLABY)
-    ),
-    policy.DocumentedRuleDefault(
         name='get_network:segments',
         check_str=base.ADMIN,
         scope_types=['project'],
