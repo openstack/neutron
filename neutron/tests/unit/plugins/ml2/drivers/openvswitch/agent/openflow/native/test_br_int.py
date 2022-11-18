@@ -62,7 +62,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                 ],
                 match=ofpp.OFPMatch(),
                 priority=0,
-                table_id=59),
+                table_id=ovs_constants.PACKET_RATE_LIMIT),
                            active_bundle=None),
             call._send_msg(ofpp.OFPFlowMod(dp,
                 cookie=self.stamp,
@@ -74,7 +74,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                 ],
                 match=ofpp.OFPMatch(),
                 priority=3,
-                table_id=60),
+                table_id=ovs_constants.TRANSIENT_TABLE),
                            active_bundle=None),
             call._send_msg(ofpp.OFPFlowMod(dp,
                 cookie=self.stamp,
@@ -85,7 +85,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                                     udp_dst=67,
                                     udp_src=68),
                 priority=101,
-                table_id=60),
+                table_id=ovs_constants.TRANSIENT_TABLE),
                            active_bundle=None),
             call._send_msg(ofpp.OFPFlowMod(dp,
                 cookie=self.stamp,
@@ -103,7 +103,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                                     udp_dst=547,
                                     udp_src=546),
                 priority=101,
-                table_id=60),
+                table_id=ovs_constants.TRANSIENT_TABLE),
                            active_bundle=None),
             call._send_msg(ofpp.OFPFlowMod(dp,
                 cookie=self.stamp,
@@ -282,7 +282,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                     eth_dst=dst_mac,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT),
                 priority=20,
-                table_id=60),
+                table_id=ovs_constants.TRANSIENT_TABLE),
                            active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
@@ -306,7 +306,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
             call.uninstall_flows(
                 strict=True,
                 priority=20,
-                table_id=60,
+                table_id=ovs_constants.TRANSIENT_TABLE,
                 match=ofpp.OFPMatch(
                     eth_dst=dst_mac,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT)),
@@ -353,7 +353,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                     eth_dst=dst_mac,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT),
                 priority=20,
-                table_id=60),
+                table_id=ovs_constants.TRANSIENT_TABLE),
                            active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
@@ -396,7 +396,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                     eth_dst=dst_mac,
                     vlan_vid=ofp.OFPVID_NONE),
                 priority=20,
-                table_id=60),
+                table_id=ovs_constants.TRANSIENT_TABLE),
                            active_bundle=None),
         ]
         self.assertEqual(expected, self.mock.mock_calls)
@@ -420,7 +420,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
             call.uninstall_flows(
                 strict=True,
                 priority=20,
-                table_id=60,
+                table_id=ovs_constants.TRANSIENT_TABLE,
                 match=ofpp.OFPMatch(
                     eth_dst=dst_mac,
                     vlan_vid=vlan_tag | ofp.OFPVID_PRESENT)),
@@ -446,7 +446,7 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
             call.uninstall_flows(
                 strict=True,
                 priority=20,
-                table_id=60,
+                table_id=ovs_constants.TRANSIENT_TABLE,
                 match=ofpp.OFPMatch(
                     eth_dst=dst_mac,
                     vlan_vid=ofp.OFPVID_NONE)),
