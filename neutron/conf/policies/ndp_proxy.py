@@ -25,7 +25,7 @@ DEPRECATION_REASON = (
 rules = [
     policy.DocumentedRuleDefault(
         name='create_ndp_proxy',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         description='Create a ndp proxy',
         operations=[
             {
@@ -42,7 +42,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_ndp_proxy',
-        check_str=base.PROJECT_READER,
+        check_str=base.ADMIN_OR_PROJECT_READER,
         description='Get a ndp proxy',
         operations=[
             {
@@ -63,7 +63,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_ndp_proxy',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         description='Update a ndp proxy',
         operations=[
             {
@@ -80,7 +80,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_ndp_proxy',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         description='Delete a ndp proxy',
         operations=[
             {

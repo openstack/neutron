@@ -26,7 +26,7 @@ DEPRECATED_REASON = (
 rules = [
     policy.DocumentedRuleDefault(
         name='create_trunk',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Create a trunk',
         operations=[
@@ -43,7 +43,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_trunk',
-        check_str=base.PROJECT_READER,
+        check_str=base.ADMIN_OR_PROJECT_READER,
         scope_types=['project'],
         description='Get a trunk',
         operations=[
@@ -64,7 +64,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_trunk',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Update a trunk',
         operations=[
@@ -81,7 +81,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_trunk',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Delete a trunk',
         operations=[
@@ -98,7 +98,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_subports',
-        check_str=base.PROJECT_READER,
+        check_str=base.ADMIN_OR_PROJECT_READER,
         scope_types=['project'],
         description='List subports attached to a trunk',
         operations=[
@@ -115,7 +115,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='add_subports',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Add subports to a trunk',
         operations=[
@@ -132,7 +132,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='remove_subports',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Delete subports from a trunk',
         operations=[

@@ -126,6 +126,53 @@ class AdminTests(FloatingipPortForwardingAPITestCase):
             policy.enforce(self.context,
                            'create_floatingip_port_forwarding',
                            self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_floatingip_port_forwarding',
+                           self.alt_target))
+
+    def test_get_fip_pf(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_floatingip_port_forwarding',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_floatingip_port_forwarding',
+                           self.alt_target))
+
+    def test_update_fip_pf(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_floatingip_port_forwarding',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_floatingip_port_forwarding',
+                           self.alt_target))
+
+    def test_delete_fip_pf(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'delete_floatingip_port_forwarding',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'delete_floatingip_port_forwarding',
+                           self.alt_target))
+
+
+class ProjectMemberTests(AdminTests):
+
+    def setUp(self):
+        super(ProjectMemberTests, self).setUp()
+        self.context = self.project_member_ctx
+
+    def test_create_fip_pf(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_floatingip_port_forwarding',
+                           self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
@@ -164,13 +211,6 @@ class AdminTests(FloatingipPortForwardingAPITestCase):
             policy.enforce,
             self.context, 'delete_floatingip_port_forwarding',
             self.alt_target)
-
-
-class ProjectMemberTests(AdminTests):
-
-    def setUp(self):
-        super(ProjectMemberTests, self).setUp()
-        self.context = self.project_member_ctx
 
 
 class ProjectReaderTests(ProjectMemberTests):

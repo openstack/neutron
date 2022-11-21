@@ -32,7 +32,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_address_group',
         check_str=base.policy_or(
-            base.PROJECT_READER,
+            base.ADMIN_OR_PROJECT_READER,
             'rule:shared_address_groups'),
         description='Get an address group',
         operations=[

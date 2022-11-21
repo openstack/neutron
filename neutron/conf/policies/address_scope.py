@@ -31,9 +31,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_address_scope',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_MEMBER),
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         description='Create an address scope',
         operations=[
             {
@@ -92,9 +90,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_address_scope',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_MEMBER),
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         description='Update an address scope',
         operations=[
             {
@@ -128,9 +124,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_address_scope',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_MEMBER),
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         description='Delete an address scope',
         operations=[
             {
