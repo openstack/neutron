@@ -39,9 +39,7 @@ ACTION_GET = [
 rules = [
     policy.DocumentedRuleDefault(
         name='create_router',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_MEMBER),
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Create a router',
         operations=ACTION_POST,
@@ -77,9 +75,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_router:external_gateway_info',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_MEMBER),
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description=('Specify ``external_gateway_info`` '
                      'information when creating a router'),
@@ -92,9 +88,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_router:external_gateway_info:network_id',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_MEMBER),
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description=('Specify ``network_id`` in ``external_gateway_info`` '
                      'information when creating a router'),
@@ -135,9 +129,7 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='get_router',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_READER),
+        check_str=base.ADMIN_OR_PROJECT_READER,
         scope_types=['project'],
         description='Get a router',
         operations=ACTION_GET,
@@ -174,9 +166,7 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='update_router',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_MEMBER),
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Update a router',
         operations=ACTION_PUT,
@@ -212,9 +202,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_router:external_gateway_info',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_MEMBER),
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Update ``external_gateway_info`` information of a router',
         operations=ACTION_PUT,
@@ -226,9 +214,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_router:external_gateway_info:network_id',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_MEMBER),
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description=('Update ``network_id`` attribute of '
                      '``external_gateway_info`` information of a router'),
@@ -268,9 +254,7 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='delete_router',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_MEMBER),
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Delete a router',
         operations=ACTION_DELETE,
@@ -283,9 +267,7 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='add_router_interface',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_MEMBER),
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Add an interface to a router',
         operations=[
@@ -302,9 +284,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='remove_router_interface',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_MEMBER),
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Remove an interface from a router',
         operations=[
@@ -321,9 +301,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='add_extraroutes',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_MEMBER),
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Add extra route to a router',
         operations=[
@@ -340,9 +318,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='remove_extraroutes',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_MEMBER),
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Remove extra route from a router',
         operations=[

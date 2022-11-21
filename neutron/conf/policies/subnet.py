@@ -40,8 +40,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='create_subnet',
         check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_MEMBER,
+            base.ADMIN_OR_PROJECT_MEMBER,
             base.RULE_NET_OWNER),
         scope_types=['project'],
         description='Create a subnet',
@@ -83,8 +82,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_subnet',
         check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_READER,
+            base.ADMIN_OR_PROJECT_READER,
             'rule:shared'),
         scope_types=['project'],
         description='Get a subnet',
@@ -112,8 +110,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='update_subnet',
         check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_MEMBER,
+            base.ADMIN_OR_PROJECT_MEMBER,
             base.RULE_NET_OWNER),
         scope_types=['project'],
         description='Update a subnet',
@@ -151,8 +148,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='delete_subnet',
         check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_MEMBER,
+            base.ADMIN_OR_PROJECT_MEMBER,
             base.RULE_NET_OWNER),
         scope_types=['project'],
         description='Delete a subnet',

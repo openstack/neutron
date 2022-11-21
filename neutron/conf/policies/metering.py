@@ -46,9 +46,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_metering_label',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_READER),
+        check_str=base.ADMIN_OR_PROJECT_READER,
         scope_types=['project'],
         description='Get a metering label',
         operations=[
@@ -103,9 +101,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_metering_label_rule',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_READER),
+        check_str=base.ADMIN_OR_PROJECT_READER,
         scope_types=['project'],
         description='Get a metering label rule',
         operations=[

@@ -45,9 +45,7 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='create_network',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_MEMBER),
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Create a network',
         operations=ACTION_POST,
@@ -95,9 +93,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_network:port_security_enabled',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_MEMBER),
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description=(
             'Specify ``port_security_enabled`` '
@@ -170,8 +166,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_network',
         check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_READER,
+            base.ADMIN_OR_PROJECT_READER,
             'rule:shared',
             'rule:external',
             base.RULE_ADVSVC
@@ -254,9 +249,7 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='update_network',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_MEMBER),
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Update a network',
         operations=ACTION_PUT,
@@ -358,9 +351,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_network:port_security_enabled',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_MEMBER),
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Update ``port_security_enabled`` attribute of a network',
         operations=ACTION_PUT,
@@ -373,9 +364,7 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='delete_network',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_MEMBER),
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Delete a network',
         operations=ACTION_DELETE,

@@ -21,7 +21,7 @@ DEPRECATED_REASON = (
 rules = [
     policy.DocumentedRuleDefault(
         name='get_floatingip_pool',
-        check_str=base.PROJECT_READER,
+        check_str=base.ADMIN_OR_PROJECT_READER,
         description='Get floating IP pools',
         operations=[
             {

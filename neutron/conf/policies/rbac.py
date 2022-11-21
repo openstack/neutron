@@ -36,9 +36,7 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='create_rbac_policy',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_MEMBER),
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Create an RBAC policy',
         operations=[
@@ -77,9 +75,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_rbac_policy',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_MEMBER),
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Update an RBAC policy',
         operations=[
@@ -120,9 +116,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_rbac_policy',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_READER),
+        check_str=base.ADMIN_OR_PROJECT_READER,
         scope_types=['project'],
         description='Get an RBAC policy',
         operations=[
@@ -143,9 +137,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_rbac_policy',
-        check_str=base.policy_or(
-            base.ADMIN,
-            base.PROJECT_MEMBER),
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
         description='Delete an RBAC policy',
         operations=[

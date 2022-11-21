@@ -114,6 +114,43 @@ class AdminTests(LocalIPAssociationAPITestCase):
             policy.enforce(self.context,
                            'create_local_ip_port_association',
                            self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_local_ip_port_association',
+                           self.alt_target))
+
+    def test_get_local_ip_port_association(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_local_ip_port_association',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_local_ip_port_association',
+                           self.alt_target))
+
+    def test_delete_local_ip_port_association(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'delete_local_ip_port_association',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'delete_local_ip_port_association',
+                           self.alt_target))
+
+
+class ProjectMemberTests(AdminTests):
+
+    def setUp(self):
+        super(ProjectMemberTests, self).setUp()
+        self.context = self.project_member_ctx
+
+    def test_create_local_ip_port_association(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_local_ip_port_association',
+                           self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
@@ -141,13 +178,6 @@ class AdminTests(LocalIPAssociationAPITestCase):
             policy.enforce,
             self.context, 'delete_local_ip_port_association',
             self.alt_target)
-
-
-class ProjectMemberTests(AdminTests):
-
-    def setUp(self):
-        super(ProjectMemberTests, self).setUp()
-        self.context = self.project_member_ctx
 
 
 class ProjectReaderTests(ProjectMemberTests):

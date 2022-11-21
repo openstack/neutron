@@ -25,7 +25,7 @@ DEPRECATION_REASON = (
 rules = [
     policy.DocumentedRuleDefault(
         name='get_auto_allocated_topology',
-        check_str=base.PROJECT_READER,
+        check_str=base.ADMIN_OR_PROJECT_READER,
         description="Get a project's auto-allocated topology",
         operations=[
             {
@@ -42,7 +42,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_auto_allocated_topology',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         description="Delete a project's auto-allocated topology",
         operations=[
             {
