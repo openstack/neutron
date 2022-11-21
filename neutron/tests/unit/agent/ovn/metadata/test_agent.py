@@ -82,7 +82,7 @@ class TestMetadataAgent(base.BaseTestCase):
     def test_sync(self):
 
         with mock.patch.object(
-                self.agent, 'ensure_all_networks_provisioned') as enp,\
+                self.agent, 'provision_datapath') as pdp,\
                 mock.patch.object(
                     ip_lib, 'list_network_namespaces') as lnn,\
                 mock.patch.object(
@@ -91,10 +91,13 @@ class TestMetadataAgent(base.BaseTestCase):
 
             self.agent.sync()
 
-            enp.assert_called_once_with({
-                (p.datapath.uuid, p.datapath.uuid)
-                for p in self.ports
-            })
+            pdp.assert_has_calls(
+                [
+                    mock.call(p.datapath.uuid, p.datapath.uuid)
+                    for p in self.ports
+                ],
+                any_order=True
+            )
 
             lnn.assert_called_once_with()
             tdp.assert_not_called()
@@ -102,7 +105,7 @@ class TestMetadataAgent(base.BaseTestCase):
     def test_sync_teardown_namespace(self):
         """Test that sync tears down unneeded metadata namespaces."""
         with mock.patch.object(
-                self.agent, 'ensure_all_networks_provisioned') as enp,\
+                self.agent, 'provision_datapath') as pdp,\
                 mock.patch.object(
                     ip_lib, 'list_network_namespaces') as lnn,\
                 mock.patch.object(
@@ -112,10 +115,13 @@ class TestMetadataAgent(base.BaseTestCase):
 
             self.agent.sync()
 
-            enp.assert_called_once_with({
-                (p.datapath.uuid, p.datapath.uuid)
-                for p in self.ports
-            })
+            pdp.assert_has_calls(
+                [
+                    mock.call(p.datapath.uuid, p.datapath.uuid)
+                    for p in self.ports
+                ],
+                any_order=True
+            )
             lnn.assert_called_once_with()
             tdp.assert_called_once_with('3')
 

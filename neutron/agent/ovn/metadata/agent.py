@@ -347,7 +347,8 @@ class MetadataAgent(object):
 
         # now that all obsolete namespaces are cleaned up, deploy required
         # networks
-        self.ensure_all_networks_provisioned(nets)
+        for datapath, net_name in nets:
+            self.provision_datapath(datapath, net_name)
 
     @staticmethod
     def _get_veth_name(datapath):
@@ -541,14 +542,3 @@ class MetadataAgent(object):
             self._process_monitor, namespace, n_const.METADATA_PORT,
             self.conf, bind_address=n_const.METADATA_V4_IP,
             network_id=net_name)
-
-    def ensure_all_networks_provisioned(self, nets):
-        """Ensure that all requested datapaths are provisioned.
-
-        This function will make sure that requested datapaths have their
-        namespaces, VETH pair and OVS ports created and metadata proxies are up
-        and running.
-        """
-        # Make sure that all those datapaths are serving metadata
-        for datapath, net_name in nets:
-            self.provision_datapath(datapath, net_name)
