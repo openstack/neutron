@@ -316,10 +316,13 @@ class MetadataAgent(object):
             return 'br-int'
 
     def get_networks(self):
+        """Return a map of relevant datapath UUIDs to Neutron network names."""
         ports = self.sb_idl.get_ports_on_chassis(self.chassis)
-        return {(str(p.datapath.uuid),
-            ovn_utils.get_network_name_from_datapath(p.datapath))
-            for p in self._vif_ports(ports)}
+        return {
+            str(p.datapath.uuid): ovn_utils.get_network_name_from_datapath(
+                                      p.datapath)
+            for p in self._vif_ports(ports)
+        }
 
     @_sync_lock
     def sync(self):
@@ -336,8 +339,8 @@ class MetadataAgent(object):
             for ns in ip_lib.list_network_namespaces())
         nets = self.get_networks()
         metadata_namespaces = [
-            self._get_namespace_name(net[1])
-            for net in nets
+            self._get_namespace_name(net)
+            for net in nets.values()
         ]
         unused_namespaces = [ns for ns in system_namespaces if
                              ns.startswith(NS_PREFIX) and
@@ -347,7 +350,7 @@ class MetadataAgent(object):
 
         # now that all obsolete namespaces are cleaned up, deploy required
         # networks
-        for datapath, net_name in nets:
+        for datapath, net_name in nets.items():
             self.provision_datapath(datapath, net_name)
 
     @staticmethod

@@ -146,7 +146,7 @@ class TestMetadataAgent(base.BaseTestCase):
         self.ports.append(makePort(datapath=DatapathInfo(uuid='5',
             external_ids={'name': 'neutron-5'}), type='unknown'))
 
-        expected_networks = {(str(i), str(i)) for i in range(0, 4)}
+        expected_networks = {str(i): str(i) for i in range(0, 4)}
         self.assertEqual(expected_networks, self.agent.get_networks())
 
     def test_update_datapath_provision(self):
