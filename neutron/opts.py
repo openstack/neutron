@@ -51,6 +51,7 @@ import neutron.conf.plugins.ml2.drivers.openvswitch.mech_ovs_conf
 import neutron.conf.plugins.ml2.drivers.ovs_conf
 import neutron.conf.quota
 import neutron.conf.service
+import neutron.conf.services.extdns_designate_driver
 import neutron.conf.services.logging
 import neutron.conf.services.metering_agent
 import neutron.conf.wsgi
@@ -76,7 +77,8 @@ AUTH_GROUPS_OPTS = {
         }
     },
     'ironic': {},
-    'placement': {}
+    'placement': {},
+    'designate': {}
 }
 
 CONF = cfg.CONF
@@ -114,6 +116,10 @@ def list_nova_auth_opts():
 
 def list_placement_auth_opts():
     return list_auth_opts('placement')
+
+
+def list_designate_auth_opts():
+    return list_auth_opts('designate')
 
 
 def list_agent_opts():
@@ -190,6 +196,9 @@ def list_opts():
         (neutron.conf.common.PLACEMENT_CONF_SECTION,
          itertools.chain(
              neutron.conf.common.placement_opts)
+         ),
+        ('designate',
+         neutron.conf.services.extdns_designate_driver.designate_opts
          ),
         ('quotas', neutron.conf.quota.core_quota_opts)
     ]
