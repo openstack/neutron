@@ -83,6 +83,10 @@ class NeutronConfigFixture(ConfigFixture):
                      'host': rabbitmq_environment.host,
                      'vhost': rabbitmq_environment.vhost},
                 'api_workers': str(env_desc.api_workers),
+                # deprecated and enabled by default in future releases,
+                # added here in order to run job backported tests backported
+                # with this feature enabled
+                'allow_overlapping_ips': 'True',
             },
             'database': {
                 'connection': connection,
