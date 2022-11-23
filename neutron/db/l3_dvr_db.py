@@ -104,13 +104,11 @@ class DVRResourceOperationHandler(object):
                        priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
     def _set_distributed_flag(self, resource, event, trigger, payload):
         """Event handler to set distributed flag on creation."""
-        context = payload.context
         router = payload.latest_state
         router_db = payload.metadata['router_db']
         dist = is_distributed_router(router)
         router['distributed'] = dist
-        self.l3plugin.set_extra_attr_value(context, router_db, 'distributed',
-                                           dist)
+        self.l3plugin.set_extra_attr_value(router_db, 'distributed', dist)
 
     def _validate_router_migration(self, context, router_db, router_res,
                                    old_router=None):
@@ -204,8 +202,7 @@ class DVRResourceOperationHandler(object):
                 payload.context, payload.resource_id,
                 agent['id'])
         self.l3plugin.set_extra_attr_value(
-            payload.context, payload.desired_state,
-            'distributed', migrating_to_distributed)
+            payload.desired_state, 'distributed', migrating_to_distributed)
 
     @registry.receives(resources.ROUTER, [events.AFTER_UPDATE],
                        priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
