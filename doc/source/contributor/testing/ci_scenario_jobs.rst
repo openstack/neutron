@@ -34,58 +34,61 @@ Each of those jobs runs on slightly different configuration of Neutron services.
 Below is a summary of those jobs.
 ::
 
-    +----------------------------------------------+----------------------------------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    | Job name                                     | Run tests                        | nodes | L2 agent    | firewall        | L3 agent | L3 HA | L3 DVR | enable_dvr | Run in gate |
-    |                                              |                                  |       |             | driver          | mode     |       |        |            | queue       |
-    +==============================================+==================================+=======+=============+=================+==========+=======+========+============+=============+
-    |neutron-tempest-plugin-designate-scenario     |neutron_tempest_plugin.scenario.\ |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | No          |
-    |                                              |test_dns_integration              |       |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-tempest-plugin-linuxbridge            |neutron_tempest_plugin.api        |   1   | linuxbridge | iptables        | ha       | False | False  | False      | Yes         |
-    |                                              |neutron_tempest_plugin.scenario   |       |             |                 |          |       |        |            |             |
-    |                                              |tempest.api.compute.servers.\     |       |             |                 |          |       |        |            |             |
-    |                                              |    test_attach_interfaces        |       |             |                 |          |       |        |            |             |
-    |                                              |tempest.api.compute.servers.\     |       |             |                 |          |       |        |            |             |
-    |                                              |    test_multiple_create          |       |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-tempest-plugin-openvswitch            |neutron_tempest_plugin.api        |   1   | openvswitch | openvswitch     | ha       | False | False  | False      | Yes         |
-    |                                              |neutron_tempest_plugin.scenario   |       |             |                 |          |       |        |            |             |
-    |                                              |tempest.api.compute.servers.\     |       |             |                 |          |       |        |            |             |
-    |                                              |    test_attach_interfaces        |       |             |                 |          |       |        |            |             |
-    |                                              |tempest.api.compute.servers.\     |       |             |                 |          |       |        |            |             |
-    |                                              |    test_multiple_create          |       |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-tempest-plugin-openvswitch-\          |neutron_tempest_plugin.api        |   1   | openvswitch | iptables_hybrid | ha       | False | False  | False      | Yes         |
-    |  iptables_hybrid                             |neutron_tempest_plugin.scenario   |       |             |                 |          |       |        |            |             |
-    |                                              |tempest.api.compute.servers.\     |       |             |                 |          |       |        |            |             |
-    |                                              |    test_attach_interfaces        |       |             |                 |          |       |        |            |             |
-    |                                              |tempest.api.compute.servers.\     |       |             |                 |          |       |        |            |             |
-    |                                              |    test_multiple_create          |       |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-tempest-plugin-scenario-ovn           | neutron_tempest_plugin.scenario  |   1   | ovn         | ovn             | ---      | False | False  | False      | Yes         |
-    |                                              |tempest.api.compute.servers.\     |       |             |                 |          |       |        |            |             |
-    |                                              |    test_attach_interfaces        |       |             |                 |          |       |        |            |             |
-    |                                              |tempest.api.compute.servers.\     |       |             |                 |          |       |        |            |             |
-    |                                              |    test_multiple_create          |       |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-ovs-tempest-multinode-full            |tempest.api (without slow tests)  |   2   | openvswitch | openvswitch     | legacy   | False | False  | True       | Yes         |
-    |                                              |tempest.scenario                  |       |             |                 |          |       |        |            |             |
-    |                                              |(only tests related to            |       |             |                 |          |       |        |            |             |
-    |                                              |Neutron and Nova)                 |       |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-ovs-tempest-dvr-ha-multinode-full     |tempest.api (without slow tests)  |   3   | openvswitch | openvswitch     | dvr      | True  | True   | True       | No          |
-    |(non-voting)                                  |tempest.scenario                  |       |             |                 | dvr_snat |       |        |            |             |
-    |                                              |                                  |       |             |                 | dvr_snat |       |        |            |             |
-    +----------------------------------------------+----------------------------------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-ovs-tempest-slow                      |tempest slow tests                |   2   | openvswitch | openvswitch     | legacy   | False | False  | True       | Yes         |
-    +----------------------------------------------+----------------------------------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |tempest-integrated-networking                 |tempest.api (without slow tests)  |   1   | ovn         | ovn             | ---      | False | False  | True       | Yes         |
-    |                                              |tempest.scenario                  |       |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-ovn-tempest-ipv6-only-ovs-release     |tempest.api (without slow tests)  |   1   | ovn         | ovn             | ---      | False | False  | True       | Yes         |
-    |                                              |(only tests related to            |       |             |                 |          |       |        |            |             |
-    |                                              |Neutron and Nova)                 |       |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    | Job name                                     | Run tests                        | nodes | Operating system | L2 agent    | firewall        | L3 agent | L3 HA | L3 DVR | enable_dvr | Run in gate |
+    |                                              |                                  |       |                  | driver      | mode            |          |       |        |            | queue       |
+    +==============================================+==================================+=======+==================+==============+================+==========+=======+========+============+=============+
+    |neutron-tempest-plugin-designate-scenario     |neutron_tempest_plugin.scenario.\ |   1   | Ubuntu Jammy     | openvswitch | openvswitch     | legacy   | False | False  | True       | No          |
+    |                                              |test_dns_integration              |       |                  |             |                 |          |       |        |            |             |
+    +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-tempest-plugin-linuxbridge            |neutron_tempest_plugin.api        |   1   | Ubuntu Jammy     | linuxbridge | iptables        | ha       | False | False  | False      | Yes         |
+    |                                              |neutron_tempest_plugin.scenario   |       |                  |             |                 |          |       |        |            |             |
+    |                                              |tempest.api.compute.servers.\     |       |                  |             |                 |          |       |        |            |             |
+    |                                              |    test_attach_interfaces        |       |                  |             |                 |          |       |        |            |             |
+    |                                              |tempest.api.compute.servers.\     |       |                  |             |                 |          |       |        |            |             |
+    |                                              |    test_multiple_create          |       |                  |             |                 |          |       |        |            |             |
+    +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-tempest-plugin-openvswitch            |neutron_tempest_plugin.api        |   1   | Ubuntu Jammy     | openvswitch | openvswitch     | ha       | False | False  | False      | Yes         |
+    |                                              |neutron_tempest_plugin.scenario   |       |                  |             |                 |          |       |        |            |             |
+    |                                              |tempest.api.compute.servers.\     |       |                  |             |                 |          |       |        |            |             |
+    |                                              |    test_attach_interfaces        |       |                  |             |                 |          |       |        |            |             |
+    |                                              |tempest.api.compute.servers.\     |       |                  |             |                 |          |       |        |            |             |
+    |                                              |    test_multiple_create          |       |                  |             |                 |          |       |        |            |             |
+    +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-tempest-plugin-openvswitch-\          |neutron_tempest_plugin.api        |   1   | Ubuntu Jammy     | openvswitch | iptables_hybrid | ha       | False | False  | False      | Yes         |
+    |  iptables_hybrid                             |neutron_tempest_plugin.scenario   |       |                  |             |                 |          |       |        |            |             |
+    |                                              |tempest.api.compute.servers.\     |       |                  |             |                 |          |       |        |            |             |
+    |                                              |    test_attach_interfaces        |       |                  |             |                 |          |       |        |            |             |
+    |                                              |tempest.api.compute.servers.\     |       |                  |             |                 |          |       |        |            |             |
+    |                                              |    test_multiple_create          |       |                  |             |                 |          |       |        |            |             |
+    +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-tempest-plugin-scenario-ovn           | neutron_tempest_plugin.scenario  |   1   | Ubuntu Jammy     | ovn         | ovn             | ---      | False | False  | False      | Yes         |
+    |                                              |tempest.api.compute.servers.\     |       |                  |             |                 |          |       |        |            |             |
+    |                                              |    test_attach_interfaces        |       |                  |             |                 |          |       |        |            |             |
+    |                                              |tempest.api.compute.servers.\     |       |                  |             |                 |          |       |        |            |             |
+    |                                              |    test_multiple_create          |       |                  |             |                 |          |       |        |            |             |
+    +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-ovs-tempest-multinode-full            |tempest.api (without slow tests)  |   2   | Ubuntu Jammy     | openvswitch | openvswitch     | legacy   | False | False  | True       | Yes         |
+    |                                              |tempest.scenario                  |       |                  |             |                 |          |       |        |            |             |
+    |                                              |(only tests related to            |       |                  |             |                 |          |       |        |            |             |
+    |                                              |Neutron and Nova)                 |       |                  |             |                 |          |       |        |            |             |
+    +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-ovs-tempest-dvr-ha-multinode-full     |tempest.api (without slow tests)  |   3   | Ubuntu Jammy     | openvswitch | openvswitch     | dvr      | True  | True   | True       | No          |
+    |(non-voting)                                  |tempest.scenario                  |       |                  |             |                 | dvr_snat |       |        |            |             |
+    |                                              |                                  |       |                  |             |                 | dvr_snat |       |        |            |             |
+    +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-ovs-tempest-slow                      |tempest slow tests                |   2   | Ubuntu Jammy     | openvswitch | openvswitch     | legacy   | False | False  | True       | Yes         |
+    +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |tempest-integrated-networking                 |tempest.api (without slow tests)  |   1   | Ubuntu Jammy     | ovn         | ovn             | ---      | False | False  | True       | Yes         |
+    |                                              |tempest.scenario                  |       |                  |             |                 |          |       |        |            |             |
+    +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-ovn-tempest-ovs-release-ubuntu-old    |tempest.api (without slow tests)  |   1   | Ubuntu Focal     | ovn         | ovn             | ---      | False | False  | True       | Yes         |
+    |                                              |tempest.scenario                  |       |                  |             |                 |          |       |        |            |             |
+    +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-ovn-tempest-ipv6-only-ovs-release     |tempest.api (without slow tests)  |   1   | Ubuntu Jammy     | ovn         | ovn             | ---      | False | False  | True       | Yes         |
+    |                                              |(only tests related to            |       |                  |             |                 |          |       |        |            |             |
+    |                                              |Neutron and Nova)                 |       |                  |             |                 |          |       |        |            |             |
+    +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
 
 Grenade jobs running in Neutron CI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -95,15 +98,15 @@ Each of those jobs runs on slightly different configuration of Neutron services.
 Below is summary of those jobs.
 ::
 
-    +------------------------------------+-------+-------------+-------------+----------+-------+--------+------------+-------------+
-    | Job name                           | nodes | L2 agent    | firewall    | L3 agent | L3 HA | L3 DVR | enable_dvr | Run in gate |
-    |                                    |       |             | driver      | mode     |       |        |            | queue       |
-    +====================================+=======+=============+=============+==========+=======+========+============+=============+
-    | neutron-ovs-grenade-multinode      |   2   | openvswitch | openvswitch | legacy   | False | False  | True       | Yes         |
-    +------------------------------------+-------+-------------+-------------+----------+-------+--------+------------+-------------+
-    | neutron-ovs-grenade-dvr-multinode  |   2   | openvswitch | openvswitch | dvr      | False | False  | True       | Yes         |
-    |                                    |       |             |             | dvr_snat |       |        |            |             |
-    +------------------------------------+-------+-------------+-------------+----------+-------+--------+------------+-------------+
+    +------------------------------------+-------+------------------+-------------+-------------+----------+-------+--------+------------+-------------+
+    | Job name                           | nodes | Operating system | L2 agent    | firewall    | L3 agent | L3 HA | L3 DVR | enable_dvr | Run in gate |
+    |                                    |       |                  |             | driver      | mode     |       |        |            | queue       |
+    +====================================+=======+==================+=============+=============+==========+=======+========+============+=============+
+    | neutron-ovs-grenade-multinode      |   2   | Ubuntu Jammy     | openvswitch | openvswitch | legacy   | False | False  | True       | Yes         |
+    +------------------------------------+-------+------------------+-------------+-------------+----------+-------+--------+------------+-------------+
+    | neutron-ovs-grenade-dvr-multinode  |   2   | Ubuntu Jammy     | openvswitch | openvswitch | dvr      | False | False  | True       | Yes         |
+    |                                    |       |                  |             |             | dvr_snat |       |        |            |             |
+    +------------------------------------+-------+------------------+-------------+-------------+----------+-------+--------+------------+-------------+
 
 Tempest jobs running in Neutron experimental CI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -116,46 +119,46 @@ the patch in Gerrit.
 Currently we have in that queue jobs like listed below.
 ::
 
-    +----------------------------------------------+----------------------------------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    | Job name                                     | Run tests                        | nodes | L2 agent    | firewall        | L3 agent | L3 HA | L3 DVR | enable_dvr | Run in gate |
-    |                                              |                                  |       |             | driver          | mode     |       |        |            | queue       |
-    +==============================================+==================================+=======+=============+=================+==========+=======+========+============+=============+
-    |neutron-ovn-tempest-with-uwsgi-loki           |tempest.api (without slow tests)  |   1   | ovn         | ovn             | ---      | ---   | ---    | ---        | No          |
-    |(non-voting)                                  |tempest.scenario                  |       |             |                 |          |       |        |            |             |
-    |                                              |(only tests related to            |       |             |                 |          |       |        |            |             |
-    |                                              |Neutron and Nova)                 |       |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-ovn-tempest-full-multinode-ovs-master |Various tempest api, scenario     |   2   | ovn         | ovn             | ---      | ---   | ---    | ---        | No          |
-    |                                              |and neutron_tempest_plugi tests   |       |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-ovn-tempest-ovs-master                |Various tempest api, scenario     |   1   | ovn         | ovn             | ---      | ---   | ---    | ---        | No          |
-    |                                              |and neutron_tempest_plugi tests   |       |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-ovn-tempest-with-neutron-lib-master   |tempest.api (without slow tests)  |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | No          |
-    |                                              |tempest.scenario                  |       |             |                 |          |       |        |            |             |
-    |                                              |(only tests related to            |       |             |                 |          |       |        |            |             |
-    |                                              |Neutron and Nova)                 |       |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-tempest-with-uwsgi-loki               |tempest.api (without slow tests)  |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | No          |
-    |(non-voting)                                  |tempest.scenario                  |       |             |                 |          |       |        |            |             |
-    |                                              |(only tests related to            |       |             |                 |          |       |        |            |             |
-    |                                              |Neutron and Nova)                 |       |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-ovn-tempest-ipv6-only-ovs-master      |tempest.api (without slow tests)  |   1   | ovn         | ovn             | ---      | False | False  | True       | Yes         |
-    |                                              |(only tests related to            |       |             |                 |          |       |        |            |             |
-    |                                              |Neutron and Nova)                 |       |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    | Job name                                     | Run tests                        | nodes | Operating system | L2 agent    | firewall        | L3 agent | L3 HA | L3 DVR | enable_dvr | Run in gate |
+    |                                              |                                  |       |                  |             | driver          | mode     |       |        |            | queue       |
+    +==============================================+==================================+=======+==================+=============+=================+==========+=======+========+============+=============+
+    |neutron-ovn-tempest-with-uwsgi-loki           |tempest.api (without slow tests)  |   1   | Ubuntu Jammy     | ovn         | ovn             | ---      | ---   | ---    | ---        | No          |
+    |(non-voting)                                  |tempest.scenario                  |       |                  |             |                 |          |       |        |            |             |
+    |                                              |(only tests related to            |       |                  |             |                 |          |       |        |            |             |
+    |                                              |Neutron and Nova)                 |       |                  |             |                 |          |       |        |            |             |
+    +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-ovn-tempest-full-multinode-ovs-master |Various tempest api, scenario     |   2   | Ubuntu Jammy     | ovn         | ovn             | ---      | ---   | ---    | ---        | No          |
+    |                                              |and neutron_tempest_plugi tests   |       |                  |             |                 |          |       |        |            |             |
+    +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-ovn-tempest-ovs-master                |Various tempest api, scenario     |   1   | Ubuntu Jammy     | ovn         | ovn             | ---      | ---   | ---    | ---        | No          |
+    |                                              |and neutron_tempest_plugi tests   |       |                  |             |                 |          |       |        |            |             |
+    +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-ovn-tempest-with-neutron-lib-master   |tempest.api (without slow tests)  |   1   | Ubuntu Jammy     | openvswitch | openvswitch     | legacy   | False | False  | True       | No          |
+    |                                              |tempest.scenario                  |       |                  |             |                 |          |       |        |            |             |
+    |                                              |(only tests related to            |       |                  |             |                 |          |       |        |            |             |
+    |                                              |Neutron and Nova)                 |       |                  |             |                 |          |       |        |            |             |
+    +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-tempest-with-uwsgi-loki               |tempest.api (without slow tests)  |   1   | Ubuntu Jammy     | openvswitch | openvswitch     | legacy   | False | False  | True       | No          |
+    |(non-voting)                                  |tempest.scenario                  |       |                  |             |                 |          |       |        |            |             |
+    |                                              |(only tests related to            |       |                  |             |                 |          |       |        |            |             |
+    |                                              |Neutron and Nova)                 |       |                  |             |                 |          |       |        |            |             |
+    +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-ovn-tempest-ipv6-only-ovs-master      |tempest.api (without slow tests)  |   1   | Ubuntu Jammy     | ovn         | ovn             | ---      | False | False  | True       | Yes         |
+    |                                              |(only tests related to            |       |                  |             |                 |          |       |        |            |             |
+    |                                              |Neutron and Nova)                 |       |                  |             |                 |          |       |        |            |             |
+    +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
 
 And we also have Grenade jobs in the experimental queue.
 ::
 
-    +--------------------------------+-------+-------------+-------------+----------+-------+--------+------------+-------------+
-    | Job name                       | nodes | L2 agent    | firewall    | L3 agent | L3 HA | L3 DVR | enable_dvr | Run in gate |
-    |                                |       |             | driver      | mode     |       |        |            | queue       |
-    +================================+=======+=============+=============+==========+=======+========+============+=============+
-    | neutron-ovn-grenade-multinode  |   2   | OVN         | ---         | ---      | ---   | ---    | False      | no          |
-    | (non-voting)                   |       |             |             |          |       |        |            |             |
-    +--------------------------------+-------+-------------+-------------+----------+-------+--------+------------+-------------+
+    +--------------------------------+-------+------------------+-------------+-------------+----------+--------+------------+------------+-------------+
+    | Job name                       | nodes | Operating system | L2 agent    | firewall    | L3 agent | L3 HA  | L3 DVR     | enable_dvr | Run in gate |
+    |                                |       |                  |             | driver      | mode     |        |            |            | queue       |
+    +================================+=======+=============+==================+=============+==========+========+============+============+=============+
+    | neutron-ovn-grenade-multinode  |   2   | Ubuntu Jammy     | OVN         | ---         | ---      | ---    | ---        | False      | no          |
+    | (non-voting)                   |       |                  |             |             |          |        |            |            |             |
+    +--------------------------------+-------+------------------+-------------+-------------+----------+--------+------------+------------+-------------+
 
 Columns description
 
