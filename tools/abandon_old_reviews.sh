@@ -103,7 +103,9 @@ project = "$CLEAN_PROJECT"
 data = urlopen("https://raw.githubusercontent.com/openstack/"
                        "governance/master/reference/projects.yaml")
 governance = yaml.safe_load(data)
-stadium = governance["neutron"]["deliverables"].keys()
+stadium = governance["neutron"]["deliverables"]
+stadium.pop('neutron-dynamic-routing', None)
+stadium = stadium.keys()
 query = ["project:openstack/%s" % p for p in stadium]
 if project:
     print(project if project in query else "")
