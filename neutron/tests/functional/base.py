@@ -178,6 +178,7 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         ml2_config.cfg.CONF.set_override('vni_ranges',
                                      ['1:65536'],
                                      group='ml2_type_geneve')
+        ovn_conf.register_opts()
         ovn_conf.cfg.CONF.set_override('dns_servers',
                                        ['10.10.10.10'],
                                        group='ovn')

@@ -21,11 +21,13 @@ from oslo_log import log as logging
 from neutron.agent.ovn.metadata import agent
 from neutron.conf.agent.metadata import config as meta
 from neutron.conf.agent.ovn.metadata import config as ovn_meta
+from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 
 LOG = logging.getLogger(__name__)
 
 
 def main():
+    ovn_conf.register_opts()
     ovn_meta.register_meta_conf_opts(meta.SHARED_OPTS)
     ovn_meta.register_meta_conf_opts(meta.UNIX_DOMAIN_METADATA_PROXY_OPTS)
     ovn_meta.register_meta_conf_opts(meta.METADATA_PROXY_HANDLER_OPTS)
