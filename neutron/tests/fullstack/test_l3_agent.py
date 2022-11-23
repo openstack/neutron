@@ -18,6 +18,7 @@ import time
 
 import netaddr
 from neutron_lib import constants
+from neutronclient.common import exceptions
 from oslo_utils import uuidutils
 
 from neutron.agent.l3 import ha_router
@@ -266,6 +267,29 @@ class TestL3Agent(base.BaseFullStackTestCase):
         return (_is_filter_set(constants.INGRESS_DIRECTION) and
                 _is_filter_set(constants.EGRESS_DIRECTION))
 
+    def _test_concurrent_router_subnet_attachment_overlapping_cidr(self,
+                                                                   ha=False):
+        tenant_id = uuidutils.generate_uuid()
+        subnet_cidr = '10.100.0.0/24'
+        network1 = self.safe_client.create_network(
+            tenant_id, name='foo-network1')
+        subnet1 = self.safe_client.create_subnet(
+            tenant_id, network1['id'], subnet_cidr)
+        network2 = self.safe_client.create_network(
+            tenant_id, name='foo-network2')
+        subnet2 = self.safe_client.create_subnet(
+            tenant_id, network2['id'], subnet_cidr)
+        router = self.safe_client.create_router(tenant_id, ha=ha)
+
+        funcs = [self.safe_client.add_router_interface,
+                 self.safe_client.add_router_interface]
+        args = [(router['id'], subnet1['id']), (router['id'], subnet2['id'])]
+        self.assertRaises(
+            exceptions.BadRequest,
+            self._simulate_concurrent_requests_process_and_raise,
+            funcs,
+            args)
+
 
 class TestLegacyL3Agent(TestL3Agent):
 
@@ -416,6 +440,9 @@ class TestLegacyL3Agent(TestL3Agent):
 
     def test_router_fip_qos_after_admin_state_down_up(self):
         self._router_fip_qos_after_admin_state_down_up()
+
+    def test_concurrent_router_subnet_attachment_overlapping_cidr_(self):
+        self._test_concurrent_router_subnet_attachment_overlapping_cidr()
 
 
 class TestHAL3Agent(TestL3Agent):
@@ -573,3 +600,7 @@ class TestHAL3Agent(TestL3Agent):
 
     def test_router_fip_qos_after_admin_state_down_up(self):
         self._router_fip_qos_after_admin_state_down_up(ha=True)
+
+    def test_concurrent_router_subnet_attachment_overlapping_cidr_(self):
+        self._test_concurrent_router_subnet_attachment_overlapping_cidr(
+            ha=True)
