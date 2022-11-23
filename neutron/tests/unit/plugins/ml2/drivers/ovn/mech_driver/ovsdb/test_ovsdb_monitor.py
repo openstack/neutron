@@ -198,6 +198,7 @@ class TestOvnConnection(base.BaseTestCase):
 class TestOvnIdlDistributedLock(base.BaseTestCase):
 
     def setUp(self):
+        ovn_conf.register_opts()
         super(TestOvnIdlDistributedLock, self).setUp()
         self.node_uuid = uuidutils.generate_uuid()
         self.fake_driver = mock.Mock()
@@ -724,6 +725,10 @@ class TestChassisEvent(base.BaseTestCase):
 
 
 class TestShortLivingOvsdbApi(base.BaseTestCase):
+    def setUp(self):
+        ovn_conf.register_opts()
+        super().setUp()
+
     def test_context(self):
         api_class = mock.Mock()
         idl = mock.Mock()

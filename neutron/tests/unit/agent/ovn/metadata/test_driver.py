@@ -24,6 +24,7 @@ from neutron.agent.ovn.metadata import agent as metadata_agent
 from neutron.agent.ovn.metadata import driver as metadata_driver
 from neutron.conf.agent.metadata import config as meta_conf
 from neutron.conf.agent.ovn.metadata import config as ovn_meta_conf
+from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.tests import base
 from neutron.tests.unit.agent.linux import test_utils
 
@@ -44,6 +45,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
         mock.patch('eventlet.spawn').start()
 
         ovn_meta_conf.register_meta_conf_opts(meta_conf.SHARED_OPTS, cfg.CONF)
+        ovn_conf.register_opts()
 
     def test_spawn_metadata_proxy(self):
         datapath_id = _uuid()

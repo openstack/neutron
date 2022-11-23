@@ -83,6 +83,7 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
                                      test_sg.Ml2SecurityGroupsTestCase):
 
     def setUp(self):
+        ovn_conf.register_opts()
         super(TestDBInconsistenciesPeriodics, self).setUp()
         self.net = self._make_network(
             self.fmt, name='net1', admin_state_up=True)['network']

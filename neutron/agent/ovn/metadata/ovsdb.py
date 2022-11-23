@@ -17,8 +17,8 @@ from ovs.db import idl
 from ovsdbapp.backend.ovs_idl import connection
 from ovsdbapp.backend.ovs_idl import idlutils
 from ovsdbapp.schema.open_vswitch import impl_idl as idl_ovs
-import tenacity
 
+from neutron.common.ovn import utils as ovn_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as config
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
@@ -54,16 +54,11 @@ class MetadataAgentOvnSbIdl(ovsdb_monitor.OvnIdl):
         if events:
             self.notify_handler.watch_events(events)
 
-    @tenacity.retry(
-        wait=tenacity.wait_exponential(max=180),
-        reraise=True)
+    @ovn_utils.retry(max_=180)
     def _get_ovsdb_helper(self, connection_string):
         return idlutils.get_schema_helper(connection_string, self.SCHEMA)
 
-    @tenacity.retry(
-        wait=tenacity.wait_exponential(
-            max=config.get_ovn_ovsdb_retry_max_interval()),
-        reraise=True)
+    @ovn_utils.retry()
     def start(self):
         LOG.info('Getting OvsdbSbOvnIdl for MetadataAgent with retry')
         conn = connection.Connection(
