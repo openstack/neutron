@@ -41,6 +41,10 @@
       - ^zuul.d/(?!(project)).*\.yaml
     vars:
       tox_envlist: integrated-network
+      # NOTE(ralonsoh): to be removed once LP#1997025 is fixed.
+      tempest_exclude_regex: "\
+          (^tempest.api.compute.admin.test_live_migration.LiveAutoBlockMigrationV225Test.test_live_migration_with_trunk)|\
+          (^tempest.api.compute.admin.test_live_migration.LiveMigrationTest.test_live_migration_with_trunk)"
       devstack_localrc:
         CIRROS_VERSION: 0.5.1
         DEFAULT_IMAGE_NAME: cirros-0.5.1-x86_64-uec
