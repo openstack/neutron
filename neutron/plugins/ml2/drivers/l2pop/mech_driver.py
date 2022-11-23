@@ -75,7 +75,7 @@ class L2populationMechanismDriver(api.MechanismDriver):
     def delete_port_postcommit(self, context):
         port = context.current
         agent_host = context.host
-        plugin_context = context._plugin_context
+        plugin_context = context.plugin_context
         fdb_entries = self._get_agent_fdb(
             plugin_context, context.bottom_bound_segment, port, agent_host)
         if fdb_entries and l3_hamode_db.is_ha_router_port(
@@ -117,13 +117,13 @@ class L2populationMechanismDriver(api.MechanismDriver):
             return
 
         # We should not add arp responder for non tunnel network type
-        port_context = context._plugin_context
+        port_context = context.plugin_context
         agent = l2pop_db.get_agent_by_host(port_context, agent_host)
         segment = context.bottom_bound_segment
         if not self._validate_segment(segment, port['id'], agent):
             return
 
-        agent_ip = l2pop_db.get_agent_ip_by_host(context._plugin_context,
+        agent_ip = l2pop_db.get_agent_ip_by_host(context.plugin_context,
                                                  agent_host)
 
         orig_mac_ip = [l2pop_rpc.PortInfo(mac_address=port['mac_address'],
@@ -160,7 +160,7 @@ class L2populationMechanismDriver(api.MechanismDriver):
     def update_port_postcommit(self, context):
         port = context.current
         orig = context.original
-        plugin_context = context._plugin_context
+        plugin_context = context.plugin_context
         if l3_hamode_db.is_ha_router_port(plugin_context, port['device_owner'],
                                           port['device_id']):
             return
@@ -258,7 +258,7 @@ class L2populationMechanismDriver(api.MechanismDriver):
                                                "list_router_ids_on_host",
                                                None):
             admin_context = n_context.get_admin_context()
-            port_context = context._plugin_context
+            port_context = context.plugin_context
             fdb_entries = self._get_agent_fdb(
                 port_context, context.bottom_bound_segment, port, agent_host,
                 include_ha_router_ports=True)
@@ -274,7 +274,7 @@ class L2populationMechanismDriver(api.MechanismDriver):
     def update_port_up(self, context, refresh_tunnels=False):
         port = context.current
         agent_host = context.host
-        port_context = context._plugin_context
+        port_context = context.plugin_context
         agent = l2pop_db.get_agent_by_host(port_context, agent_host)
         if not agent:
             LOG.warning("Unable to retrieve active L2 agent on host %s",

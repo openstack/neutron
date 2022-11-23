@@ -65,6 +65,10 @@ class MechanismDriverContext(object):
         # method call of the plugin.
         self._plugin_context = plugin_context
 
+    @property
+    def plugin_context(self):
+        return self._plugin_context
+
 
 class NetworkContext(MechanismDriverContext, api.NetworkContext):
 
@@ -111,9 +115,9 @@ class SubnetContext(MechanismDriverContext, api.SubnetContext):
     def network(self):
         if self._network_context is None:
             network = self._plugin.get_network(
-                self._plugin_context, self.current['network_id'])
+                self.plugin_context, self.current['network_id'])
             self._network_context = NetworkContext(
-                self._plugin, self._plugin_context, network)
+                self._plugin, self.plugin_context, network)
         return self._network_context
 
 
@@ -196,9 +200,9 @@ class PortContext(MechanismDriverContext, api.PortContext):
     def network(self):
         if not self._network_context:
             network = self._plugin.get_network(
-                self._plugin_context, self.current['network_id'])
+                self.plugin_context, self.current['network_id'])
             self._network_context = NetworkContext(
-                self._plugin, self._plugin_context, network)
+                self._plugin, self.plugin_context, network)
         return self._network_context
 
     @property
@@ -246,7 +250,7 @@ class PortContext(MechanismDriverContext, api.PortContext):
         # TODO(kevinbenton): eliminate the query below. The above should
         # always return since the port is bound to a network segment. Leaving
         # in for now for minimally invasive change for back-port.
-        segment = segments_db.get_segment_by_id(self._plugin_context,
+        segment = segments_db.get_segment_by_id(self.plugin_context,
                                                 segment_id)
         if not segment:
             LOG.warning("Could not expand segment %s", segment_id)
@@ -292,7 +296,7 @@ class PortContext(MechanismDriverContext, api.PortContext):
         return self._segments_to_bind
 
     def host_agents(self, agent_type):
-        return self._plugin.get_agents(self._plugin_context,
+        return self._plugin.get_agents(self.plugin_context,
                                        filters={'agent_type': [agent_type],
                                                 'host': [self._binding.host]})
 
@@ -327,4 +331,4 @@ class PortContext(MechanismDriverContext, api.PortContext):
 
     def release_dynamic_segment(self, segment_id):
         return self._plugin.type_manager.release_dynamic_segment(
-            self._plugin_context, segment_id)
+            self.plugin_context, segment_id)

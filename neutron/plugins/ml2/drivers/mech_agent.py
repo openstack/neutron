@@ -84,7 +84,7 @@ class AgentMechanismDriverBase(api.MechanismDriver, metaclass=abc.ABCMeta):
             return
         if context.host_agents(self.agent_type):
             provisioning_blocks.add_provisioning_component(
-                context._plugin_context, port['id'], resources.PORT,
+                context.plugin_context, port['id'], resources.PORT,
                 provisioning_blocks.L2_AGENT_ENTITY)
 
     def bind_port(self, context):
@@ -147,7 +147,7 @@ class AgentMechanismDriverBase(api.MechanismDriver, metaclass=abc.ABCMeta):
             subnet_id = data.get('subnet_id')
             if subnet_id:
                 subnets.append(context._plugin.get_subnet(
-                    context._plugin_context, subnet_id))
+                    context.plugin_context, subnet_id))
         return subnets
 
     @abc.abstractmethod
@@ -216,7 +216,7 @@ class AgentMechanismDriverBase(api.MechanismDriver, metaclass=abc.ABCMeta):
             # trying to bind with a dead agent.
         }
         return context._plugin.get_agents(
-            context._plugin_context,
+            context.plugin_context,
             filters=agent_filters,
         )
 

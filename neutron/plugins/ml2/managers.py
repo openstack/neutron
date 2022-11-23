@@ -867,7 +867,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                 segment = context._new_bound_segment
                 if segment:
                     pbl_obj = ports.PortBindingLevel(
-                        context._plugin_context,
+                        context.plugin_context,
                         port_id=port_id,
                         host=context.host,
                         level=level,

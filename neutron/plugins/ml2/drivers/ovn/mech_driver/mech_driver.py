@@ -543,7 +543,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         """
         self._validate_network_segments(context.network_segments)
         ovn_revision_numbers_db.create_initial_revision(
-            context._plugin_context, context.current['id'],
+            context.plugin_context, context.current['id'],
             ovn_const.TYPE_NETWORKS,
             std_attr_id=context.current['standard_attr_id'])
 
@@ -559,7 +559,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         cause the deletion of the resource.
         """
         network = context.current
-        self._ovn_client.create_network(context._plugin_context, network)
+        self._ovn_client.create_network(context.plugin_context, network)
 
     def update_network_precommit(self, context):
         """Update resources of a network.
@@ -596,7 +596,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         state or state changes that it does not know or care about.
         """
         self._ovn_client.update_network(
-            context._plugin_context, context.current,
+            context.plugin_context, context.current,
             original_network=context.original)
 
     def delete_network_postcommit(self, context):
@@ -612,26 +612,26 @@ class OVNMechanismDriver(api.MechanismDriver):
         deleted.
         """
         self._ovn_client.delete_network(
-            context._plugin_context,
+            context.plugin_context,
             context.current['id'])
 
     def create_subnet_precommit(self, context):
         ovn_revision_numbers_db.create_initial_revision(
-            context._plugin_context, context.current['id'],
+            context.plugin_context, context.current['id'],
             ovn_const.TYPE_SUBNETS,
             std_attr_id=context.current['standard_attr_id'])
 
     def create_subnet_postcommit(self, context):
-        self._ovn_client.create_subnet(context._plugin_context,
+        self._ovn_client.create_subnet(context.plugin_context,
                                        context.current,
                                        context.network.current)
 
     def update_subnet_postcommit(self, context):
         self._ovn_client.update_subnet(
-            context._plugin_context, context.current, context.network.current)
+            context.plugin_context, context.current, context.network.current)
 
     def delete_subnet_postcommit(self, context):
-        self._ovn_client.delete_subnet(context._plugin_context,
+        self._ovn_client.delete_subnet(context.plugin_context,
                                        context.current['id'])
 
     def _validate_port_extra_dhcp_opts(self, port):
@@ -663,18 +663,18 @@ class OVNMechanismDriver(api.MechanismDriver):
         ovn_utils.validate_and_get_data_from_binding_profile(port)
         self._validate_port_extra_dhcp_opts(port)
         if self._is_port_provisioning_required(port, context.host):
-            self._insert_port_provisioning_block(context._plugin_context,
+            self._insert_port_provisioning_block(context.plugin_context,
                                                  port['id'])
 
         ovn_revision_numbers_db.create_initial_revision(
-            context._plugin_context, port['id'], ovn_const.TYPE_PORTS,
+            context.plugin_context, port['id'], ovn_const.TYPE_PORTS,
             std_attr_id=context.current['standard_attr_id'])
 
         # in the case of router ports we also need to
         # track the creation and update of the LRP OVN objects
         if ovn_utils.is_lsp_router_port(port):
             ovn_revision_numbers_db.create_initial_revision(
-                context._plugin_context, port['id'],
+                context.plugin_context, port['id'],
                 ovn_const.TYPE_ROUTER_PORTS,
                 std_attr_id=context.current['standard_attr_id'])
 
@@ -782,7 +782,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         """
         port = copy.deepcopy(context.current)
         port['network'] = context.network.current
-        self._ovn_client.create_port(context._plugin_context, port)
+        self._ovn_client.create_port(context.plugin_context, port)
         self._notify_dhcp_updated(port['id'])
 
     def update_port_precommit(self, context):
@@ -807,7 +807,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         self._validate_port_extra_dhcp_opts(port)
         if self._is_port_provisioning_required(port, context.host,
                                                context.original_host):
-            self._insert_port_provisioning_block(context._plugin_context,
+            self._insert_port_provisioning_block(context.plugin_context,
                                                  port['id'])
 
         if ovn_utils.is_lsp_router_port(port):
@@ -815,7 +815,7 @@ class OVNMechanismDriver(api.MechanismDriver):
             # logical router so we need to track the creation of the lrp
             if not ovn_utils.is_lsp_router_port(original_port):
                 ovn_revision_numbers_db.create_initial_revision(
-                    context._plugin_context, port['id'],
+                    context.plugin_context, port['id'],
                     ovn_const.TYPE_ROUTER_PORTS, may_exist=True,
                     std_attr_id=context.current['standard_attr_id'])
 
@@ -852,7 +852,7 @@ class OVNMechanismDriver(api.MechanismDriver):
             LOG.info("Setting port %s status from DOWN to UP in order "
                      "to emit vif-interface-plugged event.",
                      port['id'])
-            self._plugin.update_port_status(context._plugin_context,
+            self._plugin.update_port_status(context.plugin_context,
                                             port['id'],
                                             const.PORT_STATUS_ACTIVE)
             # The revision has been changed. In the meantime
@@ -861,7 +861,7 @@ class OVNMechanismDriver(api.MechanismDriver):
             # will fail that OVN has port with bigger revision.
             return
 
-        self._ovn_update_port(context._plugin_context, port, original_port,
+        self._ovn_update_port(context.plugin_context, port, original_port,
                               retry_on_revision_mismatch=True)
         self._notify_dhcp_updated(port['id'])
 
@@ -879,9 +879,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         """
         port = copy.deepcopy(context.current)
         port['network'] = context.network.current
-        # FIXME(lucasagomes): PortContext does not have a session, therefore
-        # we need to use the _plugin_context attribute.
-        self._ovn_client.delete_port(context._plugin_context, port['id'],
+        self._ovn_client.delete_port(context.plugin_context, port['id'],
                                      port_object=port)
 
     def bind_port(self, context):
