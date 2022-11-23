@@ -24,6 +24,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron._i18n import _
+from neutron.common import metadata as comm_meta
 
 LOG = logging.getLogger(__name__)
 
@@ -31,39 +32,13 @@ METADATA_SERVICE_NAME = 'metadata-proxy'
 HAPROXY_SERVICE = 'haproxy'
 
 PROXY_CONFIG_DIR = "ovn-metadata-proxy"
-_HAPROXY_CONFIG_TEMPLATE = """
-global
-    log         /dev/log local0 %(log_level)s
-    log-tag     %(log_tag)s
-    user        %(user)s
-    group       %(group)s
-    maxconn     1024
-    pidfile     %(pidfile)s
-    daemon
-
-defaults
-    log global
-    mode http
-    option httplog
-    option dontlognull
-    option http-server-close
-    option forwardfor
-    retries                 3
-    timeout http-request    30s
-    timeout connect         30s
-    timeout client          32s
-    timeout server          32s
-    timeout http-keep-alive 30s
+_HAPROXY_CONFIG_TEMPLATE = comm_meta.METADATA_HAPROXY_GLOBAL + """
 
 listen listener
     bind %(host)s:%(port)s
     server metadata %(unix_socket_path)s
     http-request add-header X-OVN-%(res_type)s-ID %(res_id)s
 """
-
-
-class InvalidUserOrGroupException(Exception):
-    pass
 
 
 class HaproxyConfigurator(object):
@@ -99,7 +74,7 @@ class HaproxyConfigurator(object):
             try:
                 username = pwd.getpwnam(self.user).pw_name
             except KeyError:
-                raise InvalidUserOrGroupException(
+                raise comm_meta.InvalidUserOrGroupException(
                     _("Invalid user/uid: '%s'") % self.user)
 
         try:
@@ -108,7 +83,7 @@ class HaproxyConfigurator(object):
             try:
                 groupname = grp.getgrnam(self.group).gr_name
             except KeyError:
-                raise InvalidUserOrGroupException(
+                raise comm_meta.InvalidUserOrGroupException(
                     _("Invalid group/gid: '%s'") % self.group)
 
         cfg_info = {

@@ -22,6 +22,7 @@ from oslo_utils import uuidutils
 
 from neutron.agent.ovn.metadata import agent as metadata_agent
 from neutron.agent.ovn.metadata import driver as metadata_driver
+from neutron.common import metadata as comm_meta
 from neutron.conf.agent.metadata import config as meta_conf
 from neutron.conf.agent.ovn.metadata import config as ovn_meta_conf
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
@@ -119,7 +120,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                                                          mock.ANY, self.EUNAME,
                                                          self.EGNAME, mock.ANY,
                                                          mock.ANY)
-            self.assertRaises(metadata_driver.InvalidUserOrGroupException,
+            self.assertRaises(comm_meta.InvalidUserOrGroupException,
                               config.create_config_file)
 
     def test_create_config_file_wrong_group(self):
@@ -131,5 +132,5 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                                                          mock.ANY, self.EUNAME,
                                                          self.EGNAME, mock.ANY,
                                                          mock.ANY)
-            self.assertRaises(metadata_driver.InvalidUserOrGroupException,
+            self.assertRaises(comm_meta.InvalidUserOrGroupException,
                               config.create_config_file)

@@ -27,6 +27,7 @@ from neutron.agent.l3 import router_info
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import utils as linux_utils
 from neutron.agent.metadata import driver as metadata_driver
+from neutron.common import metadata as comm_meta
 from neutron.conf.agent import common as agent_config
 from neutron.conf.agent.l3 import config as l3_config
 from neutron.conf.agent.l3 import ha as ha_conf
@@ -218,7 +219,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                                                          self.EUNAME,
                                                          self.EGNAME,
                                                          mock.ANY, mock.ANY)
-            self.assertRaises(metadata_driver.InvalidUserOrGroupException,
+            self.assertRaises(comm_meta.InvalidUserOrGroupException,
                               config.create_config_file)
 
     def test_create_config_file_wrong_group(self):
@@ -231,7 +232,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                                                          self.EUNAME,
                                                          self.EGNAME,
                                                          mock.ANY, mock.ANY)
-            self.assertRaises(metadata_driver.InvalidUserOrGroupException,
+            self.assertRaises(comm_meta.InvalidUserOrGroupException,
                               config.create_config_file)
 
     def test_destroy_monitored_metadata_proxy(self):
