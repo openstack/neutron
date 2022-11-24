@@ -119,7 +119,8 @@ def get_duplicate_network_segment_count():
     query = query.group_by(
         segment.NetworkSegment.network_id,
         segment.NetworkSegment.network_type,
-        segment.NetworkSegment.physical_network
+        segment.NetworkSegment.physical_network,
+        segment.NetworkSegment.segment_index,
     )
     query = query.having(func.count() > 1)
     return query.count()

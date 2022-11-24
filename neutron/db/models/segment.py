@@ -58,8 +58,9 @@ class NetworkSegment(standard_attr.HasStandardAttributes,
             network_id,
             network_type,
             physical_network,
+            segment_index,
             name='uniq_networksegment0network_id0'
-                 'network_type0physical_network'),
+                 'network_type0physnet0sidx'),
         model_base.BASEV2.__table_args__
     )
 
