@@ -117,6 +117,45 @@ class AdminTests(L3ConntrackHelperAPITestCase):
         self.assertTrue(
             policy.enforce(self.context,
                            'create_router_conntrack_helper', self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_router_conntrack_helper', self.alt_target))
+
+    def test_get_router_conntrack_helper(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_router_conntrack_helper', self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_router_conntrack_helper', self.alt_target))
+
+    def test_update_router_conntrack_helper(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_router_conntrack_helper', self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_router_conntrack_helper', self.alt_target))
+
+    def test_delete_router_conntrack_helper(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'delete_router_conntrack_helper', self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'delete_router_conntrack_helper', self.alt_target))
+
+
+class ProjectMemberTests(AdminTests):
+
+    def setUp(self):
+        super(ProjectMemberTests, self).setUp()
+        self.context = self.project_member_ctx
+
+    def test_create_router_conntrack_helper(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_router_conntrack_helper', self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
@@ -148,13 +187,6 @@ class AdminTests(L3ConntrackHelperAPITestCase):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'delete_router_conntrack_helper', self.alt_target)
-
-
-class ProjectMemberTests(AdminTests):
-
-    def setUp(self):
-        super(ProjectMemberTests, self).setUp()
-        self.context = self.project_member_ctx
 
 
 class ProjectReaderTests(ProjectMemberTests):

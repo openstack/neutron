@@ -64,12 +64,9 @@ class AdminTests(FloatingipPoolsAPITestCase):
         self.assertTrue(
             policy.enforce(self.context, 'get_floatingip_pool',
                            self.target))
-
-    def test_get_floatingip_pool_other_project(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'get_floatingip_pool', self.alt_target)
+        self.assertTrue(
+            policy.enforce(self.context, 'get_floatingip_pool',
+                           self.alt_target))
 
 
 class ProjectMemberTests(AdminTests):
@@ -78,8 +75,17 @@ class ProjectMemberTests(AdminTests):
         super(ProjectMemberTests, self).setUp()
         self.context = self.project_member_ctx
 
+    def test_get_floatingip_pool(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'get_floatingip_pool',
+                           self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_floatingip_pool', self.alt_target)
 
-class ProjectReaderTests(AdminTests):
+
+class ProjectReaderTests(ProjectMemberTests):
 
     def setUp(self):
         super(ProjectReaderTests, self).setUp()

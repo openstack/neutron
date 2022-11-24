@@ -49,9 +49,11 @@ PROJECT_MEMBER = 'role:member and project_id:%(project_id)s'
 PROJECT_READER = 'role:reader and project_id:%(project_id)s'
 
 # The following are common composite check strings that are useful for
-# protecting APIs designed to operate with multiple scopes (e.g., a system
-# administrator should be able to delete any router in the deployment, a
+# protecting APIs designed to operate with multiple scopes (e.g.,
+# an administrator should be able to delete any router in the deployment, a
 # project member should only be able to delete routers in their project).
+ADMIN_OR_PROJECT_MEMBER = (
+    '(' + ADMIN + ') or (' + PROJECT_MEMBER + ')')
 ADMIN_OR_PROJECT_READER = (
     '(' + ADMIN + ') or (' + PROJECT_READER + ')')
 
