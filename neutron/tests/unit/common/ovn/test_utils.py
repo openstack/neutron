@@ -25,6 +25,7 @@ from oslo_config import cfg
 
 from neutron.common.ovn import constants
 from neutron.common.ovn import utils
+from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.tests import base
 from neutron.tests.unit import fake_resources as fakes
 
@@ -388,6 +389,10 @@ class TestDHCPUtils(base.BaseTestCase):
 
 class TestGetDhcpDnsServers(base.BaseTestCase):
 
+    def setUp(self):
+        ovn_conf.register_opts()
+        super(TestGetDhcpDnsServers, self).setUp()
+
     def test_ipv4(self):
         # DNS servers from subnet.
         dns_servers = utils.get_dhcp_dns_servers(
@@ -442,3 +447,49 @@ class TestGetDhcpDnsServers(base.BaseTestCase):
             {'dns_nameservers': ['::']},
             ip_version=n_const.IP_VERSION_6)
         self.assertEqual([], dns_servers)
+
+
+class TestRetryDecorator(base.BaseTestCase):
+    DEFAULT_RETRY_VALUE = 10
+
+    def setUp(self):
+        super().setUp()
+        mock.patch.object(
+            ovn_conf, "get_ovn_ovsdb_retry_max_interval",
+            return_value=self.DEFAULT_RETRY_VALUE).start()
+
+    def test_default_retry_value(self):
+        with mock.patch('tenacity.wait_exponential') as m_wait:
+            @utils.retry()
+            def decorated_method():
+                pass
+
+            decorated_method()
+        m_wait.assert_called_with(max=self.DEFAULT_RETRY_VALUE)
+
+    def test_custom_retry_value(self):
+        custom_value = 3
+        with mock.patch('tenacity.wait_exponential') as m_wait:
+            @utils.retry(max_=custom_value)
+            def decorated_method():
+                pass
+
+            decorated_method()
+        m_wait.assert_called_with(max=custom_value)
+
+    def test_positive_result(self):
+        number_of_exceptions = 3
+        method = mock.Mock(
+            side_effect=[Exception() for i in range(number_of_exceptions)])
+
+        @utils.retry(max_=0.001)
+        def decorated_method():
+            try:
+                method()
+            except StopIteration:
+                return
+
+        decorated_method()
+
+        # number of exceptions + one successful call
+        self.assertEqual(number_of_exceptions + 1, method.call_count)

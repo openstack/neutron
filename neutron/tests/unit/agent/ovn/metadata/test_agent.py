@@ -30,6 +30,7 @@ from neutron.agent.ovn.metadata import agent
 from neutron.agent.ovn.metadata import driver
 from neutron.conf.agent.metadata import config as meta_conf
 from neutron.conf.agent.ovn.metadata import config as ovn_meta_conf
+from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.tests import base
 
 
@@ -53,6 +54,7 @@ class ConfFixture(config_fixture.Config):
             meta_conf.METADATA_PROXY_HANDLER_OPTS, self.conf)
         ovn_meta_conf.register_meta_conf_opts(
             ovn_meta_conf.OVS_OPTS, self.conf, group='ovs')
+        ovn_conf.register_opts()
 
 
 class TestMetadataAgent(base.BaseTestCase):
