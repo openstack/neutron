@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    `1996677 <https://bugs.launchpad.net/neutron/+bug/1996677>`_
+    When the fixed_ips of metadata port is modified, the ip address of
+    tap device in metadata agent is modified.
