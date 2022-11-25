@@ -4,4 +4,5 @@ function configure_segments_service_plugin {
 
 function configure_segments_extension {
     configure_segments_service_plugin
+    configure_placement_neutron
 }
