@@ -47,7 +47,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
             call._send_msg(ofpp.OFPFlowMod(dp,
                 cookie=self.stamp,
                 instructions=[
-                    ofpp.OFPInstructionGotoTable(table_id=59),
+                    ofpp.OFPInstructionGotoTable(
+                        table_id=ovs_constants.PACKET_RATE_LIMIT),
                 ],
                 match=ofpp.OFPMatch(),
                 priority=0,
@@ -56,7 +57,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
             call._send_msg(ofpp.OFPFlowMod(dp,
                 cookie=self.stamp,
                 instructions=[
-                    ofpp.OFPInstructionGotoTable(table_id=60),
+                    ofpp.OFPInstructionGotoTable(
+                        table_id=ovs_constants.TRANSIENT_TABLE),
                 ],
                 match=ofpp.OFPMatch(),
                 priority=0,
@@ -139,7 +141,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
             call._send_msg(ofpp.OFPFlowMod(
                 dp, cookie=self.stamp,
                 instructions=[
-                    ofpp.OFPInstructionGotoTable(table_id=59),
+                    ofpp.OFPInstructionGotoTable(
+                        table_id=ovs_constants.PACKET_RATE_LIMIT),
                 ],
                 match=ofpp.OFPMatch(),
                 priority=0,
@@ -148,7 +151,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
             call._send_msg(ofpp.OFPFlowMod(
                 dp, cookie=self.stamp,
                 instructions=[
-                    ofpp.OFPInstructionGotoTable(table_id=59),
+                    ofpp.OFPInstructionGotoTable(
+                        table_id=ovs_constants.PACKET_RATE_LIMIT),
                 ],
                 match=ofpp.OFPMatch(),
                 priority=0,
@@ -172,7 +176,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                         ofpp.OFPActionSetField(
                             vlan_vid=lvid | ofp.OFPVID_PRESENT),
                     ]),
-                    ofpp.OFPInstructionGotoTable(table_id=59),
+                    ofpp.OFPInstructionGotoTable(
+                        table_id=ovs_constants.PACKET_RATE_LIMIT),
                 ],
                 match=ofpp.OFPMatch(
                     in_port=port,
@@ -199,7 +204,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                         ofpp.OFPActionSetField(
                             vlan_vid=lvid | ofp.OFPVID_PRESENT),
                     ]),
-                    ofpp.OFPInstructionGotoTable(table_id=59),
+                    ofpp.OFPInstructionGotoTable(
+                        table_id=ovs_constants.PACKET_RATE_LIMIT),
                 ],
                 match=ofpp.OFPMatch(
                     in_port=port,
@@ -255,7 +261,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                     ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, [
                         ofpp.OFPActionSetField(eth_src=gateway_mac),
                     ]),
-                    ofpp.OFPInstructionGotoTable(table_id=59),
+                    ofpp.OFPInstructionGotoTable(
+                        table_id=ovs_constants.PACKET_RATE_LIMIT),
                 ],
                 match=ofpp.OFPMatch(
                     eth_dst=dst_mac,
@@ -325,7 +332,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                     ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, [
                         ofpp.OFPActionSetField(eth_src=gateway_mac),
                     ]),
-                    ofpp.OFPInstructionGotoTable(table_id=59),
+                    ofpp.OFPInstructionGotoTable(
+                        table_id=ovs_constants.PACKET_RATE_LIMIT),
                 ],
                 match=ofpp.OFPMatch(
                     eth_dst=dst_mac,
@@ -368,7 +376,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
                     ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, [
                         ofpp.OFPActionSetField(eth_src=gateway_mac),
                     ]),
-                    ofpp.OFPInstructionGotoTable(table_id=59),
+                    ofpp.OFPInstructionGotoTable(
+                        table_id=ovs_constants.PACKET_RATE_LIMIT),
                 ],
                 match=ofpp.OFPMatch(
                     eth_dst=dst_mac,
@@ -511,7 +520,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
             call._send_msg(ofpp.OFPFlowMod(dp,
                 cookie=self.stamp,
                 instructions=[
-                    ofpp.OFPInstructionGotoTable(table_id=59),
+                    ofpp.OFPInstructionGotoTable(
+                        table_id=ovs_constants.PACKET_RATE_LIMIT),
                 ],
                 match=ofpp.OFPMatch(
                     eth_type=self.ether_types.ETH_TYPE_IPV6,
@@ -526,7 +536,8 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
             call._send_msg(ofpp.OFPFlowMod(dp,
                 cookie=self.stamp,
                 instructions=[
-                    ofpp.OFPInstructionGotoTable(table_id=59),
+                    ofpp.OFPInstructionGotoTable(
+                        table_id=ovs_constants.PACKET_RATE_LIMIT),
                 ],
                 match=ofpp.OFPMatch(
                     eth_type=self.ether_types.ETH_TYPE_IPV6,
@@ -891,10 +902,11 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
         self.br.install_garp_blocker_exception(vlan, ip, except_ip)
 
         (dp, ofp, ofpp) = self._get_dp()
+        goto_pkt_rate = ofpp.OFPInstructionGotoTable(
+            table_id=ovs_constants.PACKET_RATE_LIMIT)
         expected = [
             call._send_msg(ofpp.OFPFlowMod(dp, cookie=self.stamp,
-                               instructions=[
-                                   ofpp.OFPInstructionGotoTable(table_id=59)],
+                               instructions=[goto_pkt_rate],
                                match=ofpp.OFPMatch(
                                    vlan_vid=vlan | ofp.OFPVID_PRESENT,
                                    eth_type=self.ether_types.ETH_TYPE_ARP,
