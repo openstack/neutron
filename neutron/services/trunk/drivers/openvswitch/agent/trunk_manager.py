@@ -136,7 +136,6 @@ class TrunkParentPort(object):
         """
         ovsdb = self.bridge.ovsdb
         with ovsdb.transaction() as txn:
-            txn.add(ovsdb.del_br(self.bridge.br_name))
             txn.add(ovsdb.del_port(self.patch_port_int_name,
                                    bridge.br_name))
 
@@ -186,8 +185,9 @@ class SubPort(TrunkParentPort):
         """
         ovsdb = self.bridge.ovsdb
         with ovsdb.transaction() as txn:
-            txn.add(ovsdb.del_port(self.patch_port_trunk_name,
-                                   self.bridge.br_name))
+            if self.bridge.exists():
+                txn.add(ovsdb.del_port(self.patch_port_trunk_name,
+                                       self.bridge.br_name))
             txn.add(ovsdb.del_port(self.patch_port_int_name,
                                    bridge.br_name))
 
@@ -225,10 +225,7 @@ class TrunkManager(object):
         """Remove the trunk bridge."""
         trunk = TrunkParentPort(trunk_id, port_id)
         try:
-            if trunk.bridge.exists():
-                trunk.unplug(self.br_int)
-            else:
-                LOG.debug("Trunk bridge with ID %s does not exist.", trunk_id)
+            trunk.unplug(self.br_int)
         except RuntimeError as e:
             raise TrunkManagerError(error=e)
 
@@ -283,10 +280,7 @@ class TrunkManager(object):
         # Trunk bridge might have been deleted by calling delete_trunk() before
         # remove_sub_port().
         try:
-            if sub_port.bridge.exists():
-                sub_port.unplug(self.br_int)
-            else:
-                LOG.debug("Trunk bridge with ID %s does not exist.", trunk_id)
+            sub_port.unplug(self.br_int)
         except RuntimeError as e:
             raise TrunkManagerError(error=e)
 

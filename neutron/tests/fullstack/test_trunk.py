@@ -20,17 +20,10 @@ from oslo_utils import uuidutils
 
 from neutron.common import utils
 from neutron.services.trunk.drivers.openvswitch.agent import ovsdb_handler
-from neutron.services.trunk.drivers.openvswitch.agent import trunk_manager
 from neutron.services.trunk.drivers.openvswitch import utils as trunk_ovs_utils
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
 from neutron.tests.fullstack.resources import machine
-
-
-def trunk_bridge_does_not_exist(trunk_id):
-    """Return true if trunk bridge for given ID does not exists."""
-    bridge = trunk_manager.TrunkBridge(trunk_id)
-    return not bridge.exists()
 
 
 def make_ip_network(port, network):
@@ -282,16 +275,8 @@ class TestTrunkPlugin(base.BaseFullStackTestCase):
         vlan_aware_vm.block_until_ping(trunk_network_vm.ip)
         vlan_aware_vm.block_until_ping(vlan2_network_vm.ip)
 
-        # Delete vm and check that patch ports and trunk bridge are gone
+        # Delete vm and check that patch ports are gone
         vlan_aware_vm.destroy()
-        bridge_doesnt_exist_predicate = functools.partial(
-            trunk_bridge_does_not_exist, trunk_id)
-        utils.wait_until_true(
-            bridge_doesnt_exist_predicate,
-            exception=TrunkTestException(
-                'Trunk bridge with ID %s has not been removed' %
-                trunk_id)
-        )
 
         integration_bridge = self.host.get_bridge(None)
         no_patch_ports_predicate = functools.partial(

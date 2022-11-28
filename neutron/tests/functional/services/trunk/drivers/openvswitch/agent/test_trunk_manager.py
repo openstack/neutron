@@ -45,8 +45,7 @@ class TrunkParentPortTestCase(base.BaseSudoTestCase):
         port_mac = net.get_random_mac('fa:16:3e:00:00:00'.split(':'))
         self.trunk = trunk_manager.TrunkParentPort(trunk_id, port_id, port_mac)
         self.trunk.bridge = self.useFixture(
-            net_helpers.OVSTrunkBridgeFixture(
-                self.trunk.bridge.br_name)).bridge
+            net_helpers.OVSTrunkBridgeFixtureTrunkBridge(trunk_id)).bridge
         self.br_int = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
 
     def test_plug(self):
@@ -70,8 +69,6 @@ class TrunkParentPortTestCase(base.BaseSudoTestCase):
     def test_unplug(self):
         self.trunk.plug(self.br_int)
         self.trunk.unplug(self.br_int)
-        self.assertFalse(
-            self.trunk.bridge.bridge_exists(self.trunk.bridge.br_name))
         self.assertNotIn(self.trunk.patch_port_int_name,
                          self.br_int.get_port_name_list())
 
@@ -96,9 +93,8 @@ class SubPortTestCase(base.BaseSudoTestCase):
         trunk_id = uuidutils.generate_uuid()
         port_id = uuidutils.generate_uuid()
         port_mac = net.get_random_mac('fa:16:3e:00:00:00'.split(':'))
-        trunk_bridge_name = utils.gen_trunk_br_name(trunk_id)
         trunk_bridge = self.useFixture(
-            net_helpers.OVSTrunkBridgeFixture(trunk_bridge_name)).bridge
+            net_helpers.OVSTrunkBridgeFixtureTrunkBridge(trunk_id)).bridge
         segmentation_id = helpers.get_not_used_vlan(
             trunk_bridge, VLAN_RANGE)
         self.subport = trunk_manager.SubPort(

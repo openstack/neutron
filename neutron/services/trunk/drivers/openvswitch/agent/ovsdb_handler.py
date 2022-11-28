@@ -14,7 +14,6 @@
 #    under the License.
 
 import functools
-import time
 
 import eventlet
 from neutron_lib.callbacks import events
@@ -43,7 +42,6 @@ from neutron.services.trunk.rpc import agent
 LOG = logging.getLogger(__name__)
 
 DEFAULT_WAIT_FOR_PORT_TIMEOUT = 60
-WAIT_BEFORE_TRUNK_DELETE = 6
 
 
 def lock_on_bridge_name(required_parameter):
@@ -208,21 +206,6 @@ class OVSDBHandler(object):
         :param bridge_name: Name of the bridge used for locking purposes.
         :param port: Parent port dict.
         """
-        # TODO(njohnston): In the case of DPDK with trunk ports, if nova
-        # deletes an interface and then re-adds it we can get a race
-        # condition where the port is re-added and then the bridge is
-        # deleted because we did not properly catch the re-addition.  To
-        # solve this would require transitioning to ordered event
-        # resolution, like the L3 agent does with the
-        # ResourceProcessingQueue class.  Until we can make that happen, we
-        # try to mitigate the issue by checking if there is a port on the
-        # bridge and if so then do not remove it.
-        bridge = ovs_lib.OVSBridge(bridge_name)
-        time.sleep(WAIT_BEFORE_TRUNK_DELETE)
-        if bridge_has_instance_port(bridge):
-            LOG.debug("The bridge %s has instances attached so it will not "
-                      "be deleted.", bridge_name)
-            return
         try:
             # TODO(jlibosva): Investigate how to proceed during removal of
             # trunk bridge that doesn't have metadata stored.
@@ -304,8 +287,7 @@ class OVSDBHandler(object):
         LOG.debug("Added trunk: %s", trunk_id)
         return self._get_current_status(subports, subport_ids)
 
-    def unwire_subports_for_trunk(self, trunk_id, subport_ids):
-        """Destroy OVS ports associated to the logical subports."""
+    def _remove_sub_ports(self, trunk_id, subport_ids):
         ids = []
         for subport_id in subport_ids:
             try:
@@ -317,6 +299,11 @@ class OVSDBHandler(object):
                           {'subport_id': subport_id,
                            'trunk_id': trunk_id,
                            'err': te})
+        return ids
+
+    def unwire_subports_for_trunk(self, trunk_id, subport_ids):
+        """Destroy OVS ports associated to the logical subports."""
+        ids = self._remove_sub_ports(trunk_id, subport_ids)
         try:
             # OVS bridge and port to be determined by _update_trunk_metadata
             bridge = None
