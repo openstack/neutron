@@ -302,6 +302,46 @@ class OVNDriver(base.DriverBase):
         if not self.network_logging_supported(self.ovn_nb):
             raise LoggingNotSupported()
 
+    def _unset_disabled_acls(self, context, log_obj, ovn_txn):
+        """Check if we need to disable any ACLs after an update.
+
+        Will return True if there were more logs, and False if there was
+        nothing to check.
+
+        :param context: current running context information
+        :param log_obj: a log_object which was updated
+        :returns: True if there were other logs enabled, otherwise False.
+        """
+        if log_obj.enabled:
+            return False
+
+        pgs = self._pgs_from_log_obj(context, log_obj)
+        other_logs = [log for log in self._get_logs(context)
+                      if log.id != log_obj.id and log.enabled]
+        if not other_logs:
+            return False
+
+        if log_obj.event == log_const.ALL_EVENT:
+            acls_to_check = pgs[0]["acls"].copy()
+            if not acls_to_check:
+                return True
+            for log in other_logs:
+                for acl in self._pgs_from_log_obj(context, log)[0]["acls"]:
+                    if acl in acls_to_check:
+                        acls_to_check.remove(acl)
+                    if not acls_to_check:
+                        return True
+            acls_to_remove = [{"name": pgs[0]["name"], "acls": acls_to_check}]
+            self._remove_acls_log(acls_to_remove, ovn_txn)
+        else:
+            all_events = set([log.event for log in other_logs
+                if (not log.resource_id or
+                    log.resource_id == log_obj.resource_id)])
+            if (log_const.ALL_EVENT not in all_events and
+                    log_obj.event not in all_events):
+                self._remove_acls_log(pgs, ovn_txn)
+        return True
+
     def update_log(self, context, log_obj):
         """Update a log_obj invocation.
 
@@ -311,11 +351,13 @@ class OVNDriver(base.DriverBase):
         """
         LOG.debug("Update_log %s", log_obj)
 
-        pgs = self._pgs_from_log_obj(context, log_obj)
-        actions_enabled = self._acl_actions_enabled(log_obj)
         with self.ovn_nb.transaction(check_error=True) as ovn_txn:
-            self._set_acls_log(pgs, ovn_txn, actions_enabled,
-                               utils.ovn_name(log_obj.id))
+
+            if not self._unset_disabled_acls(context, log_obj, ovn_txn):
+                pgs = self._pgs_from_log_obj(context, log_obj)
+                actions_enabled = self._acl_actions_enabled(log_obj)
+                self._set_acls_log(pgs, ovn_txn, actions_enabled,
+                                   utils.ovn_name(log_obj.id))
 
     def delete_log(self, context, log_obj):
         """Delete a log_obj invocation.

@@ -338,3 +338,59 @@ class LogApiTestCaseComplex(LogApiTestCaseBase):
         self._add_logs_then_remove(
             log_const.DROP_EVENT, log_const.ACCEPT_EVENT, sg=self.sg3,
             sgrs=self.sg3rs)
+
+    def test_disable_logs(self):
+        # This test ensures that acls are correctly disabled when having
+        # multiple log objects.
+
+        # Check there are no acls with their logging active
+        sgrs = self.sg1rs
+        self._check_sgrs(sgrs, is_enabled=False)
+        self._check_acl_log_drop(is_enabled=False)
+
+        # Add accept log object
+        log_data1 = self._log_data(sg_id=self.sg1)
+        event1 = log_const.ACCEPT_EVENT
+        log_data1['log']['event'] = event1
+        log_obj1 = self.log_plugin.create_log(self.ctxt, log_data1)
+        self._check_acl_log_drop(is_enabled=False)
+        self._check_sgrs(sgrs=sgrs, is_enabled=True)
+
+        # Add drop log object
+        log_data2 = self._log_data(sg_id=self.sg1)
+        event2 = log_const.DROP_EVENT
+        log_data2['log']['event'] = event2
+        log_obj2 = self.log_plugin.create_log(self.ctxt, log_data2)
+        self._check_acl_log_drop(is_enabled=True)
+        self._check_sgrs(sgrs=sgrs, is_enabled=True)
+
+        # Disable drop log object and check it worked correctly
+        log_data2['log']['enabled'] = False
+        self.log_plugin.update_log(self.ctxt, log_obj2['id'], log_data2)
+        self._check_acl_log_drop(is_enabled=False)
+        self._check_sgrs(sgrs=sgrs, is_enabled=True)
+
+        # Enable drop log and create all log object
+        log_data2['log']['enabled'] = True
+        self.log_plugin.update_log(self.ctxt, log_obj2['id'], log_data2)
+        self._check_acl_log_drop(is_enabled=True)
+        self._check_sgrs(sgrs=sgrs, is_enabled=True)
+
+        log_data3 = self._log_data(sg_id=self.sg1)
+        log_data3['log']['event'] = log_const.ALL_EVENT
+        log_obj3 = self.log_plugin.create_log(self.ctxt, log_data3)
+        self._check_sgrs(sgrs=sgrs, is_enabled=True)
+        self._check_acl_log_drop(is_enabled=True)
+
+        # Disable all log object and check all acls are still enabled (because
+        # of the other objects)
+        log_data3['log']['enabled'] = False
+        self.log_plugin.update_log(self.ctxt, log_obj3['id'], log_data3)
+        self._check_sgrs(sgrs=sgrs, is_enabled=True)
+        self._check_acl_log_drop(is_enabled=True)
+
+        # Disable accept log object and only drop traffic gets logged
+        log_data1['log']['enabled'] = False
+        self.log_plugin.update_log(self.ctxt, log_obj1['id'], log_data1)
+        self._check_sgrs(sgrs=sgrs, is_enabled=False)
+        self._check_acl_log_drop(is_enabled=True)
