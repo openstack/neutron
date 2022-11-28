@@ -201,6 +201,11 @@ class DhcpAgent(manager.Manager):
     def call_driver(self, action, network, **action_kwargs):
         sid_segment = {}
         sid_subnets = collections.defaultdict(list)
+        if not network:
+            LOG.info('Network not present, action: %s, action_kwargs: %s',
+                     action, action_kwargs)
+            # There is nothing we can do.
+            return
         if 'segments' in network and network.segments:
             # In case of multi-segments network, let's group network per
             # segments.  We can then create DHPC process per segmentation
@@ -734,7 +739,8 @@ class DhcpAgent(manager.Manager):
             # the agent's port has been deleted. disable the service
             # and add the network to the resync list to create
             # (or acquire a reserved) port.
-            self.call_driver('disable', network)
+            self.call_driver('disable', network,
+                             network_id=payload['network_id'])
             self.schedule_resync("Agent port was deleted", port.network_id)
         else:
             self.call_driver('reload_allocations', network)

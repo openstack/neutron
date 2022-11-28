@@ -348,6 +348,11 @@ class TestDhcpAgent(base.BaseTestCase):
                                             mock.ANY,
                                             None)
 
+    def test_call_driver_no_network(self):
+        network = None
+        dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
+        self.assertIsNone(dhcp.call_driver('foo', network))
+
     def _test_call_driver_failure(self, exc=None,
                                   trace_level='exception', expected_sync=True):
         network = mock.MagicMock()
@@ -1434,6 +1439,20 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                 [mock.call.call_driver('reload_allocations', fake_network)])
             self.assertTrue(ump.called)
 
+    def test_port_delete_network_already_deleted(self):
+        port = dhcp.DictModel(copy.deepcopy(fake_port1))
+        device_id = utils.get_dhcp_agent_device_id(
+            port.network_id, self.dhcp.conf.host)
+        port['device_id'] = device_id
+        self.cache.get_network_by_id.return_value = None
+        self.cache.get_port_by_id.return_value = port
+        self.dhcp.port_delete_end(None, {'port_id': port.id,
+          'network_id': fake_network.id,
+          'priority': FAKE_PRIORITY})
+        self.dhcp._process_resource_update()
+        self.call_driver.assert_called_once_with(
+            'disable', None, network_id=fake_network.id)
+
     def test_port_delete_end(self):
         payload = dict(port_id=fake_port2.id, network_id=fake_network.id,
                        priority=FAKE_PRIORITY)
@@ -1478,7 +1497,8 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                                          'priority': FAKE_PRIORITY})
         self.dhcp._process_resource_update()
         self.call_driver.assert_has_calls(
-            [mock.call.call_driver('disable', fake_network)])
+            [mock.call.call_driver(
+                'disable', fake_network, network_id=fake_network.id)])
 
 
 class TestDhcpPluginApiProxy(base.BaseTestCase):
