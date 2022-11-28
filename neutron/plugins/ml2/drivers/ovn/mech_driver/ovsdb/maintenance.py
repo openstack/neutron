@@ -228,34 +228,37 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
             return
 
         ovn_obj = res_map['ovn_get'](row.resource_uuid)
-
-        if not ovn_obj:
-            res_map['ovn_create'](context, n_obj)
-        else:
-            if row.resource_type == ovn_const.TYPE_SECURITY_GROUP_RULES:
-                LOG.error("SG rule %s found with a revision number while "
-                          "this resource doesn't support updates",
-                          row.resource_uuid)
-            elif row.resource_type == ovn_const.TYPE_SECURITY_GROUPS:
-                # In OVN, we don't care about updates to security groups,
-                # so just bump the revision number to whatever it's
-                # supposed to be.
-                revision_numbers_db.bump_revision(context, n_obj,
-                                                  row.resource_type)
+        try:
+            if not ovn_obj:
+                res_map['ovn_create'](context, n_obj)
             else:
-                ext_ids = getattr(ovn_obj, 'external_ids', {})
-                ovn_revision = int(ext_ids.get(
-                    ovn_const.OVN_REV_NUM_EXT_ID_KEY, -1))
-                # If the resource exist in the OVN DB but the revision
-                # number is different from Neutron DB, updated it.
-                if ovn_revision != n_obj['revision_number']:
-                    res_map['ovn_update'](context, n_obj)
-                else:
-                    # If the resource exist and the revision number
-                    # is equal on both databases just bump the revision on
-                    # the cache table.
+                if row.resource_type == ovn_const.TYPE_SECURITY_GROUP_RULES:
+                    LOG.error("SG rule %s found with a revision number while "
+                              "this resource doesn't support updates",
+                              row.resource_uuid)
+                elif row.resource_type == ovn_const.TYPE_SECURITY_GROUPS:
+                    # In OVN, we don't care about updates to security groups,
+                    # so just bump the revision number to whatever it's
+                    # supposed to be.
                     revision_numbers_db.bump_revision(context, n_obj,
                                                       row.resource_type)
+                else:
+                    ext_ids = getattr(ovn_obj, 'external_ids', {})
+                    ovn_revision = int(ext_ids.get(
+                        ovn_const.OVN_REV_NUM_EXT_ID_KEY, -1))
+                    # If the resource exist in the OVN DB but the revision
+                    # number is different from Neutron DB, updated it.
+                    if ovn_revision != n_obj['revision_number']:
+                        res_map['ovn_update'](context, n_obj)
+                    else:
+                        # If the resource exist and the revision number
+                        # is equal on both databases just bump the revision on
+                        # the cache table.
+                        revision_numbers_db.bump_revision(context, n_obj,
+                                                          row.resource_type)
+        except revision_numbers_db.StandardAttributeIDNotFound:
+            LOG.error('Standard attribute ID not found for object ID %s',
+                      n_obj['id'])
 
     def _fix_delete(self, context, row):
         res_map = self._resources_func_map[row.resource_type]

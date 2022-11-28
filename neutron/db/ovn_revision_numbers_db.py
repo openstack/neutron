@@ -165,16 +165,10 @@ def get_revision_row(context, resource_uuid):
 def bump_revision(context, resource, resource_type):
     revision_number = ovn_utils.get_revision_number(resource, resource_type)
     with db_api.CONTEXT_WRITER.using(context):
-        # NOTE(ralonsoh): "resource" could be a dict or an OVO.
-        try:
-            std_attr_id = resource.db_obj.standard_attr.id
-        except AttributeError:
-            std_attr_id = resource.get('standard_attr_id', None)
+        std_attr_id = _get_standard_attr_id(context, resource['id'],
+                                            resource_type)
         _ensure_revision_row_exist(context, resource, resource_type,
                                    std_attr_id)
-        std_attr_id = (std_attr_id or
-                       _get_standard_attr_id(context, resource['id'],
-                                             resource_type))
         row = context.session.merge(ovn_models.OVNRevisionNumbers(
             standard_attr_id=std_attr_id, resource_uuid=resource['id'],
             resource_type=resource_type))
