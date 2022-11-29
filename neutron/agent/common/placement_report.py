@@ -205,14 +205,30 @@ class PlacementState(object):
         return agent_rp_traits
 
     def deferred_update_resource_provider_traits(self):
+
+        def _get_traits(device, physical_bridges, physnet_trait_mappings):
+            if device == self._rp_tun_name and device not in physical_bridges:
+                # That means the RP for tunnelled networks is not associated
+                # to a physical bridge interface.
+                return [n_const.TRAIT_NETWORK_TUNNEL]
+            elif device == self._rp_tun_name and device in physical_bridges:
+                # The physical network and the tunnelled networks share the
+                # same physical interface.
+                return [n_const.TRAIT_NETWORK_TUNNEL,
+                        physnet_trait_mappings[device]]
+            else:
+                # Just the physical interface.
+                return [physnet_trait_mappings.get(device)]
+
         rp_traits = []
-        tunnelled_trait_mappings = {
-            self._rp_tun_name: n_const.TRAIT_NETWORK_TUNNEL}
+        physical_bridges = {br for brs in self._device_mappings.values() for
+                            br in brs}
         physnet_trait_mappings = {}
         for physnet, devices in self._device_mappings.items():
             for device in devices:
                 physnet_trait_mappings[device] = place_utils.physnet_trait(
                     physnet)
+
         vnic_type_traits = [place_utils.vnic_type_trait(vnic_type)
                             for vnic_type
                             in self._supported_vnic_types]
@@ -221,8 +237,8 @@ class PlacementState(object):
                 self._driver_uuid_namespace,
                 self._hypervisor_rps[device]['name'],
                 device)
-            traits = [physnet_trait_mappings.get(device) or
-                      tunnelled_trait_mappings[device]]
+            traits = _get_traits(device, physical_bridges,
+                                 physnet_trait_mappings)
             traits.extend(vnic_type_traits)
             rp_traits.append(
                 DeferredCall(
