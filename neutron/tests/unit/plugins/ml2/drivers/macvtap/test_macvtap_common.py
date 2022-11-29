@@ -15,33 +15,31 @@
 #    under the License.
 
 import hashlib
-from unittest import mock
+
+from oslo_utils import encodeutils
 
 from neutron.plugins.ml2.drivers.macvtap import macvtap_common as m_common
 from neutron.tests import base
 
-MOCKED_HASH = "MOCKEDHASH"
-
-
-class MockSHA(object):
-    def hexdigest(self):
-        return MOCKED_HASH
-
 
 class MacvtapCommonTestCase(base.BaseTestCase):
-    @mock.patch.object(hashlib, 'sha1', return_value=MockSHA())
-    def test_get_vlan_device_name(self, mocked_hash):
+
+    def _hash_prefix(self, value):
+        hashed_name = hashlib.new('sha1', usedforsecurity=False)
+        hashed_name.update(encodeutils.to_utf8(value))
         # only the first six chars of the hash are being used in the algorithm
-        hash_used = MOCKED_HASH[0:6]
+        return hashed_name.hexdigest()[0:6]
+
+    def test_get_vlan_device_name(self):
         self.assertEqual('10charrrrr.1',
                          m_common.get_vlan_device_name('10charrrrr', "1"))
-        self.assertEqual('11ch' + hash_used + '.1',
+        self.assertEqual('11ch' + self._hash_prefix('11charrrrrr') + '.1',
                          m_common.get_vlan_device_name('11charrrrrr', "1"))
-        self.assertEqual('14ch' + hash_used + '.1',
+        self.assertEqual('14ch' + self._hash_prefix('14charrrrrrrrr') + '.1',
                          m_common.get_vlan_device_name('14charrrrrrrrr', "1"))
-        self.assertEqual('14ch' + hash_used + '.1111',
-                         m_common.get_vlan_device_name('14charrrrrrrrr',
-                                                       "1111"))
+        self.assertEqual(
+            '14ch' + self._hash_prefix('14charrrrrrrrr') + '.1111',
+            m_common.get_vlan_device_name('14charrrrrrrrr', "1111"))
 
     def test_get_vlan_subinterface_name_advanced(self):
         """Ensure the same hash is used for long interface names.
