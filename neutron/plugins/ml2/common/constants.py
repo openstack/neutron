@@ -28,3 +28,6 @@ NO_PBLOCKS_TYPES = [
     constants.DEVICE_OWNER_ROUTER_HA_INTF,
     constants.DEVICE_OWNER_FLOATINGIP,
 ]
+
+METER_FLAG_BPS = "bps"
+METER_FLAG_PPS = "pps"

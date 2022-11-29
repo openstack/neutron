@@ -20,6 +20,7 @@ from oslo_utils import uuidutils
 
 from neutron.objects.qos import policy
 from neutron.objects.qos import rule
+from neutron.plugins.ml2.common import constants as comm_consts
 from neutron.plugins.ml2.drivers.openvswitch.agent import (
         ovs_agent_extension_api as ovs_ext_api)
 from neutron.plugins.ml2.drivers.openvswitch.agent.extension_drivers import (
@@ -242,6 +243,90 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
 
         self.delete_meter.assert_not_called()
         self.remove_meter_from_port.assert_not_called()
+
+    def test_meter_manager_allocate_meter_id(self):
+        meter_cache_pps = qos_driver.MeterRuleManager(mock.Mock())
+        meter_cache_pps.generator.max_meter = 10000
+        meter_cache_bps = qos_driver.MeterRuleManager(
+            mock.Mock(), type_=comm_consts.METER_FLAG_BPS)
+        meter_cache_bps.generator.max_meter = 10000
+        meter_cache_pps.allocate_meter_id("1", "ingress")
+        meter_cache_pps.allocate_meter_id("1", "egress")
+        meter_cache_bps.allocate_meter_id("1", "ingress")
+        meter_cache_bps.allocate_meter_id("1", "egress")
+        meter_cache_pps.allocate_meter_id("2", "ingress")
+        meter_cache_pps.allocate_meter_id("2", "egress")
+        meter_cache_bps.allocate_meter_id("2", "ingress")
+        meter_cache_bps.allocate_meter_id("2", "egress")
+        self.assertEqual(
+            meter_cache_pps.generator.PORT_METER_ID,
+            meter_cache_bps.generator.PORT_METER_ID)
+        pps_keys = meter_cache_pps.generator.PORT_METER_ID.keys()
+        bps_keys = meter_cache_bps.generator.PORT_METER_ID.keys()
+        self.assertEqual(
+            2, len([k for k in pps_keys if k.startswith('pps_1')]))
+        self.assertEqual(
+            2, len([k for k in bps_keys if k.startswith('bps_1')]))
+        self.assertEqual(
+            2, len([k for k in pps_keys if k.startswith('pps_2')]))
+        self.assertEqual(
+            2, len([k for k in bps_keys if k.startswith('bps_2')]))
+        self.assertEqual(
+            meter_cache_pps.generator.PORT_METER_ID.keys(),
+            meter_cache_bps.generator.PORT_METER_ID.keys())
+        pps_values = list(meter_cache_pps.generator.PORT_METER_ID.values())
+        bps_values = list(meter_cache_bps.generator.PORT_METER_ID.values())
+        self.assertEqual(pps_values, bps_values)
+        except_keys = ["pps_1_ingress", "pps_1_egress",
+                       "bps_1_ingress", "bps_1_egress",
+                       "pps_2_ingress", "pps_2_egress",
+                       "bps_2_ingress", "bps_2_egress"]
+        except_values = []
+        for key in except_keys:
+            value = meter_cache_bps.generator.PORT_METER_ID.get(key)
+            if value:
+                except_values.append(value)
+        self.assertEqual(8, len(set(except_values)))
+
+    def test_meter_manager_remove_port_meter_id(self):
+        meter_cache_pps = qos_driver.MeterRuleManager(mock.Mock())
+        meter_cache_pps.generator.max_meter = 10000
+        meter_cache_bps = qos_driver.MeterRuleManager(
+            mock.Mock(), type_=comm_consts.METER_FLAG_BPS)
+        meter_cache_bps.generator.max_meter = 10000
+        meter_cache_pps.allocate_meter_id("1", "ingress")
+        meter_cache_pps.allocate_meter_id("1", "egress")
+        meter_cache_bps.allocate_meter_id("1", "ingress")
+        meter_cache_bps.allocate_meter_id("1", "egress")
+        meter_cache_pps.allocate_meter_id("2", "ingress")
+        meter_cache_pps.allocate_meter_id("2", "egress")
+        meter_cache_bps.allocate_meter_id("2", "ingress")
+        meter_cache_bps.allocate_meter_id("2", "egress")
+        self.assertEqual(
+            meter_cache_pps.generator.PORT_METER_ID,
+            meter_cache_bps.generator.PORT_METER_ID)
+
+        meter_cache_bps.remove_port_meter_id("2", "ingress")
+        meter_cache_pps.remove_port_meter_id("1", "egress")
+
+        self.assertNotIn(
+            "pps_1_egress", meter_cache_pps.generator.PORT_METER_ID.keys())
+        self.assertNotIn(
+            "bps_2_ingress", meter_cache_pps.generator.PORT_METER_ID.keys())
+
+        pps_values = list(meter_cache_pps.generator.PORT_METER_ID.values())
+        bps_values = list(meter_cache_bps.generator.PORT_METER_ID.values())
+        self.assertEqual(pps_values, bps_values)
+        except_keys = ["pps_1_ingress",
+                       "bps_1_ingress", "bps_1_egress",
+                       "pps_2_ingress", "pps_2_egress",
+                       "bps_2_egress"]
+        except_values = []
+        for key in except_keys:
+            value = meter_cache_bps.generator.PORT_METER_ID.get(key)
+            if value:
+                except_values.append(value)
+        self.assertEqual(6, len(set(except_values)))
 
     def _assert_rules_create_updated(self):
         self.create_egress.assert_called_once_with(

@@ -22,6 +22,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron.agent.l2.extensions import qos_linux as qos
+from neutron.plugins.ml2.common import constants as comm_consts
 from neutron.services.qos.drivers.openvswitch import driver
 
 
@@ -30,27 +31,71 @@ LOG = logging.getLogger(__name__)
 MAX_RETIES = 1000
 
 
-class MeterRuleManager(object):
+class MeterIDGenerator(object):
     # This cache will be:
     #  PORT_METER_ID = {"port_id_1_ingress": 1,
     #                   "port_id_1_egress: 2,
     #                   "port_id_2_ingress": 3,
     #                   "port_id_2_egress: 4}
-    PORT_METER_ID = {}
-    # This will be:
-    #  PORT_INFO_INGRESS = {"port_id_1": (of_port_name, mac_1, local_vlan_1),
-    #                       "port_id_2": (of_port_name, mac_2, local_vlan_2),
-    PORT_INFO_INGRESS = {}
-    #  PORT_INFO_EGRESS = {"port_id_1": (of_port_name, mac_1, of_port_1),
-    #                      "port_id_2": (of_port_name, mac_2, of_port_2),
-    PORT_INFO_EGRESS = {}
 
-    def __init__(self, br_int):
+    def __new__(cls, *args, **kwargs):
+        # make it a singleton
+        if not hasattr(cls, '_instance'):
+            cls._instance = super(MeterIDGenerator, cls).__new__(cls)
+            cls.PORT_METER_ID = {}
+        return cls._instance
+
+    def __init__(self, max_meter):
+        self.max_meter = max_meter
+
+    def _generate_meter_id(self):
+        if self.max_meter <= 0:
+            return
+        used_meter_ids = self.PORT_METER_ID.values()
+        cid = None
+        times = 0
+        while not cid or cid in used_meter_ids:
+            cid = random.randint(1, self.max_meter)
+            times += 1
+            if times >= MAX_RETIES:
+                return
+        return cid
+
+    def allocate_meter_id(self, key):
+        meter_id = self._generate_meter_id()
+        if not meter_id:
+            return
+        self.set_meter_id(key, meter_id)
+        return meter_id
+
+    def remove_port_meter_id(self, key):
+        return self.PORT_METER_ID.pop(key, None)
+
+    def set_meter_id(self, key, meter_id):
+        self.PORT_METER_ID[key] = meter_id
+
+
+class MeterRuleManager(object):
+
+    def __init__(self, br_int, type_=comm_consts.METER_FLAG_PPS):
         self.br_int = br_int
+        self.max_meter = 0
         self._init_max_meter_id()
+        self.rule_type = type_
+        self.generator = MeterIDGenerator(self.max_meter)
+        # This will be:
+        #  PORT_INFO_INGRESS = {"port_id_1": (mac_1, 1),
+        #                       "port_id_2": (mac_2, 2),
+        #                       "port_id_3": (mac_3, 3),
+        #                       "port_id_4": (mac_4, 4)}
+        self.PORT_INFO_INGRESS = {}
+        #  PORT_INFO_EGRESS = {"port_id_1": (mac_1, 1),
+        #                      "port_id_2": (mac_2, 1),
+        #                      "port_id_3": (mac_3, 1),
+        #                      "port_id_4": (mac_4, 1)}
+        self.PORT_INFO_EGRESS = {}
 
     def _init_max_meter_id(self):
-        self.max_meter = 0
         features = self.br_int.list_meter_features()
         for f in features:
             if f["max_meter"] > 0:
@@ -58,20 +103,20 @@ class MeterRuleManager(object):
                 break
 
     def get_data_key(self, port_id, direction):
-        return "%s_%s" % (port_id, direction)
+        return "%s_%s_%s" % (self.rule_type, port_id, direction)
 
     def load_port_meter_id(self, port_name, port_id, direction):
         key = self.get_data_key(port_id, direction)
-        meter_id = self.br_int.get_value_from_other_config(
-            port_name, key, value_type=int)
-        if meter_id:
-            self.PORT_METER_ID[key] = meter_id
-        else:
-            LOG.warning("Failed to load port %(port)s meter id in "
+        try:
+            meter_id = self.br_int.get_value_from_other_config(
+                 port_name, key, value_type=int)
+            self.generator.set_meter_id(key, meter_id)
+            return meter_id
+        except Exception:
+            LOG.warning("Failed to load port $(port)s meter id in "
                         "direction %(direction)s",
                         {"direction": direction,
                          "port": port_id})
-        return meter_id
 
     def store_port_meter_id_to_ovsdb(self, port_name, port_id,
                                      direction, meter_id):
@@ -84,32 +129,13 @@ class MeterRuleManager(object):
         self.br_int.remove_value_from_other_config(
             port_name, key)
 
-    def generate_meter_id(self):
-        if self.max_meter <= 0:
-            return
-        used_meter_ids = self.PORT_METER_ID.values()
-        cid = None
-        times = 0
-        while not cid or cid in used_meter_ids:
-            cid = random.randint(1, self.max_meter)
-            times += 1
-            if times >= MAX_RETIES:
-                LOG.warning("Failed to allocate meter "
-                            "id after %d retries", times)
-                return
-        return cid
-
     def allocate_meter_id(self, port_id, direction):
-        meter_id = self.generate_meter_id()
-        if not meter_id:
-            return
         key = self.get_data_key(port_id, direction)
-        self.PORT_METER_ID[key] = meter_id
-        return meter_id
+        return self.generator.allocate_meter_id(key)
 
     def remove_port_meter_id(self, port_id, direction):
         key = self.get_data_key(port_id, direction)
-        return self.PORT_METER_ID.pop(key, None)
+        return self.generator.remove_port_meter_id(key)
 
     def set_port_info_ingress(self, port_id, port_name, mac, vlan):
         self.PORT_INFO_INGRESS[port_id] = (port_name, mac, vlan)
