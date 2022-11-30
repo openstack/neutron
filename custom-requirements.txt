@@ -21,9 +21,6 @@ pymemcache
 #mysql
 pymysql
 
-# neutron-lib SAPCC specific branch
-git+https://github.com/sapcc/neutron-lib.git@stable/yoga-m3#egg=neutron-lib
-
 # 3rd party middleware
 git+https://github.com/sapcc/openstack-watcher-middleware.git#egg=watcher-middleware
 git+https://github.com/sapcc/openstack-audit-middleware.git@master#egg=audit-middleware
