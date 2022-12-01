@@ -960,10 +960,15 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                     subnets_id.extend([fixed_ip['subnet_id']
                                        for fixed_ip in port['fixed_ips']])
                 else:
-                    raise l3_exc.RouterInterfaceNotFound(
-                        router_id=router.id, port_id=rp.port_id)
+                    # due to race conditions maybe the port under analysis is
+                    # deleted, so instead returning a RouterInterfaceNotFound
+                    # we continue the analysis avoiding that port
+                    LOG.debug("Port %s could not be found, it might have been "
+                              "deleted concurrently. Will not be checked for "
+                              "an overlapping router interface.",
+                              rp.port_id)
 
-            if subnets_id:
+            if len(subnets_id) > 1:
                 id_filter = {'id': subnets_id}
                 subnets = self._core_plugin.get_subnets(context.elevated(),
                                                         filters=id_filter)

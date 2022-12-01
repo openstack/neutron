@@ -269,25 +269,37 @@ class TestL3Agent(base.BaseFullStackTestCase):
     def _test_concurrent_router_subnet_attachment_overlapping_cidr(self,
                                                                    ha=False):
         tenant_id = uuidutils.generate_uuid()
-        subnet_cidr = '10.100.0.0/24'
-        network1 = self.safe_client.create_network(
-            tenant_id, name='foo-network1')
-        subnet1 = self.safe_client.create_subnet(
-            tenant_id, network1['id'], subnet_cidr)
-        network2 = self.safe_client.create_network(
-            tenant_id, name='foo-network2')
-        subnet2 = self.safe_client.create_subnet(
-            tenant_id, network2['id'], subnet_cidr)
+        subnet_cidr = '10.200.0.0/24'
+        # to have many port interactions where race conditions would happen
+        # deleting ports meanwhile find operations to evaluate the overlapping
+        subnets = 10
+
+        funcs = []
+        args = []
         router = self.safe_client.create_router(tenant_id, ha=ha)
 
-        funcs = [self.safe_client.add_router_interface,
-                 self.safe_client.add_router_interface]
-        args = [(router['id'], subnet1['id']), (router['id'], subnet2['id'])]
-        self.assertRaises(
-            exceptions.BadRequest,
-            self._simulate_concurrent_requests_process_and_raise,
-            funcs,
-            args)
+        for i in range(subnets):
+            network_tmp = self.safe_client.create_network(
+                tenant_id, name='foo-network' + str(i))
+            subnet_tmp = self.safe_client.create_subnet(
+                tenant_id, network_tmp['id'], subnet_cidr)
+            funcs.append(self.safe_client.add_router_interface)
+            args.append((router['id'], subnet_tmp['id']))
+
+        exception_requests = self._simulate_concurrent_requests_process(
+            funcs, args)
+
+        if not all(type(e) == exceptions.BadRequest
+                   for e in exception_requests):
+            self.fail('Unexpected exception adding interfaces to router from '
+                      'different subnets overlapping')
+
+        if not len(exception_requests) >= (subnets - 1):
+            self.fail('If we have tried to associate %s subnets overlapping '
+                      'cidr to the router, we should have received at least '
+                      '%s or %s rejected requests, but we have only received '
+                      '%s', (str(subnets), str(subnets - 1), str(subnets),
+                             str(len(exception_requests))))
 
 
 class TestLegacyL3Agent(TestL3Agent):
@@ -434,7 +446,7 @@ class TestLegacyL3Agent(TestL3Agent):
     def test_router_fip_qos_after_admin_state_down_up(self):
         self._router_fip_qos_after_admin_state_down_up()
 
-    def test_concurrent_router_subnet_attachment_overlapping_cidr_(self):
+    def test_concurrent_router_subnet_attachment_overlapping_cidr(self):
         self._test_concurrent_router_subnet_attachment_overlapping_cidr()
 
 
@@ -588,6 +600,6 @@ class TestHAL3Agent(TestL3Agent):
     def test_router_fip_qos_after_admin_state_down_up(self):
         self._router_fip_qos_after_admin_state_down_up(ha=True)
 
-    def test_concurrent_router_subnet_attachment_overlapping_cidr_(self):
+    def test_concurrent_router_subnet_attachment_overlapping_cidr(self):
         self._test_concurrent_router_subnet_attachment_overlapping_cidr(
             ha=True)
