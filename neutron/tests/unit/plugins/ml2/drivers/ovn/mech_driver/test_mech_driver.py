@@ -4094,6 +4094,9 @@ class TestOVNMechanismDriverMetadataPort(MechDriverSetupBase,
 
         Check that the metadata port is deleted when a network is deleted.
         """
+        nb_idl = self.mech_driver._ovn_client._nb_idl
+        nb_idl.ls_get.return_value.execute.return_value = (
+            fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={'ports': []}))
         net = self._make_network(self.fmt, name="net1", admin_state_up=True)
         network_id = net['network']['id']
         req = self.new_delete_request('networks', network_id)
