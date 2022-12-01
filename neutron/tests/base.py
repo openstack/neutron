@@ -492,7 +492,11 @@ class BaseTestCase(DietTestCase):
                     root_helper_daemon=get_rootwrap_daemon_cmd())
 
     def _simulate_concurrent_requests_process_and_raise(self, calls, args):
+        self._simulate_concurrent_requests_process(calls, args,
+                                                   raise_on_exception=True)
 
+    def _simulate_concurrent_requests_process(self, calls, args,
+                                              raise_on_exception=False):
         class SimpleThread(threading.Thread):
             def __init__(self, q):
                 super(SimpleThread, self).__init__()
@@ -529,10 +533,16 @@ class BaseTestCase(DietTestCase):
             t.start()
         q.join()
 
+        threads_exceptions = []
         for t in threads:
             e = t.get_exception()
             if e:
-                raise e
+                if raise_on_exception:
+                    raise e
+                else:
+                    threads_exceptions.append(e)
+
+        return threads_exceptions
 
 
 class PluginFixture(fixtures.Fixture):
