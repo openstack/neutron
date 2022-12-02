@@ -16,6 +16,7 @@
 import re
 import signal
 
+from neutron_lib.plugins.ml2 import ovs_constants
 from oslo_log import log as logging
 
 from neutron.agent.common import async_process
@@ -98,11 +99,13 @@ def wait_until_pkt_meter_rule_applied_ovs(bridge, port_vif, port_id,
             port_vif, key, value_type=int)
 
         if direction == "egress":
-            flows = bridge.dump_flows_for(table='59', in_port=str(port_num),
-                                          dl_src=str(mac))
+            flows = bridge.dump_flows_for(
+                table=ovs_constants.PACKET_RATE_LIMIT, in_port=str(port_num),
+                dl_src=str(mac))
         else:
-            flows = bridge.dump_flows_for(table='59', dl_vlan=str(port_vlan),
-                                          dl_dst=str(mac))
+            flows = bridge.dump_flows_for(
+                table=ovs_constants.PACKET_RATE_LIMIT, dl_vlan=str(port_vlan),
+                dl_dst=str(mac))
         if mac:
             return bool(flows) and meter_id
         else:
