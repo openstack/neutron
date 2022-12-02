@@ -315,6 +315,12 @@ class MetadataAgent(object):
                         "br-int instead.")
             return 'br-int'
 
+    def get_networks(self):
+        ports = self.sb_idl.get_ports_on_chassis(self.chassis)
+        return {(str(p.datapath.uuid),
+            ovn_utils.get_network_name_from_datapath(p.datapath))
+            for p in self._vif_ports(ports)}
+
     @_sync_lock
     def sync(self):
         """Agent sync.
@@ -323,15 +329,25 @@ class MetadataAgent(object):
         chassis are serving metadata. Also, it will tear down those namespaces
         which were serving metadata but are no longer needed.
         """
-        metadata_namespaces = self.ensure_all_networks_provisioned()
+
+        # first, clean up namespaces that should no longer deploy
         system_namespaces = tuple(
             ns.decode('utf-8') if isinstance(ns, bytes) else ns
             for ns in ip_lib.list_network_namespaces())
+        nets = self.get_networks()
+        metadata_namespaces = [
+            self._get_namespace_name(net[1])
+            for net in nets
+        ]
         unused_namespaces = [ns for ns in system_namespaces if
                              ns.startswith(NS_PREFIX) and
                              ns not in metadata_namespaces]
         for ns in unused_namespaces:
             self.teardown_datapath(self._get_datapath_name(ns))
+
+        # now that all obsolete namespaces are cleaned up, deploy required
+        # networks
+        self.ensure_all_networks_provisioned(nets)
 
     @staticmethod
     def _get_veth_name(datapath):
@@ -424,8 +440,6 @@ class MetadataAgent(object):
         and assign the IP addresses to the interface corresponding to the
         metadata port of the network. It will also remove existing IP
         addresses that are no longer needed.
-
-        :return: The metadata namespace name of this datapath
         """
         LOG.debug("Provisioning metadata for network %s", net_name)
         port = self.sb_idl.get_metadata_port_network(datapath)
@@ -533,28 +547,13 @@ class MetadataAgent(object):
             self.conf, bind_address=n_const.METADATA_V4_IP,
             network_id=net_name)
 
-        return namespace
+    def ensure_all_networks_provisioned(self, nets):
+        """Ensure that all requested datapaths are provisioned.
 
-    def ensure_all_networks_provisioned(self):
-        """Ensure that all datapaths are provisioned.
-
-        This function will make sure that all datapaths with ports bound to
-        our chassis have its namespace, VETH pair and OVS port created and
-        metadata proxy is up and running.
-
-        :return: A list with the namespaces that are currently serving
-        metadata
+        This function will make sure that requested datapaths have their
+        namespaces, VETH pair and OVS ports created and metadata proxies are up
+        and running.
         """
-        # Retrieve all VIF ports in our Chassis
-        ports = self.sb_idl.get_ports_on_chassis(self.chassis)
-        nets = {(str(p.datapath.uuid),
-            ovn_utils.get_network_name_from_datapath(p.datapath))
-            for p in self._vif_ports(ports)}
-        namespaces = []
         # Make sure that all those datapaths are serving metadata
         for datapath, net_name in nets:
-            netns = self.provision_datapath(datapath, net_name)
-            if netns:
-                namespaces.append(netns)
-
-        return namespaces
+            self.provision_datapath(datapath, net_name)

@@ -73,19 +73,29 @@ class TestMetadataAgent(base.BaseTestCase):
         self.agent.chassis = 'chassis'
         self.agent.ovn_bridge = 'br-int'
 
+        self.ports = []
+        for i in range(0, 3):
+            self.ports.append(makePort(datapath=DatapathInfo(uuid=str(i),
+                external_ids={'name': 'neutron-%d' % i})))
+        self.agent.sb_idl.get_ports_on_chassis.return_value = self.ports
+
     def test_sync(self):
+
         with mock.patch.object(
                 self.agent, 'ensure_all_networks_provisioned') as enp,\
                 mock.patch.object(
                     ip_lib, 'list_network_namespaces') as lnn,\
                 mock.patch.object(
                     self.agent, 'teardown_datapath') as tdp:
-            enp.return_value = ['ovnmeta-1', 'ovnmeta-2']
             lnn.return_value = ['ovnmeta-1', 'ovnmeta-2']
 
             self.agent.sync()
 
-            enp.assert_called_once_with()
+            enp.assert_called_once_with({
+                (p.datapath.uuid, p.datapath.uuid)
+                for p in self.ports
+            })
+
             lnn.assert_called_once_with()
             tdp.assert_not_called()
 
@@ -97,18 +107,20 @@ class TestMetadataAgent(base.BaseTestCase):
                     ip_lib, 'list_network_namespaces') as lnn,\
                 mock.patch.object(
                     self.agent, 'teardown_datapath') as tdp:
-            enp.return_value = ['ovnmeta-1', 'ovnmeta-2']
             lnn.return_value = ['ovnmeta-1', 'ovnmeta-2', 'ovnmeta-3',
                                 'ns1', 'ns2']
 
             self.agent.sync()
 
-            enp.assert_called_once_with()
+            enp.assert_called_once_with({
+                (p.datapath.uuid, p.datapath.uuid)
+                for p in self.ports
+            })
             lnn.assert_called_once_with()
             tdp.assert_called_once_with('3')
 
-    def test_ensure_all_networks_provisioned(self):
-        """Test networks are provisioned.
+    def test_get_networks(self):
+        """Test which networks are provisioned.
 
         This test simulates that this chassis has the following ports:
             * datapath '0': 1 port
@@ -117,44 +129,27 @@ class TestMetadataAgent(base.BaseTestCase):
             * datapath '3': 1 port with type 'external'
             * datapath '5': 1 port with type 'unknown'
 
-        It is expected that only datapaths '0', '1' and '2' are provisioned
-        once.
+        It is expected that only datapaths '0', '1' and '2' are scheduled for
+        provisioning.
         """
 
-        ports = []
-        for i in range(0, 3):
-            ports.append(makePort(datapath=DatapathInfo(uuid=str(i),
-                external_ids={'name': 'neutron-%d' % i})))
-        ports.append(makePort(datapath=DatapathInfo(uuid='1',
+        self.ports.append(makePort(datapath=DatapathInfo(uuid='1',
             external_ids={'name': 'neutron-1'})))
-        ports.append(makePort(datapath=DatapathInfo(uuid='3',
+        self.ports.append(makePort(datapath=DatapathInfo(uuid='3',
             external_ids={'name': 'neutron-3'}), type='external'))
-        ports.append(makePort(datapath=DatapathInfo(uuid='5',
+        self.ports.append(makePort(datapath=DatapathInfo(uuid='5',
             external_ids={'name': 'neutron-5'}), type='unknown'))
 
-        with mock.patch.object(self.agent, 'provision_datapath',
-                               return_value=None) as pdp,\
-                mock.patch.object(self.agent.sb_idl, 'get_ports_on_chassis',
-                                  return_value=ports):
-            self.agent.ensure_all_networks_provisioned()
-
-            expected_calls = [mock.call(str(i), str(i)) for i in range(0, 4)]
-            self.assertEqual(sorted(expected_calls),
-                             sorted(pdp.call_args_list))
+        expected_networks = {(str(i), str(i)) for i in range(0, 4)}
+        self.assertEqual(expected_networks, self.agent.get_networks())
 
     def test_update_datapath_provision(self):
-        ports = []
-        for i in range(0, 3):
-            ports.append(makePort(datapath=DatapathInfo(uuid=str(i),
-                external_ids={'name': 'neutron-%d' % i})))
-        ports.append(makePort(datapath=DatapathInfo(uuid='3',
+        self.ports.append(makePort(datapath=DatapathInfo(uuid='3',
             external_ids={'name': 'neutron-3'}), type='external'))
 
         with mock.patch.object(self.agent, 'provision_datapath',
                                return_value=None) as pdp,\
-                mock.patch.object(self.agent, 'teardown_datapath') as tdp,\
-                mock.patch.object(self.agent.sb_idl, 'get_ports_on_chassis',
-                                  return_value=ports):
+                mock.patch.object(self.agent, 'teardown_datapath') as tdp:
             self.agent.update_datapath('1', 'a')
             self.agent.update_datapath('3', 'b')
             expected_calls = [mock.call('1', 'a'), mock.call('3', 'b')]
@@ -162,16 +157,9 @@ class TestMetadataAgent(base.BaseTestCase):
             tdp.assert_not_called()
 
     def test_update_datapath_teardown(self):
-        ports = []
-        for i in range(0, 3):
-            ports.append(makePort(datapath=DatapathInfo(uuid=str(i),
-                external_ids={'name': 'neutron-%d' % i})))
-
         with mock.patch.object(self.agent, 'provision_datapath',
                                return_value=None) as pdp,\
-                mock.patch.object(self.agent, 'teardown_datapath') as tdp,\
-                mock.patch.object(self.agent.sb_idl, 'get_ports_on_chassis',
-                                  return_value=ports):
+                mock.patch.object(self.agent, 'teardown_datapath') as tdp:
             self.agent.update_datapath('5', 'a')
             tdp.assert_called_once_with('5', 'a')
             pdp.assert_not_called()
