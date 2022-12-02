@@ -34,6 +34,7 @@
       - ^rally-jobs/.*$
       - ^zuul.d/(?!(project)).*\.yaml
     vars:
+      configure_swap_size: 8192
       Q_BUILD_OVS_FROM_GIT: True
       MEMORY_TRACKER: True
       INSTALL_OVN: True
@@ -130,7 +131,6 @@
     vars:
       nslookup_target: 'opendev.org'
       enable_fips: True
-      configure_swap_size: 4096
       devstack_localrc:
         ISCSI_CHAP_ALGORITHMS: SHA3-256,SHA256
         Q_BUILD_OVS_FROM_GIT: true
@@ -144,7 +144,6 @@
     vars:
       nslookup_target: 'opendev.org'
       enable_fips: True
-      configure_swap_size: 4096
       devstack_localrc:
         ISCSI_CHAP_ALGORITHMS: SHA3-256,SHA256
         Q_BUILD_OVS_FROM_GIT: true
