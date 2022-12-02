@@ -34,6 +34,7 @@
       - ^rally-jobs/.*$
       - ^zuul.d/(?!(project)).*\.yaml
     vars:
+      configure_swap_size: 8192
       Q_BUILD_OVS_FROM_GIT: True
       OVN_BRANCH: v20.06.1
       # TODO(jlibosva): v2.13.1 is incompatible with kernel 4.15.0-118, sticking to commit hash until new v2.13 tag is created
@@ -127,7 +128,6 @@
       Functional testing for a FIPS enabled Centos 8 system
     vars:
       enable_fips: True
-      configure_swap_size: 4096
       devstack_localrc:
         ISCSI_CHAP_ALGORITHMS: SHA3-256,SHA256
         Q_BUILD_OVS_FROM_GIT: true
@@ -140,7 +140,6 @@
       Functional testing for a FIPS enabled Centos 8 system
     vars:
       enable_fips: True
-      configure_swap_size: 4096
       devstack_localrc:
         ISCSI_CHAP_ALGORITHMS: SHA3-256,SHA256
         Q_BUILD_OVS_FROM_GIT: true
