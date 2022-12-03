@@ -294,6 +294,13 @@ function _install_post_devstack {
         install_dstat
         start_dstat
     fi
+
+    if [[ "$IS_GATE" != "True" ]]; then
+        # Ensure home directory for the ``stack`` user has executable
+        # permissions for all. Only for local (non-gate) installations.
+        # Check https://review.opendev.org/c/openstack/devstack/+/838645
+        chmod +x $HOME
+    fi
 }
 
 
