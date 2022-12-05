@@ -100,6 +100,12 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         self.port = self._create_fake_port(self.qos_policy.id)
         self.qos_driver.br_int.get_port_tag_by_name = mock.Mock(
             return_value=1)
+        self.addCleanup(self._reset_meter_id_generator_singleton)
+
+    @staticmethod
+    def _reset_meter_id_generator_singleton():
+        if hasattr(qos_driver.MeterIDGenerator, '_instance'):
+            del(qos_driver.MeterIDGenerator._instance)
 
     def _create_bw_limit_rule_obj(self, direction):
         rule_obj = rule.QosBandwidthLimitRule()
