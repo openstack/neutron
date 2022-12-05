@@ -76,7 +76,8 @@ class ConfigureSslConnTestCase(base.BaseTestCase):
         ovs_idl_monitor = self._get_ovs_idl_monitor()
         conn = connection.Connection(idl=ovs_idl_monitor,
                                  timeout=1)
-        conn.start()
+        with mock.patch.object(connection.Connection, 'run'):
+            conn.start()
         self.mock_stream.ssl_set_private_key_file.assert_called_once_with(
             SSL_KEY_FILE)
         self.mock_stream.ssl_set_certificate_file.assert_called_once_with(
