@@ -228,10 +228,10 @@ class TrunkPlugin(service_base.ServicePluginBase):
         """Create a trunk."""
         trunk = self.validate(context, trunk['trunk'])
         sub_ports = [trunk_objects.SubPort(
-                         context=context,
-                         port_id=p['port_id'],
-                         segmentation_id=p['segmentation_id'],
-                         segmentation_type=p['segmentation_type'])
+            context=context,
+            port_id=p['port_id'],
+            segmentation_id=p['segmentation_id'],
+            segmentation_type=p['segmentation_type'])
                      for p in trunk['sub_ports']]
         admin_state_up = trunk.get('admin_state_up', True)
         # NOTE(status_police): a trunk is created in DOWN status. Depending
@@ -351,11 +351,11 @@ class TrunkPlugin(service_base.ServicePluginBase):
 
             for subport in subports:
                 obj = trunk_objects.SubPort(
-                               context=context,
-                               trunk_id=trunk_id,
-                               port_id=subport['port_id'],
-                               segmentation_type=subport['segmentation_type'],
-                               segmentation_id=subport['segmentation_id'])
+                    context=context,
+                    trunk_id=trunk_id,
+                    port_id=subport['port_id'],
+                    segmentation_type=subport['segmentation_type'],
+                    segmentation_id=subport['segmentation_id'])
                 obj.create()
                 trunk['sub_ports'].append(obj)
                 added_subports.append(obj)

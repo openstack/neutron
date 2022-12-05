@@ -62,7 +62,7 @@ class OVSTrunkSkeleton(agent.TrunkSkeleton):
                 LOG.debug("Event %s for subports: %s", event_type, subports)
                 if event_type == events.CREATED:
                     status = self.ovsdb_handler.wire_subports_for_trunk(
-                            ctx, trunk_id, subports)
+                        ctx, trunk_id, subports)
                 elif event_type == events.DELETED:
                     subport_ids = [subport.port_id for subport in subports]
                     status = self.ovsdb_handler.unwire_subports_for_trunk(

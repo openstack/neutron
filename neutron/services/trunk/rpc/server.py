@@ -95,9 +95,7 @@ class TrunkSkeleton(object):
                 continue
 
             trunk_updated_ports = self._process_trunk_subport_bindings(
-                                                                  el,
-                                                                  trunk,
-                                                                  subport_ids)
+                el, trunk, subport_ids)
             updated_ports[trunk.id].extend(trunk_updated_ports)
 
         return updated_ports

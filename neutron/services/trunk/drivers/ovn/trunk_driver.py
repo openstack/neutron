@@ -95,9 +95,9 @@ class OVNTrunkHandler(object):
                       "binding_profile: %s", subport.port_id)
             return
         ovn_txn.add(self.plugin_driver.nb_ovn.set_lswitch_port(
-                    lport_name=subport.port_id,
-                    parent_name=parent_port,
-                    tag=subport.segmentation_id))
+            lport_name=subport.port_id,
+            parent_name=parent_port,
+            tag=subport.segmentation_id))
         LOG.debug("Done setting parent %s for subport %s",
                   parent_port, subport.port_id)
 
@@ -129,10 +129,10 @@ class OVNTrunkHandler(object):
                       "binding_profile: %s", subport.port_id)
             return
         ovn_txn.add(self.plugin_driver.nb_ovn.set_lswitch_port(
-                    lport_name=subport.port_id,
-                    parent_name=[],
-                    up=False,
-                    tag=[]))
+            lport_name=subport.port_id,
+            parent_name=[],
+            up=False,
+            tag=[]))
         LOG.debug("Done unsetting parent for subport %s", subport.port_id)
 
     def trunk_created(self, trunk):

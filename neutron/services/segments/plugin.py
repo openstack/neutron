@@ -657,7 +657,7 @@ class SegmentHostRoutes(object):
                 host_routes=copy.deepcopy(host_routes),
                 gateway_ip=gateway_ip,
                 old_gateway_ip=orig_gateway_ip if (
-                        gateway_ip != orig_gateway_ip) else None)
+                    gateway_ip != orig_gateway_ip) else None)
             if self._host_routes_need_update(host_routes, calc_host_routes):
                 subnet['host_routes'] = calc_host_routes
 

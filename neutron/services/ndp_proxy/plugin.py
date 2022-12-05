@@ -309,7 +309,7 @@ class NDPProxyPlugin(l3_ndp_proxy.NDPProxyBase):
                         "router %s") % ndp_proxy['router_id']
                 raise exc.InvalidAddress(address=ip_address, reason=msg)
         network_dict = self.core_plugin.get_network(
-                context, port_dict['network_id'])
+            context, port_dict['network_id'])
         return network_dict.get('ipv6_address_scope', None)
 
     @db_base_plugin_common.convert_result_to_dict
@@ -329,7 +329,7 @@ class NDPProxyPlugin(l3_ndp_proxy.NDPProxyBase):
             raise exc.RouterNDPProxyNotEnable(router_id=router_dict['id'])
         extrnal_gw_info = router_dict[l3_apidef.EXTERNAL_GW_INFO]
         gw_network_dict = self.core_plugin.get_network(
-                context, extrnal_gw_info['network_id'])
+            context, extrnal_gw_info['network_id'])
         ext_address_scope = gw_network_dict.get('ipv6_address_scope', None)
         internal_address_scope = self._check_port(
             context, port_dict, ndp_proxy, router_ports)
