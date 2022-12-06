@@ -152,6 +152,11 @@ class KeepalivedVirtualRoute(object):
                 LOG.warning("keepalived_use_no_track cfg option is True but "
                             "keepalived on host seems to not support this "
                             "option")
+        # NOTE(mstinsky): neutron and keepalived are adding the same routes on
+        # primary routers. With this we ensure that both are adding the routes
+        # with the same procotol and prevent duplicated routes which result in
+        # neutron exception for ip route commands.
+        output += ' protocol static'
         return output
 
 

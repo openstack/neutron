@@ -79,11 +79,11 @@ vrrp_instance VR_1 {
         %(int_port_ipv6)s dev %(internal_device_name)s scope link no_track
     }
     virtual_routes {
-        0.0.0.0/0 via %(default_gateway_ip)s dev %(ex_device_name)s no_track
-        8.8.8.0/24 via 19.4.4.4 no_track
-        %(extra_subnet_cidr)s dev %(ex_device_name)s scope link no_track
+        0.0.0.0/0 via %(default_gateway_ip)s dev %(ex_device_name)s no_track protocol static
+        8.8.8.0/24 via 19.4.4.4 no_track protocol static
+        %(extra_subnet_cidr)s dev %(ex_device_name)s scope link no_track protocol static
     }
-}"""
+}"""  # noqa: E501 # pylint: disable=line-too-long
 
 
 def get_ovs_bridge(br_name):
