@@ -151,7 +151,7 @@ Compute nodes
       l2_population = True
 
       [securitygroup]
-      firewall_driver = neutron.agent.linux.iptables_firewall.OVSHybridIptablesFirewallDriver
+      firewall_driver = iptables_hybrid
 
 #. Configure the L3 agent. Add the following to ``/etc/neutron/l3_agent.ini``:
 
