@@ -41,12 +41,18 @@ class OVSAgentExtensionAPI(object):
     '''
 
     def __init__(self, int_br, tun_br, phys_brs=None,
-                 plugin_rpc=None):
+                 plugin_rpc=None,
+                 phys_ofports=None,
+                 bridge_mappings=None):
         super(OVSAgentExtensionAPI, self).__init__()
         self.br_int = int_br
         self.br_tun = tun_br
         self.br_phys = phys_brs or {}
         self.plugin_rpc = plugin_rpc
+        # OVS agent extensions use this map to get physical device ofport.
+        self.phys_ofports = phys_ofports or {}
+        # OVS agent extensions use this map to get ovs bridge.
+        self.bridge_mappings = bridge_mappings or {}
 
     def request_int_br(self):
         """Allows extensions to request an integration bridge to use for
@@ -74,3 +80,12 @@ class OVSAgentExtensionAPI(object):
         """
         for phy_br in self.br_phys.values():
             yield OVSCookieBridge(phy_br)
+
+    def request_physical_br(self, name):
+        """Allows extensions to request one physical bridge to use for
+        extension specific flows.
+        """
+        if not self.br_phys.get(name):
+            return None
+
+        return OVSCookieBridge(self.br_phys.get(name))
