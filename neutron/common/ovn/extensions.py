@@ -17,6 +17,9 @@ from neutron_lib.api.definitions import agent as agent_def
 from neutron_lib.api.definitions import allowedaddresspairs
 from neutron_lib.api.definitions import auto_allocated_topology
 from neutron_lib.api.definitions import availability_zone as az_def
+from neutron_lib.api.definitions import bgp
+from neutron_lib.api.definitions import bgp_4byte_asn
+from neutron_lib.api.definitions import bgp_dragentscheduler
 from neutron_lib.api.definitions import default_subnetpools
 from neutron_lib.api.definitions import dns
 from neutron_lib.api.definitions import dns_domain_keywords
@@ -161,4 +164,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     logging.ALIAS,
     vpn.ALIAS,
     vpn_endpoint_groups.ALIAS,
+    bgp.ALIAS,
+    bgp_4byte_asn.ALIAS,
+    bgp_dragentscheduler.ALIAS,
 ]
