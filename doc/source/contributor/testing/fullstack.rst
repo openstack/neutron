@@ -108,11 +108,15 @@ How to run fullstack tests locally?
 
 Fullstack tests can be run locally. That makes it much easier to understand
 exactly how it works, debug issues in the existing tests or write new ones.
-To run fullstack tests locally, you should clone
-`Devstack <https://opendev.org/openstack/devstack/>` and `Neutron
-<https://opendev.org/openstack/neutron>` repositories. When repositories are
-available locally, the first thing which needs to be done is preparation of the
-environment. There is a simple script in Neutron to do that.
+To run fullstack tests locally, you should clone the following repositories:
+
+* `Devstack <https://opendev.org/openstack/devstack/>`
+* `Neutron <https://opendev.org/openstack/neutron>`
+* `Requirements <https://opendev.org/openstack/requirements>`
+
+When repositories are available locally, the first thing which needs to be
+done is preparation of the environment. There is a simple script in Neutron
+to do that:
 
 .. code-block:: console
 
@@ -127,8 +131,24 @@ done you should see a message like:
    Phew, we're done!
 
 That means that all went well and you should be ready to run fullstack tests
-locally. Of course there are many tests there and running all of them can
-take a pretty long time so lets try to run just one:
+locally.
+
+Fullstack tests execute a custom dhclient-script. From kernel version 4.14 onward,
+apparmor on certain distros could deny the execution of this script. To be sure,
+check journalctl ::
+
+    sudo journalctl | grep DENIED | grep fullstack-dhclient-script
+
+To execute these tests, the easiest workaround is to disable apparmor ::
+
+    sudo systemctl stop apparmor
+    sudo systemctl disable apparmor
+
+A more granular solution could be to disable apparmor only for dhclient ::
+
+    sudo ln -s /etc/apparmor.d/sbin.dhclient /etc/apparmor.d/disable/
+
+Now that your environment is ready for tests, you can try to run just one:
 
 .. code-block:: console
 
