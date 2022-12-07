@@ -55,6 +55,8 @@ AddrPairsDiff = collections.namedtuple(
 
 PortExtraDHCPValidation = collections.namedtuple(
     'PortExtraDHCPValidation', ['failed', 'invalid_ipv4', 'invalid_ipv6'])
+BPInfo = collections.namedtuple(
+    'BPInfo', ['bp_param', 'vnic_type', 'capabilities'])
 
 
 class OvsdbClientCommand(object):
@@ -309,10 +311,17 @@ def is_security_groups_enabled(port):
 
 
 def validate_and_get_data_from_binding_profile(port):
+    """Validate the port binding profile
+
+    :param port: (dict) Neutron port dictionary.
+    :returns: (namedtuple BPInfo: dict, string, list) a tuple with the
+              dictionary of the port profile, the VNIC type and a list of port
+              capabilities.
+    """
     if (constants.OVN_PORT_BINDING_PROFILE not in port or
             not validators.is_attr_set(
                 port[constants.OVN_PORT_BINDING_PROFILE])):
-        return {}
+        BPInfo({}, None, [])
     param_set = {}
     param_dict = {}
     vnic_type = port.get(portbindings.VNIC_TYPE, portbindings.VNIC_NORMAL)
@@ -354,7 +363,7 @@ def validate_and_get_data_from_binding_profile(port):
         break
 
     if not param_dict:
-        return {}
+        return BPInfo({}, vnic_type, capabilities)
 
     # With this example param_set:
     #
@@ -406,7 +415,7 @@ def validate_and_get_data_from_binding_profile(port):
                     'an integer between 0 and 4095, inclusive') % tag
             raise n_exc.InvalidInput(error_message=msg)
 
-    return param_dict
+    return BPInfo(param_dict, vnic_type, capabilities)
 
 
 def is_dhcp_options_ignored(subnet):

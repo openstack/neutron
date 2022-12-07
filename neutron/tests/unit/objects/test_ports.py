@@ -71,6 +71,23 @@ class PortBindingDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         # The PB register returned is the INACTIVE one.
         self.assertEqual(self.obj_fields[1]['host'], dup_pb[0].host)
 
+    def test_get_port_binding_by_vnic_type(self):
+        self.update_obj_fields({'vnic_type': portbindings.VNIC_NORMAL},
+                               obj_fields=[self.obj_fields[0]])
+        self.update_obj_fields({'vnic_type': portbindings.VNIC_DIRECT},
+                               obj_fields=[self.obj_fields[1],
+                                           self.obj_fields[2]])
+        for i in range(3):
+            _obj = self._make_object(self.obj_fields[i])
+            _obj.create()
+
+        for vnic_type, pb_num in [(portbindings.VNIC_NORMAL, 1),
+                                  (portbindings.VNIC_DIRECT, 2),
+                                  (portbindings.VNIC_MACVTAP, 0)]:
+            pb = ports.PortBinding.get_port_binding_by_vnic_type(self.context,
+                                                                 vnic_type)
+            self.assertEqual(pb_num, len(pb))
+
 
 class DistributedPortBindingIfaceObjTestCase(
         obj_test_base.BaseObjectIfaceTestCase):

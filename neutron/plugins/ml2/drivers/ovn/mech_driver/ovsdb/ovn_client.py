@@ -73,6 +73,8 @@ OvnPortInfo = collections.namedtuple(
         "security_group_ids",
         "address4_scope_id",
         "address6_scope_id",
+        "vnic_type",
+        "capabilities",
     ],
 )
 
@@ -263,18 +265,18 @@ class OVNClient(object):
             return port_context.host if port_context else port.get(
                 portbindings.HOST_ID, '')
 
-        binding_prof = utils.validate_and_get_data_from_binding_profile(port)
-        if ovn_const.VIF_DETAILS_CARD_SERIAL_NUMBER in binding_prof:
+        bp_info = (
+            utils.validate_and_get_data_from_binding_profile(port))
+        if ovn_const.VIF_DETAILS_CARD_SERIAL_NUMBER in bp_info.bp_param:
             return self._sb_idl.get_chassis_by_card_serial_from_cms_options(
-                binding_prof[
+                bp_info.bp_param[
                     ovn_const.VIF_DETAILS_CARD_SERIAL_NUMBER]).hostname
         return ''
 
     def _get_port_options(self, port):
         context = n_context.get_admin_context()
-        binding_prof = utils.validate_and_get_data_from_binding_profile(port)
-        vnic_type = port.get(portbindings.VNIC_TYPE, portbindings.VNIC_NORMAL)
-        vtep_physical_switch = binding_prof.get('vtep-physical-switch')
+        bp_info = utils.validate_and_get_data_from_binding_profile(port)
+        vtep_physical_switch = bp_info.bp_param.get('vtep-physical-switch')
 
         port_type = ''
         cidrs = ''
@@ -283,7 +285,7 @@ class OVNClient(object):
         dhcpv4_options = self._get_port_dhcp_options(port, const.IP_VERSION_4)
         dhcpv6_options = self._get_port_dhcp_options(port, const.IP_VERSION_6)
         if vtep_physical_switch:
-            vtep_logical_switch = binding_prof.get('vtep-logical-switch')
+            vtep_logical_switch = bp_info.bp_param.get('vtep-logical-switch')
             port_type = 'vtep'
             options = {'vtep-physical-switch': vtep_physical_switch,
                        'vtep-logical-switch': vtep_logical_switch}
@@ -293,8 +295,8 @@ class OVNClient(object):
             port_security = []
         else:
             options = {}
-            parent_name = binding_prof.get('parent_name', [])
-            tag = binding_prof.get('tag', [])
+            parent_name = bp_info.bp_param.get('parent_name', [])
+            tag = bp_info.bp_param.get('tag', [])
             address = port['mac_address']
 
             ip_subnets = port.get('fixed_ips', [])
@@ -394,8 +396,8 @@ class OVNClient(object):
         # HA Chassis Group will bind the port to the highest
         # priority Chassis
         if port_type != ovn_const.LSP_TYPE_EXTERNAL:
-            if (vnic_type == portbindings.VNIC_REMOTE_MANAGED and
-                    ovn_const.VIF_DETAILS_PF_MAC_ADDRESS in binding_prof):
+            if (bp_info.vnic_type == portbindings.VNIC_REMOTE_MANAGED and
+                    ovn_const.VIF_DETAILS_PF_MAC_ADDRESS in bp_info.bp_param):
                 port_net = self._plugin.get_network(
                     context, port['network_id'])
                 options.update({
@@ -403,10 +405,10 @@ class OVNClient(object):
                     ovn_const.LSP_OPTIONS_VIF_PLUG_MTU_REQUEST_KEY: str(
                         port_net['mtu']),
                     ovn_const.LSP_OPTIONS_VIF_PLUG_REPRESENTOR_PF_MAC_KEY: (
-                        binding_prof.get(
+                        bp_info.bp_param.get(
                             ovn_const.VIF_DETAILS_PF_MAC_ADDRESS)),
                     ovn_const.LSP_OPTIONS_VIF_PLUG_REPRESENTOR_VF_NUM_KEY: str(
-                        binding_prof.get(ovn_const.VIF_DETAILS_VF_NUM))})
+                        bp_info.bp_param.get(ovn_const.VIF_DETAILS_VF_NUM))})
             chassis = self.determine_bind_host(port)
             if chassis:
                 # If OVN supports multi-chassis port bindings, use it for live
@@ -440,7 +442,8 @@ class OVNClient(object):
         return OvnPortInfo(port_type, options, addresses, port_security,
                            parent_name, tag, dhcpv4_options, dhcpv6_options,
                            cidrs.strip(), device_owner, sg_ids,
-                           address4_scope_id, address6_scope_id
+                           address4_scope_id, address6_scope_id,
+                           bp_info.vnic_type, bp_info.capabilities
                            )
 
     def sync_ha_chassis_group(self, context, network_id, txn):
@@ -533,23 +536,25 @@ class OVNClient(object):
 
     def get_external_ids_from_port(self, port):
         port_info = self._get_port_options(port)
-        external_ids = {ovn_const.OVN_PORT_NAME_EXT_ID_KEY: port['name'],
-                        ovn_const.OVN_DEVID_EXT_ID_KEY: port['device_id'],
-                        ovn_const.OVN_PROJID_EXT_ID_KEY: port['project_id'],
-                        ovn_const.OVN_CIDRS_EXT_ID_KEY: port_info.cidrs,
-                        ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY:
-                            port_info.device_owner,
-                        ovn_const.OVN_SUBNET_POOL_EXT_ADDR_SCOPE4_KEY:
-                            port_info.address4_scope_id,
-                        ovn_const.OVN_SUBNET_POOL_EXT_ADDR_SCOPE6_KEY:
-                            port_info.address6_scope_id,
-                        ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY:
-                            utils.ovn_name(port['network_id']),
-                        ovn_const.OVN_SG_IDS_EXT_ID_KEY:
-                            port_info.security_group_ids,
-                        ovn_const.OVN_REV_NUM_EXT_ID_KEY: str(
-                            utils.get_revision_number(
-                                port, ovn_const.TYPE_PORTS))}
+        external_ids = {
+            ovn_const.OVN_PORT_NAME_EXT_ID_KEY: port['name'],
+            ovn_const.OVN_DEVID_EXT_ID_KEY: port['device_id'],
+            ovn_const.OVN_PROJID_EXT_ID_KEY: port['project_id'],
+            ovn_const.OVN_CIDRS_EXT_ID_KEY: port_info.cidrs,
+            ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY: port_info.device_owner,
+            ovn_const.OVN_SUBNET_POOL_EXT_ADDR_SCOPE4_KEY:
+                port_info.address4_scope_id,
+            ovn_const.OVN_SUBNET_POOL_EXT_ADDR_SCOPE6_KEY:
+                port_info.address6_scope_id,
+            ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY:
+                utils.ovn_name(port['network_id']),
+            ovn_const.OVN_SG_IDS_EXT_ID_KEY: port_info.security_group_ids,
+            ovn_const.OVN_REV_NUM_EXT_ID_KEY: str(utils.get_revision_number(
+                port, ovn_const.TYPE_PORTS)),
+            ovn_const.OVN_PORT_VNIC_TYPE_KEY: port_info.vnic_type,
+            ovn_const.OVN_PORT_BP_CAPABILITIES_KEY:
+                ';'.join(port_info.capabilities),
+        }
         return port_info, external_ids
 
     def create_port(self, context, port):

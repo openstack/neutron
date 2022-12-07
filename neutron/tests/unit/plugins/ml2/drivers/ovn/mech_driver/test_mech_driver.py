@@ -1800,7 +1800,9 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                                    'ip_address': '10.0.0.55'},
                                   {'subnet_id': 'subnet-2',
                                    'ip_address': '10.0.1.55'},
-                                  ]}
+                                  ],
+                    portbindings.PROFILE: {},
+                    }
             subnet_ids = [
                 ip['subnet_id']
                 for ip in port.get('fixed_ips')
@@ -1826,6 +1828,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                     {"subnet_id": "subnet-1", "ip_address": "10.0.0.55"},
                     {"subnet_id": "subnet-2", "ip_address": "aef0::4"},
                 ],
+                portbindings.PROFILE: {},
             }
 
             subnet_ids = [ip["subnet_id"] for ip in port.get("fixed_ips")]
@@ -1910,6 +1913,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             'network_id': 'foo',
             'fixed_ips': [],
             portbindings.HOST_ID: 'fake-src',
+            portbindings.PROFILE: {},
         }
         with mock.patch.object(
                 self.mech_driver._ovn_client._sb_idl, 'is_col_present',
@@ -1942,7 +1946,9 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                                    'ip_address': '10.0.0.55'},
                                   {'subnet_id': 'subnet-2',
                                    'ip_address': '10.0.1.55'},
-                                  ]}
+                                  ],
+                    portbindings.PROFILE: {},
+                    }
             subnet_ids = [
                 ip['subnet_id']
                 for ip in port.get('fixed_ips')
@@ -4292,7 +4298,9 @@ class TestOVNVVirtualPort(OVNMechanismDriverTestCase):
                     'device_owner': device_owner,
                     'network_id': self.net['id'],
                     'fixed_ips': [{'subnet_id': self.subnet['id'],
-                                   'ip_address': '10.0.0.55'}]}
+                                   'ip_address': '10.0.0.55'}],
+                    portbindings.PROFILE: {},
+                    }
             port_info = self.mech_driver._ovn_client._get_port_options(port)
             self.assertEqual(ovn_const.LSP_TYPE_VIRTUAL, port_info.type)
             self.assertEqual(
