@@ -20,7 +20,7 @@ from neutron._i18n import _
 
 class RevisionConflict(n_exc.NeutronException):
     message = _('OVN revision number for %(resource_id)s (type: '
-                '%(resource_type)s) is equal or higher than the given '
+                '%(resource_type)s) is higher than the given '
                 'resource. Skipping update')
 
 
