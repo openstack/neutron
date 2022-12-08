@@ -784,10 +784,13 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
             attrs={'name': 'lsp0', 'type': ''})
         lsp1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'name': 'lsp1', 'type': constants.LSP_TYPE_VIRTUAL})
+        lsp2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'lsp2_not_present_in_neutron_db', 'type': ''})
         port0 = {'fixed_ips': [{'ip_address': mock.ANY}],
                  'network_id': mock.ANY, 'id': mock.ANY}
-        nb_idl.lsp_list.return_value.execute.return_value = (lsp0, lsp1)
-        self.fake_ovn_client._plugin.get_port.return_value = port0
+        nb_idl.lsp_list.return_value.execute.return_value = (lsp0, lsp1, lsp2)
+        self.fake_ovn_client._plugin.get_port.side_effect = [
+            port0, n_exc.PortNotFound(port_id=mock.ANY)]
 
         self.assertRaises(
             periodics.NeverAgain, self.periodic.update_port_virtual_type)
