@@ -22,6 +22,7 @@ from pyroute2 import protocols \
 
 from neutron._i18n import _
 from neutron import privileged
+from neutron.privileged.agent import linux as priv_linux
 from neutron.privileged.agent.linux import ip_lib
 
 
@@ -58,7 +59,7 @@ def list_tc_qdiscs(device, namespace=None):
     index = ip_lib.get_link_id(device, namespace)
     try:
         with ip_lib.get_iproute(namespace) as ip:
-            return ip_lib.make_serializable(ip.get_qdiscs(index=index))
+            return priv_linux.make_serializable(ip.get_qdiscs(index=index))
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise ip_lib.NetworkNamespaceNotFound(netns_name=namespace)
@@ -119,7 +120,7 @@ def list_tc_policy_classes(device, namespace=None):
     try:
         index = ip_lib.get_link_id(device, namespace)
         with ip_lib.get_iproute(namespace) as ip:
-            return ip_lib.make_serializable(ip.get_classes(index=index))
+            return priv_linux.make_serializable(ip.get_classes(index=index))
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise ip_lib.NetworkNamespaceNotFound(netns_name=namespace)
@@ -196,7 +197,7 @@ def list_tc_filters(device, parent, namespace=None, **kwargs):
     try:
         index = ip_lib.get_link_id(device, namespace)
         with ip_lib.get_iproute(namespace) as ip:
-            return ip_lib.make_serializable(
+            return priv_linux.make_serializable(
                 ip.get_filters(index=index, parent=parent, **kwargs))
     except OSError as e:
         if e.errno == errno.ENOENT:

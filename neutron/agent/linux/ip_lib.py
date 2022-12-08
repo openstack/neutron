@@ -36,6 +36,7 @@ from pyroute2 import netns  # pylint: disable=no-name-in-module
 
 from neutron._i18n import _
 from neutron.agent.common import utils
+from neutron.agent.linux import utils as linux_utils
 from neutron.common import utils as common_utils
 from neutron.privileged.agent.linux import ip_lib as privileged
 from neutron.privileged.agent.linux import utils as priv_utils
@@ -1369,19 +1370,12 @@ def delete_ip_rule(namespace, ip, iif=None, table=None, priority=None,
     privileged.delete_ip_rule(namespace, **cmd_args)
 
 
-def get_attr(pyroute2_obj, attr_name):
-    """Get an attribute from a PyRoute2 object"""
-    rule_attrs = pyroute2_obj.get('attrs', [])
-    for attr in (attr for attr in rule_attrs if attr[0] == attr_name):
-        return attr[1]
-
-
 def _parse_ip_address(pyroute2_address, device_name):
-    ip = get_attr(pyroute2_address, 'IFA_ADDRESS')
+    ip = linux_utils.get_attr(pyroute2_address, 'IFA_ADDRESS')
     ip_length = pyroute2_address['prefixlen']
     event = IP_ADDRESS_EVENTS.get(pyroute2_address.get('event'))
     cidr = common_utils.ip_to_cidr(ip, prefix=ip_length)
-    flags = get_attr(pyroute2_address, 'IFA_FLAGS')
+    flags = linux_utils.get_attr(pyroute2_address, 'IFA_FLAGS')
     dynamic = not bool(flags & ifaddrmsg.IFA_F_PERMANENT)
     tentative = bool(flags & ifaddrmsg.IFA_F_TENTATIVE)
     dadfailed = bool(flags & ifaddrmsg.IFA_F_DADFAILED)
@@ -1389,7 +1383,8 @@ def _parse_ip_address(pyroute2_address, device_name):
     return {'name': device_name,
             'cidr': cidr,
             'scope': scope,
-            'broadcast': get_attr(pyroute2_address, 'IFA_BROADCAST'),
+            'broadcast': linux_utils.get_attr(pyroute2_address,
+                                              'IFA_BROADCAST'),
             'dynamic': dynamic,
             'tentative': tentative,
             'dadfailed': dadfailed,
@@ -1417,7 +1412,8 @@ def get_devices_with_ip(namespace, name=None, **kwargs):
     devices = {}  # {device index: name}
     for ip_address in ip_addresses:
         index = ip_address['index']
-        name = get_attr(ip_address, 'IFA_LABEL') or devices.get(index)
+        name = (linux_utils.get_attr(ip_address, 'IFA_LABEL') or
+                devices.get(index))
         if not name:
             device = get_devices_info(namespace, index=index)
             if not device:
@@ -1435,31 +1431,35 @@ def get_devices_info(namespace, **kwargs):
     retval = {}
     for device in devices:
         ret = {'index': device['index'],
-               'name': get_attr(device, 'IFLA_IFNAME'),
-               'operstate': get_attr(device, 'IFLA_OPERSTATE'),
-               'linkmode': get_attr(device, 'IFLA_LINKMODE'),
-               'mtu': get_attr(device, 'IFLA_MTU'),
-               'promiscuity': get_attr(device, 'IFLA_PROMISCUITY'),
-               'mac': get_attr(device, 'IFLA_ADDRESS'),
-               'broadcast': get_attr(device, 'IFLA_BROADCAST')}
-        ifla_link = get_attr(device, 'IFLA_LINK')
+               'name': linux_utils.get_attr(device, 'IFLA_IFNAME'),
+               'operstate': linux_utils.get_attr(device, 'IFLA_OPERSTATE'),
+               'linkmode': linux_utils.get_attr(device, 'IFLA_LINKMODE'),
+               'mtu': linux_utils.get_attr(device, 'IFLA_MTU'),
+               'promiscuity': linux_utils.get_attr(device, 'IFLA_PROMISCUITY'),
+               'mac': linux_utils.get_attr(device, 'IFLA_ADDRESS'),
+               'broadcast': linux_utils.get_attr(device, 'IFLA_BROADCAST')}
+        ifla_link = linux_utils.get_attr(device, 'IFLA_LINK')
         if ifla_link:
             ret['parent_index'] = ifla_link
-        ifla_linkinfo = get_attr(device, 'IFLA_LINKINFO')
+        ifla_linkinfo = linux_utils.get_attr(device, 'IFLA_LINKINFO')
         if ifla_linkinfo:
-            ret['kind'] = get_attr(ifla_linkinfo, 'IFLA_INFO_KIND')
-            ifla_data = get_attr(ifla_linkinfo, 'IFLA_INFO_DATA')
+            ret['kind'] = linux_utils.get_attr(ifla_linkinfo, 'IFLA_INFO_KIND')
+            ifla_data = linux_utils.get_attr(ifla_linkinfo, 'IFLA_INFO_DATA')
             if ret['kind'] == 'vxlan':
-                ret['vxlan_id'] = get_attr(ifla_data, 'IFLA_VXLAN_ID')
-                ret['vxlan_group'] = get_attr(ifla_data, 'IFLA_VXLAN_GROUP')
-                ret['vxlan_link_index'] = get_attr(ifla_data,
-                                                   'IFLA_VXLAN_LINK')
+                ret['vxlan_id'] = linux_utils.get_attr(ifla_data,
+                                                       'IFLA_VXLAN_ID')
+                ret['vxlan_group'] = linux_utils.get_attr(ifla_data,
+                                                          'IFLA_VXLAN_GROUP')
+                ret['vxlan_link_index'] = linux_utils.get_attr(
+                    ifla_data, 'IFLA_VXLAN_LINK')
             elif ret['kind'] == 'vlan':
-                ret['vlan_id'] = get_attr(ifla_data, 'IFLA_VLAN_ID')
+                ret['vlan_id'] = linux_utils.get_attr(ifla_data,
+                                                      'IFLA_VLAN_ID')
             elif ret['kind'] == 'bridge':
-                ret['stp'] = get_attr(ifla_data, 'IFLA_BR_STP_STATE')
-                ret['forward_delay'] = get_attr(ifla_data,
-                                                'IFLA_BR_FORWARD_DELAY')
+                ret['stp'] = linux_utils.get_attr(ifla_data,
+                                                  'IFLA_BR_STP_STATE')
+                ret['forward_delay'] = linux_utils.get_attr(
+                    ifla_data, 'IFLA_BR_FORWARD_DELAY')
         retval[device['index']] = ret
 
     for device in retval.values():
@@ -1519,8 +1519,8 @@ def ip_monitor(namespace, queue, event_stop, event_started):
         cache_devices = {}
         with privileged.get_iproute(namespace) as ip:
             for device in ip.get_links():
-                cache_devices[device['index']] = get_attr(device,
-                                                          'IFLA_IFNAME')
+                cache_devices[device['index']] = linux_utils.get_attr(
+                    device, 'IFLA_IFNAME')
         _ip = privileged.get_iproute(namespace)
         ip_updates_thread = threading.Thread(target=read_ip_updates,
                                              args=(_ip, _queue))
@@ -1570,7 +1570,7 @@ def list_ip_routes(namespace, ip_version, scope=None, via=None, table=None,
     """List IP routes"""
     def get_device(index, devices):
         for device in (d for d in devices if d['index'] == index):
-            return get_attr(device, 'IFLA_IFNAME')
+            return linux_utils.get_attr(device, 'IFLA_IFNAME')
 
     def get_proto(proto_number):
         if isinstance(proto_number, int) and proto_number in rtnl.rt_proto:
@@ -1587,37 +1587,38 @@ def list_ip_routes(namespace, ip_version, scope=None, via=None, table=None,
     devices = privileged.get_link_devices(namespace)
     ret = []
     for route in routes:
-        cidr = get_attr(route, 'RTA_DST')
+        cidr = linux_utils.get_attr(route, 'RTA_DST')
         if cidr:
             cidr = '%s/%s' % (cidr, route['dst_len'])
         else:
             cidr = constants.IP_ANY[ip_version]
-        table = int(get_attr(route, 'RTA_TABLE'))
-        metric = (get_attr(route, 'RTA_PRIORITY') or
+        table = int(linux_utils.get_attr(route, 'RTA_TABLE'))
+        metric = (linux_utils.get_attr(route, 'RTA_PRIORITY') or
                   IP_ROUTE_METRIC_DEFAULT[ip_version])
         proto = get_proto(route['proto'])
         value = {
             'table': IP_RULE_TABLES_NAMES.get(table, table),
-            'source_prefix': get_attr(route, 'RTA_PREFSRC'),
+            'source_prefix': linux_utils.get_attr(route, 'RTA_PREFSRC'),
             'cidr': cidr,
             'scope': IP_ADDRESS_SCOPE[int(route['scope'])],
             'metric': metric,
             'proto': proto,
         }
 
-        multipath = get_attr(route, 'RTA_MULTIPATH')
+        multipath = linux_utils.get_attr(route, 'RTA_MULTIPATH')
         if multipath:
             value['device'] = None
             mp_via = []
             for mp in multipath:
                 mp_via.append({'device': get_device(int(mp['oif']), devices),
-                               'via': get_attr(mp, 'RTA_GATEWAY'),
+                               'via': linux_utils.get_attr(mp, 'RTA_GATEWAY'),
                                'weight': int(mp['hops']) + 1})
             value['via'] = mp_via
         else:
-            value['device'] = get_device(int(get_attr(route, 'RTA_OIF')),
-                                         devices)
-            value['via'] = get_attr(route, 'RTA_GATEWAY')
+            value['device'] = get_device(
+                int(linux_utils.get_attr(route, 'RTA_OIF')),
+                devices)
+            value['via'] = linux_utils.get_attr(route, 'RTA_GATEWAY')
 
         ret.append(value)
 

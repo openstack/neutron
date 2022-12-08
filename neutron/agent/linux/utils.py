@@ -474,3 +474,21 @@ class UnixDomainWSGIServer(wsgi.Server):
                              protocol=UnixDomainHttpProtocol,
                              log=logger,
                              log_format=cfg.CONF.wsgi_log_format)
+
+
+def get_attr(pyroute2_obj, attr_name):
+    """Get an attribute in a pyroute object
+
+    pyroute2 object attributes are stored under a key called 'attrs'. This key
+    contains a tuple of tuples. E.g.:
+      pyroute2_obj = {'attrs': (('TCA_KIND': 'htb'),
+                                ('TCA_OPTIONS': {...}))}
+
+    :param pyroute2_obj: (dict) pyroute2 object
+    :param attr_name: (string) first value of the tuple we are looking for
+    :return: (object) second value of the tuple, None if the tuple doesn't
+             exist
+    """
+    rule_attrs = pyroute2_obj.get('attrs', [])
+    for attr in (attr for attr in rule_attrs if attr[0] == attr_name):
+        return attr[1]

@@ -15,6 +15,8 @@
 import ctypes
 from ctypes import util as ctypes_util
 
+from pyroute2 import netlink
+
 
 _CDLL = None
 
@@ -30,3 +32,26 @@ def get_cdll():
         # Check https://bugs.launchpad.net/neutron/+bug/1870352
         _CDLL = ctypes.PyDLL(ctypes_util.find_library('c'), use_errno=True)
     return _CDLL
+
+
+def make_serializable(value):
+    """Make a pyroute2 object serializable
+
+    This function converts 'netlink.nla_slot' object (key, value) in a list
+    of two elements.
+    """
+    def _ensure_string(value):
+        return value.decode() if isinstance(value, bytes) else value
+
+    if isinstance(value, list):
+        return [make_serializable(item) for item in value]
+    elif isinstance(value, netlink.nla_slot):
+        return [_ensure_string(value[0]), make_serializable(value[1])]
+    elif isinstance(value, netlink.nla_base):
+        return make_serializable(value.dump())
+    elif isinstance(value, dict):
+        return {_ensure_string(key): make_serializable(data)
+                for key, data in value.items()}
+    elif isinstance(value, tuple):
+        return tuple(make_serializable(item) for item in value)
+    return _ensure_string(value)

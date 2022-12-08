@@ -29,6 +29,7 @@ from pyroute2.netlink.rtnl.tcmsg import common \
 
 from neutron._i18n import _
 from neutron.agent.linux import ip_lib
+from neutron.agent.linux import utils as linux_utils
 from neutron.common import utils
 from neutron.privileged.agent.linux import tc_lib as priv_tc_lib
 
@@ -109,25 +110,6 @@ def convert_to_kilobits(value, base):
     else:
         bits_value = utils.bytes_to_bits(val * (base ** UNITS[unit]))
     return utils.bits_to_kilobits(bits_value, base)
-
-
-def _get_attr(pyroute2_obj, attr_name):
-    """Get an attribute in a pyroute object
-
-    pyroute2 object attributes are stored under a key called 'attrs'. This key
-    contains a tuple of tuples. E.g.:
-      pyroute2_obj = {'attrs': (('TCA_KIND': 'htb'),
-                                ('TCA_OPTIONS': {...}))}
-
-    :param pyroute2_obj: (dict) pyroute2 object
-    :param attr_name: (string) first value of the tuple we are looking for
-    :return: (object) second value of the tuple, None if the tuple doesn't
-             exist
-    """
-    rule_attrs = pyroute2_obj.get('attrs', [])
-    for attr in (attr for attr in rule_attrs if attr[0] == attr_name):
-        return attr[1]
-    return
 
 
 def _get_tbf_burst_value(rate, burst_limit, kernel_hz):
@@ -366,13 +348,13 @@ def list_tc_qdiscs(device, namespace=None):
     retval = []
     for qdisc in qdiscs:
         qdisc_attrs = {
-            'qdisc_type': _get_attr(qdisc, 'TCA_KIND'),
+            'qdisc_type': linux_utils.get_attr(qdisc, 'TCA_KIND'),
             'parent': TC_QDISC_PARENT_NAME.get(
                 qdisc['parent'], _handle_from_hex_to_string(qdisc['parent'])),
             'handle': _handle_from_hex_to_string(qdisc['handle'])}
         if qdisc_attrs['qdisc_type'] == 'tbf':
-            tca_options = _get_attr(qdisc, 'TCA_OPTIONS')
-            tca_tbf_parms = _get_attr(tca_options, 'TCA_TBF_PARMS')
+            tca_options = linux_utils.get_attr(qdisc, 'TCA_OPTIONS')
+            tca_tbf_parms = linux_utils.get_attr(tca_options, 'TCA_TBF_PARMS')
             qdisc_attrs['max_kbps'] = int(tca_tbf_parms['rate'] * 8 / 1000)
             burst_bytes = _calc_burst(tca_tbf_parms['rate'],
                                       tca_tbf_parms['buffer'])
@@ -459,8 +441,8 @@ def list_tc_policy_class(device, namespace=None):
         if qdisc_type not in TC_QDISC_TYPES:
             return None, None, None
 
-        tca_params = _get_attr(tca_options,
-                               'TCA_' + qdisc_type.upper() + '_PARMS')
+        tca_params = linux_utils.get_attr(
+            tca_options, 'TCA_' + qdisc_type.upper() + '_PARMS')
         burst_kb = int(
             _calc_burst(tca_params['rate'], tca_params['buffer']) * 8 / 1000)
         max_kbps = int(tca_params['ceil'] * 8 / 1000)
@@ -475,8 +457,8 @@ def list_tc_policy_class(device, namespace=None):
         parent = TC_QDISC_PARENT_NAME.get(
             tc_class['parent'], _handle_from_hex_to_string(tc_class['parent']))
         classid = _handle_from_hex_to_string(tc_class['handle'])
-        qdisc_type = _get_attr(tc_class, 'TCA_KIND')
-        tca_options = _get_attr(tc_class, 'TCA_OPTIONS')
+        qdisc_type = linux_utils.get_attr(tc_class, 'TCA_KIND')
+        tca_options = linux_utils.get_attr(tc_class, 'TCA_OPTIONS')
         max_kbps, min_kbps, burst_kb = get_params(tca_options, qdisc_type)
         tc_class_data = {'device': device,
                          'index': index,
@@ -487,7 +469,7 @@ def list_tc_policy_class(device, namespace=None):
                          'min_kbps': min_kbps,
                          'max_kbps': max_kbps,
                          'burst_kb': burst_kb}
-        tca_stats = _get_attr(tc_class, 'TCA_STATS')
+        tca_stats = linux_utils.get_attr(tc_class, 'TCA_STATS')
         if tca_stats:
             tc_class_data['stats'] = tca_stats
         classes.append(tc_class_data)
@@ -583,10 +565,10 @@ def list_tc_filters(device, parent, namespace=None):
     filters = priv_tc_lib.list_tc_filters(device, parent, namespace=namespace)
     retval = []
     for filter in filters:
-        tca_options = _get_attr(filter, 'TCA_OPTIONS')
+        tca_options = linux_utils.get_attr(filter, 'TCA_OPTIONS')
         if not tca_options:
             continue
-        tca_u32_sel = _get_attr(tca_options, 'TCA_U32_SEL')
+        tca_u32_sel = linux_utils.get_attr(tca_options, 'TCA_U32_SEL')
         if not tca_u32_sel:
             continue
         keys = []
@@ -602,9 +584,10 @@ def list_tc_filters(device, parent, namespace=None):
 
         value = {'keys': keys}
 
-        tca_u32_police = _get_attr(tca_options, 'TCA_U32_POLICE')
+        tca_u32_police = linux_utils.get_attr(tca_options, 'TCA_U32_POLICE')
         if tca_u32_police:
-            tca_police_tbf = _get_attr(tca_u32_police, 'TCA_POLICE_TBF')
+            tca_police_tbf = linux_utils.get_attr(tca_u32_police,
+                                                  'TCA_POLICE_TBF')
             if tca_police_tbf:
                 value['rate_kbps'] = int(tca_police_tbf['rate'] * 8 / 1000)
                 value['burst_kb'] = int(

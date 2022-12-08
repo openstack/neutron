@@ -608,29 +608,6 @@ def list_netns(**kwargs):
     return netns.listnetns(**kwargs)
 
 
-def make_serializable(value):
-    """Make a pyroute2 object serializable
-
-    This function converts 'netlink.nla_slot' object (key, value) in a list
-    of two elements.
-    """
-    def _ensure_string(value):
-        return value.decode() if isinstance(value, bytes) else value
-
-    if isinstance(value, list):
-        return [make_serializable(item) for item in value]
-    elif isinstance(value, netlink.nla_slot):
-        return [_ensure_string(value[0]), make_serializable(value[1])]
-    elif isinstance(value, netlink.nla_base):
-        return make_serializable(value.dump())
-    elif isinstance(value, dict):
-        return {_ensure_string(key): make_serializable(data)
-                for key, data in value.items()}
-    elif isinstance(value, tuple):
-        return tuple(make_serializable(item) for item in value)
-    return _ensure_string(value)
-
-
 @tenacity.retry(
     retry=tenacity.retry_if_exception_type(
         netlink_exceptions.NetlinkDumpInterrupted),
@@ -645,7 +622,7 @@ def get_link_devices(namespace, **kwargs):
     """
     try:
         with get_iproute(namespace) as ip:
-            return make_serializable(ip.get_links(**kwargs))
+            return priv_linux.make_serializable(ip.get_links(**kwargs))
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
@@ -681,7 +658,7 @@ def get_ip_addresses(namespace, **kwargs):
     """
     try:
         with get_iproute(namespace) as ip:
-            return make_serializable(ip.get_addr(**kwargs))
+            return priv_linux.make_serializable(ip.get_addr(**kwargs))
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
@@ -699,7 +676,7 @@ def list_ip_rules(namespace, ip_version, match=None, **kwargs):
     """List all IP rules"""
     try:
         with get_iproute(namespace) as ip:
-            rules = make_serializable(ip.get_rules(
+            rules = priv_linux.make_serializable(ip.get_rules(
                 family=_IP_VERSION_FAMILY_MAP[ip_version],
                 match=match, **kwargs))
             for rule in rules:
@@ -824,7 +801,7 @@ def list_ip_routes(namespace, ip_version, device=None, table=None, **kwargs):
         None))
     try:
         with get_iproute(namespace) as ip:
-            return make_serializable(ip.route('show', **kwargs))
+            return priv_linux.make_serializable(ip.route('show', **kwargs))
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
@@ -858,7 +835,7 @@ def list_bridge_fdb(namespace=None, **kwargs):
     # NOTE(ralonsoh): fbd does not support ifindex filtering in pyroute2 0.5.14
     try:
         with get_iproute(namespace) as ip:
-            return make_serializable(ip.fdb('dump', **kwargs))
+            return priv_linux.make_serializable(ip.fdb('dump', **kwargs))
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
@@ -873,7 +850,7 @@ def _command_bridge_fdb(command, mac, device, dst_ip=None, namespace=None,
         if dst_ip:
             kwargs['dst'] = dst_ip
         with get_iproute(namespace) as ip:
-            return make_serializable(ip.fdb(command, **kwargs))
+            return priv_linux.make_serializable(ip.fdb(command, **kwargs))
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
