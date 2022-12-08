@@ -355,7 +355,7 @@ Enable neutron-sriov-nic-agent (Compute)
    .. code-block:: ini
 
       [securitygroup]
-      firewall_driver = neutron.agent.firewall.NoopFirewallDriver
+      firewall_driver = noop
 
       [sriov_nic]
       physical_device_mappings = physnet2:eth3
@@ -633,7 +633,7 @@ Known limitations
   .. code-block:: ini
 
      [securitygroup]
-     firewall_driver = neutron.agent.firewall.NoopFirewallDriver
+     firewall_driver = noop
 
 * SR-IOV is not integrated into the OpenStack Dashboard (horizon). Users must
   use the CLI or API to configure SR-IOV interfaces.
