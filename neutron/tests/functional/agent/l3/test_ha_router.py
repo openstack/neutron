@@ -337,7 +337,7 @@ class L3HATestCase(framework.L3AgentTestFramework):
         self.agent._process_updated_router(router1.router)
         self.wait_until_ha_router_has_state(router1, 'primary')
 
-    def test_ha_router_namespace_has_ip_nonlocal_bind_disabled(self):
+    def test_ha_router_namespace_has_ip_nonlocal_bind_enabled(self):
         router_info = self.generate_router_info(enable_ha=True)
         router = self.manage_router(self.agent, router_info)
         try:
@@ -350,7 +350,7 @@ class L3HATestCase(framework.L3AgentTestFramework):
                     "This kernel doesn't support %s in network namespaces." % (
                         ip_lib.IP_NONLOCAL_BIND))
             raise
-        self.assertEqual(0, ip_nonlocal_bind_value)
+        self.assertEqual(1, ip_nonlocal_bind_value)
 
     @testtools.skipUnless(netutils.is_ipv6_enabled(), "IPv6 is not enabled")
     def test_ha_router_addr_gen_mode(self):
