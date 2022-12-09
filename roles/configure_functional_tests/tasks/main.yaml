@@ -1,3 +1,9 @@
+- name: Set optional env vars
+  set_fact:
+    override_env:
+      OVN_BRANCH: "{{ OVN_BRANCH | default(omit) }}"
+      OVS_BRANCH: "{{ OVS_BRANCH | default(omit) }}"
+
 - shell:
     cmd: |
         set -e
@@ -13,8 +19,6 @@
         TOP_DIR={{ devstack_dir }}
         VENV={{ tests_venv }}
         STACK_USER=stack
-        OVS_BRANCH={{ OVS_BRANCH }}
-        OVN_BRANCH={{ OVN_BRANCH }}
         Q_BUILD_OVS_FROM_GIT={{ Q_BUILD_OVS_FROM_GIT }}
         MEMORY_TRACKER={{ MEMORY_TRACKER }}
         INSTALL_OVN={{ INSTALL_OVN }}
@@ -22,8 +26,6 @@
         DATABASE_USER=openstack_citest
         MYSQL_GATHER_PERFORMANCE={{ MYSQL_GATHER_PERFORMANCE | default(true) }}
 
-        source $DEVSTACK_PATH/functions
-        source $DEVSTACK_PATH/lib/neutron_plugins/ovn_agent
         source $NEUTRON_DIR/tools/configure_for_func_testing.sh
 
         if is_fedora; then
@@ -43,3 +45,4 @@
         configure_host_for_func_testing
 
     executable: /bin/bash
+  environment: "{{ override_env | default({})}}"
