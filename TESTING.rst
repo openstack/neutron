@@ -512,59 +512,7 @@ to deploy Neutron to the target host.
 Fullstack Tests
 ~~~~~~~~~~~~~~~
 
-To run all the fullstack tests, you may use: ::
-
-    tox -e dsvm-fullstack
-
-Since fullstack tests often require the same resources and
-dependencies as the functional tests, using the configuration script
-tools/configure_for_func_testing.sh is advised (as described above).
-Before running the script, you must first set the following environment
-variable so things are setup correctly ::
-
-    export VENV=dsvm-fullstack
-
-When running fullstack tests on a clean VM for the first time, it is
-important to make sure all of Neutron's package dependencies have been met.
-As mentioned in the functional test section above, this can be done by
-running the configure script with the '-i' argument ::
-
-    ./tools/configure_for_func_testing.sh ../devstack -i
-
-You can also run './stack.sh', and if successful, it will have also
-verified the package dependencies have been met.
-When running on a new VM it is suggested to set the following environment
-variable as well, to make sure that all requirements (including database and
-message bus) are installed and set ::
-
-    export IS_GATE=False
-
-Fullstack-based Neutron daemons produce logs to a sub-folder in the
-$OS_LOG_PATH directory (default: /opt/stack/logs, note: if running fullstack
-tests on a newly created VM, make sure that $OS_LOG_PATH exists with the
-correct permissions) called 'dsvm-fullstack-logs'.
-For example, a test named "test_example" will produce logs in
-$OS_LOG_PATH/dsvm-fullstack-logs/test_example/, as well as create
-$OS_LOG_PATH/dsvm-fullstack-logs/test_example.txt, so that is a good place
-to look if your test is failing.
-
-The fullstack test suite assumes 240.0.0.0/4 (Class E) range in the root
-namespace of the test machine is available for its usage.
-
-Fullstack tests execute a custom dhclient-script. From kernel version 4.14 onward,
-apparmor on certain distros could deny the execution of this script. To be sure,
-check journalctl ::
-
-    sudo journalctl | grep DENIED | grep fullstack-dhclient-script
-
-To execute these tests, the easiest workaround is to disable apparmor ::
-
-    sudo systemctl stop apparmor
-    sudo systemctl disable apparmor
-
-A more granular solution could be to disable apparmor only for dhclient ::
-
-    sudo ln -s /etc/apparmor.d/sbin.dhclient /etc/apparmor.d/disable/
+See :ref:`FullStack Testing<fullstack_testing>` guide.
 
 API & Scenario Tests
 ~~~~~~~~~~~~~~~~~~~~
