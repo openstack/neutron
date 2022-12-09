@@ -51,9 +51,13 @@ THROTTLER_MULTIPLIER = 1.5
 class HaRouterNamespace(namespaces.RouterNamespace):
     """Namespace for HA router.
 
-    This namespace sets the ip_nonlocal_bind to 0 for HA router namespaces.
-    It does so to prevent sending gratuitous ARPs for interfaces that got VIP
-    removed in the middle of processing.
+    This namespace sets the ip_nonlocal_bind to 1 for HA router namespaces.
+    It allows to setup applications on both routers simulteniously like
+    ipsec from VPNaaS which speed up theirs failover. And let failover work
+    for VPNaaS even when python is down.
+    It is safe to set ip_nonlocal_bind to 1 as we use keepalived > 1.2.20
+    and we do not set GARP from python code anymore. More details may be
+    found in related bug #1639315.
     It also disables ipv6 forwarding by default. Forwarding will be
     enabled during router configuration processing only for the primary node.
     It has to be disabled on all other nodes to avoid sending MLD packets
@@ -61,8 +65,8 @@ class HaRouterNamespace(namespaces.RouterNamespace):
     """
     def create(self):
         super(HaRouterNamespace, self).create(ipv6_forwarding=False)
-        # HA router namespaces should not have ip_nonlocal_bind enabled
-        ip_lib.set_ip_nonlocal_bind_for_namespace(self.name, 0)
+        # HA router namespaces should have ip_nonlocal_bind enabled
+        ip_lib.set_ip_nonlocal_bind_for_namespace(self.name, 1)
         # Linux should not automatically assign link-local addr for HA routers
         # They are managed by keepalived
         ip_wrapper = ip_lib.IPWrapper(namespace=self.name)

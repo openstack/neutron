@@ -2219,7 +2219,7 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         # here.
         src_machine.assert_no_ping(machine_diff_scope.ip)
 
-    def test_dvr_snat_namespace_has_ip_nonlocal_bind_disabled(self):
+    def test_dvr_snat_namespace_has_ip_nonlocal_bind_enabled(self):
         self.agent.conf.agent_mode = 'dvr_snat'
         router_info = self.generate_dvr_router_info(
             enable_ha=True, enable_snat=True)
@@ -2234,7 +2234,7 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
                     "This kernel doesn't support %s in network namespaces." % (
                         ip_lib.IP_NONLOCAL_BIND))
             raise
-        self.assertEqual(0, ip_nonlocal_bind_value)
+        self.assertEqual(1, ip_nonlocal_bind_value)
 
     def test_dvr_router_fip_namespace_routes(self):
         """Test to validate the floatingip namespace subnets routes."""
