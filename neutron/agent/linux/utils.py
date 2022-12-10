@@ -144,11 +144,11 @@ def execute(cmd, process_input=None, addl_env=None,
                    "Stdin: %(stdin)s; "
                    "Stdout: %(stdout)s; "
                    "Stderr: %(stderr)s" % {
-                        'returncode': returncode,
-                        'cmd': cmd,
-                        'stdin': process_input or '',
-                        'stdout': _stdout,
-                        'stderr': _stderr})
+                       'returncode': returncode,
+                       'cmd': cmd,
+                       'stdin': process_input or '',
+                       'stdout': _stdout,
+                       'stderr': _stderr})
 
             if log_fail_as_error:
                 LOG.error(msg)

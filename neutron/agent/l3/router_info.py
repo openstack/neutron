@@ -625,7 +625,7 @@ class RouterInfo(BaseRouterInfo):
         if 'subnets' in port:
             for subnet in port['subnets']:
                 if (netaddr.IPNetwork(subnet['cidr']).version == 6 and
-                    subnet['cidr'] !=
+                        subnet['cidr'] !=
                         lib_constants.PROVISIONAL_IPV6_PD_PREFIX):
                     return True
 
@@ -713,9 +713,9 @@ class RouterInfo(BaseRouterInfo):
                 for subnet in p.get('subnets', []):
                     if ipv6_utils.is_ipv6_pd_enabled(subnet):
                         old_prefix = self.agent.pd.update_subnet(
-                                                      self.router_id,
-                                                      subnet['id'],
-                                                      subnet['cidr'])
+                            self.router_id,
+                            subnet['id'],
+                            subnet['cidr'])
                         if old_prefix:
                             self._internal_network_updated(p, subnet['id'],
                                                            subnet['cidr'],
@@ -779,8 +779,8 @@ class RouterInfo(BaseRouterInfo):
         for subnet in ex_gw_port.get('subnets', []):
             is_gateway_not_in_subnet = (subnet['gateway_ip'] and
                                         not ipam_utils.check_subnet_ip(
-                                                subnet['cidr'],
-                                                subnet['gateway_ip']))
+                                            subnet['cidr'],
+                                            subnet['gateway_ip']))
             if is_gateway_not_in_subnet:
                 preserve_ips.append(subnet['gateway_ip'])
                 device = ip_lib.IPDevice(device_name, namespace=namespace)
@@ -939,7 +939,7 @@ class RouterInfo(BaseRouterInfo):
         return (
             'POSTROUTING', '! -o %(interface_name)s -m conntrack '
                            '! --ctstate DNAT -j ACCEPT' %
-                           {'interface_name': interface_name})
+            {'interface_name': interface_name})
 
     def external_gateway_nat_fip_rules(self, ex_gw_ip, interface_name):
         dont_snat_traffic_to_internal_ports_if_not_to_floating_ip = (
@@ -966,7 +966,7 @@ class RouterInfo(BaseRouterInfo):
         mark = self.agent_conf.external_ingress_mark
         mark_packets_entering_external_gateway_port = (
             'mark', '-i %s -j MARK --set-xmark %s/%s' %
-                    (interface_name, mark, lib_constants.ROUTER_MARK_MASK))
+            (interface_name, mark, lib_constants.ROUTER_MARK_MASK))
         return [mark_packets_entering_external_gateway_port]
 
     def _empty_snat_chains(self, iptables_manager):

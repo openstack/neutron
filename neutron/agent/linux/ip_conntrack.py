@@ -208,7 +208,7 @@ class IpConntrackManager(object):
         else:
             identifier = port['network_id']
         return identifier[:(constants.LINUX_DEV_LEN -
-                          constants.LINUX_DEV_PREFIX_LEN)]
+                            constants.LINUX_DEV_PREFIX_LEN)]
 
     def get_device_zone(self, port, create=True):
         device_key = self._device_key(port)

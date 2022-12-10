@@ -59,7 +59,7 @@ def load_interface_driver(conf, get_networks_callback=None):
 
     try:
         loaded_class = runtime.load_class_by_alias_or_classname(
-                INTERFACE_NAMESPACE, conf.interface_driver)
+            INTERFACE_NAMESPACE, conf.interface_driver)
         return loaded_class(conf, get_networks_callback=get_networks_callback)
     except ImportError:
         LOG.error("Error loading interface driver '%s'",

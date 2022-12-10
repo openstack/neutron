@@ -109,7 +109,7 @@ class NDPProxyAgentExtension(l3_extension.L3AgentExtension):
                         context, ri, ndp_proxy)):
                 continue
             (interface_name, namespace,
-                iptables_manager) = self._get_resource_by_router(ri)
+             iptables_manager) = self._get_resource_by_router(ri)
             agent_mode = ri.agent_conf.agent_mode
             is_distributed = ri.router.get('distributed')
             if (is_distributed and
@@ -199,7 +199,7 @@ class NDPProxyAgentExtension(l3_extension.L3AgentExtension):
             iptables_manager = ri.snat_iptables_manager
         else:
             interface_name = ri.fip_ns.get_ext_device_name(
-                    ri.fip_ns.agent_gateway_port['id'])
+                ri.fip_ns.agent_gateway_port['id'])
             namespace = ri.fip_ns.name
             iptables_manager = None
         return interface_name, namespace, iptables_manager
@@ -218,9 +218,9 @@ class NDPProxyAgentExtension(l3_extension.L3AgentExtension):
                    'proxy', v6_address, 'dev', interface_name]
             ip_wrapper.netns.execute(cmd, privsep_exec=True)
             accept_rule = '-i %s --destination %s -j ACCEPT' % (
-                        interface_name, v6_address)
+                interface_name, v6_address)
             iptables_manager.ipv6['filter'].add_rule(
-                    DEFAULT_NDP_PROXY_CHAIN, accept_rule, top=True)
+                DEFAULT_NDP_PROXY_CHAIN, accept_rule, top=True)
             cmd = ['ndsend', v6_address, interface_name]
             ip_wrapper.netns.execute(cmd, check_exit_code=False,
                                      log_fail_as_error=True,
@@ -252,9 +252,9 @@ class NDPProxyAgentExtension(l3_extension.L3AgentExtension):
                    'proxy', v6_address, 'dev', interface_name]
             ip_wrapper.netns.execute(cmd, privsep_exec=True)
             accept_rule = '-i %s --destination %s -j ACCEPT' % (
-                        interface_name, v6_address)
+                interface_name, v6_address)
             iptables_manager.ipv6['filter'].remove_rule(
-                    DEFAULT_NDP_PROXY_CHAIN, accept_rule, top=True)
+                DEFAULT_NDP_PROXY_CHAIN, accept_rule, top=True)
 
     @coordination.synchronized('router-lock-ns-{namespace}')
     def _process_delete_dvr(self, ndp_proxies, rtr_2_fip_dev,
@@ -336,14 +336,14 @@ class NDPProxyAgentExtension(l3_extension.L3AgentExtension):
                     '%s-%s') % (interface_name, cidr,
                                 wrap_name, DEFAULT_NDP_PROXY_CHAIN)
                 iptables_manager.ipv6['filter'].add_rule(
-                        'FORWARD', subnet_rule)
+                    'FORWARD', subnet_rule)
             for cidr in need_del:
                 subnet_rule = (
                     '-i %s --destination %s -j '
                     '%s-%s') % (interface_name, cidr,
                                 wrap_name, DEFAULT_NDP_PROXY_CHAIN)
                 iptables_manager.ipv6['filter'].remove_rule(
-                        'FORWARD', subnet_rule)
+                    'FORWARD', subnet_rule)
         ip_wrapper.netns.execute(sysctl_cmd, privsep_exec=True)
 
     def _process_router(self, context, router_id, enable_ndp_proxy):

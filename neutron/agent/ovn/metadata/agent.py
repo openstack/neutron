@@ -103,7 +103,7 @@ class PortBindingChassisEvent(row_event.RowEvent):
         with _SYNC_STATE_LOCK.read_lock():
             try:
                 net_name = ovn_utils.get_network_name_from_datapath(
-                        row.datapath)
+                    row.datapath)
                 LOG.info(self.LOG_MSG, row.logical_port, net_name)
                 self.agent.update_datapath(str(row.datapath.uuid), net_name)
             except ConfigException:

@@ -423,7 +423,7 @@ class ConjIPFlowManager(object):
         # NOTE(hangyang): Handle add/delete overlapped IPs among
         # remote security groups and remote address groups
         removed_ips = set([str(netaddr.IPNetwork(addr[0]).cidr) for addr in (
-                set(flow_state.keys()) - set(addr_to_conj.keys()))])
+            set(flow_state.keys()) - set(addr_to_conj.keys()))])
         ip_to_conj = collections.defaultdict(set)
         for addr, conj_ids in addr_to_conj.items():
             # Addresses from remote security groups have mac addresses,
@@ -897,7 +897,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                        ovsfw_consts.REG_NET)
         if network_type == lib_const.TYPE_VLAN:
             actions += 'strip_vlan,resubmit(,{:d})'.format(
-                    ovs_consts.BASE_INGRESS_TABLE)
+                ovs_consts.BASE_INGRESS_TABLE)
             self._add_flow(
                 flow_group_id=ofport,
                 table=ovs_consts.TRANSIENT_TABLE,
@@ -909,7 +909,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             # If the port belong to flat network, we need match vlan_tci and
             # needn't pop vlan
             actions += 'resubmit(,{:d})'.format(
-                    ovs_consts.BASE_INGRESS_TABLE)
+                ovs_consts.BASE_INGRESS_TABLE)
             self._add_flow(
                 flow_group_id=ofport,
                 table=ovs_consts.TRANSIENT_TABLE,
@@ -1182,7 +1182,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 try:
                     hex_ethertype = hex(int(permitted_ethertype, base=16))
                     action = ('resubmit(,%d)' %
-                        ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE)
+                              ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE)
                     self._add_flow(
                         table=ovs_consts.BASE_EGRESS_TABLE,
                         priority=95,
@@ -1328,8 +1328,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         )
 
         for state in (
-            ovsfw_consts.OF_STATE_ESTABLISHED_REPLY,
-            ovsfw_consts.OF_STATE_RELATED,
+                ovsfw_consts.OF_STATE_ESTABLISHED_REPLY,
+                ovsfw_consts.OF_STATE_RELATED,
         ):
             self._add_flow(
                 table=ovs_consts.RULES_EGRESS_TABLE,

@@ -35,7 +35,7 @@ class TrafficControlClassNotFound(RuntimeError):
 
     def __init__(self, message=None, classid=None, namespace=None):
         message = message or self.message % {
-                'classid': classid, 'namespace': namespace}
+            'classid': classid, 'namespace': namespace}
         super(TrafficControlClassNotFound, self).__init__(message)
 
 
@@ -87,7 +87,7 @@ def delete_tc_qdisc(device, parent=None, kind=None, namespace=None,
         # code (22, 'Invalid argument') if kind='ingress' and the qdisc does
         # not exist. This behaviour must be refactored in pyroute2.
         if ((e.code == errno.ENOENT or
-                (e.code == errno.EINVAL and kind == 'ingress')) and
+             (e.code == errno.EINVAL and kind == 'ingress')) and
                 raise_qdisc_not_found is False):
             # NOTE(ralonsoh): return error code for testing purposes
             return e.code

@@ -79,7 +79,7 @@ class DvrEdgeHaRouter(dvr_edge_router.DvrEdgeRouter,
 
     def add_centralized_floatingip(self, fip, fip_cidr):
         interface_name = self.get_snat_external_device_interface_name(
-                self.get_ex_gw_port())
+            self.get_ex_gw_port())
         self._add_vip(fip_cidr, interface_name)
 
         self.set_ha_port()

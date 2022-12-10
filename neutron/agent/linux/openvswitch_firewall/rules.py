@@ -194,12 +194,12 @@ def create_flows_from_rule_and_port(rule, port, conjunction=False):
     if is_valid_prefix(dst_ip_prefix):
         flow_template[FLOW_FIELD_FOR_IPVER_AND_DIRECTION[(
             utils.get_ip_version(dst_ip_prefix), n_consts.EGRESS_DIRECTION)]
-        ] = dst_ip_prefix
+                     ] = dst_ip_prefix
 
     if is_valid_prefix(src_ip_prefix):
         flow_template[FLOW_FIELD_FOR_IPVER_AND_DIRECTION[(
             utils.get_ip_version(src_ip_prefix), n_consts.INGRESS_DIRECTION)]
-        ] = src_ip_prefix
+                     ] = src_ip_prefix
 
     flows = create_protocol_flows(direction, flow_template, port, rule)
 

@@ -88,20 +88,20 @@ class PDDibbler(pd_driver.PDDriverBase):
         script_path = utils.get_conf_file_name(dcwa, 'notify', 'sh', True)
         buf = io.StringIO()
         buf.write('%s' % SCRIPT_TEMPLATE.render(
-                             prefix_path=self.prefix_path,
-                             l3_agent_pid=os.getpid()))
+            prefix_path=self.prefix_path,
+            l3_agent_pid=os.getpid()))
         file_utils.replace_file(script_path, buf.getvalue())
         os.chmod(script_path, 0o744)
 
         dibbler_conf = utils.get_conf_file_name(dcwa, 'client', 'conf', False)
         buf = io.StringIO()
         buf.write('%s' % CONFIG_TEMPLATE.render(
-                             enterprise_number=cfg.CONF.vendor_pen,
-                             va_id='0x%s' % self.converted_subnet_id,
-                             script_path='"%s/notify.sh"' % dcwa,
-                             interface_name='"%s"' % ex_gw_ifname,
-                             bind_address='%s' % lla,
-                             hint_prefix=hint_prefix))
+            enterprise_number=cfg.CONF.vendor_pen,
+            va_id='0x%s' % self.converted_subnet_id,
+            script_path='"%s/notify.sh"' % dcwa,
+            interface_name='"%s"' % ex_gw_ifname,
+            bind_address='%s' % lla,
+            hint_prefix=hint_prefix))
 
         file_utils.replace_file(dibbler_conf, buf.getvalue())
         return dcwa
@@ -150,11 +150,11 @@ class PDDibbler(pd_driver.PDDriverBase):
         pmon.unregister(uuid=self.requestor_id,
                         service_name=PD_SERVICE_NAME)
         pm = external_process.ProcessManager(
-                uuid=self.requestor_id,
-                namespace=router_ns,
-                service=PD_SERVICE_NAME,
-                conf=cfg.CONF,
-                pid_file=self.pid_path)
+            uuid=self.requestor_id,
+            namespace=router_ns,
+            service=PD_SERVICE_NAME,
+            conf=cfg.CONF,
+            pid_file=self.pid_path)
         if switch_over:
             pm.disable()
         else:

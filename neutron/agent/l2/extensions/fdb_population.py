@@ -27,7 +27,7 @@ from pyroute2.netlink import exceptions \
 from neutron.agent.linux import bridge_lib
 from neutron.conf.agent import l2_ext_fdb_population
 from neutron.plugins.ml2.drivers.linuxbridge.agent.common import (
-     constants as linux_bridge_constants)
+    constants as linux_bridge_constants)
 
 l2_ext_fdb_population.register_fdb_population_opts()
 

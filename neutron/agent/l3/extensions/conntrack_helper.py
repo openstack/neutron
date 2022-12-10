@@ -128,7 +128,7 @@ class ConntrackHelperAgentExtension(l3_extension.L3AgentExtension):
 
     def _get_chain_name(self, id):
         return (CONNTRACK_HELPER_CHAIN_PREFIX + id)[
-               :constants.MAX_IPTABLES_CHAIN_LEN_WRAP]
+            :constants.MAX_IPTABLES_CHAIN_LEN_WRAP]
 
     def _install_default_rules(self, iptables_manager, version):
         default_rule = '-j %s-%s' % (iptables_manager.wrap_name,

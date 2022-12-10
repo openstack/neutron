@@ -692,8 +692,9 @@ class DhcpAgent(manager.Manager):
             cached_ips = {i['ip_address']
                           for i in port_cached['fixed_ips']}
             if (new_ips.intersection(cached_ips) and
-                (created_port['id'] != port_cached['id'] or
-                 created_port['mac_address'] != port_cached['mac_address'])):
+                    (created_port['id'] != port_cached['id'] or
+                     created_port['mac_address'] !=
+                     port_cached['mac_address'])):
                 resync_reason = (
                     "Duplicate IP addresses found, "
                     "Port in cache: {cache_port_id}, "
@@ -848,9 +849,9 @@ class DhcpPluginApi(object):
     def __init__(self, topic, host):
         self.host = host
         target = oslo_messaging.Target(
-                topic=topic,
-                namespace=constants.RPC_NAMESPACE_DHCP_PLUGIN,
-                version='1.0')
+            topic=topic,
+            namespace=constants.RPC_NAMESPACE_DHCP_PLUGIN,
+            version='1.0')
         self.client = n_rpc.get_client(target)
 
     @property

@@ -437,8 +437,8 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             if snat_table in ['local', 'default', 'main']:
                 continue
             if (ip_version == lib_constants.IP_VERSION_4 and
-                snat_table in range(dvr_fip_ns.FIP_PR_START,
-                                    dvr_fip_ns.FIP_PR_END)):
+                    snat_table in range(dvr_fip_ns.FIP_PR_START,
+                                        dvr_fip_ns.FIP_PR_END)):
                 continue
             gateway_cidr = ip_rule['from']
             ip_lib.delete_ip_rule(namespace, ip=gateway_cidr, table=snat_table,
@@ -518,9 +518,9 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                 address_scopes_match = self._check_if_address_scopes_match(
                     port, ex_gw_port)
                 if (address_scopes_match and
-                    (self.agent_conf.agent_mode in
-                        [lib_constants.L3_AGENT_MODE_DVR,
-                         lib_constants.L3_AGENT_MODE_DVR_SNAT])):
+                        (self.agent_conf.agent_mode in
+                         [lib_constants.L3_AGENT_MODE_DVR,
+                          lib_constants.L3_AGENT_MODE_DVR_SNAT])):
                     self._add_interface_routing_rule_to_router_ns(port)
                     self._add_interface_route_to_fip_ns(port)
         self._snat_redirect_add_from_port(port)
@@ -532,9 +532,9 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         address_scopes_match = self._check_if_address_scopes_match(
             port, ex_gw_port)
         if (address_scopes_match and
-            (self.agent_conf.agent_mode in
-                [lib_constants.L3_AGENT_MODE_DVR,
-                 lib_constants.L3_AGENT_MODE_DVR_SNAT])):
+                (self.agent_conf.agent_mode in
+                 [lib_constants.L3_AGENT_MODE_DVR,
+                  lib_constants.L3_AGENT_MODE_DVR_SNAT])):
             return
         sn_port = self.get_snat_port_for_internal_port(port)
         if not sn_port:
@@ -556,9 +556,9 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         address_scopes_match = self._check_if_address_scopes_match(
             port, self.ex_gw_port)
         if (address_scopes_match and
-            (self.agent_conf.agent_mode in
-                [lib_constants.L3_AGENT_MODE_DVR,
-                 lib_constants.L3_AGENT_MODE_DVR_SNAT])):
+                (self.agent_conf.agent_mode in
+                 [lib_constants.L3_AGENT_MODE_DVR,
+                  lib_constants.L3_AGENT_MODE_DVR_SNAT])):
             self._delete_interface_route_in_fip_ns(port)
             self._delete_interface_routing_rule_in_router_ns(port)
             # If address scopes match there is no need to cleanup the
@@ -599,8 +599,8 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             address_scopes_match = self._check_if_address_scopes_match(
                 p, ex_gw_port)
             if (not address_scopes_match or
-                (self.agent_conf.agent_mode ==
-                    lib_constants.L3_AGENT_MODE_DVR_NO_EXTERNAL)):
+                    (self.agent_conf.agent_mode ==
+                     lib_constants.L3_AGENT_MODE_DVR_NO_EXTERNAL)):
                 internal_dev = self.get_internal_device_name(p['id'])
                 self._snat_redirect_add(gateway, p, internal_dev)
 
@@ -613,8 +613,8 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             address_scopes_match = self._check_if_address_scopes_match(
                 p, ex_gw_port)
             if (not address_scopes_match or
-                (self.agent_conf.agent_mode ==
-                    lib_constants.L3_AGENT_MODE_DVR_NO_EXTERNAL)):
+                    (self.agent_conf.agent_mode ==
+                     lib_constants.L3_AGENT_MODE_DVR_NO_EXTERNAL)):
                 internal_dev = self.get_internal_device_name(p['id'])
                 self._snat_redirect_remove(gateway, p, internal_dev)
 
@@ -718,8 +718,8 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             return ports_scopemark
 
         ext_scope_mark = self._get_port_devicename_scopemark(
-                [ext_port], self.get_internal_device_name,
-                interface_name=ext_device_name)
+            [ext_port], self.get_internal_device_name,
+            interface_name=ext_device_name)
         for ip_version in (lib_constants.IP_VERSION_4,
                            lib_constants.IP_VERSION_6):
             ports_scopemark[ip_version].update(
