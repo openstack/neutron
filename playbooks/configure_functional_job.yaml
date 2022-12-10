@@ -1,6 +1,8 @@
 - hosts: all
   roles:
-    - ensure-tox
+    - role: ensure-tox
+      vars:
+        ensure_tox_version: "<4"
     # TODO(slaweq): remove it when nftables will support syntax for src and
     # destination IP addresses in arp tables:
     - legacy_ebtables
