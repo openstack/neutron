@@ -611,9 +611,7 @@
       devstack_localrc:
         OVN_BUILD_FROM_SOURCE: True
         OVN_BRANCH: main
-        # TODO(ykarel) move to master once OVN main branch is fixed to
-        # work with https://github.com/openvswitch/ovs/commit/b8bf410
-        OVS_BRANCH: a77c7796f23a76190b61e2109a009df980253b0f
+        OVS_BRANCH: master
 
 - job:
     name: neutron-ovn-tempest-ovs-release-with-oslo-master
@@ -745,6 +743,4 @@
       devstack_localrc:
         OVN_BUILD_FROM_SOURCE: True
         OVN_BRANCH: "main"
-        # TODO(ykarel) move to master once OVN main branch is fixed to
-        # work with https://github.com/openvswitch/ovs/commit/b8bf410
-        OVS_BRANCH: a77c7796f23a76190b61e2109a009df980253b0f
+        OVS_BRANCH: master
