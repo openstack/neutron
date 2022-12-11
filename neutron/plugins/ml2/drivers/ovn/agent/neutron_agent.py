@@ -89,7 +89,8 @@ class NeutronAgent(abc.ABC):
             'configurations': {
                 'chassis_name': self.chassis.name,
                 'bridge-mappings':
-                    self.chassis.external_ids.get('ovn-bridge-mappings', '')},
+                    ovn_utils.get_ovn_chassis_other_config(self.chassis).get(
+                        'ovn-bridge-mappings', '')},
             'start_flag': True,
             'agent_type': self.agent_type,
             'id': self.agent_id,
@@ -141,9 +142,9 @@ class ControllerAgent(NeutronAgent):
 
     @staticmethod  # it is by default, but this makes pep8 happy
     def __new__(cls, chassis_private, driver):
-        external_ids = cls.chassis_from_private(chassis_private).external_ids
-        if ('enable-chassis-as-gw' in
-                external_ids.get('ovn-cms-options', [])):
+        _chassis = cls.chassis_from_private(chassis_private)
+        other_config = ovn_utils.get_ovn_chassis_other_config(_chassis)
+        if 'enable-chassis-as-gw' in other_config.get('ovn-cms-options', []):
             cls = ControllerGatewayAgent
         return super().__new__(cls)
 
@@ -166,8 +167,9 @@ class ControllerAgent(NeutronAgent):
 
     def update(self, chassis_private, clear_down=False):
         super().update(chassis_private, clear_down)
-        external_ids = self.chassis_from_private(chassis_private).external_ids
-        if 'enable-chassis-as-gw' in external_ids.get('ovn-cms-options', []):
+        _chassis = self.chassis_from_private(chassis_private)
+        other_config = ovn_utils.get_ovn_chassis_other_config(_chassis)
+        if 'enable-chassis-as-gw' in other_config.get('ovn-cms-options', []):
             self.__class__ = ControllerGatewayAgent
 
 
@@ -176,9 +178,10 @@ class ControllerGatewayAgent(ControllerAgent):
 
     def update(self, chassis_private, clear_down=False):
         super().update(chassis_private, clear_down)
-        external_ids = self.chassis_from_private(chassis_private).external_ids
+        _chassis = self.chassis_from_private(chassis_private)
+        other_config = ovn_utils.get_ovn_chassis_other_config(_chassis)
         if ('enable-chassis-as-gw' not in
-                external_ids.get('ovn-cms-options', [])):
+                other_config.get('ovn-cms-options', [])):
             self.__class__ = ControllerAgent
 
 
