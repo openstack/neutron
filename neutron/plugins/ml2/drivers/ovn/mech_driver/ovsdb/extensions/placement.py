@@ -110,8 +110,8 @@ def dict_chassis_config(state):
 class ChassisBandwidthConfigEvent(row_event.RowEvent):
     """Chassis create update event to track the bandwidth config changes."""
 
-    def __init__(self, placement_extension):
-        self._placement_extension = placement_extension
+    def __init__(self, driver):
+        self._driver = driver
         # NOTE(ralonsoh): BW resource provider information is stored in
         # "Chassis", not "Chassis_Private".
         table = 'Chassis'
@@ -119,9 +119,30 @@ class ChassisBandwidthConfigEvent(row_event.RowEvent):
         super().__init__(events, table, None)
         self.event_name = 'ChassisBandwidthConfigEvent'
 
+    @property
+    def placement_extension(self):
+        if self._driver._post_fork_event.is_set():
+            return self._driver._ovn_client.placement_extension
+
+    def match_fn(self, event, row, old=None):
+        # If the OVNMechanismDriver OVNClient has not been instantiated, the
+        # event is skipped. All chassis configurations are read during the
+        # OVN placement extension initialization.
+        if (not self.placement_extension or
+                not self.placement_extension.enabled):
+            return False
+        elif event == self.ROW_CREATE:
+            return True
+        elif event == self.ROW_UPDATE and old and hasattr(old, 'other_config'):
+            row_bw = _parse_ovn_cms_options(row)
+            old_bw = _parse_ovn_cms_options(old)
+            if row_bw != old_bw:
+                return True
+        return False
+
     def run(self, event, row, old):
-        name2uuid = self._placement_extension.name2uuid()
-        state = self._placement_extension.build_placement_state(row, name2uuid)
+        name2uuid = self.placement_extension.name2uuid()
+        state = self.placement_extension.build_placement_state(row, name2uuid)
         if not state:
             return
 
@@ -153,18 +174,6 @@ class OVNClientPlacementExtension(object):
         self._plugin = None
         self.uuid_ns = ovn_const.OVN_RP_UUID
         self.supported_vnic_types = ovn_const.OVN_SUPPORTED_VNIC_TYPES
-        if not self.enabled:
-            return
-
-        if not self._config_event:
-            self._config_event = ChassisBandwidthConfigEvent(self)
-            try:
-                self._driver._sb_idl.idl.notify_handler.watch_events(
-                    [self._config_event])
-            except AttributeError:
-                # "sb_idl.idl.notify_handler" is not present in the
-                # MaintenanceWorker.
-                pass
 
     @property
     def placement_plugin(self):

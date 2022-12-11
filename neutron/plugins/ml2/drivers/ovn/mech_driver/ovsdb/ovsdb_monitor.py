@@ -35,6 +35,8 @@ from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_hash_ring_db
 from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent as n_agent
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions import \
+    placement
 
 
 CONF = cfg.CONF
@@ -808,6 +810,7 @@ class OvnSbIdl(OvnIdlDistributedLock):
             ChassisAgentTypeChangeEvent(self.driver),
             ChassisMetadataAgentWriteEvent(self.driver),
             PortBindingUpdateVirtualPortsEvent(driver),
+            placement.ChassisBandwidthConfigEvent(driver),
         ])
 
     @classmethod
