@@ -34,13 +34,17 @@ def setup_conf(conf):
 
 
 def main():
-    """Main method for removing the duplicated port binding registers.
+    """Main method for removing duplicated port binding and pb level registers.
 
     This script finds all ``PortBinding`` registers with the same ``port_id``.
     That happens during the live-migration process. Once finished, the inactive
     port binding register is deleted. However, it could happen that during the
     live-migration, an error occurs and this deletion is not executed. The
     related port cannot be migrated anymore.
+
+    This script removes the inactive ``PortBinding`` referred to a port ID and
+    the corresponding ``PortBindingLevel`` registers associated to this port
+    ID and ``PortBinding.host``.
 
     This script should not be executed during a live migration process. It will
     remove the inactive port binding and will break the migration.
@@ -53,12 +57,15 @@ def main():
         dup_pbindings = ports_obj.PortBinding.get_duplicated_port_bindings(
             admin_ctx)
 
-        # Clean duplicated port bindings that are INACTIVE (if not in dry-run).
+        # Clean duplicated port bindings that are INACTIVE and the
+        # corresponding port binding level registers (if not in dry-run).
         if not _dry_run:
             for pbinding in dup_pbindings:
+                port_id, host = pbinding.port_id, pbinding.host
                 ports_obj.PortBinding.delete_objects(
-                    admin_ctx, status=constants.INACTIVE,
-                    port_id=pbinding.port_id)
+                    admin_ctx, status=constants.INACTIVE, port_id=port_id)
+                ports_obj.PortBindingLevel.delete_objects(
+                    admin_ctx, port_id=port_id, host=host)
 
         if dup_pbindings:
             port_ids = [pbinding.port_id for pbinding in dup_pbindings]

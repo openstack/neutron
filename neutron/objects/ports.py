@@ -106,9 +106,20 @@ class PortBinding(PortBindingBase):
     @classmethod
     @db_api.CONTEXT_READER
     def get_duplicated_port_bindings(cls, context):
-        return context.session.query(
+        # This query will return the port_id of all "ml2_port_bindings"
+        # registers that appears more than once (duplicated
+        # "ml2_port_bindings" registers).
+        # At the same time, this query returns only the "ml2_port_bindings"
+        # that have status=INACTIVE.
+        # NOTE(ralonsoh): we can't use "sqlalchemy.select" as in newer
+        # versions. That requires SQLAlchemy 1.4.
+        pbindings = context.session.query(
             cls.db_model).group_by(
             cls.db_model.port_id).having(sqlalchemy.func.count() > 1).all()
+        pb_port_ids = [pb.port_id for pb in pbindings]
+        _filter = and_(cls.db_model.port_id.in_(pb_port_ids),
+                       cls.db_model.status == constants.INACTIVE)
+        return context.session.query(cls.db_model).filter(_filter).all()
 
 
 @base.NeutronObjectRegistry.register
