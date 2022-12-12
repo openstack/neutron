@@ -67,9 +67,12 @@ INSTALL_MYSQL_ONLY=${INSTALL_MYSQL_ONLY:-False}
 # The gate should automatically install dependencies.
 INSTALL_BASE_DEPENDENCIES=${INSTALL_BASE_DEPENDENCIES:-$IS_GATE}
 INSTALL_OVN=${INSTALL_OVN:-True}
-OVN_BRANCH=${OVN_BRANCH:-main}
+OVN_BRANCH=${OVN_BRANCH:-v21.06.0}
 Q_BUILD_OVS_FROM_GIT=${Q_BUILD_OVS_FROM_GIT:-True}
-OVS_BRANCH=${OVS_BRANCH:-master}
+# OVS_BRANCH needs to be updated along with OVN_BRANCH, ovs is
+# being used as submodule in ovn repo, to get a working ovs
+# version can use git submodule status command on ovn repo
+OVS_BRANCH=${OVS_BRANCH:-a4b04276ab5934d087669ff2d191a23931335c87}
 
 
 if [ ! -f "$DEVSTACK_PATH/stack.sh" ]; then
