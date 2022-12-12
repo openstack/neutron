@@ -88,6 +88,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         super(OVNL3RouterPlugin, self).__init__()
         self._plugin_property = None
         self._mech = None
+        self._initialize_plugin_driver()
         self._ovn_client_inst = None
         self.scheduler = l3_ovn_scheduler.get_scheduler()
         self.port_forwarding = port_forwarding.OVNPortForwarding(self)
@@ -139,20 +140,24 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
             self._plugin_property = directory.get_plugin()
         return self._plugin_property
 
+    def _initialize_plugin_driver(self):
+        # This method initializes the mechanism driver variable and checks
+        # if any of the valid drivers ('ovn', 'ovn-sync') is loaded.
+        drivers = ('ovn', 'ovn-sync')
+        for driver in drivers:
+            try:
+                self._mech = self._plugin.mechanism_manager.mech_drivers[
+                    driver].obj
+                break
+            except KeyError:
+                pass
+        else:
+            raise ovn_l3_exc.MechanismDriverNotFound(mechanism_drivers=drivers)
+
     @property
     def _plugin_driver(self):
         if self._mech is None:
-            drivers = ('ovn', 'ovn-sync')
-            for driver in drivers:
-                try:
-                    self._mech = self._plugin.mechanism_manager.mech_drivers[
-                        driver].obj
-                    break
-                except KeyError:
-                    pass
-            else:
-                raise ovn_l3_exc.MechanismDriverNotFound(
-                    mechanism_drivers=drivers)
+            self._initialize_plugin_driver()
         return self._mech
 
     def get_plugin_type(self):

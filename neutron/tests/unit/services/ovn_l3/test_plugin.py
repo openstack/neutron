@@ -29,9 +29,13 @@ from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
+from neutron.api.v2 import router as api_router
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as config
+from neutron import manager as neutron_manager
+from neutron.plugins.ml2 import managers
+from neutron.services.ovn_l3 import exceptions as ovn_l3_exc
 from neutron.services.revisions import revision_plugin
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.extensions import test_extraroute
@@ -1713,6 +1717,13 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 self.context, 'router', []))
         mock_list_azs.assert_not_called()
 
+    def test_ovn_l3_router_plugin_without_ovn_mech_driver(self):
+        cfg.CONF.set_override('mechanism_drivers', [], group='ml2')
+        neutron_manager.NeutronManager._instance = None
+        with mock.patch.object(managers.TypeManager, 'initialize'):
+            self.assertRaises(ovn_l3_exc.MechanismDriverNotFound,
+                              api_router.APIRouter)
+
 
 class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
                            test_l3.L3NatDBIntTestCase,
@@ -1730,7 +1741,7 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
         return patch
 
     def setUp(self):
-        plugin = 'neutron.tests.unit.extensions.test_l3.TestNoL3NatPlugin'
+        plugin = 'neutron.tests.unit.extensions.test_l3.TestOVNL3Plugin'
         l3_plugin = ('neutron.services.ovn_l3.plugin.OVNL3RouterPlugin')
         service_plugins = {'l3_plugin_name': l3_plugin}
         config.register_opts()
