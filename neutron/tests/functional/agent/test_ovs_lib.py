@@ -217,11 +217,15 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         self._test_set_igmp_snooping_state(False)
 
     def test_get_datapath_id(self):
+        def _check_datapath_id():
+            return True if dpid in self.br.get_datapath_id() else False
+
         brdev = ip_lib.IPDevice(self.br.br_name)
         dpid = brdev.link.attributes['link/ether'].replace(':', '')
         self.br.set_db_attribute('Bridge',
                                  self.br.br_name, 'datapath_id', dpid)
-        self.assertIn(dpid, self.br.get_datapath_id())
+        # Wait until local OVS DB cache is updated.
+        utils.wait_until_true(_check_datapath_id, timeout=5)
 
     def _test_add_tunnel_port(self, attrs,
                               expected_tunnel_type=const.TYPE_GRE):
