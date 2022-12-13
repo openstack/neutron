@@ -17,11 +17,13 @@ import netaddr
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.validators import availability_zone as az_validator
 from neutron_lib import constants as n_const
+from neutron_lib.db import api as db_api
 from neutron_lib.objects import common_types
 from neutron_lib.utils import net as net_utils
 from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 from sqlalchemy import func
+from sqlalchemy import sql
 
 from neutron.db.models import dvr as dvr_models
 from neutron.db.models import l3
@@ -229,6 +231,16 @@ class Router(base.NeutronDbObject):
             ~l3.Router.project_id.in_(projects))
 
         return bool(query.count())
+
+    @staticmethod
+    @db_api.CONTEXT_READER
+    def get_router_ids_without_router_std_attrs(context):
+        r_attrs = l3_attrs.RouterExtraAttributes
+        query = context.session.query(l3.Router)
+        query = query.join(r_attrs, r_attrs.router_id == l3.Router.id,
+                           isouter=True)
+        query = query.filter(r_attrs.router_id == sql.null())
+        return [r.id for r in query.all()]
 
 
 @base.NeutronObjectRegistry.register
