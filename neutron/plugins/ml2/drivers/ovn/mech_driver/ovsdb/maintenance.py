@@ -25,6 +25,7 @@ from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib.api.definitions import segment as segment_def
 from neutron_lib import constants as n_const
 from neutron_lib import context as n_context
+from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_log import log
@@ -34,9 +35,11 @@ from ovsdbapp.backend.ovs_idl import event as row_event
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
+from neutron.db import l3_attrs_db
 from neutron.db import ovn_hash_ring_db as hash_ring_db
 from neutron.db import ovn_revision_numbers_db as revision_numbers_db
 from neutron.db import segments_db
+from neutron.objects import router as router_obj
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
 
 
@@ -826,6 +829,30 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
             with self._nb_idl.transaction(check_error=True) as txn:
                 for cmd in cmds:
                     txn.add(cmd)
+        raise periodics.NeverAgain()
+
+    # TODO(ralonsoh): Remove this in the Antelope+4 cycle
+    @periodics.periodic(spacing=600, run_immediately=True)
+    def create_router_extra_attributes_registers(self):
+        """Create missing ``RouterExtraAttributes`` registers.
+
+        ML2/OVN L3 plugin does not inherit the ``ExtraAttributesMixin`` class.
+        Before LP#1995974, the L3 plugin was not creating a
+        ``RouterExtraAttributes`` register per ``Routers`` register. This one
+        only execution method finds those ``Routers`` registers without the
+        child one and creates one with the default values.
+        """
+        if not self.has_lock:
+            return
+
+        context = n_context.get_admin_context()
+        for router_id in router_obj.Router.\
+                get_router_ids_without_router_std_attrs(context):
+            with db_api.CONTEXT_WRITER.using(context):
+                router_db = {'id': router_id}
+                l3_attrs_db.ExtraAttributesMixin.add_extra_attr(context,
+                                                                router_db)
+
         raise periodics.NeverAgain()
 
 

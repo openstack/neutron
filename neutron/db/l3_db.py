@@ -47,6 +47,7 @@ from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.common import ipv6_utils
 from neutron.common import utils
 from neutron.db import _utils as db_utils
+from neutron.db import l3_attrs_db
 from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 from neutron.db import standardattrdescription_db as st_attr
@@ -242,6 +243,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 status=constants.ACTIVE,
                 description=router.get('description'))
             context.session.add(router_db)
+            l3_attrs_db.ExtraAttributesMixin.add_extra_attr(context, router_db)
             registry.notify(resources.ROUTER, events.PRECOMMIT_CREATE,
                             self, context=context, router=router,
                             router_id=router['id'], router_db=router_db)
@@ -261,7 +263,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
     @db_api.retry_if_session_inactive()
     def create_router(self, context, router):
         r = router['router']
-        gw_info = r.pop(EXTERNAL_GW_INFO, None)
+        gw_info = r.get(EXTERNAL_GW_INFO, None)
+        # TODO(ralonsoh): migrate "tenant_id" to "project_id"
+        # https://blueprints.launchpad.net/neutron/+spec/keystone-v3
         create = functools.partial(self._create_router_db, context, r,
                                    r['tenant_id'])
         delete = functools.partial(self.delete_router, context)

@@ -12,8 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.db import api as db_api
 from oslo_utils import uuidutils
 
+from neutron.db import l3_attrs_db
 from neutron.objects.qos import binding as qos_binding
 from neutron.objects import router
 from neutron.tests.unit.objects import test_base as obj_test_base
@@ -123,6 +125,24 @@ class RouterDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
             [gw_port],
             [project, new_project])
         self.assertFalse(router_exist)
+
+    def test_get_router_ids_without_router_std_attrs(self):
+        def create_r_attr_reg(idx):
+            with db_api.CONTEXT_WRITER.using(self.context):
+                router_db = {'id': self.objs[idx].id}
+                l3_attrs_db.ExtraAttributesMixin.add_extra_attr(self.context,
+                                                                router_db)
+
+        for idx in range(3):
+            self.objs[idx].create()
+        expected_router_ids = [r.id for r in self.objs]
+
+        for idx in range(3):
+            router_ids = router.Router.\
+                get_router_ids_without_router_std_attrs(self.context)
+            self.assertEqual(expected_router_ids, router_ids)
+            create_r_attr_reg(idx)
+            expected_router_ids = expected_router_ids[1:]
 
 
 class RouterPortIfaceObjectTestCase(obj_test_base.BaseObjectIfaceTestCase):
