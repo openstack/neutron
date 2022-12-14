@@ -187,14 +187,17 @@ class RouterInfo(BaseRouterInfo):
     def update_routing_table(self, operation, route):
         self._update_routing_table(operation, route, self.ns_name)
 
-    def update_routing_table_ecmp(self, route_list):
+    def _update_routing_table_ecmp(self, route_list, namespace):
         multipath = [dict(via=route['nexthop'])
                      for route in route_list]
         try:
-            ip_lib.add_ip_route(self.ns_name, route_list[0]['destination'],
+            ip_lib.add_ip_route(namespace, route_list[0]['destination'],
                                 via=multipath)
         except (RuntimeError, OSError, pyroute2_exc.NetlinkError):
             pass
+
+    def update_routing_table_ecmp(self, route_list):
+        self._update_routing_table_ecmp(route_list, self.ns_name)
 
     def check_and_remove_ecmp_route(self, old_routes, remove_route):
         route_list = []

@@ -244,17 +244,28 @@ class DvrEdgeRouter(dvr_local_router.DvrLocalRouter):
             self._add_snat_rules(ex_gw_port, self.snat_iptables_manager,
                                  interface_name)
 
-    def update_routing_table(self, operation, route):
+    def _should_update_snat_routing_table(self):
         if self.get_ex_gw_port() and self._is_this_snat_host():
-            ns_name = self.snat_namespace.name
             # NOTE: For now let us apply the static routes both in SNAT
             # namespace and Router Namespace, to reduce the complexity.
             if self.snat_namespace.exists():
-                self._update_routing_table(operation, route, ns_name)
+                return True
             else:
                 LOG.error("The SNAT namespace %s does not exist for "
-                          "the router.", ns_name)
+                          "the router.", self.snat_namespace.name)
+        return False
+
+    def update_routing_table(self, operation, route):
+        if self._should_update_snat_routing_table():
+            ns_name = self.snat_namespace.name
+            self._update_routing_table(operation, route, ns_name)
         super(DvrEdgeRouter, self).update_routing_table(operation, route)
+
+    def update_routing_table_ecmp(self, route_list):
+        if self._should_update_snat_routing_table():
+            ns_name = self.snat_namespace.name
+            self._update_routing_table_ecmp(route_list, ns_name)
+        super(DvrEdgeRouter, self).update_routing_table_ecmp(route_list)
 
     def delete(self):
         super(DvrEdgeRouter, self).delete()
