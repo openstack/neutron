@@ -36,10 +36,25 @@
       - ^vagrant/.*$
       - ^zuul.d/(?!(project)).*\.yaml
     vars:
+      grenade_devstack_localrc:
+        shared:
+          Q_AGENT: openvswitch
+          Q_ML2_TENANT_NETWORK_TYPE: vxlan
+          Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
       devstack_services:
         etcd: false
         br-ex-tcpdump: true
         br-int-flows: true
+        # Neutron services
+        q-agt: true
+        q-dhcp: true
+        q-l3: true
+        q-meta: true
+        q-svc: true
+        q-metering: true
+        ovn-controller: false
+        ovn-northd: false
+        q-ovn-metadata-agent: false
         # Cinder services
         c-api: false
         c-bak: false
@@ -58,7 +73,20 @@
               debug_iptables_rules: True
     group-vars:
       subnode:
+        grenade_devstack_localrc:
+          shared:
+            Q_AGENT: openvswitch
+            Q_ML2_TENANT_NETWORK_TYPE: vxlan
+            Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
         devstack_services:
+          # Neutron services
+          q-agt: true
+          q-l3: true
+          q-meta: true
+          ovn-controller: false
+          ovs-vswitchd: false
+          ovsdb-server: false
+          q-ovn-metadata-agent: false
           # Cinder services
           c-bak: false
           c-vol: false
@@ -85,10 +113,25 @@
       - openstack/neutron
     irrelevant-files: *openvswitch-irrelevant-files
     vars:
+      grenade_devstack_localrc:
+        shared:
+          Q_AGENT: openvswitch
+          Q_ML2_TENANT_NETWORK_TYPE: vxlan
+          Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
       devstack_services:
         etcd: false
         br-ex-tcpdump: true
         br-int-flows: true
+        # Neutron services
+        q-agt: true
+        q-dhcp: true
+        q-l3: true
+        q-meta: true
+        q-svc: true
+        q-metering: true
+        ovn-controller: false
+        ovn-northd: false
+        q-ovn-metadata-agent: false
         # Cinder services
         c-api: false
         c-bak: false
@@ -130,12 +173,22 @@
               availability_zone: nova
     group-vars:
       subnode:
+        grenade_devstack_localrc:
+          shared:
+            Q_AGENT: openvswitch
+            Q_ML2_TENANT_NETWORK_TYPE: vxlan
+            Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
         devstack_services:
+          br-ex-tcpdump: true
+          br-int-flows: true
+          # Neutron services
           q-agt: true
           q-l3: true
           q-meta: true
-          br-ex-tcpdump: true
-          br-int-flows: true
+          ovn-controller: false
+          ovs-vswitchd: false
+          ovsdb-server: false
+          q-ovn-metadata-agent: false
           # Cinder services
           c-bak: false
           c-vol: false
