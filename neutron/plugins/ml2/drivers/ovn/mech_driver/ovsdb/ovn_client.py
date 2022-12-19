@@ -56,9 +56,23 @@ LOG = log.getLogger(__name__)
 
 
 OvnPortInfo = collections.namedtuple(
-    'OvnPortInfo', ['type', 'options', 'addresses', 'port_security',
-                    'parent_name', 'tag', 'dhcpv4_options', 'dhcpv6_options',
-                    'cidrs', 'device_owner', 'security_group_ids'])
+    "OvnPortInfo",
+    [
+        "type",
+        "options",
+        "addresses",
+        "port_security",
+        "parent_name",
+        "tag",
+        "dhcpv4_options",
+        "dhcpv6_options",
+        "cidrs",
+        "device_owner",
+        "security_group_ids",
+        "address4_scope_id",
+        "address6_scope_id",
+    ],
+)
 
 
 GW_INFO = collections.namedtuple('GatewayInfo', ['network_id', 'subnet_id',
@@ -222,6 +236,8 @@ class OVNClient(object):
 
         port_type = ''
         cidrs = ''
+        address4_scope_id = ""
+        address6_scope_id = ""
         dhcpv4_options = self._get_port_dhcp_options(port, const.IP_VERSION_4)
         dhcpv6_options = self._get_port_dhcp_options(port, const.IP_VERSION_6)
         if vtep_physical_switch:
@@ -263,6 +279,26 @@ class OVNClient(object):
                         LOG.debug('Subnet not found for ip address %s',
                                   ip_addr)
                         continue
+
+                    if subnet["subnetpool_id"]:
+                        try:
+                            subnet_pool = self._plugin.get_subnetpool(
+                                context, id=subnet["subnetpool_id"]
+                            )
+                            if subnet_pool["address_scope_id"]:
+                                ip_version = subnet_pool["ip_version"]
+                                if ip_version == const.IP_VERSION_4:
+                                    address4_scope_id = subnet_pool[
+                                        "address_scope_id"
+                                    ]
+                                elif ip_version == const.IP_VERSION_6:
+                                    address6_scope_id = subnet_pool[
+                                        "address_scope_id"
+                                    ]
+                        except n_exc.SubnetPoolNotFound:
+                            # swallow the exception and just continue if the
+                            # lookup failed
+                            pass
 
                     cidrs += ' {}/{}'.format(ip['ip_address'],
                                              subnet['cidr'].split('/')[1])
@@ -337,7 +373,9 @@ class OVNClient(object):
         sg_ids = ' '.join(utils.get_lsp_security_groups(port))
         return OvnPortInfo(port_type, options, addresses, port_security,
                            parent_name, tag, dhcpv4_options, dhcpv6_options,
-                           cidrs.strip(), device_owner, sg_ids)
+                           cidrs.strip(), device_owner, sg_ids,
+                           address4_scope_id, address6_scope_id
+                           )
 
     def sync_ha_chassis_group(self, context, network_id, txn):
         """Return the UUID of the HA Chassis Group.
@@ -408,10 +446,7 @@ class OVNClient(object):
 
         return ha_ch_grp.uuid
 
-    def create_port(self, context, port):
-        if utils.is_lsp_ignored(port):
-            return
-
+    def get_external_ids_from_port(self, port):
         port_info = self._get_port_options(port)
         external_ids = {ovn_const.OVN_PORT_NAME_EXT_ID_KEY: port['name'],
                         ovn_const.OVN_DEVID_EXT_ID_KEY: port['device_id'],
@@ -419,6 +454,10 @@ class OVNClient(object):
                         ovn_const.OVN_CIDRS_EXT_ID_KEY: port_info.cidrs,
                         ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY:
                             port_info.device_owner,
+                        ovn_const.OVN_SUBNET_POOL_EXT_ADDR_SCOPE4_KEY:
+                            port_info.address4_scope_id,
+                        ovn_const.OVN_SUBNET_POOL_EXT_ADDR_SCOPE6_KEY:
+                            port_info.address6_scope_id,
                         ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY:
                             utils.ovn_name(port['network_id']),
                         ovn_const.OVN_SG_IDS_EXT_ID_KEY:
@@ -426,6 +465,13 @@ class OVNClient(object):
                         ovn_const.OVN_REV_NUM_EXT_ID_KEY: str(
                             utils.get_revision_number(
                                 port, ovn_const.TYPE_PORTS))}
+        return port_info, external_ids
+
+    def create_port(self, context, port):
+        if utils.is_lsp_ignored(port):
+            return
+
+        port_info, external_ids = self.get_external_ids_from_port(port)
         lswitch_name = utils.ovn_name(port['network_id'])
 
         # It's possible to have a network created on one controller and then a
@@ -542,20 +588,8 @@ class OVNClient(object):
     def update_port(self, context, port, port_object=None):
         if utils.is_lsp_ignored(port):
             return
-        port_info = self._get_port_options(port)
-        external_ids = {ovn_const.OVN_PORT_NAME_EXT_ID_KEY: port['name'],
-                        ovn_const.OVN_DEVID_EXT_ID_KEY: port['device_id'],
-                        ovn_const.OVN_PROJID_EXT_ID_KEY: port['project_id'],
-                        ovn_const.OVN_CIDRS_EXT_ID_KEY: port_info.cidrs,
-                        ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY:
-                            port_info.device_owner,
-                        ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY:
-                            utils.ovn_name(port['network_id']),
-                        ovn_const.OVN_SG_IDS_EXT_ID_KEY:
-                            port_info.security_group_ids,
-                        ovn_const.OVN_REV_NUM_EXT_ID_KEY: str(
-                            utils.get_revision_number(
-                                port, ovn_const.TYPE_PORTS))}
+
+        port_info, external_ids = self.get_external_ids_from_port(port)
 
         check_rev_cmd = self._nb_idl.check_revision_number(
             port['id'], port, ovn_const.TYPE_PORTS)

@@ -30,6 +30,7 @@ from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
 from neutron.tests.unit import fake_resources as fakes
 from neutron.tests.unit.plugins.ml2 import test_security_group as test_sg
 from neutron.tests.unit import testlib_api
+from neutron_lib import exceptions as n_exc
 
 
 class TestSchemaAwarePeriodicsBase(testlib_api.SqlTestCaseLight):
@@ -413,6 +414,82 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         # by sync_ha_chassis_group()
         nb_idl.set_lswitch_port.assert_called_once_with(
             'p1', ha_chassis_group=hcg0.uuid)
+
+    def test_check_port_has_address_scope(self):
+        self.fake_ovn_client.is_external_ports_supported.return_value = True
+        nb_idl = self.fake_ovn_client._nb_idl
+
+        # Already has the address scope set but empty, nothing to do
+        lsp0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={
+                "uuid": "1f4323db-fb58-48e9-adae-6c6e833c581f",
+                "name": "lsp0",
+                "external_ids": {
+                    constants.OVN_SUBNET_POOL_EXT_ADDR_SCOPE4_KEY: "",
+                    constants.OVN_SUBNET_POOL_EXT_ADDR_SCOPE6_KEY: "",
+                },
+            }
+        )
+
+        # address scope is missing, needs update
+        lsp1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={
+                "uuid": "1f4323db-fb58-48e9-adae-6c6e833c581d",
+                "name": "lsp1",
+                "external_ids": {},
+            }
+        )
+
+        # Already has the address scope set, nothing to do
+        lsp2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={
+                "uuid": "1f4323db-fb58-48e9-adae-6c6e833c581a",
+                "name": "lsp2",
+                "external_ids": {
+                    constants.OVN_SUBNET_POOL_EXT_ADDR_SCOPE4_KEY: "fakev4",
+                    constants.OVN_SUBNET_POOL_EXT_ADDR_SCOPE6_KEY: "fakev6",
+                },
+            }
+        )
+
+        # address scope is missing, needs update but port is missing in ovn
+        lsp4 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={
+                "uuid": "1f4323db-fb58-48e9-adae-6c6e833c581c",
+                "name": "lsp4",
+                "external_ids": {},
+            }
+        )
+
+        nb_idl.db_find_rows.return_value.execute.return_value = [
+            lsp0,
+            lsp1,
+            lsp2,
+            lsp4,
+        ]
+
+        self.fake_ovn_client._plugin.get_port.side_effect = [
+            {"network_id": "net0"},
+            n_exc.PortNotFound(port_id="port"),
+        ]
+
+        external_ids = {
+            constants.OVN_SUBNET_POOL_EXT_ADDR_SCOPE4_KEY: "address_scope_v4",
+            constants.OVN_SUBNET_POOL_EXT_ADDR_SCOPE6_KEY: "address_scope_v6",
+        }
+
+        self.fake_ovn_client.get_external_ids_from_port.return_value = (
+            None,
+            external_ids,
+        )
+
+        self.assertRaises(
+            periodics.NeverAgain, self.periodic.check_port_has_address_scope
+        )
+
+        nb_idl.set_lswitch_port.assert_called_once_with(
+            "lsp1", external_ids=external_ids
+        )
 
     def test_check_for_mcast_flood_reports(self):
         nb_idl = self.fake_ovn_client._nb_idl
