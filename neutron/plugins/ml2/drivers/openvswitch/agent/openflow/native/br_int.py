@@ -384,9 +384,11 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
                                   allow_all=False):
         if allow_all:
             self.uninstall_flows(table_id=constants.LOCAL_SWITCHING,
-                                 in_port=port)
+                                 in_port=port,
+                                 strict=True, priority=9)
             self.uninstall_flows(table_id=constants.MAC_SPOOF_TABLE,
-                                 in_port=port)
+                                 in_port=port,
+                                 strict=True, priority=2)
             return
         mac_addresses = mac_addresses or []
         for address in mac_addresses:

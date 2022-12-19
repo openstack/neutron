@@ -630,6 +630,64 @@ class OVSIntegrationBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase):
         ]
         self.assertEqual(expected, self.mock.mock_calls)
 
+    def _test_set_allowed_macs_for_port(self, port, mac_addresses,
+                                        allow_all=False):
+        mock_dump_flows = mock.patch.object(self.br, 'dump_flows').start()
+        mock_dump_flows.return_value = []
+
+        self.br.set_allowed_macs_for_port(port, mac_addresses, allow_all)
+        (dp, ofp, ofpp) = self._get_dp()
+        expected = []
+        if allow_all:
+            expected += [
+                call.uninstall_flows(
+                    table_id=ovs_constants.LOCAL_SWITCHING,
+                    in_port=port, strict=True, priority=9),
+                call.uninstall_flows(
+                    table_id=ovs_constants.MAC_SPOOF_TABLE,
+                    in_port=port, strict=True, priority=2),
+            ]
+            self.assertEqual(expected, self.mock.mock_calls)
+            return
+
+        mac_addresses = mac_addresses or []
+        for address in mac_addresses:
+            expected.append(
+                call._send_msg(ofpp.OFPFlowMod(dp,
+                    cookie=self.stamp,
+                    instructions=[
+                        ofpp.OFPInstructionGotoTable(
+                            table_id=ovs_constants.LOCAL_EGRESS_TABLE),
+                    ],
+                    match=ofpp.OFPMatch(
+                        eth_src=address,
+                        in_port=port,
+                    ),
+                    priority=2,
+                    table_id=ovs_constants.MAC_SPOOF_TABLE),
+                               active_bundle=None))
+
+        expected.append(
+            call._send_msg(ofpp.OFPFlowMod(dp,
+                cookie=self.stamp,
+                instructions=[
+                    ofpp.OFPInstructionGotoTable(
+                        table_id=ovs_constants.MAC_SPOOF_TABLE),
+                ],
+                match=ofpp.OFPMatch(
+                    in_port=port,
+                ),
+                priority=9,
+                table_id=ovs_constants.LOCAL_SWITCHING),
+                           active_bundle=None))
+        self.assertEqual(expected, self.mock.mock_calls)
+
+    def test_set_allowed_macs_for_port(self):
+        self._test_set_allowed_macs_for_port(1, ["11:22:33:44:55:66"])
+
+    def test_set_allowed_macs_for_port_allow_all(self):
+        self._test_set_allowed_macs_for_port(None, None, allow_all=True)
+
     def _test_delete_dvr_dst_mac_for_arp(self, network_type):
         if network_type in (p_const.TYPE_VLAN, p_const.TYPE_FLAT):
             table_id = ovs_constants.DVR_TO_SRC_MAC_PHYSICAL
