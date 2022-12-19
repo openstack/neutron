@@ -624,13 +624,13 @@ Multiple routed provider segments per host
 Starting with Antelope, the support of routed provider networks has
 been enhanced to handle multiple segments per host. The main
 consequence will be for an operator to extend the IP pool without
-creating multiple networks and/or increasing broadcast domain..
+creating multiple networks and/or increasing broadcast domain.
 
 .. note::
 
    The present support is only available for OVS agent at this point.
 
-#. On a given provided network, create a second segment. In this
+#. On a given provider network, create a second segment. In this
    example, the second segment uses the ``provider1`` physical network
    with VLAN ID 2020.
 
