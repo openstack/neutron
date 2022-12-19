@@ -551,16 +551,20 @@ class MetadataAgent(object):
         # Configure the IP addresses on the VETH pair and remove those
         # that we no longer need.
         current_cidrs = {dev['cidr'] for dev in dev_info}
-        for ipaddr in current_cidrs - metadata_port.ip_addresses:
-            ip2.addr.delete(ipaddr)
-        for ipaddr in metadata_port.ip_addresses - current_cidrs:
-            # NOTE(dalvarez): metadata only works on IPv4. We're doing this
-            # extra check here because it could be that the metadata port has
-            # an IPv6 address if there's an IPv6 subnet with SLAAC in its
-            # network. Neutron IPAM will autoallocate an IPv6 address for every
-            # port in the network.
-            if utils.get_ip_version(ipaddr) == 4:
-                ip2.addr.add(ipaddr)
+        cidrs_to_delete = list(current_cidrs - metadata_port.ip_addresses)
+        if cidrs_to_delete:
+            ip2.addr.delete_multiple(cidrs_to_delete)
+
+        # NOTE(dalvarez): metadata only works on IPv4. We're doing this
+        # extra check here because it could be that the metadata port has
+        # an IPv6 address if there's an IPv6 subnet with SLAAC in its
+        # network. Neutron IPAM will autoallocate an IPv6 address for every
+        # port in the network.
+        ipv4_cidrs = []
+        for cidr in metadata_port.ip_addresses - current_cidrs:
+            if utils.get_ip_version(cidr) == n_const.IP_VERSION_4:
+                ipv4_cidrs.append(cidr)
+        ip2.addr.add_multiple(ipv4_cidrs)
 
         # Check that this port is not attached to any other OVS bridge. This
         # can happen when the OVN bridge changes (for example, during a

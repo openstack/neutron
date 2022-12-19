@@ -314,14 +314,33 @@ def cidr_broadcast_address(cidr):
         return str(broadcast)
 
 
+def cidr_broadcast_address_alternative(cidr):
+    """Wraps cidr_broadcast address and handles last cidr differently in
+    respect to netaddr
+
+    :param cidr: (string, netaddr.IPNetwork, netaddr.IPAddress) either an ipv4
+                 or ipv6 cidr.
+    :returns: (string) broadcast address of the cidr,
+              IP of the cidr if IPv4 /32 CIDR, otherwise None
+    """
+    broadcast = cidr_broadcast_address(cidr)
+    if broadcast:
+        return str(broadcast)
+    net = netaddr.IPNetwork(cidr)
+    if net.prefixlen == 32 and net.version == n_const.IP_VERSION_4:
+        return str(net.ip)
+    # NOTE(mtomaska): netaddr ver >= 0.9.0 will start returning None
+    # for IPv6 cidr /127 /128
+
+
 def get_ip_version(ip_or_cidr):
     return netaddr.IPNetwork(ip_or_cidr).version
 
 
 def ip_version_from_int(ip_version_int):
-    if ip_version_int == 4:
+    if ip_version_int == n_const.IP_VERSION_4:
         return n_const.IPv4
-    if ip_version_int == 6:
+    if ip_version_int == n_const.IP_VERSION_6:
         return n_const.IPv6
     raise ValueError(_('Illegal IP version number'))
 

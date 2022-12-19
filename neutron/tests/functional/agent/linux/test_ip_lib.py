@@ -612,6 +612,9 @@ class IpLibTestCase(IpLibTestFramework):
             cidr = netaddr.IPNetwork(ip_address['cidr'])
             self.assertNotEqual(ip_version, cidr.version)
 
+    def _get_cidrs_from_device(self, device_obj):
+        return [ip_info['cidr'] for ip_info in device_obj.addr.list()]
+
     def test_add_ip_address(self):
         ip_addresses = [
             (netaddr.IPNetwork("10.10.10.10/30"), "global", '10.10.10.11'),
@@ -628,21 +631,77 @@ class IpLibTestCase(IpLibTestFramework):
         self.assertRaises(RuntimeError,
                           device.addr.add, str(ip_address[0]), ip_address[1])
 
+    def test_add_ip_addresses(self):
+        expected_cidrs = [
+            "10.10.10.10/30",
+            "11.11.11.11/28",
+            "2801::1/120",
+            "fe80::/64"
+        ]
+        attr = self.generate_device_details(ip_cidrs=[])
+        device = self.manage_device(attr)
+
+        device.addr.add_multiple(expected_cidrs)
+
+        self.assertListEqual(
+            expected_cidrs,
+            self._get_cidrs_from_device(device)
+        )
+
     def test_delete_ip_address(self):
         attr = self.generate_device_details()
         cidr = attr.ip_cidrs[0]
         device = self.manage_device(attr)
 
-        device_cidrs = [ip_info['cidr'] for ip_info in device.addr.list()]
-        self.assertIn(cidr, device_cidrs)
+        device_cidrs_before_delete = self._get_cidrs_from_device(device)
+        self.assertIn(cidr, device_cidrs_before_delete)
 
         device.addr.delete(cidr)
-        device_cidrs = [ip_info['cidr'] for ip_info in device.addr.list()]
-        self.assertNotIn(cidr, device_cidrs)
+        device_cidrs_after_delete = self._get_cidrs_from_device(device)
+        self.assertNotIn(cidr, device_cidrs_after_delete)
 
         # Try to delete not existing IP address, it should be just fine and
         # finish without any error raised
         device.addr.delete(cidr)
+
+    def test_delete_all_ip_addresses(self):
+        cidrs = [
+            "10.10.10.10/30",
+            "11.11.11.11/28",
+            "2801::1/120",
+            "fe80::/64"
+        ]
+        attr = self.generate_device_details(ip_cidrs=cidrs)
+        device = self.manage_device(attr)
+
+        device_cidrs_before_delete = self._get_cidrs_from_device(device)
+        self.assertCountEqual(cidrs, device_cidrs_before_delete)
+
+        device.addr.delete_multiple(cidrs)
+
+        self.assertEqual(0, len(device.addr.list()))
+
+    def test_delete_some_ip_addresses(self):
+        cidrs = [
+            "10.10.10.10/30",
+            "11.11.11.11/28",
+            "2801::1/120",
+            "fe80::/64"
+        ]
+        attr = self.generate_device_details(ip_cidrs=cidrs)
+        device = self.manage_device(attr)
+
+        device_cidrs_before_delete = self._get_cidrs_from_device(device)
+        self.assertCountEqual(cidrs, device_cidrs_before_delete)
+
+        # delete the last two cidrs
+        device.addr.delete_multiple(cidrs[-2:])
+
+        # confirm only remaining cidrs are present
+        self.assertCountEqual(
+            cidrs[:2],
+            self._get_cidrs_from_device(device)
+        )
 
     def test_flush_ip_addresses(self):
         ip_addresses = [
