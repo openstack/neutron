@@ -171,9 +171,6 @@
               quota_floatingip: 500
               quota_security_group: 100
               quota_security_group_rule: 1000
-          # NOTE(slaweq): We can get rid of this hardcoded absolute path when
-          # devstack-tempest job will be switched to use lib/neutron instead of
-          # lib/neutron-legacy
           "/$NEUTRON_CORE_PLUGIN_CONF":
             ml2_type_vlan:
               network_vlan_ranges: foo:1:10
