@@ -338,7 +338,7 @@ class ChassisAgentWriteEvent(ChassisAgentEvent):
         # don't update the AgentCache. We use chassis_private.chassis to return
         # data about the agent.
         return event == self.ROW_CREATE or (
-            getattr(old, 'nb_cfg', False) and not
+            hasattr(old, 'nb_cfg') and not
             (self.table == 'Chassis_Private' and not row.chassis))
 
     def run(self, event, row, old):
