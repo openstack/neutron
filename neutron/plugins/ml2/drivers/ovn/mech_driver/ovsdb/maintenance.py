@@ -847,7 +847,11 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
             if lsp.type != '':
                 continue
 
-            port = self._ovn_client._plugin.get_port(context, lsp.name)
+            try:
+                port = self._ovn_client._plugin.get_port(context, lsp.name)
+            except n_exc.PortNotFound:
+                continue
+
             for ip in port.get('fixed_ips', []):
                 if utils.get_virtual_port_parents(
                         self._nb_idl, ip['ip_address'], port['network_id'],
