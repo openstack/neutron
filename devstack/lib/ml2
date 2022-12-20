@@ -1,6 +1,6 @@
 function configure_ml2_extension_drivers {
     if is_neutron_legacy_enabled; then
-        # NOTE(yamamoto): This overwrites what neutron-legacy set,
+        # NOTE(yamamoto): This overwrites what Devstack's neutron module set,
         # with the latest set of drivers.
         # While we modifies Q_ML2_PLUGIN_EXT_DRIVERS (via
         # neutron_ml2_extension_driver_add calls) in the post-config phase,
