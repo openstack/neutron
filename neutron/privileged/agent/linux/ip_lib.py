@@ -74,7 +74,7 @@ class NetworkInterfaceNotFound(RuntimeError):
         # and will call it always with passing only message from originally
         # raised exception.
         message = message or self.message % {
-                'device': device, 'namespace': namespace}
+            'device': device, 'namespace': namespace}
         super(NetworkInterfaceNotFound, self).__init__(message)
 
 
@@ -89,7 +89,7 @@ class InterfaceOperationNotSupported(RuntimeError):
         # and will call it always with passing only message from originally
         # raised exception.
         message = message or self.message % {
-                'device': device, 'namespace': namespace}
+            'device': device, 'namespace': namespace}
         super(InterfaceOperationNotSupported, self).__init__(message)
 
 

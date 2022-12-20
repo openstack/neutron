@@ -226,7 +226,7 @@ class NeutronDbSubnet(ipam_base.Subnet):
             return allocated_ips
 
         raise ipam_exc.IpAddressGenerationFailure(
-                  subnet_id=self.subnet_manager.neutron_id)
+            subnet_id=self.subnet_manager.neutron_id)
 
     def allocate(self, address_request):
         # NOTE(pbondar): Ipam driver is always called in context of already

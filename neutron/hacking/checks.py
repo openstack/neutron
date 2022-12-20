@@ -149,8 +149,8 @@ def check_oslo_i18n_wrapper(logical_line, filename, noqa):
 
     if (len(split_line) > 1 and split_line[0] in ('import', 'from')):
         if (split_line[1] == bad_i18n_module or
-            modulename != 'neutron' and split_line[1] in ('neutron.i18n',
-                                                          'neutron._i18n')):
+                modulename != 'neutron' and split_line[1] in
+                ('neutron.i18n', 'neutron._i18n')):
             msg = ("N340: %(found)s is found. Use %(module)s._i18n instead."
                    % {'found': split_line[1], 'module': modulename})
             yield (0, msg)

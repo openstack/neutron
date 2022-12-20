@@ -109,7 +109,7 @@ class MeterRuleManager(object):
         key = self.get_data_key(port_id, direction)
         try:
             meter_id = self.br_int.get_value_from_other_config(
-                 port_name, key, value_type=int)
+                port_name, key, value_type=int)
             self.generator.set_meter_id(key, meter_id)
             return meter_id
         except Exception:

@@ -547,14 +547,12 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         context = n_context.get_admin_context()
         with self._nb_idl.transaction(check_error=True) as txn:
             for port in ports:
-                if (
-                    port.external_ids.get(
-                        ovn_const.OVN_SUBNET_POOL_EXT_ADDR_SCOPE4_KEY
-                    ) is None or
-                    port.external_ids.get(
-                        ovn_const.OVN_SUBNET_POOL_EXT_ADDR_SCOPE6_KEY
-                    ) is None
-                ):
+                if (port.external_ids.get(
+                        ovn_const.OVN_SUBNET_POOL_EXT_ADDR_SCOPE4_KEY)
+                        is None or
+                        port.external_ids.get(
+                            ovn_const.OVN_SUBNET_POOL_EXT_ADDR_SCOPE6_KEY)
+                        is None):
                     try:
                         port_neutron = self._ovn_client._plugin.get_port(
                             context, port.name

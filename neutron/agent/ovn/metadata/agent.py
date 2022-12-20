@@ -370,7 +370,7 @@ class MetadataAgent(object):
         ports = self.sb_idl.get_ports_on_chassis(self.chassis)
         return {
             str(p.datapath.uuid): ovn_utils.get_network_name_from_datapath(
-                                      p.datapath)
+                p.datapath)
             for p in self._vif_ports(ports)
         }
 

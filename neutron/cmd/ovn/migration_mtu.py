@@ -83,8 +83,9 @@ def verify_network_mtu():
     success = True
     for network in conn.network.networks():
         if network.provider_physical_network is None and (
-            network.provider_network_type in NETWORK_TYPE_OVERHEAD_DIFF) and (
-                'adapted_mtu' not in network.tags):
+                network.provider_network_type in
+                NETWORK_TYPE_OVERHEAD_DIFF) and (
+                    'adapted_mtu' not in network.tags):
             print("adapted_mtu tag is not set for the Network "
                   "[" + str(network.name) + "]")
             success = False

@@ -55,7 +55,7 @@ def profile(f):
                 profiler.disable()
                 elapsed_time = datetime.now() - start_time
                 elapsed_time_ms = (elapsed_time.seconds * 1000.0 +
-                                  elapsed_time.microseconds / 1000.0)
+                                   elapsed_time.microseconds / 1000.0)
                 stream = io.StringIO()
                 stats = pstats.Stats(profiler, stream=stream).sort_stats(
                     SORT_BY)

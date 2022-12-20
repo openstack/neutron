@@ -75,7 +75,7 @@ class ListProbe(ProbeCommand, lister.Lister):
         columns = sorted(info[0].keys()) if info else []
         return (columns, (utils.get_item_properties(
             s, columns, formatters=self._formatters, )
-            for s in info), )
+                          for s in info), )
 
 
 class ClearProbe(ProbeCommand):
