@@ -15,6 +15,7 @@
 
 import copy
 import os
+import signal
 from unittest import mock
 
 import netaddr
@@ -32,6 +33,7 @@ import testtools
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import ip_lib
 from neutron.cmd import runtime_checks as checks
+from neutron.common import utils as common_utils
 from neutron.conf.agent import common as config
 from neutron.conf.agent import dhcp as dhcp_config
 from neutron.conf import common as base_config
@@ -1271,6 +1273,36 @@ class TestDhcpLocalProcess(TestBase):
                     mock.call.rmtree(mock.ANY, ignore_errors=True)]
         parent.assert_has_calls(expected)
         delete_ns.assert_called_with('qdhcp-ns')
+
+    @mock.patch.object(common_utils, 'wait_until_true')
+    def test_disable_blocking(self, mock_wait_until):
+        lp = LocalChild(self.conf, FakeDualNetwork())
+        mock_pm = mock.Mock()
+        with mock.patch('neutron.agent.linux.ip_lib.'
+                        'delete_network_namespace'), \
+                mock.patch.object(dhcp.DhcpLocalProcess,
+                                  '_get_process_manager',
+                                  return_value=mock_pm):
+            lp.disable(block=True)
+        self.assertEqual(1, mock_wait_until.call_count)
+        mock_pm.disable.assert_called_once_with(sig=str(int(signal.SIGTERM)))
+
+    @mock.patch.object(common_utils, 'wait_until_true')
+    def test_disable_blocking_sigterm_sigkill(self, mock_wait_until):
+        mock_wait_until.side_effect = [common_utils.WaitTimeout, None]
+
+        lp = LocalChild(self.conf, FakeDualNetwork())
+        mock_pm = mock.Mock()
+        with mock.patch('neutron.agent.linux.ip_lib.'
+                        'delete_network_namespace'), \
+                mock.patch.object(dhcp.DhcpLocalProcess,
+                                  '_get_process_manager',
+                                  return_value=mock_pm):
+            lp.disable(block=True)
+        self.assertEqual(2, mock_wait_until.call_count)
+        mock_pm.disable.assert_has_calls([
+            mock.call(sig=str(int(signal.SIGTERM))),
+            mock.call(sig=str(int(signal.SIGKILL)))])
 
     def test_get_interface_name(self):
         net = FakeDualNetwork()
