@@ -785,6 +785,19 @@ class PortFixture(fixtures.Fixture, metaclass=abc.ABCMeta):
             return VethPortFixture(bridge, namespace)
         tools.fail('Unexpected bridge type: %s' % type(bridge))
 
+    def set_port_mac_address(self):
+
+        def set_mac_address():
+            self.port.link.set_address(self.mac)
+            return self.port.link.address.lower() == self.mac.lower()
+
+        try:
+            common_utils.wait_until_true(set_mac_address, timeout=10)
+        except common_utils.WaitTimeout:
+            LOG.error("MAC address of the port %s not set properly. "
+                      "Requested MAC: %s; Actual MAC: %s",
+                      self.port, self.mac, self.port.link.address)
+
 
 class OVSBridgeFixture(fixtures.Fixture):
     """Create an OVS bridge.
@@ -912,7 +925,7 @@ class OVSPortFixture(PortFixture):
         bridge_port.link.set_up()
         self.qbr.addif(bridge_port.name)
 
-        self.port.link.set_address(self.mac)
+        self.set_port_mac_address()
         self.port.link.set_up()
 
     # NOTE(jlibosva): Methods below are taken from nova.virt.libvirt.vif
@@ -1003,8 +1016,7 @@ class LinuxBridgePortFixture(PortFixture):
             self.veth_fixture = self.useFixture(VethFixture())
         self.br_port, self.port = self.veth_fixture.ports
 
-        if self.mac:
-            self.port.link.set_address(self.mac)
+        self.set_port_mac_address()
 
         # bridge side
         br_ip_wrapper = ip_lib.IPWrapper(self.bridge.namespace)
