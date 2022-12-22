@@ -65,6 +65,9 @@ class MetadataAgentOvnSbIdl(ovsdb_monitor.OvnIdl):
             self, timeout=config.get_ovn_ovsdb_timeout())
         return impl_idl_ovn.OvsdbSbOvnIdl(conn)
 
+    def post_connect(self):
+        pass
+
 
 class MetadataAgentOvsIdl(object):
 
