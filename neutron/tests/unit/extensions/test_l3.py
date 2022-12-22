@@ -329,6 +329,15 @@ class TestNoL3NatPlugin(TestL3NatBasePlugin):
     supported_extension_aliases = [extnet_apidef.ALIAS]
 
 
+# This plugin class is for tests with plugin for OVN L3.
+class TestOVNL3Plugin(TestNoL3NatPlugin):
+
+    def __init__(self):
+        super().__init__()
+        _mech_ext = mock.Mock(obj=mock.ANY)
+        self.mechanism_manager = mock.Mock(mech_drivers={'ovn': _mech_ext})
+
+
 # A L3 routing service plugin class for tests with plugins that
 # delegate away L3 routing functionality
 class TestL3NatServicePlugin(TestL3PluginBaseAttributes,
