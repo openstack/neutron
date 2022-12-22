@@ -766,6 +766,17 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
 
     def _assert_dvr_floating_ips(self, router, snat_bound_fip=False,
                                  enable_gw=True):
+        def check_fg_port_created(device_name, ip_cidrs, mac, namespace):
+            success = ip_lib.device_exists_with_ips_and_mac(
+                device_name, ip_cidrs, mac, namespace=namespace)
+            if success:
+                return
+            dev = ip_lib.IPDevice(device_name, namespace=namespace)
+            dev_mac, dev_cidrs = dev.link.address, dev.addr.list()
+            self.fail('Device name: %s, expected MAC: %s, expected CIDRs: %s, '
+                      'device MAC: %s, device CIDRs: %s' %
+                      (device_name, mac, ip_cidrs, dev_mac, dev_cidrs))
+
         # in the fip namespace:
         # Check that the fg-<port-id> (floatingip_agent_gateway)
         # is created with the ip address of the external gateway port
@@ -783,12 +794,10 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         external_gw_port = floating_agent_gw_port[0]
         fip_ns = self.agent.get_fip_ns(floating_ips[0]['floating_network_id'])
         fip_ns_name = fip_ns.get_name()
-        fg_port_created_successfully = ip_lib.device_exists_with_ips_and_mac(
+        check_fg_port_created(
             fip_ns.get_ext_device_name(external_gw_port['id']),
             [self._port_first_ip_cidr(external_gw_port)],
-            external_gw_port['mac_address'],
-            namespace=fip_ns_name)
-        self.assertTrue(fg_port_created_successfully)
+            external_gw_port['mac_address'], fip_ns_name)
         # Check fpr-router device has been created
         device_name = fip_ns.get_int_device_name(router.router_id)
         fpr_router_device_created_successfully = ip_lib.device_exists(
