@@ -16,6 +16,7 @@ from neutron_lib import constants as const
 from neutron_lib.db import model_query
 from neutron_lib.objects import common_types
 from neutron_lib.utils import net as net_utils
+from oslo_log import log as logging
 
 from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
@@ -31,6 +32,8 @@ from neutron.objects import base
 from neutron.objects import network
 from neutron.objects import rbac_db
 from neutron.services.segments import exceptions as segment_exc
+
+LOG = logging.getLogger(__name__)
 
 
 @base.NeutronObjectRegistry.register
@@ -342,16 +345,15 @@ class Subnet(base.NeutronDbObject):
         # The host is known. Consider both routed and non-routed networks
         results = cls._query_filter_by_segment_host_mapping(query, host).all()
 
-        # For now, we're using a simplifying assumption that a host will only
-        # touch one segment in a given routed network.  Raise exception
-        # otherwise.  This restriction may be relaxed as use cases for multiple
-        # mappings are understood.
+        # For now, we know that OVS agent is supporting multi-segments.
         segment_ids = {subnet.segment_id
                        for subnet, mapping in results
                        if mapping}
+
         if len(segment_ids) > 1:
-            raise segment_exc.HostConnectedToMultipleSegments(
-                host=host, network_id=network_id)
+            LOG.info("The network '%s' has multiple segments, "
+                     "this is currently supported by OVS agent only.",
+                     network_id)
 
         return [subnet for subnet, _mapping in results]
 

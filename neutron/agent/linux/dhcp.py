@@ -369,11 +369,9 @@ class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
             self._remove_config_files()
 
     def _destroy_namespace_and_port(self):
-        segmentation_id = (
-            self.segment.segmentation_id if self.segment else None)
         try:
             self.device_manager.destroy(
-                self.network, self.interface_name, segmentation_id)
+                self.network, self.interface_name, self.segment)
         except RuntimeError:
             LOG.warning('Failed trying to delete interface: %s',
                         self.interface_name)

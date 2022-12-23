@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    Extend routed provider networks to allow provisioning more than
+    one segment per physical network.

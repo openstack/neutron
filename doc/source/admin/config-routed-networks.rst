@@ -616,3 +616,68 @@ subnets L3 agent when:
 * The "segments" plugin is enabled; this plugin is needed for routed provided
   networks.
 * The network is connected to a segment.
+
+
+Multiple routed provider segments per host
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Starting with Antelope, the support of routed provider networks has
+been enhanced to handle multiple segments per host. The main
+consequence will be for an operator to extend the IP pool without
+creating multiple networks and/or increasing broadcast domain..
+
+.. note::
+
+   The present support is only available for OVS agent at this point.
+
+#. On a given provided network, create a second segment. In this
+   example, the second segment uses the ``provider1`` physical network
+   with VLAN ID 2020.
+
+  .. code-block:: console
+
+      $ openstack network segment create --physical-network provider1 \
+        --network-type vlan --segment 2020 --network multisegment1 segment1-2
+      +------------------+--------------------------------------+
+      | Field            | Value                                |
+      +------------------+--------------------------------------+
+      | description      | None                                 |
+      | headers          |                                      |
+      | id               | 333b7925-9a89-4489-9992-e164c8cc8764 |
+      | name             | segment1-2                           |
+      | network_id       | 6ab19caa-dda9-4b3d-abc4-5b8f435b98d9 |
+      | network_type     | vlan                                 |
+      | physical_network | provider1                            |
+      | revision_number  | 1                                    |
+      | segmentation_id  | 2020                                 |
+      | tags             | []                                   |
+      +------------------+--------------------------------------+
+
+#. Create subnets on the ``segment1-2`` segment. In this example, the IPv4
+   subnet uses 203.0.114.0/24.
+
+   .. code-block:: console
+
+       $ openstack subnet create \
+        --network multisegment1 --network-segment segment1-2 \
+        --ip-version 4 --subnet-range 203.0.114.0/24 \
+        multisegment1-segment1-2
+      +-------------------+--------------------------------------+
+      | Field             | Value                                |
+      +-------------------+--------------------------------------+
+      | allocation_pools  | 203.0.114.2-203.0.114.254            |
+      | cidr              | 203.0.114.0/24                       |
+      | enable_dhcp       | True                                 |
+      | gateway_ip        | 203.0.114.1                          |
+      | id                | c428797a-6f8e-4cb1-b394-c404318a2762 |
+      | ip_version        | 4                                    |
+      | name              | multisegment1-segment1-2             |
+      | network_id        | 6ab19caa-dda9-4b3d-abc4-5b8f435b98d9 |
+      | revision_number   | 1                                    |
+      | segment_id        | 333b7925-9a89-4489-9992-e164c8cc8764 |
+      | tags              | []                                   |
+      +-------------------+--------------------------------------+
+
+Considering that, for a subnet of the given provider network
+``provider1`` running out of available IP, Neutron will automatically
+switch to the subnet ``multisegment1-segment1-2``.

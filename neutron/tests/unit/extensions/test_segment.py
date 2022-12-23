@@ -1220,11 +1220,10 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
                                      tenant_id=network['network']['tenant_id'],
                                      arg_list=(portbindings.HOST_ID,),
                                      **{portbindings.HOST_ID: 'fakehost'})
-        res = self.deserialize(self.fmt, response)
+        self.deserialize(self.fmt, response)
 
-        self.assertEqual(webob.exc.HTTPConflict.code, response.status_int)
-        self.assertEqual(segment_exc.HostConnectedToMultipleSegments.__name__,
-                         res['NeutronError']['type'])
+        # multi segments supported since Antelope.
+        self.assertEqual(webob.exc.HTTPCreated.code, response.status_int)
 
     def test_port_update_with_fixed_ips_ok_if_no_binding_host(self):
         """No binding host information is provided, subnets on segments"""
@@ -1552,12 +1551,10 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         port_id = port['port']['id']
         port_req = self.new_update_request('ports', data, port_id)
         response = port_req.get_response(self.api)
-        res = self.deserialize(self.fmt, response)
+        self.deserialize(self.fmt, response)
 
-        # Gets conflict because it can't map the host to a segment
-        self.assertEqual(webob.exc.HTTPConflict.code, response.status_int)
-        self.assertEqual(segment_exc.HostConnectedToMultipleSegments.__name__,
-                         res['NeutronError']['type'])
+        # multi segments supported since Antelope.
+        self.assertEqual(webob.exc.HTTPOk.code, response.status_int)
 
     def test_port_update_allocate_no_segments(self):
         """Binding information is provided, subnet created after port"""
