@@ -255,6 +255,7 @@ class TrackedResource(BaseResource):
                   {'project_id': project_id, 'resource': self.name})
         return usage_info
 
+    @db_api.CONTEXT_WRITER
     def resync(self, context, project_id):
         if (project_id not in self._out_of_sync_projects or
                 not self._track_resource_events):
