@@ -153,6 +153,17 @@ def check_keepalived_ipv6_support():
     return result
 
 
+def check_keepalived_garp_on_sighup_support():
+    result = checks.keepalived_garp_on_sighup_supported()
+    if not result:
+        LOG.error('The installed version of keepalived may not support '
+                  'sending gratious ARP on SIGHUP, which may delay '
+                  'dataplane downtime during HA router failover. '
+                  'Please use at least version 1.2.20 which support '
+                  'sending garp on SIGHUP.')
+    return result
+
+
 def check_dibbler_version():
     result = checks.dibbler_version_supported()
     if not result:
@@ -369,6 +380,10 @@ OPTS = [
                     help=_('Check ebtables installation')),
     BoolOptCallback('keepalived_ipv6_support', check_keepalived_ipv6_support,
                     help=_('Check keepalived IPv6 support')),
+    BoolOptCallback('keepalived_garp_on_sighup_support',
+                    check_keepalived_garp_on_sighup_support,
+                    help=_('Check keepalived support sending garp on '
+                           'SIGHUP.')),
     BoolOptCallback('dibbler_version', check_dibbler_version,
                     help=_('Check minimal dibbler version'),
                     deprecated_for_removal=True,
