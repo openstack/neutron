@@ -251,17 +251,15 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
 
         vms[4].block_until_boot()
 
-        netcat = net_helpers.NetcatTester(vms[4].namespace,
-            vms[0].namespace, vms[0].ip, 3355,
+        self.assert_connection(
+            vms[4].namespace, vms[0].namespace, vms[0].ip, 3355,
             net_helpers.NetcatTester.TCP)
 
-        self.addCleanup(netcat.stop_processes)
-        self.assertTrue(netcat.test_connectivity())
-
         self.client.delete_security_group_rule(rule2['id'])
-        common_utils.wait_until_true(lambda: netcat.test_no_connectivity(),
-                                     sleep=8)
-        netcat.stop_processes()
+
+        self.assert_no_connection(
+            vms[4].namespace, vms[0].namespace, vms[0].ip, 3355,
+            net_helpers.NetcatTester.TCP)
 
         # 8. check if multiple overlapping remote rules work
         self.safe_client.create_security_group_rule(
