@@ -336,7 +336,8 @@ class Port(base.NeutronDbObject):
     # Version 1.5: Added qos_network_policy_id field
     # Version 1.6: Added numa_affinity_policy field
     # Version 1.7: Added port_device field
-    VERSION = '1.7'
+    # Version 1.8: Added hints field
+    VERSION = '1.8'
 
     db_model = models_v2.Port
 
@@ -369,6 +370,9 @@ class Port(base.NeutronDbObject):
         'dns': obj_fields.ObjectField('PortDNS', nullable=True),
         'fixed_ips': obj_fields.ListOfObjectsField(
             'IPAllocation', nullable=True
+        ),
+        'hints': obj_fields.ObjectField(
+            'PortHints', nullable=True
         ),
         # TODO(ihrachys): consider converting to boolean
         'security': obj_fields.ObjectField(
@@ -407,6 +411,7 @@ class Port(base.NeutronDbObject):
         'distributed_bindings',
         'dns',
         'fixed_ips',
+        'hints',
         'numa_affinity_policy',
         'qos_policy_id',
         'qos_network_policy_id',
@@ -610,6 +615,8 @@ class Port(base.NeutronDbObject):
             primitive.pop('numa_affinity_policy', None)
         if _target_version < (1, 7):
             primitive.pop('device_profile', None)
+        if _target_version < (1, 8):
+            primitive.pop('hints', None)
 
     @classmethod
     @db_api.CONTEXT_READER

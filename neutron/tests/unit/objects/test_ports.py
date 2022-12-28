@@ -529,6 +529,12 @@ class PortDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         self.assertNotIn('device_profile',
                          port_v1_6['versioned_object.data'])
 
+    def test_v1_8_to_v1_7_drops_hints(self):
+        port_new = self._create_test_port()
+        port_v1_7 = port_new.obj_to_primitive(target_version='1.7')
+        self.assertNotIn('hints',
+                         port_v1_7['versioned_object.data'])
+
     def test_get_ports_ids_by_security_groups_except_router(self):
         sg_id = self._create_test_security_group_id()
         filter_owner = constants.ROUTER_INTERFACE_OWNERS_SNAT
