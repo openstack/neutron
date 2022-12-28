@@ -1999,7 +1999,7 @@ class OVNClient(object):
                 if any([p for p in lswitch.ports if
                         p.type == ovn_const.LSP_TYPE_EXTERNAL]):
                     # Check for changes in the network Availability Zones
-                    ovn_ls_azs = lswitch_name.external_ids.get(
+                    ovn_ls_azs = lswitch.external_ids.get(
                         ovn_const.OVN_AZ_HINTS_EXT_ID_KEY, '')
                     neutron_net_azs = lswitch_params['external_ids'].get(
                         ovn_const.OVN_AZ_HINTS_EXT_ID_KEY, '')

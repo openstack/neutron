@@ -790,6 +790,40 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
     def test_external_port_update_switchdev_vnic_macvtap(self):
         self._test_external_port_update_switchdev(portbindings.VNIC_MACVTAP)
 
+    def test_external_port_network_update(self):
+        net_id = self.n1['network']['id']
+        port_data = {
+            'port': {'network_id': net_id,
+                     'tenant_id': self._tenant_id,
+                     portbindings.VNIC_TYPE: 'direct'}}
+
+        # Create external port
+        port_req = self.new_create_request('ports', port_data, self.fmt)
+        port_res = port_req.get_response(self.api)
+        port = self.deserialize(self.fmt, port_res)['port']
+        ovn_port = self._find_port_row_by_name(port['id'])
+        self.assertEqual(ovn_const.LSP_TYPE_EXTERNAL, ovn_port.type)
+        # Update MTU of network with external port
+        mtu_value = self.n1['network']['mtu'] - 100
+        dhcp_options = (
+            self.mech_driver._ovn_client._nb_idl.get_subnet_dhcp_options(
+                self.sub['subnet']['id'])
+        )
+        self.assertNotEqual(
+            int(dhcp_options['subnet']['options']['mtu']),
+            mtu_value)
+        data = {'network': {'mtu': mtu_value}}
+        req = self.new_update_request(
+            'networks', data, self.n1['network']['id'], self.fmt)
+        req.get_response(self.api)
+        dhcp_options = (
+            self.mech_driver._ovn_client._nb_idl.get_subnet_dhcp_options(
+                self.sub['subnet']['id'])
+        )
+        self.assertEqual(
+            int(dhcp_options['subnet']['options']['mtu']),
+            mtu_value)
+
 
 class TestSecurityGroup(base.TestOVNFunctionalBase):
 
