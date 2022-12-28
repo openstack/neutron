@@ -52,6 +52,7 @@ class StatusTest(base.BaseLoggingTestCase):
         try:
             stdout, stderr = utils.execute(
                 cmd=["neutron-status", "upgrade", "check"],
+                addl_env={'PYTHONWARNINGS': 'ignore'},
                 extra_ok_codes=[upgradecheck.Code.SUCCESS,
                                 upgradecheck.Code.WARNING,
                                 upgradecheck.Code.FAILURE],
