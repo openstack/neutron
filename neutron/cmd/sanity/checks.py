@@ -35,6 +35,7 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import keepalived
 from neutron.agent.linux import utils as agent_utils
+from neutron.cmd import runtime_checks
 from neutron.common import utils as common_utils
 from neutron.conf.agent.l3 import config as l3_config
 from neutron.privileged.agent.linux import dhcp as priv_dhcp
@@ -423,6 +424,14 @@ def keepalived_ipv6_supported():
                 default_gw = default_gw['via']
 
     return expected_default_gw == default_gw
+
+
+def keepalived_garp_on_sighup_supported():
+    keepalived_garp_on_sighup = ('1.2.20')
+    keepalived_version = runtime_checks.get_keepalived_version()
+    if keepalived_version:
+        return keepalived_version >= keepalived_garp_on_sighup
+    return False
 
 
 def ovsdb_native_supported():
