@@ -1,0 +1,4 @@
+---
+upgrade:
+  - |
+    The deprecated config option ``keepalived_use_no_track`` is removed.

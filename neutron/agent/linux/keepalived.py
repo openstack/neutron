@@ -117,13 +117,8 @@ class KeepalivedVipAddress(object):
         result = '%s dev %s' % (self.ip_address, self.interface_name)
         if self.scope:
             result += ' scope %s' % self.scope
-        if cfg.CONF.keepalived_use_no_track and not self.track:
-            if _is_keepalived_use_no_track_supported():
-                result += ' no_track'
-            else:
-                LOG.warning("keepalived_use_no_track cfg option is True but "
-                            "keepalived on host seems to not support this "
-                            "option")
+        if not self.track and _is_keepalived_use_no_track_supported():
+            result += ' no_track'
         return result
 
 
@@ -145,13 +140,8 @@ class KeepalivedVirtualRoute(object):
             output += ' dev %s' % self.interface_name
         if self.scope:
             output += ' scope %s' % self.scope
-        if cfg.CONF.keepalived_use_no_track:
-            if _is_keepalived_use_no_track_supported():
-                output += ' no_track'
-            else:
-                LOG.warning("keepalived_use_no_track cfg option is True but "
-                            "keepalived on host seems to not support this "
-                            "option")
+        if _is_keepalived_use_no_track_supported():
+            output += ' no_track'
         # NOTE(mstinsky): neutron and keepalived are adding the same routes on
         # primary routers. With this we ensure that both are adding the routes
         # with the same procotol and prevent duplicated routes which result in

@@ -220,61 +220,6 @@ class KeepalivedConfTestCase(KeepalivedBaseTestCase,
         self.assertEqual(['192.168.2.0/24', '192.168.3.0/24'], current_vips)
 
 
-class KeepalivedConfWithoutNoTrackTestCase(KeepalivedConfTestCase):
-
-    expected = KEEPALIVED_GLOBAL_CONFIG + textwrap.dedent("""
-        vrrp_instance VR_1 {
-            state MASTER
-            interface eth0
-            virtual_router_id 1
-            priority 50
-            garp_master_delay 60
-            advert_int 5
-            authentication {
-                auth_type AH
-                auth_pass pass123
-            }
-            track_interface {
-                eth0
-            }
-            virtual_ipaddress {
-                169.254.0.1/24 dev eth0
-            }
-            virtual_ipaddress_excluded {
-                192.168.1.0/24 dev eth1
-                192.168.2.0/24 dev eth2
-                192.168.3.0/24 dev eth2
-                192.168.55.0/24 dev eth10
-            }
-            virtual_routes {
-                0.0.0.0/0 via 192.168.1.1 dev eth1 protocol static
-            }
-        }
-        vrrp_instance VR_2 {
-            state MASTER
-            interface eth4
-            virtual_router_id 2
-            priority 50
-            garp_master_delay 60
-            mcast_src_ip 224.0.0.1
-            track_interface {
-                eth4
-            }
-            virtual_ipaddress {
-                169.254.0.2/24 dev eth4
-            }
-            virtual_ipaddress_excluded {
-                192.168.2.0/24 dev eth2
-                192.168.3.0/24 dev eth6
-                192.168.55.0/24 dev eth10
-            }
-        }""")
-
-    def setUp(self):
-        super(KeepalivedConfWithoutNoTrackTestCase, self).setUp()
-        cfg.CONF.set_override('keepalived_use_no_track', False)
-
-
 class KeepalivedStateExceptionTestCase(KeepalivedBaseTestCase):
     def test_state_exception(self):
         invalid_vrrp_state = 'a seal walks'
@@ -353,12 +298,6 @@ class KeepalivedInstanceRoutesTestCase(KeepalivedBaseTestCase):
             self.assertEqual(self._get_no_track_less_expected_config(),
                              '\n'.join(routes.build_config()))
 
-    def test_build_config_without_no_track_option(self):
-        cfg.CONF.set_override('keepalived_use_no_track', False)
-        routes = self._get_instance_routes()
-        self.assertEqual(self._get_no_track_less_expected_config(),
-                         '\n'.join(routes.build_config()))
-
 
 class KeepalivedInstanceTestCase(KeepalivedBaseTestCase,
                                  KeepalivedConfBaseMixin):
@@ -431,10 +370,6 @@ class KeepalivedInstanceTestCase(KeepalivedBaseTestCase,
                 keepalived, '_is_keepalived_use_no_track_supported',
                 return_value=False):
             self._test_remove_addresses_by_interface("")
-
-    def test_remove_addresses_by_interface_without_no_track(self):
-        cfg.CONF.set_override('keepalived_use_no_track', False)
-        self._test_remove_addresses_by_interface("")
 
     def test_build_config_no_vips(self):
         expected = textwrap.dedent("""\
@@ -514,13 +449,6 @@ class KeepalivedVirtualRouteTestCase(KeepalivedBaseTestCase):
             self.assertEqual('0.0.0.0/0 via 1.2.3.4 dev eth0 protocol static',
                              route.build_config())
 
-    def test_virtual_route_with_dev_without_no_track(self):
-        cfg.CONF.set_override('keepalived_use_no_track', False)
-        route = keepalived.KeepalivedVirtualRoute(n_consts.IPv4_ANY, '1.2.3.4',
-                                                  'eth0')
-        self.assertEqual('0.0.0.0/0 via 1.2.3.4 dev eth0 protocol static',
-                         route.build_config())
-
     def test_virtual_route_without_dev(self):
         with mock.patch.object(
                 keepalived, '_is_keepalived_use_no_track_supported',
@@ -536,12 +464,6 @@ class KeepalivedVirtualRouteTestCase(KeepalivedBaseTestCase):
             route = keepalived.KeepalivedVirtualRoute('50.0.0.0/8', '1.2.3.4')
             self.assertEqual('50.0.0.0/8 via 1.2.3.4 protocol static',
                              route.build_config())
-
-    def test_virtual_route_without_dev_without_no_track(self):
-        cfg.CONF.set_override('keepalived_use_no_track', False)
-        route = keepalived.KeepalivedVirtualRoute('50.0.0.0/8', '1.2.3.4')
-        self.assertEqual('50.0.0.0/8 via 1.2.3.4 protocol static',
-                         route.build_config())
 
 
 class KeepalivedTrackScriptTestCase(KeepalivedBaseTestCase):
