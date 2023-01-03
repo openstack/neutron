@@ -117,6 +117,8 @@ class SimpleInterfaceMonitor(OvsdbMonitor):
         dev_to_ofport = {}
         for row in self.iter_stdout():
             json = jsonutils.loads(row).get('data')
+            LOG.debug('Parsing %(len)s new events from OVS: %(events)s',
+                      {"len": len(json), "events": json})
             for ovs_id, action, name, ofport, external_ids in json:
                 if external_ids:
                     external_ids = ovsdb.val_to_py(external_ids)
@@ -141,6 +143,16 @@ class SimpleInterfaceMonitor(OvsdbMonitor):
         self.new_events['added'].extend(devices_added)
         self.new_events['removed'].extend(devices_removed)
         self.new_events['modified'].extend(devices_modified)
+
+        LOG.debug(
+            'Current size of new_events: added=%(added)s '
+            'modified=%(modified)s removed=%(removed)s. '
+            'New events: %(new_events)s',
+            {"added": len(self.new_events['added']),
+             "modified": len(self.new_events['modified']),
+             "removed": len(self.new_events['removed']),
+             "new_events": self.new_events})
+
         # update any events with ofports received from 'new' action
         for event in self.new_events['added']:
             event['ofport'] = dev_to_ofport.get(event['name'], event['ofport'])
