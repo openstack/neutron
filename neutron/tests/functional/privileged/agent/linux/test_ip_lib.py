@@ -476,6 +476,34 @@ class RouteTestCase(functional_base.BaseSudoTestCase):
         self.device = ip_lib.IPDevice(self.device_name, self.namespace)
         self.device.link.set_up()
 
+    def _check_gateway_or_multipath(self, route, gateway):
+        if gateway is None or isinstance(gateway, str):
+            self.assertEqual(gateway, ip_lib.get_attr(route, 'RTA_GATEWAY'))
+            return
+
+        rta_multipath = ip_lib.get_attr(route, 'RTA_MULTIPATH')
+        self.assertEqual(len(gateway), len(rta_multipath))
+        for nexthop in gateway:
+            to_check = {'hops': 0}
+            if nexthop.get('device'):
+                to_check['oif'] = priv_ip_lib.privileged_get_link_id(
+                    nexthop['device'], self.namespace)
+            if nexthop.get('weight'):
+                to_check['hops'] = nexthop['weight'] - 1
+            if nexthop.get('via'):
+                to_check['gateway'] = nexthop['via']
+
+            for mp in rta_multipath:
+                mp['gateway'] = ip_lib.get_attr(mp, 'RTA_GATEWAY')
+                for key in to_check:
+                    if to_check[key] != mp[key]:
+                        break
+                else:
+                    break
+            else:
+                self.fail('Route nexthops %s do not match with defined ones '
+                          '%s' % (rta_multipath, gateway))
+
     def _check_routes(self, cidrs, table=None, gateway=None, metric=None,
                       scope=None, proto='static'):
         table = table or iproute_linux.DEFAULT_TABLE
@@ -499,8 +527,7 @@ class RouteTestCase(functional_base.BaseSudoTestCase):
                 self.assertEqual(
                     priv_ip_lib._IP_VERSION_FAMILY_MAP[ip_version],
                     route['family'])
-                self.assertEqual(gateway,
-                                 ip_lib.get_attr(route, 'RTA_GATEWAY'))
+                self._check_gateway_or_multipath(route, gateway)
                 self.assertEqual(metric,
                                  ip_lib.get_attr(route, 'RTA_PRIORITY'))
                 self.assertEqual(scope, route['scope'])
@@ -615,6 +642,22 @@ class RouteTestCase(functional_base.BaseSudoTestCase):
             priv_ip_lib.add_ip_route(self.namespace, None, ip_version,
                                      device=self.device_name, via=_ip)
             self._check_gateway(_ip)
+
+    def test_add_multipath_route(self):
+        self.device_name2 = 'test_device2'
+        ip_lib.IPWrapper(self.namespace).add_dummy(self.device_name2)
+        self.device2 = ip_lib.IPDevice(self.device_name2, self.namespace)
+        self.device2.link.set_up()
+        self.device.addr.add('10.1.0.1/24')
+        self.device2.addr.add('10.2.0.1/24')
+        multipath = [
+            {'device': self.device_name, 'via': '10.1.0.100', 'weight': 10},
+            {'device': self.device_name2, 'via': '10.2.0.100', 'weight': 20},
+            {'via': '10.2.0.101', 'weight': 30},
+            {'via': '10.2.0.102'}]
+        priv_ip_lib.add_ip_route(self.namespace, '192.168.0.0/24',
+                                 n_cons.IP_VERSION_4, via=multipath)
+        self._check_routes(['192.168.0.0/24'], gateway=multipath)
 
 
 class GetLinkAttributesTestCase(functional_base.BaseSudoTestCase):
