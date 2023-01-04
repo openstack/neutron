@@ -72,6 +72,8 @@ class TestBase(base.BaseTestCase):
         self.ip_dev = self.ip_dev_p.start()
         self.ip_p = mock.patch.object(ip_lib, 'IPWrapper')
         self.ip = self.ip_p.start()
+        link = self.ip.return_value.device.return_value.link
+        link.address = 'aa:bb:cc:dd:ee:ff'
         self.device_exists_p = mock.patch.object(ip_lib, 'device_exists')
         self.device_exists = self.device_exists_p.start()
         self.get_devices_with_ip_p = mock.patch.object(ip_lib,
@@ -492,12 +494,11 @@ class TestOVSInterfaceDriver(TestBase):
                     reraise = mock.patch.object(
                         excutils, 'save_and_reraise_exception')
                     reraise.start()
-                    ip_wrapper = mock.Mock()
                     for exception in (OSError(),
                                       pyroute2_exc.NetlinkError(22),
                                       RuntimeError()):
-                        ip_wrapper.ensure_namespace.side_effect = exception
-                        self.ip.return_value = ip_wrapper
+                        ip = self.ip.return_value
+                        ip.ensure_namespace.side_effect = exception
                         delete_port.reset_mock()
                         ovs.plug_new(
                             '01234567-1234-1234-99',
@@ -568,6 +569,7 @@ class TestOVSInterfaceDriverWithVeth(TestOVSInterfaceDriver):
 
             root_dev = mock.Mock()
             ns_dev = mock.Mock()
+            ns_dev.link.address = 'aa:bb:cc:dd:ee:ff'
             self.ip().add_veth = mock.Mock(return_value=(root_dev, ns_dev))
             mock.patch.object(
                 interface, '_get_veth',

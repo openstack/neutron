@@ -18,6 +18,7 @@ import time
 
 import netaddr
 from neutron_lib.agent.linux import interface
+from neutron_lib.api import converters
 from neutron_lib import constants
 from neutron_lib import exceptions
 from neutron_lib.plugins.ml2 import ovs_constants as ovs_const
@@ -26,6 +27,7 @@ from oslo_utils import excutils
 from pyroute2.netlink import exceptions \
     as pyroute2_exc  # pylint: disable=no-name-in-module
 
+from neutron._i18n import _
 from neutron.agent.common import ovs_lib
 from neutron.agent.linux import ip_lib
 from neutron.common import utils
@@ -336,20 +338,29 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
         ovs.replace_port(device_name, *attrs)
 
     def _set_device_address(self, device, mac_address):
+        device.link.set_address(mac_address)
+        current_mac = converters.convert_to_sanitized_mac_address(
+            device.link.address)
+        if current_mac != mac_address:
+            msg = _("Failed to set mac address to: %s; "
+                    "Current mac: %s") % (mac_address, current_mac)
+            raise RuntimeError(msg)
+
+    def _ensure_device_address(self, device, mac_address):
+        mac_address = converters.convert_to_sanitized_mac_address(mac_address)
         for i in range(9):
             # workaround for the OVS shy port syndrome. ports sometimes
             # hide for a bit right after they are first created.
             # see bug/1618987
             try:
-                device.link.set_address(mac_address)
-                break
+                self._set_device_address(device, mac_address)
+                return
             except RuntimeError as e:
                 LOG.warning("Got error trying to set mac, retrying: %s",
                             str(e))
                 time.sleep(1)
-        else:
-            # didn't break, we give it one last shot without catching
-            device.link.set_address(mac_address)
+        # didn't break, we give it one last shot without catching
+        self._set_device_address(device, mac_address)
 
     def _add_device_to_namespace(self, ip_wrapper, device, namespace):
         namespace_obj = ip_wrapper.ensure_namespace(namespace)
@@ -406,7 +417,7 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
         self._ovs_add_port(bridge, tap_name, port_id, mac_address,
                            internal=internal)
         try:
-            self._set_device_address(ns_dev, mac_address)
+            self._ensure_device_address(ns_dev, mac_address)
         except Exception:
             LOG.warning("Failed to set mac for interface %s", ns_dev)
             with excutils.save_and_reraise_exception():
