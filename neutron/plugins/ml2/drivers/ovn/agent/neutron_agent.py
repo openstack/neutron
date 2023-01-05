@@ -220,6 +220,41 @@ class MetadataAgent(NeutronAgent):
             ovn_const.OVN_AGENT_METADATA_DESC_KEY, '')
 
 
+class OVNNeutronAgent(NeutronAgent):
+    agent_type = ovn_const.OVN_NEUTRON_AGENT
+    binary = 'neutron-ovn-agent'
+
+    @property
+    def alive(self):
+        # If ovn-controller is down, then OVN Neutron Agent is down even
+        # if the neutron-ovn-agent binary is updating external_ids.
+        try:
+            if not AgentCache()[self.chassis_private.name].alive:
+                return False
+        except KeyError:
+            return False
+        return super().alive
+
+    @property
+    def nb_cfg(self):
+        return int(self.chassis_private.external_ids.get(
+            ovn_const.OVN_AGENT_NEUTRON_SB_CFG_KEY, 0))
+
+    @staticmethod
+    def id_from_chassis_private(chassis_private):
+        return chassis_private.external_ids.get(
+            ovn_const.OVN_AGENT_NEUTRON_ID_KEY)
+
+    @property
+    def agent_id(self):
+        return self.id_from_chassis_private(self.chassis_private)
+
+    @property
+    def description(self):
+        return self.chassis_private.external_ids.get(
+            ovn_const.OVN_AGENT_NEUTRON_DESC_KEY, '')
+
+
 @utils.SingletonDecorator
 class AgentCache:
     def __init__(self, driver=None):

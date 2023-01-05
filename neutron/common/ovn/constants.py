@@ -74,9 +74,13 @@ OVN_AGENT_DESC_KEY = 'neutron:description'
 OVN_AGENT_METADATA_SB_CFG_KEY = 'neutron:ovn-metadata-sb-cfg'
 OVN_AGENT_METADATA_DESC_KEY = 'neutron:description-metadata'
 OVN_AGENT_METADATA_ID_KEY = 'neutron:ovn-metadata-id'
+OVN_AGENT_NEUTRON_SB_CFG_KEY = 'neutron:ovn-neutron-agent-sb-cfg'
+OVN_AGENT_NEUTRON_DESC_KEY = 'neutron:description-neutron-agent'
+OVN_AGENT_NEUTRON_ID_KEY = 'neutron:ovn-neutron-agent-id'
 OVN_CONTROLLER_AGENT = 'OVN Controller agent'
 OVN_CONTROLLER_GW_AGENT = 'OVN Controller Gateway agent'
 OVN_METADATA_AGENT = 'OVN Metadata agent'
+OVN_NEUTRON_AGENT = 'OVN Neutron agent'
 OVN_CONTROLLER_TYPES = (OVN_CONTROLLER_AGENT,
                         OVN_CONTROLLER_GW_AGENT,
                         )
