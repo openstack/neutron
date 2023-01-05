@@ -117,12 +117,6 @@ the following:
    will fail.
 #. Create a floating IP and associate it to the port.
 
-.. note::
-   To avoid dns_name conflicts in designate if the dns_name already exists
-   in designate zone records a dns_name is generated using the IP of the
-   port like dns_name.ip_hash, this helps also in the case of adding
-   multiple ports to the same instance
-
 Following is an example of these steps:
 
 .. code-block:: console
