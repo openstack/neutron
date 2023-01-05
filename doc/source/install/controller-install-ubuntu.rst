@@ -22,7 +22,7 @@ must create a database, service credentials, and API endpoints.
 
      .. code-block:: console
 
-        MariaDB [(none)] CREATE DATABASE neutron;
+        MariaDB [(none)]> CREATE DATABASE neutron;
 
      .. end
 
