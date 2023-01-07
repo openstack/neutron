@@ -62,8 +62,24 @@ class OVNNeutronAgent(service.Service):
         self.ext_manager.initialize(None, 'ovn', self.ext_manager_api)
 
     @property
+    def ovs_idl(self):
+        return self.ext_manager_api.ovs_idl
+
+    @property
+    def nb_idl(self):
+        return self.ext_manager_api.nb_idl
+
+    @property
+    def nb_post_fork_event(self):
+        return self.ext_manager_api.nb_post_fork_event
+
+    @property
     def sb_idl(self):
         return self.ext_manager_api.sb_idl
+
+    @property
+    def sb_post_fork_event(self):
+        return self.ext_manager_api.sb_post_fork_event
 
     def _load_config(self, ovs_idl):
         self.chassis = ovsdb.get_own_chassis_name(ovs_idl)

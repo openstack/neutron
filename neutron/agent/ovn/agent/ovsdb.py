@@ -18,6 +18,7 @@ from ovsdbapp.backend.ovs_idl import idlutils
 from ovsdbapp.schema.open_vswitch import impl_idl as impl_idl_ovs
 
 from neutron.agent.ovsdb.native import connection as ovsdb_conn
+from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as config
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
@@ -140,3 +141,40 @@ def get_own_chassis_name(ovs_idl):
     """
     ext_ids = ovs_idl.db_get('Open_vSwitch', '.', 'external_ids').execute()
     return ext_ids['system-id']
+
+
+def get_ovs_port_name(ovs_idl, port_id):
+    """Return the OVS port name given the Neutron port ID"""
+    int_list = ovs_idl.db_list('Interface', columns=['name', 'external_ids'],
+                               if_exists=True).execute(check_error=True,
+                                                       log_errors=False)
+    for interface in int_list:
+        if interface['external_ids'].get('iface-id') == port_id:
+            return interface['name']
+
+
+def get_port_qos(nb_idl, port_id):
+    """Retrieve the QoS egress max-bw and min-bw values (in kbps) of a LSP
+
+    There could be max-bw rules ingress (to-lport) and egress (from-lport);
+    this method is only returning the egress one. The min-bw rule is only
+    implemented for egress traffic.
+    """
+    lsp = nb_idl.lsp_get(port_id).execute(check_error=True)
+    if not lsp:
+        return {}
+
+    net_name = lsp.external_ids[ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY]
+    ls = nb_idl.lookup('Logical_Switch', net_name)
+    for qos_rule in iter(r for r in ls.qos_rules if
+                         r.external_ids[ovn_const.OVN_PORT_EXT_ID_KEY]):
+        if qos_rule.direction != 'from-lport':
+            continue
+
+        max_kbps = int(qos_rule.bandwidth.get('rate', 0))
+        break
+    else:
+        max_kbps = 0
+
+    min_kbps = int(lsp.options.get(ovn_const.LSP_OPTIONS_QOS_MIN_RATE, 0))
+    return max_kbps, min_kbps
