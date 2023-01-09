@@ -1683,6 +1683,11 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             if name not in current:
                 continue
             current_ofport = current[name]
+            # NOTE(amorin) Discarding port that disappeared from ovs
+            # This will avoid moving that port to skipped_devices
+            # and forget about deleting it. See #lp-1992109
+            if current_ofport == ovs_lib.INVALID_OFPORT:
+                continue
             if ofport != current_ofport:
                 port_moves.append(name)
         return port_moves

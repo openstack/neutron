@@ -2512,6 +2512,14 @@ class TestOvsNeutronAgent(object):
         self.assertEqual(expected,
                          self.agent._get_ofport_moves(current, previous))
 
+    def test__get_ofport_moves_invalid(self):
+        previous = {'port1': 1, 'port2': 2}
+        current = {'port1': -1, 'port2': 2}
+        # we expect it to tell nothing
+        expected = []
+        self.assertEqual(expected,
+                         self.agent._get_ofport_moves(current, previous))
+
     def test_update_stale_ofport_rules_clears_old(self):
         self.agent.prevent_arp_spoofing = True
         self.agent.vifname_to_ofport_map = {'port1': 1, 'port2': 2}
