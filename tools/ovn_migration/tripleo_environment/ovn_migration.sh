@@ -41,7 +41,8 @@ LANG=C
 : ${VALIDATE_MIGRATION:=False}
 : ${DHCP_RENEWAL_TIME:=30}
 : ${CREATE_BACKUP:=True}
-: ${BACKUP_MIGRATION_IP:=192.168.24.1} # TODO: Document this new var
+: ${BACKUP_MIGRATION_IP:=192.168.24.1}
+: ${BACKUP_MIGRATION_CTL_PLANE_CIDRS:=192.168.24.0/24}
 
 
 check_for_necessary_files() {
@@ -325,6 +326,7 @@ start_migration() {
     -e overcloudrc=$OVERCLOUDRC_FILE \
     -e stackrc=$STACKRC_FILE \
     -e backup_migration_ip=$BACKUP_MIGRATION_IP \
+    -e backup_migration_ctl_plane_cidrs=$BACKUP_MIGRATION_CTL_PLANE_CIDRS \
     -e create_backup=$CREATE_BACKUP \
     -e ansible_inventory=$inventory_file \
     -e validate_migration=$VALIDATE_MIGRATION $*
