@@ -352,7 +352,8 @@ class CacheBackedPluginApi(PluginApi):
                     constants.NO_ACTIVE_BINDING: True}
         net = self.remote_resource_cache.get_resource_by_id(
             resources.NETWORK, port_obj.network_id)
-        qos_network_policy_id = net.qos_policy_id
+        qos_network_policy_id = getattr(net, 'qos_policy_id', None)
+
         # match format of old RPC interface
         mac_addr = str(netaddr.EUI(str(port_obj.mac_address),
                                    dialect=netaddr.mac_unix_expanded))
