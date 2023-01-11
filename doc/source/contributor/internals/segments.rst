@@ -19,6 +19,8 @@ Neutron has an extension that allows CRUD operations on the ``/segments``
 resource in the API, that corresponds to the ``NetworkSegment`` entity in the
 DB layer. The extension is implemented as a service plug-in.
 
+Details about the DB models, API extension, and use cases can be found here: `routed networks spec <http://specs.openstack.org/openstack/neutron-specs/specs/newton/routed-networks.html>`_
+
 .. note:: The ``segments`` service plug-in is not configured by default. To
    configure it, add ``segments`` to the ``service_plugins`` parameter in
    ``neutron.conf``
