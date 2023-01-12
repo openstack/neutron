@@ -85,7 +85,8 @@ def _get_ovn_version(check_type):
 def ovs_vxlan_supported(from_ip='192.0.2.1', to_ip='192.0.2.2'):
     br_name = common_utils.get_rand_device_name(prefix='vxlantest-')
     port_name = common_utils.get_rand_device_name(prefix='vxlantest-')
-    with ovs_lib.OVSBridge(br_name) as br:
+    with ovs_lib.OVSBridge(br_name,
+                           datapath_type=cfg.CONF.OVS.datapath_type) as br:
         port = br.add_tunnel_port(
             port_name=port_name,
             remote_ip=from_ip,
@@ -97,7 +98,8 @@ def ovs_vxlan_supported(from_ip='192.0.2.1', to_ip='192.0.2.2'):
 def ovs_geneve_supported(from_ip='192.0.2.3', to_ip='192.0.2.4'):
     br_name = common_utils.get_rand_device_name(prefix='genevetest-')
     port_name = common_utils.get_rand_device_name(prefix='genevetest-')
-    with ovs_lib.OVSBridge(br_name) as br:
+    with ovs_lib.OVSBridge(br_name,
+                           datapath_type=cfg.CONF.OVS.datapath_type) as br:
         port = br.add_tunnel_port(
             port_name=port_name,
             remote_ip=from_ip,
@@ -119,7 +121,8 @@ def iproute2_vxlan_supported():
 def patch_supported():
     name, peer_name, patch_name = common_utils.get_related_rand_device_names(
         ['patchtest-', 'peertest0-', 'peertest1-'])
-    with ovs_lib.OVSBridge(name) as br:
+    with ovs_lib.OVSBridge(name,
+                           datapath_type=cfg.CONF.OVS.datapath_type) as br:
         port = br.add_patch_port(patch_name, peer_name)
         return port != ovs_lib.INVALID_OFPORT
 
@@ -141,7 +144,9 @@ def ofctl_arg_supported(cmd, **kwargs):
     :returns: a boolean if the supplied arguments are supported.
     """
     br_name = common_utils.get_rand_device_name(prefix='br-test-')
-    with ovs_lib.OVSBridge(br_name) as test_br:
+    with ovs_lib.OVSBridge(
+            br_name,
+            datapath_type=cfg.CONF.OVS.datapath_type) as test_br:
         full_args = ["ovs-ofctl", cmd, test_br.br_name,
                      ovs_lib._build_flow_expr_str(kwargs, cmd.split('-')[0],
                                                   False)]
@@ -397,7 +402,8 @@ def keepalived_ipv6_supported():
     gw_vip = 'fdf8:f53b:82e4::10/64'
     expected_default_gw = 'fe80:f816::1'
 
-    with ovs_lib.OVSBridge(br_name) as br:
+    with ovs_lib.OVSBridge(br_name,
+                           datapath_type=cfg.CONF.OVS.datapath_type) as br:
         with KeepalivedIPv6Test(ha_port, gw_port, gw_vip,
                                 expected_default_gw) as ka:
             br.add_port(ha_port, ('type', 'internal'))
@@ -453,7 +459,8 @@ def ovsdb_native_supported():
 def ovs_conntrack_supported():
     br_name = common_utils.get_rand_device_name(prefix="ovs-test-")
 
-    with ovs_lib.OVSBridge(br_name) as br:
+    with ovs_lib.OVSBridge(br_name,
+                           datapath_type=cfg.CONF.OVS.datapath_type) as br:
         try:
             br.add_protocols(*["OpenFlow%d" % i for i in range(10, 15)])
         except RuntimeError as e:
