@@ -148,4 +148,5 @@ using about 2GB of RAM in steady-state.
 For rpc_workers, there needs to be enough to keep up with incoming
 events from the various neutron agents. Signs that there are too few
 can be agent heartbeats arriving late, nova vif bindings timing out
-on the hypervisors, or rpc message timeout exceptions in agent logs.
+on the hypervisors, or rpc message timeout exceptions in agent logs
+(for example, "broken pipe" errors).
