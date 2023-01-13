@@ -846,8 +846,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         if self._port_has_ipv6_address(port):
             for existing_port in (rp.port for rp in router.attached_ports):
                 if (existing_port["id"] != port["id"] and
-                    existing_port["network_id"] == port["network_id"] and
-                        self._port_has_ipv6_address(existing_port)):
+                        existing_port["network_id"] == port["network_id"] and
+                        self._port_has_ipv6_address(existing_port) and
+                        port["device_owner"] not in [
+                            constants.DEVICE_OWNER_ROUTER_SNAT,
+                            constants.DEVICE_OWNER_DVR_INTERFACE]):
                     msg = _("Router already contains IPv6 port %(p)s "
                         "belonging to network id %(nid)s. Only one IPv6 port "
                         "from the same network subnet can be connected to a "
@@ -974,7 +977,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                                  port=port,
                                                  interface_info=interface_info)
                 self._add_router_port(
-                    context, port['id'], router, device_owner)
+                    context, port, router, device_owner)
 
         gw_ips = []
         gw_network_id = None
@@ -1002,10 +1005,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             subnets[-1]['id'], [subnet['id'] for subnet in subnets])
 
     @db_api.retry_if_session_inactive()
-    def _add_router_port(self, context, port_id, router, device_owner):
+    def _add_router_port(self, context, port, router, device_owner):
         l3_obj.RouterPort(
             context,
-            port_id=port_id,
+            port_id=port['id'],
             router_id=router.id,
             port_type=device_owner
         ).create()
@@ -1022,15 +1025,19 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         if len(router_ports) > 1:
             subnets_id = []
             for rp in router_ports:
-                port = port_obj.Port.get_object(context.elevated(),
-                                                id=rp.port_id)
-                if port:
+                router_port = port_obj.Port.get_object(context.elevated(),
+                                                       id=rp.port_id)
+                if router_port:
+                    # NOTE(froyo): Just run the validation in case the new port
+                    # added is on the same network than an existing one.
                     # Only allow one router port with IPv6 subnets per network
-                    # id
-                    self._validate_one_router_ipv6_port_per_network(
-                        router, port)
-                    subnets_id.extend([fixed_ip['subnet_id']
-                                       for fixed_ip in port['fixed_ips']])
+                    # id.
+                    if router_port['network_id'] == port['network_id']:
+                        self._validate_one_router_ipv6_port_per_network(
+                            router, router_port)
+                    subnets_id.extend(
+                        [fixed_ip["subnet_id"]
+                         for fixed_ip in router_port["fixed_ips"]])
                 else:
                     # due to race conditions maybe the port under analysis is
                     # deleted, so instead returning a RouterInterfaceNotFound
@@ -1058,8 +1065,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         # make sure the records in routerports table and ports
         # table are consistent.
         self._core_plugin.update_port(
-            context, port_id, {'port': {'device_id': router.id,
-                                        'device_owner': device_owner}})
+            context, port['id'], {'port': {'device_id': router.id,
+                                           'device_owner': device_owner}})
 
     def _check_router_interface_not_in_use(self, router_id, subnet):
         context = n_ctx.get_admin_context()
