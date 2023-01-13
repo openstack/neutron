@@ -58,6 +58,7 @@
 - job:
     name: neutron-fullstack
     parent: neutron-functional
+    timeout: 9000
     vars:
       tox_envlist: dsvm-fullstack-gate
       Q_BUILD_OVS_FROM_GIT: False
