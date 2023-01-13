@@ -131,7 +131,7 @@ Get Me A Network
 ----------------
 
 In a deployment where the operator has set up the resources as described above,
-they can get their auto-allocated network topology as follows:
+they can get or create their auto-allocated network topology as follows:
 
 .. code-block:: console
 
@@ -140,17 +140,16 @@ they can get their auto-allocated network topology as follows:
    | Field      | Value                                |
    +------------+--------------------------------------+
    | id         | a380c780-d6cd-4510-a4c0-1a6ec9b85a29 |
-   | name       | None                                 |
    | project_id | cfd1889ac7d64ad891d4f20aef9f8d7c     |
    +------------+--------------------------------------+
 
 .. note::
 
     When the ``--or-show`` option is used the command returns the topology
-    information if it already exists.
+    information if it already exists, or creates it if it does not.
 
-Operators (and users with admin role) can get the auto-allocated topology for a
-project by specifying the project ID:
+Operators (and users with admin role) can get or create the auto-allocated
+topology for a project by specifying the project ID:
 
 .. code-block:: console
 
@@ -160,7 +159,6 @@ project by specifying the project ID:
    | Field      | Value                                |
    +------------+--------------------------------------+
    | id         | a380c780-d6cd-4510-a4c0-1a6ec9b85a29 |
-   | name       | None                                 |
    | project_id | cfd1889ac7d64ad891d4f20aef9f8d7c     |
    +------------+--------------------------------------+
 
@@ -178,6 +176,12 @@ boots a server omitting the ``--nic`` option, and there is more than one
 network available, the Compute service will invoke the API behind
 ``auto allocated topology create``, fetch the network UUID, and pass it on
 during the boot process.
+
+Alternately one can delete their auto-allocated network topology as follows:
+
+.. code-block:: console
+
+   $ openstack network auto allocated topology delete
 
 Validating the requirements for auto-allocation
 -----------------------------------------------
