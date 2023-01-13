@@ -577,6 +577,53 @@ class TestL3_NAT_dbonly_mixin(
         self.db._validate_one_router_ipv6_port_per_network(
             router, new_port)
 
+    def test__validate_one_router_ipv6_port_per_network_distributed_port(self):
+        port = models_v2.Port(
+                id=uuidutils.generate_uuid(),
+                network_id='foo_network',
+                device_owner=n_const.DEVICE_OWNER_DVR_INTERFACE,
+                fixed_ips=[models_v2.IPAllocation(
+                    ip_address=str(netaddr.IPNetwork(
+                        '2001:db8::/32').ip + 1),
+                    subnet_id='foo_subnet')])
+        rports = [l3_models.RouterPort(router_id='foo_router', port=port)]
+        router = l3_models.Router(
+            id='foo_router', attached_ports=rports, route_list=[],
+            gw_port_id=None)
+        new_port = models_v2.Port(
+                id=uuidutils.generate_uuid(),
+                network_id='foo_network',
+                device_owner=n_const.DEVICE_OWNER_ROUTER_SNAT,
+                fixed_ips=[models_v2.IPAllocation(
+                    ip_address=str(netaddr.IPNetwork(
+                        '2001:db8::/32').ip + 2),
+                    subnet_id='foo_subnet')])
+        self.db._validate_one_router_ipv6_port_per_network(router, new_port)
+
+    def test__validate_one_router_ipv6_port_per_network_centralized_snat_port(
+            self):
+        port = models_v2.Port(
+                id=uuidutils.generate_uuid(),
+                network_id='foo_network',
+                device_owner=n_const.DEVICE_OWNER_ROUTER_SNAT,
+                fixed_ips=[models_v2.IPAllocation(
+                    ip_address=str(netaddr.IPNetwork(
+                        '2001:db8::/32').ip + 1),
+                    subnet_id='foo_subnet')])
+        rports = [l3_models.RouterPort(router_id='foo_router', port=port)]
+        router = l3_models.Router(
+            id='foo_router', attached_ports=rports, route_list=[],
+            gw_port_id=None)
+        new_port = models_v2.Port(
+                id=uuidutils.generate_uuid(),
+                network_id='foo_network',
+                device_owner=n_const.DEVICE_OWNER_DVR_INTERFACE,
+                fixed_ips=[models_v2.IPAllocation(
+                    ip_address=str(netaddr.IPNetwork(
+                        '2001:db8::/32').ip + 2),
+                    subnet_id='foo_subnet')])
+        self.db._validate_one_router_ipv6_port_per_network(router, new_port)
+
     def test__validate_one_router_ipv6_port_per_network_failed(self):
         port = models_v2.Port(
                 id=uuidutils.generate_uuid(),
