@@ -1264,6 +1264,8 @@ class OVNClient(object):
         # 2. Add default route with nexthop as gateway ip
         lrouter_name = utils.ovn_name(router['id'])
         for gw_info in gateways:
+            if gw_info.gateway_ip is None:
+                continue
             columns = {'external_ids': {
                 ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
                 ovn_const.OVN_SUBNET_EXT_ID_KEY: gw_info.subnet_id}}

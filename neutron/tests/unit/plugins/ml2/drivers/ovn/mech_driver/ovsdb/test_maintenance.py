@@ -16,6 +16,7 @@
 from unittest import mock
 
 from futurist import periodics
+from neutron_lib import constants as n_const
 from neutron_lib import context
 from neutron_lib.db import api as db_api
 from oslo_config import cfg
@@ -797,3 +798,36 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         expected_calls = [mock.call('Logical_Switch_Port', lsp0.uuid,
                                     ('type', constants.LSP_TYPE_VIRTUAL))]
         nb_idl.db_set.assert_has_calls(expected_calls)
+
+    def test_check_router_default_route_empty_dst_ip(self):
+        nb_idl = self.fake_ovn_client._nb_idl
+        route0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'ip_prefix': n_const.IPv4_ANY,
+                   'nexthop': '10.42.0.1'})
+        route1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'ip_prefix': n_const.IPv4_ANY,
+                   'nexthop': ''})
+        route2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'ip_prefix': n_const.IPv6_ANY,
+                   'nexthop': '2001:db8:42::1'})
+        route3 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'ip_prefix': n_const.IPv6_ANY,
+                   'nexthop': ''})
+        router0 = fakes.FakeOvsdbRow.create_one_ovsdb_row()
+        router1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+                attrs={
+                    'external_ids': {constants.OVN_REV_NUM_EXT_ID_KEY: 1}
+                })
+        nb_idl.lr_list.return_value.execute.return_value = (router0, router1)
+        nb_idl.lr_route_list.return_value.execute.return_value = (
+            route0, route1, route2, route3)
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.periodic.check_router_default_route_empty_dst_ip)
+        nb_idl.delete_static_route.assert_has_calls([
+            mock.call(router1.name, route1.ip_prefix, route1.nexthop),
+            mock.call(router1.name, route3.ip_prefix, route3.nexthop),
+        ])
+        self.assertEqual(
+            2,
+            nb_idl.delete_static_route.call_count)
