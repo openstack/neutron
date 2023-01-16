@@ -63,19 +63,22 @@ class NeutronAgent(abc.ABC):
             self.set_down = False
 
     @staticmethod
-    def chassis_from_private(chassis_private):
+    def _get_chassis(chassis_or_chassis_private):
+        """Return the chassis register
+
+        The input could be the chassis register itself or the chassis private.
+        """
         try:
-            return chassis_private.chassis[0]
+            return chassis_or_chassis_private.chassis[0]
         except AttributeError:
-            # No Chassis_Private support, just use Chassis
-            return chassis_private
+            return chassis_or_chassis_private
         except IndexError:
             # Chassis register has been deleted but not Chassis_Private.
             return DeletedChassis
 
     @property
     def chassis(self):
-        return self.chassis_from_private(self.chassis_private)
+        return self._get_chassis(self.chassis_private)
 
     def as_dict(self):
         return {
@@ -143,7 +146,7 @@ class ControllerAgent(NeutronAgent):
 
     @staticmethod  # it is by default, but this makes pep8 happy
     def __new__(cls, chassis_private, driver):
-        _chassis = cls.chassis_from_private(chassis_private)
+        _chassis = cls._get_chassis(chassis_private)
         other_config = ovn_utils.get_ovn_chassis_other_config(_chassis)
         if 'enable-chassis-as-gw' in other_config.get('ovn-cms-options', []):
             cls = ControllerGatewayAgent
@@ -168,7 +171,7 @@ class ControllerAgent(NeutronAgent):
 
     def update(self, chassis_private, clear_down=False):
         super().update(chassis_private, clear_down)
-        _chassis = self.chassis_from_private(chassis_private)
+        _chassis = self._get_chassis(chassis_private)
         other_config = ovn_utils.get_ovn_chassis_other_config(_chassis)
         if 'enable-chassis-as-gw' in other_config.get('ovn-cms-options', []):
             self.__class__ = ControllerGatewayAgent
@@ -179,7 +182,7 @@ class ControllerGatewayAgent(ControllerAgent):
 
     def update(self, chassis_private, clear_down=False):
         super().update(chassis_private, clear_down)
-        _chassis = self.chassis_from_private(chassis_private)
+        _chassis = self._get_chassis(chassis_private)
         other_config = ovn_utils.get_ovn_chassis_other_config(_chassis)
         if ('enable-chassis-as-gw' not in
                 other_config.get('ovn-cms-options', [])):

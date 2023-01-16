@@ -1196,15 +1196,11 @@ class TestAgentApi(base.TestOVNFunctionalBase):
         agent_id = self.agent_types[ovn_const.OVN_CONTROLLER_AGENT]
         agent = self.plugin.get_agent(self.context, agent_id)
         heartbeat_timestamp = agent['heartbeat_timestamp']
-        if self.sb_api.is_table_present('Chassis_Private'):
-            chassis_ts = self.sb_api.db_get(
-                'Chassis_Private', self.chassis, 'nb_cfg_timestamp'
-            ).execute(check_error=True)
-            updated_at = datetime.datetime.fromtimestamp(
-                int(chassis_ts / 1000))
-            # if table Chassis_Private present, agent.updated_at is
-            # Chassis_Private.nb_cfg_timestamp
-            self.assertEqual(updated_at, heartbeat_timestamp)
+        chassis_ts = self.sb_api.db_get(
+            'Chassis_Private', self.chassis, 'nb_cfg_timestamp'
+        ).execute(check_error=True)
+        updated_at = datetime.datetime.fromtimestamp(int(chassis_ts / 1000))
+        self.assertEqual(updated_at, heartbeat_timestamp)
         time.sleep(1)
         # if chassis is not updated, agent's heartbeat_timestamp shouldn't
         # be updated.

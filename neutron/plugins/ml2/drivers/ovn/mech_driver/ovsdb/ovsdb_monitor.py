@@ -367,8 +367,7 @@ class ChassisAgentTypeChangeEvent(ChassisEvent):
                         'external_ids')
         if not getattr(old, other_config, False):
             return False
-        chassis = n_agent.NeutronAgent.chassis_from_private(row)
-        new_other_config = utils.get_ovn_chassis_other_config(chassis)
+        new_other_config = utils.get_ovn_chassis_other_config(row)
         old_other_config = utils.get_ovn_chassis_other_config(old)
         agent_type_change = new_other_config.get('ovn-cms-options', []) != (
             old_other_config.get('ovn-cms-options', []))
@@ -670,6 +669,7 @@ class BaseOvnIdl(Ml2OvnIdlBase):
 class BaseOvnSbIdl(Ml2OvnIdlBase):
     @classmethod
     def from_server(cls, connection_string, helper):
+        helper.register_table('Chassis_Private')
         helper.register_table('Chassis')
         helper.register_table('Encap')
         helper.register_table('Port_Binding')
@@ -724,13 +724,6 @@ class OvnIdlDistributedLock(BaseOvnIdl):
                 return
 
             self.update_tables(tables, row.schema[0])
-
-            if self.driver.agent_chassis_table == 'Chassis_Private':
-                if 'Chassis_Private' not in self.tables:
-                    self.driver.agent_chassis_table = 'Chassis'
-            else:
-                if 'Chassis_Private' in self.tables:
-                    self.driver.agent_chassis_table = 'Chassis_Private'
 
     def notify(self, event, row, updates=None):
         try:
@@ -828,10 +821,9 @@ class OvnSbIdl(OvnIdlDistributedLock):
 
     @classmethod
     def from_server(cls, connection_string, helper, driver):
-        if 'Chassis_Private' in helper.schema_json['tables']:
-            helper.register_table('Chassis_Private')
         if 'FDB' in helper.schema_json['tables']:
             helper.register_table('FDB')
+        helper.register_table('Chassis_Private')
         helper.register_table('Chassis')
         helper.register_table('Encap')
         helper.register_table('Port_Binding')
