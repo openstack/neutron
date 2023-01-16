@@ -16,6 +16,7 @@ import datetime
 from unittest import mock
 
 import eventlet
+from oslo_utils import timeutils
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent
@@ -31,8 +32,13 @@ class AgentCacheTestCase(base.BaseTestCase):
         self.addCleanup(self._clean_agent_cache)
         self.names_ref = []
         for i in range(10):  # Add 10 agents.
+            chassis = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+                attrs={'other_config': {}})
             chassis_private = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-                attrs={'name': 'chassis' + str(i), 'other_config': {}})
+                attrs={'name': 'chassis' + str(i),
+                       'other_config': {},
+                       'chassis': [chassis],
+                       'nb_cfg_timestamp': timeutils.utcnow_ts() * 1000})
             self.agent_cache.update(ovn_const.OVN_CONTROLLER_AGENT,
                                     chassis_private)
             self.names_ref.append('chassis' + str(i))
@@ -49,8 +55,12 @@ class AgentCacheTestCase(base.BaseTestCase):
 
     def _add_and_delete_agents(self):
         del self.agent_cache['chassis8']
+        chassis = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'other_config': {}})
         chassis_private = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={'name': 'chassis10'})
+            attrs={'name': 'chassis10',
+                   'chassis': [chassis],
+                   'nb_cfg_timestamp': timeutils.utcnow_ts() * 1000})
         self.agent_cache.update(ovn_const.OVN_CONTROLLER_AGENT,
                                 chassis_private)
 

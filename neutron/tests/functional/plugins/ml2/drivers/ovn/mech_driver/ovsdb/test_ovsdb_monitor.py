@@ -470,8 +470,6 @@ class TestAgentMonitor(base.TestOVNFunctionalBase):
                 int(chassis_ts / 1000), datetime.timezone.utc)
             return agent.updated_at == updated_at
 
-        if not self.sb_api.is_table_present('Chassis_Private'):
-            self.skipTest('Ovn sb not support Chassis_Private')
         timestamp = timeutils.utcnow_ts()
         nb_cfg_timestamp = timestamp * 1000
         self.sb_api.db_set('Chassis_Private', self.chassis_name, (
@@ -503,9 +501,6 @@ class TestAgentMonitor(base.TestOVNFunctionalBase):
         def check_nb_cfg_timestamp_is_not_null():
             agent = neutron_agent.AgentCache()[self.chassis_name]
             return agent.updated_at != 0
-
-        if not self.sb_api.is_table_present('Chassis_Private'):
-            self.skipTest('Ovn sb not support Chassis_Private')
 
         # Set nb_cfg to some realistic value, so that the alive check can
         # actually work
