@@ -386,19 +386,39 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
             self.qos_driver.delete_minimum_bandwidth({'port_id': 'p_id'})
             mock_delete_minimum_bandwidth_queue.assert_called_once_with('p_id')
 
-    def test_update_minimum_bandwidth_no_vif_port(self):
+    @mock.patch.object(qos_driver, 'LOG')
+    def test_update_minimum_bandwidth_no_vif_port(self, mock_log):
         with mock.patch.object(self.qos_driver.br_int,
                                'update_minimum_bandwidth_queue') \
                 as mock_delete_minimum_bandwidth_queue:
-            self.qos_driver.update_minimum_bandwidth({}, mock.ANY)
+            self.qos_driver.update_minimum_bandwidth(
+                {'port_id': 'portid'}, mock.ANY)
             mock_delete_minimum_bandwidth_queue.assert_not_called()
+            mock_log.debug.assert_called_once_with(
+                'update_minimum_bandwidth was received for port %s but '
+                'vif_port was not found. It seems that port is already '
+                'deleted', 'portid')
+
+    @mock.patch.object(qos_driver, 'LOG')
+    def test_update_minimum_bandwidth_no_physical_network(self, mock_log):
+        with mock.patch.object(self.qos_driver.br_int,
+                               'update_minimum_bandwidth_queue') \
+                as mock_delete_minimum_bandwidth_queue:
+            port = {'vif_port': mock.ANY, 'port_id': 'portid',
+                    'physical_network': None}
+            self.qos_driver.update_minimum_bandwidth(port, mock.ANY)
+            mock_delete_minimum_bandwidth_queue.assert_not_called()
+            mock_log.debug.assert_called_once_with(
+                'update_minimum_bandwidth was received for port %s but '
+                'has no physical network associated', 'portid')
 
     def test_update_minimum_bandwidth_no_phy_brs(self):
         vif_port = mock.Mock()
         vif_port.ofport = 'ofport'
         rule = mock.Mock()
         rule.min_kbps = 1500
-        port = {'port_id': 'port_id', 'vif_port': vif_port}
+        port = {'port_id': 'port_id', 'vif_port': vif_port,
+                'physical_network': mock.ANY}
         with mock.patch.object(self.qos_driver.br_int,
                                'update_minimum_bandwidth_queue') \
                 as mock_delete_minimum_bandwidth_queue, \
@@ -413,7 +433,8 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
         vif_port.ofport = 'ofport'
         rule = mock.Mock()
         rule.min_kbps = 1500
-        port = {'port_id': 'port_id', 'vif_port': vif_port}
+        port = {'port_id': 'port_id', 'vif_port': vif_port,
+                'physical_network': mock.ANY}
         with mock.patch.object(self.qos_driver.br_int,
                                'update_minimum_bandwidth_queue') \
                 as mock_delete_minimum_bandwidth_queue, \

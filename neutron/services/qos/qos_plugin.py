@@ -49,6 +49,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron._i18n import _
+from neutron.common import _constants as n_const
 from neutron.db import db_base_plugin_common
 from neutron.exceptions import qos as neutron_qos_exc
 from neutron.extensions import qos
@@ -254,17 +255,22 @@ class QoSPlugin(qos.QoSPluginBase):
         # support will be available. See Placement spec:
         # https://review.opendev.org/565730
         first_segment = segments[0]
-        if not first_segment or not first_segment.physical_network:
+        if not first_segment:
             return []
-        physnet_trait = pl_utils.physnet_trait(
-            first_segment.physical_network)
+        elif not first_segment.physical_network:
+            # If there is no physical network this is because this is an
+            # overlay network (tunnelled network).
+            net_trait = n_const.TRAIT_NETWORK_TUNNEL
+        else:
+            net_trait = pl_utils.physnet_trait(first_segment.physical_network)
+
         # NOTE(ralonsoh): we should not rely on the current execution order of
         # the port extending functions. Although here we have
         # port_res[VNIC_TYPE], we should retrieve this value from the port DB
         # object instead.
         vnic_trait = pl_utils.vnic_type_trait(vnic_type)
 
-        return [physnet_trait, vnic_trait]
+        return [net_trait, vnic_trait]
 
     @staticmethod
     @resource_extend.extends([port_def.COLLECTION_NAME_BULK])

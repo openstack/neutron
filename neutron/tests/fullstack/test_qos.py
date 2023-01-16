@@ -825,30 +825,42 @@ class TestMinBwQoSOvs(_TestMinBwQoS, base.BaseFullStackTestCase):
             qoses, queues = self._qos_info(vm.bridge)
             self.fail(queuenum + qoses + queues)
 
-    def test_min_bw_qos_create_network_vxlan_not_supported(self):
+    def test_min_bw_qos_create_network_vxlan_supported(self):
         qos_policy = self._create_qos_policy()
         qos_policy_id = qos_policy['id']
         self.safe_client.create_minimum_bandwidth_rule(
             self.tenant_id, qos_policy_id, MIN_BANDWIDTH, self.direction)
         network_args = {'network_type': 'vxlan',
                         'qos_policy_id': qos_policy_id}
-        self.assertRaises(
-            exceptions.Conflict,
-            self.safe_client.create_network,
+        net = self.safe_client.create_network(
             self.tenant_id, name='network-test', **network_args)
+        self.assertEqual(qos_policy_id, net['qos_policy_id'])
 
-    def test_min_bw_qos_update_network_vxlan_not_supported(self):
-        network_args = {'network_type': 'vxlan'}
-        network = self.safe_client.create_network(
-            self.tenant_id, name='network-test', **network_args)
+    def test_min_bw_qos_create_and_update_network_vxlan_supported(self):
         qos_policy = self._create_qos_policy()
         qos_policy_id = qos_policy['id']
         self.safe_client.create_minimum_bandwidth_rule(
             self.tenant_id, qos_policy_id, MIN_BANDWIDTH, self.direction)
-        self.assertRaises(
-            exceptions.Conflict,
-            self.client.update_network, network['id'],
-            body={'network': {'qos_policy_id': qos_policy_id}})
+        network_args = {'network_type': 'vxlan',
+                        'qos_policy_id': qos_policy_id}
+        network = self.safe_client.create_network(
+            self.tenant_id, name='network-test', **network_args)
+        self.assertEqual(qos_policy_id, network['qos_policy_id'])
+
+        qos_policy2 = self._create_qos_policy()
+        qos_policy2_id = qos_policy2['id']
+        self.client.update_network(
+            network['id'], body={'network': {'qos_policy_id': qos_policy2_id}})
+        _net = self.client.show_network(network['id'])
+        self.assertEqual(qos_policy2_id, _net['network']['qos_policy_id'])
+
+        # This action will remove the QoS policy from the network. This is also
+        # necessary before the cleanUp call, that will delete the QoS policy
+        # before the network.
+        self.client.update_network(
+            network['id'], body={'network': {'qos_policy_id': None}})
+        _net = self.client.show_network(network['id'])
+        self.assertIsNone(_net['network']['qos_policy_id'])
 
     def test_min_bw_qos_port_removed(self):
         """Test if min BW limit config is properly removed when port removed.

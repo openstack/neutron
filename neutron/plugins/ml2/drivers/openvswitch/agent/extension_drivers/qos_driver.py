@@ -432,6 +432,11 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver,
                       'vif_port was not found. It seems that port is already '
                       'deleted', port.get('port_id'))
             return
+        elif not port.get('physical_network'):
+            LOG.debug('update_minimum_bandwidth was received for port %s but '
+                      'has no physical network associated',
+                      port.get('port_id'))
+            return
 
         self.ports[port['port_id']][(qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH,
                                      rule.direction)] = port

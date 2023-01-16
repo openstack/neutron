@@ -78,3 +78,8 @@ IDPOOL_SELECT_SIZE = 100
 AUTO_DELETE_PORT_OWNERS = [constants.DEVICE_OWNER_DHCP,
                            constants.DEVICE_OWNER_DISTRIBUTED,
                            constants.DEVICE_OWNER_AGENT_GW]
+
+# TODO(ralonsoh): move this constant to neutron_lib.placement.constants
+# Tunnelled networks resource provider default name.
+RP_TUNNELLED = 'rp_tunnelled'
+TRAIT_NETWORK_TUNNEL = 'CUSTOM_NETWORK_TUNNEL_PROVIDER'

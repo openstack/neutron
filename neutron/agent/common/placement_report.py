@@ -15,7 +15,11 @@
 from neutron_lib import constants as nlib_const
 from neutron_lib.placement import utils as place_utils
 import os_resource_classes as orc
+from oslo_config import cfg
 from oslo_log import log as logging
+
+from neutron.common import _constants as n_const
+
 
 LOG = logging.getLogger(__name__)
 
@@ -99,6 +103,7 @@ class PlacementState(object):
         self._device_mappings = device_mappings
         self._supported_vnic_types = supported_vnic_types
         self._client = client
+        self._rp_tun_name = cfg.CONF.ml2.tunnelled_network_rp_name
 
     def _deferred_update_physnet_traits(self):
         traits = []
@@ -110,6 +115,10 @@ class PlacementState(object):
                             self._client.update_trait,
                             name=place_utils.physnet_trait(physnet)))
         return traits
+
+    def _deferred_update_tunnelled_traits(self):
+        return [DeferredCall(self._client.update_trait,
+                             name=n_const.TRAIT_NETWORK_TUNNEL)]
 
     def _deferred_update_vnic_type_traits(self):
         traits = []
@@ -123,6 +132,7 @@ class PlacementState(object):
     def deferred_update_traits(self):
         traits = []
         traits += self._deferred_update_physnet_traits()
+        traits += self._deferred_update_tunnelled_traits()
         traits += self._deferred_update_vnic_type_traits()
         return traits
 
@@ -196,7 +206,8 @@ class PlacementState(object):
 
     def deferred_update_resource_provider_traits(self):
         rp_traits = []
-
+        tunnelled_trait_mappings = {
+            self._rp_tun_name: n_const.TRAIT_NETWORK_TUNNEL}
         physnet_trait_mappings = {}
         for physnet, devices in self._device_mappings.items():
             for device in devices:
@@ -210,8 +221,8 @@ class PlacementState(object):
                 self._driver_uuid_namespace,
                 self._hypervisor_rps[device]['name'],
                 device)
-            traits = []
-            traits.append(physnet_trait_mappings[device])
+            traits = [physnet_trait_mappings.get(device) or
+                      tunnelled_trait_mappings[device]]
             traits.extend(vnic_type_traits)
             rp_traits.append(
                 DeferredCall(

@@ -16,9 +16,12 @@
 import socket
 from unittest import mock
 
+from oslo_config import cfg
+
 from neutron.agent.common import utils
 from neutron.agent.linux import interface
 from neutron.conf.agent import common as config
+from neutron.conf.plugins.ml2 import config as ml2_config
 from neutron.tests import base
 from neutron.tests.unit import testlib_api
 
@@ -158,6 +161,10 @@ class TestGetHypervisorHostname(base.BaseTestCase):
 # TODO(bence romsics): rehome this to neutron_lib
 class TestDefaultRpHypervisors(base.BaseTestCase):
 
+    def setUp(self):
+        super().setUp()
+        ml2_config.register_ml2_plugin_opts()
+
     @mock.patch.object(utils, 'get_hypervisor_hostname',
                        return_value='thishost')
     def test_defaults(self, hostname_mock):
@@ -195,5 +202,28 @@ class TestDefaultRpHypervisors(base.BaseTestCase):
                 hypervisors={'eth0': 'thathost'},
                 device_mappings={'physnet0': ['eth0', 'eth1']},
                 default_hypervisor='defaulthost',
+            )
+        )
+
+        rp_tunnelled = cfg.CONF.ml2.tunnelled_network_rp_name
+        self.assertEqual(
+            {'eth0': 'thathost', 'eth1': 'defaulthost',
+             rp_tunnelled: 'defaulthost'},
+            utils.default_rp_hypervisors(
+                hypervisors={'eth0': 'thathost'},
+                device_mappings={'physnet0': ['eth0', 'eth1']},
+                default_hypervisor='defaulthost',
+                tunnelled_network_rp_name=rp_tunnelled
+            )
+        )
+
+        self.assertEqual(
+            {'eth0': 'thathost', 'eth1': 'defaulthost',
+             rp_tunnelled: 'thathost'},
+            utils.default_rp_hypervisors(
+                hypervisors={'eth0': 'thathost', rp_tunnelled: 'thathost'},
+                device_mappings={'physnet0': ['eth0', 'eth1']},
+                default_hypervisor='defaulthost',
+                tunnelled_network_rp_name=rp_tunnelled
             )
         )

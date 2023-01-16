@@ -16,6 +16,8 @@
 from oslo_config import cfg
 
 from neutron._i18n import _
+from neutron.common import _constants as common_const
+
 
 ml2_opts = [
     cfg.ListOpt('type_drivers',
@@ -65,7 +67,16 @@ ml2_opts = [
     cfg.IntOpt('overlay_ip_version',
                default=4,
                help=_("IP version of all overlay (tunnel) network endpoints. "
-                      "Use a value of 4 for IPv4 or 6 for IPv6."))
+                      "Use a value of 4 for IPv4 or 6 for IPv6.")),
+    cfg.StrOpt('tunnelled_network_rp_name',
+               default=common_const.RP_TUNNELLED,
+               help=_("Resource provider name for the host with tunnelled "
+                      "networks. This resource provider represents the "
+                      "available bandwidth for all tunnelled networks in a "
+                      "compute node. NOTE: this parameter is used both by the "
+                      "Neutron server and the mechanism driver agents; it is "
+                      "recommended not to change it once any resource "
+                      "provider register has been created.")),
 ]
 
 

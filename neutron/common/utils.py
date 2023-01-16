@@ -883,7 +883,8 @@ def port_ip_changed(new_port, original_port):
     return False
 
 
-def validate_rp_bandwidth(rp_bandwidths, device_names):
+def validate_rp_bandwidth(rp_bandwidths, device_names,
+                          tunnelled_network_rp_name=None):
     """Validate resource provider bandwidths against device names.
 
     :param rp_bandwidths: Dict containing resource provider bandwidths,
@@ -892,10 +893,14 @@ def validate_rp_bandwidth(rp_bandwidths, device_names):
     :param device_names: A set of the device names given in bridge_mappings
                          in case of ovs-agent or in physical_device_mappings
                          in case of sriov-agent
+    :param tunnelled_network_rp_name: the resource provider name for tunnelled
+                                      networks; if present, it will be added
+                                      to the devices list.
     :raises ValueError: In case of the devices (keys) in the rp_bandwidths dict
                         are not in the device_names set.
     """
-
+    if tunnelled_network_rp_name:
+        device_names.add(tunnelled_network_rp_name)
     for dev_name in rp_bandwidths:
         if dev_name not in device_names:
             raise ValueError(_(

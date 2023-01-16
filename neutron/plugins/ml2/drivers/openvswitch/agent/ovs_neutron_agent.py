@@ -62,6 +62,7 @@ from neutron.api.rpc.handlers import securitygroups_rpc as sg_rpc
 from neutron.common import config
 from neutron.common import utils as n_utils
 from neutron.conf.agent import common as agent_config
+from neutron.conf.plugins.ml2 import config as ml2_config
 from neutron.conf import service as service_conf
 from neutron.plugins.ml2.drivers.agent import capabilities
 from neutron.plugins.ml2.drivers.l2pop.rpc_manager import l2population_rpc
@@ -233,8 +234,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         self._validate_rp_pkt_processing_cfg()
 
         br_set = set(self.bridge_mappings.values())
-        n_utils.validate_rp_bandwidth(self.rp_bandwidths,
-                                      br_set)
+        n_utils.validate_rp_bandwidth(
+            self.rp_bandwidths, br_set,
+            tunnelled_network_rp_name=self.conf.ml2.tunnelled_network_rp_name)
         self.rp_inventory_defaults = place_utils.parse_rp_inventory_defaults(
             ovs_conf.resource_provider_inventory_defaults)
         # At the moment the format of
@@ -250,7 +252,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         self.rp_hypervisors = utils.default_rp_hypervisors(
             ovs_conf.resource_provider_hypervisors,
             {k: [v] for k, v in self.bridge_mappings.items()},
-            ovs_conf.resource_provider_default_hypervisor
+            default_hypervisor=ovs_conf.resource_provider_default_hypervisor,
+            tunnelled_network_rp_name=self.conf.ml2.tunnelled_network_rp_name,
         )
 
         self.phys_brs = {}
@@ -2930,6 +2933,7 @@ def main(bridge_classes):
     l2_agent_extensions_manager.register_opts(cfg.CONF)
     agent_config.setup_privsep()
     service_conf.register_service_opts(service_conf.RPC_EXTRA_OPTS, cfg.CONF)
+    ml2_config.register_ml2_plugin_opts(cfg=cfg.CONF)
 
     ext_mgr = l2_agent_extensions_manager.L2AgentExtensionsManager(cfg.CONF)
 

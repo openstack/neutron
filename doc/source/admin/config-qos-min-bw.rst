@@ -40,9 +40,6 @@ Limitations
   technical reasons (in this case the port is created too late for
   Neutron to affect scheduling).
 
-* Bandwidth guarantees for ports can only be requested on networks
-  backed by a physical network (physnet).
-
 * In Stein there is no support for networks with multiple physnets.
   However some simpler multi-segment networks are still supported:
 
@@ -185,6 +182,13 @@ supported:
   by a ``direct-physical`` port.
 
 
+Since 2023.1 (Antelope), Open vSwitch and OVN mechanism drivers can specify
+the available bandwidth for tunnelled networks (SR-IOV does not support these
+network types yet). The key "rp_tunnelled" is used to model those networks
+that are not backed by a physical network. This bandwidth models the limits
+of the VTEP/TEP interface used to send the tunnelled traffic (VXLAN, Geneve).
+
+
 neutron-server config
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -260,8 +264,19 @@ Valid values are all the
 
     [ovs]
     bridge_mappings = physnet0:br-physnet0,...
-    resource_provider_bandwidths = br-physnet0:10000000:10000000,...
+    resource_provider_bandwidths = br-physnet0:10000000:10000000,rp_tunnelled:20000000:20000000,...
     #resource_provider_inventory_defaults = step_size:1000,...
+
+
+.. note::
+
+    "rp_tunnelled" is not a bridge nor an interface present in the host.
+    The ML2/OVS agent will read the host local "resource_provider_bandwidths"
+    and will assign, by default, the "rp_tunnelled" resource provider to
+    the local host where is running. In other words, it is not needed to
+    populate "resource_provider_hypervisors" with the host assigned to this
+    specific resource provider.
+
 
 neutron-sriov-agent config
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -296,9 +311,9 @@ SR-IOV and OVS agents. This is how the values are registered:
     $ root@dev20:~# ovs-vsctl list Open_vSwitch
       ...
       external_ids        : {hostname=dev20.fistro.com, \
-                             ovn-cms-options="resource_provider_bandwidths=br-ex:1001:2000;br-ex2:3000:4000, \
+                             ovn-cms-options="resource_provider_bandwidths=br-ex:1001:2000;br-ex2:3000:4000;rp_tunnelled:5000:6000, \
                                               resource_provider_inventory_defaults=allocation_ratio:1.0;min_unit:10, \
-                                              resource_provider_hypervisors=br-ex:dev20.fistro.com;br-ex2:dev20.fistro.com", \
+                                              resource_provider_hypervisors=br-ex:dev20.fistro.com;br-ex2:dev20.fistro.com;rp_tunnelled:dev20.fistro.com", \
                              rundir="/var/run/openvswitch", \
                              system-id="029e7d3d-d2ab-4f2c-bc92-ec58c94a8fc1"}
       ...
@@ -354,7 +369,9 @@ queue periodically.
     $ openstack network agent show -f value -c configuration 5e57b85f-b017-419a-8745-9c406e149f9e
     {'bridge_mappings': {'physnet0': 'br-physnet0'},
      'resource_provider_bandwidths': {'br-physnet0': {'egress': 10000000,
-                                                      'ingress': 10000000}},
+                                                      'ingress': 10000000}
+                                      'rp_tunnelled': {'egress': 20000000,
+                                                       'ingress': 20000000}},
      'resource_provider_inventory_defaults': {'allocation_ratio': 1.0,
                                               'min_unit': 1,
                                               'reserved': 0,
@@ -578,6 +595,7 @@ Please find an example in section `Propagation of resource information`_.
     | 1c7e83f0-108d-5c35-ada7-7ebebbe43aad | devstack0:NIC Switch agent:ens5          |          2 | 3b36d91e-bf60-460f-b1f8-3322dee5cdfd | 4a8a819d-61f9-5822-8c5c-3e9c7cb942d6 |
     | 89ca1421-5117-5348-acab-6d0e2054239c | devstack0:Open vSwitch agent             |          0 | 3b36d91e-bf60-460f-b1f8-3322dee5cdfd | 3b36d91e-bf60-460f-b1f8-3322dee5cdfd |
     | f9c9ce07-679d-5d72-ac5f-31720811629a | devstack0:Open vSwitch agent:br-physnet0 |          2 | 3b36d91e-bf60-460f-b1f8-3322dee5cdfd | 89ca1421-5117-5348-acab-6d0e2054239c |
+    | 521f53a6-c8c0-583c-98da-7a47f39ff887 | devstack0:Open vSwitch agent:rp_tunnelled|          2 | 3b36d91e-bf60-460f-b1f8-3322dee5cdfd | 89ca1421-5117-5348-acab-6d0e2054239c |
     +--------------------------------------+------------------------------------------+------------+--------------------------------------+--------------------------------------+
 
 * Does Placement have the expected traits?
@@ -587,6 +605,7 @@ Please find an example in section `Propagation of resource information`_.
     # as admin
     $ openstack --os-placement-api-version 1.17 trait list | awk '/CUSTOM_/ { print $2 }' | sort
     CUSTOM_PHYSNET_PHYSNET0
+    CUSTOM_TUNNELLED_NETWORKS
     CUSTOM_VNIC_TYPE_DIRECT
     CUSTOM_VNIC_TYPE_DIRECT_PHYSICAL
     CUSTOM_VNIC_TYPE_MACVTAP
