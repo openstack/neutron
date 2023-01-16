@@ -102,10 +102,11 @@ class TestDvrFipNs(base.BaseTestCase):
     @mock.patch.object(ip_lib, 'IPWrapper')
     @mock.patch.object(ip_lib, 'device_exists')
     @mock.patch.object(dvr_fip_ns.FipNamespace, 'create')
-    def test_create_gateway_port(self, fip_create, device_exists, ip_wrapper):
+    def test_create_gateway_port(self, fip_create, device_exists, IPWrapper):
         agent_gw_port = self._get_agent_gw_port()
 
         device_exists.return_value = False
+        ip_wrapper = IPWrapper()
         with mock.patch.object(self.fip_ns.driver, 'set_onlink_routes') as \
                 mock_set_onlink_routes:
             self.fip_ns.create_or_update_gateway_port(agent_gw_port)
@@ -113,6 +114,14 @@ class TestDvrFipNs(base.BaseTestCase):
         self.assertEqual(1, self.driver.plug.call_count)
         self.assertEqual(1, self.driver.init_l3.call_count)
         interface_name = self.fip_ns.get_ext_device_name(agent_gw_port['id'])
+        sysctl1 = mock.call(['sysctl', '-w', 'net.ipv4.neigh.%s.proxy_delay=1'
+                             % interface_name], check_exit_code=False,
+                            privsep_exec=True)
+        sysctl2 = mock.call(['sysctl', '-w', 'net.ipv4.conf.%s.proxy_arp=1' %
+                             interface_name], check_exit_code=False,
+                            privsep_exec=True)
+        ip_wrapper.netns.execute.assert_has_calls([sysctl1, sysctl2])
+
         gw_cidrs = [sn['cidr'] for sn in agent_gw_port['subnets']
                     if sn.get('cidr')]
         mock_set_onlink_routes.assert_called_once_with(

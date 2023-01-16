@@ -199,6 +199,9 @@ class FipNamespace(namespaces.Namespace):
 
         self.agent_gateway_port = ex_gw_port
 
+        cmd = ['sysctl', '-w', 'net.ipv4.neigh.%s.proxy_delay=1' %
+               interface_name]
+        ip_wrapper.netns.execute(cmd, check_exit_code=False, privsep_exec=True)
         cmd = ['sysctl', '-w', 'net.ipv4.conf.%s.proxy_arp=1' % interface_name]
         ip_wrapper.netns.execute(cmd, check_exit_code=False, privsep_exec=True)
 
