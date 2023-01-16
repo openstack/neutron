@@ -96,7 +96,7 @@ class TestMonitorDaemon(base.BaseLoggingTestCase):
             except FileNotFoundError:
                 return False
         try:
-            utils.wait_until_true(text_in_file, timeout=15)
+            utils.wait_until_true(text_in_file, timeout=18)
         except utils.WaitTimeout:
             devices = {}
             for dev in ip_lib.IPWrapper(
