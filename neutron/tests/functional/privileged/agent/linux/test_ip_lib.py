@@ -26,6 +26,7 @@ from pyroute2.netlink import rtnl
 import testtools
 
 from neutron.agent.linux import ip_lib
+from neutron.agent.linux import utils as linux_utils
 from neutron.common import utils as common_utils
 from neutron.privileged.agent.linux import ip_lib as priv_ip_lib
 from neutron.tests.common import net_helpers
@@ -79,9 +80,9 @@ class GetDevicesInfoTestCase(functional_base.BaseSudoTestCase):
         devices = priv_ip_lib.get_link_devices(self.namespace)
         self.assertGreater(len(devices), 0)
         for device in devices:
-            if ip_lib.get_attr(device, 'IFLA_IFNAME') != 'lo':
+            if linux_utils.get_attr(device, 'IFLA_IFNAME') != 'lo':
                 continue
-            self.assertIsNone(ip_lib.get_attr(device, 'IFLA_LINKINFO'))
+            self.assertIsNone(linux_utils.get_attr(device, 'IFLA_LINKINFO'))
             break
         else:
             self.fail('Device "lo" not found')
@@ -94,13 +95,14 @@ class GetDevicesInfoTestCase(functional_base.BaseSudoTestCase):
         devices = priv_ip_lib.get_link_devices(self.namespace)
         self.assertGreater(len(devices), 0)
         for device in devices:
-            name = ip_lib.get_attr(device, 'IFLA_IFNAME')
+            name = linux_utils.get_attr(device, 'IFLA_IFNAME')
             if name in self.interfaces_to_exclude:
                 continue
             self.assertIn(name, self.interfaces)
-            ifla_linkinfo = ip_lib.get_attr(device, 'IFLA_LINKINFO')
-            self.assertEqual(ip_lib.get_attr(ifla_linkinfo, 'IFLA_INFO_KIND'),
-                             'dummy')
+            ifla_linkinfo = linux_utils.get_attr(device, 'IFLA_LINKINFO')
+            self.assertEqual(
+                linux_utils.get_attr(ifla_linkinfo, 'IFLA_INFO_KIND'),
+                'dummy')
             interfaces_tested.append(name)
         self.assertEqual(sorted(interfaces_tested), sorted(self.interfaces))
 
@@ -121,27 +123,29 @@ class GetDevicesInfoTestCase(functional_base.BaseSudoTestCase):
         self.assertGreater(len(devices), 0)
         device_name_index = {}
         for device in devices:
-            name = ip_lib.get_attr(device, 'IFLA_IFNAME')
+            name = linux_utils.get_attr(device, 'IFLA_IFNAME')
             device_name_index[name] = device['index']
 
         for device in devices:
-            name = ip_lib.get_attr(device, 'IFLA_IFNAME')
+            name = linux_utils.get_attr(device, 'IFLA_IFNAME')
             if name in self.interfaces_to_exclude:
                 continue
             self.assertIn(name, self.interfaces + vlan_interfaces)
-            ifla_linkinfo = ip_lib.get_attr(device, 'IFLA_LINKINFO')
+            ifla_linkinfo = linux_utils.get_attr(device, 'IFLA_LINKINFO')
             if name in vlan_interfaces:
                 self.assertEqual(
-                    ip_lib.get_attr(ifla_linkinfo, 'IFLA_INFO_KIND'), 'vlan')
-                ifla_infodata = ip_lib.get_attr(ifla_linkinfo,
-                                                'IFLA_INFO_DATA')
+                    linux_utils.get_attr(ifla_linkinfo, 'IFLA_INFO_KIND'),
+                    'vlan')
+                ifla_infodata = linux_utils.get_attr(ifla_linkinfo,
+                                                     'IFLA_INFO_DATA')
                 vlan_id = int(name.split('_')[-1])
                 self.assertEqual(
-                    ip_lib.get_attr(ifla_infodata, 'IFLA_VLAN_ID'), vlan_id)
+                    linux_utils.get_attr(ifla_infodata, 'IFLA_VLAN_ID'),
+                    vlan_id)
                 vlan_link_name = self.interfaces[vlan_interfaces.index(name)]
                 vlan_link_index = device_name_index[vlan_link_name]
-                self.assertEqual(vlan_link_index, ip_lib.get_attr(device,
-                                                                  'IFLA_LINK'))
+                self.assertEqual(vlan_link_index,
+                                 linux_utils.get_attr(device, 'IFLA_LINK'))
             interfaces_tested.append(name)
         self.assertEqual(sorted(interfaces_tested),
                          sorted(self.interfaces + vlan_interfaces))
@@ -164,39 +168,40 @@ class GetDevicesInfoTestCase(functional_base.BaseSudoTestCase):
         self.assertGreater(len(devices), 0)
         device_name_index = {}
         for device in devices:
-            name = ip_lib.get_attr(device, 'IFLA_IFNAME')
+            name = linux_utils.get_attr(device, 'IFLA_IFNAME')
             device_name_index[name] = device['index']
 
         for device in devices:
-            name = ip_lib.get_attr(device, 'IFLA_IFNAME')
+            name = linux_utils.get_attr(device, 'IFLA_IFNAME')
             if name in self.interfaces_to_exclude:
                 continue
             self.assertIn(name, self.interfaces + vxlan_interfaces)
-            ifla_linkinfo = ip_lib.get_attr(device, 'IFLA_LINKINFO')
+            ifla_linkinfo = linux_utils.get_attr(device, 'IFLA_LINKINFO')
             if name in vxlan_interfaces:
                 self.assertEqual(
-                    ip_lib.get_attr(ifla_linkinfo, 'IFLA_INFO_KIND'),
+                    linux_utils.get_attr(ifla_linkinfo, 'IFLA_INFO_KIND'),
                     'vxlan')
-                ifla_infodata = ip_lib.get_attr(ifla_linkinfo,
-                                                'IFLA_INFO_DATA')
+                ifla_infodata = linux_utils.get_attr(ifla_linkinfo,
+                                                     'IFLA_INFO_DATA')
                 vxlan_id = int(name.split('_')[-1])
                 self.assertEqual(
-                    ip_lib.get_attr(ifla_infodata, 'IFLA_VXLAN_ID'), vxlan_id)
+                    linux_utils.get_attr(ifla_infodata, 'IFLA_VXLAN_ID'),
+                    vxlan_id)
                 self.assertEqual(
-                    ip_lib.get_attr(ifla_infodata, 'IFLA_VXLAN_GROUP'),
+                    linux_utils.get_attr(ifla_infodata, 'IFLA_VXLAN_GROUP'),
                     '239.1.1.1')
                 vxlan_link_name = self.interfaces[vxlan_interfaces.index(name)]
                 vxlan_link_index = device_name_index[vxlan_link_name]
                 self.assertEqual(
                     vxlan_link_index,
-                    ip_lib.get_attr(ifla_infodata, 'IFLA_VXLAN_LINK'))
+                    linux_utils.get_attr(ifla_infodata, 'IFLA_VXLAN_LINK'))
             interfaces_tested.append(name)
         self.assertEqual(sorted(interfaces_tested),
                          sorted(self.interfaces + vxlan_interfaces))
 
     def _retrieve_interface(self, interface_name, namespace):
         for device in priv_ip_lib.get_link_devices(namespace):
-            if interface_name == ip_lib.get_attr(device, 'IFLA_IFNAME'):
+            if interface_name == linux_utils.get_attr(device, 'IFLA_IFNAME'):
                 return device
         else:
             self.fail('Interface "%s" not found' % interface_name)
@@ -216,14 +221,14 @@ class GetDevicesInfoTestCase(functional_base.BaseSudoTestCase):
         veth1_1 = self._retrieve_interface('veth1_1', self.namespace)
         veth1_2 = self._retrieve_interface('veth1_2', namespace2)
 
-        ifla_linkinfo = ip_lib.get_attr(veth1_1, 'IFLA_LINKINFO')
-        self.assertEqual(ip_lib.get_attr(ifla_linkinfo, 'IFLA_INFO_KIND'),
+        ifla_linkinfo = linux_utils.get_attr(veth1_1, 'IFLA_LINKINFO')
+        self.assertEqual(linux_utils.get_attr(ifla_linkinfo, 'IFLA_INFO_KIND'),
                          'veth')
         # NOTE(ralonsoh): since kernel_version=4.15.0-60-generic, iproute2
         # provides the veth pair index, even if the pair interface is in other
         # namespace. In previous versions, the parameter 'IFLA_LINK' was not
         # present. We need to handle both cases.
-        self.assertIn(ip_lib.get_attr(veth1_1, 'IFLA_LINK'),
+        self.assertIn(linux_utils.get_attr(veth1_1, 'IFLA_LINK'),
                       [None, veth1_2['index']])
 
     def test_get_devices_info_veth_same_namespaces(self):
@@ -233,8 +238,8 @@ class GetDevicesInfoTestCase(functional_base.BaseSudoTestCase):
         veth1_1 = self._retrieve_interface('veth1_1', self.namespace)
         veth1_2 = self._retrieve_interface('veth1_2', self.namespace)
 
-        veth1_1_link = ip_lib.get_attr(veth1_1, 'IFLA_LINK')
-        veth1_2_link = ip_lib.get_attr(veth1_2, 'IFLA_LINK')
+        veth1_1_link = linux_utils.get_attr(veth1_1, 'IFLA_LINK')
+        veth1_2_link = linux_utils.get_attr(veth1_2, 'IFLA_LINK')
         self.assertEqual(veth1_1['index'], veth1_2_link)
         self.assertEqual(veth1_2['index'], veth1_1_link)
 
@@ -464,7 +469,7 @@ class GetIpAddressesTestCase(functional_base.BaseSudoTestCase):
         ip_addresses = priv_ip_lib.get_ip_addresses(namespace)
         for ip_address in ip_addresses:
             int_name = str(ip_address['index'])
-            ip = ip_lib.get_attr(ip_address, 'IFA_ADDRESS')
+            ip = linux_utils.get_attr(ip_address, 'IFA_ADDRESS')
             mask = ip_address['prefixlen']
             cidr = common_utils.ip_to_cidr(ip, mask)
             self.assertEqual(interfaces[int_name]['cidr'], cidr)
@@ -484,10 +489,11 @@ class RouteTestCase(functional_base.BaseSudoTestCase):
 
     def _check_gateway_or_multipath(self, route, gateway):
         if gateway is None or isinstance(gateway, str):
-            self.assertEqual(gateway, ip_lib.get_attr(route, 'RTA_GATEWAY'))
+            self.assertEqual(gateway,
+                            linux_utils.get_attr(route, 'RTA_GATEWAY'))
             return
 
-        rta_multipath = ip_lib.get_attr(route, 'RTA_MULTIPATH')
+        rta_multipath = linux_utils.get_attr(route, 'RTA_MULTIPATH')
         self.assertEqual(len(gateway), len(rta_multipath))
         for nexthop in gateway:
             to_check = {'hops': 0}
@@ -500,7 +506,7 @@ class RouteTestCase(functional_base.BaseSudoTestCase):
                 to_check['gateway'] = nexthop['via']
 
             for mp in rta_multipath:
-                mp['gateway'] = ip_lib.get_attr(mp, 'RTA_GATEWAY')
+                mp['gateway'] = linux_utils.get_attr(mp, 'RTA_GATEWAY')
                 for key in to_check:
                     if to_check[key] != mp[key]:
                         break
@@ -524,7 +530,7 @@ class RouteTestCase(functional_base.BaseSudoTestCase):
                 scope = 0
             routes = priv_ip_lib.list_ip_routes(self.namespace, ip_version)
             for route in routes:
-                ip = ip_lib.get_attr(route, 'RTA_DST')
+                ip = linux_utils.get_attr(route, 'RTA_DST')
                 mask = route['dst_len']
                 if not (ip == str(netaddr.IPNetwork(cidr).ip) and
                         mask == netaddr.IPNetwork(cidr).cidr.prefixlen):
@@ -535,7 +541,7 @@ class RouteTestCase(functional_base.BaseSudoTestCase):
                     route['family'])
                 self._check_gateway_or_multipath(route, gateway)
                 self.assertEqual(metric,
-                                 ip_lib.get_attr(route, 'RTA_PRIORITY'))
+                                 linux_utils.get_attr(route, 'RTA_PRIORITY'))
                 self.assertEqual(scope, route['scope'])
                 self.assertEqual(rtnl.rt_proto[proto], route['proto'])
                 break
@@ -550,18 +556,18 @@ class RouteTestCase(functional_base.BaseSudoTestCase):
         scope = 0
         routes = priv_ip_lib.list_ip_routes(self.namespace, ip_version)
         for route in routes:
-            if not (ip_lib.get_attr(route, 'RTA_GATEWAY') == gateway):
+            if not (linux_utils.get_attr(route, 'RTA_GATEWAY') == gateway):
                 continue
             self.assertEqual(table, route['table'])
             self.assertEqual(
                 priv_ip_lib._IP_VERSION_FAMILY_MAP[ip_version],
                 route['family'])
             self.assertEqual(gateway,
-                             ip_lib.get_attr(route, 'RTA_GATEWAY'))
+                             linux_utils.get_attr(route, 'RTA_GATEWAY'))
             self.assertEqual(scope, route['scope'])
             self.assertEqual(0, route['dst_len'])
             self.assertEqual(metric,
-                             ip_lib.get_attr(route, 'RTA_PRIORITY'))
+                             linux_utils.get_attr(route, 'RTA_PRIORITY'))
             break
         else:
             self.fail('Default gateway %s not found in the list of routes'
@@ -680,8 +686,8 @@ class GetLinkAttributesTestCase(functional_base.BaseSudoTestCase):
         self.pyroute_dev = self.pyroute_dev[0]
 
     def test_get_link_attribute_kind(self):
-        ifla_linkinfo = ip_lib.get_attr(self.pyroute_dev, 'IFLA_LINKINFO')
-        ifla_link_kind = ip_lib.get_attr(ifla_linkinfo, 'IFLA_INFO_KIND')
+        ifla_linkinfo = linux_utils.get_attr(self.pyroute_dev, 'IFLA_LINKINFO')
+        ifla_link_kind = linux_utils.get_attr(ifla_linkinfo, 'IFLA_INFO_KIND')
         self.assertEqual('dummy', ifla_link_kind)
         self.assertEqual(ifla_link_kind, self.device.link.link_kind)
 

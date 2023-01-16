@@ -18,7 +18,6 @@ from unittest import mock
 import pyroute2
 from pyroute2 import netlink
 from pyroute2.netlink import exceptions as netlink_exceptions
-from pyroute2.netlink.rtnl import ifinfmsg
 
 from neutron.privileged.agent.linux import ip_lib as priv_lib
 from neutron.tests import base
@@ -270,21 +269,3 @@ class IpLibTestCase(base.BaseTestCase):
                 [mock.call('get', 'device', namespace='namespace', ext_mask=1),
                  mock.call('get', 'device', namespace='namespace', ext_mask=1)]
             )
-
-
-class MakeSerializableTestCase(base.BaseTestCase):
-
-    NLA_DATA1 = ifinfmsg.ifinfbase.state(data=b'54321')
-    NLA_DATA2 = ifinfmsg.ifinfbase.state(data=b'abcdef')
-    INPUT_1 = {'key1': 'value1', b'key2': b'value2', 'key3': ('a', 2),
-               'key4': [1, 2, 'c'],
-               b'key5': netlink.nla_slot('nla_name1', NLA_DATA1),
-               'key6': netlink.nla_slot(b'nla_name2', NLA_DATA2)}
-    OUTPUT_1 = {'key1': 'value1', 'key2': 'value2', 'key3': ('a', 2),
-                'key4': [1, 2, 'c'],
-                'key5': ['nla_name1', '54321'],
-                'key6': ['nla_name2', 'abcdef']}
-
-    def test_make_serializable(self):
-        self.assertEqual(self.OUTPUT_1,
-                         priv_lib.make_serializable(self.INPUT_1))

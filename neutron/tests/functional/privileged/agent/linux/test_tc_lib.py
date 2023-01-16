@@ -19,6 +19,7 @@ import pyroute2
 from pyroute2.netlink import rtnl
 
 from neutron.agent.linux import tc_lib
+from neutron.agent.linux import utils as linux_utils
 from neutron.privileged.agent.linux import ip_lib as priv_ip_lib
 from neutron.privileged.agent.linux import tc_lib as priv_tc_lib
 from neutron.tests.functional import base as functional_base
@@ -46,7 +47,7 @@ class TcQdiscTestCase(functional_base.BaseSudoTestCase):
         self.assertEqual(1, len(qdiscs))
         self.assertEqual(rtnl.TC_H_ROOT, qdiscs[0]['parent'])
         self.assertEqual(0x50000, qdiscs[0]['handle'])
-        self.assertEqual('htb', tc_lib._get_attr(qdiscs[0], 'TCA_KIND'))
+        self.assertEqual('htb', linux_utils.get_attr(qdiscs[0], 'TCA_KIND'))
 
         priv_tc_lib.delete_tc_qdisc(self.device, rtnl.TC_H_ROOT,
                                     namespace=self.namespace)
@@ -63,7 +64,7 @@ class TcQdiscTestCase(functional_base.BaseSudoTestCase):
         self.assertEqual(1, len(qdiscs))
         self.assertEqual(rtnl.TC_H_ROOT, qdiscs[0]['parent'])
         self.assertEqual(0, qdiscs[0]['handle'] & 0xFFFF)
-        self.assertEqual('htb', tc_lib._get_attr(qdiscs[0], 'TCA_KIND'))
+        self.assertEqual('htb', linux_utils.get_attr(qdiscs[0], 'TCA_KIND'))
 
         priv_tc_lib.delete_tc_qdisc(self.device, parent=rtnl.TC_H_ROOT,
                                     namespace=self.namespace)
@@ -82,9 +83,9 @@ class TcQdiscTestCase(functional_base.BaseSudoTestCase):
                                             namespace=self.namespace)
         self.assertEqual(1, len(qdiscs))
         self.assertEqual(rtnl.TC_H_ROOT, qdiscs[0]['parent'])
-        self.assertEqual('tbf', tc_lib._get_attr(qdiscs[0], 'TCA_KIND'))
-        tca_options = tc_lib._get_attr(qdiscs[0], 'TCA_OPTIONS')
-        tca_tbf_parms = tc_lib._get_attr(tca_options, 'TCA_TBF_PARMS')
+        self.assertEqual('tbf', linux_utils.get_attr(qdiscs[0], 'TCA_KIND'))
+        tca_options = linux_utils.get_attr(qdiscs[0], 'TCA_OPTIONS')
+        tca_tbf_parms = linux_utils.get_attr(tca_options, 'TCA_TBF_PARMS')
         self.assertEqual(rate, tca_tbf_parms['rate'])
         self.assertEqual(burst, tc_lib._calc_burst(tca_tbf_parms['rate'],
                                                    tca_tbf_parms['buffer']))
@@ -103,7 +104,8 @@ class TcQdiscTestCase(functional_base.BaseSudoTestCase):
         qdiscs = priv_tc_lib.list_tc_qdiscs(self.device,
                                             namespace=self.namespace)
         self.assertEqual(1, len(qdiscs))
-        self.assertEqual('ingress', tc_lib._get_attr(qdiscs[0], 'TCA_KIND'))
+        self.assertEqual('ingress', linux_utils.get_attr(qdiscs[0],
+                                                         'TCA_KIND'))
         self.assertEqual(rtnl.TC_H_INGRESS, qdiscs[0]['parent'])
         self.assertEqual(0xffff0000, qdiscs[0]['handle'])
 
@@ -139,7 +141,8 @@ class TcQdiscTestCase(functional_base.BaseSudoTestCase):
         qdiscs = priv_tc_lib.list_tc_qdiscs(self.device,
                                             namespace=self.namespace)
         self.assertEqual(1, len(qdiscs))
-        self.assertEqual('ingress', tc_lib._get_attr(qdiscs[0], 'TCA_KIND'))
+        self.assertEqual('ingress', linux_utils.get_attr(qdiscs[0],
+                                                         'TCA_KIND'))
         self.assertIsNone(
             priv_tc_lib.delete_tc_qdisc(self.device, kind='ingress',
                                         namespace=self.namespace))
@@ -185,8 +188,8 @@ class TcPolicyClassTestCase(functional_base.BaseSudoTestCase):
         self.assertEqual(len(self.CLASSES), len(tc_classes))
         for tc_class in tc_classes:
             handle = tc_lib._handle_from_hex_to_string(tc_class['handle'])
-            tca_options = tc_lib._get_attr(tc_class, 'TCA_OPTIONS')
-            tca_htb_params = tc_lib._get_attr(tca_options, 'TCA_HTB_PARMS')
+            tca_options = linux_utils.get_attr(tc_class, 'TCA_OPTIONS')
+            tca_htb_params = linux_utils.get_attr(tca_options, 'TCA_HTB_PARMS')
             self.assertEqual(self.CLASSES[handle]['rate'],
                              tca_htb_params['rate'])
             self.assertEqual(self.CLASSES[handle]['ceil'],

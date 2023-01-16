@@ -24,6 +24,7 @@ from pyroute2.netlink import exceptions \
     as netlink_exceptions  # pylint: disable=no-name-in-module
 
 from neutron.agent.linux import ip_lib
+from neutron.agent.linux import utils as linux_utils
 from neutron.privileged.agent.linux import ip_lib as priv_ip_lib
 
 # NOTE(toabctl): Don't use /sys/devices/virtual/net here because not all tap
@@ -184,12 +185,12 @@ class FdbInterface(object):
             if dev and dev != name:
                 continue
 
-            master = find_device_name(ip_lib.get_attr(fdb, 'NDA_MASTER'),
+            master = find_device_name(linux_utils.get_attr(fdb, 'NDA_MASTER'),
                                       devices)
-            fdb_info = {'mac': ip_lib.get_attr(fdb, 'NDA_LLADDR'),
+            fdb_info = {'mac': linux_utils.get_attr(fdb, 'NDA_LLADDR'),
                         'master': master,
-                        'vlan': ip_lib.get_attr(fdb, 'NDA_VLAN'),
-                        'dst_ip': ip_lib.get_attr(fdb, 'NDA_DST')}
+                        'vlan': linux_utils.get_attr(fdb, 'NDA_VLAN'),
+                        'dst_ip': linux_utils.get_attr(fdb, 'NDA_DST')}
             ret[name].append(fdb_info)
 
         return ret
