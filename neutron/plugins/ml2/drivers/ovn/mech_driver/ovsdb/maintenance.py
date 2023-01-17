@@ -891,6 +891,33 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
         raise periodics.NeverAgain()
 
+    @periodics.periodic(spacing=600, run_immediately=True)
+    def check_router_default_route_empty_dst_ip(self):
+        """Check routers with default route with empty dst-ip (LP: #2002993).
+        """
+        if not self.has_lock:
+            return
+
+        cmds = []
+        for router in self._nb_idl.lr_list().execute(check_error=True):
+            if not router.external_ids.get(ovn_const.OVN_REV_NUM_EXT_ID_KEY):
+                continue
+            for route in self._nb_idl.lr_route_list(router.uuid).execute(
+                    check_error=True):
+                if (route.nexthop == '' and
+                        (route.ip_prefix == n_const.IPv4_ANY or
+                         route.ip_prefix == n_const.IPv6_ANY)):
+                    cmds.append(
+                        self._nb_idl.delete_static_route(
+                            router.name, route.ip_prefix, ''))
+
+        if cmds:
+            with self._nb_idl.transaction(check_error=True) as txn:
+                for cmd in cmds:
+                    txn.add(cmd)
+
+        raise periodics.NeverAgain()
+
 
 class HashRingHealthCheckPeriodics(object):
 
