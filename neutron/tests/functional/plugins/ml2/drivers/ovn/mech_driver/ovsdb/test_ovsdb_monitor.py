@@ -474,6 +474,12 @@ class TestAgentMonitor(base.TestOVNFunctionalBase):
         nb_cfg_timestamp = timestamp * 1000
         self.sb_api.db_set('Chassis_Private', self.chassis_name, (
             'nb_cfg_timestamp', nb_cfg_timestamp)).execute(check_error=True)
+        # Also increment nb_cfg by 1 to trigger ChassisAgentWriteEvent which
+        # is responsible to update AgentCache
+        old_nb_cfg = self.sb_api.db_get('Chassis_Private', self.chassis_name,
+            'nb_cfg').execute(check_error=True)
+        self.sb_api.db_set('Chassis_Private', self.chassis_name, (
+            'nb_cfg', old_nb_cfg + 1)).execute(check_error=True)
         try:
             n_utils.wait_until_true(check_agent_ts, timeout=5)
         except n_utils.WaitTimeout:
