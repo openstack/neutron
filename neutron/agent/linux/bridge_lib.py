@@ -20,8 +20,7 @@ import collections
 import functools
 import os
 
-from pyroute2.netlink import exceptions \
-    as netlink_exceptions  # pylint: disable=no-name-in-module
+from pyroute2.netlink import exceptions as netlink_exceptions
 
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils as linux_utils

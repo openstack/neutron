@@ -17,14 +17,13 @@ import socket
 import netaddr
 from neutron_lib import constants
 from oslo_log import log as logging
-import pyroute2
-from pyroute2 import netlink  # pylint: disable=no-name-in-module
-from pyroute2.netlink import exceptions \
-    as netlink_exceptions  # pylint: disable=no-name-in-module
-from pyroute2.netlink import rtnl  # pylint: disable=no-name-in-module
-from pyroute2.netlink.rtnl import ifinfmsg  # pylint: disable=no-name-in-module
-from pyroute2.netlink.rtnl import ndmsg  # pylint: disable=no-name-in-module
-from pyroute2 import netns  # pylint: disable=no-name-in-module
+from pyroute2 import iproute
+from pyroute2.netlink import exceptions as netlink_exceptions
+from pyroute2.netlink import rtnl
+from pyroute2.netlink.rtnl import ifinfmsg
+from pyroute2.netlink.rtnl import ndmsg
+from pyroute2 import netns
+from pyroute2.nslink import nslink
 import tenacity
 
 from neutron._i18n import _
@@ -147,15 +146,15 @@ def get_iproute(namespace):
     # `NetNS` -- RTNL API to another network namespace
     if namespace:
         # do not try and create the namespace
-        return pyroute2.NetNS(namespace, flags=0, libc=priv_linux.get_cdll())
+        return nslink.NetNS(namespace, flags=0, libc=priv_linux.get_cdll())
     else:
-        return pyroute2.IPRoute()
+        return iproute.IPRoute()
 
 
 @privileged.default.entrypoint
 def open_namespace(namespace):
     """Open namespace to test if the namespace is ready to be manipulated"""
-    with pyroute2.NetNS(namespace, flags=0):
+    with nslink.NetNS(namespace, flags=0):
         pass
 
 
@@ -213,7 +212,7 @@ def _run_iproute_link(command, device, namespace=None, **kwargs):
         with get_iproute(namespace) as ip:
             idx = get_link_id(device, namespace)
             return ip.link(command, index=idx, **kwargs)
-    except netlink.NetlinkError as e:
+    except netlink_exceptions.NetlinkError as e:
         _translate_ip_device_exception(e, device, namespace)
         raise
     except OSError as e:
