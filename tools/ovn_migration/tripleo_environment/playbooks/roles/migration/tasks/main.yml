@@ -2,7 +2,6 @@
 - include_tasks: clone-dataplane.yml
 
 - include_tasks: sync-dbs.yml
-  when: ovn_central is defined
 
 - include_tasks: activate-ovn.yml
 

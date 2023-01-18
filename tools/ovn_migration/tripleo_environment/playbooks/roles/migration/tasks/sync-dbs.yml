@@ -1,20 +1,34 @@
 ---
-- name: Get the neutron container ID
-  shell:
-    podman ps --filter "name=neutron_api" --format {% raw %}"{{.ID}}"{% endraw %}
-  register: neutron_id
+- name: stop neutron_api containers
+  ansible.builtin.systemd:
+    name: tripleo_neutron_api
+    state: stopped
 
-- name: Sync neutron db with OVN db (container) - Run 1
-  command: podman exec "{{ neutron_id.stdout }}"
-           neutron-ovn-db-sync-util --config-file /etc/neutron/neutron.conf
-           --config-file /etc/neutron/plugins/ml2/ml2_conf.ini
-           --ovn-neutron_sync_mode migrate
+- name: get neutron_server image url
+  command: podman ps -a --filter "name=neutron_api" --format {% raw %}"{{.Image}}"{% endraw %}
+  register: neutron_server_image
 
-- name: Sync neutron db with OVN db (container) - Run 2
-  command: podman exec "{{ neutron_id.stdout }}"
-           neutron-ovn-db-sync-util --config-file /etc/neutron/neutron.conf
-           --config-file /etc/neutron/plugins/ml2/ml2_conf.ini
-           --ovn-neutron_sync_mode migrate
+- name: sync neutron db with OVN db
+  command: podman run --name {{ ovn_db_sync_container }}
+    -v /var/log/containers/neutron:/var/log/neutron:Z
+    -v /var/lib/config-data/puppet-generated/neutron/etc/neutron:/etc/neutron:Z
+    --privileged=True --network host --user root
+    {{ neutron_server_image.stdout }}
+    neutron-ovn-db-sync-util --config-file /etc/neutron/neutron.conf
+    --config-file /etc/neutron/plugins/ml2/ml2_conf.ini
+    --log-file /var/log/neutron/neutron-db-sync.log
+    --ovn-neutron_sync_mode migrate
+    --debug
+  when: ovn_central is defined
+
+- name: remove db-sync container
+  command: podman rm -f {{ ovn_db_sync_container }}
+  when: ovn_central is defined
+
+- name: start neutron_api containers
+  ansible.builtin.systemd:
+    name: tripleo_neutron_api
+    state: started
 
 - name: Pause and let ovn-controllers settle before doing the final activation (5 minute)
   pause: minutes=5
