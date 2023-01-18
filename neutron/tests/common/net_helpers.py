@@ -108,13 +108,20 @@ def set_namespace_gateway(port_dev, gateway_ip):
     port_dev.route.add_gateway(gateway_ip)
 
 
-def assert_ping(src_namespace, dst_ip, timeout=1, count=3):
+def assert_ping(src_namespace, dst_ip, timeout=1, count=3, retry_count=1):
     ipversion = netaddr.IPAddress(dst_ip).version
     ping_command = 'ping' if ipversion == 4 else 'ping6'
     ns_ip_wrapper = ip_lib.IPWrapper(src_namespace)
-    ns_ip_wrapper.netns.execute(
-        [ping_command, '-W', timeout, '-c', count, dst_ip],
-        privsep_exec=True)
+    while retry_count:
+        retry_count -= 1
+        try:
+            ns_ip_wrapper.netns.execute(
+                [ping_command, '-W', timeout, '-c', count, dst_ip],
+                privsep_exec=True)
+            return
+        except n_exc.ProcessExecutionError as exc:
+            if not retry_count:
+                raise exc
 
 
 def assert_async_ping(src_namespace, dst_ip, timeout=1, count=1, interval=1):
