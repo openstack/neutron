@@ -237,6 +237,14 @@ class TestPlacementBandwidthReport(base.BaseFullStackTestCase):
             sleep=1)
 
         self.environment.placement.process_fixture.stop()
+
+        placement_fixture = self.environment.placement.process_fixture
+        utils.wait_until_true(
+            predicate=functools.partial(
+                placement_fixture.process_is_not_running),
+            timeout=report_interval, sleep=1
+        )
+
         _add_new_bridge_and_restart_agent(self.environment.hosts[0])
 
         check_agent_not_synced = functools.partial(
