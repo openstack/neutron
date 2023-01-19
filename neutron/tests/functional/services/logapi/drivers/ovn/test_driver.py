@@ -151,6 +151,16 @@ class LogApiTestCaseComplex(LogApiTestCaseBase):
         acl = self._find_security_group_rule_row_by_id(sgr)
         self.assertIsNotNone(acl)
         self.assertEqual(is_enabled, acl.log)
+        if hasattr(acl, "label"):
+            # Here we compare if there is a name because the log can be
+            # disabled but disabling a log would not take out the properties
+            # attached to it.
+            if acl.name:
+                self.assertNotEqual(0, acl.label)
+                self.assertEqual("true", acl.options.get("log-related"))
+            else:
+                self.assertEqual(0, acl.label)
+                self.assertIsNone(acl.options.get("log-related"))
         return acl
 
     def _check_acl_log_drop(self, is_enabled=True):

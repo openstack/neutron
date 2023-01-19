@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Neutron can record full connection using log-related feature introduced in
+    OVN 21.12.
+    For more info see `bug LP#<https://bugs.launchpad.net/neutron/+bug/2003706>`
