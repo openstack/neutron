@@ -51,6 +51,8 @@ def _network_filter_hook(context, original_model, conditions):
             (rbac_model.target_project == context.tenant_id) |
             (rbac_model.target_project == '*'))
         conditions = expr.or_(tenant_allowed, *conditions)
+        conditions = expr.or_(original_model.tenant_id == context.tenant_id,
+                              *conditions)
     return conditions
 
 
