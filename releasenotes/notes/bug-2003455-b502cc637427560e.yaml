@@ -1,0 +1,19 @@
+---
+fixes:
+  - |
+    [`bug 2003455 <https://bugs.launchpad.net/neutron/+bug/2003455>`_]
+    It is added an extra checking to ensure the "reside-on-redirect-chassis"
+    is set to true for the logical router port associated to vlan provider
+    network despite having the "ovn_distributed_floating_ip" enabled or not.
+    This is needed as there is an OVN bug
+    (https://bugzilla.redhat.com/show_bug.cgi?id=2162756) making it not work
+    as expected. Until that is fixed, we need these workaround
+    that makes the traffic centrallized, but not tunneled, through the node
+    with the gateway port, thus avoiding MTU issues.
+issues:
+  - |
+    Until the OVN bug (https://bugzilla.redhat.com/show_bug.cgi?id=2162756)
+    is fixed, setting the "reside-on-redirect-chassis" to true for the logical
+    router port associated to vlan provider network is needed. This workaround
+    makes the traffic centrallized, but not tunneled, through the node
+    with the gateway port, thus avoiding MTU issues.
