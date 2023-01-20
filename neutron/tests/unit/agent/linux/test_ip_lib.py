@@ -776,7 +776,8 @@ class TestIpAddrCommand(TestIPCmdBase):
             6, self.parent.name, self.addr_cmd._parent.namespace)
 
     def test_wait_until_address_ready(self):
-        self.addr_cmd.list = mock.Mock(return_value=[{'tentative': False}])
+        self.addr_cmd.list = mock.Mock(
+            return_value=[{'tentative': False, 'dadfailed': False}])
         # this address is not tentative or failed so it should return
         self.assertIsNone(self.addr_cmd.wait_until_address_ready(
             '2001:470:9:1224:fd91:272:581e:3a32'))
@@ -785,6 +786,24 @@ class TestIpAddrCommand(TestIPCmdBase):
         self.addr_cmd.list = mock.Mock(return_value=[])
         with testtools.ExpectedException(ip_lib.AddressNotReady):
             self.addr_cmd.wait_until_address_ready('abcd::1234')
+
+    def test_wait_until_address_dadfailed(self):
+        self.addr_cmd.list = mock.Mock(
+            return_value=[{'tentative': True, 'dadfailed': True}])
+        with testtools.ExpectedException(ip_lib.AddressNotReady):
+            self.addr_cmd.wait_until_address_ready('abcd::1234')
+
+    @mock.patch.object(common_utils, 'wait_until_true')
+    def test_wait_until_address_ready_success_one_timeout(self, mock_wuntil):
+        tentative_address = 'fe80::3023:39ff:febc:22ae'
+        self.addr_cmd.list = mock.Mock(return_value=[
+            dict(scope='link', dadfailed=False, tentative=True, dynamic=False,
+                 cidr=tentative_address + '/64'),
+            dict(scope='link', dadfailed=False, tentative=False, dynamic=False,
+                 cidr=tentative_address + '/64')])
+        self.assertIsNone(self.addr_cmd.wait_until_address_ready(
+            tentative_address, wait_time=3))
+        self.assertEqual(1, mock_wuntil.call_count)
 
     def test_wait_until_address_ready_timeout(self):
         tentative_address = 'fe80::3023:39ff:febc:22ae'
