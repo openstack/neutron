@@ -1246,7 +1246,7 @@ class OVNClient(object):
                 # leak the RAs generated for the tenant networks via the
                 # provider network
                 ipv6_ra_configs['send_periodic'] = 'true'
-                if is_gw_port and utils.is_provider_network(net):
+                if is_gw_port and utils.is_external_network(net):
                     ipv6_ra_configs['send_periodic'] = 'false'
                 ipv6_ra_configs['mtu'] = str(net['mtu'])
 
@@ -1570,9 +1570,12 @@ class OVNClient(object):
         # logical router port is centralized in the chassis hosting the
         # distributed gateway port.
         # https://github.com/openvswitch/ovs/commit/85706c34d53d4810f54bec1de662392a3c06a996
+        # FIXME(ltomasbo): Once Bugzilla 2162756 is fixed the
+        # is_provider_network check should be removed
         if network.get(pnet.NETWORK_TYPE) == const.TYPE_VLAN:
             options[ovn_const.LRP_OPTIONS_RESIDE_REDIR_CH] = (
-                'false' if ovn_conf.is_ovn_distributed_floating_ip()
+                'false' if (ovn_conf.is_ovn_distributed_floating_ip() and
+                            not utils.is_provider_network(network))
                 else 'true')
 
         is_gw_port = const.DEVICE_OWNER_ROUTER_GW == port.get(
@@ -1987,8 +1990,9 @@ class OVNClient(object):
                 for subnet in subnets:
                     self.update_subnet(context, subnet, network, txn)
 
-                if utils.is_provider_network(network):
-                    # make sure to use admin context as this is a providernet
+                if utils.is_external_network(network):
+                    # make sure to use admin context as this is a external
+                    # network
                     self.set_gateway_mtu(n_context.get_admin_context(),
                                          network, txn)
 
