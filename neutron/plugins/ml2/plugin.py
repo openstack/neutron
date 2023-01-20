@@ -1717,13 +1717,13 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 self._process_port_binding(mech_context, port_dict)
 
                 # process allowed address pairs
-                db_port_obj[addr_apidef.ADDRESS_PAIRS] = (
+                port_dict[addr_apidef.ADDRESS_PAIRS] = (
                     self._process_create_allowed_address_pairs(
                         context, port_dict,
-                        port_dict.get(addr_apidef.ADDRESS_PAIRS)))
+                        pdata.get(addr_apidef.ADDRESS_PAIRS)))
 
                 # handle DHCP setup
-                dhcp_opts = port_dict.get(edo_ext.EXTRADHCPOPTS, [])
+                dhcp_opts = pdata.get(edo_ext.EXTRADHCPOPTS, [])
                 self._process_port_create_extra_dhcp_opts(context, port_dict,
                                                           dhcp_opts)
                 # send PRECOMMIT_CREATE notification
