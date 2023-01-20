@@ -1650,6 +1650,55 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                 ctx, ports
             )
 
+    def test_create_ports_bulk_with_allowed_address_pairs(self):
+        ctx = context.get_admin_context()
+        with self.network() as net:
+
+            aap = [{
+                'ip_address': '1.2.3.4',
+                'mac_address': '01:23:45:67:89:ab',
+            }]
+            ports_in = {
+                'ports': [{'port': {
+                    'allowed_address_pairs': aap,
+                    'network_id': net['network']['id'],
+                    'tenant_id': self._tenant_id,
+
+                    'admin_state_up': True,
+                    'device_id': '',
+                    'device_owner': '',
+                    'fixed_ips': constants.ATTR_NOT_SPECIFIED,
+                    'name': '',
+                    'security_groups': constants.ATTR_NOT_SPECIFIED,
+                }}]}
+            ports_out = self.plugin.create_port_bulk(ctx, ports_in)
+            self.assertEqual(aap, ports_out[0]['allowed_address_pairs'])
+
+    def test_create_ports_bulk_with_extra_dhcp_opts(self):
+        ctx = context.get_admin_context()
+        with self.network() as net:
+
+            edo = [{
+                'opt_name': 'domain-name-servers',
+                'opt_value': '10.0.0.1',
+                'ip_version': 4,
+            }]
+            ports_in = {
+                'ports': [{'port': {
+                    'extra_dhcp_opts': edo,
+                    'network_id': net['network']['id'],
+                    'tenant_id': self._tenant_id,
+
+                    'admin_state_up': True,
+                    'device_id': '',
+                    'device_owner': '',
+                    'fixed_ips': constants.ATTR_NOT_SPECIFIED,
+                    'name': '',
+                    'security_groups': constants.ATTR_NOT_SPECIFIED,
+                }}]}
+            ports_out = self.plugin.create_port_bulk(ctx, ports_in)
+            self.assertEqual(edo, ports_out[0]['extra_dhcp_opts'])
+
     def test_delete_port_no_notify_in_disassociate_floatingips(self):
         ctx = context.get_admin_context()
         plugin = directory.get_plugin()
