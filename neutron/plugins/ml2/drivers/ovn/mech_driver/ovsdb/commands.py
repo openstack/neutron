@@ -17,6 +17,7 @@ from collections import abc
 from oslo_utils import timeutils
 from ovsdbapp.backend.ovs_idl import command
 from ovsdbapp.backend.ovs_idl import idlutils
+from ovsdbapp import utils as ovsdbapp_utils
 
 from neutron._i18n import _
 from neutron.common.ovn import constants as ovn_const
@@ -140,6 +141,14 @@ class AddLSwitchPortCommand(command.BaseCommand):
             port.dhcpv6_options = dhcpv6_options
         else:
             port.dhcpv6_options = [dhcpv6_options.result]
+
+        # NOTE(ralonsoh): HA chassis group is created by Neutron, there is no
+        # need to create it in this command.
+        ha_chassis_group = self.columns.pop('ha_chassis_group', None)
+        if ha_chassis_group:
+            hcg_uuid = ovsdbapp_utils.get_uuid(ha_chassis_group)
+            port.ha_chassis_group = hcg_uuid
+
         for col, val in self.columns.items():
             setattr(port, col, val)
         # add the newly created port to existing lswitch
@@ -204,6 +213,21 @@ class SetLSwitchPortCommand(command.BaseCommand):
         for k, v in external_ids_update.items():
             external_ids[k] = v
         port.external_ids = external_ids
+
+        # NOTE(ralonsoh): HA chassis group is created by Neutron, there is no
+        # need to create it in this command. The register is also deleted when
+        # the network to which the HA chassis group is associated is deleted.
+        ha_chassis_group = self.columns.pop('ha_chassis_group', None)
+        if ha_chassis_group:
+            hcg_uuid = ovsdbapp_utils.get_uuid(ha_chassis_group)
+            try:
+                port_hcg_uuid = port.ha_chassis_group[0].uuid
+            except IndexError:
+                port_hcg_uuid = None
+            if port_hcg_uuid != hcg_uuid:
+                port.ha_chassis_group = hcg_uuid
+        elif ha_chassis_group == []:
+            port.ha_chassis_group = []
 
         for col, val in self.columns.items():
             setattr(port, col, val)

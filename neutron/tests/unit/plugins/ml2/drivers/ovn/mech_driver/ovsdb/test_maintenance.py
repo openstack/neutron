@@ -417,7 +417,8 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         self.assertFalse(
             self.fake_ovn_client.sync_ha_chassis_group.called)
 
-    def test_check_for_ha_chassis_group(self):
+    @mock.patch.object(utils, 'sync_ha_chassis_group')
+    def test_check_for_ha_chassis_group(self, mock_sync_ha_chassis_group):
         self.fake_ovn_client.is_external_ports_supported.return_value = True
         nb_idl = self.fake_ovn_client._nb_idl
 
@@ -441,7 +442,7 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
                        constants.OVN_NETWORK_NAME_EXT_ID_KEY: 'neutron-net1'}})
 
         nb_idl.db_find_rows.return_value.execute.return_value = [p0, p1]
-        self.fake_ovn_client.sync_ha_chassis_group.return_value = hcg0.uuid
+        mock_sync_ha_chassis_group.return_value = hcg0.uuid
 
         # Invoke the periodic method, it meant to run only once at startup
         # so NeverAgain will be raised at the end
@@ -450,16 +451,21 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
 
         # Assert sync_ha_chassis_group() is called for both networks
         expected_calls = [
-            mock.call(mock.ANY, 'net0', mock.ANY),
-            mock.call(mock.ANY, 'net1', mock.ANY)]
-        self.fake_ovn_client.sync_ha_chassis_group.assert_has_calls(
-            expected_calls)
+            mock.call(mock.ANY, 'net0',
+                      self.fake_ovn_client._nb_idl,
+                      self.fake_ovn_client._sb_idl, mock.ANY),
+            mock.call(mock.ANY, 'net1',
+                      self.fake_ovn_client._nb_idl,
+                      self.fake_ovn_client._sb_idl, mock.ANY),
+        ]
+        mock_sync_ha_chassis_group.assert_has_calls(expected_calls,
+                                                    any_order=True)
 
-        # Assert set_lswitch_port() is only called for p1 because
-        # the ha_chassis_group is different than what was returned
-        # by sync_ha_chassis_group()
-        nb_idl.set_lswitch_port.assert_called_once_with(
-            'p1', ha_chassis_group=hcg0.uuid)
+        expected_calls = [
+            mock.call('p0', ha_chassis_group=hcg0.uuid),
+            mock.call('p1', ha_chassis_group=hcg0.uuid)]
+        nb_idl.set_lswitch_port.assert_has_calls(expected_calls,
+                                                 any_order=True)
 
     def test_check_port_has_address_scope(self):
         self.fake_ovn_client.is_external_ports_supported.return_value = True

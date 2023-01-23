@@ -605,15 +605,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                 network_id = port.external_ids[
                     ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY].replace(
                         ovn_const.OVN_NAME_PREFIX, '')
-                ha_ch_grp = self._ovn_client.sync_ha_chassis_group(
-                    context, network_id, txn)
-                try:
-                    port_ha_ch_uuid = port.ha_chassis_group[0].uuid
-                except IndexError:
-                    port_ha_ch_uuid = None
-                if port_ha_ch_uuid != ha_ch_grp:
-                    txn.add(self._nb_idl.set_lswitch_port(
-                        port.name, ha_chassis_group=ha_ch_grp))
+                ha_ch_grp = utils.sync_ha_chassis_group(
+                    context, network_id, self._nb_idl, self._sb_idl, txn)
+                txn.add(self._nb_idl.set_lswitch_port(
+                    port.name, ha_chassis_group=ha_ch_grp))
 
             self._delete_default_ha_chassis_group(txn)
 
