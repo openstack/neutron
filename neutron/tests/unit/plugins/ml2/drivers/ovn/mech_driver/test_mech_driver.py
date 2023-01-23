@@ -2572,37 +2572,21 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         self.sb_ovn.get_gateway_chassis_from_cms_options.return_value = [
             ch0, ch1, ch2, ch3, ch4]
 
-        fake_ha_ch = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={'chassis_name': ch2.name, 'priority': 1})
-        fake_ch_grp_uuid = 'fake-ha-ch-grp-uuid'
-        fake_ch_grp = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={'uuid': fake_ch_grp_uuid, 'ha_chassis': [fake_ha_ch]})
-
-        self.nb_ovn.ha_chassis_group_get.return_value.execute.return_value = (
-            fake_ch_grp)
-
         # Invoke the method
-        ret = self.mech_driver._ovn_client.sync_ha_chassis_group(
-            self.context, fake_net['id'], fake_txn)
-
-        # Assert the UUID of the HA Chassis Group is returned
-        self.assertEqual(fake_ch_grp_uuid, ret)
+        hcg_cmd = ovn_utils.sync_ha_chassis_group(
+            self.context, fake_net['id'], self.nb_ovn, self.sb_ovn, fake_txn)
 
         # Assert it attempts to add the chassis group for that network
         ha_ch_grp_name = ovn_utils.ovn_name(fake_net['id'])
+        ext_ids = {ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: 'az0,az1,az2'}
         self.nb_ovn.ha_chassis_group_add.assert_called_once_with(
-            ha_ch_grp_name, may_exist=True)
-
-        # Assert existing members that no longer belong to those
-        # AZs are removed
-        self.nb_ovn.ha_chassis_group_del_chassis.assert_called_once_with(
-            ha_ch_grp_name, ch2.name, if_exists=True)
+            ha_ch_grp_name, may_exist=True, external_ids=ext_ids)
 
         # Assert that only Chassis belonging to the AZ hints are
         # added to the HA Chassis Group for that network
         expected_calls = [
-            mock.call(ha_ch_grp_name, ch0.name, priority=mock.ANY),
-            mock.call(ha_ch_grp_name, ch1.name, priority=mock.ANY)]
+            mock.call(hcg_cmd, ch0.name, priority=mock.ANY),
+            mock.call(hcg_cmd, ch1.name, priority=mock.ANY)]
         self.nb_ovn.ha_chassis_group_add_chassis.assert_has_calls(
             expected_calls, any_order=True)
 
@@ -2624,36 +2608,21 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         self.sb_ovn.get_gateway_chassis_from_cms_options.return_value = [
             ch0, ch1, ch2, ch3, ch4]
 
-        fake_ha_ch = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={'chassis_name': ch1.name, 'priority': 1})
-        fake_ch_grp_uuid = 'fake-ha-ch-grp-uuid'
-        fake_ch_grp = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={'uuid': fake_ch_grp_uuid, 'ha_chassis': [fake_ha_ch]})
-
-        self.nb_ovn.ha_chassis_group_get.return_value.execute.return_value = (
-            fake_ch_grp)
-
         # Invoke the method
-        ret = self.mech_driver._ovn_client.sync_ha_chassis_group(
-            self.context, fake_net['id'], fake_txn)
-
-        # Assert the UUID of the HA Chassis Group is returned
-        self.assertEqual(fake_ch_grp_uuid, ret)
+        hcg_cmd = ovn_utils.sync_ha_chassis_group(
+            self.context, fake_net['id'], self.nb_ovn, self.sb_ovn, fake_txn)
 
         # Assert it attempts to add the chassis group for that network
         ha_ch_grp_name = ovn_utils.ovn_name(fake_net['id'])
+        ext_ids = {ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: ''}
         self.nb_ovn.ha_chassis_group_add.assert_called_once_with(
-            ha_ch_grp_name, may_exist=True)
-
-        # Assert existing members that does belong to any AZ are removed
-        self.nb_ovn.ha_chassis_group_del_chassis.assert_called_once_with(
-            ha_ch_grp_name, ch1.name, if_exists=True)
+            ha_ch_grp_name, may_exist=True, external_ids=ext_ids)
 
         # Assert that only Chassis that are gateways and DOES NOT
         # belong to any AZs are added
         expected_calls = [
-            mock.call(ha_ch_grp_name, ch2.name, priority=mock.ANY),
-            mock.call(ha_ch_grp_name, ch3.name, priority=mock.ANY)]
+            mock.call(hcg_cmd, ch2.name, priority=mock.ANY),
+            mock.call(hcg_cmd, ch3.name, priority=mock.ANY)]
         self.nb_ovn.ha_chassis_group_add_chassis.assert_has_calls(
             expected_calls, any_order=True)
 
@@ -3966,8 +3935,7 @@ class TestOVNMechanismDriverSecurityGroup(MechDriverSetupBase,
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
                 'ovn_client.OVNClient.is_external_ports_supported',
                 lambda *_: True)
-    @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
-                'ovn_client.OVNClient.sync_ha_chassis_group')
+    @mock.patch.object(ovn_utils, 'sync_ha_chassis_group')
     def _test_create_port_with_vnic_type(self, vnic_type, sync_mock):
         fake_grp = 'fake-default-ha-group-uuid'
         sync_mock.return_value = fake_grp
@@ -3987,7 +3955,9 @@ class TestOVNMechanismDriverSecurityGroup(MechDriverSetupBase,
             if vnic_type in ovn_const.EXTERNAL_PORT_TYPES:
                 self.assertEqual(ovn_const.LSP_TYPE_EXTERNAL, kwargs['type'])
                 self.assertEqual(fake_grp, kwargs['ha_chassis_group'])
-                sync_mock.assert_called_once_with(mock.ANY, net_id, mock.ANY)
+                sync_mock.assert_called_once_with(
+                    mock.ANY, net_id, self.mech_driver.nb_ovn,
+                    self.mech_driver.sb_ovn, mock.ANY)
 
     def test_create_port_with_vnic_direct(self):
         self._test_create_port_with_vnic_type(portbindings.VNIC_DIRECT)

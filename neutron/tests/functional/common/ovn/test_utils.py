@@ -12,6 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from unittest import mock
+
+from oslo_utils import uuidutils
+
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.tests.functional import base
@@ -58,3 +62,56 @@ class TestCreateNeutronPgDrop(base.TestOVNFunctionalBase):
         self.assertEqual(directions[0], acl2.direction)
         self.assertEqual('drop', acl2.action)
         self.assertEqual(matches[0], acl2.match)
+
+
+class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
+
+    def test_sync_ha_chassis_group(self):
+        plugin = mock.Mock()
+        plugin.get_network.return_value = {}
+        network_id = uuidutils.generate_uuid()
+        hcg_name = utils.ovn_name(network_id)
+        chassis1 = self.add_fake_chassis('host1', azs=[],
+                                         enable_chassis_as_gw=True)
+        chassis2 = self.add_fake_chassis('host2', azs=[],
+                                         enable_chassis_as_gw=True)
+        self.add_fake_chassis('host3')
+
+        with self.nb_api.transaction(check_error=True) as txn:
+            utils.sync_ha_chassis_group(self.context, network_id, self.nb_api,
+                                        self.sb_api, txn)
+
+        ha_chassis = self.nb_api.db_find('HA_Chassis').execute(
+            check_error=True)
+        ha_chassis_names = [hc['chassis_name'] for hc in ha_chassis]
+        self.assertEqual(2, len(ha_chassis))
+        self.assertEqual(sorted([chassis1, chassis2]),
+                         sorted(ha_chassis_names))
+
+        hcg = self.nb_api.ha_chassis_group_get(hcg_name).execute(
+            check_error=True)
+        self.assertEqual(hcg_name, hcg.name)
+        ha_chassis_exp = sorted([str(hc['_uuid']) for hc in ha_chassis])
+        ha_chassis_ret = sorted([str(hc.uuid) for hc in hcg.ha_chassis])
+        self.assertEqual(ha_chassis_exp, ha_chassis_ret)
+
+        # Delete one GW chassis and resync the HA chassis group associated to
+        # the same network. The method will now not create again the existing
+        # HA Chassis Group register but will update the "ha_chassis" list.
+        self.del_fake_chassis(chassis2)
+        with self.nb_api.transaction(check_error=True) as txn:
+            utils.sync_ha_chassis_group(self.context, network_id, self.nb_api,
+                                        self.sb_api, txn)
+
+        ha_chassis = self.nb_api.db_find('HA_Chassis').execute(
+            check_error=True)
+        ha_chassis_names = [hc['chassis_name'] for hc in ha_chassis]
+        self.assertEqual(1, len(ha_chassis))
+        self.assertEqual([chassis1], ha_chassis_names)
+
+        hcg = self.nb_api.ha_chassis_group_get(hcg_name).execute(
+            check_error=True)
+        self.assertEqual(hcg_name, hcg.name)
+        ha_chassis_exp = str(ha_chassis[0]['_uuid'])
+        ha_chassis_ret = str(hcg.ha_chassis[0].uuid)
+        self.assertEqual(ha_chassis_exp, ha_chassis_ret)
