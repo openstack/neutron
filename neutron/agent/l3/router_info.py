@@ -21,8 +21,7 @@ from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.utils import helpers
 from oslo_log import log as logging
 from oslo_utils import netutils
-from pyroute2.netlink import exceptions \
-    as pyroute2_exc  # pylint: disable=no-name-in-module
+from pyroute2.netlink import exceptions as pyroute2_exc
 
 from neutron._i18n import _
 from neutron.agent.l3 import namespaces
