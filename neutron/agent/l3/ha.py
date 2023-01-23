@@ -188,15 +188,6 @@ class AgentMixin(object):
                  'agent %(host)s',
                  state_change_data)
 
-        # Set external gateway port link up or down according to state
-        if state == 'primary':
-            ri.set_external_gw_port_link_status(link_up=True, set_gw=True)
-        elif state == 'backup':
-            ri.set_external_gw_port_link_status(link_up=False)
-        else:
-            LOG.warning('Router %s has status %s, '
-                        'no action to router gateway device.',
-                        router_id, state)
         # TODO(dalvarez): Fix bug 1677279 by moving the IPv6 parameters
         # configuration to keepalived-state-change in order to remove the
         # dependency that currently exists on l3-agent running for the IPv6
