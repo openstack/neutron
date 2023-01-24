@@ -35,6 +35,13 @@ Open vSwitch. All cases require Open vSwitch version 2.5 or newer.
 * Kernel version 3.3, but less than 4.3, does not include *conntrack*
   support and requires building the OVS modules.
 
+It also requires the conntrack kernel module(s) to be loaded, which
+varies depending on the kernel version.
+
+* Kernel version 4.19 or newer requires the *nf_conntrack* module.
+* Kernel versions 4.18 or older require the *nf_conntrack_ipv4* and
+  *nf_conntrack_ipv6* modules.
+
 Enable the native OVS firewall driver
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
