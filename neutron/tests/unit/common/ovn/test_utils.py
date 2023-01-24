@@ -588,8 +588,8 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
             'parent_name': 'fake-parent-port-uuid',
             'tag': 42
         }
-        self.assertDictEqual(
-            expect,
+        self.assertEqual(
+            utils.BPInfo(expect, portbindings.VNIC_NORMAL, []),
             utils.validate_and_get_data_from_binding_profile(
                 {constants.OVN_PORT_BINDING_PROFILE: expect}))
 
@@ -597,8 +597,8 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
             'vtep-physical-switch': 'fake-physical-switch-uuid',
             'vtep-logical-switch': 'fake-logical-switch-uuid',
         }
-        self.assertDictEqual(
-            expect,
+        self.assertEqual(
+            utils.BPInfo(expect, portbindings.VNIC_NORMAL, []),
             utils.validate_and_get_data_from_binding_profile(
                 {constants.OVN_PORT_BINDING_PROFILE: expect}))
 
@@ -611,8 +611,9 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
         }
         expect = binding_profile.copy()
         del(expect[constants.PORT_CAP_PARAM])
-        self.assertDictEqual(
-            expect,
+        self.assertEqual(
+            utils.BPInfo(expect, portbindings.VNIC_DIRECT,
+                         [constants.PORT_CAP_SWITCHDEV]),
             utils.validate_and_get_data_from_binding_profile(
                 {portbindings.VNIC_TYPE: portbindings.VNIC_DIRECT,
                  constants.OVN_PORT_BINDING_PROFILE: binding_profile}))
@@ -626,8 +627,9 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
         }
         expect = binding_profile.copy()
         del(expect[constants.PORT_CAP_PARAM])
-        self.assertDictEqual(
-            expect,
+        self.assertEqual(
+            utils.BPInfo(expect, portbindings.VNIC_DIRECT,
+                         [constants.PORT_CAP_SWITCHDEV]),
             utils.validate_and_get_data_from_binding_profile(
                 {portbindings.VNIC_TYPE: portbindings.VNIC_DIRECT,
                  constants.OVN_PORT_BINDING_PROFILE: binding_profile}))
@@ -640,11 +642,11 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
             'pf_mac_address': '00:53:00:00:00:42',
             'vf_num': 42,
         }
-        self.assertDictEqual(
+        self.assertEqual(
+            utils.BPInfo(expect, portbindings.VNIC_REMOTE_MANAGED, []),
             utils.validate_and_get_data_from_binding_profile(
                 {portbindings.VNIC_TYPE: portbindings.VNIC_REMOTE_MANAGED,
-                 constants.OVN_PORT_BINDING_PROFILE: expect}),
-            expect)
+                 constants.OVN_PORT_BINDING_PROFILE: expect}))
 
     def test_valid_input_surplus_keys(self):
         # Confirm that extra keys are allowed
@@ -658,8 +660,9 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
         expect = binding_profile.copy()
         del(expect[constants.PORT_CAP_PARAM])
         del(expect['optional_information_provided_by_nova'])
-        self.assertDictEqual(
-            expect,
+        self.assertEqual(
+            utils.BPInfo(expect, portbindings.VNIC_DIRECT,
+                         [constants.PORT_CAP_SWITCHDEV]),
             utils.validate_and_get_data_from_binding_profile(
                 {portbindings.VNIC_TYPE: portbindings.VNIC_DIRECT,
                  constants.OVN_PORT_BINDING_PROFILE: binding_profile}))
@@ -667,7 +670,7 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
     def test_unknown_profile_items_pruned(self):
         # Confirm that unknown profile items are pruned
         self.assertEqual(
-            {},
+            utils.BPInfo({}, portbindings.VNIC_NORMAL, []),
             utils.validate_and_get_data_from_binding_profile(
                 {constants.OVN_PORT_BINDING_PROFILE: {
                     'unknown-key': 'unknown-data'}}))
@@ -676,16 +679,16 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
         expect = {
             'key': 'value',
         }
-        self.assertDictEqual(
-            expect,
+        self.assertEqual(
+            utils.BPInfo(expect, self.VNIC_FAKE_NORMAL, []),
             utils.validate_and_get_data_from_binding_profile(
                 {portbindings.VNIC_TYPE: self.VNIC_FAKE_NORMAL,
                  constants.OVN_PORT_BINDING_PROFILE: expect}))
         expect = {
             'key': None,
         }
-        self.assertDictEqual(
-            expect,
+        self.assertEqual(
+            utils.BPInfo(expect, self.VNIC_FAKE_NORMAL, []),
             utils.validate_and_get_data_from_binding_profile(
                 {portbindings.VNIC_TYPE: self.VNIC_FAKE_NORMAL,
                  constants.OVN_PORT_BINDING_PROFILE: expect}))
@@ -706,17 +709,17 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
             'other_key': 'value',
         }
         # This param set is valid for VNIC_FAKE_NORMAL with 'other_key' pruned.
-        expect = binding_profile.copy()
-        del(expect['other_key'])
-        self.assertDictEqual(
-            expect,
+        expected_bp = binding_profile.copy()
+        del(expected_bp['other_key'])
+        self.assertEqual(
+            utils.BPInfo(expected_bp, self.VNIC_FAKE_NORMAL, []),
             utils.validate_and_get_data_from_binding_profile(
                 {portbindings.VNIC_TYPE: self.VNIC_FAKE_NORMAL,
                  constants.OVN_PORT_BINDING_PROFILE: binding_profile}))
         # It is valid for VNIC_FAKE_OTHER
-        expect = binding_profile.copy()
-        self.assertDictEqual(
-            expect,
+        expected_bp = binding_profile.copy()
+        self.assertEqual(
+            utils.BPInfo(expected_bp, self.VNIC_FAKE_OTHER, []),
             utils.validate_and_get_data_from_binding_profile(
                 {portbindings.VNIC_TYPE: self.VNIC_FAKE_OTHER,
                  constants.OVN_PORT_BINDING_PROFILE: binding_profile}))
@@ -744,7 +747,7 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
             'third_key': 'value',
         }
         self.assertEqual(
-            {},
+            utils.BPInfo({}, self.VNIC_FAKE_OTHER, ['fake-capability']),
             utils.validate_and_get_data_from_binding_profile(
                 {portbindings.VNIC_TYPE: self.VNIC_FAKE_OTHER,
                  constants.OVN_PORT_BINDING_PROFILE: binding_profile}))
@@ -757,8 +760,9 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
         }
         expect = binding_profile.copy()
         del(expect[constants.PORT_CAP_PARAM])
-        self.assertDictEqual(
-            expect,
+        self.assertEqual(
+            utils.BPInfo(expect, self.VNIC_FAKE_OTHER,
+                         [constants.PORT_CAP_SWITCHDEV]),
             utils.validate_and_get_data_from_binding_profile(
                 {portbindings.VNIC_TYPE: self.VNIC_FAKE_OTHER,
                  constants.OVN_PORT_BINDING_PROFILE: binding_profile}))
@@ -775,7 +779,8 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
             constants.PORT_CAP_PARAM: [constants.PORT_CAP_SWITCHDEV],
         }
         self.assertEqual(
-            {},
+            utils.BPInfo({}, self.VNIC_FAKE_OTHER,
+                         [constants.PORT_CAP_SWITCHDEV]),
             utils.validate_and_get_data_from_binding_profile(
                 {portbindings.VNIC_TYPE: self.VNIC_FAKE_OTHER,
                  constants.OVN_PORT_BINDING_PROFILE: binding_profile}))

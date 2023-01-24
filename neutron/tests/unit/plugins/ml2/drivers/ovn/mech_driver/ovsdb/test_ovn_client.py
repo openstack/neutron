@@ -16,6 +16,7 @@
 from unittest import mock
 
 from neutron.common.ovn import constants
+from neutron.conf.plugins.ml2 import config as ml2_conf
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.tests import base
@@ -28,6 +29,7 @@ from neutron_lib import constants as const
 class TestOVNClientBase(base.BaseTestCase):
 
     def setUp(self):
+        ml2_conf.register_ml2_plugin_opts()
         ovn_conf.register_opts()
         super(TestOVNClientBase, self).setUp()
         self.nb_idl = mock.MagicMock()
@@ -133,6 +135,7 @@ class TestOVNClientDetermineBindHost(TestOVNClientBase):
     def test_vnic_remote_managed_unbound_port_no_binding_profile(self):
         port = {
             portbindings.VNIC_TYPE: portbindings.VNIC_REMOTE_MANAGED,
+            constants.OVN_PORT_BINDING_PROFILE: {},
         }
         self.assertEqual(
             '',

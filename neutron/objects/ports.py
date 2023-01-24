@@ -120,6 +120,14 @@ class PortBinding(PortBindingBase):
                        cls.db_model.status == constants.INACTIVE)
         return context.session.query(cls.db_model).filter(_filter).all()
 
+    @classmethod
+    @db_api.CONTEXT_READER
+    def get_port_binding_by_vnic_type(cls, context, vnic_type):
+        """Returns the port binding filtering by VNIC type."""
+        query = context.session.query(cls.db_model)
+        query = query.filter(cls.db_model.vnic_type == vnic_type)
+        return query.all()
+
 
 @base.NeutronObjectRegistry.register
 class DistributedPortBinding(PortBindingBase):

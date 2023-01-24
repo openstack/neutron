@@ -28,6 +28,7 @@ from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_log import log
+from oslo_serialization import jsonutils
 from oslo_utils import timeutils
 from ovsdbapp.backend.ovs_idl import event as row_event
 
@@ -915,6 +916,38 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
             with self._nb_idl.transaction(check_error=True) as txn:
                 for cmd in cmds:
                     txn.add(cmd)
+
+        raise periodics.NeverAgain()
+
+    # TODO(ralonsoh): Remove this in the Antelope+4 cycle
+    @periodics.periodic(spacing=600, run_immediately=True)
+    def add_vnic_type_and_pb_capabilities_to_lsp(self):
+        """Add the port VNIC type and port binding capabilities to the LSP.
+
+        This is needed to know if a port has hardware offload capabilities.
+        This method is only updating those ports with VNIC type direct, in
+        order to minimize the load impact of this method when updating the OVN
+        database. Within the patch that adds this maintenance method, it has
+        been added to the LSP the VNIC type and the port binding capabilities.
+        To implement LP#1998608, only direct ports are needed.
+        """
+        if not self.has_lock:
+            return
+
+        port_bindings = ports_obj.PortBinding.get_port_binding_by_vnic_type(
+            n_context.get_admin_context(), portbindings.VNIC_DIRECT)
+        with self._nb_idl.transaction(check_error=True) as txn:
+            for pb in port_bindings:
+                profile = jsonutils.loads(pb.profile)
+                capabilities = profile.get(ovn_const.PORT_CAP_PARAM, [])
+                external_ids = {
+                    ovn_const.OVN_PORT_VNIC_TYPE_KEY: portbindings.VNIC_DIRECT,
+                    ovn_const.OVN_PORT_BP_CAPABILITIES_KEY:
+                        ';'.join(capabilities)
+                }
+                txn.add(self._nb_idl.set_lswitch_port(
+                    lport_name=pb.port_id, if_exists=True,
+                    external_ids=external_ids))
 
         raise periodics.NeverAgain()
 

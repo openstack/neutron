@@ -16,10 +16,12 @@
 from unittest import mock
 
 from futurist import periodics
+from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as n_const
 from neutron_lib import context
 from neutron_lib.db import api as db_api
 from oslo_config import cfg
+from oslo_serialization import jsonutils
 from oslo_utils import uuidutils
 
 from neutron.common.ovn import constants
@@ -27,6 +29,7 @@ from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db.models import ovn as ovn_models
 from neutron.db import ovn_revision_numbers_db
+from neutron.objects import ports as ports_obj
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import maintenance
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
 from neutron.tests.unit import fake_resources as fakes
@@ -831,3 +834,23 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         self.assertEqual(
             2,
             nb_idl.delete_static_route.call_count)
+
+    @mock.patch.object(ports_obj.PortBinding, 'get_port_binding_by_vnic_type')
+    def test_add_vnic_type_and_pb_capabilities_to_lsp(self, mock_get_pb):
+        nb_idl = self.fake_ovn_client._nb_idl
+        profile = {'capabilities': ['switchdev']}
+        pb1 = mock.Mock(profile=jsonutils.dumps(profile), port_id='port1')
+        pb2 = mock.Mock(profile=jsonutils.dumps(profile), port_id='port2')
+        mock_get_pb.return_value = [pb1, pb2]
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.periodic.add_vnic_type_and_pb_capabilities_to_lsp)
+        external_ids = {
+            constants.OVN_PORT_VNIC_TYPE_KEY: portbindings.VNIC_DIRECT,
+            constants.OVN_PORT_BP_CAPABILITIES_KEY: 'switchdev'}
+        expected_calls = [mock.call(lport_name='port1', if_exists=True,
+                                    external_ids=external_ids),
+                          mock.call(lport_name='port2', if_exists=True,
+                                    external_ids=external_ids)]
+        nb_idl.set_lswitch_port.assert_has_calls(expected_calls)
