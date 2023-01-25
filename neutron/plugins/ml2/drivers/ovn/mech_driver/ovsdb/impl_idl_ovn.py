@@ -836,7 +836,8 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
         return cls(conn)
 
     def _get_chassis_physnets(self, chassis):
-        bridge_mappings = chassis.external_ids.get('ovn-bridge-mappings', '')
+        other_config = utils.get_ovn_chassis_other_config(chassis)
+        bridge_mappings = other_config.get('ovn-bridge-mappings', '')
         mapping_dict = helpers.parse_mappings(bridge_mappings.split(','))
         return list(mapping_dict.keys())
 
@@ -854,7 +855,8 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
         return [ch.name if name_only else ch
                 for ch in self.chassis_list().execute(check_error=True)
                 if ovn_const.CMS_OPT_CHASSIS_AS_GW in
-                ch.external_ids.get(ovn_const.OVN_CMS_OPTIONS, '').split(',')]
+                utils.get_ovn_chassis_other_config(ch).get(
+                    ovn_const.OVN_CMS_OPTIONS, '').split(',')]
 
     def get_chassis_and_physnets(self):
         chassis_info_dict = {}
@@ -874,8 +876,9 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
         except StopIteration:
             msg = _('Chassis with hostname %s does not exist') % hostname
             raise RuntimeError(msg)
-        return (chassis.external_ids.get('datapath-type', ''),
-                chassis.external_ids.get('iface-types', ''),
+        other_config = utils.get_ovn_chassis_other_config(chassis)
+        return (other_config.get('datapath-type', ''),
+                other_config.get('iface-types', ''),
                 self._get_chassis_physnets(chassis))
 
     def get_metadata_port_network(self, network):
