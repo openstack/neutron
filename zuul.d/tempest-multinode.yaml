@@ -289,6 +289,10 @@
           $NEUTRON_L3_CONF:
             agent:
               debug_iptables_rules: True
+        test-config:
+          $TEMPEST_CONFIG:
+            scenario:
+              dhcp_client: dhcpcd
     group-vars:
       subnode:
         devstack_localrc:
@@ -366,6 +370,8 @@
           $TEMPEST_CONFIG:
             neutron_plugin_options:
               is_igmp_snooping_enabled: True
+            scenario:
+              dhcp_client: dhcpcd
         post-config:
           "/$NEUTRON_CORE_PLUGIN_CONF":
             ovn:
