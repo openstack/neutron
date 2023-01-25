@@ -71,7 +71,6 @@
         - neutron-ovn-tempest-ovs-release
         - neutron-ovn-tempest-ipv6-only-ovs-master
         - neutron-ovn-tempest-ovs-master-centos-9-stream
-        - neutron-ovn-tempest-with-neutron-lib-master
         - neutron-ovn-tempest-with-sqlalchemy-master
         - neutron-ovs-tempest-with-sqlalchemy-master
         - neutron-ovs-tempest-fips
