@@ -741,3 +741,41 @@
         OVN_BUILD_FROM_SOURCE: True
         OVN_BRANCH: "main"
         OVS_BRANCH: master
+
+- job:
+    name: neutron-ovn-tempest-with-sqlalchemy-master
+    parent: tempest-integrated-networking
+    timeout: 10800
+    required-projects:
+      - openstack/neutron
+      - openstack/tempest
+      - name: github.com/sqlalchemy/sqlalchemy
+        override-checkout: main
+    vars:
+      devstack_plugins:
+        neutron: https://opendev.org/openstack/neutron.git
+      devstack_services:
+        br-ex-tcpdump: true
+        br-int-flows: true
+        # Cinder services
+        c-api: false
+        c-bak: false
+        c-sch: false
+        c-vol: false
+        cinder: false
+        # Swift services
+        s-account: false
+        s-container: false
+        s-object: false
+        s-proxy: false
+      zuul_copy_output:
+        '/var/log/ovn': 'logs'
+        '/var/log/openvswitch': 'logs'
+        '/var/lib/ovn': 'logs'
+
+- job:
+    name: neutron-ovs-tempest-with-sqlalchemy-master
+    parent: neutron-ovs-tempest-base
+    required-projects:
+      - name: github.com/sqlalchemy/sqlalchemy
+        override-checkout: main
