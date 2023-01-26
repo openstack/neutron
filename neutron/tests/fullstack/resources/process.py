@@ -98,6 +98,12 @@ class ProcessFixture(fixtures.Fixture):
         else:
             return executor.submit(_restart)
 
+    def process_is_running(self):
+        return self.process.is_running
+
+    def process_is_not_running(self):
+        return not self.process_is_running()
+
 
 class RabbitmqEnvironmentFixture(fixtures.Fixture):
 

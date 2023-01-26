@@ -95,6 +95,10 @@ class AsyncProcess(object):
     def cmd(self):
         return ' '.join(self._cmd)
 
+    @property
+    def is_running(self):
+        return self._is_running
+
     def _reset_queues(self):
         self._stdout_lines = eventlet.queue.LightQueue()
         self._stderr_lines = eventlet.queue.LightQueue()
