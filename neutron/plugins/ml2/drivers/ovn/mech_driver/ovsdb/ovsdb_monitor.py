@@ -679,39 +679,43 @@ class OvnIdlDistributedLock(BaseOvnIdl):
                     self.driver.agent_chassis_table = 'Chassis_Private'
 
     def notify(self, event, row, updates=None):
-        self.handle_db_schema_changes(event, row)
-        self.notify_handler.notify(event, row, updates, global_=True)
         try:
-            target_node = self._hash_ring.get_node(str(row.uuid))
-        except exceptions.HashRingIsEmpty as e:
-            LOG.error('HashRing is empty, error: %s', e)
-            return
-        if target_node != self._node_uuid:
-            return
-
-        # If the worker hasn't been health checked by the maintenance
-        # thread (see bug #1834498), indicate that it's alive here
-        time_now = timeutils.utcnow()
-        touch_timeout = time_now - datetime.timedelta(
-            seconds=ovn_const.HASH_RING_TOUCH_INTERVAL)
-        if not self._last_touch or touch_timeout >= self._last_touch:
-            # NOTE(lucasagomes): Guard the db operation with an exception
-            # handler. If heartbeating fails for whatever reason, log
-            # the error and continue with processing the event
+            self.handle_db_schema_changes(event, row)
+            self.notify_handler.notify(event, row, updates, global_=True)
             try:
-                ctx = neutron_context.get_admin_context()
-                ovn_hash_ring_db.touch_node(ctx, self._node_uuid)
-                self._last_touch = time_now
-            except Exception:
-                LOG.exception('Hash Ring node %s failed to heartbeat',
-                              self._node_uuid)
+                target_node = self._hash_ring.get_node(str(row.uuid))
+            except exceptions.HashRingIsEmpty as e:
+                LOG.error('HashRing is empty, error: %s', e)
+                return
+            if target_node != self._node_uuid:
+                return
 
-        LOG.debug('Hash Ring: Node %(node)s (host: %(hostname)s) '
-                  'handling event "%(event)s" for row %(row)s '
-                  '(table: %(table)s)',
-                  {'node': self._node_uuid, 'hostname': CONF.host,
-                   'event': event, 'row': row.uuid, 'table': row._table.name})
-        self.notify_handler.notify(event, row, updates)
+            # If the worker hasn't been health checked by the maintenance
+            # thread (see bug #1834498), indicate that it's alive here
+            time_now = timeutils.utcnow()
+            touch_timeout = time_now - datetime.timedelta(
+                seconds=ovn_const.HASH_RING_TOUCH_INTERVAL)
+            if not self._last_touch or touch_timeout >= self._last_touch:
+                # NOTE(lucasagomes): Guard the db operation with an exception
+                # handler. If heartbeating fails for whatever reason, log
+                # the error and continue with processing the event
+                try:
+                    ctx = neutron_context.get_admin_context()
+                    ovn_hash_ring_db.touch_node(ctx, self._node_uuid)
+                    self._last_touch = time_now
+                except Exception:
+                    LOG.exception('Hash Ring node %s failed to heartbeat',
+                                  self._node_uuid)
+
+            LOG.debug('Hash Ring: Node %(node)s (host: %(hostname)s) '
+                      'handling event "%(event)s" for row %(row)s '
+                      '(table: %(table)s)',
+                      {'node': self._node_uuid, 'hostname': CONF.host,
+                       'event': event, 'row': row.uuid,
+                       'table': row._table.name})
+            self.notify_handler.notify(event, row, updates)
+        except Exception as e:
+            LOG.exception(e)
 
     @abc.abstractmethod
     def post_connect(self):
