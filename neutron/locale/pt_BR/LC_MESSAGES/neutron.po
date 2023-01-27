@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2022-04-29 17:06+0000\n"
+"POT-Creation-Date: 2023-01-26 15:02+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -295,15 +295,6 @@ msgstr "Não é possível manipular a sub-rede do tipo %(subnet_type)s"
 
 msgid "Cannot have multiple IPv4 subnets on router port"
 msgstr "Não é possível ter diversas sub-redes IPV4 na porta do roteador"
-
-#, python-format
-msgid ""
-"Cannot have multiple router ports with the same network id if both contain "
-"IPv6 subnets. Existing port %(p)s has IPv6 subnet(s) and network id %(nid)s"
-msgstr ""
-"Não é possível ter várias portas de roteador com o mesmo ID de rede se ambas "
-"contiverem sub-redes IPv6. A porta existente %(p)s possui sub-rede(s) IPv6 e "
-"o ID de rede %(nid)s"
 
 #, python-format
 msgid ""

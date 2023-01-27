@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2022-04-29 17:06+0000\n"
+"POT-Creation-Date: 2023-01-26 15:02+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -288,15 +288,6 @@ msgstr "%(subnet_type)s 유형의 서브넷을 처리할 수 없음"
 
 msgid "Cannot have multiple IPv4 subnets on router port"
 msgstr "라우터 포트에 IPv4 서브넷이 여러 개일 수 없음"
-
-#, python-format
-msgid ""
-"Cannot have multiple router ports with the same network id if both contain "
-"IPv6 subnets. Existing port %(p)s has IPv6 subnet(s) and network id %(nid)s"
-msgstr ""
-"모두 IPv6 서브넷이 있는 경우 같은 네트워크 ID를 사용하는 라우터 포트를 여러 "
-"개 사용할 수 없음. 기존 포트 %(p)s에 IPv6 서브넷 및 네트워크 ID %(nid)s이"
-"(가) 있음."
 
 #, python-format
 msgid ""

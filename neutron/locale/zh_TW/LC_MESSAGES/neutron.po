@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2022-04-29 17:06+0000\n"
+"POT-Creation-Date: 2023-01-26 15:02+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -270,14 +270,6 @@ msgstr "無法處理類型為 %(subnet_type)s 的子網路"
 
 msgid "Cannot have multiple IPv4 subnets on router port"
 msgstr "路由器埠上不能具有多個 IPv4 子網路"
-
-#, python-format
-msgid ""
-"Cannot have multiple router ports with the same network id if both contain "
-"IPv6 subnets. Existing port %(p)s has IPv6 subnet(s) and network id %(nid)s"
-msgstr ""
-"不能具有多個包含相同網路 ID 的路由器埠（如果兩者都包含 IPv6 子網路）。現有埠 "
-"%(p)s 具有 IPv6 子網路和網路 ID %(nid)s"
 
 #, python-format
 msgid ""
