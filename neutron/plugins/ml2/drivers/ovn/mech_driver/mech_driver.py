@@ -27,6 +27,7 @@ import uuid
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net
 from neutron_lib.api.definitions import segment as segment_def
+from neutron_lib.api.definitions import stateful_security_group
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -227,7 +228,10 @@ class OVNMechanismDriver(api.MechanismDriver):
         return portbindings.CONNECTIVITY_L2
 
     def supported_extensions(self, extensions):
-        return set(ovn_extensions.ML2_SUPPORTED_API_EXTENSIONS) & extensions
+        supported_extensions = set(ovn_extensions.ML2_SUPPORTED_API_EXTENSIONS)
+        if not cfg.CONF.ovn.allow_stateless_action_supported:
+            supported_extensions.discard(stateful_security_group.ALIAS)
+        return set(supported_extensions) & extensions
 
     @staticmethod
     def provider_network_attribute_updates_supported():
