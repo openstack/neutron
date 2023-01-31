@@ -1283,7 +1283,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             # Otherwise, these flows will be cleaned as stale due to the
             # different cookie id. We also set refresh_tunnels if the agent
             # has not received a notification and is missing tunnels.
-            refresh_tunnels = (self.iter_num == 0) or tunnels_missing
+            refresh_tunnels = ((self.iter_num == 0) or tunnels_missing or
+                               self.ovs_restarted)
             devices_set = self.plugin_rpc.update_device_list(
                 self.context, devices_up, devices_down, self.agent_id,
                 self.conf.host, refresh_tunnels=refresh_tunnels)
@@ -2528,7 +2529,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             LOG.info("Cleaning stale %s flows", self.tun_br.br_name)
             self.tun_br.cleanup_flows()
 
-    def process_port_info(self, start, polling_manager, sync, ovs_restarted,
+    def process_port_info(self, start, polling_manager, sync,
                           ports, ancillary_ports, updated_ports_copy,
                           consecutive_resyncs, ports_not_ready_yet,
                           failed_devices, failed_ancillary_devices):
@@ -2559,7 +2560,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             # calling polling_manager.get_events() since
             # the agent might miss some event (for example a port
             # deletion)
-            reg_ports = (set() if ovs_restarted else ports)
+            reg_ports = (set() if self.ovs_restarted else ports)
             port_info = self.scan_ports(reg_ports, sync,
                                         updated_ports_copy)
             # Treat ancillary devices if they exist
@@ -2682,6 +2683,10 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             polling_manager.start()
 
     def rpc_loop(self, polling_manager):
+        # Everytime enter this loop this should always be set False again,
+        # in case of any break (or exception) after the value be set
+        # to True.
+        self.ovs_restarted = False
         idl_monitor = self.ovs.ovsdb.idl_monitor
         sync = False
         ports = set()
@@ -2689,7 +2694,6 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         activated_bindings_copy = set()
         ancillary_ports = set()
         tunnel_sync = True
-        ovs_restarted = False
         consecutive_resyncs = 0
         need_clean_stale_flow = True
         ports_not_ready_yet = set()
@@ -2736,7 +2740,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 except Exception:
                     LOG.exception("Error while configuring tunnel endpoints")
                     tunnel_sync = True
-            ovs_restarted |= (self.ovs_status == ovs_const.OVS_RESTARTED)
+            self.ovs_restarted |= (self.ovs_status == ovs_const.OVS_RESTARTED)
             devices_need_retry = (any(failed_devices.values()) or
                                   any(failed_ancillary_devices.values()) or
                                   ports_not_ready_yet)
@@ -2767,7 +2771,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                     self.activated_bindings = set()
                     (port_info, ancillary_port_info, consecutive_resyncs,
                      ports_not_ready_yet) = (self.process_port_info(
-                         start, polling_manager, sync, ovs_restarted,
+                         start, polling_manager, sync,
                          ports, ancillary_ports, updated_ports_copy,
                          consecutive_resyncs, ports_not_ready_yet,
                          failed_devices, failed_ancillary_devices))
@@ -2789,11 +2793,11 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                     # on Neutron server
                     if (self._port_info_has_changes(port_info) or
                             self.sg_agent.firewall_refresh_needed() or
-                            ovs_restarted):
+                            self.ovs_restarted):
                         LOG.debug("Starting to process devices in:%s",
                                   port_info)
                         provisioning_needed = (
-                            ovs_restarted or bridges_recreated)
+                            self.ovs_restarted or bridges_recreated)
                         failed_devices = self.process_network_ports(
                             port_info, provisioning_needed)
                         LOG.info("Agent rpc_loop - iteration:%(iter_num)d - "
@@ -2827,9 +2831,6 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                         self.update_retries_map_and_remove_devs_not_to_retry(
                             failed_devices, failed_ancillary_devices,
                             failed_devices_retries_map))
-                    # Keep this flag in the last line of "try" block,
-                    # so we can sure that no other Exception occurred.
-                    ovs_restarted = False
                     self._dispose_local_vlan_hints()
                 except Exception:
                     LOG.exception("Error while processing VIF ports")
@@ -2837,6 +2838,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                     self.updated_ports |= updated_ports_copy
                     self.activated_bindings |= activated_bindings_copy
                     sync = True
+            self.ovs_restarted = False
             port_stats = self.get_port_stats(port_info, ancillary_port_info)
             self.loop_count_and_wait(start, port_stats)
 

@@ -149,6 +149,7 @@ class TestOvsNeutronAgent(object):
         mock.patch('neutron.agent.ovsdb.impl_idl._connection').start()
         self.agent = self._make_agent()
         self.agent.sg_agent = mock.Mock()
+        self.agent.ovs_restarted = False
 
     def _make_agent(self):
         with mock.patch.object(self.mod_agent.OVSNeutronAgent,
