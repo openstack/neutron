@@ -619,9 +619,10 @@ def get_link_devices(namespace, **kwargs):
 
     :return: (list) interfaces in a namespace
     """
+    index = kwargs.pop('index') if 'index' in kwargs else 'all'
     try:
         with get_iproute(namespace) as ip:
-            return priv_linux.make_serializable(ip.get_links(**kwargs))
+            return priv_linux.make_serializable(ip.get_links(index, **kwargs))
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)

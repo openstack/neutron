@@ -22,6 +22,7 @@ from neutron_lib import constants as n_cons
 from oslo_utils import uuidutils
 from pyroute2.ipdb import routes as ipdb_routes
 from pyroute2.iproute import linux as iproute_linux
+from pyroute2.netlink import exceptions as netlink_exc
 from pyroute2.netlink import rtnl
 import testtools
 
@@ -62,10 +63,10 @@ class GetDeviceNamesTestCase(functional_base.BaseSudoTestCase):
             self.assertNotIn(name, interfaces)
 
 
-class GetDevicesInfoTestCase(functional_base.BaseSudoTestCase):
+class GetLinkDevicesTestCase(functional_base.BaseSudoTestCase):
 
     def setUp(self):
-        super(GetDevicesInfoTestCase, self).setUp()
+        super().setUp()
         self.namespace = 'ns_test-' + uuidutils.generate_uuid()
         priv_ip_lib.create_netns(self.namespace)
         self.addCleanup(self._remove_ns, self.namespace)
@@ -76,7 +77,7 @@ class GetDevicesInfoTestCase(functional_base.BaseSudoTestCase):
     def _remove_ns(self, namespace):
         priv_ip_lib.remove_netns(namespace)
 
-    def test_get_devices_info_lo(self):
+    def test_get_link_devices_lo(self):
         devices = priv_ip_lib.get_link_devices(self.namespace)
         self.assertGreater(len(devices), 0)
         for device in devices:
@@ -87,7 +88,7 @@ class GetDevicesInfoTestCase(functional_base.BaseSudoTestCase):
         else:
             self.fail('Device "lo" not found')
 
-    def test_get_devices_info_dummy(self):
+    def test_get_link_devices_dummy(self):
         interfaces_tested = []
         for interface in self.interfaces:
             priv_ip_lib.create_interface(interface, self.namespace, 'dummy')
@@ -106,7 +107,7 @@ class GetDevicesInfoTestCase(functional_base.BaseSudoTestCase):
             interfaces_tested.append(name)
         self.assertEqual(sorted(interfaces_tested), sorted(self.interfaces))
 
-    def test_get_devices_info_vlan(self):
+    def test_get_link_devices_vlan(self):
         interfaces_tested = []
         vlan_interfaces = []
         vlan_id = 1000
@@ -150,7 +151,7 @@ class GetDevicesInfoTestCase(functional_base.BaseSudoTestCase):
         self.assertEqual(sorted(interfaces_tested),
                          sorted(self.interfaces + vlan_interfaces))
 
-    def test_get_devices_info_vxlan(self):
+    def test_get_link_devices_vxlan(self):
         interfaces_tested = []
         vxlan_interfaces = []
         vxlan_id = 1000
@@ -206,7 +207,7 @@ class GetDevicesInfoTestCase(functional_base.BaseSudoTestCase):
         else:
             self.fail('Interface "%s" not found' % interface_name)
 
-    def test_get_devices_info_veth_different_namespaces(self):
+    def test_get_link_devices_veth_different_namespaces(self):
         namespace2 = 'ns_test-' + uuidutils.generate_uuid()
         priv_ip_lib.create_netns(namespace2)
         self.addCleanup(self._remove_ns, namespace2)
@@ -231,7 +232,7 @@ class GetDevicesInfoTestCase(functional_base.BaseSudoTestCase):
         self.assertIn(linux_utils.get_attr(veth1_1, 'IFLA_LINK'),
                       [None, veth1_2['index']])
 
-    def test_get_devices_info_veth_same_namespaces(self):
+    def test_get_link_devices_veth_same_namespaces(self):
         ip_wrapper = ip_lib.IPWrapper(self.namespace)
         ip_wrapper.add_veth('veth1_1', 'veth1_2')
 
@@ -242,6 +243,21 @@ class GetDevicesInfoTestCase(functional_base.BaseSudoTestCase):
         veth1_2_link = linux_utils.get_attr(veth1_2, 'IFLA_LINK')
         self.assertEqual(veth1_1['index'], veth1_2_link)
         self.assertEqual(veth1_2['index'], veth1_1_link)
+
+    def test_get_link_devices_using_index(self):
+        for interface in self.interfaces:
+            priv_ip_lib.create_interface(interface, self.namespace, 'dummy')
+        for expected_device in priv_ip_lib.get_link_devices(self.namespace):
+            device = priv_ip_lib.get_link_devices(
+                self.namespace, index=expected_device['index'])
+            self.assertEqual(1, len(device))
+            self.assertEqual(linux_utils.get_attr(expected_device,
+                                                  'IFLA_IFNAME'),
+                             linux_utils.get_attr(device[0], 'IFLA_IFNAME'))
+
+        self.assertRaises(netlink_exc.NetlinkError,
+                          priv_ip_lib.get_link_devices, self.namespace,
+                          index=10000)
 
 
 class ListIpRulesTestCase(functional_base.BaseSudoTestCase):
