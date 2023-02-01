@@ -596,7 +596,8 @@ rules = [
         check_str=base.policy_or(
             base.ADMIN,
             base.RULE_ADVSVC,
-            base.PROJECT_MEMBER
+            base.PROJECT_MEMBER,
+            base.RULE_NET_OWNER
         ),
         scope_types=['project'],
         description='Delete a port',
