@@ -33,7 +33,7 @@ class RouterL3AgentBinding(model_base.BASEV2):
     router_id = sa.Column(sa.String(36),
                           sa.ForeignKey("routers.id", ondelete='CASCADE'),
                           primary_key=True)
-    l3_agent = orm.relation(agent_model.Agent)
+    l3_agent = orm.relationship(agent_model.Agent)
     l3_agent_id = sa.Column(sa.String(36),
                             sa.ForeignKey("agents.id", ondelete='CASCADE'),
                             primary_key=True)
