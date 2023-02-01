@@ -113,14 +113,23 @@ class SubnetRequest(object, metaclass=abc.ABCMeta):
 
     @staticmethod
     def _validate_gateway_ip_in_subnet(subnet_cidr, gateway_ip):
+        """Validates if the Gateway IP is in subnet CIDR if needed
+
+        If the Gateway (GW) IP address is in the subnet CIDR, we need to make
+        sure that the user has not used the IPs reserved to represent the
+        network or the broadcast domain.
+
+        If the Gateway is not in the subnet CIDR, we do not validate it.
+        Therefore, for such cases, it is assumed that its access is on link.
+        """
         if not gateway_ip:
             return
 
         if ipam_utils.check_gateway_invalid_in_subnet(subnet_cidr, gateway_ip):
             raise ipam_exc.IpamValueInvalid(_(
-                'Gateway IP %(gateway_ip)s cannot be allocated in CIDR '
-                '%(subnet_cidr)s' % {'gateway_ip': gateway_ip,
-                                     'subnet_cidr': subnet_cidr}))
+                'Gateway IP %(gateway_ip)s cannot be the network or broadcast '
+                'IP address %(subnet_cidr)s' % {'gateway_ip': gateway_ip,
+                                                'subnet_cidr': subnet_cidr}))
 
 
 class AnySubnetRequest(SubnetRequest):
