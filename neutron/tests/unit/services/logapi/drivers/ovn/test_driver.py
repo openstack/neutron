@@ -278,7 +278,10 @@ class TestOVNDriver(base.BaseTestCase):
         self.assertEqual(len(pg_dict["acls"]), info_args[1])
         self.assertEqual(len(pg_dict["acls"]) - 2, info_args[2])
         self.assertEqual(len(pg_dict["acls"]), info_args[3])
-        self.assertEqual(len(pg_dict["acls"]), self._nb_ovn.db_set.call_count)
+        self.assertEqual(len(pg_dict["acls"]),
+                         self._nb_ovn.db_set.call_count)
+        self.assertEqual(len(pg_dict["acls"]),
+                         self._nb_ovn.db_remove.call_count)
 
     @mock.patch.object(ovn_driver.LOG, 'info')
     def test__remove_acls_log_missing_acls(self, m_info):
