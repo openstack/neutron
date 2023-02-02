@@ -189,7 +189,7 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
         self._setup_port_binding(
             device_owner=constants.DEVICE_OWNER_ROUTER_SNAT,
             device_id=TEST_ROUTER_ID)
-        ha_iface_ids = l2pop_db._get_ha_router_interface_ids(
+        ha_iface_ids = l2pop_db._get_ha_router_interface_ids_subquery(
             self.ctx, TEST_NETWORK_ID)
         self.assertEqual(1, len(list(ha_iface_ids)))
 
@@ -201,7 +201,7 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
         self._setup_port_binding(
             device_owner=constants.DEVICE_OWNER_HA_REPLICATED_INT,
             device_id=TEST_ROUTER_ID)
-        ha_iface_ids = l2pop_db._get_ha_router_interface_ids(
+        ha_iface_ids = l2pop_db._get_ha_router_interface_ids_subquery(
             self.ctx, TEST_NETWORK_ID)
         self.assertEqual(1, len(list(ha_iface_ids)))
 
@@ -210,7 +210,7 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
         self._setup_port_binding(
             device_owner=constants.DEVICE_OWNER_ROUTER_SNAT,
             device_id=TEST_ROUTER_ID)
-        ha_iface_ids = l2pop_db._get_ha_router_interface_ids(
+        ha_iface_ids = l2pop_db._get_ha_router_interface_ids_subquery(
             self.ctx, TEST_NETWORK_ID)
         self.assertEqual(0, len(list(ha_iface_ids)))
 

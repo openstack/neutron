@@ -21,6 +21,7 @@ from oslo_log import log as logging
 from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 from sqlalchemy import and_, or_
+from sqlalchemy import orm
 from sqlalchemy.sql import exists
 
 from neutron.db.models import dns as dns_models
@@ -168,7 +169,7 @@ class SubnetServiceType(base.NeutronDbObject):
     }
 
     @classmethod
-    def query_filter_service_subnets(cls, query, service_type):
+    def _query_entity_service_subnets(cls, query, service_type):
         # TODO(tuanvu): find OVO-like solution for handling "join queries"
         Subnet = models_v2.Subnet
         ServiceType = subnet_service_type.SubnetServiceType
@@ -181,7 +182,9 @@ class SubnetServiceType(base.NeutronDbObject):
             # service type when DHCP is enabled on the subnet.
             and_(Subnet.enable_dhcp.is_(True),
                  service_type == const.DEVICE_OWNER_DHCP)))
-        return query.from_self(Subnet)
+
+        entity = orm.aliased(Subnet, query.subquery())
+        return entity
 
 
 # RBAC metaclass is not applied here because 'shared' attribute of Subnet
@@ -325,8 +328,11 @@ class Subnet(base.NeutronDbObject):
                                distributed_service=False):
         """Find canditate subnets for the network, host, and service_type"""
         query = cls.query_subnets_on_network(context, network_id)
-        query = SubnetServiceType.query_filter_service_subnets(
+
+        subnet_entity = SubnetServiceType._query_entity_service_subnets(
             query, service_type)
+
+        query = context.session.query(subnet_entity)
 
         # Select candidate subnets and return them
         if not cls.is_host_set(host):
@@ -336,14 +342,18 @@ class Subnet(base.NeutronDbObject):
                 # on port update with binding:host_id set. Allocation _cannot_
                 # be deferred as requested fixed_ips would then be lost.
                 return cls._query_filter_by_fixed_ips_segment(
-                    query, fixed_ips,
+                    query, fixed_ips, subnet_entity,
                     allow_multiple_segments=distributed_service).all()
             # If the host isn't known, we can't allocate on a routed network.
             # So, exclude any subnets attached to segments.
-            return cls._query_exclude_subnets_on_segments(query).all()
+            return cls._query_exclude_subnets_on_segments(
+                query, subnet_entity
+            ).all()
 
         # The host is known. Consider both routed and non-routed networks
-        results = cls._query_filter_by_segment_host_mapping(query, host).all()
+        results = cls._query_filter_by_segment_host_mapping(
+            query, subnet_entity, host
+        ).all()
 
         # For now, we know that OVS agent is supporting multi-segments.
         segment_ids = {subnet.segment_id
@@ -359,6 +369,7 @@ class Subnet(base.NeutronDbObject):
 
     @classmethod
     def _query_filter_by_fixed_ips_segment(cls, query, fixed_ips,
+                                           subnet_entity,
                                            allow_multiple_segments=False):
         """Excludes subnets not on the same segment as fixed_ips
 
@@ -366,7 +377,6 @@ class Subnet(base.NeutronDbObject):
         """
         segment_ids = []
         subnets = query.all()
-
         for fixed_ip in fixed_ips:
             subnet = None
             if 'subnet_id' in fixed_ip:
@@ -404,10 +414,10 @@ class Subnet(base.NeutronDbObject):
             return query
 
         segment_id = None if not segment_ids else segment_ids[0]
-        return query.filter(cls.db_model.segment_id == segment_id)
+        return query.filter(subnet_entity.segment_id == segment_id)
 
     @classmethod
-    def _query_filter_by_segment_host_mapping(cls, query, host):
+    def _query_filter_by_segment_host_mapping(cls, query, subnet_entity, host):
         # TODO(tuanvu): find OVO-like solution for handling "join queries" and
         #               write unit test for this function
         """Excludes subnets on segments not reachable by the host
@@ -427,13 +437,13 @@ class Subnet(base.NeutronDbObject):
         query = query.add_entity(SegmentHostMapping)
         query = query.outerjoin(
             SegmentHostMapping,
-            and_(cls.db_model.segment_id == SegmentHostMapping.segment_id,
+            and_(subnet_entity.segment_id == SegmentHostMapping.segment_id,
                  SegmentHostMapping.host == host))
 
         # Essentially "segment_id IS NULL XNOR host IS NULL"
-        query = query.filter(or_(and_(cls.db_model.segment_id.isnot(None),
+        query = query.filter(or_(and_(subnet_entity.segment_id.isnot(None),
                                       SegmentHostMapping.host.isnot(None)),
-                                 and_(cls.db_model.segment_id.is_(None),
+                                 and_(subnet_entity.segment_id.is_(None),
                                       SegmentHostMapping.host.is_(None))))
         return query
 
@@ -443,14 +453,16 @@ class Subnet(base.NeutronDbObject):
         return query.filter(cls.db_model.network_id == network_id)
 
     @classmethod
-    def _query_exclude_subnets_on_segments(cls, query):
+    def _query_exclude_subnets_on_segments(cls, query, subnet_entity):
         """Excludes all subnets associated with segments
 
         For the case where the host is not known, we don't consider any subnets
         that are on segments. But, we still consider subnets that are not
         associated with any segment (i.e. for non-routed networks).
         """
-        return query.filter(cls.db_model.segment_id.is_(None))
+        # here, we assume this assertion is true
+        # assert cls.db_model is models_v2.Subnet
+        return query.filter(subnet_entity.segment_id.is_(None))
 
     @classmethod
     def is_host_set(cls, host):
@@ -478,8 +490,10 @@ class Subnet(base.NeutronDbObject):
             return True
 
         # Does filtering ineligible service subnets makes the list empty?
-        query = SubnetServiceType.query_filter_service_subnets(
+        subnet_entity = SubnetServiceType._query_entity_service_subnets(
             query, service_type)
+
+        query = context.session.query(subnet_entity)
         if query.limit(1).count():
             # No, must be a deferred IP port because there are matching
             # subnets. Happens on routed networks when host isn't known.

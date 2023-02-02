@@ -96,9 +96,12 @@ def _ha_router_interfaces_on_network_query(context, network_id):
         models_v2.Port.device_owner.in_(HA_ROUTER_PORTS))
 
 
-def _get_ha_router_interface_ids(context, network_id):
+def _get_ha_router_interface_ids_subquery(context, network_id):
     query = _ha_router_interfaces_on_network_query(context, network_id)
-    return query.from_self(models_v2.Port.id).distinct()
+
+    port_entity = orm.aliased(models_v2.Port, query.subquery())
+
+    return context.session.query(port_entity.id).distinct()
 
 
 @db_api.CONTEXT_READER
@@ -107,7 +110,9 @@ def get_nondistributed_active_network_ports(context, network_id):
     # Exclude DVR and HA router interfaces
     query = query.filter(models_v2.Port.device_owner !=
                          const.DEVICE_OWNER_DVR_INTERFACE)
-    ha_iface_ids_query = _get_ha_router_interface_ids(context, network_id)
+    ha_iface_ids_query = _get_ha_router_interface_ids_subquery(
+        context, network_id
+    )
     query = query.filter(models_v2.Port.id.notin_(ha_iface_ids_query))
     return [(bind, agent) for bind, agent in query.all()
             if get_agent_ip(agent)]
@@ -164,7 +169,9 @@ def get_agent_network_active_port_count(context, agent_host,
                            const.DEVICE_OWNER_DVR_INTERFACE,
                            ml2_models.PortBinding.host == agent_host)
 
-    ha_iface_ids_query = _get_ha_router_interface_ids(context, network_id)
+    ha_iface_ids_query = _get_ha_router_interface_ids_subquery(
+        context, network_id
+    )
     query1 = query1.filter(models_v2.Port.id.notin_(ha_iface_ids_query))
     ha_port_count = _get_ha_router_active_port_count(
         context, agent_host, network_id)
