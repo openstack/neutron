@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    Added a new agent: the OVN Agent. This new agent will run on a compute or
+    a controller node using OVN as network backend, similar to other ML2
+    mechanism drivers as ML2/OVS or ML2/SRIOV. This new agent will perform
+    those actions that the ovn-controller service cannot execute. The agent
+    functionality will be plugable and added via configuration knob.
