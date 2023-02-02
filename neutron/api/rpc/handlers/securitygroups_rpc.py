@@ -27,6 +27,7 @@ from oslo_utils import versionutils
 
 from neutron.api.rpc.callbacks import resources
 from neutron.api.rpc.handlers import resources_rpc
+from neutron.common import utils
 from neutron.db import securitygroups_rpc_base as sg_rpc_base
 
 LOG = logging.getLogger(__name__)
@@ -169,6 +170,7 @@ class SecurityGroupAgentRpcApiMixin(object):
                                      topics.SECURITY_GROUP,
                                      topics.UPDATE)
 
+    @utils.disable_notifications
     def security_groups_rule_updated(self, context, security_groups):
         """Notify rule updated security groups."""
         if not security_groups:
@@ -179,6 +181,7 @@ class SecurityGroupAgentRpcApiMixin(object):
         cctxt.cast(context, 'security_groups_rule_updated',
                    security_groups=security_groups)
 
+    @utils.disable_notifications
     def security_groups_member_updated(self, context, security_groups):
         """Notify member updated security groups."""
         if not security_groups:

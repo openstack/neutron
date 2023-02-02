@@ -28,6 +28,8 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 
+from neutron.common import utils
+
 
 # Priorities - lower value is higher priority
 PRIORITY_NETWORK_CREATE = 0
@@ -87,6 +89,8 @@ class DhcpAgentNotifyAPI(object):
         self._plugin = plugin
         target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
+        if not cfg.CONF.dhcp_agent_notification:
+            return
         # register callbacks for router interface changes
         registry.subscribe(self._after_router_interface_created,
                            resources.ROUTER_INTERFACE, events.AFTER_CREATE)
@@ -101,8 +105,6 @@ class DhcpAgentNotifyAPI(object):
             resources.SUBNET,
             resources.SUBNETS,
         )
-        if not cfg.CONF.dhcp_agent_notification:
-            return
         for resource in callback_resources:
             registry.subscribe(self._send_dhcp_notification,
                                resource, events.BEFORE_RESPONSE)
@@ -182,6 +184,7 @@ class DhcpAgentNotifyAPI(object):
     def _is_reserved_dhcp_port(self, port):
         return port.get('device_id') == constants.DEVICE_ID_RESERVED_DHCP_PORT
 
+    @utils.disable_notifications
     def _notify_agents(
             self, context, method, payload, network_id, network=None):
         """Notify all the agents that are hosting the network."""
@@ -242,12 +245,14 @@ class DhcpAgentNotifyAPI(object):
         self._cast_message(context, "port_create_end",
                            payload, agent.host, agent.topic)
 
+    @utils.disable_notifications
     def _cast_message(self, context, method, payload, host,
                       topic=topics.DHCP_AGENT):
         """Cast the payload to the dhcp agent running on the host."""
         cctxt = self.client.prepare(topic=topic, server=host)
         cctxt.cast(context, method, payload=payload)
 
+    @utils.disable_notifications
     def _fanout_message(self, context, method, payload):
         """Fanout the payload to all dhcp agents."""
         cctxt = self.client.prepare(fanout=True)

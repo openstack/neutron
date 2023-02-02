@@ -25,6 +25,7 @@ from oslo_log import log as logging
 import oslo_messaging
 
 from neutron.api.rpc.agentnotifiers import utils as ag_utils
+from neutron.common import utils
 
 
 LOG = logging.getLogger(__name__)
@@ -41,6 +42,7 @@ class L3AgentNotifyAPI(object):
         target = oslo_messaging.Target(topic=topic, version='1.0')
         self.client = n_rpc.get_client(target)
 
+    @utils.disable_notifications
     def _notification_host(self, context, method, host, use_call=False,
                            **kwargs):
         """Notify the agent that is hosting the router."""
@@ -52,6 +54,7 @@ class L3AgentNotifyAPI(object):
                       if use_call else cctxt.cast)
         rpc_method(context, method, **kwargs)
 
+    @utils.disable_notifications
     def _agent_notification(self, context, method, router_ids, operation,
                             shuffle_agents):
         """Notify changed routers to hosting l3 agents."""
@@ -72,6 +75,7 @@ class L3AgentNotifyAPI(object):
                                             version='1.1')
                 cctxt.cast(context, method, routers=[router_id])
 
+    @utils.disable_notifications
     def _agent_notification_arp(self, context, method, router_id,
                                 operation, data):
         """Notify arp details to l3 agents hosting router."""
@@ -82,6 +86,7 @@ class L3AgentNotifyAPI(object):
         cctxt = self.client.prepare(fanout=True, version='1.2')
         cctxt.cast(context, method, payload=dvr_arptable)
 
+    @utils.disable_notifications
     def _notification(self, context, method, router_ids, operation,
                       shuffle_agents, schedule_routers=True):
         """Notify all the agents that are hosting the routers."""
@@ -102,6 +107,7 @@ class L3AgentNotifyAPI(object):
             cctxt = self.client.prepare(fanout=True)
             cctxt.cast(context, method, routers=router_ids)
 
+    @utils.disable_notifications
     def _notification_fanout(self, context, method, router_id=None, **kwargs):
         """Fanout the information to all L3 agents.
 

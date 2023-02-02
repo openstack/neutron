@@ -23,6 +23,7 @@ import eventlet
 from eventlet import queue
 import netaddr
 from neutron_lib import constants
+from oslo_config import cfg
 from oslo_log import log as logging
 from osprofiler import profiler
 import testscenarios
@@ -625,6 +626,25 @@ class SkipDecoratorTestCase(base.BaseTestCase):
             raise AttributeError()
 
         self.assertRaises(AttributeError, raise_attribute_error)
+
+
+class DisableNotificationTestCase(base.BaseTestCase):
+
+    @utils.disable_notifications
+    def sample_method(self):
+        raise AttributeError()
+
+    def test_notification_rpc_workers_lt_one(self):
+        cfg.CONF.set_override('rpc_workers', 0)
+        self.assertIsNone(self.sample_method())
+
+    def test_notification_rpc_workers_none(self):
+        cfg.CONF.set_override('rpc_workers', None)
+        self.assertRaises(AttributeError, self.sample_method)
+
+    def test_notification_rpc_workers_one(self):
+        cfg.CONF.set_override('rpc_workers', 1)
+        self.assertRaises(AttributeError, self.sample_method)
 
 
 class SignatureTestCase(base.BaseTestCase):
