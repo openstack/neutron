@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    Added a new OVN Neutron Agent extension: QoS for hardware offloaded ports.
+    This extension will enforce the minimum and maximum bandwidth egress QoS
+    rules for ports with hardware offload (DevLink ports). This extension
+    uses the "ip-link" commands to set the "ceil" and "rate" parameters on
+    the corresponding virtual functions.
