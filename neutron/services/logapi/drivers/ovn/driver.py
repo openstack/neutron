@@ -11,6 +11,7 @@
 #    under the License.
 
 from collections import namedtuple
+import random
 
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import resources
@@ -38,6 +39,7 @@ DRIVER = None
 
 log_cfg.register_log_driver_opts()
 
+MAX_INT_LABEL = 2**32
 SUPPORTED_LOGGING_TYPES = [log_const.SECURITY_GROUP]
 
 
@@ -167,13 +169,20 @@ class OVNDriver(base.DriverBase):
                 if log_name:
                     if acl.name and acl.name[0] != log_name:
                         continue
+                columns = {
+                    'log': False,
+                    'meter': [],
+                    'name': [],
+                    'severity': []
+                }
+                # TODO(egarciar): There wont be a need to check if label exists
+                # once minimum version for OVN is >= 22.03
+                if hasattr(acl, 'label'):
+                    columns['label'] = 0
+                    ovn_txn.add(self.ovn_nb.db_remove(
+                        "ACL", acl_uuid, 'options', 'log-related'))
                 ovn_txn.add(self.ovn_nb.db_set(
-                    "ACL", acl_uuid,
-                    ("log", False),
-                    ("meter", []),
-                    ("name", []),
-                    ("severity", [])
-                ))
+                    "ACL", acl_uuid, *columns.items()))
                 acl_changes += 1
         msg = "Cleared %d, Not found %d (out of %d visited) ACLs"
         if log_name:
@@ -189,13 +198,20 @@ class OVNDriver(base.DriverBase):
                 # skip acls used by a different network log
                 if acl.name and acl.name[0] != log_name:
                     continue
+                columns = {
+                    'log': acl.action in actions_enabled,
+                    'meter': self.meter_name,
+                    'name': log_name,
+                    'severity': "info"
+                }
+                # TODO(egarciar): There wont be a need to check if label exists
+                # once minimum version for OVN is >= 22.03
+                if hasattr(acl, "label"):
+                    # Label needs to be an unsigned 32 bit number and not 0.
+                    columns["label"] = random.randrange(1, MAX_INT_LABEL)
+                    columns["options"] = {'log-related': "true"}
                 ovn_txn.add(self.ovn_nb.db_set(
-                    "ACL", acl_uuid,
-                    ("log", acl.action in actions_enabled),
-                    ("meter", self.meter_name),
-                    ("name", log_name),
-                    ("severity", "info")
-                ))
+                    "ACL", acl_uuid, *columns.items()))
                 acl_changes += 1
         LOG.info("Set %d (out of %d visited) ACLs for network log %s",
                  acl_changes, acl_visits, log_name)
