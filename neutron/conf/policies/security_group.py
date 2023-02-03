@@ -42,6 +42,11 @@ rules = [
             RULE_ADMIN_OR_SG_OWNER),
         description=('Rule for resource owner, '
                      'admin or security group owner access')),
+    policy.RuleDefault(
+        name='shared_security_group',
+        check_str='field:security_groups:shared=True',
+        description='Definition of a shared security group'
+    ),
     # TODO(amotoki): admin_or_owner is the right rule?
     # Does an empty string make more sense for create_security_group?
     policy.DocumentedRuleDefault(
@@ -63,7 +68,10 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_security_group',
-        check_str=base.ADMIN_OR_PROJECT_READER,
+        check_str=base.policy_or(
+            base.ADMIN_OR_PROJECT_READER,
+            'rule:shared_security_group'
+        ),
         scope_types=['project'],
         description='Get a security group',
         operations=[
