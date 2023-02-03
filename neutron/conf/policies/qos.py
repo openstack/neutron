@@ -21,9 +21,16 @@ The QoS API now supports project scope and default roles.
 
 
 rules = [
+    policy.RuleDefault(
+        'shared_qos_policy',
+        'field:policies:shared=True',
+        description='Rule of shared qos policy'),
     policy.DocumentedRuleDefault(
         name='get_policy',
-        check_str=base.ADMIN_OR_PROJECT_READER,
+        check_str=base.policy_or(
+            base.ADMIN_OR_PROJECT_READER,
+            'rule:shared_qos_policy'
+        ),
         scope_types=['project'],
         description='Get QoS policies',
         operations=[
