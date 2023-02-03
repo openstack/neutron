@@ -53,3 +53,12 @@ RPC_EXTRA_OPTS = [
 
 def register_service_opts(opts, conf=cfg.CONF):
     conf.register_opts(opts)
+
+
+def get_rpc_workers(conf=cfg.CONF):
+    """Retrieve the conf knob rpc_workers, register option first if needed"""
+    try:
+        return conf.rpc_workers
+    except cfg.NoSuchOptError:
+        register_service_opts(SERVICE_OPTS, conf=conf)
+        return conf.rpc_workers

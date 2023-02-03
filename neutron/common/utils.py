@@ -60,6 +60,8 @@ from sqlalchemy.sql.expression import func as sql_func
 import neutron
 from neutron._i18n import _
 from neutron.api import api_common
+from neutron.conf import service as conf_service
+
 
 TIME_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 LOG = logging.getLogger(__name__)
@@ -1041,7 +1043,8 @@ def disable_notifications(function):
 
     @functools.wraps(function)
     def wrapper(*args, **kwargs):
-        if cfg.CONF.rpc_workers is None or cfg.CONF.rpc_workers >= 1:
+        rpc_workers = conf_service.get_rpc_workers()
+        if rpc_workers is None or rpc_workers >= 1:
             return function(*args, **kwargs)
     return wrapper
 

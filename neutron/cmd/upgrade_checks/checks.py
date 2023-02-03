@@ -27,6 +27,7 @@ from sqlalchemy import or_
 
 from neutron._i18n import _
 from neutron.cmd.upgrade_checks import base
+from neutron.conf import service as conf_service
 from neutron.db.extra_dhcp_opt import models as extra_dhcp_opt_models
 from neutron.db.models import agent as agent_model
 from neutron.db.models import external_net
@@ -183,7 +184,7 @@ class CoreChecks(base.BaseChecks):
     @staticmethod
     def worker_count_check(checker):
 
-        if cfg.CONF.api_workers and cfg.CONF.rpc_workers:
+        if cfg.CONF.api_workers and conf_service.get_rpc_workers():
             return upgradecheck.Result(
                 upgradecheck.Code.SUCCESS, _("Number of workers already "
                                              "defined in config"))

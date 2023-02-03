@@ -109,6 +109,7 @@ from neutron.api.rpc.handlers import metadata_rpc
 from neutron.api.rpc.handlers import resources_rpc
 from neutron.api.rpc.handlers import securitygroups_rpc
 from neutron.common import utils
+from neutron.conf import service as conf_service
 from neutron.db import address_group_db
 from neutron.db import address_scope_db
 from neutron.db import agents_db
@@ -401,7 +402,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def _start_rpc_notifiers(self):
         """Initialize RPC notifiers for agents."""
         self.ovo_notifier = None
-        if cfg.CONF.rpc_workers is None or cfg.CONF.rpc_workers >= 1:
+        rpc_workers = conf_service.get_rpc_workers()
+        if rpc_workers is None or rpc_workers >= 1:
             self.ovo_notifier = ovo_rpc.OVOServerRpcInterface()
         self.notifier = rpc.AgentNotifierApi(topics.AGENT)
         if cfg.CONF.enable_traditional_dhcp:
