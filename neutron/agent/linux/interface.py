@@ -411,6 +411,9 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
             root_dev.disable_ipv6()
         else:
             ns_dev = ip.device(device_name)
+        if not ns_dev:
+            LOG.warning("Device %s is not ready in namespace %s!",
+                        device_name, namespace)
 
         internal = not self.conf.ovs_use_veth
         self._ovs_add_port(bridge, tap_name, port_id, mac_address,
@@ -436,6 +439,13 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
                 #   Interface not found
                 LOG.warning("Failed to plug interface %s into bridge %s, "
                             "cleaning up", device_name, bridge)
+                with excutils.save_and_reraise_exception():
+                    ovs = ovs_lib.OVSBridge(bridge)
+                    ovs.delete_port(tap_name)
+            except Exception as exc:
+                LOG.warning("Failed to plug interface %s to bridge %s in "
+                            "namespace %s due to unknown reason: %s",
+                            device_name, bridge, namespace, str(exc))
                 with excutils.save_and_reraise_exception():
                     ovs = ovs_lib.OVSBridge(bridge)
                     ovs.delete_port(tap_name)

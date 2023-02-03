@@ -463,6 +463,7 @@ class TestOVSInterfaceDriver(TestBase):
             expected = [
                 mock.call(),
                 mock.call().device('tap0'),
+                mock.ANY,
                 mock.call().device().link.set_address('aa:bb:cc:dd:ee:ff'),
                 mock.call().device().link.set_address('aa:bb:cc:dd:ee:ff')]
             if namespace:
