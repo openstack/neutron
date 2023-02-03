@@ -83,6 +83,10 @@ cfg.CONF.import_group('OVS', 'neutron.plugins.ml2.drivers.openvswitch.agent.'
 
 INIT_MAX_TRIES = 3
 
+PORT_HINTS_TX_STEERING = 'tx-steering'
+PORT_HINTS_TX_STEERING_HASH = 'hash'
+PORT_HINTS_TX_STEERING_THREAD = 'thread'
+
 
 class _mac_mydialect(netaddr.mac_unix):
     word_fmt = '%.2x'
@@ -1250,6 +1254,28 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             if self.prevent_arp_spoofing:
                 self.setup_arp_spoofing_protection(self.int_br,
                                                    port, port_detail)
+            # Apply port hints
+            try:
+                to_set = self.sanitize_ovs_iface_other_config(
+                    port_detail['hints']['openvswitch']['other_config'])
+                self.int_br.set_db_attribute(
+                    'Interface', port.port_name, 'other_config', to_set)
+            # Clear the config from ovs when we receive:
+            #   * an empty hints attribute
+            #   * an invalid hints value, for example:
+            #     * invalid key: KeyError
+            #     * anything that's not a dict in hints, like None: TypeError
+            except (KeyError, TypeError):
+                self.int_br.clear_db_attribute(
+                    'Interface', port.port_name, 'other_config')
+            finally:
+                LOG.debug(
+                    'port-hint-ovs-tx-steering: vif=%s other_config=%s',
+                    port.port_name,
+                    self.int_br.db_get_val(
+                        'Interface', port.port_name, 'other_config')
+                )
+
             if cur_tag != lvm.vlan:
                 ovsdb = self.int_br.ovsdb
                 with ovsdb.transaction() as txn:
@@ -1300,6 +1326,27 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                  "down %(down)s completed.",
                  {'up': devices_up, 'down': devices_down})
         return set(failed_devices)
+
+    @staticmethod
+    def sanitize_ovs_iface_other_config(other_config):
+        '''Take an other_config dict meant for an ovs interface.
+
+        Return a filtered/sanitized version of it with only keys and values
+        we consider accepted. Log if the output differs from the input.
+        '''
+        output = {}
+        if PORT_HINTS_TX_STEERING in other_config:
+            if other_config[PORT_HINTS_TX_STEERING] in (
+                    PORT_HINTS_TX_STEERING_HASH,
+                    PORT_HINTS_TX_STEERING_THREAD):
+                output[PORT_HINTS_TX_STEERING] = other_config[
+                    PORT_HINTS_TX_STEERING]
+        if other_config != output:
+            LOG.warning(
+                'Got unexpected other_config, using sanitized version!'
+                ' got=%s sanitized=%s', other_config, output,
+            )
+        return output
 
     @staticmethod
     def setup_arp_spoofing_protection(bridge, vif, port_details):

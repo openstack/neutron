@@ -384,6 +384,7 @@ class CacheBackedPluginApi(PluginApi):
             'vnic_type': binding.vnic_type,
             'security_groups': list(port_obj.security_group_ids),
             'migrating_to': migrating_to,
+            'hints': port_obj.hints.hints if port_obj.hints else None,
         }
         LOG.debug("Returning: %s", entry)
         return entry
