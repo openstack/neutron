@@ -207,6 +207,12 @@
       - openstack/pbr
 
 - job:
+    name: neutron-functional-with-sqlalchemy-master
+    parent: neutron-functional
+    required-projects:
+      - name: github.com/sqlalchemy/sqlalchemy
+        override-checkout: main
+- job:
     name: neutron-fullstack-with-uwsgi-fips
     parent: neutron-fullstack-with-uwsgi
     nodeset: devstack-single-node-centos-8-stream
