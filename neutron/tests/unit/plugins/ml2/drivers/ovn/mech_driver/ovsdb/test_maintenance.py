@@ -841,7 +841,8 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         profile = {'capabilities': ['switchdev']}
         pb1 = mock.Mock(profile=jsonutils.dumps(profile), port_id='port1')
         pb2 = mock.Mock(profile=jsonutils.dumps(profile), port_id='port2')
-        mock_get_pb.return_value = [pb1, pb2]
+        pb3 = mock.Mock(profile='', port_id='port3')
+        mock_get_pb.return_value = [pb1, pb2, pb3]
 
         self.assertRaises(
             periodics.NeverAgain,
@@ -854,3 +855,4 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
                           mock.call(lport_name='port2', if_exists=True,
                                     external_ids=external_ids)]
         nb_idl.set_lswitch_port.assert_has_calls(expected_calls)
+        self.assertEqual(2, nb_idl.set_lswitch_port.call_count)

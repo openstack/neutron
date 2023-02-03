@@ -938,7 +938,11 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
             n_context.get_admin_context(), portbindings.VNIC_DIRECT)
         with self._nb_idl.transaction(check_error=True) as txn:
             for pb in port_bindings:
-                profile = jsonutils.loads(pb.profile)
+                try:
+                    profile = jsonutils.loads(pb.profile)
+                except ValueError:
+                    continue
+
                 capabilities = profile.get(ovn_const.PORT_CAP_PARAM, [])
                 external_ids = {
                     ovn_const.OVN_PORT_VNIC_TYPE_KEY: portbindings.VNIC_DIRECT,
