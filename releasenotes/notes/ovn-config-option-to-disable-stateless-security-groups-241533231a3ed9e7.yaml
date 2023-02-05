@@ -1,0 +1,13 @@
+---
+other:
+  - |
+    OVN mechanism driver has now got config option
+    ``allow_stateless_action_supported`` which allows manually disable
+    ``stateful-security-group`` API extension in case when OVN older than 21.06
+    is used because support for ``allow-stateful`` action in OVN's ACL was
+    added in OVN 21.06.
+    By default this option is set to ``True`` so ``stateful-security-group``
+    API extension is enabled.
+    If this option is set to ``True`` and OVN < 21.06 is used, Neutron will
+    fallback to the statefull ACLs even if SG is set to be stateless in Neutron
+    database.

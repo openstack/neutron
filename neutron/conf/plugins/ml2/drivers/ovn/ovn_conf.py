@@ -213,6 +213,13 @@ ovn_opts = [
                        '(VNIC type "baremetal"). This alllow operators to '
                        'plug their own DHCP server of choice for PXE booting '
                        'baremetal nodes. Defaults to False.')),
+    cfg.BoolOpt('allow_stateless_action_supported',
+                default=True,
+                help=_('If OVN older than 21.06 is used together with '
+                       'Neutron, this option should be set to ``False`` in '
+                       'order to disable ``stateful-security-group`` API '
+                       'extension as ``allow-stateless`` keyword is only '
+                       'supported by OVN >= 21.06.')),
 ]
 
 
