@@ -629,7 +629,7 @@ class DhcpAgent(manager.Manager):
 
     def reload_allocations(self, port, network, prio=False):
         LOG.info("Trigger reload_allocations for port %s on network %s",
-                 port, network)
+                 port, network.id)
         if not dhcp.port_requires_dhcp_configuration(port):
             return
         driver_action = 'reload_allocations'
