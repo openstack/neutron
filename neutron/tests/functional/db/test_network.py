@@ -91,6 +91,9 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
                 'fixed_ips': constants.ATTR_NOT_SPECIFIED}
         return self.plugin.create_port(self.cxt, {'port': port})
 
+    def _list_networks(self, ctx):
+        return self.plugin.get_networks(ctx)
+
     def _check_rbac(self, network_id, is_none, external):
         if external:
             action = 'access_as_external'
@@ -102,6 +105,41 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
             self.assertIsNone(rbac)
         else:
             self.assertIsNotNone(rbac)
+
+    def test_network_owner(self):
+        tenant_1 = {
+            'net-not-shared': (uuidutils.generate_uuid(), False),
+            'net-shared': (uuidutils.generate_uuid(), True)}
+        tenant_2 = {
+            'net-not-shared': (uuidutils.generate_uuid(), False),
+            'net-shared': (uuidutils.generate_uuid(), True)}
+        for uuid, shared in tenant_1.values():
+            self._create_network(self.tenant_1, uuid, shared)
+            self._check_rbac(uuid, is_none=(not shared), external=False)
+        for uuid, shared in tenant_2.values():
+            self._create_network(self.tenant_2, uuid, shared)
+            self._check_rbac(uuid, is_none=(not shared), external=False)
+
+        ctx_1 = context.Context(user_id=None,
+                                tenant_id=self.tenant_1,
+                                is_admin=False,
+                                overwrite=False)
+        ctx_2 = context.Context(user_id=None,
+                                tenant_id=self.tenant_2,
+                                is_admin=False,
+                                overwrite=False)
+
+        nets_1 = [net['id'] for net in self._list_networks(ctx_1)]
+        self.assertEqual(3, len(nets_1))
+        self.assertIn(tenant_1['net-shared'][0], nets_1)
+        self.assertIn(tenant_1['net-not-shared'][0], nets_1)
+        self.assertIn(tenant_2['net-shared'][0], nets_1)
+
+        nets_2 = [net['id'] for net in self._list_networks(ctx_2)]
+        self.assertEqual(3, len(nets_2))
+        self.assertIn(tenant_2['net-shared'][0], nets_2)
+        self.assertIn(tenant_2['net-not-shared'][0], nets_2)
+        self.assertIn(tenant_1['net-shared'][0], nets_2)
 
     def test_create_network_shared(self):
         self._create_network(self.tenant_1, self.network_id, True)
