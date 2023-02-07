@@ -35,8 +35,6 @@
               - ^setup.cfg$
               - ^tools/.*$
               - ^tox.ini$
-        - networking-ovn-tempest-dsvm-ovs-release:
-            irrelevant-files: *tempest-irrelevant-files
         - tempest-integrated-networking
         - openstacksdk-functional-devstack
         - grenade:
