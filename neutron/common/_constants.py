@@ -78,3 +78,6 @@ IDPOOL_SELECT_SIZE = 100
 AUTO_DELETE_PORT_OWNERS = [constants.DEVICE_OWNER_DHCP,
                            constants.DEVICE_OWNER_DISTRIBUTED,
                            constants.DEVICE_OWNER_AGENT_GW]
+
+# The lowest binding index for L3 agents and DHCP agents.
+LOWEST_AGENT_BINDING_INDEX = 1
