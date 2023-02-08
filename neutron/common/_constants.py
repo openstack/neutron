@@ -83,3 +83,6 @@ AUTO_DELETE_PORT_OWNERS = [constants.DEVICE_OWNER_DHCP,
 # Tunnelled networks resource provider default name.
 RP_TUNNELLED = 'rp_tunnelled'
 TRAIT_NETWORK_TUNNEL = 'CUSTOM_NETWORK_TUNNEL_PROVIDER'
+
+# The lowest binding index for L3 agents and DHCP agents.
+LOWEST_AGENT_BINDING_INDEX = 1
