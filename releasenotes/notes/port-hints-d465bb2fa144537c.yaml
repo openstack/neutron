@@ -1,0 +1,12 @@
+---
+features:
+  - |
+    Ports now have a ``hints`` attribute, in which backend specific
+    tuning options can be passed to Neutron. The availability of the
+    ``hints`` attribute is signaled by the ``port-hints`` extension.
+    The ``hints`` attribute is admin-only by default. Its value is a
+    dict, keyed by mechanism driver aliases. The possible values are
+    defined by the mechanism drivers. An admin user can ask for a
+    hint in a port create or update request. As the name suggests a
+    hint is not a demand - Neutron applies the hint when it can, but
+    it is free to ignore it, when it can't.
