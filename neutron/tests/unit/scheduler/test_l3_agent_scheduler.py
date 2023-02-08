@@ -155,33 +155,6 @@ class L3SchedulerBaseTestCase(base.BaseTestCase):
         routers = [{'id': 'foo_router'}]
         self._test__get_routers_can_schedule(routers, None, [])
 
-    def test__bind_routers_centralized(self):
-        routers = [{'id': 'foo_router'}]
-        agent = agent_obj.Agent(mock.ANY, id=uuidutils.generate_uuid())
-        with mock.patch.object(self.scheduler, 'bind_router') as mock_bind:
-            self.scheduler._bind_routers(mock.ANY, mock.ANY, routers, agent)
-        mock_bind.assert_called_once_with(mock.ANY, mock.ANY,
-                                          'foo_router', agent.id)
-
-    def _test__bind_routers_ha(self, has_binding):
-        routers = [{'id': 'foo_router', 'ha': True, 'tenant_id': '42'}]
-        agent = agent_obj.Agent(mock.ANY, id=uuidutils.generate_uuid())
-        with mock.patch.object(self.scheduler,
-                               '_router_has_binding',
-                               return_value=has_binding) as mock_has_binding,\
-                mock.patch.object(self.scheduler,
-                                  'create_ha_port_and_bind') as mock_bind:
-            self.scheduler._bind_routers(mock.ANY, mock.ANY, routers, agent)
-            mock_has_binding.assert_called_once_with(mock.ANY, 'foo_router',
-                                                     agent.id)
-            self.assertEqual(not has_binding, mock_bind.called)
-
-    def test__bind_routers_ha_has_binding(self):
-        self._test__bind_routers_ha(has_binding=True)
-
-    def test__bind_routers_ha_no_binding(self):
-        self._test__bind_routers_ha(has_binding=False)
-
     def test__get_candidates_iterable_on_early_returns(self):
         plugin = mock.MagicMock()
         # non-distributed router already hosted
