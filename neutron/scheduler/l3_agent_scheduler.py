@@ -28,6 +28,7 @@ from oslo_db import exception as db_exc
 from oslo_log import log as logging
 import six
 
+from neutron.common import _constants as n_const
 from neutron.common import utils
 from neutron.conf.db import l3_hamode_db
 from neutron.db.models import l3agent as rb_model
@@ -187,7 +188,7 @@ class L3Scheduler(object):
             return
 
         if not is_ha:
-            binding_index = rb_model.LOWEST_BINDING_INDEX
+            binding_index = n_const.LOWEST_AGENT_BINDING_INDEX
             if rb_obj.RouterL3AgentBinding.objects_exist(
                     context, router_id=router_id, binding_index=binding_index):
                 LOG.debug('Non-HA router %s has already been scheduled',
@@ -196,7 +197,7 @@ class L3Scheduler(object):
         else:
             binding_index = plugin.get_vacant_binding_index(
                 context, router_id, is_manual_scheduling)
-            if binding_index < rb_model.LOWEST_BINDING_INDEX:
+            if binding_index < n_const.LOWEST_AGENT_BINDING_INDEX:
                 LOG.debug('Unable to find a vacant binding_index for '
                           'router %(router_id)s and agent %(agent_id)s',
                           {'router_id': router_id,
