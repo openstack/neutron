@@ -49,9 +49,14 @@ if [[ -d "$dst_rootwrap_path" ]]; then
 fi
 mkdir -p -m 755 ${dst_rootwrap_path}
 
+filters_path=${dst_rootwrap_path}
+if [[ "$filters_path" != /* ]]; then
+    filters_path=${absolute_neutron_path}/${filters_path}
+fi
+
 cp -p ${src_rootwrap_path}/* ${dst_rootwrap_path}/
 cp -p ${src_conf} ${dst_conf}
-sed -i "s:^filters_path=.*$:filters_path=${absolute_neutron_path}/${dst_rootwrap_path}:" ${dst_conf}
+sed -i "s:^filters_path=.*$:filters_path=${filters_path}:" ${dst_conf}
 sed -i "s:^exec_dirs=\(.*\)$:exec_dirs=${target_bin_path},${fullstack_path},\1:" ${dst_conf}
 
 if [[ "$OS_SUDO_TESTING" = "1" ]]; then
@@ -59,5 +64,5 @@ if [[ "$OS_SUDO_TESTING" = "1" ]]; then
     sed -i 's/syslog_log_level=ERROR/syslog_log_level=DEBUG/g' ${dst_conf}
     sed -i 's/daemon_timeout=600/daemon_timeout=7800/g' ${dst_conf}
     cp -p ${neutron_path}/neutron/tests/contrib/testing.filters \
-        ${dst_rootwrap_path}/
+        ${filters_path}/
 fi
