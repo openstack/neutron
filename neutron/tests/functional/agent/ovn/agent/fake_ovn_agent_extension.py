@@ -22,34 +22,34 @@ class OVSInterfaceEvent(row_event.RowEvent):
 
     def __init__(self, ovn_agent):
         self.ovn_agent = ovn_agent
-        events = (self.ROW_CREATE, )
+        events = (self.ROW_CREATE, self.ROW_UPDATE)
         table = 'Interface'
         super().__init__(events, table, None)
 
     def run(self, event, row, old):
-        self.ovn_agent.test_ovs_idl = row.name
+        self.ovn_agent.test_ovs_idl.append(row.name)
 
 
 class OVNSBChassisEvent(row_event.RowEvent):
     def __init__(self, ovn_agent):
         self.ovn_agent = ovn_agent
-        events = (self.ROW_CREATE, )
+        events = (self.ROW_CREATE, self.ROW_UPDATE)
         table = 'Chassis'
         super().__init__(events, table, None)
 
     def run(self, event, row, old):
-        self.ovn_agent.test_ovn_sb_idl = row.name
+        self.ovn_agent.test_ovn_sb_idl.append(row.name)
 
 
 class OVNNBLogicalSwitchEvent(row_event.RowEvent):
     def __init__(self, ovn_agent):
         self.ovn_agent = ovn_agent
-        events = (self.ROW_CREATE, )
+        events = (self.ROW_CREATE, self.ROW_UPDATE)
         table = 'Logical_Switch'
         super().__init__(events, table, None)
 
     def run(self, event, row, old):
-        self.ovn_agent.test_ovn_nb_idl = row.name
+        self.ovn_agent.test_ovn_nb_idl.append(row.name)
 
 
 class FakeOVNAgentExtension(ext_mgr.OVNAgentExtension):

@@ -43,11 +43,18 @@ class TestOVNNeutronAgent(base.TestOVNFunctionalBase):
         conf.set_override('ovn_nb_connection', ovn_nb_db, group='ovn')
         ovn_sb_db = self.ovsdb_server_mgr.get_ovsdb_connection_path('sb')
         conf.set_override('ovn_sb_connection', ovn_sb_db, group='ovn')
-        self.chassis_name = self.add_fake_chassis(self.FAKE_CHASSIS_HOST)
+
+        self.chassis_name = uuidutils.generate_uuid()
         self.mock_chassis_name.return_value = self.chassis_name
 
         agt = ovn_neutron_agent.OVNNeutronAgent(conf)
+        agt.test_ovs_idl = []
+        agt.test_ovn_sb_idl = []
+        agt.test_ovn_nb_idl = []
         agt.start()
+
+        self.add_fake_chassis(self.FAKE_CHASSIS_HOST, name=self.chassis_name)
+
         self.addCleanup(agt.ext_manager_api.ovs_idl.ovsdb_connection.stop)
         if agt.ext_manager_api.sb_idl:
             self.addCleanup(agt.ext_manager_api.sb_idl.ovsdb_connection.stop)
@@ -58,20 +65,25 @@ class TestOVNNeutronAgent(base.TestOVNFunctionalBase):
     def test_ovs_and_ovs_events(self):
         # Test the OVS IDL is attending the provided events.
         bridge = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
+        exc = Exception('Bridge %s not added or not detected by '
+                        'OVSInterfaceEvent' % bridge)
         n_utils.wait_until_true(
-            lambda: bridge.br_name == self.ovn_agent.test_ovs_idl,
-            timeout=10)
+            lambda: bridge.br_name in self.ovn_agent.test_ovs_idl,
+            timeout=10, exception=exc)
 
         # Test the OVN SB IDL is attending the provided events. The chassis is
         # created before the OVN SB IDL connection is created but the creation
         # event is received during the subscription.
+        exc = Exception('Chassis %s not added or not detected by '
+                        'OVNSBChassisEvent' % self.chassis_name)
         n_utils.wait_until_true(
-            lambda: self.chassis_name == self.ovn_agent.test_ovn_sb_idl,
-            timeout=10)
+            lambda: self.chassis_name in self.ovn_agent.test_ovn_sb_idl,
+            timeout=10, exception=exc)
 
         # Test the OVN SN IDL is attending the provided events.
         lswitch_name = 'ovn-' + uuidutils.generate_uuid()
         self.nb_api.ls_add(lswitch_name).execute(check_error=True)
+        exc = Exception('Logical Switch %s not added or not detected by ')
         n_utils.wait_until_true(
-            lambda: lswitch_name == self.ovn_agent.test_ovn_nb_idl,
+            lambda: lswitch_name in self.ovn_agent.test_ovn_nb_idl,
             timeout=10)
