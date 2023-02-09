@@ -142,17 +142,6 @@ class L3Scheduler(object, metaclass=abc.ABCMeta):
 
             return candidates
 
-    def _bind_routers(self, plugin, context, routers, l3_agent):
-        for router in routers:
-            if router.get('ha'):
-                if not self._router_has_binding(context, router['id'],
-                                                l3_agent.id):
-                    self.create_ha_port_and_bind(
-                        plugin, context, router['id'],
-                        router['tenant_id'], l3_agent)
-            else:
-                self.bind_router(plugin, context, router['id'], l3_agent.id)
-
     @lib_db_api.retry_db_errors
     def bind_router(self, plugin, context, router_id, agent_id,
                     is_manual_scheduling=False, is_ha=False):
