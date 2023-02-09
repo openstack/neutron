@@ -129,7 +129,9 @@ class TestTrunkHandler(base.BaseTestCase):
 
         calls = [mock.call(lport_name=s_port.port_id,
                            parent_name=trunk.port_id,
-                           tag=s_port.segmentation_id)
+                           tag=s_port.segmentation_id,
+                           external_ids_update={
+                               'neutron:device_owner': 'trunk:subport'})
                  for trunk, s_port in [(self.trunk_1, self.sub_port_1),
                                        (self.trunk_1, self.sub_port_2)]]
         self._assert_calls(self.plugin_driver.nb_ovn.set_lswitch_port, calls)
@@ -196,7 +198,8 @@ class TestTrunkHandler(base.BaseTestCase):
         calls = [mock.call(lport_name=s_port.port_id,
                            parent_name=[],
                            tag=[],
-                           up=False)
+                           up=False,
+                           external_ids_update={'neutron:device_owner': ''})
                  for trunk, s_port in [(self.trunk_1, self.sub_port_1),
                                        (self.trunk_1, self.sub_port_2)]]
         self._assert_calls(self.plugin_driver.nb_ovn.set_lswitch_port, calls)
@@ -225,7 +228,8 @@ class TestTrunkHandler(base.BaseTestCase):
         calls = [mock.call(lport_name=s_port.port_id,
                            parent_name=[],
                            tag=[],
-                           up=False)
+                           up=False,
+                           external_ids_update={'neutron:device_owner': ''})
                  for trunk, s_port in [(self.trunk_1, self.sub_port_1)]]
         self._assert_calls(self.plugin_driver.nb_ovn.set_lswitch_port, calls)
 

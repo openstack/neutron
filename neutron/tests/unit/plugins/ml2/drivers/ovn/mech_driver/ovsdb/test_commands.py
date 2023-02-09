@@ -200,7 +200,8 @@ class TestSetLSwitchPortCommand(TestBaseCommand):
         with mock.patch.object(idlutils, 'row_by_value',
                                side_effect=idlutils.RowNotFound):
             cmd = commands.SetLSwitchPortCommand(
-                self.ovn_api, 'fake-lsp', if_exists=if_exists)
+                self.ovn_api, 'fake-lsp', external_ids_update=None,
+                if_exists=if_exists)
             if if_exists:
                 cmd.run_idl(self.transaction)
             else:
@@ -220,8 +221,8 @@ class TestSetLSwitchPortCommand(TestBaseCommand):
         with mock.patch.object(idlutils, 'row_by_value',
                                return_value=fake_lsp):
             cmd = commands.SetLSwitchPortCommand(
-                self.ovn_api, fake_lsp.name, if_exists=True,
-                external_ids=new_ext_ids)
+                self.ovn_api, fake_lsp.name, external_ids_update=new_ext_ids,
+                if_exists=True, external_ids=new_ext_ids)
             cmd.run_idl(self.transaction)
             self.assertEqual(new_ext_ids, fake_lsp.external_ids)
 
@@ -255,7 +256,8 @@ class TestSetLSwitchPortCommand(TestBaseCommand):
         with mock.patch.object(idlutils, 'row_by_value',
                                return_value=fake_lsp):
             cmd = commands.SetLSwitchPortCommand(
-                self.ovn_api, fake_lsp.name, if_exists=True, **columns)
+                self.ovn_api, fake_lsp.name, external_ids_update=None,
+                if_exists=True, **columns)
             cmd.run_idl(self.transaction)
 
             if clear_v4_opts and clear_v6_opts:
@@ -307,7 +309,8 @@ class TestSetLSwitchPortCommand(TestBaseCommand):
         with mock.patch.object(idlutils, 'row_by_value',
                                return_value=fake_lsp):
             cmd = commands.SetLSwitchPortCommand(
-                self.ovn_api, fake_lsp.name, if_exists=True,
+                self.ovn_api, fake_lsp.name, external_ids_update=ext_ids,
+                if_exists=True,
                 external_ids=ext_ids, dhcpv4_options=dhcpv4_opts,
                 dhcpv6_options=dhcpv6_opts)
             if not isinstance(dhcpv4_opts, list):

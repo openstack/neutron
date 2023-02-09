@@ -148,9 +148,10 @@ class AddLSwitchPortCommand(command.BaseCommand):
 
 
 class SetLSwitchPortCommand(command.BaseCommand):
-    def __init__(self, api, lport, if_exists, **columns):
+    def __init__(self, api, lport, external_ids_update, if_exists, **columns):
         super(SetLSwitchPortCommand, self).__init__(api)
         self.lport = lport
+        self.external_ids_update = external_ids_update
         self.columns = columns
         self.if_exists = if_exists
 
@@ -194,6 +195,12 @@ class SetLSwitchPortCommand(command.BaseCommand):
             port.dhcpv6_options = [dhcpv6_options.result]
         for uuid in cur_port_dhcp_opts - new_port_dhcp_opts:
             self.api._tables['DHCP_Options'].rows[uuid].delete()
+
+        external_ids_update = self.external_ids_update or {}
+        external_ids = getattr(port, 'external_ids', {})
+        for k, v in external_ids_update.items():
+            external_ids[k] = v
+        port.external_ids = external_ids
 
         for col, val in self.columns.items():
             setattr(port, col, val)
