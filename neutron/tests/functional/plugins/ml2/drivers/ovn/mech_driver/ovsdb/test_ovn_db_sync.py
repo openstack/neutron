@@ -833,12 +833,12 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                 txn.add(self.nb_api.pg_del(pg))
 
             for lport_name in self.reset_lport_dhcpv4_options:
-                txn.add(self.nb_api.set_lswitch_port(lport_name, True,
-                                                     dhcpv4_options=[]))
+                txn.add(self.nb_api.set_lswitch_port(
+                    lport_name, if_exists=True, dhcpv4_options=[]))
 
             for lport_name in self.reset_lport_dhcpv6_options:
-                txn.add(self.nb_api.set_lswitch_port(lport_name, True,
-                                                     dhcpv6_options=[]))
+                txn.add(self.nb_api.set_lswitch_port(
+                    lport_name, if_exists=True, dhcpv6_options=[]))
 
             for dhcp_opts in self.stale_lport_dhcpv4_options:
                 dhcpv4_opts = txn.add(self.nb_api.add_dhcp_options(
@@ -851,7 +851,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                 if dhcp_opts['port_id'] in self.orphaned_lport_dhcp_options:
                     continue
                 txn.add(self.nb_api.set_lswitch_port(
-                    lport_name, True, dhcpv4_options=dhcpv4_opts))
+                    lport_name, if_exists=True, dhcpv4_options=dhcpv4_opts))
 
             for dhcp_opts in self.stale_lport_dhcpv6_options:
                 dhcpv6_opts = txn.add(self.nb_api.add_dhcp_options(
@@ -864,7 +864,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                 if dhcp_opts['port_id'] in self.orphaned_lport_dhcp_options:
                     continue
                 txn.add(self.nb_api.set_lswitch_port(
-                    lport_name, True, dhcpv6_options=dhcpv6_opts))
+                    lport_name, if_exists=True, dhcpv6_options=dhcpv6_opts))
 
             for row_uuid in self.missed_dhcp_options:
                 txn.add(self.nb_api.delete_dhcp_options(row_uuid))
@@ -881,12 +881,12 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
 
             for port_id in self.lport_dhcpv4_disabled:
                 txn.add(self.nb_api.set_lswitch_port(
-                    port_id, True,
+                    port_id, if_exists=True,
                     dhcpv4_options=[self.lport_dhcpv4_disabled[port_id]]))
 
             for port_id in self.lport_dhcpv6_disabled:
                 txn.add(self.nb_api.set_lswitch_port(
-                    port_id, True,
+                    port_id, if_exists=True,
                     dhcpv6_options=[self.lport_dhcpv6_disabled[port_id]]))
 
             # Delete the first DNS record and clear the second row records
