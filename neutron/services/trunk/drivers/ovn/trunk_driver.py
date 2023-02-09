@@ -22,6 +22,8 @@ from oslo_config import cfg
 from oslo_log import log
 
 from neutron.common.ovn import constants as ovn_const
+from neutron.db import db_base_plugin_common
+from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.objects import ports as port_obj
 from neutron.services.trunk.drivers import base as trunk_base
 
@@ -47,20 +49,23 @@ class OVNTrunkHandler(object):
         context = n_context.get_admin_context()
         db_parent_port = port_obj.Port.get_object(context, id=parent_port)
         parent_port_status = db_parent_port.status
-        for port in subports:
+        for subport in subports:
             with db_api.CONTEXT_WRITER.using(context), (
                     txn(check_error=True)) as ovn_txn:
-                self._set_binding_profile(context, port, parent_port,
-                                          parent_port_status, ovn_txn)
+                port = self._set_binding_profile(context, subport, parent_port,
+                                                 parent_port_status, ovn_txn)
+            db_rev.bump_revision(context, port, ovn_const.TYPE_PORTS)
 
     def _unset_sub_ports(self, subports):
         txn = self.plugin_driver.nb_ovn.transaction
         context = n_context.get_admin_context()
-        for port in subports:
+        for subport in subports:
             with db_api.CONTEXT_WRITER.using(context), (
                     txn(check_error=True)) as ovn_txn:
-                self._unset_binding_profile(context, port, ovn_txn)
+                port = self._unset_binding_profile(context, subport, ovn_txn)
+            db_rev.bump_revision(context, port, ovn_const.TYPE_PORTS)
 
+    @db_base_plugin_common.convert_result_to_dict
     def _set_binding_profile(self, context, subport, parent_port,
                              parent_port_status, ovn_txn):
         LOG.debug("Setting parent %s for subport %s",
@@ -71,6 +76,9 @@ class OVNTrunkHandler(object):
                       "binding_profile: %s",
                       subport.port_id)
             return
+        check_rev_cmd = self.plugin_driver.nb_ovn.check_revision_number(
+            db_port.id, db_port, ovn_const.TYPE_PORTS)
+        ovn_txn.add(check_rev_cmd)
         try:
             # NOTE(flaviof): We expect binding's host to be set. Otherwise,
             # sub-port will not transition from DOWN to ACTIVE.
@@ -103,7 +111,9 @@ class OVNTrunkHandler(object):
                     ))
         LOG.debug("Done setting parent %s for subport %s",
                   parent_port, subport.port_id)
+        return db_port
 
+    @db_base_plugin_common.convert_result_to_dict
     def _unset_binding_profile(self, context, subport, ovn_txn):
         LOG.debug("Unsetting parent for subport %s", subport.port_id)
         db_port = port_obj.Port.get_object(context, id=subport.port_id)
@@ -112,6 +122,9 @@ class OVNTrunkHandler(object):
                       "binding_profile: %s",
                       subport.port_id)
             return
+        check_rev_cmd = self.plugin_driver.nb_ovn.check_revision_number(
+            db_port.id, db_port, ovn_const.TYPE_PORTS)
+        ovn_txn.add(check_rev_cmd)
         try:
             db_port.device_owner = ''
             for binding in db_port.bindings:
@@ -140,6 +153,7 @@ class OVNTrunkHandler(object):
                     external_ids_update=ext_ids,
                     ))
         LOG.debug("Done unsetting parent for subport %s", subport.port_id)
+        return db_port
 
     def trunk_created(self, trunk):
         # Check if parent port is handled by OVN.

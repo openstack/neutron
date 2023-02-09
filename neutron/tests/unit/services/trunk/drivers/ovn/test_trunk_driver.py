@@ -87,6 +87,8 @@ class TestTrunkHandler(base.BaseTestCase):
             "neutron.objects.ports.PortBinding.update_object").start()
         self.mock_clear_levels = mock.patch(
             "neutron.objects.ports.PortBindingLevel.delete_objects").start()
+        self.mock_bump_revision = mock.patch(
+            "neutron.db.ovn_revision_numbers_db.bump_revision").start()
 
     def _get_fake_port_obj(self, port_id):
         with mock.patch('uuid.UUID') as mock_uuid:
