@@ -40,16 +40,23 @@ class API(api.API, metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def set_lswitch_port(self, lport_name, if_exists=True, **columns):
+    def set_lswitch_port(self, lport_name, external_ids_update=None,
+                         if_exists=True, **columns):
         """Create a command to set OVN logical switch port fields
 
         :param lport_name:    The name of the lport
         :type lport_name:     string
+        :param external_ids_update: Dictionary of keys to be updated
+                              individually in the external IDs dictionary.
+                              If "external_ids" is defined in "columns",
+                              "external_ids" will override any
+                              "external_ids_update" value.
+        :type external_ids_update: dictionary
+        :param if_exists:     Do not fail if lport does not exist
+        :type if_exists:      bool
         :param columns:       Dictionary of port columns
                               Supported columns: macs, external_ids,
                                                  parent_name, tag, enabled
-        :param if_exists:     Do not fail if lport does not exist
-        :type if_exists:      bool
         :type columns:        dictionary
         :returns:             :class:`Command` with no result
         """
