@@ -21,7 +21,7 @@ from neutron_lib.services.trunk import constants as trunk_consts
 from oslo_config import cfg
 from oslo_log import log
 
-from neutron.common.ovn.constants import OVN_ML2_MECH_DRIVER_NAME
+from neutron.common.ovn import constants as ovn_const
 from neutron.objects import ports as port_obj
 from neutron.services.trunk.drivers import base as trunk_base
 
@@ -94,10 +94,13 @@ class OVNTrunkHandler(object):
             LOG.debug("Port not found while trying to set "
                       "binding_profile: %s", subport.port_id)
             return
+        ext_ids = {ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY: db_port.device_owner}
         ovn_txn.add(self.plugin_driver.nb_ovn.set_lswitch_port(
             lport_name=subport.port_id,
             parent_name=parent_port,
-            tag=subport.segmentation_id))
+            tag=subport.segmentation_id,
+            external_ids_update=ext_ids,
+        ))
         LOG.debug("Done setting parent %s for subport %s",
                   parent_port, subport.port_id)
 
@@ -128,11 +131,14 @@ class OVNTrunkHandler(object):
             LOG.debug("Port not found while trying to unset "
                       "binding_profile: %s", subport.port_id)
             return
+        ext_ids = {ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY: db_port.device_owner}
         ovn_txn.add(self.plugin_driver.nb_ovn.set_lswitch_port(
             lport_name=subport.port_id,
             parent_name=[],
             up=False,
-            tag=[]))
+            tag=[],
+            external_ids_update=ext_ids,
+        ))
         LOG.debug("Done unsetting parent for subport %s", subport.port_id)
 
     def trunk_created(self, trunk):
@@ -185,7 +191,8 @@ class OVNTrunkDriver(trunk_base.DriverBase):
     @property
     def is_loaded(self):
         try:
-            return OVN_ML2_MECH_DRIVER_NAME in cfg.CONF.ml2.mechanism_drivers
+            return (ovn_const.OVN_ML2_MECH_DRIVER_NAME in
+                    cfg.CONF.ml2.mechanism_drivers)
         except cfg.NoSuchOptError:
             return False
 
@@ -205,7 +212,7 @@ class OVNTrunkDriver(trunk_base.DriverBase):
     @classmethod
     def create(cls, plugin_driver):
         cls.plugin_driver = plugin_driver
-        return cls(OVN_ML2_MECH_DRIVER_NAME,
+        return cls(ovn_const.OVN_ML2_MECH_DRIVER_NAME,
                    SUPPORTED_INTERFACES,
                    SUPPORTED_SEGMENTATION_TYPES,
                    None,
