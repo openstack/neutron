@@ -776,7 +776,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         LOG.debug('OVN-NB Sync DHCP options for Neutron subnets started')
 
         db_subnets = {}
-        filters = {'enable_dhcp': [1]}
+        filters = {'enable_dhcp': [True]}
         for subnet in self.core_plugin.get_subnets(ctx, filters=filters):
             if (subnet['ip_version'] == constants.IP_VERSION_6 and
                     subnet.get('ipv6_address_mode') == constants.IPV6_SLAAC):
