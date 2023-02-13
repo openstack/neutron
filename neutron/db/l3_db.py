@@ -341,7 +341,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                              states=(original, updated)))
         return updated
 
-    def _create_router_gw_port(self, context, router, network_id, ext_ips):
+    def _create_router_gw_port(self, context, router, network_id, ext_ips,
+                               update_gw_port=True):
         # Port has no 'tenant-id', as it is hidden from user
         port_data = {'tenant_id': '',  # intentionally not set
                      'network_id': network_id,
@@ -367,8 +368,9 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 self._core_plugin, context.elevated(), gw_port['id']):
             with db_api.CONTEXT_WRITER.using(context):
                 router = self._get_router(context, router['id'])
-                router.gw_port = self._core_plugin._get_port(
-                    context.elevated(), gw_port['id'])
+                if update_gw_port:
+                    router.gw_port = self._core_plugin._get_port(
+                        context.elevated(), gw_port['id'])
                 router_port = l3_obj.RouterPort(
                     context,
                     router_id=router.id,
@@ -505,9 +507,11 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 # raise the underlying exception
                 raise e.errors[0].error
 
-            self._check_for_dup_router_subnets(context, router,
-                                               new_network_id,
-                                               subnets)
+            self._check_for_dup_router_subnets(
+                context, router,
+                subnets,
+                constants.DEVICE_OWNER_ROUTER_GW
+            )
             self._create_router_gw_port(context, router,
                                         new_network_id, ext_ips)
 
@@ -669,7 +673,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             query_field=l3_models.Router.id.key)
 
     def _check_for_dup_router_subnets(self, context, router,
-                                      network_id, new_subnets):
+                                      new_subnets, new_device_owner):
         # It's possible these ports are on the same network, but
         # different subnets.
         new_subnet_ids = {s['id'] for s in new_subnets}
@@ -789,8 +793,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
 
         if subnets:
             self._check_for_dup_router_subnets(context, router,
-                                               port['network_id'],
-                                               subnets)
+                                               subnets, port['device_owner'])
 
         # Keep the restriction against multiple IPv4 subnets
         if len([s for s in subnets if s['ip_version'] == 4]) > 1:
@@ -896,8 +899,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                            % subnet_id)
                     raise n_exc.BadRequest(resource='router', msg=msg)
         self._validate_subnet_address_mode(subnet)
-        self._check_for_dup_router_subnets(context, router,
-                                           subnet['network_id'], [subnet])
+        self._check_for_dup_router_subnets(context, router, [subnet],
+                                           constants.DEVICE_OWNER_ROUTER_INTF)
         fixed_ip = {'ip_address': subnet['gateway_ip'],
                     'subnet_id': subnet['id']}
 
