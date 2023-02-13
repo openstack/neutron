@@ -167,6 +167,7 @@ class FakeOvsdbNbOvnIdl(object):
         self.get_lrouter_port = mock.Mock()
         self.schedule_unhosted_gateways = mock.Mock()
         self.get_lrouter_by_lrouter_port = mock.Mock()
+        self.schedule_new_gateway = mock.Mock()
 
 
 class FakeOvsdbSbOvnIdl(object):

@@ -438,6 +438,11 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
             self, g_name, sb_api, plugin, port_physnets, all_gw_chassis,
             chassis_with_physnets, chassis_with_azs)
 
+    def schedule_new_gateway(self, g_name, sb_api, lrouter_name, plugin,
+                             physnet, az_hints):
+        return cmd.ScheduleNewGatewayCommand(
+            self, g_name, sb_api, lrouter_name, plugin, physnet, az_hints)
+
     def update_lrouter_port(self, name, if_exists=True, **columns):
         return cmd.UpdateLRouterPortCommand(self, name, if_exists, **columns)
 
@@ -482,7 +487,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         # getting gateway_chassis
         chassis = []
         if self._tables.get('Gateway_Chassis'):
-            for gwc in lrp.gateway_chassis:
+            for gwc in getattr(lrp, 'gateway_chassis', set()):
                 if priorities is not None and gwc.priority not in priorities:
                     continue
                 chassis.append((gwc.chassis_name, gwc.priority))

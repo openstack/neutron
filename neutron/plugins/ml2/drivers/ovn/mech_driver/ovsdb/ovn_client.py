@@ -58,7 +58,6 @@ from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions \
     import placement as placement_extension
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions \
     import qos as qos_extension
-from neutron.scheduler import l3_ovn_scheduler
 
 
 LOG = log.getLogger(__name__)
@@ -106,7 +105,6 @@ class OVNClient(object):
         self._qos_driver = qos_extension.OVNClientQosExtension(driver=self)
         self.placement_extension = (
             placement_extension.OVNClientPlacementExtension(self))
-        self._ovn_scheduler = l3_ovn_scheduler.get_scheduler()
 
     @property
     def _plugin(self):
@@ -1684,19 +1682,6 @@ class OVNClient(object):
         columns = {}
         columns['options'] = self._gen_router_port_options(port)
 
-        if is_gw_port:
-            port_net = self._plugin.get_network(n_context.get_admin_context(),
-                                                port['network_id'])
-            physnet = self._get_physnet(port_net)
-            candidates = self.get_candidates_for_scheduling(
-                physnet, availability_zone_hints=common_utils.get_az_hints(
-                    router))
-            selected_chassis = self._ovn_scheduler.select(
-                self._nb_idl, self._sb_idl, lrouter_port_name,
-                candidates=candidates)
-            if selected_chassis:
-                columns['gateway_chassis'] = selected_chassis
-
         lsp_address = ovn_const.DEFAULT_ADDR_FOR_LSP_WITH_PEER
         if ipv6_ra_configs:
             columns['ipv6_ra_configs'] = ipv6_ra_configs
@@ -1709,10 +1694,24 @@ class OVNClient(object):
                 networks=networks,
                 may_exist=True,
                 external_ids=self._gen_router_port_ext_ids(port),
-                **columns),
+                **columns)
+        ]
+
+        if is_gw_port:
+            port_net = self._plugin.get_network(
+                n_context.get_admin_context(), port['network_id'])
+            physnet = self._get_physnet(port_net)
+            az_hints = common_utils.get_az_hints(router)
+            commands.append(
+                self._nb_idl.schedule_new_gateway(lrouter_port_name,
+                                                  self._sb_idl,
+                                                  lrouter, self._l3_plugin,
+                                                  physnet, az_hints))
+        commands.append(
             self._nb_idl.set_lrouter_port_in_lswitch_port(
                 port['id'], lrouter_port_name, is_gw_port=is_gw_port,
-                lsp_address=lsp_address)]
+                lsp_address=lsp_address))
+
         self._transaction(commands, txn=txn)
 
     def create_router_port(self, context, router_id, router_interface):

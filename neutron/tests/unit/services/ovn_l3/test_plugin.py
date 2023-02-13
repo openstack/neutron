@@ -163,7 +163,6 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY:
                 utils.ovn_name('ext-network-id'),
                 ovn_const.OVN_ROUTER_IS_EXT_GW: 'True'},
-            'gateway_chassis': ['hv1'],
             'options': {}}
         self.fake_floating_ip_attrs = {'floating_ip_address': '192.168.0.10',
                                        'fixed_ip_address': '10.0.0.10'}
@@ -1903,7 +1902,6 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
 
         # Make sure that the "gateway_mtu" option was set to the router port
         fake_router_port_assert = self.fake_router_port_assert
-        fake_router_port_assert['gateway_chassis'] = mock.ANY
         fake_router_port_assert['options'] = {
             ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION:
             str(prov_net['mtu'])}
@@ -1954,7 +1952,6 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
 
         # Make sure that the "gateway_mtu" option was set to the router port
         fake_router_port_assert = self.fake_router_port_assert
-        fake_router_port_assert['gateway_chassis'] = mock.ANY
         fake_router_port_assert['options'] = {}
         fake_router_port_assert['external_ids'][
             ovn_const.OVN_ROUTER_IS_EXT_GW] = 'True'

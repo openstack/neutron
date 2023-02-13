@@ -28,6 +28,8 @@ class FakeOVNGatewaySchedulerNbOvnIdl(object):
         self.get_gateway_chassis_binding = mock.Mock(
             return_value=chassis_gateway_mapping['Gateways'].get(gateway,
                                                                  None))
+        self.get_lrouter_by_lrouter_port = mock.Mock(
+            return_value=None)
 
 
 class FakeOVNGatewaySchedulerSbOvnIdl(object):

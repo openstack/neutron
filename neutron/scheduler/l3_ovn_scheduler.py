@@ -36,7 +36,7 @@ class OVNGatewayScheduler(object, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def select(self, nb_idl, sb_idl, gateway_name, candidates=None,
-               existing_chassis=None):
+               existing_chassis=None, target_lrouter=None):
         """Schedule the gateway port of a router to an OVN chassis.
 
         Schedule the gateway router port only if it is not already
@@ -59,7 +59,7 @@ class OVNGatewayScheduler(object, metaclass=abc.ABCMeta):
         return chassis_list
 
     def _schedule_gateway(self, nb_idl, sb_idl, gateway_name, candidates,
-                          existing_chassis):
+                          existing_chassis, target_lrouter):
         existing_chassis = existing_chassis or []
         candidates = candidates or []
         candidates = list(set(candidates) - set(existing_chassis))
@@ -82,7 +82,7 @@ class OVNGatewayScheduler(object, metaclass=abc.ABCMeta):
         # column or gateway_chassis column in the OVN_Northbound is done
         # by the caller
         chassis = self._select_gateway_chassis(
-            nb_idl, sb_idl, candidates, 1, chassis_count
+            nb_idl, sb_idl, candidates, 1, chassis_count, target_lrouter
         )[:chassis_count]
         # priority of existing chassis is higher than candidates
         chassis = existing_chassis + chassis
@@ -129,7 +129,7 @@ class OVNGatewayScheduler(object, metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def _select_gateway_chassis(self, nb_idl, sb_idl, candidates,
-                                priority_min, priority_max):
+                                priority_min, priority_max, target_lrouter):
         """Choose a chassis from candidates based on a specific policy.
 
         Returns a list of chassis to use for scheduling. The value at
@@ -142,12 +142,12 @@ class OVNGatewayChanceScheduler(OVNGatewayScheduler):
     """Randomly select an chassis for a gateway port of a router"""
 
     def select(self, nb_idl, sb_idl, gateway_name, candidates=None,
-               existing_chassis=None):
+               existing_chassis=None, target_lrouter=None):
         return self._schedule_gateway(nb_idl, sb_idl, gateway_name,
-              candidates, existing_chassis)
+              candidates, existing_chassis, target_lrouter)
 
     def _select_gateway_chassis(self, nb_idl, sb_idl, candidates,
-                                priority_min, priority_max):
+                                priority_min, priority_max, target_lrouter):
         candidates = copy.deepcopy(candidates)
         random.shuffle(candidates)
         return self._reorder_by_az(nb_idl, sb_idl, candidates)
@@ -157,12 +157,41 @@ class OVNGatewayLeastLoadedScheduler(OVNGatewayScheduler):
     """Select the least loaded chassis for a gateway port of a router"""
 
     def select(self, nb_idl, sb_idl, gateway_name, candidates=None,
-               existing_chassis=None):
+               existing_chassis=None, target_lrouter=None):
         return self._schedule_gateway(nb_idl, sb_idl, gateway_name,
-                                      candidates, existing_chassis)
+                                      candidates, existing_chassis,
+                                      target_lrouter)
+
+    def _lrp_anti_affinity_score(self, nb_idl, target_lrouter, lrp_name):
+        """Provide elevated score if LRP is part of LR with multiple LRPs.
+
+        The artificial score can be added to chassis load to make it less
+        likely that the chassis is selected for scheduling.
+
+        :param nb_idl:         IDL for the OVN NB API
+        :type nb_idl:          :class:`OvsdbNbOvnIdl`
+        :param target_lrouter: Logical Router object
+        :type target_lrouter:  :class:`RowView`
+        :param lrp_name:       Name of LRP.
+        :type lrp_name:        str
+        :returns:              Number, if lrp_name belongs to LR with multiple
+                               LRPs.
+        :rtype:                int
+        """
+        if target_lrouter:
+            lrouter_ports = getattr(target_lrouter, 'ports', set())
+            if len(lrouter_ports) and nb_idl.get_lrouter_by_lrouter_port(
+                    lrp_name) == target_lrouter:
+                # The `MAX_GW_CHASSIS` constant here is used mostly to get a
+                # multiplier that guarantees our score will outweigh natural
+                # LRP priority so that when other chassis are available those
+                # will be chosen rather than a chassis already hosting a LRP
+                # for this LR.
+                return ovn_const.MAX_GW_CHASSIS * len(target_lrouter.ports)
+        return 0
 
     def _select_gateway_chassis(self, nb_idl, sb_idl, candidates,
-                                priority_min, priority_max):
+                                priority_min, priority_max, target_lrouter):
         """Returns a lit of chassis from candidates ordered by priority
         (highest first). Each chassis in every priority will be selected, as it
         is the least loaded for that specific priority.
@@ -176,8 +205,14 @@ class OVNGatewayLeastLoadedScheduler(OVNGatewayScheduler):
             for chassis, lrps in all_chassis_bindings.items():
                 if chassis in selected_chassis:
                     continue
-                chassis_load[chassis] = len(
-                    [lrp for lrp, prio in lrps if prio == priority])
+                lrps_with_prio = 0
+                anti_affinity_score = 0
+                for lrp, prio in lrps:
+                    if prio == priority:
+                        lrps_with_prio += 1
+                    anti_affinity_score += self._lrp_anti_affinity_score(
+                        nb_idl, target_lrouter, lrp)
+                chassis_load[chassis] = lrps_with_prio + anti_affinity_score
             if len(chassis_load) == 0:
                 break
             leastload = min(chassis_load.values())

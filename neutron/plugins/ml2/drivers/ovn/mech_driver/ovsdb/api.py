@@ -148,6 +148,25 @@ class API(api.API, metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
+    def schedule_new_gateway(self, g_name, sb_api, lrouter_name, plugin,
+                             physnet, az_hints):
+        """Schedule new gateway
+
+        :param g_name:       The unique name of the lrouter port
+        :type g_name:        string
+        :param sb_api:       IDL for the OVN SB API
+        :type class:         :class:`OvsdbSbOvnIdl`
+        :param lrouter_name: The unique name of the lrouter
+        :type lrouter_name:  string
+        :param plugin:       The L3 plugin to call back to for lookups
+        :type plugin:        :class:`OVNL3RouterPlugin`
+        :param physnet:      Physnet for lrouter port
+        :type physnet:       string
+        :param az_hints:     Availability zone hints for router resource
+        :type az_hints:      List[string]
+        """
+
+    @abc.abstractmethod
     def delete_lrouter_port(self, name, lrouter, if_exists=True):
         """Create a command to delete an OVN lrouter port
 

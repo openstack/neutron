@@ -391,6 +391,33 @@ class ScheduleUnhostedGatewaysCommand(command.BaseCommand):
             *_add_gateway_chassis(self.api, txn, self.g_name, chassis))
 
 
+class ScheduleNewGatewayCommand(command.BaseCommand):
+    def __init__(self, nb_api, g_name, sb_api, lrouter_name, plugin, physnet,
+                 az_hints):
+        super().__init__(nb_api)
+        self.g_name = g_name
+        self.sb_api = sb_api
+        self.lrouter_name = lrouter_name
+        self.ovn_client = plugin._ovn_client
+        self.scheduler = plugin.scheduler
+        self.physnet = physnet
+        self.az_hints = az_hints
+
+    def run_idl(self, txn):
+        lrouter = self.api.lookup("Logical_Router", self.lrouter_name)
+        lrouter_port = self.api.lookup("Logical_Router_Port", self.g_name)
+
+        candidates = self.ovn_client.get_candidates_for_scheduling(
+            self.physnet, availability_zone_hints=self.az_hints)
+        chassis = self.scheduler.select(
+            self.api, self.sb_api, self.g_name, candidates=candidates,
+            target_lrouter=lrouter)
+
+        setattr(
+            lrouter_port,
+            *_add_gateway_chassis(self.api, txn, self.g_name, chassis))
+
+
 class AddLRouterPortCommand(command.BaseCommand):
     def __init__(self, api, name, lrouter, may_exist, **columns):
         super(AddLRouterPortCommand, self).__init__(api)
