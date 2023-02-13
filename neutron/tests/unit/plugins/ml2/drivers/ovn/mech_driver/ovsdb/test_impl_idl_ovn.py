@@ -913,6 +913,19 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
             utils.ovn_name('lr-id-f'))
         self.assertEqual([gw1_row], gw_ports)
 
+    def test_get_lrouter_by_lrouter_port(self):
+        self.assertIsNone(
+            self.nb_ovn_idl.get_lrouter_by_lrouter_port('not_there'))
+        self._load_nb_db()
+        self.assertIsNone(
+            self.nb_ovn_idl.get_lrouter_by_lrouter_port('not_there'))
+        lr_row = self._find_ovsdb_fake_row(
+            self.lrouter_table,
+            'name',
+            utils.ovn_name('lr-id-a'))
+        lr = self.nb_ovn_idl.get_lrouter_by_lrouter_port('lrp-orp-id-a1')
+        self.assertEqual(lr.uuid, lr_row.uuid)
+
 
 class TestSBImplIdlOvnBase(TestDBImplIdlOvn):
 

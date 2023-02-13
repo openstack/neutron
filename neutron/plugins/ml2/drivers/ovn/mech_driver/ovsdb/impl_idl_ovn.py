@@ -785,6 +785,31 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
                 gw_ports.append(lrp)
         return gw_ports
 
+    def get_lrouter_by_lrouter_port(self, lrp_name):
+        """Get LR by name of LRP.
+
+        :param lrp_name: Name of LRP.
+        :type lrp_name:  str
+        :returns:        LR associated with LRP as represented by lrp_name.
+        :rtype:          Optional[ovs_idl.rowview.RowView]
+        """
+        lrp = self.get_lrouter_port(lrp_name)
+        if not lrp:
+            return None
+
+        # NOTE(fnordahl) This could be replaced by something like:
+        #
+        #     lr = self.db_find_rows(
+        #         'Logical_Router',
+        #         ('ports', '{>}', lrp.uuid))
+        #
+        # However, ovsdbapp does not currently support the '{>}' operator.
+        for lr in self._tables['Logical_Router'].rows.values():
+            lr_ports = getattr(lr, 'ports', set())
+            if lrp in lr_ports:
+                return lr
+        return None
+
     def delete_lrouter_ext_gw(self, lrouter_name, if_exists=True):
         return cmd.DeleteLRouterExtGwCommand(self, lrouter_name, if_exists)
 
