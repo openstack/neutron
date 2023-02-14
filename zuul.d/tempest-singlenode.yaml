@@ -741,6 +741,11 @@
 - job:
     name: neutron-ovn-tempest-ipv6-only-ovs-release
     parent: neutron-ovn-tempest-ipv6-only-base
+    vars:
+      # TODO(ykarel) remove once ubuntu jammy contains fixed version
+      # of ovn https://bugs.launchpad.net/neutron/+bug/2007166
+      tempest_exclude_regex: "\
+          (^tempest.scenario.test_network_basic_ops.TestNetworkBasicOps.test_hotplug_nic)"
 
 - job:
     name: neutron-ovn-tempest-ipv6-only-ovs-master
