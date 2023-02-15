@@ -23,6 +23,7 @@ from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import l3_ext_gw_mode
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib import fixture
 from oslo_config import cfg
 from oslo_utils import uuidutils
 from webob import exc
@@ -566,6 +567,9 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
     def test_create_ndp_proxy_with_duplicated(self):
         with self.port(self.private_subnet) as port1:
             self._create_ndp_proxy(self.router1_id, port1['port']['id'])
+            retry_fixture = fixture.DBRetryErrorsFixture(max_retries=1)
+            retry_fixture.setUp()
             self._create_ndp_proxy(
                 self.router1_id, port1['port']['id'],
                 expected_code=exc.HTTPConflict.code)
+            retry_fixture.cleanUp()
