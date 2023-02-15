@@ -19,3 +19,4 @@ OVN Driver Administration Guide
    smartnic_dpu
    baremetal
    external_ports
+   rpc
