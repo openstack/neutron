@@ -23,12 +23,16 @@ from neutron.agent.ovn.extensions import qos_hwol
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.common import utils as n_utils
+from neutron.tests import base as test_base
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
 
 
 class OVSInterfaceEventTestCase(base.TestOVNFunctionalBase):
 
+    @test_base.unstable_test(
+        'LP#2006603, it is being addressed in '
+        'https://review.opendev.org/c/openstack/neutron/+/873118')
     def test_port_creation_and_deletion(self):
         def check_add_port_called():
             try:
