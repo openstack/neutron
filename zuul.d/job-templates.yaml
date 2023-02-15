@@ -95,7 +95,8 @@
       jobs:
         # NOTE(ralonsoh): to be removed when "openstack-tox-py311" is defined
         # and added to "openstack-python3-jobs" template.
-        - tox-py311
+        - tox-py311:
+            timeout: 3600
         - neutron-functional
         - neutron-functional-with-uwsgi-fips
         - neutron-functional-with-pyroute2-master

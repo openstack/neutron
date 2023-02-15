@@ -21,6 +21,7 @@
         # and added to "openstack-python3-jobs" template.
         - tox-py311:
             voting: false
+            timeout: 3600
         - neutron-functional-with-uwsgi
         - neutron-fullstack-with-uwsgi
         - neutron-ovs-grenade-multinode
