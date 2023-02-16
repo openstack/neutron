@@ -237,7 +237,7 @@ class DhcpBase(object, metaclass=abc.ABCMeta):
         raise NotImplementedError()
 
     @abc.abstractmethod
-    def clean_devices(self, network):
+    def clean_devices(self):
         """Request to clean unnecessary devices for the network"""
 
 
@@ -416,9 +416,9 @@ class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
     def spawn_process(self):
         pass
 
-    def clean_devices(self, network):
+    def clean_devices(self):
         return self.device_manager.cleanup_stale_devices(
-            network, dhcp_port=None)
+            self.network, dhcp_port=None)
 
 
 class Dnsmasq(DhcpLocalProcess):
