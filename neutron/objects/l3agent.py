@@ -17,6 +17,7 @@ from sqlalchemy.orm import joinedload
 
 from sqlalchemy import sql
 
+from neutron.common import _constants as n_const
 from neutron.db.models import agent as agent_model
 from neutron.db.models import l3_attrs
 from neutron.db.models import l3agent
@@ -36,7 +37,7 @@ class RouterL3AgentBinding(base.NeutronDbObject):
         'router_id': common_types.UUIDField(),
         'l3_agent_id': common_types.UUIDField(),
         'binding_index': obj_fields.IntegerField(
-            default=l3agent.LOWEST_BINDING_INDEX),
+            default=n_const.LOWEST_AGENT_BINDING_INDEX),
     }
 
     # TODO(ihrachys) return OVO objects not models

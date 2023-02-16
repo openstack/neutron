@@ -25,7 +25,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron.agent.common import utils as agent_utils
-from neutron.db.network_dhcp_agent_binding import models as ndab_model
+from neutron.common import _constants as n_const
 from neutron.objects import agent as agent_obj
 from neutron.objects import network
 from neutron.scheduler import base_resource_filter
@@ -195,7 +195,7 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
         bindings = network.NetworkDhcpAgentBinding.get_objects(
             context, network_id=network_id)
         return base_scheduler.get_vacant_binding_index(
-            num_agents, bindings, ndab_model.LOWEST_BINDING_INDEX,
+            num_agents, bindings, n_const.LOWEST_AGENT_BINDING_INDEX,
             force_scheduling=force_scheduling)
 
     def bind(self, context, agents, network_id, force_scheduling=False):
@@ -205,7 +205,7 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
         for agent in agents:
             binding_index = self.get_vacant_network_dhcp_agent_binding_index(
                 context, network_id, force_scheduling)
-            if binding_index < ndab_model.LOWEST_BINDING_INDEX:
+            if binding_index < n_const.LOWEST_AGENT_BINDING_INDEX:
                 LOG.debug('Unable to find a vacant binding_index for '
                           'network %(network_id)s and agent %(agent_id)s',
                           {'network_id': network_id,
