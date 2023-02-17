@@ -20,6 +20,7 @@ from unittest import mock
 import eventlet
 import fixtures
 import netaddr
+from neutron_lib.api import converters
 from neutron_lib import constants as lib_const
 from oslo_config import fixture as fixture_config
 from oslo_utils import uuidutils
@@ -42,10 +43,10 @@ from neutron.tests.functional import base
 
 class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
 
-    _DHCP_PORT_MAC_ADDRESS = netaddr.EUI("24:77:03:7d:00:4c")
-    _DHCP_PORT_MAC_ADDRESS.dialect = netaddr.mac_unix
-    _TENANT_PORT_MAC_ADDRESS = netaddr.EUI("24:77:03:7d:00:3a")
-    _TENANT_PORT_MAC_ADDRESS.dialect = netaddr.mac_unix
+    _DHCP_PORT_MAC_ADDRESS = converters.convert_to_sanitized_mac_address(
+        '24:77:03:7d:00:4c')
+    _TENANT_PORT_MAC_ADDRESS = converters.convert_to_sanitized_mac_address(
+        '24:77:03:7d:00:3a')
 
     _IP_ADDRS = {
         4: {'addr': '192.168.10.11',
@@ -307,9 +308,8 @@ class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
         network, port = self._get_network_port_for_allocation_test()
         network.ports.append(port)
         self.configure_dhcp_for_network(network=network)
-        bad_mac_address = netaddr.EUI(self._TENANT_PORT_MAC_ADDRESS.value + 1)
-        bad_mac_address.dialect = netaddr.mac_unix
-        port.mac_address = str(bad_mac_address)
+        port.mac_address = converters.convert_to_sanitized_mac_address(
+            '24:77:03:7d:00:4d')
         self._plug_port_for_dhcp_request(network, port)
         self.assert_bad_allocation_for_port(network, port)
 
