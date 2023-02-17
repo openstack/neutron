@@ -99,24 +99,44 @@ def get_vacant_binding_index(num_agents, bindings, lowest_binding_index,
                              always return an index, even if this number
                              exceeds the maximum configured number of agents.
     """
-    binding_indices = [b.binding_index for b in bindings]
-    all_indices = set(range(lowest_binding_index, num_agents + 1))
-    open_slots = sorted(list(all_indices - set(binding_indices)))
+    def get_open_slots(binding_indices, lowest_binding_index, max_number):
+        """Returns an ordered list of free slots
 
+        This list starts from the lowest available binding index. The number
+        of open slots and "binding_indices" (those already taken), must be
+        equal to "max_number". The list returned can be [], if
+        len(max_number) == len(binding_indices) (that means there are no free
+        slots).
+        """
+        # NOTE(ralonsoh): check LP#2006496 for more context. The DHCP/router
+        # binding indexes could not be a sequential list starting from
+        # lowest_binding_index (that is usually 1).
+        open_slots = set(binding_indices)
+        idx = lowest_binding_index
+        while len(open_slots) < max_number:
+            # Increase sequentially the "open_slots" set until we have the
+            # required number of slots, that is "num_agents".
+            open_slots.add(idx)
+            idx += 1
+
+        # Remove those indices already used.
+        open_slots -= set(binding_indices)
+        return sorted(list(open_slots))
+
+    binding_indices = [b.binding_index for b in bindings]
+    open_slots = get_open_slots(binding_indices, lowest_binding_index,
+                                num_agents)
     if open_slots:
         return open_slots[0]
 
     if not force_scheduling:
         return -1
 
-    # Last chance: if this is a manual scheduling, we're gonna allow
+    # Last chance: if this is a manual scheduling, we're going to allow
     # creation of a binding_index even if it will exceed
-    # dhcp_agents_per_network.
-    if max(binding_indices) == len(binding_indices):
-        return max(binding_indices) + 1
-    else:
-        # Find binding index set gaps and return first free one.
-        all_indices = set(range(lowest_binding_index,
-                                max(binding_indices) + 1))
-        open_slots = sorted(list(all_indices - set(binding_indices)))
-        return open_slots[0]
+    # dhcp_agents_per_network/max_l3_agents_per_router.
+    while not open_slots:
+        num_agents += 1
+        open_slots = get_open_slots(binding_indices, lowest_binding_index,
+                                    num_agents)
+    return open_slots[0]

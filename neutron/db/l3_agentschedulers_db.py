@@ -25,9 +25,9 @@ from oslo_log import log as logging
 import oslo_messaging
 
 from neutron.agent.common import utils as agent_utils
+from neutron.common import _constants as n_const
 from neutron.conf.db import l3_agentschedulers_db
 from neutron.db import agentschedulers_db
-from neutron.db.models import l3agent as rb_model
 from neutron.extensions import l3agentscheduler
 from neutron.extensions import router_availability_zone as router_az
 from neutron.objects import agent as ag_obj
@@ -521,7 +521,7 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
         bindings = rb_obj.RouterL3AgentBinding.get_objects(
                 context, _pager=pager, router_id=router_id)
         return base_scheduler.get_vacant_binding_index(
-            num_agents, bindings, rb_model.LOWEST_BINDING_INDEX,
+            num_agents, bindings, n_const.LOWEST_AGENT_BINDING_INDEX,
             force_scheduling=is_manual_scheduling)
 
 
