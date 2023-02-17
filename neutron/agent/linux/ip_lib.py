@@ -1574,11 +1574,23 @@ def list_ip_routes(namespace, ip_version, scope=None, via=None, table=None,
             'source_prefix': get_attr(route, 'RTA_PREFSRC'),
             'cidr': cidr,
             'scope': IP_ADDRESS_SCOPE[int(route['scope'])],
-            'device': get_device(int(get_attr(route, 'RTA_OIF')), devices),
-            'via': get_attr(route, 'RTA_GATEWAY'),
             'metric': metric,
             'proto': proto,
         }
+
+        multipath = get_attr(route, 'RTA_MULTIPATH')
+        if multipath:
+            value['device'] = None
+            mp_via = []
+            for mp in multipath:
+                mp_via.append({'device': get_device(int(mp['oif']), devices),
+                               'via': get_attr(mp, 'RTA_GATEWAY'),
+                               'weight': int(mp['hops']) + 1})
+            value['via'] = mp_via
+        else:
+            value['device'] = get_device(int(get_attr(route, 'RTA_OIF')),
+                                         devices)
+            value['via'] = get_attr(route, 'RTA_GATEWAY')
 
         ret.append(value)
 

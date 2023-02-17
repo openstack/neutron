@@ -575,9 +575,9 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
     def _assert_extra_routes(self, router, namespace=None, enable_gw=True):
         if namespace is None:
             namespace = router.ns_name
-        routes = ip_lib.get_routing_table(4, namespace=namespace)
-        routes = [{'nexthop': route['nexthop'],
-                   'destination': route['destination']} for route in routes]
+        routes = ip_lib.list_ip_routes(namespace, constants.IP_VERSION_4)
+        routes = [{'nexthop': route['via'],
+                   'destination': route['cidr']} for route in routes]
 
         for extra_route in router.router['routes']:
             check = self.assertIn if enable_gw else self.assertNotIn
@@ -588,17 +588,16 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         ns_name = namespace or router.ns_name
         routes = []
         for ip_version in ip_versions:
-            _routes = ip_lib.get_routing_table(ip_version,
-                                               namespace=ns_name)
+            _routes = ip_lib.list_ip_routes(ns_name, ip_version)
             routes.extend(_routes)
-        routes = set(route['destination'] for route in routes)
+        routes = set(route['cidr'] for route in routes)
         ex_gw_port = router.get_ex_gw_port()
         if not ex_gw_port:
             if not enable_gw:
                 return
             self.fail('GW port is enabled but not present in the router')
 
-        extra_subnets = ex_gw_port['extra_subnets']
+        extra_subnets = router.get_ex_gw_port()['extra_subnets']
         for extra_subnet in (route['cidr'] for route in extra_subnets):
             self.assertIn(extra_subnet, routes)
 
