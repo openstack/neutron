@@ -77,8 +77,9 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
             'interface_driver',
             'neutron.agent.linux.interface.OVSInterfaceDriver')
         self.conf.set_override('report_interval', 0, 'AGENT')
-        br_int = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
-        self.conf.set_override('integration_bridge', br_int.br_name, 'OVS')
+        self.br_int = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
+        self.conf.set_override('integration_bridge', self.br_int.br_name,
+                               'OVS')
 
         self.mock_plugin_api = mock.patch(
             'neutron.agent.dhcp.agent.DhcpPluginApi').start().return_value
@@ -223,6 +224,10 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
 
     def assert_good_allocation_for_port(self, network, port):
         vif_name = self.get_interface_name(network.id, port)
+        tag = self.br_int.ovsdb.db_get('Port', vif_name, 'tag').execute(
+            check_error=True)
+        self.assertEqual([], tag)
+
         self._run_dhclient(vif_name, network)
 
         predicate = lambda: len(
