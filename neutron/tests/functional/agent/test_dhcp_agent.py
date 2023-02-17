@@ -40,12 +40,31 @@ from neutron.tests.functional.agent.linux import helpers
 from neutron.tests.functional import base
 
 
+# NOTE(ralonsoh): this method is not present in n-lib Wallaby.
+def convert_to_sanitized_mac_address(mac_address):
+    """Return a MAC address with format xx:xx:xx:xx:xx:xx
+
+    :param mac_address: (string, netaddr.EUI) The MAC address value
+    :return: A string with the MAC address formatted. If the MAC address
+             provided is invalid, the same input value is returned; the goal
+             of this method is not to validate it.
+    """
+    try:
+        if isinstance(mac_address, netaddr.EUI):
+            _mac_address = copy.deepcopy(mac_address)
+            _mac_address.dialect = netaddr.mac_unix_expanded
+            return str(_mac_address)
+        return str(netaddr.EUI(mac_address, dialect=netaddr.mac_unix_expanded))
+    except netaddr.core.AddrFormatError:
+        return mac_address
+
+
 class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
 
-    _DHCP_PORT_MAC_ADDRESS = netaddr.EUI("24:77:03:7d:00:4c")
-    _DHCP_PORT_MAC_ADDRESS.dialect = netaddr.mac_unix
-    _TENANT_PORT_MAC_ADDRESS = netaddr.EUI("24:77:03:7d:00:3a")
-    _TENANT_PORT_MAC_ADDRESS.dialect = netaddr.mac_unix
+    _DHCP_PORT_MAC_ADDRESS = convert_to_sanitized_mac_address(
+        '24:77:03:7d:00:4c')
+    _TENANT_PORT_MAC_ADDRESS = convert_to_sanitized_mac_address(
+        '24:77:03:7d:00:3a')
 
     _IP_ADDRS = {
         4: {'addr': '192.168.10.11',
@@ -307,9 +326,8 @@ class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
         network, port = self._get_network_port_for_allocation_test()
         network.ports.append(port)
         self.configure_dhcp_for_network(network=network)
-        bad_mac_address = netaddr.EUI(self._TENANT_PORT_MAC_ADDRESS.value + 1)
-        bad_mac_address.dialect = netaddr.mac_unix
-        port.mac_address = str(bad_mac_address)
+        port.mac_address = convert_to_sanitized_mac_address(
+            '24:77:03:7d:00:4d')
         self._plug_port_for_dhcp_request(network, port)
         self.assert_bad_allocation_for_port(network, port)
 
