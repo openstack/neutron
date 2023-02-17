@@ -38,6 +38,21 @@ class GetVacantBindingFilterCase(base.BaseTestCase):
             3, [mock.Mock(binding_index=1), mock.Mock(binding_index=3)], 1)
         self.assertEqual(2, ret)
 
+        # Binding list starting in 2, two elements, required three.
+        ret = base_scheduler.get_vacant_binding_index(
+            3, [mock.Mock(binding_index=2), mock.Mock(binding_index=3)], 1)
+        self.assertEqual(1, ret)
+
+        # Binding list starting in 2, two elements, required two.
+        ret = base_scheduler.get_vacant_binding_index(
+            2, [mock.Mock(binding_index=2), mock.Mock(binding_index=3)], 1)
+        self.assertEqual(-1, ret)
+
+        # Binding list starting in 2, two elements, required one.
+        ret = base_scheduler.get_vacant_binding_index(
+            1, [mock.Mock(binding_index=2), mock.Mock(binding_index=3)], 1)
+        self.assertEqual(-1, ret)
+
     def test_get_vacant_binding_index_force_scheduling(self):
         ret = base_scheduler.get_vacant_binding_index(
             3, [mock.Mock(binding_index=1), mock.Mock(binding_index=2),
@@ -50,3 +65,9 @@ class GetVacantBindingFilterCase(base.BaseTestCase):
                 mock.Mock(binding_index=3), mock.Mock(binding_index=4),
                 mock.Mock(binding_index=5)], 1, force_scheduling=True)
         self.assertEqual(6, ret)
+
+        ret = base_scheduler.get_vacant_binding_index(
+            3, [mock.Mock(binding_index=2), mock.Mock(binding_index=3),
+                mock.Mock(binding_index=4), mock.Mock(binding_index=5),
+                mock.Mock(binding_index=6)], 1, force_scheduling=True)
+        self.assertEqual(1, ret)
