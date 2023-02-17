@@ -21,13 +21,9 @@ from unittest import mock
 import warnings
 
 import fixtures
-from neutron_lib import fixture
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
-from oslo_concurrency import lockutils
 from oslo_config import cfg
-from oslo_db import exception as os_db_exc
-from oslo_db.sqlalchemy import provision
 from oslo_log import log
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
@@ -61,7 +57,6 @@ LOG = log.getLogger(__name__)
 # This is the directory from which infra fetches log files for functional tests
 DEFAULT_LOG_DIR = os.path.join(helpers.get_test_log_path(),
                                'dsvm-functional-logs')
-SQL_FIXTURE_LOCK = 'sql_fixture_lock'
 
 
 def config_decorator(method_to_decorate, config_tuples):
@@ -132,27 +127,6 @@ class BaseSudoTestCase(BaseLoggingTestCase):
             ovs_conf.register_ovs_agent_opts, ovs_agent_opts)
         mock.patch.object(ovs_conf, 'register_ovs_agent_opts',
                           new=ovs_agent_decorator).start()
-
-
-class OVNSqlFixture(fixture.StaticSqlFixture):
-
-    @classmethod
-    @lockutils.synchronized(SQL_FIXTURE_LOCK)
-    def _init_resources(cls):
-        cls.schema_resource = provision.SchemaResource(
-            provision.DatabaseResource("sqlite"),
-            cls._generate_schema, teardown=False)
-        dependency_resources = {}
-        for name, resource in cls.schema_resource.resources:
-            dependency_resources[name] = resource.getResource()
-        cls.schema_resource.make(dependency_resources)
-        cls.engine = dependency_resources['database'].engine
-
-    def _delete_from_schema(self, engine):
-        try:
-            super(OVNSqlFixture, self)._delete_from_schema(engine)
-        except os_db_exc.DBNonExistentTable:
-            pass
 
 
 class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
@@ -250,16 +224,6 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         msg += 'Looked for schemas in paths:' + ', '.join(sorted(lookup_paths))
         raise FileNotFoundError(
                     errno.ENOENT, os.strerror(errno.ENOENT), msg)
-
-    # FIXME(lucasagomes): Workaround for
-    # https://bugs.launchpad.net/networking-ovn/+bug/1808146. We should
-    # investigate and properly fix the problem. This method is just a
-    # workaround to alleviate the gate for now and should not be considered
-    # a proper fix.
-    def _setup_database_fixtures(self):
-        fixture = OVNSqlFixture()
-        self.useFixture(fixture)
-        self.engine = fixture.engine
 
     def get_additional_service_plugins(self):
         p = super(TestOVNFunctionalBase, self).get_additional_service_plugins()
