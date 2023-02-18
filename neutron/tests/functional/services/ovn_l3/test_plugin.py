@@ -87,12 +87,8 @@ class TestRouter(base.TestOVNFunctionalBase):
                     self.sb_api.tables['Chassis'].rows.values()]
         for row in self.nb_api.tables[
                 'Logical_Router_Port'].rows.values():
-            if self._l3_ha_supported():
-                chassis = [gwc.chassis_name for gwc in row.gateway_chassis]
-                self.assertCountEqual(expected, chassis)
-            else:
-                rc = row.options.get(ovn_const.OVN_GATEWAY_CHASSIS_KEY)
-                self.assertIn(rc, expected)
+            chassis = [gwc.chassis_name for gwc in row.gateway_chassis]
+            self.assertCountEqual(expected, chassis)
 
     def _check_gateway_chassis_candidates(self, candidates,
                                           router_az_hints=None):
@@ -217,11 +213,6 @@ class TestRouter(base.TestOVNFunctionalBase):
         # Test if chassis1 is selected as candidate or not.
         self._check_gateway_chassis_candidates([self.chassis1])
 
-    def _l3_ha_supported(self):
-        # If the Gateway_Chassis table exists in SB database, then it
-        # means that L3 HA is supported.
-        return self.nb_api.tables.get('Gateway_Chassis')
-
     def test_gateway_chassis_least_loaded_scheduler(self):
         # This test will create 4 routers each with its own gateway.
         # Using the least loaded policy for scheduling gateway ports, we
@@ -241,26 +232,17 @@ class TestRouter(base.TestOVNFunctionalBase):
         # At this point we expect two gateways to be present in chassis1
         # and two in chassis2. If schema supports L3 HA, we expect each
         # chassis to host 2 priority 2 gateways and 2 priority 1 ones.
-        if self._l3_ha_supported():
-            # Each chassis contains a dict of (priority, # of ports hosted).
-            # {1: 2, 2: 2} means that this chassis hosts 2 ports of prio 1
-            # and two ports of prio 2.
-            expected = {self.chassis1: {1: 2, 2: 2},
-                        self.chassis2: {1: 2, 2: 2}}
-        else:
-            # For non L3 HA, each chassis should contain two gateway ports.
-            expected = {self.chassis1: 2,
-                        self.chassis2: 2}
+        # Each chassis contains a dict of (priority, # of ports hosted).
+        # {1: 2, 2: 2} means that this chassis hosts 2 ports of prio 1
+        # and two ports of prio 2.
+        expected = {self.chassis1: {1: 2, 2: 2},
+                    self.chassis2: {1: 2, 2: 2}}
         sched_info = {}
         for row in self.nb_api.tables[
                 'Logical_Router_Port'].rows.values():
-            if self._l3_ha_supported():
-                for gwc in row.gateway_chassis:
-                    chassis = sched_info.setdefault(gwc.chassis_name, {})
-                    chassis[gwc.priority] = chassis.get(gwc.priority, 0) + 1
-            else:
-                rc = row.options.get(ovn_const.OVN_GATEWAY_CHASSIS_KEY)
-                sched_info[rc] = sched_info.get(rc, 0) + 1
+            for gwc in row.gateway_chassis:
+                chassis = sched_info.setdefault(gwc.chassis_name, {})
+                chassis[gwc.priority] = chassis.get(gwc.priority, 0) + 1
         self.assertEqual(expected, sched_info)
 
     def _get_gw_port(self, router_id):
@@ -531,8 +513,6 @@ class TestRouter(base.TestOVNFunctionalBase):
                     chassis[gwc.priority] = chassis.get(gwc.priority, 0) + 1
             return sched_info
 
-        if not self._l3_ha_supported():
-            self.skipTest('L3 HA not supported')
         ovn_client = self.l3_plugin._ovn_client
         chassis4 = self.add_fake_chassis(
             'ovs-host4', physical_nets=['physnet4'], other_config={
