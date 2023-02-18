@@ -63,7 +63,7 @@ def get_duplicate_l3_ha_port_bindings(connection):
     insp = sa.inspect(connection)
     if 'ha_router_agent_port_bindings' not in insp.get_table_names():
         return {}
-    session = sa.orm.Session(bind=connection.connect())
+    session = sa.orm.Session(bind=connection)
     query = (session.query(ha_router_agent_port_bindings.c.router_id)
              .group_by(ha_router_agent_port_bindings.c.router_id,
                        ha_router_agent_port_bindings.c.l3_agent_id)
