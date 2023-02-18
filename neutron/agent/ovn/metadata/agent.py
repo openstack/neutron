@@ -416,6 +416,10 @@ class MetadataAgent(object):
     def _get_port_ips(self, port):
         # Retrieve IPs from the port mac column which is in form
         # ["<port_mac> <ip1> <ip2> ... <ipN>"]
+        if not port.mac:
+            LOG.warning("Port %s MAC column is empty, cannot retrieve IP "
+                        "addresses", port.uuid)
+            return []
         mac_field_attrs = port.mac[0].split()
         ips = mac_field_attrs[1:]
         if not ips:
