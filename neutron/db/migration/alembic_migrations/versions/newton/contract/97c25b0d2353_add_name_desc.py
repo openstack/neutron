@@ -47,19 +47,18 @@ standardattrs = sa.Table(
 def update_existing_records():
     session = sa.orm.Session(bind=op.get_bind())
     values = []
-    with session.begin(subtransactions=True):
-        for row in session.query(TBL_MODEL):
-            # NOTE from kevinbenton: without this disabled, pylint complains
-            # about a missing 'dml' argument.
-            # pylint: disable=no-value-for-parameter
-            res = session.execute(
-                standardattrs.insert().values(resource_type=TBL)
-            )
-            session.execute(
-                TBL_MODEL.update().values(
-                    standard_attr_id=res.inserted_primary_key[0]).where(
-                        TBL_MODEL.c.id == row[0])
-            )
+    for row in session.query(TBL_MODEL):
+        # NOTE from kevinbenton: without this disabled, pylint complains
+        # about a missing 'dml' argument.
+        # pylint: disable=no-value-for-parameter
+        res = session.execute(
+            standardattrs.insert().values(resource_type=TBL)
+        )
+        session.execute(
+            TBL_MODEL.update().values(
+                standard_attr_id=res.inserted_primary_key[0]).where(
+                    TBL_MODEL.c.id == row[0])
+        )
     # this commit is necessary to allow further operations
     session.commit()
     return values

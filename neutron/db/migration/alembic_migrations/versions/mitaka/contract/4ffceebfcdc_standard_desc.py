@@ -58,11 +58,10 @@ def migrate_values():
     for row in session.query(securitygroups):
         values.append({'id': row[0],
                        'description': row[1]})
-    with session.begin(subtransactions=True):
-        for value in values:
-            session.execute(
-                standardattr.update().values(
-                    description=value['description']).where(
-                        standardattr.c.id == value['id']))
+    for value in values:
+        session.execute(
+            standardattr.update().values(
+                description=value['description']).where(
+                    standardattr.c.id == value['id']))
     # this commit appears to be necessary to allow further operations
     session.commit()

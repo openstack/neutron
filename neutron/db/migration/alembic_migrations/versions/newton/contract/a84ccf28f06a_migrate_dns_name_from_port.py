@@ -52,16 +52,15 @@ portdnses = sa.Table('portdnses', sa.MetaData(),
 
 def migrate_records_for_existing():
     session = sa.orm.Session(bind=op.get_bind())
-    with session.begin(subtransactions=True):
-        for row in session.query(ports):
-            if row[1]:
-                res = session.execute(portdnses.update().values(
-                    dns_name=row[1]).where(portdnses.c.port_id == row[0]))
-                if res.rowcount == 0:
-                    session.execute(portdnses.insert().values(
-                        port_id=row[0], current_dns_name='',
-                        current_dns_domain='', previous_dns_name='',
-                        previous_dns_domain='', dns_name=row[1]))
+    for row in session.query(ports):
+        if row[1]:
+            res = session.execute(portdnses.update().values(
+                dns_name=row[1]).where(portdnses.c.port_id == row[0]))
+            if res.rowcount == 0:
+                session.execute(portdnses.insert().values(
+                    port_id=row[0], current_dns_name='',
+                    current_dns_domain='', previous_dns_name='',
+                    previous_dns_domain='', dns_name=row[1]))
     session.commit()
 
 

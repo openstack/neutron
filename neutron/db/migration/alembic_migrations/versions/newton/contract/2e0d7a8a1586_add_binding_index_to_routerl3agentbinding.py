@@ -59,16 +59,15 @@ def upgrade():
 
     routers_to_bindings = defaultdict(list)
     session = sa.orm.Session(bind=op.get_bind())
-    with session.begin(subtransactions=True):
-        for result in session.query(bindings_table):
-            routers_to_bindings[result.router_id].append(result)
+    for result in session.query(bindings_table):
+        routers_to_bindings[result.router_id].append(result)
 
-        for bindings in routers_to_bindings.values():
-            for index, result in enumerate(bindings):
-                session.execute(bindings_table.update().values(
-                    binding_index=index + 1).where(
-                    bindings_table.c.router_id == result.router_id).where(
-                    bindings_table.c.l3_agent_id == result.l3_agent_id))
+    for bindings in routers_to_bindings.values():
+        for index, result in enumerate(bindings):
+            session.execute(bindings_table.update().values(
+                binding_index=index + 1).where(
+                bindings_table.c.router_id == result.router_id).where(
+                bindings_table.c.l3_agent_id == result.l3_agent_id))
     session.commit()
 
     op.create_unique_constraint(

@@ -44,16 +44,15 @@ STDATTRS_TABLE = sa.Table(
 
 def update_existing_records():
     session = sa.orm.Session(bind=op.get_bind())
-    with session.begin(subtransactions=True):
-        for row in session.query(TABLE_MODEL):
-            res = session.execute(
-                STDATTRS_TABLE.insert().values(resource_type=TABLE_NAME)
-            )
-            session.execute(
-                TABLE_MODEL.update().values(
-                    standard_attr_id=res.inserted_primary_key[0]).where(
-                    TABLE_MODEL.c.id == row[0])
-            )
+    for row in session.query(TABLE_MODEL):
+        res = session.execute(
+            STDATTRS_TABLE.insert().values(resource_type=TABLE_NAME)
+        )
+        session.execute(
+            TABLE_MODEL.update().values(
+                standard_attr_id=res.inserted_primary_key[0]).where(
+                TABLE_MODEL.c.id == row[0])
+        )
     session.commit()
 
 

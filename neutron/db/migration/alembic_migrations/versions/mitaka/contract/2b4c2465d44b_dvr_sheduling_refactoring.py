@@ -56,21 +56,20 @@ def transfer_snat_bindings():
                               sa.Column('l3_agent_id', sa.String(36)))
 
     session = sa.orm.Session(bind=op.get_bind())
-    with session.begin(subtransactions=True):
-        # first delete all bindings for dvr routers from
-        # routerl3agentbindings as this might be bindings with l3 agents
-        # on compute nodes
-        for router_attr in session.query(
-                router_attr_table).filter(router_attr_table.c.distributed):
-            session.execute(router_binding.delete(
-                router_binding.c.router_id == router_attr.router_id))
+    # first delete all bindings for dvr routers from
+    # routerl3agentbindings as this might be bindings with l3 agents
+    # on compute nodes
+    for router_attr in session.query(
+            router_attr_table).filter(router_attr_table.c.distributed):
+        session.execute(router_binding.delete(
+            router_binding.c.router_id == router_attr.router_id))
 
-        # now routerl3agentbindings will only contain bindings for snat
-        # portion of the router
-        for csnat_binding in session.query(csnat_binding):
-            session.execute(
-                router_binding.insert().values(
-                    router_id=csnat_binding.router_id,
-                    l3_agent_id=csnat_binding.l3_agent_id))
+    # now routerl3agentbindings will only contain bindings for snat
+    # portion of the router
+    for csnat_binding in session.query(csnat_binding):
+        session.execute(
+            router_binding.insert().values(
+                router_id=csnat_binding.router_id,
+                l3_agent_id=csnat_binding.l3_agent_id))
     # this commit is necessary to allow further operations
     session.commit()

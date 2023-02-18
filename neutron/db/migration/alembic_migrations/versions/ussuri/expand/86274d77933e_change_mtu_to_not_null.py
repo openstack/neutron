@@ -39,12 +39,11 @@ networks = sa.Table(
 
 def upgrade_existing_records():
     session = sa.orm.Session(bind=op.get_bind())
-    with session.begin(subtransactions=True):
-        for row in session.query(networks):
-            if row[1] is None:
-                session.execute(networks.update().values(
-                    mtu=constants.DEFAULT_NETWORK_MTU).where(
-                    networks.c.id == row[0]))
+    for row in session.query(networks):
+        if row[1] is None:
+            session.execute(networks.update().values(
+                mtu=constants.DEFAULT_NETWORK_MTU).where(
+                networks.c.id == row[0]))
     session.commit()
 
 
