@@ -197,7 +197,7 @@ class DhcpBase(object, metaclass=abc.ABCMeta):
         """Enables DHCP for this network."""
 
     @abc.abstractmethod
-    def disable(self, retain_port=False, block=False):
+    def disable(self, retain_port=False, block=False, **kwargs):
         """Disable dhcp for this network."""
 
     def restart(self):
@@ -348,7 +348,7 @@ class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
             pid_file=self.get_conf_file_name('pid'),
             run_as_root=True)
 
-    def disable(self, retain_port=False, block=False):
+    def disable(self, retain_port=False, block=False, **kwargs):
         """Disable DHCP for this network by killing the local process."""
         self.process_monitor.unregister(self.network.id, DNSMASQ_SERVICE_NAME)
         pm = self._get_process_manager()
