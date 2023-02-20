@@ -215,6 +215,8 @@ ovn_opts = [
                        'baremetal nodes. Defaults to False.')),
     cfg.BoolOpt('allow_stateless_action_supported',
                 default=True,
+                deprecated_for_removal=True,
+                deprecated_since="2023.1",
                 help=_('If OVN older than 21.06 is used together with '
                        'Neutron, this option should be set to ``False`` in '
                        'order to disable ``stateful-security-group`` API '

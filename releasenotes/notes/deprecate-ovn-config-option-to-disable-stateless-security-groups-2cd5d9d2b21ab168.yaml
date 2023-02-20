@@ -1,0 +1,7 @@
+---
+deprecations:
+  - |
+    Config option ``allow_stateless_action_supported`` is deprecated to
+    removal and will be removed in ``2023.2 (Bobcat)`` release.
+    This option will not be needed anymore as Neutron will not be supported to
+    be run with OVN < 21.06.
