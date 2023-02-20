@@ -22,6 +22,8 @@ from neutron_lib.plugins import utils
 from neutron_lib.services.trunk import constants as trunk_consts
 from oslo_utils import uuidutils
 
+from neutron.common.ovn import constants as ovn_const
+
 
 class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
 
@@ -60,18 +62,25 @@ class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
         for row in self.nb_api.tables[
                 'Logical_Switch_Port'].rows.values():
             if row.parent_name and row.tag:
+                device_owner = row.external_ids[
+                    ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY]
                 ovn_trunk_info.append({'port_id': row.name,
                                        'parent_port_id': row.parent_name,
-                                       'tag': row.tag})
+                                       'tag': row.tag,
+                                       'device_owner': device_owner,
+                                       })
         return ovn_trunk_info
 
     def _verify_trunk_info(self, trunk, has_items):
         ovn_subports_info = self._get_ovn_trunk_info()
         neutron_subports_info = []
         for subport in trunk.get('sub_ports', []):
-            neutron_subports_info.append({'port_id': subport['port_id'],
-                                          'parent_port_id': [trunk['port_id']],
-                                          'tag': [subport['segmentation_id']]})
+            neutron_subports_info.append(
+                {'port_id': subport['port_id'],
+                 'parent_port_id': [trunk['port_id']],
+                 'tag': [subport['segmentation_id']],
+                 'device_owner': trunk_consts.TRUNK_SUBPORT_OWNER,
+                 })
             # Check that the subport has the binding is active.
             binding = obj_reg.load_class('PortBinding').get_object(
                 self.context, port_id=subport['port_id'], host='')
