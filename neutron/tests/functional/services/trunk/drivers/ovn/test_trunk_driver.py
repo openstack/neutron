@@ -64,10 +64,13 @@ class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
             if row.parent_name and row.tag:
                 device_owner = row.external_ids[
                     ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY]
+                revision_number = row.external_ids[
+                    ovn_const.OVN_REV_NUM_EXT_ID_KEY]
                 ovn_trunk_info.append({'port_id': row.name,
                                        'parent_port_id': row.parent_name,
                                        'tag': row.tag,
                                        'device_owner': device_owner,
+                                       'revision_number': revision_number,
                                        })
         return ovn_trunk_info
 
@@ -80,6 +83,7 @@ class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
                  'parent_port_id': [trunk['port_id']],
                  'tag': [subport['segmentation_id']],
                  'device_owner': trunk_consts.TRUNK_SUBPORT_OWNER,
+                 'revision_number': '2',
                  })
             # Check that the subport has the binding is active.
             binding = obj_reg.load_class('PortBinding').get_object(
