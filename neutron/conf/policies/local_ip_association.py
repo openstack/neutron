@@ -27,7 +27,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='create_local_ip_port_association',
         check_str=base.policy_or(
-            base.PROJECT_MEMBER,
+            base.ADMIN_OR_PROJECT_MEMBER,
             base.RULE_PARENT_OWNER),
         scope_types=['project'],
         description='Create a Local IP port association',
@@ -46,7 +46,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_local_ip_port_association',
         check_str=base.policy_or(
-            base.PROJECT_READER,
+            base.ADMIN_OR_PROJECT_READER,
             base.RULE_PARENT_OWNER),
         scope_types=['project'],
         description='Get a Local IP port association',
@@ -69,7 +69,7 @@ rules = [
     policy.DocumentedRuleDefault(
         name='delete_local_ip_port_association',
         check_str=base.policy_or(
-            base.PROJECT_MEMBER,
+            base.ADMIN_OR_PROJECT_MEMBER,
             base.RULE_PARENT_OWNER),
         scope_types=['project'],
         description='Delete a Local IP port association',

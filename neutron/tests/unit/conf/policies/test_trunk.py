@@ -127,6 +127,55 @@ class AdminTests(TrunkAPITestCase):
     def test_create_trunk(self):
         self.assertTrue(
             policy.enforce(self.context, 'create_trunk', self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'create_trunk', self.alt_target))
+
+    def test_get_trunk(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'get_trunk', self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'get_trunk', self.alt_target))
+
+    def test_update_trunk(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'update_trunk', self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'update_trunk', self.alt_target))
+
+    def test_delete_trunk(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_trunk', self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_trunk', self.alt_target))
+
+    def test_get_subports(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'get_subports', self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'get_subports', self.alt_target))
+
+    def test_add_subports(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'add_subports', self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'add_subports', self.alt_target))
+
+    def test_remove_subports(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'remove_subports', self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'remove_subports', self.alt_target))
+
+
+class ProjectMemberTests(AdminTests):
+
+    def setUp(self):
+        super(ProjectMemberTests, self).setUp()
+        self.context = self.project_member_ctx
+
+    def test_create_trunk(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'create_trunk', self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
@@ -179,13 +228,6 @@ class AdminTests(TrunkAPITestCase):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'remove_subports', self.alt_target)
-
-
-class ProjectMemberTests(AdminTests):
-
-    def setUp(self):
-        super(ProjectMemberTests, self).setUp()
-        self.context = self.project_member_ctx
 
 
 class ProjectReaderTests(ProjectMemberTests):

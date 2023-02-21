@@ -97,6 +97,37 @@ class AdminTests(NDPProxyAPITestCase):
     def test_create_ndp_proxy(self):
         self.assertTrue(
             policy.enforce(self.context, "create_ndp_proxy", self.target))
+        self.assertTrue(
+            policy.enforce(self.context, "create_ndp_proxy", self.alt_target))
+
+    def test_get_ndp_proxy(self):
+        self.assertTrue(
+            policy.enforce(self.context, "get_ndp_proxy", self.target))
+        self.assertTrue(
+            policy.enforce(self.context, "get_ndp_proxy", self.alt_target))
+
+    def test_update_ndp_proxy(self):
+        self.assertTrue(
+            policy.enforce(self.context, "update_ndp_proxy", self.target))
+        self.assertTrue(
+            policy.enforce(self.context, "update_ndp_proxy", self.alt_target))
+
+    def test_delete_ndp_proxy(self):
+        self.assertTrue(
+            policy.enforce(self.context, "delete_ndp_proxy", self.target))
+        self.assertTrue(
+            policy.enforce(self.context, "delete_ndp_proxy", self.alt_target))
+
+
+class ProjectMemberTests(AdminTests):
+
+    def setUp(self):
+        super(ProjectMemberTests, self).setUp()
+        self.context = self.project_member_ctx
+
+    def test_create_ndp_proxy(self):
+        self.assertTrue(
+            policy.enforce(self.context, "create_ndp_proxy", self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
@@ -122,13 +153,6 @@ class AdminTests(NDPProxyAPITestCase):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, "delete_ndp_proxy", self.alt_target)
-
-
-class ProjectMemberTests(AdminTests):
-
-    def setUp(self):
-        super(ProjectMemberTests, self).setUp()
-        self.context = self.project_member_ctx
 
 
 class ProjectReaderTests(ProjectMemberTests):

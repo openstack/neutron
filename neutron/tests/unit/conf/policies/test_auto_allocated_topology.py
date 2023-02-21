@@ -95,6 +95,25 @@ class AdminTests(AutoAllocatedTopologyAPITestCase):
         self.context = self.project_admin_ctx
 
     def test_get_topology(self):
+        self.assertTrue(
+            policy.enforce(self.context, GET_POLICY, self.target))
+        self.assertTrue(
+            policy.enforce(self.context, GET_POLICY, self.alt_target))
+
+    def test_delete_topology(self):
+        self.assertTrue(
+            policy.enforce(self.context, DELETE_POLICY, self.target))
+        self.assertTrue(
+            policy.enforce(self.context, DELETE_POLICY, self.alt_target))
+
+
+class ProjectMemberTests(AdminTests):
+
+    def setUp(self):
+        super(ProjectMemberTests, self).setUp()
+        self.context = self.project_member_ctx
+
+    def test_get_topology(self):
         self.assertTrue(policy.enforce(self.context, GET_POLICY, self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
@@ -113,13 +132,6 @@ class AdminTests(AutoAllocatedTopologyAPITestCase):
             policy.enforce,
             self.context, DELETE_POLICY, self.alt_target
         )
-
-
-class ProjectMemberTests(AdminTests):
-
-    def setUp(self):
-        super(ProjectMemberTests, self).setUp()
-        self.context = self.project_member_ctx
 
 
 class ProjectReaderTests(ProjectMemberTests):

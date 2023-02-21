@@ -25,7 +25,7 @@ DEPRECATION_REASON = (
 rules = [
     policy.DocumentedRuleDefault(
         name='create_local_ip',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         description='Create a Local IP',
         operations=[
             {
@@ -42,7 +42,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_local_ip',
-        check_str=base.PROJECT_READER,
+        check_str=base.ADMIN_OR_PROJECT_READER,
         description='Get a Local IP',
         operations=[
             {
@@ -63,7 +63,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_local_ip',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         description='Update a Local IP',
         operations=[
             {
@@ -80,7 +80,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_local_ip',
-        check_str=base.PROJECT_MEMBER,
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
         description='Delete a Local IP',
         operations=[
             {
