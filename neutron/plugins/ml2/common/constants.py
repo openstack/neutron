@@ -14,9 +14,6 @@
 from neutron_lib import constants
 
 DEFAULT_DEVICE_OWNER = ''
-# TODO(carthaca): use from neutron-lib once
-# change id I9be781d99a08a6a015c3747eb15f20bc356cf08e has been released
-DEVICE_OWNER_MANILA_PREFIX = "manila:"
 
 # TODO(liuyulong): move to neutron-lib or common constants
 NO_PBLOCKS_TYPES = [
