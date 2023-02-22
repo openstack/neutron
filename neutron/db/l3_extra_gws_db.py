@@ -22,6 +22,8 @@ from neutron.db import l3_gwmode_db
 from neutron.objects import ports as port_obj
 from neutron.objects import router as l3_obj
 from neutron_lib.api.definitions import l3 as l3_apidef
+from neutron_lib.api.definitions import l3_enable_default_route_bfd
+from neutron_lib.api.definitions import l3_enable_default_route_ecmp
 from neutron_lib.api.definitions import l3_ext_gw_multihoming
 from neutron_lib.api import extensions
 from neutron_lib.callbacks import events
@@ -74,6 +76,16 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
     def _delete_router_remove_external_gateways(self, resource, event,
                                                 trigger, payload):
         self._remove_all_gateways(payload.context, payload.resource_id)
+
+    @registry.receives(resources.ROUTER, [events.PRECOMMIT_CREATE])
+    def _process_bfd_ecmp_request(self, resource, event, trigger, payload):
+        router = payload.latest_state
+        router_db = payload.metadata['router_db']
+        for attr in (l3_enable_default_route_ecmp.ENABLE_DEFAULT_ROUTE_ECMP,
+                     l3_enable_default_route_bfd.ENABLE_DEFAULT_ROUTE_BFD):
+            value = router.get(attr)
+            if value is not None:
+                self.set_extra_attr_value(router_db, attr, value)
 
     def _add_external_gateways(
             self, context, router_id, gw_info_list, payload):

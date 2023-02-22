@@ -657,9 +657,17 @@ class ExtraAttributesMixinTestCase(testlib_api.SqlTestCase):
             self.mixin.set_extra_attr_value(self.router,
                                             'availability_zone_hints',
                                             ['x', 'y', 'z'])
+            self.mixin.set_extra_attr_value(self.router,
+                                            'enable_default_route_ecmp',
+                                            True)
+            self.mixin.set_extra_attr_value(self.router,
+                                            'enable_default_route_bfd',
+                                            True)
             expected = self._get_default_api_values()
             expected.update({'ha_vr_id': 99,
-                             'availability_zone_hints': ['x', 'y', 'z']})
+                             'availability_zone_hints': ['x', 'y', 'z'],
+                             'enable_default_route_ecmp': True,
+                             'enable_default_route_bfd': True})
             rdict = {}
             self.mixin._extend_extra_router_dict(rdict, self.router)
             self.assertEqual(expected, rdict)
@@ -667,7 +675,15 @@ class ExtraAttributesMixinTestCase(testlib_api.SqlTestCase):
             self.mixin.set_extra_attr_value(self.router,
                                             'availability_zone_hints',
                                             ['z', 'y', 'z'])
+            self.mixin.set_extra_attr_value(self.router,
+                                            'enable_default_route_ecmp',
+                                            False)
+            self.mixin.set_extra_attr_value(self.router,
+                                            'enable_default_route_bfd',
+                                            False)
             expected['availability_zone_hints'] = ['z', 'y', 'z']
+            expected['enable_default_route_ecmp'] = False
+            expected['enable_default_route_bfd'] = False
             self.mixin._extend_extra_router_dict(rdict, self.router)
             self.assertEqual(expected, rdict)
 
