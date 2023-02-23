@@ -742,6 +742,18 @@ class L3HATestCase(L3HATestFramework):
 
         self._test_ensure_with_patched_ensure_vr_id(_ensure_vr_id)
 
+    def test_delete_router_ha_interface_port(self):
+        router = self._create_router()
+        network = self.plugin.get_ha_network(self.admin_ctx,
+                                             router['tenant_id'])
+        binding = self.plugin.add_ha_port(
+            self.admin_ctx, router['id'], network.network_id,
+            router['tenant_id'])
+
+        self.assertRaises(n_exc.ServicePortInUse,
+                          self.core_plugin.delete_port,
+                          self.admin_ctx, binding.port_id)
+
     def test_create_ha_network_tenant_binding_raises_duplicate(self):
         router = self._create_router()
         network = self.plugin.get_ha_network(self.admin_ctx,
