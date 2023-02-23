@@ -69,6 +69,10 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
                          router_az_db.RouterAvailabilityZoneMixin):
     """Mixin class to add high availability capability to routers."""
 
+    router_device_owners = (
+        l3_dvr_db.L3_NAT_with_dvr_db_mixin.router_device_owners +
+        (constants.DEVICE_OWNER_ROUTER_HA_INTF, ))
+
     def _verify_configuration(self):
         self.ha_cidr = cfg.CONF.l3_ha_net_cidr
         try:
