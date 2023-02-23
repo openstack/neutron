@@ -15,6 +15,7 @@ from neutron_lib import constants
 from oslo_utils import uuidutils
 
 from neutron.common import utils as common_utils
+from neutron.tests import base as tests_base
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
 from neutron.tests.fullstack.resources import machine
@@ -65,6 +66,7 @@ class TestMultiSegs(base.BaseFullStackTestCase):
         vm.block_until_dhcp_config_done()
         return vm
 
+    @tests_base.unstable_test("bug 2007152")
     def test_multi_segs_network(self):
         ovs_physnet = None
         agents = self.client.list_agents()
