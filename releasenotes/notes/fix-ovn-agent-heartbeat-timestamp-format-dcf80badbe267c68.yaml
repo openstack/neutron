@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Normalise OVN agent heartbeat timestamp format to match other agent types.
+    This fixes parsing of ``GET /v2.0/agents`` for some clients, such as
+    gophercloud.
