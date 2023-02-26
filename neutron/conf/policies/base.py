@@ -29,8 +29,6 @@ RULE_ADMIN_ONLY = 'rule:admin_only'
 RULE_ANY = 'rule:regular_user'
 RULE_ADVSVC = 'rule:context_is_advsvc'
 RULE_ADMIN_OR_NET_OWNER = 'rule:admin_or_network_owner'
-RULE_ADMIN_OR_NET_OWNER_OR_ADVSVC = policy_or(RULE_ADMIN_OR_NET_OWNER,
-                                              RULE_ADVSVC)
 RULE_ADMIN_OR_PARENT_OWNER = 'rule:admin_or_ext_parent_owner'
 
 # For completion of the phase 1
