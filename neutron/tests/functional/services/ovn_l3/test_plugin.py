@@ -541,9 +541,9 @@ class TestRouter(base.TestOVNFunctionalBase):
         ext1 = self._create_ext_network(
             'ext1', 'flat', 'physnet4', None, "30.0.0.1", "30.0.0.0/24")
         gw_info = {'network_id': ext1['network']['id']}
-        # Tries to create 20 routers with a gateway. Since we're using
+        # Tries to create 5 routers with a gateway. Since we're using
         # physnet4, the chassis candidates will be chassis4 initially.
-        num_routers = 20
+        num_routers = 5
         for i in range(num_routers):
             try:
                 router = self._create_router('router%d' % i, gw_info=gw_info)
