@@ -2618,7 +2618,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def _validate_port_supports_multiple_bindings(port):
         if not port['device_owner'].startswith((
                 const.DEVICE_OWNER_COMPUTE_PREFIX,
-                ml2_consts.DEVICE_OWNER_MANILA_PREFIX)):
+                const.DEVICE_OWNER_MANILA_PREFIX)):
             msg = _('Invalid port %s. Operation only valid on compute '
                     'and shared filesystem ports') % port['id']
             raise exc.BadRequest(resource='port', msg=msg)
