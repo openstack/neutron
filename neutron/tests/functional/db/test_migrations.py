@@ -393,7 +393,7 @@ class TestSanityCheck(testlib_api.SqlTestCaseLight):
             sqlalchemy.Column('router_id', sqlalchemy.String(36)),
             sqlalchemy.Column('l3_agent_id', sqlalchemy.String(36)))
 
-        with self.engine.connect() as conn:
+        with self.engine.begin() as conn:
             ha_router_agent_port_bindings.create(conn)
             self.addCleanup(self._drop_table, ha_router_agent_port_bindings)
             # NOTE(haleyb): without this disabled, pylint complains
@@ -418,7 +418,7 @@ class TestSanityCheck(testlib_api.SqlTestCaseLight):
             sqlalchemy.Column('port_id', sqlalchemy.String(36)),
             sqlalchemy.Column('port_type', sqlalchemy.String(255)))
 
-        with self.engine.connect() as conn:
+        with self.engine.begin() as conn:
             routerports.create(conn)
             self.addCleanup(self._drop_table, routerports)
             # NOTE(haleyb): without this disabled, pylint complains
@@ -443,7 +443,7 @@ class TestSanityCheck(testlib_api.SqlTestCaseLight):
             sqlalchemy.Column('fixed_port_id', sqlalchemy.String(36)),
             sqlalchemy.Column('fixed_ip_address', sqlalchemy.String(64)))
 
-        with self.engine.connect() as conn:
+        with self.engine.begin() as conn:
             floatingips.create(conn)
             self.addCleanup(self._drop_table, floatingips)
             # NOTE(haleyb): without this disabled, pylint complains
@@ -470,7 +470,7 @@ class TestSanityCheck(testlib_api.SqlTestCaseLight):
             sqlalchemy.Column('fixed_port_id', sqlalchemy.String(36)),
             sqlalchemy.Column('fixed_ip_address', sqlalchemy.String(64)))
 
-        with self.engine.connect() as conn:
+        with self.engine.begin() as conn:
             floatingips.create(conn)
             self.addCleanup(self._drop_table, floatingips)
             # NOTE(haleyb): without this disabled, pylint complains
