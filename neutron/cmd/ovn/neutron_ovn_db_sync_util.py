@@ -205,6 +205,9 @@ def main():
             'port_forwarding',
             'qos'
         ]
+        extension_drivers = list(set(cfg.CONF.ml2.extension_drivers + ['qos']))
+        cfg.CONF.set_override('extension_drivers', extension_drivers, 'ml2')
+
     else:
         LOG.error('Invalid core plugin : ["%s"].', cfg.CONF.core_plugin)
         return
