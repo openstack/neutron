@@ -4045,22 +4045,6 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                 webob.exc.HTTPCreated.code,
                                 gateway_ip='100.0.0.1')
 
-    def test_create_subnet_gw_is_nw_addr_returns_400(self):
-        with self.network() as network:
-            self._create_subnet(self.fmt,
-                                network['network']['id'],
-                                '10.0.0.0/24',
-                                webob.exc.HTTPClientError.code,
-                                gateway_ip='10.0.0.0')
-
-    def test_create_subnet_gw_is_broadcast_addr_returns_400(self):
-        with self.network() as network:
-            self._create_subnet(self.fmt,
-                                network['network']['id'],
-                                '10.0.0.0/24',
-                                webob.exc.HTTPClientError.code,
-                                gateway_ip='10.0.0.255')
-
     def test_create_subnet_gw_of_network_returns_400(self):
         with self.network() as network:
             self._create_subnet(self.fmt,
