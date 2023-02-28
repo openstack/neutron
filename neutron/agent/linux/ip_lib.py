@@ -269,9 +269,9 @@ class IPWrapper(SubProcessBase):
                 return True
         return False
 
-    def add_device_to_namespace(self, device):
+    def add_device_to_namespace(self, device, is_ovs_port=False):
         if self.namespace:
-            device.link.set_netns(self.namespace)
+            device.link.set_netns(self.namespace, is_ovs_port=is_ovs_port)
 
     def add_vlan(self, name, physical_interface, vlan_id):
         privileged.create_interface(name,
@@ -461,10 +461,15 @@ class IpLinkCommand(IpDeviceCommandBase):
         privileged.set_link_attribute(
             self.name, self._parent.namespace, state='down')
 
-    def set_netns(self, namespace):
+    def set_netns(self, namespace, is_ovs_port=False):
         privileged.set_link_attribute(
             self.name, self._parent.namespace, net_ns_fd=namespace)
         self._parent.namespace = namespace
+        if is_ovs_port:
+            # NOTE(slaweq): because of the "shy port" which may dissapear for
+            # short time after it's moved to the namespace we need to wait
+            # a bit before checking if port really exists in the namespace
+            time.sleep(1)
         common_utils.wait_until_true(lambda: self.exists, timeout=5,
                                      sleep=0.5)
 
