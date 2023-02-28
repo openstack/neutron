@@ -467,11 +467,11 @@ class TestOVSInterfaceDriver(TestBase):
                 expected.extend(
                     [mock.call().ensure_namespace(namespace),
                      mock.call().ensure_namespace().add_device_to_namespace(
-                         mock.ANY),
+                         mock.ANY, is_ovs_port=True),
                      mock.call().ensure_namespace().add_device_to_namespace(
-                         mock.ANY),
+                         mock.ANY, is_ovs_port=True),
                      mock.call().ensure_namespace().add_device_to_namespace(
-                         mock.ANY)])
+                         mock.ANY, is_ovs_port=True)])
             expected.extend([
                 mock.call(namespace=namespace),
                 mock.call().device('tap0'),
