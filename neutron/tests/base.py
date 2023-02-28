@@ -279,6 +279,8 @@ class DietTestCase(base.BaseTestCase, metaclass=_CatchTimeoutMetaclass):
 
         lib_test_tools.reset_random_seed()
 
+        config.register_common_config_options()
+
     def addOnException(self, handler):
 
         def safe_handler(*args, **kwargs):
@@ -382,7 +384,6 @@ class BaseTestCase(DietTestCase):
         self.useFixture(lockutils.ExternalLockFixture())
         self.useFixture(fixture.APIDefinitionFixture())
 
-        config.register_common_config_options()
         cfg.CONF.set_override('state_path', self.get_default_temp_dir().path)
 
         self.addCleanup(CONF.reset)
