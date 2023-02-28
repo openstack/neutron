@@ -155,7 +155,7 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
         self.nb_api.set_lswitch_port(lport_name=metadata_port_name,
                                      external_ids=external_ids).execute()
 
-    def _create_logical_switch_port(self, type_=None):
+    def _create_logical_switch_port(self, type_=None, addresses=None):
         lswitch_name = 'ovn-' + uuidutils.generate_uuid()
         lswitchport_name = 'ovn-port-' + uuidutils.generate_uuid()
         # It may take some time to ovn-northd to translate from OVN NB DB to
@@ -165,6 +165,8 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
         self.handler.watch_event(pb_event)
 
         lswitch_port_columns = {}
+        if addresses:
+            lswitch_port_columns['addresses'] = addresses
         if type_:
             lswitch_port_columns['type'] = type_
 
@@ -179,30 +181,33 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
 
         return lswitchport_name, lswitch_name
 
-    @mock.patch.object(agent.PortBindingChassisCreatedEvent, 'run')
-    def test_agent_resync_on_non_existing_bridge(self, mock_pbinding):
+    def test_agent_resync_on_non_existing_bridge(self):
+        BR_NEW = 'br-new'
+        self._mock_get_ovn_br.return_value = BR_NEW
+        self.agent.ovs_idl.list_br.return_value.execute.return_value = [BR_NEW]
         # The agent has initialized with br-int and above list_br doesn't
         # return it, hence the agent should trigger reconfiguration and store
         # new br-new value to its attribute.
         self.assertEqual(self.OVN_BRIDGE, self.agent.ovn_bridge)
 
-        lswitchport_name, _ = self._create_logical_switch_port()
+        # NOTE: The IP address is specifically picked such that it fits the
+        # metadata port external_ids: { neutron:cidrs }. This is because agent
+        # will only trigger if the logical port is part of a neutron subnet
+        lswitchport_name, _ = self._create_logical_switch_port(
+            addresses='AA:AA:AA:AA:AA:AB 192.168.122.125'
+        )
 
         # Trigger PortBindingChassisCreatedEvent
         self.sb_api.lsp_bind(lswitchport_name, self.chassis_name).execute(
             check_error=True, log_errors=True)
-        exc = Exception('PortBindingChassisCreatedEvent was not called')
 
-        def check_mock_pbinding():
-            if mock_pbinding.call_count < 1:
-                return False
-            args = mock_pbinding.call_args[0]
-            self.assertEqual('update', args[0])
-            self.assertEqual(lswitchport_name, args[1].logical_port)
-            self.assertEqual(self.chassis_name, args[1].chassis[0].name)
-            return True
-
-        n_utils.wait_until_true(check_mock_pbinding, timeout=10, exception=exc)
+        exc = Exception("Agent bridge hasn't changed from %s to %s "
+                        "in 10 seconds after Port_Binding event" %
+                        (self.agent.ovn_bridge, BR_NEW))
+        n_utils.wait_until_true(
+            lambda: BR_NEW == self.agent.ovn_bridge,
+            timeout=10,
+            exception=exc)
 
     def _test_agent_events(self, delete, type_=None, update=False):
         m_pb_created = mock.patch.object(
