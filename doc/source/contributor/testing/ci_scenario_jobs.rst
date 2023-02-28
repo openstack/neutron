@@ -73,9 +73,9 @@ Below is a summary of those jobs.
     |                                              |(only tests related to            |       |                  |             |                 |          |       |        |            |             |
     |                                              |Neutron and Nova)                 |       |                  |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-ovs-tempest-dvr-ha-multinode-full     |tempest.api (without slow tests)  |   3   | Ubuntu Jammy     | openvswitch | openvswitch     | dvr      | True  | True   | True       | No          |
-    |(non-voting)                                  |tempest.scenario                  |       |                  |             |                 | dvr_snat |       |        |            |             |
-    |                                              |                                  |       |                  |             |                 | dvr_snat |       |        |            |             |
+    |neutron-ovs-tempest-dvr-ha-multinode-full     |tempest.api (without slow tests)  |   3   | Ubuntu Jammy     | openvswitch | openvswitch     | dvr_snat | True  | True   | True       | No          |
+    |(non-voting)                                  |tempest.scenario                  |       |                  |             |                 | dvr      |       |        |            |             |
+    |                                              |                                  |       |                  |             |                 | dvr      |       |        |            |             |
     +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-ovs-tempest-slow                      |tempest slow tests                |   2   | Ubuntu Jammy     | openvswitch | openvswitch     | legacy   | False | False  | True       | Yes         |
     +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+

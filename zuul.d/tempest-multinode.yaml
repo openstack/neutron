@@ -1,6 +1,41 @@
+- nodeset:
+    name: neutron-three-node-jammy
+    nodes:
+      - name: controller
+        label: ubuntu-jammy
+      - name: compute1
+        label: ubuntu-jammy
+      - name: compute2
+        label: ubuntu-jammy
+    groups:
+      # Node where tests are executed and test results collected
+      - name: tempest
+        nodes:
+          - controller
+      # Nodes running the compute service
+      - name: compute
+        nodes:
+          - compute1
+          - compute2
+      # Nodes that are not the controller
+      - name: subnode
+        nodes:
+          - compute1
+          - compute2
+      # Switch node for multinode networking setup
+      - name: switch
+        nodes:
+          - controller
+      # Peer nodes for multinode networking setup
+      - name: peers
+        nodes:
+          - compute1
+          - compute2
+
 - job:
     name: neutron-ovs-tempest-dvr-ha-multinode-full
     parent: tempest-multinode-full-py3
+    nodeset: neutron-three-node-jammy
     timeout: 10800
     roles:
       - zuul: openstack/neutron-tempest-plugin
@@ -51,6 +86,11 @@
       devstack_services:
         br-ex-tcpdump: true
         br-int-flows: true
+        # Nova services
+        # NOTE(slaweq): this node is going to be only control plane and
+        # networker node with "dvr_snat" L3 agent mode. Other nodes in that job
+        # are compute nodes with L3 agent in "dvr" mode
+        n-cpu: false
         # Neutron services
         q-agt: true
         q-dhcp: true
@@ -150,7 +190,7 @@
                 resource_provider_bandwidths: br-ex:1000000:1000000
             $NEUTRON_L3_CONF:
               DEFAULT:
-                agent_mode: dvr_snat
+                agent_mode: dvr
               agent:
                 availability_zone: nova
                 debug_iptables_rules: True
