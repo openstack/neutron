@@ -75,12 +75,14 @@ The following are the current Neutron Lieutenants.
 | Area                   | Lieutenant                | IRC nick             |
 +========================+===========================+======================+
 | API                    | Akihiro Motoki            | amotoki              |
+|                        | Slawomir Kaplonski        | slaweq               |
 +------------------------+---------------------------+----------------------+
 | DB                     | Rodolfo Alonso Hernandez  | ralonsoh             |
 +------------------------+---------------------------+----------------------+
 | Built-In Control Plane | Miguel Lavalle            | mlavalle             |
 +------------------------+---------------------------+----------------------+
 | Client                 | Akihiro Motoki            | amotoki              |
+|                        | Slawomir Kaplonski        | slaweq               |
 +------------------------+---------------------------+----------------------+
 | Docs                   | Akihiro Motoki            | amotoki              |
 +------------------------+---------------------------+----------------------+
@@ -93,6 +95,7 @@ The following are the current Neutron Lieutenants.
 |                        | Yulong Liu                | liuyulong            |
 +------------------------+---------------------------+----------------------+
 | Testing                | Lajos Katona              | lajoskatona          |
+|                        | Slawomir Kaplonski        | slaweq               |
 +------------------------+---------------------------+----------------------+
 
 Some notes on the above:
