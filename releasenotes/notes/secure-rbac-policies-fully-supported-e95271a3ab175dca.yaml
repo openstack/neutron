@@ -1,0 +1,16 @@
+---
+features:
+  - |
+    Neutron now supports API policies with the new default roles
+    ``project_member`` and ``project_reader``.
+    Role ``admin`` is working in the same way as with old policies.
+upgrade:
+  - |
+    New default API policies are not enabled by default. A cloud operator can
+    enable them by setting ``oslo_policy/enforce_new_defaults`` to ``true`` in
+    the Neutron config file.
+    It is also possible to switch the ``oslo_policy/enforce_scope`` config
+    option to ``true`` but currently Neutron does not support any system scope
+    APIs. All Neutron API policies are currently project scoped so setting
+    ``oslo_policy/enforce_scope`` to ``true`` will cause ``Forbidden`` responses
+    to any API calls made with the system scope token.
