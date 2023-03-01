@@ -75,6 +75,7 @@ The following are the current Neutron Lieutenants.
 | Area                   | Lieutenant                | IRC nick             |
 +========================+===========================+======================+
 | API                    | Akihiro Motoki            | amotoki              |
+|                        +---------------------------+----------------------+
 |                        | Slawomir Kaplonski        | slaweq               |
 +------------------------+---------------------------+----------------------+
 | DB                     | Rodolfo Alonso Hernandez  | ralonsoh             |
@@ -82,9 +83,14 @@ The following are the current Neutron Lieutenants.
 | Built-In Control Plane | Miguel Lavalle            | mlavalle             |
 +------------------------+---------------------------+----------------------+
 | Client                 | Akihiro Motoki            | amotoki              |
+|                        +---------------------------+----------------------+
 |                        | Slawomir Kaplonski        | slaweq               |
+|                        +---------------------------+----------------------+
+|                        | Lajos Katona              | lajoskatona          |
 +------------------------+---------------------------+----------------------+
 | Docs                   | Akihiro Motoki            | amotoki              |
+|                        +---------------------------+----------------------+
+|                        | Lajos Katona              | lajoskatona          |
 +------------------------+---------------------------+----------------------+
 | Infra                  | Rodolfo Alonso Hernandez  | ralonsoh             |
 |                        +---------------------------+----------------------+
@@ -95,6 +101,7 @@ The following are the current Neutron Lieutenants.
 |                        | Yulong Liu                | liuyulong            |
 +------------------------+---------------------------+----------------------+
 | Testing                | Lajos Katona              | lajoskatona          |
+|                        +---------------------------+----------------------+
 |                        | Slawomir Kaplonski        | slaweq               |
 +------------------------+---------------------------+----------------------+
 
