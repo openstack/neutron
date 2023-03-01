@@ -140,7 +140,9 @@ updating the core review team for the sub-project's repositories.
 +-------------------------+-----------------------------+-------------------+
 | networking-sfc          | Dharmendra Kushwaha         | dkushwaha         |
 +-------------------------+-----------------------------+-------------------+
-| ovn-octavia-provider    | None                        | N/A               |
+| ovn-octavia-provider    | Luis Tomas Bolivar          | ltomasbo          |
+|                         +-----------------------------+-------------------+
+|                         | Fernando Royo               | froyo             |
 +-------------------------+-----------------------------+-------------------+
 | ovsdbapp                | Terry Wilson                | otherwiseguy      |
 +-------------------------+-----------------------------+-------------------+
