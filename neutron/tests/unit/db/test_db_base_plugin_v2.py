@@ -49,6 +49,7 @@ import neutron
 from neutron.api import api_common
 from neutron.api import extensions
 from neutron.api.v2 import router
+from neutron.common import _constants as common_constants
 from neutron.common import ipv6_utils
 from neutron.common.ovn import utils as ovn_utils
 from neutron.common import test_lib
@@ -60,6 +61,7 @@ from neutron.db import ipam_backend_mixin
 from neutron.db.models import l3 as l3_models
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
+from neutron.exceptions import mtu as mtu_exc
 from neutron.ipam.drivers.neutrondb_ipam import driver as ipam_driver
 from neutron.ipam import exceptions as ipam_exc
 from neutron.objects import network as network_obj
@@ -373,7 +375,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                             'admin_state_up': admin_state_up,
                             'tenant_id': tenant_id}}
         for arg in (('admin_state_up', 'tenant_id', 'shared',
-                     'vlan_transparent',
+                     'vlan_transparent', 'mtu',
                      'availability_zone_hints') + (arg_list or ())):
             # Arg must be present
             if arg in kwargs:
@@ -7066,7 +7068,8 @@ class NeutronDbPluginV2AsMixinTestCase(NeutronDbPluginV2TestCase,
         super(NeutronDbPluginV2AsMixinTestCase, self).setUp()
         self.plugin = importutils.import_object(DB_PLUGIN_KLASS)
         self.context = context.get_admin_context()
-        self.net_data = {'network': {'id': 'fake-id',
+        self.net_id = uuidutils.generate_uuid()
+        self.net_data = {'network': {'id': self.net_id,
                                      'name': 'net1',
                                      'admin_state_up': True,
                                      'tenant_id': TEST_TENANT_ID,
@@ -7075,7 +7078,7 @@ class NeutronDbPluginV2AsMixinTestCase(NeutronDbPluginV2TestCase,
     def test_create_network_with_default_status(self):
         net = self.plugin.create_network(self.context, self.net_data)
         default_net_create_status = 'ACTIVE'
-        expected = [('id', 'fake-id'), ('name', 'net1'),
+        expected = [('id', self.net_id), ('name', 'net1'),
                     ('admin_state_up', True), ('tenant_id', TEST_TENANT_ID),
                     ('shared', False), ('status', default_net_create_status)]
         for k, v in expected:
@@ -7112,6 +7115,81 @@ class NeutronDbPluginV2AsMixinTestCase(NeutronDbPluginV2TestCase,
                           constants.IP_VERSION_4,
                           new_subnetpool_id,
                           None)
+
+    def test_create_subnet_invalid_network_mtu_ipv4_returns_409(self):
+        self.net_data['network']['mtu'] = common_constants.IPV4_MIN_MTU - 1
+        net = self.plugin.create_network(self.context, self.net_data)
+        self._create_subnet(self.fmt,
+                            net['id'],
+                            '10.0.0.0/24',
+                            webob.exc.HTTPConflict.code)
+
+    def test_create_subnet_invalid_network_mtu_ipv6_returns_409(self):
+        self.net_data['network']['mtu'] = constants.IPV6_MIN_MTU - 1
+        net = self.plugin.create_network(self.context, self.net_data)
+        self._create_subnet(self.fmt,
+                            net['id'],
+                            '2001:db8:0:1::/64',
+                            webob.exc.HTTPConflict.code,
+                            ip_version=constants.IP_VERSION_6)
+
+    def test_update_network_invalid_mtu(self):
+        self.net_data['network']['mtu'] = 1500
+        net = self.plugin.create_network(self.context, self.net_data)
+
+        # This should succeed with no subnets
+        self.net_data['network']['mtu'] = common_constants.IPV4_MIN_MTU - 1
+        self.plugin.update_network(self.context, net['id'], self.net_data)
+
+        # reset mtu
+        self.net_data['network']['mtu'] = 1500
+        self.plugin.update_network(self.context, net['id'], self.net_data)
+
+        self._create_subnet(self.fmt,
+                            net['id'],
+                            '10.0.0.0/24',
+                            ip_version=constants.IP_VERSION_4)
+
+        # These should succeed with just an IPv4 subnet present
+        self.net_data['network']['mtu'] = constants.IPV6_MIN_MTU
+        self.plugin.update_network(self.context, net['id'], self.net_data)
+        self.net_data['network']['mtu'] = constants.IPV6_MIN_MTU - 1
+        self.plugin.update_network(self.context, net['id'], self.net_data)
+        self.net_data['network']['mtu'] = common_constants.IPV4_MIN_MTU
+        self.plugin.update_network(self.context, net['id'], self.net_data)
+
+        # This should fail with any subnets present
+        self.net_data['network']['mtu'] = common_constants.IPV4_MIN_MTU - 1
+        with testlib_api.ExpectedException(mtu_exc.NetworkMTUSubnetConflict):
+            self.plugin.update_network(self.context, net['id'], self.net_data)
+
+    def test_update_network_invalid_mtu_ipv4_ipv6(self):
+        self.net_data['network']['mtu'] = 1500
+        net = self.plugin.create_network(self.context, self.net_data)
+
+        self._create_subnet(self.fmt,
+                            net['id'],
+                            '10.0.0.0/24',
+                            ip_version=constants.IP_VERSION_4)
+        self._create_subnet(self.fmt,
+                            net['id'],
+                            '2001:db8:0:1::/64',
+                            ip_version=constants.IP_VERSION_6)
+
+        # This should succeed with both subnets present
+        self.net_data['network']['mtu'] = constants.IPV6_MIN_MTU
+        self.plugin.update_network(self.context, net['id'], self.net_data)
+
+        # These should all fail with both subnets present
+        with testlib_api.ExpectedException(mtu_exc.NetworkMTUSubnetConflict):
+            self.net_data['network']['mtu'] = constants.IPV6_MIN_MTU - 1
+            self.plugin.update_network(self.context, net['id'], self.net_data)
+        with testlib_api.ExpectedException(mtu_exc.NetworkMTUSubnetConflict):
+            self.net_data['network']['mtu'] = common_constants.IPV4_MIN_MTU
+            self.plugin.update_network(self.context, net['id'], self.net_data)
+        with testlib_api.ExpectedException(mtu_exc.NetworkMTUSubnetConflict):
+            self.net_data['network']['mtu'] = common_constants.IPV4_MIN_MTU - 1
+            self.plugin.update_network(self.context, net['id'], self.net_data)
 
 
 class TestNetworks(testlib_api.SqlTestCase):

@@ -58,6 +58,7 @@ from neutron.db import ipam_pluggable_backend
 from neutron.db import models_v2
 from neutron.db import rbac_db_mixin as rbac_mixin
 from neutron.db import standardattrdescription_db as stattr_db
+from neutron.exceptions import mtu as mtu_exc
 from neutron.extensions import subnetpool_prefix_ops
 from neutron import ipam
 from neutron.ipam import exceptions as ipam_exc
@@ -466,12 +467,38 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 # context.
                 getattr(network, 'rbac_entries')
 
+            # validate 'mtu' parameter
+            if 'mtu' in n:
+                self._validate_change_network_mtu(context, id, n['mtu'])
+
             # The filter call removes attributes from the body received from
             # the API that are logically tied to network resources but are
             # stored in other database tables handled by extensions
             network.update(
                 ndb_utils.filter_non_model_columns(n, models_v2.Network))
         return self._make_network_dict(network, context=context)
+
+    def _validate_change_network_mtu(self, context, id, mtu):
+        # can support either ip_version
+        if mtu >= constants.IPV6_MIN_MTU:
+            return
+
+        subnets = self._get_subnets_by_network(context, id)
+        if len(subnets) == 0:
+            return
+
+        # at least one subnet present, if below IPv4 minimum we fail early
+        if mtu < _constants.IPV4_MIN_MTU:
+            raise mtu_exc.NetworkMTUSubnetConflict(
+                net_id=id, mtu=_constants.IPV4_MIN_MTU)
+
+        # We do not need to check IPv4 subnets as they will have been
+        # caught by above IPV4_MIN_MTU check
+        for subnet in subnets:
+            if (subnet.ip_version == constants.IP_VERSION_6 and
+                    mtu < constants.IPV6_MIN_MTU):
+                raise mtu_exc.NetworkMTUSubnetConflict(
+                    net_id=id, mtu=constants.IPV6_MIN_MTU)
 
     def _ensure_network_not_in_use(self, context, net_id):
         non_auto_ports = context.session.query(
@@ -715,6 +742,23 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                        "Prefix Delegation.")
             raise exc.BadRequest(resource='subnets', msg=reason)
 
+    def _validate_subnet_network_mtu(self, network, subnet):
+        """Validates that network mtu is correct for subnet association"""
+        mtu = network.mtu
+        if not mtu or mtu >= constants.IPV6_MIN_MTU:
+            return
+
+        # if below IPv4 minimum we fail early
+        if mtu < _constants.IPV4_MIN_MTU:
+            raise mtu_exc.NetworkMTUSubnetConflict(net_id=network.id, mtu=mtu)
+
+        # We do not need to check IPv4 subnets as they will have been
+        # caught by above IPV4_MIN_MTU check
+        ip_version = subnet.get('ip_version')
+        if (ip_version == constants.IP_VERSION_6 and
+                mtu < constants.IPV6_MIN_MTU):
+            raise mtu_exc.NetworkMTUSubnetConflict(net_id=network.id, mtu=mtu)
+
     def _update_router_gw_ports(self, context, network, subnet):
         l3plugin = directory.get_plugin(plugin_constants.L3)
         if l3plugin:
@@ -876,6 +920,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         with db_api.CONTEXT_WRITER.using(context):
             network = self._get_network(context,
                                         subnet['subnet']['network_id'])
+            self._validate_subnet_network_mtu(network, s)
             subnet, ipam_subnet = self.ipam.allocate_subnet(context,
                                                             network,
                                                             subnet['subnet'],

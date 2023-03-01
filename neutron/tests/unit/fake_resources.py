@@ -322,6 +322,7 @@ class FakeNetwork(object):
             'availability_zone_hints': [],
             'is_default': False,
             'standard_attr_id': 1,
+            'mtu': 1500,
         }
 
         # Overwrite default attributes.

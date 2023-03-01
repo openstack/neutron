@@ -130,6 +130,13 @@ IPv6. IPv6 uses RA via the L3 agent because the DHCP agent only supports
 IPv4. Instances using IPv4 and IPv6 should obtain the same MTU value
 regardless of method.
 
+.. note::
+
+   If you are using an MTU value on your network below 1280, please
+   read the warning listed in the
+   `IPv6 configuration guide <./config-ipv6.html#project-network-considerations>`__
+   before creating any subnets.
+
 Networks with enabled vlan transparency
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
