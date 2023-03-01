@@ -33,25 +33,51 @@ from neutron.db import rbac_db_models
 class HasInUse(object):
     """NeutronBaseV2 mixin, to add the flag "in_use" to a DB model.
 
-    The content of this flag (boolean) parameter is not relevant. The goal of
-    this field is to be used in a write transaction to mark a DB register as
-    "in_use". Writing any value on this DB parameter will lock the container
-    register. At the end of the DB transaction, the DB engine will check if
-    this register was modified or deleted. In such case, the transaction will
-    fail and won't be commited.
+    The goal of this class is to allow users lock specific database rows with
+    a shared or exclusive lock (without necessarily introducing a change in
+    the table itself). Having these locks allows the DB engine to prevent
+    concurrent modifications (e.g. the deletion of a resource while we are
+    currently adding a new dependency on the resource).
 
-    "lock_register" is the method to write the register "in_use" column.
-    Because the lifespan of this DB lock is the DB transaction, there isn't an
-    unlock method. The lock will finish once the transaction ends.
+    "read_lock_register" takes a shared DB lock on the row specified by the
+    filters. The lock is automatically released once the transaction ends.
+    You can have any number of parallel read locks on the same DB row. But
+    you can not have any write lock in parallel.
+
+    "write_lock_register" takes an exclusive DB lock on the row specified by
+    the filters. The lock is automatically released on transaction commit.
+    You may only have one write lock on each row at a time. It therefor
+    blocks all other read and write locks to this row.
     """
+    # keep this value to not need to update the database schema
+    # only at backport
     in_use = sa.Column(sa.Boolean(), nullable=False,
                        server_default=sql.false(), default=False)
 
     @classmethod
-    def lock_register(cls, context, exception, **filters):
+    def write_lock_register(cls, context, exception, **filters):
+        # we use `with_for_update()` to include `FOR UPDATE` in the sql
+        # statement.
+        # we need to set `enable_eagerloads(False)` so that we do not try to
+        # load attached resources (e.g. standardattributes) as this breaks the
+        # `FOR UPDATE` statement.
         num_reg = context.session.query(
-            cls).filter_by(**filters).update({'in_use': True})
-        if num_reg != 1:
+            cls).filter_by(**filters).enable_eagerloads(
+                False).with_for_update().first()
+        if num_reg is None:
+            raise exception
+
+    @classmethod
+    def read_lock_register(cls, context, exception, **filters):
+        # we use `with_for_update(read=True)` to include `LOCK IN SHARE MODE`
+        # in the sql statement.
+        # we need to set `enable_eagerloads(False)` so that we do not try to
+        # load attached resources (e.g. standardattributes) as this breaks the
+        # `LOCK IN SHARE MODE` statement.
+        num_reg = context.session.query(
+            cls).filter_by(**filters).enable_eagerloads(
+                False).with_for_update(read=True).first()
+        if num_reg is None:
             raise exception
 
 
