@@ -31,6 +31,9 @@ Create Date: 2022-11-06 13:04:26.390013
 revision = 'fc153938cdc1'
 down_revision = '5881373af7f5'
 
+# milestone identifier, used by neutron-db-manage
+neutron_milestone = [migration.RELEASE_2023_1]
+
 TABLE_NAME = 'networksegments'
 
 
