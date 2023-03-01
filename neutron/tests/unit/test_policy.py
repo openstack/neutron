@@ -110,10 +110,10 @@ class PolicyTestCase(base.BaseTestCase):
         cfg.CONF.set_override(
             'enforce_new_defaults', enforce_new_defaults, group='oslo_policy')
         project_admin_ctx = context.Context(
-            user="fake", project_id="fake",
+            user_id="fake", project_id="fake",
             roles=['admin', 'member', 'reader'])
         system_admin_ctx = context.Context(
-            user="fake",
+            user_id="fake",
             roles=['admin', 'member', 'reader'],
             system_scope='all')
         if not enforce_new_defaults:
@@ -138,10 +138,10 @@ class PolicyTestCase(base.BaseTestCase):
         cfg.CONF.set_override(
             'enforce_new_defaults', enforce_new_defaults, group='oslo_policy')
         project_admin_ctx = context.Context(
-            user="fake", project_id="fake",
+            user_id="fake", project_id="fake",
             roles=['admin', 'member', 'reader'])
         system_admin_ctx = context.Context(
-            user="fake",
+            user_id="fake",
             roles=['admin', 'member', 'reader'],
             system_scope='all')
         if not enforce_new_defaults:
@@ -194,7 +194,7 @@ class PolicyTestCase(base.BaseTestCase):
         action = "get_example:only_project_user_allowed"
         target = {'project_id': 'some-project'}
         system_admin_ctx = context.Context(
-            user="fake",
+            user_id="fake",
             roles=['admin', 'member', 'reader'],
             system_scope='all')
         self.assertFalse(policy.check(system_admin_ctx, action, target))
