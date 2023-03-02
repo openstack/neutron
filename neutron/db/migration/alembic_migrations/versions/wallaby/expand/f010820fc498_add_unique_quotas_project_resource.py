@@ -50,7 +50,7 @@ def get_duplicate_quotas(connection):
     insp = sa.inspect(connection)
     if 'quotas' not in insp.get_table_names():
         return []
-    session = sa.orm.Session(bind=connection.connect())
+    session = sa.orm.Session(bind=connection)
     items = (session.query(quotas.c.project_id, quotas.c.resource)
              .group_by(quotas.c.project_id, quotas.c.resource)
              .having(sa.func.count() > 1)).all()
