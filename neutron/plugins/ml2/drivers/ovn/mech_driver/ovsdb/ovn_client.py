@@ -1418,21 +1418,29 @@ class OVNClient(object):
         if network is None:
             network = self._plugin.get_network(admin_context,
                                                port['network_id'])
+
         # For VLAN type networks we need to set the
         # "reside-on-redirect-chassis" option so the routing for this
         # logical router port is centralized in the chassis hosting the
         # distributed gateway port.
         # https://github.com/openvswitch/ovs/commit/85706c34d53d4810f54bec1de662392a3c06a996
-        # FIXME(ltomasbo): Once Bugzilla 2162756 is fixed the
-        # is_provider_network check should be removed
         if network.get(pnet.NETWORK_TYPE) == const.TYPE_VLAN:
             options[ovn_const.LRP_OPTIONS_RESIDE_REDIR_CH] = (
-                'false' if (ovn_conf.is_ovn_distributed_floating_ip() and
-                            not utils.is_provider_network(network))
+                'false' if ovn_conf.is_ovn_distributed_floating_ip()
                 else 'true')
 
         is_gw_port = const.DEVICE_OWNER_ROUTER_GW == port.get(
             'device_owner')
+
+        # NOTE(ltomasbo): For VLAN type networks connected through the gateway
+        # port there is a need to set the redirect-type option to bridge to
+        # ensure traffic is not centralized through the controller.
+        # For geneve based tenant networks it won't have any effect as it only
+        # applies to network with a localnet associated to it
+        if is_gw_port and ovn_conf.is_ovn_distributed_floating_ip():
+            options[ovn_const.LRP_OPTIONS_REDIRECT_TYPE] = (
+                ovn_const.BRIDGE_REDIRECT_TYPE)
+
         if is_gw_port and ovn_conf.is_ovn_emit_need_to_frag_enabled():
             try:
                 router_ports = self._get_router_ports(admin_context,
