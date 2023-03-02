@@ -304,6 +304,8 @@ LSP_OPTIONS_MCAST_FLOOD_REPORTS = 'mcast_flood_reports'
 LSP_OPTIONS_MCAST_FLOOD = 'mcast_flood'
 
 LRP_OPTIONS_RESIDE_REDIR_CH = 'reside-on-redirect-chassis'
+LRP_OPTIONS_REDIRECT_TYPE = 'redirect-type'
+BRIDGE_REDIRECT_TYPE = "bridged"
 
 # Port Binding types
 PB_TYPE_VIRTUAL = 'virtual'

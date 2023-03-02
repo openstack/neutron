@@ -776,10 +776,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         # Get router ports belonging to VLAN networks
         vlan_nets = self._ovn_client._plugin.get_networks(
             context, {pnet.NETWORK_TYPE: [n_const.TYPE_VLAN]})
-        # FIXME(ltomasbo): Once Bugzilla 2162756 is fixed the
-        # is_provider_network check should be removed
-        vlan_net_ids = [vn['id'] for vn in vlan_nets
-                        if not utils.is_provider_network(vn)]
+        vlan_net_ids = [vn['id'] for vn in vlan_nets]
         router_ports = self._ovn_client._plugin.get_ports(
             context, {'network_id': vlan_net_ids,
                       'device_owner': n_const.ROUTER_PORT_OWNERS})
