@@ -23,7 +23,7 @@ class FlavorAPITestCase(base.PolicyBaseTestCase):
 
     def setUp(self):
         super(FlavorAPITestCase, self).setUp()
-        self.target = {'project_id': self.project_id}
+        self.target = {}
 
 
 class SystemAdminTests(FlavorAPITestCase):
