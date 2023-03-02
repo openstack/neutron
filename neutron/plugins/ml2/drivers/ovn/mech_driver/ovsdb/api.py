@@ -299,6 +299,15 @@ class API(api.API, metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
+    def get_gateway_chassis_az_hints(self, gateway_id):
+        """Return the list of availability zone hints
+
+        :param gateway_id:     The gateway id
+        :type gateway_id:      string
+        :returns:              a list of strings with the availability zones
+        """
+
+    @abc.abstractmethod
     def get_unhosted_gateways(self, port_physnet_dict, chassis_physnets,
                               gw_chassis, chassis_with_azs):
         """Return a list of gateways not hosted on chassis
