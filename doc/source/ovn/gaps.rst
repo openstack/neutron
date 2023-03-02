@@ -8,12 +8,6 @@ It is not a complete list, but is enough to be used as a starting point for
 implementors working on closing these gaps. A TODO list for OVN is located
 at [1]_.
 
-* BGP support
-
-  Neutron-dynamic-routing supports making a tenant subnet routable via BGP, and
-  can announce host routes for both floating and fixed IP addresses. These
-  functions are not supported in OVN.
-
 * Baremetal provisioning with iPXE without Neutron DHCP agent for IPv6
 
   The core OVN built-in DHCP server implementation does not
