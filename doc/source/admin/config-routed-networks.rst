@@ -621,7 +621,7 @@ subnets L3 agent when:
 Multiple routed provider segments per host
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Starting with Antelope, the support of routed provider networks has
+Starting with 2023.1 (Antelope), the support of routed provider networks has
 been enhanced to handle multiple segments per host. The main
 consequence will be for an operator to extend the IP pool without
 creating multiple networks and/or increasing broadcast domain.
