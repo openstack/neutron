@@ -1366,6 +1366,25 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             actions='output:{:d}'.format(port.ofport)
         )
 
+        # Allow custom ethertypes
+        for permitted_ethertype in self.permitted_ethertypes:
+            if permitted_ethertype[:2] == '0x':
+                try:
+                    hex_ethertype = hex(int(permitted_ethertype, base=16))
+                    self._add_flow(
+                        table=ovs_consts.BASE_INGRESS_TABLE,
+                        priority=100,
+                        dl_type=hex_ethertype,
+                        reg_port=port.ofport,
+                        actions='output:{:d}'.format(port.ofport)
+                    )
+                    continue
+                except ValueError:
+                    pass
+            LOG.warning('Custom ethertype %(permitted_ethertype)s is not '
+                        'a hexadecimal number.',
+                        {'permitted_ethertype': permitted_ethertype})
+
         self._initialize_ingress_ipv6_icmp(port)
 
         # DHCP offers
