@@ -31,6 +31,7 @@ from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.agent.linux.openvswitch_firewall import exceptions
 from neutron.agent.linux.openvswitch_firewall import firewall as ovsfw
 from neutron.conf.agent import securitygroups_rpc
+from neutron.conf.plugins.ml2.drivers import ovs_conf
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
     import ovs_bridge
 from neutron.tests import base
@@ -518,6 +519,7 @@ class FakeOVSPort(object):
 class TestOVSFirewallDriver(base.BaseTestCase):
     def setUp(self):
         super(TestOVSFirewallDriver, self).setUp()
+        ovs_conf.register_ovs_agent_opts(cfg=cfg.CONF)
         mock_bridge = mock.patch.object(
             ovs_lib, 'OVSBridge', autospec=True).start()
         securitygroups_rpc.register_securitygroups_opts()
@@ -843,6 +845,26 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         with mock.patch.object(helpers, "parse_mappings",
                                return_value={"vlan1": "br-vlan1"}):
             self.firewall.initialize_port_flows(port)
+
+    def test_initialize_port_flows_permitted_ethertypes(self):
+        self.firewall.permitted_ethertypes = ['0x1234', '0x5678']
+        port_dict = {'device': 'port-id',
+                     'security_groups': [1]}
+        of_port = create_ofport(port_dict,
+                                network_type=constants.TYPE_VLAN,
+                                physical_network='vlan1')
+        self.firewall.sg_port_map.ports[of_port.id] = of_port
+        port = self.firewall.get_or_create_ofport(port_dict)
+        with mock.patch.object(self.firewall, '_add_flow') as mock_add_flow:
+            self.firewall.initialize_port_flows(port)
+
+        calls = [mock.call(table=ovs_consts.BASE_INGRESS_TABLE,
+                           priority=100, dl_type='0x1234',
+                           reg_port=1, actions='output:1'),
+                 mock.call(table=ovs_consts.BASE_INGRESS_TABLE,
+                           priority=100, dl_type='0x5678',
+                           reg_port=1, actions='output:1')]
+        mock_add_flow.assert_has_calls(calls, any_order=True)
 
     def test_delete_all_port_flows(self):
         port_dict = {
