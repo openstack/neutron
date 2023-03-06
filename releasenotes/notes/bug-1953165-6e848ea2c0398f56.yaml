@@ -1,0 +1,16 @@
+---
+issues:
+  - |
+    The high availability of metadata service on isolated networks is limited
+    or non-existent. IPv4 metadata is redundant when the DHCP agent managing
+    it is redundant, but recovery is tied to the renewal of the DHCP lease,
+    making most recoveries very slow. IPv6 metadata is not redundant at all
+    as the IPv6 metadata address can only be configured in a single place at
+    a time as it is link-local. Multiple agents trying to configure it will
+    generate an IPv6 duplicate address detection failure.
+
+    Administrators may observe the IPv6 metadata address in "dadfailed" state
+    in the DHCP namespace for this reason, which is only an indication it is
+    not highly available. Until a redesign is made to the isolated metadata
+    service there is not a better deployment option. See `bug 1953165
+    <https://bugs.launchpad.net/neutron/+bug/1953165>`_ for information.
