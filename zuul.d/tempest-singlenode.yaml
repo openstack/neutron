@@ -12,6 +12,7 @@
       tempest_concurrency: 4
       devstack_localrc:
         Q_ML2_TENANT_NETWORK_TYPE: vxlan
+        MYSQL_REDUCE_MEMORY: true
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
@@ -260,6 +261,7 @@
     vars:
       devstack_localrc:
         MYSQL_SERVICE_NAME: mariadb
+        MYSQL_REDUCE_MEMORY: true
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
@@ -411,6 +413,7 @@
     vars:
       devstack_localrc:
         NEUTRON_DEPLOY_MOD_WSGI: true
+        MYSQL_REDUCE_MEMORY: true
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
@@ -482,6 +485,7 @@
             DEFAULT:
               rpc_workers: 0
       devstack_localrc:
+        MYSQL_REDUCE_MEMORY: true
         CIRROS_VERSION: 0.6.1
         DEFAULT_IMAGE_NAME: cirros-0.6.1-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.6.1-x86_64-uec.tar.gz
@@ -708,6 +712,7 @@
     vars:
       tox_envlist: integrated-network
       devstack_localrc:
+        MYSQL_REDUCE_MEMORY: true
         CIRROS_VERSION: 0.6.1
         DEFAULT_IMAGE_NAME: cirros-0.6.1-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.6.1-x86_64-uec.tar.gz
