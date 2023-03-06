@@ -18,6 +18,7 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
+from neutron_lib import constants as neutron_const
 from neutron_lib.plugins import directory
 from neutron_lib.services.trunk import constants
 import testtools
@@ -292,6 +293,32 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
                 self.context, trunk['id'],
                 {'sub_ports': [{'port_id': subport['port']['id']}]})
             self.assertEqual(constants.TRUNK_DOWN_STATUS, trunk['status'])
+
+    def test__trigger_trunk_status_change_parent_port_status_down(self):
+        callback = register_mock_callback(resources.TRUNK, events.AFTER_UPDATE)
+        with self.port() as parent:
+            parent['status'] = neutron_const.PORT_STATUS_DOWN
+            original_port = {'status': neutron_const.PORT_STATUS_DOWN}
+            _, _ = (
+                self._test__trigger_trunk_status_change(
+                    parent, original_port,
+                    constants.TRUNK_DOWN_STATUS,
+                    constants.TRUNK_DOWN_STATUS))
+        callback.assert_not_called()
+
+    def test__trigger_trunk_status_change_parent_port_status_up(self):
+        callback = register_mock_callback(resources.TRUNK, events.AFTER_UPDATE)
+        with self.port() as parent:
+            parent['status'] = neutron_const.PORT_STATUS_ACTIVE
+            original_port = {'status': neutron_const.PORT_STATUS_DOWN}
+            _, _ = (
+                self._test__trigger_trunk_status_change(
+                    parent, original_port,
+                    constants.TRUNK_DOWN_STATUS,
+                    constants.TRUNK_ACTIVE_STATUS))
+        callback.assert_called_once_with(
+            resources.TRUNK, events.AFTER_UPDATE,
+            self.trunk_plugin, payload=mock.ANY)
 
     def test__trigger_trunk_status_change_vif_type_changed_unbound(self):
         callback = register_mock_callback(resources.TRUNK, events.AFTER_UPDATE)
