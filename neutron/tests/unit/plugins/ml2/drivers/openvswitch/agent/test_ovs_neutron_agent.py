@@ -2725,6 +2725,15 @@ class TestOvsNeutronAgent(object):
             self.agent._update_network_segmentation_id(network)
             mock_get.assert_not_called()
 
+    def test__update_network_segmentation_id_mapping_not_found(self):
+        network = {'id': 'my-net-uuid',
+                   'segments': [mock.ANY]}
+        with mock.patch.object(self.agent.vlan_manager,
+                               'get') as mock_get:
+            mock_get.side_effect = ValueError
+            self.assertIsNone(
+                self.agent._update_network_segmentation_id(network))
+
     def _test_treat_smartnic_port(self, vif_type):
         vm_uuid = "407a79e0-e0be-4b7d-92a6-513b2161011b"
         iface_id = "407a79e0-e0be-4b7d-92a6-513b2161011c"
