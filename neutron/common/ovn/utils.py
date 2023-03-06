@@ -22,6 +22,7 @@ from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
 from neutron_lib.api.definitions import l3
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import provider_net
 from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib import context as n_context
@@ -582,6 +583,10 @@ def is_gateway_chassis_invalid(chassis_name, gw_chassis,
 
 
 def is_provider_network(network):
+    return network.get(provider_net.PHYSICAL_NETWORK, False)
+
+
+def is_external_network(network):
     return network.get(external_net.EXTERNAL, False)
 
 
