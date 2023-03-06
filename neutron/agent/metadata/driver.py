@@ -33,6 +33,7 @@ from neutron.agent.l3 import namespaces
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils as linux_utils
+from neutron.common import _constants as common_constants
 from neutron.common import coordination
 from neutron.common import utils as common_utils
 
@@ -266,9 +267,30 @@ class MetadataDriver(object):
             # HAProxy cannot bind() until IPv6 Duplicate Address Detection
             # completes. We must wait until the address leaves its 'tentative'
             # state.
-            ip_lib.IpAddrCommand(
-                parent=ip_lib.IPDevice(name=bind_interface, namespace=ns_name)
-            ).wait_until_address_ready(address=bind_address_v6)
+            try:
+                ip_lib.IpAddrCommand(
+                    parent=ip_lib.IPDevice(name=bind_interface,
+                                           namespace=ns_name)
+                ).wait_until_address_ready(address=bind_address_v6)
+            except ip_lib.DADFailed as exc:
+                # This failure means that another DHCP agent has already
+                # configured this metadata address, so all requests will
+                # be via that single agent.
+                LOG.info('DAD failed for address %(address)s on interface '
+                         '%(interface)s in namespace %(namespace)s on network '
+                         '%(network)s, deleting it. Exception: %(exception)s',
+                         {'address': bind_address_v6,
+                          'interface': bind_interface,
+                          'namespace': ns_name,
+                          'network': network_id,
+                          'exception': str(exc)})
+                try:
+                    ip_lib.delete_ip_address(bind_address_v6, bind_interface,
+                                             namespace=ns_name)
+                except Exception as exc:
+                    # do not re-raise a delete failure, just log
+                    LOG.info('Address deletion failure: %s', str(exc))
+                return
         pm.enable()
         monitor.register(uuid, METADATA_SERVICE_NAME, pm)
         cls.monitors[router_id] = pm
@@ -363,6 +385,6 @@ def apply_metadata_nat_rules(router, proxy):
     if netutils.is_ipv6_enabled():
         for c, r in proxy.metadata_nat_rules(
                 proxy.metadata_port,
-                metadata_address=(constants.METADATA_V6_IP + '/128')):
+                metadata_address=(common_constants.METADATA_V6_CIDR)):
             router.iptables_manager.ipv6['nat'].add_rule(c, r)
     router.iptables_manager.apply()
