@@ -12,7 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from itertools import chain
 from unittest import mock
+
+import netaddr
 
 from neutron_lib.db import api as db_api
 from oslo_utils import uuidutils
@@ -292,6 +295,51 @@ class FloatingIPDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         obj_v1_1 = obj.obj_to_primitive(target_version='1.1')
         self.assertNotIn('qos_network_policy_id',
                          obj_v1_1['versioned_object.data'])
+
+    def test_get_scoped_floating_ips(self):
+        def compare_results(router_ids, original_fips):
+            self.assertCountEqual(
+                original_fips,
+                [
+                    fip[0].id
+                    for fip in router.FloatingIP.get_scoped_floating_ips(
+                        self.context, router_ids)
+                ]
+            )
+
+        # Setup three routers, networks and external networks
+        routers = {}
+        for i in range(3):
+            router_id = self._create_test_router_id(name=f'router-{i}')
+            routers[router_id] = []
+            net_id = self._create_test_network_id()
+            fip_net_id = self._create_external_network_id()
+
+            # Create three subnets and three FIPs using the
+            # aforementioned networks and routers
+            for j in range(3):
+                self._create_test_subnet_id(net_id)
+                fip = router.FloatingIP(
+                    self.context,
+                    floating_ip_address=netaddr.IPAddress(f'10.{i}.{j}.3'),
+                    floating_network_id=fip_net_id,
+                    floating_port_id=self._create_test_port_id(
+                        network_id=fip_net_id),
+                    fixed_port_id=self._create_test_port_id(
+                        network_id=net_id),
+                    router_id=router_id,
+                )
+                fip.create()
+                routers[router_id].append(fip.id)
+
+        # For each router we created, fetch the fips and ensure the
+        # results match what we originally created
+        for router_id, original_fips in routers.items():
+            compare_results([router_id], original_fips)
+
+        # Now try to fetch all the fips for all the routers at once
+        original_fips = list(chain.from_iterable(routers.values()))
+        compare_results(routers.keys(), original_fips)
 
 
 class DvrFipGatewayPortAgentBindingTestCase(

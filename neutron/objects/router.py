@@ -10,8 +10,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import itertools
-
 import netaddr
 
 from neutron_lib.api.definitions import availability_zone as az_def
@@ -409,20 +407,11 @@ class FloatingIP(base.NeutronDbObject):
 
         # Filter out on router_ids
         query = query.filter(l3.FloatingIP.router_id.in_(router_ids))
-        return cls._unique_floatingip_iterator(context, query)
 
-    @classmethod
-    def _unique_floatingip_iterator(cls, context, query):
-        """Iterates over only one row per floating ip. Ignores others."""
-        # Group rows by fip id. They must be sorted by same.
-        q = query.order_by(l3.FloatingIP.id)
-        keyfunc = lambda row: row[0]['id']
-        group_iterator = itertools.groupby(q, keyfunc)
+        # Remove duplicate rows based on FIP IDs
+        query = query.group_by(l3.FloatingIP.id)
 
-        # Just hit the first row of each group
-        for key, value in group_iterator:
-            # pylint: disable=stop-iteration-return
-            row = list(next(value))
+        for row in query:
             yield (cls._load_object(context, row[0]), row[1])
 
     @classmethod
