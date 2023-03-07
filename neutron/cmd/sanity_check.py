@@ -339,6 +339,14 @@ def check_ovn_sb_db_schema_virtual_port():
     return result
 
 
+def check_ovn_nb_db_schema_gateway_chassis():
+    result = checks.ovn_nb_db_schema_gateway_chassis_supported()
+    if not result:
+        LOG.warning('OVN NB DB schema does not support "Chassis_Gateway" '
+                    'table. This support was added in DB schema version 5.7.')
+    return result
+
+
 # Define CLI opts to test specific features, with a callback for the test
 OPTS = [
     BoolOptCallback('ovs_vxlan', check_ovs_vxlan, default=False,
@@ -419,6 +427,10 @@ OPTS = [
                     check_ovn_sb_db_schema_virtual_port,
                     help=_('Check OVN SB DB schema support virtual ports'),
                     default=False),
+    BoolOptCallback('ovn_nb_db_schema_gateway_chassis_support',
+                    check_ovn_nb_db_schema_gateway_chassis,
+                    help=_('Check OVN NB DB schema support Gateway_Chassis'),
+                    default=False),
 ]
 
 
@@ -469,6 +481,7 @@ def enable_tests_from_config():
         cfg.CONF.set_default('ovn_nb_db_schema_port_group_support', True)
         cfg.CONF.set_default('ovn_nb_db_schema_stateless_nat_support', True)
         cfg.CONF.set_default('ovn_sb_db_schema_virtual_port_support', True)
+        cfg.CONF.set_default('ovn_nb_db_schema_gateway_chassis_support', True)
 
 
 def all_tests_passed():
