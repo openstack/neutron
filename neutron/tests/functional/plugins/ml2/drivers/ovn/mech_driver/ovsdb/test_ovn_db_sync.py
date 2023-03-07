@@ -50,8 +50,8 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
     _extension_drivers = ['port_security', 'dns', 'qos', 'revision_plugin']
 
     def setUp(self, *args):
-        ovn_config.cfg.CONF.set_override('dns_domain', 'ovn.test')
         super(TestOvnNbSync, self).setUp(maintenance_worker=True)
+        ovn_config.cfg.CONF.set_override('dns_domain', 'ovn.test')
         ext_mgr = test_extraroute.ExtraRouteTestExtensionManager()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
         sg_mgr = test_securitygroup.SecurityGroupTestExtensionManager()
