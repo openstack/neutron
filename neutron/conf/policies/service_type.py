@@ -10,10 +10,9 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from neutron_lib import policy as neutron_policy
 from oslo_log import versionutils
 from oslo_policy import policy
-
-from neutron.conf.policies import base
 
 
 DEPRECATION_REASON = (
@@ -37,7 +36,7 @@ rules = [
         scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_service_provider',
-            check_str=base.RULE_ANY,
+            check_str=neutron_policy.RULE_ANY,
             deprecated_reason=DEPRECATION_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),

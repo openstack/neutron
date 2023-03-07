@@ -10,6 +10,7 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from neutron_lib import policy as neutron_policy
 from oslo_log import versionutils
 from oslo_policy import policy
 
@@ -45,7 +46,7 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_router',
-            check_str=base.RULE_ANY,
+            check_str=neutron_policy.RULE_ANY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -57,7 +58,7 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_router:distributed',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -69,7 +70,7 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_router:ha',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -82,7 +83,7 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_router:external_gateway_info',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -95,7 +96,7 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_router:external_gateway_info:network_id',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -108,7 +109,7 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_router:external_gateway_info:enable_snat',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -122,7 +123,7 @@ rules = [
         operations=ACTION_POST,
         deprecated_rule=policy.DeprecatedRule(
             name='create_router:external_gateway_info:external_fixed_ips',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -135,7 +136,7 @@ rules = [
         operations=ACTION_GET,
         deprecated_rule=policy.DeprecatedRule(
             name='get_router',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -147,7 +148,7 @@ rules = [
         operations=ACTION_GET,
         deprecated_rule=policy.DeprecatedRule(
             name='get_router:distributed',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -159,7 +160,7 @@ rules = [
         operations=ACTION_GET,
         deprecated_rule=policy.DeprecatedRule(
             name='get_router:ha',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -172,7 +173,7 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_router',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -184,7 +185,7 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_router:distributed',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -196,7 +197,7 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_router:ha',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -208,7 +209,7 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_router:external_gateway_info',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -221,7 +222,7 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_router:external_gateway_info:network_id',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -234,7 +235,7 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_router:external_gateway_info:enable_snat',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -247,7 +248,7 @@ rules = [
         operations=ACTION_PUT,
         deprecated_rule=policy.DeprecatedRule(
             name='update_router:external_gateway_info:external_fixed_ips',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -260,7 +261,7 @@ rules = [
         operations=ACTION_DELETE,
         deprecated_rule=policy.DeprecatedRule(
             name='delete_router',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -278,7 +279,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='add_router_interface',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -295,7 +296,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='remove_router_interface',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -312,7 +313,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='add_extraroutes',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since="Xena")
     ),
@@ -329,7 +330,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='remove_extraroutes',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since="Xena")
     ),

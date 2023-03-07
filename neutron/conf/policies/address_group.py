@@ -10,6 +10,7 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from neutron_lib import policy as neutron_policy
 from oslo_log import versionutils
 from oslo_policy import policy
 
@@ -31,7 +32,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_address_group',
-        check_str=base.policy_or(
+        check_str=neutron_policy.policy_or(
             base.ADMIN_OR_PROJECT_READER,
             'rule:shared_address_groups'),
         description='Get an address group',
@@ -48,8 +49,9 @@ rules = [
         scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_address_group',
-            check_str=base.policy_or(base.RULE_ADMIN_OR_OWNER,
-                                     'rule:shared_address_groups'),
+            check_str=neutron_policy.policy_or(
+                neutron_policy.RULE_ADMIN_OR_OWNER,
+                'rule:shared_address_groups'),
             deprecated_reason=DEPRECATION_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),

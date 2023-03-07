@@ -10,6 +10,7 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from neutron_lib import policy as neutron_policy
 from oslo_log import versionutils
 from oslo_policy import policy
 
@@ -42,7 +43,7 @@ rules = [
         scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='create_address_scope',
-            check_str=base.RULE_ANY,
+            check_str=neutron_policy.RULE_ANY,
             deprecated_reason=DEPRECATION_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -59,13 +60,13 @@ rules = [
         scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='create_address_scope:shared',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATION_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_address_scope',
-        check_str=base.policy_or(
+        check_str=neutron_policy.policy_or(
             base.ADMIN,
             base.PROJECT_READER,
             'rule:shared_address_scopes'),
@@ -83,8 +84,9 @@ rules = [
         scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='get_address_scope',
-            check_str=base.policy_or(base.RULE_ADMIN_OR_OWNER,
-                                     'rule:shared_address_scopes'),
+            check_str=neutron_policy.policy_or(
+                neutron_policy.RULE_ADMIN_OR_OWNER,
+                'rule:shared_address_scopes'),
             deprecated_reason=DEPRECATION_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -101,7 +103,7 @@ rules = [
         scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='update_address_scope',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATION_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -118,7 +120,7 @@ rules = [
         scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='update_address_scope:shared',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATION_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -135,7 +137,7 @@ rules = [
         scope_types=['project'],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_address_scope',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATION_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
