@@ -1474,7 +1474,6 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         db_pgs = []
         for sg in self._list('security-groups')['security_groups']:
             db_pgs.append(utils.ovn_port_group_name(sg['id']))
-        db_pgs.append(ovn_const.OVN_DROP_PORT_GROUP_NAME)
 
         nb_pgs = _plugin_nb_ovn.get_sg_port_groups()
 
@@ -1484,7 +1483,8 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
 
         if should_match:
             self.assertCountEqual(nb_pgs, db_pgs)
-            self.assertCountEqual(mn_pgs, db_pgs)
+            # pg_drop port group doesn't have corresponding neutron sg
+            self.assertEqual(len(mn_pgs), len(db_pgs) + 1)
         else:
             self.assertRaises(AssertionError, self.assertCountEqual,
                               nb_pgs, db_pgs)
