@@ -507,6 +507,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             LOG.warning("Can't update segmentation id on no uniq segment "
                         "for a network %s", network['id'])
             return
+        except vlanmanager.MappingNotFound:
+            LOG.debug("Mapping not found for network %s", network['id'])
+            return
 
         if segmentation_id_old is None:
             # The segmentation id did not changed.
