@@ -803,7 +803,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         port_groups = {}
         for row in self._tables['Port_Group'].rows.values():
             name = getattr(row, 'name')
-            if not (ovn_const.OVN_SG_EXT_ID_KEY in row.external_ids or
+            if (ovn_const.OVN_SG_EXT_ID_KEY not in row.external_ids or
                     name == ovn_const.OVN_DROP_PORT_GROUP_NAME):
                 continue
             data = {}
