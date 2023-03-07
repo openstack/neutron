@@ -101,10 +101,9 @@ class QoSBandwidthLimitEvent(row_event.RowEvent):
 
     def run(self, event, row, old):
         port_id = row.external_ids[ovn_const.OVN_PORT_EXT_ID_KEY]
-        max_bw_kbps = int(row.bandwidth['rate'])
-        LOG.debug(self.LOG_MSG, str(row.uuid), port_id, max_bw_kbps, event)
         max_kbps, min_kbps = agent_ovsdb.get_port_qos(self.ovn_agent.nb_idl,
                                                       port_id)
+        LOG.debug(self.LOG_MSG, str(row.uuid), port_id, max_kbps, event)
         self.ovn_agent.qos_hwol_ext.update_egress(port_id, max_kbps, min_kbps)
 
 
@@ -136,10 +135,9 @@ class QoSMinimumBandwidthEvent(row_event.RowEvent):
         return True
 
     def run(self, event, row, old):
-        min_bw_kbps = int(row.options[ovn_const.LSP_OPTIONS_QOS_MIN_RATE])
-        LOG.debug(self.LOG_MSG, row.name, min_bw_kbps, event)
         max_kbps, min_kbps = agent_ovsdb.get_port_qos(self.ovn_agent.nb_idl,
                                                       row.name)
+        LOG.debug(self.LOG_MSG, row.name, min_kbps, event)
         self.ovn_agent.qos_hwol_ext.update_egress(row.name, max_kbps, min_kbps)
 
 
