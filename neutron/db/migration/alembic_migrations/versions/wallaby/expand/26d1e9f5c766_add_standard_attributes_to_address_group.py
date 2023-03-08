@@ -48,17 +48,16 @@ standardattrs = sa.Table(
 
 def generate_records_for_existing():
     session = sa.orm.Session(bind=op.get_bind())
-    with session.begin(subtransactions=True):
-        for row in session.query(TABLE_MODEL):
-            res = session.execute(
-                standardattrs.insert().values(resource_type=TABLE,
-                                              description=row[1])
-            )
-            session.execute(
-                TABLE_MODEL.update().values(
-                    standard_attr_id=res.inserted_primary_key[0]).where(
-                        TABLE_MODEL.c.id == row[0])
-            )
+    for row in session.query(TABLE_MODEL):
+        res = session.execute(
+            standardattrs.insert().values(resource_type=TABLE,
+                                          description=row[1])
+        )
+        session.execute(
+            TABLE_MODEL.update().values(
+                standard_attr_id=res.inserted_primary_key[0]).where(
+                    TABLE_MODEL.c.id == row[0])
+        )
     # this commit is necessary to allow further operations
     session.commit()
 

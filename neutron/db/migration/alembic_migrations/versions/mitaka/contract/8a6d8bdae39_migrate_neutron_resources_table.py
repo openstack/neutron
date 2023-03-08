@@ -69,18 +69,17 @@ def upgrade():
 def generate_records_for_existing():
     session = sa.orm.Session(bind=op.get_bind())
     values = []
-    with session.begin(subtransactions=True):
-        for table, model in TABLE_MODELS:
-            for row in session.query(model):
-                # NOTE(kevinbenton): without this disabled, pylint complains
-                # about a missing 'dml' argument.
-                # pylint: disable=no-value-for-parameter
-                res = session.execute(
-                    standardattrs.insert().values(resource_type=table))
-                session.execute(
-                    model.update().values(
-                        standard_attr_id=res.inserted_primary_key[0]).where(
-                            model.c.id == row[0]))
+    for table, model in TABLE_MODELS:
+        for row in session.query(model):
+            # NOTE(kevinbenton): without this disabled, pylint complains
+            # about a missing 'dml' argument.
+            # pylint: disable=no-value-for-parameter
+            res = session.execute(
+                standardattrs.insert().values(resource_type=table))
+            session.execute(
+                model.update().values(
+                    standard_attr_id=res.inserted_primary_key[0]).where(
+                        model.c.id == row[0]))
     # this commit is necessary to allow further operations
     session.commit()
     return values

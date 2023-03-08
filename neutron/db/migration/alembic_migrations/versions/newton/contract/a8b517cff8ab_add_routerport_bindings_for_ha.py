@@ -49,20 +49,19 @@ def upgrade():
                             sa.Column('port_id', sa.String(36)),
                             sa.Column('port_type', sa.String(255)))
     session = sa.orm.Session(bind=op.get_bind())
-    with session.begin(subtransactions=True):
-        router_port_tuples = set()
-        for ha_bind in session.query(ha_bindings):
-            router_port_tuples.add((ha_bind.router_id, ha_bind.port_id))
-        # we have to remove any from the bulk insert that may already exist
-        # as a result of Ifd3e007aaf2a2ed8123275aa3a9f540838e3c003 being
-        # back-ported
-        for router_port in session.query(router_ports).filter(
-                router_ports.c.port_type ==
-                constants.DEVICE_OWNER_ROUTER_HA_INTF):
-            router_port_tuples.discard((router_port.router_id,
-                                        router_port.port_id))
-        new_records = [dict(router_id=router_id, port_id=port_id,
-                            port_type=constants.DEVICE_OWNER_ROUTER_HA_INTF)
-                       for router_id, port_id in router_port_tuples]
+    router_port_tuples = set()
+    for ha_bind in session.query(ha_bindings):
+        router_port_tuples.add((ha_bind.router_id, ha_bind.port_id))
+    # we have to remove any from the bulk insert that may already exist
+    # as a result of Ifd3e007aaf2a2ed8123275aa3a9f540838e3c003 being
+    # back-ported
+    for router_port in session.query(router_ports).filter(
+            router_ports.c.port_type ==
+            constants.DEVICE_OWNER_ROUTER_HA_INTF):
+        router_port_tuples.discard((router_port.router_id,
+                                    router_port.port_id))
+    new_records = [dict(router_id=router_id, port_id=port_id,
+                        port_type=constants.DEVICE_OWNER_ROUTER_HA_INTF)
+                   for router_id, port_id in router_port_tuples]
     op.bulk_insert(router_ports, new_records)
     session.commit()

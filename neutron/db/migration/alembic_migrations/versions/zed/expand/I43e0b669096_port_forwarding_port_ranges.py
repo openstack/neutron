@@ -110,20 +110,19 @@ def migrate_values():
                        'socket': row[1],
                        'external_port': row[2]})
 
-    with session.begin(subtransactions=True):
-        for value in values:
-            internal_ip_address, internal_port = str(
-                value['socket']).split(':')
-            external_port = value['external_port']
-            internal_port = int(internal_port)
-            session.execute(
-                pf_table.update().values(
-                    internal_port_start=internal_port,
-                    internal_port_end=internal_port,
-                    external_port_start=external_port,
-                    external_port_end=external_port,
-                    internal_ip_address=internal_ip_address).where(
-                        pf_table.c.id == value['id']))
+    for value in values:
+        internal_ip_address, internal_port = str(
+            value['socket']).split(':')
+        external_port = value['external_port']
+        internal_port = int(internal_port)
+        session.execute(
+            pf_table.update().values(
+                internal_port_start=internal_port,
+                internal_port_end=internal_port,
+                external_port_start=external_port,
+                external_port_end=external_port,
+                internal_ip_address=internal_ip_address).where(
+                    pf_table.c.id == value['id']))
     session.commit()
 
 

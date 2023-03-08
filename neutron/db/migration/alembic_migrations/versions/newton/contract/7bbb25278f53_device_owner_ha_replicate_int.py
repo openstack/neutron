@@ -56,15 +56,14 @@ def update_device_owner_ha_replicated_interface():
                      sa.Column('device_id', sa.String(255)))
 
     session = sa.orm.Session(bind=op.get_bind())
-    with session.begin(subtransactions=True):
-        for router_attr in session.query(
-                router_attr_table).filter(router_attr_table.c.ha):
-            session.execute(routerports.update().values(
-                port_type=constants.DEVICE_OWNER_HA_REPLICATED_INT).where(
-                routerports.c.router_id == router_attr.router_id).where(
-                routerports.c.port_type == constants.DEVICE_OWNER_ROUTER_INTF))
-            session.execute(ports.update().values(
-                device_owner=constants.DEVICE_OWNER_HA_REPLICATED_INT).where(
-                ports.c.device_id == router_attr.router_id).where(
-                ports.c.device_owner == constants.DEVICE_OWNER_ROUTER_INTF))
+    for router_attr in session.query(
+            router_attr_table).filter(router_attr_table.c.ha):
+        session.execute(routerports.update().values(
+            port_type=constants.DEVICE_OWNER_HA_REPLICATED_INT).where(
+            routerports.c.router_id == router_attr.router_id).where(
+            routerports.c.port_type == constants.DEVICE_OWNER_ROUTER_INTF))
+        session.execute(ports.update().values(
+            device_owner=constants.DEVICE_OWNER_HA_REPLICATED_INT).where(
+            ports.c.device_id == router_attr.router_id).where(
+            ports.c.device_owner == constants.DEVICE_OWNER_ROUTER_INTF))
     session.commit()

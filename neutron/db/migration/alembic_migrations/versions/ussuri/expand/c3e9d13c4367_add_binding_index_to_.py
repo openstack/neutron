@@ -51,16 +51,15 @@ def upgrade():
 
     networks_to_bindings = defaultdict(list)
     session = sa.orm.Session(bind=op.get_bind())
-    with session.begin(subtransactions=True):
-        for result in session.query(bindings_table):
-            networks_to_bindings[result.network_id].append(result)
+    for result in session.query(bindings_table):
+        networks_to_bindings[result.network_id].append(result)
 
-        for bindings in networks_to_bindings.values():
-            for index, result in enumerate(bindings):
-                session.execute(bindings_table.update().values(
-                    binding_index=index + 1).where(
-                    bindings_table.c.network_id == result.network_id).where(
-                    bindings_table.c.dhcp_agent_id == result.dhcp_agent_id))
+    for bindings in networks_to_bindings.values():
+        for index, result in enumerate(bindings):
+            session.execute(bindings_table.update().values(
+                binding_index=index + 1).where(
+                bindings_table.c.network_id == result.network_id).where(
+                bindings_table.c.dhcp_agent_id == result.dhcp_agent_id))
     session.commit()
 
     op.create_unique_constraint(
