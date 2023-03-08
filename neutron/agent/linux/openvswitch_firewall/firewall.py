@@ -40,6 +40,7 @@ from neutron.agent.linux.openvswitch_firewall import constants as ovsfw_consts
 from neutron.agent.linux.openvswitch_firewall import exceptions
 from neutron.agent.linux.openvswitch_firewall import iptables
 from neutron.agent.linux.openvswitch_firewall import rules
+from neutron.common import utils as n_utils
 
 LOG = logging.getLogger(__name__)
 CONJ_ID_REGEX = re.compile(r"conj_id=(\d+),")
@@ -543,7 +544,8 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                                    applied
 
         """
-        self.permitted_ethertypes = cfg.CONF.SECURITYGROUP.permitted_ethertypes
+        self.permitted_ethertypes = n_utils.parse_permitted_ethertypes(
+            cfg.CONF.SECURITYGROUP.permitted_ethertypes)
         self.int_br = self.initialize_bridge(integration_bridge)
         self._initialize_sg()
         self._update_cookie = None
@@ -1178,24 +1180,14 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
         # Allow custom ethertypes
         for permitted_ethertype in self.permitted_ethertypes:
-            if permitted_ethertype[:2] == '0x':
-                try:
-                    hex_ethertype = hex(int(permitted_ethertype, base=16))
-                    action = ('resubmit(,%d)' %
-                              ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE)
-                    self._add_flow(
-                        table=ovs_consts.BASE_EGRESS_TABLE,
-                        priority=95,
-                        dl_type=hex_ethertype,
-                        reg_port=port.ofport,
-                        actions=action
-                    )
-                    continue
-                except ValueError:
-                    pass
-            LOG.warning("Custom ethertype %(permitted_ethertype)s is not "
-                        "a hexadecimal number.",
-                        {'permitted_ethertype': permitted_ethertype})
+            action = ('resubmit(,%d)' %
+                      ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE)
+            self._add_flow(
+                table=ovs_consts.BASE_EGRESS_TABLE,
+                priority=95,
+                dl_type=permitted_ethertype,
+                reg_port=port.ofport,
+                actions=action)
 
         # Drop all remaining egress connections
         self._add_flow(
@@ -1390,22 +1382,12 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
         # Allow custom ethertypes
         for permitted_ethertype in self.permitted_ethertypes:
-            if permitted_ethertype[:2] == '0x':
-                try:
-                    hex_ethertype = hex(int(permitted_ethertype, base=16))
-                    self._add_flow(
-                        table=ovs_consts.BASE_INGRESS_TABLE,
-                        priority=100,
-                        dl_type=hex_ethertype,
-                        reg_port=port.ofport,
-                        actions='output:{:d}'.format(port.ofport)
-                    )
-                    continue
-                except ValueError:
-                    pass
-            LOG.warning('Custom ethertype %(permitted_ethertype)s is not '
-                        'a hexadecimal number.',
-                        {'permitted_ethertype': permitted_ethertype})
+            self._add_flow(
+                table=ovs_consts.BASE_INGRESS_TABLE,
+                priority=100,
+                dl_type=permitted_ethertype,
+                reg_port=port.ofport,
+                actions='output:{:d}'.format(port.ofport))
 
         self._initialize_ingress_ipv6_icmp(port)
 

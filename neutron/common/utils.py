@@ -1088,3 +1088,23 @@ def sign_instance_id(conf, instance_id):
     secret = encodeutils.to_utf8(secret)
     instance_id = encodeutils.to_utf8(instance_id)
     return hmac.new(secret, instance_id, hashlib.sha256).hexdigest()
+
+
+def parse_permitted_ethertypes(permitted_ethertypes):
+    ret = set()
+    for pe in permitted_ethertypes:
+        if pe[:2].lower() != '0x':
+            LOG.warning('Custom ethertype %s is not a hexadecimal number.', pe)
+            continue
+
+        try:
+            value = hex(int(pe, 16))
+            if value in ret:
+                LOG.warning('Custom ethertype %s is repeated', pe)
+            else:
+                ret.add(value)
+        except ValueError:
+            LOG.warning('Custom ethertype %s is not a hexadecimal number.', pe)
+            continue
+
+    return ret

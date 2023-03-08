@@ -656,3 +656,24 @@ class SignatureTestCase(base.BaseTestCase):
             '773ba44693c7553d6ee20f61ea5d2757a9a4f4a44d2841ae4e95b52e4cd62db4',
             utils.sign_instance_id(conf, 'foo')
         )
+
+
+class ParsePermittedEthertypesTestCase(base.BaseTestCase):
+
+    @mock.patch.object(utils, 'LOG')
+    def test_parse_permitted_ethertypes(self, mock_log):
+        permitted_ethertypes = ['0x1234',
+                                '0x1234',
+                                '0x5678',
+                                '0XCAfe',
+                                '1112',
+                                '0x123R']
+        ret = utils.parse_permitted_ethertypes(permitted_ethertypes)
+        self.assertEqual({'0x1234', '0x5678', '0xcafe'}, ret)
+        calls = [mock.call('Custom ethertype %s is repeated', '0x1234'),
+                 mock.call('Custom ethertype %s is not a hexadecimal number.',
+                           '1112'),
+                 mock.call('Custom ethertype %s is not a hexadecimal number.',
+                           '0x123R'),
+                 ]
+        mock_log.warning.assert_has_calls(calls)
