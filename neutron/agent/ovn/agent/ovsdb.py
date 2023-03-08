@@ -160,9 +160,12 @@ def get_port_qos(nb_idl, port_id):
     this method is only returning the egress one. The min-bw rule is only
     implemented for egress traffic.
     """
-    lsp = nb_idl.lsp_get(port_id).execute(check_error=True)
-    if not lsp:
-        return {}
+    try:
+        lsp = nb_idl.lsp_get(port_id).execute(check_error=True)
+    except idlutils.RowNotFound:
+        # If the LSP is not present, we can't retrieve any QoS info. The
+        # default values are (0, 0).
+        return 0, 0
 
     net_name = lsp.external_ids[ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY]
     ls = nb_idl.lookup('Logical_Switch', net_name)
