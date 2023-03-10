@@ -69,9 +69,17 @@ class GetPortQosTestCase(base.TestOVNFunctionalBase):
         max_kbps, min_kbps = agent_ovsdb.get_port_qos(self.nb_api, lsp.name)
         self.assertEqual((max_qos_value, 0), (max_kbps, min_kbps))
 
-        # Remove the max-bw rukle
+        # Remove the max-bw rule
         ext_ids = {ovn_const.OVN_PORT_EXT_ID_KEY: lsp_name}
         self.nb_api.qos_del_ext_ids(
             network_name, ext_ids).execute(check_error=True)
         max_kbps, min_kbps = agent_ovsdb.get_port_qos(self.nb_api, lsp.name)
+        self.assertEqual((0, 0), (max_kbps, min_kbps))
+
+        # Remove the port, the default values returned by the method are (0, 0)
+        lsp_name = lsp.name
+        self.nb_api.lsp_del(lsp_name).execute(check_error=True)
+        lsp = self.nb_api.lookup('Logical_Switch_Port', lsp_name, default=None)
+        self.assertIsNone(lsp)
+        max_kbps, min_kbps = agent_ovsdb.get_port_qos(self.nb_api, lsp_name)
         self.assertEqual((0, 0), (max_kbps, min_kbps))
