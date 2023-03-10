@@ -13,6 +13,7 @@
 #    under the License.
 
 import os.path
+import shutil
 import tempfile
 from unittest import mock
 
@@ -203,56 +204,6 @@ class TestProcessManager(base.BaseTestCase):
             except common_utils.WaitTimeout:
                 self.fail('ProcessManager.enable() raised WaitTimeout')
 
-    def _create_env_var_testing_environment(self, script_content, _create_cmd):
-        with tempfile.NamedTemporaryFile('w+', dir='/tmp/',
-                                         delete=False) as script:
-            script.write(script_content)
-        output = tempfile.NamedTemporaryFile('w+', dir='/tmp/', delete=False)
-        os.chmod(script.name, 0o777)
-        service_name = 'my_new_service'
-        uuid = uuidutils.generate_uuid()
-        pm = ep.ProcessManager(self.conf, uuid, service=service_name,
-                               default_cmd_callback=_create_cmd)
-        return script, output, service_name, uuid, pm
-
-    def test_enable_check_process_id_env_var(self):
-        def _create_cmd(*args):
-            return [script.name, output.name]
-
-        self.execute_p.stop()
-        script, output, service_name, uuid, pm = (
-            self._create_env_var_testing_environment(SCRIPT, _create_cmd))
-        with mock.patch.object(ep.ProcessManager, 'active') as active:
-            active.__get__ = mock.Mock(return_value=False)
-            pm.enable()
-
-        with open(output.name, 'r') as f:
-            ret_value = f.readline().strip()
-        expected_value = ('Variable PROCESS_TAG set: %s-%s' %
-                          (service_name, uuid))
-        self.assertEqual(expected_value, ret_value)
-
-    def test_disable_check_process_id_env_var(self):
-        def _create_cmd(*args):
-            return [script.name, output.name]
-
-        self.execute_p.stop()
-        script, output, service_name, uuid, pm = (
-            self._create_env_var_testing_environment(SCRIPT, _create_cmd))
-        with mock.patch.object(ep.ProcessManager, 'active') as active, \
-                mock.patch.object(pm, 'get_kill_cmd') as mock_kill_cmd:
-            active.__get__ = mock.Mock(return_value=True)
-            # NOTE(ralonsoh): the script we are using for testing does not
-            # expect to receive the SIG number as the first argument.
-            mock_kill_cmd.return_value = [script.name, output.name]
-            pm.disable(sig='15')
-
-        with open(output.name, 'r') as f:
-            ret_value = f.readline().strip()
-        expected_value = ('Variable PROCESS_TAG set: %s-%s' %
-                          (service_name, uuid))
-        self.assertEqual(expected_value, ret_value)
-
     def test_reload_cfg_without_custom_reload_callback(self):
         with mock.patch.object(ep.ProcessManager, 'disable') as disable:
             manager = ep.ProcessManager(self.conf, 'uuid', namespace='ns')
@@ -439,3 +390,65 @@ class TestProcessManager(base.BaseTestCase):
                 manager = ep.ProcessManager(self.conf, 'uuid')
                 self.assertIsNone(manager.cmdline)
         proc.assert_called_once_with(4)
+
+
+class TestProcessManagerScript(TestProcessManager):
+    def setUp(self):
+        super().setUp()
+        self.env_path = tempfile.mkdtemp(prefix="pm_env_", dir="/tmp/")
+        os.chmod(self.env_path, 0o755)
+        self.addCleanup(self._clean_env_path)
+
+    def _create_env_var_testing_environment(self, script_content, _create_cmd):
+        with tempfile.NamedTemporaryFile('w+', dir=self.env_path,
+                                         delete=False) as script:
+            script.write(script_content)
+        output = tempfile.NamedTemporaryFile('w+', dir=self.env_path,
+                                             delete=False)
+        os.chmod(script.name, 0o777)
+        service_name = 'my_new_service'
+        uuid = uuidutils.generate_uuid()
+        pm = ep.ProcessManager(self.conf, uuid, service=service_name,
+                               default_cmd_callback=_create_cmd)
+        return script, output, service_name, uuid, pm
+
+    def _clean_env_path(self):
+        shutil.rmtree(self.env_path, ignore_errors=True)
+
+    def test_enable_check_process_id_env_var(self):
+        def _create_cmd(*args):
+            return [script.name, output.name]
+
+        self.execute_p.stop()
+        script, output, service_name, uuid, pm = (
+            self._create_env_var_testing_environment(SCRIPT, _create_cmd))
+        with mock.patch.object(ep.ProcessManager, 'active') as active:
+            active.__get__ = mock.Mock(return_value=False)
+            pm.enable()
+
+        with open(output.name, 'r') as f:
+            ret_value = f.readline().strip()
+        expected_value = ('Variable PROCESS_TAG set: %s-%s' %
+                          (service_name, uuid))
+        self.assertEqual(expected_value, ret_value)
+
+    def test_disable_check_process_id_env_var(self):
+        def _create_cmd(*args):
+            return [script.name, output.name]
+
+        self.execute_p.stop()
+        script, output, service_name, uuid, pm = (
+            self._create_env_var_testing_environment(SCRIPT, _create_cmd))
+        with mock.patch.object(ep.ProcessManager, 'active') as active, \
+                mock.patch.object(pm, 'get_kill_cmd') as mock_kill_cmd:
+            active.__get__ = mock.Mock(return_value=True)
+            # NOTE(ralonsoh): the script we are using for testing does not
+            # expect to receive the SIG number as the first argument.
+            mock_kill_cmd.return_value = [script.name, output.name]
+            pm.disable(sig='15')
+
+        with open(output.name, 'r') as f:
+            ret_value = f.readline().strip()
+        expected_value = ('Variable PROCESS_TAG set: %s-%s' %
+                          (service_name, uuid))
+        self.assertEqual(expected_value, ret_value)
