@@ -465,10 +465,10 @@ class AdminTests(PortAPITestCase):
     def test_create_port_with_fixed_ips_and_subnet_id(self):
         self.assertTrue(
             policy.enforce(self.context,
-                           'create_port:fixed_ips:subent_id', self.target))
+                           'create_port:fixed_ips:subnet_id', self.target))
         self.assertTrue(
             policy.enforce(self.context,
-                           'create_port:fixed_ips:subent_id', self.alt_target))
+                           'create_port:fixed_ips:subnet_id', self.alt_target))
 
     def test_create_port_with_port_security_enabled(self):
         self.assertTrue(
@@ -624,10 +624,10 @@ class AdminTests(PortAPITestCase):
     def test_update_port_with_fixed_ips_and_subnet_id(self):
         self.assertTrue(
             policy.enforce(self.context,
-                           'update_port:fixed_ips:subent_id', self.target))
+                           'update_port:fixed_ips:subnet_id', self.target))
         self.assertTrue(
             policy.enforce(self.context,
-                           'update_port:fixed_ips:subent_id', self.alt_target))
+                           'update_port:fixed_ips:subnet_id', self.alt_target))
 
     def test_update_port_with_port_security_enabled(self):
         self.assertTrue(
