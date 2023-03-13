@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    [`bug 2003455 <https://bugs.launchpad.net/neutron/+bug/2003455>`_]
+    Previous commit (https://review.opendev.org/c/openstack/neutron/+/871252)
+    added a workaround to avoid vlan provider networks traffic to be tunneled
+    to the compute nodes but it was still centralized. Now the traffic is
+    distributed thanks to using the "redirect-type" flag on the ovn gateway
+    port.
