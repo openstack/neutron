@@ -1470,10 +1470,10 @@ def get_devices_info(namespace, attrs=None, **kwargs):
                      'IFLA_VXLAN_ID'],
         'vxlan_group': ['IFLA_LINKINFO', 'IFLA_INFO_KIND', 'IFLA_INFO_DATA',
                         'IFLA_VXLAN_GROUP'],
-        'vxlan_link_index': ['IFLA_LINKINFO', 'IFLA_INFO_KIND', 'IFLA_INFO_DATA',
-                             'IFLA_VXLAN_LINK'],
-        'vxlan_link_name': ['IFLA_LINKINFO', 'IFLA_INFO_KIND', 'IFLA_INFO_DATA',
-                            'IFLA_VXLAN_LINK'],
+        'vxlan_link_index': ['IFLA_LINKINFO', 'IFLA_INFO_KIND',
+                             'IFLA_INFO_DATA', 'IFLA_VXLAN_LINK'],
+        'vxlan_link_name': ['IFLA_LINKINFO', 'IFLA_INFO_KIND',
+                            'IFLA_INFO_DATA', 'IFLA_VXLAN_LINK'],
     }
     attr_filter = set()
     if attrs is not None:

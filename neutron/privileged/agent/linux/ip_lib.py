@@ -646,7 +646,8 @@ def get_device_names(namespace, **kwargs):
     """
     devices_attrs = [link['attrs'] for link
                      in get_link_devices(namespace,
-                                         attr_filter=['IFLA_IFNAME'], **kwargs)]
+                                         attr_filter=['IFLA_IFNAME'],
+                                         **kwargs)]
     device_names = []
     for device_attrs in devices_attrs:
         for link_name in (link_attr[1] for link_attr in device_attrs
