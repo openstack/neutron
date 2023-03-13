@@ -175,6 +175,16 @@ the default ``_constants.AGENT_RES_PROCESSING_STEP``:
     # (6) Check the OVS agent restart time, checking the "iteration" time and
     #     number.
 
+Permitted ethertypes
+~~~~~~~~~~~~~~~~~~~~
+
+The OVS Firewall blocks traffic that does not have either the IPv4 or IPv6
+ethertypes at present. This is a behavior change compared to the
+"iptables_hybrid" firewall, which only operates on IP packets and thus does
+not address other ethertypes. With the configuration option
+``permitted_ethertypes`` it is possible to define a set of allowed ethertypes.
+Any traffic with these allowed ethertypes with destination to a local port or
+generated from a local port and MAC address, will be allowed.
 
 References
 ~~~~~~~~~~
