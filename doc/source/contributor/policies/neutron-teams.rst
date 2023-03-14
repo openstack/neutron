@@ -94,7 +94,7 @@ The following are the current Neutron Lieutenants.
 +------------------------+---------------------------+----------------------+
 | Infra                  | Rodolfo Alonso Hernandez  | ralonsoh             |
 |                        +---------------------------+----------------------+
-|                        | YAMAMOTO Takashi          | yamamoto             |
+|                        | Jens Harbott              | frickler             |
 +------------------------+---------------------------+----------------------+
 | L3                     | Miguel Lavalle            | mlavalle             |
 |                        +---------------------------+----------------------+
