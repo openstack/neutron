@@ -10,6 +10,7 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from neutron_lib import policy as neutron_policy
 from oslo_log import versionutils
 from oslo_policy import policy
 
@@ -44,7 +45,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='create_subnetpool',
-            check_str=base.RULE_ANY,
+            check_str=neutron_policy.RULE_ANY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -61,7 +62,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='create_subnetpool:shared',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -80,13 +81,13 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='create_subnetpool:is_default',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_subnetpool',
-        check_str=base.policy_or(
+        check_str=neutron_policy.policy_or(
             base.ADMIN_OR_PROJECT_READER,
             'rule:shared_subnetpools'
         ),
@@ -104,8 +105,8 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='get_subnetpool',
-            check_str=base.policy_or(
-                base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.policy_or(
+                neutron_policy.RULE_ADMIN_OR_OWNER,
                 'rule:shared_subnetpools'),
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
@@ -123,7 +124,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='update_subnetpool',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -140,7 +141,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='update_subnetpool:is_default',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -157,7 +158,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_subnetpool',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -174,7 +175,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='onboard_network_subnets',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -191,7 +192,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='add_prefixes',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -208,7 +209,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='remove_prefixes',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),

@@ -10,6 +10,7 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from neutron_lib import policy as neutron_policy
 from oslo_log import versionutils
 from oslo_policy import policy
 
@@ -31,13 +32,13 @@ RULE_ADMIN_OWNER_OR_SG_OWNER = 'rule:admin_owner_or_sg_owner'
 rules = [
     policy.RuleDefault(
         name='admin_or_sg_owner',
-        check_str=base.policy_or(
+        check_str=neutron_policy.policy_or(
             'rule:context_is_admin',
             'tenant_id:%(security_group:tenant_id)s'),
         description='Rule for admin or security group owner access'),
     policy.RuleDefault(
         name='admin_owner_or_sg_owner',
-        check_str=base.policy_or(
+        check_str=neutron_policy.policy_or(
             'rule:owner',
             RULE_ADMIN_OR_SG_OWNER),
         description=('Rule for resource owner, '
@@ -62,13 +63,13 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='create_security_group',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_security_group',
-        check_str=base.policy_or(
+        check_str=neutron_policy.policy_or(
             base.ADMIN_OR_PROJECT_READER,
             'rule:shared_security_group'
         ),
@@ -86,7 +87,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='get_security_group',
-            check_str=base.RULE_ANY,
+            check_str=neutron_policy.RULE_ANY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -103,7 +104,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='update_security_group',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -120,7 +121,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_security_group',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -140,13 +141,13 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='create_security_group_rule',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
         name='get_security_group_rule',
-        check_str=base.policy_or(
+        check_str=neutron_policy.policy_or(
             base.ADMIN_OR_PROJECT_READER,
             base.RULE_SG_OWNER),
         scope_types=['project'],
@@ -180,7 +181,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_security_group_rule',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),

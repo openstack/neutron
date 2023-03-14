@@ -10,6 +10,7 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from neutron_lib import policy as neutron_policy
 from oslo_log import versionutils
 from oslo_policy import policy
 
@@ -28,10 +29,10 @@ rules = [
     # TODO(ralonsoh): remove 'target_tenant=*' reference.
     policy.RuleDefault(
         name='restrict_wildcard',
-        check_str=base.policy_or(
+        check_str=neutron_policy.policy_or(
             '(not field:rbac_policy:target_tenant=* and '
             'not field:rbac_policy:target_project=*)',
-            base.RULE_ADMIN_ONLY),
+            neutron_policy.RULE_ADMIN_ONLY),
         description='Definition of a wildcard target_project'),
 
     policy.DocumentedRuleDefault(
@@ -47,7 +48,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='create_rbac_policy',
-            check_str=base.RULE_ANY,
+            check_str=neutron_policy.RULE_ANY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -55,7 +56,7 @@ rules = [
     # and remove 'target_tenant=*' reference.
     policy.DocumentedRuleDefault(
         name='create_rbac_policy:target_tenant',
-        check_str=base.policy_or(
+        check_str=neutron_policy.policy_or(
             base.ADMIN,
             '(not field:rbac_policy:target_tenant=* and '
             'not field:rbac_policy:target_project=*)'),
@@ -86,7 +87,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='update_rbac_policy',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -94,7 +95,7 @@ rules = [
     # and remove 'target_tenant=*' reference.
     policy.DocumentedRuleDefault(
         name='update_rbac_policy:target_tenant',
-        check_str=base.policy_or(
+        check_str=neutron_policy.policy_or(
             base.ADMIN,
             '(not field:rbac_policy:target_tenant=* and '
             'not field:rbac_policy:target_project=*)'),
@@ -107,9 +108,9 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='update_rbac_policy:target_tenant',
-            check_str=base.policy_and(
+            check_str=neutron_policy.policy_and(
                 'rule:restrict_wildcard',
-                base.RULE_ADMIN_OR_OWNER),
+                neutron_policy.RULE_ADMIN_OR_OWNER),
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY),
         scope_types=['project'],
@@ -131,7 +132,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='get_rbac_policy',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -148,7 +149,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_rbac_policy',
-            check_str=base.RULE_ADMIN_OR_OWNER,
+            check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),

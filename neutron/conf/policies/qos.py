@@ -10,6 +10,7 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
+from neutron_lib import policy as neutron_policy
 from oslo_log import versionutils
 from oslo_policy import policy
 
@@ -27,7 +28,7 @@ rules = [
         description='Rule of shared qos policy'),
     policy.DocumentedRuleDefault(
         name='get_policy',
-        check_str=base.policy_or(
+        check_str=neutron_policy.policy_or(
             base.ADMIN_OR_PROJECT_READER,
             'rule:shared_qos_policy'
         ),
@@ -45,7 +46,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='get_policy',
-            check_str=base.RULE_ANY,
+            check_str=neutron_policy.RULE_ANY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -62,7 +63,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='create_policy',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -79,7 +80,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='update_policy',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -96,7 +97,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_policy',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -118,7 +119,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='get_rule_type',
-            check_str=base.RULE_ANY,
+            check_str=neutron_policy.RULE_ANY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -141,7 +142,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='get_policy_bandwidth_limit_rule',
-            check_str=base.RULE_ANY,
+            check_str=neutron_policy.RULE_ANY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -158,7 +159,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='create_policy_bandwidth_limit_rule',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -176,7 +177,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='update_policy_bandwidth_limit_rule',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -194,7 +195,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_policy_bandwidth_limit_rule',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -273,7 +274,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='get_policy_dscp_marking_rule',
-            check_str=base.RULE_ANY,
+            check_str=neutron_policy.RULE_ANY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -290,7 +291,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='create_policy_dscp_marking_rule',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -308,7 +309,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='update_policy_dscp_marking_rule',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -326,7 +327,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_policy_dscp_marking_rule',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -349,7 +350,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='get_policy_minimum_bandwidth_rule',
-            check_str=base.RULE_ANY,
+            check_str=neutron_policy.RULE_ANY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -366,7 +367,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='create_policy_minimum_bandwidth_rule',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -384,7 +385,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='update_policy_minimum_bandwidth_rule',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -402,7 +403,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_policy_minimum_bandwidth_rule',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -474,7 +475,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='get_alias_bandwidth_limit_rule',
-            check_str=base.RULE_ANY,
+            check_str=neutron_policy.RULE_ANY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -491,7 +492,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='update_alias_bandwidth_limit_rule',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -508,7 +509,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_alias_bandwidth_limit_rule',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -525,7 +526,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='get_alias_dscp_marking_rule',
-            check_str=base.RULE_ANY,
+            check_str=neutron_policy.RULE_ANY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -542,7 +543,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='update_alias_dscp_marking_rule',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -559,7 +560,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_alias_dscp_marking_rule',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -576,7 +577,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='get_alias_minimum_bandwidth_rule',
-            check_str=base.RULE_ANY,
+            check_str=neutron_policy.RULE_ANY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -593,7 +594,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='update_alias_minimum_bandwidth_rule',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
@@ -610,7 +611,7 @@ rules = [
         ],
         deprecated_rule=policy.DeprecatedRule(
             name='delete_alias_minimum_bandwidth_rule',
-            check_str=base.RULE_ADMIN_ONLY,
+            check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
