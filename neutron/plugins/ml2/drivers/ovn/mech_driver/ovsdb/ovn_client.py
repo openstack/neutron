@@ -2395,17 +2395,26 @@ class OVNClient(object):
                     return fixed_ip['ip_address']
 
     def create_metadata_port(self, context, network):
-        if ovn_conf.is_ovn_metadata_enabled():
-            metadata_port = self._find_metadata_port(context, network['id'])
-            if not metadata_port:
-                # Create a neutron port for DHCP/metadata services
-                port = {'port':
-                        {'network_id': network['id'],
+        if not ovn_conf.is_ovn_metadata_enabled():
+            return
+
+        if self._find_metadata_port(context, network['id']):
+            return
+
+        # Create a neutron port for DHCP/metadata services
+        filters = {'network_id': [network['id']]}
+        subnets = self._plugin.get_subnets(context, filters=filters)
+        fixed_ips = [{'subnet_id': s['id']}
+                     for s in subnets if s['enable_dhcp']]
+        port = {'port': {'network_id': network['id'],
                          'tenant_id': network['project_id'],
                          'device_owner': const.DEVICE_OWNER_DISTRIBUTED,
-                         'device_id': 'ovnmeta-%s' % network['id']}}
-                # TODO(boden): rehome create_port into neutron-lib
-                p_utils.create_port(self._plugin, context, port)
+                         'device_id': 'ovnmeta-%s' % network['id'],
+                         'fixed_ips': fixed_ips,
+                         }
+                }
+        # TODO(boden): rehome create_port into neutron-lib
+        p_utils.create_port(self._plugin, context, port)
 
     def update_metadata_port(self, context, network_id, subnet=None):
         """Update metadata port.
