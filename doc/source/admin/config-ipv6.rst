@@ -114,7 +114,7 @@ ipv6_ra_mode and ipv6_address_mode combinations
      - Not currently implemented in the reference implementation.
    * - dhcpv6-stateful
      - *N/S*
-     - 0,1,1
+     - 0,1,0
      - Off
      - Not currently implemented in the reference implementation.
    * - dhcpv6-stateless
@@ -129,7 +129,7 @@ ipv6_ra_mode and ipv6_address_mode combinations
      - Guest instance obtains IPv6 address from OpenStack managed radvd using SLAAC.
    * - dhcpv6-stateful
      - dhcpv6-stateful
-     - 0,1,1
+     - 0,1,0
      - Off
      - Guest instance obtains IPv6 address from dnsmasq using DHCPv6
        stateful and optional info from dnsmasq using DHCPv6.
@@ -174,6 +174,20 @@ ipv6_ra_mode and ipv6_address_mode combinations
 *A - Autonomous Address Configuration Flag,*
 *M - Managed Address Configuration Flag,*
 *O - Other Configuration Flag*
+
+.. note::
+
+    If the M flag is set to 1, the O flag can be either 1 or 0.
+    This is because the O flag can be ignored when the M flag is set to 1,
+    as mentioned in `RFC 4861 <https://www.rfc-editor.org/rfc/rfc4861#section-4.2>`_
+    below:
+
+    "If the M flag is set, the O flag is redundant and
+    can be ignored because DHCPv6 will return all
+    available configuration information."
+
+    For this reason, the neutron-generated advertisements will have the M flag
+    set to 1 and the O flag set to 0.
 
 Project network considerations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -344,13 +358,27 @@ addresses and additional network information through DHCPv6.
 
 * Autonomous Address Configuration Flag = 0
 * Managed Address Configuration Flag = 1
-* Other Configuration Flag = 1
+* Other Configuration Flag = 0
 
 .. note::
 
     If a router is not created and added to the subnet, DHCPv6 addressing will
     not succeed for instances since no Router Advertisement messages will
     be generated.
+
+.. note::
+
+    If the M flag is set to 1, the O flag can be either 1 or 0.
+    This is because the O flag can be ignored when the M flag is set to 1,
+    as mentioned in `RFC 4861 <https://www.rfc-editor.org/rfc/rfc4861#section-4.2>`_
+    below:
+
+    "If the M flag is set, the O flag is redundant and
+    can be ignored because DHCPv6 will return all
+    available configuration information."
+
+    For this reason, the neutron-generated advertisements will have the M flag
+    set to 1 and the O flag set to 0.
 
 Router support
 ~~~~~~~~~~~~~~
