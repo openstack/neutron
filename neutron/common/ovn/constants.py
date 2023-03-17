@@ -391,6 +391,7 @@ LSP_OPTIONS_REQUESTED_CHASSIS_KEY = 'requested-chassis'
 LSP_OPTIONS_MCAST_FLOOD_REPORTS = 'mcast_flood_reports'
 LSP_OPTIONS_MCAST_FLOOD = 'mcast_flood'
 LSP_OPTIONS_QOS_MIN_RATE = 'qos_min_rate'
+LSP_OPTIONS_LOCALNET_LEARN_FDB = 'localnet_learn_fdb'
 
 LRP_OPTIONS_RESIDE_REDIR_CH = 'reside-on-redirect-chassis'
 LRP_OPTIONS_REDIRECT_TYPE = 'redirect-type'

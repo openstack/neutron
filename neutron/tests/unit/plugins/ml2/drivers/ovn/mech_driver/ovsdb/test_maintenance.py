@@ -586,6 +586,102 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
 
         nb_idl.lsp_set_options.assert_has_calls(expected_calls)
 
+    def test_check_localnet_port_has_learn_fdb(self):
+        cfg.CONF.set_override('localnet_learn_fdb', 'True',
+                              group='ovn')
+        nb_idl = self.fake_ovn_client._nb_idl
+
+        # Already has the learn fdb option enabled
+        lsp0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={
+                "name": "lsp0",
+                "options": {
+                    constants.LSP_OPTIONS_LOCALNET_LEARN_FDB: "true",
+                },
+            }
+        )
+
+        # learn fdb option missing, needs update
+        lsp1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={
+                "name": "lsp1",
+                "options": {},
+            }
+        )
+
+        # learn fdb option set to false, needs update
+        lsp2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={
+                "name": "lsp2",
+                "options": {
+                    constants.LSP_OPTIONS_LOCALNET_LEARN_FDB: "false",
+                },
+            }
+        )
+
+        nb_idl.db_find_rows.return_value.execute.return_value = [
+            lsp0,
+            lsp1,
+            lsp2,
+        ]
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.periodic.check_localnet_port_has_learn_fdb)
+
+        options = {constants.LSP_OPTIONS_LOCALNET_LEARN_FDB: 'true'}
+        expected_calls = [mock.call('Logical_Switch_Port', 'lsp1',
+                                    ('options', options)),
+                          mock.call('Logical_Switch_Port', 'lsp2',
+                                    ('options', options))]
+        nb_idl.db_set.assert_has_calls(expected_calls)
+
+    def test_check_localnet_port_has_learn_fdb_disabled(self):
+        nb_idl = self.fake_ovn_client._nb_idl
+
+        # learn fdb option enabled, needs update
+        lsp0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={
+                "name": "lsp0",
+                "options": {
+                    constants.LSP_OPTIONS_LOCALNET_LEARN_FDB: "true",
+                },
+            }
+        )
+
+        # learn fdb option missing, no update needed
+        lsp1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={
+                "name": "lsp1",
+                "options": {},
+            }
+        )
+
+        # learn fdb option set to false, no update needed
+        lsp2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={
+                "name": "lsp2",
+                "options": {
+                    constants.LSP_OPTIONS_LOCALNET_LEARN_FDB: "false",
+                },
+            }
+        )
+
+        nb_idl.db_find_rows.return_value.execute.return_value = [
+            lsp0,
+            lsp1,
+            lsp2,
+        ]
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.periodic.check_localnet_port_has_learn_fdb)
+
+        options = {constants.LSP_OPTIONS_LOCALNET_LEARN_FDB: 'false'}
+        expected_calls = [mock.call('Logical_Switch_Port', 'lsp0',
+                                    ('options', options))]
+        nb_idl.db_set.assert_has_calls(expected_calls)
+
     def test_check_router_mac_binding_options(self):
         nb_idl = self.fake_ovn_client._nb_idl
         lr0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(

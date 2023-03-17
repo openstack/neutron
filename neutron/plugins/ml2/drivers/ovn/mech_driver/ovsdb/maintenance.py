@@ -650,6 +650,36 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
         raise periodics.NeverAgain()
 
+    # A static spacing value is used here, but this method will only run
+    # once per lock due to the use of periodics.NeverAgain().
+    @periodics.periodic(spacing=600, run_immediately=True)
+    def check_localnet_port_has_learn_fdb(self):
+        if not self.has_lock:
+            return
+
+        ports = self._nb_idl.db_find_rows(
+            "Logical_Switch_Port", ("type", "=", ovn_const.LSP_TYPE_LOCALNET)
+        ).execute(check_error=True)
+
+        with self._nb_idl.transaction(check_error=True) as txn:
+            for port in ports:
+                if ovn_conf.is_learn_fdb_enabled():
+                    fdb_opt = port.options.get(
+                        ovn_const.LSP_OPTIONS_LOCALNET_LEARN_FDB)
+                    if not fdb_opt or fdb_opt == 'false':
+                        txn.add(self._nb_idl.db_set(
+                            'Logical_Switch_Port', port.name,
+                            ('options',
+                             {ovn_const.LSP_OPTIONS_LOCALNET_LEARN_FDB: 'true'}
+                             )))
+                elif port.options.get(
+                        ovn_const.LSP_OPTIONS_LOCALNET_LEARN_FDB) == 'true':
+                    txn.add(self._nb_idl.db_set(
+                        'Logical_Switch_Port', port.name,
+                        ('options',
+                         {ovn_const.LSP_OPTIONS_LOCALNET_LEARN_FDB: 'false'})))
+        raise periodics.NeverAgain()
+
     # TODO(lucasagomes): Remove this in the Z cycle
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().

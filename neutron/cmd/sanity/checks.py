@@ -53,6 +53,7 @@ OVN_NB_DB_SCHEMA_GATEWAY_CHASSIS = '5.7'
 OVN_NB_DB_SCHEMA_PORT_GROUP = '5.11'
 OVN_NB_DB_SCHEMA_STATELESS_NAT = '5.17'
 OVN_SB_DB_SCHEMA_VIRTUAL_PORT = '2.5'
+OVN_LOCALNET_LEARN_FDB = '22.09'
 
 
 class OVNCheckType(enum.Enum):
@@ -654,6 +655,19 @@ def ovn_nb_db_schema_gateway_chassis_supported():
             return False
     except (OSError, RuntimeError, ValueError) as e:
         LOG.debug('Exception while checking OVN DB schema version. '
+                  'Exception: %s', e)
+        return False
+    return True
+
+
+def ovn_localnet_learn_fdb_support():
+    try:
+        ver = _get_ovn_version(OVNCheckType.nb_version)
+        minver = versionutils.convert_version_to_tuple(OVN_LOCALNET_LEARN_FDB)
+        if ver < minver:
+            return False
+    except (OSError, RuntimeError, ValueError) as e:
+        LOG.debug('Exception while checking OVN version. '
                   'Exception: %s', e)
         return False
     return True

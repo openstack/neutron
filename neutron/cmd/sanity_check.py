@@ -347,6 +347,14 @@ def check_ovn_nb_db_schema_gateway_chassis():
     return result
 
 
+def check_ovn_localnet_learn_fdb_support():
+    result = checks.ovn_localnet_learn_fdb_support()
+    if not result:
+        LOG.warning('OVN does not support localnet_learn_fdb option. '
+                    'This support was added in OVN 22.09.')
+    return result
+
+
 # Define CLI opts to test specific features, with a callback for the test
 OPTS = [
     BoolOptCallback('ovs_vxlan', check_ovs_vxlan, default=False,
@@ -430,6 +438,10 @@ OPTS = [
     BoolOptCallback('ovn_nb_db_schema_gateway_chassis_support',
                     check_ovn_nb_db_schema_gateway_chassis,
                     help=_('Check OVN NB DB schema support Gateway_Chassis'),
+                    default=False),
+    BoolOptCallback('ovn_localnet_learn_fdb_support',
+                    check_ovn_localnet_learn_fdb_support,
+                    help=_('Check OVN supports localnet_learn_fdb option'),
                     default=False),
 ]
 

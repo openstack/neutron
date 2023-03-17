@@ -1914,9 +1914,12 @@ class OVNClient(object):
     def create_provnet_port(self, network_id, segment, txn=None):
         tag = segment.get(segment_def.SEGMENTATION_ID, [])
         physnet = segment.get(segment_def.PHYSICAL_NETWORK)
+        fdb_enabled = ('true' if ovn_conf.is_learn_fdb_enabled()
+                       else 'false')
         options = {'network_name': physnet,
                    ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true',
-                   ovn_const.LSP_OPTIONS_MCAST_FLOOD: 'false'}
+                   ovn_const.LSP_OPTIONS_MCAST_FLOOD: 'false',
+                   ovn_const.LSP_OPTIONS_LOCALNET_LEARN_FDB: fdb_enabled}
         cmd = self._nb_idl.create_lswitch_port(
             lport_name=utils.ovn_provnet_port_name(segment['id']),
             lswitch_name=utils.ovn_name(network_id),
