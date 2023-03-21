@@ -58,9 +58,11 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
     _mechanism_drivers = ['ovn']
     l3_plugin = 'neutron.services.ovn_l3.plugin.OVNL3RouterPlugin'
 
-    def _start_mock(self, path, return_value, new_callable=None):
+    def _start_mock(self, path, return_value=None, new_callable=None,
+                    side_effect=None):
         patcher = mock.patch(path, return_value=return_value,
-                             new_callable=new_callable)
+                             new_callable=new_callable,
+                             side_effect=side_effect)
         patch = patcher.start()
         self.addCleanup(patcher.stop)
         return patch
@@ -128,6 +130,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             'admin_state_up': True,
             'flavor_id': None,
             'external_gateway_info': self.fake_external_fixed_ips,
+            'external_gateways': [self.fake_external_fixed_ips],
             'gw_port_id': 'gw-port-id'
         }
         self.fake_router_without_ext_gw = {
@@ -144,8 +147,9 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                                  'fixed_ips': [{'ip_address': '192.168.1.1',
                                                 'subnet_id': 'ext-subnet-id'}],
                                  'mac_address': '00:00:00:02:04:06',
-                                 'network_id': self.fake_network['id'],
+                                 'network_id': 'ext-network-id',
                                  'id': 'gw-port-id'}
+        self.fake_ext_gw_ports = [self.fake_ext_gw_port]
         self.fake_ext_gw_port_assert = {
             'lrouter': 'neutron-router-id',
             'mac': '00:00:00:02:04:06',
@@ -156,7 +160,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 ovn_const.OVN_SUBNET_EXT_IDS_KEY: 'ext-subnet-id',
                 ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
                 ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY:
-                utils.ovn_name(self.fake_network['id'])},
+                utils.ovn_name('ext-network-id')},
             'gateway_chassis': ['hv1'],
             'options': {}}
         self.fake_floating_ip_attrs = {'floating_ip_address': '192.168.0.10',
@@ -250,6 +254,13 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.get_subnet = self._start_mock(
             'neutron.db.db_base_plugin_v2.NeutronDbPluginV2.get_subnet',
             return_value=self.fake_subnet)
+        self.get_subnets_by_network = self._start_mock(
+            'neutron.db.db_base_plugin_v2.NeutronDbPluginV2.'
+            'get_subnets_by_network',
+            side_effect=lambda _, x: {
+                self.fake_network['id']: [self.fake_subnet],
+                'ext-network-id': [self.fake_ext_subnet],
+            }[x])
         self.get_router = self._start_mock(
             'neutron.db.l3_db.L3_NAT_dbonly_mixin.get_router',
             return_value=self.fake_router)
@@ -318,6 +329,10 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self._start_mock(
             'neutron.common.ovn.utils.is_nat_gateway_port_supported',
             return_value=False)
+        self._get_router_gw_ports = self._start_mock(
+            'neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.ovn_client.'
+            'OVNClient._get_router_gw_ports',
+            return_value=self.fake_ext_gw_ports)
 
     def test__plugin_driver(self):
         # No valid mech drivers should raise an exception.
@@ -818,6 +833,9 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                                                           self.fake_subnet)
         self.get_port.return_value = self.fake_ext_gw_port
         grps.return_value = self.fake_router_ports
+        fake_old_ext_gw_port = self.fake_ext_gw_port.copy()
+        fake_old_ext_gw_port['id'] = 'old-gw-port-id'
+        self._get_router_gw_ports.return_value = [fake_old_ext_gw_port]
 
         payload = self._create_payload_for_router_update(
             self.get_router.return_value, self.fake_router_with_ext_gw)

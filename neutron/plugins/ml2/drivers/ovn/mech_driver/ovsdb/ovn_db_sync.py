@@ -15,7 +15,6 @@ from datetime import datetime
 import itertools
 
 from eventlet import greenthread
-from neutron_lib.api.definitions import l3
 from neutron_lib.api.definitions import segment as segment_def
 from neutron_lib import constants
 from neutron_lib import context
@@ -527,32 +526,28 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
             db_extends[router['id']]['snats'] = []
             db_extends[router['id']]['fips'] = []
             db_extends[router['id']]['fips_pfs'] = []
-            if not router.get(l3.EXTERNAL_GW_INFO):
-                continue
-            gateways = self._ovn_client._get_gw_info(ctx, router)
-            for gw_info in gateways:
-                prefix = (constants.IPv4_ANY if
-                          gw_info.ip_version == constants.IP_VERSION_4 else
-                          constants.IPv6_ANY)
-                if gw_info.gateway_ip:
-                    db_extends[router['id']]['routes'].append(
-                        {'destination': prefix,
-                         'nexthop': gw_info.gateway_ip,
-                         'external_ids': {
-                             ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
-                             ovn_const.OVN_SUBNET_EXT_ID_KEY:
-                             gw_info.subnet_id}})
-                if gw_info.ip_version == constants.IP_VERSION_6:
-                    continue
-                if gw_info.router_ip and utils.is_snat_enabled(router):
-                    networks = (
-                        self._ovn_client._get_v4_network_of_all_router_ports(
-                            ctx, router['id']))
-                    for network in networks:
-                        db_extends[router['id']]['snats'].append({
-                            'logical_ip': network,
-                            'external_ip': gw_info.router_ip,
-                            'type': 'snat'})
+            for gw_port in self._ovn_client._get_router_gw_ports(ctx,
+                                                                 router['id']):
+                for gw_info in self._ovn_client._get_gw_info(ctx, gw_port):
+                    if gw_info.gateway_ip:
+                        db_extends[router['id']]['routes'].append(
+                            {'destination': gw_info.ip_prefix,
+                             'nexthop': gw_info.gateway_ip,
+                             'external_ids': {
+                                 ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
+                                 ovn_const.OVN_SUBNET_EXT_ID_KEY:
+                                 gw_info.subnet_id}})
+                    if gw_info.ip_version == constants.IP_VERSION_6:
+                        continue
+                    if gw_info.router_ip and utils.is_snat_enabled(router):
+                        networks = self._ovn_client.\
+                            _get_v4_network_of_all_router_ports(
+                                ctx, router['id'])
+                        for network in networks:
+                            db_extends[router['id']]['snats'].append({
+                                'logical_ip': network,
+                                'external_ip': gw_info.router_ip,
+                                'type': 'snat'})
 
         fips = self.l3_plugin.get_floatingips(
             ctx, {'router_id': list(db_routers.keys())})

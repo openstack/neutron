@@ -19,6 +19,7 @@ import datetime
 
 import netaddr
 from neutron_lib.api.definitions import l3
+from neutron_lib.api.definitions import l3_ext_gw_multihoming
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
@@ -1180,17 +1181,21 @@ class OVNClient(object):
                 LOG.error('Unable to disassociate floating ip in gateway '
                           'router. Error: %s', e)
 
-    def _get_gw_info(self, context, router):
+    def _get_gw_info(self, context, port_dict):
         gateways_info = []
-        ext_gw_info = router.get(l3.EXTERNAL_GW_INFO, {})
-        network_id = ext_gw_info.get('network_id', '')
-        for ext_fixed_ip in ext_gw_info.get('external_fixed_ips', []):
-            subnet_id = ext_fixed_ip['subnet_id']
-            subnet = self._plugin.get_subnet(context, subnet_id)
+        network_id = port_dict.get('network_id')
+        subnet_by_id = {
+            subnet['id']: subnet
+            for subnet in self._plugin.get_subnets_by_network(
+                context, network_id)}
+        for fixed_ip in port_dict.get('fixed_ips'):
+            subnet_id = fixed_ip.get('subnet_id')
+            subnet = subnet_by_id.get(subnet_id)
+            ip_version = subnet.get('ip_version')
             gateways_info.append(GW_INFO(
-                network_id, subnet_id, ext_fixed_ip['ip_address'],
-                subnet.get('gateway_ip'), subnet['ip_version'],
-                const.IPv4_ANY if subnet['ip_version'] == const.IP_VERSION_4
+                network_id, subnet_id, fixed_ip.get('ip_address'),
+                subnet.get('gateway_ip'), ip_version,
+                const.IPv4_ANY if ip_version == const.IP_VERSION_4
                 else const.IPv6_ANY))
         return gateways_info
 
@@ -1199,21 +1204,23 @@ class OVNClient(object):
         if not networks:
             networks = []
         router_id = router['id']
-        gw_port_id = router['gw_port_id']
         gw_lrouter_name = utils.ovn_name(router_id)
-        gateways = self._get_gw_info(context, router)
-        for gw_info in gateways:
-            if gw_info.ip_version == const.IP_VERSION_4:
-                for network in networks:
-                    txn.add(self._nb_idl.delete_nat_rule_in_lrouter(
-                        gw_lrouter_name, type='snat', logical_ip=network,
-                        external_ip=gw_info.router_ip))
-            txn.add(self._nb_idl.delete_static_route(
-                gw_lrouter_name, ip_prefix=gw_info.ip_prefix,
-                nexthop=gw_info.gateway_ip))
-        txn.add(self._nb_idl.delete_lrouter_port(
-            utils.ovn_lrouter_port_name(gw_port_id),
-            gw_lrouter_name))
+        deleted_ports = []
+        for gw_port in self._get_router_gw_ports(context, router_id):
+            for gw_info in self._get_gw_info(context, gw_port):
+                if gw_info.ip_version == const.IP_VERSION_4:
+                    for network in networks:
+                        txn.add(self._nb_idl.delete_nat_rule_in_lrouter(
+                            gw_lrouter_name, type='snat', logical_ip=network,
+                            external_ip=gw_info.router_ip))
+                txn.add(self._nb_idl.delete_static_route(
+                    gw_lrouter_name, ip_prefix=gw_info.ip_prefix,
+                    nexthop=gw_info.gateway_ip))
+            txn.add(self._nb_idl.delete_lrouter_port(
+                utils.ovn_lrouter_port_name(gw_port['id']),
+                gw_lrouter_name))
+            deleted_ports.append(gw_port['id'])
+        return deleted_ports
 
     def _get_nets_and_ipv6_ra_confs_for_router_port(self, context, port):
         port_fixed_ips = port['fixed_ips']
@@ -1249,34 +1256,35 @@ class OVNClient(object):
         return list(networks), ipv6_ra_configs
 
     def _add_router_ext_gw(self, context, router, networks, txn):
+        lrouter_name = utils.ovn_name(router['id'])
+
         # 1. Add the external gateway router port.
         admin_context = context.elevated()
-        gateways = self._get_gw_info(admin_context, router)
-        gw_port_id = router['gw_port_id']
-        port = self._plugin.get_port(admin_context, gw_port_id)
-        self._create_lrouter_port(admin_context, router, port, txn=txn)
+        added_ports = []
+        for gw_port in self._get_router_gw_ports(admin_context, router['id']):
+            port = self._plugin.get_port(admin_context, gw_port['id'])
+            self._create_lrouter_port(admin_context, router, port, txn=txn)
+            added_ports.append(port)
 
-        # 2. Add default route with nexthop as gateway ip
-        lrouter_name = utils.ovn_name(router['id'])
-        for gw_info in gateways:
-            if gw_info.gateway_ip is None:
-                continue
-            columns = {'external_ids': {
-                ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
-                ovn_const.OVN_SUBNET_EXT_ID_KEY: gw_info.subnet_id}}
-            txn.add(self._nb_idl.add_static_route(
-                lrouter_name, ip_prefix=gw_info.ip_prefix,
-                nexthop=gw_info.gateway_ip, **columns))
+            # 2. Add default route with nexthop as gateway ip
+            for gw_info in self._get_gw_info(admin_context, gw_port):
+                if gw_info.gateway_ip is None:
+                    continue
+                columns = {'external_ids': {
+                    ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
+                    ovn_const.OVN_SUBNET_EXT_ID_KEY: gw_info.subnet_id}}
+                txn.add(self._nb_idl.add_static_route(
+                    lrouter_name, ip_prefix=gw_info.ip_prefix,
+                    nexthop=gw_info.gateway_ip, **columns))
 
         # 3. Add snat rules for tenant networks in lrouter if snat is enabled
         if utils.is_snat_enabled(router) and networks:
             self.update_nat_rules(router, networks, enable_snat=True, txn=txn)
-        return port
+        return added_ports
 
     def _check_external_ips_changed(self, ovn_snats,
                                     ovn_static_routes, router):
         context = n_context.get_admin_context()
-        gateways = self._get_gw_info(context, router)
         ovn_gw_subnets = None
         if self._nb_idl.is_col_present('Logical_Router_Static_Route',
                                        'external_ids'):
@@ -1285,14 +1293,28 @@ class OVNClient(object):
                     ovn_const.OVN_SUBNET_EXT_ID_KEY) for route in
                 ovn_static_routes]
 
-        for gw_info in gateways:
-            if ovn_gw_subnets and gw_info.subnet_id not in ovn_gw_subnets:
-                return True
-            if gw_info.ip_version == const.IP_VERSION_6:
-                continue
-            for snat in ovn_snats:
-                if snat.external_ip != gw_info.router_ip:
+        for gw_port in self._get_router_gw_ports(context, router['id']):
+            gw_infos = self._get_gw_info(context, gw_port)
+            if not gw_infos:
+                # The router is attached to a external network without a subnet
+                lrp = self._nb_idl.get_lrouter_port(
+                    utils.ovn_lrouter_port_name(gw_port['id']))
+                if not lrp:
+                    continue
+                lrp_ext_ids = getattr(lrp, 'external_ids', {})
+                if (ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY in lrp_ext_ids and
+                        lrp_ext_ids[ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY] != (
+                            utils.ovn_name(gw_port['network_id']))):
                     return True
+
+            for gw_info in gw_infos:
+                if ovn_gw_subnets and gw_info.subnet_id not in ovn_gw_subnets:
+                    return True
+                if gw_info.ip_version == const.IP_VERSION_6:
+                    continue
+                for snat in ovn_snats:
+                    if snat.external_ip != gw_info.router_ip:
+                        return True
 
         return False
 
@@ -1315,7 +1337,9 @@ class OVNClient(object):
         self._transaction(commands, txn=txn)
 
     def _get_router_gw_ports(self, context, router_id):
-        return self._plugin.get_ports(context, filters={
+        # NOTE(fnordahl): an elevated context is required here to ensure we
+        # have access to the data.
+        return self._plugin.get_ports(context.elevated(), filters={
             'device_owner': [const.DEVICE_OWNER_ROUTER_GW],
             'device_id': [router_id]})
 
@@ -1367,7 +1391,7 @@ class OVNClient(object):
         external_ids = self._gen_router_ext_ids(router)
         enabled = router.get('admin_state_up')
         lrouter_name = utils.ovn_name(router['id'])
-        added_gw_port = None
+        added_gw_ports = []
         options = {'always_learn_from_arp_request': 'false',
                    'dynamic_neigh_routers': 'true',
                    ovn_const.LR_OPTIONS_MAC_AGE_LIMIT:
@@ -1383,14 +1407,15 @@ class OVNClient(object):
             if add_external_gateway:
                 networks = self._get_v4_network_of_all_router_ports(
                     context, router['id'])
-                if router.get(l3.EXTERNAL_GW_INFO) and networks is not None:
-                    added_gw_port = self._add_router_ext_gw(
+                if (router.get(l3_ext_gw_multihoming.EXTERNAL_GATEWAYS) and
+                        networks is not None):
+                    added_gw_ports = self._add_router_ext_gw(
                         context, router, networks, txn)
 
             self._qos_driver.create_router(txn, router)
 
-        if added_gw_port:
-            db_rev.bump_revision(context, added_gw_port,
+        for gw_port in added_gw_ports:
+            db_rev.bump_revision(context, gw_port,
                                  ovn_const.TYPE_ROUTER_PORTS)
         db_rev.bump_revision(context, router, ovn_const.TYPE_ROUTERS)
 
@@ -1402,13 +1427,16 @@ class OVNClient(object):
         router_id = new_router['id']
         router_name = utils.ovn_name(router_id)
         ovn_router = self._nb_idl.get_lrouter(router_name)
-        gateway_new = new_router.get(l3.EXTERNAL_GW_INFO)
+        # Note that this needs to be retrieved from the request
+        gateway_new = new_router.get(l3_ext_gw_multihoming.EXTERNAL_GATEWAYS)
         gateway_old = utils.get_lrouter_ext_gw_static_route(ovn_router)
-        added_gw_port = None
-        deleted_gw_port_id = None
+        added_gw_ports = []
+        deleted_gw_port_ids = []
 
         if router_object:
-            gateway_old = gateway_old or router_object.get(l3.EXTERNAL_GW_INFO)
+            gateway_old = gateway_old or router_object.get(
+                l3_ext_gw_multihoming.EXTERNAL_GATEWAYS)
+
         ovn_snats = utils.get_lrouter_snats(ovn_router)
         networks = self._get_v4_network_of_all_router_ports(context, router_id)
         try:
@@ -1418,15 +1446,14 @@ class OVNClient(object):
                 txn.add(check_rev_cmd)
                 if gateway_new and not gateway_old:
                     # Route gateway is set
-                    added_gw_port = self._add_router_ext_gw(
+                    added_gw_ports = self._add_router_ext_gw(
                         context, new_router, networks, txn)
                 elif gateway_old and not gateway_new:
                     # router gateway is removed
                     txn.add(self._nb_idl.delete_lrouter_ext_gw(router_name))
                     if router_object:
-                        self._delete_router_ext_gw(
+                        deleted_gw_port_ids = self._delete_router_ext_gw(
                             router_object, networks, txn)
-                        deleted_gw_port_id = router_object['gw_port_id']
                 elif gateway_new and gateway_old:
                     # Check if external gateway has changed, if yes, delete
                     # the old gateway and add the new gateway
@@ -1435,14 +1462,13 @@ class OVNClient(object):
                         txn.add(self._nb_idl.delete_lrouter_ext_gw(
                             router_name))
                         if router_object:
-                            self._delete_router_ext_gw(
+                            deleted_gw_port_ids = self._delete_router_ext_gw(
                                 router_object, networks, txn)
-                            deleted_gw_port_id = router_object['gw_port_id']
-                        added_gw_port = self._add_router_ext_gw(
+                        added_gw_ports = self._add_router_ext_gw(
                             context, new_router, networks, txn)
                     else:
                         # Check if snat has been enabled/disabled and update
-                        new_snat_state = gateway_new.get('enable_snat', True)
+                        new_snat_state = utils.is_snat_enabled(new_router)
                         if bool(ovn_snats) != new_snat_state and networks:
                             self.update_nat_rules(
                                 new_router, networks,
@@ -1465,12 +1491,12 @@ class OVNClient(object):
                 db_rev.bump_revision(context, new_router,
                                      ovn_const.TYPE_ROUTERS)
 
-            if added_gw_port:
-                db_rev.bump_revision(context, added_gw_port,
+            for gw_port in added_gw_ports:
+                db_rev.bump_revision(context, gw_port,
                                      ovn_const.TYPE_ROUTER_PORTS)
 
-            if deleted_gw_port_id:
-                db_rev.delete_revision(context, deleted_gw_port_id,
+            for gw_port in deleted_gw_port_ids:
+                db_rev.delete_revision(context, gw_port,
                                        ovn_const.TYPE_ROUTER_PORTS)
 
         except Exception as e:
@@ -1692,7 +1718,8 @@ class OVNClient(object):
             else:
                 self._create_lrouter_port(context, router, port, txn=txn)
 
-            if router.get(l3.EXTERNAL_GW_INFO):
+            gw_ports = self._get_router_gw_ports(context, router_id)
+            if gw_ports:
                 cidr = None
                 for fixed_ip in port['fixed_ips']:
                     subnet = self._plugin.get_subnet(context,
@@ -1705,9 +1732,10 @@ class OVNClient(object):
                         cidr = subnet['cidr']
 
                 if ovn_conf.is_ovn_emit_need_to_frag_enabled():
-                    provider_net = self._plugin.get_network(
-                        context, router[l3.EXTERNAL_GW_INFO]['network_id'])
-                    self.set_gateway_mtu(context, provider_net)
+                    for gw_port in gw_ports:
+                        provider_net = self._plugin.get_network(
+                            context, gw_port['network_id'])
+                        self.set_gateway_mtu(context, provider_net)
 
                 if utils.is_snat_enabled(router) and cidr:
                     self.update_nat_rules(router, networks=[cidr],
@@ -1816,14 +1844,16 @@ class OVNClient(object):
                 router_id = port.get('device_id')
 
             router = None
+            gw_ports = []
             if router_id:
                 try:
                     router = self._l3_plugin.get_router(context, router_id)
+                    gw_ports = self._get_router_gw_ports(context, router_id)
                 except l3_exc.RouterNotFound:
                     # If the router is gone, the router port is also gone
                     port_removed = True
 
-            if not router or not router.get(l3.EXTERNAL_GW_INFO):
+            if not router or not gw_ports:
                 if port_removed:
                     self._delete_lrouter_port(context, port_id, router_id,
                                               txn=txn)
@@ -1838,11 +1868,11 @@ class OVNClient(object):
             elif port:
                 subnet_ids = utils.get_port_subnet_ids(port)
 
-            if (ovn_conf.is_ovn_emit_need_to_frag_enabled() and
-                    router.get('gw_port_id')):
-                provider_net = self._plugin.get_network(
-                    context, router[l3.EXTERNAL_GW_INFO]['network_id'])
-                self.set_gateway_mtu(context, provider_net, txn=txn)
+            if ovn_conf.is_ovn_emit_need_to_frag_enabled():
+                for gw_port in gw_ports:
+                    provider_net = self._plugin.get_network(
+                        context, gw_port['network_id'])
+                    self.set_gateway_mtu(context, provider_net, txn=txn)
 
             cidr = None
             for sid in subnet_ids:
@@ -1881,10 +1911,12 @@ class OVNClient(object):
         func = (self._nb_idl.add_nat_rule_in_lrouter if enable_snat else
                 self._nb_idl.delete_nat_rule_in_lrouter)
         gw_lrouter_name = utils.ovn_name(router['id'])
-        gateways = self._get_gw_info(context, router)
         # Update NAT rules only for IPv4 subnets
         commands = [func(gw_lrouter_name, type='snat', logical_ip=network,
-                         external_ip=gw_info.router_ip) for gw_info in gateways
+                         external_ip=gw_info.router_ip)
+                    for gw_port in self._get_router_gw_ports(context,
+                                                             router['id'])
+                    for gw_info in self._get_gw_info(context, gw_port)
                     if gw_info.ip_version != const.IP_VERSION_6
                     for network in networks]
         self._transaction(commands, txn=txn)

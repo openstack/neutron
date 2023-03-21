@@ -53,6 +53,16 @@ class TestRouter(base.TestOVNFunctionalBase):
             router['router']['external_gateway_info'] = gw_info
         return self.l3_plugin.create_router(self.context, router)
 
+    def _add_external_gateways(self, router_id, external_gateways):
+        router = {'router': {'external_gateways': external_gateways}}
+        return self.l3_plugin.add_external_gateways(
+            self.context, router_id, body=router)
+
+    def _remove_external_gateways(self, router_id, external_gateways):
+        router = {'router': {'external_gateways': external_gateways}}
+        return self.l3_plugin.remove_external_gateways(
+            self.context, router_id, body=router)
+
     def _create_ext_network(self, name, net_type, physnet, seg,
                             gateway, cidr):
         arg_list = (pnet.NETWORK_TYPE, external_net.EXTERNAL,)
@@ -503,6 +513,27 @@ class TestRouter(base.TestOVNFunctionalBase):
     def test_router_port_ipv6_ra_configs_ipv4(self):
         self._test_router_port_ipv6_ra_configs_helper(
             ip_version=4)
+
+    def test_create_delete_router_multiple_gw_ports(self):
+        ext4 = self._create_ext_network(
+            'ext4', 'flat', 'physnet4', None, "40.0.0.1", "40.0.0.0/24")
+        router = self._create_router('router4')
+        gws = self._add_external_gateways(
+            router['id'],
+            [
+                {'network_id': ext4['network']['id']},
+                {'network_id': ext4['network']['id']},
+            ]
+        )
+        lr = self.nb_api.lookup('Logical_Router',
+                                ovn_utils.ovn_name(router['id']))
+        self.assertEqual(
+            len(lr.ports),
+            len(gws['router']['external_gateways']))
+
+        self.l3_plugin.delete_router(self.context, id=router['id'])
+        self.assertRaises(idlutils.RowNotFound, self.nb_api.lookup,
+                          'Logical_Router', ovn_utils.ovn_name(router['id']))
 
     def test_gateway_chassis_rebalance(self):
         def _get_result_dict():
