@@ -16,6 +16,7 @@
 
 from neutron_lib import constants
 
+from neutron.agent.linux import ip_lib
 from neutron.plugins.ml2.drivers.macvtap.agent import macvtap_neutron_agent
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base as functional_base
@@ -27,6 +28,16 @@ class MacvtapAgentTestCase(functional_base.BaseSudoTestCase):
         self.mgr = macvtap_neutron_agent.MacvtapManager({})
 
     def test_get_all_devices(self):
+        # NOTE(ralonsoh): Clean-up before testing. This test is executed with
+        # concurrency=1. That means no other test is being executed at the same
+        # time. Because the macvtap interface must be created in the root
+        # namespace (``MacvtapManager`` cannot handle namespaces), the test
+        # deletes any previous existing interface.
+        for mac in self.mgr.get_all_devices():
+            devices = ip_lib.IPWrapper().get_devices()
+            for device in (d for d in devices if d.address == mac):
+                device.link.delete()
+
         # Veth is simulating the hosts eth device. In this test it is used as
         # src_dev for the macvtap
         veth1, veth2 = self.useFixture(net_helpers.VethFixture()).ports
