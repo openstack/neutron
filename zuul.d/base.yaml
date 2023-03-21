@@ -212,6 +212,7 @@
     required-projects:
       - name: github.com/sqlalchemy/sqlalchemy
         override-checkout: main
+      - openstack/oslo.db
 - job:
     name: neutron-fullstack-with-uwsgi-fips
     parent: neutron-fullstack-with-uwsgi
