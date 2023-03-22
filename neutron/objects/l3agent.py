@@ -13,7 +13,6 @@
 from neutron_lib.db import api as db_api
 from neutron_lib.objects import common_types
 from oslo_versionedobjects import fields as obj_fields
-from sqlalchemy.orm import joinedload
 
 from sqlalchemy import sql
 
@@ -46,7 +45,8 @@ class RouterL3AgentBinding(base.NeutronDbObject):
     @db_api.CONTEXT_READER
     def get_l3_agents_by_router_ids(cls, context, router_ids):
         query = context.session.query(l3agent.RouterL3AgentBinding)
-        query = query.options(joinedload('l3_agent')).filter(
+        query = query.outerjoin(agent_model.Agent)
+        query = query.filter(
             l3agent.RouterL3AgentBinding.router_id.in_(router_ids))
         return [db_obj.l3_agent for db_obj in query.all()]
 
