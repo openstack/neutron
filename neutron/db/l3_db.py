@@ -1267,7 +1267,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         # TODO(lujinluo): Need IPAllocation and Port object
         routerport_qry = (context.session.query(
             RouterPort.router_id, models_v2.IPAllocation.ip_address).
-                          join(RouterPort.port, models_v2.Port.fixed_ips).
+                          join(RouterPort.port).
+                          join(models_v2.Port.fixed_ips).
                           filter(models_v2.Port.network_id ==
                                  internal_port['network_id'],
                                  RouterPort.port_type.in_(
