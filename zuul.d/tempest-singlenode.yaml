@@ -764,6 +764,7 @@
       - openstack/neutron
       - openstack/tempest
       - openstack/oslo.db
+      - openstack/neutron-lib
       - name: github.com/sqlalchemy/sqlalchemy
         override-checkout: main
     vars:
@@ -795,3 +796,4 @@
       - name: github.com/sqlalchemy/sqlalchemy
         override-checkout: main
       - openstack/oslo.db
+      - openstack/neutron-lib

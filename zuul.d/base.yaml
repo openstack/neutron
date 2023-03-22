@@ -213,6 +213,7 @@
       - name: github.com/sqlalchemy/sqlalchemy
         override-checkout: main
       - openstack/oslo.db
+      - openstack/neutron-lib
 - job:
     name: neutron-fullstack-with-uwsgi-fips
     parent: neutron-fullstack-with-uwsgi
