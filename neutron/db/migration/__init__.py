@@ -38,6 +38,7 @@ XENA = 'xena'
 YOGA = 'yoga'
 ZED = 'zed'
 RELEASE_2023_1 = '2023.1'
+RELEASE_2023_2 = '2023.2'
 
 NEUTRON_MILESTONES = [
     # earlier milestones were not tagged
@@ -56,6 +57,7 @@ NEUTRON_MILESTONES = [
     XENA,
     YOGA,
     RELEASE_2023_1,
+    RELEASE_2023_2,
     # Do not add the milestone until the end of the release
 ]
 

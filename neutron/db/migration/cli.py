@@ -38,7 +38,7 @@ HEADS_FILENAME = 'HEADS'
 CONTRACT_HEAD_FILENAME = 'CONTRACT_HEAD'
 EXPAND_HEAD_FILENAME = 'EXPAND_HEAD'
 
-CURRENT_RELEASE = migration.RELEASE_2023_1
+CURRENT_RELEASE = migration.RELEASE_2023_2
 RELEASES = (
     migration.LIBERTY,
     migration.MITAKA,
@@ -56,6 +56,7 @@ RELEASES = (
     migration.YOGA,
     migration.ZED,
     migration.RELEASE_2023_1,
+    migration.RELEASE_2023_2,
 )
 
 EXPAND_BRANCH = 'expand'
