@@ -28,16 +28,16 @@ L3_HA_OPTS = [
                       "be scheduled on every agent.")),
     cfg.StrOpt('l3_ha_net_cidr',
                default=n_const.L3_HA_NET_CIDR,
-               help=_('Subnet used for the l3 HA admin network.')),
+               help=_('Subnet used for the L3 HA admin network.')),
     cfg.StrOpt('l3_ha_network_type', default='',
-               help=_("The network type to use when creating the HA network "
-                      "for an HA router. By default or if empty, the first "
-                      "'tenant_network_types' is used. This is helpful when "
-                      "the VRRP traffic should use a specific network which "
-                      "is not the default one.")),
+               help=_("The network type to use when creating the L3 HA "
+                      "network for an HA router. By default, or if empty, the "
+                      "first 'tenant_network_types' value is used. This is "
+                      "helpful when the VRRP traffic should use a specific "
+                      "network which is not the default one.")),
     cfg.StrOpt('l3_ha_network_physical_name', default='',
-               help=_("The physical network name with which the HA network "
-                      "can be created."))
+               help=_("The physical network name with which the L3 HA network "
+                      "should be created."))
 ]
 
 

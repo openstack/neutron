@@ -24,7 +24,7 @@ ROUTER_DISTRIBUTED_OPTS = [
     cfg.BoolOpt('enable_dvr',
                 default=True,
                 help=_("Determine if setup is configured for DVR. If False, "
-                       "DVR API extension will be disabled.")),
+                       "the DVR API extension will be disabled.")),
     cfg.BoolOpt('host_dvr_for_dhcp',
                 default=True,
                 help=_("Flag to determine if hosting a DVR local router to "

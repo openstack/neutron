@@ -25,18 +25,18 @@ DEFAULT_TC_TBF_LATENCY = 50  # [ms]
 vxlan_opts = [
     cfg.BoolOpt('enable_vxlan', default=True,
                 help=_("Enable VXLAN on the agent. Can be enabled when "
-                       "agent is managed by ml2 plugin using linuxbridge "
+                       "agent is managed by ML2 plugin using Linux bridge "
                        "mechanism driver")),
     cfg.IntOpt('ttl',
-               help=_("TTL for vxlan interface protocol packets.")),
+               help=_("TTL for VXLAN interface protocol packets.")),
     cfg.IntOpt('tos',
                deprecated_for_removal=True,
-               help=_("TOS for vxlan interface protocol packets. This option "
-                      "is deprecated in favor of the dscp option in the AGENT "
+               help=_("TOS for VXLAN interface protocol packets. This option "
+                      "is deprecated in favor of the DSCP option in the AGENT "
                       "section and will be removed in a future release. "
                       "To convert the TOS value to DSCP, divide by 4.")),
     cfg.StrOpt('vxlan_group', default=DEFAULT_VXLAN_GROUP,
-               help=_("Multicast group(s) for vxlan interface. A range of "
+               help=_("Multicast group(s) for VXLAN interface. A range of "
                       "group addresses may be specified by using CIDR "
                       "notation. Specifying a range allows different VNIs to "
                       "use different group addresses, reducing or eliminating "
@@ -59,14 +59,14 @@ vxlan_opts = [
                        "VXLAN communication.")),
     cfg.PortOpt('udp_dstport',
                 help=_("The UDP port used for VXLAN communication. By "
-                       "default, the Linux kernel doesn't use the IANA "
+                       "default, the Linux kernel does not use the IANA "
                        "assigned standard value, so if you want to use it, "
                        "this option must be set to 4789. It is not set by "
                        "default because of backward compatibility.")),
     cfg.BoolOpt('l2_population', default=False,
-                help=_("Extension to use alongside ml2 plugin's l2population "
+                help=_("Extension to use alongside ML2 plugin's l2population "
                        "mechanism driver. It enables the plugin to populate "
-                       "VXLAN forwarding table.")),
+                       "the VXLAN forwarding table.")),
     cfg.BoolOpt('arp_responder', default=False,
                 help=_("Enable local ARP responder which provides local "
                        "responses instead of performing ARP broadcast into "

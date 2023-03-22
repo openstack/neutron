@@ -25,7 +25,7 @@ DHCP_AGENT_OPTS = [
     cfg.IntOpt('resync_interval', default=5,
                help=_("The DHCP agent will resync its state with Neutron to "
                       "recover from any transient notification or RPC errors. "
-                      "The interval is maximum number of seconds between "
+                      "The interval is the maximum number of seconds between "
                       "attempts. The resync can be done more often based on "
                       "the events triggered.")),
     cfg.IntOpt('resync_throttle', default=1,
@@ -47,7 +47,7 @@ DHCP_AGENT_OPTS = [
                        "will only be activated when the subnet does not "
                        "contain any router port. The guest instance must be "
                        "configured to request host routes via DHCP (Option "
-                       "121). This option doesn't have any effect when "
+                       "121). This option does not have any effect when "
                        "force_metadata is set to True.")),
     cfg.BoolOpt('force_metadata', default=False,
                 help=_("In some cases the Neutron router is not present to "
@@ -55,7 +55,7 @@ DHCP_AGENT_OPTS = [
                        "used to provide this info. Setting this value will "
                        "force the DHCP server to append specific host routes "
                        "to the DHCP request. If this option is set, then the "
-                       "metadata service will be activated for all the "
+                       "metadata service will be activated for all of the "
                        "networks.")),
     cfg.BoolOpt('enable_metadata_network', default=False,
                 help=_("Allows for serving metadata requests coming from a "
@@ -74,8 +74,7 @@ DHCP_AGENT_OPTS = [
                help=_('Time to sleep between reloading the DHCP allocations. '
                       'This will only be invoked if the value is not 0. '
                       'If a network has N updates in X seconds then '
-                      'we will reload once with the port changes in the X '
-                      'seconds and not N times.')),
+                      'it will reload once and not N times.')),
 ]
 
 DHCP_OPTS = [

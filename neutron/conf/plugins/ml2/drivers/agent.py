@@ -23,9 +23,9 @@ agent_opts = [
                help=_("The number of seconds the agent will wait between "
                       "polling for local device changes.")),
     cfg.IntOpt('quitting_rpc_timeout', default=10,
-               help=_("Set new timeout in seconds for new rpc calls after "
-                      "agent receives SIGTERM. If value is set to 0, rpc "
-                      "timeout won't be changed")),
+               help=_("Set new timeout in seconds for new RPC calls after "
+                      "agent receives SIGTERM. If value is set to 0, RPC "
+                      "timeout will not be changed")),
     cfg.IntOpt('dscp', min=0, max=63,
                help=_("The DSCP value to use for outer headers during tunnel "
                       "encapsulation.")),

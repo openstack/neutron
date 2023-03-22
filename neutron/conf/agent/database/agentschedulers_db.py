@@ -20,9 +20,10 @@ AGENTS_SCHEDULER_OPTS = [
     cfg.StrOpt('network_scheduler_driver',
                default='neutron.scheduler.'
                        'dhcp_agent_scheduler.WeightScheduler',
-               help=_('Driver to use for scheduling network to DHCP agent')),
+               help=_('Driver to use for scheduling networks to a DHCP '
+                      'agent')),
     cfg.BoolOpt('network_auto_schedule', default=True,
-                help=_('Allow auto scheduling networks to DHCP agent.')),
+                help=_('Allow auto scheduling networks to a DHCP agent.')),
     cfg.BoolOpt('allow_automatic_dhcp_failover', default=True,
                 help=_('Automatically remove networks from offline DHCP '
                        'agents.')),
@@ -32,7 +33,7 @@ AGENTS_SCHEDULER_OPTS = [
                       'network. If this number is greater than 1, the '
                       'scheduler automatically assigns multiple DHCP agents '
                       'for a given tenant network, providing high '
-                      'availability for DHCP service.')),
+                      'availability for the DHCP service.')),
     cfg.BoolOpt('enable_services_on_agents_with_admin_state_down',
                 default=False,
                 help=_('Enable services on an agent with admin_state_up '

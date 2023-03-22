@@ -21,7 +21,7 @@ API_OPTS = [
     cfg.StrOpt('ovsdb_connection',
                default='tcp:127.0.0.1:6640',
                help=_('The connection string for the OVSDB backend. '
-                      'Will be used for all ovsdb commands and '
+                      'Will be used for all OVSDB commands and '
                       'by ovsdb-client when monitoring'
                       )),
     cfg.StrOpt('ssl_key_file',
@@ -36,7 +36,7 @@ API_OPTS = [
                       )),
     cfg.StrOpt('ssl_ca_cert_file',
                help=_('The Certificate Authority (CA) certificate to use '
-                      'when interacting with OVSDB.  Required when using an '
+                      'when interacting with OVSDB. Required when using an '
                       '"ssl:" prefixed ovsdb_connection'
                       )),
     cfg.BoolOpt('ovsdb_debug',

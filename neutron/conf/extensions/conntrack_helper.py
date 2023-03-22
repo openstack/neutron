@@ -42,7 +42,7 @@ conntrack_helper_opts = [
                     {'sip': 'udp'}
                 ],
                 help=_('Defines the allowed conntrack helpers, and '
-                       'conntack helper module protocol constraints.')
+                       'conntrack helper module protocol constraints.')
                 )
 ]
 

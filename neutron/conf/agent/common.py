@@ -39,7 +39,7 @@ PD_OPTS = [
 PD_DRIVER_OPTS = [
     cfg.StrOpt('pd_confs',
                default='$state_path/pd',
-               help=_('Location to store IPv6 PD files.')),
+               help=_('Location to store IPv6 Prefix Delegation files.')),
     cfg.StrOpt('vendor_pen',
                default='8888',
                help=_("A decimal value as Vendor's Registered Private "
@@ -67,7 +67,8 @@ INTERFACE_OPTS = [
 RA_OPTS = [
     cfg.StrOpt('ra_confs',
                default='$state_path/ra',
-               help=_('Location to store IPv6 RA config files')),
+               help=_('Location to store IPv6 Router Advertisement config '
+                      'files')),
     cfg.IntOpt('min_rtr_adv_interval',
                default=30,
                help=_('MinRtrAdvInterval setting for radvd.conf')),
@@ -118,7 +119,7 @@ AGENT_STATE_OPTS = [
 
 INTERFACE_DRIVER_OPTS = [
     cfg.StrOpt('interface_driver',
-               help=_("The driver used to manage the virtual interface.")),
+               help=_("The driver used to manage virtual interfaces.")),
 ]
 
 IPTABLES_OPTS = [
@@ -144,8 +145,8 @@ PROCESS_MONITOR_OPTS = [
                choices=['respawn', 'exit'],
                help=_('Action to be executed when a child process dies')),
     cfg.IntOpt('check_child_processes_interval', default=60,
-               help=_('Interval between checks of child process liveness '
-                      '(seconds), use 0 to disable')),
+               help=_('Interval between checks of child process liveness, '
+                      'in seconds, use 0 to disable')),
     cfg.StrOpt('kill_scripts_path', default='/etc/neutron/kill_scripts/',
                help=_('Location of scripts used to kill external processes. '
                       'Names of scripts here must follow the pattern: '

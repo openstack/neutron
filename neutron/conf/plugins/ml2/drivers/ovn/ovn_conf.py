@@ -37,7 +37,7 @@ ovn_opts = [
                       'ovn_nb_private_key, ovn_nb_certificate and '
                       'ovn_nb_ca_cert are mandatory.\n'
                       'Use unix:FILE for unix domain socket connection.\n'
-                      'Multiple connection can be specified by a comma '
+                      'Multiple connections can be specified by a comma '
                       'separated string. See also: '
                       'https://github.com/openvswitch/ovs/blob'
                       '/ab4d3bfbef37c31331db5a9dbe7c22eb8d5e5e5f'
@@ -62,7 +62,7 @@ ovn_opts = [
                       'ovn_sb_private_key, ovn_sb_certificate and '
                       'ovn_sb_ca_cert are mandatory.\n'
                       'Use unix:FILE for unix domain socket connection.\n'
-                      'Multiple connection can be specified by a comma '
+                      'Multiple connections can be specified by a comma '
                       'separated string. See also: '
                       'https://github.com/openvswitch/ovs/blob'
                       '/ab4d3bfbef37c31331db5a9dbe7c22eb8d5e5e5f'
@@ -81,16 +81,16 @@ ovn_opts = [
                       ' verify certificates presented to it by SSL peers')),
     cfg.IntOpt('ovsdb_connection_timeout',
                default=180,
-               help=_('Timeout in seconds for the OVSDB '
+               help=_('Timeout, in seconds, for the OVSDB '
                       'connection transaction')),
     cfg.IntOpt('ovsdb_retry_max_interval',
                default=180,
-               help=_('Max interval in seconds between '
+               help=_('Max interval, in seconds ,between '
                       'each retry to get the OVN NB and SB IDLs')),
     cfg.IntOpt('ovsdb_probe_interval',
                min=0,
                default=60000,
-               help=_('The probe interval in for the OVSDB session in '
+               help=_('The probe interval for the OVSDB session, in '
                       'milliseconds. If this is zero, it disables the '
                       'connection keepalive feature. If non-zero the value '
                       'will be forced to at least 1000 milliseconds. Defaults '
@@ -105,7 +105,7 @@ ovn_opts = [
                       'check to see if OVN is in sync with '
                       'the Neutron database. '
                       ' Log warnings for any inconsistencies found so'
-                      ' that an admin can investigate \n'
+                      ' that an admin can investigate\n'
                       'repair - during neutron-server startup, automatically'
                       ' create resources found in Neutron but not in OVN.'
                       ' Also remove resources from OVN'
@@ -126,9 +126,9 @@ ovn_opts = [
                default='leastloaded',
                choices=('leastloaded', 'chance'),
                help=_('The OVN L3 Scheduler type used to schedule router '
-                      'gateway ports on hypervisors/chassis. \n'
+                      'gateway ports on hypervisors/chassis.\n'
                       'leastloaded - chassis with fewest gateway ports '
-                      'selected \n'
+                      'selected\n'
                       'chance - chassis randomly selected')),
     cfg.BoolOpt('enable_distributed_floating_ip',
                 default=False,
@@ -152,8 +152,8 @@ ovn_opts = [
                         portbindings.VIF_TYPE_VHOST_USER]),
     cfg.StrOpt("vhost_sock_dir",
                default="/var/run/openvswitch",
-               help=_("The directory in which vhost virtio socket "
-                      "is created by all the vswitch daemons")),
+               help=_("The directory in which vhost virtio sockets "
+                      "are created by all the vswitch daemons")),
     cfg.IntOpt('dhcp_default_lease_time',
                default=(12 * 60 * 60),
                help=_('Default least time (in seconds) to use with '
@@ -170,7 +170,7 @@ ovn_opts = [
                 help=_("Comma-separated list of the DNS servers which will be "
                        "used as forwarders if a subnet's dns_nameservers "
                        "field is empty. If both subnet's dns_nameservers and "
-                       "this option is empty, then the DNS resolvers on the "
+                       "this option are empty, then the DNS resolvers on the "
                        "host running the neutron server will be used.")),
     cfg.DictOpt('ovn_dhcp4_global_options',
                 default={},
@@ -190,21 +190,16 @@ ovn_opts = [
                 help=_("Dictionary of global DHCPv6 options which will be "
                        "automatically set on each subnet upon creation and "
                        "on all existing subnets when Neutron starts.\n"
-                       "An empty value for a DHCP option will cause that "
+                       "An empty value for a DHCPv6 option will cause that "
                        "option to be unset globally.\n"
-                       "EXAMPLES:\n"
-                       "- ntp_server:1.2.3.4,wpad:1.2.3.5 - Set ntp_server "
-                       "and wpad\n"
-                       "- ntp_server:,wpad:1.2.3.5 - Unset ntp_server and "
-                       "set wpad\n"
                        "See the ovn-nb(5) man page for available options.")),
     cfg.BoolOpt('ovn_emit_need_to_frag',
                 default=False,
                 help=_('Configure OVN to emit "need to frag" packets in '
-                       'case of MTU mismatch.\n'
-                       'Before enabling this configuration make sure that '
-                       'its supported by the host kernel (version >= 5.2) '
-                       'or by checking the output of the following command: \n'
+                       'case of MTU mismatches.\n'
+                       'Before enabling this option make sure that '
+                       'it is supported by the host kernel (version >= 5.2) '
+                       'or by checking the output of the following command:\n'
                        'ovs-appctl -t ovs-vswitchd dpif/show-dp-features '
                        'br-int | grep "Check pkt length action".')),
     cfg.BoolOpt('disable_ovn_dhcp_for_baremetal_ports',
@@ -219,7 +214,7 @@ ovn_opts = [
                 deprecated_since="2023.1",
                 help=_('If OVN older than 21.06 is used together with '
                        'Neutron, this option should be set to ``False`` in '
-                       'order to disable ``stateful-security-group`` API '
+                       'order to disable the ``stateful-security-group`` API '
                        'extension as ``allow-stateless`` keyword is only '
                        'supported by OVN >= 21.06.')),
 ]

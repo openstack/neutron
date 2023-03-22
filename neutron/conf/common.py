@@ -32,7 +32,7 @@ core_opts = [
                       "For example: api_extensions_path = "
                       "extensions:/path/to/more/exts:/even/more/exts. "
                       "The __path__ of neutron.extensions is appended to "
-                      "this, so if your extensions are in there you don't "
+                      "this, so if your extensions are in there you do not "
                       "need to specify them here.")),
     cfg.StrOpt('auth_strategy', default='keystone',
                help=_("The type of authentication to use")),
@@ -49,7 +49,7 @@ core_opts = [
                 help=_("Allow the usage of the bulk API")),
     cfg.StrOpt('pagination_max_limit', default="-1",
                help=_("The maximum number of items returned in a single "
-                      "response, value was 'infinite' or negative integer "
+                      "response, value of 'infinite' or negative integer "
                       "means no limit")),
     cfg.ListOpt('default_availability_zones', default=[],
                 help=_("Default value of availability zone hints. The "
@@ -101,12 +101,12 @@ core_opts = [
                       "is empty (the default), the URLs are returned "
                       "unchanged.")),
     cfg.BoolOpt('notify_nova_on_port_status_changes', default=True,
-                help=_("Send notification to nova when port status changes")),
+                help=_("Send notification to Nova when port status changes")),
     cfg.BoolOpt('notify_nova_on_port_data_changes', default=True,
-                help=_("Send notification to nova when port data (fixed_ips/"
-                       "floatingip) changes so nova can update its cache.")),
+                help=_("Send notification to Nova when port data (fixed_ips/"
+                       "floatingip) changes so Nova can update its cache.")),
     cfg.IntOpt('send_events_interval', default=2,
-               help=_('Number of seconds between sending events to nova if '
+               help=_('Number of seconds between sending events to Nova if '
                       'there are any events to send.')),
     cfg.StrOpt('setproctitle', default='on',
                help=_("Set process name to match child worker role. "
@@ -137,7 +137,7 @@ core_opts = [
                       'overlay protocol overhead from this value. Defaults '
                       'to 1500, the standard value for Ethernet.')),
     cfg.IntOpt('http_retries', default=3, min=0,
-               help=_("Number of times client connections (nova, ironic) "
+               help=_("Number of times client connections (Nova, Ironic) "
                       "should be retried on a failed HTTP call. 0 (zero) "
                       "means connection is attempted only once (not retried). "
                       "Setting to any positive integer means that on failure "
@@ -146,7 +146,7 @@ core_opts = [
                       "connect will be 4.")),
     cfg.BoolOpt('enable_traditional_dhcp', default=True,
                 help=_('If False, neutron-server will disable the following '
-                       'DHCP-agent related functions:'
+                       'DHCP-agent related functions: '
                        '1. DHCP provisioning block '
                        '2. DHCP scheduler API extension '
                        '3. Network scheduling mechanism '
@@ -171,13 +171,13 @@ NOVA_CONF_SECTION = 'nova'
 
 nova_opts = [
     cfg.StrOpt('region_name',
-               help=_('Name of nova region to use. Useful if keystone manages'
+               help=_('Name of Nova region to use. Useful if Keystone manages'
                       ' more than one region.')),
     cfg.StrOpt('endpoint_type',
                default='public',
                choices=['public', 'admin', 'internal'],
-               help=_('Type of the nova endpoint to use.  This endpoint will'
-                      ' be looked up in the keystone catalog and should be'
+               help=_('Type of the Nova endpoint to use.  This endpoint will'
+                      ' be looked up in the Keystone catalog and should be'
                       ' one of public, internal or admin.')),
 ]
 
@@ -190,13 +190,13 @@ PLACEMENT_CONF_SECTION = 'placement'
 
 placement_opts = [
     cfg.StrOpt('region_name',
-               help=_('Name of placement region to use. Useful if keystone '
+               help=_('Name of placement region to use. Useful if Keystone '
                       'manages more than one region.')),
     cfg.StrOpt('endpoint_type',
                default='public',
                choices=['public', 'admin', 'internal'],
                help=_('Type of the placement endpoint to use.  This endpoint '
-                      'will be looked up in the keystone catalog and should '
+                      'will be looked up in the Keystone catalog and should '
                       'be one of public, internal or admin.')),
 ]
 
@@ -209,7 +209,7 @@ IRONIC_CONF_SECTION = 'ironic'
 
 ironic_opts = [
     cfg.BoolOpt('enable_notifications', default=False,
-                help=_("Send notification events to ironic. (For example on "
+                help=_("Send notification events to Ironic. (For example on "
                        "relevant port status changes.)")),
 ]
 

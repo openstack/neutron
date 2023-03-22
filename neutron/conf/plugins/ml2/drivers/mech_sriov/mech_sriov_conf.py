@@ -27,7 +27,7 @@ sriov_driver_opts = [
                        "depend on your network interface card, on the kernel "
                        "version of your operating system, and on other "
                        "factors. "
-                       "In case of sriov mechanism driver the valid "
+                       "In the case of SRIOV mechanism drivers the valid "
                        "VNIC types are direct, macvtap and direct-physical.")),
 ]
 
