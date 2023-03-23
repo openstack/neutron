@@ -16,6 +16,7 @@
 from unittest import mock
 
 from futurist import periodics
+from neutron_lib import constants as n_const
 from neutron_lib import context
 from neutron_lib.db import api as db_api
 from oslo_config import cfg
@@ -622,16 +623,76 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
                                     ('external_ids', external_ids))]
         nb_idl.db_set.assert_has_calls(expected_calls)
 
+    def _test_check_redirect_type_router_gateway_ports(self, networks,
+                                                       redirect_value):
+        self.fake_ovn_client._plugin.get_ports.return_value = [{
+            'device_owner': n_const.DEVICE_OWNER_ROUTER_GW,
+            'id': 'fake-id',
+            'device_id': 'fake-device-id'}]
+        self.fake_ovn_client._get_router_ports.return_value = []
+        self.fake_ovn_client._plugin.get_networks.return_value = networks
+
+        lrp_redirect = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={
+                'options': {constants.LRP_OPTIONS_REDIRECT_TYPE: "bridged"}})
+        lrp_no_redirect = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={
+                'options': {}})
+
+        # set the opossite so that the value is changed
+        if redirect_value:
+            self.fake_ovn_client._nb_idl.get_lrouter_port.return_value = (
+                lrp_no_redirect)
+        else:
+            self.fake_ovn_client._nb_idl.get_lrouter_port.return_value = (
+                lrp_redirect)
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.periodic.check_redirect_type_router_gateway_ports)
+
+        if redirect_value:
+            expected_calls = [
+                mock.call.db_set('Logical_Router_Port',
+                                 mock.ANY,
+                                 ('options', {'redirect-type': 'bridged'}))
+            ]
+            self.fake_ovn_client._nb_idl.db_set.assert_has_calls(
+                expected_calls)
+        else:
+            expected_calls = [
+                mock.call.db_remove('Logical_Router_Port', mock.ANY,
+                                    'options', 'redirect-type')
+            ]
+            self.fake_ovn_client._nb_idl.db_remove.assert_has_calls(
+                expected_calls)
+
+    def test_check_redirect_type_router_gateway_ports_enable_redirect(self):
+        cfg.CONF.set_override('enable_distributed_floating_ip', 'True',
+                              group='ovn')
+        networks = [{'network_id': 'foo',
+                     'provider:network_type': n_const.TYPE_VLAN}]
+        self._test_check_redirect_type_router_gateway_ports(networks, True)
+
+    def test_check_redirect_type_router_gateway_ports_disable_redirect(self):
+        cfg.CONF.set_override('enable_distributed_floating_ip', 'True',
+                              group='ovn')
+        networks = [{'network_id': 'foo',
+                     'provider:network_type': n_const.TYPE_GENEVE}]
+        self._test_check_redirect_type_router_gateway_ports(networks, False)
+
     def _test_check_vlan_distributed_ports(self, opt_value=None):
         fake_net0 = {'id': 'net0'}
         fake_net1 = {'id': 'net1'}
-        fake_port0 = {'id': 'port0'}
-        fake_port1 = {'id': 'port1'}
+        fake_port0 = {'id': 'port0', 'device_id': 'device0'}
+        fake_port1 = {'id': 'port1', 'device_id': 'device1'}
 
         self.fake_ovn_client._plugin.get_networks.return_value = [
             fake_net0, fake_net1]
         self.fake_ovn_client._plugin.get_ports.return_value = [
             fake_port0, fake_port1]
+        (self.fake_ovn_client._get_reside_redir_for_gateway_port
+             .return_value) = 'true'
 
         fake_lrp = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={
@@ -645,8 +706,6 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
                           self.periodic.check_vlan_distributed_ports)
 
     def test_check_vlan_distributed_ports_expected_value(self):
-        cfg.CONF.set_override('enable_distributed_floating_ip', 'False',
-                              group='ovn')
         self._test_check_vlan_distributed_ports(opt_value='true')
 
         # If the "reside-on-redirect-chassis" option value do match
@@ -655,8 +714,6 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
             self.fake_ovn_client._nb_idl.db_set.called)
 
     def test_check_vlan_distributed_ports_non_expected_value(self):
-        cfg.CONF.set_override('enable_distributed_floating_ip', 'False',
-                              group='ovn')
         self._test_check_vlan_distributed_ports(opt_value='false')
 
         # If the "reside-on-redirect-chassis" option value does not match
