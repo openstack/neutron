@@ -1,0 +1,24 @@
+---
+issues:
+  - |
+    The `redirect-type=bridged` option is only used if all the tenant networks
+    connected to the router are of type VLAN or FLAT. In this case their
+    traffic will be distributed. However, if there is a mix of VLAN/FLAT and
+    geneve networks connected to the same router, the redirect-type option is
+    not set, and therefore the traffic for the VLAN/FLAT networks will also be
+    centralized but not tunneled.
+fixes:
+  - |
+    [`bug 2003455 <https://bugs.launchpad.net/neutron/+bug/2003455>`_]
+    As part of a previous commit
+    (https://review.opendev.org/c/openstack/neutron/+/875644) the
+    `redirect-type=bridged` option was set in all the router gateway ports
+    (cr-lrp ovn ports). However this was breaking the N/S traffic for geneve
+    tenant networks connected to the provider networks through those routers
+    with the redirect-type option enabled. To fix this we ensure that the
+    redirect-type option is only set if all the networks connected to the
+    router are of VLAN or FLAT type, otherwise we fall back to the default
+    option. This also means that if there is a mix of VLAN and geneve tenant
+    networks connected to the same router, the VLAN traffic will be centralized
+    (but not tunneled). If the traffic for the VLAN/FLAT needs to be
+    distributed, then it should use a different router.
