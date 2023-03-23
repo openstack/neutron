@@ -24,8 +24,8 @@ networking infrastructure for instances and handles security groups.
     .. end
 
     Replace ``PROVIDER_INTERFACE_NAME`` with the name of the underlying
-    provider physical network interface. See :doc:`environment-networking-obs`
-    for more information.
+    provider physical network interface.
+    See :doc:`environment-networking-ubuntu` for more information.
 
   * In the ``[vxlan]`` section, configure the IP address of the physical
     network interface that handles overlay networks and enable layer-2

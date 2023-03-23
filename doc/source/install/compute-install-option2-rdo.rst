@@ -24,7 +24,7 @@ networking infrastructure for instances and handles security groups.
     .. end
 
     Replace ``PROVIDER_INTERFACE_NAME`` with the name of the underlying
-    provider physical network interface. See :doc:`environment-networking-obs`
+    provider physical network interface. See :doc:`environment-networking-rdo`
     for more information.
 
   * In the ``[vxlan]`` section, configure the IP address of the physical
