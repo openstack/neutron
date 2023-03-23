@@ -118,7 +118,7 @@ class OVNNeutronAgent(service.Service):
 
     def _load_sb_idl(self):
         events = [SbGlobalUpdateEvent]
-        tables = ['SB_Global']
+        tables = ['SB_Global', 'Chassis_Private']
         for extension in self.ext_manager:
             events += extension.obj.sb_idl_events
             tables += extension.obj.sb_idl_tables
