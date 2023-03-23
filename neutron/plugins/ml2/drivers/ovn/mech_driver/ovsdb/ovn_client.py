@@ -1324,6 +1324,11 @@ class OVNClient(object):
                     nexthop=route['nexthop']))
         self._transaction(commands, txn=txn)
 
+    def _get_router_gw_ports(self, context, router_id):
+        return self._plugin.get_ports(context, filters={
+            'device_owner': [const.DEVICE_OWNER_ROUTER_GW],
+            'device_id': [router_id]})
+
     def _get_router_ports(self, context, router_id, get_gw_port=False):
         # _get_router() will raise a RouterNotFound error if there's no router
         # with the router_id
@@ -1567,6 +1572,31 @@ class OVNClient(object):
 
         return ext_ids
 
+    def _get_reside_redir_for_gateway_port(self, device_id):
+        admin_context = n_context.get_admin_context()
+        reside_redir_ch = 'true'
+        if ovn_conf.is_ovn_distributed_floating_ip():
+            reside_redir_ch = 'false'
+            try:
+                router_ports = self._get_router_ports(admin_context, device_id)
+            except l3_exc.RouterNotFound:
+                LOG.debug("No Router %s not found", device_id)
+            else:
+                network_ids = {port['network_id'] for port in router_ports}
+                networks = self._plugin.get_networks(
+                    admin_context, filters={'id': network_ids})
+
+                # NOTE(ltomasbo): not all the networks connected to the router
+                # are of vlan type, so we won't set the redirect-type=bridged
+                # on the router gateway port, therefore we need to centralized
+                # the vlan traffic to avoid tunneling
+                if networks:
+                    reside_redir_ch = 'true' if any(
+                        net.get(pnet.NETWORK_TYPE) not in [const.TYPE_VLAN,
+                                                           const.TYPE_FLAT]
+                        for net in networks) else 'false'
+        return reside_redir_ch
+
     def _gen_router_port_options(self, port, network=None):
         options = {}
         admin_context = n_context.get_admin_context()
@@ -1581,14 +1611,15 @@ class OVNClient(object):
         # FIXME(ltomasbo): Once Bugzilla 2162756 is fixed the
         # is_provider_network check should be removed
         if network.get(pnet.NETWORK_TYPE) == const.TYPE_VLAN:
-            options[ovn_const.LRP_OPTIONS_RESIDE_REDIR_CH] = (
-                'false' if (ovn_conf.is_ovn_distributed_floating_ip() and
-                            not utils.is_provider_network(network))
-                else 'true')
+            reside_redir_ch = self._get_reside_redir_for_gateway_port(
+                port['device_id'])
+            options[ovn_const.LRP_OPTIONS_RESIDE_REDIR_CH] = reside_redir_ch
 
         is_gw_port = const.DEVICE_OWNER_ROUTER_GW == port.get(
             'device_owner')
-        if is_gw_port and ovn_conf.is_ovn_emit_need_to_frag_enabled():
+
+        if is_gw_port and (ovn_conf.is_ovn_distributed_floating_ip() or
+                           ovn_conf.is_ovn_emit_need_to_frag_enabled()):
             try:
                 router_ports = self._get_router_ports(admin_context,
                                                       port['device_id'])
@@ -1597,12 +1628,32 @@ class OVNClient(object):
                 LOG.debug("Router %s not found", port['device_id'])
             else:
                 network_ids = {port['network_id'] for port in router_ports}
-                for net in self._plugin.get_networks(
-                        admin_context, filters={'id': network_ids}):
-                    if net['mtu'] > network['mtu']:
-                        options[ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION] = str(
-                            network['mtu'])
-                        break
+                networks = self._plugin.get_networks(
+                    admin_context, filters={'id': network_ids})
+                if ovn_conf.is_ovn_emit_need_to_frag_enabled():
+                    for net in networks:
+                        if net['mtu'] > network['mtu']:
+                            options[
+                                ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION] = str(
+                                    network['mtu'])
+                            break
+                if ovn_conf.is_ovn_distributed_floating_ip():
+                    # NOTE(ltomasbo): For VLAN type networks connected through
+                    # the gateway port there is a need to set the redirect-type
+                    # option to bridge to ensure traffic is not centralized
+                    # through the controller.
+                    # If there are no VLAN type networks attached we need to
+                    # still make it centralized.
+                    enable_redirect = False
+                    if networks:
+                        enable_redirect = all(
+                            net.get(pnet.NETWORK_TYPE) in [const.TYPE_VLAN,
+                                                           const.TYPE_FLAT]
+                            for net in networks)
+                    if enable_redirect:
+                        options[ovn_const.LRP_OPTIONS_REDIRECT_TYPE] = (
+                            ovn_const.BRIDGE_REDIRECT_TYPE)
+
         return options
 
     def _create_lrouter_port(self, context, router, port, txn=None):
@@ -1683,6 +1734,12 @@ class OVNClient(object):
                 if utils.is_snat_enabled(router) and cidr:
                     self.update_nat_rules(router, networks=[cidr],
                                           enable_snat=True, txn=txn)
+                if ovn_conf.is_ovn_distributed_floating_ip():
+                    router_gw_ports = self._get_router_gw_ports(context,
+                                                                router_id)
+                    for router_port in router_gw_ports:
+                        self._update_lrouter_port(context, router_port,
+                                                  txn=txn)
 
         db_rev.bump_revision(context, port, ovn_const.TYPE_ROUTER_PORTS)
 
@@ -1822,6 +1879,11 @@ class OVNClient(object):
             if utils.is_snat_enabled(router) and cidr:
                 self.update_nat_rules(
                     router, networks=[cidr], enable_snat=False, txn=txn)
+
+            if ovn_conf.is_ovn_distributed_floating_ip():
+                router_gw_ports = self._get_router_gw_ports(context, router_id)
+                for router_port in router_gw_ports:
+                    self._update_lrouter_port(context, router_port, txn=txn)
 
             # NOTE(mangelajo): If the port doesn't exist anymore, we
             # delete the router port as the last operation and update the
