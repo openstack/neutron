@@ -370,14 +370,11 @@
     description: |
       Grenade job that skips a release, validating that deployers can skip
       specific releases as prescribed by our process.
-    # See background from gmann:
-    # https://review.opendev.org/c/openstack/manila/+/859875/1/zuul.d/grenade-jobs.yaml
-    branches: ^(?!stable/(pike|queens|rocky|stein|train|ussuri|victoria|wallaby|xena|zed)).*$
     vars:
       # Move this forward when master changes to a new skip-level-allowed
-      # target release. Right now, this is xena because master is zed.
-      # When master is A, this should become yoga, and so forth.
-      grenade_from_branch: stable/yoga
+      # target release. Right now, this is Zed because master is Bobcat (2023.2).
+      # When master is C, this should become Antelope (2023.1), and so forth.
+      grenade_from_branch: stable/zed
       grenade_localrc:
         NOVA_ENABLE_UPGRADE_WORKAROUND: True
 
@@ -387,13 +384,10 @@
     description: |
       Grenade job that skips a release, validating that deployers can skip
       specific releases as prescribed by our process.
-    # See background from gmann:
-    # https://review.opendev.org/c/openstack/manila/+/859875/1/zuul.d/grenade-jobs.yaml
-    branches: ^(?!stable/(pike|queens|rocky|stein|train|ussuri|victoria|wallaby|xena|zed)).*$
     vars:
       # Move this forward when master changes to a new skip-level-allowed
-      # target release. Right now, this is xena because master is zed.
-      # When master is A, this should become yoga, and so forth.
-      grenade_from_branch: stable/yoga
+      # target release. Right now, this is Zed because master is Bobcat (2023.2).
+      # When master is C, this should become Antelope (2023.1), and so forth.
+      grenade_from_branch: stable/zed
       grenade_localrc:
         NOVA_ENABLE_UPGRADE_WORKAROUND: True

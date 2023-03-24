@@ -15,15 +15,12 @@
       - neutron-experimental-jobs
       - neutron-periodic-jobs
       - neutron-tox-override-jobs
+      - neutron-skip-level-jobs
     check:
       jobs:
         - neutron-functional-with-uwsgi
         - neutron-fullstack-with-uwsgi
         - neutron-ovs-grenade-multinode
-        - neutron-ovs-grenade-multinode-skip-level:
-            voting: false
-        - neutron-ovn-grenade-multinode-skip-level:
-            voting: false
         - neutron-ovs-grenade-dvr-multinode
         - neutron-ovs-tempest-multinode-full
         - neutron-ovs-tempest-dvr-ha-multinode-full
