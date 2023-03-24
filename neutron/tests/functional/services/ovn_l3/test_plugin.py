@@ -42,7 +42,8 @@ class TestRouter(base.TestOVNFunctionalBase):
         self.cr_lrp_pb_event = events.WaitForCrLrpPortBindingEvent()
         self.sb_api.idl.notify_handler.watch_event(self.cr_lrp_pb_event)
 
-    def _create_router(self, name, gw_info=None, az_hints=None):
+    def _create_router(self, name, gw_info=None, az_hints=None,
+                       enable_ecmp=None):
         router = {'router':
                   {'name': name,
                    'admin_state_up': True,
@@ -51,6 +52,8 @@ class TestRouter(base.TestOVNFunctionalBase):
             router['router']['availability_zone_hints'] = az_hints
         if gw_info:
             router['router']['external_gateway_info'] = gw_info
+        if enable_ecmp:
+            router['router']['enable_default_route_ecmp'] = enable_ecmp
         return self.l3_plugin.create_router(self.context, router)
 
     def _add_external_gateways(self, router_id, external_gateways):
@@ -531,9 +534,35 @@ class TestRouter(base.TestOVNFunctionalBase):
             len(lr.ports),
             len(gws['router']['external_gateways']))
 
+        self.assertEqual(
+            len(lr.static_routes),
+            1)
+
         self.l3_plugin.delete_router(self.context, id=router['id'])
         self.assertRaises(idlutils.RowNotFound, self.nb_api.lookup,
                           'Logical_Router', ovn_utils.ovn_name(router['id']))
+
+    def test_create_router_multiple_gw_ports_ecmp(self):
+        ext5 = self._create_ext_network(
+            'ext5', 'flat', 'physnet5', None, "10.0.50.1", "10.0.50.0/24")
+        router = self._create_router('router5', enable_ecmp=True)
+        gws = self._add_external_gateways(
+            router['id'],
+            [
+                {'network_id': ext5['network']['id']},
+                {'network_id': ext5['network']['id']},
+            ]
+        )
+        lr = self.nb_api.lookup('Logical_Router',
+                                ovn_utils.ovn_name(router['id']))
+        # Check that the expected number of ports are created
+        self.assertEqual(
+            len(lr.ports),
+            len(gws['router']['external_gateways']))
+        # Check that the expected number of static routes are created
+        self.assertEqual(
+            len(lr.static_routes),
+            len(gws['router']['external_gateways']))
 
     def test_gateway_chassis_rebalance(self):
         def _get_result_dict():

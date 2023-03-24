@@ -40,6 +40,7 @@ from neutron_lib.api.definitions import flavors
 from neutron_lib.api.definitions import floating_ip_port_forwarding
 from neutron_lib.api.definitions import floatingip_pools
 from neutron_lib.api.definitions import l3
+from neutron_lib.api.definitions import l3_enable_default_route_ecmp
 from neutron_lib.api.definitions import l3_ext_gw_mode
 from neutron_lib.api.definitions import l3_ext_gw_multihoming
 from neutron_lib.api.definitions import l3_flavors
@@ -120,6 +121,7 @@ ML2_SUPPORTED_API_EXTENSIONS_OVN_L3 = [
     flavors.ALIAS,
     l3_flavors.ALIAS,
     l3_ext_gw_multihoming.ALIAS,
+    l3_enable_default_route_ecmp.ALIAS,
 ]
 ML2_SUPPORTED_API_EXTENSIONS = [
     address_group.ALIAS,
