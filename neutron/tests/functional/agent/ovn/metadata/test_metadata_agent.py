@@ -51,6 +51,18 @@ class MetadataAgentHealthEvent(event.WaitEvent):
             ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY, 0)) >= self.sb_cfg
 
 
+class MetadataPortCreateEvent(event.WaitEvent):
+    event_name = 'MetadataPortCreateEvent'
+
+    def __init__(self, metadata_port, timeout=5):
+        table = 'Port_Binding'
+        events = (self.ROW_CREATE,)
+        conditions = (('logical_port', '=', metadata_port),)
+        super(MetadataPortCreateEvent, self).__init__(
+            events, table, conditions, timeout=timeout
+        )
+
+
 class TestMetadataAgent(base.TestOVNFunctionalBase):
     OVN_BRIDGE = 'br-int'
     FAKE_CHASSIS_HOST = 'ovn-host-fake'
@@ -132,8 +144,8 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
         # chassis with the nb_cfg, 1 revisions when listing the agents.
         self.assertTrue(row_event.wait())
 
-    def _create_metadata_port(self, txn, lswitch_name):
-        mdt_port_name = 'ovn-mdt-' + uuidutils.generate_uuid()
+    def _create_metadata_port(self, txn, lswitch_name, port_name=None):
+        mdt_port_name = port_name or 'ovn-mdt-' + uuidutils.generate_uuid()
         txn.add(
             self.nb_api.lsp_add(
                 lswitch_name,
@@ -144,7 +156,6 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
                     ovn_const.OVN_CIDRS_EXT_ID_KEY: '192.168.122.123/24',
                     ovn_const.OVN_DEVID_EXT_ID_KEY: 'ovnmeta-' + lswitch_name
                 }))
-        return mdt_port_name
 
     def _update_metadata_port_ip(self, metadata_port_name):
         external_ids = {
@@ -224,7 +235,14 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
         if update and type_ == ovn_const.LSP_TYPE_LOCALPORT:
             with self.nb_api.transaction(
                     check_error=True, log_errors=True) as txn:
-                mdt_port_name = self._create_metadata_port(txn, lswitch_name)
+                mdt_port_name = 'ovn-mdt-' + uuidutils.generate_uuid()
+                metadata_port_create_event = MetadataPortCreateEvent(
+                    mdt_port_name)
+                self.agent.sb_idl.idl.notify_handler.watch_event(
+                    metadata_port_create_event)
+                self._create_metadata_port(txn, lswitch_name, mdt_port_name)
+            self.assertTrue(metadata_port_create_event.wait())
+
             self.sb_api.lsp_bind(mdt_port_name, self.chassis_name).execute(
                 check_error=True, log_errors=True)
             self._update_metadata_port_ip(mdt_port_name)
