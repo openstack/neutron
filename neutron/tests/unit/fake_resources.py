@@ -797,7 +797,8 @@ class FakeOVNPort(object):
 
 
 FakeStaticRoute = collections.namedtuple(
-    'Static_Routes', ['ip_prefix', 'nexthop', 'external_ids'])
+    'Static_Routes', ['ip_prefix', 'nexthop', 'external_ids', 'bfd'],
+    defaults=([],))
 
 
 class FakeOVNRouterPort(object):

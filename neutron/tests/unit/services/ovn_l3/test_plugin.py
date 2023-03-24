@@ -627,6 +627,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         expected_calls = [
             mock.call('neutron-router-id', ip_prefix='0.0.0.0/0',
                       nexthop='192.168.1.254',
+                      maintain_bfd=False,
                       external_ids={
                           ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
                           ovn_const.OVN_SUBNET_EXT_ID_KEY: 'ext-subnet-id'})]
@@ -798,6 +799,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 lsp_address=ovn_const.DEFAULT_ADDR_FOR_LSP_WITH_PEER)
         self.l3_inst._nb_ovn.add_static_route.assert_called_once_with(
             'neutron-router-id', ip_prefix='0.0.0.0/0',
+            maintain_bfd=False,
             external_ids={ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
                           ovn_const.OVN_SUBNET_EXT_ID_KEY: 'ext-subnet-id'},
             nexthop='192.168.1.254')
@@ -868,6 +870,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.l3_inst._nb_ovn.add_static_route.assert_called_once_with(
             'neutron-router-id', ip_prefix='0.0.0.0/0',
             nexthop='192.168.1.254',
+            maintain_bfd=False,
             external_ids={ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
                           ovn_const.OVN_SUBNET_EXT_ID_KEY: 'ext-subnet-id'})
         self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
@@ -920,6 +923,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.l3_inst._nb_ovn.add_static_route.assert_called_once_with(
             'neutron-router-id', ip_prefix='0.0.0.0/0',
             nexthop='192.168.1.254',
+            maintain_bfd=False,
             external_ids={ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
                           ovn_const.OVN_SUBNET_EXT_ID_KEY: 'ext-subnet-id'})
         self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
@@ -971,6 +975,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         # Need not check lsp and lrp here, it has been tested in other cases
         self.l3_inst._nb_ovn.add_static_route.assert_called_once_with(
             'neutron-router-id', ip_prefix='0.0.0.0/0',
+            maintain_bfd=False,
             external_ids={ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
                           ovn_const.OVN_SUBNET_EXT_ID_KEY: 'ext-subnet-id'},
             nexthop='192.168.1.254')
@@ -2131,8 +2136,8 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
                 ovn_const.OVN_SUBNET_EXT_ID_KEY: mock.ANY}
         add_static_route_calls = [
             mock.call(mock.ANY, ip_prefix='0.0.0.0/0', nexthop='10.0.0.1',
-                external_ids=expected_ext_ids),
+                maintain_bfd=False, external_ids=expected_ext_ids),
             mock.call(mock.ANY, ip_prefix='::/0', nexthop='2001:db8::',
-                external_ids=expected_ext_ids)]
+                maintain_bfd=False, external_ids=expected_ext_ids)]
         self.l3_inst._nb_ovn.add_static_route.assert_has_calls(
             add_static_route_calls, any_order=True)

@@ -45,7 +45,7 @@ class TestRouter(base.TestOVNFunctionalBase):
         self.sb_api.idl.notify_handler.watch_event(self.cr_lrp_pb_event)
 
     def _create_router(self, name, gw_info=None, az_hints=None,
-                       enable_ecmp=None):
+                       enable_ecmp=None, enable_bfd=None):
         router = {'router':
                   {'name': name,
                    'admin_state_up': True,
@@ -54,6 +54,8 @@ class TestRouter(base.TestOVNFunctionalBase):
             router['router']['availability_zone_hints'] = az_hints
         if gw_info:
             router['router']['external_gateway_info'] = gw_info
+        if enable_bfd:
+            router['router']['enable_default_route_bfd'] = enable_bfd
         if enable_ecmp:
             router['router']['enable_default_route_ecmp'] = enable_ecmp
         return self.l3_plugin.create_router(self.context, router)
@@ -657,6 +659,101 @@ class TestRouter(base.TestOVNFunctionalBase):
         self.assertEqual(
             len(lr.static_routes),
             len(gws['router']['external_gateways']))
+
+    def test_create_delete_router_multiple_gw_ports_ecmp_and_bfd(self):
+        default_gw = "10.0.60.1"
+        ext6 = self._create_ext_network(
+            'ext6', 'flat', 'physnet6', None, default_gw, "10.0.60.0/24")
+        router = self._create_router('router6', gw_info=None,
+                                     enable_bfd=True, enable_ecmp=True)
+        gws = self._add_external_gateways(
+            router['id'],
+            [
+                {'network_id': ext6['network']['id']},
+                {'network_id': ext6['network']['id']},
+            ])
+        lr = self.nb_api.lookup('Logical_Router',
+                                ovn_utils.ovn_name(router['id']))
+
+        # Check that the expected number of ports are created
+        self.assertEqual(
+            len(lr.ports),
+            len(gws['router']['external_gateways']))
+        # Check that the expected number of static routes are created
+        self.assertEqual(
+            len(lr.static_routes),
+            len(gws['router']['external_gateways']))
+        # Check that static_route bfd and output_port attributes is set to the
+        # expected values
+        for static_route in lr.static_routes:
+            self.assertNotEqual(
+                [],
+                static_route.bfd)
+            self.assertNotEqual(
+                [],
+                static_route.output_port)
+            self.assertIn(static_route.output_port[0],
+                          [lrp.name
+                           for lrp in lr.ports])
+            self.assertIn(static_route.bfd[0].logical_port,
+                          [lrp.name
+                           for lrp in lr.ports])
+            self.assertEqual(static_route.bfd[0].logical_port,
+                             static_route.output_port[0])
+
+        router_ips = set()
+        for ext_gws in gws['router']['external_gateways']:
+            for ext_fip in ext_gws['external_fixed_ips']:
+                router_ips.add(ext_fip['ip_address'])
+
+        lrps = set()
+        for lrp in lr.ports:
+            for network in lrp.networks:
+                self.assertIn(
+                    network.split('/')[0],
+                    router_ips)
+            lrps.add(lrp.name)
+            bfd_rows = self.nb_api.bfd_find(
+                    lrp.name, default_gw).execute(check_error=True)
+            if not bfd_rows:
+                raise AssertionError('None of the expected BFD rows found.')
+            for bfd_row in bfd_rows:
+                self.assertEqual(
+                    bfd_row.logical_port,
+                    lrp.name)
+                self.assertEqual(
+                    bfd_row.dst_ip,
+                    default_gw)
+
+        self.l3_plugin.delete_router(self.context, id=router['id'])
+        self.assertRaises(idlutils.RowNotFound, self.nb_api.lookup,
+                          'Logical_Router', ovn_utils.ovn_name(router['id']))
+        for lrp_name in lrps:
+            if self.nb_api.bfd_find(
+                    lrp.name, default_gw).execute(check_error=True):
+                raise AssertionError('Unexpectedly found BFD rows.')
+
+    def test_update_router_single_gw_bfd(self):
+        ext1 = self._create_ext_network(
+            'ext7', 'flat', 'physnet1', None, "10.0.70.1", "10.0.70.0/24")
+        gw_info = {'network_id': ext1['network']['id']}
+        router = self._create_router('router7', gw_info=gw_info)
+        self.assertFalse(router['enable_default_route_bfd'])
+        lr = self.nb_api.lr_get(ovn_utils.ovn_name(router['id'])).execute()
+        for route in ovn_utils.get_lrouter_ext_gw_static_route(lr):
+            self.assertEqual(
+                [],
+                route.bfd)
+
+        router = self.l3_plugin.update_router(
+            self.context, router['id'],
+            {'router': {'enable_default_route_bfd': True}})
+        self.assertTrue(router['enable_default_route_bfd'])
+        lr = self.nb_api.lr_get(ovn_utils.ovn_name(router['id'])).execute()
+        for route in ovn_utils.get_lrouter_ext_gw_static_route(lr):
+            self.assertNotEqual(
+                [],
+                route.bfd)
 
     def test_gateway_chassis_rebalance(self):
         ovn_client = self.l3_plugin._ovn_client

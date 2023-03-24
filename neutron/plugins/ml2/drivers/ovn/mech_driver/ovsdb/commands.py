@@ -15,6 +15,7 @@
 from oslo_utils import timeutils
 from ovsdbapp.backend.ovs_idl import command
 from ovsdbapp.backend.ovs_idl import idlutils
+from ovsdbapp.schema.ovn_northbound import commands as ovn_nb_commands
 from ovsdbapp import utils as ovsdbapp_utils
 
 from neutron._i18n import _
@@ -624,9 +625,10 @@ class DelACLCommand(command.BaseCommand):
 
 
 class AddStaticRouteCommand(command.BaseCommand):
-    def __init__(self, api, lrouter, **columns):
+    def __init__(self, api, lrouter, maintain_bfd=False, **columns):
         super(AddStaticRouteCommand, self).__init__(api)
         self.lrouter = lrouter
+        self.maintain_bfd = maintain_bfd
         self.columns = columns
 
     def run_idl(self, txn):
@@ -637,9 +639,29 @@ class AddStaticRouteCommand(command.BaseCommand):
             msg = _("Logical Router %s does not exist") % self.lrouter
             raise RuntimeError(msg)
 
+        bfd_uuid = None
+        if (self.maintain_bfd and
+                'nexthop' in self.columns and
+                'output_port' in self.columns):
+            cmd = ovn_nb_commands.BFDAddCommand(self.api,
+                                                self.columns['output_port'],
+                                                self.columns['nexthop'],
+                                                may_exist=True)
+            cmd.run_idl(txn)
+            try:
+                bfd_uuid = cmd.result.uuid
+            except AttributeError:
+                # When the BFD record is created in the same transaction the
+                # post commit code that would resolve the real UUID and look up
+                # the bfd record has not run yet, and consequently the object
+                # returned by BFDAddCommand() is an UUID object.
+                bfd_uuid = cmd.result
+
         row = txn.insert(self.api._tables['Logical_Router_Static_Route'])
         for col, val in self.columns.items():
             setattr(row, col, val)
+        if bfd_uuid:
+            setattr(row, 'bfd', bfd_uuid)
         _addvalue_to_list(lrouter, 'static_routes', row.uuid)
 
 
@@ -915,10 +937,11 @@ class CheckRevisionNumberCommand(command.BaseCommand):
 
 class DeleteLRouterExtGwCommand(command.BaseCommand):
 
-    def __init__(self, api, lrouter, if_exists):
+    def __init__(self, api, lrouter, if_exists, maintain_bfd=True):
         super(DeleteLRouterExtGwCommand, self).__init__(api)
         self.lrouter = lrouter
         self.if_exists = if_exists
+        self.maintain_bfd = maintain_bfd
 
     def run_idl(self, txn):
         try:
@@ -930,9 +953,20 @@ class DeleteLRouterExtGwCommand(command.BaseCommand):
             msg = _("Logical Router %s does not exist") % self.lrouter
             raise RuntimeError(msg)
 
+        if self.maintain_bfd:
+            lrp_names = set()
+            for lrp in getattr(lrouter, 'ports', []):
+                lrp_names.add(lrp.name)
         for route in lrouter.static_routes:
             external_ids = getattr(route, 'external_ids', {})
             if ovn_const.OVN_ROUTER_IS_EXT_GW in external_ids:
+                bfd = getattr(route, 'bfd', [])
+                if bfd and self.maintain_bfd:
+                    for bfd_rec in bfd:
+                        bfd_logical_port = getattr(bfd_rec, 'logical_port', '')
+                        if bfd_logical_port in lrp_names:
+                            route.delvalue('bfd', bfd_rec)
+                            bfd_rec.delete()
                 lrouter.delvalue('static_routes', route)
                 route.delete()
 

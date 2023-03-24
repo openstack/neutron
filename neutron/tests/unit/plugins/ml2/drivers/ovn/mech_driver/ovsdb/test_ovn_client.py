@@ -85,6 +85,7 @@ class TestOVNClient(TestOVNClientBase):
             'neutron-' + router['id'],
             ip_prefix='0.0.0.0/0',
             nexthop='10.42.0.1',
+            maintain_bfd=False,
             external_ids={
                 'neutron:is_ext_gw': 'true',
                 'neutron:subnet_id': subnet['id']})
@@ -136,6 +137,7 @@ class TestOVNClient(TestOVNClientBase):
             mock.call('neutron-' + router['id'],
                       ip_prefix='0.0.0.0/0',
                       nexthop=subnet1['gateway_ip'],
+                      maintain_bfd=False,
                       external_ids={
                          'neutron:is_ext_gw': 'true',
                          'neutron:subnet_id': subnet1['id']},
@@ -143,6 +145,7 @@ class TestOVNClient(TestOVNClientBase):
             mock.call('neutron-' + router['id'],
                       ip_prefix='0.0.0.0/0',
                       nexthop=subnet2['gateway_ip'],
+                      maintain_bfd=False,
                       external_ids={
                          'neutron:is_ext_gw': 'true',
                          'neutron:subnet_id': subnet2['id']},

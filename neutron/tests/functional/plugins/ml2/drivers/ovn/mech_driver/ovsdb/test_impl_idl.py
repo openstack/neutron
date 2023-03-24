@@ -21,6 +21,7 @@ from neutron_lib import constants
 from oslo_utils import netutils
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import connection
+from ovsdbapp.backend.ovs_idl import idlutils
 from ovsdbapp import constants as const
 from ovsdbapp import event as ovsdb_event
 from ovsdbapp.tests.functional import base
@@ -416,6 +417,178 @@ class TestNbApi(BaseOvnIdlTest):
             r = self.nbapi.lookup("Logical_Router", name)
             self.assertEqual(r.options[ovn_const.LR_OPTIONS_MAC_AGE_LIMIT],
                              ovn_conf.get_ovn_mac_binding_age_threshold())
+
+    def _add_static_route(self, txn, lr_name, lrp_name, **columns):
+        r = txn.add(self.nbapi.lr_add(lr_name))
+        if lrp_name:
+            txn.add(self.nbapi.add_lrouter_port(lrp_name, lr_name))
+            columns.update({'output_port': lrp_name})
+        txn.add(self.nbapi.add_static_route(lr_name, **columns))
+
+        return r
+
+    def test_add_static_route(self):
+        name = 'router_with_static_routes'
+        columns = {
+            'bfd': [],
+            'external_ids': {'fake_eid_key': 'fake_eid_value'},
+            'ip_prefix': '0.0.0.0/0',
+            'nexthop': '192.0.2.1',
+            'options': {'fake_option_key': 'fake_option_value'},
+            'output_port': [],
+            'policy': ['dst-ip'],
+            'route_table': '',
+        }
+        with self.nbapi.transaction(check_error=True) as txn:
+            r = self._add_static_route(txn, name, '', **columns)
+        for route in r.result.static_routes:
+            for k, v in columns.items():
+                self.assertEqual(
+                    getattr(route, k),
+                    v)
+
+    def _add_static_route_bfd_assert(self, r, lr_name, lrp_name, ip_prefix,
+                                     nexthop):
+        for route in r.result.static_routes:
+            self.assertEqual(
+                route.ip_prefix,
+                ip_prefix)
+            self.assertEqual(
+                route.nexthop,
+                nexthop)
+            self.assertEqual(
+                route.output_port[0],
+                lrp_name)
+
+            self.assertEqual(
+                route.bfd[0].logical_port,
+                lrp_name)
+            self.assertEqual(
+                route.bfd[0].dst_ip,
+                nexthop)
+
+    def test_add_static_route_bfd(self):
+        lr_name = 'router_with_static_routes_and_bfd'
+        lrp_name = 'lrp-' + lr_name
+        ip_prefix = '0.0.0.0/0'
+        nexthop = '192.0.2.1'
+        with self.nbapi.transaction(check_error=True) as txn:
+            r = self._add_static_route(txn, lr_name, lrp_name,
+                                       ip_prefix=ip_prefix,
+                                       nexthop=nexthop,
+                                       maintain_bfd=True)
+
+        self._add_static_route_bfd_assert(r, lr_name, lrp_name, ip_prefix,
+                                          nexthop)
+
+    def test_add_static_route_bfd_record_exists(self):
+        lr_name = 'router_with_static_routes_and_preexisting_bfd_record'
+        lrp_name = 'lrp-' + lr_name
+        ip_prefix = '0.0.0.0/0'
+        nexthop = '192.0.2.1'
+        with self.nbapi.transaction(check_error=True) as txn:
+            bfd = txn.add(self.nbapi.bfd_add(lrp_name, nexthop))
+            r = self._add_static_route(txn, lr_name, lrp_name,
+                                       ip_prefix=ip_prefix,
+                                       nexthop=nexthop,
+                                       maintain_bfd=True)
+
+        for route in r.result.static_routes:
+            self.assertEqual(
+                bfd.result,
+                route.bfd[0],
+            )
+        self._add_static_route_bfd_assert(r, lr_name, lrp_name, ip_prefix,
+                                          nexthop)
+
+    def test_add_static_route_bfd_record_exists_multiple_txn(self):
+        lr_name = 'router_with_static_routes_and_preexisting_bfd_record_txn'
+        lrp_name = 'lrp-' + lr_name
+        ip_prefix = '0.0.0.0/0'
+        nexthop = '192.0.2.1'
+        with self.nbapi.transaction(check_error=True) as txn:
+            bfd = txn.add(self.nbapi.bfd_add(lrp_name, nexthop))
+        with self.nbapi.transaction(check_error=True) as txn:
+            r = self._add_static_route(txn, lr_name, lrp_name,
+                                       ip_prefix=ip_prefix,
+                                       nexthop=nexthop,
+                                       maintain_bfd=True)
+
+        for route in r.result.static_routes:
+            self.assertEqual(
+                bfd.result,
+                route.bfd[0],
+            )
+        self._add_static_route_bfd_assert(r, lr_name, lrp_name, ip_prefix,
+                                          nexthop)
+
+    def test_delete_lrouter_ext_gw(self):
+        lr_name = 'router_with_ext_gw'
+        ip_prefix = '0.0.0.0/0'
+        nexthop = '192.0.2.1'
+        external_ids = {ovn_const.OVN_ROUTER_IS_EXT_GW: 'True'}
+        with self.nbapi.transaction(check_error=True) as txn:
+            r = self._add_static_route(txn, lr_name, '',
+                                       ip_prefix=ip_prefix,
+                                       nexthop=nexthop,
+                                       external_ids=external_ids)
+
+        uuids = []
+        for route in r.result.static_routes:
+            lkp = self.nbapi.lookup("Logical_Router_Static_Route", route.uuid)
+            uuids.append(lkp.uuid)
+        self.assertTrue(len(uuids))
+
+        with self.nbapi.transaction(check_error=True) as txn:
+            txn.add(self.nbapi.delete_lrouter_ext_gw(lr_name))
+
+        for route_uuid in uuids:
+            self.assertRaises(
+                idlutils.RowNotFound,
+                self.nbapi.lookup,
+                "Logical_Router_Static_Route",
+                route_uuid)
+
+    def test_delete_lrouter_ext_gw_bfd(self):
+        lr_name = 'router_with_ext_gw_bfd'
+        lrp_name = 'lrp-' + lr_name
+        ip_prefix = '0.0.0.0/0'
+        nexthop = '192.0.2.1'
+        external_ids = {ovn_const.OVN_ROUTER_IS_EXT_GW: 'True'}
+        with self.nbapi.transaction(check_error=True) as txn:
+            r = self._add_static_route(txn, lr_name, lrp_name,
+                                       ip_prefix=ip_prefix,
+                                       nexthop=nexthop,
+                                       external_ids=external_ids,
+                                       maintain_bfd=True)
+
+        uuids = []
+        bfd_uuids = []
+        for route in r.result.static_routes:
+            lkp = self.nbapi.lookup("Logical_Router_Static_Route", route.uuid)
+            uuids.append(lkp.uuid)
+            self.assertTrue(len(lkp.bfd))
+            for bfd_rec in lkp.bfd:
+                bfd_uuids.append(bfd_rec.uuid)
+        self.assertTrue(len(uuids))
+        self.assertTrue(len(bfd_uuids))
+
+        with self.nbapi.transaction(check_error=True) as txn:
+            txn.add(self.nbapi.delete_lrouter_ext_gw(lr_name))
+
+        for route_uuid in uuids:
+            self.assertRaises(
+                idlutils.RowNotFound,
+                self.nbapi.lookup,
+                "Logical_Router_Static_Route",
+                route_uuid)
+
+        for bfd_uuid in bfd_uuids:
+            self.assertRaises(
+                idlutils.RowNotFound,
+                self.nbapi.lookup,
+                "BFD",
+                bfd_uuid)
 
 
 class TestIgnoreConnectionTimeout(BaseOvnIdlTest):
