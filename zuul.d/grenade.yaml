@@ -370,9 +370,6 @@
     description: |
       Grenade job that skips a release, validating that deployers can skip
       specific releases as prescribed by our process.
-    # See background from gmann:
-    # https://review.opendev.org/c/openstack/manila/+/859875/1/zuul.d/grenade-jobs.yaml
-    branches: ^(?!stable/(pike|queens|rocky|stein|train|ussuri|victoria|wallaby|xena|zed)).*$
     vars:
       # Move this forward when master changes to a new skip-level-allowed
       # target release. Right now, this is xena because master is zed.
@@ -387,9 +384,6 @@
     description: |
       Grenade job that skips a release, validating that deployers can skip
       specific releases as prescribed by our process.
-    # See background from gmann:
-    # https://review.opendev.org/c/openstack/manila/+/859875/1/zuul.d/grenade-jobs.yaml
-    branches: ^(?!stable/(pike|queens|rocky|stein|train|ussuri|victoria|wallaby|xena|zed)).*$
     vars:
       # Move this forward when master changes to a new skip-level-allowed
       # target release. Right now, this is xena because master is zed.
