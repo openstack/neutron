@@ -55,6 +55,8 @@
       - ^neutron/tests/.*$
       - ^tools/.*$
       - ^tox.ini$
+      - ^plugin.spec$
+      - ^tools/ovn_migration/.*$
       - ^neutron/agent/ovn/.*$
       - ^neutron/agent/windows/.*$
       - ^neutron/plugins/ml2/drivers/linuxbridge/.*$
@@ -377,6 +379,8 @@
       - ^neutron/tests/.*$
       - ^tools/.*$
       - ^tox.ini$
+      - ^plugin.spec$
+      - ^tools/ovn_migration/.*$
       - ^neutron/agent/dhcp/.*$
       - ^neutron/agent/l2/.*$
       - ^neutron/agent/l3/.*$
