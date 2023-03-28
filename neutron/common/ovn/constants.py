@@ -393,8 +393,6 @@ LSP_OPTIONS_MCAST_FLOOD = 'mcast_flood'
 LSP_OPTIONS_QOS_MIN_RATE = 'qos_min_rate'
 
 LRP_OPTIONS_RESIDE_REDIR_CH = 'reside-on-redirect-chassis'
-LRP_OPTIONS_REDIRECT_TYPE = 'redirect-type'
-BRIDGE_REDIRECT_TYPE = "bridged"
 
 # Port Binding types
 PB_TYPE_VIRTUAL = 'virtual'
