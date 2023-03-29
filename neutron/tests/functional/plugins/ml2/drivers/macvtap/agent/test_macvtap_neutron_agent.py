@@ -17,6 +17,7 @@
 from neutron_lib import constants
 
 from neutron.agent.linux import ip_lib
+from neutron.common import utils as common_utils
 from neutron.plugins.ml2.drivers.macvtap.agent import macvtap_neutron_agent
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base as functional_base
@@ -44,5 +45,14 @@ class MacvtapAgentTestCase(functional_base.BaseSudoTestCase):
         macvtap = self.useFixture(net_helpers.MacvtapFixture(
             src_dev=veth1.name, mode='bridge',
             prefix=constants.MACVTAP_DEVICE_PREFIX)).ip_dev
-        self.assertEqual(set([macvtap.link.address]),
-                         self.mgr.get_all_devices())
+        try:
+            common_utils.wait_until_true(
+                lambda: {macvtap.link.address} == self.mgr.get_all_devices(),
+                timeout=5)
+        except common_utils.WaitTimeout:
+            msg = 'MacVTap address: %s, read devices: %s\n' % (
+                macvtap.link.address, self.mgr.get_all_devices())
+            for device in ip_lib.IPWrapper().get_devices():
+                msg += '  Device %s, MAC: %s' % (device.name,
+                                                 device.link.address)
+            self.fail(msg)
