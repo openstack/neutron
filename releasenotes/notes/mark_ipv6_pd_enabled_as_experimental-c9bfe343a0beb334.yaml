@@ -1,0 +1,7 @@
+---
+deprecations:
+  - |
+    "ipv6_pd_enabled" has been marked as deprecated and marked as experimental.
+    To continue using it, deployers have to set to True the "ipv6_pd_enabled"
+    option in the "experimental" section of neutron.conf. See
+    `Dibbler project concluded <https://bugs.launchpad.net/neutron/+bug/1916428>`_.
