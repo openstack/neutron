@@ -57,13 +57,17 @@ _TYPES_PRIORITY_ORDER = (
 
 # The order in which the resources should be created or updated by the
 # maintenance task: Root ones first and leafs at the end.
-MAINTENANCE_CREATE_UPDATE_TYPE_ORDER = {
-    t: n for n, t in enumerate(_TYPES_PRIORITY_ORDER, 1)}
+MAINTENANCE_CREATE_UPDATE_TYPE_ORDER = [
+    (ovn_models.OVNRevisionNumbers.resource_type == resource_type, idx)
+    for idx, resource_type in enumerate(_TYPES_PRIORITY_ORDER, 1)
+]
 
 # The order in which the resources should be deleted by the maintenance
 # task: Leaf ones first and roots at the end.
-MAINTENANCE_DELETE_TYPE_ORDER = {
-    t: n for n, t in enumerate(reversed(_TYPES_PRIORITY_ORDER), 1)}
+MAINTENANCE_DELETE_TYPE_ORDER = [
+    (ovn_models.OVNRevisionNumbers.resource_type == resource_type, idx)
+    for idx, resource_type in enumerate(reversed(_TYPES_PRIORITY_ORDER), 1)
+]
 
 INITIAL_REV_NUM = -1
 
@@ -194,8 +198,7 @@ def get_inconsistent_resources(context):
     :returns: A list of objects which the revision number from the
               ovn_revision_number and standardattributes tables differs.
     """
-    sort_order = sa.case(value=ovn_models.OVNRevisionNumbers.resource_type,
-                         whens=MAINTENANCE_CREATE_UPDATE_TYPE_ORDER)
+    sort_order = sa.case(*MAINTENANCE_CREATE_UPDATE_TYPE_ORDER)
     time_ = (timeutils.utcnow() -
              datetime.timedelta(seconds=INCONSISTENCIES_OLDER_THAN))
     with db_api.CONTEXT_READER.using(context):
@@ -225,8 +228,7 @@ def get_deleted_resources(context):
     the entry will be kept and returned in this list so the maintenance
     thread can later fix it.
     """
-    sort_order = sa.case(value=ovn_models.OVNRevisionNumbers.resource_type,
-                         whens=MAINTENANCE_DELETE_TYPE_ORDER)
+    sort_order = sa.case(*MAINTENANCE_DELETE_TYPE_ORDER)
     with db_api.CONTEXT_READER.using(context):
         return context.session.query(ovn_models.OVNRevisionNumbers).filter_by(
             standard_attr_id=None).order_by(sort_order).all()
