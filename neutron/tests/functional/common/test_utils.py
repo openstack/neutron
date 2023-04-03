@@ -38,7 +38,7 @@ class _TestIsSessionActive(testlib_api.SqlTestCase):
             self.skipTest('No driver defined')
         super().setUp()
 
-    def test_1(self):
+    def test_is_session_active(self):
         context = n_context.Context(user_id=None, tenant_id=None,
                                     is_admin=True, overwrite=False)
         self.assertFalse(db_api.is_session_active(context.session))
