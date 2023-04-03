@@ -22,6 +22,8 @@
       - ^neutron/tests/fullstack/.*$
       - ^releasenotes/.*$
       - ^setup.cfg$
+      - ^plugin.spec$
+      - ^tools/ovn_migration/.*$
       - ^vagrant/.*$
       - ^devstack/.*\.sample$
       - ^playbooks/add_mariadb_repo.yaml
@@ -74,6 +76,8 @@
       - ^releasenotes/.*$
       - ^doc/.*$
       - ^setup.cfg$
+      - ^plugin.spec$
+      - ^tools/ovn_migration/.*$
       - ^.*\.conf\.sample$
       - ^.*\.rst$
       - ^neutron/locale/.*$
