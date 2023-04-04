@@ -19,6 +19,7 @@ from oslo_utils import uuidutils
 
 from neutron.agent.linux import ip_lib
 from neutron.common import utils as common_utils
+from neutron.tests import base as test_base
 from neutron.tests.fullstack.agents import dhcp_agent
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import environment
@@ -184,6 +185,7 @@ class TestDhcpAgentHA(BaseDhcpAgentTest):
         # check if new vm will get IP from new DHCP agent
         self._spawn_vm()
 
+    @test_base.unstable_test('bug 2000150')
     def test_multiple_agents_for_network(self):
         network_dhcp_agents = self.client.list_dhcp_agent_hosting_networks(
             self.network['id'])['agents']
