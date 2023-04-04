@@ -24,6 +24,7 @@ MYSQL_USER=${MYSQL_USER:-root}
 DATABASE_USER=${DATABASE_USER:-openstack_citest}
 DATABASE_NAME=${DATABASE_NAME:-openstack_citest}
 MEMORY_TRACKER=${MEMORY_TRACKER:-False}
+MYSQL_REDUCE_MEMORY=${MYSQL_REDUCE_MEMORY:-True}
 
 
 if [[ "$IS_GATE" != "True" ]] && [[ "$#" -lt 1 ]]; then

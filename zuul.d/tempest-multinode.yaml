@@ -79,6 +79,7 @@
     vars:
       tox_envlist: integrated-network
       devstack_localrc:
+        MYSQL_REDUCE_MEMORY: true
         CIRROS_VERSION: 0.6.1
         DEFAULT_IMAGE_NAME: cirros-0.6.1-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.6.1-x86_64-uec.tar.gz
@@ -205,6 +206,7 @@
     vars:
       tox_envlist: integrated-network
       devstack_localrc:
+        MYSQL_REDUCE_MEMORY: true
         CIRROS_VERSION: 0.6.1
         DEFAULT_IMAGE_NAME: cirros-0.6.1-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.6.1-x86_64-uec.tar.gz
@@ -293,6 +295,7 @@
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_localrc:
+        MYSQL_REDUCE_MEMORY: true
         CIRROS_VERSION: 0.6.1
         DEFAULT_IMAGE_NAME: cirros-0.6.1-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.6.1-x86_64-uec.tar.gz
@@ -421,6 +424,7 @@
             ovn:
               enable_distributed_floating_ip: True
       devstack_localrc:
+        MYSQL_REDUCE_MEMORY: true
         CIRROS_VERSION: 0.6.1
         DEFAULT_IMAGE_NAME: cirros-0.6.1-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.6.1-x86_64-uec.tar.gz
