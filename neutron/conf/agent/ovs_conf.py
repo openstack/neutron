@@ -17,14 +17,14 @@ from oslo_config import cfg
 
 from neutron._i18n import _
 
-# Default timeout for ovsdb commands
+# Default timeout for OVSDB commands
 DEFAULT_OVSDB_TIMEOUT = 10
 
 OPTS = [
     cfg.IntOpt('ovsdb_timeout',
                default=DEFAULT_OVSDB_TIMEOUT,
-               help=_('Timeout in seconds for ovsdb commands. '
-                      'If the timeout expires, ovsdb commands will fail with '
+               help=_('Timeout in seconds for OVSDB commands. '
+                      'If the timeout expires, OVSDB commands will fail with '
                       'ALARMCLOCK error.')),
     cfg.IntOpt('bridge_mac_table_size',
                default=50000,
@@ -38,7 +38,7 @@ OPTS = [
                        'option is set to True, support for Internet Group '
                        'Management Protocol (IGMP) is enabled in integration '
                        'bridge. '
-                       'Setting this option to True will also enable Open '
+                       'Setting this option to True will also enable the Open '
                        'vSwitch mcast-snooping-disable-flood-unregistered '
                        'flag. This option will disable flooding of '
                        'unregistered multicast packets to all ports. '

@@ -185,12 +185,12 @@ ovs_opts = [
 agent_opts = [
     cfg.BoolOpt('minimize_polling',
                 default=True,
-                help=_("Minimize polling by monitoring ovsdb for interface "
+                help=_("Minimize polling by monitoring OVSDB for interface "
                        "changes.")),
     cfg.IntOpt('ovsdb_monitor_respawn_interval',
                default=ovs_constants.DEFAULT_OVSDBMON_RESPAWN,
                help=_("The number of seconds to wait before respawning the "
-                      "ovsdb monitor after losing communication with it.")),
+                      "OVSDB monitor after losing communication with it.")),
     cfg.ListOpt('tunnel_types', default=DEFAULT_TUNNEL_TYPES,
                 help=_("Network types supported by the agent "
                        "(gre, vxlan and/or geneve).")),
@@ -216,7 +216,7 @@ agent_opts = [
                        "in the agent, regardless of the setting in the config "
                        "file.")),
     cfg.BoolOpt('dont_fragment', default=True,
-                help=_("Set or un-set the don't fragment (DF) bit on "
+                help=_("Set or un-set the do not fragment (DF) bit on "
                        "outgoing IP packet carrying GRE/VXLAN tunnel.")),
     cfg.BoolOpt('enable_distributed_routing', default=False,
                 help=_("Make the l2 agent run in DVR mode.")),
@@ -245,12 +245,12 @@ dhcp_opts = [
 
 local_ip_opts = [
     cfg.BoolOpt('static_nat', default=False,
-                help=_("When set to True, the Local IP openvswitch agent "
+                help=_("When set to True, the Local IP Openvswitch agent "
                        "extension will use static NAT rules instead of using "
                        "conntrack. This allows to use feature in OVS offload "
                        "and DPDK scenarios at the cost of number and "
-                       "complexity of flows. This also allows to use feature "
-                       "together with ovs firewall.")),
+                       "complexity of flows. This also allows using this "
+                       "feature together with the OVS firewall.")),
 ]
 
 

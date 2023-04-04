@@ -61,13 +61,13 @@ designate_opts = [
                 help=_('Allow the creation of PTR records')),
     cfg.IntOpt(
         'ipv4_ptr_zone_prefix_size', default=24,
-        help=_('Number of bits in an ipv4 PTR zone that will be considered '
+        help=_('Number of bits in an IPv4 PTR zone that will be considered '
                'network prefix. It has to align to byte boundary. Minimum '
                'value is 8. Maximum value is 24. As a consequence, range '
                'of values is 8, 16 and 24')),
     cfg.IntOpt(
         'ipv6_ptr_zone_prefix_size', default=120,
-        help=_('Number of bits in an ipv6 PTR zone that will be considered '
+        help=_('Number of bits in an IPv6 PTR zone that will be considered '
                'network prefix. It has to align to nyble boundary. Minimum '
                'value is 4. Maximum value is 124. As a consequence, range '
                'of values is 4, 8, 12, 16,..., 124')),

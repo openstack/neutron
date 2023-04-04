@@ -19,7 +19,7 @@ from neutron._i18n import _
 L3NDPPROXY_OPTS = [
     cfg.BoolOpt('enable_ndp_proxy_by_default', default=False,
                 help=_('Define the default value of enable_ndp_proxy if not '
-                       'provided in router.'))
+                       'provided in the router.'))
 ]
 
 

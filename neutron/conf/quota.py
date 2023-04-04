@@ -44,7 +44,7 @@ DEFAULT_QUOTA_RBAC = 10
 core_quota_opts = [
     cfg.IntOpt('default_quota',
                default=DEFAULT_QUOTA,
-               help=_('Default number of resource allowed per tenant. '
+               help=_('Default number of resources allowed per tenant. '
                       'A negative value means unlimited.')),
     cfg.IntOpt('quota_network',
                default=DEFAULT_QUOTA_NETWORK,
@@ -63,9 +63,15 @@ core_quota_opts = [
                help=_('Default driver to use for quota checks.')),
     cfg.BoolOpt('track_quota_usage',
                 default=True,
-                help=_('Keep in track in the database of current resource '
-                       'quota usage. Plugins which do not leverage the '
-                       'neutron database should set this flag to False.')),
+                help=_('When set to True, quota usage will be tracked in the '
+                       'Neutron database for each resource, by directly '
+                       'mapping to a data model class, for example, '
+                       'networks, subnets, ports, etc. '
+                       'When set to False, quota usage will be tracked by '
+                       'the quota engine as a count of the object type '
+                       'directly. '
+                       'For more information, see the Quota Management '
+                       'and Enforcement guide.')),
 ]
 
 # security_group_quota_opts from neutron/extensions/securitygroup.py
@@ -76,7 +82,7 @@ security_group_quota_opts = [
                       'A negative value means unlimited.')),
     cfg.IntOpt('quota_security_group_rule',
                default=DEFAULT_QUOTA_SG_RULE,
-               help=_('Number of security rules allowed per tenant. '
+               help=_('Number of security group rules allowed per tenant. '
                       'A negative value means unlimited.')),
 ]
 

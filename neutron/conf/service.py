@@ -34,7 +34,7 @@ SERVICE_OPTS = [
                       'number of API workers.')),
     cfg.IntOpt('rpc_state_report_workers',
                default=1,
-               help=_('Number of RPC worker processes dedicated to state '
+               help=_('Number of RPC worker processes dedicated to the state '
                       'reports queue.')),
     cfg.IntOpt('periodic_fuzzy_delay',
                default=5,

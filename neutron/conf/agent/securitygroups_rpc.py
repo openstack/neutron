@@ -30,13 +30,13 @@ security_group_opts = [
         help=_(
             'Controls whether the neutron security group API is enabled '
             'in the server. It should be false when using no security '
-            'groups or using the nova security group API.')),
+            'groups or using the Nova security group API.')),
     cfg.BoolOpt(
         'enable_ipset',
         default=True,
-        help=_('Use ipset to speed-up the iptables based security groups. '
-               'Enabling ipset support requires that ipset is installed on L2 '
-               'agent node.')),
+        help=_('Use IPsets to speed-up the iptables based security groups. '
+               'Enabling IPset support requires that ipset is installed on '
+               'the L2 agent node.')),
     cfg.ListOpt(
         'permitted_ethertypes',
         default=[],
