@@ -26,6 +26,7 @@ from neutron_lib import constants as n_const
 from neutron_lib import context as n_context
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
+from neutron_lib.exceptions import l3 as l3_exc
 from oslo_config import cfg
 from oslo_log import log
 from oslo_serialization import jsonutils
@@ -713,6 +714,66 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
     @periodics.periodic(spacing=600, run_immediately=True)
+    def check_redirect_type_router_gateway_ports(self):
+        """Check OVN router gateway ports
+        Check for the option "redirect-type=bridged" value for
+        router gateway ports.
+        """
+        if not self.has_lock:
+            return
+        context = n_context.get_admin_context()
+        cmds = []
+        gw_ports = self._ovn_client._plugin.get_ports(
+            context, {'device_owner': [n_const.DEVICE_OWNER_ROUTER_GW]})
+        for gw_port in gw_ports:
+            enable_redirect = False
+            if ovn_conf.is_ovn_distributed_floating_ip():
+                try:
+                    r_ports = self._ovn_client._get_router_ports(
+                        context, gw_port['device_id'])
+                except l3_exc.RouterNotFound:
+                    LOG.debug("No Router %s not found", gw_port['device_id'])
+                    continue
+                else:
+                    network_ids = {port['network_id'] for port in r_ports}
+                    networks = self._ovn_client._plugin.get_networks(
+                        context, filters={'id': network_ids})
+                    # NOTE(ltomasbo): For VLAN type networks connected through
+                    # the gateway port there is a need to set the redirect-type
+                    # option to bridge to ensure traffic is not centralized
+                    # through the controller.
+                    # If there are no VLAN type networks attached we need to
+                    # still make it centralized.
+                    if networks:
+                        enable_redirect = all(
+                            net.get(pnet.NETWORK_TYPE) in [n_const.TYPE_VLAN,
+                                                           n_const.TYPE_FLAT]
+                            for net in networks)
+
+            lrp_name = utils.ovn_lrouter_port_name(gw_port['id'])
+            lrp = self._nb_idl.get_lrouter_port(lrp_name)
+            redirect_value = lrp.options.get(
+                ovn_const.LRP_OPTIONS_REDIRECT_TYPE)
+            if enable_redirect:
+                if redirect_value != ovn_const.BRIDGE_REDIRECT_TYPE:
+                    opt = {ovn_const.LRP_OPTIONS_REDIRECT_TYPE:
+                           ovn_const.BRIDGE_REDIRECT_TYPE}
+                    cmds.append(self._nb_idl.db_set(
+                        'Logical_Router_Port', lrp_name, ('options', opt)))
+            else:
+                if redirect_value == ovn_const.BRIDGE_REDIRECT_TYPE:
+                    cmds.append(self._nb_idl.db_remove(
+                        'Logical_Router_Port', lrp_name, 'options',
+                        (ovn_const.LRP_OPTIONS_REDIRECT_TYPE)))
+        if cmds:
+            with self._nb_idl.transaction(check_error=True) as txn:
+                for cmd in cmds:
+                    txn.add(cmd)
+        raise periodics.NeverAgain()
+
+    # A static spacing value is used here, but this method will only run
+    # once per lock due to the use of periodics.NeverAgain().
+    @periodics.periodic(spacing=600, run_immediately=True)
     def check_vlan_distributed_ports(self):
         """Check VLAN distributed ports
         Check for the option "reside-on-redirect-chassis" value for
@@ -732,9 +793,11 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         router_ports = self._ovn_client._plugin.get_ports(
             context, {'network_id': vlan_net_ids,
                       'device_owner': n_const.ROUTER_PORT_OWNERS})
-        expected_value = ('false' if ovn_conf.is_ovn_distributed_floating_ip()
-                          else 'true')
+
         for rp in router_ports:
+            expected_value = (
+                self._ovn_client._get_reside_redir_for_gateway_port(
+                    rp['device_id']))
             lrp_name = utils.ovn_lrouter_port_name(rp['id'])
             lrp = self._nb_idl.get_lrouter_port(lrp_name)
             if lrp.options.get(
