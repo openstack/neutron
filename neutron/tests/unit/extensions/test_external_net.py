@@ -142,7 +142,8 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def test_network_filter_hook_nonadmin_context(self):
         ctx = context.Context('edinson', 'cavani')
         model = models_v2.Network
-        txt = ("networkrbacs.action = :action_1 AND "
+        txt = ("networks.project_id = :project_id_1 OR "
+               "networkrbacs.action = :action_1 AND "
                "networkrbacs.target_project = :target_project_1 OR "
                "networkrbacs.target_project = :target_project_2")
         conditions = external_net_db._network_filter_hook(ctx, model, [])
@@ -150,7 +151,8 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         # Try to concatenate conditions
         txt2 = (txt.replace('project_1', 'project_3').
                 replace('project_2', 'project_4').
-                replace('action_1', 'action_2'))
+                replace('action_1', 'action_2').
+                replace('project_id_1', 'project_id_2'))
         conditions = external_net_db._network_filter_hook(ctx, model,
                                                           conditions)
         self.assertEqual(conditions.__str__(), "%s OR %s" % (txt, txt2))
