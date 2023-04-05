@@ -137,3 +137,22 @@
         - neutron-functional-with-oslo-master
         - neutron-ovs-tempest-with-oslo-master
         - neutron-ovn-tempest-ovs-release-with-oslo-master
+
+- project-template:
+    name: neutron-skip-level-jobs
+    # NOTE(ralonsoh): during Bobcat (non SLURP release), these
+    # jobs are not executed in the "check" queue.
+    #check:
+    #  jobs:
+    #    - neutron-ovs-grenade-multinode-skip-level:
+    #        voting: false
+    #    - neutron-ovn-grenade-multinode-skip-level:
+    #        voting: false
+    periodic:
+      jobs:
+        - neutron-ovs-grenade-multinode-skip-level
+        - neutron-ovn-grenade-multinode-skip-level
+    experimental:
+      jobs:
+        - neutron-ovs-grenade-multinode-skip-level
+        - neutron-ovn-grenade-multinode-skip-level
