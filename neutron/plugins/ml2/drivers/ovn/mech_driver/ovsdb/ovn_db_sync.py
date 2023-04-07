@@ -914,7 +914,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                 try:
                     # Make sure that this port has an IP address in all the
                     # subnets
-                    self._ovn_client.update_metadata_port(ctx, net['id'])
+                    self._ovn_client.update_metadata_port(ctx, net)
                 except n_exc.IpAddressGenerationFailure:
                     LOG.error('Could not allocate IP addresses for '
                               'metadata port in network %s', net['id'])
