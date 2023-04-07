@@ -26,6 +26,7 @@ from oslo_utils import netutils
 from oslo_utils import uuidutils
 import webob.exc
 
+from neutron.conf import common as base_config
 from neutron.db import ipam_backend_mixin
 from neutron.db import ipam_pluggable_backend
 from neutron.ipam import exceptions as ipam_exc
@@ -39,6 +40,7 @@ from neutron.tests.unit.db import test_db_base_plugin_v2 as test_db_base
 class UseIpamMixin(object):
 
     def setUp(self):
+        cfg.CONF.register_opts(base_config.core_opts)
         cfg.CONF.set_override("ipam_driver", 'internal')
         super(UseIpamMixin, self).setUp()
 
