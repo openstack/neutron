@@ -995,6 +995,7 @@ class TestMetadataPorts(base.TestOVNFunctionalBase):
 
     def setUp(self, *args, **kwargs):
         super().setUp(*args, **kwargs)
+        self.plugin = self.mech_driver._plugin
         self._ovn_client = self.mech_driver._ovn_client
         self.meta_regex = re.compile(r'%s,(\d+\.\d+\.\d+\.\d+)' %
                                      constants.METADATA_V4_CIDR)
@@ -1017,7 +1018,7 @@ class TestMetadataPorts(base.TestOVNFunctionalBase):
         res = self._list_ports(self.fmt, net_id=net_id)
         return self.deserialize(self.fmt, res)['ports']
 
-    def _check_metadata_port(self, net_id, fixed_ip):
+    def _check_metadata_port(self, net_id, fixed_ip, fail=True):
         for port in self._list_ports_ovn(net_id=net_id):
             if ovn_client.OVNClient.is_metadata_port(port):
                 self.assertEqual(net_id, port['network_id'])
@@ -1027,13 +1028,17 @@ class TestMetadataPorts(base.TestOVNFunctionalBase):
                     self.assertEqual([], port['fixed_ips'])
                 return port['id']
 
-        self.fail('Metadata port is not present in network %s or data is not '
-                  'correct' % self.n1_id)
+        if fail:
+            self.fail('Metadata port is not present in network %s or data is '
+                      'not correct' % self.n1_id)
 
     def _check_subnet_dhcp_options(self, subnet_id, cidr):
-        # This method checks the DHCP options CIDR and returns, if exits, the
-        # metadata port IP address, included in the classless static routes.
+        # This method checks DHCP options for a subnet ID, and if they exist,
+        # verifies the CIDR matches. Returns the metadata port IP address
+        # if it is included in the classless static routes, else returns None.
         dhcp_opts = self._ovn_client._nb_idl.get_subnet_dhcp_options(subnet_id)
+        if not dhcp_opts['subnet']:
+            return
         self.assertEqual(cidr, dhcp_opts['subnet']['cidr'])
         routes = dhcp_opts['subnet']['options'].get('classless_static_route')
         if not routes:
@@ -1061,6 +1066,35 @@ class TestMetadataPorts(base.TestOVNFunctionalBase):
         self.assertEqual('10.0.0.5', metatada_ip)
         fixed_ip = {'subnet_id': subnet['id'], 'ip_address': metatada_ip}
         self._check_metadata_port(self.n1_id, fixed_ip)
+
+    def test_update_subnet_ipv4(self):
+        self._create_network_ovn(metadata_enabled=True)
+        subnet = self._create_subnet_ovn('10.0.0.0/24')
+        metatada_ip = self._check_subnet_dhcp_options(subnet['id'],
+                                                      '10.0.0.0/24')
+        fixed_ip = {'subnet_id': subnet['id'], 'ip_address': metatada_ip}
+        port_id = self._check_metadata_port(self.n1_id, fixed_ip)
+
+        # Disable DHCP, port should still be present
+        subnet['enable_dhcp'] = False
+        self._ovn_client.update_subnet(self.context, subnet,
+                                       self.n1['network'])
+        port_id = self._check_metadata_port(self.n1_id, None)
+        self.assertIsNone(self._check_subnet_dhcp_options(subnet['id'], []))
+
+        # Delete metadata port
+        self.plugin.delete_port(self.context, port_id)
+        port_id = self._check_metadata_port(self.n1_id, None, fail=False)
+        self.assertIsNone(port_id)
+
+        # Enable DHCP, metadata port should have been re-created
+        subnet['enable_dhcp'] = True
+        self._ovn_client.update_subnet(self.context, subnet,
+                                       self.n1['network'])
+        metatada_ip = self._check_subnet_dhcp_options(subnet['id'],
+                                                      '10.0.0.0/24')
+        fixed_ip = {'subnet_id': subnet['id'], 'ip_address': metatada_ip}
+        port_id = self._check_metadata_port(self.n1_id, fixed_ip)
 
     def test_subnet_ipv4_no_metadata(self):
         self._create_network_ovn(metadata_enabled=False)
