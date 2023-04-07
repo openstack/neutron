@@ -114,7 +114,7 @@ class SegmentTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             segment['segment'][k] = None if v is None else str(v)
 
         segment_req = self.new_create_request(
-            'segments', segment, fmt)
+            'segments', segment, fmt, as_admin=True)
 
         segment_res = segment_req.get_response(self.ext_api)
         if expected_res_status:
@@ -189,7 +189,8 @@ class TestSegmentNameDescription(SegmentTestCase):
         result = self._update('segments',
                               segment['segment']['id'],
                               {'segment': {'name': 'Segment name'}},
-                              expected_code=webob.exc.HTTPOk.code)
+                              expected_code=webob.exc.HTTPOk.code,
+                              as_admin=True)
         self.assertEqual('Segment name', result['segment']['name'])
 
     def test_update_segment_set_description(self):
@@ -197,7 +198,8 @@ class TestSegmentNameDescription(SegmentTestCase):
         result = self._update('segments',
                               segment['segment']['id'],
                               {'segment': {'description': 'Segment desc'}},
-                              expected_code=webob.exc.HTTPOk.code)
+                              expected_code=webob.exc.HTTPOk.code,
+                              as_admin=True)
         self.assertEqual('Segment desc', result['segment']['description'])
 
     def test_update_segment_set_name_to_none(self):
@@ -206,7 +208,8 @@ class TestSegmentNameDescription(SegmentTestCase):
         result = self._update('segments',
                               segment['segment']['id'],
                               {'segment': {'name': None}},
-                              expected_code=webob.exc.HTTPOk.code)
+                              expected_code=webob.exc.HTTPOk.code,
+                              as_admin=True)
         self.assertIsNone(result['segment']['name'])
 
     def test_update_segment_set_description_to_none(self):
@@ -273,7 +276,8 @@ class TestSegment(SegmentTestCase):
         with self.network() as network:
             network = network['network']
 
-        local_segment = self._list('segments')['segments'][0]
+        local_segment = self._list('segments',
+                                   as_admin=True)['segments'][0]
         with mock.patch.object(registry, 'publish') as publish:
             publish.side_effect = exceptions.CallbackFailure(errors=Exception)
             self.assertRaises(webob.exc.HTTPClientError,
@@ -312,7 +316,7 @@ class TestSegment(SegmentTestCase):
                      physical_network='physnet0')
         segment = self.segment(network_id=network['id'], segmentation_id=201,
                                physical_network='physnet1')
-        self._delete('segments', segment['segment']['id'])
+        self._delete('segments', segment['segment']['id'], as_admin=True)
         self._show('segments', segment['segment']['id'],
                    expected_code=webob.exc.HTTPNotFound.code)
 
@@ -326,8 +330,10 @@ class TestSegment(SegmentTestCase):
             segment_id = segment['segment']['id']
             with self.subnet(network=network, segment_id=segment_id):
                 self._delete('segments', segment_id,
-                             expected_code=webob.exc.HTTPConflict.code)
-                exist_segment = self._show('segments', segment_id)
+                             expected_code=webob.exc.HTTPConflict.code,
+                             as_admin=True)
+                exist_segment = self._show('segments', segment_id,
+                                           as_admin=True)
                 self.assertEqual(segment_id, exist_segment['segment']['id'])
 
     def test_get_segment(self):
@@ -336,7 +342,8 @@ class TestSegment(SegmentTestCase):
         segment = self._test_create_segment(network_id=network['id'],
                                             physical_network='physnet',
                                             segmentation_id=200)
-        req = self.new_show_request('segments', segment['segment']['id'])
+        req = self.new_show_request('segments', segment['segment']['id'],
+                                    as_admin=True)
         res = self.deserialize(self.fmt, req.get_response(self.ext_api))
         self.assertEqual(segment['segment']['id'], res['segment']['id'])
 
@@ -349,14 +356,15 @@ class TestSegment(SegmentTestCase):
         self._test_create_segment(network_id=network['id'],
                                   physical_network='physnet2',
                                   segmentation_id=201)
-        res = self._list('segments')
+        res = self._list('segments', as_admin=True)
         self.assertEqual(3, len(res['segments']))
 
     def test_list_segments_with_sort(self):
         with self.network() as network:
             network = network['network']
 
-        local_segment = {'segment': self._list('segments')['segments'][0]}
+        local_segment = {'segment': self._list('segments',
+                                               as_admin=True)['segments'][0]}
         s1 = self._test_create_segment(network_id=network['id'],
                                        physical_network='physnet1',
                                        segmentation_id=200)
@@ -366,13 +374,15 @@ class TestSegment(SegmentTestCase):
         self._test_list_with_sort('segment',
                                   (s2, s1, local_segment),
                                   [('physical_network', 'desc')],
-                                  query_params='network_id=%s' % network['id'])
+                                  query_params='network_id=%s' % network['id'],
+                                  as_admin=True)
 
     def test_list_segments_with_pagination(self):
         with self.network() as network:
             network = network['network']
 
-        local_segment = {'segment': self._list('segments')['segments'][0]}
+        local_segment = {'segment': self._list('segments',
+                                               as_admin=True)['segments'][0]}
         s1 = self._test_create_segment(network_id=network['id'],
                                        physical_network='physnet0',
                                        segmentation_id=200)
@@ -386,7 +396,8 @@ class TestSegment(SegmentTestCase):
             'segment',
             (local_segment, s1, s2, s3),
             ('physical_network', 'asc'), 3, 2,
-            query_params='network_id=%s' % network['id'])
+            query_params='network_id=%s' % network['id'],
+            as_admin=True)
 
     def test_list_segments_with_pagination_reverse(self):
         with self.network() as network:
@@ -405,7 +416,8 @@ class TestSegment(SegmentTestCase):
             'segment',
             (s1, s2, s3),
             ('physical_network', 'asc'), 2, 2,
-            query_params='network_id=%s' % network['id'])
+            query_params='network_id=%s' % network['id'],
+            as_admin=True)
 
     def test_update_segments(self):
         with self.network() as network:
@@ -456,7 +468,7 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
         with self.subnet(network=network, segment_id=segment_id) as subnet:
             subnet = subnet['subnet']
 
-        request = self.new_show_request('subnets', subnet['id'])
+        request = self.new_show_request('subnets', subnet['id'], as_admin=True)
         response = request.get_response(self.api)
         res = self.deserialize(self.fmt, response)
         self.assertEqual(segment_id,
@@ -556,12 +568,14 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
         with self.network() as network:
             pass
 
-        segment_id = self._list('segments')['segments'][0]['id']
+        segment_id = self._list('segments',
+                                as_admin=True)['segments'][0]['id']
         with self.subnet(network=network, segment_id=None) as subnet:
             subnet = subnet['subnet']
 
         data = {'subnet': {'segment_id': segment_id}}
-        request = self.new_update_request('subnets', data, subnet['id'])
+        request = self.new_update_request('subnets', data, subnet['id'],
+                                          as_admin=True)
         response = request.get_response(self.api)
         res = self.deserialize(self.fmt, response)
 
@@ -582,7 +596,8 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
             subnet = subnet['subnet']
 
         data = {'subnet': {'segment_id': segment1['id']}}
-        request = self.new_update_request('subnets', data, subnet['id'])
+        request = self.new_update_request('subnets', data, subnet['id'],
+                                          as_admin=True)
         response = request.get_response(self.api)
         res = self.deserialize(self.fmt, response)
 
@@ -604,7 +619,8 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
             subnet = subnet['subnet']
 
         data = {'subnet': {'segment_id': segment1['id']}}
-        request = self.new_update_request('subnets', data, subnet['id'])
+        request = self.new_update_request('subnets', data, subnet['id'],
+                                          as_admin=True)
         response = request.get_response(self.api)
 
         self.assertEqual(webob.exc.HTTPBadRequest.code, response.status_int)
@@ -627,7 +643,8 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
             subnet2 = subnet2['subnet']
 
         data = {'subnet': {'segment_id': segment1['id']}}
-        request = self.new_update_request('subnets', data, subnet1['id'])
+        request = self.new_update_request('subnets', data, subnet1['id'],
+                                          as_admin=True)
         response = request.get_response(self.api)
 
         self.assertEqual(webob.exc.HTTPBadRequest.code, response.status_int)
@@ -636,7 +653,7 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
         with self.network() as network:
             net = network['network']
 
-        segment_id = self._list('segments')['segments'][0]['id']
+        segment_id = self._list('segments', as_admin=True)['segments'][0]['id']
         with self.subnet(network=network, segment_id=segment_id) as subnet:
             subnet = subnet['subnet']
 
@@ -645,7 +662,8 @@ class TestSegmentSubnetAssociation(SegmentTestCase):
                                              segmentation_id=202)['segment']
 
         data = {'subnet': {'segment_id': segment2['id']}}
-        request = self.new_update_request('subnets', data, subnet['id'])
+        request = self.new_update_request('subnets', data, subnet['id'],
+                                          as_admin=True)
         response = request.get_response(self.api)
 
         self.assertEqual(webob.exc.HTTPBadRequest.code, response.status_int)
@@ -855,7 +873,7 @@ class TestMl2HostSegmentMappingOVS(HostSegmentMappingTestCase):
     def test_segment_deletion_removes_host_mapping(self):
         host = 'host1'
         segment = self._test_one_segment_one_host(host)
-        self._delete('segments', segment['id'])
+        self._delete('segments', segment['id'], as_admin=True)
         segments_host_db = self._get_segments_for_host(host)
         self.assertFalse(segments_host_db)
 
@@ -1021,7 +1039,8 @@ class SegmentAwareIpamTestCase(SegmentTestCase):
                          segment_id=segment['segment']['id'],
                          ip_version=ip_version,
                          cidr=cidr,
-                         allocation_pools=allocation_pools) as subnet:
+                         allocation_pools=allocation_pools,
+                         as_admin=True) as subnet:
             self._validate_l2_adjacency(network['network']['id'],
                                         is_adjacent=False)
             return subnet
@@ -1098,6 +1117,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(self.fmt,
                                      net_id=network['network']['id'],
                                      tenant_id=network['network']['tenant_id'],
+                                     is_admin=True,
                                      fixed_ips=[
                                          {'subnet_id': subnet['subnet']['id']}
                                      ])
@@ -1125,6 +1145,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(self.fmt,
                                      net_id=network['network']['id'],
                                      tenant_id=network['network']['tenant_id'],
+                                     is_admin=True,
                                      arg_list=(portbindings.HOST_ID,),
                                      **{portbindings.HOST_ID: 'fakehost'})
         res = self.deserialize(self.fmt, response)
@@ -1147,6 +1168,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(self.fmt,
                                      net_id=network['network']['id'],
                                      tenant_id=network['network']['tenant_id'],
+                                     is_admin=True,
                                      arg_list=(portbindings.HOST_ID,),
                                      **{portbindings.HOST_ID: 'fakehost'})
         res = self.deserialize(self.fmt, response)
@@ -1173,6 +1195,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(self.fmt,
                                      net_id=network['network']['id'],
                                      tenant_id=network['network']['tenant_id'],
+                                     is_admin=True,
                                      arg_list=(portbindings.HOST_ID,),
                                      **{portbindings.HOST_ID: 'fakehost'})
 
@@ -1188,6 +1211,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(self.fmt,
                                      net_id=network['network']['id'],
                                      tenant_id=network['network']['tenant_id'],
+                                     is_admin=True,
                                      arg_list=(portbindings.HOST_ID,),
                                      **{portbindings.HOST_ID: 'fakehost'})
         res = self.deserialize(self.fmt, response)
@@ -1201,6 +1225,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(self.fmt,
                                      net_id=network['network']['id'],
                                      tenant_id=network['network']['tenant_id'],
+                                     is_admin=True,
                                      arg_list=(portbindings.HOST_ID,),
                                      **{portbindings.HOST_ID: 'fakehost'})
         res = self.deserialize(self.fmt, response)
@@ -1220,6 +1245,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(self.fmt,
                                      net_id=network['network']['id'],
                                      tenant_id=network['network']['tenant_id'],
+                                     is_admin=True,
                                      arg_list=(portbindings.HOST_ID,),
                                      **{portbindings.HOST_ID: 'fakehost'})
         self.deserialize(self.fmt, response)
@@ -1282,6 +1308,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
             self.fmt,
             net_id=network['network']['id'],
             tenant_id=network['network']['tenant_id'],
+            is_admin=True,
             **kwargs)
         port = self.deserialize(self.fmt, response)
         request = self.new_show_request('ports', port['port']['id'])
@@ -1326,6 +1353,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(self.fmt,
                                      net_id=network['network']['id'],
                                      tenant_id=network['network']['tenant_id'],
+                                     is_admin=True,
                                      arg_list=(portbindings.HOST_ID,),
                                      **{portbindings.HOST_ID: 'fakehost'})
         port = self.deserialize(self.fmt, response)
@@ -1362,6 +1390,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(self.fmt,
                                      net_id=network['network']['id'],
                                      tenant_id=network['network']['tenant_id'],
+                                     is_admin=True,
                                      arg_list=(portbindings.HOST_ID,),
                                      **{portbindings.HOST_ID: 'fakehost'})
         port = self.deserialize(self.fmt, response)
@@ -1403,7 +1432,8 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
     def _create_deferred_ip_port(self, network):
         response = self._create_port(self.fmt,
                                      net_id=network['network']['id'],
-                                     tenant_id=network['network']['tenant_id'])
+                                     tenant_id=network['network']['tenant_id'],
+                                     is_admin=True)
         port = self.deserialize(self.fmt, response)
         ips = port['port']['fixed_ips']
         self.assertEqual(0, len(ips))
@@ -1423,7 +1453,8 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         # Try requesting an IP (but the only subnet is on a segment)
         data = {'port': {portbindings.HOST_ID: 'fakehost'}}
         port_id = port['port']['id']
-        port_req = self.new_update_request('ports', data, port_id)
+        port_req = self.new_update_request('ports', data, port_id,
+                                           as_admin=True)
         response = port_req.get_response(self.api)
 
         # Port update succeeds and allocates a new IP address.
@@ -1441,7 +1472,8 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         with self.subnet(network=network):
             data = {'port': {portbindings.HOST_ID: 'fakehost'}}
             port_id = port['port']['id']
-            port_req = self.new_update_request('ports', data, port_id)
+            port_req = self.new_update_request('ports', data, port_id,
+                                               as_admin=True)
             response = port_req.get_response(self.api)
 
         self.assertEqual(webob.exc.HTTPOk.code, response.status_int)
@@ -1457,7 +1489,8 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(self.fmt,
                                      net_id=network['network']['id'],
                                      tenant_id=network['network']['tenant_id'],
-                                     fixed_ips=[])
+                                     fixed_ips=[],
+                                     is_admin=True)
         port = self.deserialize(self.fmt, response)
         ips = port['port']['fixed_ips']
         self.assertEqual(0, len(ips))
@@ -1465,7 +1498,8 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         # Create the subnet and try to update the port to get an IP
         data = {'port': {portbindings.HOST_ID: 'fakehost'}}
         port_id = port['port']['id']
-        port_req = self.new_update_request('ports', data, port_id)
+        port_req = self.new_update_request('ports', data, port_id,
+                                           as_admin=True)
         response = port_req.get_response(self.api)
 
         self.assertEqual(webob.exc.HTTPOk.code, response.status_int)
@@ -1485,7 +1519,8 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
                 portbindings.HOST_ID: 'fakehost',
                 'fixed_ips': [{'subnet_id': subnet['subnet']['id']}]}}
             port_id = port['port']['id']
-            port_req = self.new_update_request('ports', data, port_id)
+            port_req = self.new_update_request('ports', data, port_id,
+                                               as_admin=True)
             response = port_req.get_response(self.api)
 
         self.assertEqual(webob.exc.HTTPOk.code, response.status_int)
@@ -1510,7 +1545,8 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
                 portbindings.HOST_ID: 'fakehost',
                 'fixed_ips': []}}
             port_id = port['port']['id']
-            port_req = self.new_update_request('ports', data, port_id)
+            port_req = self.new_update_request('ports', data, port_id,
+                                               as_admin=True)
             response = port_req.get_response(self.api)
 
         self.assertEqual(webob.exc.HTTPOk.code, response.status_int)
@@ -1528,7 +1564,8 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         # Try requesting an IP (but the only subnet is on a segment)
         data = {'port': {portbindings.HOST_ID: 'fakehost'}}
         port_id = port['port']['id']
-        port_req = self.new_update_request('ports', data, port_id)
+        port_req = self.new_update_request('ports', data, port_id,
+                                           as_admin=True)
         response = port_req.get_response(self.api)
         res = self.deserialize(self.fmt, response)
 
@@ -1551,7 +1588,8 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         # Try requesting an IP (but the only subnet is on a segment)
         data = {'port': {portbindings.HOST_ID: 'fakehost'}}
         port_id = port['port']['id']
-        port_req = self.new_update_request('ports', data, port_id)
+        port_req = self.new_update_request('ports', data, port_id,
+                                           as_admin=True)
         response = port_req.get_response(self.api)
         self.deserialize(self.fmt, response)
 
@@ -1599,7 +1637,8 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         # Try requesting an IP (but the subnet ran out of ips)
         data = {'port': {portbindings.HOST_ID: 'fakehost'}}
         port_id = port['port']['id']
-        port_req = self.new_update_request('ports', data, port_id)
+        port_req = self.new_update_request('ports', data, port_id,
+                                           as_admin=True)
         response = port_req.get_response(self.api)
         res = self.deserialize(self.fmt, response)
 
@@ -1619,6 +1658,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(self.fmt,
                                      net_id=network['network']['id'],
                                      tenant_id=network['network']['tenant_id'],
+                                     is_admin=True,
                                      arg_list=(portbindings.HOST_ID,),
                                      **{portbindings.HOST_ID: 'fakehost'})
         self._assert_one_ip_in_subnet(response, subnets[1]['subnet']['cidr'])
@@ -1626,7 +1666,8 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
 
         # Now, try to update binding to a host on the other segment
         data = {'port': {portbindings.HOST_ID: 'fakehost2'}}
-        port_req = self.new_update_request('ports', data, port['port']['id'])
+        port_req = self.new_update_request('ports', data, port['port']['id'],
+                                           as_admin=True)
         response = port_req.get_response(self.api)
 
         # It fails since the IP address isn't compatible with the new segment
@@ -1644,6 +1685,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(self.fmt,
                                      net_id=network['network']['id'],
                                      tenant_id=network['network']['tenant_id'],
+                                     is_admin=True,
                                      arg_list=(portbindings.HOST_ID,),
                                      **{portbindings.HOST_ID: 'fakehost'})
         self._assert_one_ip_in_subnet(response, subnets[1]['subnet']['cidr'])
@@ -1651,7 +1693,8 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
 
         # Now, try to update binding to another host in same segment
         data = {'port': {portbindings.HOST_ID: 'fakehost1'}}
-        port_req = self.new_update_request('ports', data, port['port']['id'])
+        port_req = self.new_update_request('ports', data, port['port']['id'],
+                                           as_admin=True)
         response = port_req.get_response(self.api)
 
         # Since the new host is in the same segment, it succeeds.
@@ -1671,7 +1714,8 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         data = {'port': {portbindings.HOST_ID: 'fakehost',
                          port_apidef.PORT_MAC_ADDRESS: '00:00:00:00:00:01'}}
         port_id = port['port']['id']
-        port_req = self.new_update_request('ports', data, port_id)
+        port_req = self.new_update_request('ports', data, port_id,
+                                           as_admin=True)
         response = port_req.get_response(self.api)
 
         # Port update succeeds and allocates a new IP address.
@@ -1722,6 +1766,7 @@ class TestSegmentAwareIpam(SegmentAwareIpamTestCase):
         response = self._create_port(self.fmt,
                                      net_id=network['network']['id'],
                                      tenant_id=network['network']['tenant_id'],
+                                     is_admin=True,
                                      arg_list=(portbindings.HOST_ID,),
                                      **{portbindings.HOST_ID: 'fakehost_a'})
         res = self.deserialize(self.fmt, response)
@@ -1849,7 +1894,8 @@ class TestSegmentAwareIpamML2(TestSegmentAwareIpam):
         network, segment, subnet = self._create_test_segment_with_subnet()
         self.assertTrue(self.VLAN_MIN <=
                         segment['segment']['segmentation_id'] <= self.VLAN_MAX)
-        retrieved_segment = self._show('segments', segment['segment']['id'])
+        retrieved_segment = self._show('segments', segment['segment']['id'],
+                                       as_admin=True)
         self.assertEqual(segment['segment']['segmentation_id'],
                          retrieved_segment['segment']['segmentation_id'])
 
@@ -1975,7 +2021,8 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
     def test_update_subnet_association_with_segment(self, cidr='10.0.0.0/24',
                                                     allocation_pools=None):
         with self.network() as network:
-            segment_id = self._list('segments')['segments'][0]['id']
+            segment_id = self._list('segments',
+                                    as_admin=True)['segments'][0]['id']
             network_id = network['network']['id']
 
         self._setup_host_mappings([(segment_id, 'fakehost')])
@@ -1993,9 +2040,11 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
                          segment_id=None) as subnet:
             self._validate_l2_adjacency(network_id, is_adjacent=True)
             data = {'subnet': {'segment_id': segment_id}}
-            self.new_update_request('subnets', data, subnet['subnet']['id'])
+            self.new_update_request('subnets', data, subnet['subnet']['id'],
+                                    as_admin=True)
             self.new_update_request(
-                'subnets', data, subnet['subnet']['id']).get_response(self.api)
+                'subnets', data, subnet['subnet']['id'],
+                as_admin=True).get_response(self.api)
             self._validate_l2_adjacency(network_id, is_adjacent=False)
             self._assert_inventory_creation(segment_id, aggregate, subnet)
 
@@ -2287,7 +2336,8 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
 
     def _create_test_port(self, network_id, tenant_id, subnet, **kwargs):
         port = self._make_port(self.fmt, network_id, tenant_id=tenant_id,
-                               arg_list=(portbindings.HOST_ID,), **kwargs)
+                               as_admin=True, arg_list=(portbindings.HOST_ID,),
+                               **kwargs)
         self.batch_notifier._notify()
         return port
 
@@ -2403,7 +2453,7 @@ class TestNovaSegmentNotifier(SegmentAwareIpamTestCase):
         if compute_owned:
             port_data['port']['device_owner'] = (
                 constants.DEVICE_OWNER_COMPUTE_PREFIX)
-        self._update('ports', port['port']['id'], port_data)
+        self._update('ports', port['port']['id'], port_data, as_admin=True)
         self.batch_notifier._notify()
         self._assert_inventory_update_port(
             first_subnet['subnet']['segment_id'], original_inventory,

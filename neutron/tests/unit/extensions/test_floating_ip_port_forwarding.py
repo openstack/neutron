@@ -14,7 +14,6 @@
 
 from unittest import mock
 
-from neutron_lib import context
 from oslo_utils import uuidutils
 from webob import exc
 
@@ -50,8 +49,9 @@ class FloatingIPPorForwardingTestCase(test_l3.L3BaseForIntTests,
                                     tenant_id=None,
                                     description=None,
                                     external_port_range=None,
-                                    internal_port_range=None):
-        tenant_id = tenant_id or _uuid()
+                                    internal_port_range=None,
+                                    as_admin=False):
+        tenant_id = tenant_id or self._tenant_id
         data = {'port_forwarding': {
             "protocol": protocol,
             "internal_ip_address": internal_ip_address,
@@ -69,28 +69,29 @@ class FloatingIPPorForwardingTestCase(test_l3.L3BaseForIntTests,
         if description:
             data['port_forwarding']['description'] = description
 
-        fip_pf_req = self._req(
-            'POST', 'floatingips', data,
-            fmt or self.fmt, id=floating_ip_id,
-            subresource='port_forwardings')
-
-        fip_pf_req.environ['neutron.context'] = context.Context(
-            '', tenant_id, is_admin=True)
+        fip_pf_req = self.new_create_request(
+            'floatingips', data, fmt or self.fmt, floating_ip_id,
+            subresource='port_forwardings',
+            tenant_id=tenant_id, as_admin=as_admin)
 
         return fip_pf_req.get_response(self.ext_api)
 
     def _update_fip_port_forwarding(self, fmt, floating_ip_id,
-                                    port_forwarding_id, **kwargs):
+                                    port_forwarding_id,
+                                    req_tenant_id=None, as_admin=False,
+                                    **kwargs):
+        req_tenant_id = req_tenant_id or self._tenant_id
         port_forwarding = {}
         for k, v in kwargs.items():
             port_forwarding[k] = v
         data = {'port_forwarding': port_forwarding}
 
-        fip_pf_req = self._req(
-            'PUT', 'floatingips', data,
-            fmt or self.fmt, id=floating_ip_id,
+        fip_pf_req = self.new_update_request(
+            'floatingips', data, floating_ip_id, fmt or self.fmt,
             sub_id=port_forwarding_id,
-            subresource='port_forwardings')
+            subresource='port_forwardings',
+            tenant_id=req_tenant_id,
+            as_admin=as_admin)
 
         return fip_pf_req.get_response(self.ext_api)
 

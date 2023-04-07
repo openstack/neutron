@@ -39,10 +39,12 @@ class TestMigrateNeutronDatabaseToOvn(
         for sid in range(1, 6):
             net_arg = {pnet.NETWORK_TYPE: 'vxlan',
                        pnet.SEGMENTATION_ID: sid}
-            network_id = self._make_network(self.fmt, 'net%d' % sid, True,
+            network_id = self._make_network(
+                self.fmt, 'net%d' % sid, True, as_admin=True,
                 arg_list=(pnet.NETWORK_TYPE,
                           pnet.SEGMENTATION_ID,),
-                **net_arg)['network']['id']
+                **net_arg
+            )['network']['id']
 
         for vif_details in vif_details_list:
             port = self._make_port(self.fmt, network_id)['port']

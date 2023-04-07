@@ -103,12 +103,13 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
                     allowedaddresspairs.ADDRESS_PAIRS: allowed_address_pairs
                     }
         port_res = self._create_port(self.fmt, self.net['network']['id'],
+                                     is_admin=True,
                                      arg_list=arg_list, **host_arg)
         port = self.deserialize(self.fmt, port_res)['port']
         return port
 
     def _create_fip(self, port, fip_address):
-        e1 = self._make_network(self.fmt, 'e1', True,
+        e1 = self._make_network(self.fmt, 'e1', True, as_admin=True,
                                 arg_list=('router:external',
                                           'provider:network_type',
                                           'provider:physical_network'),
@@ -403,7 +404,8 @@ class TestSBDbMonitor(base.TestOVNFunctionalBase, test_l3.L3NatTestCaseMixin):
 
         kwargs = {'arg_list': (external_net.EXTERNAL,),
                   external_net.EXTERNAL: True}
-        ext_net = self._make_network(self.fmt, 'ext_net', True, **kwargs)
+        ext_net = self._make_network(self.fmt, 'ext_net', True, as_admin=True,
+                                     **kwargs)
         self._make_subnet(self.fmt, ext_net, '10.251.0.1', '10.251.0.0/24',
                           enable_dhcp=True)
         router = self._make_router(self.fmt, self._tenant_id)

@@ -63,7 +63,7 @@ class TestRouter(base.TestOVNFunctionalBase):
         if physnet:
             arg_list = arg_list + (pnet.PHYSICAL_NETWORK,)
             net_arg[pnet.PHYSICAL_NETWORK] = physnet
-        network = self._make_network(self.fmt, name, True,
+        network = self._make_network(self.fmt, name, True, as_admin=True,
                                      arg_list=arg_list, **net_arg)
         if cidr:
             self._make_subnet(self.fmt, network, gateway, cidr,

@@ -65,7 +65,8 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def _set_net_external(self, net_id):
         self._update('networks', net_id,
-                     {'network': {extnet_apidef.EXTERNAL: True}})
+                     {'network': {extnet_apidef.EXTERNAL: True}},
+                     as_admin=True)
 
     def test_list_nets_external(self):
         with self.network() as n1:
@@ -111,13 +112,14 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             data = {'network': {'router:external': True}}
             req = self.new_update_request('networks',
                                           data,
-                                          network['network']['id'])
-            req.environ['neutron.context'] = context.Context('', 'noadmin')
+                                          network['network']['id'],
+                                          tenant_id='noadmin')
             res = req.get_response(self.api)
             self.assertEqual(exc.HTTPForbidden.code, res.status_int)
 
     def test_update_network_external_net_with_ports_set_not_shared(self):
-        with self.network(router__external=True, shared=True) as ext_net,\
+        with self.network(router__external=True, shared=True,
+                          as_admin=True) as ext_net,\
                 self.subnet(network=ext_net) as ext_subnet, \
                 self.port(subnet=ext_subnet,
                           tenant_id='',
@@ -125,7 +127,8 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             data = {'network': {'shared': False}}
             req = self.new_update_request('networks',
                                           data,
-                                          ext_net['network']['id'])
+                                          ext_net['network']['id'],
+                                          as_admin=True)
             res = req.get_response(self.api)
             self.assertEqual(exc.HTTPOk.code, res.status_int)
             ctx = context.Context(None, None, is_admin=True)
@@ -158,18 +161,18 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         self.assertEqual(conditions.__str__(), "%s OR %s" % (txt, txt2))
 
     def test_create_port_external_network_non_admin_fails(self):
-        with self.network(router__external=True) as ext_net:
+        with self.network(as_admin=True, router__external=True) as ext_net:
             with self.subnet(network=ext_net) as ext_subnet:
                 with testtools.ExpectedException(
                         exc.HTTPClientError) as ctx_manager:
                     with self.port(subnet=ext_subnet,
-                                   set_context='True',
+                                   is_admin=False,
                                    tenant_id='noadmin'):
                         pass
                     self.assertEqual(403, ctx_manager.exception.code)
 
     def test_create_port_external_network_admin_succeeds(self):
-        with self.network(router__external=True) as ext_net:
+        with self.network(router__external=True, as_admin=True) as ext_net:
             with self.subnet(network=ext_net) as ext_subnet:
                 with self.port(subnet=ext_subnet) as port:
                     self.assertEqual(port['port']['network_id'],
@@ -178,13 +181,13 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def test_create_external_network_non_admin_fails(self):
         with testtools.ExpectedException(exc.HTTPClientError) as ctx_manager:
             with self.network(router__external=True,
-                              set_context='True',
+                              as_admin=False,
                               tenant_id='noadmin'):
                 pass
             self.assertEqual(403, ctx_manager.exception.code)
 
     def test_create_external_network_admin_succeeds(self):
-        with self.network(router__external=True) as ext_net:
+        with self.network(router__external=True, as_admin=True) as ext_net:
             self.assertTrue(ext_net['network'][extnet_apidef.EXTERNAL])
 
     def test_delete_network_check_disassociated_floatingips(self):

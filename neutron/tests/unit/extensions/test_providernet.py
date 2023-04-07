@@ -92,21 +92,28 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
 
     def _put_network_with_provider_attrs(self, ctx, expect_errors=False):
         data = self._prepare_net_data()
+        ctx.roles = ['member', 'reader']
+        if ctx.is_admin:
+            ctx.roles.append('admin')
         env = {'neutron.context': ctx}
         instance = self.plugin.return_value
-        instance.get_network.return_value = {'tenant_id': ctx.tenant_id,
+        instance.get_network.return_value = {'project_id': ctx.tenant_id,
                                              'shared': False}
         net_id = uuidutils.generate_uuid()
         res = self.api.put(test_base._get_path('networks',
                                                id=net_id,
                                                fmt=self.fmt),
                            self.serialize({'network': data}),
+                           content_type='application/' + self.fmt,
                            extra_environ=env,
                            expect_errors=expect_errors)
         return res, data, net_id
 
     def _post_network_with_provider_attrs(self, ctx, expect_errors=False):
         data = self._prepare_net_data()
+        ctx.roles = ['member', 'reader']
+        if ctx.is_admin:
+            ctx.roles.append('admin')
         env = {'neutron.context': ctx}
         res = self.api.post(test_base._get_path('networks', fmt=self.fmt),
                             self.serialize({'network': data}),
@@ -119,6 +126,9 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
                                               expect_errors=False):
         data = self._prepare_net_data()
         data.update(bad_data)
+        ctx.roles = ['member', 'reader']
+        if ctx.is_admin:
+            ctx.roles.append('admin')
         env = {'neutron.context': ctx}
         res = self.api.post(test_base._get_path('networks', fmt=self.fmt),
                             self.serialize({'network': data}),

@@ -80,7 +80,8 @@ class DataPlaneStatusExtensionTestCase(
             data = {'port': {'data_plane_status': constants.ACTIVE}}
             req = self.new_update_request(port_def.COLLECTION_NAME,
                                           data,
-                                          port['port']['id'])
+                                          port['port']['id'],
+                                          as_admin=True)
             res = req.get_response(self.api)
             p = self.deserialize(self.fmt, res)['port']
             self.assertEqual(200, res.status_code)
@@ -106,9 +107,11 @@ class DataPlaneStatusExtensionTestCase(
         with self.port(name='port1') as port:
             res = self._update(port_def.COLLECTION_NAME, port['port']['id'],
                                {'port': {dps_lib.DATA_PLANE_STATUS:
-                                         constants.ACTIVE}})
+                                         constants.ACTIVE}},
+                               as_admin=True)
             res = self._update(port_def.COLLECTION_NAME, port['port']['id'],
-                               {'port': {'name': 'port2'}})
+                               {'port': {'name': 'port2'}},
+                               as_admin=True)
             self.assertEqual(res['port']['name'], 'port2')
             self.assertEqual(res['port'][dps_lib.DATA_PLANE_STATUS],
                              constants.ACTIVE)
@@ -125,7 +128,8 @@ class DataPlaneStatusExtensionTestCase(
         with self.port(name='port1') as port:
             self._update(port_def.COLLECTION_NAME, port['port']['id'],
                          {'port': {dps_lib.DATA_PLANE_STATUS:
-                                   constants.ACTIVE}})
+                                   constants.ACTIVE}},
+                         as_admin=True)
             notify = set(n['event_type'] for n in fake_notifier.NOTIFICATIONS)
             duplicated_notify = expect_notify & notify
             self.assertEqual(expect_notify, duplicated_notify)

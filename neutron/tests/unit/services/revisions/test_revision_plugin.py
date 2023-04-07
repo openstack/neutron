@@ -97,7 +97,7 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
         # with the flush process that occurs with these two connected objects,
         # creating two copies of the Network object in the Session and putting
         # it into an invalid state.
-        with self.network(shared=True):
+        with self.network(shared=True, as_admin=True):
             pass
 
     def test_port_name_update_revises(self):
@@ -279,7 +279,8 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
                                      'project_id': uuidutils.generate_uuid()}}
             qos_obj = qos_plugin.create_policy(self.ctx, qos_policy)
             data = {'port': {'qos_policy_id': qos_obj['id']}}
-            response = self._update('ports', port['port']['id'], data)
+            response = self._update('ports', port['port']['id'], data,
+                                    as_admin=True)
             new_rev = response['port']['revision_number']
             self.assertGreater(new_rev, rev)
 
@@ -292,7 +293,8 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
                                      'project_id': uuidutils.generate_uuid()}}
             qos_obj = qos_plugin.create_policy(self.ctx, qos_policy)
             data = {'network': {'qos_policy_id': qos_obj['id']}}
-            response = self._update('networks', network['network']['id'], data)
+            response = self._update('networks', network['network']['id'], data,
+                                    as_admin=True)
             new_rev = response['network']['revision_number']
             self.assertGreater(new_rev, rev)
 

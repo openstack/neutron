@@ -101,20 +101,21 @@ class TestPortBinding(base.TestOVNFunctionalBase):
                 'network_id': self.n1['network']['id'],
                 'tenant_id': self._tenant_id})
 
-            port_req = self.new_create_request('ports', port_data, self.fmt)
+            port_req = self.new_create_request('ports', port_data, self.fmt,
+                                               as_admin=True)
             port_res = port_req.get_response(self.api)
             p = self.deserialize(self.fmt, port_res)
             port_id = p['port']['id']
         else:
             port_req = self.new_update_request('ports', port_data, port_id,
-                                               self.fmt)
+                                               self.fmt, as_admin=True)
             port_res = port_req.get_response(self.api)
             self.deserialize(self.fmt, port_res)
 
         return port_id
 
     def _port_show(self, port_id):
-        port_req = self.new_show_request('ports', port_id)
+        port_req = self.new_show_request('ports', port_id, as_admin=True)
         port_res = port_req.get_response(self.api)
         return self.deserialize(self.fmt, port_res)
 
@@ -715,13 +716,13 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
     def _test_external_port_create_switchdev(self, vnic_type):
         port_data = {
             'port': {'network_id': self.n1['network']['id'],
-                     'tenant_id': self._tenant_id,
                      portbindings.VNIC_TYPE: vnic_type,
                      ovn_const.OVN_PORT_BINDING_PROFILE: {
                          ovn_const.PORT_CAP_PARAM: [
                              ovn_const.PORT_CAP_SWITCHDEV]}}}
 
-        port_req = self.new_create_request('ports', port_data, self.fmt)
+        port_req = self.new_create_request('ports', port_data, self.fmt,
+                                           as_admin=True)
         port_res = port_req.get_response(self.api)
         port = self.deserialize(self.fmt, port_res)['port']
 
@@ -769,7 +770,8 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
                      ovn_const.PORT_CAP_PARAM: [
                          ovn_const.PORT_CAP_SWITCHDEV]}}}
         port_req = self.new_update_request(
-            'ports', port_upt_data, port['id'], self.fmt)
+            'ports', port_upt_data, port['id'], self.fmt,
+            as_admin=True)
         port_res = port_req.get_response(self.api)
         port = self.deserialize(self.fmt, port_res)['port']
 
@@ -948,7 +950,7 @@ class TestProvnetPorts(base.TestOVNFunctionalBase):
 
     def test_network_segments_localnet_ports(self):
         n1 = self._make_network(
-                self.fmt, 'n1', True,
+                self.fmt, 'n1', True, as_admin=True,
                 arg_list=('provider:network_type',
                           'provider:segmentation_id',
                           'provider:physical_network'),

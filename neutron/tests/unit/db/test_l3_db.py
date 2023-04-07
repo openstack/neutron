@@ -928,7 +928,8 @@ class L3TestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         with db_api.CONTEXT_WRITER.using(self.ctx):
             res = self._create_network(
                 self.fmt, name, True,
-                arg_list=(extnet_apidef.EXTERNAL,), **kwargs)
+                arg_list=(extnet_apidef.EXTERNAL,),
+                as_admin=True, **kwargs)
             if res.status_int >= webob.exc.HTTPClientError.code:
                 raise webob.exc.HTTPClientError(code=res.status_int)
             return self.deserialize(self.fmt, res)

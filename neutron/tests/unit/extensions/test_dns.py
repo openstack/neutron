@@ -109,10 +109,8 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
             self.assertEqual(expected_res_status, port_res.status_int)
         return port_res
 
-    def _test_list_resources(self, resource, items, neutron_context=None,
-                             query_params=None):
+    def _test_list_resources(self, resource, items, query_params=None):
         res = self._list('%ss' % resource,
-                         neutron_context=neutron_context,
                          query_params=query_params)
         resource = resource.replace('-', '_')
         self.assertCountEqual([i['id'] for i in res['%ss' % resource]],

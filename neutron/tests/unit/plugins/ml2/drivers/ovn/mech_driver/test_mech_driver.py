@@ -449,11 +449,10 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             {'vtep-physical-switch': 'psw1', 'vtep-logical-switch': 'lsw1',
              'tag': 1024, 'parent_name': 'fakename'},
         ]
-        with self.network(set_context=True, tenant_id='test') as net1:
+        with self.network() as net1:
             with self.subnet(network=net1) as subnet1:
                 # succeed without binding:profile
-                with self.port(subnet=subnet1,
-                               set_context=True, tenant_id='test'):
+                with self.port(subnet=subnet1):
                     pass
                 # fail with invalid binding profiles
                 for invalid_profile in invalid_binding_profiles:
@@ -465,7 +464,6 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                                 expected_res_status=403,
                                 arg_list=(
                                 ovn_const.OVN_PORT_BINDING_PROFILE,),
-                                set_context=True, tenant_id='test',
                                 **kwargs):
                             pass
                     except exc.HTTPClientError:
@@ -534,10 +532,9 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                                          'opt_value': 'apple'},
                                          {'ip_version': 6, 'opt_name': 'grape',
                                          'opt_value': 'grape'}]}}
-        with self.network(set_context=True, tenant_id='test') as net:
+        with self.network() as net:
             with self.subnet(network=net) as subnet:
-                with self.port(subnet=subnet,
-                               set_context=True, tenant_id='test') as port:
+                with self.port(subnet=subnet) as port:
                     port_id = port['port']['id']
                     self._update('ports', port_id, data)
 
@@ -548,11 +545,12 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                     mock_log.assert_has_calls([expected_call])
 
     def test_create_and_update_ignored_fip_port(self):
-        with self.network(set_context=True, tenant_id='test') as net1:
+        with self.network() as net1:
             with self.subnet(network=net1) as subnet1:
-                with self.port(subnet=subnet1,
-                               device_owner=const.DEVICE_OWNER_FLOATINGIP,
-                               set_context=True, tenant_id='test') as port:
+                with self.port(
+                        subnet=subnet1,
+                        is_admin=True,
+                        device_owner=const.DEVICE_OWNER_FLOATINGIP) as port:
                     self.nb_ovn.create_lswitch_port.assert_not_called()
                     data = {'port': {'name': 'new'}}
                     req = self.new_update_request('ports', data,
@@ -562,15 +560,17 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                     self.nb_ovn.set_lswitch_port.assert_not_called()
 
     def test_update_ignored_port_from_fip_device_owner(self):
-        with self.network(set_context=True, tenant_id='test') as net1:
+        with self.network() as net1:
             with self.subnet(network=net1) as subnet1:
-                with self.port(subnet=subnet1,
-                               device_owner=const.DEVICE_OWNER_FLOATINGIP,
-                               set_context=True, tenant_id='test') as port:
+                with self.port(
+                        subnet=subnet1,
+                        is_admin=True,
+                        device_owner=const.DEVICE_OWNER_FLOATINGIP) as port:
                     self.nb_ovn.create_lswitch_port.assert_not_called()
                     data = {'port': {'device_owner': 'test'}}
                     req = self.new_update_request('ports', data,
-                                                  port['port']['id'])
+                                                  port['port']['id'],
+                                                  as_admin=True)
                     res = req.get_response(self.api)
                     self.assertEqual(exc.HTTPBadRequest.code, res.status_int)
                     msg = jsonutils.loads(res.body)['NeutronError']['message']
@@ -581,17 +581,18 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                     self.nb_ovn.set_lswitch_port.assert_not_called()
 
     def test_update_ignored_port_to_fip_device_owner(self):
-        with self.network(set_context=True, tenant_id='test') as net1:
+        with self.network() as net1:
             with self.subnet(network=net1) as subnet1:
                 with self.port(subnet=subnet1,
-                               device_owner='test',
-                               set_context=True, tenant_id='test') as port:
+                               is_admin=True,
+                               device_owner='test') as port:
                     self.assertEqual(
                         1, self.nb_ovn.create_lswitch_port.call_count)
                     data = {'port': {'device_owner':
                                      const.DEVICE_OWNER_FLOATINGIP}}
                     req = self.new_update_request('ports', data,
-                                                  port['port']['id'])
+                                                  port['port']['id'],
+                                                  as_admin=True)
                     res = req.get_response(self.api)
                     self.assertEqual(exc.HTTPBadRequest.code, res.status_int)
                     msg = jsonutils.loads(res.body)['NeutronError']['message']
@@ -605,11 +606,11 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         kwargs = {'mac_address': '00:00:00:00:00:01',
                   'fixed_ips': [{'ip_address': '10.0.0.2'},
                                 {'ip_address': '10.0.0.4'}]}
-        with self.network(set_context=True, tenant_id='test') as net1:
+        with self.network() as net1:
             with self.subnet(network=net1) as subnet1:
                 with self.port(subnet=subnet1,
+                               is_admin=True,
                                arg_list=('mac_address', 'fixed_ips'),
-                               set_context=True, tenant_id='test',
                                **kwargs) as port:
                     self.assertTrue(self.nb_ovn.create_lswitch_port.called)
                     called_args_dict = (
@@ -621,7 +622,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                     data = {'port': {'mac_address': '00:00:00:00:00:02'}}
                     req = self.new_update_request(
                         'ports',
-                        data, port['port']['id'])
+                        data, port['port']['id'],
+                        as_admin=True)
                     req.get_response(self.api)
                     self.assertTrue(self.nb_ovn.set_lswitch_port.called)
                     called_args_dict = (
@@ -635,11 +637,10 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         # be treated as VIP.
         kwargs = {'port_security_enabled': False,
                   'device_owner': 'compute:nova'}
-        with self.network(set_context=True, tenant_id='test') as net1:
+        with self.network() as net1:
             with self.subnet(network=net1) as subnet1:
                 with self.port(subnet=subnet1,
                                arg_list=('port_security_enabled',),
-                               set_context=True, tenant_id='test',
                                **kwargs) as port:
                     self.assertTrue(self.nb_ovn.create_lswitch_port.called)
                     called_args_dict = (
@@ -653,7 +654,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                     data = {'port': {'mac_address': '00:00:00:00:00:01'}}
                     req = self.new_update_request(
                         'ports',
-                        data, port['port']['id'])
+                        data, port['port']['id'],
+                        as_admin=True)
                     req.get_response(self.api)
                     self.assertTrue(self.nb_ovn.set_lswitch_port.called)
                     called_args_dict = (
@@ -687,11 +689,11 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                    {"ip_address": "2.2.2.2",
                     "mac_address": "22:22:22:22:22:22"}],
                   'device_owner': 'compute:nova'}
-        with self.network(set_context=True, tenant_id='test') as net1:
+        with self.network() as net1:
             with self.subnet(network=net1) as subnet1:
                 with self.port(subnet=subnet1,
+                               is_admin=True,
                                arg_list=('allowed_address_pairs',),
-                               set_context=True, tenant_id='test',
                                **kwargs) as port:
                     port_ip = port['port'].get('fixed_ips')[0]['ip_address']
                     self.assertTrue(self.nb_ovn.create_lswitch_port.called)
@@ -718,7 +720,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                     data = {'port': {'mac_address': '00:00:00:00:00:01'}}
                     req = self.new_update_request(
                         'ports',
-                        data, port['port']['id'])
+                        data, port['port']['id'],
+                        as_admin=True)
                     req.get_response(self.api)
                     self.assertTrue(self.nb_ovn.set_lswitch_port.called)
                     called_args_dict = (
@@ -737,10 +740,10 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                         called_args_dict.get('addresses'))
 
     def test_create_port_ovn_octavia_vip(self):
-        with (self.network(set_context=True, tenant_id='test')) as net1, (
-                self.subnet(network=net1)) as subnet1, (
+        with self.network() as net1,\
+                self.subnet(network=net1) as subnet1,\
                 self.port(name=ovn_const.LB_VIP_PORT_PREFIX + 'foo',
-                          subnet=subnet1, set_context=True, tenant_id='test')):
+                          subnet=subnet1):
 
             self.assertTrue(self.nb_ovn.create_lswitch_port.called)
             called_args_dict = (
@@ -865,6 +868,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                    pnet.PHYSICAL_NETWORK: 'physnet1',
                    pnet.SEGMENTATION_ID: '2'}
         net = self._make_network(self.fmt, 'net1', True,
+                                 as_admin=True,
                                  arg_list=(pnet.NETWORK_TYPE,
                                            pnet.PHYSICAL_NETWORK,
                                            pnet.SEGMENTATION_ID,),
@@ -884,11 +888,10 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
 
     def test_create_port_without_security_groups(self):
         kwargs = {'security_groups': []}
-        with self.network(set_context=True, tenant_id='test') as net1:
+        with self.network() as net1:
             with self.subnet(network=net1) as subnet1:
                 with self.port(subnet=subnet1,
                                arg_list=('security_groups',),
-                               set_context=True, tenant_id='test',
                                **kwargs):
                     self.assertEqual(
                         1, self.nb_ovn.create_lswitch_port.call_count)
@@ -896,22 +899,20 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
 
     def test_create_port_without_security_groups_no_ps(self):
         kwargs = {'security_groups': [], 'port_security_enabled': False}
-        with self.network(set_context=True, tenant_id='test') as net1:
+        with self.network() as net1:
             with self.subnet(network=net1) as subnet1:
                 with self.port(subnet=subnet1,
                                arg_list=('security_groups',
                                          'port_security_enabled'),
-                               set_context=True, tenant_id='test',
                                **kwargs):
                     self.assertEqual(
                         1, self.nb_ovn.create_lswitch_port.call_count)
                     self.nb_ovn.add_acl.assert_not_called()
 
     def test_update_port_changed_security_groups(self):
-        with self.network(set_context=True, tenant_id='test') as net1:
+        with self.network() as net1:
             with self.subnet(network=net1) as subnet1:
-                with self.port(subnet=subnet1,
-                               set_context=True, tenant_id='test') as port1:
+                with self.port(subnet=subnet1) as port1:
                     sg_id = port1['port']['security_groups'][0]
                     fake_lsp = (
                         fakes.FakeOVNPort.from_neutron_port(
@@ -938,10 +939,9 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                     self.assertTrue(self.nb_ovn.pg_add_ports.called)
 
     def test_update_port_unchanged_security_groups(self):
-        with self.network(set_context=True, tenant_id='test') as net1:
+        with self.network() as net1:
             with self.subnet(network=net1) as subnet1:
-                with self.port(subnet=subnet1,
-                               set_context=True, tenant_id='test') as port1:
+                with self.port(subnet=subnet1) as port1:
                     fake_lsp = (
                         fakes.FakeOVNPort.from_neutron_port(
                             port1['port']))
@@ -967,11 +967,9 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
 
     def _test_update_port_vip(self, is_vip=True):
         kwargs = {}
-        with (
-            self.network(set_context=True, tenant_id='test')) as net1, (
-            self.subnet(network=net1)) as subnet1, (
-            self.port(subnet=subnet1, set_context=True,
-                      tenant_id='test', **kwargs)) as port1:
+        with self.network() as net1, \
+                self.subnet(network=net1) as subnet1, \
+                self.port(subnet=subnet1, **kwargs) as port1:
             fake_lsp = (
                 fakes.FakeOVNPort.from_neutron_port(
                     port1['port']))
@@ -1001,11 +999,10 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
 
     def test_delete_port_without_security_groups(self):
         kwargs = {'security_groups': []}
-        with self.network(set_context=True, tenant_id='test') as net1:
+        with self.network() as net1:
             with self.subnet(network=net1) as subnet1:
                 with self.port(subnet=subnet1,
                                arg_list=('security_groups',),
-                               set_context=True, tenant_id='test',
                                **kwargs) as port1:
                     fake_lsp = (
                         fakes.FakeOVNPort.from_neutron_port(
@@ -1022,10 +1019,9 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
     def test_delete_port_exception_delete_revision(self, mock_del_port,
                                                    mock_del_rev):
         mock_del_port.side_effect = Exception('BoOoOoOoOmmmmm!!!')
-        with self.network(set_context=True, tenant_id='test') as net:
+        with self.network() as net:
             with self.subnet(network=net) as subnet:
-                with self.port(subnet=subnet,
-                               set_context=True, tenant_id='test') as port:
+                with self.port(subnet=subnet) as port:
                     self._delete('ports', port['port']['id'])
                     # Assert that delete_revision wasn't invoked
                     mock_del_rev.assert_not_called()
@@ -1035,10 +1031,9 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
     def test_delete_port_not_exist_in_ovn(self, mock_del_port,
                                           mock_del_rev):
         mock_del_port.side_effect = idlutils.RowNotFound
-        with self.network(set_context=True, tenant_id='test') as net:
+        with self.network() as net:
             with self.subnet(network=net) as subnet:
-                with self.port(subnet=subnet,
-                               set_context=True, tenant_id='test') as port:
+                with self.port(subnet=subnet) as port:
                     self._delete('ports', port['port']['id'])
                     # Assert that delete_revision wasn't invoked
                     mock_del_rev.assert_not_called()
@@ -1050,14 +1045,13 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         created_at = timeutils.utcnow() - datetime.timedelta(
             seconds=ovn_const.DB_CONSISTENCY_CHECK_INTERVAL * 2)
         mock_del_port.side_effect = idlutils.RowNotFound
-        with self.network(set_context=True, tenant_id='test') as net:
+        with self.network() as net:
             with self.subnet(network=net) as subnet:
-                with self.port(subnet=subnet,
-                               set_context=True, tenant_id='test') as port, \
-                        mock.patch.object(ovn_revision_numbers_db,
-                                          'get_revision_row',
-                                          return_value=OvnRevNumberRow(
-                                              created_at=created_at)):
+                with self.port(subnet=subnet) as port, \
+                    mock.patch.object(ovn_revision_numbers_db,
+                                      'get_revision_row',
+                                      return_value=OvnRevNumberRow(
+                                          created_at=created_at)):
                     self._delete('ports', port['port']['id'])
                     # Assert that delete_revision was invoked
                     mock_del_rev.assert_called_once_with(mock.ANY,
@@ -1067,10 +1061,9 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
     def _test_set_port_status_up(self, is_compute_port=False):
         port_device_owner = 'compute:nova' if is_compute_port else ''
         self.mech_driver._plugin.nova_notifier = mock.Mock()
-        with self.network(set_context=True, tenant_id='test') as net1, \
+        with self.network() as net1, \
                 self.subnet(network=net1) as subnet1, \
-                self.port(subnet=subnet1, set_context=True,
-                          tenant_id='test',
+                self.port(subnet=subnet1, is_admin=True,
                           device_owner=port_device_owner) as port1, \
                 mock.patch.object(provisioning_blocks,
                                   'provisioning_complete') as pc, \
@@ -1106,10 +1099,9 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
     def _test_set_port_status_down(self, is_compute_port=False):
         port_device_owner = 'compute:nova' if is_compute_port else ''
         self.mech_driver._plugin.nova_notifier = mock.Mock()
-        with self.network(set_context=True, tenant_id='test') as net1, \
+        with self.network() as net1, \
                 self.subnet(network=net1) as subnet1, \
-                self.port(subnet=subnet1, set_context=True,
-                          tenant_id='test',
+                self.port(subnet=subnet1, is_admin=True,
                           device_owner=port_device_owner) as port1, \
                 mock.patch.object(provisioning_blocks,
                                   'add_provisioning_component') as apc, \
@@ -1158,10 +1150,9 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
 
     def test_set_port_status_concurrent_delete(self):
         exc = os_db_exc.DBReferenceError('', '', '', '')
-        with self.network(set_context=True, tenant_id='test') as net1, \
+        with self.network() as net1, \
                 self.subnet(network=net1) as subnet1, \
-                self.port(subnet=subnet1, set_context=True,
-                          tenant_id='test') as port1, \
+                self.port(subnet=subnet1) as port1, \
                 mock.patch.object(provisioning_blocks,
                                   'add_provisioning_component',
                                   side_effect=exc) as apc, \
@@ -2411,7 +2402,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
     def _test_update_network_fragmentation(self, new_mtu, expected_opts, grps):
         network_attrs = {external_net.EXTERNAL: True}
         network = self._make_network(
-            self.fmt, 'net1', True, arg_list=(external_net.EXTERNAL,),
+            self.fmt, 'net1', True, as_admin=True,
+            arg_list=(external_net.EXTERNAL,),
             **network_attrs)
 
         with self.subnet(network=network) as subnet:
@@ -2712,6 +2704,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                    pnet.PHYSICAL_NETWORK: 'physnet1',
                    pnet.SEGMENTATION_ID: '1'}
         net = self._make_network(self.fmt, 'net1', True,
+                                 as_admin=True,
                                  arg_list=(pnet.NETWORK_TYPE,
                                            pnet.PHYSICAL_NETWORK,
                                            pnet.SEGMENTATION_ID,),
@@ -2724,7 +2717,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
 
         # Issue an update to the network changing the segmentation_id
         data = {'network': {pnet.SEGMENTATION_ID: new_vlan_tag}}
-        req = self.new_update_request('networks', data, net['id'])
+        req = self.new_update_request('networks', data, net['id'],
+                                      as_admin=True)
         res = self.deserialize(self.fmt, req.get_response(self.api))
         self.assertEqual(new_vlan_tag, res['network'][pnet.SEGMENTATION_ID])
 
@@ -2854,6 +2848,7 @@ class TestOVNMechanismDriverSubnetsV2(test_plugin.TestMl2SubnetsV2,
         net_arg = {pnet.NETWORK_TYPE: 'geneve',
                    pnet.SEGMENTATION_ID: '1'}
         network = self._make_network(self.fmt, 'net1', True,
+                                     as_admin=True,
                                      arg_list=(pnet.NETWORK_TYPE,
                                                pnet.SEGMENTATION_ID,),
                                      **net_arg)
@@ -3022,7 +3017,7 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
         segment = self._test_create_segment(
             network_id=net['id'], physical_network='physnet1',
             segmentation_id=200, network_type='vlan')['segment']
-        self._delete('segments', segment['id'])
+        self._delete('segments', segment['id'], as_admin=True)
         ovn_nb_api.delete_lswitch_port.assert_called_once_with(
             lport_name=ovn_utils.ovn_provnet_port_name(segment['id']),
             lswitch_name=ovn_utils.ovn_name(net['id']))
@@ -3050,12 +3045,12 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
                     'options': {'network_name': 'physnet2'},
                     'tag': 300,
                     'name': ovn_utils.ovn_provnet_port_name(seg_2['id'])})]
-        self._delete('segments', seg_1['id'])
+        self._delete('segments', seg_1['id'], as_admin=True)
         ovn_nb_api.delete_lswitch_port.assert_called_once_with(
             lport_name=ovn_utils.ovn_provnet_port_name(net['id']),
             lswitch_name=ovn_utils.ovn_name(net['id']))
         ovn_nb_api.delete_lswitch_port.reset_mock()
-        self._delete('segments', seg_2['id'])
+        self._delete('segments', seg_2['id'], as_admin=True)
         ovn_nb_api.delete_lswitch_port.assert_called_once_with(
             lport_name=ovn_utils.ovn_provnet_port_name(seg_2['id']),
             lswitch_name=ovn_utils.ovn_name(net['id']))
@@ -3159,8 +3154,8 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
         ovn_nb_api.delete_lswitch_port.assert_not_called()
 
         # Delete both segments
-        self._delete('segments', self.seg_2['id'])
-        self._delete('segments', self.seg_1['id'])
+        self._delete('segments', self.seg_2['id'], as_admin=True)
+        self._delete('segments', self.seg_1['id'], as_admin=True)
 
         # Make sure that the metadata port wasn't deleted.
         deleted_ports = [
@@ -4096,7 +4091,7 @@ class TestOVNMechanismDriverSecurityGroup(MechDriverSetupBase,
                 1, self.mech_driver.nb_ovn.pg_acl_del.call_count)
 
     def test_delete_port_with_security_groups_port_doesnt_remove_pg(self):
-        with self.network(set_context=True, tenant_id='test') as net1:
+        with self.network() as net1:
             with self.subnet(network=net1):
                 sg = self._create_sg('sg')
                 port = self._make_port(
@@ -4174,7 +4169,7 @@ class TestOVNMechanismDriverMetadataPort(MechDriverSetupBase,
         """
         self.mech_driver.nb_ovn.get_subnet_dhcp_options.return_value = {
             'subnet': {}, 'ports': {}}
-        with self.network(set_context=True, tenant_id='test') as net1:
+        with self.network() as net1:
             with self.subnet(network=net1, cidr='10.0.0.0/24') as subnet1:
                 with self.subnet(network=net1,
                                  cidr='20.0.0.0/24') as subnet2:
@@ -4215,6 +4210,7 @@ class TestOVNParentTagPortBinding(OVNMechanismDriverTestCase):
                 self._create_port(
                     self.fmt, n['network']['id'],
                     expected_res_status=404,
+                    is_admin=True,
                     arg_list=(OVN_PROFILE,),
                     **binding)
 
@@ -4226,6 +4222,7 @@ class TestOVNParentTagPortBinding(OVNMechanismDriverTestCase):
                 with self.port(s) as p:
                     binding[OVN_PROFILE]['parent_name'] = p['port']['id']
                     res = self._create_port(self.fmt, n['network']['id'],
+                                            is_admin=True,
                                             arg_list=(OVN_PROFILE,),
                                             **binding)
                     port = self.deserialize(self.fmt, res)
@@ -4240,6 +4237,7 @@ class TestOVNParentTagPortBinding(OVNMechanismDriverTestCase):
                 with self.port(s) as p:
                     binding[OVN_PROFILE]['parent_name'] = p['port']['id']
                     self._create_port(self.fmt, n['network']['id'],
+                                      is_admin=True,
                                       arg_list=(OVN_PROFILE,),
                                       expected_res_status=400,
                                       **binding)
@@ -4253,6 +4251,7 @@ class TestOVNVtepPortBinding(OVNMechanismDriverTestCase):
         with self.network() as n:
             with self.subnet(n):
                 res = self._create_port(self.fmt, n['network']['id'],
+                                        is_admin=True,
                                         arg_list=(OVN_PROFILE,),
                                         **binding)
                 port = self.deserialize(self.fmt, res)
@@ -4264,6 +4263,7 @@ class TestOVNVtepPortBinding(OVNMechanismDriverTestCase):
         with self.network() as n:
             with self.subnet(n):
                 self._create_port(self.fmt, n['network']['id'],
+                                  is_admin=True,
                                   arg_list=(OVN_PROFILE,),
                                   expected_res_status=400,
                                   **binding)
@@ -4273,6 +4273,7 @@ class TestOVNVtepPortBinding(OVNMechanismDriverTestCase):
         with self.network() as n:
             with self.subnet(n):
                 self._create_port(self.fmt, n['network']['id'],
+                                  is_admin=True,
                                   arg_list=(OVN_PROFILE,),
                                   expected_res_status=400,
                                   **binding)
@@ -4283,6 +4284,7 @@ class TestOVNVtepPortBinding(OVNMechanismDriverTestCase):
         with self.network() as n:
             with self.subnet(n):
                 self._create_port(self.fmt, n['network']['id'],
+                                  is_admin=True,
                                   arg_list=(OVN_PROFILE,),
                                   expected_res_status=400,
                                   **binding)
@@ -4294,6 +4296,7 @@ class TestOVNVtepPortBinding(OVNMechanismDriverTestCase):
         with self.network() as n:
             with self.subnet(n):
                 self._create_port(self.fmt, n['network']['id'],
+                                  is_admin=True,
                                   arg_list=(OVN_PROFILE,),
                                   expected_res_status=404,
                                   **binding)

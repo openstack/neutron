@@ -251,7 +251,8 @@ class ServiceTypeManagerExtTestCase(ServiceTypeExtensionTestCaseBase):
         super(ServiceTypeManagerExtTestCase, self).setUp()
 
     def _list_service_providers(self):
-        return self.api.get(_get_path('service-providers', fmt=self.fmt))
+        return self.api.get(_get_path('service-providers', fmt=self.fmt),
+                            extra_environ=test_base._get_neutron_env())
 
     def test_list_service_providers(self):
         res = self._list_service_providers()

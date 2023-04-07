@@ -74,6 +74,14 @@ def _get_path(resource, id=None, action=None,
     return path
 
 
+def _get_neutron_env(tenant_id=None, as_admin=False):
+    tenant_id = tenant_id or _uuid()
+    roles = ['member', 'reader']
+    if as_admin:
+        roles.append('admin')
+    return {'neutron.context': context.Context('', tenant_id, roles=roles)}
+
+
 class APIv2TestBase(base.BaseTestCase):
     def setUp(self):
         super(APIv2TestBase, self).setUp()
@@ -98,12 +106,35 @@ class APIv2TestBase(base.BaseTestCase):
         api = router.APIRouter()
         self.api = webtest.TestApp(api)
 
+        self._tenant_id = "api-test-tenant"
+
         quota.QUOTAS._driver = None
         cfg.CONF.set_override('quota_driver', quota_conf.QUOTA_DB_DRIVER,
                               group='QUOTAS')
 
         # APIRouter initialization resets policy module, re-initializing it
         policy.init()
+
+    def _post_request(self, path, initial_input, expect_errors=None,
+                      req_tenant_id=None, as_admin=False):
+        req_tenant_id = req_tenant_id or self._tenant_id
+        return self.api.post_json(
+            path, initial_input, expect_errors=expect_errors,
+            extra_environ=_get_neutron_env(req_tenant_id, as_admin))
+
+    def _put_request(self, path, initial_input, expect_errors=None,
+                     req_tenant_id=None, as_admin=False):
+        req_tenant_id = req_tenant_id or self._tenant_id
+        return self.api.put_json(
+            path, initial_input, expect_errors=expect_errors,
+            extra_environ=_get_neutron_env(req_tenant_id, as_admin))
+
+    def _delete_request(self, path, expect_errors=None,
+                        req_tenant_id=None, as_admin=False):
+        req_tenant_id = req_tenant_id or self._tenant_id
+        return self.api.delete_json(
+            path, expect_errors=expect_errors,
+            extra_environ=_get_neutron_env(req_tenant_id, as_admin))
 
 
 class _ArgMatcher(object):
@@ -512,17 +543,16 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
     def _test_list(self, req_tenant_id, real_tenant_id):
         env = {}
         if req_tenant_id:
-            env = {'neutron.context': context.Context('', req_tenant_id)}
+            env = _get_neutron_env(req_tenant_id)
         input_dict = {'id': uuidutils.generate_uuid(),
                       'name': 'net1',
                       'admin_state_up': True,
                       'status': "ACTIVE",
-                      'tenant_id': real_tenant_id,
+                      'project_id': real_tenant_id,
                       'shared': False,
                       'subnets': []}
-        return_value = [input_dict]
         instance = self.plugin.return_value
-        instance.get_networks.return_value = return_value
+        instance.get_networks.return_value = [input_dict]
 
         res = self.api.get(_get_path('networks',
                                      fmt=self.fmt), extra_environ=env)
@@ -789,7 +819,7 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
     def test_create_with_keystone_env(self):
         tenant_id = _uuid()
         net_id = _uuid()
-        env = {'neutron.context': context.Context('', tenant_id)}
+        env = _get_neutron_env(tenant_id)
         # tenant_id should be fetched from env
         initial_input = {'network': {'name': 'net1'}}
         full_input = {'network': {'admin_state_up': True,
@@ -947,8 +977,9 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
 
     def test_create_return_extra_attr(self):
         net_id = _uuid()
+        project_id = _uuid()
         data = {'network': {'name': 'net1', 'admin_state_up': True,
-                            'tenant_id': _uuid()}}
+                            'tenant_id': project_id}}
         return_value = {'subnets': [], 'status': "ACTIVE",
                         'id': net_id, 'v2attrs:something': "123"}
         return_value.update(data['network'].copy())
@@ -959,7 +990,8 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
 
         res = self.api.post(_get_path('networks', fmt=self.fmt),
                             self.serialize(data),
-                            content_type='application/' + self.fmt)
+                            content_type='application/' + self.fmt,
+                            extra_environ=_get_neutron_env(project_id))
         self.assertEqual(exc.HTTPCreated.code, res.status_int)
         res = self.deserialize(res)
         self.assertIn('network', res)
@@ -969,23 +1001,25 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         self.assertNotIn('v2attrs:something', net)
 
     def test_fields(self):
+        project_id = _uuid()
         return_value = {'name': 'net1', 'admin_state_up': True,
-                        'subnets': []}
+                        'project_id': project_id, 'subnets': []}
 
         instance = self.plugin.return_value
         instance.get_network.return_value = return_value
 
         self.api.get(_get_path('networks',
                                id=uuidutils.generate_uuid(),
-                               fmt=self.fmt))
+                               fmt=self.fmt),
+                     extra_environ=_get_neutron_env(project_id))
 
     def _test_delete(self, req_tenant_id, real_tenant_id, expected_code,
                      expect_errors=False):
         env = {}
         if req_tenant_id:
-            env = {'neutron.context': context.Context('', req_tenant_id)}
+            env = _get_neutron_env(req_tenant_id)
         instance = self.plugin.return_value
-        instance.get_network.return_value = {'tenant_id': real_tenant_id,
+        instance.get_network.return_value = {'project_id': real_tenant_id,
                                              'shared': False}
         instance.delete_network.return_value = None
 
@@ -1010,15 +1044,12 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
 
     def _test_get(self, req_tenant_id, real_tenant_id, expected_code,
                   expect_errors=False):
+        shared = req_tenant_id and req_tenant_id.endswith('another')
         env = {}
-        shared = False
         if req_tenant_id:
-            env = {'neutron.context': context.Context('', req_tenant_id)}
-            if req_tenant_id.endswith('another'):
-                shared = True
-                env['neutron.context'].roles = ['tenant_admin']
+            env = _get_neutron_env(req_tenant_id)
 
-        data = {'tenant_id': real_tenant_id, 'shared': shared}
+        data = {'project_id': real_tenant_id, 'shared': shared}
         instance = self.plugin.return_value
         instance.get_network.return_value = data
 
@@ -1060,14 +1091,14 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
                      expect_errors=False):
         env = {}
         if req_tenant_id:
-            env = {'neutron.context': context.Context('', req_tenant_id)}
+            env = _get_neutron_env(req_tenant_id)
         # leave out 'name' field intentionally
         data = {'network': {'admin_state_up': True}}
         return_value = {'subnets': []}
         return_value.update(data['network'].copy())
 
         instance = self.plugin.return_value
-        instance.get_network.return_value = {'tenant_id': real_tenant_id,
+        instance.get_network.return_value = {'project_id': real_tenant_id,
                                              'shared': False}
         instance.update_network.return_value = return_value
 
@@ -1308,26 +1339,31 @@ class NotificationTest(APIv2TestBase):
                               group='QUOTAS')
 
     def _resource_op_notifier(self, opname, resource, expected_errors=False):
-        initial_input = {resource: {'name': 'myname'}}
+        tenant_id = _uuid()
+        network_obj = {'name': 'myname',
+                       'project_id': tenant_id}
+        initial_input = {resource: network_obj}
         instance = self.plugin.return_value
-        instance.get_networks.return_value = initial_input
+        instance.get_network.return_value = network_obj
         instance.get_networks_count.return_value = 0
         expected_code = exc.HTTPCreated.code
         if opname == 'create':
-            initial_input[resource]['tenant_id'] = _uuid()
-            res = self.api.post_json(
+            res = self._post_request(
                 _get_path('networks'),
-                initial_input, expect_errors=expected_errors)
+                initial_input, expect_errors=expected_errors,
+                req_tenant_id=tenant_id)
         if opname == 'update':
-            res = self.api.put_json(
-                _get_path('networks', id=_uuid()),
-                initial_input, expect_errors=expected_errors)
+            op_input = {resource: {'name': 'myname'}}
+            res = self._put_request(
+                _get_path('networks', id=tenant_id),
+                op_input, expect_errors=expected_errors,
+                req_tenant_id=tenant_id)
             expected_code = exc.HTTPOk.code
         if opname == 'delete':
-            initial_input[resource]['tenant_id'] = _uuid()
-            res = self.api.delete(
-                _get_path('networks', id=_uuid()),
-                expect_errors=expected_errors)
+            res = self._delete_request(
+                _get_path('networks', id=tenant_id),
+                expect_errors=expected_errors,
+                req_tenant_id=tenant_id)
             expected_code = exc.HTTPNoContent.code
 
         expected_events = ('.'.join([resource, opname, "start"]),
@@ -1472,7 +1508,9 @@ class ExtensionTestCase(base.BaseTestCase):
         instance.create_network.return_value = return_value
         instance.get_networks_count.return_value = 0
 
-        res = self.api.post_json(_get_path('networks'), initial_input)
+        res = self.api.post_json(
+            _get_path('networks'), initial_input,
+            extra_environ=_get_neutron_env(tenant_id))
 
         instance.create_network.assert_called_with(mock.ANY,
                                                    network=data)

@@ -45,6 +45,7 @@ from neutron.db.models import agent as agent_model
 from neutron.extensions import l3agentscheduler
 from neutron.objects import agent as ag_obj
 from neutron.objects import l3agent as rb_obj
+from neutron import policy
 from neutron.tests.common import helpers
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
@@ -78,18 +79,21 @@ class AgentSchedulerTestMixIn(object):
 
     def _path_req(self, path, method='GET', data=None,
                   query_string=None,
-                  admin_context=True):
+                  admin_context=True,
+                  req_tenant_id=None):
         content_type = 'application/%s' % self.fmt
         body = None
         if data is not None:  # empty dict is valid
             body = wsgi.Serializer().serialize(data, content_type)
+        roles = ['member', 'reader']
+        req_tenant_id = req_tenant_id or self._tenant_id
         if admin_context:
-            return testlib_api.create_request(
-                path, body, content_type, method, query_string=query_string)
-        else:
-            return testlib_api.create_request(
-                path, body, content_type, method, query_string=query_string,
-                context=context.Context('', 'tenant_id'))
+            roles.append('admin')
+        req = testlib_api.create_request(
+            path, body, content_type, method, query_string=query_string)
+        req.environ['neutron.context'] = context.Context(
+            '', req_tenant_id, roles=roles, is_admin=admin_context)
+        return req
 
     def _path_create_request(self, path, data, admin_context=True):
         return self._path_req(path, method='POST', data=data,
@@ -218,7 +222,7 @@ class AgentSchedulerTestMixIn(object):
         new_agent = {}
         new_agent['agent'] = {}
         new_agent['agent']['admin_state_up'] = admin_state_up
-        self._update('agents', agent_id, new_agent)
+        self._update('agents', agent_id, new_agent, as_admin=True)
 
     def _get_agent_id(self, agent_type, host):
         agents = self._list_agents()
@@ -269,6 +273,7 @@ class OvsAgentSchedulerTestCaseBase(test_l3.L3NatTestCaseMixin,
         self.dhcp_notify_p = mock.patch(
             'neutron.extensions.dhcpagentscheduler.notify')
         self.patched_dhcp_notify = self.dhcp_notify_p.start()
+        policy.init()
 
 
 class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
@@ -911,10 +916,12 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             self.assertNotEqual(agent['host'], new_agent_host)
 
     def test_router_auto_schedule_with_invalid_router(self):
-        with self.router() as router:
+        project_id = uuidutils.generate_uuid()
+        with self.router(project_id=project_id) as router:
             l3_rpc_cb = l3_rpc.L3RpcCallback()
             self._register_agent_states()
-        self._delete('routers', router['router']['id'])
+        self._delete('routers', router['router']['id'],
+                     tenant_id=project_id)
 
         # deleted router
         ret_a = l3_rpc_cb.sync_routers(self.adminContext, host=L3_HOSTA,
@@ -1106,19 +1113,22 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
                 self.assertEqual(0, len(router_ids))
 
     def test_router_without_l3_agents(self):
+        project_id = uuidutils.generate_uuid()
         with self.subnet() as s:
             self._set_net_external(s['subnet']['network_id'])
-            data = {'router': {'tenant_id': uuidutils.generate_uuid()}}
+            data = {'router': {'tenant_id': project_id}}
             data['router']['name'] = 'router1'
             data['router']['external_gateway_info'] = {
                 'network_id': s['subnet']['network_id']}
-            router_req = self.new_create_request('routers', data, self.fmt)
+            router_req = self.new_create_request(
+                'routers', data, self.fmt, tenant_id=project_id)
             res = router_req.get_response(self.ext_api)
             router = self.deserialize(self.fmt, res)
             l3agents = (
                 self.l3plugin.get_l3_agents_hosting_routers(
                     self.adminContext, [router['router']['id']]))
-            self._delete('routers', router['router']['id'])
+            self._delete(
+                'routers', router['router']['id'], tenant_id=project_id)
         self.assertEqual(0, len(l3agents))
 
     def test_dvr_router_scheduling_to_only_dvr_snat_agent(self):
@@ -1217,26 +1227,30 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             self.assertEqual(agent['id'], new_agent['id'])
 
     def test_router_sync_data(self):
-        with self.subnet() as s1,\
-                self.subnet(cidr='10.0.2.0/24') as s2,\
-                self.subnet(cidr='10.0.3.0/24') as s3:
+        project_id = uuidutils.generate_uuid()
+        with self.subnet(project_id=project_id) as s1,\
+                self.subnet(project_id=project_id, cidr='10.0.2.0/24') as s2,\
+                self.subnet(project_id=project_id, cidr='10.0.3.0/24') as s3:
             self._register_agent_states()
             self._set_net_external(s1['subnet']['network_id'])
-            data = {'router': {'tenant_id': uuidutils.generate_uuid()}}
+            data = {'router': {'tenant_id': project_id}}
             data['router']['name'] = 'router1'
             data['router']['external_gateway_info'] = {
                 'network_id': s1['subnet']['network_id']}
-            router_req = self.new_create_request('routers', data, self.fmt)
+            router_req = self.new_create_request(
+                'routers', data, self.fmt, tenant_id=project_id)
             res = router_req.get_response(self.ext_api)
             router = self.deserialize(self.fmt, res)
             self._router_interface_action('add',
                                           router['router']['id'],
                                           s2['subnet']['id'],
-                                          None)
+                                          None,
+                                          tenant_id=project_id)
             self._router_interface_action('add',
                                           router['router']['id'],
                                           s3['subnet']['id'],
-                                          None)
+                                          None,
+                                          tenant_id=project_id)
             l3agents = self._list_l3_agents_hosting_router(
                 router['router']['id'])
             self.assertEqual(1, len(l3agents['agents']))
@@ -1267,7 +1281,8 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             self._router_interface_action('remove',
                                           router['router']['id'],
                                           s2['subnet']['id'],
-                                          None)
+                                          None,
+                                          tenant_id=project_id)
             l3agents = self._list_l3_agents_hosting_router(
                 router['router']['id'])
             self.assertEqual(1,
@@ -1275,8 +1290,10 @@ class OvsAgentSchedulerTestCase(OvsAgentSchedulerTestCaseBase):
             self._router_interface_action('remove',
                                           router['router']['id'],
                                           s3['subnet']['id'],
-                                          None)
-            self._delete('routers', router['router']['id'])
+                                          None,
+                                          tenant_id=project_id)
+            self._delete('routers', router['router']['id'],
+                         tenant_id=project_id)
 
     def _test_router_add_to_l3_agent(self, admin_state_up=True):
         with self.router() as router1:

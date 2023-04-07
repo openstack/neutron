@@ -50,7 +50,7 @@ class DNSDomainKeywordsTestCase(
                 net_kwargs.get('arg_list', ()) + (dns_apidef.DNSDOMAIN,)
         net_kwargs['shared'] = True
         res = self._create_network(self.fmt, 'test_network', True,
-                                   **net_kwargs)
+                                   as_admin=True, **net_kwargs)
         network = self.deserialize(self.fmt, res)
         if ipv4:
             cidr = '10.0.0.0/24'
@@ -108,8 +108,8 @@ class DNSDomainKeywordsTestCase(
         # NOTE(slaweq): Admin context is required here to be able to update
         # fixed_ips of the port as by default it is not possible for non-admin
         # users
-        ctx = context.Context(project_id=PROJECT_ID, is_admin=True)
-        req = self.new_update_request('ports', data, port['id'], context=ctx)
+        req = self.new_update_request('ports', data, port['id'],
+                                      tenant_id=PROJECT_ID, as_admin=True)
         res = req.get_response(self.api)
         self.assertEqual(200, res.status_int)
         port = self.deserialize(self.fmt, res)['port']

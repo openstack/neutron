@@ -380,7 +380,7 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
     def _set_router_external_gateway(self, router_id, network_id,
                                      snat_enabled=None,
                                      expected_code=exc.HTTPOk.code,
-                                     neutron_context=None):
+                                     tenant_id=None, as_admin=False):
         ext_gw_info = {'network_id': network_id}
         # Need to set enable_snat also if snat_enabled == False
         if snat_enabled is not None:
@@ -389,7 +389,8 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                             {'router': {'external_gateway_info':
                                         ext_gw_info}},
                             expected_code=expected_code,
-                            neutron_context=neutron_context)
+                            request_tenant_id=tenant_id,
+                            as_admin=as_admin)
 
     def test_router_gateway_set_fail_after_port_create(self):
         with self.router() as r, self.subnet() as s:
@@ -444,7 +445,8 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                           ('external_gateway_info', None)]
         with self.router(name=name, admin_state_up=True,
                          tenant_id=tenant_id) as router:
-            res = self._show('routers', router['router']['id'])
+            res = self._show('routers', router['router']['id'],
+                             tenant_id=tenant_id)
             for k, v in expected_value:
                 self.assertEqual(res['router'][k], v)
 
@@ -468,8 +470,10 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                                     'subnet_id': s['subnet']['id']}]})]
             with self.router(name=name, admin_state_up=True,
                              tenant_id=tenant_id,
-                             external_gateway_info=input_value) as router:
-                res = self._show('routers', router['router']['id'])
+                             external_gateway_info=input_value,
+                             as_admin=True) as router:
+                res = self._show('routers', router['router']['id'],
+                                 tenant_id=tenant_id)
                 for k, v in expected_value:
                     self.assertEqual(v, res['router'][k])
 
@@ -493,7 +497,8 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                     self._set_router_external_gateway(
                         r['router']['id'], ext_net_id,
                         snat_enabled=snat_input_value,
-                        expected_code=expected_http_code)
+                        expected_code=expected_http_code,
+                        as_admin=True)
                     if expected_http_code != exc.HTTPOk.code:
                         return
                     body = self._show('routers', r['router']['id'])
