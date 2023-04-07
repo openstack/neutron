@@ -2059,7 +2059,7 @@ class OVNClient(object):
             mport_updated = False
             if subnet['ip_version'] == const.IP_VERSION_4:
                 mport_updated = self.update_metadata_port(
-                    context, network['id'], subnet=subnet)
+                    context, network, subnet=subnet)
             if subnet['ip_version'] == const.IP_VERSION_6 or not mport_updated:
                 # NOTE(ralonsoh): if IPv4 but the metadata port has not been
                 # updated, the DHPC options register has not been created.
@@ -2079,7 +2079,7 @@ class OVNClient(object):
             subnet['id'])['subnet']
 
         if subnet['enable_dhcp'] or ovn_subnet:
-            self.update_metadata_port(context, network['id'], subnet=subnet)
+            self.update_metadata_port(context, network, subnet=subnet)
 
         check_rev_cmd = self._nb_idl.check_revision_number(
             subnet['id'], subnet, ovn_const.TYPE_SUBNETS)
@@ -2184,26 +2184,39 @@ class OVNClient(object):
                     return fixed_ip['ip_address']
 
     def create_metadata_port(self, context, network):
-        if ovn_conf.is_ovn_metadata_enabled():
-            metadata_port = self._find_metadata_port(context, network['id'])
-            if not metadata_port:
-                # Create a neutron port for DHCP/metadata services
-                port = {'port':
-                        {'network_id': network['id'],
+        if not ovn_conf.is_ovn_metadata_enabled():
+            return
+
+        metadata_port = self._find_metadata_port(context, network['id'])
+        if metadata_port:
+            return metadata_port
+
+        # Create a neutron port for DHCP/metadata services
+        filters = {'network_id': [network['id']]}
+        subnets = self._plugin.get_subnets(context, filters=filters)
+        fixed_ips = [{'subnet_id': s['id']}
+                     for s in subnets if s['enable_dhcp']]
+        port = {'port': {'network_id': network['id'],
                          'tenant_id': network['project_id'],
                          'device_owner': const.DEVICE_OWNER_DISTRIBUTED,
-                         'device_id': 'ovnmeta-%s' % network['id']}}
-                # TODO(boden): rehome create_port into neutron-lib
-                p_utils.create_port(self._plugin, context, port)
+                         'device_id': 'ovnmeta-%s' % network['id'],
+                         'fixed_ips': fixed_ips,
+                         }
+                }
+        # TODO(boden): rehome create_port into neutron-lib
+        return p_utils.create_port(self._plugin, context, port)
 
-    def update_metadata_port(self, context, network_id, subnet=None):
+    def update_metadata_port(self, context, network, subnet=None):
         """Update metadata port.
 
         This function will allocate an IP address for the metadata port of
         the given network in all its IPv4 subnets or the given subnet. Returns
         "True" if the metadata port has been updated and "False" if OVN
-        metadata is disabled or the metadata port does not exist.
+        metadata is disabled or the metadata port does not exist or
+        cannot be created.
         """
+        network_id = network['id']
+
         def update_metadata_port_fixed_ips(metadata_port, add_subnet_ids,
                                            del_subnet_ids):
             wanted_fixed_ips = [
@@ -2222,11 +2235,11 @@ class OVNClient(object):
         if not ovn_conf.is_ovn_metadata_enabled():
             return False
 
-        # Retrieve the metadata port of this network
-        metadata_port = self._find_metadata_port(context, network_id)
+        # Retrieve or create the metadata port of this network
+        metadata_port = self.create_metadata_port(context, network)
         if not metadata_port:
-            LOG.error("Metadata port couldn't be found for network %s",
-                      network_id)
+            LOG.error("Metadata port could not be found or created "
+                      "for network %s", network_id)
             return False
 
         port_subnet_ids = set(ip['subnet_id'] for ip in
