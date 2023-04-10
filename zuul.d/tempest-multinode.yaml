@@ -569,10 +569,14 @@
       devstack_localrc:
         OVN_BUILD_FROM_SOURCE: True
         OVN_BRANCH: main
-        OVS_BRANCH: master
+        # TODO(ykarel) move to master once OVN main branch is fixed to
+        # work with https://github.com/openvswitch/ovs/commit/07cf5810de
+        OVS_BRANCH: e90a0727f17f6ad915a32735a8c0b282f2c8cd6f
     group-vars:
       subnode:
         devstack_localrc:
           OVN_BUILD_FROM_SOURCE: True
           OVN_BRANCH: main
-          OVS_BRANCH: master
+          # TODO(ykarel) move to master once OVN main branch is fixed to
+          # work with https://github.com/openvswitch/ovs/commit/07cf5810de
+          OVS_BRANCH: e90a0727f17f6ad915a32735a8c0b282f2c8cd6f
