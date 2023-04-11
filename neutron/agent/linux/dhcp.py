@@ -245,8 +245,9 @@ class DhcpBase(object, metaclass=abc.ABCMeta):
 class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
     PORTS = []
 
-    # Track running interfaces.
-    _interfaces = set()
+    # Track running interfaces, indexed by network ID, for example,
+    # {net-id-1: set(intf_1, intf_2), net-id-2: set(intf_3, intf_4), ...}
+    _interfaces = collections.defaultdict(set)
 
     def __init__(self, conf, network, process_monitor, version=None,
                  plugin=None, segment=None):
@@ -267,20 +268,24 @@ class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
         fileutils.ensure_tree(self.network_conf_dir, mode=0o755)
 
     @classmethod
-    def _add_running_interface(cls, interface):
-        """Safe method that add running interface"""
-        cls._interfaces.add(interface)
+    def _add_running_interface(cls, interface, network_id):
+        """Safe method that adds a given interface"""
+        cls._interfaces[network_id].add(interface)
 
     @classmethod
-    def _del_running_interface(cls, interface):
-        """Safe method that remove given interface"""
-        if interface in cls._interfaces:
-            cls._interfaces.remove(interface)
+    def _del_running_interface(cls, interface, network_id):
+        """Safe method that removes a given interface"""
+        if cls._interfaces.get(network_id):
+            if interface in cls._interfaces[network_id]:
+                cls._interfaces[network_id].remove(interface)
+            # no entries, cleanup
+            if not cls._interfaces[network_id]:
+                del cls._interfaces[network_id]
 
     @classmethod
-    def _has_running_interfaces(cls):
-        """Safe method that remove given interface"""
-        return bool(cls._interfaces)
+    def _has_running_interfaces(cls, network_id):
+        """Safe method that checks for interfaces"""
+        bool(cls._interfaces.get(network_id))
 
     @staticmethod
     def get_confs_dir(conf):
@@ -332,7 +337,8 @@ class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
                     self.network, self.segment)
                 self.interface_name = interface_name
                 self.spawn_process()
-                self._add_running_interface(self.interface_name)
+                self._add_running_interface(self.interface_name,
+                                            self.network.id)
             return True
         except exceptions.ProcessExecutionError as error:
             LOG.debug("Spawning DHCP process for network %s failed; "
@@ -364,7 +370,7 @@ class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
                             pm.pid, SIGTERM_TIMEOUT)
                 pm.disable(sig=str(int(signal.SIGKILL)))
                 common_utils.wait_until_true(lambda: not self.active)
-        self._del_running_interface(self.interface_name)
+        self._del_running_interface(self.interface_name, self.network.id)
         if not retain_port:
             self._destroy_namespace_and_port()
             self._remove_config_files()
@@ -376,8 +382,9 @@ class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
         except RuntimeError:
             LOG.warning('Failed trying to delete interface: %s',
                         self.interface_name)
-        if not self._has_running_interfaces():
-            # Delete nm only if we don't serve different segmentation id.
+        # Delete namespace only if there are no running interfaces in it,
+        # which covers the case where a network has multiple segmentation ids.
+        if not self._has_running_interfaces(self.network.id):
             try:
                 ip_lib.delete_network_namespace(self.network.namespace)
             except RuntimeError:
