@@ -52,29 +52,18 @@
       jobs:
         - neutron-functional
         - neutron-functional-with-uwsgi-fips
-        - neutron-functional-with-uwsgi-with-neutron-lib-master
-        - neutron-functional-with-pyroute2-master
         - neutron-fullstack
         - neutron-fullstack-with-uwsgi-fips
-        - neutron-fullstack-with-uwsgi-with-neutron-lib-master
-        - neutron-fullstack-with-pyroute2-master
         - neutron-ovn-grenade-multinode
         - neutron-ovn-grenade-multinode-tick-tick:
             voting: false
         - neutron-ovn-tempest-with-uwsgi-loki
-        - neutron-ovn-tempest-full-multinode-ovs-master
-        - neutron-ovn-tempest-ovs-master
-        - neutron-ovn-tempest-with-neutron-lib-master
-        - neutron-ovs-tempest-with-neutron-lib-master
         - neutron-ovs-tempest-slow
         - neutron-ovn-tempest-slow
-        - neutron-ovs-tempest-with-os-ken-master
         - neutron-ovn-tempest-postgres-full
         - neutron-ovn-tempest-mariadb-full
         - neutron-ovn-tempest-ovs-release
         - neutron-ovn-tempest-ovs-release-ipv6-only
-        - neutron-ovn-tempest-ovs-master-centos-9-stream
-        - neutron-ovn-tempest-with-neutron-lib-master
         - neutron-ovs-tempest-fips
         - neutron-ovn-tempest-ovs-release-fips
         - devstack-tobiko-neutron:
@@ -140,19 +129,14 @@
       jobs:
         - neutron-functional
         - neutron-functional-with-uwsgi-fips
-        - neutron-functional-with-pyroute2-master
         - neutron-fullstack
         - neutron-fullstack-with-uwsgi-fips
-        - neutron-fullstack-with-pyroute2-master
         - neutron-ovs-tempest-slow
         - neutron-ovn-tempest-slow
-        - neutron-ovs-tempest-with-os-ken-master
         - neutron-ovn-tempest-postgres-full
         - neutron-ovn-tempest-mariadb-full
         - neutron-ovn-tempest-ovs-release
         - neutron-ovn-tempest-ovs-release-ipv6-only
-        - neutron-ovn-tempest-ovs-master-centos-9-stream
-        - neutron-ovn-tempest-with-neutron-lib-master
         - neutron-ovs-tempest-fips
         - neutron-ovn-tempest-ovs-release-fips
         - neutron-ovs-grenade-multinode-tick-tick

@@ -124,17 +124,6 @@ Currently we have in that queue jobs like listed below.
     |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
     |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-ovn-tempest-full-multinode-ovs-master |Various tempest api, scenario     |   3.6   |   2   | ovn         | ovn             | ---      | ---   | ---    | ---        | No          |
-    |                                              |and neutron_tempest_plugi tests   |         |       |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-ovn-tempest-ovs-master                |Various tempest api, scenario     |   3.6   |   1   | ovn         | ovn             | ---      | ---   | ---    | ---        | No          |
-    |                                              |and neutron_tempest_plugi tests   |         |       |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-ovn-tempest-with-neutron-lib-master   |tempest.api (without slow tests)  |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | No          |
-    |                                              |tempest.scenario                  |         |       |             |                 |          |       |        |            |             |
-    |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
-    |                                              |Neutron and Nova)                 |         |       |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+---------+-------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-tempest-with-uwsgi-loki               |tempest.api (without slow tests)  |   3.6   |   1   | openvswitch | openvswitch     | legacy   | False | False  | True       | No          |
     |(non-voting)                                  |tempest.scenario                  |         |       |             |                 |          |       |        |            |             |
     |                                              |(only tests related to            |         |       |             |                 |          |       |        |            |             |
