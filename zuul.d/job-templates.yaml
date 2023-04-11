@@ -56,29 +56,16 @@
       jobs:
         - neutron-functional
         - neutron-functional-with-uwsgi-fips
-        - neutron-functional-with-uwsgi-with-neutron-lib-master
-        - neutron-functional-with-pyroute2-master
-        - neutron-functional-with-sqlalchemy-master
         - neutron-fullstack
         - neutron-fullstack-with-uwsgi-fips
-        - neutron-fullstack-with-uwsgi-with-neutron-lib-master
-        - neutron-fullstack-with-pyroute2-master
         - neutron-ovn-grenade-multinode
         - neutron-ovn-tempest-with-uwsgi-loki
-        - neutron-ovn-tempest-full-multinode-ovs-master
-        - neutron-ovn-tempest-ovs-master
-        - neutron-ovn-tempest-with-neutron-lib-master
-        - neutron-ovs-tempest-with-neutron-lib-master
         - neutron-ovs-tempest-slow
         - neutron-ovn-tempest-slow
-        - neutron-ovs-tempest-with-os-ken-master
         - neutron-ovn-tempest-postgres-full
         - neutron-ovn-tempest-mariadb-full
         - neutron-ovn-tempest-ovs-release
-        - neutron-ovn-tempest-ipv6-only-ovs-master
         - neutron-ovn-tempest-ovs-master-centos-9-stream
-        - neutron-ovn-tempest-with-sqlalchemy-master
-        - neutron-ovs-tempest-with-sqlalchemy-master
         - neutron-ovs-tempest-fips
         - neutron-ovn-tempest-ovs-release-fips
         - devstack-tobiko-neutron:
@@ -91,9 +78,6 @@
         - openstack-tox-py39-with-oslo-master:
             timeout: 3600
             irrelevant-files:  *irrelevant-files
-        - neutron-functional-with-oslo-master
-        - neutron-ovs-tempest-with-oslo-master
-        - neutron-ovn-tempest-ovs-release-with-oslo-master
 
 - project-template:
     name: neutron-periodic-jobs
@@ -105,21 +89,13 @@
             timeout: 3600
         - neutron-functional
         - neutron-functional-with-uwsgi-fips
-        - neutron-functional-with-pyroute2-master
-        - neutron-functional-with-sqlalchemy-master
         - neutron-fullstack
         - neutron-fullstack-with-uwsgi-fips
-        - neutron-fullstack-with-pyroute2-master
         - neutron-ovs-tempest-slow
         - neutron-ovn-tempest-slow
-        - neutron-ovs-tempest-with-os-ken-master
         - neutron-ovn-tempest-postgres-full
         - neutron-ovn-tempest-mariadb-full
-        - neutron-ovn-tempest-ipv6-only-ovs-master
         - neutron-ovn-tempest-ovs-master-centos-9-stream
-        - neutron-ovn-tempest-with-neutron-lib-master
-        - neutron-ovn-tempest-with-sqlalchemy-master
-        - neutron-ovs-tempest-with-sqlalchemy-master
         - neutron-ovs-tempest-fips
         - neutron-ovn-tempest-ovs-release-fips
         - devstack-tobiko-neutron:
@@ -132,6 +108,3 @@
         - openstack-tox-py39-with-oslo-master:
             timeout: 3600
             irrelevant-files:  *irrelevant-files
-        - neutron-functional-with-oslo-master
-        - neutron-ovs-tempest-with-oslo-master
-        - neutron-ovn-tempest-ovs-release-with-oslo-master
