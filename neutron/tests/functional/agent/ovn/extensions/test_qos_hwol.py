@@ -17,27 +17,26 @@ from unittest import mock
 
 from oslo_utils import uuidutils
 
-from neutron.agent.common import ovs_lib
 from neutron.agent.ovn.agent import ovsdb as agent_ovsdb
 from neutron.agent.ovn.extensions import qos_hwol
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.common import utils as n_utils
-from neutron.tests import base as test_base
-from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
 
 
 class OVSInterfaceEventTestCase(base.TestOVNFunctionalBase):
 
-    @test_base.unstable_test(
-        'LP#2006603, it is being addressed in '
-        'https://review.opendev.org/c/openstack/neutron/+/873118')
+    def _cleanup(self):
+        self.ovs_idl.del_port(self.port_name, bridge=self.br_name).execute(
+            check_error=False)
+        self.ovs_idl.del_br(self.br_name).execute(check_error=False)
+
     def test_port_creation_and_deletion(self):
         def check_add_port_called():
             try:
                 mock_agent.qos_hwol_ext.add_port.assert_has_calls(
-                    [mock.call('port_iface-id', port_name)])
+                    [mock.call(port_iface_id, self.port_name)])
                 return True
             except AssertionError:
                 return False
@@ -45,24 +44,36 @@ class OVSInterfaceEventTestCase(base.TestOVNFunctionalBase):
         def check_remove_egress_called():
             try:
                 mock_agent.qos_hwol_ext.remove_egress.assert_has_calls(
-                    [mock.call('port_iface-id')])
+                    [mock.call(port_iface_id)])
                 return True
             except AssertionError:
                 return False
 
+        port_iface_id = 'port_iface-id'
         mock_agent = mock.Mock()
         events = [qos_hwol.OVSInterfaceEvent(mock_agent)]
-        agent_ovsdb.MonitorAgentOvsIdl(events=events).start()
-        br = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
-        self.ovs_bridge = ovs_lib.OVSBridge(br.br_name)
-        port_name = ('port-' + uuidutils.generate_uuid())[:8]
+        self.ovs_idl = agent_ovsdb.MonitorAgentOvsIdl(events=events).start()
+        self.br_name = ('brtest-' + uuidutils.generate_uuid())[:13]
+        self.port_name = ('port-' + uuidutils.generate_uuid())[:13]
+        self.addCleanup(self._cleanup)
+        with self.ovs_idl.transaction() as txn:
+            txn.add(self.ovs_idl.add_br(self.br_name))
+            txn.add(self.ovs_idl.add_port(self.br_name, self.port_name))
+            txn.add(self.ovs_idl.iface_set_external_id(
+                self.port_name, 'iface-id', port_iface_id))
+            txn.add(self.ovs_idl.db_set(
+                'Interface', self.port_name, ('type', 'internal')))
 
-        self.ovs_bridge.add_port(
-            port_name, ('external_ids', {'iface-id': 'port_iface-id'}))
-        n_utils.wait_until_true(check_add_port_called, timeout=5)
+        exc = Exception('Port %s was not added to the bridge %s' %
+                        (self.port_name, self.br_name))
+        n_utils.wait_until_true(check_add_port_called, timeout=5,
+                                exception=exc)
 
-        self.ovs_bridge.delete_port(port_name)
-        n_utils.wait_until_true(check_remove_egress_called, timeout=5)
+        self.ovs_idl.del_port(self.port_name).execute(check_error=True)
+        exc = Exception('Port %s was not deleted from the bridge %s' %
+                        (self.port_name, self.br_name))
+        n_utils.wait_until_true(check_remove_egress_called, timeout=5,
+                                exception=exc)
 
 
 class QoSBandwidthLimitEventTestCase(base.TestOVNFunctionalBase):
