@@ -1640,12 +1640,37 @@ class L3_HA_scheduler_db_mixinTestCase(L3HATestCaseMixin):
         router2 = self._create_ha_router()
         router3 = self._create_ha_router(ha=False)
         result = self.plugin.get_routers_l3_agents_count(self.adminContext)
+        result += self.plugin.get_routers_l3_agents_count(
+            self.adminContext, ha=True)
 
         self.assertEqual(3, len(result))
         check_result = [(router['id'], agents) for router, agents in result]
         self.assertIn((router1['id'], 4), check_result)
         self.assertIn((router2['id'], 2), check_result)
         self.assertIn((router3['id'], 0), check_result)
+
+        result = self.plugin.get_routers_l3_agents_count(self.adminContext,
+                                                         ha=True, less_than=3)
+        check_result = [(router['id'], agents) for router, agents in result]
+        self.assertIn((router2['id'], 2), check_result)
+
+    def test_get_routers_not_ha_l3_agents_count(self):
+        router1 = self._create_ha_router(ha=False)
+        router2 = self._create_ha_router(ha=False)
+        self.plugin.schedule_router(self.adminContext, router1['id'],
+                                    candidates=[self.agent1])
+        result = self.plugin.get_routers_l3_agents_count(self.adminContext)
+
+        self.assertEqual(2, len(result))
+        check_result = [(router['id'], agents) for router, agents in result]
+        self.assertIn((router1['id'], 1), check_result)
+        self.assertIn((router2['id'], 0), check_result)
+
+        result = self.plugin.get_routers_l3_agents_count(self.adminContext,
+                                                         less_than=1)
+        check_result = [(router['id'], agents) for router, agents in result]
+        self.assertIn((router2['id'], 0), check_result)
+        self.assertNotIn((router1['id'], 1), check_result)
 
     def test_get_ordered_l3_agents_by_num_routers(self):
         # Mock scheduling so that the test can control it explicitly
