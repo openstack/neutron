@@ -788,6 +788,8 @@
       - openstack/neutron-lib
       - name: github.com/sqlalchemy/sqlalchemy
         override-checkout: main
+      - name: github.com/sqlalchemy/alembic
+        override-checkout: main
     vars:
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
@@ -818,3 +820,5 @@
         override-checkout: main
       - openstack/oslo.db
       - openstack/neutron-lib
+      - name: github.com/sqlalchemy/alembic
+        override-checkout: main
