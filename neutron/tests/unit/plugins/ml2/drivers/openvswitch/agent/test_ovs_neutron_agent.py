@@ -83,6 +83,7 @@ class FakeVif(object):
     ofport = 99
     port_name = 'name'
     vif_mac = 'aa:bb:cc:11:22:33'
+    vif_id = 'dead-beaf'
 
 
 class MockFixedIntervalLoopingCall(object):
@@ -2485,6 +2486,95 @@ class TestOvsNeutronAgent(object):
             self.assertTrue(update_stale.called)
             cleanup.assert_not_called()
             rpc_stop.assert_called_once()
+
+    def _test_rpc_loop_hints(self, devices, failed_devices, hints):
+        devices_details = []
+        vifs = {}
+        for device in devices:
+            details = {
+                'admin_state_up': True,
+                'port_id': mock.Mock(),
+                'device': device,
+                'network_id': device + 'net',
+                'physical_network': 'physnet42',
+                'segmentation_id': '4242',
+                'network_type': n_const.TYPE_LOCAL,
+                'fixed_ips': [{
+                    'subnet_id': '8a66d0cc-2950-dead-beef-d090140d3607',
+                    'ip_address': '1.1.1.1'}],
+                'device_owner': DEVICE_OWNER_COMPUTE,
+            }
+            devices_details.append(details)
+            vifs[device] = FakeVif()
+        port_info = {'current': set(),
+                     'added': set(devices + failed_devices)}
+
+        with mock.patch.object(
+                    self.agent,
+                    'process_port_info') as process_port_info, \
+                mock.patch.object(
+                    self.agent,
+                    '_check_and_handle_signal', side_effect=[True, False]), \
+                mock.patch.object(
+                    self.agent,
+                    'check_ovs_status',
+                    return_value=ovs_constants.OVS_RESTARTED), \
+                mock.patch.object(
+                    self.agent,
+                    '_handle_ovs_restart'), \
+                mock.patch.object(
+                    self.agent,
+                    'cleanup_stale_flows'), \
+                mock.patch.object(
+                    self.agent.plugin_rpc,
+                    'get_devices_details_list_and_failed_devices') as gddl, \
+                mock.patch.object(
+                    self.agent.int_br,
+                    'get_vifs_by_ids') as get_vifs_by_ids:
+            # Simulate a restart
+            self.agent.fullsync = True
+            self.agent._local_vlan_hints = hints
+
+            # Populate fake info
+            process_port_info.return_value = (port_info, set(), 0, set())
+            gddl.return_value = {
+                'devices': devices_details,
+                'failed_devices': failed_devices,
+            }
+            get_vifs_by_ids.return_value = vifs
+
+            # Run the rpc_loop
+            self.agent.rpc_loop(polling_manager=mock.Mock())
+
+    def test_rpc_loop_hints_all_used(self):
+        devices = ['tap1234', 'tap2345']
+        failed_devices = []
+        hints = {'tap1234net/4242': 42, 'tap2345net/4242': 43}
+        self._test_rpc_loop_hints(
+            devices=devices, failed_devices=failed_devices, hints=hints)
+
+        # Assert that we do not have any value in the hints
+        self.assertEqual(0, len(self.agent._local_vlan_hints))
+
+    def test_rpc_loop_hints_one_left(self):
+        devices = ['tap1234']
+        failed_devices = []
+        hints = {'tap1234net/4242': 42, 'tap2345net/4242': 43}
+        self._test_rpc_loop_hints(
+            devices=devices, failed_devices=failed_devices, hints=hints)
+
+        # Assert that we have one value left in the hints
+        self.assertEqual(1, len(self.agent._local_vlan_hints))
+
+    def test_rpc_loop_hints_with_failed_devices(self):
+        devices = ['tap1234']
+        failed_devices = ['tap2345']
+        hints = {'tap1234net/4242': 42, 'tap2345net/4242': 43}
+        self._test_rpc_loop_hints(
+            devices=devices, failed_devices=failed_devices, hints=hints)
+
+        # Assert that we have one value left in the hints
+        self.assertEqual(1, len(self.agent._local_vlan_hints))
 
     def test_set_rpc_timeout(self):
         with mock.patch.object(n_rpc.BackingOffClient,
