@@ -157,6 +157,7 @@ class DVRDbMixin(ext_dvr.DVRMacAddressPluginBase):
 
     @log_helpers.log_method_call
     @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_READER
     def get_ports_on_host_by_subnet(self, context, host, subnet):
         """Returns DVR serviced ports on a given subnet in the input host
 
