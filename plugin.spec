@@ -59,7 +59,7 @@ subparsers:
                         - train
                   install_from_package:
                       type: Bool
-                      help: Install python-neutron-ovn-migration-tool rpm
+                      help: Install openstack-neutron-ovn-migration-tool rpm
                       default: True
 
                   dvr:

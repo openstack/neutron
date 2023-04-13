@@ -49,11 +49,11 @@ Perform the following steps in the overcloud/undercloud
 Perform the following steps in the undercloud
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-1. Install python-networking-ovn-migration-tool.
+1. Install openstack-neutron-ovn-migration-tool.
 
    .. code-block:: console
 
-      # yum install python-networking-ovn-migration-tool
+      # yum install openstack-neutron-ovn-migration-tool
 
 2. Create a working directory on the undercloud, and copy the ansible playbooks
 
@@ -61,7 +61,7 @@ Perform the following steps in the undercloud
 
       $ mkdir ~/ovn_migration
       $ cd ~/ovn_migration
-      $ cp -rfp /usr/share/ansible/networking-ovn-migration/playbooks .
+      $ cp -rfp /usr/share/ansible/neutron-ovn-migration/playbooks .
 
 3. Create  ``~/overcloud-deploy-ovn.sh`` script in your ``$HOME``.
    This script must source your stackrc file, and then execute an ``openstack

@@ -7,11 +7,11 @@ See http://infrared.readthedocs.io/en/stable/index.html for more information.
 
 Before using this plugin, first deploy an ML2/OVS overcloud and then:
 
-1. On your undercloud, install python-neutron-ovn-migration-tool package (https://trunk.rdoproject.org/centos7-master/current/)
-   You also need to install python-neutron and python3-openvswitch packages.
+1. On your undercloud, install openstack-neutron-ovn-migration-tool package (https://trunk.rdoproject.org/centos9-master/component/network/current/)
+   You also need to install python3-neutron and python3-openvswitch packages.
 
 2. Run ::
-   $infrared plugin add "https://github.com/openstack/neutron.git"
+   $infrared plugin add "https://opendev.org/openstack/neutron.git"
 
 3. Start migration by running::
 
