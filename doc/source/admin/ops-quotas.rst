@@ -9,10 +9,10 @@ more resources than the quota allows, an error occurs:
 .. code-block:: console
 
    $ openstack network create test_net
-    Quota exceeded for resources: ['network']
+    Error while executing command: ConflictException: 409, Quota exceeded for resources: ['network'].
 
 Per-project quota configuration is also supported by the quota
-extension API. See :ref:`cfg_quotas_per_tenant` for details.
+extension API. See :ref:`cfg_quotas_per_project` for details.
 
 Basic quota configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -28,75 +28,87 @@ default quota values:
 .. code-block:: ini
 
    [quotas]
-   # number of networks allowed per tenant, and minus means unlimited
-   quota_network = 10
+   # Default number of resources allowed per project. A negative value means
+   # unlimited. (integer value)
+   #default_quota = -1
 
-   # number of subnets allowed per tenant, and minus means unlimited
-   quota_subnet = 10
+   # Number of networks allowed per project. A negative value means unlimited.
+   # (integer value)
+   quota_network = 100
 
-   # number of ports allowed per tenant, and minus means unlimited
-   quota_port = 50
+   # Number of subnets allowed per project, A negative value means unlimited.
+   # (integer value)
+   quota_subnet = 100
+
+   # Number of ports allowed per project. A negative value means unlimited.
+   # (integer value)
+   quota_port = 500
 
    # default driver to use for quota checks
-   quota_driver = neutron.quota.DbQuotaNoLockDriver
+   quota_driver = neutron.db.quota.driver_nolock.DbQuotaNoLockDriver
 
-OpenStack Networking also supports quotas for L3 resources:
-router and floating IP. Add these lines to the
-``quotas`` section in the ``/etc/neutron/neutron.conf`` file:
+   # When set to True, quota usage will be tracked in the Neutron database
+   # for each resource, by directly mapping to a data model class, for
+   # example, networks, subnets, ports, etc. When set to False, quota usage
+   # will be tracked by the quota engine as a count of the object type
+   # directly. For more information, see the Quota Management and
+   # Enforcement guide.
+   # (boolean value)
+   track_quota_usage = true
 
-.. code-block:: ini
+   #
+   # From neutron.extensions
+   #
 
-   [quotas]
-   # number of routers allowed per tenant, and minus means unlimited
+   # Number of routers allowed per project. A negative value means unlimited.
+   # (integer value)
    quota_router = 10
 
-   # number of floating IPs allowed per tenant, and minus means unlimited
+   # Number of floating IPs allowed per project. A negative value means
+   # unlimited.
+   # (integer value)
    quota_floatingip = 50
 
-OpenStack Networking also supports quotas for security group
-resources: number of security groups and number of rules.
-Add these lines to the ``quotas`` section in the
-``/etc/neutron/neutron.conf`` file:
-
-.. code-block:: ini
-
-   [quotas]
-   # number of security groups per tenant, and minus means unlimited
+   # Number of security groups allowed per project. A negative value means
+   # unlimited.
+   # (integer value)
    quota_security_group = 10
 
-   # number of security rules allowed per tenant, and minus means unlimited
+   # Number of security group rules allowed per project. A negative value means
+   # unlimited.
+   # (integer value)
    quota_security_group_rule = 100
 
-.. _cfg_quotas_per_tenant:
+.. _cfg_quotas_per_project:
 
 Configure per-project quotas
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 OpenStack Networking also supports per-project quota limit by
 quota extension API.
 
-.. todo:: This document needs to be migrated to using ``openstack`` commands
-          rather than the deprecated ``neutron`` commands.
-
 Use these commands to manage per-project quotas:
 
-neutron quota-delete
+openstack quota delete
     Delete defined quotas for a specified project
 
-neutron quota-list
-    Lists defined quotas for all projects
+openstack quota list
+    Lists defined quotas for all projects with non-default quota values
 
-neutron quota-show
+openstack quota show
+    Shows defined quotas for all projects
+
+openstack quota show <project>
     Shows quotas for a specified project
 
-neutron quota-default-show
-    Show default quotas for a specified tenant
+openstack quota show --default <project>
+    Show default quotas for a specified project
 
-neutron quota-update
+openstack quota set --<resource> <value> <project>
     Updates quotas for a specified project
 
 Only users with the ``admin`` role can change a quota value. By default,
 the default set of quotas are enforced for all projects, so no
-:command:`quota-create` command exists.
+:command:`opentack quota create` command exists.
 
 #. Configure Networking to show per-project quotas
 
@@ -104,7 +116,7 @@ the default set of quotas are enforced for all projects, so no
 
    .. code-block:: ini
 
-      quota_driver = neutron.db.quota_db.DbQuotaDriver
+      quota_driver = neutron.db.quota.driver.DbQuotaDriver
 
    When you set this option, the output for Networking commands shows ``quotas``.
 
@@ -119,10 +131,6 @@ the default set of quotas are enforced for all projects, so no
    The command shows the ``quotas`` extension, which provides
    per-project quota management support.
 
-   .. note::
-
-      Many of the extensions shown below are supported in the Mitaka release and later.
-
    .. code-block:: console
 
       +------------------------+------------------------+--------------------------+
@@ -131,7 +139,7 @@ the default set of quotas are enforced for all projects, so no
       | ...                    | ...                    | ...                      |
       | Quota management       | quotas                 | Expose functions for     |
       | support                |                        | quotas management per    |
-      |                        |                        | tenant                   |
+      |                        |                        | project                  |
       | ...                    | ...                    | ...                      |
       +------------------------+------------------------+--------------------------+
 
@@ -141,215 +149,144 @@ the default set of quotas are enforced for all projects, so no
 
    .. code-block:: console
 
-      $ neutron ext-show quotas
-      +-------------+------------------------------------------------------------+
-      | Field       | Value                                                      |
-      +-------------+------------------------------------------------------------+
-      | alias       | quotas                                                     |
-      | description | Expose functions for quotas management per tenant          |
-      | links       |                                                            |
-      | name        | Quota management support                                   |
-      | namespace   | https://docs.openstack.org/network/ext/quotas-sets/api/v2.0 |
-      | updated     | 2012-07-29T10:00:00-00:00                                  |
-      +-------------+------------------------------------------------------------+
+      $ openstack extension show quotas
+      +-------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+      | Field       | Value                                                                                                                                                                                     |
+      +-------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
+      | alias       | quotas                                                                                                                                                                                    |
+      | description | Expose functions for quotas management per project                                                                                                                                        |
+      | id          | quotas                                                                                                                                                                                    |
+      | links       | []                                                                                                                                                                                        |
+      | location    | Munch({'cloud': '', 'region_name': 'RegionOne', 'zone': None, 'project': Munch({'id': 'afc55714081b4ef29f99ec128cb1fa30', 'name': 'demo', 'domain_id': 'default', 'domain_name': None})}) |
+      | name        | Quota management support                                                                                                                                                                  |
+      | updated     | 2012-07-29T10:00:00-00:00                                                                                                                                                                 |
+      +-------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
    .. note::
 
       Only some plug-ins support per-project quotas.
-      Specifically, Open vSwitch, Linux Bridge, and VMware NSX
+      Specifically, OVN, Open vSwitch, Linux Bridge, and VMware NSX
       support them, but new versions of other plug-ins might
       bring additional functionality. See the documentation for
       each plug-in.
 
 #. List projects who have per-project quota support.
 
-   The :command:`neutron quota-list` command lists projects for which the
+   The :command:`openstack quota list` command lists projects for which the
    per-project quota is enabled. The command does not list projects with
    default quota support. You must be an administrative user to run this
    command:
 
    .. code-block:: console
 
-      $ neutron quota-list
-      +------------+---------+------+--------+--------+----------------------------------+
-      | floatingip | network | port | router | subnet | tenant_id                        |
-      +------------+---------+------+--------+--------+----------------------------------+
-      |         20 |       5 |   20 |     10 |      5 | 6f88036c45344d9999a1f971e4882723 |
-      |         25 |      10 |   30 |     10 |     10 | bff5c9455ee24231b5bc713c1b96d422 |
-      +------------+---------+------+--------+--------+----------------------------------+
+      $ openstack quota list --network
+      +----------------------------------+--------------+----------+-------+---------------+---------+-----------------+----------------------+---------+--------------+
+      | Project ID                       | Floating IPs | Networks | Ports | RBAC Policies | Routers | Security Groups | Security Group Rules | Subnets | Subnet Pools |
+      +----------------------------------+--------------+----------+-------+---------------+---------+-----------------+----------------------+---------+--------------+
+      | 6f88036c45344d9999a1f971e4882723 |           50 |      100 |   500 |            10 |      20 |              10 |                  100 |     100 |           -1 |
+      | bff5c9455ee24231b5bc713c1b96d422 |          100 |      100 |   500 |            10 |      10 |              10 |                  100 |     100 |           -1 |
+      +----------------------------------+--------------+----------+-------+---------------+---------+-----------------+----------------------+---------+--------------+
 
 #. Show per-project quota values.
 
-   The :command:`neutron quota-show` command reports the current
+   The :command:`openstack quota show` command reports the current
    set of quota limits for the specified project.
    Non-administrative users can run this command without the
-   ``--tenant_id`` parameter. If per-project quota limits are
+   ``<project>`` argument. If per-project quota limits are
    not enabled for the project, the command shows the default
    set of quotas.
 
-   .. note::
-
-      Additional quotas added in the Mitaka release include ``security_group``,
-      ``security_group_rule``, ``subnet``, and ``subnetpool``.
-
    .. code-block:: console
 
-      $ neutron quota-show --tenant_id 6f88036c45344d9999a1f971e4882723
-      +---------------------+-------+
-      | Field               | Value |
-      +---------------------+-------+
-      | floatingip          | 50    |
-      | network             | 10    |
-      | port                | 50    |
-      | rbac_policy         | 10    |
-      | router              | 10    |
-      | security_group      | 10    |
-      | security_group_rule | 100   |
-      | subnet              | 10    |
-      | subnetpool          | -1    |
-      +---------------------+-------+
+      $ openstack quota show 6f88036c45344d9999a1f971e4882723
+      +----------------+-------+
+      | Resource       | Limit |
+      +----------------+-------+
+      | networks       |   100 |
+      | ports          |   500 |
+      | rbac_policies  |    10 |
+      | routers        |    20 |
+      | subnets        |   100 |
+      | subnet_pools   |    -1 |
+      | floating-ips   |    50 |
+      | secgroup-rules |   100 |
+      | secgroups      |    10 |
+      +----------------+-------+
 
    The following command shows the command output for a
    non-administrative user.
 
    .. code-block:: console
 
-      $ neutron quota-show
-      +---------------------+-------+
-      | Field               | Value |
-      +---------------------+-------+
-      | floatingip          | 50    |
-      | network             | 10    |
-      | port                | 50    |
-      | rbac_policy         | 10    |
-      | router              | 10    |
-      | security_group      | 10    |
-      | security_group_rule | 100   |
-      | subnet              | 10    |
-      | subnetpool          | -1    |
-      +---------------------+-------+
+      $ openstack quota show
+      +----------------+-------+
+      | Resource       | Limit |
+      +----------------+-------+
+      | networks       |   100 |
+      | ports          |   500 |
+      | rbac_policies  |    10 |
+      | routers        |    20 |
+      | subnets        |   100 |
+      | subnet_pools   |    -1 |
+      | floating-ips   |    50 |
+      | secgroup-rules |   100 |
+      | secgroups      |    10 |
+      +----------------+-------+
 
 #. Update quota values for a specified project.
 
-   Use the :command:`neutron quota-update` command to
+   Use the :command:`openstack quota set` command to
    update a quota for a specified project.
 
    .. code-block:: console
 
-      $ neutron quota-update --tenant_id 6f88036c45344d9999a1f971e4882723 --network 5
-      +---------------------+-------+
-      | Field               | Value |
-      +---------------------+-------+
-      | floatingip          | 50    |
-      | network             | 5     |
-      | port                | 50    |
-      | rbac_policy         | 10    |
-      | router              | 10    |
-      | security_group      | 10    |
-      | security_group_rule | 100   |
-      | subnet              | 10    |
-      | subnetpool          | -1    |
-      +---------------------+-------+
+      $ openstack quota set --routers 20 6f88036c45344d9999a1f971e4882723
 
    You can update quotas for multiple resources through one
    command.
 
    .. code-block:: console
 
-      $ neutron quota-update --tenant_id 6f88036c45344d9999a1f971e4882723 --subnet 5 --port 20
-      +---------------------+-------+
-      | Field               | Value |
-      +---------------------+-------+
-      | floatingip          | 50    |
-      | network             | 5     |
-      | port                | 20    |
-      | rbac_policy         | 10    |
-      | router              | 10    |
-      | security_group      | 10    |
-      | security_group_rule | 100   |
-      | subnet              | 5     |
-      | subnetpool          | -1    |
-      +---------------------+-------+
+      $ openstack quota set --subnets 50 --ports 100 6f88036c45344d9999a1f971e4882723
 
-   To update the limits for an L3 resource such as, router
-   or floating IP, you must define new values for the quotas
-   after the ``--`` directive.
-
-   This example updates the limit of the number of floating
-   IPs for the specified project.
+   You can update the limits of multiple resources through
+   one command:
 
    .. code-block:: console
 
-      $ neutron quota-update --tenant_id 6f88036c45344d9999a1f971e4882723 --floatingip 20
-      +---------------------+-------+
-      | Field               | Value |
-      +---------------------+-------+
-      | floatingip          | 20    |
-      | network             | 5     |
-      | port                | 20    |
-      | rbac_policy         | 10    |
-      | router              | 10    |
-      | security_group      | 10    |
-      | security_group_rule | 100   |
-      | subnet              | 5     |
-      | subnetpool          | -1    |
-      +---------------------+-------+
-
-   You can update the limits of multiple resources by
-   including L2 resources and L3 resource through one
-   command:
-
-   .. code-block:: console
-
-      $ neutron quota-update --tenant_id 6f88036c45344d9999a1f971e4882723 \
-        --network 3 --subnet 3 --port 3 --floatingip 3 --router 3
-      +---------------------+-------+
-      | Field               | Value |
-      +---------------------+-------+
-      | floatingip          | 3     |
-      | network             | 3     |
-      | port                | 3     |
-      | rbac_policy         | 10    |
-      | router              | 3     |
-      | security_group      | 10    |
-      | security_group_rule | 100   |
-      | subnet              | 3     |
-      | subnetpool          | -1    |
-      +---------------------+-------+
+      $ openstack quota set --networks 50 --subnets 50 --ports 100 \
+        --floating-ips 20 --routers 5 6f88036c45344d9999a1f971e4882723
 
 #. Delete per-project quota values.
 
    To clear per-project quota limits, use the
-   :command:`neutron quota-delete` command.
+   :command:`openstack quota delete` command.
 
    .. code-block:: console
 
-      $ neutron quota-delete --tenant_id 6f88036c45344d9999a1f971e4882723
-       Deleted quota: 6f88036c45344d9999a1f971e4882723
+      $ openstack quota delete 6f88036c45344d9999a1f971e4882723
 
    After you run this command, you can see that quota
    values for the project are reset to the default values.
 
    .. code-block:: console
 
-      $ openstack quota show 6f88036c45344d9999a1f971e4882723
-      +---------------------+-------+
-      | Field               | Value |
-      +---------------------+-------+
-      | floatingip          | 50    |
-      | network             | 10    |
-      | port                | 50    |
-      | rbac_policy         | 10    |
-      | router              | 10    |
-      | security_group      | 10    |
-      | security_group_rule | 100   |
-      | subnet              | 10    |
-      | subnetpool          | -1    |
-      +---------------------+-------+
+      $ openstack quota show --network 6f88036c45344d9999a1f971e4882723
+      +----------------+-------+
+      | Resource       | Limit |
+      +----------------+-------+
+      | networks       |   100 |
+      | ports          |   500 |
+      | rbac_policies  |    10 |
+      | routers        |    20 |
+      | subnets        |   100 |
+      | subnet_pools   |    -1 |
+      | floating-ips   |    50 |
+      | secgroup-rules |   100 |
+      | secgroups      |    10 |
+      +----------------+-------+
 
 .. note::
 
    Listing default quotas with the OpenStack command line client will
-   provide all quotas for networking and other services. Previously,
-   the :command:`neutron quota-show --tenant_id` would list only networking
-   quotas.
+   provide all quotas for networking and other services.
