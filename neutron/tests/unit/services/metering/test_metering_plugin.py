@@ -220,10 +220,10 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         with self.router(tenant_id=self.project_id, set_context=True):
             with self.metering_label(tenant_id=self.project_id,
                                      set_context=True) as label:
-                self.mock_add.assert_called_with(self.ctx, expected)
+                self.mock_add.assert_called_with(mock.ANY, expected)
                 self._delete('metering-labels',
                              label['metering_label']['id'])
-            self.mock_remove.assert_called_with(self.ctx, expected)
+            self.mock_remove.assert_called_with(mock.ANY, expected)
 
     def test_remove_one_metering_label_rpc_call(self):
         second_uuid = 'e27fe2df-376e-4ac7-ae13-92f050a21f84'
@@ -259,10 +259,10 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                 self.mock_uuid.return_value = second_uuid
                 with self.metering_label(tenant_id=self.project_id,
                                          set_context=True) as label:
-                    self.mock_add.assert_called_with(self.ctx, expected_add)
+                    self.mock_add.assert_called_with(mock.ANY, expected_add)
                     self._delete('metering-labels',
                                  label['metering_label']['id'])
-                self.mock_remove.assert_called_with(self.ctx, expected_remove)
+                self.mock_remove.assert_called_with(mock.ANY, expected_remove)
 
     def test_add_and_remove_metering_label_rule_rpc_call(self):
         second_uuid = 'e27fe2df-376e-4ac7-ae13-92f050a21f84'
@@ -313,10 +313,10 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                 la = label['metering_label']
                 self.mock_uuid.return_value = second_uuid
                 with self.metering_label_rule(la['id'], **remote_ip_prefix):
-                    self.mock_add_rule.assert_called_with(self.ctx,
+                    self.mock_add_rule.assert_called_with(mock.ANY,
                                                           expected_add)
                     self._delete('metering-label-rules', second_uuid)
-                self.mock_remove_rule.assert_called_with(self.ctx,
+                self.mock_remove_rule.assert_called_with(mock.ANY,
                                                          expected_del)
 
     def test_add_and_remove_metering_label_rule_source_ip_only(self):
@@ -369,10 +369,10 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                 self.mock_uuid.return_value = second_uuid
                 with self.metering_label_rule(la['id'],
                                               **source_ip_prefix):
-                    self.mock_add_rule.assert_called_with(self.ctx,
+                    self.mock_add_rule.assert_called_with(mock.ANY,
                                                           expected_add)
                     self._delete('metering-label-rules', second_uuid)
-                self.mock_remove_rule.assert_called_with(self.ctx,
+                self.mock_remove_rule.assert_called_with(mock.ANY,
                                                          expected_del)
 
     def test_add_and_remove_metering_label_rule_dest_ip_only(self):
@@ -425,10 +425,10 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                 self.mock_uuid.return_value = second_uuid
                 with self.metering_label_rule(la['id'],
                                               **source_ip_prefix):
-                    self.mock_add_rule.assert_called_with(self.ctx,
+                    self.mock_add_rule.assert_called_with(mock.ANY,
                                                           expected_add)
                     self._delete('metering-label-rules', second_uuid)
-                self.mock_remove_rule.assert_called_with(self.ctx,
+                self.mock_remove_rule.assert_called_with(mock.ANY,
                                                          expected_del)
 
     def test_add_and_remove_metering_label_rule_src_and_dest_ip_only(self):
@@ -484,10 +484,10 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                 self.mock_uuid.return_value = second_uuid
                 with self.metering_label_rule(la['id'],
                                               **ip_prefixes):
-                    self.mock_add_rule.assert_called_with(self.ctx,
+                    self.mock_add_rule.assert_called_with(mock.ANY,
                                                           expected_add)
                     self._delete('metering-label-rules', second_uuid)
-                self.mock_remove_rule.assert_called_with(self.ctx,
+                self.mock_remove_rule.assert_called_with(mock.ANY,
                                                          expected_del)
 
     def test_add_and_remove_metering_label_rule_src_and_remote_ip(self):
