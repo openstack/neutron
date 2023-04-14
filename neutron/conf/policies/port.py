@@ -276,6 +276,7 @@ rules = [
         check_str=neutron_policy.policy_or(
             base.ADMIN,
             neutron_policy.RULE_ADVSVC,
+            base.RULE_NET_OWNER,
             base.PROJECT_READER
         ),
         scope_types=['project'],
