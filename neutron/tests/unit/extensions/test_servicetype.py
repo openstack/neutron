@@ -25,6 +25,7 @@ import webob.exc as webexc
 import webtest
 
 from neutron.api import extensions
+from neutron.common import config
 from neutron.db import servicetype_db as st_db
 from neutron.extensions import servicetype
 from neutron.objects import servicetype as servicetype_obj
@@ -48,6 +49,7 @@ class ServiceTypeManagerTestCase(testlib_api.SqlTestCase):
             provconf.NeutronModule, 'service_providers').start()
         super(ServiceTypeManagerTestCase, self).setUp()
         self.ctx = context.get_admin_context()
+        config.register_common_config_options()
         self.setup_coreplugin(PLUGIN_NAME)
 
     def _set_override(self, service_providers):
@@ -192,6 +194,7 @@ class ServiceTypeExtensionTestCaseBase(testlib_api.WebTestCase):
     def setUp(self):
         # This is needed because otherwise a failure will occur due to
         # nonexisting core_plugin
+        config.register_common_config_options()
         self.setup_coreplugin(test_db_base_plugin_v2.DB_PLUGIN_KLASS)
 
         cfg.CONF.set_override('service_plugins',
