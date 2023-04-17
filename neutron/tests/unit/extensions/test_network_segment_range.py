@@ -19,6 +19,7 @@ from neutron_lib import context
 from oslo_config import cfg
 import webob.exc
 
+from neutron.common import config
 from neutron.db import db_base_plugin_v2
 from neutron.db import segments_db
 from neutron.extensions import network_segment_range as ext_range
@@ -112,6 +113,7 @@ class NetworkSegmentRangeTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 class TestNetworkSegmentRange(NetworkSegmentRangeTestBase):
 
     def setUp(self, plugin=None):
+        config.register_common_config_options()
         if not plugin:
             plugin = TEST_PLUGIN_KLASS
         service_plugins = {'network_segment_range_plugin_name':
