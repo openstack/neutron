@@ -139,11 +139,6 @@ Currently we have in that queue jobs like listed below.
     |                                              |(only tests related to            |       |                  |             |                 |          |       |        |            |             |
     |                                              |Neutron and Nova)                 |       |                  |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-tempest-with-uwsgi-loki               |tempest.api (without slow tests)  |   1   | Ubuntu Jammy     | openvswitch | openvswitch     | legacy   | False | False  | True       | No          |
-    |(non-voting)                                  |tempest.scenario                  |       |                  |             |                 |          |       |        |            |             |
-    |                                              |(only tests related to            |       |                  |             |                 |          |       |        |            |             |
-    |                                              |Neutron and Nova)                 |       |                  |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-ovn-tempest-ipv6-only-ovs-master      |tempest.api (without slow tests)  |   1   | Ubuntu Jammy     | ovn         | ovn             | ---      | False | False  | True       | Yes         |
     |                                              |(only tests related to            |       |                  |             |                 |          |       |        |            |             |
     |                                              |Neutron and Nova)                 |       |                  |             |                 |          |       |        |            |             |

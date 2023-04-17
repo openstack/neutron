@@ -420,7 +420,9 @@
     timeout: 10800
     vars:
       devstack_localrc:
-        NEUTRON_DEPLOY_MOD_WSGI: true
+        # TODO(ykarel) can be enabled once
+        # https://bugs.launchpad.net/neutron/+bug/1912359 fixed
+        NEUTRON_DEPLOY_MOD_WSGI: false
         MYSQL_REDUCE_MEMORY: true
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
@@ -468,7 +470,7 @@
 
 - job:
     name: neutron-ovn-tempest-with-uwsgi-loki
-    parent: neutron-tempest-with-uwsgi
+    parent: neutron-ovn-tempest-with-uwsgi
     timeout: 10800
     vars:
       devstack_services:
