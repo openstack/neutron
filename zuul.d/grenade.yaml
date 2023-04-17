@@ -293,6 +293,8 @@
       zuul_copy_output:
         '{{ devstack_base_dir }}/data/ovs': 'logs'
         '{{ devstack_base_dir }}/data/ovn': 'logs'
+        '/opt/stack/old/logs': 'logs'
+        '/opt/stack/new/logs': 'logs'
       extensions_to_txt:
         db: true
       devstack_services:
