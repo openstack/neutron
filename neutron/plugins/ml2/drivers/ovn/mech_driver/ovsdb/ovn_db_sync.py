@@ -991,6 +991,10 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                 except RuntimeError:
                     LOG.warning("Create network in OVN NB failed for "
                                 "network %s", network['id'])
+                except n_exc.IpAddressGenerationFailure:
+                    LOG.warning("No more IP addresses available during "
+                                "implicit port creation while creating "
+                                "network %s", network['id'])
 
         self._sync_metadata_ports(ctx, db_ports)
 
