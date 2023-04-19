@@ -27,6 +27,7 @@ from oslo_config import cfg
 from oslo_utils import uuidutils
 import testtools
 
+from neutron.common import config
 from neutron.objects import ports as port_obj
 from neutron.plugins.ml2.extensions import dns_integration
 from neutron.services.externaldns.drivers.designate import driver
@@ -53,6 +54,7 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
     _domain = DNSDOMAIN
 
     def setUp(self):
+        config.register_common_config_options()
         cfg.CONF.set_override('extension_drivers',
                               self._extension_drivers,
                               group='ml2')

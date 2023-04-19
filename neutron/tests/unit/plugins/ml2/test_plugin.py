@@ -49,6 +49,7 @@ import webob
 
 from neutron._i18n import _
 from neutron.agent import rpc as agent_rpc
+from neutron.common import config
 from neutron.common import utils
 from neutron.db import agents_db
 from neutron.db import ipam_pluggable_backend
@@ -673,6 +674,7 @@ class TestMl2NetworksWithVlanTransparencyBase(TestMl2NetworksV2):
                         'vlan_transparent': 'True'}}
 
     def setUp(self, plugin=None):
+        config.register_common_config_options()
         cfg.CONF.set_override('vlan_transparent', True)
         super(TestMl2NetworksWithVlanTransparencyBase, self).setUp(plugin)
 
