@@ -43,7 +43,6 @@ from oslo_db import exception as os_db_exc
 from oslo_log import log as logging
 from oslo_utils import excutils
 from oslo_utils import uuidutils
-from sqlalchemy import and_
 from sqlalchemy import exc as sql_exc
 from sqlalchemy import func
 from sqlalchemy import not_
@@ -125,8 +124,10 @@ def _port_query_hook(context, original_model, query):
 def _port_filter_hook(context, original_model, conditions):
     # Apply the port filter only in non-admin and non-advsvc context
     if ndb_utils.model_query_scope_is_project(context, original_model):
-        conditions |= and_(
-            models_v2.Network.project_id == context.project_id)
+        conditions |= (models_v2.Port.network_id.in_(
+            context.session.query(models_v2.Network.id).
+            filter(context.project_id == models_v2.Network.project_id).
+            subquery()))
     return conditions
 
 
@@ -1702,7 +1703,6 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             query = query.filter(IPAllocation.subnet_id.in_(subnet_ids))
         if limit:
             query = query.limit(limit)
-        query = query.distinct()
         return query
 
     @db_api.retry_if_session_inactive()
