@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import signal
 
 from oslo_config import cfg
 
@@ -27,6 +26,7 @@ from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import helpers
 from neutron.tests.functional import base
 from neutron.tests.unit.agent.linux import test_keepalived
+from neutron_lib.exceptions import ProcessExecutionError
 
 
 class KeepalivedManagerTestCase(base.BaseSudoTestCase,
@@ -51,12 +51,17 @@ class KeepalivedManagerTestCase(base.BaseSudoTestCase,
         self.addCleanup(self._stop_keepalived_manager)
 
     def _stop_keepalived_manager(self):
-        self.manager.disable()
         try:
-            common_utils.wait_until_true(
-                lambda: not self.manager.get_process().active, timeout=5)
-        except common_utils.WaitTimeout:
-            self.manager.get_process().disable(sig=signal.SIGKILL)
+            self.manager.disable()
+        except ProcessExecutionError as process_err:
+            # self.manager.disable() will perform SIGTERM->wait->SIGKILL
+            # (if needed) on the process. However, it is sometimes possible
+            # that SIGKILL gets called on a process that just exited due to
+            # SIGTERM. Ignore this condition so the test is not marked as
+            # failed.
+            if not (len(process_err.args) > 0 and
+                    "No such process" in process_err.args[0]):
+                raise
 
     def _prepare_devices(self):
         # NOTE(slaweq): those are devices used in keepalived config file,
