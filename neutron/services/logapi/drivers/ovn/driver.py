@@ -90,52 +90,12 @@ class OVNDriver(base.DriverBase):
         return [self._log_dict_to_obj(lo) for lo in log_objs]
 
     @property
+    def _ovn_client(self):
+        return self.plugin_driver._ovn_client
+
+    @property
     def ovn_nb(self):
         return self.plugin_driver.nb_ovn
-
-    def _create_ovn_fair_meter(self, ovn_txn):
-        """Create row in Meter table with fair attribute set to True.
-
-        Create a row in OVN's NB Meter table based on well-known name. This
-        method uses the network_log configuration to specify the attributes
-        of the meter. Current implementation needs only one 'fair' meter row
-        which is then referred by multiple ACL rows.
-
-        :param ovn_txn: ovn northbound idl transaction.
-
-        """
-        meter = self.ovn_nb.db_find_rows(
-            "Meter", ("name", "=", self.meter_name)).execute(check_error=True)
-        if meter:
-            meter = meter[0]
-            try:
-                meter_band = self.ovn_nb.lookup("Meter_Band",
-                                                meter.bands[0].uuid)
-                if all((meter.unit == "pktps",
-                        meter.fair[0],
-                        meter_band.rate == cfg.CONF.network_log.rate_limit,
-                        meter_band.burst_size ==
-                        cfg.CONF.network_log.burst_limit)):
-                    # Meter (and its meter-band) unchanged: noop.
-                    return
-            except idlutils.RowNotFound:
-                pass
-            # Re-create meter (and its meter-band) with the new attributes.
-            # This is supposed to happen only if configuration changed, so
-            # doing updates is an overkill: better to leverage the ovsdbapp
-            # library to avoid the complexity.
-            ovn_txn.add(self.ovn_nb.meter_del(meter.uuid))
-        # Create meter
-        LOG.info("Creating network log fair meter %s", self.meter_name)
-        ovn_txn.add(self.ovn_nb.meter_add(
-            name=self.meter_name,
-            unit="pktps",
-            rate=cfg.CONF.network_log.rate_limit,
-            fair=True,
-            burst_size=cfg.CONF.network_log.burst_limit,
-            may_exist=False,
-            external_ids={ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY:
-                          log_const.LOGGING_PLUGIN}))
 
     @staticmethod
     def _acl_actions_enabled(log_obj):
@@ -303,7 +263,8 @@ class OVNDriver(base.DriverBase):
         pgs = self._pgs_from_log_obj(context, log_obj)
         actions_enabled = self._acl_actions_enabled(log_obj)
         with self.ovn_nb.transaction(check_error=True) as ovn_txn:
-            self._create_ovn_fair_meter(ovn_txn)
+            self._ovn_client.create_ovn_fair_meter(self.meter_name,
+                                                   txn=ovn_txn)
             self._set_acls_log(pgs, ovn_txn, actions_enabled,
                                utils.ovn_name(log_obj.id))
 
