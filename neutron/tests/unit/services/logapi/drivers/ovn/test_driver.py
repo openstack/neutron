@@ -29,7 +29,7 @@ FAKE_CFG_RATE = 123
 FAKE_CFG_BURST = 321
 
 
-class TestOVNDriver(base.BaseTestCase):
+class TestOVNDriverBase(base.BaseTestCase):
 
     def setUp(self):
         super().setUp()
@@ -91,6 +91,8 @@ class TestOVNDriver(base.BaseTestCase):
         meter_band_obj_dict = {**meter_band_defaults_dict, **kwargs}
         return mock.Mock(**meter_band_obj_dict)
 
+
+class TestOVNDriver(TestOVNDriverBase):
     def test_create(self):
         driver = self._log_driver
         self.assertEqual(self.log_plugin, driver._log_plugin)
@@ -105,62 +107,6 @@ class TestOVNDriver(base.BaseTestCase):
         self.fake_cfg_network_log.local_output_log_base = test_log_base
         driver2 = self._log_driver_reinit()
         self.assertEqual(test_log_base, driver2.meter_name)
-
-    def test__create_ovn_fair_meter(self):
-        mock_find_rows = mock.Mock()
-        mock_find_rows.execute.return_value = None
-        self._nb_ovn.db_find_rows.return_value = mock_find_rows
-        self._log_driver._create_ovn_fair_meter(self._nb_ovn.transaction)
-        self.assertFalse(self._nb_ovn.meter_del.called)
-        self.assertTrue(self._nb_ovn.meter_add.called)
-        self.assertFalse(
-            self._nb_ovn.transaction.return_value.__enter__.called)
-        self._nb_ovn.meter_add.assert_called_once_with(
-            name="acl_log_meter",
-            unit="pktps",
-            rate=FAKE_CFG_RATE,
-            fair=True,
-            burst_size=FAKE_CFG_BURST,
-            may_exist=False,
-            external_ids={ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY:
-                          log_const.LOGGING_PLUGIN})
-
-    def test__create_ovn_fair_meter_unchanged(self):
-        mock_find_rows = mock.Mock()
-        mock_find_rows.execute.return_value = [self._fake_meter()]
-        self._nb_ovn.db_find_rows.return_value = mock_find_rows
-        self._nb_ovn.lookup.side_effect = lambda table, key: (
-            self._fake_meter_band() if key == "test_band" else None)
-        self._log_driver._create_ovn_fair_meter(self._nb_ovn.transaction)
-        self.assertFalse(self._nb_ovn.meter_del.called)
-        self.assertFalse(self._nb_ovn.meter_add.called)
-
-    def test__create_ovn_fair_meter_changed(self):
-        mock_find_rows = mock.Mock()
-        mock_find_rows.execute.return_value = [self._fake_meter(fair=[False])]
-        self._nb_ovn.db_find_rows.return_value = mock_find_rows
-        self._nb_ovn.lookup.return_value = self._fake_meter_band()
-        self._log_driver._create_ovn_fair_meter(self._nb_ovn.transaction)
-        self.assertTrue(self._nb_ovn.meter_del.called)
-        self.assertTrue(self._nb_ovn.meter_add.called)
-
-    def test__create_ovn_fair_meter_band_changed(self):
-        mock_find_rows = mock.Mock()
-        mock_find_rows.execute.return_value = [self._fake_meter()]
-        self._nb_ovn.db_find_rows.return_value = mock_find_rows
-        self._nb_ovn.lookup.return_value = self._fake_meter_band(rate=666)
-        self._log_driver._create_ovn_fair_meter(self._nb_ovn.transaction)
-        self.assertTrue(self._nb_ovn.meter_del.called)
-        self.assertTrue(self._nb_ovn.meter_add.called)
-
-    def test__create_ovn_fair_meter_band_missing(self):
-        mock_find_rows = mock.Mock()
-        mock_find_rows.execute.return_value = [self._fake_meter()]
-        self._nb_ovn.db_find_rows.return_value = mock_find_rows
-        self._nb_ovn.lookup.side_effect = idlutils.RowNotFound
-        self._log_driver._create_ovn_fair_meter(self._nb_ovn.transaction)
-        self.assertTrue(self._nb_ovn.meter_del.called)
-        self.assertTrue(self._nb_ovn.meter_add.called)
 
     class _fake_acl():
         def __init__(self, name=None, **acl_dict):
