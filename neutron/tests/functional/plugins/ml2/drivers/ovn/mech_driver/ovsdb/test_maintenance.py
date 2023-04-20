@@ -30,8 +30,14 @@ from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as ovn_config
 from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import maintenance
 from neutron.tests.functional import base
+from neutron.tests.functional.services.logapi.drivers.ovn \
+    import test_driver as test_log_driver
+
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.extensions import test_extraroute
+
+CFG_NEW_BURST = 50
+CFG_NEW_RATE = 150
 
 
 class _TestMaintenanceHelper(base.TestOVNFunctionalBase):
@@ -943,3 +949,37 @@ class TestMaintenance(_TestMaintenanceHelper):
 
             # Assert load balancer for port forwarding is gone
             self.assertFalse(self._find_pf_lb(router_id, fip_id))
+
+
+class TestLogMaintenance(_TestMaintenanceHelper,
+                         test_log_driver.LogApiTestCaseBase):
+    def test_check_for_logging_conf_change(self):
+        # Check logging is supported
+        if not self.log_driver.network_logging_supported(self.nb_api):
+            self.skipTest("The current OVN version does not offer support "
+                          "for neutron network log functionality.")
+            self.assertIsNotNone(self.log_plugin)
+        # Check no meter exists
+        self.assertFalse(self.nb_api._tables['Meter'].rows.values())
+        # Add a log object
+        self.log_plugin.create_log(self.context, self._log_data())
+        # Check a meter and fair meter exist
+        self.assertTrue(self.nb_api._tables['Meter'].rows)
+        self.assertTrue(self.nb_api._tables['Meter_Band'].rows)
+        self.assertEqual(cfg.CONF.network_log.burst_limit,
+            [*self.nb_api._tables['Meter_Band'].rows.values()][0].burst_size)
+        self.assertEqual(cfg.CONF.network_log.rate_limit,
+            [*self.nb_api._tables['Meter_Band'].rows.values()][0].rate)
+        # Update burst and rate limit values on the configuration
+        ovn_config.cfg.CONF.set_override('burst_limit', CFG_NEW_BURST,
+                                         group='network_log')
+        ovn_config.cfg.CONF.set_override('rate_limit', CFG_NEW_RATE,
+                                         group='network_log')
+        # Call the maintenance task
+        self.assertRaises(periodics.NeverAgain,
+                          self.maint.check_fair_meter_consistency)
+        # Check meter band was effectively changed after the maintenance call
+        self.assertEqual(CFG_NEW_BURST,
+            [*self.nb_api._tables['Meter_Band'].rows.values()][0].burst_size)
+        self.assertEqual(CFG_NEW_RATE,
+            [*self.nb_api._tables['Meter_Band'].rows.values()][0].rate)
