@@ -528,6 +528,7 @@
     # TODO(slaweq): propose job with ovs-release and move -master one to
     # experimental queue
     name: neutron-ovn-tempest-full-multinode-ovs-master
+    branches: ^master$
     parent: neutron-ovn-multinode-base
     run: playbooks/multinode-devstack-custom.yaml
     vars:

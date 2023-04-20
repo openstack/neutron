@@ -117,12 +117,14 @@
 
 - job:
     name: neutron-fullstack-with-uwsgi-with-neutron-lib-master
+    branches: ^master$
     parent: neutron-fullstack-with-uwsgi
     required-projects:
       - openstack/neutron-lib
 
 - job:
     name: neutron-fullstack-with-pyroute2-master
+    branches: ^master$
     parent: neutron-fullstack
     required-projects:
       - name: github.com/svinota/pyroute2
@@ -142,6 +144,7 @@
 
 - job:
     name: neutron-functional-with-uwsgi-with-neutron-lib-master
+    branches: ^master$
     parent: neutron-functional-with-uwsgi
     required-projects:
       - openstack/neutron-lib
@@ -166,12 +169,14 @@
 
 - job:
     name: neutron-functional-with-pyroute2-master
+    branches: ^master$
     parent: neutron-functional
     required-projects:
       - name: github.com/svinota/pyroute2
 
 - job:
     name: neutron-functional-with-oslo-master
+    branches: ^master$
     parent: neutron-functional
     description: |
       This job installs all oslo libraries from source and executes the
@@ -212,6 +217,7 @@
 
 - job:
     name: neutron-functional-with-sqlalchemy-master
+    branches: ^master$
     parent: neutron-functional
     required-projects:
       - name: github.com/sqlalchemy/sqlalchemy

@@ -295,6 +295,7 @@
 
 - job:
     name: neutron-ovs-tempest-with-os-ken-master
+    branches: ^master$
     parent: neutron-ovs-tempest-base
     timeout: 10800
     required-projects:
@@ -343,6 +344,7 @@
 
 - job:
     name: neutron-ovn-tempest-with-neutron-lib-master
+    branches: ^master$
     parent: tempest-integrated-networking
     timeout: 10800
     required-projects:
@@ -373,12 +375,14 @@
 
 - job:
     name: neutron-ovs-tempest-with-neutron-lib-master
+    branches: ^master$
     parent: neutron-ovs-tempest-base
     required-projects:
       - openstack/neutron-lib
 
 - job:
     name: neutron-ovs-tempest-with-oslo-master
+    branches: ^master$
     parent: neutron-ovs-tempest-base
     description: |
       Job testing for devstack/tempest testing Neutron with OVS driver.
@@ -622,6 +626,7 @@
 
 - job:
     name: neutron-ovn-tempest-ovs-master
+    branches: ^master$
     description: Job testing for devstack/tempest testing Neutron with ovn driver and OVN master branch
     parent: neutron-ovn-base
     vars:
@@ -634,6 +639,7 @@
 
 - job:
     name: neutron-ovn-tempest-ovs-release-with-oslo-master
+    branches: ^master$
     description: |
       Job testing for devstack/tempest testing Neutron with OVN driver.
       This job installs all oslo libraries from source.
@@ -768,6 +774,7 @@
 
 - job:
     name: neutron-ovn-tempest-ipv6-only-ovs-master
+    branches: ^master$
     parent: neutron-ovn-tempest-ipv6-only-base
     vars:
       devstack_localrc:
@@ -779,6 +786,7 @@
 
 - job:
     name: neutron-ovn-tempest-with-sqlalchemy-master
+    branches: ^master$
     parent: tempest-integrated-networking
     timeout: 10800
     required-projects:
@@ -814,6 +822,7 @@
 
 - job:
     name: neutron-ovs-tempest-with-sqlalchemy-master
+    branches: ^master$
     parent: neutron-ovs-tempest-base
     required-projects:
       - name: github.com/sqlalchemy/sqlalchemy
