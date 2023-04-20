@@ -4176,19 +4176,13 @@ class TestOVNMechanismDriverMetadataPort(MechDriverSetupBase,
             'subnet': {}, 'ports': {}}
         with self.network(set_context=True, tenant_id='test') as net1:
             with self.subnet(network=net1, cidr='10.0.0.0/24') as subnet1:
-                # Create a network:dhcp owner port just as how Neutron DHCP
-                # agent would do.
-                with self.port(subnet=subnet1,
-                               device_owner=const.DEVICE_OWNER_DISTRIBUTED,
-                               device_id='dhcpxxxx',
-                               set_context=True, tenant_id='test'):
-                    with self.subnet(network=net1,
-                                     cidr='20.0.0.0/24') as subnet2:
-                        self.assertEqual(
-                            2, self.nb_ovn.set_lswitch_port.call_count)
-                        args, kwargs = self.nb_ovn.set_lswitch_port.call_args
-                        self.assertEqual(ovn_const.LSP_TYPE_LOCALPORT,
-                                         kwargs['type'])
+                with self.subnet(network=net1,
+                                 cidr='20.0.0.0/24') as subnet2:
+                    self.assertEqual(
+                        2, self.nb_ovn.set_lswitch_port.call_count)
+                    args, kwargs = self.nb_ovn.set_lswitch_port.call_args
+                    self.assertEqual(ovn_const.LSP_TYPE_LOCALPORT,
+                                     kwargs['type'])
         port_ips = kwargs['external_ids'].get(
             ovn_const.OVN_CIDRS_EXT_ID_KEY, '').split()
         port_cidrs = [str(netaddr.IPNetwork(cidr).cidr) for cidr in port_ips]
