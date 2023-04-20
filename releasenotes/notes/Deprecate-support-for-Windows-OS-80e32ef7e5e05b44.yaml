@@ -1,0 +1,5 @@
+---
+deprecations:
+  - |
+    Support for Neutron on Windows operating systems is deprecated since 2023.2
+    release and will be removed in 2024.2.
