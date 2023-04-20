@@ -31,6 +31,7 @@ from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.plugins import utils as p_utils
+from neutron_lib.services.logapi import constants as log_const
 from neutron_lib.utils import helpers
 from neutron_lib.utils import net as n_net
 from oslo_config import cfg
@@ -2587,3 +2588,54 @@ class OVNClient(object):
             if ls_dns_record.records.get(ptr_record):
                 txn.add(self._nb_idl.dns_remove_record(
                         ls_dns_record.uuid, ptr_record, if_exists=True))
+
+    def create_ovn_fair_meter(self, meter_name, from_reload=False, txn=None):
+        """Create row in Meter table with fair attribute set to True.
+
+        Create a row in OVN's NB Meter table based on well-known name. This
+        method uses the network_log configuration to specify the attributes
+        of the meter. Current implementation needs only one 'fair' meter row
+        which is then referred by multiple ACL rows.
+
+        :param meter_name: ovn northbound meter name.
+        :param from_reload: whether we update the meter values or create them.
+        :txn: ovn northbound idl transaction.
+
+        """
+        meter = self._nb_idl.db_find_rows(
+            "Meter", ("name", "=", meter_name)).execute(check_error=True)
+        # The meter is created when a log object is created, not by default.
+        # This condition avoids creating the meter if it wasn't there already
+        commands = []
+        if from_reload and not meter:
+            return
+        if meter:
+            meter = meter[0]
+            meter_band = self._nb_idl.lookup("Meter_Band",
+                                             meter.bands[0].uuid, default=None)
+            if meter_band:
+                if all((meter.unit == "pktps",
+                        meter.fair[0],
+                        meter_band.rate == cfg.CONF.network_log.rate_limit,
+                        meter_band.burst_size ==
+                        cfg.CONF.network_log.burst_limit)):
+                    # Meter (and its meter-band) unchanged: noop.
+                    return
+            # Re-create meter (and its meter-band) with the new attributes.
+            # This is supposed to happen only if configuration changed, so
+            # doing updates is an overkill: better to leverage the ovsdbapp
+            # library to avoid the complexity.
+            LOG.info("Deleting outdated log fair meter %s", meter_name)
+            commands.append(self._nb_idl.meter_del(meter.uuid))
+        # Create meter
+        LOG.info("Creating network log fair meter %s", meter_name)
+        commands.append(self._nb_idl.meter_add(
+                        name=meter_name,
+                        unit="pktps",
+                        rate=cfg.CONF.network_log.rate_limit,
+                        fair=True,
+                        burst_size=cfg.CONF.network_log.burst_limit,
+                        may_exist=False,
+                        external_ids={ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY:
+                                      log_const.LOGGING_PLUGIN}))
+        self._transaction(commands, txn=txn)

@@ -42,6 +42,7 @@ from neutron.db import ovn_revision_numbers_db as revision_numbers_db
 from neutron.db import segments_db
 from neutron.objects import router as router_obj
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
+from neutron.services.logapi.drivers.ovn import driver as log_driver
 
 
 CONF = cfg.CONF
@@ -955,6 +956,24 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                 l3_attrs_db.ExtraAttributesMixin.add_extra_attr(context,
                                                                 router_db)
 
+        raise periodics.NeverAgain()
+
+    @periodics.periodic(spacing=600, run_immediately=True)
+    def check_fair_meter_consistency(self):
+        """Update the logging meter after neutron-server reload
+
+        When we change the rate and burst limit we need to update the fair
+        meter band to apply the new values. This is called from the ML2/OVN
+        driver after the OVN NB idl is loaded
+
+        """
+        if not self.has_lock:
+            return
+        if log_driver.OVNDriver.network_logging_supported(self._nb_idl):
+            meter_name = (
+                cfg.CONF.network_log.local_output_log_base or "acl_log_meter")
+            self._ovn_client.create_ovn_fair_meter(meter_name,
+                                                   from_reload=True)
         raise periodics.NeverAgain()
 
 

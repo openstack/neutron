@@ -90,6 +90,10 @@ class OVNDriver(base.DriverBase):
         return [self._log_dict_to_obj(lo) for lo in log_objs]
 
     @property
+    def _ovn_client(self):
+        return self.plugin_driver._ovn_client
+
+    @property
     def ovn_nb(self):
         return self.plugin_driver.nb_ovn
 
@@ -303,7 +307,8 @@ class OVNDriver(base.DriverBase):
         pgs = self._pgs_from_log_obj(context, log_obj)
         actions_enabled = self._acl_actions_enabled(log_obj)
         with self.ovn_nb.transaction(check_error=True) as ovn_txn:
-            self._create_ovn_fair_meter(ovn_txn)
+            self._ovn_client.create_ovn_fair_meter(self.meter_name,
+                                                   txn=ovn_txn)
             self._set_acls_log(pgs, ovn_txn, actions_enabled,
                                utils.ovn_name(log_obj.id))
 
