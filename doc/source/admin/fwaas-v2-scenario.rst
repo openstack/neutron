@@ -5,6 +5,37 @@ Firewall-as-a-Service (FWaaS) v2 scenario
 
    Firewall v2 has no support for OVN currently.
 
+Installation of FWaaS v2
+------------------------
+
+If possible, you should rely on packages provided by your Linux and/or
+OpenStack distribution:
+
+* For example for Ubuntu you can install the ``neutron-fwaas-common``
+  package provided by Canonical.
+
+.. warning::
+
+   Always check the version of the available package and check the releases
+   on https://releases.openstack.org/
+
+If you use ``pip``, follow these steps to install neutron-fwaas:
+
+* `identify the version of the neutron-fwaas package
+  <https://opendev.org/openstack/releases/src/branch/master/deliverables>`_
+  that matches your OpenStack version:
+
+  * 2023.1 Antelope: latest 18.0.x version
+  * Zed: latest 17.0.x version
+
+* indicate pip to (a) install precisely this version and (b) take into
+  account OpenStack upper constraints on package versions for dependencies
+  (example for Antelope):
+
+  .. code-block:: console
+
+     pip install -c https://opendev.org/openstack/requirements/raw/branch/stable/2023.1/upper-constraints.txt neutron-fwaas==18.0.0
+
 Enable FWaaS v2
 ---------------
 
