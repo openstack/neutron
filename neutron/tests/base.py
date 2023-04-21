@@ -553,6 +553,7 @@ class PluginFixture(fixtures.Fixture):
         self.core_plugin = core_plugin
 
     def _setUp(self):
+        config.register_common_config_options()
         # Do not load default service plugins in the testing framework
         # as all the mocking involved can cause havoc.
         self.default_svc_plugins_p = mock.patch(
