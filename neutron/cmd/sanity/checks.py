@@ -49,11 +49,11 @@ DNSMASQ_VERSION_HOST_ADDR6_LIST = '2.81'
 DIRECT_PORT_QOS_MIN_OVS_VERSION = '2.11'
 MINIMUM_DIBBLER_VERSION = '1.0.1'
 CONNTRACK_GRE_MODULE = 'nf_conntrack_proto_gre'
-OVN_NB_DB_SCHEMA_GATEWAY_CHASSIS = '5.7'
-OVN_NB_DB_SCHEMA_PORT_GROUP = '5.11'
-OVN_NB_DB_SCHEMA_STATELESS_NAT = '5.17'
-OVN_SB_DB_SCHEMA_VIRTUAL_PORT = '2.5'
-OVN_LOCALNET_LEARN_FDB = '22.09'
+OVN_NB_DB_SCHEMA_GATEWAY_CHASSIS = '5.7.0'
+OVN_NB_DB_SCHEMA_PORT_GROUP = '5.11.0'
+OVN_NB_DB_SCHEMA_STATELESS_NAT = '5.17.0'
+OVN_SB_DB_SCHEMA_VIRTUAL_PORT = '2.5.0'
+OVN_LOCALNET_LEARN_FDB = '22.09.0'
 
 
 class OVNCheckType(enum.Enum):
@@ -64,6 +64,14 @@ class OVNCheckType(enum.Enum):
 
 
 def _get_ovn_version(check_type):
+    """Retrieves the OVN nbctl, sbctl, NS schema or SB schema version
+
+    :param check_type: ``OVNCheckType`` enum element. This method can return
+                       the nbctl version, the sbctl version, the NB schema
+                       version or the SB schema version.
+    :return: (tuple) 3 element tuple: (major, minor, revision). (0, 0, 0) by
+             default.
+    """
     if check_type in (OVNCheckType.nb_version, OVNCheckType.nb_db_schema):
         cmd = ['ovn-nbctl', '--version']
     elif check_type in (OVNCheckType.nb_version, OVNCheckType.nb_db_schema):
@@ -79,9 +87,9 @@ def _get_ovn_version(check_type):
     else:
         matched_line = re.search(r"DB Schema.*", out)
 
-    matched_version = re.search(r"(\d+\.\d+)", matched_line.group(0))
+    matched_version = re.search(r"(\d+\.\d+\.\d+)", matched_line.group(0))
     return versionutils.convert_version_to_tuple(matched_version.group(1) if
-                                                 matched_version else '0.0')
+                                                 matched_version else '0.0.0')
 
 
 def ovs_vxlan_supported(from_ip='192.0.2.1', to_ip='192.0.2.2'):
