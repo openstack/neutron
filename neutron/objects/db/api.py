@@ -30,19 +30,19 @@ def _get_filter_query(obj_cls, context, query_field=None, query_limit=None,
     return query
 
 
-@db_api.CONTEXT_READER
 def get_object(obj_cls, context, **kwargs):
-    return _get_filter_query(obj_cls, context, **kwargs).first()
+    with db_api.CONTEXT_READER.using(context):
+        return _get_filter_query(obj_cls, context, **kwargs).first()
 
 
-@db_api.CONTEXT_READER
 def count(obj_cls, context, query_field=None, query_limit=None, **kwargs):
-    if not query_field and obj_cls.primary_keys:
-        query_field = obj_cls.primary_keys[0]
-        if query_field in obj_cls.fields_need_translation:
-            query_field = obj_cls.fields_need_translation[query_field]
-    return _get_filter_query(obj_cls, context, query_field=query_field,
-                             query_limit=query_limit, **kwargs).count()
+    with db_api.CONTEXT_READER.using(context):
+        if not query_field and obj_cls.primary_keys:
+            query_field = obj_cls.primary_keys[0]
+            if query_field in obj_cls.fields_need_translation:
+                query_field = obj_cls.fields_need_translation[query_field]
+        return _get_filter_query(obj_cls, context, query_field=query_field,
+                                 query_limit=query_limit, **kwargs).count()
 
 
 def _kwargs_to_filters(**kwargs):
