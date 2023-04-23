@@ -13,6 +13,7 @@
 # TODO(ihrachys): cover the module with functional tests targeting supported
 # backends
 
+from neutron_lib.db import api as db_api
 from neutron_lib.db import model_query
 from neutron_lib import exceptions as n_exc
 from neutron_lib.objects import utils as obj_utils
@@ -31,16 +32,18 @@ def _get_filter_query(obj_cls, context, query_field=None, query_limit=None,
 
 
 def get_object(obj_cls, context, **kwargs):
-    return _get_filter_query(obj_cls, context, **kwargs).first()
+    with db_api.CONTEXT_READER.using(context):
+        return _get_filter_query(obj_cls, context, **kwargs).first()
 
 
 def count(obj_cls, context, query_field=None, query_limit=None, **kwargs):
-    if not query_field and obj_cls.primary_keys:
-        query_field = obj_cls.primary_keys[0]
-        if query_field in obj_cls.fields_need_translation:
-            query_field = obj_cls.fields_need_translation[query_field]
-    return _get_filter_query(obj_cls, context, query_field=query_field,
-                             query_limit=query_limit, **kwargs).count()
+    with db_api.CONTEXT_READER.using(context):
+        if not query_field and obj_cls.primary_keys:
+            query_field = obj_cls.primary_keys[0]
+            if query_field in obj_cls.fields_need_translation:
+                query_field = obj_cls.fields_need_translation[query_field]
+        return _get_filter_query(obj_cls, context, query_field=query_field,
+                                 query_limit=query_limit, **kwargs).count()
 
 
 def _kwargs_to_filters(**kwargs):
