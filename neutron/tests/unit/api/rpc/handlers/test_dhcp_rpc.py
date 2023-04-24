@@ -217,16 +217,19 @@ class TestDhcpRpcCallback(base.BaseTestCase):
                    'mtu': network.mtu}
             # Plugin segment is activated globally, the tests is asserting the
             # return.
-            ret['segments'] = [{'id': segment.id,
-                                'network_id': segment.network_id,
-                                'name': segment.name,
-                                'network_type': segment.network_type,
-                                'physical_network': segment.physical_network,
-                                'segmentation_id': segment.segmentation_id,
-                                'is_dynamic': segment.is_dynamic,
-                                'segment_index': segment.segment_index,
-                                'hosts': segment.hosts
-                                } for segment in network.segments]
+            if non_local_subnets:
+                ret['segments'] = [{
+                    'id': segment.id,
+                    'network_id': segment.network_id,
+                    'name': segment.name,
+                    'network_type': segment.network_type,
+                    'physical_network': segment.physical_network,
+                    'segmentation_id': segment.segmentation_id,
+                    'is_dynamic': segment.is_dynamic,
+                    'segment_index': segment.segment_index,
+                    'hosts': segment.hosts
+                } for segment in network.segments]
+
             return ret
 
         def _make_subnet_dict(subnet):

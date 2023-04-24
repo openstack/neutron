@@ -364,7 +364,6 @@ class TestDhcpAgent(base.BaseTestCase):
     def test_call_driver(self):
         network = mock.MagicMock()
         network.id = '1'
-        network.segments = None
         dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
         self.assertTrue(dhcp.call_driver('foo', network))
         self.driver.assert_called_once_with(cfg.CONF,
@@ -408,7 +407,6 @@ class TestDhcpAgent(base.BaseTestCase):
                                   trace_level='exception', expected_sync=True):
         network = mock.MagicMock()
         network.id = '1'
-        network.segments = None
         self.driver.return_value.foo.side_effect = exc or Exception
         dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
         with mock.patch.object(dhcp,
@@ -448,7 +446,6 @@ class TestDhcpAgent(base.BaseTestCase):
 
     def test_call_driver_get_metadata_bind_interface_returns(self):
         network = mock.MagicMock()
-        network.segments = None
         self.driver().get_metadata_bind_interface.return_value = 'iface0'
         agent = dhcp_agent.DhcpAgent(cfg.CONF)
         self.assertEqual(
