@@ -2,7 +2,7 @@
     name: neutron-tox-override-jobs
     check:
       jobs:
-        - openstack-tox-py39:  # from openstack-python3-jobs template
+        - openstack-tox-py38:  # from openstack-python3-jobs template
             timeout: 3600
             irrelevant-files:  &irrelevant-files
               - ^\.pylintrc$
@@ -37,7 +37,7 @@
             irrelevant-files:  *irrelevant-files
     check-arm64:
       jobs:
-        - openstack-tox-py39-arm64: # from openstack-python3-jobs-arm64 template
+        - openstack-tox-py38-arm64: # from openstack-python3-jobs-arm64 template
             timeout: 4800
             irrelevant-files:  *irrelevant-files
         - openstack-tox-py310-arm64: # from openstack-python3-jobs-arm64 template
@@ -45,7 +45,7 @@
             irrelevant-files:  *irrelevant-files
     gate:
       jobs:
-        - openstack-tox-py39:  # from openstack-python3-jobs template
+        - openstack-tox-py38:  # from openstack-python3-jobs template
             timeout: 3600
             irrelevant-files:  *irrelevant-files
         - openstack-tox-py310: # from openstack-python3-jobs template
