@@ -836,19 +836,8 @@ class DeleteLRouterExtGwCommand(command.BaseCommand):
             lrouter.delvalue('nat', nat)
             nat.delete()
 
-        lrouter_ext_ids = getattr(lrouter, 'external_ids', {})
-        gw_port_id = lrouter_ext_ids.get(ovn_const.OVN_GW_PORT_EXT_ID_KEY)
-        if not gw_port_id:
-            return
-
-        try:
-            lrouter_port = idlutils.row_by_value(
-                self.api.idl, 'Logical_Router_Port', 'name',
-                utils.ovn_lrouter_port_name(gw_port_id))
-        except idlutils.RowNotFound:
-            return
-
-        lrouter.delvalue('ports', lrouter_port)
+        for gw_port in self.api.get_lrouter_gw_ports(lrouter.name):
+            lrouter.delvalue('ports', gw_port)
 
 
 class SetLSwitchPortToVirtualTypeCommand(command.BaseCommand):

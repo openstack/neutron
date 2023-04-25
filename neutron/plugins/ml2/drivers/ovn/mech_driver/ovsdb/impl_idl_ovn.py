@@ -785,6 +785,22 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         result = lrp.execute(check_error=True)
         return result[0] if result else None
 
+    def get_lrouter_gw_ports(self, lrouter_name):
+        lr = self.get_lrouter(lrouter_name)
+        gw_ports = []
+        for lrp in getattr(lr, 'ports', []):
+            lrp_ext_ids = getattr(lrp, 'external_ids', {})
+            if (ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY not in lrp_ext_ids or
+                    utils.ovn_name(lrp_ext_ids[
+                        ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY]) != lr.name):
+                continue
+            lrp_ha_cfg = (getattr(lrp, 'gateway_chassis', None) or
+                          getattr(lrp, 'options', {}).get(
+                              ovn_const.OVN_GATEWAY_CHASSIS_KEY))
+            if lrp_ha_cfg:
+                gw_ports.append(lrp)
+        return gw_ports
+
     def delete_lrouter_ext_gw(self, lrouter_name, if_exists=True):
         return cmd.DeleteLRouterExtGwCommand(self, lrouter_name, if_exists)
 

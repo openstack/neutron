@@ -1214,6 +1214,7 @@ class TestDeleteLRouterExtGwCommand(TestBaseCommand):
         fake_lrouter = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'static_routes': [fake_route_1, fake_route_2],
                    'nat': []})
+        self.ovn_api.get_lrouter_gw_ports.return_value = []
         with mock.patch.object(self.ovn_api, "is_col_present",
                                return_value=True):
             with mock.patch.object(idlutils, 'row_by_value',
@@ -1234,6 +1235,7 @@ class TestDeleteLRouterExtGwCommand(TestBaseCommand):
         fake_lrouter = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'nat': [fake_nat_1, fake_nat_2],
                    'static_routes': []})
+        self.ovn_api.get_lrouter_gw_ports.return_value = []
         with mock.patch.object(self.ovn_api, "is_col_present",
                                return_value=True):
             with mock.patch.object(idlutils, 'row_by_value',
@@ -1246,10 +1248,11 @@ class TestDeleteLRouterExtGwCommand(TestBaseCommand):
 
     def test_delete_lrouter_extgw_ports(self):
         port_id = 'fake-port-id'
+        fake_lrp = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'gateway_chassis': ['fake_gwc']})
         fake_lrouter = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={'external_ids':
-                   {ovn_const.OVN_GW_PORT_EXT_ID_KEY: port_id},
-                   'static_routes': [], 'nat': []})
+            attrs={'ports': [fake_lrp], 'static_routes': [], 'nat': []})
+        self.ovn_api.get_lrouter_gw_ports.return_value = [fake_lrp]
         with mock.patch.object(self.ovn_api, "is_col_present",
                                return_value=True):
             with mock.patch.object(idlutils, 'row_by_value',
@@ -1258,22 +1261,21 @@ class TestDeleteLRouterExtGwCommand(TestBaseCommand):
                     self.ovn_api, fake_lrouter.name, False)
                 cmd.run_idl(self.transaction)
                 fake_lrouter.delvalue.assert_called_once_with(
-                    'ports', port_id)
+                    'ports', fake_lrp)
 
     def test_delete_lrouter_extgw_ports_not_found(self):
-        port_id = 'fake-port-id'
         fake_lrouter = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={'external_ids':
-                   {ovn_const.OVN_GW_PORT_EXT_ID_KEY: port_id},
-                   'static_routes': [], 'nat': []})
+            attrs={'static_routes': [], 'nat': []})
+        self.ovn_api.get_lrouter_gw_ports.return_value = []
         with mock.patch.object(self.ovn_api, "is_col_present",
                                return_value=True):
             with mock.patch.object(idlutils, 'row_by_value',
-                                   side_effect=[fake_lrouter,
-                                                idlutils.RowNotFound]):
+                                   side_effect=[fake_lrouter]):
                 cmd = commands.DeleteLRouterExtGwCommand(
                     self.ovn_api, fake_lrouter.name, False)
                 cmd.run_idl(self.transaction)
+                self.ovn_api.get_lrouter_gw_ports.assert_called_once_with(
+                    fake_lrouter.name)
                 fake_lrouter.delvalue.assert_not_called()
 
     def _test_delete_lrouter_no_lrouter_exist(self, if_exists=True):

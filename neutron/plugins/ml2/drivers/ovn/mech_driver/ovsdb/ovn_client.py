@@ -1371,8 +1371,6 @@ class OVNClient(object):
         return {
             ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
                 router.get('name', 'no_router_name'),
-            ovn_const.OVN_GW_PORT_EXT_ID_KEY:
-                router.get('gw_port_id') or '',
             ovn_const.OVN_REV_NUM_EXT_ID_KEY: str(utils.get_revision_number(
                 router, ovn_const.TYPE_ROUTERS)),
             ovn_const.OVN_AZ_HINTS_EXT_ID_KEY:
