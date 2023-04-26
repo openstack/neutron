@@ -1329,20 +1329,17 @@ class OVNClient(object):
             'device_owner': [const.DEVICE_OWNER_ROUTER_GW],
             'device_id': [router_id]})
 
-    def _get_router_ports(self, context, router_id, get_gw_port=False):
+    def _get_router_ports(self, context, router_id):
         # _get_router() will raise a RouterNotFound error if there's no router
         # with the router_id
         router_db = self._l3_plugin._get_router(context, router_id)
-        if get_gw_port:
-            return [p.port for p in router_db.attached_ports]
-        else:
-            # When the existing deployment is migrated to OVN
-            # we may need to consider other port types - DVR_INTERFACE/HA_INTF.
-            return [p.port for p in router_db.attached_ports
-                    if p.port_type in [const.DEVICE_OWNER_ROUTER_INTF,
-                                       const.DEVICE_OWNER_DVR_INTERFACE,
-                                       const.DEVICE_OWNER_HA_REPLICATED_INT,
-                                       const.DEVICE_OWNER_ROUTER_HA_INTF]]
+        # When the existing deployment is migrated to OVN
+        # we may need to consider other port types - DVR_INTERFACE/HA_INTF.
+        return [p.port for p in router_db.attached_ports
+                if p.port_type in [const.DEVICE_OWNER_ROUTER_INTF,
+                                   const.DEVICE_OWNER_DVR_INTERFACE,
+                                   const.DEVICE_OWNER_HA_REPLICATED_INT,
+                                   const.DEVICE_OWNER_ROUTER_HA_INTF]]
 
     def _get_v4_network_for_router_port(self, context, port):
         cidr = None
