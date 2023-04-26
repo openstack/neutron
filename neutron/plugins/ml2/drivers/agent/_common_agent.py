@@ -68,6 +68,7 @@ class CommonAgentLoop(service.Service):
         self.agent_type = agent_type
         self.agent_binary = agent_binary
         self.connection = None
+        self.iter_num = 0
 
     def _validate_manager_class(self):
         if not isinstance(self.mgr,
@@ -137,7 +138,10 @@ class CommonAgentLoop(service.Service):
                 self.fullsync = True
             # we only want to update resource versions on startup
             self.agent_state.pop('resource_versions', None)
-            self.agent_state.pop('start_flag', None)
+            if self.iter_num > 0:
+                # agent is considered started after initial sync with
+                # server (iter 0) is done
+                self.agent_state.pop('start_flag', None)
         except Exception:
             self.failed_report_state = True
             LOG.exception("Failed reporting state!")
@@ -449,6 +453,8 @@ class CommonAgentLoop(service.Service):
 
         while True:
             start = time.time()
+            LOG.info("%s Agent loop - iteration:%d started",
+                     self.agent_type, self.iter_num)
 
             if self.fullsync:
                 sync = True
@@ -480,6 +486,10 @@ class CommonAgentLoop(service.Service):
                           "(%(polling_interval)s vs. %(elapsed)s)!",
                           {'polling_interval': self.polling_interval,
                            'elapsed': elapsed})
+
+            LOG.info("%s Agent loop - iteration:%d completed",
+                     self.agent_type, self.iter_num)
+            self.iter_num = self.iter_num + 1
 
     def set_rpc_timeout(self, timeout):
         for rpc_api in (self.plugin_rpc, self.sg_plugin_rpc,
