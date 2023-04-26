@@ -33,7 +33,9 @@ AGENTS_SCHEDULER_OPTS = [
                       'network. If this number is greater than 1, the '
                       'scheduler automatically assigns multiple DHCP agents '
                       'for a given tenant network, providing high '
-                      'availability for the DHCP service.')),
+                      'availability for the DHCP service. However this does '
+                      'not provide high availability for the IPv6 metadata '
+                      'service in isolated networks.')),
     cfg.BoolOpt('enable_services_on_agents_with_admin_state_down',
                 default=False,
                 help=_('Enable services on an agent with admin_state_up '

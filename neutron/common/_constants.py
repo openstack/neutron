@@ -86,3 +86,6 @@ TRAIT_NETWORK_TUNNEL = 'CUSTOM_NETWORK_TUNNEL_PROVIDER'
 
 # The lowest binding index for L3 agents and DHCP agents.
 LOWEST_AGENT_BINDING_INDEX = 1
+
+# Neutron-lib defines this with a /64 but it should be /128
+METADATA_V6_CIDR = constants.METADATA_V6_IP + '/128'

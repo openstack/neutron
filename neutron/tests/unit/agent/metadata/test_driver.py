@@ -25,6 +25,7 @@ from oslo_utils import uuidutils
 from neutron.agent.l3 import agent as l3_agent
 from neutron.agent.l3 import router_info
 from neutron.agent.linux import external_process as ep
+from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import utils as linux_utils
 from neutron.agent.metadata import driver as metadata_driver
@@ -76,6 +77,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
     EUNAME = 'neutron'
     EGNAME = 'neutron'
     METADATA_DEFAULT_IP = '169.254.169.254'
+    METADATA_DEFAULT_IPV6 = 'fe80::a9fe:a9fe'
     METADATA_PORT = 8080
     METADATA_SOCKET = '/socket/path'
     PIDFILE = 'pidfile'
@@ -140,7 +142,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
             agent._process_updated_router(router)
             f.assert_not_called()
 
-    def test_spawn_metadata_proxy(self):
+    def _test_spawn_metadata_proxy(self, dad_failed=False):
         router_id = _uuid()
         router_ns = 'qrouter-%s' % router_id
         service_name = 'haproxy'
@@ -165,22 +167,32 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                            'NamespaceManager.list_all', return_value={}),\
                 mock.patch(
                     'neutron.agent.linux.ip_lib.'
-                    'IpAddrCommand.wait_until_address_ready') as mock_wait:
+                    'IpAddrCommand.wait_until_address_ready') as mock_wait,\
+                mock.patch(
+                    'neutron.agent.linux.ip_lib.'
+                    'delete_ip_address') as mock_del:
             agent = l3_agent.L3NATAgent('localhost')
+            agent.process_monitor = mock.Mock()
             cfg_file = os.path.join(
                 metadata_driver.HaproxyConfigurator.get_config_path(
                     agent.conf.state_path),
                 "%s.conf" % router_id)
             mock_open = self.useFixture(
                 lib_fixtures.OpenFixture(cfg_file)).mock_open
-            mock_wait.return_value = True
+            if dad_failed:
+                mock_wait.side_effect = ip_lib.DADFailed(
+                    address=self.METADATA_DEFAULT_IP, reason='DAD failed')
+            else:
+                mock_wait.return_value = True
             agent.metadata_driver.spawn_monitored_metadata_proxy(
                 agent.process_monitor,
                 router_ns,
                 self.METADATA_PORT,
                 agent.conf,
                 bind_address=self.METADATA_DEFAULT_IP,
-                router_id=router_id)
+                router_id=router_id,
+                bind_address_v6=self.METADATA_DEFAULT_IPV6,
+                bind_interface='fake-if')
 
             netns_execute_args = [
                 service_name,
@@ -188,6 +200,8 @@ class TestMetadataDriverProcess(base.BaseTestCase):
 
             log_tag = ("haproxy-" + metadata_driver.METADATA_SERVICE_NAME +
                        "-" + router_id)
+            bind_v6_line = 'bind %s:%s interface %s' % (
+                self.METADATA_DEFAULT_IPV6, self.METADATA_PORT, 'fake-if')
             cfg_contents = metadata_driver._HAPROXY_CONFIG_TEMPLATE % {
                 'user': self.EUNAME,
                 'group': self.EGNAME,
@@ -200,19 +214,35 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 'pidfile': self.PIDFILE,
                 'log_level': 'debug',
                 'log_tag': log_tag,
-                'bind_v6_line': ''}
+                'bind_v6_line': bind_v6_line}
 
-            mock_open.assert_has_calls([
-                mock.call(cfg_file, 'w'),
-                mock.call().write(cfg_contents)],
-                                       any_order=True)
+            if dad_failed:
+                agent.process_monitor.register.assert_not_called()
+                mock_del.assert_called_once_with(self.METADATA_DEFAULT_IPV6,
+                                                 'fake-if',
+                                                 namespace=router_ns)
+            else:
+                mock_open.assert_has_calls([
+                    mock.call(cfg_file, 'w'),
+                    mock.call().write(cfg_contents)], any_order=True)
 
-            env = {ep.PROCESS_TAG: service_name + '-' + router_id}
-            ip_mock.assert_has_calls([
-                mock.call(namespace=router_ns),
-                mock.call().netns.execute(netns_execute_args, addl_env=env,
-                                          run_as_root=True)
-            ])
+                env = {ep.PROCESS_TAG: service_name + '-' + router_id}
+                ip_mock.assert_has_calls([
+                    mock.call(namespace=router_ns),
+                    mock.call().netns.execute(netns_execute_args, addl_env=env,
+                                              run_as_root=True)
+                ])
+
+                agent.process_monitor.register.assert_called_once_with(
+                    router_id, metadata_driver.METADATA_SERVICE_NAME,
+                    mock.ANY)
+                mock_del.assert_not_called()
+
+    def test_spawn_metadata_proxy(self):
+        self._test_spawn_metadata_proxy()
+
+    def test_spawn_metadata_proxy_dad_failed(self):
+        self._test_spawn_metadata_proxy(dad_failed=True)
 
     def test_create_config_file_wrong_user(self):
         with mock.patch('pwd.getpwnam', side_effect=KeyError):
