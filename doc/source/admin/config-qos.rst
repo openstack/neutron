@@ -126,10 +126,11 @@ updated:
 Valid DSCP Marks
 ----------------
 
-Valid DSCP mark values are even numbers between 0 and 56, except 2-6, 42, 44,
-and 50-54.  The full list of valid DSCP marks is:
+Valid DSCP mark values are even numbers between 0 and 56, except 2-6, 42, and
+50-54.  The full list of valid DSCP marks is:
 
-0, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 46, 48, 56
+0, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 44, 46,
+48, 56
 
 
 L3 QoS support
@@ -165,7 +166,7 @@ traffic directions (from the VM point of view) for **bandwidth limiting**.
      Rule \\ L3 service    L3 router            OVN L3
     ====================  ===================  ===================
      Floating IP           Egress \\ Ingress    Egress \\ Ingress
-     Gateway IP            Egress \\ Ingress    -
+     Gateway IP            Egress \\ Ingress    Egress \\ Ingress
     ====================  ===================  ===================
 
 
