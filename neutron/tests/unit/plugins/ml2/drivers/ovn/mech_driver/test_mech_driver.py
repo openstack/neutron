@@ -1251,6 +1251,28 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             portbindings.VIF_TYPE_OVS,
             self.mech_driver.vif_details[portbindings.VIF_TYPE_OVS])
 
+    def _test_bind_port_virtio_forwarder(self, fake_segments):
+        fake_port = fakes.FakePort.create_one_port(
+            attrs={'binding:vnic_type': 'virtio-forwarder'}).info()
+        fake_host = 'host'
+        fake_port_context = fakes.FakePortContext(
+            fake_port, fake_host, fake_segments)
+        self.mech_driver.bind_port(fake_port_context)
+
+        vif_details = self.mech_driver.\
+            vif_details[portbindings.VIF_TYPE_AGILIO_OVS]
+        vif_details.update({"vhostuser_socket": ovn_utils.ovn_vhu_sockpath(
+            ovn_conf.get_ovn_vhost_sock_dir(), fake_port['id'])})
+        vif_details.update({"vhostuser_mode": "client"})
+
+        neutron_agent.AgentCache().get_agents.assert_called_once_with(
+            {'host': fake_host,
+             'agent_type': ovn_const.OVN_CONTROLLER_TYPES})
+        fake_port_context.set_binding.assert_called_once_with(
+            fake_segments[0]['id'],
+            portbindings.VIF_TYPE_AGILIO_OVS,
+            vif_details)
+
     def _test_bind_port_remote_managed(self, fake_segments):
         fake_serial = 'fake-serial'
         fake_port = fakes.FakePort.create_one_port(
@@ -1330,6 +1352,15 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             [fakes.FakeSegment.create_one_segment(attrs=segment_attrs).info()]
         self._test_bind_port_remote_managed(fake_segments)
 
+    def test_bind_virtio_forwarder_port_geneve(self):
+        """Test binding a VIRTIO_FORWARDER port to a geneve segment."""
+        segment_attrs = {'network_type': 'geneve',
+                         'physical_network': None,
+                         'segmentation_id': 1023}
+        fake_segments = \
+            [fakes.FakeSegment.create_one_segment(attrs=segment_attrs).info()]
+        self._test_bind_port_virtio_forwarder(fake_segments)
+
     def test_bind_remote_managed_port_vlan(self):
         """Test binding a REMOTE_MANAGED port to a geneve segment."""
         segment_attrs = {'network_type': 'vlan',
@@ -1362,6 +1393,15 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         fake_segments = \
             [fakes.FakeSegment.create_one_segment(attrs=segment_attrs).info()]
         self._test_bind_port(fake_segments)
+
+    def test_bind_virtio_forwarder_port_vxlan(self):
+        """Test binding a VIRTIO_FORWARDER port to a vxlan segment."""
+        segment_attrs = {'network_type': 'vxlan',
+                         'physical_network': None,
+                         'segmentation_id': 1024}
+        fake_segments = \
+            [fakes.FakeSegment.create_one_segment(attrs=segment_attrs).info()]
+        self._test_bind_port_virtio_forwarder(fake_segments)
 
     def test__is_port_provisioning_required(self):
         fake_port = fakes.FakePort.create_one_port(
@@ -3973,6 +4013,10 @@ class TestOVNMechanismDriverSecurityGroup(MechDriverSetupBase,
     def test_create_port_with_vnic_baremetal(self):
         self._test_create_port_with_vnic_type(
             portbindings.VNIC_BAREMETAL)
+
+    def test_create_port_with_vnic_virtio_forwarder(self):
+        self._test_create_port_with_vnic_type(
+            portbindings.VNIC_VIRTIO_FORWARDER)
 
     def test_update_port_with_sgs(self):
         with self.network() as n, self.subnet(n):

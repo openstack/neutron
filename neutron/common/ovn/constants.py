@@ -434,4 +434,5 @@ OVN_SUPPORTED_VNIC_TYPES = [portbindings.VNIC_NORMAL,
                             portbindings.VNIC_VHOST_VDPA,
                             portbindings.VNIC_REMOTE_MANAGED,
                             portbindings.VNIC_BAREMETAL,
+                            portbindings.VNIC_VIRTIO_FORWARDER,
                             ]
