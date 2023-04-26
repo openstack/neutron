@@ -434,7 +434,6 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                                    {'router': updated_data})
         self.l3_inst._nb_ovn.update_lrouter.assert_called_once_with(
             'neutron-router-id', enabled=True, external_ids={
-                ovn_const.OVN_GW_NETWORK_EXT_ID_KEY: '',
                 ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
                 ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'router',
                 ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: ''})
@@ -455,7 +454,6 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             'neutron-router-id', enabled=False,
             external_ids={ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'test',
                           ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
-                          ovn_const.OVN_GW_NETWORK_EXT_ID_KEY: '',
                           ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: ''})
 
     @mock.patch.object(utils, 'get_lrouter_non_gw_routes')
@@ -549,7 +547,6 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
 
         external_ids = {ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'router',
                         ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
-                        ovn_const.OVN_GW_NETWORK_EXT_ID_KEY: 'ext-network-id',
                         ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: ''}
         self.l3_inst._nb_ovn.create_lrouter.assert_called_once_with(
             'neutron-router-id', external_ids=external_ids,

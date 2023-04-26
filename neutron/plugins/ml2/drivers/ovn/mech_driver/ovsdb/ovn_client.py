@@ -1366,8 +1366,6 @@ class OVNClient(object):
         return networks
 
     def _gen_router_ext_ids(self, router):
-        gw_net_id = (router.get('external_gateway_info') or
-                     {}).get('network_id') or ''
         return {
             ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
                 router.get('name', 'no_router_name'),
@@ -1375,7 +1373,6 @@ class OVNClient(object):
                 router, ovn_const.TYPE_ROUTERS)),
             ovn_const.OVN_AZ_HINTS_EXT_ID_KEY:
                 ','.join(common_utils.get_az_hints(router)),
-            ovn_const.OVN_GW_NETWORK_EXT_ID_KEY: gw_net_id,
         }
 
     def create_router(self, context, router, add_external_gateway=True):
@@ -1496,13 +1493,8 @@ class OVNClient(object):
     def delete_router(self, context, router_id):
         """Delete a logical router."""
         lrouter_name = utils.ovn_name(router_id)
-        ovn_router = self._nb_idl.get_lrouter(lrouter_name)
-        gw_network_id = ovn_router.external_ids.get(
-            ovn_const.OVN_GW_NETWORK_EXT_ID_KEY) if ovn_router else None
-        router_dict = {'id': router_id, 'gw_network_id': gw_network_id}
         with self._nb_idl.transaction(check_error=True) as txn:
             txn.add(self._nb_idl.delete_lrouter(lrouter_name))
-            self._qos_driver.delete_router(txn, router_dict)
         db_rev.delete_revision(context, router_id, ovn_const.TYPE_ROUTERS)
 
     def get_candidates_for_scheduling(self, physnet, cms=None,

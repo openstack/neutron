@@ -716,18 +716,18 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         self.fake_ovn_client._nb_idl.db_set.assert_has_calls(
             expected_calls)
 
-    def test_update_logical_router_with_gateway_network_id(self):
+    def test_remove_gw_ext_ids_from_logical_router(self):
         nb_idl = self.fake_ovn_client._nb_idl
-        # lr0: GW port ID, not GW network ID --> we need to add network ID.
+        # lr0: GW port ID, not GW network ID --> we need to remove port ID.
         lr0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
             'name': 'lr0',
             'external_ids': {constants.OVN_GW_PORT_EXT_ID_KEY: 'port0'}})
-        # lr1: GW port ID and not GW network ID --> register already updated.
+        # lr1: GW port ID and GW network ID --> we need to remove both.
         lr1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
                 'name': 'lr1',
                 'external_ids': {constants.OVN_GW_PORT_EXT_ID_KEY: 'port1',
                                  constants.OVN_GW_NETWORK_EXT_ID_KEY: 'net1'}})
-        # lr2: no GW port ID (nor GW network ID) --> no QoS.
+        # lr2: no GW port ID (nor GW network ID) --> no action needed.
         lr2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
                 'name': 'lr2', 'external_ids': {}})
         nb_idl.lr_list.return_value.execute.return_value = (lr0, lr1, lr2)
@@ -736,10 +736,11 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
 
         self.assertRaises(
             periodics.NeverAgain,
-            self.periodic.update_logical_router_with_gateway_network_id)
-        ext_ids = {constants.OVN_GW_NETWORK_EXT_ID_KEY: 'net0'}
+            self.periodic.remove_gw_ext_ids_from_logical_router)
         expected_calls = [mock.call('Logical_Router', lr0.uuid,
-                                    ('external_ids', ext_ids))]
+                                    ('external_ids', {})),
+                          mock.call('Logical_Router', lr1.uuid,
+                                    ('external_ids', {}))]
         nb_idl.db_set.assert_has_calls(expected_calls)
 
     def _test_check_baremetal_ports_dhcp_options(self, dhcp_disabled=False):

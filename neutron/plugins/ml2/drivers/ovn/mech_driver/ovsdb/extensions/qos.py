@@ -425,13 +425,6 @@ class OVNClientQosExtension(object):
     def disassociate_floatingip(self, txn, floatingip):
         self.delete_floatingip(txn, floatingip)
 
-    def _delete_gateway_ip_qos_rules(self, txn, router_id, network_id):
-        if network_id:
-            lswitch_name = utils.ovn_name(network_id)
-            txn.add(self.nb_idl.qos_del_ext_ids(
-                lswitch_name,
-                {ovn_const.OVN_ROUTER_ID_EXT_ID_KEY: router_id}))
-
     def create_router(self, txn, router):
         self.update_router(txn, router)
 
@@ -464,10 +457,6 @@ class OVNClientQosExtension(object):
             else:
                 # Delete, if exists, the QoS rule in this direction.
                 txn.add(self.nb_idl.qos_del(**ovn_rule, if_exists=True))
-
-    def delete_router(self, txn, router):
-        self._delete_gateway_ip_qos_rules(txn, router['id'],
-                                          router['gw_network_id'])
 
     def update_policy(self, context, policy):
         updated_port_ids = set([])
