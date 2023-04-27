@@ -18,7 +18,9 @@ import contextlib
 import datetime
 from unittest import mock
 
+from neutron_lib.api import attributes
 from neutron_lib.api.definitions import l3_ext_ha_mode
+from neutron_lib.api.definitions import network_ha
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import router_availability_zone
 from neutron_lib.callbacks import events
@@ -1455,6 +1457,10 @@ class L3HATestCaseMixin(testlib_api.SqlTestCase,
         self.mock_make_res = make_res.start()
         commit_res = mock.patch.object(quota.QuotaEngine, 'commit_reservation')
         self.mock_quota_commit_res = commit_res.start()
+        # Extend network HA extension.
+        rname = network_ha.COLLECTION_NAME
+        attributes.RESOURCES[rname].update(
+            network_ha.RESOURCE_ATTRIBUTE_MAP[rname])
 
     @staticmethod
     def get_router_l3_agent_binding(context, router_id, l3_agent_id=None,
@@ -2113,6 +2119,10 @@ class L3AgentAZLeastRoutersSchedulerTestCase(L3HATestCaseMixin):
         self.patch_notifier = mock.patch(
             'neutron.notifiers.batch_notifier.BatchNotifier._notify')
         self.patch_notifier.start()
+        # Extend network HA extension.
+        rname = network_ha.COLLECTION_NAME
+        attributes.RESOURCES[rname].update(
+            network_ha.RESOURCE_ATTRIBUTE_MAP[rname])
 
     def _register_l3_agents(self):
         self.agent1 = helpers.register_l3_agent(host='az1-host1', az='az1')

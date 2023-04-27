@@ -25,6 +25,7 @@ from neutron_lib.api.definitions import l3_ext_gw_mode
 from neutron_lib.api.definitions import l3_ext_ha_mode
 from neutron_lib.api.definitions import l3_flavors
 from neutron_lib.api.definitions import l3_port_ip_change_not_allowed
+from neutron_lib.api.definitions import network_ha
 from neutron_lib.api.definitions import qos_gateway_ip
 from neutron_lib.api.definitions import \
     router_admin_state_down_before_update as r_admin_state_down_before_update
@@ -109,7 +110,9 @@ class L3RouterPlugin(service_base.ServicePluginBase,
                                     floatingip_pools.ALIAS,
                                     qos_gateway_ip.ALIAS,
                                     l3_port_ip_change_not_allowed.ALIAS,
-                                    r_admin_state_down_before_update.ALIAS]
+                                    r_admin_state_down_before_update.ALIAS,
+                                    network_ha.ALIAS,
+                                    ]
 
     __native_pagination_support = True
     __native_sorting_support = True

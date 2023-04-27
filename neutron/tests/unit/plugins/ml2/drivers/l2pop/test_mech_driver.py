@@ -16,6 +16,8 @@
 from unittest import mock
 
 from neutron_lib.agent import topics
+from neutron_lib.api import attributes
+from neutron_lib.api.definitions import network_ha
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
@@ -120,6 +122,10 @@ class TestL2PopulationRpcTestCase(test_plugin.Ml2PluginV2TestCase):
         uptime = ('neutron.plugins.ml2.drivers.l2pop.db.get_agent_uptime')
         uptime_patch = mock.patch(uptime, return_value=190)
         uptime_patch.start()
+        # Extend network HA extension.
+        rname = network_ha.COLLECTION_NAME
+        attributes.RESOURCES[rname].update(
+            network_ha.RESOURCE_ATTRIBUTE_MAP[rname])
 
     def _setup_l3(self):
         notif_p = mock.patch.object(l3_hamode_db.L3_HA_NAT_db_mixin,

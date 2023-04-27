@@ -40,6 +40,7 @@ from neutron_lib.api.definitions import l3_ext_gw_mode
 from neutron_lib.api.definitions import logging
 from neutron_lib.api.definitions import multiprovidernet
 from neutron_lib.api.definitions import network_availability_zone
+from neutron_lib.api.definitions import network_ha
 from neutron_lib.api.definitions import network_ip_availability
 from neutron_lib.api.definitions import network_mtu
 from neutron_lib.api.definitions import network_mtu_writable
@@ -122,6 +123,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     extra_dhcp_opt.ALIAS,
     filter_validation.ALIAS,
     multiprovidernet.ALIAS,
+    network_ha.ALIAS,
     network_mtu.ALIAS,
     network_mtu_writable.ALIAS,
     network_availability_zone.ALIAS,

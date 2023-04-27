@@ -16,6 +16,8 @@
 import collections
 import random
 
+from neutron_lib.api import attributes
+from neutron_lib.api.definitions import network_ha
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.plugins import constants as plugin_constants
@@ -302,6 +304,10 @@ class L3AZSchedulerBaseTest(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         directory.add_plugin(plugin_constants.L3, self.l3_plugin)
         self.adminContext = context.get_admin_context()
         self.adminContext.tenant_id = '_func_test_tenant_'
+        # Extend network HA extension.
+        rname = network_ha.COLLECTION_NAME
+        attributes.RESOURCES[rname].update(
+            network_ha.RESOURCE_ATTRIBUTE_MAP[rname])
 
     def _create_l3_agent(self, host, context, agent_mode='legacy', plugin=None,
                          state=True, az='nova'):

@@ -19,6 +19,7 @@ import random
 import netaddr
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import l3_ext_ha_mode as l3_ext_ha_apidef
+from neutron_lib.api.definitions import network_ha as network_ha_apidef
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as providernet
@@ -61,6 +62,11 @@ UNLIMITED_AGENTS_PER_ROUTER = 0
 LOG = logging.getLogger(__name__)
 
 l3_hamode_db.register_db_l3_hamode_opts()
+
+
+# TODO(ralonsoh): move to neutron-lib
+class DuplicatedHANetwork(n_exc.Conflict):
+    message = _('Project %(project_id)s already has a HA network.')
 
 
 @registry.has_registry_receivers
@@ -192,21 +198,21 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         return p_utils.create_subnet(self._core_plugin, context,
                                      {'subnet': args})
 
-    def _create_ha_network_tenant_binding(self, context, tenant_id,
-                                          network_id):
-        ha_network = l3_hamode.L3HARouterNetwork(
-            context, project_id=tenant_id, network_id=network_id)
-        ha_network.create()
-        # we need to check if someone else just inserted at exactly the
-        # same time as us because there is no constrain in L3HARouterNetwork
-        # that prevents multiple networks per tenant
-        if l3_hamode.L3HARouterNetwork.count(
-                context, project_id=tenant_id) > 1:
-            # we need to throw an error so our network is deleted
-            # and the process is started over where the existing
-            # network will be selected.
-            raise db_exc.DBDuplicateEntry(columns=['tenant_id'])
-        return None, ha_network
+    @registry.receives(resources.NETWORK, [events.PRECOMMIT_CREATE])
+    def _create_ha_network_tenant_binding(self, resource, event, trigger,
+                                          payload=None):
+        if not payload.request_body.get(network_ha_apidef.HA):
+            return
+
+        network = payload.latest_state
+        context = payload.context
+        ha_network = l3_hamode.L3HARouterNetwork(payload.context,
+                                                 project_id=context.project_id,
+                                                 network_id=network['id'])
+        try:
+            ha_network.create()
+        except obj_base.NeutronDbObjectDuplicateEntry:
+            raise DuplicatedHANetwork(project_id=context.project_id)
 
     def _add_ha_network_settings(self, network):
         if cfg.CONF.l3_ha_network_type:
@@ -218,29 +224,27 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
     def _create_ha_network(self, context, tenant_id):
         admin_ctx = context.elevated()
-
+        # The project ID is needed to create the ``L3HARouterNetwork``
+        # resource; the project ID cannot be retrieved from the network because
+        # is explicitly created without it.
+        admin_ctx.project_id = tenant_id
         args = {'network':
                 {'name': constants.HA_NETWORK_NAME % tenant_id,
                  'tenant_id': '',
                  'shared': False,
-                 'admin_state_up': True}}
+                 'admin_state_up': True,
+                 network_ha_apidef.HA: True,
+                 }}
         self._add_ha_network_settings(args['network'])
-        creation = functools.partial(p_utils.create_network,
-                                     self._core_plugin, admin_ctx, args)
-        content = functools.partial(self._create_ha_network_tenant_binding,
-                                    admin_ctx, tenant_id)
-        deletion = functools.partial(self._core_plugin.delete_network,
-                                     admin_ctx)
-
-        network, ha_network = db_utils.safe_creation(
-            context, creation, deletion, content, transaction=False)
+        network = p_utils.create_network(self._core_plugin, admin_ctx, args)
         try:
             self._create_ha_subnet(admin_ctx, network['id'], tenant_id)
         except Exception:
             with excutils.save_and_reraise_exception():
                 self._core_plugin.delete_network(admin_ctx, network['id'])
 
-        return ha_network
+        return l3_hamode.L3HARouterNetwork.get_object(
+            admin_ctx, network_id=network['id'], project_id=tenant_id)
 
     def get_number_of_agents_for_scheduling(self, context):
         """Return number of agents on which the router will be scheduled."""
@@ -370,8 +374,10 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         # ensure the HA network exists before we start router creation so
         # we can provide meaningful errors back to the user if no network
         # can be allocated
-        if not self.get_ha_network(context, router['tenant_id']):
-            self._create_ha_network(context, router['tenant_id'])
+        # TODO(ralonsoh): remove once bp/keystone-v3 migration finishes.
+        project_id = router.get('project_id') or router['tenant_id']
+        if not self.get_ha_network(context, project_id):
+            self._create_ha_network(context, project_id)
 
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_CREATE],
                        priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
