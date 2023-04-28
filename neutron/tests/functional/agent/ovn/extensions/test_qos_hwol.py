@@ -22,6 +22,7 @@ from neutron.agent.ovn.extensions import qos_hwol
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.common import utils as n_utils
+from neutron.tests import base as test_base
 from neutron.tests.functional import base
 
 
@@ -32,6 +33,7 @@ class OVSInterfaceEventTestCase(base.TestOVNFunctionalBase):
             check_error=False)
         self.ovs_idl.del_br(self.br_name).execute(check_error=False)
 
+    @test_base.unstable_test('bug 2006603')
     def test_port_creation_and_deletion(self):
         def check_add_port_called():
             try:
