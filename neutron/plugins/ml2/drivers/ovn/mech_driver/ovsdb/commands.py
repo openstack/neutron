@@ -122,6 +122,7 @@ class AddLSwitchPortCommand(command.BaseCommand):
                                          'Logical_Switch_Port', 'name',
                                          self.lport, None)
             if port:
+                self.result = port.uuid
                 return
 
         port = txn.insert(self.api._tables['Logical_Switch_Port'])
