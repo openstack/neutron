@@ -217,6 +217,13 @@ ovn_opts = [
                        'order to disable the ``stateful-security-group`` API '
                        'extension as ``allow-stateless`` keyword is only '
                        'supported by OVN >= 21.06.')),
+    cfg.BoolOpt('localnet_learn_fdb',
+                default=False,
+                help=_('If enabled it will allow localnet ports to learn MAC '
+                       'addresses and store them in FDB SB table. This avoids '
+                       'flooding for traffic towards unknown IPs when port '
+                       'security is disabled. It requires OVN 22.09 or '
+                       'newer.')),
 ]
 
 
@@ -330,3 +337,7 @@ def is_igmp_snooping_enabled():
 
 def is_ovn_dhcp_disabled_for_baremetal():
     return cfg.CONF.ovn.disable_ovn_dhcp_for_baremetal_ports
+
+
+def is_learn_fdb_enabled():
+    return cfg.CONF.ovn.localnet_learn_fdb

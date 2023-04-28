@@ -878,7 +878,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             lswitch_name=ovn_utils.ovn_name(net['id']),
             options={'network_name': 'physnet1',
                      ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true',
-                     ovn_const.LSP_OPTIONS_MCAST_FLOOD: 'false'},
+                     ovn_const.LSP_OPTIONS_MCAST_FLOOD: 'false',
+                     ovn_const.LSP_OPTIONS_LOCALNET_LEARN_FDB: 'false'},
             tag=2,
             type='localnet')
 
@@ -3034,7 +3035,8 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
             lswitch_name=ovn_utils.ovn_name(net['id']),
             options={'network_name': 'physnet1',
                      ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true',
-                     ovn_const.LSP_OPTIONS_MCAST_FLOOD: 'false'},
+                     ovn_const.LSP_OPTIONS_MCAST_FLOOD: 'false',
+                     ovn_const.LSP_OPTIONS_LOCALNET_LEARN_FDB: 'false'},
             tag=200,
             type='localnet')
         ovn_nb_api.create_lswitch_port.reset_mock()
@@ -3048,7 +3050,8 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
             lswitch_name=ovn_utils.ovn_name(net['id']),
             options={'network_name': 'physnet2',
                      ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true',
-                     ovn_const.LSP_OPTIONS_MCAST_FLOOD: 'false'},
+                     ovn_const.LSP_OPTIONS_MCAST_FLOOD: 'false',
+                     ovn_const.LSP_OPTIONS_LOCALNET_LEARN_FDB: 'false'},
             tag=300,
             type='localnet')
         segments = segments_db.get_network_segments(

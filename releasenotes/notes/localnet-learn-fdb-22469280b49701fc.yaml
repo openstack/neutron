@@ -1,0 +1,23 @@
+---
+issues:
+  - |
+    In OVN 22.09 the option "localnet_learn_fdb" was added, enabling localnet
+    ports to learn MAC addresses and store them at the FDB table.
+    There is no aging mechanism for those MACs (that is the reason for not
+    having this option enabled by default) and therefore it needs to be used
+    with care, specially when provider networks are big. It is recommended to
+    perform periodic manual cleanups of FDB table, to avoid scalability
+    issues -- until OVN implements an aging mechanism for this, tracked at
+    https://bugzilla.redhat.com/show_bug.cgi?id=2179942.
+fixes:
+  - |
+    By default localnet ports don't learn MAC addresses and therefore they are
+    not stored in the FDB table at OVN SB DB. This leads to flooding issues
+    when the destination traffic is an unknown IP by OpenStack. In OVN 22.09
+    the option "localnet_learn_fdb" was added, enabling those ports to learn
+    MAC addresses and store them at the FDB table. Note there is no aging
+    mechanism for those MACs, thus this is not enabled by default and needs
+    to be used carefully, specially when provider networks are big, and/or
+    performing manual cleanup of FDB table over time to avoid scalability
+    issues, until OVN implements it at
+    https://bugzilla.redhat.com/show_bug.cgi?id=2179942.
