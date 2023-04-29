@@ -327,7 +327,7 @@ class ChassisAgentDeleteEvent(ChassisAgentEvent):
             return False
 
     def run(self, event, row, old):
-        del n_agent.AgentCache()[row.external_ids['delete_agent']]
+        n_agent.AgentCache().delete([row.external_ids['delete_agent']])
 
 
 class ChassisAgentWriteEvent(ChassisAgentEvent):

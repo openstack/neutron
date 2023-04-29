@@ -498,18 +498,18 @@ class TestAgentMonitor(base.TestOVNFunctionalBase):
 
     def test_agent_change_controller(self):
         self.assertEqual(neutron_agent.ControllerGatewayAgent,
-                type(neutron_agent.AgentCache()[self.chassis_name]))
+                type(neutron_agent.AgentCache().get(self.chassis_name)))
         self.sb_api.db_set('Chassis', self.chassis_name, ('other_config',
                 {'ovn-cms-options': ''})).execute(check_error=True)
         n_utils.wait_until_true(lambda:
-                neutron_agent.AgentCache()[self.chassis_name].
+                neutron_agent.AgentCache().get(self.chassis_name).
                 chassis.other_config['ovn-cms-options'] == '')
         self.assertEqual(neutron_agent.ControllerAgent,
-                type(neutron_agent.AgentCache()[self.chassis_name]))
+                type(neutron_agent.AgentCache().get(self.chassis_name)))
 
     def test_agent_updated_at_use_nb_cfg_timestamp(self):
         def check_agent_ts():
-            agent = neutron_agent.AgentCache()[self.chassis_name]
+            agent = neutron_agent.AgentCache().get(self.chassis_name)
             chassis_ts = self.sb_api.db_get(
                 'Chassis_Private', self.chassis_name,
                 'nb_cfg_timestamp').execute(check_error=True)
@@ -532,7 +532,7 @@ class TestAgentMonitor(base.TestOVNFunctionalBase):
         try:
             n_utils.wait_until_true(check_agent_ts, timeout=5)
         except n_utils.WaitTimeout:
-            agent = neutron_agent.AgentCache()[self.chassis_name]
+            agent = neutron_agent.AgentCache().get(self.chassis_name)
             chassis_ts = self.sb_api.db_get(
                 'Chassis_Private', self.chassis_name,
                 'nb_cfg_timestamp').execute(check_error=True)
@@ -541,14 +541,14 @@ class TestAgentMonitor(base.TestOVNFunctionalBase):
 
     def test_agent_restart(self):
         def check_agent_up():
-            agent = neutron_agent.AgentCache()[self.chassis_name]
+            agent = neutron_agent.AgentCache().get(self.chassis_name)
             return agent.alive
 
         def check_agent_down():
             return not check_agent_up()
 
         def check_nb_cfg_timestamp_is_not_null():
-            agent = neutron_agent.AgentCache()[self.chassis_name]
+            agent = neutron_agent.AgentCache().get(self.chassis_name)
             return agent.updated_at != 0
 
         if not self.sb_api.is_table_present('Chassis_Private'):

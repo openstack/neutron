@@ -195,7 +195,7 @@ class MetadataAgent(NeutronAgent):
         # If ovn-controller is down, then metadata agent is down even
         # if the metadata-agent binary is updating external_ids.
         try:
-            if not AgentCache()[self.chassis_private.name].alive:
+            if not AgentCache().get(self.chassis_private.name).alive:
                 return False
         except KeyError:
             return False
@@ -230,7 +230,7 @@ class OVNNeutronAgent(NeutronAgent):
         # If ovn-controller is down, then OVN Neutron Agent is down even
         # if the neutron-ovn-agent binary is updating external_ids.
         try:
-            if not AgentCache()[self.chassis_private.name].alive:
+            if not AgentCache().get(self.chassis_private.name).alive:
                 return False
         except KeyError:
             return False
@@ -257,7 +257,7 @@ class OVNNeutronAgent(NeutronAgent):
 
 
 @utils.SingletonDecorator
-class AgentCache:
+class AgentCache(object):
     def __init__(self, driver=None):
         # This is just to make pylint happy because it doesn't like calls to
         # AgentCache() with no arguments, despite init only being called the
@@ -273,7 +273,7 @@ class AgentCache:
         _agents = copy.copy(self.agents)
         return iter(_agents.values())
 
-    def __getitem__(self, key):
+    def get(self, key):
         return self.agents[key]
 
     def update(self, agent_type, row, clear_down=False):
@@ -286,7 +286,7 @@ class AgentCache:
             self.agents[agent.agent_id] = agent
         return agent
 
-    def __delitem__(self, agent_id):
+    def delete(self, agent_id):
         del self.agents[agent_id]
 
     def agents_by_chassis_private(self, chassis_private):

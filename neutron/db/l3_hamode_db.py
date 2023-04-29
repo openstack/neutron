@@ -503,6 +503,8 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         self._core_plugin.delete_network(admin_ctx, net.network_id)
 
     def safe_delete_ha_network(self, context, ha_network, tenant_id):
+        # initialize to silence pylint used-before-assignment warning
+        net_id = None
         try:
             # reference the attr inside the try block before we attempt
             # to delete the network and potentially invalidate the

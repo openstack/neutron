@@ -28,9 +28,6 @@ disable=
  no-method-argument,
  no-self-argument,
  not-an-iterable,
- unsubscriptable-object,
- unsupported-delete-operation,
- used-before-assignment,
 # "W" Warnings for stylistic problems or minor programming issues
  abstract-method,
  arguments-differ,

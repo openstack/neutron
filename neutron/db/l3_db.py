@@ -1504,6 +1504,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             self._core_plugin, context.elevated(),
             {'port': port}, check_allow_post=False)
 
+        dns_data = None
         with plugin_utils.delete_port_on_error(
                 self._core_plugin, context.elevated(),
                 external_port['id']),\
@@ -1587,6 +1588,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             # raise the underlying exception
             raise e.errors[0].error
 
+        dns_data = None
         fip = floatingip['floatingip']
         with db_api.CONTEXT_WRITER.using(context):
             floatingip_obj = self._get_floatingip(context, id)

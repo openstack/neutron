@@ -391,10 +391,9 @@ class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
             with open(file_name, 'r') as f:
                 return converter(f.read()) if converter else f.read()
         except ValueError:
-            msg = "Unable to convert value in %s"
+            LOG.debug("Unable to convert value in %s", file_name)
         except IOError:
-            msg = "Unable to access %s"
-        LOG.debug(msg, file_name)
+            LOG.debug("Unable to access %s", file_name)
         return None
 
     @property

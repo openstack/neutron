@@ -42,41 +42,40 @@ def profile(f):
 
     @functools.wraps(f)
     def profile_wrapper(*args, **kwargs):
+        if not cfg.CONF.enable_code_profiling:
+            return f(*args, **kwargs)
 
+        profid = "%s.%s" % (f.__module__, f.__name__)
+        profiler = cProfile.Profile()
+        start_time = datetime.now()
         try:
-            if cfg.CONF.enable_code_profiling:
-                profid = "%s.%s" % (f.__module__, f.__name__)
-                profiler = cProfile.Profile()
-                profiler.enable()
-                start_time = datetime.now()
+            profiler.enable()
             return f(*args, **kwargs)
         finally:
-            if cfg.CONF.enable_code_profiling:
-                profiler.disable()
-                elapsed_time = datetime.now() - start_time
-                elapsed_time_ms = (elapsed_time.seconds * 1000.0 +
-                                   elapsed_time.microseconds / 1000.0)
-                stream = io.StringIO()
-                stats = pstats.Stats(profiler, stream=stream).sort_stats(
-                    SORT_BY)
-                stats.print_stats(cfg.CONF.code_profiling_calls_to_log)
-                stats.print_callers(cfg.CONF.code_profiling_calls_to_log)
-                stats.print_callees(cfg.CONF.code_profiling_calls_to_log)
-                profiler_info = utils.collect_profiler_info()
-                if not profiler_info:
-                    profiler_info = {'base_id': 'not available',
-                                     'parent_id': 'not available'}
-                LOG.debug('os-profiler parent trace-id %(parent_id)s '
-                          'trace-id %(trace_id)s %(elapsed_time)7d millisecs '
-                          'elapsed for %(method)s(*%(args)s, **%(kwargs)s):'
-                          '\n%(profiler_data)s',
-                          {'parent_id': profiler_info['parent_id'],
-                           'trace_id': profiler_info['base_id'],
-                           'elapsed_time': elapsed_time_ms,
-                           'method': profid,
-                           'args': args,
-                           'kwargs': kwargs,
-                           'profiler_data': stream.getvalue()})
-                stream.close()
+            profiler.disable()
+            elapsed_time = datetime.now() - start_time
+            elapsed_time_ms = (elapsed_time.seconds * 1000.0 +
+                               elapsed_time.microseconds / 1000.0)
+            stream = io.StringIO()
+            stats = pstats.Stats(profiler, stream=stream).sort_stats(SORT_BY)
+            stats.print_stats(cfg.CONF.code_profiling_calls_to_log)
+            stats.print_callers(cfg.CONF.code_profiling_calls_to_log)
+            stats.print_callees(cfg.CONF.code_profiling_calls_to_log)
+            profiler_info = utils.collect_profiler_info()
+            if not profiler_info:
+                profiler_info = {'base_id': 'not available',
+                                 'parent_id': 'not available'}
+            LOG.debug('os-profiler parent trace-id %(parent_id)s '
+                      'trace-id %(trace_id)s %(elapsed_time)7d millisecs '
+                      'elapsed for %(method)s(*%(args)s, **%(kwargs)s):'
+                      '\n%(profiler_data)s',
+                      {'parent_id': profiler_info['parent_id'],
+                       'trace_id': profiler_info['base_id'],
+                       'elapsed_time': elapsed_time_ms,
+                       'method': profid,
+                       'args': args,
+                       'kwargs': kwargs,
+                       'profiler_data': stream.getvalue()})
+            stream.close()
 
     return profile_wrapper

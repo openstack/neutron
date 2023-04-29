@@ -1359,7 +1359,7 @@ def get_agents(self, context, filters=None, fields=None, _driver=None):
 
 def get_agent(self, context, id, fields=None, _driver=None):
     try:
-        return n_agent.AgentCache()[id].as_dict()
+        return n_agent.AgentCache().get(id).as_dict()
     except KeyError:
         raise n_exc.agent.AgentNotFound(id=id)
 
@@ -1417,6 +1417,11 @@ def delete_agent(self, context, id, _driver=None):
     _driver.sb_ovn.db_remove(
         'SB_Global', '.', 'external_ids', delete_agent=str(id),
         if_exists=True).execute(check_error=True)
+
+    try:
+        n_agent.AgentCache().delete(id)
+    except KeyError:
+        LOG.debug('OVN agent %s has been deleted concurrently', id)
 
 
 def get_availability_zones(cls, context, _driver, filters=None, fields=None,
