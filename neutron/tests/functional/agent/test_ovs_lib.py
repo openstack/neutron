@@ -489,7 +489,7 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
                 txn.add(ovsdb.del_port(port_name, self.br.br_name,
                                        if_exists=False))
                 txn.add(ovsdb.db_set('Interface', port_name,
-                                     ('type', 'internal')))
+                                     ('type', 'internal'), if_exists=False))
         self.assertRaises((RuntimeError, idlutils.RowNotFound),
                           del_port_mod_iface)
 
