@@ -36,6 +36,7 @@ from oslo_config import cfg
 from oslo_utils import uuidutils
 import webob.exc
 
+from neutron.common import config
 from neutron.conf import experimental as c_experimental
 from neutron.conf.plugins.ml2 import config as ml2_config
 from neutron.conf.plugins.ml2.drivers import driver_type
@@ -81,6 +82,7 @@ class SegmentTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     VLAN_MAX = 209
 
     def setUp(self, plugin=None):
+        config.register_common_config_options()
         # Remove MissingAuthPlugin exception from logs
         self.patch_notifier = mock.patch(
             'neutron.notifiers.batch_notifier.BatchNotifier._notify')
