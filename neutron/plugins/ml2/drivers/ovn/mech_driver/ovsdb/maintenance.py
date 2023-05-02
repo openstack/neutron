@@ -805,7 +805,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                     txn.add(cmd)
         raise periodics.NeverAgain()
 
-    # TODO(fnordahl): Remove this in the A+3 cycle. This method removes the
+    # TODO(fnordahl): Remove this in the B+3 cycle. This method removes the
     # now redundant  "external_ids:OVN_GW_NETWORK_EXT_ID_KEY" and
     # "external_ids:OVN_GW_PORT_EXT_ID_KEY" from to each router.
     # A static spacing value is used here, but this method will only run
