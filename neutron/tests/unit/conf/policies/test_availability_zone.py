@@ -70,12 +70,6 @@ class ProjectMemberTests(AdminTests):
         super(ProjectMemberTests, self).setUp()
         self.context = self.project_member_ctx
 
-    def test_get_availability_zone(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, "get_availability_zone", self.target)
-
 
 class ProjectReaderTests(ProjectMemberTests):
 
