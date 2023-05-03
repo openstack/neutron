@@ -163,6 +163,15 @@ class RouterPort(base.NeutronDbObject):
         query = query.distinct()
         return [r[0] for r in query]
 
+    @classmethod
+    @db_api.CONTEXT_READER
+    def get_gw_port_ids_by_router_id(cls, context, router_id):
+        query = context.session.query(l3.RouterPort)
+        query = query.filter(
+            l3.RouterPort.router_id == router_id,
+            l3.RouterPort.port_type == n_const.DEVICE_OWNER_ROUTER_GW)
+        return [rp.port_id for rp in query]
+
 
 @base.NeutronObjectRegistry.register
 class DVRMacAddress(base.NeutronDbObject):

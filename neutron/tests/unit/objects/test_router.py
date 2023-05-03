@@ -17,6 +17,7 @@ from unittest import mock
 
 import netaddr
 
+from neutron_lib import constants
 from neutron_lib.db import api as db_api
 from oslo_utils import uuidutils
 
@@ -205,6 +206,36 @@ class RouterPortDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         self.update_obj_fields(
             {'router_id': lambda: self._create_test_router_id(),
              'port_id': lambda: self._create_test_port_id()})
+
+    def test_get_gw_port_ids_by_router_id(self):
+        router_id = self._create_test_router_id()
+        router_gws = [
+            self._make_object({
+                'router_id': router_id,
+                'port_id': self._create_test_port_id(
+                    device_owner=constants.DEVICE_OWNER_ROUTER_GW),
+                'port_type': constants.DEVICE_OWNER_ROUTER_GW}),
+            self._make_object({
+                'router_id': router_id,
+                'port_id': self._create_test_port_id(
+                    device_owner=constants.DEVICE_OWNER_ROUTER_GW),
+                'port_type': constants.DEVICE_OWNER_ROUTER_GW,
+            })
+        ]
+        for gw in router_gws:
+            gw.create()
+
+        other = self._make_object({
+            'router_id': router_id,
+            'port_id': self._create_test_port_id(
+                device_owner=constants.DEVICE_OWNER_ROUTER_INTF),
+            'port_type': constants.DEVICE_OWNER_ROUTER_INTF,
+        })
+        other.create()
+
+        res_gws = self._test_class.get_gw_port_ids_by_router_id(self.context,
+                                                                router_id)
+        self.assertCountEqual(res_gws, [rp.port_id for rp in router_gws])
 
 
 class DVRMacAddressIfaceObjectTestCase(obj_test_base.BaseObjectIfaceTestCase):
