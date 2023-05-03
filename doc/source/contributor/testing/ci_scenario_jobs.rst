@@ -82,9 +82,6 @@ Below is a summary of those jobs.
     |tempest-integrated-networking                 |tempest.api (without slow tests)  |   1   | Ubuntu Jammy     | ovn         | ovn             | ---      | False | False  | True       | Yes         |
     |                                              |tempest.scenario                  |       |                  |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-ovn-tempest-ovs-release-ubuntu-old    |tempest.api (without slow tests)  |   1   | Ubuntu Focal     | ovn         | ovn             | ---      | False | False  | True       | Yes         |
-    |                                              |tempest.scenario                  |       |                  |             |                 |          |       |        |            |             |
-    +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-ovn-tempest-ipv6-only-ovs-release     |tempest.api (without slow tests)  |   1   | Ubuntu Jammy     | ovn         | ovn             | ---      | False | False  | True       | Yes         |
     |                                              |(only tests related to            |       |                  |             |                 |          |       |        |            |             |
     |                                              |Neutron and Nova)                 |       |                  |             |                 |          |       |        |            |             |

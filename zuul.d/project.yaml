@@ -63,8 +63,6 @@
               - ^roles/.*functional.*$
               - ^playbooks/.*functional.*$
               - ^zuul.d/(?!(project)).*\.yaml
-        - neutron-ovn-tempest-ovs-release-ubuntu-old:
-            irrelevant-files: *ovn-irrelevant-files
 
     gate:
       jobs:
@@ -75,6 +73,4 @@
         - neutron-ovs-grenade-dvr-multinode
         - neutron-ovn-tempest-ipv6-only-ovs-release
         - tempest-integrated-networking:
-            irrelevant-files: *ovn-irrelevant-files
-        - neutron-ovn-tempest-ovs-release-ubuntu-old:
             irrelevant-files: *ovn-irrelevant-files
