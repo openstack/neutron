@@ -791,7 +791,7 @@ class TestIpAddrCommand(TestIPCmdBase):
     def test_wait_until_address_dadfailed(self):
         self.addr_cmd.list = mock.Mock(
             return_value=[{'tentative': True, 'dadfailed': True}])
-        with testtools.ExpectedException(ip_lib.AddressNotReady):
+        with testtools.ExpectedException(ip_lib.DADFailed):
             self.addr_cmd.wait_until_address_ready('abcd::1234')
 
     @mock.patch.object(common_utils, 'wait_until_true')
