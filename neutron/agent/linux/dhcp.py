@@ -40,6 +40,7 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.cmd import runtime_checks as checks
+from neutron.common import _constants as common_constants
 from neutron.common import utils as common_utils
 from neutron.ipam import utils as ipam_utils
 from neutron.privileged.agent.linux import dhcp as priv_dhcp
@@ -1773,7 +1774,7 @@ class DeviceManager(object):
         if self.conf.force_metadata or self.conf.enable_isolated_metadata:
             ip_cidrs.append(constants.METADATA_CIDR)
             if netutils.is_ipv6_enabled():
-                ip_cidrs.append(constants.METADATA_V6_CIDR)
+                ip_cidrs.append(common_constants.METADATA_V6_CIDR)
 
         self.driver.init_l3(interface_name, ip_cidrs,
                             namespace=network.namespace)
