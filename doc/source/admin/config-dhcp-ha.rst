@@ -442,6 +442,38 @@ To test the HA of DHCP agent:
 
 #. Start DHCP agent on HostB. The VM gets the wanted IP again.
 
+No HA for metadata service on isolated networks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+All Neutron backends using the DHCP agent can also provide `metadata service
+<https://docs.openstack.org/nova/latest/user/metadata.html>`_ in isolated
+networks (i.e. networks without a router). In this case the DHCP agent manages
+the metadata service (see config option `enable_isolated_metadata
+<https://docs.openstack.org/neutron/latest/configuration/dhcp-agent.html#DEFAULT.enable_isolated_metadata>`_).
+
+Note however that the metadata service is only redundant for IPv4, and not
+IPv6, even when the DHCP service is configured to be highly available
+(config option `dhcp_agents_per_network
+<https://docs.openstack.org/neutron/latest/configuration/neutron.html#DEFAULT.dhcp_agents_per_network>`_
+> 1). This is because the DHCP agent will insert a route to the well known
+metadata IPv4 address (`169.254.169.254`) via its own IP address, so it will
+be reachable as long as the DHCP service is available at that IP address.
+This also means that recovery after a failure is tied to the renewal of the
+DHCP lease, since that route will only change if the DHCP server for a VM
+changes.
+
+With IPv6, the well known metadata IPv6 address (`fe80::a9fe:a9fe`) is used,
+but directly configured in the DHCP agent network namespace.
+Due to the enforcement of duplicate address detection (DAD), this address
+can only be configured in at most one DHCP network namespaces at any time.
+See `RFC 4862 <https://www.rfc-editor.org/rfc/rfc4862#section-5.4>`_ for
+details on the DAD process.
+
+For this reason, even when you have multiple DHCP agents, an arbitrary one
+(where the metadata IPv6 address is not in `dadfailed` state) will serve all
+metadata requests over IPv6. When that metadata service instance becomes
+unreachable there is no failover and the service will become unreachable.
+
 Disabling and removing an agent
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
