@@ -24,6 +24,7 @@ import shlex
 import signal
 import subprocess
 import time
+from unittest import mock
 
 import fixtures
 import netaddr
@@ -880,20 +881,19 @@ class OVSPortFixture(PortFixture):
         interface_config = cfg.ConfigOpts()
         config.register_interface_opts(interface_config)
         ovs_interface = interface.OVSInterfaceDriver(interface_config)
-        ovs_interface.plug_new(
-            None,
-            self.port_id,
-            port_name,
-            self.mac,
-            bridge=self.bridge.br_name,
-            namespace=self.namespace)
-        # NOTE(mangelajo): for OVS implementations remove the DEAD VLAN tag
-        # on ports that we intend to use as fake vm interfaces, they
-        # need to be flat. This is related to lp#1767422
-        self.bridge.clear_db_attribute("Port", port_name, "tag")
-        # Clear vlan_mode that is added for each new port. lp#1930414
-        self.bridge.clear_db_attribute("Port", port_name, "vlan_mode")
-        self.bridge.clear_db_attribute("Port", port_name, "trunks")
+        # NOTE(slaweq): for OVS implementation normally there would be DEAD
+        # VLAN tag set for port and we would need to remove it here as it is
+        # needed during the tests. But to avoid setting and removing tag, we
+        # can simply mock _set_port_dead method so port will not be tagged with
+        # DEAD_VLAN tag initially
+        with mock.patch.object(ovs_lib.OVSBridge, '_set_port_dead'):
+            ovs_interface.plug_new(
+                None,
+                self.port_id,
+                port_name,
+                self.mac,
+                bridge=self.bridge.br_name,
+                namespace=self.namespace)
         self.addCleanup(self.bridge.delete_port, port_name)
         self.port = ip_lib.IPDevice(port_name, self.namespace)
 
