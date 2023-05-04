@@ -38,6 +38,13 @@ NAT for IPv4 network traffic and directly routes IPv6 network traffic.
       | status                  | ACTIVE       |
       +-------------------------+--------------+
 
+   .. note::
+
+      If you are using an MTU value on your network below 1280, please
+      read the warning listed in the
+      `IPv6 configuration guide <../config-ipv6.html#project-network-considerations>`__
+      before creating any subnets.
+
 #. Create a IPv4 subnet on the self-service network.
 
    .. code-block:: console

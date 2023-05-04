@@ -195,14 +195,23 @@ Project network considerations
 Dataplane
 ---------
 
-Both the Linux bridge and the Open vSwitch dataplane modules support
-forwarding IPv6
+All dataplane modules, including OVN, Open vSwitch and Linux bridge,
+support forwarding IPv6
 packets amongst the guests and router ports. Similar to IPv4, there is no
 special configuration or setup required to enable the dataplane to properly
 forward packets from the source to the destination using IPv6. Note that these
 dataplanes will forward Link-local Address (LLA) packets between hosts on the
 same network just fine without any participation or setup by OpenStack
 components after the ports are all connected and MAC addresses learned.
+
+.. warning::
+   The only exception to this is the setting of the MTU value on
+   the network an IPv6 subnet is created on. If the MTU is less than
+   1280 octets (the minimum link MTU value specified in
+   `RFC 8200 <https://www.rfc-editor.org/rfc/rfc8200>`__), then it
+   could lead to issues configuring both IPv6 and IPv4 addresses on
+   the network, leaving the subnets unusable. For that reason, the API
+   validates the MTU value when subnets are created to avoid this issue.
 
 Addresses for subnets
 ---------------------

@@ -1,0 +1,22 @@
+---
+fixes:
+  - |
+    The Neutron API has been changed to validate network MTU minimums.
+    A network's MTU is now only valid if it is the minimum value
+    allowed based on the IP version of the associated subnets,
+    68 for IPv4 and 1280 for IPv6.
+
+    This minimum is now enforced in the following ways:
+
+    * When a subnet is associated with a network, validate
+      the MTU is large enough for the IP version. Not only
+      would the subnet be unusable if it was allowed, but the
+      Linux kernel can fail adding addresses and configuring
+      network settings like the MTU.
+
+    * When a network MTU is changed, validate the MTU is large
+      enough for any currently associated subnets. Allowing a
+      smaller MTU would render any existing subnets unusable.
+
+    See bug `1988069 <https://bugs.launchpad.net/neutron/+bug/1988069>`_
+    for more information.
