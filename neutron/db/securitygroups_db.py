@@ -253,6 +253,12 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             if sg['name'] == 'default' and not context.is_admin:
                 raise ext_sg.SecurityGroupCannotRemoveDefault()
 
+            # Check if there are rules with remote_group_id ponting to
+            # the security_group to be deleted
+            rules_ids_as_remote = self._get_security_group_rules_by_remote(
+                context=context, remote_id=id,
+            )
+
         self._registry_publish(resources.SECURITY_GROUP,
                                events.BEFORE_DELETE,
                                exc_cls=ext_sg.SecurityGroupInUse, id=id,
@@ -285,6 +291,20 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                              context, resource_id=id, states=(sec_group,),
                              metadata={'security_group_rule_ids': sgr_ids,
                                        'name': sg['name']}))
+        for rule in rules_ids_as_remote:
+            registry.publish(
+                resources.SECURITY_GROUP_RULE,
+                events.AFTER_DELETE,
+                self,
+                payload=events.DBEventPayload(
+                    context,
+                    resource_id=rule['id'],
+                    metadata={'security_group_id': rule['security_group_id'],
+                              'remote_group_id': rule['remote_group_id'],
+                              'rule': rule
+                              }
+                )
+            )
 
     @db_api.retry_if_session_inactive()
     def update_security_group(self, context, id, security_group):
@@ -370,6 +390,23 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             context, sg_models.SecurityGroupPortBinding,
             self._make_security_group_binding_dict,
             filters=filters, fields=fields)
+
+    def _get_security_group_rules_by_remote(self, context, remote_id):
+        return model_query.get_collection(
+            context, sg_models.SecurityGroupRule,
+            self._make_security_group_rule_dict,
+            filters={'remote_group_id': [remote_id]},
+            fields=['id',
+                    'remote_group_id',
+                    'security_group_id',
+                    'direction',
+                    'ethertype',
+                    'protocol',
+                    'port_range_min',
+                    'port_range_max',
+                    'normalized_cidr'
+                    ]
+        )
 
     @db_api.retry_if_session_inactive()
     def _delete_port_security_group_bindings(self, context, port_id):
