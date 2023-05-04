@@ -170,6 +170,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
 
     def create_router_precommit(self, resource, event, trigger, payload):
         context = payload.context
+        context.session.flush()
         router_id = payload.resource_id
         router_db = payload.metadata['router_db']
 

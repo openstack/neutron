@@ -100,6 +100,7 @@ class TagPlugin(tagging.TagPluginBase):
                         tag=tag).create()
 
     @log_helpers.log_method_call
+    @db_api.retry_if_session_inactive()
     def update_tag(self, context, resource, resource_id, tag):
         res = self._get_resource(context, resource, resource_id)
         if any(tag == tag_db.tag for tag_db in res.standard_attr.tags):
@@ -111,12 +112,14 @@ class TagPlugin(tagging.TagPluginBase):
             pass
 
     @log_helpers.log_method_call
+    @db_api.retry_if_session_inactive()
     def delete_tags(self, context, resource, resource_id):
         res = self._get_resource(context, resource, resource_id)
         tag_obj.Tag.delete_objects(context,
                                    standard_attr_id=res.standard_attr_id)
 
     @log_helpers.log_method_call
+    @db_api.retry_if_session_inactive()
     def delete_tag(self, context, resource, resource_id, tag):
         res = self._get_resource(context, resource, resource_id)
         if not tag_obj.Tag.delete_objects(
