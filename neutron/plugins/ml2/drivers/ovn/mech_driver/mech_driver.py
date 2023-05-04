@@ -265,9 +265,6 @@ class OVNMechanismDriver(api.MechanismDriver):
             registry.subscribe(self._create_security_group,
                                resources.SECURITY_GROUP,
                                events.AFTER_CREATE)
-            registry.subscribe(self._delete_security_group_precommit,
-                               resources.SECURITY_GROUP,
-                               events.PRECOMMIT_DELETE)
             registry.subscribe(self._delete_security_group,
                                resources.SECURITY_GROUP,
                                events.AFTER_DELETE)
@@ -280,6 +277,9 @@ class OVNMechanismDriver(api.MechanismDriver):
             registry.subscribe(self._process_sg_rule_notification,
                                resources.SECURITY_GROUP_RULE,
                                events.BEFORE_DELETE)
+            registry.subscribe(self._process_sg_rule_after_del_notification,
+                               resources.SECURITY_GROUP_RULE,
+                               events.AFTER_DELETE)
 
     def _clean_hash_ring(self, *args, **kwargs):
         admin_context = n_context.get_admin_context()
@@ -396,14 +396,6 @@ class OVNMechanismDriver(api.MechanismDriver):
         self._ovn_client.create_security_group(context,
                                                security_group)
 
-    def _delete_security_group_precommit(self, resource, event, trigger,
-                                         payload):
-        context = n_context.get_admin_context()
-        security_group_id = payload.resource_id
-        for sg_rule in self._plugin.get_security_group_rules(
-                context, filters={'remote_group_id': [security_group_id]}):
-            self._ovn_client.delete_security_group_rule(context, sg_rule)
-
     def _delete_security_group(self, resource, event, trigger, payload):
         context = payload.context
         security_group_id = payload.resource_id
@@ -460,6 +452,12 @@ class OVNMechanismDriver(api.MechanismDriver):
             self._ovn_client.delete_security_group_rule(
                 context,
                 sg_rule)
+
+    def _process_sg_rule_after_del_notification(
+            self, resource, event, trigger, payload):
+        context = payload.context
+        sg_rule = payload.metadata['rule']
+        self._ovn_client.delete_security_group_rule(context, sg_rule)
 
     def _sg_has_rules_with_same_normalized_cidr(self, sg_rule):
         compare_keys = [
