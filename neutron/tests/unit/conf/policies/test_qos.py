@@ -210,12 +210,6 @@ class ProjectMemberQosRuleTypeTests(AdminQosRuleTypeTests):
         super(ProjectMemberQosRuleTypeTests, self).setUp()
         self.context = self.project_member_ctx
 
-    def test_get_rule_type(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, 'get_rule_type', self.target)
-
 
 class ProjectReaderQosRuleTypeTests(ProjectMemberQosRuleTypeTests):
 
