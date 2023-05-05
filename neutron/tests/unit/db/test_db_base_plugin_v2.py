@@ -61,6 +61,7 @@ from neutron.db import ipam_backend_mixin
 from neutron.db.models import l3 as l3_models
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import models_v2
+from neutron.db import rbac_db_models
 from neutron.exceptions import mtu as mtu_exc
 from neutron.ipam.drivers.neutrondb_ipam import driver as ipam_driver
 from neutron.ipam import exceptions as ipam_exc
@@ -2898,12 +2899,12 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             with db_api.CONTEXT_WRITER.using(ctx):
                 network_obj.NetworkRBAC(
                     ctx, object_id=network['network']['id'],
-                    action='access_as_shared',
+                    action=rbac_db_models.ACCESS_SHARED,
                     project_id=network['network']['tenant_id'],
                     target_project='somebody_else').create()
                 network_obj.NetworkRBAC(
                     ctx, object_id=network['network']['id'],
-                    action='access_as_shared',
+                    action=rbac_db_models.ACCESS_SHARED,
                     project_id=network['network']['tenant_id'],
                     target_project='one_more_somebody_else').create()
             res1 = self._create_port(self.fmt,
@@ -6700,7 +6701,7 @@ class DbModelMixin(object):
 
             network_obj.NetworkRBAC(
                 ctx, object_id=network.id,
-                action='access_as_shared',
+                action=rbac_db_models.ACCESS_SHARED,
                 project_id=network.project_id,
                 target_project='*').create()
             net2 = models_v2.Network(name="net_net2", status="OK",

@@ -57,6 +57,7 @@ from neutron.db import db_base_plugin_common
 from neutron.db import ipam_pluggable_backend
 from neutron.db import models_v2
 from neutron.db import rbac_db_mixin as rbac_mixin
+from neutron.db import rbac_db_models
 from neutron.db import standardattrdescription_db as stattr_db
 from neutron.exceptions import mtu as mtu_exc
 from neutron.extensions import subnetpool_prefix_ops
@@ -204,7 +205,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         policy = (payload.request_body if event == events.BEFORE_CREATE
                   else payload.latest_state)
 
-        if object_type != 'network' or policy['action'] != 'access_as_shared':
+        if (object_type != 'network' or
+                policy['action'] != rbac_db_models.ACCESS_SHARED):
             # we only care about shared network policies
             return
         # The object a policy targets cannot be changed so we can look
@@ -247,7 +249,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 # any port with another RBAC entry covering it or one belonging
                 # to the same tenant as the network owner is ok
                 other_rbac_objs = network_obj.NetworkRBAC.get_objects(
-                    elevated, object_id=network_id, action='access_as_shared')
+                    elevated, object_id=network_id,
+                    action=rbac_db_models.ACCESS_SHARED)
                 allowed_tenants = [rbac['target_project'] for rbac
                                    in other_rbac_objs
                                    if rbac.target_project != tenant_id]
@@ -259,7 +262,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 # allows any ports
                 if network_obj.NetworkRBAC.get_object(
                         elevated, object_id=network_id,
-                        action='access_as_shared', target_project='*'):
+                        action=rbac_db_models.ACCESS_SHARED,
+                        target_project='*'):
                     return
                 ports = ports.filter(models_v2.Port.project_id == tenant_id)
             if ports.count():
@@ -305,7 +309,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def _validate_projects_have_access_to_network(self, network, project_ids):
         ctx_admin = ctx.get_admin_context()
         other_rbac_objs = network_obj.NetworkRBAC.get_objects(
-            ctx_admin, object_id=network.id, action='access_as_shared')
+            ctx_admin, object_id=network.id,
+            action=rbac_db_models.ACCESS_SHARED)
         allowed_projects = {rbac['target_project'] for rbac in other_rbac_objs
                             if rbac.target_project != '*'}
         allowed_projects.add(network.project_id)
@@ -419,7 +424,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             if n['shared']:
                 np_rbac_args = {'project_id': network.project_id,
                                 'object_id': network.id,
-                                'action': 'access_as_shared',
+                                'action': rbac_db_models.ACCESS_SHARED,
                                 'target_project': '*'}
                 np_rbac_obj = network_obj.NetworkRBAC(context, **np_rbac_args)
                 np_rbac_obj.create()
@@ -437,7 +442,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             if 'shared' in n:
                 entry = None
                 for item in network.rbac_entries:
-                    if (item.action == 'access_as_shared' and
+                    if (item.action == rbac_db_models.ACCESS_SHARED and
                             item.target_project == '*'):
                         entry = item
                         break
@@ -447,7 +452,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 if update_shared and not entry:
                     np_rbac_args = {'project_id': network.project_id,
                                     'object_id': network.id,
-                                    'action': 'access_as_shared',
+                                    'action': rbac_db_models.ACCESS_SHARED,
                                     'target_project': '*'}
                     np_rbac_obj = network_obj.NetworkRBAC(context,
                                                           **np_rbac_args)
@@ -455,7 +460,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 elif not update_shared and entry:
                     network_obj.NetworkRBAC.delete_objects(
                         context, object_id=network.id,
-                        action='access_as_shared', target_project='*')
+                        action=rbac_db_models.ACCESS_SHARED,
+                        target_project='*')
 
                 # TODO(ihrachys) Below can be removed when we make sqlalchemy
                 # event listeners in neutron_lib/db/api.py to refresh expired
