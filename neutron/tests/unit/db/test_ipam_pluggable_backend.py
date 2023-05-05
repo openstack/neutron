@@ -71,7 +71,6 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
             plugin = 'neutron.tests.unit.db.test_ipam_backend_mixin.TestPlugin'
         super(TestDbBasePluginIpam, self).setUp(plugin=plugin)
         cfg.CONF.set_override("ipam_driver", 'internal')
-        self.tenant_id = uuidutils.generate_uuid()
         self.subnet_id = uuidutils.generate_uuid()
         self.admin_context = ncontext.get_admin_context()
 
@@ -89,7 +88,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
                 'device_owner': constants.DEVICE_OWNER_COMPUTE_PREFIX + 'None'
             },
             'subnet_request': ipam_req.SpecificSubnetRequest(
-                self.tenant_id,
+                self._tenant_id,
                 self.subnet_id,
                 '10.0.0.0/24',
                 '10.0.0.1',

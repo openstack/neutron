@@ -1927,7 +1927,8 @@ class TestQoSRuleAlias(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         data = {'alias_%s_rule' % rule_type: kwargs}
         resource = '%s/alias-%s-rules' % (qos.ALIAS,
                                           rule_type.replace('_', '-'))
-        request = self.new_update_request(resource, data, rule_id, self.fmt)
+        request = self.new_update_request(resource, data, rule_id, self.fmt,
+                                          as_admin=True)
         res = request.get_response(self.ext_api)
         if res.status_int >= webob.exc.HTTPClientError.code:
             raise webob.exc.HTTPClientError(code=res.status_int)
@@ -1936,7 +1937,8 @@ class TestQoSRuleAlias(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def _show_rule(self, rule_type, rule_id):
         resource = '%s/alias-%s-rules' % (qos.ALIAS,
                                           rule_type.replace('_', '-'))
-        request = self.new_show_request(resource, rule_id, self.fmt)
+        request = self.new_show_request(resource, rule_id, self.fmt,
+                                        as_admin=True)
         res = request.get_response(self.ext_api)
         if res.status_int >= webob.exc.HTTPClientError.code:
             raise webob.exc.HTTPClientError(code=res.status_int)
@@ -1945,7 +1947,8 @@ class TestQoSRuleAlias(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def _delete_rule(self, rule_type, rule_id):
         resource = '%s/alias-%s-rules' % (qos.ALIAS,
                                           rule_type.replace('_', '-'))
-        request = self.new_delete_request(resource, rule_id, self.fmt)
+        request = self.new_delete_request(resource, rule_id, self.fmt,
+                                          as_admin=True)
         res = request.get_response(self.ext_api)
         if res.status_int >= webob.exc.HTTPClientError.code:
             raise webob.exc.HTTPClientError(code=res.status_int)
@@ -2014,7 +2017,8 @@ class TestQoSRuleAlias(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                             return_value=None):
                 resource = '%s/alias-%s-rules' % (qos.ALIAS,
                                                   rule_type.replace('_', '-'))
-                request = self.new_show_request(resource, rule_id, self.fmt)
+                request = self.new_show_request(resource, rule_id, self.fmt,
+                                                as_admin=True)
                 res = request.get_response(self.ext_api)
                 self.assertEqual(webob.exc.HTTPNotFound.code, res.status_int)
 

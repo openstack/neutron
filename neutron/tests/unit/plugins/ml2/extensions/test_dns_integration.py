@@ -82,7 +82,7 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
             net_kwargs['arg_list'] = \
                 net_kwargs.get('arg_list', ()) + (dns_apidef.DNSDOMAIN,)
         res = self._create_network(self.fmt, 'test_network', True,
-                                   **net_kwargs)
+                                   as_admin=True, **net_kwargs)
         network = self.deserialize(self.fmt, res)
         if ipv4:
             cidr = '10.0.0.0/24'

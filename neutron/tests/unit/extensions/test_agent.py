@@ -59,11 +59,10 @@ class TestAgentPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 class AgentDBTestMixIn(object):
 
     def _list_agents(self, expected_res_status=None,
-                     neutron_context=None,
                      query_string=None):
         agent_res = self._list('agents',
-                               neutron_context=neutron_context,
-                               query_params=query_string)
+                               query_params=query_string,
+                               as_admin=True)
         if expected_res_status:
             self.assertEqual(expected_res_status, agent_res.status_int)
         return agent_res
@@ -107,14 +106,12 @@ class AgentDBTestCase(AgentDBTestMixIn,
     def test_create_agent(self):
         data = {'agent': {}}
         _req = self.new_create_request('agents', data, self.fmt)
-        _req.environ['neutron.context'] = context.Context(
-            '', 'tenant_id')
         res = _req.get_response(self.ext_api)
         self.assertEqual(exc.HTTPBadRequest.code, res.status_int)
 
     def test_list_agent(self):
         agents = self._register_agent_states()
-        res = self._list('agents')
+        res = self._list('agents', as_admin=True)
         self.assertEqual(len(agents), len(res['agents']))
 
     def test_show_agent(self):
@@ -122,7 +119,7 @@ class AgentDBTestCase(AgentDBTestMixIn,
         agents = self._list_agents(
             query_string='binary=' + constants.AGENT_PROCESS_L3)
         self.assertEqual(2, len(agents['agents']))
-        agent = self._show('agents', agents['agents'][0]['id'])
+        agent = self._show('agents', agents['agents'][0]['id'], as_admin=True)
         self.assertEqual(constants.AGENT_PROCESS_L3, agent['agent']['binary'])
 
     def test_update_agent(self):
@@ -132,13 +129,13 @@ class AgentDBTestCase(AgentDBTestMixIn,
                 '&host=' + L3_HOSTB))
         self.assertEqual(1, len(agents['agents']))
         com_id = agents['agents'][0]['id']
-        agent = self._show('agents', com_id)
+        agent = self._show('agents', com_id, as_admin=True)
         new_agent = {}
         new_agent['agent'] = {}
         new_agent['agent']['admin_state_up'] = False
         new_agent['agent']['description'] = 'description'
-        self._update('agents', com_id, new_agent)
-        agent = self._show('agents', com_id)
+        self._update('agents', com_id, new_agent, as_admin=True)
+        agent = self._show('agents', com_id, as_admin=True)
         self.assertFalse(agent['agent']['admin_state_up'])
         self.assertEqual('description', agent['agent']['description'])
 

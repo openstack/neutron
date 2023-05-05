@@ -159,7 +159,8 @@ class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,
             self.assertFalse(self.was_active)
             self._delete(
                 'security-groups',
-                self._list('security-groups')['security_groups'][0]['id'])
+                self._list('security-groups')['security_groups'][0]['id'],
+                as_admin=True)
             with self.port(subnet=s):
                 self.assertFalse(self.was_active)
 

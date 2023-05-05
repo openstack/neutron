@@ -71,12 +71,11 @@ class TestAZAgentCase(AZTestCommon):
             {'name': 'nova2', 'resource': 'network', 'state': 'available'},
             {'name': 'nova2', 'resource': 'router', 'state': 'available'},
             {'name': 'nova3', 'resource': 'router', 'state': 'unavailable'}]
-        res = self._list('availability_zones')
+        res = self._list('availability_zones', as_admin=True)
         azs = res['availability_zones']
         self.assertCountEqual(expected, azs)
         # not admin case
-        ctx = context.Context('', 'noadmin')
-        res = self._list('availability_zones', neutron_context=ctx)
+        res = self._list('availability_zones', as_admin=False)
         azs = res['availability_zones']
         self.assertCountEqual(expected, azs)
 
@@ -89,33 +88,37 @@ class TestAZAgentCase(AZTestCommon):
             {'name': 'nova2', 'resource': 'network', 'state': 'available'},
             {'name': 'nova2', 'resource': 'router', 'state': 'available'},
             {'name': 'nova3', 'resource': 'router', 'state': 'unavailable'}]
-        res = self._list('availability_zones')
+        res = self._list('availability_zones', as_admin=True)
         azs = res['availability_zones']
         self.assertCountEqual(expected, azs)
         # list with filter of 'name'
         res = self._list('availability_zones',
-                         query_params="name=nova1")
+                         query_params="name=nova1",
+                         as_admin=True)
         azs = res['availability_zones']
         self.assertCountEqual(expected[:1], azs)
         # list with filter of 'resource'
         res = self._list('availability_zones',
-                         query_params="resource=router")
+                         query_params="resource=router",
+                         as_admin=True)
         azs = res['availability_zones']
         self.assertCountEqual(expected[-2:], azs)
         # list with filter of 'state' as 'available'
         res = self._list('availability_zones',
-                         query_params="state=available")
+                         query_params="state=available",
+                         as_admin=True)
         azs = res['availability_zones']
         self.assertCountEqual(expected[:3], azs)
         # list with filter of 'state' as 'unavailable'
         res = self._list('availability_zones',
-                         query_params="state=unavailable")
+                         query_params="state=unavailable",
+                         as_admin=True)
         azs = res['availability_zones']
         self.assertCountEqual(expected[-1:], azs)
 
     def test_list_agent_with_az(self):
         helpers.register_dhcp_agent(host='host1', az='nova1')
-        res = self._list('agents')
+        res = self._list('agents', as_admin=True)
         self.assertEqual('nova1',
             res['agents'][0]['availability_zone'])
 

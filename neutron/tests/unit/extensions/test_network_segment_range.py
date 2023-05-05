@@ -56,7 +56,8 @@ class NetworkSegmentRangeTestBase(test_db_base_plugin_v2.
             network_segment_range['network_segment_range'][k] = str(v)
 
         network_segment_range_req = self.new_create_request(
-            'network-segment-ranges', network_segment_range, fmt)
+            'network-segment-ranges', network_segment_range, fmt,
+            as_admin=True)
 
         network_segment_range_res = network_segment_range_req.get_response(
             self.ext_api)
@@ -84,7 +85,7 @@ class NetworkSegmentRangeTestBase(test_db_base_plugin_v2.
     def _test_update_network_segment_range(self, range_id,
                                            data, expected=None):
         update_req = self.new_update_request(
-            'network-segment-ranges', data, range_id)
+            'network-segment-ranges', data, range_id, as_admin=True)
 
         update_res = update_req.get_response(self.ext_api)
         if expected:
@@ -264,7 +265,8 @@ class TestNetworkSegmentRange(NetworkSegmentRangeTestBase):
                 'network-segment-ranges',
                 network_segment_range['network_segment_range']['id'],
                 {'network_segment_range': {'name': 'foo-name'}},
-                expected_code=webob.exc.HTTPOk.code)
+                expected_code=webob.exc.HTTPOk.code,
+                as_admin=True)
             self.assertEqual('foo-name',
                              result['network_segment_range']['name'])
 
@@ -277,7 +279,8 @@ class TestNetworkSegmentRange(NetworkSegmentRangeTestBase):
                 'network-segment-ranges',
                 network_segment_range['network_segment_range']['id'],
                 {'network_segment_range': {'name': ''}},
-                expected_code=webob.exc.HTTPOk.code)
+                expected_code=webob.exc.HTTPOk.code,
+                as_admin=True)
             self.assertEqual('', result['network_segment_range']['name'])
 
     def test_update_network_segment_range_min_max(self):
@@ -288,7 +291,8 @@ class TestNetworkSegmentRange(NetworkSegmentRangeTestBase):
                 'network-segment-ranges',
                 network_segment_range['network_segment_range']['id'],
                 {'network_segment_range': {'minimum': 1200, 'maximum': 1300}},
-                expected_code=webob.exc.HTTPOk.code)
+                expected_code=webob.exc.HTTPOk.code,
+                as_admin=True)
             self.assertEqual(1200, result['network_segment_range']['minimum'])
             self.assertEqual(1300, result['network_segment_range']['maximum'])
 
@@ -296,7 +300,8 @@ class TestNetworkSegmentRange(NetworkSegmentRangeTestBase):
         network_segment_range = self._test_create_network_segment_range()
         req = self.new_show_request(
             'network-segment-ranges',
-            network_segment_range['network_segment_range']['id'])
+            network_segment_range['network_segment_range']['id'],
+            as_admin=True)
         res = self.deserialize(self.fmt, req.get_response(self.ext_api))
         self.assertEqual(
             network_segment_range['network_segment_range']['id'],
@@ -306,7 +311,7 @@ class TestNetworkSegmentRange(NetworkSegmentRangeTestBase):
         self._test_create_network_segment_range(name='foo-range1')
         self._test_create_network_segment_range(
             name='foo-range2', minimum=400, maximum=500)
-        res = self._list('network-segment-ranges')
+        res = self._list('network-segment-ranges', as_admin=True)
         self.assertEqual(2, len(res['network_segment_ranges']))
 
     def test_list_network_segment_ranges_with_sort(self):
@@ -316,7 +321,8 @@ class TestNetworkSegmentRange(NetworkSegmentRangeTestBase):
             name='foo-range2', physical_network='phys_net2')
         self._test_list_with_sort('network-segment-range',
                                   (range2, range1),
-                                  [('name', 'desc')])
+                                  [('name', 'desc')],
+                                  as_admin=True)
 
     def test_list_network_segment_ranges_with_pagination(self):
         range1 = self._test_create_network_segment_range(
@@ -328,7 +334,8 @@ class TestNetworkSegmentRange(NetworkSegmentRangeTestBase):
         self._test_list_with_pagination(
             'network-segment-range',
             (range1, range2, range3),
-            ('name', 'asc'), 2, 2)
+            ('name', 'asc'), 2, 2,
+            as_admin=True)
 
     def test_list_network_segment_ranges_with_pagination_reverse(self):
         range1 = self._test_create_network_segment_range(
@@ -340,14 +347,17 @@ class TestNetworkSegmentRange(NetworkSegmentRangeTestBase):
         self._test_list_with_pagination_reverse(
             'network-segment-range',
             (range1, range2, range3),
-            ('name', 'asc'), 2, 2)
+            ('name', 'asc'), 2, 2,
+            as_admin=True)
 
     def test_delete_network_segment_range(self):
         network_segment_range = self._test_create_network_segment_range()
         with mock.patch.object(segments_db, 'network_segments_exist_in_range',
                                return_value=False):
             self._delete('network-segment-ranges',
-                         network_segment_range['network_segment_range']['id'])
+                         network_segment_range['network_segment_range']['id'],
+                         as_admin=True)
             self._show('network-segment-ranges',
                        network_segment_range['network_segment_range']['id'],
-                       expected_code=webob.exc.HTTPNotFound.code)
+                       expected_code=webob.exc.HTTPNotFound.code,
+                       as_admin=True)

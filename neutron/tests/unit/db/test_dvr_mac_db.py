@@ -188,22 +188,28 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
         arg_list = (portbindings.HOST_ID,)
         with self.subnet() as subnet,\
                 self.port(subnet=subnet,
+                          is_admin=True,
                           device_owner=constants.DEVICE_OWNER_COMPUTE_PREFIX,
                           arg_list=arg_list, **host_arg) as compute_port,\
                 self.port(subnet=subnet,
                           device_owner=constants.DEVICE_OWNER_DHCP,
+                          is_admin=True,
                           arg_list=arg_list, **host_arg) as dhcp_port,\
                 self.port(subnet=subnet,
                           device_owner=constants.DEVICE_OWNER_LOADBALANCER,
+                          is_admin=True,
                           arg_list=arg_list, **host_arg) as lb_port,\
                 self.port(device_owner=constants.DEVICE_OWNER_COMPUTE_PREFIX,
+                          is_admin=True,
                           arg_list=arg_list, **host_arg),\
                 self.port(subnet=subnet,
                           device_owner=constants.DEVICE_OWNER_COMPUTE_PREFIX,
+                          is_admin=True,
                           arg_list=arg_list,
                           **{portbindings.HOST_ID: 'other'}),\
                 self.port(subnet=subnet,
                           device_owner=constants.DEVICE_OWNER_NETWORK_PREFIX,
+                          is_admin=True,
                           arg_list=arg_list, **host_arg):
             expected_ids = [port['port']['id'] for port in
                             [compute_port, dhcp_port, lb_port]]

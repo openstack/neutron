@@ -84,9 +84,8 @@ class AddressGroupTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def _test_address_group_actions(self, addr_group_id, data, action,
                                     expected=None, tenant_id=None):
         act_req = self.new_action_request(
-            'address-groups', data, addr_group_id, action)
-        act_req.environ['neutron.context'] = context.Context(
-            '', tenant_id or self._tenant_id)
+            'address-groups', data, addr_group_id, action,
+            tenant_id=tenant_id or self._tenant_id)
 
         act_res = act_req.get_response(self.ext_api)
         if expected:

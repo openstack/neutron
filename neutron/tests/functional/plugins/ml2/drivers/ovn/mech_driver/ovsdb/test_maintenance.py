@@ -55,9 +55,9 @@ class _TestMaintenanceHelper(base.TestOVNFunctionalBase):
                 return row
 
     def _create_network(self, name, external=False):
-        data = {'network': {'name': name, 'tenant_id': self._tenant_id,
-                            extnet_apidef.EXTERNAL: external}}
-        req = self.new_create_request('networks', data, self.fmt)
+        data = {'network': {'name': name, extnet_apidef.EXTERNAL: external}}
+        req = self.new_create_request('networks', data, self.fmt,
+                                      as_admin=True)
         res = req.get_response(self.api)
         return self.deserialize(self.fmt, res)['network']
 
@@ -70,7 +70,6 @@ class _TestMaintenanceHelper(base.TestOVNFunctionalBase):
     def _create_port(self, name, net_id, security_groups=None,
                      device_owner=None):
         data = {'port': {'name': name,
-                         'tenant_id': self._tenant_id,
                          'network_id': net_id}}
 
         if security_groups is not None:
@@ -125,7 +124,6 @@ class _TestMaintenanceHelper(base.TestOVNFunctionalBase):
         data = {'subnet': {'name': name,
                            'network_id': net_id,
                            'ip_version': ip_version,
-                           'tenant_id': self._tenant_id,
                            'cidr': cidr,
                            'enable_dhcp': True}}
         data['subnet'].update(kwargs)
@@ -146,10 +144,13 @@ class _TestMaintenanceHelper(base.TestOVNFunctionalBase):
                 return row
 
     def _create_router(self, name, external_gateway_info=None):
-        data = {'router': {'name': name, 'tenant_id': self._tenant_id}}
+        data = {'router': {'name': name}}
+        as_admin = False
         if external_gateway_info is not None:
             data['router']['external_gateway_info'] = external_gateway_info
-        req = self.new_create_request('routers', data, self.fmt)
+            as_admin = bool(external_gateway_info.get('enable_snat'))
+        req = self.new_create_request('routers', data, self.fmt,
+                                      as_admin=as_admin)
         res = req.get_response(self.api)
         return self.deserialize(self.fmt, res)['router']
 
@@ -167,7 +168,6 @@ class _TestMaintenanceHelper(base.TestOVNFunctionalBase):
 
     def _create_security_group(self):
         data = {'security_group': {'name': 'sgtest',
-                                   'tenant_id': self._tenant_id,
                                    'description': 'SpongeBob Rocks!'}}
         req = self.new_create_request('security-groups', data, self.fmt)
         res = req.get_response(self.api)
@@ -183,8 +183,7 @@ class _TestMaintenanceHelper(base.TestOVNFunctionalBase):
                                         'protocol': n_const.PROTO_NAME_TCP,
                                         'ethertype': n_const.IPv4,
                                         'port_range_min': 22,
-                                        'port_range_max': 22,
-                                        'tenant_id': self._tenant_id}}
+                                        'port_range_max': 22}}
         req = self.new_create_request('security-group-rules', data, self.fmt)
         res = req.get_response(self.api)
         return self.deserialize(self.fmt, res)['security_group_rule']
@@ -772,8 +771,8 @@ class TestMaintenance(_TestMaintenanceHelper):
         p1 = self._create_port('testp1', net1['id'])
         logical_ip = p1['fixed_ips'][0]['ip_address']
         fip_info = {'floatingip': {
-            'description': 'test_fip',
             'tenant_id': self._tenant_id,
+            'description': 'test_fip',
             'floating_network_id': ext_net['id'],
             'port_id': p1['id'],
             'fixed_ip_address': logical_ip}}

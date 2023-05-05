@@ -22,7 +22,6 @@ from neutron_lib.api.definitions import external_net as enet_apidef
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import l3_ext_gw_mode
 from neutron_lib import constants
-from neutron_lib import context
 from neutron_lib import fixture
 from oslo_config import cfg
 from oslo_utils import uuidutils
@@ -66,7 +65,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
                          test_l3.L3BaseForIntTests,
                          test_l3.L3NatTestCaseMixin):
     fmt = 'json'
-    tenant_id = _uuid()
+    _tenant_id = _uuid()
 
     def setUp(self):
         mock.patch('neutron.api.rpc.handlers.resources_rpc.'
@@ -81,11 +80,11 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
 
         self.address_scope_id = self._make_address_scope(
             self.fmt, constants.IP_VERSION_6,
-            **{'tenant_id': self.tenant_id})['address_scope']['id']
+            **{'tenant_id': self._tenant_id})['address_scope']['id']
         self.subnetpool_id = self._make_subnetpool(
             self.fmt, ['2001::0/96'],
             **{'address_scope_id': self.address_scope_id,
-               'default_prefixlen': 112, 'tenant_id': self.tenant_id,
+               'default_prefixlen': 112,
                'name': "test-ipv6-pool"})['subnetpool']['id']
         self.ext_net = self._make_network(
             self.fmt, 'ext-net', True)
@@ -103,7 +102,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
             ipv6_ra_mode=constants.DHCPV6_STATEFUL,
             ipv6_address_mode=constants.DHCPV6_STATEFUL)
         self._ext_subnet_v6_id = self._ext_subnet_v6['subnet']['id']
-        self.router1 = self._make_router(self.fmt, self.tenant_id)
+        self.router1 = self._make_router(self.fmt, self._tenant_id)
         self.router1_id = self.router1['router']['id']
         self.private_net = self._make_network(self.fmt, 'private-net', True)
         self.private_subnet = self._make_subnet(
@@ -125,7 +124,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
                           description=None, fmt=None, tenant_id=None,
                           expected_code=exc.HTTPCreated.code,
                           expected_message=None):
-        tenant_id = tenant_id or self.tenant_id
+        tenant_id = tenant_id or self._tenant_id
         data = {'ndp_proxy': {
             "port_id": port_id,
             "router_id": router_id}
@@ -135,11 +134,9 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
         if description:
             data['ndp_proxy']['description'] = description
 
-        req_res = self._req(
-            'POST', 'ndp-proxies', data,
-            fmt or self.fmt)
-        req_res.environ['neutron.context'] = context.Context(
-            '', tenant_id, is_admin=True)
+        req_res = self.new_create_request(
+            'ndp-proxies', data, fmt or self.fmt,
+            tenant_id=tenant_id, as_admin=True)
 
         res = req_res.get_response(self.ext_api)
         self.assertEqual(expected_code, res.status_int)
@@ -152,15 +149,14 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
                           tenant_id=None, fmt=None,
                           expected_code=exc.HTTPOk.code,
                           expected_message=None, **kwargs):
-        tenant_id = tenant_id or self.tenant_id
+        tenant_id = tenant_id or self._tenant_id
         data = {}
         for k, v in kwargs.items():
             data[k] = v
-        req_res = self._req(
-            'PUT', 'ndp-proxies', {'ndp_proxy': data},
-            fmt or self.fmt, id=ndp_proxy_id)
-        req_res.environ['neutron.context'] = context.Context(
-            '', tenant_id, is_admin=True)
+        req_res = self.new_update_request(
+            'ndp-proxies', {'ndp_proxy': data},
+            ndp_proxy_id, fmt or self.fmt,
+            tenant_id=tenant_id, as_admin=True)
         res = req_res.get_response(self.ext_api)
         self.assertEqual(expected_code, res.status_int)
         if expected_message:
@@ -208,13 +204,12 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
     def _update_router(self, router_id, update_date, tenant_id=None,
                        fmt=None, expected_code=exc.HTTPOk.code,
                        expected_message=None):
-        tenant_id = tenant_id or self.tenant_id
+        tenant_id = tenant_id or self._tenant_id
         data = {'router': update_date}
         router_req = self.new_update_request(
             'routers', id=router_id, data=data,
-            fmt=(fmt or self.fmt))
-        router_req.environ['neutron.context'] = context.Context(
-            '', tenant_id, is_admin=True)
+            fmt=(fmt or self.fmt),
+            tenant_id=tenant_id, as_admin=True)
         res = router_req.get_response(self.ext_api)
         self.assertEqual(expected_code, res.status_int)
         if expected_message:
@@ -275,7 +270,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
                 ipv6_address_mode=constants.DHCPV6_STATEFUL):
             self._set_net_external(ext_net['network']['id'])
             res = self._make_router(
-                self.fmt, self.tenant_id,
+                self.fmt, self._tenant_id,
                 external_gateway_info={'network_id': ext_net['network']['id']},
                 **{'enable_ndp_proxy': True})
             expected_msg = (
@@ -284,7 +279,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
                 "scope.") % ext_net['network']['id']
             self.assertTrue(expected_msg in res['NeutronError']['message'])
             router = self._make_router(
-                self.fmt, self.tenant_id,
+                self.fmt, self._tenant_id,
                 external_gateway_info={'network_id': ext_net['network']['id']})
             expected_msg = (
                 "Can not enable ndp proxy on router %s, The router has no "
@@ -473,18 +468,18 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
     def test_create_ndp_proxy_with_different_address_scope(self):
         with self.address_scope(
             ip_version=constants.IP_VERSION_6,
-            tenant_id=self.tenant_id) as addr_scope, \
+            tenant_id=self._tenant_id) as addr_scope, \
                 self.subnetpool(['2001::100:0:0/100'],
                 **{'address_scope_id': addr_scope['address_scope']['id'],
                    'default_prefixlen': 112, 'name': 'test1',
-                   'tenant_id': self.tenant_id}) as subnetpool, \
+                   'tenant_id': self._tenant_id}) as subnetpool, \
                 self.subnet(
                     cidr='2001::100:1:0/112',
                     ip_version=constants.IP_VERSION_6,
                     ipv6_ra_mode=constants.DHCPV6_STATEFUL,
                     ipv6_address_mode=constants.DHCPV6_STATEFUL,
                     subnetpool_id=subnetpool['subnetpool']['id'],
-                    tenant_id=self.tenant_id) as subnet, \
+                    tenant_id=self._tenant_id) as subnet, \
                 self.port(subnet) as port:
             subnet_id = subnet['subnet']['id']
             port_id = port['port']['id']
@@ -503,9 +498,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
         def _create_router(self, data, expected_code=exc.HTTPCreated.code,
                           expected_message=None):
             router_req = self.new_create_request(
-                'routers', data, self.fmt)
-            router_req.environ['neutron.context'] = context.Context(
-                '', self.tenant_id, is_admin=True)
+                'routers', data, self.fmt, as_admin=True)
             res = router_req.get_response(self.ext_api)
             self.assertEqual(expected_code, res.status_int)
             if expected_message:

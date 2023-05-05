@@ -248,60 +248,117 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                           query_string=params, context=context,
                                           headers=headers)
 
+    def _admin_req(self, method, resource, data=None, fmt=None, id=None,
+                   params=None, action=None, subresource=None, sub_id=None,
+                   ctx=None, headers=None, tenant_id=None):
+        tenant_id = tenant_id or self._tenant_id
+        req = self._req(method, resource, data, fmt, id, params, action,
+                        subresource, sub_id, ctx, headers)
+        req.environ['neutron.context'] = context.Context(
+            '', tenant_id, is_admin=True,
+            roles=['admin', 'member', 'reader'])
+        return req
+
+    def _member_req(self, method, resource, data=None, fmt=None, id=None,
+                    params=None, action=None, subresource=None, sub_id=None,
+                    ctx=None, headers=None, tenant_id=None):
+        tenant_id = tenant_id or self._tenant_id
+        req = self._req(method, resource, data, fmt, id, params, action,
+                        subresource, sub_id, ctx, headers)
+        req.environ['neutron.context'] = context.Context(
+            '', tenant_id, roles=['member', 'reader'])
+        return req
+
+    def _reader_req(self, method, resource, data=None, fmt=None, id=None,
+                    params=None, action=None, subresource=None, sub_id=None,
+                    ctx=None, headers=None, tenant_id=None):
+        tenant_id = tenant_id or self._tenant_id
+        req = self._req(method, resource, data, fmt, id, params, action,
+                        subresource, sub_id, ctx, headers)
+        req.environ['neutron.context'] = context.Context(
+            '', tenant_id, roles=['reader'])
+        return req
+
     def new_create_request(self, resource, data, fmt=None, id=None,
-                           subresource=None, context=None):
-        return self._req('POST', resource, data, fmt, id=id,
-                         subresource=subresource, context=context)
+                           subresource=None, context=None, tenant_id=None,
+                           as_admin=False):
+        tenant_id = tenant_id or self._tenant_id
+        if as_admin:
+            return self._admin_req(
+                'POST', resource, data, fmt, id=id,
+                subresource=subresource, ctx=context, tenant_id=tenant_id)
+        return self._member_req('POST', resource, data, fmt, id=id,
+                                subresource=subresource, ctx=context,
+                                tenant_id=tenant_id)
 
     def new_list_request(self, resource, fmt=None, params=None,
-                         subresource=None, parent_id=None):
-        return self._req(
+                         subresource=None, parent_id=None, tenant_id=None,
+                         as_admin=False):
+        tenant_id = tenant_id or self._tenant_id
+        if as_admin:
+            return self._admin_req(
+                'GET', resource, None, fmt, params=params, id=parent_id,
+                subresource=subresource, tenant_id=tenant_id
+            )
+        return self._reader_req(
             'GET', resource, None, fmt, params=params, id=parent_id,
-            subresource=subresource
+            subresource=subresource, tenant_id=tenant_id
         )
 
     def new_show_request(self, resource, id, fmt=None,
-                         subresource=None, fields=None, sub_id=None):
+                         subresource=None, fields=None, sub_id=None,
+                         tenant_id=None, as_admin=False):
+        tenant_id = tenant_id or self._tenant_id
         if fields:
             params = "&".join(["fields=%s" % x for x in fields])
         else:
             params = None
-        return self._req('GET', resource, None, fmt, id=id,
-                         params=params, subresource=subresource, sub_id=sub_id)
+        if as_admin:
+            return self._admin_req('GET', resource, None, fmt, id=id,
+                                   params=params, subresource=subresource,
+                                   sub_id=sub_id, tenant_id=tenant_id)
+        return self._reader_req('GET', resource, None, fmt, id=id,
+                                params=params, subresource=subresource,
+                                sub_id=sub_id, tenant_id=tenant_id)
 
     def new_delete_request(self, resource, id, fmt=None, subresource=None,
-                           sub_id=None, data=None, headers=None):
-        return self._req(
-            'DELETE',
-            resource,
-            data,
-            fmt,
-            id=id,
-            subresource=subresource,
-            sub_id=sub_id,
-            headers=headers
-        )
+                           sub_id=None, data=None, headers=None,
+                           tenant_id=None, as_admin=False):
+        tenant_id = tenant_id or self._tenant_id
+        if as_admin:
+            return self._admin_req('DELETE', resource, data, fmt, id=id,
+                                   subresource=subresource, sub_id=sub_id,
+                                   headers=headers, tenant_id=tenant_id)
+        return self._member_req('DELETE', resource, data, fmt, id=id,
+                                subresource=subresource, sub_id=sub_id,
+                                headers=headers, tenant_id=tenant_id)
 
     def new_update_request(self, resource, data, id, fmt=None,
                            subresource=None, context=None, sub_id=None,
-                           headers=None):
-        return self._req(
+                           headers=None, as_admin=False, tenant_id=None):
+        tenant_id = tenant_id or self._tenant_id
+        if as_admin:
+            return self._admin_req(
+                'PUT', resource, data, fmt, id=id, subresource=subresource,
+                sub_id=sub_id, ctx=context, headers=headers,
+                tenant_id=tenant_id
+            )
+        return self._member_req(
             'PUT', resource, data, fmt, id=id, subresource=subresource,
-            sub_id=sub_id, context=context, headers=headers
+            sub_id=sub_id, ctx=context, headers=headers, tenant_id=tenant_id
         )
 
     def new_action_request(self, resource, data, id, action, fmt=None,
-                           subresource=None, sub_id=None):
-        return self._req(
-            'PUT',
-            resource,
-            data,
-            fmt,
-            id=id,
-            action=action,
-            subresource=subresource,
-            sub_id=sub_id
-        )
+                           subresource=None, sub_id=None, tenant_id=None,
+                           as_admin=False):
+        tenant_id = tenant_id or self._tenant_id
+        if as_admin:
+            return self._admin_req('PUT', resource, data, fmt, id=id,
+                                   action=action, subresource=subresource,
+                                   sub_id=sub_id, tenant_id=tenant_id)
+        return self._member_req('PUT', resource, data, fmt, id=id,
+                                action=action, subresource=subresource,
+                                sub_id=sub_id, tenant_id=tenant_id)
 
     def deserialize(self, content_type, response):
         ctype = 'application/%s' % content_type
@@ -330,23 +387,19 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                     return random.choice(ip_list)
                 return ip_list[0]
 
-    def _create_bulk_from_list(self, fmt, resource, objects, **kwargs):
+    def _create_bulk_from_list(self, fmt, resource, objects, tenant_id=None,
+                               as_admin=False, **kwargs):
         """Creates a bulk request from a list of objects."""
         collection = "%ss" % resource
         req_data = {collection: objects}
-        req = self.new_create_request(collection, req_data, fmt)
-        if ('set_context' in kwargs and
-                kwargs['set_context'] is True and
-                'tenant_id' in kwargs):
-            # create a specific auth context for this request
-            req.environ['neutron.context'] = context.Context(
-                '', kwargs['tenant_id'])
-        elif 'context' in kwargs:
-            req.environ['neutron.context'] = kwargs['context']
+        req = self.new_create_request(collection, req_data, fmt,
+                                      tenant_id=tenant_id, as_admin=as_admin)
         return req.get_response(self.api)
 
-    def _create_bulk(self, fmt, number, resource, data, name='test', **kwargs):
+    def _create_bulk(self, fmt, number, resource, data, name='test',
+                     tenant_id=None, as_admin=False, **kwargs):
         """Creates a bulk request for any kind of resource."""
+        tenant_id = tenant_id or self._tenant_id
         objects = []
         collection = "%ss" % resource
         for i in range(number):
@@ -356,19 +409,13 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                 obj[resource].update(kwargs['override'][i])
             objects.append(obj)
         req_data = {collection: objects}
-        req = self.new_create_request(collection, req_data, fmt)
-        if ('set_context' in kwargs and
-                kwargs['set_context'] is True and
-                'tenant_id' in kwargs):
-            # create a specific auth context for this request
-            req.environ['neutron.context'] = context.Context(
-                '', kwargs['tenant_id'])
-        elif 'context' in kwargs:
-            req.environ['neutron.context'] = kwargs['context']
+        req = self.new_create_request(collection, req_data, fmt,
+                                      tenant_id=tenant_id,
+                                      as_admin=as_admin)
         return req.get_response(self.api)
 
     def _create_network(self, fmt, name, admin_state_up,
-                        arg_list=None, set_context=False, tenant_id=None,
+                        arg_list=None, tenant_id=None, as_admin=False,
                         **kwargs):
         tenant_id = tenant_id or self._tenant_id
         data = {'network': {'name': name,
@@ -380,11 +427,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             # Arg must be present
             if arg in kwargs:
                 data['network'][arg] = kwargs[arg]
-        network_req = self.new_create_request('networks', data, fmt)
-        if set_context and tenant_id:
-            # create a specific auth context for this request
-            network_req.environ['neutron.context'] = context.Context(
-                '', tenant_id)
+        network_req = self.new_create_request('networks', data, fmt,
+                                              tenant_id=tenant_id,
+                                              as_admin=as_admin)
 
         return network_req.get_response(self.api)
 
@@ -394,11 +439,12 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                  'tenant_id': self._tenant_id}}
         return self._create_bulk(fmt, number, 'network', base_data, **kwargs)
 
-    def _create_subnet(self, fmt, net_id, cidr,
-                       expected_res_status=None, **kwargs):
+    def _create_subnet(self, fmt, net_id, cidr, expected_res_status=None,
+                       tenant_id=None, as_admin=False, **kwargs):
+        tenant_id = tenant_id or self._tenant_id
         data = {'subnet': {'network_id': net_id,
                            'ip_version': constants.IP_VERSION_4,
-                           'tenant_id': self._tenant_id}}
+                           'tenant_id': tenant_id}}
         if cidr:
             data['subnet']['cidr'] = cidr
         for arg in ('ip_version', 'tenant_id', 'subnetpool_id', 'prefixlen',
@@ -414,11 +460,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                 kwargs['gateway_ip'] is not constants.ATTR_NOT_SPECIFIED):
             data['subnet']['gateway_ip'] = kwargs['gateway_ip']
 
-        subnet_req = self.new_create_request('subnets', data, fmt)
-        if (kwargs.get('set_context') and 'tenant_id' in kwargs):
-            # create a specific auth context for this request
-            subnet_req.environ['neutron.context'] = context.Context(
-                '', kwargs['tenant_id'])
+        subnet_req = self.new_create_request('subnets', data, fmt,
+                                             tenant_id=tenant_id,
+                                             as_admin=as_admin)
 
         subnet_res = subnet_req.get_response(self.api)
         if expected_res_status:
@@ -445,24 +489,25 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         return self._create_bulk(fmt, number, 'subnet', base_data, **kwargs)
 
     def _create_subnetpool(self, fmt, prefixes,
-                           expected_res_status=None, admin=False, **kwargs):
+                           expected_res_status=None, admin=False,
+                           tenant_id=None, **kwargs):
+        tenant_id = tenant_id or self._tenant_id
         subnetpool = {'subnetpool': {'prefixes': prefixes}}
         for k, v in kwargs.items():
             subnetpool['subnetpool'][k] = str(v)
 
         api = self._api_for_resource('subnetpools')
         subnetpools_req = self.new_create_request('subnetpools',
-                                                  subnetpool, fmt)
-        if not admin:
-            neutron_context = context.Context('', kwargs['tenant_id'])
-            subnetpools_req.environ['neutron.context'] = neutron_context
+                                                  subnetpool, fmt,
+                                                  tenant_id=tenant_id,
+                                                  as_admin=admin)
         subnetpool_res = subnetpools_req.get_response(api)
         if expected_res_status:
             self.assertEqual(expected_res_status, subnetpool_res.status_int)
         return subnetpool_res
 
     def _create_port(self, fmt, net_id, expected_res_status=None,
-                     arg_list=None, set_context=False, is_admin=False,
+                     arg_list=None, is_admin=False,
                      tenant_id=None, **kwargs):
         tenant_id = tenant_id or self._tenant_id
         data = {'port': {'network_id': net_id,
@@ -483,11 +528,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                 'device_id' not in kwargs):
             device_id = utils.get_dhcp_agent_device_id(net_id, kwargs['host'])
             data['port']['device_id'] = device_id
-        port_req = self.new_create_request('ports', data, fmt)
-        if set_context and tenant_id:
-            # create a specific auth context for this request
-            port_req.environ['neutron.context'] = context.Context(
-                '', tenant_id, is_admin=is_admin)
+        port_req = self.new_create_request('ports', data, fmt,
+                                           tenant_id=tenant_id,
+                                           as_admin=is_admin)
 
         port_res = port_req.get_response(self.api)
         if expected_res_status:
@@ -501,28 +544,26 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             query_params.append("network_id=%s" % net_id)
         if kwargs.get('device_owner'):
             query_params.append("device_owner=%s" % kwargs.get('device_owner'))
-        port_req = self.new_list_request('ports', fmt, '&'.join(query_params))
-        if ('set_context' in kwargs and
-                kwargs['set_context'] is True and
-                'tenant_id' in kwargs):
-            # create a specific auth context for this request
-            port_req.environ['neutron.context'] = context.Context(
-                '', kwargs['tenant_id'])
-
+        port_req = self.new_list_request('ports', fmt, '&'.join(query_params),
+                                         tenant_id=kwargs.get('tenant_id'))
         port_res = port_req.get_response(self.api)
         if expected_res_status:
             self.assertEqual(expected_res_status, port_res.status_int)
         return port_res
 
     def _create_port_bulk(self, fmt, number, net_id, name,
-                          admin_state_up, **kwargs):
+                          admin_state_up, tenant_id=None, as_admin=False,
+                          **kwargs):
         base_data = {'port': {'network_id': net_id,
-                              'admin_state_up': admin_state_up,
-                              'tenant_id': self._tenant_id}}
-        return self._create_bulk(fmt, number, 'port', base_data, **kwargs)
+                              'admin_state_up': admin_state_up}}
+        return self._create_bulk(fmt, number, 'port', base_data,
+                                 tenant_id=tenant_id, as_admin=as_admin,
+                                 **kwargs)
 
-    def _make_network(self, fmt, name, admin_state_up, **kwargs):
-        res = self._create_network(fmt, name, admin_state_up, **kwargs)
+    def _make_network(self, fmt, name, admin_state_up, as_admin=False,
+                      **kwargs):
+        res = self._create_network(fmt, name, admin_state_up,
+                                   as_admin=as_admin, **kwargs)
         # TODO(salvatore-orlando): do exception handling in this test module
         # in a uniform way (we do it differently for ports, subnets, and nets
         # Things can go wrong - raise HTTP exc with res code only
@@ -535,7 +576,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                      allocation_pools=None, ip_version=constants.IP_VERSION_4,
                      enable_dhcp=True, dns_nameservers=None, host_routes=None,
                      shared=None, ipv6_ra_mode=None, ipv6_address_mode=None,
-                     tenant_id=None, set_context=False, segment_id=None):
+                     tenant_id=None, segment_id=None, as_admin=False):
         res = self._create_subnet(fmt,
                                   net_id=network['network']['id'],
                                   cidr=cidr,
@@ -552,7 +593,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                   shared=shared,
                                   ipv6_ra_mode=ipv6_ra_mode,
                                   ipv6_address_mode=ipv6_address_mode,
-                                  set_context=set_context)
+                                  as_admin=as_admin)
         # Things can go wrong - raise HTTP exc with res code only
         # so it can be caught by unit tests
         if res.status_int >= webob.exc.HTTPClientError.code:
@@ -574,11 +615,13 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                   ipv6_ra_mode=ra_addr_mode,
                                   ipv6_address_mode=ra_addr_mode))
 
-    def _make_subnetpool(self, fmt, prefixes, admin=False, **kwargs):
+    def _make_subnetpool(self, fmt, prefixes, admin=False, tenant_id=None,
+                         **kwargs):
         res = self._create_subnetpool(fmt,
                                       prefixes,
                                       None,
                                       admin,
+                                      tenant_id=tenant_id,
                                       **kwargs)
         # Things can go wrong - raise HTTP exc with res code only
         # so it can be caught by unit tests
@@ -586,8 +629,10 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             raise webob.exc.HTTPClientError(code=res.status_int)
         return self.deserialize(fmt, res)
 
-    def _make_port(self, fmt, net_id, expected_res_status=None, **kwargs):
-        res = self._create_port(fmt, net_id, expected_res_status, **kwargs)
+    def _make_port(self, fmt, net_id, expected_res_status=None,
+                   as_admin=False, **kwargs):
+        res = self._create_port(fmt, net_id, expected_res_status,
+                                is_admin=as_admin, **kwargs)
         # Things can go wrong - raise HTTP exc with res code only
         # so it can be caught by unit tests
         if res.status_int >= webob.exc.HTTPClientError.code:
@@ -598,7 +643,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                          max_burst_kbps=None, dscp_mark=None, min_kbps=None,
                          direction=constants.EGRESS_DIRECTION,
                          expected_res_status=None, project_id=None,
-                         set_context=False, is_admin=False):
+                         is_admin=False):
         # Accepted rule types: "bandwidth_limit", "dscp_marking" and
         # "minimum_bandwidth"
         self.assertIn(rule_type, [qos_const.RULE_TYPE_BANDWIDTH_LIMIT,
@@ -617,11 +662,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             data[type_req][qos_const.MIN_KBPS] = min_kbps
             data[type_req][qos_const.DIRECTION] = direction
         route = 'qos/policies/%s/%s' % (qos_policy_id, type_req + 's')
-        qos_rule_req = self.new_create_request(route, data, fmt)
-        if set_context and project_id:
-            # create a specific auth context for this request
-            qos_rule_req.environ['neutron.context'] = context.Context(
-                '', project_id, is_admin=is_admin)
+        qos_rule_req = self.new_create_request(route, data, fmt,
+                                               tenant_id=project_id,
+                                               as_admin=is_admin)
 
         qos_rule_res = qos_rule_req.get_response(self.api)
         if expected_res_status:
@@ -630,16 +673,14 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
     def _create_qos_policy(self, fmt, qos_policy_name=None,
                            expected_res_status=None, project_id=None,
-                           set_context=False, is_admin=False):
+                           is_admin=False):
         project_id = project_id or self._tenant_id
         name = qos_policy_name or uuidutils.generate_uuid()
         data = {'policy': {'name': name,
                            'project_id': project_id}}
-        qos_req = self.new_create_request('policies', data, fmt)
-        if set_context and project_id:
-            # create a specific auth context for this request
-            qos_req.environ['neutron.context'] = context.Context(
-                '', project_id, is_admin=is_admin)
+        qos_req = self.new_create_request('policies', data, fmt,
+                                          tenant_id=project_id,
+                                          as_admin=is_admin)
 
         qos_policy_res = qos_req.get_response(self.api)
         if expected_res_status:
@@ -655,54 +696,49 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
     def _delete(self, collection, id,
                 expected_code=webob.exc.HTTPNoContent.code,
-                neutron_context=None, headers=None, subresource=None,
-                sub_id=None):
+                headers=None, subresource=None, sub_id=None,
+                tenant_id=None, as_admin=False):
         req = self.new_delete_request(collection, id, headers=headers,
-                                      subresource=subresource, sub_id=sub_id)
-        if neutron_context:
-            # create a specific auth context for this request
-            req.environ['neutron.context'] = neutron_context
+                                      subresource=subresource, sub_id=sub_id,
+                                      tenant_id=tenant_id, as_admin=as_admin)
+
         res = req.get_response(self._api_for_resource(collection))
         self.assertEqual(expected_code, res.status_int)
 
-    def _show_response(self, resource, id, neutron_context=None):
-        req = self.new_show_request(resource, id)
-        if neutron_context:
-            # create a specific auth context for this request
-            req.environ['neutron.context'] = neutron_context
-        elif hasattr(self, 'tenant_id'):
-            req.environ['neutron.context'] = context.Context('',
-                                                             self.tenant_id)
+    def _show_response(self, resource, id, tenant_id=None, as_admin=False):
+        req = self.new_show_request(resource, id,
+                                    tenant_id=tenant_id,
+                                    as_admin=as_admin)
         return req.get_response(self._api_for_resource(resource))
 
     def _show(self, resource, id,
               expected_code=webob.exc.HTTPOk.code,
-              neutron_context=None):
-        res = self._show_response(resource, id,
-                                  neutron_context=neutron_context)
+              tenant_id=None, as_admin=False):
+        res = self._show_response(resource, id, tenant_id=tenant_id,
+                                  as_admin=as_admin)
         self.assertEqual(expected_code, res.status_int)
         return self.deserialize(self.fmt, res)
 
     def _update(self, resource, id, new_data,
-                expected_code=webob.exc.HTTPOk.code,
-                neutron_context=None, headers=None):
-        req = self.new_update_request(resource, new_data, id, headers=headers)
-        if neutron_context:
-            # create a specific auth context for this request
-            req.environ['neutron.context'] = neutron_context
+                expected_code=webob.exc.HTTPOk.code, headers=None,
+                request_tenant_id=None, as_admin=False):
+        req = self.new_update_request(
+            resource, new_data, id, headers=headers,
+            tenant_id=request_tenant_id, as_admin=as_admin)
         res = req.get_response(self._api_for_resource(resource))
         self.assertEqual(expected_code, res.status_int)
         return self.deserialize(self.fmt, res)
 
-    def _list(self, resource, fmt=None, neutron_context=None,
+    def _list(self, resource, fmt=None,
               query_params=None, expected_code=webob.exc.HTTPOk.code,
-              parent_id=None, subresource=None):
+              parent_id=None, subresource=None,
+              tenant_id=None, as_admin=False):
         fmt = fmt or self.fmt
         req = self.new_list_request(resource, fmt, query_params,
                                     subresource=subresource,
-                                    parent_id=parent_id)
-        if neutron_context:
-            req.environ['neutron.context'] = neutron_context
+                                    parent_id=parent_id,
+                                    tenant_id=tenant_id,
+                                    as_admin=as_admin)
         res = req.get_response(self._api_for_resource(resource))
         self.assertEqual(expected_code, res.status_int)
         return self.deserialize(fmt, res)
@@ -732,13 +768,14 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         self.assertEqual(items[0]['name'], 'test_0')
         self.assertEqual(items[1]['name'], 'test_1')
 
-    def _test_list_resources(self, resource, items, neutron_context=None,
-                             query_params=None,
-                             expected_code=webob.exc.HTTPOk.code):
+    def _test_list_resources(self, resource, items, query_params=None,
+                             expected_code=webob.exc.HTTPOk.code,
+                             tenant_id=None, as_admin=False):
         res = self._list('%ss' % resource,
-                         neutron_context=neutron_context,
                          query_params=query_params,
-                         expected_code=expected_code)
+                         expected_code=expected_code,
+                         tenant_id=tenant_id,
+                         as_admin=as_admin)
         if expected_code == webob.exc.HTTPOk.code:
             resource = resource.replace('-', '_')
             self.assertCountEqual([i['id'] for i in res['%ss' % resource]],
@@ -773,7 +810,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                tenant_id=None,
                project_id=None,
                service_types=None,
-               set_context=False):
+               as_admin=False):
         if project_id:
             tenant_id = project_id
         cidr = netaddr.IPNetwork(cidr) if cidr else None
@@ -782,7 +819,6 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             gateway_ip = netaddr.IPAddress(gateway_ip)
 
         with optional_ctx(network, self.network,
-                          set_context=set_context,
                           tenant_id=tenant_id) as network_to_use:
             subnet = self._make_subnet(fmt or self.fmt,
                                        network_to_use,
@@ -799,7 +835,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                        ipv6_ra_mode=ipv6_ra_mode,
                                        ipv6_address_mode=ipv6_address_mode,
                                        tenant_id=tenant_id,
-                                       set_context=set_context)
+                                       as_admin=as_admin)
             yield subnet
 
     @contextlib.contextmanager
@@ -813,22 +849,22 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         yield subnetpool
 
     @contextlib.contextmanager
-    def port(self, subnet=None, fmt=None, set_context=False, project_id=None,
+    def port(self, subnet=None, fmt=None, project_id=None, is_admin=False,
              **kwargs):
         tenant_id = project_id if project_id else kwargs.pop(
             'tenant_id', None)
         with optional_ctx(
                 subnet, self.subnet,
-                set_context=set_context, tenant_id=tenant_id) as subnet_to_use:
+                tenant_id=tenant_id) as subnet_to_use:
             net_id = subnet_to_use['subnet']['network_id']
             port = self._make_port(
-                fmt or self.fmt, net_id,
-                set_context=set_context, tenant_id=tenant_id,
-                **kwargs)
+                fmt or self.fmt, net_id, tenant_id=tenant_id,
+                as_admin=is_admin, **kwargs)
             yield port
 
     def _test_list_with_sort(self, resource,
-                             items, sorts, resources=None, query_params=''):
+                             items, sorts, resources=None, query_params='',
+                             tenant_id=None, as_admin=False):
         query_str = query_params
         for key, direction in sorts:
             query_str = query_str + "&sort_key=%s&sort_dir=%s" % (key,
@@ -836,7 +872,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         if not resources:
             resources = '%ss' % resource
         req = self.new_list_request(resources,
-                                    params=query_str)
+                                    params=query_str,
+                                    tenant_id=tenant_id,
+                                    as_admin=as_admin)
         api = self._api_for_resource(resources)
         res = self.deserialize(self.fmt, req.get_response(api))
         resource = resource.replace('-', '_')
@@ -848,13 +886,17 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                    limit, expected_page_num,
                                    resources=None,
                                    query_params='',
-                                   verify_key='id'):
+                                   verify_key='id',
+                                   tenant_id=None,
+                                   as_admin=False):
         if not resources:
             resources = '%ss' % resource
         query_str = query_params + '&' if query_params else ''
         query_str = query_str + ("limit=%s&sort_key=%s&"
                                  "sort_dir=%s") % (limit, sort[0], sort[1])
-        req = self.new_list_request(resources, params=query_str)
+        req = self.new_list_request(resources, params=query_str,
+                                    tenant_id=tenant_id, as_admin=as_admin)
+        neutron_ctx = req.environ['neutron.context']
         items_res = []
         page_num = 0
         api = self._api_for_resource(resources)
@@ -873,6 +915,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                         content_type = 'application/%s' % self.fmt
                         req = testlib_api.create_request(link['href'],
                                                          '', content_type)
+                        req.environ['neutron.context'] = neutron_ctx
                         self.assertEqual(len(res[resources]),
                                          limit)
         self.assertEqual(expected_page_num, page_num)
@@ -882,7 +925,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
     def _test_list_with_pagination_reverse(self, resource, items, sort,
                                            limit, expected_page_num,
                                            resources=None,
-                                           query_params=''):
+                                           query_params='',
+                                           tenant_id=None,
+                                           as_admin=False):
         if not resources:
             resources = '%ss' % resource
         resource = resource.replace('-', '_')
@@ -893,7 +938,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                  "sort_key=%s&sort_dir=%s&"
                                  "marker=%s") % (limit, sort[0], sort[1],
                                                  marker)
-        req = self.new_list_request(resources, params=query_str)
+        req = self.new_list_request(resources, params=query_str,
+                                    tenant_id=tenant_id, as_admin=as_admin)
+        neutron_ctx = req.environ['neutron.context']
         item_res = [items[-1][resource]]
         page_num = 0
         resources = resources.replace('-', '_')
@@ -911,6 +958,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                         content_type = 'application/%s' % self.fmt
                         req = testlib_api.create_request(link['href'],
                                                          '', content_type)
+                        req.environ['neutron.context'] = neutron_ctx
                         self.assertEqual(len(res[resources]),
                                          limit)
         self.assertEqual(expected_page_num, page_num)
@@ -1003,10 +1051,9 @@ class TestV2HTTPResponse(NeutronDbPluginV2TestCase):
         self._create_network(self.fmt,
                              'some_net',
                              True,
-                             tenant_id=tenant_id,
-                             set_context=True)
-        req = self.new_list_request('networks', params="fields=name")
-        req.environ['neutron.context'] = context.Context('', tenant_id)
+                             tenant_id=tenant_id)
+        req = self.new_list_request(
+            'networks', params="fields=name", tenant_id=tenant_id)
         res = req.get_response(self.api)
         self._check_list_with_fields(res, 'name')
 
@@ -1022,10 +1069,9 @@ class TestV2HTTPResponse(NeutronDbPluginV2TestCase):
         self._create_network(self.fmt,
                              'some_net',
                              True,
-                             tenant_id=tenant_id,
-                             set_context=True)
-        req = self.new_list_request('networks', params="fields=tenant_id")
-        req.environ['neutron.context'] = context.Context('', tenant_id)
+                             tenant_id=tenant_id)
+        req = self.new_list_request(
+            'networks', params="fields=tenant_id", tenant_id=tenant_id)
         res = req.get_response(self.api)
         self._check_list_with_fields(res, 'tenant_id')
 
@@ -1088,7 +1134,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
 
     def test_create_port_json(self):
         keys = [('admin_state_up', True), ('status', self.port_create_status)]
-        with self.network(shared=True) as network:
+        with self.network(shared=True, as_admin=True) as network:
             with self.subnet(network=network) as subnet:
                 with self.port(name='myname', subnet=subnet) as port:
                     for k, v in keys:
@@ -1110,7 +1156,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                               device_id='fake_device',
                               device_owner='fake_owner',
                               fixed_ips=[],
-                              set_context=False)
+                              is_admin=True)
 
     def test_create_port_bad_tenant(self):
         with self.network() as network:
@@ -1120,17 +1166,15 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                               tenant_id='bad_tenant_id',
                               device_id='fake_device',
                               device_owner='fake_owner',
-                              fixed_ips=[],
-                              set_context=True)
+                              fixed_ips=[])
 
     def test_create_port_public_network(self):
         keys = [('admin_state_up', True), ('status', self.port_create_status)]
-        with self.network(shared=True) as network:
+        with self.network(shared=True, as_admin=True) as network:
             port_res = self._create_port(self.fmt,
                                          network['network']['id'],
                                          webob.exc.HTTPCreated.code,
-                                         tenant_id='another_tenant',
-                                         set_context=True)
+                                         tenant_id='another_tenant')
             port = self.deserialize(self.fmt, port_res)
             for k, v in keys:
                 self.assertEqual(port['port'][k], v)
@@ -1149,11 +1193,10 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                                   webob.exc.HTTPClientError.code,
                                   tenant_id='tenant_id',
                                   fixed_ips=[],
-                                  set_context=False,
                                   **kwargs)
 
     def test_create_port_public_network_with_ip(self):
-        with self.network(shared=True) as network:
+        with self.network(shared=True, as_admin=True) as network:
             ip_net = netaddr.IPNetwork('10.0.0.0/24')
             with self.subnet(network=network, cidr=str(ip_net)):
                 keys = [('admin_state_up', True),
@@ -1161,8 +1204,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                 port_res = self._create_port(self.fmt,
                                              network['network']['id'],
                                              webob.exc.HTTPCreated.code,
-                                             tenant_id='another_tenant',
-                                             set_context=True)
+                                             tenant_id='another_tenant')
                 port = self.deserialize(self.fmt, port_res)
                 for k, v in keys:
                     self.assertEqual(port['port'][k], v)
@@ -1172,7 +1214,7 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
                 self._delete('ports', port['port']['id'])
 
     def test_create_port_anticipating_allocation(self):
-        with self.network(shared=True) as network:
+        with self.network(shared=True, as_admin=True) as network:
             with self.subnet(network=network, cidr='10.0.0.0/24') as subnet:
                 fixed_ips = [{'subnet_id': subnet['subnet']['id']},
                              {'subnet_id': subnet['subnet']['id'],
@@ -1183,14 +1225,13 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
 
     def test_create_port_public_network_with_invalid_ip_no_subnet_id(self,
             expected_error='InvalidIpForNetwork'):
-        with self.network(shared=True) as network:
+        with self.network(shared=True, as_admin=True) as network:
             with self.subnet(network=network, cidr='10.0.0.0/24'):
                 ips = [{'ip_address': '1.1.1.1'}]
                 res = self._create_port(self.fmt,
                                         network['network']['id'],
                                         webob.exc.HTTPBadRequest.code,
-                                        fixed_ips=ips,
-                                        set_context=True)
+                                        fixed_ips=ips)
                 data = self.deserialize(self.fmt, res)
                 msg = str(lib_exc.InvalidIpForNetwork(ip_address='1.1.1.1'))
                 self.assertEqual(expected_error, data['NeutronError']['type'])
@@ -1198,15 +1239,14 @@ class TestPortsV2(NeutronDbPluginV2TestCase):
 
     def test_create_port_public_network_with_invalid_ip_and_subnet_id(self,
             expected_error='InvalidIpForSubnet'):
-        with self.network(shared=True) as network:
+        with self.network(shared=True, as_admin=True) as network:
             with self.subnet(network=network, cidr='10.0.0.0/24') as subnet:
                 ips = [{'subnet_id': subnet['subnet']['id'],
                         'ip_address': '1.1.1.1'}]
                 res = self._create_port(self.fmt,
                                         network['network']['id'],
                                         webob.exc.HTTPBadRequest.code,
-                                        fixed_ips=ips,
-                                        set_context=True)
+                                        fixed_ips=ips)
                 data = self.deserialize(self.fmt, res)
                 msg = str(lib_exc.InvalidIpForSubnet(ip_address='1.1.1.1'))
                 self.assertEqual(expected_error, data['NeutronError']['type'])
@@ -1344,29 +1384,29 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         self._test_list_ports_filtered_by_fixed_ip(limit=500)
 
     def test_list_ports_public_network(self):
-        with self.network(shared=True) as network:
+        with self.network(shared=True, as_admin=True) as network:
             with self.subnet(network) as subnet:
                 with self.port(subnet, tenant_id='tenant_1') as port1,\
                         self.port(subnet, tenant_id='tenant_2') as port2:
                     # Admin request - must return both ports
-                    self._test_list_resources('port', [port1, port2])
+                    self._test_list_resources(
+                        'port', [port1, port2], as_admin=True)
                     # Tenant_1 request - must return single port
-                    n_context = context.Context('', 'tenant_1')
                     self._test_list_resources('port', [port1],
-                                              neutron_context=n_context)
+                                              tenant_id='tenant_1')
                     # Tenant_2 request - must return single port
-                    n_context = context.Context('', 'tenant_2')
                     self._test_list_resources('port', [port2],
-                                              neutron_context=n_context)
+                                              tenant_id='tenant_2')
 
     def test_list_ports_for_network_owner(self):
         with self.network(tenant_id='tenant_1') as network:
-            with self.subnet(network) as subnet:
-                with self.port(subnet, tenant_id='tenant_1') as port1,\
-                        self.port(subnet, tenant_id='tenant_2') as port2:
+            with self.subnet(network, tenant_id='tenant_1') as subnet:
+                with self.port(subnet, project_id='tenant_1') as port1,\
+                        self.port(subnet, project_id='tenant_2',
+                                  is_admin=True) as port2:
                     # network owner request, should return all ports
                     port_res = self._list_ports(
-                        'json', set_context=True, tenant_id='tenant_1')
+                        'json', tenant_id='tenant_1')
                     port_list = self.deserialize('json', port_res)['ports']
                     port_ids = [p['id'] for p in port_list]
                     self.assertEqual(2, len(port_list))
@@ -1375,7 +1415,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
 
                     # another tenant request, only return ports belong to it
                     port_res = self._list_ports(
-                        'json', set_context=True, tenant_id='tenant_2')
+                        'json', tenant_id='tenant_2')
                     port_list = self.deserialize('json', port_res)['ports']
                     port_ids = [p['id'] for p in port_list]
                     self.assertEqual(1, len(port_list))
@@ -1469,12 +1509,11 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                        expected_code=webob.exc.HTTPNotFound.code)
 
     def test_delete_port_public_network(self):
-        with self.network(shared=True) as network:
+        with self.network(shared=True, as_admin=True) as network:
             port_res = self._create_port(self.fmt,
                                          network['network']['id'],
                                          webob.exc.HTTPCreated.code,
-                                         tenant_id='another_tenant',
-                                         set_context=True)
+                                         tenant_id='another_tenant')
 
             port = self.deserialize(self.fmt, port_res)
             self._delete('ports', port['port']['id'])
@@ -1484,15 +1523,15 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
     def test_delete_port_by_network_owner(self):
         with self.network(tenant_id='tenant_1') as network:
             with self.subnet(network) as subnet:
-                with self.port(subnet, tenant_id='tenant_2') as port:
+                with self.port(subnet, tenant_id='tenant_2',
+                               is_admin=True) as port:
                     self._delete(
-                        'ports', port['port']['id'],
-                        neutron_context=context.Context('', 'tenant_1'))
+                        'ports', port['port']['id'], tenant_id='tenant_1')
                     self._show('ports', port['port']['id'],
                                expected_code=webob.exc.HTTPNotFound.code)
 
     def test_update_port_with_stale_subnet(self):
-        with self.network(shared=True) as network:
+        with self.network(shared=True, as_admin=True) as network:
             port = self._make_port(self.fmt, network['network']['id'])
             subnet = self._make_subnet(self.fmt, network,
                                        '10.0.0.1', '10.0.0.0/24')
@@ -1530,7 +1569,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         data = {'port': {'mac_address': new_mac}}
         if updated_fixed_ips:
             data['port']['fixed_ips'] = updated_fixed_ips
-        req = self.new_update_request('ports', data, port['id'])
+        req = self.new_update_request(
+            'ports', data, port['id'], as_admin=True)
         return req.get_response(self.api), new_mac
 
     def _verify_ips_after_mac_change(self, orig_port, new_port):
@@ -1555,6 +1595,7 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
         host_arg = host_arg or {}
         arg_list = arg_list or []
         with self.port(device_owner=device_owner, subnet=subnet,
+                       is_admin=True,
                        arg_list=arg_list, **host_arg) as port:
             self.assertIn('mac_address', port['port'])
             res, new_mac = self.update_port_mac(
@@ -1636,7 +1677,8 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                     new_mac = port2['port']['mac_address']
                     data = {'port': {'mac_address': new_mac}}
                     req = self.new_update_request('ports', data,
-                                                  port['port']['id'])
+                                                  port['port']['id'],
+                                                  as_admin=True)
                     res = req.get_response(self.api)
                     self.assertEqual(webob.exc.HTTPConflict.code,
                                      res.status_int)
@@ -1649,16 +1691,14 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
 
     def test_update_port_not_admin(self):
         res = self._create_network(self.fmt, 'net1', True,
-                                   tenant_id='not_admin',
-                                   set_context=True)
+                                   tenant_id='not_admin')
         net1 = self.deserialize(self.fmt, res)
         res = self._create_port(self.fmt, net1['network']['id'],
-                                tenant_id='not_admin', set_context=True)
+                                tenant_id='not_admin')
         port = self.deserialize(self.fmt, res)
         data = {'port': {'admin_state_up': False}}
-        neutron_context = context.Context('', 'not_admin')
         port = self._update('ports', port['port']['id'], data,
-                            neutron_context=neutron_context)
+                            request_tenant_id='not_admin')
         self.assertFalse(port['port']['admin_state_up'])
 
     def test_update_device_id_unchanged(self):
@@ -2748,7 +2788,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
         name = 'public_net'
         keys = [('subnets', []), ('name', name), ('admin_state_up', True),
                 ('status', self.net_create_status), ('shared', True)]
-        with self.network(name=name, shared=True) as net:
+        with self.network(name=name, shared=True, as_admin=True) as net:
             for k, v in keys:
                 self.assertEqual(net['network'][k], v)
 
@@ -2758,8 +2798,7 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                 webob.exc.HTTPClientError) as ctx_manager:
             with self.network(name=name,
                               shared=True,
-                              tenant_id="another_tenant",
-                              set_context=True):
+                              tenant_id="another_tenant"):
                 pass
         self.assertEqual(webob.exc.HTTPForbidden.code,
                          ctx_manager.exception.code)
@@ -2775,12 +2814,12 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                              res['network']['name'])
 
     def test_update_shared_network_noadmin_returns_403(self):
-        with self.network(shared=True) as network:
+        with self.network(shared=True, as_admin=True) as network:
             data = {'network': {'name': 'a_brand_new_name'}}
             req = self.new_update_request('networks',
                                           data,
-                                          network['network']['id'])
-            req.environ['neutron.context'] = context.Context('', 'somebody')
+                                          network['network']['id'],
+                                          tenant_id='other-tenant')
             res = req.get_response(self.api)
             self.assertEqual(403, res.status_int)
 
@@ -2789,7 +2828,8 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             data = {'network': {'shared': True}}
             req = self.new_update_request('networks',
                                           data,
-                                          network['network']['id'])
+                                          network['network']['id'],
+                                          as_admin=True)
             res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertTrue(res['network']['shared'])
 
@@ -2810,7 +2850,8 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                 data = {'network': {'shared': True}}
                 req = self.new_update_request('networks',
                                               data,
-                                              network['network']['id'])
+                                              network['network']['id'],
+                                              as_admin=True)
                 res = self.deserialize(self.fmt, req.get_response(self.api))
                 self.assertTrue(res['network']['shared'])
                 # must query db to see whether subnet's shared attribute
@@ -2821,39 +2862,38 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                 self.assertTrue(subnet_db['shared'])
 
     def test_update_network_set_not_shared_single_tenant(self):
-        with self.network(shared=True) as network:
+        with self.network(shared=True, as_admin=True) as network:
             res1 = self._create_port(self.fmt,
                                      network['network']['id'],
                                      webob.exc.HTTPCreated.code,
-                                     tenant_id=network['network']['tenant_id'],
-                                     set_context=True)
+                                     tenant_id=network['network']['tenant_id'])
             data = {'network': {'shared': False}}
             req = self.new_update_request('networks',
                                           data,
-                                          network['network']['id'])
+                                          network['network']['id'],
+                                          as_admin=True)
             res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertFalse(res['network']['shared'])
             port1 = self.deserialize(self.fmt, res1)
             self._delete('ports', port1['port']['id'])
 
-    def test_update_network_set_not_shared_other_tenant_returns_409(self):
-        with self.network(shared=True) as network:
+    def test_update_network_set_not_shared_other_tenant_returns_403(self):
+        with self.network(shared=True, as_admin=True) as network:
             res1 = self._create_port(self.fmt,
                                      network['network']['id'],
                                      webob.exc.HTTPCreated.code,
-                                     tenant_id='somebody_else',
-                                     set_context=True)
+                                     tenant_id='somebody_else')
             data = {'network': {'shared': False}}
             req = self.new_update_request('networks',
                                           data,
                                           network['network']['id'])
-            self.assertEqual(webob.exc.HTTPConflict.code,
+            self.assertEqual(webob.exc.HTTPForbidden.code,
                              req.get_response(self.api).status_int)
             port1 = self.deserialize(self.fmt, res1)
             self._delete('ports', port1['port']['id'])
 
     def test_update_network_set_not_shared_other_tenant_access_via_rbac(self):
-        with self.network(shared=True) as network:
+        with self.network(shared=True, as_admin=True) as network:
             ctx = context.get_admin_context()
             with db_api.CONTEXT_WRITER.using(ctx):
                 network_obj.NetworkRBAC(
@@ -2869,33 +2909,32 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             res1 = self._create_port(self.fmt,
                                      network['network']['id'],
                                      webob.exc.HTTPCreated.code,
-                                     tenant_id='somebody_else',
-                                     set_context=True)
+                                     tenant_id='somebody_else')
             data = {'network': {'shared': False}}
             req = self.new_update_request('networks',
                                           data,
-                                          network['network']['id'])
+                                          network['network']['id'],
+                                          as_admin=True)
             res = self.deserialize(self.fmt, req.get_response(self.api))
             self.assertFalse(res['network']['shared'])
             port1 = self.deserialize(self.fmt, res1)
             self._delete('ports', port1['port']['id'])
 
     def test_update_network_set_not_shared_multi_tenants_returns_409(self):
-        with self.network(shared=True) as network:
+        with self.network(shared=True, as_admin=True) as network:
             res1 = self._create_port(self.fmt,
                                      network['network']['id'],
                                      webob.exc.HTTPCreated.code,
-                                     tenant_id='somebody_else',
-                                     set_context=True)
+                                     tenant_id='somebody_else')
             res2 = self._create_port(self.fmt,
                                      network['network']['id'],
                                      webob.exc.HTTPCreated.code,
-                                     tenant_id=network['network']['tenant_id'],
-                                     set_context=True)
+                                     tenant_id=network['network']['tenant_id'])
             data = {'network': {'shared': False}}
             req = self.new_update_request('networks',
                                           data,
-                                          network['network']['id'])
+                                          network['network']['id'],
+                                          as_admin=True)
             self.assertEqual(webob.exc.HTTPConflict.code,
                              req.get_response(self.api).status_int)
             port1 = self.deserialize(self.fmt, res1)
@@ -2904,22 +2943,21 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             self._delete('ports', port2['port']['id'])
 
     def test_update_network_set_not_shared_multi_tenants2_returns_409(self):
-        with self.network(shared=True) as network:
+        with self.network(shared=True, as_admin=True) as network:
             res1 = self._create_port(self.fmt,
                                      network['network']['id'],
                                      webob.exc.HTTPCreated.code,
-                                     tenant_id='somebody_else',
-                                     set_context=True)
+                                     tenant_id='somebody_else')
             self._create_subnet(self.fmt,
                                 network['network']['id'],
                                 '10.0.0.0/24',
                                 webob.exc.HTTPCreated.code,
-                                tenant_id=network['network']['tenant_id'],
-                                set_context=True)
+                                tenant_id=network['network']['tenant_id'])
             data = {'network': {'shared': False}}
             req = self.new_update_request('networks',
                                           data,
-                                          network['network']['id'])
+                                          network['network']['id'],
+                                          as_admin=True)
             self.assertEqual(webob.exc.HTTPConflict.code,
                              req.get_response(self.api).status_int)
 
@@ -2969,7 +3007,8 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                     {'network': {'name': 'n2',
                                  'tenant_id': 't1'}}]
 
-        res = self._create_bulk_from_list(self.fmt, 'network', networks)
+        res = self._create_bulk_from_list(self.fmt, 'network', networks,
+                                          as_admin=True)
         self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
 
     def test_create_networks_bulk_tenants_and_quotas_fail(self):
@@ -2989,7 +3028,8 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                     {'network': {'name': 'n2',
                                  'tenant_id': 't1'}}]
 
-        res = self._create_bulk_from_list(self.fmt, 'network', networks)
+        res = self._create_bulk_from_list(self.fmt, 'network', networks,
+                                          as_admin=True)
         self.assertEqual(webob.exc.HTTPConflict.code, res.status_int)
 
     def test_create_networks_bulk_emulated(self):
@@ -3138,9 +3178,9 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
             'neutron.api.v2.base.Controller._get_pagination_helper',
             new=_fake_get_pagination_helper)
         helper_patcher.start()
-        with self.network(name='net1', shared=True) as net1,\
+        with self.network(name='net1', shared=True, as_admin=True) as net1,\
                 self.network(name='net2', shared=False) as net2,\
-                self.network(name='net3', shared=True) as net3:
+                self.network(name='net3', shared=True, as_admin=True) as net3:
             self._test_list_with_pagination('network',
                                             (net1, net2, net3),
                                             ('name', 'asc'), 2, 2,
@@ -3217,14 +3257,13 @@ class TestNetworksV2(NeutronDbPluginV2TestCase):
                           tenant_id='tenant1') as net1,\
                 self.network(shared=True,
                              name='net2',
+                             as_admin=True,
                              tenant_id='another_tenant') as net2,\
                 self.network(shared=False,
                              name='net3',
                              tenant_id='another_tenant'):
-            ctx = context.Context(user_id='non_admin',
-                                  tenant_id='tenant1',
-                                  is_admin=False)
-            self._test_list_resources('network', (net1, net2), ctx)
+            self._test_list_resources('network', (net1, net2),
+                                      tenant_id='tenant1')
 
     def test_show_network(self):
         with self.network(name='net1') as net:
@@ -3762,8 +3801,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                 ip_version=constants.IP_VERSION_4,
                                 tenant_id='bad_tenant_id',
                                 gateway_ip='10.0.2.1',
-                                device_owner='fake_owner',
-                                set_context=True)
+                                device_owner='fake_owner')
 
     def test_create_subnet_as_admin(self):
         with self.network() as network:
@@ -3775,7 +3813,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                 tenant_id='bad_tenant_id',
                                 gateway_ip='10.0.2.1',
                                 device_owner='fake_owner',
-                                set_context=False)
+                                as_admin=True)
 
     def test_create_subnet_nonzero_cidr(self):
         # Pass None as gateway_ip to prevent ip auto allocation for gw
@@ -4466,7 +4504,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                           'tenant_id': 'tenant_id',
                           'device_id': 'fake_device',
                           'device_owner': constants.DEVICE_OWNER_ROUTER_GW}
-                res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+                res = self._create_port(self.fmt, net_id=net_id,
+                                        is_admin=True, **kwargs)
                 self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
 
     def test_create_subnet_ipv6_first_ip_owned_by_non_router(self):
@@ -4482,7 +4521,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                           'tenant_id': 'tenant_id',
                           'device_id': 'fake_device',
                           'device_owner': 'fake_owner'}
-                res = self._create_port(self.fmt, net_id=net_id, **kwargs)
+                res = self._create_port(self.fmt, net_id=net_id,
+                                        is_admin=True, **kwargs)
                 self.assertEqual(webob.exc.HTTPClientError.code,
                                  res.status_int)
 
@@ -4806,7 +4846,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             ra_addr_mode=constants.DHCPV6_STATELESS)
 
     def test_update_subnet_shared_returns_400(self):
-        with self.network(shared=True) as network:
+        with self.network(shared=True, as_admin=True) as network:
             with self.subnet(network=network) as subnet:
                 data = {'subnet': {'shared': True}}
                 req = self.new_update_request('subnets', data,
@@ -5296,7 +5336,8 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             with self.subnet(network=network,
                              gateway_ip='10.0.0.1',
                              cidr='10.0.0.0/24',
-                             tenant_id=project_id),\
+                             tenant_id=project_id,
+                             as_admin=True),\
                     self.subnet(network=network,
                                 gateway_ip='10.0.1.1',
                                 cidr='10.0.1.0/24'),\
@@ -5353,7 +5394,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                 self._test_list_resources('subnet', subnets)
 
     def test_list_subnets_shared(self):
-        with self.network(shared=True) as network:
+        with self.network(shared=True, as_admin=True) as network:
             with self.subnet(network=network, cidr='10.0.0.0/24') as subnet:
                 with self.subnet(cidr='10.0.1.0/24') as priv_subnet:
                     # normal user should see only 1 subnet
@@ -6119,8 +6160,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                      min_prefixlen='24',
                                      shared=True)
         admin_res = self._list('subnetpools')
-        mortal_res = self._list('subnetpools',
-                   neutron_context=context.Context('', 'not-the-owner'))
+        mortal_res = self._list('subnetpools', tenant_id='not-the-owner')
         self.assertEqual(1, len(admin_res['subnetpools']))
         self.assertEqual(1, len(mortal_res['subnetpools']))
 
@@ -6132,8 +6172,7 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
                                      min_prefixlen='24',
                                      shared=False)
         admin_res = self._list('subnetpools')
-        mortal_res = self._list('subnetpools',
-                   neutron_context=context.Context('', 'not-the-owner'))
+        mortal_res = self._list('subnetpools', tenant_id='not-the-owner')
         self.assertEqual(1, len(admin_res['subnetpools']))
         self.assertEqual(0, len(mortal_res['subnetpools']))
 
@@ -7275,10 +7314,10 @@ class DbOperationBoundMixin(object):
 
     def get_api_kwargs(self):
         context_ = self._get_context()
-        return {'set_context': True, 'tenant_id': context_.project_id}
+        return {'tenant_id': context_.project_id}
 
     def _list_and_record_queries(self, resource, query_params=None):
-        kwargs = {'neutron_context': self._get_context()}
+        kwargs = {}
         if query_params:
             kwargs['query_params'] = query_params
         # list once before tracking to flush out any quota recalculations.

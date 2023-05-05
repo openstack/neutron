@@ -365,7 +365,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
             port_req.get_response(self.api)
 
         # External network and subnet
-        e1 = self._make_network(self.fmt, 'e1', True,
+        e1 = self._make_network(self.fmt, 'e1', True, as_admin=True,
                                 arg_list=('router:external',
                                           'provider:network_type',
                                           'provider:physical_network'),
@@ -1608,20 +1608,23 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         net = self.deserialize(self.fmt, res)['network']
         self._create_subnet(self.fmt, net['id'], '10.0.0.0/24')
 
-        res = self._create_qos_policy(self.fmt, 'qos_maxbw')
+        res = self._create_qos_policy(self.fmt, 'qos_maxbw', is_admin=True)
         qos_maxbw = self.deserialize(self.fmt, res)['policy']
         self._create_qos_rule(self.fmt, qos_maxbw['id'],
                               qos_const.RULE_TYPE_BANDWIDTH_LIMIT,
-                              max_kbps=1000, max_burst_kbps=800)
+                              max_kbps=1000, max_burst_kbps=800,
+                              is_admin=True)
         self._create_qos_rule(self.fmt, qos_maxbw['id'],
                               qos_const.RULE_TYPE_BANDWIDTH_LIMIT,
                               direction=constants.INGRESS_DIRECTION,
-                              max_kbps=700, max_burst_kbps=600)
+                              max_kbps=700, max_burst_kbps=600,
+                              is_admin=True)
 
-        res = self._create_qos_policy(self.fmt, 'qos_maxbw')
+        res = self._create_qos_policy(self.fmt, 'qos_maxbw', is_admin=True)
         qos_dscp = self.deserialize(self.fmt, res)['policy']
         self._create_qos_rule(self.fmt, qos_dscp['id'],
-                              qos_const.RULE_TYPE_DSCP_MARKING, dscp_mark=14)
+                              qos_const.RULE_TYPE_DSCP_MARKING, dscp_mark=14,
+                              is_admin=True)
 
         res = self._create_port(
             self.fmt, net['id'], arg_list=('qos_policy_id', ),
@@ -1677,7 +1680,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                                                 {'floatingip': body})
 
     def test_sync_fip_qos_policies(self):
-        res = self._create_network(self.fmt, 'n1_ext', True,
+        res = self._create_network(self.fmt, 'n1_ext', True, as_admin=True,
                                    arg_list=('router:external', ),
                                    **{'router:external': True})
         net_ext = self.deserialize(self.fmt, res)['network']
@@ -1687,15 +1690,17 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         net_int = self.deserialize(self.fmt, res)['network']
         self._create_subnet(self.fmt, net_int['id'], '10.10.0.0/24')
 
-        res = self._create_qos_policy(self.fmt, 'qos_maxbw')
+        res = self._create_qos_policy(self.fmt, 'qos_maxbw', is_admin=True)
         qos_maxbw = self.deserialize(self.fmt, res)['policy']
         self._create_qos_rule(self.fmt, qos_maxbw['id'],
                               qos_const.RULE_TYPE_BANDWIDTH_LIMIT,
-                              max_kbps=1000, max_burst_kbps=800)
+                              max_kbps=1000, max_burst_kbps=800,
+                              is_admin=True)
         self._create_qos_rule(self.fmt, qos_maxbw['id'],
                               qos_const.RULE_TYPE_BANDWIDTH_LIMIT,
                               direction=constants.INGRESS_DIRECTION,
-                              max_kbps=700, max_burst_kbps=600)
+                              max_kbps=700, max_burst_kbps=600,
+                              is_admin=True)
 
         # Create a router with net_ext as GW network and net_int as internal
         # one, and a floating IP on the external network.
@@ -1750,7 +1755,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         self._validate_qos_records()
 
     def test_fip_nat_revert_to_stateful(self):
-        res = self._create_network(self.fmt, 'n1_ext', True,
+        res = self._create_network(self.fmt, 'n1_ext', True, as_admin=True,
                                    arg_list=('router:external', ),
                                    **{'router:external': True})
         net_ext = self.deserialize(self.fmt, res)['network']

@@ -65,7 +65,9 @@ class TestNetworkIPAvailabilityAPI(
             with self.subnet(network=net):
                 # list by query fields: total_ips
                 params = 'fields=total_ips'
-                request = self.new_list_request(API_RESOURCE, params=params)
+                request = self.new_list_request(API_RESOURCE,
+                                                params=params,
+                                                as_admin=True)
                 response = self.deserialize(self.fmt,
                                             request.get_response(self.ext_api))
                 self.assertIn(IP_AVAILS_KEY, response)
@@ -83,7 +85,8 @@ class TestNetworkIPAvailabilityAPI(
                 params = ['total_ips']
                 request = self.new_show_request(API_RESOURCE,
                                                 network['id'],
-                                                fields=params)
+                                                fields=params,
+                                                as_admin=True)
                 response = self.deserialize(
                     self.fmt, request.get_response(self.ext_api))
                 self.assertIn(IP_AVAIL_KEY, response)
@@ -103,7 +106,9 @@ class TestNetworkIPAvailabilityAPI(
             with self.subnet(network=net):
                 network = net['network']
                 # Get ALL
-                request = self.new_list_request(API_RESOURCE, self.fmt)
+                request = self.new_list_request(API_RESOURCE,
+                                                self.fmt,
+                                                as_admin=True)
                 response = self.deserialize(self.fmt,
                                             request.get_response(self.ext_api))
                 self.assertIn(IP_AVAILS_KEY, response)
@@ -112,7 +117,8 @@ class TestNetworkIPAvailabilityAPI(
                                                    net, 0)
 
                 # Get single via id
-                request = self.new_show_request(API_RESOURCE, network['id'])
+                request = self.new_show_request(API_RESOURCE, network['id'],
+                                                as_admin=True)
                 response = self.deserialize(
                     self.fmt, request.get_response(self.ext_api))
                 self.assertIn(IP_AVAIL_KEY, response)
@@ -134,7 +140,8 @@ class TestNetworkIPAvailabilityAPI(
                         self.port(subnet=subnet3_1):
 
                     # Test get ALL
-                    request = self.new_list_request(API_RESOURCE)
+                    request = self.new_list_request(API_RESOURCE,
+                                                    as_admin=True)
                     response = self.deserialize(
                         self.fmt, request.get_response(self.ext_api))
                     self.assertIn(IP_AVAILS_KEY, response)
@@ -148,7 +155,8 @@ class TestNetworkIPAvailabilityAPI(
                     # Test get single via network id
                     network = n1['network']
                     request = self.new_show_request(API_RESOURCE,
-                                                    network['id'])
+                                                    network['id'],
+                                                    as_admin=True)
                     response = self.deserialize(
                         self.fmt, request.get_response(self.ext_api))
                     self.assertIn(IP_AVAIL_KEY, response)
@@ -165,7 +173,8 @@ class TestNetworkIPAvailabilityAPI(
                         self.port(subnet=subnet1_2),\
                         self.port(subnet=subnet1_2):
                     # Get ALL
-                    request = self.new_list_request(API_RESOURCE)
+                    request = self.new_list_request(API_RESOURCE,
+                                                    as_admin=True)
                     response = self.deserialize(
                         self.fmt, request.get_response(self.ext_api))
                     self.assertIn(IP_AVAILS_KEY, response)
@@ -176,7 +185,8 @@ class TestNetworkIPAvailabilityAPI(
                     # Get single via network id
                     network = n1['network']
                     request = self.new_show_request(API_RESOURCE,
-                                                    network['id'])
+                                                    network['id'],
+                                                    as_admin=True)
                     response = self.deserialize(
                         self.fmt, request.get_response(self.ext_api))
                     self.assertIn(IP_AVAIL_KEY, response)
@@ -186,7 +196,8 @@ class TestNetworkIPAvailabilityAPI(
     def test_usages_port_consumed_v4(self):
         with self.network() as net:
             with self.subnet(network=net) as subnet:
-                request = self.new_list_request(API_RESOURCE)
+                request = self.new_list_request(API_RESOURCE,
+                                                as_admin=True)
                 # Consume 2 ports
                 with self.port(subnet=subnet), self.port(subnet=subnet):
                     response = self.deserialize(self.fmt,
@@ -200,7 +211,8 @@ class TestNetworkIPAvailabilityAPI(
             with self.subnet(network=net):
                 # Get IPv4
                 params = 'ip_version=%s' % constants.IP_VERSION_4
-                request = self.new_list_request(API_RESOURCE, params=params)
+                request = self.new_list_request(API_RESOURCE, params=params,
+                                                as_admin=True)
                 response = self.deserialize(self.fmt,
                                             request.get_response(self.ext_api))
                 self.assertIn(IP_AVAILS_KEY, response)
@@ -210,7 +222,8 @@ class TestNetworkIPAvailabilityAPI(
 
                 # Get IPv6 should return empty array
                 params = 'ip_version=%s' % constants.IP_VERSION_6
-                request = self.new_list_request(API_RESOURCE, params=params)
+                request = self.new_list_request(API_RESOURCE, params=params,
+                                                as_admin=True)
                 response = self.deserialize(self.fmt,
                                             request.get_response(self.ext_api))
                 self.assertEqual(0, len(response[IP_AVAILS_KEY]))
@@ -225,7 +238,8 @@ class TestNetworkIPAvailabilityAPI(
                     ipv6_address_mode=constants.DHCPV6_STATELESS):
                 # Get IPv6
                 params = 'ip_version=%s' % constants.IP_VERSION_6
-                request = self.new_list_request(API_RESOURCE, params=params)
+                request = self.new_list_request(API_RESOURCE, params=params,
+                                                as_admin=True)
                 response = self.deserialize(self.fmt,
                                             request.get_response(self.ext_api))
                 self.assertEqual(1, len(response[IP_AVAILS_KEY]))
@@ -234,7 +248,8 @@ class TestNetworkIPAvailabilityAPI(
 
                 # Get IPv4 should return empty array
                 params = 'ip_version=%s' % constants.IP_VERSION_4
-                request = self.new_list_request(API_RESOURCE, params=params)
+                request = self.new_list_request(API_RESOURCE, params=params,
+                                                as_admin=True)
                 response = self.deserialize(self.fmt,
                                             request.get_response(self.ext_api))
                 self.assertEqual(0, len(response[IP_AVAILS_KEY]))
@@ -247,7 +262,8 @@ class TestNetworkIPAvailabilityAPI(
                     network=net, cidr=cidr_ipv6,
                     ip_version=constants.IP_VERSION_6,
                     ipv6_address_mode=constants.DHCPV6_STATELESS) as subnet:
-                request = self.new_list_request(API_RESOURCE)
+                request = self.new_list_request(API_RESOURCE,
+                                                as_admin=True)
                 # Consume 3 ports
                 with self.port(subnet=subnet),\
                         self.port(subnet=subnet), \
@@ -266,7 +282,8 @@ class TestNetworkIPAvailabilityAPI(
                 test_id = network['id']
                 # Get by query param: network_id
                 params = 'network_id=%s' % test_id
-                request = self.new_list_request(API_RESOURCE, params=params)
+                request = self.new_list_request(API_RESOURCE, params=params,
+                                                as_admin=True)
                 response = self.deserialize(self.fmt,
                                             request.get_response(self.ext_api))
                 self.assertIn(IP_AVAILS_KEY, response)
@@ -276,7 +293,8 @@ class TestNetworkIPAvailabilityAPI(
 
                 # Get by NON-matching query param: network_id
                 params = 'network_id=clearlywontmatch'
-                request = self.new_list_request(API_RESOURCE, params=params)
+                request = self.new_list_request(API_RESOURCE, params=params,
+                                                as_admin=True)
                 response = self.deserialize(self.fmt,
                                             request.get_response(self.ext_api))
                 self.assertEqual(0, len(response[IP_AVAILS_KEY]))
@@ -287,7 +305,8 @@ class TestNetworkIPAvailabilityAPI(
             with self.subnet(network=net):
                 # Get by query param: network_name
                 params = 'network_name=%s' % test_name
-                request = self.new_list_request(API_RESOURCE, params=params)
+                request = self.new_list_request(API_RESOURCE, params=params,
+                                                as_admin=True)
                 response = self.deserialize(self.fmt,
                                             request.get_response(self.ext_api))
                 self.assertIn(IP_AVAILS_KEY, response)
@@ -297,7 +316,8 @@ class TestNetworkIPAvailabilityAPI(
 
                 # Get by NON-matching query param: network_name
                 params = 'network_name=clearly-wont-match'
-                request = self.new_list_request(API_RESOURCE, params=params)
+                request = self.new_list_request(API_RESOURCE, params=params,
+                                                as_admin=True)
                 response = self.deserialize(self.fmt,
                                             request.get_response(self.ext_api))
                 self.assertEqual(0, len(response[IP_AVAILS_KEY]))
@@ -308,7 +328,8 @@ class TestNetworkIPAvailabilityAPI(
             with self.subnet(network=net):
                 # Get by query param: tenant_id
                 params = 'tenant_id=%s' % test_tenant_id
-                request = self.new_list_request(API_RESOURCE, params=params)
+                request = self.new_list_request(API_RESOURCE, params=params,
+                                                as_admin=True)
                 response = self.deserialize(self.fmt,
                                             request.get_response(self.ext_api))
                 self.assertIn(IP_AVAILS_KEY, response)
@@ -320,7 +341,8 @@ class TestNetworkIPAvailabilityAPI(
 
                 # Get by NON-matching query param: tenant_id
                 params = 'tenant_id=clearly-wont-match'
-                request = self.new_list_request(API_RESOURCE, params=params)
+                request = self.new_list_request(API_RESOURCE, params=params,
+                                                as_admin=True)
                 response = self.deserialize(self.fmt,
                                             request.get_response(self.ext_api))
                 self.assertEqual(0, len(response[IP_AVAILS_KEY]))
@@ -331,7 +353,8 @@ class TestNetworkIPAvailabilityAPI(
             with self.subnet(network=net):
                 # Get by query param: project_id
                 params = 'project_id=%s' % test_project_id
-                request = self.new_list_request(API_RESOURCE, params=params)
+                request = self.new_list_request(API_RESOURCE, params=params,
+                                                as_admin=True)
                 response = self.deserialize(self.fmt,
                                             request.get_response(self.ext_api))
                 self.assertIn(IP_AVAILS_KEY, response)
@@ -343,7 +366,8 @@ class TestNetworkIPAvailabilityAPI(
 
                 # Get by NON-matching query param: project_id
                 params = 'project_id=clearly-wont-match'
-                request = self.new_list_request(API_RESOURCE, params=params)
+                request = self.new_list_request(API_RESOURCE, params=params,
+                                                as_admin=True)
                 response = self.deserialize(self.fmt,
                                             request.get_response(self.ext_api))
                 self.assertEqual(0, len(response[IP_AVAILS_KEY]))
@@ -369,7 +393,8 @@ class TestNetworkIPAvailabilityAPI(
                         self.port(subnet=s42), self.port(subnet=s42):
 
                     # Verify consumption across all
-                    request = self.new_list_request(API_RESOURCE)
+                    request = self.new_list_request(API_RESOURCE,
+                                                    as_admin=True)
                     response = self.deserialize(
                         self.fmt, request.get_response(self.ext_api))
                     avails_list = response[IP_AVAILS_KEY]
@@ -387,7 +412,8 @@ class TestNetworkIPAvailabilityAPI(
                                    constants.IP_VERSION_6]:
                         params = 'ip_version=%i' % ip_ver
                         request = self.new_list_request(API_RESOURCE,
-                                                        params=params)
+                                                        params=params,
+                                                        as_admin=True)
                         response = self.deserialize(
                                 self.fmt, request.get_response(self.ext_api))
                         for net_avail in response[IP_AVAILS_KEY]:
@@ -399,7 +425,8 @@ class TestNetworkIPAvailabilityAPI(
                             API_RESOURCE,
                             params='network_id=%s&network_id=%s'
                                    % (net_v4_2['network']['id'],
-                                      net_v6_2['network']['id']))
+                                      net_v6_2['network']['id']),
+                            as_admin=True)
                     response = self.deserialize(
                         self.fmt, request.get_response(self.ext_api))
                     avails_list = response[IP_AVAILS_KEY]
@@ -414,7 +441,8 @@ class TestNetworkIPAvailabilityAPI(
             networks = (net1, net2, net3, net4)
             for idx in range(1, len(networks) + 1):
                 params = 'limit=%s' % idx
-                request = self.new_list_request(API_RESOURCE, params=params)
+                request = self.new_list_request(API_RESOURCE, params=params,
+                                                as_admin=True)
                 response = self.deserialize(self.fmt,
                                             request.get_response(self.ext_api))
                 self.assertEqual(idx, len(response[IP_AVAILS_KEY]))
@@ -426,14 +454,16 @@ class TestNetworkIPAvailabilityAPI(
             network_ids = sorted([net['network']['id'] for net in networks])
 
             params = 'sort_key=network_id;sort_dir=asc'
-            request = self.new_list_request(API_RESOURCE, params=params)
+            request = self.new_list_request(API_RESOURCE, params=params,
+                                            as_admin=True)
             response = self.deserialize(self.fmt,
                                         request.get_response(self.ext_api))
             res = [net['network_id'] for net in response[IP_AVAILS_KEY]]
             self.assertEqual(network_ids, res)
 
             params = 'sort_key=network_id;sort_dir=desc'
-            request = self.new_list_request(API_RESOURCE, params=params)
+            request = self.new_list_request(API_RESOURCE, params=params,
+                                            as_admin=True)
             response = self.deserialize(self.fmt,
                                         request.get_response(self.ext_api))
             res = [net['network_id'] for net in response[IP_AVAILS_KEY]]

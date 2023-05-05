@@ -50,12 +50,10 @@ class TagPortsDuringBulkCreationTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def test_create_ports_bulk_with_tags(self):
         num_ports = 3
-        tenant_id = 'some_tenant'
-        with self.network(tenant_id=tenant_id) as network_to_use:
+        with self.network() as network_to_use:
             net_id = network_to_use['network']['id']
             port = {'port': {'network_id': net_id,
-                             'admin_state_up': True,
-                             'tenant_id': tenant_id}}
+                             'admin_state_up': True}}
             ports = [copy.deepcopy(port) for x in range(num_ports)]
             ports_tags_map = {}
             for port, tags in zip(ports, TAGS):
@@ -73,13 +71,11 @@ class TagPortsDuringBulkCreationTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def test_create_ports_bulk_no_tags(self):
         num_ports = 2
-        tenant_id = 'some_tenant'
-        with self.network(tenant_id=tenant_id) as network_to_use:
+        with self.network() as network_to_use:
             net_id = network_to_use['network']['id']
             port = {'port': {'name': 'port',
                              'network_id': net_id,
-                             'admin_state_up': True,
-                             'tenant_id': tenant_id}}
+                             'admin_state_up': True}}
             ports = [copy.deepcopy(port) for x in range(num_ports)]
             req_body = {'ports': ports}
             ports_req = self.new_create_request('ports', req_body)
@@ -90,13 +86,11 @@ class TagPortsDuringBulkCreationTestCase(test_plugin.Ml2PluginV2TestCase):
                 self.assertFalse(port['tags'])
 
     def test_create_port_with_tags(self):
-        tenant_id = 'some_tenant'
-        with self.network(tenant_id=tenant_id) as network_to_use:
+        with self.network() as network_to_use:
             net_id = network_to_use['network']['id']
             req_body = {'port': {'name': 'port',
                                  'network_id': net_id,
                                  'admin_state_up': True,
-                                 'tenant_id': tenant_id,
                                  'tags': TAGS[0]}}
             port_req = self.new_create_request('ports', req_body)
             res = port_req.get_response(self.api)
@@ -106,16 +100,14 @@ class TagPortsDuringBulkCreationTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def test_type_args_passed_to_extension(self):
         num_ports = 2
-        tenant_id = 'some_tenant'
         extension = tag_ports_during_bulk_creation
         with mock.patch.object(
                 extension.TagPortsDuringBulkCreationExtensionDriver,
                 'process_create_port') as patched_method:
-            with self.network(tenant_id=tenant_id) as network_to_use:
+            with self.network() as network_to_use:
                 net_id = network_to_use['network']['id']
                 port = {'port': {'network_id': net_id,
-                                 'admin_state_up': True,
-                                 'tenant_id': tenant_id}}
+                                 'admin_state_up': True}}
                 ports = [copy.deepcopy(port) for x in range(num_ports)]
                 ports[0]['port']['tags'] = TAGS[0]
                 ports[1]['port']['tags'] = TAGS[1]

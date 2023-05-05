@@ -198,7 +198,9 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
                                'service_profiles': ['profile-1']}}
         instance = self.plugin.return_value
         instance.get_flavor.return_value = expected['flavor']
-        res = self.api.get(_get_path('flavors', id=flavor_id, fmt=self.fmt))
+        res = self.api.get(
+            _get_path('flavors', id=flavor_id, fmt=self.fmt),
+            extra_environ=test_base._get_neutron_env(as_admin=True))
         instance.get_flavor.assert_called_with(mock.ANY,
                                                flavor_id,
                                                fields=mock.ANY)
@@ -218,7 +220,9 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
                              'service_profiles': ['profile-2', 'profile-1']}]}
         instance = self.plugin.return_value
         instance.get_flavors.return_value = data['flavors']
-        res = self.api.get(_get_path('flavors', fmt=self.fmt))
+        res = self.api.get(
+            _get_path('flavors', fmt=self.fmt),
+            extra_environ=test_base._get_neutron_env(as_admin=True))
         instance.get_flavors.assert_called_with(mock.ANY,
                                                 fields=mock.ANY,
                                                 filters=mock.ANY)

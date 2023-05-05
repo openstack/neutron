@@ -43,8 +43,11 @@ class InjectContext(base.ConfigurableMiddleware):
         # Determine the tenant
         tenant_id = req.headers.get('X_PROJECT_ID')
 
-        # Suck out the roles
-        roles = [r.strip() for r in req.headers.get('X_ROLES', '').split(',')]
+        roles = ['member', 'reader']
+        # Suck out the roles if any are set
+        custom_roles = req.headers.get('X_ROLES')
+        if custom_roles:
+            roles = [r.strip() for r in custom_roles.split(',')]
 
         # Human-friendly names
         tenant_name = req.headers.get('X_PROJECT_NAME')

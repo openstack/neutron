@@ -237,7 +237,7 @@ class TestRevisionNumberMaintenance(test_securitygroup.SecurityGroupsTestCase,
                                    '10.0.0.0/24')['subnet']
         self._set_net_external(self.net['id'])
         info = {'network_id': self.net['id']}
-        router = self._make_router(self.fmt, None,
+        router = self._make_router(self.fmt, self._tenant_id,
                                    external_gateway_info=info)['router']
         fip = self._make_floatingip(self.fmt, self.net['id'])['floatingip']
         port = self._make_port(self.fmt, self.net['id'])['port']

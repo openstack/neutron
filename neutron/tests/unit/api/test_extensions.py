@@ -17,6 +17,7 @@ import copy
 from unittest import mock
 
 import fixtures
+from neutron_lib import context
 from neutron_lib import exceptions
 from neutron_lib.plugins import constants as lib_const
 from neutron_lib.plugins import directory
@@ -1045,6 +1046,8 @@ class ExtensionExtendedAttributeTestCase(base.BaseTestCase):
         req = testlib_api.create_request(
             path, body, content_type,
             method, query_string=params)
+        req.environ['neutron.context'] = context.Context(
+            '', self._tenant_id, roles=['member', 'reader'])
         res = req.get_response(self._api)
         if res.status_code >= 400:
             raise webexc.HTTPClientError(detail=res.body, code=res.status_code)

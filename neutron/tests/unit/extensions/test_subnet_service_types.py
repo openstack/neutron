@@ -344,13 +344,14 @@ class SubnetServiceTypesExtensionTestCase(
                                  tenant_id=network['tenant_id'],
                                  device_owner=service_type,
                                  arg_list=(portbindings.HOST_ID,),
-                                 **{portbindings.HOST_ID: 'fakehost'})
+                                 **{portbindings.HOST_ID: 'fakehost'},
+                                 is_admin=True)
         port = self.deserialize('json', port)['port']
         # Update the port's host binding.
         data = {'port': {portbindings.HOST_ID: 'fakehost2'}}
         # self._update will fail with a MismatchError if the update cannot be
         # applied
-        port = self._update('ports', port['id'], data)
+        port = self._update('ports', port['id'], data, as_admin=True)
 
 
 class SubnetServiceTypesExtensionTestCasev6(

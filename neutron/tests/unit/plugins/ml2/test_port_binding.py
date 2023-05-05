@@ -78,7 +78,8 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         mac_address = 'aa:aa:aa:aa:aa:aa'
         host_arg = {portbindings.HOST_ID: host,
                     'mac_address': mac_address}
-        with self.port(name='name', arg_list=(portbindings.HOST_ID,),
+        with self.port(name='name', is_admin=True,
+                       arg_list=(portbindings.HOST_ID,),
                        **host_arg) as port:
             self._check_response(port['port'], vif_type, has_port_filter,
                                  bound, status)
@@ -152,12 +153,12 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
             update_body = {'name': 'test_update'}
             if new_host is not None:
                 update_body[portbindings.HOST_ID] = new_host
-            with self.port(name='name', arg_list=(portbindings.HOST_ID,),
+            with self.port(name='name', is_admin=True,
+                           arg_list=(portbindings.HOST_ID,),
                            **host_arg) as port:
-                neutron_context = context.get_admin_context()
                 updated_port = self._update('ports', port['port']['id'],
                                             {'port': update_body},
-                                            neutron_context=neutron_context)
+                                            as_admin=True)
                 port_data = updated_port['port']
                 if new_host is not None:
                     self.assertEqual(new_host,
@@ -190,7 +191,7 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         ctx = context.get_admin_context()
         plugin = directory.get_plugin()
         host_id = {portbindings.HOST_ID: 'host1'}
-        with self.port(**host_id) as port:
+        with self.port(is_admin=True, **host_id) as port:
             # Since the port is DOWN at first
             # It's necessary to make its status ACTIVE for this test
             plugin.update_port_status(ctx, port['port']['id'],
@@ -221,7 +222,8 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
 
     def test_distributed_binding(self):
         ctx = context.get_admin_context()
-        with self.port(device_owner=const.DEVICE_OWNER_DVR_INTERFACE) as port:
+        with self.port(is_admin=True,
+                       device_owner=const.DEVICE_OWNER_DVR_INTERFACE) as port:
             port_id = port['port']['id']
 
             # Verify port's VIF type and status.
@@ -235,7 +237,7 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
                  'device_id': 'router1'}})
 
             # Get port and verify VIF type and status unchanged.
-            port = self._show('ports', port_id)
+            port = self._show('ports', port_id, as_admin=True)
             self.assertEqual(portbindings.VIF_TYPE_DISTRIBUTED,
                              port['port'][portbindings.VIF_TYPE])
             self.assertEqual('DOWN', port['port']['status'])
@@ -247,7 +249,7 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
             self.assertEqual('local', details['network_type'])
 
             # Get port and verify VIF type and changed status.
-            port = self._show('ports', port_id)
+            port = self._show('ports', port_id, as_admin=True)
             self.assertEqual(portbindings.VIF_TYPE_DISTRIBUTED,
                              port['port'][portbindings.VIF_TYPE])
             self.assertEqual('BUILD', port['port']['status'])
@@ -258,7 +260,7 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
                 host='host-ovs-no_filter')
 
             # Get port and verify VIF type and changed status.
-            port = self._show('ports', port_id)
+            port = self._show('ports', port_id, as_admin=True)
             self.assertEqual(portbindings.VIF_TYPE_DISTRIBUTED,
                              port['port'][portbindings.VIF_TYPE])
             self.assertEqual('ACTIVE', port['port']['status'])
@@ -269,7 +271,7 @@ class PortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
                 host='host-ovs-no_filter')
 
             # Get port and verify VIF type and changed status.
-            port = self._show('ports', port_id)
+            port = self._show('ports', port_id, as_admin=True)
             self.assertEqual(portbindings.VIF_TYPE_DISTRIBUTED,
                              port['port'][portbindings.VIF_TYPE])
             self.assertEqual('DOWN', port['port']['status'])
@@ -382,7 +384,8 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         data = {'binding': kwargs}
         binding_req = self.new_update_request('ports', data, port_id, fmt,
                                               subresource='bindings',
-                                              sub_id=host)
+                                              sub_id=host,
+                                              as_admin=True)
         return binding_req.get_response(self.api)
 
     def _do_update_port_binding(self, fmt, port_id, host, **kwargs):
@@ -457,7 +460,8 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
     def test_create_duplicate_port_binding(self):
         device_owner = '%s%s' % (const.DEVICE_OWNER_COMPUTE_PREFIX, 'nova')
         host_arg = {portbindings.HOST_ID: self.host}
-        with self.port(device_owner=device_owner,
+        with self.port(is_admin=True,
+                       device_owner=device_owner,
                        arg_list=(portbindings.HOST_ID,),
                        **host_arg) as port:
             response = self._create_port_binding(self.fmt, port['port']['id'],
@@ -540,7 +544,7 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
             active_binding = self._activate_port_binding(
                 port['id'], self.host, raw_response=False)
         self._assert_bound_port_binding(active_binding)
-        updated_port = self._show('ports', port['id'])['port']
+        updated_port = self._show('ports', port['id'], as_admin=True)['port']
         updated_bound_drivers = updated_port[portbindings.VIF_DETAILS].pop(
             portbindings.VIF_DETAILS_BOUND_DRIVERS)
         self.assertEqual({'0': 'test'}, updated_bound_drivers)
@@ -711,7 +715,8 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         with mock.patch.object(
                 mechanism_test.TestMechanismDriver, '_check_port_context'
         ):
-            req = self.new_update_request('ports', update_body, port_id)
+            req = self.new_update_request('ports', update_body, port_id,
+                                          as_admin=True)
             self.assertEqual(200, req.get_response(self.api).status_int)
 
     def test_bind_non_pf_port_with_mac_port_not_updated(self):
@@ -851,7 +856,8 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         with mock.patch.object(
                 mechanism_test.TestMechanismDriver, '_check_port_context'
         ):
-            req = self.new_update_request('ports', update_body, port['id'])
+            req = self.new_update_request('ports', update_body, port['id'],
+                                          as_admin=True)
             self.assertEqual(200, req.get_response(self.api).status_int)
 
         # Neutron expected to reset the MAC to a generated one so that the

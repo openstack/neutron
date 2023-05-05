@@ -28,7 +28,7 @@ class LogApiTestCaseBase(functional_base.TestOVNFunctionalBase):
         super().setUp()
         self.log_driver = self.mech_driver.log_driver
         self._check_is_supported()
-        self.ctxt = context.Context('admin', 'fake_tenant')
+        self.ctxt = context.Context('admin', self._tenant_id)
 
     def _check_is_supported(self):
         if not self.log_driver.network_logging_supported(self.nb_api):
@@ -110,7 +110,6 @@ class LogApiTestCaseComplex(LogApiTestCaseBase):
 
     def _create_port(self, name, net_id, security_groups):
         data = {'port': {'name': name,
-                         'tenant_id': self.ctxt.project_id,
                          'network_id': net_id,
                          'security_groups': security_groups}}
         req = self.new_create_request('ports', data, self.fmt)
@@ -118,8 +117,7 @@ class LogApiTestCaseComplex(LogApiTestCaseBase):
         return self.deserialize(self.fmt, res)['port']['id']
 
     def _create_security_group(self, name):
-        data = {'security_group': {'name': name,
-                                   'tenant_id': self.ctxt.project_id}}
+        data = {'security_group': {'name': name}}
         req = self.new_create_request('security-groups', data, self.fmt)
         res = req.get_response(self.api)
         return self.deserialize(self.fmt, res)['security_group']['id']
@@ -130,8 +128,7 @@ class LogApiTestCaseComplex(LogApiTestCaseBase):
                                         'protocol': n_const.PROTO_NAME_TCP,
                                         'ethertype': n_const.IPv4,
                                         'port_range_min': tcp_port,
-                                        'port_range_max': tcp_port,
-                                        'tenant_id': self.ctxt.project_id}}
+                                        'port_range_max': tcp_port}}
         req = self.new_create_request('security-group-rules', data, self.fmt)
         res = req.get_response(self.api)
         return self.deserialize(self.fmt, res)['security_group_rule']['id']

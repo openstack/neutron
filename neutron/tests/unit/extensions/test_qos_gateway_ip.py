@@ -69,7 +69,7 @@ class GatewayIPQoSDBTestCaseBase(object):
         ctx = context.get_admin_context()
         policy_obj = policy.QosPolicy(ctx,
                                       id=uuidutils.generate_uuid(),
-                                      project_id='tenant', name='pol1',
+                                      project_id=self._tenant_id, name='pol1',
                                       rules=[])
         policy_obj.create()
         with self.subnet(cidr='11.0.0.0/24') as public_sub,\
@@ -88,7 +88,7 @@ class GatewayIPQoSDBTestCaseBase(object):
         ctx = context.get_admin_context()
         policy_obj = policy.QosPolicy(ctx,
                                       id=uuidutils.generate_uuid(),
-                                      project_id='tenant', name='pol1',
+                                      project_id=self._tenant_id, name='pol1',
                                       rules=[])
         policy_obj.create()
         with self.subnet(cidr='11.0.0.0/24') as public_sub,\
@@ -115,7 +115,7 @@ class GatewayIPQoSDBTestCaseBase(object):
         ctx = context.get_admin_context()
         policy_obj = policy.QosPolicy(ctx,
                                       id=uuidutils.generate_uuid(),
-                                      project_id='tenant', name='pol1',
+                                      project_id=self._tenant_id, name='pol1',
                                       rules=[])
         policy_obj.create()
         with self.subnet(cidr='11.0.0.0/24') as public_sub,\
@@ -153,7 +153,7 @@ class GatewayIPQoSDBTestCaseBase(object):
         ctx = context.get_admin_context()
         policy_obj = policy.QosPolicy(ctx,
                                       id=uuidutils.generate_uuid(),
-                                      project_id='tenant', name='pol1',
+                                      project_id=self._tenant_id, name='pol1',
                                       rules=[])
         policy_obj.create()
         with self.subnet(cidr='11.0.0.0/24') as public_sub,\

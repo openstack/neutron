@@ -50,6 +50,7 @@ class TestMl2PortBinding(ml2_test_base.ML2TestFramework,
             with self.subnet(network=network) as subnet:
                 with self.port(
                         subnet=subnet, device_owner=DEVICE_OWNER_COMPUTE,
+                        is_admin=True,
                         arg_list=(portbindings.HOST_ID, 'admin_state_up',),
                         **self.host_args) as port:
                     # Note: Port creation invokes _bind_port_if_needed(),
@@ -65,6 +66,7 @@ class TestMl2PortBinding(ml2_test_base.ML2TestFramework,
             with self.subnet(network=network) as subnet:
                 with self.port(
                         subnet=subnet, device_owner=DEVICE_OWNER_COMPUTE,
+                        is_admin=True,
                         arg_list=(portbindings.HOST_ID, 'admin_state_up',),
                         **self.host_args) as port:
                     # Since the agent is dead, expect binding to fail
@@ -88,6 +90,7 @@ class TestMl2PortBinding(ml2_test_base.ML2TestFramework,
             with self.subnet(network=network) as subnet:
                 with self.port(
                         subnet=subnet, device_owner=DEVICE_OWNER_COMPUTE,
+                        is_admin=True,
                         arg_list=(portbindings.HOST_ID, 'admin_state_up',),
                         **self.host_args) as port:
                     pass

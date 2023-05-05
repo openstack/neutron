@@ -98,7 +98,8 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
     def _prepare_env(self):
         self.router = self._create_router(distributed=True)
         self.ext_net = self._create_network(
-            self.fmt, 'ext-net', True, arg_list=("router:external",),
+            self.fmt, 'ext-net', True, as_admin=True,
+            arg_list=("router:external",),
             **{"router:external": True}).json['network']
         self.ext_subnet = self._create_subnet(
             self.fmt, self.ext_net['id'], '172.24.2.0/24').json['subnet']

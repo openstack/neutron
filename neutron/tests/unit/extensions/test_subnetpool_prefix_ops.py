@@ -36,7 +36,7 @@ class SubnetpoolPrefixOpsTestBase(object):
         tenant_id = project_id if project_id else kwargs.get(
             'tenant_id', None)
         if not tenant_id:
-            tenant_id = _uuid()
+            tenant_id = self._tenant_id
 
         scope_data = {'tenant_id': tenant_id, 'ip_version': ip_version,
                       'shared': shared, 'name': name + '-scope'}
@@ -52,7 +52,7 @@ class SubnetpoolPrefixOpsTestBase(object):
         tenant_id = project_id if project_id else kwargs.get(
             'tenant_id', None)
         if not tenant_id:
-            tenant_id = _uuid()
+            tenant_id = self._tenant_id
         pool_data = {'tenant_id': tenant_id, 'shared': shared, 'name': name,
                      'address_scope_id': address_scope_id,
                      'prefixes': prefixes, 'is_default': is_default_pool}

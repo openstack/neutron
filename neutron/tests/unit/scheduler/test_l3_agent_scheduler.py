@@ -209,13 +209,13 @@ class L3SchedulerBaseMixin(object):
 
     @contextlib.contextmanager
     def router_with_ext_gw(self, name='router1', admin_state_up=True,
-                           fmt=None, tenant_id=uuidutils.generate_uuid(),
+                           fmt=None, tenant_id=None,
                            external_gateway_info=None,
-                           subnet=None, set_context=False,
-                           **kwargs):
+                           subnet=None, **kwargs):
+        tenant_id = tenant_id or self._tenant_id
         router = self._make_router(fmt or self.fmt, tenant_id, name,
                                    admin_state_up, external_gateway_info,
-                                   set_context, **kwargs)
+                                   **kwargs)
         self._add_external_gateway_to_router(
             router['router']['id'],
             subnet['subnet']['network_id'])
@@ -1380,6 +1380,7 @@ class L3DvrSchedulerTestCase(L3SchedulerBaseMixin,
                 subnet_ids = []
                 subnet_ids.append(subnet['subnet']['id'])
                 with self.port(subnet=subnet,
+                               is_admin=True,
                                device_owner=DEVICE_OWNER_COMPUTE,
                                arg_list=('admin_state_up',
                                portbindings.PROFILE,), **host_args):

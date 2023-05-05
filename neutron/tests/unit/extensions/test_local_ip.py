@@ -19,7 +19,6 @@ from unittest import mock
 import netaddr
 from neutron_lib.api.definitions import local_ip as apidef
 from neutron_lib import constants
-from neutron_lib import context
 import webob.exc
 
 from neutron.extensions import local_ip as lip_ext
@@ -46,10 +45,8 @@ class LocalIPTestBase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         for k, v in kwargs.items():
             local_ip['local_ip'][k] = v
 
-        req = self.new_create_request('local-ips', local_ip)
-        neutron_context = context.Context(
-            '', kwargs.get('project_id', self._tenant_id), is_admin=True)
-        req.environ['neutron.context'] = neutron_context
+        req = self.new_create_request('local-ips', local_ip,
+                                      tenant_id=self._tenant_id, as_admin=True)
         res = req.get_response(self.ext_api)
         if res.status_int >= webob.exc.HTTPClientError.code:
             raise webob.exc.HTTPClientError(code=res.status_int)
@@ -57,9 +54,7 @@ class LocalIPTestBase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def _update_local_ip(self, lip_id, data):
         update_req = self.new_update_request(
-            'local-ips', data, lip_id)
-        update_req.environ['neutron.context'] = context.Context(
-            '', self._tenant_id)
+            'local-ips', data, lip_id, tenant_id=self._tenant_id)
         res = update_req.get_response(self.ext_api)
         if res.status_int >= webob.exc.HTTPClientError.code:
             raise webob.exc.HTTPClientError(code=res.status_int)
@@ -73,9 +68,8 @@ class LocalIPTestBase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         req = self.new_create_request('local_ips',
                                       data=local_ip_assoc,
                                       id=local_ip_id,
-                                      subresource='port_associations')
-        neutron_context = context.Context('', self._tenant_id)
-        req.environ['neutron.context'] = neutron_context
+                                      subresource='port_associations',
+                                      tenant_id=self._tenant_id)
         res = req.get_response(self.ext_api)
         if res.status_int >= webob.exc.HTTPClientError.code:
             raise webob.exc.HTTPClientError(code=res.status_int)

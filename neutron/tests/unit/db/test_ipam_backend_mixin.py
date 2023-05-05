@@ -373,7 +373,8 @@ class TestPortUpdateIpam(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                                      net_id=network['network']['id'],
                                      tenant_id=network['network']['tenant_id'],
                                      arg_list=(portbindings.HOST_ID,),
-                                     **{portbindings.HOST_ID: 'fakehost'})
+                                     **{portbindings.HOST_ID: 'fakehost'},
+                                     is_admin=True)
         port = self.deserialize(self.fmt, response)
 
         # Create the subnet and try to update the port to get an IP
@@ -381,7 +382,8 @@ class TestPortUpdateIpam(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             data = {'port': {
                 'fixed_ips': [{'subnet_id': subnet['subnet']['id']}]}}
             port_id = port['port']['id']
-            port_req = self.new_update_request('ports', data, port_id)
+            port_req = self.new_update_request('ports', data, port_id,
+                                               as_admin=True)
             response = port_req.get_response(self.api)
             res = self.deserialize(self.fmt, response)
 

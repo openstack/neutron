@@ -71,9 +71,13 @@ class DefaultSubnetpoolsExtensionTestCase(
 
         return self.deserialize(self.fmt, res)['subnet']
 
-    def _update_subnetpool(self, subnetpool_id, **data):
+    def _update_subnetpool(self, subnetpool_id, tenant_id=None,
+                           as_admin=False, **data):
+        if 'shared' in data or 'is_default' in data:
+            as_admin = True
         update_req = self.new_update_request(
-            'subnetpools', {'subnetpool': data}, subnetpool_id)
+            'subnetpools', {'subnetpool': data}, subnetpool_id,
+            tenant_id=tenant_id, as_admin=as_admin)
         res = update_req.get_response(self.api)
 
         return self.deserialize(self.fmt, res)['subnetpool']
