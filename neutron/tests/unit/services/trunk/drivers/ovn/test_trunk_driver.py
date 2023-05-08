@@ -122,6 +122,7 @@ class TestTrunkHandler(base.BaseTestCase):
             mock.call(mock.ANY,
                       {'profile': {'parent_name': trunk.port_id,
                                    'tag': s_port.segmentation_id},
+                       'host': mock.ANY,
                        'vif_type': portbindings.VIF_TYPE_OVS},
                       host=mock.ANY,
                       port_id=s_port.port_id)
@@ -152,6 +153,7 @@ class TestTrunkHandler(base.BaseTestCase):
         self.mock_update_pb.assert_called_once_with(
             mock.ANY, {'profile': {'parent_name': self.sub_port_1.trunk_id,
                                    'tag': self.sub_port_1.segmentation_id},
+                       'host': 'foo.com',
                        'vif_type': portbindings.VIF_TYPE_OVS},
             host='foo.com', port_id=self.sub_port_1.port_id)
         self.mock_port_update.assert_not_called()

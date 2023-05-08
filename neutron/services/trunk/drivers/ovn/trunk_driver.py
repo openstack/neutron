@@ -49,11 +49,13 @@ class OVNTrunkHandler(object):
         context = n_context.get_admin_context()
         db_parent_port = port_obj.Port.get_object(context, id=parent_port)
         parent_port_status = db_parent_port.status
+        parent_port_bindings = db_parent_port.bindings[0]
         for subport in subports:
             with db_api.CONTEXT_WRITER.using(context), (
                     txn(check_error=True)) as ovn_txn:
                 port = self._set_binding_profile(context, subport, parent_port,
-                                                 parent_port_status, ovn_txn)
+                                                 parent_port_status,
+                                                 parent_port_bindings, ovn_txn)
             db_rev.bump_revision(context, port, ovn_const.TYPE_PORTS)
 
     def _unset_sub_ports(self, subports):
@@ -67,7 +69,8 @@ class OVNTrunkHandler(object):
 
     @db_base_plugin_common.convert_result_to_dict
     def _set_binding_profile(self, context, subport, parent_port,
-                             parent_port_status, ovn_txn):
+                             parent_port_status,
+                             parent_port_bindings, ovn_txn):
         LOG.debug("Setting parent %s for subport %s",
                   parent_port, subport.port_id)
         db_port = port_obj.Port.get_object(context, id=subport.port_id)
@@ -79,6 +82,9 @@ class OVNTrunkHandler(object):
         check_rev_cmd = self.plugin_driver.nb_ovn.check_revision_number(
             db_port.id, db_port, ovn_const.TYPE_PORTS)
         ovn_txn.add(check_rev_cmd)
+        parent_binding_host = ''
+        if parent_port_bindings.host:
+            parent_binding_host = parent_port_bindings.host
         try:
             # NOTE(flaviof): We expect binding's host to be set. Otherwise,
             # sub-port will not transition from DOWN to ACTIVE.
@@ -94,6 +100,7 @@ class OVNTrunkHandler(object):
                 port_obj.PortBinding.update_object(
                     context,
                     {'profile': binding.profile,
+                     'host': parent_binding_host,
                      'vif_type': portbindings.VIF_TYPE_OVS},
                     port_id=subport.port_id,
                     host=binding.host)
@@ -155,6 +162,14 @@ class OVNTrunkHandler(object):
         LOG.debug("Done unsetting parent for subport %s", subport.port_id)
         return db_port
 
+    def trunk_updated(self, trunk):
+        # Check if parent port is handled by OVN.
+        if not self.plugin_driver.nb_ovn.lookup('Logical_Switch_Port',
+                                                trunk.port_id, default=None):
+            return
+        if trunk.sub_ports:
+            self._set_sub_ports(trunk.port_id, trunk.sub_ports)
+
     def trunk_created(self, trunk):
         # Check if parent port is handled by OVN.
         if not self.plugin_driver.nb_ovn.lookup('Logical_Switch_Port',
@@ -189,6 +204,8 @@ class OVNTrunkHandler(object):
     def trunk_event(self, resource, event, trunk_plugin, payload):
         if event == events.AFTER_CREATE:
             self.trunk_created(payload.current_trunk)
+        elif event == events.AFTER_UPDATE:
+            self.trunk_updated(payload.current_trunk)
         elif event == events.AFTER_DELETE:
             self.trunk_deleted(payload.original_trunk)
 
@@ -215,13 +232,16 @@ class OVNTrunkDriver(trunk_base.DriverBase):
         super(OVNTrunkDriver, self).register(
             resource, event, trigger, payload=payload)
         self._handler = OVNTrunkHandler(self.plugin_driver)
-        for trunk_event in (events.AFTER_CREATE, events.AFTER_DELETE):
+        for _event in (events.AFTER_CREATE, events.AFTER_UPDATE,
+                       events.AFTER_DELETE):
             registry.subscribe(self._handler.trunk_event,
                                resources.TRUNK,
-                               trunk_event)
+                               _event)
+
+        for _event in (events.AFTER_CREATE, events.AFTER_DELETE):
             registry.subscribe(self._handler.subport_event,
                                resources.SUBPORTS,
-                               trunk_event)
+                               _event)
 
     @classmethod
     def create(cls, plugin_driver):
