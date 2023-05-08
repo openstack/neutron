@@ -903,6 +903,9 @@ class TestMl2DbOperationBounds(test_plugin.DbOperationBoundMixin,
     def setUp(self):
         super(TestMl2DbOperationBounds, self).setUp()
         self.kwargs = self.get_api_kwargs()
+        # NOTE(slaweq): In this class we are not testing any operations related
+        # to policy module so we don't need to checu policies
+        mock.patch('neutron.policy.check').start()
 
     def make_network(self):
         return self._make_network(self.fmt, 'name', True, **self.kwargs)
