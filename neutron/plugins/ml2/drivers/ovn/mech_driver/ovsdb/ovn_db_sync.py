@@ -284,7 +284,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
 
         # Remove the common ones
         for na in list(neutron_acls):
-            for ovn_a in ovn_acls:
+            for ovn_a in ovn_acls.copy():
                 if all(item in na.items() for item in ovn_a.items()):
                     neutron_acls.remove(na)
                     ovn_acls.remove(ovn_a)

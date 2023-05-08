@@ -59,13 +59,10 @@ disable=
  raise-missing-from,
  arguments-renamed,
  broad-exception-raised,
- modified-iterating-list,
  unspecified-encoding,
  missing-timeout,
- implicit-str-concat,
  redundant-u-string-prefix,
  unused-private-member,
- global-variable-not-assigned,
 # "C" Coding convention violations
  consider-iterating-dictionary,
  consider-using-enumerate,
