@@ -341,11 +341,20 @@ class OVNClient(object):
             address4_scope_id, address6_scope_id = (
                 utils.get_subnets_address_scopes(context, subnets, ip_subnets,
                                                  self._plugin))
+            p_type, virtual_ip, virtual_parents = (
+                utils.get_port_type_virtual_and_parents(
+                    subnets, ip_subnets, port['network_id'], port['id'],
+                    self._nb_idl))
+            if p_type:
+                port_type = ovn_const.LSP_TYPE_VIRTUAL
+                options[ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY] = virtual_ip
+                options[ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY] = (
+                    virtual_parents)
+
             if subnets:
                 for ip in ip_subnets:
                     ip_addr = ip['ip_address']
                     address += ' ' + ip_addr
-                    subnet = None
 
                     try:
                         subnet = [
@@ -360,18 +369,6 @@ class OVNClient(object):
 
                     cidrs += ' {}/{}'.format(ip['ip_address'],
                                              subnet['cidr'].split('/')[1])
-
-                    # Check if the port being created is a virtual port
-                    parents = utils.get_virtual_port_parents(
-                        self._nb_idl, ip_addr, port['network_id'], port['id'])
-                    if not parents:
-                        continue
-
-                    port_type = ovn_const.LSP_TYPE_VIRTUAL
-                    options[ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY] = ip_addr
-                    options[ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY] = (
-                        ','.join(parents))
-                    break
 
             # Metadata port.
             if port['device_owner'] == const.DEVICE_OWNER_DISTRIBUTED:
