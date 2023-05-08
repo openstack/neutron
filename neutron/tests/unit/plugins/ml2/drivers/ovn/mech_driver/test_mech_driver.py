@@ -4348,7 +4348,7 @@ class TestOVNVVirtualPort(OVNMechanismDriverTestCase):
             self.fmt, {'network': self.net},
             '10.0.0.1', '10.0.0.0/24')['subnet']
 
-    @mock.patch.object(ovn_client.OVNClient, 'determine_bind_host')
+    @mock.patch.object(ovn_utils, 'determine_bind_host')
     def test_create_port_with_virtual_type_and_options(self, *args):
         fake_parents = ['parent-0', 'parent-1']
         self.mock_vp_parents.return_value = fake_parents
