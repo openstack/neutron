@@ -1003,3 +1003,49 @@ class GetSubnetsAddressScopeTestCase(base.BaseTestCase):
         address4, address6 = utils.get_subnets_address_scopes(
             mock.ANY, subnets, fixed_ips, self.ml2_plugin)
         self.assertEqual(('scope4', 'scope6'), (address4, address6))
+
+
+class GetPortTypeVirtualAndParentsTestCase(base.BaseTestCase):
+
+    def test_no_subnets(self):
+        subnets = []
+        fixed_ips = []
+        port_type, virtual_ip, virtual_parents = (
+            utils.get_port_type_virtual_and_parents(subnets, fixed_ips, 'net1',
+                                                    'port1', mock.ANY))
+        self.assertEqual(('', None, None),
+                         (port_type, virtual_ip, virtual_parents))
+
+    @mock.patch.object(utils, 'get_virtual_port_parents', return_value=[])
+    def test_no_parents(self, *args):
+        subnets = [
+            {'id': 'subnet1'},
+            {'id': 'subnet2'},
+        ]
+        fixed_ips = [
+            {'subnet_id': 'subnet1', 'ip_address': '1.2.3.4'},
+            {'subnet_id': 'subnet2', 'ip_address': '1.2.3.5'},
+        ]
+        port_type, virtual_ip, virtual_parents = (
+            utils.get_port_type_virtual_and_parents(subnets, fixed_ips, 'net1',
+                                                    'port1', mock.ANY))
+        self.assertEqual(('', None, None),
+                         (port_type, virtual_ip, virtual_parents))
+
+    @mock.patch.object(utils, 'get_virtual_port_parents',
+                       return_value=['parent1', 'parent2'])
+    def test_with_parents(self, *args):
+        subnets = [
+            {'id': 'subnet1'},
+            {'id': 'subnet2'},
+        ]
+        fixed_ips = [
+            {'subnet_id': 'subnet1', 'ip_address': '1.2.3.4'},
+            {'subnet_id': 'subnet2', 'ip_address': '1.2.3.5'},
+        ]
+        port_type, virtual_ip, virtual_parents = (
+            utils.get_port_type_virtual_and_parents(subnets, fixed_ips, 'net1',
+                                                    'port1', mock.ANY))
+        self.assertEqual((constants.LSP_TYPE_VIRTUAL, '1.2.3.4',
+                          'parent1,parent2'),
+                         (port_type, virtual_ip, virtual_parents))
