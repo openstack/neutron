@@ -738,7 +738,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
         ip_version = utils.get_ip_version(ip)
         entry = ip_lib.dump_neigh_entries(ip_version, interface, dst=ip,
                                           lladdr=mac)
-        return entry != []
+        return bool(entry)
 
     @staticmethod
     def fdb_bridge_entry_exists(mac, interface, agent_ip=None):

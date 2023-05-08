@@ -78,9 +78,6 @@ disable=
  wrong-import-order,
  consider-using-f-string,
  consider-using-dict-items,
- use-implicit-booleaness-not-comparison,
- use-maxsplit-arg,
- unnecessary-dunder-call,
 # "R" Refactor recommendations
  consider-merging-isinstance,
  consider-using-ternary,

@@ -32,7 +32,7 @@ def has_expected_arp_entry(device_name, namespace, ip, mac):
     ip_version = utils.get_ip_version(ip)
     entry = ip_lib.dump_neigh_entries(ip_version, device_name, namespace,
                                       dst=ip, lladdr=mac)
-    return entry != []
+    return bool(entry)
 
 
 class TestMonitorDaemon(base.BaseLoggingTestCase):
