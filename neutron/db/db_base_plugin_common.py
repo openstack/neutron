@@ -34,6 +34,7 @@ from oslo_log import log as logging
 from sqlalchemy.orm import exc
 
 from neutron.db import models_v2
+from neutron.db import rbac_db_models
 from neutron.objects import base as base_obj
 from neutron.objects import ports as port_obj
 from neutron.objects import subnet as subnet_obj
@@ -347,7 +348,7 @@ class DbBasePluginCommon(object):
         # is shared to the calling tenant via an RBAC entry.
         matches = ('*',) + ((context.tenant_id,) if context else ())
         for entry in rbac_entries:
-            if (entry.action == 'access_as_shared' and
+            if (entry.action == rbac_db_models.ACCESS_SHARED and
                     entry.target_project in matches):
                 return True
         return False

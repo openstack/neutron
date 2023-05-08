@@ -20,6 +20,7 @@ from neutron_lib import exceptions as n_exc
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
+from neutron.db import rbac_db_models
 from neutron.objects import network as network_obj
 from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron import quota
@@ -96,9 +97,9 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
 
     def _check_rbac(self, network_id, is_none, external):
         if external:
-            action = 'access_as_external'
+            action = rbac_db_models.ACCESS_EXTERNAL
         else:
-            action = 'access_as_shared'
+            action = rbac_db_models.ACCESS_SHARED
         rbac = network_obj.NetworkRBAC.get_object(
             self.ctx, object_id=network_id, action=action, target_project='*')
         if is_none:

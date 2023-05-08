@@ -53,6 +53,7 @@ from neutron.db import l3_attrs_db
 from neutron.db.models import l3 as l3_models
 from neutron.db.models import l3_attrs as l3_attrs_models
 from neutron.db import models_v2
+from neutron.db import rbac_db_models
 from neutron.db import standardattrdescription_db as st_attr
 from neutron.extensions import l3
 from neutron.extensions import segment as segment_ext
@@ -884,7 +885,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             with db_api.CONTEXT_READER.using(elevated):
                 rbac_allowed_projects = network_obj.NetworkRBAC.get_projects(
                     elevated, object_id=subnet['network_id'],
-                    action='access_as_shared',
+                    action=rbac_db_models.ACCESS_SHARED,
                     target_project=context.project_id)
 
                 # Fail if the current project_id is NOT in the allowed
