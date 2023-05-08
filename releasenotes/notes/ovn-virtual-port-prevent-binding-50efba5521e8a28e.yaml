@@ -1,0 +1,9 @@
+---
+other:
+  - |
+    A ML2/OVN virtual port cannot be bound to a virtual machine. If a port
+    IP address is assigned as an allowed address pair into another port, the
+    first one is considered a virtual port. If the second port (non-virtual)
+    is bound to ML2/OVN, the virtual port cannot be bound to a virtual
+    machine; a virtual port is created only to reserve a set of IP addresses
+    to be used by other ports.
