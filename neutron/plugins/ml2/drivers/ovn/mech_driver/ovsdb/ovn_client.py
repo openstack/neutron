@@ -231,49 +231,6 @@ class OVNClient(object):
             external_ids=subnet_dhcp_options['external_ids'])
         return {'cmd': add_dhcp_opts_cmd}
 
-    def determine_bind_host(self, port, port_context=None):
-        """Determine which host the port should be bound to.
-
-        Traditionally it has been Nova's responsibility to create Virtual
-        Interfaces (VIFs) as part of instance life cycle, and subsequently
-        manage plug/unplug operations on the Open vSwitch integration bridge.
-        For the traditional topology the bind host will be the same as the
-        hypervisor hosting the instance.
-
-        With the advent of SmartNIC DPUs which are connected to multiple
-        distinct CPUs we can have a topology where the instance runs on one
-        host and Open vSwitch and OVN runs on a different host, the SmartNIC
-        DPU control plane CPU.  In the SmartNIC DPU topology the bind host will
-        be different than the hypervisor host.
-
-        This helper accepts both a port Dict and optionally a PortContext
-        instance so that it can be used both before and after a port is bound.
-
-        :param port: Port Dictionary
-        :type port: Dict[str,any]
-        :param port_context: PortContext instance describing the port
-        :type port_context: api.PortContext
-        :returns: FQDN or Hostname to bind port to.
-        :rtype: str
-        :raises: n_exc.InvalidInput, RuntimeError
-        """
-        # Note that we use port_context.host below when called from bind_port
-        port = port_context.current if port_context else port
-        vnic_type = port.get(portbindings.VNIC_TYPE, portbindings.VNIC_NORMAL)
-        if vnic_type != portbindings.VNIC_REMOTE_MANAGED:
-            # The ``PortContext`` ``host`` property contains handling of
-            # special cases.
-            return port_context.host if port_context else port.get(
-                portbindings.HOST_ID, '')
-
-        bp_info = (
-            utils.validate_and_get_data_from_binding_profile(port))
-        if ovn_const.VIF_DETAILS_CARD_SERIAL_NUMBER in bp_info.bp_param:
-            return self._sb_idl.get_chassis_by_card_serial_from_cms_options(
-                bp_info.bp_param[
-                    ovn_const.VIF_DETAILS_CARD_SERIAL_NUMBER]).hostname
-        return ''
-
     def update_lsp_host_info(self, context, db_port, up=True):
         """Update the binding hosting information for the LSP.
 
@@ -420,7 +377,7 @@ class OVNClient(object):
                             ovn_const.VIF_DETAILS_PF_MAC_ADDRESS)),
                     ovn_const.LSP_OPTIONS_VIF_PLUG_REPRESENTOR_VF_NUM_KEY: str(
                         bp_info.bp_param.get(ovn_const.VIF_DETAILS_VF_NUM))})
-            chassis = self.determine_bind_host(port)
+            chassis = utils.determine_bind_host(self._sb_idl, port)
             if chassis:
                 # If OVN supports multi-chassis port bindings, use it for live
                 # migration to asynchronously configure destination port while
