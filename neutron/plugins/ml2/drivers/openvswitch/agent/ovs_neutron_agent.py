@@ -312,10 +312,14 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         self.ancillary_brs = self.setup_ancillary_bridges(
             ovs_conf.integration_bridge, ovs_conf.tunnel_bridge)
 
-        agent_api = ovs_ext_api.OVSAgentExtensionAPI(self.int_br,
-                                                     self.tun_br,
-                                                     self.phys_brs,
-                                                     self.plugin_rpc)
+        agent_api = ovs_ext_api.OVSAgentExtensionAPI(
+            self.int_br,
+            self.tun_br,
+            self.phys_brs,
+            self.plugin_rpc,
+            phys_ofports=self.phys_ofports,
+            bridge_mappings=self.bridge_mappings)
+
         self.ext_manager.initialize(
             self.connection, ovs_const.EXTENSION_DRIVER_TYPE, agent_api)
 

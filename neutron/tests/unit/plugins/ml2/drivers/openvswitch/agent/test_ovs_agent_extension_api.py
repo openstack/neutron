@@ -68,6 +68,14 @@ class TestOVSAgentExtensionAPI(ovs_test_base.OVSOSKenTestBase):
         for phys_br in agent_extension_api.request_phy_brs():
             self._test_bridge(self.br_phys[phys_br.br_name], phys_br)
 
+    def test_request_physical_br(self):
+        agent_extension_api = ovs_ext_agt.OVSAgentExtensionAPI(
+            self.br_int, self.br_tun,
+            {'phys1': self.br_phys['br-phys1'],
+             'phys2': self.br_phys['br-phys2']})
+        phys_br = agent_extension_api.request_physical_br('phys1')
+        self._test_bridge(self.br_phys[phys_br.br_name], phys_br)
+
 
 class TestOVSCookieBridgeOSKen(native_ovs_bridge_test_base.OVSBridgeTestBase):
 
