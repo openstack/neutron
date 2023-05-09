@@ -166,7 +166,7 @@ network and has access to the private networks of all nodes.
       The PCI bus number of the PF (03:00.0) and VFs (03:00.2 .. 03:00.5)
       will be used later.
 
-   .. code-block::bash
+   .. code-block:: bash
 
       # lspci | grep Ethernet
       03:00.0 Ethernet controller: Mellanox Technologies MT27800 Family [ConnectX-5]
@@ -175,7 +175,6 @@ network and has access to the private networks of all nodes.
       03:00.3 Ethernet controller: Mellanox Technologies MT27800 Family [ConnectX-5 Virtual Function]
       03:00.4 Ethernet controller: Mellanox Technologies MT27800 Family [ConnectX-5 Virtual Function]
       03:00.5 Ethernet controller: Mellanox Technologies MT27800 Family [ConnectX-5 Virtual Function]
-
 
    .. code-block:: bash
 

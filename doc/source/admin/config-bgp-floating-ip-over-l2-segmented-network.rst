@@ -65,10 +65,10 @@ python3-neutron-dynamic-routing packages). On top of that, "segments" and
 "bgp" must be added to the list of plugins in service_plugins. For example
 in neutron.conf:
 
-  .. code-block:: ini
+.. code-block:: ini
 
-     [DEFAULT]
-     service_plugins=router,metering,qos,trunk,segments,bgp
+   [DEFAULT]
+   service_plugins=router,metering,qos,trunk,segments,bgp
 
 
 The BGP agent
@@ -89,36 +89,36 @@ associated to a dynamic-routing-agent (in our example, the dynamic-routing
 agents run on compute 1 and 4). Finally, the peer is added to the BGP speaker,
 so the speaker initiates a BGP session to the network equipment.
 
-  .. code-block:: console
+.. code-block:: console
 
-     $ # Create a BGP peer to represent the switch 1,
-     $ # which runs FRR on 10.1.0.253 with AS 64601
-     $ openstack bgp peer create \
-           --peer-ip 10.1.0.253 \
-           --remote-as 64601 \
-           rack1-switch-1
+   $ # Create a BGP peer to represent the switch 1,
+   $ # which runs FRR on 10.1.0.253 with AS 64601
+   $ openstack bgp peer create \
+         --peer-ip 10.1.0.253 \
+         --remote-as 64601 \
+         rack1-switch-1
 
-     $ # Create a BGP speaker on compute-1
-     $ BGP_SPEAKER_ID_COMPUTE_1=$(openstack bgp speaker create \
-           --local-as 64999 --ip-version 4 mycloud-compute-1.example.com \
-           --format value -c id)
+   $ # Create a BGP speaker on compute-1
+   $ BGP_SPEAKER_ID_COMPUTE_1=$(openstack bgp speaker create \
+         --local-as 64999 --ip-version 4 mycloud-compute-1.example.com \
+         --format value -c id)
 
-     $ # Get the agent ID of the dragent running on compute 1
-     $ BGP_AGENT_ID_COMPUTE_1=$(openstack network agent list \
-           --host mycloud-compute-1.example.com --agent-type bgp \
-           --format value -c ID)
+   $ # Get the agent ID of the dragent running on compute 1
+   $ BGP_AGENT_ID_COMPUTE_1=$(openstack network agent list \
+         --host mycloud-compute-1.example.com --agent-type bgp \
+         --format value -c ID)
 
-     $ # Add the BGP speaker to the dragent of compute 1
-     $ openstack bgp dragent add speaker \
-           ${BGP_AGENT_ID_COMPUTE_1} ${BGP_SPEAKER_ID_COMPUTE_1}
+   $ # Add the BGP speaker to the dragent of compute 1
+   $ openstack bgp dragent add speaker \
+         ${BGP_AGENT_ID_COMPUTE_1} ${BGP_SPEAKER_ID_COMPUTE_1}
 
-     $ # Add the BGP peer to the speaker of compute 1
-     $ openstack bgp speaker add peer \
-           compute-1.example.com rack1-switch-1
+   $ # Add the BGP peer to the speaker of compute 1
+   $ openstack bgp speaker add peer \
+         compute-1.example.com rack1-switch-1
 
-     $ # Tell the speaker not to advertize tenant networks
-     $ openstack bgp speaker set \
-           --no-advertise-tenant-networks mycloud-compute-1.example.com
+   $ # Tell the speaker not to advertize tenant networks
+   $ openstack bgp speaker set \
+         --no-advertise-tenant-networks mycloud-compute-1.example.com
 
 
 It is possible to repeat this operation for a 2nd machine on the same rack,
@@ -141,25 +141,23 @@ in each host, according to the rack names. On the compute or network nodes,
 this is done in /etc/neutron/plugins/ml2/openvswitch_agent.ini using the
 bridge_mappings directive:
 
-  .. code-block:: ini
+.. code-block:: ini
 
-     [ovs]
-     bridge_mappings = physnet-rack1:br-ex
-
+   [ovs]
+   bridge_mappings = physnet-rack1:br-ex
 
 All of the physical networks created this way must be added in the
 configuration of the neutron-server as well (ie: this is used by both
 neutron-api and neutron-rpc-server). For example, with 3 racks,
 here's how /etc/neutron/plugins/ml2/ml2_conf.ini should look like:
 
-  .. code-block:: ini
+.. code-block:: ini
 
-     [ml2_type_flat]
-     flat_networks = physnet-rack1,physnet-rack2,physnet-rack3
+   [ml2_type_flat]
+   flat_networks = physnet-rack1,physnet-rack2,physnet-rack3
 
-     [ml2_type_vlan]
-     network_vlan_ranges = physnet-rack1,physnet-rack2,physnet-rack3
-
+   [ml2_type_vlan]
+   network_vlan_ranges = physnet-rack1,physnet-rack2,physnet-rack3
 
 Once this is done, the provider network can be created, using physnet-rack1
 as "physical network".
@@ -171,40 +169,40 @@ Setting-up the provider network
 Everything that is in the provider network's scope will be advertised through
 BGP. Here is how to create the network scope:
 
-  .. code-block:: console
+.. code-block:: console
 
-     $ # Create the address scope
-     $ openstack address scope create --share --ip-version 4 provider-addr-scope
+   $ # Create the address scope
+   $ openstack address scope create --share --ip-version 4 provider-addr-scope
 
 
 Then, the network can be ceated using the physical network name set above:
 
-  .. code-block:: console
+.. code-block:: console
 
-     $ # Create the provider network that spawns over all racks
-     $ openstack network create --external --share \
-           --provider-physical-network physnet-rack1 \
-           --provider-network-type vlan \
-           --provider-segment 11 \
-           provider-network
+   $ # Create the provider network that spawns over all racks
+   $ openstack network create --external --share \
+         --provider-physical-network physnet-rack1 \
+         --provider-network-type vlan \
+         --provider-segment 11 \
+         provider-network
 
 
 This automatically creates a network AND a segment. Though by default, this
 segment has no name, which isn't convenient. This name can be changed though:
 
-  .. code-block:: console
+.. code-block:: console
 
-     $ # Get the network ID:
-     $ PROVIDER_NETWORK_ID=$(openstack network show provider-network \
-           --format value -c id)
+   $ # Get the network ID:
+   $ PROVIDER_NETWORK_ID=$(openstack network show provider-network \
+         --format value -c id)
 
-     $ # Get the segment ID:
-     $ FIRST_SEGMENT_ID=$(openstack network segment list \
-           --format csv -c ID -c Network | \
-           q -H -d, "SELECT ID FROM - WHERE Network='${PROVIDER_NETWORK_ID}'")
+   $ # Get the segment ID:
+   $ FIRST_SEGMENT_ID=$(openstack network segment list \
+         --format csv -c ID -c Network | \
+         q -H -d, "SELECT ID FROM - WHERE Network='${PROVIDER_NETWORK_ID}'")
 
-     $ # Set the 1st segment name, matching the rack name
-     $ openstack network segment set --name segment-rack1 ${FIRST_SEGMENT_ID}
+   $ # Set the 1st segment name, matching the rack name
+   $ openstack network segment set --name segment-rack1 ${FIRST_SEGMENT_ID}
 
 
 Setting-up the 2nd segment
@@ -213,15 +211,15 @@ Setting-up the 2nd segment
 The 2nd segment, which will be attached to our provider network, is created
 this way:
 
-  .. code-block:: console
+.. code-block:: console
 
-     $ # Create the 2nd segment, matching the 2nd rack name
-     $ openstack network segment create \
-           --physical-network physnet-rack2 \
-           --network-type vlan \
-           --segment 13 \
-           --network provider-network \
-           segment-rack2
+   $ # Create the 2nd segment, matching the 2nd rack name
+   $ openstack network segment create \
+         --physical-network physnet-rack2 \
+         --network-type vlan \
+         --segment 13 \
+         --network provider-network \
+         segment-rack2
 
 
 Setting-up the provider subnets for the BGP next HOP routing
@@ -232,45 +230,45 @@ network is in use in the machines. In order to use the address scope, subnet
 pools must be used. Here is how to create the subnet pool with the two ranges
 to use later when creating the subnets:
 
-  .. code-block:: console
+.. code-block:: console
 
-     $ # Create the provider subnet pool which includes all ranges for all racks
-     $ openstack subnet pool create \
-           --pool-prefix 10.1.0.0/24 \
-           --pool-prefix 10.2.0.0/24 \
-           --address-scope provider-addr-scope \
-           --share \
-           provider-subnet-pool
+   $ # Create the provider subnet pool which includes all ranges for all racks
+   $ openstack subnet pool create \
+         --pool-prefix 10.1.0.0/24 \
+         --pool-prefix 10.2.0.0/24 \
+         --address-scope provider-addr-scope \
+         --share \
+         provider-subnet-pool
 
 
 Then, this is how to create the two subnets. In this example, we are keeping
 the addresses in .1 for the gateway, .2 for the DHCP server, and .253 +.254,
 as these addresses will be used by the switches for the BGP announcements:
 
-  .. code-block:: console
+.. code-block:: console
 
-     $ # Create the subnet for the physnet-rack-1, using the segment-rack-1, and
-     $ # the subnet_service_type network:floatingip_agent_gateway
-     $ openstack subnet create \
-           --service-type 'network:floatingip_agent_gateway' \
-           --subnet-pool provider-subnet-pool \
-           --subnet-range 10.1.0.0/24 \
-           --allocation-pool start=10.1.0.3,end=10.1.0.252 \
-           --gateway 10.1.0.1 \
-           --network provider-network \
-           --network-segment segment-rack1 \
-           provider-subnet-rack1
+   $ # Create the subnet for the physnet-rack-1, using the segment-rack-1, and
+   $ # the subnet_service_type network:floatingip_agent_gateway
+   $ openstack subnet create \
+         --service-type 'network:floatingip_agent_gateway' \
+         --subnet-pool provider-subnet-pool \
+         --subnet-range 10.1.0.0/24 \
+         --allocation-pool start=10.1.0.3,end=10.1.0.252 \
+         --gateway 10.1.0.1 \
+         --network provider-network \
+         --network-segment segment-rack1 \
+         provider-subnet-rack1
 
-     $ # The same, for the 2nd rack
-     $ openstack subnet create \
-           --service-type 'network:floatingip_agent_gateway' \
-           --subnet-pool provider-subnet-pool \
-           --subnet-range 10.2.0.0/24 \
-           --allocation-pool start=10.2.0.3,end=10.2.0.252 \
-           --gateway 10.2.0.1 \
-           --network provider-network \
-           --network-segment segment-rack2 \
-           provider-subnet-rack2
+   $ # The same, for the 2nd rack
+   $ openstack subnet create \
+         --service-type 'network:floatingip_agent_gateway' \
+         --subnet-pool provider-subnet-pool \
+         --subnet-range 10.2.0.0/24 \
+         --allocation-pool start=10.2.0.3,end=10.2.0.252 \
+         --gateway 10.2.0.1 \
+         --network provider-network \
+         --network-segment segment-rack2 \
+         provider-subnet-rack2
 
 
 Note the service types. network:floatingip_agent_gateway makes sure that these
@@ -285,21 +283,21 @@ This is to be repeated each time a new subnet must be created for floating IPs
 and router gateways. First, the range is added in the subnet pool, then the
 subnet itself is created:
 
-  .. code-block:: console
+.. code-block:: console
 
-     $ # Add a new prefix in the subnet pool for the floating IPs:
-     $ openstack subnet pool set \
-           --pool-prefix 203.0.113.0/24 \
-           provider-subnet-pool
+   $ # Add a new prefix in the subnet pool for the floating IPs:
+   $ openstack subnet pool set \
+         --pool-prefix 203.0.113.0/24 \
+         provider-subnet-pool
 
-     $ # Create the floating IP subnet
-     $ openstack subnet create vm-fip \
-           --service-type 'network:routed' \
-           --service-type 'network:floatingip' \
-           --service-type 'network:router_gateway' \
-           --subnet-pool provider-subnet-pool \
-           --subnet-range 203.0.113.0/24 \
-           --network provider-network
+   $ # Create the floating IP subnet
+   $ openstack subnet create vm-fip \
+         --service-type 'network:routed' \
+         --service-type 'network:floatingip' \
+         --service-type 'network:router_gateway' \
+         --subnet-pool provider-subnet-pool \
+         --subnet-range 203.0.113.0/24 \
+         --network provider-network
 
 The service-type network:routed ensures we're using BGP through the provider
 network to advertize the IPs. network:floatingip and network:router_gateway
@@ -312,13 +310,13 @@ The provider network needs to be added to each of the BGP speakers. This means
 each time a new rack is setup, the provider network must be added to the 2 BGP
 speakers of that rack.
 
-  .. code-block:: console
+.. code-block:: console
 
-     $ # Add the provider network to the BGP speakers.
-     $ openstack bgp speaker add network \
-           mycloud-compute-1.example.com provider-network
-     $ openstack bgp speaker add network \
-           mycloud-compute-4.example.com provider-network
+   $ # Add the provider network to the BGP speakers.
+   $ openstack bgp speaker add network \
+         mycloud-compute-1.example.com provider-network
+   $ openstack bgp speaker add network \
+         mycloud-compute-4.example.com provider-network
 
 
 In this example, we've selected two compute nodes that are also running an
@@ -332,68 +330,68 @@ This can be done by each customer. A subnet pool isn't mandatory, but it is
 nice to have. Typically, the customer network will not be advertized through
 BGP (but this can be done if needed).
 
-  .. code-block:: console
+.. code-block:: console
 
-     $ # Create the tenant private network
-     $ openstack network create tenant-network
+   $ # Create the tenant private network
+   $ openstack network create tenant-network
 
-     $ # Self-service network pool:
-     $ openstack subnet pool create \
-           --pool-prefix 192.168.130.0/23 \
-           --share \
-           tenant-subnet-pool
+   $ # Self-service network pool:
+   $ openstack subnet pool create \
+         --pool-prefix 192.168.130.0/23 \
+         --share \
+         tenant-subnet-pool
 
-     $ # Self-service subnet:
-     $ openstack subnet create \
-           --network tenant-network \
-           --subnet-pool tenant-subnet-pool \
-           --prefix-length 24 \
-           tenant-subnet-1
+   $ # Self-service subnet:
+   $ openstack subnet create \
+         --network tenant-network \
+         --subnet-pool tenant-subnet-pool \
+         --prefix-length 24 \
+         tenant-subnet-1
 
-     $ # Create the router
-     $ openstack router create tenant-router
+   $ # Create the router
+   $ openstack router create tenant-router
 
-     $ # Add the tenant subnet to the tenant router
-     $ openstack router add subnet \
-           tenant-router tenant-subnet-1
+   $ # Add the tenant subnet to the tenant router
+   $ openstack router add subnet \
+         tenant-router tenant-subnet-1
 
-     $ # Set the router's default gateway. This will use one public IP.
-     $ openstack router set \
-           --external-gateway provider-network tenant-router
+   $ # Set the router's default gateway. This will use one public IP.
+   $ openstack router set \
+         --external-gateway provider-network tenant-router
 
-     $ # Create a first VM on the tenant subnet
-     $ openstack server create --image debian-10.5.0-openstack-amd64.qcow2 \
-           --flavor cpu2-ram6-disk20 \
-           --nic net-id=tenant-network \
-           --key-name yubikey-zigo \
-           test-server-1
+   $ # Create a first VM on the tenant subnet
+   $ openstack server create --image debian-10.5.0-openstack-amd64.qcow2 \
+         --flavor cpu2-ram6-disk20 \
+         --nic net-id=tenant-network \
+         --key-name yubikey-zigo \
+         test-server-1
 
-     $ # Eventually, add a floating IP
-     $ openstack floating ip create provider-network
-     +---------------------+--------------------------------------+
-     | Field               | Value                                |
-     +---------------------+--------------------------------------+
-     | created_at          | 2020-12-15T11:48:36Z                 |
-     | description         |                                      |
-     | dns_domain          | None                                 |
-     | dns_name            | None                                 |
-     | fixed_ip_address    | None                                 |
-     | floating_ip_address | 203.0.113.17                         |
-     | floating_network_id | 859f5302-7b22-4c50-92f8-1f71d6f3f3f4 |
-     | id                  | 01de252b-4b78-4198-bc28-1328393bf084 |
-     | name                | 203.0.113.17                         |
-     | port_details        | None                                 |
-     | port_id             | None                                 |
-     | project_id          | d71a5d98aef04386b57736a4ea4f3644     |
-     | qos_policy_id       | None                                 |
-     | revision_number     | 0                                    |
-     | router_id           | None                                 |
-     | status              | DOWN                                 |
-     | subnet_id           | None                                 |
-     | tags                | []                                   |
-     | updated_at          | 2020-12-15T11:48:36Z                 |
-     +---------------------+--------------------------------------+
-     $ openstack server add floating ip test-server-1 203.0.113.17
+   $ # Eventually, add a floating IP
+   $ openstack floating ip create provider-network
+   +---------------------+--------------------------------------+
+   | Field               | Value                                |
+   +---------------------+--------------------------------------+
+   | created_at          | 2020-12-15T11:48:36Z                 |
+   | description         |                                      |
+   | dns_domain          | None                                 |
+   | dns_name            | None                                 |
+   | fixed_ip_address    | None                                 |
+   | floating_ip_address | 203.0.113.17                         |
+   | floating_network_id | 859f5302-7b22-4c50-92f8-1f71d6f3f3f4 |
+   | id                  | 01de252b-4b78-4198-bc28-1328393bf084 |
+   | name                | 203.0.113.17                         |
+   | port_details        | None                                 |
+   | port_id             | None                                 |
+   | project_id          | d71a5d98aef04386b57736a4ea4f3644     |
+   | qos_policy_id       | None                                 |
+   | revision_number     | 0                                    |
+   | router_id           | None                                 |
+   | status              | DOWN                                 |
+   | subnet_id           | None                                 |
+   | tags                | []                                   |
+   | updated_at          | 2020-12-15T11:48:36Z                 |
+   +---------------------+--------------------------------------+
+   $ openstack server add floating ip test-server-1 203.0.113.17
 
 Cumulus switch configuration
 ----------------------------
@@ -409,38 +407,38 @@ that works (at least with Cumulus switches). Here's how.
 
 In /etc/network/switchd.conf we change this:
 
-  .. code-block:: ini
+.. code-block:: ini
 
-     # configure a route instead of a neighbor with the same ip/mask
-     #route.route_preferred_over_neigh = FALSE
-     route.route_preferred_over_neigh = TRUE
+   # configure a route instead of a neighbor with the same ip/mask
+   #route.route_preferred_over_neigh = FALSE
+   route.route_preferred_over_neigh = TRUE
 
 and then simply restart switchd:
 
-  .. code-block:: console
+.. code-block:: console
 
-     systemctl restart switchd
+   systemctl restart switchd
 
 This reboots the switch ASIC of the switch, so it may be a dangerous thing to
 do with no switch redundancy (so be careful when doing it). The completely safe
 procedure, if having 2 switches per rack, looks like this:
 
-  .. code-block:: console
+.. code-block:: console
 
-     # save clagd priority
-     OLDPRIO=$(clagctl status | sed -r -n  's/.*Our.*Role: ([0-9]+) 0.*/\1/p')
-     # make sure that this switch is not the primary clag switch. otherwise the
-     # secondary switch will also shutdown all interfaces when loosing contact
-     # with the primary switch.
-     clagctl priority 16535
+   # save clagd priority
+   OLDPRIO=$(clagctl status | sed -r -n  's/.*Our.*Role: ([0-9]+) 0.*/\1/p')
+   # make sure that this switch is not the primary clag switch. otherwise the
+   # secondary switch will also shutdown all interfaces when loosing contact
+   # with the primary switch.
+   clagctl priority 16535
 
-     # tell neighbors to not route through this router
-     vtysh
-     vtysh# router bgp 64999
-     vtysh# bgp graceful-shutdown
-     vtysh# exit
-     systemctl restart switchd
-     clagctl priority $OLDPRIO
+   # tell neighbors to not route through this router
+   vtysh
+   vtysh# router bgp 64999
+   vtysh# bgp graceful-shutdown
+   vtysh# exit
+   systemctl restart switchd
+   clagctl priority $OLDPRIO
 
 Verification
 ------------
@@ -449,16 +447,16 @@ If everything goes well, the floating IPs are advertized over BGP through the
 provider network. Here is an example with 4 VMs deployed on 2 racks. Neutron
 is here picking-up IPs on the segmented network as Nexthop.
 
-  .. code-block:: console
+.. code-block:: console
 
-     $ # Check the advertized routes:
-     $ openstack bgp speaker list advertised routes \
-           mycloud-compute-4.example.com
-     +-----------------+-----------+
-     | Destination     | Nexthop   |
-     +-----------------+-----------+
-     | 203.0.113.17/32 | 10.1.0.48 |
-     | 203.0.113.20/32 | 10.1.0.65 |
-     | 203.0.113.40/32 | 10.2.0.23 |
-     | 203.0.113.55/32 | 10.2.0.35 |
-     +-----------------+-----------+
+   $ # Check the advertized routes:
+   $ openstack bgp speaker list advertised routes \
+         mycloud-compute-4.example.com
+   +-----------------+-----------+
+   | Destination     | Nexthop   |
+   +-----------------+-----------+
+   | 203.0.113.17/32 | 10.1.0.48 |
+   | 203.0.113.20/32 | 10.1.0.65 |
+   | 203.0.113.40/32 | 10.2.0.23 |
+   | 203.0.113.55/32 | 10.2.0.35 |
+   +-----------------+-----------+
