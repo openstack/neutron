@@ -230,6 +230,36 @@ class OVNClient(object):
             external_ids=subnet_dhcp_options['external_ids'])
         return {'cmd': add_dhcp_opts_cmd}
 
+    def update_lsp_host_info(self, context, db_port, up=True):
+        """Update the binding hosting information for the LSP.
+
+        Update the binding hosting information in the Logical_Switch_Port
+        external_ids column. See LP #2020058 for more information.
+
+        :param context: Neutron API context.
+        :param db_port: The Neutron port.
+        :param up: If True add the host information, if False remove it.
+                   Defaults to True.
+        """
+        cmd = []
+        if up:
+            if not db_port.port_bindings:
+                return
+            host = db_port.port_bindings[0].host
+
+            ext_ids = ('external_ids',
+                       {ovn_const.OVN_HOST_ID_EXT_ID_KEY: host})
+            cmd.append(
+                self._nb_idl.db_set(
+                    'Logical_Switch_Port', db_port.id, ext_ids))
+        else:
+            cmd.append(
+                self._nb_idl.db_remove(
+                    'Logical_Switch_Port', db_port.id, 'external_ids',
+                    ovn_const.OVN_HOST_ID_EXT_ID_KEY, if_exists=True))
+
+        self._transaction(cmd)
+
     def _get_port_options(self, port):
         context = n_context.get_admin_context()
         binding_prof = utils.validate_and_get_data_from_binding_profile(port)
@@ -358,7 +388,8 @@ class OVNClient(object):
 
         # HA Chassis Group will bind the port to the highest
         # priority Chassis
-        if port_type != ovn_const.LSP_TYPE_EXTERNAL:
+        if port_type not in (ovn_const.LSP_TYPE_EXTERNAL,
+                             ovn_const.LSP_TYPE_VIRTUAL):
             options.update({'requested-chassis':
                             port.get(portbindings.HOST_ID, '')})
 
