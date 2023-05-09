@@ -57,28 +57,28 @@ To enable the logging service, follow the below steps.
 
 #. On compute/network nodes, add configuration for logging service to
    ``[network_log]`` in ``/etc/neutron/plugins/ml2/openvswitch_agent.ini`` and in
-   ``/etc/neutron/l3_agent.ini`` as shown bellow:
+   ``/etc/neutron/l3_agent.ini`` as shown below:
 
-    .. code-block:: ini
+   .. code-block:: ini
 
       [network_log]
       rate_limit = 100
       burst_limit = 25
       #local_output_log_base = <None>
 
-    In which, ``rate_limit`` is used to configure the maximum number of packets
-    to be logged per second (packets per second). When a high rate triggers
-    ``rate_limit``, logging queues packets to be logged. ``burst_limit`` is
-    used to configure the maximum of queued packets. And logged packets can be
-    stored anywhere by using ``local_output_log_base``.
+   In which, ``rate_limit`` is used to configure the maximum number of packets
+   to be logged per second (packets per second). When a high rate triggers
+   ``rate_limit``, logging queues packets to be logged. ``burst_limit`` is
+   used to configure the maximum of queued packets. And logged packets can be
+   stored anywhere by using ``local_output_log_base``.
 
-    .. note::
+   .. note::
 
-       - It requires at least ``100`` for ``rate_limit`` and at least ``25``
-         for ``burst_limit``.
-       - If ``rate_limit`` is unset, logging will log unlimited.
-       - If we don't specify ``local_output_log_base``, logged packets will be
-         stored in system journal like ``/var/log/syslog`` by default.
+      - It requires at least ``100`` for ``rate_limit`` and at least ``25``
+        for ``burst_limit``.
+      - If ``rate_limit`` is unset, logging will log unlimited.
+      - If we don't specify ``local_output_log_base``, logged packets will be
+        stored in system journal like ``/var/log/syslog`` by default.
 
 Trusted projects policy.yaml configuration
 ----------------------------------------------
@@ -127,55 +127,55 @@ Service workflow for Operator
 
    * Create a logging resource with an appropriate resource type
 
-      .. code-block:: console
+     .. code-block:: console
 
-         $ openstack network log create --resource-type security_group \
-           --description "Collecting all security events" \
-           --event ALL Log_Created
-         +-----------------+------------------------------------------------+
-         | Field           | Value                                          |
-         +-----------------+------------------------------------------------+
-         | Description     | Collecting all security events                 |
-         | Enabled         | True                                           |
-         | Event           | ALL                                            |
-         | ID              | 8085c3e6-0fa2-4954-b5ce-ff6207931b6d           |
-         | Name            | Log_Created                                    |
-         | Project         | 02568bd62b414221956f15dbe9527d16               |
-         | Resource        | None                                           |
-         | Target          | None                                           |
-         | Type            | security_group                                 |
-         | created_at      | 2017-07-05T02:56:43Z                           |
-         | revision_number | 0                                              |
-         | tenant_id       | 02568bd62b414221956f15dbe9527d16               |
-         | updated_at      | 2017-07-05T02:56:43Z                           |
-         +-----------------+------------------------------------------------+
+        $ openstack network log create --resource-type security_group \
+          --description "Collecting all security events" \
+          --event ALL Log_Created
+        +-----------------+------------------------------------------------+
+        | Field           | Value                                          |
+        +-----------------+------------------------------------------------+
+        | Description     | Collecting all security events                 |
+        | Enabled         | True                                           |
+        | Event           | ALL                                            |
+        | ID              | 8085c3e6-0fa2-4954-b5ce-ff6207931b6d           |
+        | Name            | Log_Created                                    |
+        | Project         | 02568bd62b414221956f15dbe9527d16               |
+        | Resource        | None                                           |
+        | Target          | None                                           |
+        | Type            | security_group                                 |
+        | created_at      | 2017-07-05T02:56:43Z                           |
+        | revision_number | 0                                              |
+        | tenant_id       | 02568bd62b414221956f15dbe9527d16               |
+        | updated_at      | 2017-07-05T02:56:43Z                           |
+        +-----------------+------------------------------------------------+
 
-   .. warning::
+     .. warning::
 
-      In the case of ``--resource`` and ``--target`` are not specified from the
-      request, these arguments will be assigned to ``ALL`` by default. Hence,
-      there is an enormous range of log events will be created.
+        In the case of ``--resource`` and ``--target`` are not specified from the
+        request, these arguments will be assigned to ``ALL`` by default. Hence,
+        there is an enormous range of log events will be created.
 
    * Create logging resource with a given resource (sg1 or fwg1)
 
-      .. code-block:: console
+     .. code-block:: console
 
-         $ openstack network log create my-log --resource-type security_group --resource sg1
-         $ openstack network log create my-log --resource-type firewall_group --resource fwg1
+        $ openstack network log create my-log --resource-type security_group --resource sg1
+        $ openstack network log create my-log --resource-type firewall_group --resource fwg1
 
    * Create logging resource with a given target (portA)
 
-      .. code-block:: console
+     .. code-block:: console
 
-         $ openstack network log create my-log --resource-type security_group --target portA
+        $ openstack network log create my-log --resource-type security_group --target portA
 
    * Create logging resource for only the given target (portB) and the given
      resource (sg1 or fwg1)
 
-      .. code-block:: console
+     .. code-block:: console
 
-         $ openstack network log create my-log --resource-type security_group --target portB --resource sg1
-         $ openstack network log create my-log --resource-type firewall_group --target portB --resource fwg1
+        $ openstack network log create my-log --resource-type security_group --target portB --resource sg1
+        $ openstack network log create my-log --resource-type firewall_group --target portB --resource fwg1
 
    .. note::
 
@@ -259,7 +259,7 @@ The  general characteristics of each event will be shown as the following:
 
    * Security event record format:
 
-     * Logged data of an ``ACCEPT`` event would look like:
+     Logged data of an ``ACCEPT`` event would look like:
 
      .. code-block:: console
 
@@ -274,7 +274,7 @@ The  general characteristics of each event will be shown as the following:
          TCPOptionNoOperation(kind=1,length=1), TCPOptionWindowScale(kind=3,length=3,shift_cnt=3)],
          seq=3284890090,src_port=47825,urgent=0,window_size=14600)
 
-     * Logged data of a ``DROP`` event:
+     Logged data of a ``DROP`` event:
 
      .. code-block:: console
 
@@ -298,7 +298,7 @@ The  general characteristics of each event will be shown as the following:
 
    * Security event record format:
 
-     * Logged data of an ``ACCEPT`` event would look like:
+     Logged data of an ``ACCEPT`` event would look like:
 
      .. code-block:: console
 
@@ -310,7 +310,7 @@ The  general characteristics of each event will be shown as the following:
          \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00
          \x00\x00\x00\x00\x00\x00\x00',id=29185,seq=0),type=8)
 
-     * Logged data of a ``DROP`` event:
+     Logged data of a ``DROP`` event:
 
      .. code-block:: console
 

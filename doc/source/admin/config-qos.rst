@@ -268,13 +268,12 @@ On the network and compute nodes:
       [agent]
       extensions = fip_qos, gateway_ip_qos
 
-
 #. As rate limit doesn't work on Open vSwitch's ``internal`` ports,
    optionally, as a workaround, to make QoS bandwidth limit work on
    router's gateway ports, set ``ovs_use_veth`` to ``True`` in ``DEFAULT``
    section in ``/etc/neutron/l3_agent.ini``
 
-  .. code-block:: ini
+   .. code-block:: ini
 
       [DEFAULT]
       ovs_use_veth = True

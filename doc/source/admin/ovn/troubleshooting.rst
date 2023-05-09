@@ -54,7 +54,7 @@ the host to the OVN database by creating the corresponding "Chassis" and
 when the process is gracefully stopped, it deletes both registers. These
 registers are used by Neutron to control the OVN agents.
 
-  .. code-block:: console
+.. code-block:: console
 
   $ openstack network agent list -c ID -c "Agent Type" -c Host -c Alive -c State
   +--------------------------------------+------------------------------+--------+-------+-------+
@@ -76,40 +76,36 @@ the other one will be down because the "Chassis_Private.nb_cfg_timestamp"
 is not updated. In this case, the administrator should manually delete from
 the OVN Southbound database the stale registers. For example:
 
-  * List the "Chassis" registers, filtering by hostname and name (OVS
-    "system-id"):
+* List the "Chassis" registers, filtering by hostname and name (OVS
+  "system-id"):
 
-    .. code-block:: console
+  .. code-block:: console
 
-    $ sudo ovn-sbctl list Chassis | grep name
-    hostname            : u20ovn
-    name                : "a55c8d85-2071-4452-92cb-95d15c29bde7"
-    hostname            : u20ovn
-    name                : "ce9a1471-79c1-4472-adfc-9e5ce86eba07"
+     $ sudo ovn-sbctl list Chassis | grep name
+     hostname            : u20ovn
+     name                : "a55c8d85-2071-4452-92cb-95d15c29bde7"
+     hostname            : u20ovn
+     name                : "ce9a1471-79c1-4472-adfc-9e5ce86eba07"
 
+* Delete the stale "Chassis" register:
 
-  * Delete the stale "Chassis" register:
+  .. code-block:: console
 
-    .. code-block:: console
+     $ sudo ovn-sbctl destroy Chassis ce9a1471-79c1-4472-adfc-9e5ce86eba07
 
-    $ sudo ovn-sbctl destroy Chassis ce9a1471-79c1-4472-adfc-9e5ce86eba07
+* List the "Chassis_Private" registers, filtering by name:
 
+  .. code-block:: console
 
-  * List the "Chassis_Private" registers, filtering by name:
+     $ sudo ovn-sbctl list Chassis_Private | grep name
+     name                : "a55c8d85-2071-4452-92cb-95d15c29bde7"
+     name                : "ce9a1471-79c1-4472-adfc-9e5ce86eba07"
 
-    .. code-block:: console
+* Delete the stale "Chassis_Private" register:
 
-    $ sudo ovn-sbctl list Chassis_Private | grep name
-    name                : "a55c8d85-2071-4452-92cb-95d15c29bde7"
-    name                : "ce9a1471-79c1-4472-adfc-9e5ce86eba07"
+  .. code-block:: console
 
-
-  * Delete the stale "Chassis_Private" register:
-
-    .. code-block:: console
-
-    $ sudo ovn-sbctl destroy Chassis_Private ce9a1471-79c1-4472-adfc-9e5ce86eba07
-
+     $ sudo ovn-sbctl destroy Chassis_Private ce9a1471-79c1-4472-adfc-9e5ce86eba07
 
 If the host name is also updated during the system upgrade, the Neutron
 agent list could present entries from different host names, but the older
