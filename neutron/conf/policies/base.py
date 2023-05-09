@@ -60,6 +60,20 @@ RULE_NET_OWNER = 'rule:network_owner'
 RULE_PARENT_OWNER = 'rule:ext_parent_owner'
 RULE_SG_OWNER = 'rule:sg_owner'
 
+# In some cases we need to check owner of the parent resource, it's like that
+# for example for QoS rules (check owner of QoS policy rule belongs to) or
+# Floating IP port forwarding (check owner of FIP which PF is using). It's like
+# that becasue those resources (QOS rules, FIP PFs) don't have project_id
+# attribute at all and they belongs to the same project as parent resource (QoS
+# policy, FIP).
+PARENT_OWNER_MEMBER = 'role:member and ' + RULE_PARENT_OWNER
+PARENT_OWNER_READER = 'role:reader and ' + RULE_PARENT_OWNER
+ADMIN_OR_PARENT_OWNER_MEMBER = (
+    '(' + ADMIN + ') or (' + PARENT_OWNER_MEMBER + ')')
+ADMIN_OR_PARENT_OWNER_READER = (
+    '(' + ADMIN + ') or (' + PARENT_OWNER_READER + ')')
+
+
 rules = [
     policy.RuleDefault(
         'context_is_admin',
