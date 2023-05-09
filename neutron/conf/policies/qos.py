@@ -126,7 +126,7 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='get_policy_bandwidth_limit_rule',
-        check_str=base.ADMIN_OR_PROJECT_READER,
+        check_str=base.ADMIN_OR_PARENT_OWNER_READER,
         scope_types=['project'],
         description='Get a QoS bandwidth limit rule',
         operations=[
@@ -202,7 +202,7 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='get_policy_packet_rate_limit_rule',
-        check_str=base.ADMIN_OR_PROJECT_READER,
+        check_str=base.ADMIN_OR_PARENT_OWNER_READER,
         scope_types=['project'],
         description='Get a QoS packet rate limit rule',
         operations=[
@@ -258,7 +258,7 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='get_policy_dscp_marking_rule',
-        check_str=base.ADMIN_OR_PROJECT_READER,
+        check_str=base.ADMIN_OR_PARENT_OWNER_READER,
         scope_types=['project'],
         description='Get a QoS DSCP marking rule',
         operations=[
@@ -334,7 +334,7 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='get_policy_minimum_bandwidth_rule',
-        check_str=base.ADMIN_OR_PROJECT_READER,
+        check_str=base.ADMIN_OR_PARENT_OWNER_READER,
         scope_types=['project'],
         description='Get a QoS minimum bandwidth rule',
         operations=[
@@ -409,7 +409,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_policy_minimum_packet_rate_rule',
-        check_str=base.ADMIN_OR_PROJECT_READER,
+        check_str=base.ADMIN_OR_PARENT_OWNER_READER,
         scope_types=['project'],
         description='Get a QoS minimum packet rate rule',
         operations=[
@@ -464,7 +464,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_alias_bandwidth_limit_rule',
-        check_str=base.ADMIN_OR_PROJECT_READER,
+        check_str=base.ADMIN_OR_PARENT_OWNER_READER,
         scope_types=['project'],
         description='Get a QoS bandwidth limit rule through alias',
         operations=[
@@ -515,7 +515,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_alias_dscp_marking_rule',
-        check_str=base.ADMIN_OR_PROJECT_READER,
+        check_str=base.ADMIN_OR_PARENT_OWNER_READER,
         scope_types=['project'],
         description='Get a QoS DSCP marking rule through alias',
         operations=[
@@ -566,7 +566,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_alias_minimum_bandwidth_rule',
-        check_str=base.ADMIN_OR_PROJECT_READER,
+        check_str=base.ADMIN_OR_PARENT_OWNER_READER,
         scope_types=['project'],
         description='Get a QoS minimum bandwidth rule through alias',
         operations=[
