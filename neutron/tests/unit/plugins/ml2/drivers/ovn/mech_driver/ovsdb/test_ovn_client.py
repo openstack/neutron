@@ -126,6 +126,30 @@ class TestOVNClientDetermineBindHost(TestOVNClientBase):
             self.fake_smartnic_hostname,
             self.ovn_client.determine_bind_host({}, port_context=context))
 
+    def test_update_lsp_host_info_up(self):
+        context = mock.MagicMock()
+        host_id = 'fake-binding-host-id'
+        port_id = 'fake-port-id'
+        db_port = mock.Mock(
+            id=port_id, port_bindings=[mock.Mock(host=host_id)])
+
+        self.ovn_client.update_lsp_host_info(context, db_port)
+
+        self.nb_idl.db_set.assert_called_once_with(
+            'Logical_Switch_Port', port_id,
+            ('external_ids', {constants.OVN_HOST_ID_EXT_ID_KEY: host_id}))
+
+    def test_update_lsp_host_info_down(self):
+        context = mock.MagicMock()
+        port_id = 'fake-port-id'
+        db_port = mock.Mock(id=port_id)
+
+        self.ovn_client.update_lsp_host_info(context, db_port, up=False)
+
+        self.nb_idl.db_remove.assert_called_once_with(
+            'Logical_Switch_Port', port_id, 'external_ids',
+            constants.OVN_HOST_ID_EXT_ID_KEY, if_exists=True)
+
 
 class TestOVNClientFairMeter(TestOVNClientBase,
                              test_log_driver.TestOVNDriverBase):
