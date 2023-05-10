@@ -17,11 +17,16 @@ from neutron._i18n import _
 
 EXPERIMENTAL_CFG_GROUP = 'experimental'
 EXPERIMENTAL_LINUXBRIDGE = 'linuxbridge'
+EXPERIMENTAL_IPV6_PD = 'ipv6_pd_enabled'
 experimental_opts = [
     cfg.BoolOpt(EXPERIMENTAL_LINUXBRIDGE,
                 default=False,
                 help=_('Enable execution of the experimental Linuxbridge '
                        'agent.')),
+    cfg.BoolOpt(EXPERIMENTAL_IPV6_PD,
+                default=False,
+                help=_('Enable execution of the experimental IPv6 Prefix '
+                       'Delegation functionality in the L3 agent.')),
 ]
 
 

@@ -77,7 +77,12 @@ core_opts = [
                        "without providing a CIDR or subnetpool ID will be "
                        "given a CIDR via the Prefix Delegation mechanism. "
                        "Note that enabling PD will override the behavior of "
-                       "the default IPv6 subnetpool.")),
+                       "the default IPv6 subnetpool."),
+                deprecated_for_removal=True,
+                deprecated_since='2023.2',
+                deprecated_reason=("The Dibbler client used for this feature "
+                                   "is no longer maintained. See LP#1916428"),
+                ),
     cfg.IntOpt('dhcp_lease_duration', default=86400,
                help=_("DHCP lease duration (in seconds). Use -1 to tell "
                       "dnsmasq to use infinite lease times.")),

@@ -51,8 +51,10 @@ from sqlalchemy import not_
 from neutron._i18n import _
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.common import _constants
+from neutron.common import experimental
 from neutron.common import ipv6_utils
 from neutron.common import utils
+from neutron.conf import experimental as c_exp
 from neutron.db import db_base_plugin_common
 from neutron.db import ipam_pluggable_backend
 from neutron.db import models_v2
@@ -157,7 +159,17 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             result_filters=None)
         return super(NeutronDbPluginV2, cls).__new__(cls, *args, **kwargs)
 
+    @staticmethod
+    def _validate_ipv6_pd():
+        try:
+            if cfg.CONF.ipv6_pd_enabled:
+                experimental.validate_experimental_enabled(
+                    c_exp.EXPERIMENTAL_IPV6_PD)
+        except cfg.NoSuchOptError:
+            return
+
     def __init__(self):
+        self._validate_ipv6_pd()
         self.set_ipam_backend()
         if (cfg.CONF.notify_nova_on_port_status_changes or
                 cfg.CONF.notify_nova_on_port_data_changes):
