@@ -67,7 +67,7 @@ def setup_logging():
 
 
 def find_deleted_sg_rules(old_port, new_ports):
-    del_rules = list()
+    del_rules = []
     for port in new_ports:
         if old_port.id == port.id:
             for rule in old_port.secgroup_rules:

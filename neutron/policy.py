@@ -143,8 +143,8 @@ def _should_validate_sub_attributes(attribute, sub_attr):
     """Verify that sub-attributes are iterable and should be validated."""
     validate = attribute.get('validate')
     return (validate and isinstance(sub_attr, abc.Iterable) and
-            any([k.startswith('type:dict') and
-                 v for (k, v) in validate.items()]))
+            any(k.startswith('type:dict') and v
+                for (k, v) in validate.items()))
 
 
 def _build_subattr_match_rule(attr_name, attr, action, target):
@@ -383,11 +383,15 @@ class FieldCheck(policy.Check):
                                          (resource, field, value))
 
         # Value might need conversion - we need help from the attribute map
+
+        def _no_conv(x):
+            return x
+
         try:
             attr = attributes.RESOURCES[resource][field]
             conv_func = attr['convert_to']
         except KeyError:
-            conv_func = lambda x: x
+            conv_func = _no_conv
 
         self.field = field
         self.resource = resource

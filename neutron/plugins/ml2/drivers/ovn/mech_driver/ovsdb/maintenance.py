@@ -937,8 +937,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
             for route in self._nb_idl.lr_route_list(router.uuid).execute(
                     check_error=True):
                 if (route.nexthop == '' and
-                        (route.ip_prefix == n_const.IPv4_ANY or
-                         route.ip_prefix == n_const.IPv6_ANY)):
+                        route.ip_prefix in (n_const.IPv4_ANY,
+                                            n_const.IPv6_ANY)):
                     cmds.append(
                         self._nb_idl.delete_static_route(
                             router.name, route.ip_prefix, ''))

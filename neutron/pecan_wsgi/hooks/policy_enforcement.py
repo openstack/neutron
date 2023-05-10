@@ -92,8 +92,7 @@ class PolicyHook(hooks.PecanHook):
         if not controller or utils.is_member_action(controller):
             return
         collection = state.request.context.get('collection')
-        needs_prefetch = (state.request.method == 'PUT' or
-                          state.request.method == 'DELETE')
+        needs_prefetch = state.request.method in ('PUT', 'DELETE')
         policy.init()
 
         action = controller.plugin_handlers[

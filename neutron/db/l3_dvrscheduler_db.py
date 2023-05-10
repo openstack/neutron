@@ -522,7 +522,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
                                           dvr_routers):
         related_routers = self._get_other_dvr_router_ids_connected_router(
             context, router_id)
-        return any([r in dvr_routers for r in related_routers])
+        return any(r in dvr_routers for r in related_routers)
 
 
 def _dvr_handle_unbound_allowed_addr_pair_add(

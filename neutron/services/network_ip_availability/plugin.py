@@ -17,8 +17,8 @@ from neutron_lib.api.definitions import network_ip_availability
 from neutron_lib.db import utils as db_utils
 from neutron_lib import exceptions
 
-import neutron.db.db_base_plugin_v2 as db_base_plugin_v2
-import neutron.db.network_ip_availability_db as ip_availability_db
+from neutron.db import db_base_plugin_v2
+from neutron.db import network_ip_availability_db as ip_availability_db
 
 
 class NetworkIPAvailabilityPlugin(ip_availability_db.IpAvailabilityMixin,

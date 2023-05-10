@@ -204,7 +204,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         # Stores the port IDs whose binding has been activated
         self.activated_bindings = set()
         # Stores smartnic ports update/remove
-        self.updated_smartnic_ports = list()
+        self.updated_smartnic_ports = []
         # Stores integration bridge smartnic ports data
         self.current_smartnic_ports_map = {}
 
@@ -219,7 +219,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         # keeps association between ports and ofports to detect ofport change
         self.vifname_to_ofport_map = {}
         # Stores newly created bridges
-        self.added_bridges = list()
+        self.added_bridges = []
         self.bridge_mappings = self._parse_bridge_mappings(
             ovs_conf.bridge_mappings)
         self.rp_bandwidths = place_utils.parse_rp_bandwidths(
@@ -2753,7 +2753,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                             self.process_smartnic_ports()
                         updated_smartnic_ports_copy = (
                             self.updated_smartnic_ports)
-                        self.updated_smartnic_ports = list()
+                        self.updated_smartnic_ports = []
                         for port_data in updated_smartnic_ports_copy:
                             self.treat_smartnic_port(port_data)
 

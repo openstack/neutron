@@ -277,9 +277,12 @@ class PortForwarding(base.NeutronDbObject):
 
     @staticmethod
     def _unique_port_forwarding(query):
+
+        def _row_one(row):
+            return row[1]
+
         q = query.order_by(l3.FloatingIP.router_id)
-        keyfunc = lambda row: row[1]
-        group_iterator = itertools.groupby(q, keyfunc)
+        group_iterator = itertools.groupby(q, _row_one)
 
         result = []
         for key, value in group_iterator:

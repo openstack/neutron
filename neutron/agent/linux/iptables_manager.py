@@ -855,11 +855,14 @@ def _get_rules_by_chain(rules):
 
 
 def _ensure_all_mac_addresses_are_uppercase(rules):
+
+    def _to_upper(pat):
+        return pat.group(0).upper()
+
     new_rules = []
     lowercase_mac_regex = re.compile(r"(?:[0-9a-f]{2}[:]){5}(?:[0-9a-f]{2})")
-    callback = lambda pat: pat.group(0).upper()
     for rule in rules:
-        new_rules.append(re.sub(lowercase_mac_regex, callback, rule))
+        new_rules.append(re.sub(lowercase_mac_regex, _to_upper, rule))
     return new_rules
 
 

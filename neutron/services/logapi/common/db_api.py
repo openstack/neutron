@@ -175,10 +175,13 @@ def get_logs_bound_port(context, port_id):
                                       project_id=project_id,
                                       resource_type=constants.SECURITY_GROUP,
                                       enabled=True)
-    is_bound = lambda log: (log.resource_id in port.security_group_ids or
-                            log.target_id == port.id or
-                            (not log.target_id and not log.resource_id))
-    return [log for log in logs if is_bound(log)]
+
+    def _is_bound(log):
+        return (log.resource_id in port.security_group_ids or
+                log.target_id == port.id or
+                (not log.target_id and not log.resource_id))
+
+    return [log for log in logs if _is_bound(log)]
 
 
 def get_logs_bound_sg(context, sg_id=None, project_id=None, port_id=None,

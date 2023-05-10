@@ -171,7 +171,7 @@ class OFPort(object):
         self.lla_address = str(netutils.get_ipv6_addr_by_EUI64(
             lib_const.IPv6_LLA_PREFIX, self.mac))
         self.ofport = ovs_port.ofport
-        self.sec_groups = list()
+        self.sec_groups = []
         self.fixed_ips = port_dict.get('fixed_ips', [])
         self.neutron_port_dict = port_dict.copy()
         self.allowed_pairs_v4 = self._get_allowed_pairs(port_dict, version=4)
@@ -307,7 +307,7 @@ class ConjIdMap(object):
                   for table in ovs_consts.OVS_FIREWALL_TABLES])
             conj_ids = CONJ_ID_REGEX.findall(" | ".join(flows_iter))
             try:
-                conj_id_max = max([int(conj_id) for conj_id in conj_ids])
+                conj_id_max = max(int(conj_id) for conj_id in conj_ids)
             except ValueError:
                 conj_id_max = 0
 
