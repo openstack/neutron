@@ -1259,13 +1259,13 @@ class OVNClient(object):
 
         return list(networks), ipv6_ra_configs
 
-    def _add_router_ext_gw(self, router, networks, txn):
-        context = n_context.get_admin_context()
+    def _add_router_ext_gw(self, context, router, networks, txn):
         # 1. Add the external gateway router port.
-        gateways = self._get_gw_info(context, router)
+        admin_context = context.elevated()
+        gateways = self._get_gw_info(admin_context, router)
         gw_port_id = router['gw_port_id']
-        port = self._plugin.get_port(context, gw_port_id)
-        self._create_lrouter_port(context, router, port, txn=txn)
+        port = self._plugin.get_port(admin_context, gw_port_id)
+        self._create_lrouter_port(admin_context, router, port, txn=txn)
 
         # 2. Add default route with nexthop as gateway ip
         lrouter_name = utils.ovn_name(router['id'])
@@ -1394,7 +1394,7 @@ class OVNClient(object):
                     context, router['id'])
                 if router.get(l3.EXTERNAL_GW_INFO) and networks is not None:
                     added_gw_port = self._add_router_ext_gw(
-                        router, networks, txn)
+                        context, router, networks, txn)
 
             self._qos_driver.create_router(txn, router)
 
@@ -1428,7 +1428,7 @@ class OVNClient(object):
                 if gateway_new and not gateway_old:
                     # Route gateway is set
                     added_gw_port = self._add_router_ext_gw(
-                        new_router, networks, txn)
+                        context, new_router, networks, txn)
                 elif gateway_old and not gateway_new:
                     # router gateway is removed
                     txn.add(self._nb_idl.delete_lrouter_ext_gw(router_name))
@@ -1448,7 +1448,7 @@ class OVNClient(object):
                                 router_object, networks, txn)
                             deleted_gw_port_id = router_object['gw_port_id']
                         added_gw_port = self._add_router_ext_gw(
-                            new_router, networks, txn)
+                            context, new_router, networks, txn)
                     else:
                         # Check if snat has been enabled/disabled and update
                         new_snat_state = gateway_new.get('enable_snat', True)

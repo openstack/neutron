@@ -69,7 +69,8 @@ class TestOVNClient(TestOVNClientBase):
         txn = mock.MagicMock()
         self.assertEqual(
             self.get_plugin().get_port(),
-            self.ovn_client._add_router_ext_gw(router, networks, txn))
+            self.ovn_client._add_router_ext_gw(mock.Mock(), router, networks,
+                                               txn))
         self.nb_idl.add_static_route.assert_called_once_with(
             'neutron-' + router['id'],
             ip_prefix='0.0.0.0/0',
@@ -100,7 +101,8 @@ class TestOVNClient(TestOVNClientBase):
         txn = mock.MagicMock()
         self.assertEqual(
             self.get_plugin().get_port(),
-            self.ovn_client._add_router_ext_gw(router, networks, txn))
+            self.ovn_client._add_router_ext_gw(mock.Mock(), router, networks,
+                                               txn))
         self.nb_idl.add_static_route.assert_not_called()
 
 
