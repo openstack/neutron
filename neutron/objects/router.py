@@ -408,8 +408,12 @@ class FloatingIP(base.NeutronDbObject):
         # Filter out on router_ids
         query = query.filter(l3.FloatingIP.router_id.in_(router_ids))
 
-        # Remove duplicate rows based on FIP IDs
-        query = query.group_by(l3.FloatingIP.id)
+        # Remove duplicate rows based on FIP IDs and the subnet pool address
+        # scope. Only one subnet pool (per IP version, 4 in this case) can
+        # be assigned to a subnet. The subnet pool address scope for a FIP is
+        # unique.
+        query = query.group_by(l3.FloatingIP.id,
+                               models_v2.SubnetPool.address_scope_id)
 
         for row in query:
             yield (cls._load_object(context, row[0]), row[1])

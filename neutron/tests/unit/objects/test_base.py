@@ -55,6 +55,7 @@ from neutron.objects import router
 from neutron.objects import securitygroup
 from neutron.objects import stdattrs
 from neutron.objects import subnet
+from neutron.objects import subnetpool
 from neutron.tests import base as test_base
 from neutron.tests import tools
 from neutron.tests.unit.db import test_db_base_plugin_v2
@@ -1583,7 +1584,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         fip_obj.create()
         return fip_obj.id
 
-    def _create_test_subnet_id(self, network_id=None):
+    def _create_test_subnet_id(self, network_id=None, subnet_pool_id=None):
         if not network_id:
             network_id = self._create_test_network_id()
         test_subnet = {
@@ -1597,6 +1598,8 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
             'ipv6_ra_mode': None,
             'ipv6_address_mode': None
         }
+        if subnet_pool_id:
+            test_subnet['subnetpool_id'] = subnet_pool_id
         subnet_obj = subnet.Subnet(self.context, **test_subnet)
         subnet_obj.create()
         return subnet_obj.id
@@ -1721,6 +1724,21 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         _qos_policy = qos_policy.QosPolicy(self.context, **qos_policy_attrs)
         _qos_policy.create()
         return _qos_policy
+
+    def _create_test_subnet_pool(
+            self, prefix, default_prefixlen, min_prefixlen, max_prefixlen,
+            ip_version):
+        subnet_pool = {
+            'prefixes': [prefix],
+            'default_prefixlen': default_prefixlen,
+            'min_prefixlen': min_prefixlen,
+            'max_prefixlen': max_prefixlen,
+            'ip_version': ip_version,
+            'address_scope_id': uuidutils.generate_uuid(),
+        }
+        subnet_pool_obj = subnetpool.SubnetPool(self.context, **subnet_pool)
+        subnet_pool_obj.create()
+        return subnet_pool_obj.id, subnet_pool_obj.address_scope_id
 
     def test_get_standard_attr_id(self):
 
