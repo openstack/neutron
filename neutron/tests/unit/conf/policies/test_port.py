@@ -532,6 +532,16 @@ class AdminTests(PortAPITestCase):
                            'create_port:allowed_address_pairs:ip_address',
                            self.alt_target))
 
+    def test_create_port_with_hints(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_port:hints',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_port:hints',
+                           self.alt_target))
+
     def test_get_port(self):
         self.assertTrue(
             policy.enforce(self.context, 'get_port', self.target))
@@ -577,6 +587,14 @@ class AdminTests(PortAPITestCase):
         self.assertTrue(
             policy.enforce(
                 self.context, 'get_port:resource_request', self.alt_target))
+
+    def test_get_port_hints(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'get_port:hints', self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'get_port:hints', self.alt_target))
 
     def test_update_port(self):
         self.assertTrue(
@@ -699,6 +717,16 @@ class AdminTests(PortAPITestCase):
         self.assertTrue(
             policy.enforce(self.context,
                            'update_port:data_plane_status',
+                           self.alt_target))
+
+    def test_update_port_hints(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_port:hints',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_port:hints',
                            self.alt_target))
 
     def test_delete_port(self):
@@ -850,6 +878,18 @@ class ProjectMemberTests(AdminTests):
             self.context, 'create_port:allowed_address_pairs:ip_address',
             self.alt_target)
 
+    def test_create_port_with_hints(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_port:hints',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_port:hints',
+            self.alt_target)
+
     def test_get_port(self):
         self.assertTrue(
             policy.enforce(self.context, 'get_port', self.target))
@@ -905,6 +945,16 @@ class ProjectMemberTests(AdminTests):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, 'get_port:resource_request',
+            self.alt_target)
+
+    def test_get_port_hints(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'get_port:hints',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'get_port:hints',
             self.alt_target)
 
     def test_update_port(self):
@@ -1052,6 +1102,16 @@ class ProjectMemberTests(AdminTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'update_port:data_plane_status', self.alt_target)
+
+    def test_update_port_hints(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_port:hints', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_port:hints', self.alt_target)
 
     def test_delete_port(self):
         self.assertTrue(

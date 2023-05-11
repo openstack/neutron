@@ -270,6 +270,15 @@ rules = [
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
+    policy.DocumentedRuleDefault(
+        name='create_port:hints',
+        check_str=base.ADMIN,
+        scope_types=['project'],
+        description=(
+            'Specify ``hints`` attribute when creating a port'
+        ),
+        operations=ACTION_POST,
+    ),
 
     policy.DocumentedRuleDefault(
         name='get_port',
@@ -349,6 +358,13 @@ rules = [
             check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
+    ),
+    policy.DocumentedRuleDefault(
+        name='get_port:hints',
+        check_str=base.ADMIN,
+        scope_types=['project'],
+        description='Get ``hints`` attribute of a port',
+        operations=ACTION_GET,
     ),
     # TODO(amotoki): Add get_port:binding:vnic_type
     # TODO(amotoki): Add get_port:binding:data_plane_status
@@ -591,6 +607,13 @@ rules = [
             check_str='rule:admin_or_data_plane_int',
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_port:hints',
+        check_str=base.ADMIN,
+        scope_types=['project'],
+        description='Update ``hints`` attribute of a port',
+        operations=ACTION_PUT,
     ),
 
     policy.DocumentedRuleDefault(
