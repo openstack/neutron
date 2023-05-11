@@ -30,9 +30,7 @@ RESOURCE_PATH = ('/floatingips/{floatingip_id}'
 rules = [
     policy.DocumentedRuleDefault(
         name='create_floatingip_port_forwarding',
-        check_str=neutron_policy.policy_or(
-            base.ADMIN_OR_PROJECT_MEMBER,
-            base.RULE_PARENT_OWNER),
+        check_str=base.ADMIN_OR_PARENT_OWNER_MEMBER,
         scope_types=['project'],
         description='Create a floating IP port forwarding',
         operations=[
@@ -49,9 +47,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_floatingip_port_forwarding',
-        check_str=neutron_policy.policy_or(
-            base.ADMIN_OR_PROJECT_READER,
-            base.RULE_PARENT_OWNER),
+        check_str=base.ADMIN_OR_PARENT_OWNER_READER,
         scope_types=['project'],
         description='Get a floating IP port forwarding',
         operations=[
@@ -72,9 +68,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_floatingip_port_forwarding',
-        check_str=neutron_policy.policy_or(
-            base.ADMIN_OR_PROJECT_MEMBER,
-            base.RULE_PARENT_OWNER),
+        check_str=base.ADMIN_OR_PARENT_OWNER_MEMBER,
         scope_types=['project'],
         description='Update a floating IP port forwarding',
         operations=[
@@ -91,9 +85,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_floatingip_port_forwarding',
-        check_str=neutron_policy.policy_or(
-            base.ADMIN_OR_PROJECT_MEMBER,
-            base.RULE_PARENT_OWNER),
+        check_str=base.ADMIN_OR_PARENT_OWNER_MEMBER,
         scope_types=['project'],
         description='Delete a floating IP port forwarding',
         operations=[
