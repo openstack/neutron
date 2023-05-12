@@ -314,6 +314,27 @@ class PlacementFixture(ServiceFixture):
             config_filenames=[self.placement_cfg_fixture.filename]))
 
 
+class MetadataFixture(ServiceFixture):
+
+    def __init__(self, env_desc, host_desc, test_name, metadata_cfg_fixture):
+        super().__init__()
+        self.env_desc = env_desc
+        self.host_desc = host_desc
+        self.test_name = test_name
+        self.metadata_cfg_fixture = metadata_cfg_fixture
+        self.metadata_config = self.metadata_cfg_fixture.config
+
+    def _setUp(self):
+        self.process_fixture = self.useFixture(ProcessFixture(
+            test_name=self.test_name,
+            process_name='metadata',
+            exec_name=shutil.which(
+                'metadata.py', path=os.path.join(fullstack_base.ROOTDIR,
+                                                 'servers')
+            ),
+            config_filenames=[self.metadata_cfg_fixture.filename]))
+
+
 class SRIOVAgentFixture(ServiceFixture):
 
     def __init__(self, env_desc, host_desc,

@@ -216,18 +216,21 @@ class OVSConfigFixture(ConfigFixture):
             base_filename='openvswitch_agent.ini')
 
         self.tunneling_enabled = self.env_desc.tunneling_enabled
-        ext_dev = utils.get_rand_device_name(prefix='br-eth')
-
         if host_desc.segmented_physnet:
             physnet = PHYSICAL_NETWORK_SEGMENTS_NAME
         else:
             physnet = PHYSICAL_NETWORK_NAME
 
+        self.phy_br_name = utils.get_rand_device_name(prefix='br-eth')
+        self.meta_br_name = self._generate_meta_bridge()
+        bridge_mappings = '{}:{}'.format(physnet, self.phy_br_name)
+        if env_desc.has_metadata:
+            bridge_mappings += ',{}:{}'.format('meta', self.meta_br_name)
         self.config.update({
             'ovs': {
                 'local_ip': local_ip,
                 'integration_bridge': self._generate_integration_bridge(),
-                'bridge_mappings': '{}:{}'.format(physnet, ext_dev),
+                'bridge_mappings': bridge_mappings,
                 'of_inactivity_probe': '0',
                 'ovsdb_debug': 'True',
                 'qos_meter_bandwidth': str(
@@ -254,7 +257,8 @@ class OVSConfigFixture(ConfigFixture):
         else:
             if env_desc.report_bandwidths:
                 self.config['ovs'][constants.RP_BANDWIDTHS] = \
-                    '{}:{}:{}'.format(ext_dev, MINIMUM_BANDWIDTH_EGRESS_KBPS,
+                    '{}:{}:{}'.format(self.phy_br_name,
+                                      MINIMUM_BANDWIDTH_EGRESS_KBPS,
                                       MINIMUM_BANDWIDTH_INGRESS_KBPS)
 
         if env_desc.qos:
@@ -281,6 +285,17 @@ class OVSConfigFixture(ConfigFixture):
             if host_desc.firewall_driver == 'openvswitch':
                 self.config['local_ip'] = {'static_nat': 'True'}
 
+        if env_desc.has_metadata:
+            self.config['agent']['extensions'] = 'metadata_path'
+            self.config.update({
+                'METADATA': {
+                    'metadata_proxy_shared_secret': 'secret',
+                    'nova_metadata_host': env_desc.metadata_host,
+                    'nova_metadata_port': str(env_desc.metadata_port),
+                    'host_proxy_listen_port': str(env_desc.hp_listen_port),
+                }
+            })
+
     def _setUp(self):
         self.config['ovs'].update({
             'of_listen_port': self.useFixture(
@@ -295,6 +310,9 @@ class OVSConfigFixture(ConfigFixture):
 
     def _generate_tunnel_bridge(self):
         return utils.get_rand_device_name(prefix='br-tun')
+
+    def _generate_meta_bridge(self):
+        return utils.get_rand_device_name(prefix='br-meta')
 
     def _generate_int_peer(self):
         return utils.get_rand_device_name(prefix='patch-tun')
@@ -313,7 +331,10 @@ class OVSConfigFixture(ConfigFixture):
         return self.config.ovs.integration_bridge
 
     def get_br_phys_name(self):
-        return self.config.ovs.bridge_mappings.split(':')[1]
+        return self.phy_br_name
+
+    def get_br_meta_name(self):
+        return self.meta_br_name
 
     def get_br_tun_name(self):
         return self.config.ovs.tunnel_bridge
@@ -351,6 +372,20 @@ class PlacementConfigFixture(ConfigFixture):
             'DEFAULT': {
                 'debug': 'True',
                 'placement_port': self.env_desc.placement_port
+            }
+        })
+
+
+class MetadataConfigFixture(ConfigFixture):
+
+    def __init__(self, env_desc, host_desc, temp_dir):
+        super().__init__(
+            env_desc, host_desc, temp_dir, base_filename='metadata.ini')
+        self.config.update({
+            'DEFAULT': {
+                'debug': 'True',
+                'metadata_host': self.env_desc.metadata_host,
+                'metadata_port': str(self.env_desc.metadata_port)
             }
         })
 

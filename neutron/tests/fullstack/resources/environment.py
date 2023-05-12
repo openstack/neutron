@@ -46,7 +46,9 @@ class EnvironmentDescription:
                  api_workers=1,
                  enable_traditional_dhcp=True, local_ip_ext=False,
                  quota_driver=quota_conf.QUOTA_DB_DRIVER,
-                 use_meter_bandwidth_limit=False):
+                 use_meter_bandwidth_limit=False,
+                 has_metadata=False, metadata_host=None, metadata_port=None,
+                 host_proxy_listen_port=None):
         self.network_type = network_type
         self.l2_pop = l2_pop
         self.qos = qos
@@ -75,6 +77,10 @@ class EnvironmentDescription:
             self.service_plugins += ',local_ip'
         self.quota_driver = quota_driver
         self.use_meter_bandwidth_limit = use_meter_bandwidth_limit
+        self.has_metadata = has_metadata
+        self.metadata_host = metadata_host
+        self.metadata_port = metadata_port
+        self.hp_listen_port = host_proxy_listen_port
 
     @property
     def tunneling_enabled(self):
@@ -182,6 +188,12 @@ class Host(fixtures.Fixture):
             process.OVSAgentFixture(
                 self.env_desc, self.host_desc,
                 self.test_name, self.neutron_config, agent_cfg_fixture))
+
+        if self.env_desc.has_metadata:
+            self.br_meta = self.useFixture(
+                net_helpers.OVSMetaBridgeFixture(
+                    self.ovs_agent.agent_cfg_fixture.get_br_meta_name())
+            ).bridge
 
         if self.host_desc.l3_agent:
             self.l3_agent_cfg_fixture = self.useFixture(
@@ -413,6 +425,17 @@ class Environment(fixtures.Fixture):
                 process.PlacementFixture(
                     self.env_desc, self.hosts_desc, self.test_name,
                     placement_cfg_fixture)
+            )
+
+        if self.env_desc.has_metadata:
+            metadata_cfg_fixture = self.useFixture(
+                config.MetadataConfigFixture(self.env_desc, self.hosts_desc,
+                                             self.temp_dir)
+            )
+            self.metadata = self.useFixture(
+                process.MetadataFixture(
+                    self.env_desc, self.hosts_desc, self.test_name,
+                    metadata_cfg_fixture)
             )
 
         self.hosts = [self._create_host(desc) for desc in self.hosts_desc]
