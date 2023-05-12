@@ -1,0 +1,6 @@
+---
+deprecations:
+  - |
+    The tool neutron-debug is now removed. With removal of the neutron client
+    shell code this tool is no longer usable. It had been marked for
+    deprecation since the Newton (9.0) cycle and unmaintained.
