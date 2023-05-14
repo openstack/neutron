@@ -817,6 +817,10 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
     def update_lb_external_ids(self, lb_name, values, if_exists=True):
         return cmd.UpdateLbExternalIds(self, lb_name, values, if_exists)
 
+    def db_set(self, table, record, *col_values, if_exists=True, **columns):
+        return cmd.DbSetCommand(self, table, record, *col_values,
+                                if_exists=if_exists, **columns)
+
 
 class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
     def __init__(self, connection):
@@ -940,3 +944,7 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
                 datapath = str(port.datapath.uuid)
                 chassis = port.chassis[0].name if port.chassis else None
                 return chassis, datapath
+
+    def db_set(self, table, record, *col_values, if_exists=True, **columns):
+        return cmd.DbSetCommand(self, table, record, *col_values,
+                                if_exists=if_exists, **columns)
