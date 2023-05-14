@@ -828,6 +828,10 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
     def update_lb_external_ids(self, lb_name, values, if_exists=True):
         return cmd.UpdateLbExternalIds(self, lb_name, values, if_exists)
 
+    def db_set(self, table, record, *col_values, if_exists=True, **columns):
+        return cmd.DbSetCommand(self, table, record, *col_values,
+                                if_exists=if_exists, **columns)
+
 
 class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
     def __init__(self, connection):
@@ -948,3 +952,7 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
         # and just start using chassis objects so db_find_rows could be used
         rows = self.db_list_rows('Port_Binding').execute(check_error=True)
         return [r for r in rows if r.chassis and r.chassis[0].name == chassis]
+
+    def db_set(self, table, record, *col_values, if_exists=True, **columns):
+        return cmd.DbSetCommand(self, table, record, *col_values,
+                                if_exists=if_exists, **columns)
