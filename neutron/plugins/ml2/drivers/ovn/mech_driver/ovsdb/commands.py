@@ -11,6 +11,8 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+import collections
+from collections import abc
 
 from oslo_utils import timeutils
 from ovsdbapp.backend.ovs_idl import command
@@ -894,3 +896,35 @@ class UnsetLSwitchPortToVirtualTypeCommand(command.BaseCommand):
                 virtual_parents)
 
         setattr(lsp, 'options', options)
+
+
+class DbSetCommand(command.BaseCommand):
+    def __init__(self, api, table, record, *col_values, if_exists=False,
+                 **columns):
+        super().__init__(api)
+        self.table = table
+        self.record = record
+        self.col_values = col_values or columns.items()
+        self.if_exists = if_exists
+
+    def run_idl(self, txn):
+        try:
+            record = self.api.lookup(self.table, self.record)
+        except idlutils.RowNotFound:
+            if self.if_exists:
+                return
+            raise
+
+        for col, val in self.col_values:
+            if isinstance(val, abc.Mapping):
+                if isinstance(val, collections.OrderedDict):
+                    val = dict(val)
+                existing = getattr(record, col, {})
+                existing.update(val)
+                val = existing
+                # Since we are updating certain keys and leaving existing keys
+                # but rewriting the whole external_ids column, we must verify()
+                record.verify(col)
+            # For non-map columns, we unconditionally overwrite the values that
+            # exist, so prior state doesn't matter and we don't need verify()
+            self.set_column(record, col, val)
