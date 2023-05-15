@@ -255,14 +255,6 @@ class MetadataDriver(object):
                                        bind_address="0.0.0.0", network_id=None,
                                        router_id=None, bind_address_v6=None,
                                        bind_interface=None):
-        uuid = network_id or router_id
-        callback = cls._get_metadata_proxy_callback(
-            bind_address, port, conf,
-            network_id=network_id, router_id=router_id,
-            bind_address_v6=bind_address_v6, bind_interface=bind_interface)
-        pm = cls._get_metadata_proxy_process_manager(uuid, conf,
-                                                     ns_name=ns_name,
-                                                     callback=callback)
         if bind_interface is not None and bind_address_v6 is not None:
             # HAProxy cannot bind() until IPv6 Duplicate Address Detection
             # completes. We must wait until the address leaves its 'tentative'
@@ -290,7 +282,18 @@ class MetadataDriver(object):
                 except Exception as exc:
                     # do not re-raise a delete failure, just log
                     LOG.info('Address deletion failure: %s', str(exc))
-                return
+
+                # Do not use the address or interface when DAD fails
+                bind_address_v6 = bind_interface = None
+
+        uuid = network_id or router_id
+        callback = cls._get_metadata_proxy_callback(
+            bind_address, port, conf,
+            network_id=network_id, router_id=router_id,
+            bind_address_v6=bind_address_v6, bind_interface=bind_interface)
+        pm = cls._get_metadata_proxy_process_manager(uuid, conf,
+                                                     ns_name=ns_name,
+                                                     callback=callback)
         pm.enable()
         monitor.register(uuid, METADATA_SERVICE_NAME, pm)
         cls.monitors[router_id] = pm
