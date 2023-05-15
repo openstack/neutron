@@ -18,6 +18,7 @@ from oslo_config import cfg
 
 from neutron._i18n import _
 from neutron.conf.agent import common
+from neutron.conf.agent.metadata import config as meta_conf
 
 
 DEFAULT_BRIDGE_MAPPINGS = []
@@ -260,6 +261,7 @@ def register_ovs_agent_opts(cfg=cfg.CONF):
     cfg.register_opts(dhcp_opts, "DHCP")
     cfg.register_opts(common.DHCP_PROTOCOL_OPTS, "DHCP")
     cfg.register_opts(local_ip_opts, "LOCAL_IP")
+    cfg.register_opts(meta_conf.METADATA_PROXY_HANDLER_OPTS, "METADATA")
 
 
 def register_ovs_opts(cfg=cfg.CONF):
