@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2023-01-26 15:02+0000\n"
+"POT-Creation-Date: 2023-05-15 17:54+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -141,24 +141,9 @@ msgstr "코어 자원에 테스트 속성을 추가합니다."
 msgid "Agent %(id)s is not a L3 Agent or has been disabled"
 msgstr "%(id)s 에이전트가 L3 에이전트가 아니거나 사용 안함 상태임"
 
-msgid ""
-"Agent starts with admin_state_up=False when enable_new_agents=False. In the "
-"case, user's resources will not be scheduled automatically to the agent "
-"until admin changes admin_state_up to True."
-msgstr ""
-"enable_new_agents=False인 경우 에이전트는 admin_state_up=False로 시작합니다. "
-"이 경우 사용자의 자원은 관리자가 admin_state_up을 True로 변경할 때까지 에이전"
-"트에 대해 자동으로 스케줄되지 않습니다. "
-
 #, python-format
 msgid "Agent updated: %(payload)s"
 msgstr "업데이트된 에이전트: %(payload)s"
-
-msgid "Allow auto scheduling networks to DHCP agent."
-msgstr "DHCP 에이전트에 대한 네트워크 자동 스케줄링을 허용합니다. "
-
-msgid "Allow auto scheduling of routers to L3 agent."
-msgstr "L3 에이전트에 대한 라우터 자동 스케줄링을 허용합니다."
 
 msgid "Allow running metadata proxy."
 msgstr "메타데이터 프록시 실행을 허용합니다."
@@ -171,9 +156,6 @@ msgstr "PTR 레코드의 작성 허용"
 
 msgid "Allow the usage of the bulk API"
 msgstr "벌크 API 사용 허용"
-
-msgid "Allow to perform insecure SSL (https) requests to nova metadata"
-msgstr "nova 메타데이터에 대한 비보안 SSL(https) 요청 수행 허용"
 
 msgid ""
 "Allows for serving metadata requests coming from a dedicated metadata access "
@@ -371,9 +353,6 @@ msgstr ""
 msgid "Cleanup resources of a specific agent type only."
 msgstr "특정 에이전트 유형의 자원만 정리합니다."
 
-msgid "Client certificate for nova metadata api server."
-msgstr "nova 메타데이터 api 서버에 대한 클라이언트 인증서입니다."
-
 msgid ""
 "Comma-separated list of <network_device>:<vfs_to_exclude> tuples, mapping "
 "network_device to the agent's node-specific list of virtual functions that "
@@ -431,23 +410,9 @@ msgid ""
 "Comma-separated list of the DNS servers which will be used as forwarders."
 msgstr "쉼표로 분리된 DNS 서버의 목록이며 전달자로 사용됩니다."
 
-msgid "Command to execute"
-msgstr "실행할 명령"
-
-msgid "Config file for interface driver (You may also use l3_agent.ini)"
-msgstr "인터페이스 드라이버에 대한 구성 파일(l3_agent.ini도 사용할 수 있음)"
-
 #, python-format
 msgid "Conflicting value ethertype %(ethertype)s for CIDR %(cidr)s"
 msgstr "CIDR %(cidr)s에 대한 충돌하는 값 ethertype %(ethertype)s"
-
-msgid ""
-"Controls whether the neutron security group API is enabled in the server. It "
-"should be false when using no security groups or using the nova security "
-"group API."
-msgstr ""
-"서버에서 neutron 보안 그룹 API가 사용되는지 여부를 제어합니다.보안 그룹을 사"
-"용하지 않거나 nova 보안 그룹 API를 사용할 때는 false이어야 합니다."
 
 #, python-format
 msgid "Could not bind to %(host)s:%(port)s after trying for %(time)d seconds"
@@ -498,11 +463,6 @@ msgid ""
 "unlimited."
 msgstr ""
 "테넌트당 허용되는 기본 RBAC 항목 수입니다. 음수 값은 무제한을 의미합니다. "
-
-msgid ""
-"Default number of resource allowed per tenant. A negative value means "
-"unlimited."
-msgstr "테넌트당 허용되는 기본 자원 수입니다. 음수 값은 무제한을 의미합니다."
 
 msgid "Default security group"
 msgstr "기본 보안 그룹"
@@ -574,21 +534,6 @@ msgstr "외부 DNS 통합을 위한 드라이버."
 msgid "Driver for security groups firewall in the L2 agent"
 msgstr "L2 에이전트의 보안 그룹 방화벽에 대한 드라이버"
 
-msgid "Driver to use for scheduling network to DHCP agent"
-msgstr "DHCP 에이전트에 대한 네트워크 스케줄링에 사용할 드라이버"
-
-msgid "Driver to use for scheduling router to a default L3 agent"
-msgstr "기본 L3 에이전트에 대한 라우터 스케줄링에 사용할 드라이버"
-
-msgid ""
-"Driver used for ipv6 prefix delegation. This needs to be an entry point "
-"defined in the neutron.agent.linux.pd_drivers namespace. See setup.cfg for "
-"entry points included with the neutron source."
-msgstr ""
-"ipv6 접두부 위임에 사용되는 드라이버입니다. 이는 neutron.agent.linux."
-"pd_drivers 네임스페이스에서 정의된 시작점이어야 합니다. neutron 소스와 함께 "
-"포함된 시작점은 setup.cfg를 참조하십시오. "
-
 #, python-format
 msgid ""
 "Duplicate L3HARouterAgentPortBinding is created for router(s) %(router)s. "
@@ -631,13 +576,6 @@ msgstr "가상 라우터에 대해 HA 모드를 사용합니다."
 
 msgid "Enable SSL on the API server"
 msgstr "API 서버에서 SSL 연결 활성화"
-
-msgid ""
-"Enable VXLAN on the agent. Can be enabled when agent is managed by ml2 "
-"plugin using linuxbridge mechanism driver"
-msgstr ""
-"에이전트에서 VXLAN을 사용 가능하게 설정하십시오. linuxbridge 메커니즘 드라이"
-"버를 사용하여 ml2 플러그인이 에이전트를 관리할 경우 사용할 수 있습니다."
 
 msgid ""
 "Enable services on an agent with admin_state_up False. If this option is "
@@ -691,13 +629,6 @@ msgid ""
 msgstr ""
 "서비스 플러그인 %(service_plugin)s에 필요한 확장 드라이버 %(driver)s을(를) 찾"
 "을 수 없음"
-
-msgid ""
-"Extension to use alongside ml2 plugin's l2population mechanism driver. It "
-"enables the plugin to populate VXLAN forwarding table."
-msgstr ""
-"ml2 플러그인의 l2population 메커니즘 드라이버와 함께 사용할 확장기능. 이를 통"
-"해플러그인이 VXLAN 전달 테이블을 채울 수 있습니다."
 
 #, python-format
 msgid "Extension with alias %s does not exist"
@@ -798,18 +729,6 @@ msgstr ""
 "ICMP 코드 (port-range-max) %(value)s이(가) 제공되지만 ICMP 유형(port-range-"
 "min)이 누락되었습니다."
 
-msgid "ID of network"
-msgstr "네트워크의 ID"
-
-msgid "ID of network to probe"
-msgstr "프로브할 네트워크의 ID"
-
-msgid "ID of probe port to delete"
-msgstr "삭제할 프로브 포트의 ID"
-
-msgid "ID of probe port to execute command"
-msgstr "명령을 실행할 프로브 포트의 ID"
-
 msgid "ID of the router"
 msgstr "라우터의 ID"
 
@@ -871,18 +790,6 @@ msgid "Illegal IP version number"
 msgstr "올바르지 않은 IP 버전 번호"
 
 msgid ""
-"In some cases the Neutron router is not present to provide the metadata IP "
-"but the DHCP server can be used to provide this info. Setting this value "
-"will force the DHCP server to append specific host routes to the DHCP "
-"request. If this option is set, then the metadata service will be activated "
-"for all the networks."
-msgstr ""
-"경우에 따라 메타데이터 IP를 제공하는 Neutron 라우터는 없지만 DHCP 서버를 사용"
-"하여 이 정보를 제공할 수 있습니다. 이 값을 설정하면 DHCP 서버가 특정 호스트 "
-"경로를 DHCP 요청에 강제로 추가합니다. 이 옵션이 설정되면 모든 네트워크의 메타"
-"데이터 서비스가 활성화됩니다."
-
-msgid ""
 "Indicates that this L3 agent should also handle routers that do not have an "
 "external network gateway configured. This option should be True only for a "
 "single agent in a Neutron deployment, and may be False for all agents if all "
@@ -919,11 +826,6 @@ msgstr ""
 
 msgid "Interface to monitor"
 msgstr "모니터할 인터페이스"
-
-msgid ""
-"Interval between checks of child process liveness (seconds), use 0 to disable"
-msgstr ""
-"하위 프로세스 활동 확인 간격(초), 사용 안함으로 설정하려면 0을 지정하십시오."
 
 msgid "Interval between two metering measures"
 msgstr "2개의 측정 조치 간의 간격"
@@ -1001,13 +903,6 @@ msgid "Invalid value for port %(port)s"
 msgstr "%(port)s 포트에 대한 올바르지 않은 값"
 
 msgid ""
-"Iptables mangle mark used to mark ingress from external network. This mark "
-"will be masked with 0xffff so that only the lower 16 bits will be used."
-msgstr ""
-"외부 네트워크의 입구를 표시하는 데 사용되는 Iptables mangle 표시입니다. 이 표"
-"시는 하위 16비트만 사용되도록 0xffff로 마스크됩니다. "
-
-msgid ""
 "Iptables mangle mark used to mark metadata valid requests. This mark will be "
 "masked with 0xffff so that only the lower 16 bits will be used."
 msgstr ""
@@ -1062,12 +957,6 @@ msgstr "메타데이터 프록시 UNIX 도메인 소켓의 위치"
 
 msgid "Location to store DHCP server config files."
 msgstr "DHCP 서버 구성 파일을 저장할 위치."
-
-msgid "Location to store IPv6 PD files."
-msgstr "IPv6 PD 파일을 저장할 위치입니다. "
-
-msgid "Location to store IPv6 RA config files"
-msgstr "IPv6 RA 구성 파일을 저장할 위치"
 
 msgid "Location to store child pid files"
 msgstr "하위 pid 파일을 저장할 위치"
@@ -1140,9 +1029,6 @@ msgstr "측정 드라이버"
 msgid "MinRtrAdvInterval setting for radvd.conf"
 msgstr "radvd.conf의 MinRtrAdvInterval 설정"
 
-msgid "Minimize polling by monitoring ovsdb for interface changes."
-msgstr "인터페이스 변경사항에 대한 ovsdb를 모니터링하여 폴링을 최소화합니다."
-
 #, python-format
 msgid "Missing key in mapping: '%s'"
 msgstr "맵핑에서 키 누락: '%s'"
@@ -1155,20 +1041,6 @@ msgstr ""
 "VXLAN의 멀티캐스트 그룹입니다. 이 그룹이 구성되면 모든 브로드캐스트 트래픽을 "
 "이 멀티캐스트 그룹에 보낼 수 있습니다. 구성되지 않은 상태로 두면 멀티캐스트 "
 "VXLAN 모드가 사용되지 않습니다."
-
-msgid ""
-"Multicast group(s) for vxlan interface. A range of group addresses may be "
-"specified by using CIDR notation. Specifying a range allows different VNIs "
-"to use different group addresses, reducing or eliminating spurious broadcast "
-"traffic to the tunnel endpoints. To reserve a unique group for each possible "
-"(24-bit) VNI, use a /8 such as 239.0.0.0/8. This setting must be the same on "
-"all the agents."
-msgstr ""
-"vxlan 인터페이스의 멀티캐스트 그룹입니다. 그룹 주소의 범위는 CIDR 표기법을 사"
-"용하여 지정할 수 있습니다. 범위를 지정하면 여러 다른 VNI에서 여러 다른 그룹 "
-"주소를 사용할 수 있으므로, 터널 엔드포인트에 대한 의사 브로드캐스트 트래픽이 "
-"감소하거나 제거됩니다. 가능한 각 (24비트) VNI의 고유 그룹을 유지하려면 /8을 "
-"사용하십시오(예: 239.0.0.0/8). 이 설정은 모든 에이전트에서 같아야 합니다."
 
 #, python-format
 msgid "Multiple default providers for service %s"
@@ -1189,12 +1061,6 @@ msgstr "플로우 추가 또는 수정 시 하나 이상의 조치를 지정해�
 
 msgid "Name of Open vSwitch bridge to use"
 msgstr "사용할 열린 vSwitch 브릿지의 이름"
-
-msgid ""
-"Name of nova region to use. Useful if keystone manages more than one region."
-msgstr ""
-"사용할 nova 리젼의 이름입니다. 키스톤이 둘 이상의 리젼을 관리할 경우 유용합니"
-"다."
 
 msgid "Namespace of the router"
 msgstr "라우터의 네임스페이스"
@@ -1273,38 +1139,11 @@ msgstr "'dvr' 모드에서 수동으로 에이전트에 라우터를 지정할 �
 msgid "Not allowed to manually remove a router from an agent in 'dvr' mode."
 msgstr "'dvr' 모드에서 수동으로 에이전트에서 라우터를 제거할 수 없습니다."
 
-msgid ""
-"Number of DHCP agents scheduled to host a tenant network. If this number is "
-"greater than 1, the scheduler automatically assigns multiple DHCP agents for "
-"a given tenant network, providing high availability for DHCP service."
-msgstr ""
-"테넌트 네트워크를 호스팅하기 위해 스케줄된 DHCP 에이전트의 수입니다. 이 숫자"
-"가 1보다 크면 스케줄러는 지정된 테넌트 네트워크에 대해 다중 DHCP 에이전트를 "
-"자동으로 지정하여 DHCP 서비스에 대한 고가용성을 제공합니다. "
-
 msgid "Number of backlog requests to configure the metadata server socket with"
 msgstr "메타데이터 서버 소켓을 구성하기 위한 백로그 요청 수"
 
 msgid "Number of backlog requests to configure the socket with"
 msgstr "소켓을 설정하려는 백로그 요청 횟수"
-
-msgid ""
-"Number of bits in an ipv4 PTR zone that will be considered network prefix. "
-"It has to align to byte boundary. Minimum value is 8. Maximum value is 24. "
-"As a consequence, range of values is 8, 16 and 24"
-msgstr ""
-"네트워크 접두어로 고려될 ipv4 PTR 구역의 비트 수입니다. 바이트 경계에 맞게 정"
-"렬해야 합니다. 최소값은 8이고 최대값은 24입니다. 결과적으로 값의 범위는 8, "
-"16 및 24입니다."
-
-msgid ""
-"Number of bits in an ipv6 PTR zone that will be considered network prefix. "
-"It has to align to nyble boundary. Minimum value is 4. Maximum value is 124. "
-"As a consequence, range of values is 4, 8, 12, 16,..., 124"
-msgstr ""
-"네트워크 접두어로 고려될 ipv6 PTR 구역의 비트 수입니다. nyble 경계에 맞게 정"
-"렬해야 합니다. 최소값은 4이고 최대값은 124입니다. 결과적으로 값의 범위는 4, "
-"8, 12, 16,..., 124입니다."
 
 msgid ""
 "Number of floating IPs allowed per tenant. A negative value means unlimited."
@@ -1320,11 +1159,6 @@ msgstr "테넌트당 허용되는 포트 수입니다. 음수 값은 무제한�
 msgid "Number of routers allowed per tenant. A negative value means unlimited."
 msgstr "테넌트당 허용된 라우터 수입니다. 음수 값은 무제한을 의미합니다."
 
-msgid ""
-"Number of seconds between sending events to nova if there are any events to "
-"send."
-msgstr "보낼 이벤트가 있는 경우 nova에 전송하는 이벤트 간의 시간(초)입니다."
-
 msgid "Number of seconds to keep retrying to listen"
 msgstr "감청 재시도 계속할 시간"
 
@@ -1332,11 +1166,6 @@ msgid ""
 "Number of security groups allowed per tenant. A negative value means "
 "unlimited."
 msgstr "테넌트당 허용된 보안 그룹 수입니다. 음수 값은 무제한을 의미합니다."
-
-msgid ""
-"Number of security rules allowed per tenant. A negative value means "
-"unlimited."
-msgstr "테넌트당 허용된 보안 규칙 수입니다. 음수 값은 무제한을 의미합니다."
 
 msgid "Number of subnets allowed per tenant, A negative value means unlimited."
 msgstr "테넌트당 허용되는 서브넷 수입니다. 음수 값은 무제한을 의미합니다."
@@ -1381,9 +1210,6 @@ msgstr ""
 msgid "Override the default dnsmasq settings with this file."
 msgstr "기본 dnsmasq 설정을 이 파일로 대체합니다."
 
-msgid "Owner type of the device: network/compute"
-msgstr "디바이스의 소유자 유형: network/compute"
-
 msgid "POST requests are not supported on this resource."
 msgstr "이 자원에서 POST 요청이 지원되지 않습니다."
 
@@ -1413,9 +1239,6 @@ msgstr "통합 브릿지에 대한 터널 브릿지에 있는 피어 패치 포�
 msgid "Phase upgrade options do not accept revision specification"
 msgstr "단계 업그레이드 옵션이 개정 스펙을 승인하지 않음"
 
-msgid "Ping timeout"
-msgstr "Ping 제한시간 초과"
-
 #, python-format
 msgid "Port %(id)s does not have fixed ip %(address)s"
 msgstr "%(id)s 포트가 고정 IP %(address)s을(를) 갖지 않음"
@@ -1438,22 +1261,11 @@ msgstr "접두부 위임은 IPv6 서브넷에만 사용할 수 있습니다. "
 msgid "Private key of client certificate."
 msgstr "클라이언트 인증서의 개인 키입니다."
 
-#, python-format
-msgid "Probe %s deleted"
-msgstr "%s 프로브가 삭제되었음"
-
-#, python-format
-msgid "Probe created : %s "
-msgstr "프로브 작성: %s "
-
 msgid "Process is already started"
 msgstr "프로세스가 이미 시작됨"
 
 msgid "Process is not running."
 msgstr "프로세스가 실행 중이지 않습니다."
-
-msgid "Protocol to access nova metadata, http or https"
-msgstr "nova 메타데이터에 액세스하기 위한 프로토콜, http 또는 https"
 
 #, python-format
 msgid "Provider name %(name)s is limited by %(len)s characters"
@@ -1503,26 +1315,6 @@ msgstr "원격 메타데이터 서버에서 내부 서버 오류가 발생했습
 msgid ""
 "Repository does not contain HEAD files for contract and expand branches."
 msgstr "저장소에 계약 및 확장 분기의 HEAD 파일이 포함되지 않습니다."
-
-msgid ""
-"Representing the resource type whose load is being reported by the agent. "
-"This can be \"networks\", \"subnets\" or \"ports\". When specified (Default "
-"is networks), the server will extract particular load sent as part of its "
-"agent configuration object from the agent report state, which is the number "
-"of resources being consumed, at every report_interval.dhcp_load_type can be "
-"used in combination with network_scheduler_driver = neutron.scheduler."
-"dhcp_agent_scheduler.WeightScheduler When the network_scheduler_driver is "
-"WeightScheduler, dhcp_load_type can be configured to represent the choice "
-"for the resource being balanced. Example: dhcp_load_type=networks"
-msgstr ""
-"에이전트에서 로드를 보고하는 자원 유형을 나타냅니다. 이는 \"네트워크\", \"서"
-"브넷\" 또는 \"포트\"입니다. 이를 지정하는 경우 (기본값은 네트워크임) 서버는 "
-"network_scheduler_driver = neutron.scheduler.dhcp_agent_scheduler."
-"WeightScheduler와의 조합에서 report_interval.dhcp_load_type을 사용할 수 있을 "
-"때마다 에이전트 보고 상태에서 에이전트 구성 오브젝트의 일부로 보낸 특정 로드"
-"를 추출하는데, 이는 이용 중인 자원 수입니다. network_scheduler_driver가 "
-"WeightScheduler인 경우 dhcp_load_type을 구성하여 밸런스 조정 중인 자원에 대"
-"한 선택을 표시할 수 있습니다. 예: dhcp_load_type=networks"
 
 msgid "Request Failed: internal server error while processing your request."
 msgstr "요청 실패: 요청을 처리하는 중에 내부 서버 오류가 발생했습니다. "
@@ -1600,13 +1392,6 @@ msgstr ""
 "서버에 대한 상태를 보고하는 노드 사이의 시간(초)이며 agent_down_time보다 짧아"
 "야 하며 절반이거나 agent_down_time보다 짧은 경우 최적입니다."
 
-msgid ""
-"Seconds to regard the agent is down; should be at least twice "
-"report_interval, to be sure the agent is down for good."
-msgstr ""
-"에이전트가 작동 중지되었다고 간주되는 시간(초)이며 에이전트가 계속 작동 중지 "
-"상태인지 확인할 수 있도록 report_interval의 두 배 이상이어야 합니다."
-
 #, python-format
 msgid "Security Group %(id)s %(reason)s."
 msgstr "보안 그룹 %(id)s %(reason)s입니다. "
@@ -1643,16 +1428,6 @@ msgstr ""
 "보안 그룹 규칙 프로토콜 %(protocol)s이(가) 지원되지 않습니다. 프로토콜 값 "
 "%(values)s 및 정수 표시 [0 - 255]만 지원됩니다. "
 
-msgid ""
-"Send notification to nova when port data (fixed_ips/floatingip) changes so "
-"nova can update its cache."
-msgstr ""
-"포트 데이터(fixed_ips/floatingip)가 변경되면 알림을 nova에 보냅니다. 이에 따"
-"라 nova는 해당 캐시를 업데이트할 수 있습니다."
-
-msgid "Send notification to nova when port status changes"
-msgstr "포트 상태가 변경되면 알림을 nova에 보냅니다."
-
 #, python-format
 msgid ""
 "Service provider '%(provider)s' could not be found for service type "
@@ -1667,20 +1442,6 @@ msgstr "DHCPv6 접두부 위임을 처리할 서비스입니다. "
 #, python-format
 msgid "Service type %(service_type)s does not have a default service provider"
 msgstr "%(service_type)s 서비스 유형에 기본 서비스 제공자가 없음"
-
-msgid ""
-"Set new timeout in seconds for new rpc calls after agent receives SIGTERM. "
-"If value is set to 0, rpc timeout won't be changed"
-msgstr ""
-"에이전트에서 SIGTERM을 수신한 후에 새 rpc 호출에 대한 새 제한시간(초)을 설정"
-"합니다. 값을 0으로 설정하면 rpc 제한시간이 변경되지 않습니다."
-
-msgid ""
-"Set or un-set the don't fragment (DF) bit on outgoing IP packet carrying GRE/"
-"VXLAN tunnel."
-msgstr ""
-"GRE/VXLAN 터널을 전송하는 발신 IP 패킷에 DF(Don't Fragment) 비트를 설정하거"
-"나 설정 해제하십시오."
 
 msgid "Shared address scope can't be unshared"
 msgstr "공유 주소 범위는 공유 해제할 수 없음"
@@ -1698,9 +1459,6 @@ msgstr "라우터 인터페이스에 대한 서브넷은 게이트웨이 IP를 �
 msgid "Subnet pool has existing allocations"
 msgstr "서브넷 풀에 기존 할당이 있음"
 
-msgid "Subnet used for the l3 HA admin network."
-msgstr "l3 HA 관리 네트워크에 사용된 서브넷입니다."
-
 msgid ""
 "System-wide flag to determine the type of router that tenants can create. "
 "Only admin can override."
@@ -1713,9 +1471,6 @@ msgstr "Neutron 메타데이터 네임스페이스 프록시가 사용하는 TCP
 
 msgid "TCP Port used by Nova metadata server."
 msgstr "Nova 메타데이터 서버가 사용한 TCP 포트입니다. "
-
-msgid "TTL for vxlan interface protocol packets."
-msgstr "vxlan 인터페이스 프로토콜 패킷용 TTL."
 
 #, python-format
 msgid "Tag %(tag)s could not be found."
@@ -1732,21 +1487,6 @@ msgstr "관리 컨텍스트에서 지정하기 위해 연결할 테넌트 ID"
 
 msgid "Tenant name for connecting to designate in admin context"
 msgstr "관리 컨텍스트에서 지정하기 위해 연결할 테넌트 이름"
-
-msgid ""
-"The DHCP server can assist with providing metadata support on isolated "
-"networks. Setting this value to True will cause the DHCP server to append "
-"specific host routes to the DHCP request. The metadata service will only be "
-"activated when the subnet does not contain any router port. The guest "
-"instance must be configured to request host routes via DHCP (Option 121). "
-"This option doesn't have any effect when force_metadata is set to True."
-msgstr ""
-"DHCP 서버는 격리된 네트워크에서 메타데이터 지원을 제공하도록 지원할 수 있습니"
-"다. 이 값을 True로 설정하면 DHCP 서버가 특정 호스트 경로를 DHCP 요청에 추가합"
-"니다. 메타데이터 서비스는 서브넷에 라우터 포트가 포함되지 않은 경우에만 활성"
-"화됩니다. DHCP를 통해 호스트 경로를 요청하려면 게스트 인스턴스가 구성되어야 "
-"합니다(옵션 121). 이 옵션은 force_metadata가 True로 설정된 경우 적용되지 않습"
-"니다."
 
 msgid "The UDP port to use for VXLAN tunnels."
 msgstr "VXLAN 터널에 사용하는 UDP 포트"
@@ -1768,28 +1508,11 @@ msgstr ""
 "태로 남습니다. 네 번째 옥텟이 00이 아니면 이 옥텟도 사용됩니다. 다른 옥텟은 "
 "임의로 생성됩니다."
 
-msgid ""
-"The base mac address used for unique DVR instances by Neutron. The first 3 "
-"octets will remain unchanged. If the 4th octet is not 00, it will also be "
-"used. The others will be randomly generated. The 'dvr_base_mac' *must* be "
-"different from 'base_mac' to avoid mixing them up with MAC's allocated for "
-"tenant ports. A 4 octet example would be dvr_base_mac = fa:16:3f:4f:00:00. "
-"The default is 3 octet"
-msgstr ""
-"Neutron에 의해 고유 DVR 인스턴스에 사용되는 기본 mac 주소입니다. 처음 세 개 "
-"옥텟은 변경되지 않고 남아 있습니다. 네 번째 옥텟이 00이 아니면 이 옥텟도 사용"
-"됩니다. 다른 옥텟은 무작위로 생성됩니다. 테넌트 포트에 대해 할당된 MAC과의 혼"
-"합을 방지하기 위해 'dvr_base_mac'은 'base_mac'과 달라야 *합니다*. 4 옥텟 예제"
-"는 dvr_base_mac = fa:16:3f:4f:00:00입니다. 기본값은 3 옥텟입니다. "
-
 msgid "The core plugin Neutron will use"
 msgstr "Neutron이 사용할 코어 플러그인"
 
 msgid "The driver used to manage the DHCP server."
 msgstr "DHCP 서버를 관리하는 데 사용되는 드라이버입니다. "
-
-msgid "The driver used to manage the virtual interface."
-msgstr "가상 인터페이스를 관리하는 데 사용되는 드라이버입니다. "
 
 msgid ""
 "The email address to be used when creating PTR zones. If not specified, the "
@@ -1799,49 +1522,12 @@ msgstr ""
 "는 admin@<dns_domain>입니다."
 
 msgid ""
-"The maximum number of items returned in a single response, value was "
-"'infinite' or negative integer means no limit"
-msgstr ""
-"단일 응답으로 최대 항목 수가 리턴되었습니다. 값이 'infinite' 또는 음수인 경"
-"우 제한이 없다는 의미입니다. "
-
-msgid ""
-"The network type to use when creating the HA network for an HA router. By "
-"default or if empty, the first 'tenant_network_types' is used. This is "
-"helpful when the VRRP traffic should use a specific network which is not the "
-"default one."
-msgstr ""
-"HA 라우터에 대한 HA 네트워크 작성 시 사용할 네트워크 유형입니다. 기본적으로 "
-"또는 비어 있는 경우 첫 번째 'tenant_network_types'가 사용됩니다. 이는 VRRP 트"
-"래픽이 기본값이 아닌 특정 네트워크를 사용해야 하는 경우에 유용합니다. "
-
-msgid ""
 "The number of seconds the agent will wait between polling for local device "
 "changes."
 msgstr "에이전트가 로컬 디바이스 변경을 폴링하는 사이에 대기하는 시간(초). "
 
-msgid ""
-"The number of seconds to wait before respawning the ovsdb monitor after "
-"losing communication with it."
-msgstr ""
-"통신이 유실된 후에 ovsdb 모니터를 재파생하기 전에 대기할 시간(초)입니다."
-
 msgid "The number of sort_keys and sort_dirs must be same"
 msgstr "sort_keys 및 sort_dirs의 수가 같아야 함"
-
-msgid ""
-"The path for API extensions. Note that this can be a colon-separated list of "
-"paths. For example: api_extensions_path = extensions:/path/to/more/exts:/"
-"even/more/exts. The __path__ of neutron.extensions is appended to this, so "
-"if your extensions are in there you don't need to specify them here."
-msgstr ""
-"API 확장의 경로입니다. 이 경로는 콜론으로 구분된 경로 목록일 수 있습니다. "
-"예: api_extensions_path = extensions:/path/to/more/exts:/even/more/exts. "
-"neutron.extensions의 __path__가 이 경로에 추가되므로, 해당 위치에 확장이 있으"
-"면 여기에 지정하지 않아도 됩니다."
-
-msgid "The physical network name with which the HA network can be created."
-msgstr "HA 네트워크를 작성하는 데 사용할 수 있는 실제 네트워크 이름입니다. "
 
 #, python-format
 msgid "The port '%s' was deleted"
@@ -1896,13 +1582,6 @@ msgstr "ML2 플러그인에 터널 IP 값이 필요함"
 
 msgid "Tunnel bridge to use."
 msgstr "사용할 터널 브릿지입니다."
-
-msgid ""
-"Type of the nova endpoint to use.  This endpoint will be looked up in the "
-"keystone catalog and should be one of public, internal or admin."
-msgstr ""
-"사용할 nova 엔드포인트의 유형입니다. 이 엔드포인트는 keystone 카탈로그에서 검"
-"색하며 공용, 내부 또는 관리 중 하나여야 합니다."
 
 msgid "URL for connecting to designate"
 msgstr "지정하기 위해 연결할 URL"
@@ -2022,13 +1701,6 @@ msgid "Use either --delta or relative revision, not both"
 msgstr "--델타 또는 상대적 개정판 중 하나 사용"
 
 msgid ""
-"Use ipset to speed-up the iptables based security groups. Enabling ipset "
-"support requires that ipset is installed on L2 agent node."
-msgstr ""
-"ipset을 사용하여 iptables 기반 보안 그룹의 속도를 높입니다. ipset 지원을 사용"
-"하려면 ipset이 L2 에이전트 노드에 설치되어야 합니다."
-
-msgid ""
 "Use the root helper when listing the namespaces on a system. This may not be "
 "required depending on the security configuration. If the root helper is not "
 "required, set this to False for a performance improvement."
@@ -2073,56 +1745,14 @@ msgstr ""
 "는 tc-tbf 매뉴얼을 참조하십시오."
 
 msgid ""
-"When proxying metadata requests, Neutron signs the Instance-ID header with a "
-"shared secret to prevent spoofing. You may select any string for a secret, "
-"but it must match here and in the configuration used by the Nova Metadata "
-"Server. NOTE: Nova uses the same config key, but in [neutron] section."
-msgstr ""
-"메타데이터 요청의 프록시 역할을 수행할 때 Neutron이 위조를 방지하기 위해 공"
-"유 시크릿으로 Instance-ID 헤더에 서명합니다. 시크릿으로 임의의 문자열을 선택"
-"할 수 있지만 여기에 있는 문자열 및 Nova Metadata Server에서 사용하는 구성과 "
-"일치해야 합니다. 참고: Nova에서는 [neutron] 섹션에 있는 동일한 구성 키를 사용"
-"합니다."
-
-msgid ""
 "Where to store Neutron state files. This directory must be writable by the "
 "agent."
 msgstr ""
 "Neutron 상태 파일을 저장할 위치. 에이전트가 이 디렉토리에 쓸 수 있어야 합니"
 "다."
 
-msgid ""
-"With IPv6, the network used for the external gateway does not need to have "
-"an associated subnet, since the automatically assigned link-local address "
-"(LLA) can be used. However, an IPv6 gateway address is needed for use as the "
-"next-hop for the default route. If no IPv6 gateway address is configured "
-"here, (and only then) the neutron router will be configured to get its "
-"default route from router advertisements (RAs) from the upstream router; in "
-"which case the upstream router must also be configured to send these RAs. "
-"The ipv6_gateway, when configured, should be the LLA of the interface on the "
-"upstream router. If a next-hop using a global unique address (GUA) is "
-"desired, it needs to be done via a subnet allocated to the network and not "
-"through this parameter. "
-msgstr ""
-"IPv6를 사용하면 자동으로 지정되는 링크 로컬 주소(LLA)를 사용할 수 있으므로 외"
-"부 게이트웨이에 사용한 네트워크에 연관 서브넷이 필요하지 않습니다. 그러나 기"
-"본 라우트의 다음 홉으로 사용할 IPv6 게이트웨이 주소가 필요합니다. 여기서 "
-"IPv6 게이트웨이 주소를 구성하지 않으면(또한 이 경우에만)상위 라우터의 "
-"RA(Router Advertisement)에서 해당 기본 라우트를 가져오도록 Neutron 라우터를 "
-"구성할 수 있습니다. 이 경우 이러한 RA를 보내도록 상위 라우터를 구성할 수도 있"
-"습니다. ipv6_gateway를 구성한 경우, 이 게이트웨이가 상위 라우터의 인터페이스"
-"에 대한 LLA여야 합니다. 글로벌 고유 주소(GUA)를 사용하는 다음 합이 필요한 경"
-"우, 이 매개변수가 아닌 네트워크에 할당된 서브넷을 통해 수행해야 합니다. "
-
 msgid "You must implement __call__"
 msgstr "__call__을 구현해야 합니다. "
-
-msgid ""
-"You must provide a config file for bridge - either --config-file or "
-"env[NEUTRON_TEST_CONFIG_FILE]"
-msgstr ""
-"브릿지에 대한 구성 파일, 즉 --config-file 또는 env[QUANTUM_TEST_CONFIG_FILE] "
-"env[NEUTRON_TEST_CONFIG_FILE]"
 
 msgid "You must provide a revision or relative delta"
 msgstr "개정판 또는 상대적 델타를 제공해야 함"

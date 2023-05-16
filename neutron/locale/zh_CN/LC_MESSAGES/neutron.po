@@ -18,7 +18,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: neutron VERSION\n"
 "Report-Msgid-Bugs-To: https://bugs.launchpad.net/openstack-i18n/\n"
-"POT-Creation-Date: 2023-01-26 15:02+0000\n"
+"POT-Creation-Date: 2023-05-15 17:54+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -135,24 +135,9 @@ msgstr "将测试属性添加至核心资源。"
 msgid "Agent %(id)s is not a L3 Agent or has been disabled"
 msgstr "代理 %(id)s 不是 L3 代理或已禁用"
 
-msgid ""
-"Agent starts with admin_state_up=False when enable_new_agents=False. In the "
-"case, user's resources will not be scheduled automatically to the agent "
-"until admin changes admin_state_up to True."
-msgstr ""
-"当 enable_new_agents=False 时，代理将使用 admin_state_up=False 启动。在这种情"
-"况下，将不会自动对代理调度用户的资源，直到管理员将 admin_state_up 更改为 "
-"True 为止。"
-
 #, python-format
 msgid "Agent updated: %(payload)s"
 msgstr "进程更新: %(payload)s"
-
-msgid "Allow auto scheduling networks to DHCP agent."
-msgstr "允许自动对 DHCP 代理调度网络。"
-
-msgid "Allow auto scheduling of routers to L3 agent."
-msgstr "允许自动对 L3 代理调度路由器。"
 
 msgid "Allow running metadata proxy."
 msgstr "允许运行 metadata代理"
@@ -165,9 +150,6 @@ msgstr "允许创建 PTR 记录"
 
 msgid "Allow the usage of the bulk API"
 msgstr "允许使用成批 API"
-
-msgid "Allow to perform insecure SSL (https) requests to nova metadata"
-msgstr "允许对 nova 元数据执行非安全 SSL (HTTPS) 请求"
 
 msgid ""
 "Allows for serving metadata requests coming from a dedicated metadata access "
@@ -365,9 +347,6 @@ msgstr ""
 msgid "Cleanup resources of a specific agent type only."
 msgstr "仅清除特定代理程序类型的资源。"
 
-msgid "Client certificate for nova metadata api server."
-msgstr "nova 元数据 API 服务器的客户机证书。"
-
 msgid ""
 "Comma-separated list of <network_device>:<vfs_to_exclude> tuples, mapping "
 "network_device to the agent's node-specific list of virtual functions that "
@@ -423,23 +402,9 @@ msgid ""
 "Comma-separated list of the DNS servers which will be used as forwarders."
 msgstr "将用作转发器的 DNS 服务器的逗号分隔列表。"
 
-msgid "Command to execute"
-msgstr "要执行的命令"
-
-msgid "Config file for interface driver (You may also use l3_agent.ini)"
-msgstr "用于接口驱动程序的配置文件（还可使用 l3_agent.ini）"
-
 #, python-format
 msgid "Conflicting value ethertype %(ethertype)s for CIDR %(cidr)s"
 msgstr "CIDR %(cidr)s 具有冲突值 ethertype %(ethertype)s "
-
-msgid ""
-"Controls whether the neutron security group API is enabled in the server. It "
-"should be false when using no security groups or using the nova security "
-"group API."
-msgstr ""
-"控制是否在服务器中启用了 neutron 安全组 API。未使用安全组或使用 nova安全组 "
-"API 时，它应该为 false。"
 
 #, python-format
 msgid "Could not bind to %(host)s:%(port)s after trying for %(time)d seconds"
@@ -483,11 +448,6 @@ msgid ""
 "Default number of RBAC entries allowed per tenant. A negative value means "
 "unlimited."
 msgstr "每个租户允许的缺省 RBAC 条目数。负值表示无限制。"
-
-msgid ""
-"Default number of resource allowed per tenant. A negative value means "
-"unlimited."
-msgstr "每个租户允许的缺省资源数。负值表示无限。"
 
 msgid "Default security group"
 msgstr "缺省安全组"
@@ -558,20 +518,6 @@ msgstr "外部 DNS 集成的驱动程序。"
 msgid "Driver for security groups firewall in the L2 agent"
 msgstr "L2 代理程序中的安全组防火墙的驱动程序"
 
-msgid "Driver to use for scheduling network to DHCP agent"
-msgstr "要用于对 DHCP 代理调度网络的驱动程序"
-
-msgid "Driver to use for scheduling router to a default L3 agent"
-msgstr "要用于对缺省 L3 代理调度路由器的驱动程序"
-
-msgid ""
-"Driver used for ipv6 prefix delegation. This needs to be an entry point "
-"defined in the neutron.agent.linux.pd_drivers namespace. See setup.cfg for "
-"entry points included with the neutron source."
-msgstr ""
-"用于 IPv6 前缀授权的驱动程序。这需要是 neutron.agent.linux.pd_drivers 名称空"
-"间中定义的入口点。请参阅 setup.cfg 以了解 Neutron 源随附的入口点。"
-
 #, python-format
 msgid ""
 "Duplicate L3HARouterAgentPortBinding is created for router(s) %(router)s. "
@@ -611,13 +557,6 @@ msgstr "为虚拟路由器启用HA模式。"
 
 msgid "Enable SSL on the API server"
 msgstr "在API 服务器上打开SSL"
-
-msgid ""
-"Enable VXLAN on the agent. Can be enabled when agent is managed by ml2 "
-"plugin using linuxbridge mechanism driver"
-msgstr ""
-"请在代理上启用 VXLAN。可在通过使用 linuxbridge 机制驱动程序由 ml2 插件管理代"
-"理时启用"
 
 msgid ""
 "Enable services on an agent with admin_state_up False. If this option is "
@@ -667,13 +606,6 @@ msgid ""
 "Extension driver %(driver)s required for service plugin %(service_plugin)s "
 "not found."
 msgstr "找不到服务插件 %(service_plugin)s 所需的扩展驱动程序 %(driver)s。"
-
-msgid ""
-"Extension to use alongside ml2 plugin's l2population mechanism driver. It "
-"enables the plugin to populate VXLAN forwarding table."
-msgstr ""
-"要与 ml2 插件的 l2population 机制驱动程序一起使用的扩展。它使该插件能够填充 "
-"VXLAN 转发表。"
 
 #, python-format
 msgid "Extension with alias %s does not exist"
@@ -769,18 +701,6 @@ msgstr ""
 "已提供 ICMP 代码 (port-range-max) %(value)s，但缺少 ICMP 类型 (port-range-"
 "min)。"
 
-msgid "ID of network"
-msgstr "网络的标识"
-
-msgid "ID of network to probe"
-msgstr "要探测的网络的标识"
-
-msgid "ID of probe port to delete"
-msgstr "要删除的探测器端口的标识"
-
-msgid "ID of probe port to execute command"
-msgstr "用于执行命令的探测器端口的标识"
-
 msgid "ID of the router"
 msgstr "路由器ID"
 
@@ -836,17 +756,6 @@ msgid "Illegal IP version number"
 msgstr "IP 版本号不合法"
 
 msgid ""
-"In some cases the Neutron router is not present to provide the metadata IP "
-"but the DHCP server can be used to provide this info. Setting this value "
-"will force the DHCP server to append specific host routes to the DHCP "
-"request. If this option is set, then the metadata service will be activated "
-"for all the networks."
-msgstr ""
-"在某些情况下，没有 Neutron 路由器可提供元数据 IP，但 DHCP 服务器可用于提供此"
-"信息。设置此值将强制 DHCP 服务器将特定主机路由追加至 DHCP 请求。如果设置了此"
-"选项，那么将对所有网络激活此元数据服务。"
-
-msgid ""
 "Indicates that this L3 agent should also handle routers that do not have an "
 "external network gateway configured. This option should be True only for a "
 "single agent in a Neutron deployment, and may be False for all agents if all "
@@ -880,10 +789,6 @@ msgstr ""
 
 msgid "Interface to monitor"
 msgstr "要监视的接口"
-
-msgid ""
-"Interval between checks of child process liveness (seconds), use 0 to disable"
-msgstr "子进程活性检查之间的时间间隔（秒），使用 0 来进行禁用"
 
 msgid "Interval between two metering measures"
 msgstr "在采取两种测量措施之间的时间间隔"
@@ -954,13 +859,6 @@ msgid "Invalid value for port %(port)s"
 msgstr "端口 %(port)s 的值无效"
 
 msgid ""
-"Iptables mangle mark used to mark ingress from external network. This mark "
-"will be masked with 0xffff so that only the lower 16 bits will be used."
-msgstr ""
-"用来标记外部网络中的入口的 Iptables mangle 标记。将使用 0xffff 来屏蔽此标记，"
-"以便将仅使用低位的 16 位。"
-
-msgid ""
 "Iptables mangle mark used to mark metadata valid requests. This mark will be "
 "masked with 0xffff so that only the lower 16 bits will be used."
 msgstr ""
@@ -1012,12 +910,6 @@ msgstr "元数据代理 UNIX 域套接字的位置"
 
 msgid "Location to store DHCP server config files."
 msgstr "用于存储 DHCP 服务器配置文件的位置。"
-
-msgid "Location to store IPv6 PD files."
-msgstr "用来存储 IPv6 PD 文件的位置。"
-
-msgid "Location to store IPv6 RA config files"
-msgstr "用于存储 IPv6 RA 配置文件的位置"
 
 msgid "Location to store child pid files"
 msgstr "用于存储子 pid 文件的位置"
@@ -1088,9 +980,6 @@ msgstr "测量驱动程序"
 msgid "MinRtrAdvInterval setting for radvd.conf"
 msgstr "radvd.conf 的 MinRtrAdvInterval 设置"
 
-msgid "Minimize polling by monitoring ovsdb for interface changes."
-msgstr "请通过监视 ovsdb 以获取接口更改来最大程度地减少轮询。"
-
 #, python-format
 msgid "Missing key in mapping: '%s'"
 msgstr "映射中缺少键：“%s”"
@@ -1102,19 +991,6 @@ msgid ""
 msgstr ""
 "VXLAN 的多点广播组。如果配置了此项，那么系统允许将所有广播流量发送至此多点广"
 "播组。如果保留为未配置，那么系统将禁用多点广播 VXLAN 方式。"
-
-msgid ""
-"Multicast group(s) for vxlan interface. A range of group addresses may be "
-"specified by using CIDR notation. Specifying a range allows different VNIs "
-"to use different group addresses, reducing or eliminating spurious broadcast "
-"traffic to the tunnel endpoints. To reserve a unique group for each possible "
-"(24-bit) VNI, use a /8 such as 239.0.0.0/8. This setting must be the same on "
-"all the agents."
-msgstr ""
-"VXLAN 接口的多点广播组。必须使用 CIDR 注释指定一定范围的组地址。指定范围允许"
-"不同 VNI 使用不同组地址，从而减少或消除发送至通道端点的伪造广播流量。为对每个"
-"可能的（24 位）VNI 保留唯一组，请使用 /8，例如，239.0.0.0/8。此设置在所有代理"
-"程序上必须相同。"
 
 #, python-format
 msgid "Multiple default providers for service %s"
@@ -1135,10 +1011,6 @@ msgstr "必须在添加或删除流时指定一个或多个操作"
 
 msgid "Name of Open vSwitch bridge to use"
 msgstr "要使用的已打开 vSwitch 网桥的名称"
-
-msgid ""
-"Name of nova region to use. Useful if keystone manages more than one region."
-msgstr "要使用的 nova 区域的名称。如果 keystone 管理多个区域，那么这很有用。"
 
 msgid "Namespace of the router"
 msgstr "路由器名字空间"
@@ -1214,35 +1086,11 @@ msgstr "不允许以“dvr”方式将路由器手动分配给代理程序。"
 msgid "Not allowed to manually remove a router from an agent in 'dvr' mode."
 msgstr "不允许以“dvr”方式从代理程序手动移除路由器。"
 
-msgid ""
-"Number of DHCP agents scheduled to host a tenant network. If this number is "
-"greater than 1, the scheduler automatically assigns multiple DHCP agents for "
-"a given tenant network, providing high availability for DHCP service."
-msgstr ""
-"已调度的主管租户网络的 DHCP 代理数。如果此数目大于 1，那么调度程序会自动为所"
-"给定的租户网络分配多个 DHCP 代理，从而为 DHCP 服务提供高可用性。"
-
 msgid "Number of backlog requests to configure the metadata server socket with"
 msgstr "关于配置元数据服务器套接字的储备请求数"
 
 msgid "Number of backlog requests to configure the socket with"
 msgstr "积压许多配置socket的请求"
-
-msgid ""
-"Number of bits in an ipv4 PTR zone that will be considered network prefix. "
-"It has to align to byte boundary. Minimum value is 8. Maximum value is 24. "
-"As a consequence, range of values is 8, 16 and 24"
-msgstr ""
-"ipv4 PTR 区域中将被视为网络前缀的位数。它必须符合字节限制。最小值为 8。最大值"
-"为 24。因此，有效值包括：8、16 和 24。"
-
-msgid ""
-"Number of bits in an ipv6 PTR zone that will be considered network prefix. "
-"It has to align to nyble boundary. Minimum value is 4. Maximum value is 124. "
-"As a consequence, range of values is 4, 8, 12, 16,..., 124"
-msgstr ""
-"ipv6 PTR 区域中将被视为网络前缀的位数。它必须符合字节限制。最小值为 4。最大值"
-"为 124。因此，有效值包括：4，8，12，16，...，124。"
 
 msgid ""
 "Number of floating IPs allowed per tenant. A negative value means unlimited."
@@ -1258,11 +1106,6 @@ msgstr "每个租户允许的端口数。负值表示无限。"
 msgid "Number of routers allowed per tenant. A negative value means unlimited."
 msgstr "每个租户允许的路由器数。负值表示无限。"
 
-msgid ""
-"Number of seconds between sending events to nova if there are any events to "
-"send."
-msgstr "前后两次将事件发送至 nova 的间隔秒数（如果有事件要发送）。"
-
 msgid "Number of seconds to keep retrying to listen"
 msgstr "若干秒保持重试监听"
 
@@ -1270,11 +1113,6 @@ msgid ""
 "Number of security groups allowed per tenant. A negative value means "
 "unlimited."
 msgstr "每个租户允许的安全组数。负值表示无限。"
-
-msgid ""
-"Number of security rules allowed per tenant. A negative value means "
-"unlimited."
-msgstr "每个租户允许的安全性规则数。负值表示无限。"
 
 msgid "Number of subnets allowed per tenant, A negative value means unlimited."
 msgstr "每个租户允许的子网数。负值表示无限。"
@@ -1317,9 +1155,6 @@ msgstr ""
 msgid "Override the default dnsmasq settings with this file."
 msgstr "使用此文件覆盖缺省 dnsmasq 设置。"
 
-msgid "Owner type of the device: network/compute"
-msgstr "设备的所有者类型如下：网络/计算"
-
 msgid "POST requests are not supported on this resource."
 msgstr "POST 请求在此资源上不受支持。"
 
@@ -1349,9 +1184,6 @@ msgstr "隧道网桥中的同级补丁端口（对于集成网桥）。"
 msgid "Phase upgrade options do not accept revision specification"
 msgstr "阶段升级选项不接受修订规范"
 
-msgid "Ping timeout"
-msgstr "Ping 超时"
-
 #, python-format
 msgid "Port %(id)s does not have fixed ip %(address)s"
 msgstr "端口 %(id)s 没有固定 ip %(address)s"
@@ -1373,22 +1205,11 @@ msgstr "前缀授权只能用于 IPv6 子网。"
 msgid "Private key of client certificate."
 msgstr "客户机证书的专用密钥。"
 
-#, python-format
-msgid "Probe %s deleted"
-msgstr "已删除探测器 %s"
-
-#, python-format
-msgid "Probe created : %s "
-msgstr "已创建探测器：%s "
-
 msgid "Process is already started"
 msgstr "进程已经启动"
 
 msgid "Process is not running."
 msgstr "进程未运行"
-
-msgid "Protocol to access nova metadata, http or https"
-msgstr "用于访问 nova 元数据的协议（HTTP 或 HTTPS）"
 
 #, python-format
 msgid "Provider name %(name)s is limited by %(len)s characters"
@@ -1435,25 +1256,6 @@ msgstr "远程元数据服务器遇到内部服务器错误。"
 msgid ""
 "Repository does not contain HEAD files for contract and expand branches."
 msgstr "存储库未包含用于合同分支和扩展分支的 HEAD 文件。"
-
-msgid ""
-"Representing the resource type whose load is being reported by the agent. "
-"This can be \"networks\", \"subnets\" or \"ports\". When specified (Default "
-"is networks), the server will extract particular load sent as part of its "
-"agent configuration object from the agent report state, which is the number "
-"of resources being consumed, at every report_interval.dhcp_load_type can be "
-"used in combination with network_scheduler_driver = neutron.scheduler."
-"dhcp_agent_scheduler.WeightScheduler When the network_scheduler_driver is "
-"WeightScheduler, dhcp_load_type can be configured to represent the choice "
-"for the resource being balanced. Example: dhcp_load_type=networks"
-msgstr ""
-"表示其负载要由代理报告的资源类型。这可以是“网络”、“子网”或“端口”。如果已指定"
-"（缺省值为“网络”），那么服务器将根据代理报告状态抽取特定负载（作为其代理配置"
-"对象的一部分发送），这是在每个 report_interval 要消耗的资源数。"
-"dhcp_load_type 可与 network_scheduler_driver = neutron.scheduler."
-"dhcp_agent_scheduler.WeightScheduler 一起使用。当 network_scheduler_driver "
-"为 WeightScheduler 时，dhcp_load_type 可配置为表示针对要均衡的资源的选择。示"
-"例：dhcp_load_type=networks"
 
 msgid "Request Failed: internal server error while processing your request."
 msgstr "请求失败：在处理请求时，发生内部服务器错误。"
@@ -1528,13 +1330,6 @@ msgstr ""
 "节点向服务器报告状态的间隔秒数；应该小于 agent_down_time，最好小于 "
 "agent_down_time 或是它的一半。"
 
-msgid ""
-"Seconds to regard the agent is down; should be at least twice "
-"report_interval, to be sure the agent is down for good."
-msgstr ""
-"认为代理已关闭的秒数；应该至少为 report_interval 的两倍，以确保代理已正常关"
-"闭。"
-
 #, python-format
 msgid "Security Group %(id)s %(reason)s."
 msgstr "安全组 %(id)s %(reason)s。"
@@ -1570,16 +1365,6 @@ msgstr ""
 "安全组规则协议 %(protocol)s 不受支持。只有协议值 %(values)s 和整数表示 [0 到 "
 "255] 受支持。"
 
-msgid ""
-"Send notification to nova when port data (fixed_ips/floatingip) changes so "
-"nova can update its cache."
-msgstr ""
-"当端口数据（固定 IP/floatingip）更改时，将通知发送至 nova，以便 nova 可更新其"
-"高速缓存。"
-
-msgid "Send notification to nova when port status changes"
-msgstr "当端口状态更改时，将通知发送至 nova"
-
 #, python-format
 msgid ""
 "Service provider '%(provider)s' could not be found for service type "
@@ -1592,18 +1377,6 @@ msgstr "用来处理 DHCPv6 前缀授权的服务。"
 #, python-format
 msgid "Service type %(service_type)s does not have a default service provider"
 msgstr "服务类型 %(service_type)s 没有缺省服务提供程序"
-
-msgid ""
-"Set new timeout in seconds for new rpc calls after agent receives SIGTERM. "
-"If value is set to 0, rpc timeout won't be changed"
-msgstr ""
-"在代理接收到 SIGTERM 之后，为新的 RPC 调用设置新超时（以秒计）。如果值设置为 "
-"0，那么 RPC 超时将不更改"
-
-msgid ""
-"Set or un-set the don't fragment (DF) bit on outgoing IP packet carrying GRE/"
-"VXLAN tunnel."
-msgstr "在承载 GRE/VXLAN 隧道的出局 IP 包上设置或取消设置不分段 (DF) 位。"
 
 msgid "Shared address scope can't be unshared"
 msgstr "无法取消共享已共享的地址范围"
@@ -1621,9 +1394,6 @@ msgstr "路由器接口的子网必须具有网关 IP"
 msgid "Subnet pool has existing allocations"
 msgstr "子网池具有现有分配"
 
-msgid "Subnet used for the l3 HA admin network."
-msgstr "用于 l3 HA 管理网络的子网。"
-
 msgid ""
 "System-wide flag to determine the type of router that tenants can create. "
 "Only admin can override."
@@ -1634,9 +1404,6 @@ msgstr "TCP 端口已由 Neutron 元数据名称空间代理使用。"
 
 msgid "TCP Port used by Nova metadata server."
 msgstr "Nova 元数据服务器使用的 TCP 端口。"
-
-msgid "TTL for vxlan interface protocol packets."
-msgstr "用于 vxlan 接口协议包的 TTL。"
 
 #, python-format
 msgid "Tag %(tag)s could not be found."
@@ -1651,19 +1418,6 @@ msgstr "管理员上下文中要指定的连接租户标识"
 
 msgid "Tenant name for connecting to designate in admin context"
 msgstr "管理员上下文中要指定的连接租户名"
-
-msgid ""
-"The DHCP server can assist with providing metadata support on isolated "
-"networks. Setting this value to True will cause the DHCP server to append "
-"specific host routes to the DHCP request. The metadata service will only be "
-"activated when the subnet does not contain any router port. The guest "
-"instance must be configured to request host routes via DHCP (Option 121). "
-"This option doesn't have any effect when force_metadata is set to True."
-msgstr ""
-"DHCP 服务器可帮助在隔离网络上提供元数据支持。将此值设置为 True 将导致 DHCP 服"
-"务器将特定主机路由追加至 DHCP 请求。仅当子网未包含任何路由器端口时，才会激活"
-"元数据服务。访客实例必须配置为通过 DHCP 请求主机路由（选项 121）。如果 "
-"force_metadata 设置为 True，那么此选项没有任何效果。"
 
 msgid "The UDP port to use for VXLAN tunnels."
 msgstr "UDP端口用于VXLAN隧道"
@@ -1684,27 +1438,11 @@ msgstr ""
 "基本 MAC 地址 Neutron 将用于 VIF。前 3 个八位元将保持不变。如果第 4 个八位元"
 "并非 00，那么也将使用该八位元。将随机生成其他八位元。"
 
-msgid ""
-"The base mac address used for unique DVR instances by Neutron. The first 3 "
-"octets will remain unchanged. If the 4th octet is not 00, it will also be "
-"used. The others will be randomly generated. The 'dvr_base_mac' *must* be "
-"different from 'base_mac' to avoid mixing them up with MAC's allocated for "
-"tenant ports. A 4 octet example would be dvr_base_mac = fa:16:3f:4f:00:00. "
-"The default is 3 octet"
-msgstr ""
-"由 Neutron 用于唯一 DVR 实例的基本 MAC 地址。前三个八位元将保持不变。如果第四"
-"个八位元不为 00，那么也将使用该八位元。将随机生成其他八位元。“dvr_base_mac”必"
-"须不同于“base_mac”，以避免将它们与为租户端口分配的 MAC 混合使用。以下是一个具"
-"有 4 个八位元的示例：dvr_base_mac = fa:16:3f:4f:00:00。缺省值为 3 个八位元"
-
 msgid "The core plugin Neutron will use"
 msgstr "Neutron 将使用的核心插件"
 
 msgid "The driver used to manage the DHCP server."
 msgstr "用于管理 DHCP 服务器的驱动程序。"
-
-msgid "The driver used to manage the virtual interface."
-msgstr "用于管理虚拟接口的驱动程序。"
 
 msgid ""
 "The email address to be used when creating PTR zones. If not specified, the "
@@ -1714,46 +1452,12 @@ msgstr ""
 "admin@<dns_domain>"
 
 msgid ""
-"The maximum number of items returned in a single response, value was "
-"'infinite' or negative integer means no limit"
-msgstr "在单个响应中返回的最大项数，值为“无限”或负整数表示无限制"
-
-msgid ""
-"The network type to use when creating the HA network for an HA router. By "
-"default or if empty, the first 'tenant_network_types' is used. This is "
-"helpful when the VRRP traffic should use a specific network which is not the "
-"default one."
-msgstr ""
-"为 HA 路由器创建 HA 网络时要使用的网络类型。缺省情况下，或者如果网络类型为"
-"空，那么将使用第一个“tenant_network_types”。这在 VRRP 流量应使用特定网络（该"
-"网络不是缺省网络）时很有帮助。"
-
-msgid ""
 "The number of seconds the agent will wait between polling for local device "
 "changes."
 msgstr "在轮询本地设备更改之间，代理将等待的秒数。"
 
-msgid ""
-"The number of seconds to wait before respawning the ovsdb monitor after "
-"losing communication with it."
-msgstr "在与 ovsdb 监视器失去通信联系之后重新衍生该监视器之前要等待的秒数。"
-
 msgid "The number of sort_keys and sort_dirs must be same"
 msgstr "sort_keys 的数字与 sort_dirs 的数字必须相同"
-
-msgid ""
-"The path for API extensions. Note that this can be a colon-separated list of "
-"paths. For example: api_extensions_path = extensions:/path/to/more/exts:/"
-"even/more/exts. The __path__ of neutron.extensions is appended to this, so "
-"if your extensions are in there you don't need to specify them here."
-msgstr ""
-"API 扩展的路径。请注意，它可能是路径的冒号分隔列表。例如："
-"api_extensions_path = extensions:/path/to/more/exts:/even/more/exts。neutron."
-"extensions 的 __path__ 将追加至此项之后，所以，如果扩展位于该处，那么不需要在"
-"此处指定它们。"
-
-msgid "The physical network name with which the HA network can be created."
-msgstr "可以用来创建 HA 网络的物理网络名称。"
 
 #, python-format
 msgid "The port '%s' was deleted"
@@ -1804,13 +1508,6 @@ msgstr "ML2 插件需要隧道 IP 值"
 
 msgid "Tunnel bridge to use."
 msgstr "要使用的隧道网桥。"
-
-msgid ""
-"Type of the nova endpoint to use.  This endpoint will be looked up in the "
-"keystone catalog and should be one of public, internal or admin."
-msgstr ""
-"要使用的 nova 端点的类型。系统将在 keystone 目录中查找此端点，值应该为 "
-"public、internal 或 admin 的其中之一。"
 
 msgid "URL for connecting to designate"
 msgstr "要指定的连接 URL"
@@ -1926,13 +1623,6 @@ msgid "Use either --delta or relative revision, not both"
 msgstr "请使用 --delta 或者相关修订版，但是不能同时指定这两者"
 
 msgid ""
-"Use ipset to speed-up the iptables based security groups. Enabling ipset "
-"support requires that ipset is installed on L2 agent node."
-msgstr ""
-"使用 ipset 以加速基于安全组的 iptable。启用 ipset 支持要求该 ipset 安装在 L2 "
-"代理程序节点上。"
-
-msgid ""
 "Use the root helper when listing the namespaces on a system. This may not be "
 "required depending on the security configuration. If the root helper is not "
 "required, set this to False for a performance improvement."
@@ -1975,48 +1665,12 @@ msgstr ""
 "多信息。"
 
 msgid ""
-"When proxying metadata requests, Neutron signs the Instance-ID header with a "
-"shared secret to prevent spoofing. You may select any string for a secret, "
-"but it must match here and in the configuration used by the Nova Metadata "
-"Server. NOTE: Nova uses the same config key, but in [neutron] section."
-msgstr ""
-"代理元数据请求时，Neutron 会使用共享密钥签署 Instance-ID 头以避免电子诈骗。可"
-"选择任何字符串作为密钥，但此处的密钥必须与 Nova Metadata Server 使用的配置中"
-"的密钥相匹配。注意：Nova 使用同一配置密钥，但在 [neutron] 节中。"
-
-msgid ""
 "Where to store Neutron state files. This directory must be writable by the "
 "agent."
 msgstr "用于存储 Neutron 状态文件的位置。此目录对于代理必须为可写。"
 
-msgid ""
-"With IPv6, the network used for the external gateway does not need to have "
-"an associated subnet, since the automatically assigned link-local address "
-"(LLA) can be used. However, an IPv6 gateway address is needed for use as the "
-"next-hop for the default route. If no IPv6 gateway address is configured "
-"here, (and only then) the neutron router will be configured to get its "
-"default route from router advertisements (RAs) from the upstream router; in "
-"which case the upstream router must also be configured to send these RAs. "
-"The ipv6_gateway, when configured, should be the LLA of the interface on the "
-"upstream router. If a next-hop using a global unique address (GUA) is "
-"desired, it needs to be done via a subnet allocated to the network and not "
-"through this parameter. "
-msgstr ""
-"对于 IPv6，用于外部网关的网络不需要具备相关联的子网，因为可以使用自动指定的链"
-"路本地地址 (LLA)。但是，需要 IPv6 网关地址用作缺省路由的下一个路由器。如果此"
-"处未配置 IPv6 网关地址，那么将配置 Neutron 路由器，以从上游的路由器中获取路由"
-"器广告（RA）中的缺省路由；在这种情况下，还必须配置上游路由器以发送这些 RA。配"
-"置了 ipv6_gateway 时，ipv6_gateway 应为上游路由器上的接口的 LLA。如果需要下一"
-"个使用全局唯一地址 (GUA) 的路由器，那么它需要通过分配给该网络的子网来完成，而"
-"不是通过此参数来完成。"
-
 msgid "You must implement __call__"
 msgstr "必须实现 __call__"
-
-msgid ""
-"You must provide a config file for bridge - either --config-file or "
-"env[NEUTRON_TEST_CONFIG_FILE]"
-msgstr "必须为网桥提供配置文件 - --config-file 或env[NEUTRON_TEST_CONFIG_FILE]"
 
 msgid "You must provide a revision or relative delta"
 msgstr "必须提供修订或相对变化量"
