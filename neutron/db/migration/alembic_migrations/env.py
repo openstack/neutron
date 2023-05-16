@@ -13,16 +13,14 @@
 #    under the License.
 
 from alembic import context
-from neutron_lib import context as n_context
-from neutron_lib.db import api as db_api
 from neutron_lib.db import model_base
 from oslo_config import cfg
-from oslo_db import options as db_options
 import sqlalchemy as sa
 from sqlalchemy import event  # noqa
 
 from neutron.db.migration.alembic_migrations import external
 from neutron.db.migration import autogen
+from neutron.db.migration.connection import DBConnection
 from neutron.db.migration.models import head  # noqa
 
 try:
@@ -53,13 +51,6 @@ def set_mysql_engine():
     global MYSQL_ENGINE
     MYSQL_ENGINE = (mysql_engine or
                     model_base.BASEV2.__table_args__['mysql_engine'])
-
-
-def setup_conf():
-    conf = cfg.CONF
-    conf.register_opts(db_options.database_opts, 'database')
-    conf.set_override('connection', neutron_config.database.connection,
-                      group='database')
 
 
 def include_object(object_, name, type_, reflected, compare_to):
@@ -110,12 +101,11 @@ def run_migrations_online():
     and associate a connection with the context.
 
     """
-    setup_conf()
     set_mysql_engine()
-    admin_ctx = n_context.get_admin_context()
-    with db_api.CONTEXT_WRITER.using(admin_ctx) as session:
+    connection = config.attributes.get('connection')
+    with DBConnection(neutron_config.database.connection, connection) as conn:
         context.configure(
-            connection=session.connection(),
+            connection=conn,
             target_metadata=target_metadata,
             include_object=include_object,
             process_revision_directives=autogen.process_revision_directives
