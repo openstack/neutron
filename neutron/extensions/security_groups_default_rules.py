@@ -46,6 +46,10 @@ RESOURCE_ATTRIBUTE_MAP = {
             'allow_post': True, 'allow_put': False,
             'default': None, 'is_visible': True,
             'is_sort_key': True, 'is_filter': True},
+        'remote_address_group_id': {
+            'allow_post': True, 'allow_put': False,
+            'default': None, 'is_visible': True,
+            'is_sort_key': True, 'is_filter': True},
         'direction': {
             'allow_post': True, 'allow_put': False,
             'is_visible': True, 'is_filter': True,
@@ -79,6 +83,10 @@ RESOURCE_ATTRIBUTE_MAP = {
             'is_sort_key': True, 'is_filter': True,
             'convert_to': securitygroup.convert_ip_prefix_to_cidr},
         'used_in_default_sg': {
+            'allow_post': True, 'allow_put': False,
+            'convert_to': converters.convert_to_boolean,
+            'is_visible': True, 'is_filter': True},
+        'used_in_non_default_sg': {
             'allow_post': True, 'allow_put': False,
             'convert_to': converters.convert_to_boolean,
             'is_visible': True, 'is_filter': True},
