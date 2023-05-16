@@ -64,8 +64,19 @@ migration.log_warning = LOG.warning
 migration.log_info = LOG.info
 
 
+def render_url_str(_url):
+    """Render a ``URL`` instance as string and the password in clear text"""
+    try:
+        return _url.render_as_string(hide_password=False)
+    except AttributeError:
+        # NOTE(ralonsoh): ``URL`` objects from SQLAlchemy<2.0.0 don't have
+        # ``render_as_string`` method but it is not necessary.
+        return str(_url)
+
+
 def upgrade(engine, alembic_config, branch_name='heads'):
-    cfg.CONF.set_override('connection', engine.url, group='database')
+    url_str = render_url_str(engine.url)
+    cfg.CONF.set_override('connection', url_str, group='database')
     migration.do_alembic_command(alembic_config, 'upgrade',
                                  branch_name)
 
@@ -301,7 +312,8 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
 
         find_migration_exceptions()
         engine = self.engine
-        cfg.CONF.set_override('connection', engine.url, group='database')
+        url_str = render_url_str(engine.url)
+        cfg.CONF.set_override('connection', url_str, group='database')
 
         with engine.begin() as connection:
             self.alembic_config.attributes['connection'] = connection
@@ -331,7 +343,8 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
     # contradiction to blueprint online-upgrades
     def test_forbid_offline_migrations_starting_newton(self):
         engine = self.get_engine()
-        cfg.CONF.set_override('connection', engine.url, group='database')
+        url_str = render_url_str(engine.url)
+        cfg.CONF.set_override('connection', url_str, group='database')
         # the following revisions are Newton heads
         for revision in ('5cd92597d11d', '5c85685d616d'):
             migration.do_alembic_command(
@@ -348,7 +361,8 @@ class TestModelsMigrationsMySQL(testlib_api.MySQLTestCaseMixin,
 
     def test_check_mysql_engine(self):
         engine = self.get_engine()
-        cfg.CONF.set_override('connection', engine.url, group='database')
+        url_str = render_url_str(engine.url)
+        cfg.CONF.set_override('connection', url_str, group='database')
         with engine.begin() as connection:
             self.alembic_config.attributes['connection'] = connection
             migration.do_alembic_command(self.alembic_config, 'upgrade',
@@ -567,7 +581,8 @@ class _TestWalkMigrations(object):
 
         """
         engine = self.engine
-        config = self._get_alembic_config(engine.url)
+        url_str = render_url_str(engine.url)
+        config = self._get_alembic_config(url_str)
         revisions = self._revisions()
         for dest, curr in revisions:
             self._migrate_up(config, engine, dest, curr)
