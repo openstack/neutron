@@ -10,15 +10,33 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import abc
+
 from neutron_lib.api import converters
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib.db import constants as db_const
+from neutron_lib import exceptions
 from neutron_lib.plugins import directory
 
+from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.extensions import securitygroup
 from neutron.extensions import standardattrdescription as stdattr_ext
+
+
+class DefaultSecurityGroupRuleNotFound(exceptions.NotFound):
+    message = _("Default Security Group rule %(id)s does not exist")
+
+
+class DefaultSecurityGroupRuleExists(exceptions.InUse):
+    message = _("Default Security group rule already exists. "
+                "Rule id is %(rule_id)s.")
+
+
+class DuplicateDefaultSgRuleInPost(exceptions.InUse):
+    message = _("Duplicate Default Security Group Rule in POST.")
+
 
 # TODO(slaweq): rehome API definition to neutron-lib together with
 # securitygroup API definition
@@ -44,6 +62,12 @@ RESOURCE_ATTRIBUTE_MAP = {
             'is_filter': True,
             'is_sort_key': True,
             'primary_key': True},
+        'tenant_id': {
+            'allow_post': True, 'allow_put': False,
+            'required_by_policy': True,
+            'is_sort_key': False,
+            'validate': {'type:string': db_const.PROJECT_ID_FIELD_SIZE},
+            'is_visible': False, 'is_filter': False},
         'description': {
             'allow_post': True, 'allow_put': False, 'default': '',
             'validate': {'type:string': db_const.LONG_DESCRIPTION_FIELD_SIZE},
@@ -138,12 +162,37 @@ class Security_groups_default_rules(api_extensions.ExtensionDescriptor):
     def get_resources(cls):
         """Returns Ext Resources."""
         plugin = directory.get_plugin()
-        params = RESOURCE_ATTRIBUTE_MAP.get(COLLECTION_NAME)
+        collection_name = COLLECTION_NAME.replace('_', '-')
+        params = RESOURCE_ATTRIBUTE_MAP.get(COLLECTION_NAME, dict())
         controller = base.create_resource(COLLECTION_NAME,
                                           RESOURCE_NAME,
-                                          plugin, params)
+                                          plugin, params,
+                                          allow_pagination=True,
+                                          allow_sorting=True)
 
-        ex = extensions.ResourceExtension(COLLECTION_NAME,
-                                          controller)
+        ex = extensions.ResourceExtension(collection_name, controller,
+                                          attr_map=params)
 
         return [ex]
+
+
+class SecurityGroupDefaultRulesPluginBase(object, metaclass=abc.ABCMeta):
+
+    @abc.abstractmethod
+    def create_default_security_group_rule(self, context, sg_rule_template):
+        pass
+
+    @abc.abstractmethod
+    def delete_default_security_group_rule(self, context, sg_rule_template_id):
+        pass
+
+    @abc.abstractmethod
+    def get_default_security_group_rules(self, context, filters=None,
+                                         fields=None, sorts=None, limit=None,
+                                         marker=None, page_reverse=False):
+        pass
+
+    @abc.abstractmethod
+    def get_default_security_group_rule(self, context, sg_rule_template_id,
+                                        fields=None):
+        pass

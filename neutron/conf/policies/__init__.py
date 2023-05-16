@@ -20,6 +20,7 @@ from neutron.conf.policies import agent
 from neutron.conf.policies import auto_allocated_topology
 from neutron.conf.policies import availability_zone
 from neutron.conf.policies import base
+from neutron.conf.policies import default_security_group_rules
 from neutron.conf.policies import flavor
 from neutron.conf.policies import floatingip
 from neutron.conf.policies import floatingip_pools
@@ -55,6 +56,7 @@ def list_rules():
         agent.list_rules(),
         auto_allocated_topology.list_rules(),
         availability_zone.list_rules(),
+        default_security_group_rules.list_rules(),
         flavor.list_rules(),
         floatingip.list_rules(),
         floatingip_pools.list_rules(),

@@ -79,6 +79,7 @@ from neutron_lib.api.definitions import vpn_endpoint_groups
 from neutron_lib import constants
 
 from neutron.extensions import quotasv2_detail
+from neutron.extensions import security_groups_default_rules
 
 # NOTE(russellb) This remains in its own file (vs constants.py) because we want
 # to be able to easily import it and export the info without any dependencies
@@ -145,6 +146,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     rbac_security_groups.ALIAS,
     'standard-attr-revisions',
     'security-group',
+    security_groups_default_rules.ALIAS,
     security_groups_normalized_cidr.ALIAS,
     security_groups_remote_address_group.ALIAS,
     security_groups_shared_filtering.ALIAS,
