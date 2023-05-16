@@ -104,7 +104,11 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='get_rule_type',
-        check_str=base.ADMIN,
+        # NOTE(ralonsoh): it can't be ADMIN_OR_PROJECT_READER constant from the
+        # base module because that is using "project_id" in the check string
+        # and the rule type resource don't belongs to any project thus such
+        # check string would fail enforcement.
+        check_str='role:reader',
         scope_types=['project'],
         description='Get available QoS rule types',
         operations=[
