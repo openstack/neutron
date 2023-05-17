@@ -99,7 +99,7 @@ def recreate_index(table):
     for idx in (idx for idx in indexes if idx['name'] == index_name):
         old_name = idx['name']
         new_name = old_name.replace('target_tenant', 'target_project')
-        op.drop_index(op.f(old_name), table)
+        op.drop_index(index_name=op.f(old_name), table_name=table)
         op.create_index(new_name, table, ['target_project'])
 
 
