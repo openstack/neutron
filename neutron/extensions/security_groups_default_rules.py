@@ -12,11 +12,13 @@
 
 from neutron_lib.api import converters
 from neutron_lib.api import extensions as api_extensions
+from neutron_lib.db import constants as db_const
 from neutron_lib.plugins import directory
 
 from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.extensions import securitygroup
+from neutron.extensions import standardattrdescription as stdattr_ext
 
 # TODO(slaweq): rehome API definition to neutron-lib together with
 # securitygroup API definition
@@ -42,6 +44,10 @@ RESOURCE_ATTRIBUTE_MAP = {
             'is_filter': True,
             'is_sort_key': True,
             'primary_key': True},
+        'description': {
+            'allow_post': True, 'allow_put': False, 'default': '',
+            'validate': {'type:string': db_const.LONG_DESCRIPTION_FIELD_SIZE},
+            'is_filter': True, 'is_sort_key': False, 'is_visible': True},
         'remote_group_id': {
             'allow_post': True, 'allow_put': False,
             'default': None, 'is_visible': True,
@@ -102,7 +108,7 @@ ACTION_STATUS = {
 }
 
 REQUIRED_EXTENSIONS = [
-    'security-group'
+    'security-group', stdattr_ext.Standardattrdescription.get_alias()
 ]
 
 OPTIONAL_EXTENSIONS = [
