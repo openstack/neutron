@@ -16,6 +16,7 @@ import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy import sql
 
+from neutron.common import _constants as n_const
 from neutron.db.models import l3 as l3_models
 from neutron.db import models_v2
 
@@ -88,7 +89,7 @@ class PortDNS(model_base.BASEV2):
     dns_name = sa.Column(sa.String(255), nullable=False)
     dns_domain = sa.Column(sa.String(constants.FQDN_FIELD_SIZE),
                            nullable=False,
-                           server_default='')
+                           server_default=n_const.SQL_EMPTY_STRING)
     # Add a relationship to the Port model in order to instruct
     # SQLAlchemy to eagerly load this association
     port = orm.relationship(models_v2.Port,

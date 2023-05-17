@@ -14,6 +14,7 @@
 # limitations under the License.
 
 from neutron_lib import constants
+from sqlalchemy.sql import elements
 
 # NOTE(boden): This module is common constants for neutron only.
 # Any constants used outside of neutron should go into neutron-lib.
@@ -92,3 +93,6 @@ METADATA_V6_CIDR = constants.METADATA_V6_IP + '/128'
 
 # TODO(haleyb): move this constant to neutron_lib.constants
 IPV4_MIN_MTU = 68
+
+# TODO(ralonsoh): move to neutron-lib.db.contants
+SQL_EMPTY_STRING = elements.TextClause("''")
