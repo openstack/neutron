@@ -58,7 +58,7 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
         """
         address_scope = self._get_address_scope(context, id)
         return context.is_admin or (
-            address_scope.tenant_id == context.tenant_id)
+            address_scope.project_id == context.project_id)
 
     def get_ip_version_for_address_scope(self, context, id):
         address_scope = self._get_address_scope(context, id)
@@ -68,7 +68,10 @@ class AddressScopeDbMixin(ext_address_scope.AddressScopePluginBase):
         """Create an address scope."""
         a_s = address_scope['address_scope']
         address_scope_id = a_s.get('id') or uuidutils.generate_uuid()
-        pool_args = {'project_id': a_s['tenant_id'],
+        # TODO(ralonsoh): remove tenant_id reference once bp/keystone-v3
+        # migration finishes.
+        project_id = a_s.get('project_id') or a_s['tenant_id']
+        pool_args = {'project_id': project_id,
                      'id': address_scope_id,
                      'name': a_s['name'],
                      'shared': a_s['shared'],
