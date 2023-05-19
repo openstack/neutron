@@ -32,18 +32,22 @@ METADATA_SERVICE_NAME = 'metadata-proxy'
 HAPROXY_SERVICE = 'haproxy'
 
 PROXY_CONFIG_DIR = "ovn-metadata-proxy"
-_HAPROXY_CONFIG_TEMPLATE = comm_meta.METADATA_HAPROXY_GLOBAL + """
 
+_HEADER_CONFIG_TEMPLATE = """
+    http-request add-header X-OVN-%(res_type)s-ID %(res_id)s
+"""
+
+_UNLIMITED_CONFIG_TEMPLATE = """
 listen listener
     bind %(host)s:%(port)s
     server metadata %(unix_socket_path)s
-    http-request add-header X-OVN-%(res_type)s-ID %(res_id)s
 """
 
 
 class HaproxyConfigurator(object):
     def __init__(self, network_id, router_id, unix_socket_path, host,
-                 port, user, group, state_path, pid_file):
+                 port, user, group, state_path, pid_file,
+                 rate_limiting_config):
         self.network_id = network_id
         self.router_id = router_id
         if network_id is None and router_id is None:
@@ -56,6 +60,7 @@ class HaproxyConfigurator(object):
         self.state_path = state_path
         self.unix_socket_path = unix_socket_path
         self.pidfile = pid_file
+        self.rate_limiting_config = rate_limiting_config
         self.log_level = (
             'debug' if logging.is_debug_enabled(cfg.CONF) else 'info')
         # log-tag will cause entries to have the string pre-pended, so use
@@ -94,7 +99,8 @@ class HaproxyConfigurator(object):
             'group': groupname,
             'pidfile': self.pidfile,
             'log_level': self.log_level,
-            'log_tag': self.log_tag
+            'log_tag': self.log_tag,
+            'bind_v6_line': '',
         }
         if self.network_id:
             cfg_info['res_type'] = 'Network'
@@ -103,7 +109,11 @@ class HaproxyConfigurator(object):
             cfg_info['res_type'] = 'Router'
             cfg_info['res_id'] = self.router_id
 
-        haproxy_cfg = _HAPROXY_CONFIG_TEMPLATE % cfg_info
+        haproxy_cfg = comm_meta.get_haproxy_config(cfg_info,
+                                                   self.rate_limiting_config,
+                                                   _HEADER_CONFIG_TEMPLATE,
+                                                   _UNLIMITED_CONFIG_TEMPLATE)
+
         LOG.debug("haproxy_cfg = %s", haproxy_cfg)
         cfg_dir = self.get_config_path(self.state_path)
         # uuid has to be included somewhere in the command line so that it can
@@ -161,7 +171,8 @@ class MetadataDriver(object):
                                           user,
                                           group,
                                           conf.state_path,
-                                          pid_file)
+                                          pid_file,
+                                          conf.metadata_rate_limiting)
             haproxy.create_config_file()
             proxy_cmd = [HAPROXY_SERVICE,
                          '-f', haproxy.cfg_path]

@@ -32,6 +32,8 @@ def main():
     ovn_meta.register_meta_conf_opts(meta.SHARED_OPTS)
     ovn_meta.register_meta_conf_opts(meta.UNIX_DOMAIN_METADATA_PROXY_OPTS)
     ovn_meta.register_meta_conf_opts(meta.METADATA_PROXY_HANDLER_OPTS)
+    ovn_meta.register_meta_conf_opts(meta.METADATA_RATE_LIMITING_OPTS,
+                                     group=meta.RATE_LIMITING_GROUP)
     ovn_meta.register_meta_conf_opts(ovn_meta.OVS_OPTS, group='ovs')
     config.init(sys.argv[1:])
     config.setup_logging()

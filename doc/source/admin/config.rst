@@ -24,6 +24,7 @@ Configuration
    config-ipv6
    config-logging
    config-macvtap
+   config-metadata-rate-limiting
    config-mtu
    config-ndp-proxy
    config-network-segment-ranges

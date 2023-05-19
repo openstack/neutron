@@ -1,0 +1,8 @@
+---
+features:
+    - Neutron allows cloud administrators to limit the rate at which VMs query
+      the Nova metadata service in order to protect the OpenStack deployment
+      from DoS or misbehaved instances. This new feature can be configured in
+      the neutron.conf file. Please see the "Metadata service query rate
+      limiting" section under Neutron configuration in the documentation for
+      more details.

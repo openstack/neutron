@@ -19,7 +19,7 @@ from oslo_config import cfg
 
 from neutron._i18n import _
 from neutron.conf.agent import common
-
+from neutron.conf.agent.metadata import config as meta_conf
 
 DHCP_AGENT_OPTS = [
     cfg.IntOpt('resync_interval', default=5,
@@ -121,3 +121,6 @@ def register_agent_dhcp_opts(cfg=cfg.CONF):
     cfg.register_opts(DHCP_OPTS)
     cfg.register_opts(DNSMASQ_OPTS)
     cfg.register_opts(common.DHCP_PROTOCOL_OPTS)
+    meta_conf.register_meta_conf_opts(meta_conf.METADATA_RATE_LIMITING_OPTS,
+                                      cfg=cfg,
+                                      group=meta_conf.RATE_LIMITING_GROUP)
