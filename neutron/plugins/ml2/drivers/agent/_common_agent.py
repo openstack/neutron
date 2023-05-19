@@ -67,6 +67,7 @@ class CommonAgentLoop(service.Service):
         self.quitting_rpc_timeout = quitting_rpc_timeout
         self.agent_type = agent_type
         self.agent_binary = agent_binary
+        self.connection = None
 
     def _validate_manager_class(self):
         if not isinstance(self.mgr,
@@ -115,6 +116,8 @@ class CommonAgentLoop(service.Service):
         LOG.info("Stopping %s agent.", self.agent_type)
         if graceful and self.quitting_rpc_timeout:
             self.set_rpc_timeout(self.quitting_rpc_timeout)
+        if self.connection:
+            self.connection.close()
         super(CommonAgentLoop, self).stop(graceful)
 
     def reset(self):
