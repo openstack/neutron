@@ -132,7 +132,7 @@ def recreate_index(index, table_name):
     old_name = index['name']
     new_name = old_name.replace('tenant', 'project')
 
-    op.drop_index(op.f(old_name), table_name)
+    op.drop_index(index_name=op.f(old_name), table_name=table_name)
     op.create_index(new_name, table_name, ['project_id'])
 
 
