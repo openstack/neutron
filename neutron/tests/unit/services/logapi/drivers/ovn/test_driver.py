@@ -27,6 +27,7 @@ from neutron.tests.unit import fake_resources
 
 FAKE_CFG_RATE = 123
 FAKE_CFG_BURST = 321
+FAKE_LABEL = 1
 
 
 class TestOVNDriverBase(base.BaseTestCase):
@@ -113,6 +114,7 @@ class TestOVNDriver(TestOVNDriverBase):
             acl_defaults_dict = {
                 "name": [name] if name else [],
                 "action": ovn_const.ACL_ACTION_ALLOW_RELATED,
+                "label": FAKE_LABEL
             }
             self.__dict__ = {**acl_defaults_dict, **acl_dict}
 
@@ -246,6 +248,19 @@ class TestOVNDriver(TestOVNDriverBase):
         self.assertEqual(len(pg_dict["acls"]), info_args[3])
         self.assertEqual(len(pg_dict["acls"]) - 1,
                          self._nb_ovn.db_set.call_count)
+
+    # This test is enforcing the use of if_exists so that we don't get
+    # unexpected errors while doing parallel operations like erasing log
+    # objects and security groups
+    @mock.patch.object(ovn_driver.LOG, 'info')
+    def test__remove_acls_log_only_if_exists(self, m_info):
+        pg_dict = self._fake_pg_dict(acls=['acl1', 'acl2', 'acl3'])
+
+        def _only_if_exists(_pg_table, acl_uuid, col, val, if_exists):
+            self.assertTrue(if_exists)
+
+        self._nb_ovn.db_remove.side_effect = _only_if_exists
+        self._log_driver._remove_acls_log([pg_dict], self._nb_ovn.transaction)
 
     @mock.patch.object(ovn_driver.LOG, 'info')
     def test__remove_acls_log_with_log_name(self, m_info):
