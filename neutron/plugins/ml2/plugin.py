@@ -2068,8 +2068,14 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         """
         hostname = hostname or ''
         with db_api.CONTEXT_WRITER.using(context):
-            for pb in ports_obj.PortBinding.get_objects(context,
-                                                        port_id=port_id):
+            pbindings = ports_obj.PortBinding.get_objects(context,
+                                                          port_id=port_id)
+            if not pbindings:
+                # The port has been deleted and there is no need to delete and
+                # create any port binding.
+                return
+
+            for pb in pbindings:
                 pb.delete()
 
             attrs = {'port_id': port_id,
