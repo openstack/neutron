@@ -184,7 +184,8 @@ class OVNDriver(base.DriverBase):
                 if hasattr(acl, 'label'):
                     columns['label'] = 0
                     ovn_txn.add(self.ovn_nb.db_remove(
-                        "ACL", acl_uuid, 'options', 'log-related'))
+                        "ACL", acl_uuid, 'options', 'log-related',
+                        if_exists=True))
                 ovn_txn.add(self.ovn_nb.db_set(
                     "ACL", acl_uuid, *columns.items()))
                 acl_changes += 1
