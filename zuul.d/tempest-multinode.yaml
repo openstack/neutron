@@ -79,6 +79,7 @@
     vars:
       tox_envlist: integrated-network
       devstack_localrc:
+        MYSQL_GATHER_PERFORMANCE: false
         MYSQL_REDUCE_MEMORY: true
         CIRROS_VERSION: 0.6.1
         DEFAULT_IMAGE_NAME: cirros-0.6.1-x86_64-uec
@@ -206,6 +207,7 @@
     vars:
       tox_envlist: integrated-network
       devstack_localrc:
+        MYSQL_GATHER_PERFORMANCE: false
         MYSQL_REDUCE_MEMORY: true
         CIRROS_VERSION: 0.6.1
         DEFAULT_IMAGE_NAME: cirros-0.6.1-x86_64-uec
@@ -295,6 +297,7 @@
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_localrc:
+        MYSQL_GATHER_PERFORMANCE: false
         MYSQL_REDUCE_MEMORY: true
         CIRROS_VERSION: 0.6.1
         DEFAULT_IMAGE_NAME: cirros-0.6.1-x86_64-uec
@@ -424,6 +427,7 @@
             ovn:
               enable_distributed_floating_ip: True
       devstack_localrc:
+        MYSQL_GATHER_PERFORMANCE: false
         MYSQL_REDUCE_MEMORY: true
         CIRROS_VERSION: 0.6.1
         DEFAULT_IMAGE_NAME: cirros-0.6.1-x86_64-uec
@@ -568,6 +572,7 @@
         '{{ devstack_log_dir }}/ovsdb-server-nb.log': 'logs'
         '{{ devstack_log_dir }}/ovsdb-server-sb.log': 'logs'
       devstack_localrc:
+        MYSQL_GATHER_PERFORMANCE: false
         OVN_BUILD_FROM_SOURCE: True
         OVN_BRANCH: main
         # TODO(ykarel) move to master once OVN main branch is fixed to

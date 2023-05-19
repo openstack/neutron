@@ -40,6 +40,7 @@
     vars:
       grenade_devstack_localrc:
         shared:
+          MYSQL_GATHER_PERFORMANCE: false
           Q_AGENT: openvswitch
           Q_ML2_TENANT_NETWORK_TYPE: vxlan
           Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
@@ -117,6 +118,7 @@
     vars:
       grenade_devstack_localrc:
         shared:
+          MYSQL_GATHER_PERFORMANCE: false
           Q_AGENT: openvswitch
           Q_ML2_TENANT_NETWORK_TYPE: vxlan
           Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
@@ -278,6 +280,7 @@
           Q_BUILD_OVS_FROM_GIT: false
           OVN_BUILD_MODULES: false
         shared:
+          MYSQL_GATHER_PERFORMANCE: false
           Q_AGENT: ovn
           Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger
           Q_ML2_TENANT_NETWORK_TYPE: geneve
