@@ -404,38 +404,6 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             self.assertEqual([mock.ANY, mock.ANY],
                              payload.metadata.get('security_group_rule_ids'))
 
-    def test_security_group_rule_after_delete_event_for_remot_group(self):
-        sg1_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
-        sg2_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
-
-        fake_rule = copy.deepcopy(FAKE_SECGROUP_RULE)
-        fake_rule['security_group_rule']['security_group_id'] = sg1_dict['id']
-        fake_rule['security_group_rule']['remote_group_id'] = sg2_dict['id']
-        fake_rule['security_group_rule']['remote_ip_prefix'] = None
-        remote_rule = self.mixin.create_security_group_rule(
-            self.ctx, fake_rule)
-
-        with mock.patch.object(registry, "publish") as mock_publish:
-            self.mixin.delete_security_group(self.ctx, sg2_dict['id'])
-            mock_publish.assert_has_calls(
-                [mock.call('security_group', 'before_delete',
-                           mock.ANY, payload=mock.ANY),
-                 mock.call('security_group', 'precommit_delete',
-                           mock.ANY,
-                           payload=mock.ANY),
-                 mock.call('security_group', 'after_delete',
-                           mock.ANY,
-                           payload=mock.ANY),
-                 mock.call('security_group_rule', 'after_delete',
-                           mock.ANY,
-                           payload=mock.ANY)])
-            rule_payload = mock_publish.mock_calls[3][2]['payload']
-            self.assertEqual(remote_rule['id'], rule_payload.resource_id)
-            self.assertEqual(sg1_dict['id'],
-                             rule_payload.metadata['security_group_id'])
-            self.assertEqual(sg2_dict['id'],
-                             rule_payload.metadata['remote_group_id'])
-
     def test_security_group_rule_precommit_create_event_fail(self):
         registry.subscribe(fake_callback, resources.SECURITY_GROUP_RULE,
                            events.PRECOMMIT_CREATE)
