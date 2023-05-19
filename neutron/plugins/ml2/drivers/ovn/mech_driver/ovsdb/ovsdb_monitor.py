@@ -547,43 +547,42 @@ class PortBindingUpdateVirtualPortsEvent(row_event.RowEvent):
     def __init__(self, driver):
         self.driver = driver
         table = 'Port_Binding'
-        events = (self.ROW_UPDATE, )
+        events = (self.ROW_UPDATE, self.ROW_DELETE)
         super().__init__(events, table, None)
         self.event_name = 'PortBindingUpdateVirtualPortsEvent'
 
     def match_fn(self, event, row, old):
-        # This event should catch only those events from ports that are
-        # "virtual" or have been "virtual". The second happens when all virtual
-        # parent are disassociated; in the same transaction the
-        # "virtual-parents" list is removed from "options" and the type is set
-        # to "".
-        if (row.type != ovn_const.PB_TYPE_VIRTUAL and
-                getattr(old, 'type', None) != ovn_const.PB_TYPE_VIRTUAL):
-            return False
+        # This event should catch the events related to virtual parents (that
+        # are associated to virtual ports).
+        if event == self.ROW_DELETE:
+            # The port binding has been deleted, delete the host ID (if the
+            # port was not deleted before).
+            return True
 
         virtual_parents = (row.options or {}).get(
             ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY)
         old_virtual_parents = getattr(old, 'options', {}).get(
             ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY)
-        chassis = row.chassis
-        old_chassis = getattr(old, 'chassis', [])
-
-        if virtual_parents and chassis != old_chassis:
-            # That happens when the chassis is assigned (VIP is first detected
-            # in a port) or changed (the VIP changes of assigned port and
-            # host).
-            return True
-
-        if not virtual_parents and old_virtual_parents:
+        if virtual_parents != old_virtual_parents:
+            # 1) if virtual_parents and not old_virtual_parents:
+            # The port has received a virtual parent and now is bound.
+            # 2) elif (virtual_parents and old_virtual_parents and
+            #          old_virtual_parents != virtual_parents):
+            # If the port virtual parents have changed (the VIP is bound
+            # to another host because it's owned by another port).
+            # 3) if not virtual_parents and old_virtual_parents:
             # All virtual parent ports are removed, the VIP is unbound.
             return True
         return False
 
     def run(self, event, row, old):
-        virtual_parents = (row.options or {}).get(
-            ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY)
-        chassis_uuid = (row.chassis[0].uuid if
-                        row.chassis and virtual_parents else None)
+        if event == self.ROW_DELETE:
+            chassis_uuid = None
+        else:
+            virtual_parents = (row.options or {}).get(
+                ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY)
+            chassis_uuid = (row.chassis[0].uuid if
+                            row.chassis and virtual_parents else None)
         self.driver.update_virtual_port_host(row.logical_port, chassis_uuid)
 
 

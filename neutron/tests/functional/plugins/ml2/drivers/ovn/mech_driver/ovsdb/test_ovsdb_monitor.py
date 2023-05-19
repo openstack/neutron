@@ -311,6 +311,17 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         rows = cmd.execute(check_error=True)
         return rows[0] if rows else None
 
+    def _set_port_binding_virtual_parent(self, port_id, parent_port_id):
+        pb_port_parent = self.sb_api.db_find_rows(
+            'Port_Binding', ('logical_port', '=', parent_port_id)).execute(
+            check_error=True)[0]
+        pb_port_vip = self.sb_api.db_find_rows(
+            'Port_Binding', ('logical_port', '=', port_id)).execute(
+            check_error=True)[0]
+        self.sb_api.db_set(
+            'Port_Binding', pb_port_vip.uuid,
+            ('virtual_parent', pb_port_parent.uuid)).execute(check_error=True)
+
     def _check_port_binding_type(self, port_id, port_type):
         def is_port_binding_type(port_id, port_type):
             bp = self._find_port_binding(port_id)
@@ -340,6 +351,7 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         port = self.create_port()
         self._check_port_binding_type(vip['id'], '')
 
+        # 1) Set the allowed address pairs.
         data = {'port': {'allowed_address_pairs': allowed_address_pairs}}
         req = self.new_update_request('ports', data, port['id'])
         req.get_response(self.api)
@@ -347,8 +359,21 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         # and the corresponding "virtual-parents".
         self._check_port_binding_type(vip['id'], ovn_const.LSP_TYPE_VIRTUAL)
         self._check_port_virtual_parents(vip['id'], port['id'])
-        mock_update_vip_host.assert_not_called()
+        n_utils.wait_until_true(lambda: mock_update_vip_host.called,
+                                timeout=10)
+        # The "Port_Binding" has been deleted. Then the "Port_Binding" register
+        # is created again without virtual_parents, but this event doesn't
+        # call "update_virtual_port_host".
+        mock_update_vip_host.assert_called_once_with(vip['id'], None)
 
+        # 2) Unset the allowed address pairs.
+        # Assign the VIP again and delete the virtual port.
+        # Before unsetting the allowed address pairs, we first manually add
+        # the Port_Binding.virtual_parent of the virtual port. That happens
+        # when an ovn-controller detects traffic with the VIP and assign the
+        # port hosting the VIP as virtual parent.
+        self._set_port_binding_virtual_parent(vip['id'], port['id'])
+        mock_update_vip_host.reset_mock()
         data = {'port': {'allowed_address_pairs': []}}
         req = self.new_update_request('ports', data, port['id'])
         req.get_response(self.api)
@@ -356,6 +381,24 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         self._check_port_virtual_parents(vip['id'], None)
         n_utils.wait_until_true(lambda: mock_update_vip_host.called,
                                 timeout=10)
+        # The virtual port is no longer considered as virtual. The
+        # "Port_Binding" register is deleted.
+        mock_update_vip_host.assert_called_once_with(vip['id'], None)
+
+        # 3) Set again the allowed address pairs.
+        mock_update_vip_host.reset_mock()
+        data = {'port': {'allowed_address_pairs': allowed_address_pairs}}
+        req = self.new_update_request('ports', data, port['id'])
+        req.get_response(self.api)
+        # This test checks that the VIP "Port_Binding" register gets the type
+        # and the corresponding "virtual-parents".
+        self._check_port_binding_type(vip['id'], ovn_const.LSP_TYPE_VIRTUAL)
+        self._check_port_virtual_parents(vip['id'], port['id'])
+        mock_update_vip_host.reset_mock()
+        self._delete('ports', vip['id'])
+        n_utils.wait_until_true(lambda: mock_update_vip_host.called,
+                                timeout=10)
+        # The virtual port is deleted and so the associated "Port_Binding".
         mock_update_vip_host.assert_called_once_with(vip['id'], None)
 
 
