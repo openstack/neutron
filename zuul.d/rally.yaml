@@ -4,6 +4,7 @@
     timeout: 10800
     vars:
       devstack_localrc:
+        MYSQL_GATHER_PERFORMANCE: false
         USE_PYTHON3: true
         OSPROFILER_COLLECTOR: redis
         OSPROFILER_HMAC_KEYS: "neutron-hmac-key-used-in-zuul-ci"
@@ -162,6 +163,7 @@
         s-object: false
         s-proxy: false
       devstack_localrc:
+        MYSQL_GATHER_PERFORMANCE: false
         Q_AGENT: ovn
         ML2_L3_PLUGIN: ovn-router,trunk
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger

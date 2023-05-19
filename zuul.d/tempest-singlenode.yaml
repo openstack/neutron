@@ -11,6 +11,7 @@
     vars:
       tempest_concurrency: 4
       devstack_localrc:
+        MYSQL_GATHER_PERFORMANCE: false
         Q_ML2_TENANT_NETWORK_TYPE: vxlan
         MYSQL_REDUCE_MEMORY: true
       devstack_plugins:
@@ -52,6 +53,7 @@
     parent: neutron-tempest-base
     vars:
       devstack_localrc:
+        MYSQL_GATHER_PERFORMANCE: false
         Q_AGENT: openvswitch
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
     irrelevant-files: &openvswitch-irrelevant-files
@@ -266,6 +268,7 @@
       - openstack/tempest
     vars:
       devstack_localrc:
+        MYSQL_GATHER_PERFORMANCE: false
         MYSQL_SERVICE_NAME: mariadb
         MYSQL_REDUCE_MEMORY: true
       devstack_plugins:
@@ -424,6 +427,7 @@
     timeout: 10800
     vars:
       devstack_localrc:
+        MYSQL_GATHER_PERFORMANCE: false
         # TODO(ykarel) can be enabled once
         # https://bugs.launchpad.net/neutron/+bug/1912359 fixed
         NEUTRON_DEPLOY_MOD_WSGI: false
@@ -501,6 +505,7 @@
             DEFAULT:
               rpc_workers: 0
       devstack_localrc:
+        MYSQL_GATHER_PERFORMANCE: false
         MYSQL_REDUCE_MEMORY: true
         CIRROS_VERSION: 0.6.1
         DEFAULT_IMAGE_NAME: cirros-0.6.1-x86_64-uec
@@ -728,6 +733,7 @@
     vars:
       tox_envlist: integrated-network
       devstack_localrc:
+        MYSQL_GATHER_PERFORMANCE: false
         MYSQL_REDUCE_MEMORY: true
         CIRROS_VERSION: 0.6.1
         DEFAULT_IMAGE_NAME: cirros-0.6.1-x86_64-uec
