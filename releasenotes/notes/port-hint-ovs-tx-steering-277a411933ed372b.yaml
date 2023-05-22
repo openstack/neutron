@@ -1,0 +1,13 @@
+---
+features:
+  - |
+    The first hint using the new ``hints`` port attribute is the
+    ``ovs-tx-steering`` hint. The availability of this is marked
+    by the extension: ``port-hint-ovs-tx-steering``.  This hint is
+    specific to the ``openvswitch`` mechanism driver.  It enables
+    the control of Open vSwitch's Userspace Tx packet steering
+    feature. For details about the Open vSwitch feature please see:
+    https://docs.openvswitch.org/en/latest/topics/userspace-tx-steering/
+    The valid values for the ``hints`` attribute introduced by the 2nd
+    extension are:
+    ``{"openvswitch": {"other_config": {"tx-steering": "hash|thread"}}}``
