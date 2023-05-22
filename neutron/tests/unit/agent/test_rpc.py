@@ -29,6 +29,7 @@ from oslo_utils import uuidutils
 
 from neutron.agent import rpc
 from neutron.objects import network
+from neutron.objects.port.extensions import port_hints
 from neutron.objects import ports
 from neutron.tests import base
 
@@ -221,7 +222,10 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
                                                    host='host1',
                                                    level=0,
                                                    segment=self._segment)],
-            status='ACTIVE')
+            status='ACTIVE',
+            hints=port_hints.PortHints(hints={
+                "openvswitch": {"other_config": {"tx-steering": "hash"}}}),
+        )
 
     def test__legacy_notifier_resource_delete(self):
         self._api._legacy_notifier(resources.PORT, events.AFTER_DELETE, self,
@@ -359,6 +363,15 @@ class TestCacheBackedPluginApi(base.BaseTestCase):
         entry = self._api.get_device_details(mock.ANY, self._port_id,
                                              mock.ANY, 'host2')
         self.assertEqual('host2', entry['migrating_to'])
+
+    def test_get_device_details_hints(self):
+        self._api.remote_resource_cache.get_resource_by_id.side_effect = [
+            self._port, self._network]
+        entry = self._api.get_device_details(
+            mock.ANY, self._port_id, mock.ANY, mock.ANY)
+        self.assertEqual(
+            {"openvswitch": {"other_config": {"tx-steering": "hash"}}},
+            entry['hints'])
 
     @mock.patch('neutron.agent.resource_cache.RemoteResourceCache')
     def test_initialization_with_default_resources(self, rcache_class):

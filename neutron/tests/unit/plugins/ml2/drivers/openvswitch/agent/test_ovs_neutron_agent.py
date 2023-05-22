@@ -738,6 +738,78 @@ class TestOvsNeutronAgent(object):
                                                    mock.ANY, mock.ANY,
                                                    refresh_tunnels=True)
 
+    def test_bind_devices_hints_valid_hints(self):
+        self.agent.vlan_manager.mapping['net1']['seg1'] = mock.Mock()
+        ovs_db_list = [{'name': 'tap1', 'tag': []}]
+        vif_port1 = mock.Mock()
+        vif_port1.port_name = 'tap1'
+        port_details = [
+            {'network_id': 'net1',
+             'vif_port': vif_port1,
+             'segmentation_id': 'seg1',
+             'device': 'tap1',
+             'device_owner': 'network:dhcp',
+             'admin_state_up': True,
+             'hints': {
+                 'openvswitch': {'other_config': {'tx-steering': 'hash'}}}},
+        ]
+        with mock.patch.object(self.agent.plugin_rpc, 'update_device_list'), \
+                mock.patch.object(self.agent, 'int_br') as mock_int_br:
+            mock_int_br.get_ports_attributes.return_value = ovs_db_list
+            self.agent._bind_devices(port_details)
+            mock_int_br.set_db_attribute.assert_called_once_with(
+                'Interface',
+                vif_port1.port_name,
+                'other_config',
+                {'tx-steering': 'hash'})
+
+    def test_bind_devices_hints_no_hints(self):
+        self.agent.vlan_manager.mapping['net1']['seg1'] = mock.Mock()
+        ovs_db_list = [{'name': 'tap1', 'tag': []}]
+        vif_port1 = mock.Mock()
+        vif_port1.port_name = 'tap1'
+        port_details = [
+            {'network_id': 'net1',
+             'vif_port': vif_port1,
+             'segmentation_id': 'seg1',
+             'device': 'tap1',
+             'device_owner': 'network:dhcp',
+             'admin_state_up': True,
+             'hints': {}},
+        ]
+        with mock.patch.object(self.agent.plugin_rpc, 'update_device_list'), \
+                mock.patch.object(self.agent, 'int_br') as mock_int_br:
+            mock_int_br.get_ports_attributes.return_value = ovs_db_list
+            self.agent._bind_devices(port_details)
+            mock_int_br.clear_db_attribute.assert_called_once_with(
+                'Interface',
+                vif_port1.port_name,
+                'other_config')
+
+    def test_bind_devices_hints_invalid_hints(self):
+        self.agent.vlan_manager.mapping['net1']['seg1'] = mock.Mock()
+        ovs_db_list = [{'name': 'tap1', 'tag': []}]
+        vif_port1 = mock.Mock()
+        vif_port1.port_name = 'tap1'
+        port_details = [
+            {'network_id': 'net1',
+             'vif_port': vif_port1,
+             'segmentation_id': 'seg1',
+             'device': 'tap1',
+             'device_owner': 'network:dhcp',
+             'admin_state_up': True,
+             'hints': {
+                 'openvswitch': {'not-a-valid-key': {'tx-steering': 'hash'}}}},
+        ]
+        with mock.patch.object(self.agent.plugin_rpc, 'update_device_list'), \
+                mock.patch.object(self.agent, 'int_br') as mock_int_br:
+            mock_int_br.get_ports_attributes.return_value = ovs_db_list
+            self.agent._bind_devices(port_details)
+            mock_int_br.clear_db_attribute.assert_called_once_with(
+                'Interface',
+                vif_port1.port_name,
+                'other_config')
+
     def _test_bind_devices_sets_refresh_tunnels(self, tun_ofports, expected):
         self.agent.iter_num = 3
         self.agent.prevent_arp_spoofing = False
@@ -2909,6 +2981,32 @@ class TestOvsNeutronAgent(object):
         int_br_smartnic_port_map =\
             self.agent.create_smartnic_port_map_entry_data(mac, rep_port)
         self.assertEqual(int_br_smartnic_port_map, expected_return_value)
+
+    def test_sanitize_ovs_iface_other_config(self):
+        self.assertEqual(
+            {},
+            self.agent.sanitize_ovs_iface_other_config({}),
+        )
+        self.assertEqual(
+            {"tx-steering": "hash"},
+            self.agent.sanitize_ovs_iface_other_config(
+                {"tx-steering": "hash"}),
+        )
+        self.assertEqual(
+            {"tx-steering": "thread"},
+            self.agent.sanitize_ovs_iface_other_config(
+                {"tx-steering": "thread"}),
+        )
+        self.assertEqual(
+            {},
+            self.agent.sanitize_ovs_iface_other_config(
+                {"tx-steering": "invalid"}),
+        )
+        self.assertEqual(
+            {},
+            self.agent.sanitize_ovs_iface_other_config(
+                {"invalid": "thread"}),
+        )
 
 
 class TestOvsNeutronAgentOSKen(TestOvsNeutronAgent,
