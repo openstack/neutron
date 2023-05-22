@@ -883,8 +883,10 @@ class SecurityGroupDbMixin(
     def _make_security_group_rule_dict(self, security_group_rule, fields=None):
         if isinstance(security_group_rule, base_obj.NeutronDbObject):
             sg_rule_db = security_group_rule.db_obj
+            belongs_to_default_sg = security_group_rule.belongs_to_default_sg
         else:
             sg_rule_db = security_group_rule
+            belongs_to_default_sg = None
         res = {'id': sg_rule_db.id,
                'project_id': sg_rule_db.project_id,
                'tenant_id': sg_rule_db.project_id,
@@ -900,6 +902,7 @@ class SecurityGroupDbMixin(
                    sg_rule_db),
                'remote_group_id': sg_rule_db.remote_group_id,
                'standard_attr_id': sg_rule_db.standard_attr.id,
+               'belongs_to_default_sg': belongs_to_default_sg,
                }
 
         resource_extend.apply_funcs(ext_sg.SECURITYGROUPRULES, res, sg_rule_db)
@@ -1021,8 +1024,7 @@ class SecurityGroupDbMixin(
         # be returned
         rule_objs = sg_obj.SecurityGroupRule.get_objects(
             context_lib.get_admin_context(), _pager=pager,
-            validate_filters=False, return_db_obj=True, **filters
-        )
+            validate_filters=False, **filters)
         return [
             self._make_security_group_rule_dict(obj, fields)
             for obj in rule_objs

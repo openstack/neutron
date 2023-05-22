@@ -67,6 +67,8 @@ from neutron_lib.api.definitions import rbac_security_groups
 from neutron_lib.api.definitions import router_availability_zone as raz_def
 from neutron_lib.api.definitions import security_groups_normalized_cidr
 from neutron_lib.api.definitions import security_groups_remote_address_group
+from neutron_lib.api.definitions import \
+    security_groups_rules_belongs_to_default_sg
 from neutron_lib.api.definitions import security_groups_shared_filtering
 from neutron_lib.api.definitions import segment as seg_def
 from neutron_lib.api.definitions import sorting
@@ -152,6 +154,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     security_groups_default_rules.ALIAS,
     security_groups_normalized_cidr.ALIAS,
     security_groups_remote_address_group.ALIAS,
+    security_groups_rules_belongs_to_default_sg.ALIAS,
     security_groups_shared_filtering.ALIAS,
     stateful_security_group.ALIAS,
     'standard-attr-description',

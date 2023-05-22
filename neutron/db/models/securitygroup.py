@@ -41,20 +41,6 @@ class SecurityGroup(standard_attr.HasStandardAttributes, model_base.BASEV2,
     tag_support = True
 
 
-class DefaultSecurityGroup(model_base.BASEV2, model_base.HasProjectPrimaryKey):
-    __tablename__ = 'default_security_group'
-
-    security_group_id = sa.Column(sa.String(36),
-                                  sa.ForeignKey("securitygroups.id",
-                                                ondelete="CASCADE"),
-                                  nullable=False)
-    security_group = orm.relationship(
-        SecurityGroup, lazy='joined',
-        backref=orm.backref('default_security_group', cascade='all,delete'),
-        primaryjoin="SecurityGroup.id==DefaultSecurityGroup.security_group_id",
-    )
-
-
 class SecurityGroupPortBinding(model_base.BASEV2):
     """Represents binding between neutron ports and security profiles."""
 
@@ -110,3 +96,24 @@ class SecurityGroupRule(standard_attr.HasStandardAttributes, model_base.BASEV2,
         backref=orm.backref('source_rules', cascade='all,delete'),
         primaryjoin="SecurityGroup.id==SecurityGroupRule.remote_group_id")
     api_collections = [sg.SECURITYGROUPRULES]
+
+
+class DefaultSecurityGroup(model_base.BASEV2, model_base.HasProjectPrimaryKey):
+    __tablename__ = 'default_security_group'
+
+    security_group_id = sa.Column(sa.String(36),
+                                  sa.ForeignKey("securitygroups.id",
+                                                ondelete="CASCADE"),
+                                  nullable=False)
+    security_group = orm.relationship(
+        SecurityGroup, lazy='joined',
+        backref=orm.backref('default_security_group', cascade='all,delete'),
+        primaryjoin="SecurityGroup.id==DefaultSecurityGroup.security_group_id",
+    )
+    security_group_rule = orm.relationship(
+        SecurityGroupRule, lazy='joined',
+        backref=orm.backref('default_security_group'),
+        primaryjoin="foreign(SecurityGroupRule.security_group_id) == "
+                    "DefaultSecurityGroup.security_group_id",
+        viewonly=True,
+    )

@@ -110,6 +110,15 @@ class SecurityGroupDbObjTestCase(test_base.BaseDbObjectTestCase,
             self.assertEqual('1.1', rule['versioned_object.version'])
             self.assertNotIn('normalized_cidr', rule['versioned_object.data'])
 
+    def test_object_version_degradation_1_6_to_1_5_no_belongs_to_default_sg(
+            self):
+        sg_obj = self._create_test_security_group_with_rule()
+        sg_obj_1_5 = sg_obj.obj_to_primitive('1.5')
+        for rule in sg_obj_1_5['versioned_object.data']['rules']:
+            self.assertEqual('1.2', rule['versioned_object.version'])
+            self.assertNotIn('belongs_to_default_sg',
+                             rule['versioned_object.data'])
+
     def test_object_version_degradation_1_2_to_1_1_no_stateful(self):
         sg_stateful_obj = self._create_test_security_group()
         sg_no_stateful_obj = sg_stateful_obj.obj_to_primitive('1.1')
@@ -291,6 +300,27 @@ class SecurityGroupRuleDbObjTestCase(test_base.BaseDbObjectTestCase,
             rule_ids_ref.update(set(rules_per_sg[sgs[idx]]))
             self.assertEqual(rule_ids_ref, set(rule_ids))
 
+    def test_check_belongs_to_default_sg(self):
+        # SG1 is the project default security group, SG2 is not.
+        project_id = uuidutils.generate_uuid()
+        sg1 = securitygroup.SecurityGroup(self.context, project_id=project_id)
+        sg1.is_default = True
+        sg1.create()
+        sg2 = securitygroup.SecurityGroup(self.context, project_id=project_id)
+        sg2.create()
+
+        fields = self.obj_fields[0].copy()
+        fields['security_group_id'] = sg1.id
+        sg1_rule = self._make_object(fields)
+        sg1_rule.create()
+        self.assertTrue(sg1_rule.belongs_to_default_sg)
+
+        fields = self.obj_fields[1].copy()
+        fields['security_group_id'] = sg2.id
+        sg2_rule = self._make_object(fields)
+        sg2_rule.create()
+        self.assertFalse(sg2_rule.belongs_to_default_sg)
+
     def test_object_version_degradation_1_1_to_1_0_no_remote_ag(self):
         rule_remote_ag_obj = self._create_test_security_group_rule()
         rule_no_remote_ag_obj = rule_remote_ag_obj.obj_to_primitive('1.0')
@@ -302,3 +332,9 @@ class SecurityGroupRuleDbObjTestCase(test_base.BaseDbObjectTestCase,
         sg_rule_10_obj = sg_rule_obj.obj_to_primitive('1.0')
         self.assertNotIn('normalized_cidr',
                          sg_rule_10_obj['versioned_object.data'])
+
+    def test_object_version_degradation_1_3_to_1_2_no_belongs_to_def_sg(self):
+        sg_rule_obj = self._create_test_security_group_rule()
+        sg_rule_12_obj = sg_rule_obj.obj_to_primitive('1.2')
+        self.assertNotIn('belongs_to_default_sg',
+                         sg_rule_12_obj['versioned_object.data'])
