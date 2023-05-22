@@ -1,8 +1,16 @@
 # The format of this file isn't really documented; just use --generate-rcfile
-[MASTER]
+[MAIN]
 # Add <file or directory> to the black list. It should be a base name, not a
 # path. You may set this option multiple times.
 ignore=.git,tests
+
+# List of plugins (as comma separated values of python module names) to load,
+# usually to register additional checkers.
+load-plugins=pylint.extensions.no_self_use
+
+# When enabled, pylint would attempt to guess common misconfiguration and emit
+# user-friendly hints instead of false-positive error messages.
+suggestion-mode=yes
 
 [MESSAGES CONTROL]
 # NOTE(gus): This is a long list.  A number of these are important and
@@ -20,6 +28,9 @@ disable=
  no-method-argument,
  no-self-argument,
  not-an-iterable,
+ unsubscriptable-object,
+ unsupported-delete-operation,
+ used-before-assignment,
 # "W" Warnings for stylistic problems or minor programming issues
  abstract-method,
  arguments-differ,
@@ -44,6 +55,17 @@ disable=
  unused-import,
  unused-variable,
  useless-super-delegation,
+ unnecessary-pass,
+ raise-missing-from,
+ arguments-renamed,
+ broad-exception-raised,
+ modified-iterating-list,
+ unspecified-encoding,
+ missing-timeout,
+ implicit-str-concat,
+ redundant-u-string-prefix,
+ unused-private-member,
+ global-variable-not-assigned,
 # "C" Coding convention violations
  consider-iterating-dictionary,
  consider-using-enumerate,
@@ -54,6 +76,11 @@ disable=
  superfluous-parens,
  ungrouped-imports,
  wrong-import-order,
+ consider-using-f-string,
+ consider-using-dict-items,
+ use-implicit-booleaness-not-comparison,
+ use-maxsplit-arg,
+ unnecessary-dunder-call,
 # "R" Refactor recommendations
  consider-merging-isinstance,
  consider-using-ternary,
@@ -74,10 +101,17 @@ disable=
  too-many-public-methods,
  too-many-return-statements,
  too-many-statements,
-# new for python3 version of pylint
  consider-using-set-comprehension,
- unnecessary-pass,
- useless-object-inheritance
+ useless-object-inheritance,
+ use-a-generator,
+ unnecessary-lambda-assignment,
+ super-with-arguments,
+ consider-using-max-builtin,
+ use-dict-literal,
+ consider-using-generator,
+ consider-using-in,
+ use-list-literal,
+ consider-using-from-import
 
 [BASIC]
 # Variable names can be 1 to 31 characters long, with lowercase and underscores
