@@ -36,7 +36,6 @@
               - ^tools/.*$
               - ^tox.ini$
         - tempest-integrated-networking
-        - openstacksdk-functional-devstack
         - grenade:
             irrelevant-files: *tempest-irrelevant-files
         - grenade-py3:
@@ -55,7 +54,6 @@
         - neutron-grenade
         - neutron-tempest-slow-py3
         - tempest-integrated-networking
-        - openstacksdk-functional-devstack
         - grenade:
             irrelevant-files: *tempest-irrelevant-files
         - grenade-py3:
