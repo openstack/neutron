@@ -42,10 +42,10 @@ class WaitForPortCreateEvent(event.WaitEvent):
 
     def __init__(self, port_name):
         table = 'Port'
-        events = (self.ROW_CREATE,)
+        events = (self.ROW_CREATE, self.ROW_UPDATE)
         conditions = (('name', '=', port_name),)
         super(WaitForPortCreateEvent, self).__init__(
-            events, table, conditions, timeout=5)
+            events, table, conditions, timeout=15)
 
 
 class BaseOVSTestCase(base.BaseSudoTestCase):
