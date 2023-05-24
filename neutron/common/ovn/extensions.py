@@ -36,10 +36,12 @@ from neutron_lib.api.definitions import fip_pf_port_range
 from neutron_lib.api.definitions import fip_port_details
 from neutron_lib.api.definitions import firewall_v2
 from neutron_lib.api.definitions import firewall_v2_stdattrs
+from neutron_lib.api.definitions import flavors
 from neutron_lib.api.definitions import floating_ip_port_forwarding
 from neutron_lib.api.definitions import floatingip_pools
 from neutron_lib.api.definitions import l3
 from neutron_lib.api.definitions import l3_ext_gw_mode
+from neutron_lib.api.definitions import l3_flavors
 from neutron_lib.api.definitions import logging
 from neutron_lib.api.definitions import multiprovidernet
 from neutron_lib.api.definitions import network_availability_zone
@@ -114,6 +116,8 @@ ML2_SUPPORTED_API_EXTENSIONS_OVN_L3 = [
     agent_def.ALIAS,
     az_def.ALIAS,
     raz_def.ALIAS,
+    flavors.ALIAS,
+    l3_flavors.ALIAS,
 ]
 ML2_SUPPORTED_API_EXTENSIONS = [
     address_group.ALIAS,

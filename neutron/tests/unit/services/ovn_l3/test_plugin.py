@@ -37,6 +37,8 @@ from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers import driver_type as driver_type_conf
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as config
 from neutron.db import extraroute_db
+from neutron.db.models import l3 as l3_models
+from neutron.db.models import ovn as ovn_models
 from neutron import manager as neutron_manager
 from neutron.plugins.ml2 import managers
 from neutron.services.ovn_l3 import exceptions as ovn_l3_exc
@@ -78,6 +80,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 attrs=network_attrs).info()
         self.fake_router_port = {'device_id': '',
                                  'network_id': self.fake_network['id'],
+                                 'tenant_id': 'tenant-id',
                                  'device_owner': 'network:router_interface',
                                  'mac_address': 'aa:aa:aa:aa:aa:aa',
                                  'status': constants.PORT_STATUS_ACTIVE,
@@ -103,6 +106,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.fake_router = {'id': 'router-id',
                             'name': 'router',
                             'admin_state_up': False,
+                            'flavor_id': None,
                             'routes': [{'destination': '1.1.1.0/24',
                                         'nexthop': '10.0.0.2'}]}
         self.fake_router_interface_info = {
@@ -122,6 +126,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             'id': 'router-id',
             'name': 'router',
             'admin_state_up': True,
+            'flavor_id': None,
             'external_gateway_info': self.fake_external_fixed_ips,
             'gw_port_id': 'gw-port-id'
         }
@@ -179,6 +184,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                         self.fake_floating_ip['router_id'])},
             }))
         self.l3_inst = directory.get_plugin(plugin_constants.L3)
+        ovn_provider = self.l3_inst.l3_driver_controller.default_provider
+        self.ovn_drv = self.l3_inst.l3_driver_controller.drivers[ovn_provider]
         self.lb_id = uuidutils.generate_uuid()
         self.member_subnet = {'id': 'subnet-id',
                               'ip_version': 4,
@@ -292,6 +299,9 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.get_rev_p = self._start_mock(
             'neutron.common.ovn.utils.get_revision_number',
             return_value=1)
+        self.get_rev_row_p = self._start_mock(
+            'neutron.db.ovn_revision_numbers_db.get_revision_row',
+            return_value=ovn_models.OVNRevisionNumbers(revision_number=1))
         self.admin_context = mock.Mock()
         self._start_mock(
             'neutron_lib.context.get_admin_context',
@@ -326,13 +336,26 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 driver, None)
             self.assertEqual(fake_mech_driver.obj, result)
 
+    def _create_payload_for_router_interface(self, router_id,
+                                             pass_subnet=True):
+        router_obj = l3_models.Router(id=router_id, flavor_id=None)
+        metadata = {'port': self.fake_router_port}
+        if pass_subnet:
+            metadata['subnets'] = [self.fake_subnet]
+        else:
+            metadata['subnet_ids'] = [self.fake_subnet['id']]
+        return events.DBEventPayload(self.context, metadata=metadata,
+                                     states=(router_obj,),
+                                     resource_id=router_id)
+
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.add_router_interface')
     def test_add_router_interface(self, func):
         router_id = 'router-id'
-        interface_info = {'port_id': 'router-port-id'}
         func.return_value = self.fake_router_interface_info
-        self.l3_inst.add_router_interface(self.context, router_id,
-                                          interface_info)
+        payload = self._create_payload_for_router_interface(router_id)
+        self.ovn_drv._process_add_router_interface(resources.ROUTER_INTERFACE,
+                                                   events.AFTER_CREATE,
+                                                   self, payload)
         self.l3_inst._nb_ovn.add_lrouter_port.assert_called_once_with(
             **self.fake_router_port_assert)
         self.l3_inst._nb_ovn.set_lrouter_port_in_lswitch_port.\
@@ -346,7 +369,6 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.add_router_interface')
     def test_add_router_interface_update_lrouter_port(self, func):
         router_id = 'router-id'
-        interface_info = {'port_id': 'router-port-id'}
         func.return_value = {'id': router_id,
                              'port_id': 'router-port-id',
                              'subnet_id': 'subnet-id1',
@@ -366,8 +388,10 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             'mac_address': 'aa:aa:aa:aa:aa:aa',
             'network_id': 'network-id1'}
         fake_rtr_intf_networks = ['2001:db8::1/24', '2001:dba::1/24']
-        self.l3_inst.add_router_interface(self.context, router_id,
-                                          interface_info)
+        payload = self._create_payload_for_router_interface(router_id)
+        self.ovn_drv._process_add_router_interface(resources.ROUTER_INTERFACE,
+                                                   events.AFTER_CREATE,
+                                                   self, payload)
         called_args_dict = (
             self.l3_inst._nb_ovn.update_lrouter_port.call_args_list[0][1])
 
@@ -382,12 +406,13 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
 
     def test_remove_router_interface(self):
         router_id = 'router-id'
-        interface_info = {'port_id': 'router-port-id'}
         self.get_port.side_effect = n_exc.PortNotFound(
                                         port_id='router-port-id')
 
-        self.l3_inst.remove_router_interface(
-            self.context, router_id, interface_info)
+        payload = self._create_payload_for_router_interface(router_id,
+                                                            pass_subnet=False)
+        self.ovn_drv._process_remove_router_interface(
+            resources.ROUTER_INTERFACE, events.AFTER_DELETE, self, payload)
 
         self.l3_inst._nb_ovn.lrp_del.assert_called_once_with(
             'lrp-router-port-id', 'neutron-router-id', if_exists=True)
@@ -396,9 +421,10 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
 
     def test_remove_router_interface_update_lrouter_port(self):
         router_id = 'router-id'
-        interface_info = {'port_id': 'router-port-id'}
-        self.l3_inst.remove_router_interface(
-            self.context, router_id, interface_info)
+        payload = self._create_payload_for_router_interface(router_id,
+                                                            pass_subnet=False)
+        self.ovn_drv._process_remove_router_interface(
+            resources.ROUTER_INTERFACE, events.AFTER_DELETE, self, payload)
 
         self.l3_inst._nb_ovn.update_lrouter_port.assert_called_once_with(
             if_exists=False, name='lrp-router-port-id',
@@ -413,14 +439,15 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
 
     def test_remove_router_interface_router_not_found(self):
         router_id = 'router-id'
-        interface_info = {'port_id': 'router-port-id'}
         self.get_port.side_effect = n_exc.PortNotFound(
                                         port_id='router-port-id')
         self.get_router.side_effect = l3_exc.RouterNotFound(
             router_id='router-id')
 
-        self.l3_inst.remove_router_interface(
-            self.context, router_id, interface_info)
+        payload = self._create_payload_for_router_interface(router_id,
+                                                            pass_subnet=False)
+        self.ovn_drv._process_remove_router_interface(
+            resources.ROUTER_INTERFACE, events.AFTER_DELETE, self, payload)
 
         self.get_router.assert_called_once_with(self.context, 'router-id')
         self.l3_inst._nb_ovn.lrp_del.assert_called_once_with(
@@ -433,31 +460,40 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb'
                 '.ovn_client.OVNClient._get_v4_network_of_all_router_ports')
     def test_update_router_admin_state_change(self, get_rps, func):
-        router_id = 'router-id'
         new_router = self.fake_router.copy()
         updated_data = {'admin_state_up': True}
         new_router.update(updated_data)
         func.return_value = new_router
-        self.l3_inst.update_router(self.context, router_id,
-                                   {'router': updated_data})
+        payload = self._create_payload_for_router_update(self.fake_router,
+                                                         new_router)
+        self.ovn_drv._process_router_update(resources.ROUTER,
+                                            events.AFTER_UPDATE,
+                                            self, payload)
         self.l3_inst._nb_ovn.update_lrouter.assert_called_once_with(
             'neutron-router-id', enabled=True, external_ids={
                 ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
                 ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'router',
                 ovn_const.OVN_AZ_HINTS_EXT_ID_KEY: ''})
 
+    def _create_payload_for_router_update(self, original, updated):
+        return events.DBEventPayload(self.context,
+                                     states=(original, updated),
+                                     resource_id=original['id'])
+
     @mock.patch('neutron.db.extraroute_db.ExtraRoute_dbonly_mixin.'
                 'update_router')
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
                 'ovn_client.OVNClient._get_v4_network_of_all_router_ports')
     def test_update_router_name_change(self, get_rps, func):
-        router_id = 'router-id'
         new_router = self.fake_router.copy()
         updated_data = {'name': 'test'}
         new_router.update(updated_data)
         func.return_value = new_router
-        self.l3_inst.update_router(self.context, router_id,
-                                   {'router': updated_data})
+        payload = self._create_payload_for_router_update(self.fake_router,
+                                                         new_router)
+        self.ovn_drv._process_router_update(resources.ROUTER,
+                                            events.AFTER_UPDATE,
+                                            self, payload)
         self.l3_inst._nb_ovn.update_lrouter.assert_called_once_with(
             'neutron-router-id', enabled=False,
             external_ids={ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'test',
@@ -492,7 +528,6 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 'ovn_client.OVNClient._get_v4_network_of_all_router_ports')
     def test_update_router_static_route_change(self, get_rps, func,
                                                mock_routes):
-        router_id = 'router-id'
         get_rps.return_value = [{'device_id': '',
                                 'device_owner': 'network:router_interface',
                                  'mac_address': 'aa:aa:aa:aa:aa:aa',
@@ -506,8 +541,11 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                                     'nexthop': '10.0.0.3'}]}
         new_router.update(updated_data)
         func.return_value = new_router
-        self.l3_inst.update_router(self.context, router_id,
-                                   {'router': updated_data})
+        payload = self._create_payload_for_router_update(self.fake_router,
+                                                         new_router)
+        self.ovn_drv._process_router_update(resources.ROUTER,
+                                            events.AFTER_UPDATE,
+                                            self, payload)
         self.l3_inst._nb_ovn.add_static_route.assert_called_once_with(
             'neutron-router-id',
             ip_prefix='2.2.2.0/24', nexthop='10.0.0.3')
@@ -522,7 +560,6 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 'ovn_client.OVNClient._get_v4_network_of_all_router_ports')
     def test_update_router_static_route_clear(self, get_rps, func,
                                               mock_routes):
-        router_id = 'router-id'
         get_rps.return_value = [{'device_id': '',
                                  'device_owner': 'network:router_interface',
                                  'mac_address': 'aa:aa:aa:aa:aa:aa',
@@ -535,8 +572,11 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         updated_data = {'routes': []}
         new_router.update(updated_data)
         func.return_value = new_router
-        self.l3_inst.update_router(self.context, router_id,
-                                   {'router': updated_data})
+        payload = self._create_payload_for_router_update(self.fake_router,
+                                                         new_router)
+        self.ovn_drv._process_router_update(resources.ROUTER,
+                                            events.AFTER_UPDATE,
+                                            self, payload)
         self.l3_inst._nb_ovn.add_static_route.assert_not_called()
         self.l3_inst._nb_ovn.delete_static_route.assert_called_once_with(
             'neutron-router-id',
@@ -546,12 +586,14 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 'ovn_client.OVNClient._get_v4_network_of_all_router_ports')
     def test_create_router_with_ext_gw(self, get_rps):
         self.l3_inst._nb_ovn.is_col_present.return_value = True
-        router = {'router': {'name': 'router'}}
         self.get_subnet.return_value = self.fake_ext_subnet
         self.get_port.return_value = self.fake_ext_gw_port
         get_rps.return_value = self.fake_ext_subnet['cidr']
 
-        self.l3_inst.create_router(self.context, router)
+        payload = events.DBEventPayload(self.context,
+                                        states=(self.fake_router_with_ext_gw,))
+        self.ovn_drv._process_router_create(resources.ROUTER,
+                                            events.AFTER_CREATE, self, payload)
 
         external_ids = {ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'router',
                         ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
@@ -596,7 +638,12 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             fake_resources.FakeOVNRouter.from_neutron_router(
                 self.fake_router_with_ext_gw))
 
-        self.l3_inst.delete_router(self.context, 'router-id')
+        payload = events.DBEventPayload(
+            self.context, states=(self.fake_router_with_ext_gw,),
+            resource_id=self.fake_router_with_ext_gw['id'])
+        self.ovn_drv._process_router_delete(resources.ROUTER,
+                                            events.AFTER_DELETE,
+                                            self, payload)
 
         self.l3_inst._nb_ovn.delete_lrouter.assert_called_once_with(
             'neutron-router-id')
@@ -606,12 +653,13 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.add_router_interface')
     def test_add_router_interface_with_gateway_set(self, ari, grps):
         router_id = 'router-id'
-        interface_info = {'port_id': 'router-port-id'}
         ari.return_value = self.fake_router_interface_info
         self.get_router.return_value = self.fake_router_with_ext_gw
 
-        self.l3_inst.add_router_interface(self.context, router_id,
-                                          interface_info)
+        payload = self._create_payload_for_router_interface(router_id)
+        self.ovn_drv._process_add_router_interface(resources.ROUTER_INTERFACE,
+                                                   events.AFTER_CREATE,
+                                                   self, payload)
 
         self.l3_inst._nb_ovn.add_lrouter_port.assert_called_once_with(
             **self.fake_router_port_assert)
@@ -632,14 +680,15 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
     def test_add_router_interface_with_gateway_set_and_snat_disabled(
             self, ari, grps):
         router_id = 'router-id'
-        interface_info = {'port_id': 'router-port-id'}
         ari.return_value = self.fake_router_interface_info
         get_router = self.fake_router_with_ext_gw
         get_router['external_gateway_info']['enable_snat'] = False
         self.get_router.return_value = get_router
 
-        self.l3_inst.add_router_interface(self.context, router_id,
-                                          interface_info)
+        payload = self._create_payload_for_router_interface(router_id)
+        self.ovn_drv._process_add_router_interface(resources.ROUTER_INTERFACE,
+                                                   events.AFTER_CREATE,
+                                                   self, payload)
 
         self.l3_inst._nb_ovn.add_lrouter_port.assert_called_once_with(
             **self.fake_router_port_assert)
@@ -655,7 +704,6 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.add_router_interface')
     def test_add_router_interface_vlan_network(self, ari, grps, gn):
         router_id = 'router-id'
-        interface_info = {'port_id': 'router-port-id'}
         ari.return_value = self.fake_router_interface_info
         self.get_router.return_value = self.fake_router_with_ext_gw
 
@@ -664,8 +712,10 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         fake_network_vlan[pnet.NETWORK_TYPE] = constants.TYPE_VLAN
         gn.return_value = fake_network_vlan
 
-        self.l3_inst.add_router_interface(self.context, router_id,
-                                          interface_info)
+        payload = self._create_payload_for_router_interface(router_id)
+        self.ovn_drv._process_add_router_interface(resources.ROUTER_INTERFACE,
+                                                   events.AFTER_CREATE,
+                                                   self, payload)
 
         # Make sure that the "reside-on-redirect-chassis" option was
         # set to the new router port
@@ -689,13 +739,13 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
 
     def test_remove_router_interface_with_gateway_set(self):
         router_id = 'router-id'
-        interface_info = {'port_id': 'router-port-id',
-                          'subnet_id': 'subnet-id'}
         self.get_router.return_value = self.fake_router_with_ext_gw
         self.get_port.side_effect = n_exc.PortNotFound(
                                         port_id='router-port-id')
-        self.l3_inst.remove_router_interface(
-            self.context, router_id, interface_info)
+        payload = self._create_payload_for_router_interface(router_id,
+                                                            pass_subnet=False)
+        self.ovn_drv._process_remove_router_interface(
+            resources.ROUTER_INTERFACE, events.AFTER_DELETE, self, payload)
         nb_ovn = self.l3_inst._nb_ovn
         nb_ovn.lrp_del.assert_called_once_with(
             'lrp-router-port-id', 'neutron-router-id', if_exists=True)
@@ -711,15 +761,17 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 'update_router')
     def test_update_router_with_ext_gw(self, ur, grps):
         self.l3_inst._nb_ovn.is_col_present.return_value = True
-        router = {'router': {'name': 'router'}}
-        self.get_router.return_value = self.fake_router_without_ext_gw
         ur.return_value = self.fake_router_with_ext_gw
         self.get_subnet.side_effect = lambda ctx, sid: {
             'ext-subnet-id': self.fake_ext_subnet}.get(sid, self.fake_subnet)
         self.get_port.return_value = self.fake_ext_gw_port
         grps.return_value = self.fake_router_ports
 
-        self.l3_inst.update_router(self.context, 'router-id', router)
+        payload = self._create_payload_for_router_update(
+            self.fake_router_without_ext_gw, self.fake_router_with_ext_gw)
+        self.ovn_drv._process_router_update(resources.ROUTER,
+                                            events.AFTER_UPDATE,
+                                            self, payload)
 
         self.l3_inst._nb_ovn.add_lrouter_port.assert_called_once_with(
             **self.fake_ext_gw_port_assert)
@@ -748,7 +800,6 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                                                 grps, mock_get_gw):
         self.l3_inst._nb_ovn.is_col_present.return_value = True
         mock_get_gw.return_value = [mock.sentinel.GwRoute]
-        router = {'router': {'name': 'router'}}
         fake_old_ext_subnet = {'id': 'old-ext-subnet-id',
                                'ip_version': 4,
                                'cidr': '192.168.2.0/24',
@@ -768,7 +819,11 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.get_port.return_value = self.fake_ext_gw_port
         grps.return_value = self.fake_router_ports
 
-        self.l3_inst.update_router(self.context, 'router-id', router)
+        payload = self._create_payload_for_router_update(
+            self.get_router.return_value, self.fake_router_with_ext_gw)
+        self.ovn_drv._process_router_update(resources.ROUTER,
+                                            events.AFTER_UPDATE,
+                                            self, payload)
 
         # Check deleting old router gateway
         self.l3_inst._nb_ovn.delete_lrouter_ext_gw.assert_called_once_with(
@@ -805,7 +860,6 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                                                     grps, mock_get_gw):
         self.l3_inst._nb_ovn.is_col_present.return_value = True
         mock_get_gw.return_value = [mock.sentinel.GwRoute]
-        router = {'router': {'name': 'router'}}
         # Old gateway info with same subnet and different ip address
         gr_value = copy.deepcopy(self.fake_router_with_ext_gw)
         gr_value['external_gateway_info'][
@@ -818,7 +872,11 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.get_port.return_value = self.fake_ext_gw_port
         grps.return_value = self.fake_router_ports
 
-        self.l3_inst.update_router(self.context, 'router-id', router)
+        payload = self._create_payload_for_router_update(
+            gr_value, self.fake_router_with_ext_gw)
+        self.ovn_drv._process_router_update(resources.ROUTER,
+                                            events.AFTER_UPDATE,
+                                            self, payload)
 
         # Check deleting old router gateway
         self.l3_inst._nb_ovn.delete_lrouter_ext_gw.assert_called_once_with(
@@ -868,8 +926,6 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 'update_router')
     def test_update_router_with_ext_gw_and_disabled_snat(self, ur, grps):
         self.l3_inst._nb_ovn.is_col_present.return_value = True
-        router = {'router': {'name': 'router'}}
-        self.get_router.return_value = self.fake_router_without_ext_gw
         ur.return_value = self.fake_router_with_ext_gw
         ur.return_value['external_gateway_info']['enable_snat'] = False
         self.get_subnet.side_effect = lambda ctx, sid: {
@@ -877,7 +933,11 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.get_port.return_value = self.fake_ext_gw_port
         grps.return_value = self.fake_router_ports
 
-        self.l3_inst.update_router(self.context, 'router-id', router)
+        payload = self._create_payload_for_router_update(
+            self.fake_router_without_ext_gw, self.fake_router_with_ext_gw)
+        self.ovn_drv._process_router_update(resources.ROUTER,
+                                            events.AFTER_UPDATE,
+                                            self, payload)
 
         # Need not check lsp and lrp here, it has been tested in other cases
         self.l3_inst._nb_ovn.add_static_route.assert_called_once_with(
@@ -892,7 +952,6 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
     @mock.patch('neutron.db.extraroute_db.ExtraRoute_dbonly_mixin.'
                 'update_router')
     def test_enable_snat(self, ur, grps):
-        router = {'router': {'name': 'router'}}
         gr_value = copy.deepcopy(self.fake_router_with_ext_gw)
         gr_value['external_gateway_info']['enable_snat'] = False
         self.get_router.return_value = gr_value
@@ -905,7 +964,11 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.get_port.return_value = self.fake_ext_gw_port
         grps.return_value = self.fake_router_ports
 
-        self.l3_inst.update_router(self.context, 'router-id', router)
+        payload = self._create_payload_for_router_update(
+            self.fake_router_with_ext_gw, ur.return_value)
+        self.ovn_drv._process_router_update(resources.ROUTER,
+                                            events.AFTER_UPDATE,
+                                            self, payload)
 
         self.l3_inst._nb_ovn.delete_static_route.assert_not_called()
         self.l3_inst._nb_ovn.delete_nat_rule_in_lrouter.assert_not_called()
@@ -927,7 +990,6 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         mock_get_gw.return_value = [mock.sentinel.GwRoute]
         mock_snats.return_value = [mock.sentinel.NAT]
         mock_ext_ips.return_value = False
-        router = {'router': {'name': 'router'}}
         self.get_router.return_value = self.fake_router_with_ext_gw
         ur.return_value = copy.deepcopy(self.fake_router_with_ext_gw)
         ur.return_value['external_gateway_info']['enable_snat'] = False
@@ -936,7 +998,11 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.get_port.return_value = self.fake_ext_gw_port
         grps.return_value = self.fake_router_ports
 
-        self.l3_inst.update_router(self.context, 'router-id', router)
+        payload = self._create_payload_for_router_update(
+            self.fake_router_with_ext_gw, ur.return_value)
+        self.ovn_drv._process_router_update(resources.ROUTER,
+                                            events.AFTER_UPDATE,
+                                            self, payload)
 
         nb_ovn = self.l3_inst._nb_ovn
         nb_ovn.delete_static_route.assert_not_called()
@@ -949,7 +1015,13 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
     def test_create_floatingip(self):
         self.l3_inst._nb_ovn.is_col_present.return_value = True
         self._get_floatingip.return_value = {'floating_port_id': 'fip-port-id'}
-        self.l3_inst.create_floatingip(self.context, 'floatingip')
+        payload = events.DBEventPayload(
+            self.context, states=(self.fake_floating_ip,),
+            resource_id=self.fake_floating_ip['id'],
+            request_body={'floatingip': self.fake_floating_ip})
+        self.ovn_drv._process_floatingip_create(resources.FLOATING_IP,
+                                                events.AFTER_CREATE,
+                                                self, payload)
         expected_ext_ids = {
             ovn_const.OVN_FIP_EXT_ID_KEY: self.fake_floating_ip['id'],
             ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
@@ -975,7 +1047,13 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self._get_floatingip.return_value = {'floating_port_id': 'fip-port-id'}
         config.cfg.CONF.set_override(
             'enable_distributed_floating_ip', True, group='ovn')
-        self.l3_inst.create_floatingip(self.context, 'floatingip')
+        payload = events.DBEventPayload(
+            self.context, states=(self.fake_floating_ip,),
+            resource_id=self.fake_floating_ip['id'],
+            request_body={'floatingip': self.fake_floating_ip})
+        self.ovn_drv._process_floatingip_create(resources.FLOATING_IP,
+                                                events.AFTER_CREATE,
+                                                self, payload)
         expected_ext_ids = {
             ovn_const.OVN_FIP_EXT_ID_KEY: self.fake_floating_ip['id'],
             ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
@@ -1003,7 +1081,13 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self._get_floatingip.return_value = {'floating_port_id': 'fip-port-id'}
         config.cfg.CONF.set_override(
             'enable_distributed_floating_ip', True, group='ovn')
-        self.l3_inst.create_floatingip(self.context, 'floatingip')
+        payload = events.DBEventPayload(
+            self.context, states=(self.fake_floating_ip,),
+            resource_id=self.fake_floating_ip['id'],
+            request_body={'floatingip': self.fake_floating_ip})
+        self.ovn_drv._process_floatingip_create(resources.FLOATING_IP,
+                                                events.AFTER_CREATE,
+                                                self, payload)
         expected_ext_ids = {
             ovn_const.OVN_FIP_EXT_ID_KEY: self.fake_floating_ip['id'],
             ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
@@ -1026,7 +1110,13 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.l3_inst._nb_ovn.get_lrouter_nat_rules.return_value = [
             {'external_ip': '192.168.0.10', 'logical_ip': '10.0.0.6',
              'type': 'dnat_and_snat', 'uuid': 'uuid1'}]
-        self.l3_inst.create_floatingip(self.context, 'floatingip')
+        payload = events.DBEventPayload(
+            self.context, states=(self.fake_floating_ip,),
+            resource_id=self.fake_floating_ip['id'],
+            request_body={'floatingip': self.fake_floating_ip})
+        self.ovn_drv._process_floatingip_create(resources.FLOATING_IP,
+                                                events.AFTER_CREATE,
+                                                self, payload)
         expected_ext_ids = {
             ovn_const.OVN_FIP_EXT_ID_KEY: self.fake_floating_ip['id'],
             ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
@@ -1051,7 +1141,13 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.l3_inst._nb_ovn.get_lrouter_nat_rules.return_value = [
             {'external_ip': '192.168.0.10', 'logical_ip': '10.0.0.0/24',
              'type': 'snat', 'uuid': 'uuid1'}]
-        self.l3_inst.create_floatingip(self.context, 'floatingip')
+        payload = events.DBEventPayload(
+            self.context, states=(self.fake_floating_ip,),
+            resource_id=self.fake_floating_ip['id'],
+            request_body={'floatingip': self.fake_floating_ip})
+        self.ovn_drv._process_floatingip_create(resources.FLOATING_IP,
+                                                events.AFTER_CREATE,
+                                                self, payload)
         self.l3_inst._nb_ovn.set_nat_rule_in_lrouter.assert_not_called()
         expected_ext_ids = {
             ovn_const.OVN_FIP_EXT_ID_KEY: self.fake_floating_ip['id'],
@@ -1075,7 +1171,13 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         foo_lport = fake_resources.FakeOvsdbRow.create_one_ovsdb_row()
         foo_lport.uuid = 'foo-port'
         self.l3_inst._nb_ovn.get_lswitch_port.return_value = foo_lport
-        self.l3_inst.create_floatingip(self.context, 'floatingip')
+        payload = events.DBEventPayload(
+            self.context, states=(self.fake_floating_ip,),
+            resource_id=self.fake_floating_ip['id'],
+            request_body={'floatingip': self.fake_floating_ip})
+        self.ovn_drv._process_floatingip_create(resources.FLOATING_IP,
+                                                events.AFTER_CREATE,
+                                                self, payload)
         calls = [mock.call(
             'Logical_Switch_Port',
             'foo-port',
@@ -1092,7 +1194,14 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.l3_inst._nb_ovn.is_col_present.return_value = True
         self.l3_inst._nb_ovn.lookup.return_value = self.lb_network
         self.l3_inst._nb_ovn.get_lswitch_port.return_value = self.member_lsp
-        fip = self.l3_inst.create_floatingip(self.context, 'floatingip')
+        payload = events.DBEventPayload(
+            self.context, states=(self.fake_floating_ip,),
+            resource_id=self.fake_floating_ip['id'],
+            request_body={'floatingip': self.fake_floating_ip})
+        self.ovn_drv._process_floatingip_create(resources.FLOATING_IP,
+                                                events.AFTER_CREATE,
+                                                self, payload)
+        fip = self.fake_floating_ip
         # Validate that there is no external_mac and logical_port while
         # setting the NAT entry.
         expected_ext_ids = {
@@ -1121,7 +1230,14 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             [self.fake_ovn_nat_rule],
         ]
         self.l3_inst._nb_ovn.lookup.return_value = self.lb_network
-        fip = self.l3_inst.create_floatingip(self.context, 'floatingip')
+        payload = events.DBEventPayload(
+            self.context, states=(self.fake_floating_ip,),
+            resource_id=self.fake_floating_ip['id'],
+            request_body={'floatingip': self.fake_floating_ip})
+        self.ovn_drv._process_floatingip_create(resources.FLOATING_IP,
+                                                events.AFTER_CREATE,
+                                                self, payload)
+        fip = self.fake_floating_ip
         expected_ext_ids = {
               ovn_const.OVN_FIP_EXT_ID_KEY: fip['id'],
               ovn_const.OVN_REV_NUM_EXT_ID_KEY: mock.ANY,
@@ -1160,7 +1276,13 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         _nb_ovn.get_lrouter_port.return_value = lrp
         self.l3_inst.get_router.return_value = self.fake_router_with_ext_gw
 
-        self.l3_inst.create_floatingip(self.context, 'floatingip')
+        payload = events.DBEventPayload(
+            self.context, states=(self.fake_floating_ip,),
+            resource_id=self.fake_floating_ip['id'],
+            request_body={'floatingip': self.fake_floating_ip})
+        self.ovn_drv._process_floatingip_create(resources.FLOATING_IP,
+                                                events.AFTER_CREATE,
+                                                self, payload)
         _nb_ovn.set_nat_rule_in_lrouter.assert_not_called()
 
         expected_ext_ids = {
@@ -1278,7 +1400,14 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         nb_ovn.get_floatingip.return_value = (
             self.fake_ovn_nat_rule)
         fip = {l3_def.FLOATINGIP: {'port_id': 'port1'}}
-        self.l3_inst.update_floatingip(self.context, 'id', fip)
+        payload = events.DBEventPayload(
+            self.context,
+            states=(self.fake_floating_ip_new, self.fake_floating_ip_new),
+            resource_id=self.fake_floating_ip_new['id'],
+            request_body=fip)
+        self.ovn_drv._process_floatingip_update(resources.FLOATING_IP,
+                                                events.AFTER_UPDATE,
+                                                self, payload)
         nb_ovn.delete_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-router-id',
             type='dnat_and_snat',
@@ -1311,9 +1440,16 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         nb_ovn.get_floatingip.return_value = (
             self.fake_ovn_nat_rule)
         fip = {l3_def.FLOATINGIP: {qos_consts.QOS_POLICY_ID: 'qos_id_1'}}
+        payload = events.DBEventPayload(
+            self.context,
+            states=(self.fake_floating_ip_new, self.fake_floating_ip_new),
+            resource_id=self.fake_floating_ip_new['id'],
+            request_body=fip)
         with mock.patch.object(self.l3_inst._ovn_client._qos_driver,
                                'update_floatingip') as ufip:
-            self.l3_inst.update_floatingip(self.context, 'id', fip)
+            self.ovn_drv._process_floatingip_update(resources.FLOATING_IP,
+                                                    events.AFTER_UPDATE,
+                                                    self, payload)
         nb_ovn.delete_nat_rule_in_lrouter.assert_not_called()
         nb_ovn.add_nat_rule_in_lrouter.assert_not_called()
         ufip.assert_called_once_with(mock.ANY, self.fake_floating_ip_new)
@@ -1325,7 +1461,14 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.fake_floating_ip.update({'fixed_port_id': None})
         uf.return_value = self.fake_floating_ip_new
         fip = {l3_def.FLOATINGIP: {'port_id': 'port1'}}
-        self.l3_inst.update_floatingip(self.context, 'id', fip)
+        payload = events.DBEventPayload(
+            self.context,
+            states=(self.fake_floating_ip_new, self.fake_floating_ip_new),
+            resource_id=self.fake_floating_ip_new['id'],
+            request_body=fip)
+        self.ovn_drv._process_floatingip_update(resources.FLOATING_IP,
+                                                events.AFTER_UPDATE,
+                                                self, payload)
         self.l3_inst._nb_ovn.delete_nat_rule_in_lrouter.assert_not_called()
         expected_ext_ids = {
             ovn_const.OVN_FIP_EXT_ID_KEY: self.fake_floating_ip_new['id'],
@@ -1362,7 +1505,14 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         config.cfg.CONF.set_override(
             'enable_distributed_floating_ip', True, group='ovn')
         fip = {l3_def.FLOATINGIP: {'port_id': 'port1'}}
-        self.l3_inst.update_floatingip(self.context, 'id', fip)
+        payload = events.DBEventPayload(
+            self.context,
+            states=(self.fake_floating_ip_new, self.fake_floating_ip_new),
+            resource_id=self.fake_floating_ip_new['id'],
+            request_body=fip)
+        self.ovn_drv._process_floatingip_update(resources.FLOATING_IP,
+                                                events.AFTER_UPDATE,
+                                                self, payload)
         self.l3_inst._nb_ovn.delete_nat_rule_in_lrouter.assert_not_called()
         expected_ext_ids = {
             ovn_const.OVN_FIP_EXT_ID_KEY: self.fake_floating_ip_new['id'],
@@ -1391,7 +1541,14 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.fake_floating_ip_new.update({'port_id': 'foo'})
         uf.return_value = self.fake_floating_ip_new
         fip = {l3_def.FLOATINGIP: {'port_id': 'port1'}}
-        self.l3_inst.update_floatingip(self.context, 'id', fip)
+        payload = events.DBEventPayload(
+            self.context,
+            states=(self.fake_floating_ip_new, self.fake_floating_ip_new),
+            resource_id=self.fake_floating_ip_new['id'],
+            request_body=fip)
+        self.ovn_drv._process_floatingip_update(resources.FLOATING_IP,
+                                                events.AFTER_UPDATE,
+                                                self, payload)
         nb_ovn.delete_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-router-id',
             type='dnat_and_snat',
@@ -1427,7 +1584,14 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                                           'fixed_port_id': 'port_id'})
         uf.return_value = self.fake_floating_ip_new
         fip = {l3_def.FLOATINGIP: {'port_id': 'port1'}}
-        self.l3_inst.update_floatingip(self.context, 'id', fip)
+        payload = events.DBEventPayload(
+            self.context,
+            states=(self.fake_floating_ip_new, self.fake_floating_ip_new),
+            resource_id=self.fake_floating_ip_new['id'],
+            request_body=fip)
+        self.ovn_drv._process_floatingip_update(resources.FLOATING_IP,
+                                                events.AFTER_UPDATE,
+                                                self, payload)
 
         nb_ovn.delete_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-router-id',
@@ -1452,48 +1616,58 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             logical_port='port_id',
             external_ids=expected_ext_ids)
 
-    @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.get_floatingips')
-    def test_disassociate_floatingips(self, gfs):
-        gfs.return_value = [{'id': 'fip-id1',
-                             'floating_ip_address': '192.168.0.10',
-                             'router_id': 'router-id',
-                             'port_id': 'port_id',
-                             'floating_port_id': 'fip-port-id1',
-                             'fixed_ip_address': '10.0.0.10',
-                             'floating_network_id': 'net1'},
-                            {'id': 'fip-id2',
-                             'floating_ip_address': '192.167.0.10',
-                             'router_id': 'router-id',
-                             'port_id': 'port_id',
-                             'floating_port_id': 'fip-port-id2',
-                             'fixed_ip_address': '10.0.0.11',
-                             'floating_network_id': 'net2'}]
-        self.l3_inst.disassociate_floatingips(self.context, 'port_id',
-                                              do_notify=False)
+    @mock.patch('neutron.services.ovn_l3.plugin.OVNL3RouterPlugin.'
+                'update_floatingip_status')
+    def test_disassociate_floatingips(self, status_upd_mock):
+        old_fips = [{'id': 'fip-id1',
+                     'floating_ip_address': '192.168.0.10',
+                     'router_id': 'router-id',
+                     'port_id': 'port_id',
+                     'floating_port_id': 'fip-port-id1',
+                     'fixed_ip_address': '10.0.0.10',
+                     'floating_network_id': 'net1'},
+                    {'id': 'fip-id2',
+                     'floating_ip_address': '192.167.0.10',
+                     'router_id': 'router-id',
+                     'port_id': 'port_id',
+                     'floating_port_id': 'fip-port-id2',
+                     'fixed_ip_address': '10.0.0.11',
+                     'floating_network_id': 'net2'}]
+        for fip in old_fips:
+            payload = events.DBEventPayload(
+                self.context, states=(fip, self.fake_floating_ip_new),
+                resource_id=self.fake_floating_ip_new['id'])
+            self.ovn_drv._process_floatingip_update(resources.FLOATING_IP,
+                                                    events.AFTER_UPDATE,
+                                                    self, payload)
 
         delete_nat_calls = [mock.call('neutron-router-id',
                                       type='dnat_and_snat',
                                       logical_ip=fip['fixed_ip_address'],
                                       external_ip=fip['floating_ip_address'])
-                            for fip in gfs.return_value]
+                            for fip in old_fips]
         self.assertEqual(
             len(delete_nat_calls),
             self.l3_inst._nb_ovn.delete_nat_rule_in_lrouter.call_count)
         self.l3_inst._nb_ovn.delete_nat_rule_in_lrouter.assert_has_calls(
             delete_nat_calls, any_order=True)
+        self.assertEqual(len(delete_nat_calls), status_upd_mock.call_count)
 
+    @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.get_router')
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
                 'ovn_client.OVNClient.update_router_port')
-    def test_port_update_postcommit(self, update_rp_mock):
+    def test_port_update_postcommit(self, update_rp_mock, gr):
         context = 'fake_context'
-        port = {'device_owner': 'foo'}
+        port = {'device_owner': 'foo', 'device_id': 'id'}
+        gr.return_value = {'flavor_id': None}
         self.l3_inst._port_update(resources.PORT, events.AFTER_UPDATE, None,
                                   payload=events.DBEventPayload(
                                       context,
                                       states=(port,)))
         update_rp_mock.assert_not_called()
 
-        port = {'device_owner': constants.DEVICE_OWNER_ROUTER_INTF}
+        port = {'device_owner': constants.DEVICE_OWNER_ROUTER_INTF,
+                'device_id': 'router_id'}
         self.l3_inst._port_update(resources.PORT, events.AFTER_UPDATE, None,
                                   payload=events.DBEventPayload(
                                       context,
@@ -1503,11 +1677,14 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                                                port,
                                                if_exists=True)
 
-    def test_port_update_before_update_router_port_without_ip(self):
+    @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.get_router')
+    def test_port_update_before_update_router_port_without_ip(self, gr):
         context = 'fake_context'
         port = {'device_owner': constants.DEVICE_OWNER_ROUTER_INTF,
                 'fixed_ips': [],
-                'id': 'port-id'}
+                'id': 'port-id',
+                'device_id': 'router_id'}
+        gr.return_value = {'flavor_id': None}
         self.assertRaises(
             n_exc.ServicePortInUse,
             self.l3_inst._port_update,
@@ -1674,8 +1851,10 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         gn.return_value = prov_net
         gns.return_value = [self.fake_network]
 
-        self.l3_inst.add_router_interface(self.context, router_id,
-                                          interface_info)
+        payload = self._create_payload_for_router_interface(router_id)
+        self.ovn_drv._process_add_router_interface(resources.ROUTER_INTERFACE,
+                                                   events.AFTER_CREATE,
+                                                   self, payload)
 
         # Make sure that the "gateway_mtu" option was set to the router port
         fake_router_port_assert = self.fake_router_port_assert
@@ -1708,8 +1887,6 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         config.cfg.CONF.set_override(
             'ovn_emit_need_to_frag', True, group='ovn')
         router_id = 'router-id'
-        interface_info = {'port_id': 'router-port-id',
-                'network_id': 'priv-net'}
         ari.return_value = self.fake_router_interface_info
         # If we remove the router halfway the return value of
         # _get_routers_ports will be RouterNotFound
@@ -1723,8 +1900,10 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         gn.return_value = prov_net
         gns.return_value = [self.fake_network]
 
-        self.l3_inst.add_router_interface(self.context, router_id,
-                                          interface_info)
+        payload = self._create_payload_for_router_interface(router_id)
+        self.ovn_drv._process_add_router_interface(resources.ROUTER_INTERFACE,
+                                                   events.AFTER_CREATE,
+                                                   self, payload)
 
         # Make sure that the "gateway_mtu" option was set to the router port
         fake_router_port_assert = self.fake_router_port_assert
@@ -1882,7 +2061,9 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
             test_floatingip_update_subnet_gateway_disabled(expected_status)
 
     # Test function _subnet_update of L3 OVN plugin.
-    def test_update_subnet_gateway_for_external_net(self):
+    @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.get_router')
+    def test_update_subnet_gateway_for_external_net(self, gr):
+        gr.return_value = {'flavor_id': None}
         super(OVNL3ExtrarouteTests, self). \
             test_update_subnet_gateway_for_external_net()
         self.l3_inst._nb_ovn.add_static_route.assert_called_once_with(

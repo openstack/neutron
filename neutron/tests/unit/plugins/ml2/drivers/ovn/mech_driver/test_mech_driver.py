@@ -2495,9 +2495,12 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
     def test__update_dnat_entry_if_needed_down_no_dvr(self):
         self._test__update_dnat_entry_if_needed(up=False, dvr=False)
 
+    @mock.patch('neutron.objects.router.Router.get_object')
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
                 'ovn_client.OVNClient._get_router_ports')
-    def _test_update_network_fragmentation(self, new_mtu, expected_opts, grps):
+    def _test_update_network_fragmentation(self, new_mtu, expected_opts, grps,
+                                           gr):
+        gr.return_value = {'flavor_id': ''}
         network_attrs = {external_net.EXTERNAL: True}
         network = self._make_network(
             self.fmt, 'net1', True, as_admin=True,

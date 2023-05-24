@@ -1216,20 +1216,21 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             gw_ips = [x['ip_address'] for x in router.gw_port.fixed_ips]
 
         cidrs = [x['cidr'] for x in subnets]
+        subnet_ids = [subnet['id'] for subnet in subnets]
         metadata = {'interface_info': interface_info,
                     'port': port, 'gateway_ips': gw_ips,
-                    'network_id': gw_network_id, 'cidrs': cidrs}
+                    'network_id': gw_network_id, 'cidrs': cidrs,
+                    'subnet_ids': subnet_ids}
         registry.publish(resources.ROUTER_INTERFACE,
                          events.AFTER_DELETE, self,
                          payload=events.DBEventPayload(
                              context, metadata=metadata,
-                             resource_id=router_id))
+                             resource_id=router_id,
+                             states=(router,)))
 
         return self._make_router_interface_info(router_id, port['tenant_id'],
                                                 port['id'], port['network_id'],
-                                                subnets[0]['id'],
-                                                [subnet['id'] for subnet in
-                                                 subnets])
+                                                subnets[0]['id'], subnet_ids)
 
     def _get_floatingip(self, context, id):
         floatingip = l3_obj.FloatingIP.get_object(context, id=id)
@@ -1571,7 +1572,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             payload=events.DBEventPayload(
                 context, states=(floatingip_dict,),
                 resource_id=floatingip_obj.id,
-                metadata={'association_event': assoc_result}))
+                metadata={'association_event': assoc_result},
+                request_body=floatingip))
         if assoc_result:
             LOG.info(FIP_ASSOC_MSG,
                      {'fip_id': floatingip_obj.id,
@@ -1637,7 +1639,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             payload=events.DBEventPayload(
                 context, states=(old_floatingip, floatingip_dict),
                 resource_id=floatingip_obj.id,
-                metadata={'association_event': assoc_result}))
+                metadata={'association_event': assoc_result},
+                request_body=floatingip))
         if assoc_result is not None:
             port_id = old_fixed_port_id or floatingip_obj.fixed_port_id
             assoc = 'associated' if assoc_result else 'disassociated'

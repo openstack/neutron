@@ -2224,7 +2224,9 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
             self.assertEqual(webob.exc.HTTPClientError.code,
                              res.status_int)
 
-    def test_requested_fixed_ip_address_v6_slaac_router_iface(self):
+    @mock.patch('neutron.objects.router.Router.get_object')
+    def test_requested_fixed_ip_address_v6_slaac_router_iface(self, gr):
+        gr.return_value = {'flavor_id': ''}
         with self.subnet(gateway_ip='fe80::1',
                          cidr='fe80::/64',
                          ip_version=constants.IP_VERSION_6,
@@ -2284,7 +2286,9 @@ fixed_ips=ip_address%%3D%s&fixed_ips=ip_address%%3D%s&fixed_ips=subnet_id%%3D%s
                     self.assertIn({'ip_address': eui_addr,
                                    'subnet_id': subnet2['subnet']['id']}, ips)
 
-    def test_create_router_port_ipv4_and_ipv6_slaac_no_fixed_ips(self):
+    @mock.patch('neutron.objects.router.Router.get_object')
+    def test_create_router_port_ipv4_and_ipv6_slaac_no_fixed_ips(self, gr):
+        gr.return_value = {'flavor_id': ''}
         with self.network() as network:
             # Create an IPv4 and an IPv6 SLAAC subnet on the network
             with self.subnet(network) as subnet_v4,\
@@ -3764,8 +3768,10 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         sport = self.deserialize(self.fmt, req.get_response(self.api))
         self.assertEqual(0, len(sport['port']['fixed_ips']))
 
-    def test_delete_subnet_ipv6_slaac_router_port_exists(self):
+    @mock.patch('neutron.objects.router.Router.get_object')
+    def test_delete_subnet_ipv6_slaac_router_port_exists(self, gr):
         """Test IPv6 SLAAC subnet delete with a router port using the subnet"""
+        gr.return_value = {'flavor_id': ''}
         subnet, port = self._create_slaac_subnet_and_port(
                 constants.DEVICE_OWNER_ROUTER_INTF)
         # Delete the subnet and assert that we get a HTTP 409 error
@@ -4502,7 +4508,9 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
             ipv6_ra_mode=constants.IPV6_SLAAC,
             ipv6_address_mode=constants.IPV6_SLAAC)
 
-    def test_create_subnet_ipv6_first_ip_owned_by_router(self):
+    @mock.patch('neutron.objects.router.Router.get_object')
+    def test_create_subnet_ipv6_first_ip_owned_by_router(self, gr):
+        gr.return_value = {'flavor_id': ''}
         cidr = '2001::/64'
         with self.network() as network:
             net_id = network['network']['id']
@@ -4598,10 +4606,12 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         self.assertEqual(webob.exc.HTTPClientError.code,
                          ctx_manager.exception.code)
 
+    @mock.patch('neutron.objects.router.Router.get_object')
     def _test_create_subnet_ipv6_auto_addr_with_port_on_network(
-            self, addr_mode, device_owner=DEVICE_OWNER_COMPUTE,
+            self, addr_mode, gr, device_owner=DEVICE_OWNER_COMPUTE,
             insert_db_reference_error=False, insert_port_not_found=False,
             insert_address_allocated=False):
+        gr.return_value = {'flavor_id': ''}
         # Create a network with one IPv4 subnet and one port
         with self.network() as network,\
                 self.subnet(network=network) as v4_subnet,\

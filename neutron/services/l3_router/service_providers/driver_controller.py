@@ -87,7 +87,7 @@ class DriverController(object):
         router = payload.latest_state
         router_db = payload.metadata['router_db']
         router_id = payload.resource_id
-        if _flavor_specified(router):
+        if flavor_specified(router):
             router_db.flavor_id = router['flavor_id']
         drv = self._get_provider_for_create(context, router)
         self._stm.add_resource_association(context, plugin_constants.L3,
@@ -127,7 +127,7 @@ class DriverController(object):
         drv = self.get_provider_for_router(payload.context,
                                            payload.resource_id)
         new_drv = None
-        if _flavor_specified(payload.request_body):
+        if flavor_specified(payload.request_body):
             if (payload.request_body['flavor_id'] !=
                     payload.states[0]['flavor_id']):
                 # TODO(kevinbenton): this is currently disallowed by the API
@@ -210,7 +210,7 @@ class DriverController(object):
 
     def _get_provider_for_create(self, context, router):
         """Get provider based on flavor or ha/distributed flags."""
-        if not _flavor_specified(router):
+        if not flavor_specified(router):
             return self._attrs_to_driver(router)
         return self._get_l3_driver_by_flavor(context, router['flavor_id'])
 
@@ -293,7 +293,7 @@ def _is_ha(ha_attr):
     return True
 
 
-def _flavor_specified(router):
+def flavor_specified(router):
     return ('flavor_id' in router and
             router['flavor_id'] != lib_const.ATTR_NOT_SPECIFIED)
 

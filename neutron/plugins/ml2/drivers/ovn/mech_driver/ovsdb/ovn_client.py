@@ -51,6 +51,7 @@ from neutron.conf.agent import ovs_conf
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.db import segments_db
+from neutron.objects import router
 from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions \
     import placement as placement_extension
@@ -646,7 +647,10 @@ class OVNClient(object):
                 # LogicalSwitchPortUpdateDownEvent, that will most likely
                 # cause a revision conflict.
                 # https://bugs.launchpad.net/neutron/+bug/1955578
-                columns_dict['type'] = ovn_const.LSP_TYPE_ROUTER
+                router_obj = router.Router.get_object(context,
+                                                      id=port['device_id'])
+                if utils.is_ovn_provider_router(router_obj):
+                    columns_dict['type'] = ovn_const.LSP_TYPE_ROUTER
                 port_info.options.update(
                     self._nb_idl.get_router_port_options(port['id']))
             else:

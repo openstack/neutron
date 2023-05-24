@@ -13,6 +13,7 @@
 #
 
 from neutron_lib.api.definitions import external_net
+from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib.api.definitions import qos_fip as qos_fip_apidef
@@ -23,19 +24,18 @@ from neutron_lib.callbacks import resources
 from neutron_lib import constants as n_const
 from neutron_lib import context as n_context
 from neutron_lib.db import api as db_api
+from neutron_lib.db import resource_extend
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import availability_zone as az_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.services import base as service_base
 from oslo_log import log
-from oslo_utils import excutils
 
 from neutron._i18n import _
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import extensions
 from neutron.common.ovn import utils
-from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db.availability_zone import router as router_az_db
 from neutron.db import dns_db
 from neutron.db import extraroute_db
@@ -46,11 +46,11 @@ from neutron.db import l3_fip_qos
 from neutron.db import l3_gateway_ip_qos
 from neutron.db import l3_gwmode_db
 from neutron.db.models import l3 as l3_models
-from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.quota import resource_registry
 from neutron.scheduler import l3_ovn_scheduler
 from neutron.services.ovn_l3 import exceptions as ovn_l3_exc
+from neutron.services.ovn_l3.service_providers import driver_controller
 from neutron.services.portforwarding.drivers.ovn import driver \
     as port_forwarding
 
@@ -94,15 +94,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         self._ovn_client_inst = None
         self.scheduler = l3_ovn_scheduler.get_scheduler()
         self.port_forwarding = port_forwarding.OVNPortForwarding(self)
-        self._register_precommit_callbacks()
-
-    def _register_precommit_callbacks(self):
-        registry.subscribe(
-            self.create_router_precommit, resources.ROUTER,
-            events.PRECOMMIT_CREATE)
-        registry.subscribe(
-            self.create_floatingip_precommit, resources.FLOATING_IP,
-            events.PRECOMMIT_CREATE)
+        self.l3_driver_controller = driver_controller.DriverController(self)
 
     @staticmethod
     def _disable_qos_extensions_by_extension_drivers(aliases):
@@ -170,67 +162,13 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         return ("L3 Router Service Plugin for basic L3 forwarding"
                 " using OVN")
 
-    def create_router_precommit(self, resource, event, trigger, payload):
-        context = payload.context
-        context.session.flush()
-        router_id = payload.resource_id
-        router_db = payload.metadata['router_db']
-        # NOTE(ralonsoh): the "distributed" flag is a static configuration
-        # parameter that needs to be defined only during the router creation.
-        extra_attr = router_db['extra_attributes']
-        extra_attr.distributed = ovn_conf.is_ovn_distributed_floating_ip()
-
-        db_rev.create_initial_revision(
-            context, router_id, ovn_const.TYPE_ROUTERS,
-            std_attr_id=router_db.standard_attr.id)
-
-    def create_router(self, context, router):
-        router = super(OVNL3RouterPlugin, self).create_router(context, router)
-        try:
-            self._ovn_client.create_router(context, router)
-        except Exception:
-            with excutils.save_and_reraise_exception():
-                # Delete the logical router
-                LOG.exception('Unable to create lrouter %s', router['id'])
-                super(OVNL3RouterPlugin, self).delete_router(context,
-                                                             router['id'])
-        return router
-
-    def update_router(self, context, id, router):
-        original_router = self.get_router(context, id)
-        result = super(OVNL3RouterPlugin, self).update_router(context, id,
-                                                              router)
-        try:
-            self._ovn_client.update_router(context, result,
-                                           original_router)
-        except Exception:
-            with excutils.save_and_reraise_exception():
-                LOG.exception('Unable to update lrouter %s', id)
-                revert_router = {'router': original_router}
-                super(OVNL3RouterPlugin, self).update_router(context, id,
-                                                             revert_router)
-        return result
-
-    def delete_router(self, context, id):
-        original_router = self.get_router(context, id)
-        super(OVNL3RouterPlugin, self).delete_router(context, id)
-        try:
-            self._ovn_client.delete_router(context, id)
-        except Exception:
-            with excutils.save_and_reraise_exception():
-                LOG.exception('Unable to delete lrouter %s', id)
-                super(OVNL3RouterPlugin, self).create_router(
-                    context, {'router': original_router})
-
     def _add_neutron_router_interface(self, context, router_id,
-                                      interface_info, may_exist=False):
+                                      interface_info):
         try:
             router_interface_info = (
                 super(OVNL3RouterPlugin, self).add_router_interface(
                     context, router_id, interface_info))
         except n_exc.PortInUse:
-            if not may_exist:
-                raise
             # NOTE(lucasagomes): If the port is already being used it means
             # the interface has been created already, let's just fetch it from
             # the database. Perhaps the code below should live in Neutron
@@ -247,70 +185,24 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
 
         return router_interface_info
 
-    def add_router_interface(self, context, router_id, interface_info=None):
-        router_interface_info = self._add_neutron_router_interface(
-            context, router_id, interface_info)
-        try:
-            self._ovn_client.create_router_port(
-                context, router_id, router_interface_info)
-        except Exception:
-            with excutils.save_and_reraise_exception():
-                LOG.exception(
-                    'Unable to add router interface to lrouter %s. '
-                    'Interface info: %s', router_id, interface_info)
-                super(OVNL3RouterPlugin, self).remove_router_interface(
-                    context, router_id, router_interface_info)
-
-        return router_interface_info
-
-    def remove_router_interface(self, context, router_id, interface_info):
-        router_interface_info = (
-            super(OVNL3RouterPlugin, self).remove_router_interface(
-                context, router_id, interface_info))
-        try:
-            port_id = router_interface_info['port_id']
-            subnet_ids = router_interface_info.get('subnet_ids')
-            self._ovn_client.delete_router_port(
-                context, port_id, router_id=router_id, subnet_ids=subnet_ids)
-        except Exception:
-            with excutils.save_and_reraise_exception():
-                LOG.exception(
-                    'Unable to remove router interface from lrouter %s. '
-                    'Interface info: %s', router_id, interface_info)
-                super(OVNL3RouterPlugin, self).add_router_interface(
-                    context, router_id, interface_info)
-        return router_interface_info
-
-    def create_floatingip_precommit(self, resource, event, trigger, payload):
-        context = payload.context
-        floatingip_id = payload.resource_id
-        floatingip_db = payload.desired_state
-
-        db_rev.create_initial_revision(
-            context, floatingip_id, ovn_const.TYPE_FLOATINGIPS,
-            std_attr_id=floatingip_db.standard_attr.id)
-
     def create_floatingip(self, context, floatingip,
                           initial_status=n_const.FLOATINGIP_STATUS_DOWN):
-        fip = super(OVNL3RouterPlugin, self).create_floatingip(
+        # The OVN L3 plugin creates floating IPs in down status by default,
+        # whereas the L3 DB layer creates them in active status. So we keep
+        # this method to create the floating IP in the DB with status down,
+        # while the flavor drivers are responsible for calling the correct
+        # backend to instatiate the floating IP in the data plane
+        return super(OVNL3RouterPlugin, self).create_floatingip(
             context, floatingip, initial_status)
-        self._ovn_client.create_floatingip(context, fip)
-        return fip
-
-    def delete_floatingip(self, context, id):
-        super(OVNL3RouterPlugin, self).delete_floatingip(context, id)
-        self._ovn_client.delete_floatingip(context, id)
-
-    def update_floatingip(self, context, id, floatingip):
-        fip = super(OVNL3RouterPlugin, self).update_floatingip(context, id,
-                                                               floatingip)
-        self._ovn_client.update_floatingip(context, fip, floatingip)
-        return fip
 
     def update_floatingip_status(self, context, floatingip_id, status):
         fip = self.update_floatingip_status_retry(
             context, floatingip_id, status)
-        self._ovn_client.update_floatingip_status(context, fip)
+        registry.publish(
+            resources.FLOATING_IP, events.AFTER_STATUS_UPDATE, self,
+            payload=events.DBEventPayload(
+                context, states=(fip,),
+                resource_id=floatingip_id))
         return fip
 
     @db_api.retry_if_session_inactive()
@@ -318,30 +210,6 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         with db_api.CONTEXT_WRITER.using(context):
             return super(OVNL3RouterPlugin, self).update_floatingip_status(
                 context, floatingip_id, status)
-
-    def disassociate_floatingips(self, context, port_id, do_notify=True):
-        fips = self.get_floatingips(context.elevated(),
-                                    filters={'port_id': [port_id]})
-        router_ids = super(OVNL3RouterPlugin, self).disassociate_floatingips(
-            context, port_id, do_notify)
-        for fip in fips:
-            router_id = fip.get('router_id')
-            fixed_ip_address = fip.get('fixed_ip_address')
-            if router_id and fixed_ip_address:
-                update_fip = {
-                    'id': fip['id'],
-                    'logical_ip': fixed_ip_address,
-                    'external_ip': fip['floating_ip_address'],
-                    'floating_network_id': fip['floating_network_id']}
-                try:
-                    self._ovn_client.disassociate_floatingip(update_fip,
-                                                             router_id)
-                    self.update_floatingip_status(
-                        context, fip['id'], n_const.FLOATINGIP_STATUS_DOWN)
-                except Exception as e:
-                    LOG.error('Error in disassociating floatingip %(id)s: '
-                              '%(error)s', {'id': fip['id'], 'error': e})
-        return router_ids
 
     def _get_gateway_port_physnet_mapping(self):
         # This function returns all gateway ports with corresponding
@@ -359,8 +227,10 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                 net_physnet_dict[net['id']] = net.get(pnet.PHYSICAL_NETWORK)
         for port in l3plugin._plugin.get_ports(context, filters={
                 'device_owner': [n_const.DEVICE_OWNER_ROUTER_GW]}):
-            port_physnet_dict[port['id']] = net_physnet_dict.get(
-                port['network_id'])
+            if utils.is_ovn_provider_router(
+                    l3plugin.get_router(context, port['device_id'])):
+                port_physnet_dict[port['id']] = net_physnet_dict.get(
+                    port['network_id'])
         return port_physnet_dict
 
     def update_router_gateway_port_bindings(self, router, host):
@@ -474,7 +344,9 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
             'device_owner': [n_const.DEVICE_OWNER_ROUTER_GW],
             'fixed_ips': {'subnet_id': [orig['id']]},
         })
-        router_ids = {port['device_id'] for port in gw_ports}
+        router_ids = {port['device_id'] for port in gw_ports
+                      if utils.is_ovn_provider_router(
+                          l3plugin.get_router(context, port['device_id']))}
         remove = [{'destination': '0.0.0.0/0', 'nexthop': orig_gw_ip}
                   ] if orig_gw_ip else []
         add = [{'destination': '0.0.0.0/0', 'nexthop': current_gw_ip}
@@ -508,11 +380,16 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         # https://bugs.launchpad.net/neutron/+bug/1948457
         if (event == events.BEFORE_UPDATE and
                 'fixed_ips' in current and not current['fixed_ips'] and
-                utils.is_lsp_router_port(original)):
+                utils.is_lsp_router_port(original) and
+                utils.is_ovn_provider_router(
+                    l3plugin.get_router(context, original['device_id']))):
             reason = _("Router port must have at least one IP.")
             raise n_exc.ServicePortInUse(port_id=original['id'], reason=reason)
 
-        if event == events.AFTER_UPDATE and utils.is_lsp_router_port(current):
+        if (event == events.AFTER_UPDATE and
+                utils.is_lsp_router_port(current) and
+                utils.is_ovn_provider_router(
+                    l3plugin.get_router(context, current['device_id']))):
             # We call the update_router port with if_exists, because neutron,
             # internally creates the port, and then calls update, which will
             # trigger this callback even before we had the chance to create
@@ -541,3 +418,8 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         if diff:
             raise az_exc.AvailabilityZoneNotFound(
                 availability_zone=', '.join(diff))
+
+    @staticmethod
+    @resource_extend.extends([l3_apidef.ROUTERS])
+    def add_flavor_id(router_res, router_db):
+        router_res['flavor_id'] = router_db['flavor_id']

@@ -38,6 +38,7 @@ Configuration
    config-qos-min-pps
    config-rbac
    config-routed-networks
+   config-router-flavor-ovn
    config-sriov
    config-sfc
    config-service-subnets
