@@ -1360,3 +1360,37 @@ class IptablesManagerNoNatTestCase(base.BaseTestCase):
         iptables.initialize_nat_table()
         self.assertIn('nat', iptables.ipv4)
         self.assertIn('mangle', iptables.ipv4)
+
+
+class IptablesRandomFullyFixture(fixtures.Fixture):
+    def _setUp(self):
+        # We MUST save and restore _random_fully because it is a class
+        # attribute and could change state in some tests, which can cause
+        # the other router test cases to randomly fail due to race conditions.
+        self._random_fully = iptables_manager.IptablesManager._random_fully
+        iptables_manager.IptablesManager._random_fully = None
+        self.addCleanup(self._reset)
+
+    def _reset(self):
+        iptables_manager.IptablesManager._random_fully = self._random_fully
+
+
+class IptablesManagerDisableRandomFullyTestCase(base.BaseTestCase):
+
+    def setUp(self):
+        super(IptablesManagerDisableRandomFullyTestCase, self).setUp()
+        self.useFixture(IptablesRandomFullyFixture())
+        self.execute = mock.patch.object(linux_utils, "execute").start()
+        cfg.CONF.set_override('use_random_fully', False, "AGENT")
+
+    def test_verify_disable_random_fully(self):
+        expected_calls_and_values = [
+            (mock.call(['iptables', '--version'],
+                       run_as_root=True, privsep_exec=True),
+             "iptables v1.6.2")]
+        tools.setup_mock_calls(self.execute, expected_calls_and_values)
+        iptables_mgrs = [iptables_manager.IptablesManager() for _ in range(3)]
+        # The random_full properties of all
+        # IptablesManager instances must return False
+        for ipt_mgr in iptables_mgrs:
+            self.assertFalse(ipt_mgr.random_fully)

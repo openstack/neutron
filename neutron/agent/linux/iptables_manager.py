@@ -304,7 +304,7 @@ class IptablesManager(object):
     # run iptables-restore without it.
     use_table_lock = False
 
-    # Flag to denote iptables supports --random-fully argument
+    # Flag to denote iptables --random-fully option enabled
     _random_fully = None
 
     def __init__(self, _execute=None, state_less=False, use_ipv6=False,
@@ -492,10 +492,11 @@ class IptablesManager(object):
             return self._random_fully
 
         version = self._get_version()
-        self.__class__._random_fully = utils.is_version_greater_equal(
+
+        random_fully_support = utils.is_version_greater_equal(
             version, n_const.IPTABLES_RANDOM_FULLY_VERSION)
 
-        self._random_fully = self._random_fully and \
+        self.__class__._random_fully = random_fully_support and \
             cfg.CONF.AGENT.use_random_fully
 
         return self._random_fully
