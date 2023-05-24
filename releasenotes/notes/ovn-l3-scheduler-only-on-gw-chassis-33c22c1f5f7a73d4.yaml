@@ -1,0 +1,12 @@
+---
+features:
+  - |
+    The OVN L3 scheduler will assign chassis explicitly configured as gateways
+    to the router gateway ports (OVN logical router ports). If no candidates are
+    available, the "neutron-ovn-invalid-chassis" will be used instead and a
+    warning message will be printed in the logs.
+upgrade:
+  - |
+    In ML2/OVN, any new router gateway port (OVN logical router port) will be
+    scheduled only on those chassis configured as gateway. Any existing router
+    gateway port will preserve the current chassis assignation.
