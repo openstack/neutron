@@ -15,6 +15,7 @@
 from neutron_lib.api import converters
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.db import api as db_api
 from neutron_lib.db import model_query
 from oslo_config import cfg
 from oslo_serialization import jsonutils
@@ -52,10 +53,11 @@ def get_agents(agt_type):
     """
     filters = {'agent_type': [agt_type]}
     ctx = context.get_admin_context()
-    query = model_query.get_collection_query(ctx,
-                                             agent_model.Agent,
-                                             filters=filters)
-    return query.all()
+    with db_api.CONTEXT_READER.using(ctx):
+        query = model_query.get_collection_query(ctx,
+                                                 agent_model.Agent,
+                                                 filters=filters)
+        return query.all()
 
 
 def get_extra_dhcp_opts():
@@ -64,10 +66,10 @@ def get_extra_dhcp_opts():
     :return: list of ports' extra_dhcp_option names and values
     """
     ctx = context.get_admin_context()
-    query = model_query.get_collection_query(
-        ctx,
-        extra_dhcp_opt_models.ExtraDhcpOpt)
-    return query.all()
+    with db_api.CONTEXT_READER.using(ctx):
+        query = model_query.get_collection_query(
+            ctx, extra_dhcp_opt_models.ExtraDhcpOpt)
+        return query.all()
 
 
 def get_l3_agents():
@@ -80,75 +82,86 @@ def get_nic_switch_agents():
 
 def get_networks():
     ctx = context.get_admin_context()
-    query = model_query.get_collection_query(ctx,
-                                             models_v2.Network)
-    return query.all()
+    with db_api.CONTEXT_READER.using(ctx):
+        query = model_query.get_collection_query(ctx,
+                                                 models_v2.Network)
+        return query.all()
 
 
 def table_exists(table_name):
     ctx = context.get_admin_context()
-    tables = [t[0] for t in ctx.session.execute("SHOW TABLES;")]
-    return table_name in tables
+    with db_api.CONTEXT_READER.using(ctx):
+        tables = [t[0] for t in ctx.session.execute("SHOW TABLES;")]
+        return table_name in tables
 
 
 def get_ovn_db_revisions():
     ctx = context.get_admin_context()
-    return [row[0] for row in ctx.session.execute(
-        "SELECT version_num from %s;" % OVN_ALEMBIC_TABLE_NAME)]  # nosec
+    with db_api.CONTEXT_READER.using(ctx):
+        return [row[0] for row in ctx.session.execute(
+            "SELECT version_num from %s;" % OVN_ALEMBIC_TABLE_NAME)]  # nosec
 
 
 def count_vlan_allocations_invalid_segmentation_id():
     ctx = context.get_admin_context()
-    query = ctx.session.query(vlanallocation.VlanAllocation)
-    query = query.filter(or_(
-        vlanallocation.VlanAllocation.vlan_id < constants.MIN_VLAN_TAG,
-        vlanallocation.VlanAllocation.vlan_id > constants.MAX_VLAN_TAG))
-    return query.count()
+    with db_api.CONTEXT_READER.using(ctx):
+        query = ctx.session.query(vlanallocation.VlanAllocation)
+        query = query.filter(or_(
+            vlanallocation.VlanAllocation.vlan_id < constants.MIN_VLAN_TAG,
+            vlanallocation.VlanAllocation.vlan_id > constants.MAX_VLAN_TAG))
+        return query.count()
 
 
 def port_mac_addresses():
     ctx = context.get_admin_context()
-    return [port[0] for port in
-            ctx.session.query(models_v2.Port.mac_address).all()]
+    with db_api.CONTEXT_READER.using(ctx):
+        return [port[0] for port in
+                ctx.session.query(models_v2.Port.mac_address).all()]
 
 
 def get_duplicate_network_segment_count():
     ctx = context.get_admin_context()
-    query = ctx.session.query(segment.NetworkSegment.network_id)
-    # for a unique constraint it's always NULL != NULL --> we filter them out
-    query = query.filter(segment.NetworkSegment.physical_network.isnot(None))
-    query = query.group_by(
-        segment.NetworkSegment.network_id,
-        segment.NetworkSegment.network_type,
-        segment.NetworkSegment.physical_network,
-        segment.NetworkSegment.segment_index,
-    )
-    query = query.having(func.count() > 1)
-    return query.count()
+    with db_api.CONTEXT_READER.using(ctx):
+        query = ctx.session.query(segment.NetworkSegment.network_id)
+        # for a unique constraint it's always NULL != NULL --> we filter them
+        # out
+        query = query.filter(
+            segment.NetworkSegment.physical_network.isnot(None))
+        query = query.group_by(
+            segment.NetworkSegment.network_id,
+            segment.NetworkSegment.network_type,
+            segment.NetworkSegment.physical_network,
+            segment.NetworkSegment.segment_index,
+        )
+        query = query.having(func.count() > 1)
+        return query.count()
 
 
 def port_binding_profiles():
     ctx = context.get_admin_context()
-    return [port_binding.profile
-            for port_binding in port_obj.PortBinding.get_objects(ctx)]
+    with db_api.CONTEXT_READER.using(ctx):
+        return [port_binding.profile
+                for port_binding in port_obj.PortBinding.get_objects(ctx)]
 
 
 def get_external_networks_with_qos_policies():
     ctx = context.get_admin_context()
-    query = ctx.session.query(external_net.ExternalNetwork.network_id)
-    query = query.filter(external_net.ExternalNetwork.network_id ==
-                         qos_models.QosNetworkPolicyBinding.network_id)
-    return [network[0] for network in query.all()]
+    with db_api.CONTEXT_READER.using(ctx):
+        query = ctx.session.query(external_net.ExternalNetwork.network_id)
+        query = query.filter(external_net.ExternalNetwork.network_id ==
+                             qos_models.QosNetworkPolicyBinding.network_id)
+        return [network[0] for network in query.all()]
 
 
 def get_fip_per_network_without_qos_policies(network_id):
     ctx = context.get_admin_context()
-    query = ctx.session.query(l3_models.FloatingIP)
-    query = query.filter(and_(
-        ~exists().where(qos_models.QosFIPPolicyBinding.fip_id ==
-                        l3_models.FloatingIP.id),
-        l3_models.FloatingIP.floating_network_id == network_id))
-    return query.count()
+    with db_api.CONTEXT_READER.using(ctx):
+        query = ctx.session.query(l3_models.FloatingIP)
+        query = query.filter(and_(
+            ~exists().where(qos_models.QosFIPPolicyBinding.fip_id ==
+                            l3_models.FloatingIP.id),
+            l3_models.FloatingIP.floating_network_id == network_id))
+        return query.count()
 
 
 class CoreChecks(base.BaseChecks):
