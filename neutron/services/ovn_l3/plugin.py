@@ -434,7 +434,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                 chassis_physnets=chassis_with_physnets,
                 availability_zone_hints=az_hints)
             chassis = self.scheduler.select(
-                self._nb_ovn, self._sb_ovn, g_name, candidates=candidates,
+                self._nb_ovn, g_name, candidates=candidates,
                 existing_chassis=existing_chassis)
             if primary and primary != chassis[0]:
                 if primary not in chassis:
