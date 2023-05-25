@@ -148,7 +148,7 @@ class Designate(driver.ExternalDNSService):
             # first try regular client:
             ids_to_delete = self._get_ids_ips_to_delete(
                 dns_domain, '%s.%s' % (dns_name, dns_domain), records, client)
-        except (dns_exc.DNSDomainNotFound, d_exc.Forbidden):
+        except dns_exc.DNSDomainNotFound:
             # Try whether we have admin powers and can see all projects
             # and also handle managed records (to prevent leftover PTRs):
             client, admin_client = get_all_projects_edit_managed_client(
@@ -158,22 +158,22 @@ class Designate(driver.ExternalDNSService):
                     dns_domain,
                     '%s.%s' % (dns_name, dns_domain),
                     records,
-                    admin_client)
-            except d_exc.Forbidden:
-                LOG.error("Cannot determine Designate record ids for "
-                          "deletion of: '%(name)s.%(dom)s'",
-                          {'name': dns_name, 'dom': dns_domain})
+                    client)
             except dns_exc.DNSDomainNotFound:
                 LOG.debug("The domain '%s' not found in Designate",
                           dns_domain)
+        except d_exc.Forbidden:
+            LOG.error("Cannot determine Designate record ids for "
+                      "deletion of: '%(name)s.%(dom)s'",
+                      {'name': dns_name, 'dom': dns_domain})
 
         for _id in ids_to_delete:
             try:
                 client.recordsets.delete(dns_domain, _id)
-            except d_exc.Forbidden:
+            except (d_exc.Forbidden, d_exc.NotFound) as exc:
                 LOG.error("Cannot delete Designate record with id %(recid)s in"
-                          " domain: %(dom)s",
-                          {'recid': _id, 'dom': dns_domain})
+                          " domain: %(dom)s. Error: %(err)s",
+                          {'recid': _id, 'dom': dns_domain, 'err': exc})
 
         if not CONF.designate.allow_reverse_dns_lookup:
             return
