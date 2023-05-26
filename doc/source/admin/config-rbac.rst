@@ -804,3 +804,37 @@ IDs.
 If an operator wants to prevent normal users from doing this, the
 ``"create_rbac_policy":`` entry in ``policy.yaml`` can be adjusted
 from ``""`` to ``"rule:admin_only"``.
+
+
+Improve database RBAC query operations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Since [1]_, present in Yoga version, Neutron has indexes for
+"target_tenant" (now "target_project") and "action" columns in all
+RBAC related tables. That improves the SQL queries involving the
+RBAC tables [2]_. Any system before Yoga won't have these indexes
+but the system administrator can manually add them to the Neutron
+database following the next steps:
+
+* Find the RBAC tables:
+
+.. code-block:: console
+
+    $ tables=`mysql -e "use ovs_neutron; show tables;" | grep rbac`
+
+
+* Insert the indexes for the "target_tenant" and "action" columns:
+
+    $ for table in $tables do; mysql -e \
+        "alter table $table add key (action); alter table $table add key (target_tenant);"; done
+
+
+In order to prevent errors during a system upgrade, [3]_ was
+implemented and backported up to Yoga. This patch checks if any index
+is already present in the Neutron tables and avoids executing the
+index creation command again.
+
+
+.. [1] https://review.opendev.org/c/openstack/neutron/+/810072
+.. [2] https://github.com/openstack/neutron-lib/blob/890d62a3df3f35bb18bf1a11e79a9e97e7dd2d2c/neutron_lib/db/model_query.py#L123-L131
+.. [3] https://review.opendev.org/c/openstack/neutron/+/884617
