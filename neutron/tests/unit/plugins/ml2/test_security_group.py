@@ -14,6 +14,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 import math
 from unittest import mock
 
@@ -44,6 +45,11 @@ class Ml2SecurityGroupsTestCase(test_sg.SecurityGroupDBTestCase):
         notifier_cls.return_value = self.notifier
         self.useFixture(fixture.APIDefinitionFixture())
         super(Ml2SecurityGroupsTestCase, self).setUp('ml2')
+        plugin = directory.get_plugin()
+        mock.patch.object(
+            plugin, 'get_default_security_group_rules',
+            return_value=copy.deepcopy(
+                test_sg.RULES_TEMPLATE_FOR_CUSTOM_SG)).start()
 
 
 class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,
@@ -90,6 +96,28 @@ class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,
                     self.assertEqual([p['fixed_ips'][0]['ip_address']],
                                      port_dict['fixed_ips'])
                     self._delete('ports', p['id'])
+
+    def test_default_security_group_rules(self):
+        plugin = directory.get_plugin()
+        with mock.patch.object(
+                plugin, 'get_default_security_group_rules',
+                return_value=copy.deepcopy(
+                    test_sg.RULES_TEMPLATE_FOR_DEFAULT_SG)):
+            super().test_default_security_group_rules()
+
+    def test_get_security_group(self):
+        plugin = directory.get_plugin()
+        with mock.patch.object(
+                plugin, 'get_default_security_group_rules',
+                return_value=[]):
+            super().test_get_security_group()
+
+    def test_create_security_group_rules_admin_tenant(self):
+        plugin = directory.get_plugin()
+        with mock.patch.object(
+                plugin, 'get_default_security_group_rules',
+                return_value=[]):
+            super().test_create_security_group_rules_admin_tenant()
 
     def test_security_group_get_ports_from_devices_with_bad_id(self):
         plugin = directory.get_plugin()

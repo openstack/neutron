@@ -36,6 +36,7 @@ from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
 from neutron.tests import base as tests_base
 from neutron.tests.functional import base
+from neutron.tests.unit.extensions import test_securitygroup as test_sg
 
 VHU_MODE = 'server'
 OVS_VIF_DETAILS = {
@@ -838,6 +839,10 @@ class TestSecurityGroup(base.TestOVNFunctionalBase):
             'tenant_id': self._tenant_id,
             'is_default': True,
         }
+        mock.patch.object(
+            self.plugin, 'get_default_security_group_rules',
+            return_value=copy.deepcopy(
+                test_sg.RULES_TEMPLATE_FOR_CUSTOM_SG)).start()
 
     def _find_acls_for_sg(self, sg_id):
         rows = self.nb_api.db_find_rows('ACL').execute(check_error=True)

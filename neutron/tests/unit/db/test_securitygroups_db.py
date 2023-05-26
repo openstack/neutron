@@ -294,15 +294,18 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             'standard_attr_id': mock.ANY,
             'shared': False,
             'security_group_rules': [
-                # Four rules for egress/ingress and ipv4/ipv6
-                mock.ANY, mock.ANY, mock.ANY, mock.ANY,
+                # 2 Custom rules from template
+                mock.ANY, mock.ANY
             ],
         }
         if with_revisions:
             DEFAULT_SECGROUP_DICT.update({
                 'revision_number': mock.ANY,
             })
-        with mock.patch.object(registry, 'publish') as publish:
+        with mock.patch.object(registry, 'publish') as publish, \
+                mock.patch.object(
+                    self.mixin, 'get_default_security_group_rules',
+                    return_value=[mock.MagicMock(), mock.MagicMock()]):
             sg_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
 
             publish.assert_has_calls([
@@ -382,7 +385,10 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             self.assertEqual(sg_dict, payload.latest_state)
 
     def test_security_group_precommit_and_after_delete_event(self):
-        sg_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
+        with mock.patch.object(
+                self.mixin, 'get_default_security_group_rules',
+                return_value=[mock.MagicMock(), mock.MagicMock()]):
+            sg_dict = self.mixin.create_security_group(self.ctx, FAKE_SECGROUP)
         with mock.patch.object(registry, "publish") as mock_publish:
             self.mixin.delete_security_group(self.ctx, sg_dict['id'])
             sg_dict['security_group_rules'] = mock.ANY
