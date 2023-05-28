@@ -34,7 +34,7 @@ class SecurityGroup(standard_attr.HasStandardAttributes, model_base.BASEV2,
                          nullable=False)
     rbac_entries = sa.orm.relationship(rbac_db_models.SecurityGroupRBAC,
                                        backref='security_group',
-                                       lazy='subquery',
+                                       lazy='joined',
                                        cascade='all, delete, delete-orphan')
     api_collections = [sg.SECURITYGROUPS]
     collection_resource_map = {sg.SECURITYGROUPS: 'security_group'}
