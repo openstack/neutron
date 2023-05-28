@@ -195,6 +195,7 @@ class SubnetPoolRBACDbObjectTestCase(test_rbac.TestRBACObjectMixin,
                                      SubnetPoolTestMixin):
 
     _test_class = subnetpool.SubnetPoolRBAC
+    _parent_class = subnetpool.SubnetPool
 
     def setUp(self):
         super(SubnetPoolRBACDbObjectTestCase, self).setUp()
