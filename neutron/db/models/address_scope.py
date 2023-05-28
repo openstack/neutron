@@ -37,5 +37,5 @@ class AddressScope(model_base.BASEV2, model_base.HasId, model_base.HasProject):
 
     rbac_entries = sa.orm.relationship(rbac_db_models.AddressScopeRBAC,
                                        backref='address_scopes',
-                                       lazy='subquery',
+                                       lazy='joined',
                                        cascade='all, delete, delete-orphan')
