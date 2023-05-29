@@ -335,7 +335,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                }
         if security_group.rules:
             res['security_group_rules'] = [
-                self._make_security_group_rule_dict(r.db_obj)
+                self._make_security_group_rule_dict(r)
                 for r in security_group.rules
             ]
         else:
@@ -471,7 +471,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
             # otherwise a DetachedInstanceError can occur for model extensions
             sg_rule = sg_obj.SecurityGroupRule.get_object(context,
                                                           id=sg_rule.id)
-            res_rule_dict = self._make_security_group_rule_dict(sg_rule.db_obj)
+            res_rule_dict = self._make_security_group_rule_dict(sg_rule)
             self._registry_publish(
                 resources.SECURITY_GROUP_RULE,
                 events.PRECOMMIT_CREATE,
@@ -680,31 +680,34 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         return sg_id
 
     def _make_security_group_rule_dict(self, security_group_rule, fields=None):
-        res = {'id': security_group_rule['id'],
-               'tenant_id': security_group_rule['tenant_id'],
-               'security_group_id': security_group_rule['security_group_id'],
-               'ethertype': security_group_rule['ethertype'],
-               'direction': security_group_rule['direction'],
-               'protocol': security_group_rule['protocol'],
-               'port_range_min': security_group_rule['port_range_min'],
-               'port_range_max': security_group_rule['port_range_max'],
-               'remote_ip_prefix': security_group_rule['remote_ip_prefix'],
-               'remote_address_group_id': security_group_rule[
-                   'remote_address_group_id'],
+        if isinstance(security_group_rule, base_obj.NeutronDbObject):
+            sg_rule_db = security_group_rule.db_obj
+        else:
+            sg_rule_db = security_group_rule
+        res = {'id': sg_rule_db.id,
+               'project_id': sg_rule_db.project_id,
+               'tenant_id': sg_rule_db.project_id,
+               'security_group_id': sg_rule_db.security_group_id,
+               'ethertype': sg_rule_db.ethertype,
+               'direction': sg_rule_db.direction,
+               'protocol': sg_rule_db.protocol,
+               'port_range_min': sg_rule_db.port_range_min,
+               'port_range_max': sg_rule_db.port_range_max,
+               'remote_ip_prefix': sg_rule_db.remote_ip_prefix,
+               'remote_address_group_id': sg_rule_db.remote_address_group_id,
                'normalized_cidr': self._get_normalized_cidr_from_rule(
-                   security_group_rule),
-               'remote_group_id': security_group_rule['remote_group_id'],
-               'standard_attr_id': security_group_rule.standard_attr.id,
+                   sg_rule_db),
+               'remote_group_id': sg_rule_db.remote_group_id,
+               'standard_attr_id': sg_rule_db.standard_attr.id,
                }
 
-        resource_extend.apply_funcs(ext_sg.SECURITYGROUPRULES, res,
-                                    security_group_rule)
+        resource_extend.apply_funcs(ext_sg.SECURITYGROUPRULES, res, sg_rule_db)
         return db_utils.resource_fields(res, fields)
 
     @staticmethod
     def _get_normalized_cidr_from_rule(rule):
         normalized_cidr = None
-        remote_ip_prefix = rule.get('remote_ip_prefix')
+        remote_ip_prefix = rule.remote_ip_prefix
         if remote_ip_prefix:
             normalized_cidr = str(
                 net.AuthenticIPNetwork(remote_ip_prefix).cidr)
@@ -832,8 +835,7 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
         # be returned
         security_group_rule = self._get_security_group_rule(
             context_lib.get_admin_context(), id)
-        return self._make_security_group_rule_dict(
-            security_group_rule.db_obj, fields)
+        return self._make_security_group_rule_dict(security_group_rule, fields)
 
     def _get_security_group_rule(self, context, id):
         sgr = sg_obj.SecurityGroupRule.get_object(context, id=id)
