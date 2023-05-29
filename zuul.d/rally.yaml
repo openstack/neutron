@@ -177,5 +177,5 @@
             openstack:
               neutron_bind_l2_agent_types: "OVN Controller Gateway agent"
       rally_task: rally-jobs/task-neutron.yaml
-    timeout: 7800
+    timeout: 9000
 
