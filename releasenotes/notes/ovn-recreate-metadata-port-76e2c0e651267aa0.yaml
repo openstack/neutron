@@ -1,0 +1,11 @@
+---
+fixes:
+  - |
+    Fix an issue in the OVN driver where network metadata could
+    become unavailable if the metadata port was ever deleted, even
+    if accidental. To re-create the port, a user can now disable,
+    then enable, DHCP for one of the subnets associated with the
+    network using the Neutron API. This will try and create the
+    port, similar to what happens in the DHCP agent for ML2/OVS.
+    For more information, see bug `2015377
+    <https://bugs.launchpad.net/ubuntu/+source/neutron/+bug/2015377>`_.
