@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    Removed support for OVN versions under 20.09. The "Chassis_Private" OVN
+    Southbound table is expected in the database definition.

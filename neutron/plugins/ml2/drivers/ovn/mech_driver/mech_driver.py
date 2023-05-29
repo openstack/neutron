@@ -137,10 +137,7 @@ class OVNMechanismDriver(api.MechanismDriver):
                          OVN_MIN_GENEVE_MAX_HEADER_SIZE)
             raise SystemExit(1)
         self._setup_vif_port_bindings()
-        if impl_idl_ovn.OvsdbSbOvnIdl.schema_has_table('Chassis_Private'):
-            self.agent_chassis_table = 'Chassis_Private'
-        else:
-            self.agent_chassis_table = 'Chassis'
+        self.agent_chassis_table = 'Chassis_Private'
         self.subscribe()
         self.qos_driver = qos_driver.OVNQosDriver.create(self)
         self.trunk_driver = trunk_driver.OVNTrunkDriver.create(self)
