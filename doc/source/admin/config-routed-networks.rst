@@ -634,7 +634,7 @@ creating multiple networks and/or increasing broadcast domain.
    example, the second segment uses the ``provider1`` physical network
    with VLAN ID 2020.
 
-  .. code-block:: console
+   .. code-block:: console
 
       $ openstack network segment create --physical-network provider1 \
         --network-type vlan --segment 2020 --network multisegment1 segment1-2
