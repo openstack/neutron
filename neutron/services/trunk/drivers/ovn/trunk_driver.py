@@ -22,10 +22,12 @@ from oslo_config import cfg
 from oslo_log import log
 
 from neutron.common.ovn import constants as ovn_const
+from neutron.common import utils as n_utils
 from neutron.db import db_base_plugin_common
 from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.objects import ports as port_obj
 from neutron.services.trunk.drivers import base as trunk_base
+from neutron.services.trunk import exceptions as trunk_exc
 
 
 SUPPORTED_INTERFACES = (
@@ -162,6 +164,10 @@ class OVNTrunkHandler(object):
         LOG.debug("Done unsetting parent for subport %s", subport.port_id)
         return db_port
 
+    @staticmethod
+    def _is_port_bound(port):
+        return n_utils.is_port_bound(port, log_message=False)
+
     def trunk_updated(self, trunk):
         # Check if parent port is handled by OVN.
         if not self.plugin_driver.nb_ovn.lookup('Logical_Switch_Port',
@@ -208,6 +214,16 @@ class OVNTrunkHandler(object):
             self.trunk_updated(payload.states[0])
         elif event == events.AFTER_DELETE:
             self.trunk_deleted(payload.states[0])
+        elif event == events.PRECOMMIT_CREATE:
+            trunk = payload.desired_state
+            parent_port = trunk.db_obj.port
+            if self._is_port_bound(parent_port):
+                raise trunk_exc.ParentPortInUse(port_id=parent_port.id)
+        elif event == events.PRECOMMIT_DELETE:
+            trunk = payload.states[0]
+            parent_port = payload.states[1]
+            if self._is_port_bound(parent_port):
+                raise trunk_exc.TrunkInUse(trunk_id=trunk.id)
 
     def subport_event(self, resource, event, trunk_plugin, payload):
         if event == events.AFTER_CREATE:
@@ -233,7 +249,8 @@ class OVNTrunkDriver(trunk_base.DriverBase):
             resource, event, trigger, payload=payload)
         self._handler = OVNTrunkHandler(self.plugin_driver)
         for _event in (events.AFTER_CREATE, events.AFTER_UPDATE,
-                       events.AFTER_DELETE):
+                       events.AFTER_DELETE, events.PRECOMMIT_CREATE,
+                       events.PRECOMMIT_DELETE):
             registry.subscribe(self._handler.trunk_event,
                                resources.TRUNK,
                                _event)
