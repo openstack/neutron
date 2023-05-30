@@ -14,6 +14,7 @@ import collections
 import copy
 import inspect
 import os
+import random
 
 import netaddr
 from neutron_lib.api.definitions import external_net
@@ -34,6 +35,7 @@ from oslo_log import log
 from oslo_serialization import jsonutils
 from oslo_utils import netutils
 from oslo_utils import strutils
+from ovsdbapp.backend.ovs_idl import rowview
 from ovsdbapp import constants as ovsdbapp_const
 import tenacity
 
@@ -853,3 +855,76 @@ def get_ovn_chassis_other_config(chassis):
         return chassis.other_config
     except AttributeError:
         return chassis.external_ids
+
+
+def sync_ha_chassis_group(context, network_id, nb_idl, sb_idl, txn):
+    """Return the UUID of the HA Chassis Group or the HA Chassis Group cmd.
+
+    Given the Neutron Network ID, this method will return (or create
+    and then return) the appropriate HA Chassis Group the external
+    port (in that network) needs to be associated with.
+
+    :param context: Neutron API context.
+    :param network_id: The Neutron network ID.
+    :param nb_idl: OVN NB IDL
+    :param sb_idl: OVN SB IDL
+    :param txn: The ovsdbapp transaction object.
+    :returns: The HA Chassis Group UUID or the HA Chassis Group command object.
+    """
+    plugin = directory.get_plugin()
+    az_hints = common_utils.get_az_hints(
+        plugin.get_network(context, network_id))
+
+    ha_ch_grp_name = ovn_name(network_id)
+    ext_ids = {constants.OVN_AZ_HINTS_EXT_ID_KEY: ','.join(az_hints)}
+    hcg_cmd = txn.add(nb_idl.ha_chassis_group_add(
+        ha_ch_grp_name, may_exist=True, external_ids=ext_ids))
+
+    if isinstance(hcg_cmd.result, rowview.RowView):
+        # The HA chassis group existed before this transaction.
+        ha_ch_grp = hcg_cmd.result
+    else:
+        # The HA chassis group is being created in this transaction.
+        ha_ch_grp = None
+
+    # Get the chassis belonging to the AZ hints
+    ch_list = sb_idl.get_gateway_chassis_from_cms_options(name_only=False)
+    if not az_hints:
+        az_chassis = get_gateway_chassis_without_azs(ch_list)
+    else:
+        az_chassis = get_chassis_in_azs(ch_list, az_hints)
+
+    priority = constants.HA_CHASSIS_GROUP_HIGHEST_PRIORITY
+    if ha_ch_grp:
+        # Remove any chassis that no longer belongs to the AZ hints
+        all_ch = {ch.chassis_name for ch in ha_ch_grp.ha_chassis}
+        ch_to_del = all_ch - az_chassis
+        for ch in ch_to_del:
+            txn.add(nb_idl.ha_chassis_group_del_chassis(
+                ha_ch_grp_name, ch, if_exists=True))
+
+        # Find the highest priority chassis in the HA Chassis Group. If
+        # it exists and still belongs to the same AZ, keep it as the
+        # highest priority in the group to avoid ports already bond to it
+        # from moving to another chassis.
+        high_prio_ch = max(ha_ch_grp.ha_chassis, key=lambda x: x.priority,
+                           default=None)
+        priority = constants.HA_CHASSIS_GROUP_HIGHEST_PRIORITY
+        if high_prio_ch and high_prio_ch.chassis_name in az_chassis:
+            txn.add(nb_idl.ha_chassis_group_add_chassis(
+                ha_ch_grp_name, high_prio_ch.chassis_name,
+                priority=priority))
+            az_chassis.remove(high_prio_ch.chassis_name)
+            priority -= 1
+
+    # Randomize the order so that networks belonging to the same
+    # availability zones do not necessarily end up with the same
+    # Chassis as the highest priority one.
+    for ch in random.sample(list(az_chassis), len(az_chassis)):
+        txn.add(nb_idl.ha_chassis_group_add_chassis(
+            hcg_cmd, ch, priority=priority))
+        priority -= 1
+
+    # Return the existing register UUID or the HA chassis group creation
+    # command (see ovsdbapp ``HAChassisGroupAddChassisCommand`` class).
+    return ha_ch_grp.uuid if ha_ch_grp else hcg_cmd
