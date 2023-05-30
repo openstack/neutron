@@ -294,6 +294,7 @@ class TrunkPlugin(service_base.ServicePluginBase):
             trunk = self._get_trunk(context, trunk_id)
             rules.trunk_can_be_managed(context, trunk)
             trunk_port_validator = rules.TrunkPortValidator(trunk.port_id)
+            parent_port = trunk.db_obj.port
             if trunk_port_validator.can_be_trunked_or_untrunked(context):
                 # NOTE(status_police): when a trunk is deleted, the logical
                 # object disappears from the datastore, therefore there is no
@@ -307,7 +308,7 @@ class TrunkPlugin(service_base.ServicePluginBase):
                                     'deleting trunk port %s: %s', trunk_id,
                                     str(e))
                 payload = events.DBEventPayload(context, resource_id=trunk_id,
-                                                states=(trunk,))
+                                                states=(trunk, parent_port))
                 registry.publish(resources.TRUNK, events.PRECOMMIT_DELETE,
                                  self, payload=payload)
             else:
@@ -317,7 +318,7 @@ class TrunkPlugin(service_base.ServicePluginBase):
         registry.publish(resources.TRUNK, events.AFTER_DELETE, self,
                          payload=events.DBEventPayload(
                              context, resource_id=trunk_id,
-                             states=(trunk,)))
+                             states=(trunk, parent_port)))
 
     @db_base_plugin_common.convert_result_to_dict
     def add_subports(self, context, trunk_id, subports):
