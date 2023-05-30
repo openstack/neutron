@@ -17,7 +17,6 @@ import netaddr
 from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import portbindings
-from neutron_lib.api.definitions import portbindings_extended
 from neutron_lib.api.definitions import router_admin_state_down_before_update
 from neutron_lib.api import validators
 from neutron_lib.callbacks import events
@@ -68,18 +67,6 @@ def is_admin_state_down_necessary():
             router_admin_state_down_before_update.ALIAS in (extensions.
                     PluginAwareExtensionManager.get_instance().extensions)
     return _IS_ADMIN_STATE_DOWN_NECESSARY
-
-
-# TODO(slaweq): this should be moved to neutron_lib.plugins.utils module
-def is_port_bound(port):
-    active_binding = plugin_utils.get_port_binding_by_status_and_host(
-        port.get("port_bindings", []), const.ACTIVE)
-    if not active_binding:
-        LOG.warning("Binding for port %s was not found.", port)
-        return False
-    return active_binding[portbindings_extended.VIF_TYPE] not in [
-        portbindings.VIF_TYPE_UNBOUND,
-        portbindings.VIF_TYPE_BINDING_FAILED]
 
 
 @registry.has_registry_receivers
@@ -1426,7 +1413,7 @@ class L3_NAT_with_dvr_db_mixin(_DVRAgentInterfaceMixin,
 
     def get_ports_under_dvr_connected_subnet(self, context, subnet_id):
         query = dvr_mac_db.get_ports_query_by_subnet_and_ip(context, subnet_id)
-        ports = [p for p in query.all() if is_port_bound(p)]
+        ports = [p for p in query.all() if n_utils.is_port_bound(p)]
         # TODO(slaweq): if there would be way to pass to neutron-lib only
         # list of extensions which actually should be processed, than setting
         # process_extensions=True below could avoid that second loop and
