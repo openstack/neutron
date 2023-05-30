@@ -405,6 +405,17 @@ class TestDhcpAgent(base.BaseTestCase):
             'iface0',
             agent.call_driver('get_metadata_bind_interface', network))
 
+    def test_call_driver_get_metadata_bind_interface_returns_segments(self):
+        network = fake_network
+        network.segments = [
+            dhcp.DictModel(id='bbbbbbbb-bbbb-bbbb-bbbbbbbbbbbb')]
+        network.subnets[0] = fake_subnet1
+        self.driver().get_metadata_bind_interface.return_value = 'iface0'
+        agent = dhcp_agent.DhcpAgent(cfg.CONF)
+        self.assertEqual(
+            'iface0',
+            agent.call_driver('get_metadata_bind_interface', network))
+
     def _test_sync_state_helper(self, known_net_ids, active_net_ids):
         active_networks = set(mock.Mock(id=netid) for netid in active_net_ids)
 
