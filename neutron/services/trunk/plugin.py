@@ -293,6 +293,7 @@ class TrunkPlugin(service_base.ServicePluginBase):
             trunk = self._get_trunk(context, trunk_id)
             rules.trunk_can_be_managed(context, trunk)
             trunk_port_validator = rules.TrunkPortValidator(trunk.port_id)
+            parent_port = trunk.db_obj.port
             if trunk_port_validator.can_be_trunked_or_untrunked(context):
                 # NOTE(status_police): when a trunk is deleted, the logical
                 # object disappears from the datastore, therefore there is no
@@ -305,8 +306,13 @@ class TrunkPlugin(service_base.ServicePluginBase):
                         LOG.warning('Trunk driver raised exception when '
                                     'deleting trunk port %s: %s', trunk_id,
                                     str(e))
+                # NOTE(ralonsoh): this patch is overriding the concept of
+                # "TrunkPayload.current_trunk" to pass the parent_port
+                # information. No existing consumer is expecting it, apart from
+                # the one implemented in this patch.
                 payload = callbacks.TrunkPayload(context, trunk_id,
-                                                 original_trunk=trunk)
+                                                 original_trunk=trunk,
+                                                 current_trunk=parent_port)
                 registry.notify(resources.TRUNK,
                                 events.PRECOMMIT_DELETE,
                                 self, payload=payload)
