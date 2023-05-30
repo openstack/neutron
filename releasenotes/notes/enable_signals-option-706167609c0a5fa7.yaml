@@ -1,0 +1,11 @@
+---
+features:
+  - |
+    A new config option ``enable_signals`` has been added to neutron.conf to
+    control whether neutron-server registers signal handlers or not (like
+    SIGTERM, etc). The default value for this new option is True to mimic the
+    original behavior of registering signal handlers.
+    The recommendation is to set this option to False when neutron-server is
+    running behind a WSGI server, because in that situation the signals are
+    taken over by the WSGI server and neutron will print a stack trace letting
+    us know that signals cannot be registered.

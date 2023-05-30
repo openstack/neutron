@@ -154,10 +154,13 @@ class OVOServerRpcInterface(object):
     Generates RPC callback notifications on ML2 object changes.
     """
 
-    def __init__(self):
+    def __init__(self, enable_signals=True):
         self._rpc_pusher = resources_rpc.ResourcesPushRpcApi()
         self._setup_change_handlers()
-        _setup_change_handlers_cleanup()
+        # When running behind wsgi server (like apache2/mod_wsgi)
+        # we should not register signals
+        if enable_signals:
+            _setup_change_handlers_cleanup()
         LOG.debug("ML2 OVO RPC backend initialized.")
 
     def _setup_change_handlers(self):
