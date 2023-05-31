@@ -52,9 +52,8 @@ class TestUtils(base.BaseTestCase):
     def test_get_system_dns_resolvers(self):
         tempdir = self.useFixture(fixtures.TempDir()).path
         resolver_file_name = tempdir + '/resolv.conf'
-        tmp_resolv_file = open(resolver_file_name, 'w')
-        tmp_resolv_file.writelines(RESOLV_CONF_TEMPLATE)
-        tmp_resolv_file.close()
+        with open(resolver_file_name, 'w') as f:
+            f.writelines(RESOLV_CONF_TEMPLATE)
         expected_dns_resolvers = RESOLV_DNS_SERVERS
         observed_dns_resolvers = utils.get_system_dns_resolvers(
             resolver_file=resolver_file_name)
