@@ -894,7 +894,7 @@ def get_ovn_chassis_other_config(chassis):
         return chassis.external_ids
 
 
-def get_subnets_address_scopes(context, subnets, fixed_ips, ml2_plugin):
+def get_subnets_address_scopes(context, subnets_by_id, fixed_ips, ml2_plugin):
     """Returns the IPv4 and IPv6 address scopes of several subnets.
 
     The subnets hosted on the same network must be allocated from the same
@@ -903,17 +903,16 @@ def get_subnets_address_scopes(context, subnets, fixed_ips, ml2_plugin):
     one for IPv4 and one for IPv6).
 
     :param context: neutron api request context
-    :param subnets: (list of dict) subnet dictionaries
+    :param subnets_by_id: (dict) of subnets {subnet_id: subnet, ...}
     :param fixed_ips: (list of dict) fixed IPs of several subnets (usually
                       belonging to a network but not mandatory)
     :param ml2_plugin: (``Ml2Plugin``) ML2 plugin instance
     :return: (tuple of 2 strings) IPv4 and IPv6 address scope IDs
     """
     address4_scope_id, address6_scope_id = '', ''
-    if not subnets:
+    if not subnets_by_id:
         return address4_scope_id, address6_scope_id
 
-    subnets_by_id = {subnet['id']: subnet for subnet in subnets}
     for fixed_ip in fixed_ips:
         subnet_id = fixed_ip.get('subnet_id')
         subnet = subnets_by_id.get(subnet_id)
@@ -1009,11 +1008,11 @@ def sync_ha_chassis_group(context, network_id, nb_idl, sb_idl, txn):
     return ha_ch_grp.uuid if ha_ch_grp else hcg_cmd
 
 
-def get_port_type_virtual_and_parents(subnets, fixed_ips, network_id, port_id,
-                                      nb_idl):
+def get_port_type_virtual_and_parents(subnets_by_id, fixed_ips, network_id,
+                                      port_id, nb_idl):
     """Returns if a port is type virtual and its corresponding parents.
 
-    :param subnets: (list of dict) subnet dictionaries
+    :param subnets_by_id: (dict) of subnets {subnet_id: subnet, ...}
     :param fixed_ips: (list of dict) fixed IPs of several subnets (usually
                       belonging to a network but not mandatory)
     :param network_id: (string) network ID
@@ -1023,10 +1022,9 @@ def get_port_type_virtual_and_parents(subnets, fixed_ips, network_id, port_id,
              (2) the virtual IP address and (3) the virtual parents
     """
     port_type, virtual_ip, virtual_parents = '', None, None
-    if not subnets:
+    if not subnets_by_id:
         return port_type, virtual_ip, virtual_parents
 
-    subnets_by_id = {subnet['id'] for subnet in subnets}
     for fixed_ip in fixed_ips:
         if fixed_ip.get('subnet_id') not in subnets_by_id:
             continue
@@ -1109,8 +1107,9 @@ def validate_port_binding_and_virtual_port(
 
     subnets = ml2_plugin.get_subnets(port_context.plugin_context,
                                      filters={'id': list(subnet_ids)})
+    subnets_by_id = {subnet['id']: subnet for subnet in subnets}
     port_type, _, _ = get_port_type_virtual_and_parents(
-        subnets, fixed_ips, port['network_id'], port['id'], nb_idl)
+        subnets_by_id, fixed_ips, port['network_id'], port['id'], nb_idl)
     if port_type == constants.LSP_TYPE_VIRTUAL:
         raise n_exc.BadRequest(
             resource='port',
