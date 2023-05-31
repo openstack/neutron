@@ -202,14 +202,21 @@ class SbGlobalUpdateEvent(row_event.RowEvent):
                     ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY:
                         str(row.nb_cfg)})).execute()
 
+        delay = 0
         if self.first_run:
-            interval = 0
             self.first_run = False
         else:
-            interval = randint(0, cfg.CONF.agent_down_time // 2)
+            # We occasionally see port binding failed errors due to
+            # the ml2 driver refusing to bind the port to a dead agent.
+            # if all agents heartbeat at the same time, they will all
+            # cause a load spike on the server. To mitigate that we
+            # need to spread out the load by introducing a random delay.
+            # clamp the max delay between 3 and 10 seconds.
+            max_delay = max(min(cfg.CONF.agent_down_time // 3, 10), 3)
+            delay = randint(0, max_delay)
 
-        LOG.debug("Delaying updating chassis table for %s seconds", interval)
-        timer = threading.Timer(interval, _update_chassis, [self, row])
+        LOG.debug("Delaying updating chassis table for %s seconds", delay)
+        timer = threading.Timer(delay, _update_chassis, [self, row])
         timer.start()
 
 
