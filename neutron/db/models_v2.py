@@ -25,6 +25,7 @@ import sqlalchemy as sa
 from sqlalchemy import orm
 from sqlalchemy import sql
 
+from neutron.common import _constants as n_const
 from neutron.db.network_dhcp_agent_binding import models as ndab_model
 from neutron.db import rbac_db_models
 
@@ -296,7 +297,8 @@ class SubnetPool(standard_attr.HasStandardAttributes, model_base.BASEV2,
     is_default = sa.Column(sa.Boolean, nullable=False,
                            server_default=sql.false())
     default_quota = sa.Column(sa.Integer, nullable=True)
-    hash = sa.Column(sa.String(36), nullable=False, server_default='')
+    hash = sa.Column(sa.String(36), nullable=False,
+                     server_default=n_const.SQL_EMPTY_STRING)
     address_scope_id = sa.Column(sa.String(36), nullable=True, index=True)
     prefixes = orm.relationship(SubnetPoolPrefix,
                                 backref='subnetpools',
