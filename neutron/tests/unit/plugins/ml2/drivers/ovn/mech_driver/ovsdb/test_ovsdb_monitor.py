@@ -302,20 +302,45 @@ class TestOvnIdlDistributedLock(base.BaseTestCase):
 
         self.assertFalse(self.mock_update_tables.called)
 
-    def _test_handle_db_schema(self, agent_table):
+    def _test_handle_db_schema(self, agent_table, chassis_private_present):
         database_table_row = self._create_fake_row('Database')
         self.idl._tables_to_register[database_table_row.name] = 'foo'
 
         self.fake_driver.agent_chassis_table = agent_table
-        self.idl.tables['Chassis_Private'] = 'foo'
+        if chassis_private_present:
+            self.idl.tables['Chassis_Private'] = 'foo'
+        else:
+            try:
+                del self.idl.tables['Chassis_Private']
+            except KeyError:
+                pass
+
         self.idl.handle_db_schema_changes(
             ovsdb_monitor.BaseEvent.ROW_CREATE, database_table_row)
+
+    def test_handle_db_schema_changes_old_schema_to_old_schema(self):
+        """Agents use Chassis and should keep using Chassis table"""
+        self._test_handle_db_schema('Chassis', chassis_private_present=False)
+        self.assertEqual('Chassis', self.fake_driver.agent_chassis_table)
+
+    def test_handle_db_schema_changes_old_schema_to_new_schema(self):
+        """Agents use Chassis and should start using Chassis_Private table"""
+        self._test_handle_db_schema('Chassis', chassis_private_present=True)
+        self.assertEqual('Chassis_Private',
+                         self.fake_driver.agent_chassis_table)
+
+    def test_handle_db_schema_changes_new_schema_to_old_schema(self):
+        """Agents use Chassis_Private and should start using Chassis table"""
+        self._test_handle_db_schema('Chassis_Private',
+                                    chassis_private_present=False)
+        self.assertEqual('Chassis', self.fake_driver.agent_chassis_table)
 
     def test_handle_db_schema_changes_new_schema_to_new_schema(self):
         """Agents use Chassis_Private and should keep using Chassis_Private
            table.
         """
-        self._test_handle_db_schema('Chassis_Private')
+        self._test_handle_db_schema('Chassis_Private',
+                                    chassis_private_present=True)
         self.assertEqual('Chassis_Private',
                          self.fake_driver.agent_chassis_table)
 

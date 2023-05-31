@@ -1,17 +1,14 @@
 {
     "name": "OVN_Northbound",
-    "version": "6.3.0",
-    "cksum": "4042813038 31869",
+    "version": "5.23.0",
+    "cksum": "111023208 25806",
     "tables": {
         "NB_Global": {
             "columns": {
                 "name": {"type": "string"},
                 "nb_cfg": {"type": {"key": "integer"}},
-                "nb_cfg_timestamp": {"type": {"key": "integer"}},
                 "sb_cfg": {"type": {"key": "integer"}},
-                "sb_cfg_timestamp": {"type": {"key": "integer"}},
                 "hv_cfg": {"type": {"key": "integer"}},
-                "hv_cfg_timestamp": {"type": {"key": "integer"}},
                 "external_ids": {
                     "type": {"key": "string", "value": "string",
                              "min": 0, "max": "unlimited"}},
@@ -29,19 +26,6 @@
                              "min": 0, "max": "unlimited"}},
                 "ipsec": {"type": "boolean"}},
             "maxRows": 1,
-            "isRoot": true},
-        "Copp": {
-            "columns": {
-                "name": {"type": "string"},
-                "meters": {
-                    "type": {"key": "string",
-                             "value": "string",
-                             "min": 0,
-                             "max": "unlimited"}},
-                "external_ids": {
-                    "type": {"key": "string", "value": "string",
-                             "min": 0, "max": "unlimited"}}},
-            "indexes": [["name"]],
             "isRoot": true},
         "Logical_Switch": {
             "columns": {
@@ -66,19 +50,11 @@
                                                   "refType": "weak"},
                                            "min": 0,
                                            "max": "unlimited"}},
-                "load_balancer_group": {
-                    "type": {"key": {"type": "uuid",
-                                     "refTable": "Load_Balancer_Group"},
-                             "min": 0,
-                             "max": "unlimited"}},
                 "dns_records": {"type": {"key": {"type": "uuid",
                                          "refTable": "DNS",
                                          "refType": "weak"},
                                   "min": 0,
                                   "max": "unlimited"}},
-                "copp": {"type": {"key": {"type": "uuid", "refTable": "Copp",
-                                          "refType": "weak"},
-                                  "min": 0, "max": 1}},
                 "other_config": {
                     "type": {"key": "string", "value": "string",
                              "min": 0, "max": "unlimited"}},
@@ -209,24 +185,9 @@
                                 ["eth_src", "eth_dst", "ip_src", "ip_dst",
                                  "tp_src", "tp_dst"]]},
                              "min": 0, "max": "unlimited"}},
-                "options": {
-                     "type": {"key": "string",
-                              "value": "string",
-                              "min": 0,
-                              "max": "unlimited"}},
                 "external_ids": {
                     "type": {"key": "string", "value": "string",
                              "min": 0, "max": "unlimited"}}},
-            "isRoot": true},
-        "Load_Balancer_Group": {
-            "columns": {
-                "name": {"type": "string"},
-                "load_balancer": {"type": {"key": {"type": "uuid",
-                                                   "refTable": "Load_Balancer",
-                                                   "refType": "weak"},
-                                 "min": 0,
-                                 "max": "unlimited"}}},
-            "indexes": [["name"]],
             "isRoot": true},
         "Load_Balancer_Health_Check": {
             "columns": {
@@ -252,10 +213,7 @@
                                             "enum": ["set", ["from-lport", "to-lport"]]}}},
                 "match": {"type": "string"},
                 "action": {"type": {"key": {"type": "string",
-                                            "enum": ["set",
-                                               ["allow", "allow-related",
-                                                "allow-stateless", "drop",
-                                                "reject"]]}}},
+                                            "enum": ["set", ["allow", "allow-related", "drop", "reject"]]}}},
                 "log": {"type": "boolean"},
                 "severity": {"type": {"key": {"type": "string",
                                               "enum": ["set",
@@ -264,14 +222,6 @@
                                                         "debug"]]},
                                       "min": 0, "max": 1}},
                 "meter": {"type": {"key": "string", "min": 0, "max": 1}},
-                "label": {"type": {"key": {"type": "integer",
-                                           "minInteger": 0,
-                                           "maxInteger": 4294967295}}},
-                "options": {
-                     "type": {"key": "string",
-                              "value": "string",
-                              "min": 0,
-                              "max": "unlimited"}},
                 "external_ids": {
                     "type": {"key": "string", "value": "string",
                              "min": 0, "max": "unlimited"}}},
@@ -311,7 +261,6 @@
                                            "refType": "strong"},
                                    "min": 1,
                                    "max": "unlimited"}},
-                "fair": {"type": {"key": "boolean", "min": 0, "max": 1}},
                 "external_ids": {
                     "type": {"key": "string", "value": "string",
                              "min": 0, "max": "unlimited"}}},
@@ -361,14 +310,6 @@
                                                   "refType": "weak"},
                                            "min": 0,
                                            "max": "unlimited"}},
-                "load_balancer_group": {
-                    "type": {"key": {"type": "uuid",
-                                     "refTable": "Load_Balancer_Group"},
-                             "min": 0,
-                             "max": "unlimited"}},
-                "copp": {"type": {"key": {"type": "uuid", "refTable": "Copp",
-                                          "refType": "weak"},
-                                  "min": 0, "max": 1}},
                 "options": {
                      "type": {"key": "string",
                               "value": "string",
@@ -417,7 +358,6 @@
             "isRoot": false},
         "Logical_Router_Static_Route": {
             "columns": {
-                "route_table": {"type": "string"},
                 "ip_prefix": {"type": "string"},
                 "policy": {"type": {"key": {"type": "string",
                                             "enum": ["set", ["src-ip",
@@ -425,13 +365,6 @@
                                     "min": 0, "max": 1}},
                 "nexthop": {"type": "string"},
                 "output_port": {"type": {"key": "string", "min": 0, "max": 1}},
-                "bfd": {"type": {"key": {"type": "uuid", "refTable": "BFD",
-                                          "refType": "weak"},
-                                  "min": 0,
-                                  "max": 1}},
-                "options": {
-                    "type": {"key": "string", "value": "string",
-                             "min": 0, "max": "unlimited"}},
                 "external_ids": {
                     "type": {"key": "string", "value": "string",
                              "min": 0, "max": "unlimited"}}},
@@ -446,11 +379,6 @@
                     "key": {"type": "string",
                             "enum": ["set", ["allow", "drop", "reroute"]]}}},
                 "nexthop": {"type": {"key": "string", "min": 0, "max": 1}},
-                "nexthops": {"type": {
-                    "key": "string", "min": 0, "max": "unlimited"}},
-                "options": {
-                    "type": {"key": "string", "value": "string",
-                             "min": 0, "max": "unlimited"}},
                 "external_ids": {
                     "type": {"key": "string", "value": "string",
                              "min": 0, "max": "unlimited"}}},
@@ -469,22 +397,6 @@
                                                              "snat",
                                                              "dnat_and_snat"
                                                                ]]}}},
-                "allowed_ext_ips": {"type": {
-                    "key": {"type": "uuid", "refTable": "Address_Set",
-                            "refType": "strong"},
-                    "min": 0,
-                    "max": 1}},
-                "exempted_ext_ips": {"type": {
-                    "key": {"type": "uuid", "refTable": "Address_Set",
-                            "refType": "strong"},
-                    "min": 0,
-                    "max": 1}},
-                "gateway_port": {
-                    "type": {"key": {"type": "uuid",
-                                     "refTable": "Logical_Router_Port",
-                                     "refType": "weak"},
-                             "min": 0,
-                             "max": 1}},
                 "options": {"type": {"key": "string", "value": "string",
                                      "min": 0, "max": "unlimited"}},
                 "external_ids": {
@@ -587,39 +499,5 @@
                     "type": {"key": "string", "value": "string",
                              "min": 0, "max": "unlimited"}}},
             "indexes": [["name"]],
-            "isRoot": true},
-        "BFD": {
-            "columns": {
-                "logical_port": {"type": "string"},
-                "dst_ip": {"type": "string"},
-                "min_tx": {"type": {"key": {"type": "integer",
-                                            "minInteger": 1},
-                                    "min": 0, "max": 1}},
-                "min_rx": {"type": {"key": {"type": "integer"},
-                                    "min": 0, "max": 1}},
-                "detect_mult": {"type": {"key": {"type": "integer",
-                                                 "minInteger": 1},
-                                    "min": 0, "max": 1}},
-                "status": {
-                    "type": {"key": {"type": "string",
-                             "enum": ["set", ["down", "init", "up",
-                                              "admin_down"]]},
-                             "min": 0, "max": 1}},
-                "external_ids": {
-                    "type": {"key": "string", "value": "string",
-                             "min": 0, "max": "unlimited"}},
-                "options": {
-                    "type": {"key": "string", "value": "string",
-                             "min": 0, "max": "unlimited"}}},
-            "indexes": [["logical_port", "dst_ip"]],
-            "isRoot": true},
-        "Static_MAC_Binding": {
-            "columns": {
-                "logical_port": {"type": "string"},
-                "ip": {"type": "string"},
-                "mac": {"type": "string"},
-                "override_dynamic_mac": {"type": "boolean"}},
-            "indexes": [["logical_port", "ip"]],
-             "isRoot": true}
+            "isRoot": true}}
     }
-}

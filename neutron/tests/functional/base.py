@@ -423,15 +423,17 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
             name, ['geneve'], '172.24.4.%d' % self._counter,
             external_ids=external_ids, hostname=host,
             other_config=other_config).execute(check_error=True)
-        nb_cfg_timestamp = timeutils.utcnow_ts() * 1000
-        self.sb_api.db_create(
-            'Chassis_Private', name=name, external_ids=external_ids,
-            chassis=chassis.uuid, nb_cfg_timestamp=nb_cfg_timestamp
-        ).execute(check_error=True)
+        if self.sb_api.is_table_present('Chassis_Private'):
+            nb_cfg_timestamp = timeutils.utcnow_ts() * 1000
+            self.sb_api.db_create(
+                'Chassis_Private', name=name, external_ids=external_ids,
+                chassis=chassis.uuid, nb_cfg_timestamp=nb_cfg_timestamp
+            ).execute(check_error=True)
         return name
 
     def del_fake_chassis(self, chassis, if_exists=True):
         self.sb_api.chassis_del(
             chassis, if_exists=if_exists).execute(check_error=True)
-        self.sb_api.db_destroy(
-            'Chassis_Private', chassis).execute(check_error=True)
+        if self.sb_api.is_table_present('Chassis_Private'):
+            self.sb_api.db_destroy(
+                'Chassis_Private', chassis).execute(check_error=True)

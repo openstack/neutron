@@ -85,7 +85,9 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
 
     @property
     def agent_chassis_table(self):
-        return 'Chassis_Private'
+        if self.agent.has_chassis_private:
+            return 'Chassis_Private'
+        return 'Chassis'
 
     def _start_metadata_agent(self):
         conf = self.useFixture(fixture_config.Config()).conf
