@@ -38,6 +38,18 @@ class SystemAdminTests(PortBindingsAPITestCase):
             policy.enforce,
             self.context, "get_port_binding", self.target)
 
+    def test_create_port_binding(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, "create_port_binding", self.target)
+
+    def test_delete_port_binding(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, "delete_port_binding", self.target)
+
     def test_activate_port_binding(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -69,6 +81,14 @@ class AdminTests(PortBindingsAPITestCase):
         self.assertTrue(
             policy.enforce(self.context, "get_port_binding", self.target))
 
+    def test_create_port_binding(self):
+        self.assertTrue(
+            policy.enforce(self.context, "create_port_binding", self.target))
+
+    def test_delete_port_binding(self):
+        self.assertTrue(
+            policy.enforce(self.context, "delete_port_binding", self.target))
+
     def test_activate_port_binding(self):
         self.assertTrue(
             policy.enforce(self.context, "activate", self.target))
@@ -85,6 +105,18 @@ class ProjectMemberTests(AdminTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, "get_port_binding", self.target)
+
+    def test_create_port_binding(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "create_port_binding", self.target)
+
+    def test_delete_port_binding(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "delete_port_binding", self.target)
 
     def test_activate_port_binding(self):
         self.assertRaises(
