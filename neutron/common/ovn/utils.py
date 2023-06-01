@@ -857,6 +857,48 @@ def get_ovn_chassis_other_config(chassis):
         return chassis.external_ids
 
 
+def get_subnets_address_scopes(context, subnets, fixed_ips, ml2_plugin):
+    """Returns the IPv4 and IPv6 address scopes of several subnets.
+
+    The subnets hosted on the same network must be allocated from the same
+    subnet pool (from ``NetworkSubnetPoolAffinityError`` exception). That
+    applies per IP version (it means it is possible to have two subnet pools,
+    one for IPv4 and one for IPv6).
+
+    :param context: neutron api request context
+    :param subnets: (list of dict) subnet dictionaries
+    :param fixed_ips: (list of dict) fixed IPs of several subnets (usually
+                      belonging to a network but not mandatory)
+    :param ml2_plugin: (``Ml2Plugin``) ML2 plugin instance
+    :return: (tuple of 2 strings) IPv4 and IPv6 address scope IDs
+    """
+    address4_scope_id, address6_scope_id = '', ''
+    if not subnets:
+        return address4_scope_id, address6_scope_id
+
+    subnets_by_id = {subnet['id']: subnet for subnet in subnets}
+    for fixed_ip in fixed_ips:
+        subnet_id = fixed_ip.get('subnet_id')
+        subnet = subnets_by_id.get(subnet_id)
+        if not subnet or not subnet['subnetpool_id']:
+            continue
+
+        try:
+            subnet_pool = ml2_plugin.get_subnetpool(context,
+                                                    id=subnet['subnetpool_id'])
+            if subnet_pool['address_scope_id']:
+                if subnet_pool['ip_version'] == const.IP_VERSION_4:
+                    address4_scope_id = subnet_pool['address_scope_id']
+                else:
+                    address6_scope_id = subnet_pool['address_scope_id']
+        except n_exc.SubnetPoolNotFound:
+            # swallow the exception and just continue if the
+            # lookup failed
+            pass
+
+    return address4_scope_id, address6_scope_id
+
+
 def sync_ha_chassis_group(context, network_id, nb_idl, sb_idl, txn):
     """Return the UUID of the HA Chassis Group or the HA Chassis Group cmd.
 
