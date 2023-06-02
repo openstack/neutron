@@ -970,3 +970,39 @@ def sync_ha_chassis_group(context, network_id, nb_idl, sb_idl, txn):
     # Return the existing register UUID or the HA chassis group creation
     # command (see ovsdbapp ``HAChassisGroupAddChassisCommand`` class).
     return ha_ch_grp.uuid if ha_ch_grp else hcg_cmd
+
+
+def get_port_type_virtual_and_parents(subnets, fixed_ips, network_id, port_id,
+                                      nb_idl):
+    """Returns if a port is type virtual and its corresponding parents.
+
+    :param subnets: (list of dict) subnet dictionaries
+    :param fixed_ips: (list of dict) fixed IPs of several subnets (usually
+                      belonging to a network but not mandatory)
+    :param network_id: (string) network ID
+    :param port_id: (string) port ID
+    :param nb_idl: (``OvsdbNbOvnIdl``) OVN Northbound IDL
+    :return: (tuple, three strings) (1) the virtual type ('' if not virtual),
+             (2) the virtual IP address and (3) the virtual parents
+    """
+    port_type, virtual_ip, virtual_parents = '', None, None
+    if not subnets:
+        return port_type, virtual_ip, virtual_parents
+
+    subnets_by_id = {subnet['id'] for subnet in subnets}
+    for fixed_ip in fixed_ips:
+        if fixed_ip.get('subnet_id') not in subnets_by_id:
+            continue
+
+        # Check if the port being created is a virtual port
+        parents = get_virtual_port_parents(
+            nb_idl, fixed_ip['ip_address'], network_id, port_id)
+        if not parents:
+            continue
+
+        port_type = constants.LSP_TYPE_VIRTUAL
+        virtual_ip = fixed_ip['ip_address']
+        virtual_parents = ','.join(parents)
+        break
+
+    return port_type, virtual_ip, virtual_parents
