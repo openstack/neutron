@@ -36,6 +36,7 @@ class AddressScopeRBACDbObjectTestCase(test_rbac.TestRBACObjectMixin,
                                        testlib_api.SqlTestCase):
 
     _test_class = address_scope.AddressScopeRBAC
+    _parent_class = address_scope.AddressScope
 
     def setUp(self):
         super(AddressScopeRBACDbObjectTestCase, self).setUp()
