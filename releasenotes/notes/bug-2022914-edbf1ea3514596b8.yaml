@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    [`bug 2022914 <https://bugs.launchpad.net/neutron/+bug/2022914>`_]
+    Neutron-API supports using relays as the southbound connection in a
+    ML2/OVN setup. Before the maintenance worker of the API required a
+    leader_only connection, which was removed.
