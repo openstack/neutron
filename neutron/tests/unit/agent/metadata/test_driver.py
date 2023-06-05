@@ -188,9 +188,12 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 "%s.conf" % router_id)
             mock_open = self.useFixture(
                 lib_fixtures.OpenFixture(cfg_file)).mock_open
+            bind_v6_line = 'bind %s:%s interface %s' % (
+                self.METADATA_DEFAULT_IPV6, self.METADATA_PORT, 'fake-if')
             if dad_failed:
                 mock_wait.side_effect = ip_lib.DADFailed(
-                    address=self.METADATA_DEFAULT_IP, reason='DAD failed')
+                    address=self.METADATA_DEFAULT_IPV6, reason='DAD failed')
+                bind_v6_line = ''
             else:
                 mock_wait.return_value = True
             agent.metadata_driver.spawn_monitored_metadata_proxy(
@@ -209,8 +212,6 @@ class TestMetadataDriverProcess(base.BaseTestCase):
 
             log_tag = ("haproxy-" + metadata_driver.METADATA_SERVICE_NAME +
                        "-" + router_id)
-            bind_v6_line = 'bind %s:%s interface %s' % (
-                self.METADATA_DEFAULT_IPV6, self.METADATA_PORT, 'fake-if')
 
             expected_params = {
                 'user': self.EUNAME,
@@ -227,42 +228,41 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 'bind_v6_line': bind_v6_line}
 
             if dad_failed:
-                agent.process_monitor.register.assert_not_called()
                 mock_del.assert_called_once_with(self.METADATA_DEFAULT_IPV6,
                                                  'fake-if',
                                                  namespace=router_ns)
             else:
-                if rate_limited:
-                    expected_params.update(self.RATE_LIMIT_CONFIG,
-                                           stick_table_expire=10,
-                                           ip_version='ip')
-                    expected_config_template = (
-                        comm_meta.METADATA_HAPROXY_GLOBAL +
-                        comm_meta.RATE_LIMITED_CONFIG_TEMPLATE +
-                        metadata_driver._HEADER_CONFIG_TEMPLATE)
-                else:
-                    expected_config_template = (
-                        comm_meta.METADATA_HAPROXY_GLOBAL +
-                        metadata_driver._UNLIMITED_CONFIG_TEMPLATE +
-                        metadata_driver._HEADER_CONFIG_TEMPLATE)
-
-                mock_open.assert_has_calls([
-                    mock.call(cfg_file, 'w'),
-                    mock.call().write(expected_config_template %
-                                      expected_params)],
-                                           any_order=True)
-
-                env = {ep.PROCESS_TAG: service_name + '-' + router_id}
-                ip_mock.assert_has_calls([
-                    mock.call(namespace=router_ns),
-                    mock.call().netns.execute(netns_execute_args, addl_env=env,
-                                              run_as_root=True)
-                ])
-
-                agent.process_monitor.register.assert_called_once_with(
-                    router_id, metadata_driver.METADATA_SERVICE_NAME,
-                    mock.ANY)
                 mock_del.assert_not_called()
+
+            if rate_limited:
+                expected_params.update(self.RATE_LIMIT_CONFIG,
+                                       stick_table_expire=10,
+                                       ip_version='ip')
+                expected_config_template = (
+                    comm_meta.METADATA_HAPROXY_GLOBAL +
+                    comm_meta.RATE_LIMITED_CONFIG_TEMPLATE +
+                    metadata_driver._HEADER_CONFIG_TEMPLATE)
+            else:
+                expected_config_template = (
+                    comm_meta.METADATA_HAPROXY_GLOBAL +
+                    metadata_driver._UNLIMITED_CONFIG_TEMPLATE +
+                    metadata_driver._HEADER_CONFIG_TEMPLATE)
+
+            mock_open.assert_has_calls([
+                mock.call(cfg_file, 'w'),
+                mock.call().write(expected_config_template %
+                                  expected_params)], any_order=True)
+
+            env = {ep.PROCESS_TAG: service_name + '-' + router_id}
+            ip_mock.assert_has_calls([
+                mock.call(namespace=router_ns),
+                mock.call().netns.execute(netns_execute_args, addl_env=env,
+                                          run_as_root=True)
+            ])
+
+            agent.process_monitor.register.assert_called_once_with(
+                router_id, metadata_driver.METADATA_SERVICE_NAME,
+                mock.ANY)
 
     def test_spawn_metadata_proxy(self):
         self._test_spawn_metadata_proxy()
