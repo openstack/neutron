@@ -27,6 +27,7 @@ class SecurityGroupRBACDbObjectTestCase(test_rbac.TestRBACObjectMixin,
                                         testlib_api.SqlTestCase):
 
     _test_class = securitygroup.SecurityGroupRBAC
+    _parent_class = securitygroup.SecurityGroup
 
     def setUp(self):
         super(SecurityGroupRBACDbObjectTestCase, self).setUp()
