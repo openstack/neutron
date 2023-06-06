@@ -228,7 +228,7 @@ class Subnet(standard_attr.HasStandardAttributes, model_base.BASEV2,
     # subnets don't have their own rbac_entries, they just inherit from
     # the network rbac entries
     rbac_entries = orm.relationship(
-        rbac_db_models.NetworkRBAC, lazy='subquery', uselist=True,
+        rbac_db_models.NetworkRBAC, lazy='joined', uselist=True,
         foreign_keys='Subnet.network_id',
         primaryjoin='Subnet.network_id==NetworkRBAC.object_id',
         viewonly=True)
@@ -282,7 +282,7 @@ class SubnetPool(standard_attr.HasStandardAttributes, model_base.BASEV2,
                                 lazy='subquery')
     rbac_entries = sa.orm.relationship(rbac_db_models.SubnetPoolRBAC,
                                        backref='subnetpools',
-                                       lazy='subquery',
+                                       lazy='joined',
                                        cascade='all, delete, delete-orphan')
     api_collections = [subnetpool_def.COLLECTION_NAME]
     collection_resource_map = {subnetpool_def.COLLECTION_NAME:
@@ -304,7 +304,7 @@ class Network(standard_attr.HasStandardAttributes, model_base.BASEV2,
     rbac_entries = orm.relationship(rbac_db_models.NetworkRBAC,
                                     backref=orm.backref('network',
                                                         load_on_pending=True),
-                                    lazy='subquery',
+                                    lazy='joined',
                                     cascade='all, delete, delete-orphan')
     availability_zone_hints = sa.Column(sa.String(255))
     mtu = sa.Column(sa.Integer, nullable=False,
