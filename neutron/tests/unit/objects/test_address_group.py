@@ -58,6 +58,7 @@ class AddressGroupRBACDbObjectTestCase(test_rbac.TestRBACObjectMixin,
                                        testlib_api.SqlTestCase):
 
     _test_class = address_group.AddressGroupRBAC
+    _parent_class = address_group.AddressGroup
 
     def setUp(self):
         super(AddressGroupRBACDbObjectTestCase, self).setUp()

@@ -12,6 +12,8 @@
 
 from unittest import mock
 
+from neutron_lib.api.definitions import availability_zone as az_def
+
 from neutron.db import rbac_db_models
 from neutron.objects import base as obj_base
 from neutron.objects import network
@@ -27,6 +29,7 @@ class NetworkRBACDbObjectTestCase(test_rbac.TestRBACObjectMixin,
                                   testlib_api.SqlTestCase):
 
     _test_class = network.NetworkRBAC
+    _parent_class = network.Network
 
     def setUp(self):
         self._mock_get_valid_actions = mock.patch.object(
@@ -49,6 +52,13 @@ class NetworkRBACDbObjectTestCase(test_rbac.TestRBACObjectMixin,
         self.assertNotIn('project_id',
                          network_rbac_obj['versioned_object.data'])
         self.assertNotIn('id', network_rbac_obj['versioned_object.data'])
+
+    def _create_random_parent_object(self):
+        objclass_fields = self.get_random_db_fields(self._parent_class)
+        objclass_fields.pop(az_def.AZ_HINTS)
+        _obj = self._parent_class(self.context, **objclass_fields)
+        _obj.create()
+        return _obj
 
 
 class NetworkRBACIfaceOjectTestCase(test_rbac.TestRBACObjectMixin,

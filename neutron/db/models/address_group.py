@@ -46,6 +46,6 @@ class AddressGroup(standard_attr.HasStandardAttributes,
                                  cascade='all, delete-orphan')
     rbac_entries = sa.orm.relationship(rbac_db_models.AddressGroupRBAC,
                                        backref='address_groups',
-                                       lazy='subquery',
+                                       lazy='joined',
                                        cascade='all, delete, delete-orphan')
     api_collections = [ag.ALIAS]
