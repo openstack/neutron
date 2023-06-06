@@ -320,7 +320,7 @@ def add_tc_qdisc(device, qdisc_type, parent=None, handle=None, latency_ms=None,
     args = {'kind': qdisc_type}
     if qdisc_type in ['htb', 'ingress']:
         if handle:
-            args['handle'] = str(handle).split(':')[0] + ':0'
+            args['handle'] = str(handle).split(':', maxsplit=1)[0] + ':0'
     elif qdisc_type == 'tbf':
         if not latency_ms or not max_kbps or not kernel_hz:
             raise qos_exc.TcLibQdiscNeededArguments(

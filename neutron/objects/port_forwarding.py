@@ -146,11 +146,13 @@ class PortForwarding(base.NeutronDbObject):
             primitive['internal_port'] = int(
                 str(primitive.pop(
                     'internal_port_range',
-                    str(primitive.get('internal_port', '')))).split(':')[0])
+                    str(primitive.get('internal_port',
+                                      '')))).split(':', maxsplit=1)[0])
             primitive['external_port'] = int(
                 str(primitive.pop(
                     'external_port_range',
-                    str(primitive.get('external_port', '')))).split(':')[0])
+                    str(primitive.get('external_port',
+                                      '')))).split(':', maxsplit=1)[0])
 
     @staticmethod
     def _modify_single_ports_to_db(result):

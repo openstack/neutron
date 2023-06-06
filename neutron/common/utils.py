@@ -1065,7 +1065,7 @@ def skip_exceptions(exceptions):
                 with excutils.save_and_reraise_exception() as ctx:
                     if issubclass(type(exc), tuple(exceptions)):
                         LOG.info('Skipped exception %s when calling method %s',
-                                 ctx.value.__repr__(), function.__repr__())
+                                 repr(ctx.value), repr(function))
                         ctx.reraise = False
         return wrapper
     return decorator
