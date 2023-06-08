@@ -17,6 +17,7 @@ from neutron_lib import constants
 from neutron_lib.utils import net
 from oslo_config import cfg
 from oslo_service import wsgi
+from oslo_utils import netutils
 
 from neutron._i18n import _
 
@@ -156,6 +157,10 @@ core_opts = [
                        '2. DHCP scheduler API extension '
                        '3. Network scheduling mechanism '
                        '4. DHCP RPC/notification')),
+    cfg.StrOpt('my_ip', default=netutils.get_my_ipv4(),
+               help=_('IPv4 address of this host. If no address is provided '
+                      'and one cannot be determined, 127.0.0.1 will be '
+                      'used.')),
 ]
 
 core_cli_opts = [

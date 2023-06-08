@@ -1,0 +1,9 @@
+---
+other:
+  - |
+    Add a new config option in DEFAULT section named ``my_ip``.
+    This new config option will be set by default to the local IPv4 configured
+    to reach the default gateway.
+    This new setting might be useful for operators that need to configure this
+    IP in another part of their config (like OVS/local_ip) without relying on
+    any external templating system.
