@@ -33,6 +33,7 @@ from neutron.db.extra_dhcp_opt import models as extra_dhcp_opt_models
 from neutron.db.models import agent as agent_model
 from neutron.db.models import external_net
 from neutron.db.models import l3 as l3_models
+from neutron.db.models import l3ha as l3ha_models
 from neutron.db.models.plugins.ml2 import vlanallocation
 from neutron.db.models import segment
 from neutron.db import models_v2
@@ -164,6 +165,16 @@ def get_fip_per_network_without_qos_policies(network_id):
         return query.count()
 
 
+def get_duplicated_ha_networks_per_project():
+    """Return those HA network reg. that have more than 1 entry per project"""
+    ctx = context.get_admin_context()
+    with db_api.CONTEXT_READER.using(ctx):
+        query = ctx.session.query(l3ha_models.L3HARouterNetwork)
+        query = query.group_by(l3ha_models.L3HARouterNetwork.project_id)
+        query = query.having(func.count() > 1)
+        return query.all()
+
+
 class CoreChecks(base.BaseChecks):
 
     def get_checks(self):
@@ -191,6 +202,8 @@ class CoreChecks(base.BaseChecks):
                'network'),
              self.floatingip_inherit_qos_from_network),
             (_('Port extra DHCP options check'),
+             self.extra_dhcp_options_check),
+            (_('Duplicated HA network per project check'),
              self.extra_dhcp_options_check),
         ]
 
@@ -528,3 +541,32 @@ class CoreChecks(base.BaseChecks):
             upgradecheck.Code.SUCCESS,
             _('There are no extra_dhcp_opts with the newline character '
               'in the option name or option value.'))
+
+    @staticmethod
+    def duplicated_ha_network_per_project_check(checker):
+        """Check if there are duplicated HA networks per project
+
+        By definition there could be zero or one HA network per project. In
+        case of having more than one register associated to any existing
+        project (that should never happen), this check will fail.
+        """
+        if not cfg.CONF.database.connection:
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _("Database connection string is not set. Check for "
+                  "extra_dhcp_opts can't be done."))
+
+        ha_networks = get_duplicated_ha_networks_per_project()
+        project_ids = {ha_network['project_id'] for ha_network in ha_networks}
+        network_ids = {ha_network['network_id'] for ha_network in ha_networks}
+        if project_ids:
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _('The following projects have duplicated HA networks: '
+                  '%(project_ids)s. This is the list of duplicated HA '
+                  'networks: %(network_ids)s' %
+                  {'project_ids': project_ids, 'network_ids': network_ids}))
+
+        return upgradecheck.Result(
+            upgradecheck.Code.SUCCESS,
+            _('There are no duplicated HA networks in the system.'))

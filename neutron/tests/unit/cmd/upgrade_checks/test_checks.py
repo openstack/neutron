@@ -278,3 +278,22 @@ class TestChecks(base.BaseTestCase):
                           opt_value='bar\nbar')]
             result = checks.CoreChecks.extra_dhcp_options_check(mock.ANY)
             self.assertEqual(Code.WARNING, result.code)
+
+    @mock.patch.object(checks, 'get_duplicated_ha_networks_per_project')
+    def test_duplicated_ha_network_per_project_check_success(self,
+                                                             mock_ha_nets):
+        mock_ha_nets.return_value = []
+        result = checks.CoreChecks.duplicated_ha_network_per_project_check(
+            mock.ANY)
+        self.assertEqual(Code.SUCCESS, result.code)
+
+    @mock.patch.object(checks, 'get_duplicated_ha_networks_per_project')
+    def test_duplicated_ha_network_per_project_check_warning(self,
+                                                             mock_ha_nets):
+        mock_ha_nets.return_value = [
+            {'project_id': 'project1', 'network_id': 'net1'},
+            {'project_id': 'project1', 'network_id': 'net2'},
+        ]
+        result = checks.CoreChecks.duplicated_ha_network_per_project_check(
+            mock.ANY)
+        self.assertEqual(Code.WARNING, result.code)

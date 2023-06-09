@@ -67,6 +67,11 @@ class L3HARouterNetwork(model_base.BASEV2, model_base.HasProjectPrimaryKey):
     """
 
     __tablename__ = 'ha_router_networks'
+    __table_args__ = (
+        sa.UniqueConstraint('project_id',
+                            name='uniq_ha_router_networks0project_id'),
+        model_base.BASEV2.__table_args__
+    )
 
     network_id = sa.Column(sa.String(36),
                            sa.ForeignKey('networks.id', ondelete="CASCADE"),

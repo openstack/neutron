@@ -1,0 +1,8 @@
+---
+other:
+  - |
+    Introduced a database constraint to limit the number of
+    ``ha_router_networks`` registers per project to one only. This register is
+    used to bind projects and networks, defining the corresponding network
+    as high availability (HA) network. By definition, only one HA network per
+    project can exist.
