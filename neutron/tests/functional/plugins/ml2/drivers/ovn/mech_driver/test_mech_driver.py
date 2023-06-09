@@ -1169,6 +1169,19 @@ class TestAgentApi(base.TestOVNFunctionalBase):
         _, status = self.plugin.create_or_update_agent(self.context, agent)
         return status['id']
 
+    def _check_chassis_registers(self, present=True):
+        chassis = self.sb_api.lookup('Chassis', self.chassis, default=None)
+        chassis_name = chassis.name if chassis else None
+        if self.sb_api.is_table_present('Chassis_Private'):
+            ch_private = self.sb_api.lookup(
+                'Chassis_Private', self.chassis, default=None)
+            ch_private_name = ch_private.name if ch_private else None
+            self.assertEqual(chassis_name, ch_private_name)
+        if present:
+            self.assertEqual(self.chassis, chassis_name)
+        else:
+            self.assertIsNone(chassis)
+
     def test_agent_show(self):
         for agent_id in self.agent_types.values():
             self.assertTrue(self.plugin.get_agent(self.context, agent_id))
@@ -1217,12 +1230,15 @@ class TestAgentApi(base.TestOVNFunctionalBase):
         self.assertRaises(agent_exc.AgentNotFound, self.plugin.get_agent,
                           self.context, agent_id)
 
-        # OVN controller agent deletion, that triggers the "Chassis" register
-        # deletion. The "Chassis" register deletion triggers the host OVN
-        # agents deletion, both controller and metadata if present.
+        # OVN controller agent deletion, that triggers the "Chassis" and
+        # "Chassis_Private" registers deletion. The registers deletion triggers
+        # the host OVN agents deletion, both controller and metadata if
+        # present.
         controller_id = self.agent_types[ovn_const.OVN_CONTROLLER_AGENT]
         metadata_id = self.agent_types[ovn_const.OVN_METADATA_AGENT]
+        self._check_chassis_registers()
         self.plugin.delete_agent(self.context, controller_id)
+        self._check_chassis_registers(present=False)
         self.assertRaises(agent_exc.AgentNotFound, self.plugin.get_agent,
                           self.context, controller_id)
         self.assertEqual(
