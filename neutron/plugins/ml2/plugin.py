@@ -410,6 +410,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self.agent_notifiers[const.AGENT_TYPE_DHCP] = (
                 dhcp_rpc_agent_api.DhcpAgentNotifyAPI()
             )
+        # NOTE(zhouhenglc): SG notifier is not needed when using ML2/OVN, as
+        # there are no agents expecting these updates.
+        if 'ovn' not in self.mechanism_manager.mech_drivers:
+            self.register_sg_notifier()
 
     @log_helpers.log_method_call
     def start_rpc_listeners(self):

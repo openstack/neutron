@@ -1394,7 +1394,10 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                 'security_groups_member_updated') as sg_member_update:
             port['port']['fixed_ips'][0]['ip_address'] = '10.0.0.3'
             plugin.update_port(ctx, port['port']['id'], port)
-            self.assertTrue(sg_member_update.called)
+            if 'ovn' in self._mechanism_drivers:
+                sg_member_update.assert_not_called()
+            else:
+                self.assertTrue(sg_member_update.called)
 
     def test_update_port_name_do_not_notify_sg(self):
         ctx = context.get_admin_context()
@@ -1507,9 +1510,12 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             ports = self.deserialize(self.fmt, res)
             if 'ports' in ports:
                 used_sg = ports['ports'][0]['security_groups']
-                m_upd.assert_has_calls(
-                    [mock.call(mock.ANY, [sg]) for sg in used_sg],
-                    any_order=True)
+                if 'ovn' in self._mechanism_drivers:
+                    m_upd.assert_not_called()
+                else:
+                    m_upd.assert_has_calls(
+                        [mock.call(mock.ANY, [sg]) for sg in used_sg],
+                        any_order=True)
             else:
                 self.assertTrue('ports' in ports)
 
@@ -1552,7 +1558,10 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                                               as_admin=True)
             ports = self.deserialize(self.fmt, res)
             used_sg = ports['ports'][0]['security_groups']
-            m_upd.assert_called_with(mock.ANY, used_sg)
+            if 'ovn' in self._mechanism_drivers:
+                m_upd.assert_not_called()
+            else:
+                m_upd.assert_called_with(mock.ANY, used_sg)
             m_upd.reset_mock()
             data[0]['device_owner'] = constants.DEVICE_OWNER_DHCP
             self._create_bulk_from_list(self.fmt, 'port',

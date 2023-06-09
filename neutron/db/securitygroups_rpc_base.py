@@ -37,13 +37,17 @@ DIRECTION_IP_PREFIX = {'ingress': 'source_ip_prefix',
 DHCP_RULE_PORT = {4: (67, 68, const.IPv4), 6: (547, 546, const.IPv6)}
 
 
-@registry.has_registry_receivers
 class SecurityGroupServerNotifierRpcMixin(sg_db.SecurityGroupDbMixin):
     """Mixin class to add agent-based security group implementation."""
 
-    @registry.receives(resources.PORT, [events.AFTER_CREATE,
-                                        events.AFTER_UPDATE,
-                                        events.AFTER_DELETE])
+    def register_sg_notifier(self):
+        registry.subscribe(self._notify_sg_on_port_change, resources.PORT,
+                           events.AFTER_CREATE)
+        registry.subscribe(self._notify_sg_on_port_change, resources.PORT,
+                           events.AFTER_UPDATE)
+        registry.subscribe(self._notify_sg_on_port_change, resources.PORT,
+                           events.AFTER_DELETE)
+
     def _notify_sg_on_port_change(self, resource, event, trigger, payload):
         """Trigger notification to other SG members on port changes."""
 
