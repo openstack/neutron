@@ -161,6 +161,10 @@ core_opts = [
                help=_('IPv4 address of this host. If no address is provided '
                       'and one cannot be determined, 127.0.0.1 will be '
                       'used.')),
+    cfg.StrOpt('my_ipv6', default=netutils.get_my_ipv6(),
+               help=_('IPv6 address of this host. If no address is provided '
+                      'and one cannot be determined, ::1 will be '
+                      'used.')),
 ]
 
 core_cli_opts = [
