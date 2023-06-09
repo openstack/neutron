@@ -32,6 +32,7 @@ from oslo_utils import uuidutils
 from neutron.api.v2 import router as api_router
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
+from neutron.conf.plugins.ml2.drivers import driver_type as driver_type_conf
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as config
 from neutron import manager as neutron_manager
 from neutron.plugins.ml2 import managers
@@ -62,6 +63,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
     def setUp(self):
         mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
                    'impl_idl_ovn.Backend.schema_helper').start()
+        driver_type_conf.register_ml2_drivers_geneve_opts(cfg=cfg.CONF)
         cfg.CONF.set_override('max_header_size', 38, group='ml2_type_geneve')
         super(TestOVNL3RouterPlugin, self).setUp()
         revision_plugin.RevisionPlugin()
@@ -1526,12 +1528,10 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                       chassis_physnets=chassis_mappings,
                       cms=chassis, availability_zone_hints=[])] * 3)
         self.mock_schedule.assert_has_calls([
-            mock.call(self.nb_idl(), self.sb_idl(),
-                      'lrp-foo-1', [], ['chassis1', 'chassis2']),
-            mock.call(self.nb_idl(), self.sb_idl(),
-                      'lrp-foo-2', [], ['chassis2']),
-            mock.call(self.nb_idl(), self.sb_idl(),
-                      'lrp-foo-3', [], [])])
+            mock.call(self.nb_idl(), 'lrp-foo-1', [],
+                      ['chassis1', 'chassis2']),
+            mock.call(self.nb_idl(), 'lrp-foo-2', [], ['chassis2']),
+            mock.call(self.nb_idl(), 'lrp-foo-3', [], [])])
         # make sure that for second port primary chassis stays untouched
         self.nb_idl().update_lrouter_port.assert_has_calls([
             mock.call('lrp-foo-1',
