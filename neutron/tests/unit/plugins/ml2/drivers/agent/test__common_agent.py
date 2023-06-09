@@ -25,6 +25,7 @@ from oslo_config import cfg
 import testtools
 
 from neutron.agent.linux import bridge_lib
+from neutron.conf.plugins.ml2.drivers import linuxbridge as conf_lb
 from neutron.plugins.ml2.drivers.agent import _agent_manager_base as amb
 from neutron.plugins.ml2.drivers.agent import _common_agent as ca
 from neutron.tests import base
@@ -48,7 +49,8 @@ PORT_DATA = {
 
 class TestCommonAgentLoop(base.BaseTestCase):
     def setUp(self):
-        super(TestCommonAgentLoop, self).setUp()
+        super().setUp()
+        conf_lb.register_linuxbridge_opts(cfg=cfg.CONF)
         # disable setting up periodic state reporting
         cfg.CONF.set_override('report_interval', 0, 'AGENT')
         cfg.CONF.set_default('firewall_driver',
@@ -613,3 +615,10 @@ class TestCommonAgentLoop(base.BaseTestCase):
         )
         self.assertNotIn(NETWORK_ID, self.agent.network_ports.keys())
         self.assertEqual(port_2_data['port_id'], cleaned_port_id)
+
+    def test_stop(self):
+        mock_connection = mock.Mock()
+        self.agent.connection = mock_connection
+        with mock.patch.object(self.agent, 'set_rpc_timeout'):
+            self.agent.stop()
+            mock_connection.close.assert_called_once()
