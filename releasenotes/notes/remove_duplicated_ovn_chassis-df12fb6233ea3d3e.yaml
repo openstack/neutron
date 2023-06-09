@@ -1,0 +1,17 @@
+---
+issues:
+  - |
+    When using ML2/OVN, during an upgrade procedure, the OVS system-id stored
+    value can be changed. The ovn-controller service will create the "Chassis"
+    and "Chassis_Private" registers based on this OVS system-id. If the
+    ovn-controller process is not gracefully stopped, that could lead to the
+    existence of duplicated "Chassis" and "Chassis_Private" registers in the
+    OVN Southbound database.
+fixes:
+  - |
+    A new OVN maintenance method ``remove_duplicated_chassis_registers`` is
+    added. This method will periodically check the OVN Southbound "Chassis"
+    and "Chassis_Private" tables looking for duplicated registers. The older
+    ones (based on the "Chassis_Private.nb_cfg_timestamp" value) will be
+    removed when more than one register has the same hostname, that should
+    be unique.
