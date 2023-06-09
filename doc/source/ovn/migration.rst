@@ -155,6 +155,12 @@ Perform the following steps in the undercloud
      server that will be used as a NFS server to store the backup.
      Default: 192.168.24.1
 
+   * BACKUP_MIGRATION_CTL_PLANE_CIDRS - Only used if CREATE_BACKUP is enabled.
+     A comma separated string of control plane subnets in CIDR notation for the
+     controllers being backed up. The specified subnets will be used to enable
+     NFS remote clients connections.
+     Default: 192.168.24.0/24
+
    .. warning::
 
       Please note that VALIDATE_MIGRATION requires enough quota (2
