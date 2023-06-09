@@ -1050,6 +1050,72 @@ class TestMaintenance(_TestMaintenanceHelper):
             # Assert load balancer for port forwarding is gone
             self.assertFalse(self._find_pf_lb(router_id, fip_id))
 
+    def test_remove_duplicated_chassis_registers(self):
+        if not self.sb_api.is_table_present('Chassis_Private'):
+            self.skipTest('This test needs an OVN version with '
+                          '"Chassis_Private" table (>=20.09)')
+
+        hostnames = ['host1', 'host2']
+        for hostname in hostnames:
+            for _ in range(3):
+                self.add_fake_chassis(hostname)
+
+        chassis = self.sb_api.chassis_list().execute(check_error=True)
+        self.assertEqual(6, len(chassis))
+        # Make the chassis private timestamp different
+        for idx, ch in enumerate(chassis):
+            self.sb_api.db_set('Chassis_Private', ch.name,
+                               ('nb_cfg_timestamp', idx)).execute()
+
+        ch_private_dict = {}  # host: [ch_private1, ch_private2, ...]
+        for hostname in hostnames:
+            ch_private_list = []
+            for ch in (ch for ch in chassis if ch.hostname == hostname):
+                ch_private = self.sb_api.lookup('Chassis_Private', ch.name,
+                                                default=None)
+                if ch_private:
+                    # One of the "Chassis_Private" has been deleted on purpose
+                    # in this test.
+                    ch_private_list.append(ch_private)
+            ch_private_list.sort(key=lambda x: x.nb_cfg_timestamp,
+                                 reverse=True)
+            ch_private_dict[hostname] = ch_private_list
+
+        self.maint.remove_duplicated_chassis_registers()
+        chassis_result = self.sb_api.chassis_list().execute(check_error=True)
+        self.assertEqual(2, len(chassis_result))
+        for ch in chassis_result:
+            self.assertIn(ch.hostname, hostnames)
+            hostnames.remove(ch.hostname)
+            # From ch_private_dict[ch.hostname], we retrieve the first
+            # "Chassis_Private" register because these are ordered by
+            # timestamp. The newer one (bigger timestamp) should remain in the
+            # system.
+            ch_expected = ch_private_dict[ch.hostname][0].chassis[0]
+            self.assertEqual(ch_expected.name, ch.name)
+
+    def test_remove_duplicated_chassis_registers_no_ch_private_register(self):
+        if not self.sb_api.is_table_present('Chassis_Private'):
+            self.skipTest('This test needs an OVN version with '
+                          '"Chassis_Private" table (>=20.09)')
+
+        for _ in range(2):
+            self.add_fake_chassis('host1')
+
+        chassis = self.sb_api.chassis_list().execute(check_error=True)
+        self.assertEqual(2, len(chassis))
+        # Make the chassis private timestamp different
+        # Delete on of the "Chassis_Private" registers.
+        self.sb_api.db_destroy('Chassis_Private', chassis[0].name).execute()
+        self.sb_api.db_set('Chassis_Private', chassis[1].name,
+                           ('nb_cfg_timestamp', 1)).execute()
+
+        self.maint.remove_duplicated_chassis_registers()
+        chassis_result = self.sb_api.chassis_list().execute(check_error=True)
+        # Both "Chassis" registers are still in the DB because one
+        # "Chassis_Private" register was missing.
+        self.assertEqual(2, len(chassis_result))
+
 
 class TestLogMaintenance(_TestMaintenanceHelper,
                          test_log_driver.LogApiTestCaseBase):

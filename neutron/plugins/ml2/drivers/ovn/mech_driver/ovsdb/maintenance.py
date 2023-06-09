@@ -985,6 +985,63 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                                                    from_reload=True)
         raise periodics.NeverAgain()
 
+    @periodics.periodic(spacing=300, run_immediately=True)
+    def remove_duplicated_chassis_registers(self):
+        """Remove the "Chassis" and "Chassis_Private" duplicated registers.
+
+        When the ovn-controller service of a node is updated and the system-id
+        is changed, if the old service is not stopped gracefully, it will leave
+        a "Chassis" and a "Chassis_Private" registers on the OVN SB database.
+        These leftovers must be removed.
+
+        NOTE: this method is executed every 5 minutes. If a new chassis is
+        added, this method will perform again the clean-up process.
+
+        NOTE: this method can be executed only if the OVN SB has the
+        "Chassis_Private" table. Otherwise, is not possible to find out which
+        register is newer and thus must be kept in the database.
+        """
+        if not self._sb_idl.is_table_present('Chassis_Private'):
+            raise periodics.NeverAgain()
+
+        if not self.has_lock:
+            return
+
+        # dup_chassis_port_host = {host_name: [(ch1, ch_private1),
+        #                                      (ch2, ch_private2), ... ]}
+        dup_chassis_port_host = {}
+        chassis = self._sb_idl.chassis_list().execute(check_error=True)
+        chassis_hostnames = {ch.hostname for ch in chassis}
+        # Find the duplicated "Chassis" and "Chassis_Private" registers,
+        # comparing the hostname.
+        for hostname in chassis_hostnames:
+            ch_list = []
+            # Find these chassis matching the hostname and create a list.
+            for ch in (ch for ch in chassis if ch.hostname == hostname):
+                ch_private = self._sb_idl.lookup('Chassis_Private', ch.name,
+                                                 default=None)
+                if ch_private:
+                    ch_list.append((ch, ch_private))
+
+            # If the chassis list > 1, then we have duplicated chassis.
+            if len(ch_list) > 1:
+                # Order ch_list by Chassis_Private.nb_cfg_timestamp, from newer
+                # (greater value) to older.
+                ch_list.sort(key=lambda x: x[1].nb_cfg_timestamp, reverse=True)
+                dup_chassis_port_host[hostname] = ch_list
+
+        if not dup_chassis_port_host:
+            return
+
+        # Remove the "Chassis" and "Chassis_Private" registers with the
+        # older Chassis_Private.nb_cfg_timestamp.
+        with self._sb_idl.transaction(check_error=True) as txn:
+            for ch_list in dup_chassis_port_host.values():
+                # The first item is skipped, this is the newest element.
+                for ch, ch_private in ch_list[1:]:
+                    for table in ('Chassis_Private', 'Chassis'):
+                        txn.add(self._sb_idl.db_destroy(table, ch.name))
+
 
 class HashRingHealthCheckPeriodics(object):
 
