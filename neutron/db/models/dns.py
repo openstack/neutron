@@ -24,8 +24,7 @@ from neutron.db import models_v2
 class NetworkDNSDomain(model_base.BASEV2):
     network_id = sa.Column(sa.String(36),
                            sa.ForeignKey('networks.id', ondelete="CASCADE"),
-                           primary_key=True,
-                           index=True)
+                           primary_key=True)
     dns_domain = sa.Column(sa.String(255),
                            nullable=False)
 
@@ -47,8 +46,7 @@ class FloatingIPDNS(model_base.BASEV2):
     floatingip_id = sa.Column(sa.String(36),
                               sa.ForeignKey('floatingips.id',
                                             ondelete="CASCADE"),
-                              primary_key=True,
-                              index=True)
+                              primary_key=True)
     dns_name = sa.Column(sa.String(255),
                          nullable=False)
     dns_domain = sa.Column(sa.String(255),
@@ -76,8 +74,7 @@ class PortDNS(model_base.BASEV2):
     port_id = sa.Column(sa.String(36),
                         sa.ForeignKey('ports.id',
                                       ondelete="CASCADE"),
-                        primary_key=True,
-                        index=True)
+                        primary_key=True)
     current_dns_name = sa.Column(sa.String(255),
                                  nullable=False)
     current_dns_domain = sa.Column(sa.String(255),
@@ -106,8 +103,7 @@ class SubnetDNSPublishFixedIP(model_base.BASEV2):
 
     subnet_id = sa.Column(sa.String(constants.UUID_FIELD_SIZE),
                           sa.ForeignKey('subnets.id', ondelete="CASCADE"),
-                          primary_key=True,
-                          index=True)
+                          primary_key=True)
     dns_publish_fixed_ip = sa.Column(sa.Boolean(),
                                      nullable=False,
                                      server_default=sql.false())

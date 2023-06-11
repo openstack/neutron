@@ -36,7 +36,7 @@ def upgrade():
         sa.Column('tenant_id', sa.String(length=255),
                   nullable=False, primary_key=True, index=True),
         sa.Column('resource', sa.String(length=255),
-                  nullable=False, primary_key=True, index=True),
+                  nullable=False, primary_key=True),
         sa.Column('dirty', sa.Boolean(), nullable=False,
                   server_default=sql.false()),
         sa.Column('in_use', sa.Integer(), nullable=False,

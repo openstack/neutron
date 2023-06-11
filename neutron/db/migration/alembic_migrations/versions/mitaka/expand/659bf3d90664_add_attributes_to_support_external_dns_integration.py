@@ -35,20 +35,19 @@ def upgrade():
                     sa.Column('network_id',
                               sa.String(length=36),
                               nullable=False,
-                              index=True),
+                              primary_key=True),
                     sa.Column('dns_domain', sa.String(
                         length=constants.FQDN_FIELD_SIZE),
                               nullable=False),
                     sa.ForeignKeyConstraint(['network_id'],
                                             ['networks.id'],
-                                            ondelete='CASCADE'),
-                    sa.PrimaryKeyConstraint('network_id'))
+                                            ondelete='CASCADE'))
 
     op.create_table('floatingipdnses',
                     sa.Column('floatingip_id',
                               sa.String(length=36),
                               nullable=False,
-                              index=True),
+                              primary_key=True),
                     sa.Column('dns_name', sa.String(
                         length=constants.FQDN_FIELD_SIZE),
                               nullable=False),
@@ -63,14 +62,13 @@ def upgrade():
                               nullable=False),
                     sa.ForeignKeyConstraint(['floatingip_id'],
                                             ['floatingips.id'],
-                                            ondelete='CASCADE'),
-                    sa.PrimaryKeyConstraint('floatingip_id'))
+                                            ondelete='CASCADE'))
 
     op.create_table('portdnses',
                     sa.Column('port_id',
                               sa.String(length=36),
                               nullable=False,
-                              index=True),
+                              primary_key=True),
                     sa.Column('current_dns_name',
                               sa.String(length=constants.FQDN_FIELD_SIZE),
                               nullable=False),
@@ -85,5 +83,4 @@ def upgrade():
                               nullable=False),
                     sa.ForeignKeyConstraint(['port_id'],
                                             ['ports.id'],
-                                            ondelete='CASCADE'),
-                    sa.PrimaryKeyConstraint('port_id'))
+                                            ondelete='CASCADE'))

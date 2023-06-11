@@ -24,7 +24,7 @@ class PortDataPlaneStatus(model_base.BASEV2):
 
     port_id = sa.Column(sa.String(36),
                         sa.ForeignKey('ports.id', ondelete="CASCADE"),
-                        primary_key=True, index=True)
+                        primary_key=True)
     data_plane_status = sa.Column(sa.String(16), nullable=True)
     port = orm.relationship(
         models_v2.Port, load_on_pending=True,

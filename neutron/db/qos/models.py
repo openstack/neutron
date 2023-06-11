@@ -132,7 +132,7 @@ class QosPortPolicyBinding(model_base.BASEV2):
 
 
 class QosPolicyDefault(model_base.BASEV2,
-                       model_base.HasProjectPrimaryKeyIndex):
+                       model_base.HasProjectPrimaryKey):
     __tablename__ = 'qos_policies_default'
     qos_policy_id = sa.Column(sa.String(36),
                               sa.ForeignKey('qos_policies.id',

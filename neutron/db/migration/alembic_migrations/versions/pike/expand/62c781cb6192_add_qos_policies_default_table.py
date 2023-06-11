@@ -39,6 +39,5 @@ def upgrade():
         sa.Column('project_id',
                   sa.String(length=255),
                   nullable=False,
-                  index=True,
                   primary_key=True),
     )
