@@ -36,6 +36,7 @@
         --setup-nfs \
         --extra-vars '{
                 "tripleo_backup_and_restore_server": {{ backup_migration_ip }},
+                "tripleo_backup_and_restore_clients_nets": {{ backup_migration_ctl_plane_cidrs.split(',') }},
                 "nfs_server_group_name": {{ revert_preparation_server_name }}
               }'
 
