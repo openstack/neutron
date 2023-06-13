@@ -242,3 +242,30 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
         for node in group2:
             node_db = self._get_node_row(node)
             self.assertEqual(node_db.created_at, node_db.updated_at)
+
+    def test_count_offline_nodes(self):
+        self._add_nodes_and_assert_exists(count=3)
+
+        # Assert no nodes are considered offline
+        self.assertEqual(0, ovn_hash_ring_db.count_offline_nodes(
+            self.admin_ctx, interval=60, group_name=HASH_RING_TEST_GROUP))
+
+        # Subtract 60 seconds from utcnow() and touch the nodes to make
+        # them to appear offline
+        fake_utcnow = timeutils.utcnow() - datetime.timedelta(seconds=60)
+        with mock.patch.object(timeutils, 'utcnow') as mock_utcnow:
+            mock_utcnow.return_value = fake_utcnow
+            ovn_hash_ring_db.touch_nodes_from_host(self.admin_ctx,
+                                                   HASH_RING_TEST_GROUP)
+
+        # Now assert that all nodes from our host are seeing as offline
+        self.assertEqual(3, ovn_hash_ring_db.count_offline_nodes(
+            self.admin_ctx, interval=60, group_name=HASH_RING_TEST_GROUP))
+
+        # Touch the nodes again without faking utcnow()
+        ovn_hash_ring_db.touch_nodes_from_host(self.admin_ctx,
+                                               HASH_RING_TEST_GROUP)
+
+        # Assert no nodes are considered offline
+        self.assertEqual(0, ovn_hash_ring_db.count_offline_nodes(
+            self.admin_ctx, interval=60, group_name=HASH_RING_TEST_GROUP))
