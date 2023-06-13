@@ -26,6 +26,7 @@ git+https://github.com/sapcc/openstack-watcher-middleware.git#egg=watcher-middle
 git+https://github.com/sapcc/openstack-audit-middleware.git@master#egg=audit-middleware
 git+https://github.com/sapcc/openstack-manhole-middleware.git@main#egg=manhole-middleware
 git+https://github.com/sapcc/openstack-uwsgi-middleware.git@main#egg=uwsgi-middleware
+git+https://github.com/sapcc/openstack-rate-limit-middleware.git#egg=rate-limit-middleware
 
 # Networking Drivers
 -e git+https://github.com/sapcc/asr1k-neutron-l3@stable/yoga-m3#egg=asr1k-neutron-l3
@@ -38,4 +39,3 @@ git+https://github.com/sapcc/openstack-uwsgi-middleware.git@main#egg=uwsgi-middl
 -e git+https://github.com/sapcc/networking-bgpvpn@stable/yoga-m3#egg=networking-bgpvpn
 -e git+https://github.com/sapcc/networking-interconnection@stable/yoga-m3#egg=networking_interconnection
 -e git+https://github.com/sapcc/networking-ccloud@stable/yoga-m3#egg=networking_ccloud
-
