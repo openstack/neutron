@@ -400,7 +400,11 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         n_utils.wait_until_true(lambda: mock_update_vip_host.called,
                                 timeout=10)
         # The virtual port is deleted and so the associated "Port_Binding".
-        mock_update_vip_host.assert_called_once_with(vip['id'], None)
+        # With OVN v22.03.3 sometimes 2 delete events are received with the
+        # same arguments.
+        # TODO(lajoskatona): check when new OVN version is out
+        # if this behaviour is changed.
+        mock_update_vip_host.assert_called_with(vip['id'], None)
 
 
 class TestNBDbMonitorOverTcp(TestNBDbMonitor):
