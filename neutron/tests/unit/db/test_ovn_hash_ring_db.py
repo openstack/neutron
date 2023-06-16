@@ -269,3 +269,17 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
         # Assert no nodes are considered offline
         self.assertEqual(0, ovn_hash_ring_db.count_offline_nodes(
             self.admin_ctx, interval=60, group_name=HASH_RING_TEST_GROUP))
+
+    def test_set_nodes_from_host_as_offline(self):
+        self._add_nodes_and_assert_exists(count=3)
+
+        active_nodes = ovn_hash_ring_db.get_active_nodes(
+            self.admin_ctx, interval=60, group_name=HASH_RING_TEST_GROUP)
+        self.assertEqual(3, len(active_nodes))
+
+        ovn_hash_ring_db.set_nodes_from_host_as_offline(
+                self.admin_ctx, HASH_RING_TEST_GROUP)
+
+        active_nodes = ovn_hash_ring_db.get_active_nodes(
+            self.admin_ctx, interval=60, group_name=HASH_RING_TEST_GROUP)
+        self.assertEqual(0, len(active_nodes))
