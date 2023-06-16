@@ -41,6 +41,7 @@ from neutron.db import ovn_revision_numbers_db as revision_numbers_db
 from neutron.objects import ports as ports_obj
 from neutron.objects import router as router_obj
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
+from neutron import service
 from neutron.services.logapi.drivers.ovn import driver as log_driver
 
 
@@ -1045,3 +1046,20 @@ class HashRingHealthCheckPeriodics(object):
         # here because we want the maintenance tasks from each instance to
         # execute this task.
         hash_ring_db.touch_nodes_from_host(self.ctx, self._group)
+
+        # Check the number of the nodes in the ring and log a message in
+        # case they are out of sync. See LP #2024205 for more information
+        # on this issue.
+        api_workers = service._get_api_workers()
+        num_nodes = hash_ring_db.count_nodes_from_host(self.ctx, self._group)
+
+        if num_nodes > api_workers:
+            LOG.critical(
+                'The number of nodes in the Hash Ring (%d) is higher than '
+                'the number of API workers (%d) for host "%s". Something is '
+                'not right and OVSDB events could be missed because of this. '
+                'Please check the status of the Neutron processes, this can '
+                'happen when the API workers are killed and restarted. '
+                'Restarting the service should fix the issue, see LP '
+                '#2024205 for more information.',
+                num_nodes, api_workers, cfg.CONF.host)

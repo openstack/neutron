@@ -58,12 +58,12 @@ class OVNMechanismDriver(mech_driver.OVNMechanismDriver):
     def ovn_client(self):
         return self._ovn_client
 
-    def _set_hash_ring_nodes_offline(self):
-        """Don't set hash ring nodes as offline.
+    def _remove_node_from_hash_ring(self):
+        """Don't remove the node from the Hash Ring.
 
         If this method was not overridden, cleanup would be performed when
-        calling the db sync and running neutron server would mark all the
-        nodes from the ring as offline.
+        calling the db sync and running neutron server would remove the
+        nodes from the Hash Ring.
         """
 
     # Since we are not using the ovn mechanism driver while syncing,
