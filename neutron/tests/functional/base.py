@@ -326,7 +326,8 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         self.addCleanup(self.stop)
         # NOTE(ralonsoh): do not access to the DB at exit when the SQL
         # connection is already closed, to avoid useless exception messages.
-        mock.patch.object(self.mech_driver, '_clean_hash_ring').start()
+        mock.patch.object(
+            self.mech_driver, '_set_hash_ring_nodes_offline').start()
         self.mech_driver.pre_fork_initialize(
             mock.ANY, mock.ANY, trigger_cls.trigger)
 

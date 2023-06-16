@@ -286,15 +286,17 @@ class OVNMechanismDriver(api.MechanismDriver):
                                resources.SECURITY_GROUP_RULE,
                                events.BEFORE_DELETE)
 
-    def _clean_hash_ring(self, *args, **kwargs):
+    def _set_hash_ring_nodes_offline(self, *args, **kwargs):
         admin_context = n_context.get_admin_context()
-        ovn_hash_ring_db.remove_nodes_from_host(admin_context,
-                                                self.hash_ring_group)
+        ovn_hash_ring_db.set_nodes_from_host_as_offline(
+            admin_context, self.hash_ring_group)
+        LOG.info('Hash Ring nodes from host "%s" marked as offline',
+                 cfg.CONF.host)
 
     def pre_fork_initialize(self, resource, event, trigger, payload=None):
         """Pre-initialize the ML2/OVN driver."""
-        atexit.register(self._clean_hash_ring)
-        signal.signal(signal.SIGTERM, self._clean_hash_ring)
+        atexit.register(self._set_hash_ring_nodes_offline)
+        signal.signal(signal.SIGTERM, self._set_hash_ring_nodes_offline)
         ovn_utils.create_neutron_pg_drop()
 
     @staticmethod
@@ -314,7 +316,9 @@ class OVNMechanismDriver(api.MechanismDriver):
         """
         admin_context = n_context.get_admin_context()
         if not self._hash_ring_probe_event.is_set():
-            self._clean_hash_ring()
+            # Clear existing entries
+            ovn_hash_ring_db.remove_nodes_from_host(admin_context,
+                                                    self.hash_ring_group)
             self.node_uuid = ovn_hash_ring_db.add_node(admin_context,
                                                        self.hash_ring_group)
             self._hash_ring_thread = maintenance.MaintenanceThread()
