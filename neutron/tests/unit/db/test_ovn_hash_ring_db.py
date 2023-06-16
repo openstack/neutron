@@ -270,16 +270,18 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
         self.assertEqual(0, ovn_hash_ring_db.count_offline_nodes(
             self.admin_ctx, interval=60, group_name=HASH_RING_TEST_GROUP))
 
-    def test_set_nodes_from_host_as_offline(self):
+    def test_remove_node_by_uuid(self):
         self._add_nodes_and_assert_exists(count=3)
 
         active_nodes = ovn_hash_ring_db.get_active_nodes(
             self.admin_ctx, interval=60, group_name=HASH_RING_TEST_GROUP)
         self.assertEqual(3, len(active_nodes))
 
-        ovn_hash_ring_db.set_nodes_from_host_as_offline(
-                self.admin_ctx, HASH_RING_TEST_GROUP)
+        node_to_remove = active_nodes[0].node_uuid
+        ovn_hash_ring_db.remove_node_by_uuid(
+                self.admin_ctx, node_to_remove)
 
         active_nodes = ovn_hash_ring_db.get_active_nodes(
             self.admin_ctx, interval=60, group_name=HASH_RING_TEST_GROUP)
-        self.assertEqual(0, len(active_nodes))
+        self.assertEqual(2, len(active_nodes))
+        self.assertNotIn(node_to_remove, [n.node_uuid for n in active_nodes])
