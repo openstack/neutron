@@ -67,27 +67,28 @@ def touch_node(context, node_uuid):
 def _get_nodes_query(context, interval, group_name, offline=False,
                      from_host=False):
     limit = timeutils.utcnow() - datetime.timedelta(seconds=interval)
-    with db_api.CONTEXT_READER.using(context):
-        query = context.session.query(ovn_models.OVNHashRing).filter(
-            ovn_models.OVNHashRing.group_name == group_name)
+    query = context.session.query(ovn_models.OVNHashRing).filter(
+        ovn_models.OVNHashRing.group_name == group_name)
 
-        if offline:
-            query = query.filter(ovn_models.OVNHashRing.updated_at < limit)
-        else:
-            query = query.filter(ovn_models.OVNHashRing.updated_at >= limit)
+    if offline:
+        query = query.filter(ovn_models.OVNHashRing.updated_at < limit)
+    else:
+        query = query.filter(ovn_models.OVNHashRing.updated_at >= limit)
 
-        if from_host:
-            query = query.filter_by(hostname=CONF.host)
+    if from_host:
+        query = query.filter_by(hostname=CONF.host)
 
-        return query
+    return query
 
 
+@db_api.CONTEXT_READER
 def get_active_nodes(context, interval, group_name, from_host=False):
     query = _get_nodes_query(context, interval, group_name,
                              from_host=from_host)
     return query.all()
 
 
+@db_api.CONTEXT_READER
 def count_offline_nodes(context, interval, group_name):
     query = _get_nodes_query(context, interval, group_name, offline=True)
     return query.count()
