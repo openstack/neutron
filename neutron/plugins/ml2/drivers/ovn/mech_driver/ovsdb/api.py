@@ -126,6 +126,28 @@ class API(api.API, metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
+    def schedule_unhosted_gateways(self, g_name, sb_api, plugin, port_physnets,
+                                   all_gw_chassis, chassis_with_physnets,
+                                   chassis_with_azs):
+        """Schedule unhosted gateways
+
+        :param g_name:                The unique name of the lrouter port
+        :type g_name:                 string
+        :param sb_api:                IDL for the OVN SB API
+        :type class:                  :class:`OvsdbSbOvnIdl`
+        :param plugin:                The L3 plugin to call back to for lookups
+        :type plugin:                 :class:`OVNL3RouterPlugin`
+        :param port_physnets:         Map of lrouter ports and their physnets
+        :type port_physnets:          Dict[string,string]
+        :param all_gw_chassis:        List of gateway chassis
+        :type all_gw_chassis:         List[Option[string,:class:`RowView`]]
+        :param chassis_with_physnets: Map of chassis and their physnets
+        :type chassis_with_physnets:  Dict[string,Set[string]]
+        :param chassis_with_azs:      Map of chassis and their AZs
+        :type chassis_with_azs:       Dict[string,Set[string]]
+        """
+
+    @abc.abstractmethod
     def delete_lrouter_port(self, name, lrouter, if_exists=True):
         """Create a command to delete an OVN lrouter port
 

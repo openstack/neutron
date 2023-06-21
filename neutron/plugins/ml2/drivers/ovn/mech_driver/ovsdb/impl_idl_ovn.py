@@ -431,6 +431,13 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         return cmd.AddLRouterPortCommand(self, name, lrouter,
                                          may_exist, **columns)
 
+    def schedule_unhosted_gateways(self, g_name, sb_api, plugin, port_physnets,
+                                   all_gw_chassis, chassis_with_physnets,
+                                   chassis_with_azs):
+        return cmd.ScheduleUnhostedGatewaysCommand(
+            self, g_name, sb_api, plugin, port_physnets, all_gw_chassis,
+            chassis_with_physnets, chassis_with_azs)
+
     def update_lrouter_port(self, name, if_exists=True, **columns):
         return cmd.UpdateLRouterPortCommand(self, name, if_exists, **columns)
 

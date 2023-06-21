@@ -94,6 +94,50 @@ class TestRouter(base.TestOVNFunctionalBase):
                     lrp.name,
                     gateway_chassis=[ovn_const.OVN_GATEWAY_INVALID_CHASSIS]))
 
+    def _get_gwc_dict(self):
+        sched_info = {}
+        for row in self.nb_api.db_list_rows("Logical_Router_Port").execute(
+                check_error=True):
+            for gwc in row.gateway_chassis:
+                chassis = sched_info.setdefault(gwc.chassis_name, {})
+                chassis[gwc.priority] = chassis.get(gwc.priority, 0) + 1
+        return sched_info
+
+    def _create_routers_wait_pb(self, begin, n, gw_info=None,
+                                bind_chassis=None):
+        routers = []
+        for i in range(begin, n + begin):
+            try:
+                router = self._create_router('router%d' % i, gw_info=gw_info)
+                routers.append(router)
+            except db_exc.DBReferenceError:
+                # NOTE(ralonsoh): this is a workaround for LP#1956344. There
+                # seems to be a bug in SQLite3. The "port" DB object is not
+                # persistently stored in the DB and raises a "DBReferenceError"
+                # exception occasionally.
+                continue
+
+            gw_port_id = router.get('gw_port_id')
+            logical_port = 'cr-lrp-%s' % gw_port_id
+            self.assertTrue(self.cr_lrp_pb_event.wait(logical_port),
+                            msg='lrp %s failed to bind' % logical_port)
+            if bind_chassis:
+                self.sb_api.lsp_bind(logical_port, bind_chassis,
+                                     may_exist=True).execute(check_error=True)
+        return routers
+
+    def _add_chassis(self, begin, n, physical_nets):
+        chassis_added = []
+        for i in range(begin, begin + n):
+            chassis_added.append(
+                self.add_fake_chassis(
+                    'ovs-host%s' % i,
+                    name=f'chassis-{i:02d}',
+                    physical_nets=physical_nets,
+                    other_config={
+                        'ovn-cms-options': 'enable-chassis-as-gw'}))
+        return chassis_added
+
     def test_gateway_chassis_on_router_gateway_port(self):
         ext2 = self._create_ext_network(
             'ext2', 'flat', 'physnet3', None, "20.0.0.1", "20.0.0.0/24")
@@ -569,15 +613,6 @@ class TestRouter(base.TestOVNFunctionalBase):
             len(gws['router']['external_gateways']))
 
     def test_gateway_chassis_rebalance(self):
-        def _get_result_dict():
-            sched_info = {}
-            for row in self.nb_api.tables[
-                    'Logical_Router_Port'].rows.values():
-                for gwc in row.gateway_chassis:
-                    chassis = sched_info.setdefault(gwc.chassis_name, {})
-                    chassis[gwc.priority] = chassis.get(gwc.priority, 0) + 1
-            return sched_info
-
         ovn_client = self.l3_plugin._ovn_client
         chassis4 = self.add_fake_chassis(
             'ovs-host4', physical_nets=['physnet4'], other_config={
@@ -588,27 +623,11 @@ class TestRouter(base.TestOVNFunctionalBase):
         gw_info = {'network_id': ext1['network']['id']}
         # Tries to create 5 routers with a gateway. Since we're using
         # physnet4, the chassis candidates will be chassis4 initially.
-        num_routers = 5
-        for i in range(num_routers):
-            try:
-                router = self._create_router('router%d' % i, gw_info=gw_info)
-            except db_exc.DBReferenceError:
-                # NOTE(ralonsoh): this is a workaround for LP#1956344. There
-                # seems to be a bug in SQLite3. The "port" DB object is not
-                # persistently stored in the DB and raises a "DBReferenceError"
-                # exception occasionally.
-                num_routers -= 1
-                continue
-
-            gw_port_id = router.get('gw_port_id')
-            logical_port = 'cr-lrp-%s' % gw_port_id
-            self.assertTrue(self.cr_lrp_pb_event.wait(logical_port),
-                            msg='lrp %s failed to bind' % logical_port)
-            self.sb_api.lsp_bind(logical_port, chassis4,
-                                 may_exist=True).execute(check_error=True)
+        num_routers = len(self._create_routers_wait_pb(
+            1, 20, gw_info=gw_info, bind_chassis=chassis4))
         self.l3_plugin.schedule_unhosted_gateways()
         expected = {chassis4: {1: num_routers}}
-        self.assertEqual(expected, _get_result_dict())
+        self.assertEqual(expected, self._get_gwc_dict())
 
         # Add another chassis as a gateway chassis
         chassis5 = self.add_fake_chassis(
@@ -622,9 +641,9 @@ class TestRouter(base.TestOVNFunctionalBase):
 
         # Chassis4 should have all ports at Priority 2
         self.l3_plugin.schedule_unhosted_gateways()
-        self.assertEqual({2: num_routers}, _get_result_dict()[chassis4])
+        self.assertEqual({2: num_routers}, self._get_gwc_dict()[chassis4])
         # Chassis5 should have all ports at Priority 1
-        self.assertEqual({1: num_routers}, _get_result_dict()[chassis5])
+        self.assertEqual({1: num_routers}, self._get_gwc_dict()[chassis5])
 
         # delete chassis that hosts all the gateways
         self.del_fake_chassis(chassis4)
@@ -633,7 +652,7 @@ class TestRouter(base.TestOVNFunctionalBase):
         # As Chassis4 has been removed so all gateways that were
         # hosted there are now primaries on chassis5 and have
         # priority 1.
-        self.assertEqual({1: num_routers}, _get_result_dict()[chassis5])
+        self.assertEqual({1: num_routers}, self._get_gwc_dict()[chassis5])
 
     def test_gateway_chassis_rebalance_max_chassis(self):
         chassis_list = []
@@ -669,3 +688,47 @@ class TestRouter(base.TestOVNFunctionalBase):
             "Logical_Router", lr_name, "options").execute(check_error=True)
         self.assertEqual(ovn_conf.get_ovn_mac_binding_age_threshold(),
                          options[ovn_const.LR_OPTIONS_MAC_AGE_LIMIT])
+
+    def test_schedule_unhosted_gateways_single_transaction(self):
+        ext1 = self._create_ext_network(
+            'ext1', 'flat', 'physnet6', None, "10.0.60.1", "10.0.60.0/24")
+        gw_info = {'network_id': ext1['network']['id']}
+
+        # Attempt to add 4 routers, since there are no chassis all will be
+        # scheduled on the ovn_const.OVN_GATEWAY_INVALID_CHASSIS.
+        num_routers = len(self._create_routers_wait_pb(1, 4, gw_info))
+        self.assertEqual(
+            {ovn_const.OVN_GATEWAY_INVALID_CHASSIS: {1: num_routers}},
+            self._get_gwc_dict())
+
+        # Add 2 chassis and rebalance gateways.
+        #
+        # The ovsdb_monitor.ChassisEvent handler will attempt to schedule
+        # unhosted gateways as chassis are added.
+        #
+        # Temporarily mock it out while adding the chassis so that we can get a
+        # predictable result for the purpose of this test.
+        chassis_list = []
+        with mock.patch.object(
+                self.l3_plugin, 'schedule_unhosted_gateways'):
+            chassis_list.extend(self._add_chassis(1, 2, ['physnet6']))
+        self.assertEqual(
+            {ovn_const.OVN_GATEWAY_INVALID_CHASSIS: {1: num_routers}},
+            self._get_gwc_dict())
+
+        # Wrap `self.l3_plugin._nb_ovn.transaction` so that we can assert on
+        # number of calls.
+        with mock.patch.object(
+                self.l3_plugin._nb_ovn, 'transaction',
+                wraps=self.l3_plugin._nb_ovn.transaction) as wrap_txn:
+            self.l3_plugin.schedule_unhosted_gateways()
+            # The server is alive and we can't control the exact number of
+            # calls made to `_nb_ovn.transaction`. We can however check that
+            # the number of calls is less than number of unhosted gateways.
+            self.assertLess(len(wrap_txn.mock_calls), num_routers)
+
+        # Ensure the added gateways are spread evenly on the added chassis.
+        self.assertEqual(
+            {'chassis-01': {1: 2, 2: 2},
+             'chassis-02': {1: 2, 2: 2}},
+            self._get_gwc_dict())

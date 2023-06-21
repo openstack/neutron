@@ -296,61 +296,18 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         all_gw_chassis = self._sb_ovn.get_gateway_chassis_from_cms_options()
         chassis_with_azs = self._sb_ovn.get_chassis_and_azs()
 
-        for g_name in lrps:
-            physnet = port_physnet_dict.get(g_name[len(ovn_const.LRP_PREFIX):])
-            # Remove any invalid gateway chassis from the list, otherwise
-            # we can have a situation where all existing_chassis are invalid
-            existing_chassis = self._nb_ovn.get_gateway_chassis_binding(g_name)
-            primary = existing_chassis[0] if existing_chassis else None
-            az_hints = self._nb_ovn.get_gateway_chassis_az_hints(g_name)
-            filtered_existing_chassis = \
-                self.scheduler.filter_existing_chassis(
-                    nb_idl=self._nb_ovn, gw_chassis=all_gw_chassis,
-                    physnet=physnet,
-                    chassis_physnets=chassis_with_physnets,
-                    existing_chassis=existing_chassis, az_hints=az_hints,
-                    chassis_with_azs=chassis_with_azs)
-            if existing_chassis != filtered_existing_chassis:
-                first_diff = None
-                for i in range(len(filtered_existing_chassis)):
-                    if existing_chassis[i] != filtered_existing_chassis[i]:
-                        first_diff = i
-                        break
-                if first_diff is not None:
-                    LOG.debug(
-                        "A chassis for this gateway has been filtered. "
-                        "Rebalancing priorities %s and lower", first_diff)
-                    filtered_existing_chassis = filtered_existing_chassis[
-                        :max(first_diff, 1)]
-
-            candidates = self._ovn_client.get_candidates_for_scheduling(
-                physnet, cms=all_gw_chassis,
-                chassis_physnets=chassis_with_physnets,
-                availability_zone_hints=az_hints)
-            chassis = self.scheduler.select(
-                self._nb_ovn, self._sb_ovn, g_name, candidates=candidates,
-                existing_chassis=filtered_existing_chassis)
-            if primary and primary != chassis[0]:
-                if primary not in chassis:
-                    LOG.debug("Primary gateway chassis %(old)s "
-                              "has been removed from the system. Moving "
-                              "gateway %(gw)s to other chassis %(new)s.",
-                              {'gw': g_name,
-                               'old': primary,
-                               'new': chassis[0]})
-                else:
-                    LOG.debug("Gateway %s is hosted at %s.", g_name, primary)
-                    # NOTE(mjozefcz): It means scheduler moved primary chassis
-                    # to other gw based on scheduling method. But we don't
-                    # want network flap - so moving actual primary to be on
-                    # the top.
-                    index = chassis.index(primary)
-                    chassis[0], chassis[index] = chassis[index], chassis[0]
-            # NOTE(dalvarez): Let's commit the changes in separate transactions
-            # as we will rely on those for scheduling subsequent gateways.
-            with self._nb_ovn.transaction(check_error=True) as txn:
-                txn.add(self._nb_ovn.update_lrouter_port(
-                    g_name, gateway_chassis=chassis))
+        with self._nb_ovn.transaction(check_error=True) as txn:
+            for g_name in lrps:
+                # NOTE(fnordahl): Make scheduling decissions in ovsdbapp
+                # command so that scheduling is done based on up to date
+                # information as the transaction is applied.
+                #
+                # We pass in a reference to our class instance so that the
+                # ovsdbapp command can call the scheduler methods from within
+                # its context.
+                txn.add(self._nb_ovn.schedule_unhosted_gateways(
+                    g_name, self._sb_ovn, self, port_physnet_dict,
+                    all_gw_chassis, chassis_with_physnets, chassis_with_azs))
 
     @staticmethod
     @registry.receives(resources.SUBNET, [events.AFTER_UPDATE])

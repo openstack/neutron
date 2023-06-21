@@ -25,6 +25,7 @@ from neutron.services.portforwarding.constants import PORT_FORWARDING_PREFIX
 
 from oslo_log import log
 
+
 LOG = log.getLogger(__name__)
 
 RESOURCE_TYPE_MAP = {
@@ -318,6 +319,76 @@ class UpdateLRouterCommand(command.BaseCommand):
             for col, val in self.columns.items():
                 setattr(lrouter, col, val)
             return
+
+
+class ScheduleUnhostedGatewaysCommand(command.BaseCommand):
+    def __init__(self, nb_api, g_name, sb_api, plugin, port_physnets,
+                 all_gw_chassis, chassis_with_physnets, chassis_with_azs):
+        super().__init__(api=nb_api)
+        self.g_name = g_name
+        self.sb_api = sb_api
+        self.scheduler = plugin.scheduler
+        self.ovn_client = plugin._ovn_client
+        self.port_physnets = port_physnets
+        self.all_gw_chassis = all_gw_chassis
+        self.chassis_with_physnets = chassis_with_physnets
+        self.chassis_with_azs = chassis_with_azs
+
+    def run_idl(self, txn):
+        lrouter_port = self.api.lookup("Logical_Router_Port", self.g_name)
+        physnet = self.port_physnets.get(
+            self.g_name[len(ovn_const.LRP_PREFIX):])
+        # Remove any invalid gateway chassis from the list, otherwise
+        # we can have a situation where all existing_chassis are invalid
+        existing_chassis = self.api.get_gateway_chassis_binding(self.g_name)
+        primary = existing_chassis[0] if existing_chassis else None
+        az_hints = self.api.get_gateway_chassis_az_hints(self.g_name)
+        filtered_existing_chassis = (
+            self.scheduler.filter_existing_chassis(
+                nb_idl=self.api, gw_chassis=self.all_gw_chassis,
+                physnet=physnet,
+                chassis_physnets=self.chassis_with_physnets,
+                existing_chassis=existing_chassis, az_hints=az_hints,
+                chassis_with_azs=self.chassis_with_azs))
+        if existing_chassis != filtered_existing_chassis:
+            first_diff = None
+            for i in range(len(filtered_existing_chassis)):
+                if existing_chassis[i] != filtered_existing_chassis[i]:
+                    first_diff = i
+                    break
+            if first_diff is not None:
+                LOG.debug(
+                    "A chassis for this gateway has been filtered. "
+                    "Rebalancing priorities %s and lower", first_diff)
+                filtered_existing_chassis = filtered_existing_chassis[
+                    :max(first_diff, 1)]
+
+        candidates = self.ovn_client.get_candidates_for_scheduling(
+            physnet, cms=self.all_gw_chassis,
+            chassis_physnets=self.chassis_with_physnets,
+            availability_zone_hints=az_hints)
+        chassis = self.scheduler.select(
+            self.api, self.sb_api, self.g_name, candidates=candidates,
+            existing_chassis=filtered_existing_chassis)
+        if primary and primary != chassis[0]:
+            if primary not in chassis:
+                LOG.debug("Primary gateway chassis %(old)s "
+                          "has been removed from the system. Moving "
+                          "gateway %(gw)s to other chassis %(new)s.",
+                          {'gw': self.g_name,
+                           'old': primary,
+                           'new': chassis[0]})
+            else:
+                LOG.debug("Gateway %s is hosted at %s.", self.g_name, primary)
+                # NOTE(mjozefcz): It means scheduler moved primary chassis
+                # to other gw based on scheduling method. But we don't
+                # want network flap - so moving actual primary to be on
+                # the top.
+                index = chassis.index(primary)
+                chassis[0], chassis[index] = chassis[index], chassis[0]
+        setattr(
+            lrouter_port,
+            *_add_gateway_chassis(self.api, txn, self.g_name, chassis))
 
 
 class AddLRouterPortCommand(command.BaseCommand):

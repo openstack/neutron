@@ -40,6 +40,7 @@ class FakeOvsdbNbOvnIdl(object):
         self.dhcp_options_table = FakeOvsdbTable.create_one_ovsdb_table()
         self.nat_table = FakeOvsdbTable.create_one_ovsdb_table()
         self.port_group_table = FakeOvsdbTable.create_one_ovsdb_table()
+        self.gateway_chassis_table = FakeOvsdbTable.create_one_ovsdb_table()
         self._tables = {}
         self._tables['Logical_Switch'] = self.lswitch_table
         self._tables['Logical_Switch_Port'] = self.lsp_table
@@ -52,6 +53,7 @@ class FakeOvsdbNbOvnIdl(object):
         self._tables['DHCP_Options'] = self.dhcp_options_table
         self._tables['NAT'] = self.nat_table
         self._tables['Port_Group'] = self.port_group_table
+        self._tables['Gateway_Chassis'] = self.gateway_chassis_table
         self.transaction = mock.MagicMock()
         self.create_transaction = mock.MagicMock()
         self.ls_add = mock.Mock()
@@ -163,6 +165,7 @@ class FakeOvsdbNbOvnIdl(object):
         self.lrp_get = mock.Mock()
         self.get_schema_version = mock.Mock(return_value='3.6.0')
         self.get_lrouter_port = mock.Mock()
+        self.schedule_unhosted_gateways = mock.Mock()
 
 
 class FakeOvsdbSbOvnIdl(object):

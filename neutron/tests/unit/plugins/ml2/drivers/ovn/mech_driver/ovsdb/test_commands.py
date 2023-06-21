@@ -1220,3 +1220,64 @@ class TestDeleteLRouterExtGwCommand(TestBaseCommand):
 
     def test_delete_no_lrouter_exist_fail(self):
         self._test_delete_lrouter_no_lrouter_exist(if_exists=False)
+
+
+class TestScheduleUnhostedGatewaysCommand(TestBaseCommand):
+
+    @staticmethod
+    def _insert_gwc(table):
+        fake_gwc = fakes.FakeOvsdbRow.create_one_ovsdb_row()
+        table.rows[fake_gwc.uuid] = fake_gwc
+        return fake_gwc
+
+    def test_schedule_unhosted_gateways_rebalances_lower_prios(self):
+        unhosted_gws = ['lrp-foo-1', 'lrp-foo-2', 'lrp-foo-3']
+        port_physnets = {k[len(ovn_const.LRP_PREFIX):]: 'physnet1'
+                         for k in unhosted_gws}
+        # we skip chasiss2 here since we assume it has been removed
+        chassis_mappings = {
+            'chassis1': ['physnet1'],
+            'chassis3': ['physnet1'],
+            'chassis4': ['physnet1'],
+        }
+        chassis = ['chassis1', 'chassis3', 'chassis4']
+        sb_api = mock.MagicMock()
+        plugin = mock.MagicMock()
+        plugin.scheduler.select.side_effect = [
+            ['chassis1', 'chassis4', 'chassis3'],
+            ['chassis4', 'chassis3', 'chassis1'],
+            ['chassis4', 'chassis3', 'chassis1'],
+        ]
+        self.transaction.insert.side_effect = self._insert_gwc
+
+        expected_mapping = {
+            'lrp-foo-1': ['chassis1', 'chassis4', 'chassis3'],
+            'lrp-foo-2': ['chassis4', 'chassis3', 'chassis1'],
+            'lrp-foo-3': ['chassis4', 'chassis3', 'chassis1'],
+        }
+
+        with mock.patch.object(
+                self.ovn_api,
+                'get_gateway_chassis_binding',
+                side_effect=[
+                    ['chassis1', 'chassis2', 'chassis3', 'chassis4'],
+                    ['chassis2', 'chassis4', 'chassis3', 'chassis1'],
+                    ['chassis4', 'chassis3', 'chassis1', 'chassis2'],
+                ]):
+            for g_name in unhosted_gws:
+                lrouter_port = mock.MagicMock()
+                with mock.patch.object(self.ovn_api, 'lookup',
+                                       return_value=lrouter_port):
+                    with mock.patch.object(idlutils, 'row_by_value',
+                                           side_effect=idlutils.RowNotFound):
+                        cmd = commands.ScheduleUnhostedGatewaysCommand(
+                            self.ovn_api, g_name, sb_api, plugin,
+                            port_physnets, chassis, chassis_mappings, [])
+                        cmd.run_idl(self.transaction)
+                        self.assertEqual(
+                            expected_mapping[g_name],
+                            [
+                                self.ovn_api._tables[
+                                    'Gateway_Chassis'].rows[uuid].chassis_name
+                                for uuid in lrouter_port.gateway_chassis
+                            ])

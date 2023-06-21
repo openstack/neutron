@@ -1809,25 +1809,41 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
 
         self.l3_inst.schedule_unhosted_gateways()
 
-        self.mock_candidates.assert_has_calls([
-            mock.call(mock.ANY,
-                      chassis_physnets=chassis_mappings,
-                      cms=chassis, availability_zone_hints=[])] * 3)
-        self.mock_schedule.assert_has_calls([
-            mock.call(self.nb_idl(), self.sb_idl(),
-                      'lrp-foo-1', [], ['chassis1', 'chassis2']),
-            mock.call(self.nb_idl(), self.sb_idl(),
-                      'lrp-foo-2', [], ['chassis2']),
-            mock.call(self.nb_idl(), self.sb_idl(),
-                      'lrp-foo-3', [], [])])
-        # make sure that for second port primary chassis stays untouched
-        self.nb_idl().update_lrouter_port.assert_has_calls([
+        self.nb_idl().schedule_unhosted_gateways.assert_has_calls([
             mock.call('lrp-foo-1',
-                      gateway_chassis=['chassis1', 'chassis2', 'chassis3']),
+                      mock.ANY,
+                      mock.ANY,
+                      {'foo-1': 'physnet1',
+                       'foo-2': 'physnet1',
+                       'foo-3': 'physnet1'},
+                      ['chassis1', 'chassis2', 'chassis3'],
+                      {'chassis1': ['physnet1'],
+                       'chassis2': ['physnet1'],
+                       'chassis3': ['physnet1']},
+                      {}),
             mock.call('lrp-foo-2',
-                      gateway_chassis=['chassis2', 'chassis1', 'chassis3']),
+                      mock.ANY,
+                      mock.ANY,
+                      {'foo-1': 'physnet1',
+                       'foo-2': 'physnet1',
+                       'foo-3': 'physnet1'},
+                      ['chassis1', 'chassis2', 'chassis3'],
+                      {'chassis1': ['physnet1'],
+                       'chassis2': ['physnet1'],
+                       'chassis3': ['physnet1']},
+                      {}),
             mock.call('lrp-foo-3',
-                      gateway_chassis=['chassis3', 'chassis2', 'chassis1'])])
+                      mock.ANY,
+                      mock.ANY,
+                      {'foo-1': 'physnet1',
+                       'foo-2': 'physnet1',
+                       'foo-3': 'physnet1'},
+                      ['chassis1', 'chassis2', 'chassis3'],
+                      {'chassis1': ['physnet1'],
+                       'chassis2': ['physnet1'],
+                       'chassis3': ['physnet1']},
+                      {}),
+        ])
 
     @mock.patch('neutron.services.ovn_l3.plugin.OVNL3RouterPlugin.'
                 '_get_gateway_port_physnet_mapping')
@@ -1856,69 +1872,6 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         # Validate that only foo-1 port is beign rescheduled.
         self.nb_idl().get_unhosted_gateways.assert_called_once_with(
             {'foo-1': 'physnet1'}, mock.ANY, mock.ANY, mock.ANY)
-
-    @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.mech_driver.'
-                'OVNMechanismDriver.list_availability_zones', lambda *_: [])
-    @mock.patch('neutron.services.ovn_l3.plugin.OVNL3RouterPlugin.'
-                '_get_gateway_port_physnet_mapping')
-    def test_schedule_unhosted_gateways_rebalances_lower_prios(self, get_gppm):
-        unhosted_gws = ['lrp-foo-1', 'lrp-foo-2', 'lrp-foo-3']
-        get_gppm.return_value = {k[len(ovn_const.LRP_PREFIX):]: 'physnet1'
-                                 for k in unhosted_gws}
-        # we skip chasiss2 here since we assume it has been removed
-        chassis_mappings = {
-            'chassis1': ['physnet1'],
-            'chassis3': ['physnet1'],
-            'chassis4': ['physnet1'],
-        }
-        chassis = ['chassis1', 'chassis3', 'chassis4']
-        self.sb_idl().get_chassis_and_physnets.return_value = (
-            chassis_mappings)
-        self.sb_idl().get_gateway_chassis_from_cms_options.return_value = (
-            chassis)
-        self.nb_idl().get_unhosted_gateways.return_value = unhosted_gws
-        self.mock_candidates.return_value = chassis
-        # all ports have 4 chassis (including chassis2 that will be removed)
-        # the ports are not perfectly balanced (but this is realistic with a)
-        # few router creations and deletions
-        existing_port_bindings = [
-            ['chassis1', 'chassis2', 'chassis3', 'chassis4'],
-            ['chassis2', 'chassis4', 'chassis3', 'chassis1'],
-            ['chassis4', 'chassis3', 'chassis1', 'chassis2']]
-        self.nb_idl().get_gateway_chassis_binding.side_effect = (
-            existing_port_bindings)
-        # for 1. port reschedule all besides the first
-        # for 2. port reschedule all besides the new first (chassis 4)
-        # for 3. port keep all and drop the last
-        self.mock_schedule.side_effect = [
-            ['chassis1', 'chassis4', 'chassis3'],
-            ['chassis4', 'chassis3', 'chassis1'],
-            ['chassis4', 'chassis3', 'chassis1']]
-
-        self.l3_inst.schedule_unhosted_gateways()
-
-        self.mock_candidates.assert_has_calls([
-            mock.call(mock.ANY,
-                      chassis_physnets=chassis_mappings,
-                      cms=chassis, availability_zone_hints=[])] * 3)
-        self.mock_schedule.assert_has_calls([
-            mock.call(self.nb_idl(), self.sb_idl(), 'lrp-foo-1',
-                      ['chassis1', 'chassis3', 'chassis4'],
-                      ['chassis1']),
-            mock.call(self.nb_idl(), self.sb_idl(), 'lrp-foo-2',
-                      ['chassis1', 'chassis3', 'chassis4'],
-                      ['chassis4']),
-            mock.call(self.nb_idl(), self.sb_idl(), 'lrp-foo-3',
-                      ['chassis1', 'chassis3', 'chassis4'],
-                      ['chassis4', 'chassis3', 'chassis1'])])
-        # make sure that the primary chassis stays untouched
-        self.nb_idl().update_lrouter_port.assert_has_calls([
-            mock.call('lrp-foo-1',
-                      gateway_chassis=['chassis1', 'chassis4', 'chassis3']),
-            mock.call('lrp-foo-2',
-                      gateway_chassis=['chassis4', 'chassis3', 'chassis1']),
-            mock.call('lrp-foo-3',
-                      gateway_chassis=['chassis4', 'chassis3', 'chassis1'])])
 
     @mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.get_network')
     @mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.get_networks')
