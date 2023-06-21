@@ -1848,8 +1848,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
     def test_process_router_snat_enabled_random_fully_false(self):
         self._test_process_router_snat_enabled(False)
 
-    def _test_update_routing_table(self, is_snat_host=True):
-        router = l3_test_common.prepare_router_data()
+    def _test_update_routing_table(self, is_snat_host=True, enable_ha=False):
+        router = l3_test_common.prepare_router_data(enable_ha=enable_ha)
         uuid = router['id']
         s_netns = 'snat-' + uuid
         q_netns = 'qrouter-' + uuid
@@ -1858,22 +1858,64 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         calls = [mock.call('replace', fake_route1, q_netns)]
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         self._set_ri_kwargs(agent, uuid, router)
-        ri = dvr_router.DvrEdgeRouter(HOSTNAME, **self.ri_kwargs)
+        router_cls = (dvr_edge_ha_router.DvrEdgeHaRouter if enable_ha else
+                      dvr_router.DvrEdgeRouter)
+        ri = router_cls(HOSTNAME, **self.ri_kwargs)
         ri._update_routing_table = mock.Mock()
 
         with mock.patch.object(ri, '_is_this_snat_host') as snat_host:
             snat_host.return_value = is_snat_host
             ri.update_routing_table('replace', fake_route1)
-            if is_snat_host:
-                ri._update_routing_table('replace', fake_route1, s_netns)
+            if is_snat_host and not enable_ha:
                 calls += [mock.call('replace', fake_route1, s_netns)]
             ri._update_routing_table.assert_has_calls(calls, any_order=True)
+            self.assertEqual(len(calls), ri._update_routing_table.call_count)
 
     def test_process_update_snat_routing_table(self):
         self._test_update_routing_table()
 
     def test_process_not_update_snat_routing_table(self):
         self._test_update_routing_table(is_snat_host=False)
+
+    def test_process_not_update_ha_routing_table(self):
+        self._test_update_routing_table(enable_ha=True)
+
+    def _test_update_routing_table_ecmp(self, is_snat_host=True,
+                                        enable_ha=False):
+        router = l3_test_common.prepare_router_data()
+        uuid = router['id']
+        s_netns = 'snat-' + uuid
+        q_netns = 'qrouter-' + uuid
+        fake_route_list = [{'destination': '135.207.0.0/16',
+                            'nexthop': '19.4.4.200'},
+                           {'destination': '135.207.0.0/16',
+                            'nexthop': '19.4.4.201'}]
+        calls = [mock.call(fake_route_list, q_netns)]
+        agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
+        self._set_ri_kwargs(agent, uuid, router)
+        router_cls = (dvr_edge_ha_router.DvrEdgeHaRouter if enable_ha else
+                      dvr_router.DvrEdgeRouter)
+        ri = router_cls(HOSTNAME, **self.ri_kwargs)
+        ri._update_routing_table_ecmp = mock.Mock()
+
+        with mock.patch.object(ri, '_is_this_snat_host') as snat_host:
+            snat_host.return_value = is_snat_host
+            ri.update_routing_table_ecmp(fake_route_list)
+            if is_snat_host and not enable_ha:
+                calls += [mock.call(fake_route_list, s_netns)]
+            ri._update_routing_table_ecmp.assert_has_calls(calls,
+                                                           any_order=True)
+            self.assertEqual(
+                len(calls), ri._update_routing_table_ecmp.call_count)
+
+    def test_process_update_snat_routing_table_ecmp(self):
+        self._test_update_routing_table_ecmp()
+
+    def test_process_not_update_snat_routing_table_ecmp(self):
+        self._test_update_routing_table_ecmp(is_snat_host=False)
+
+    def test_process_not_update_ha_routing_table_ecmp(self):
+        self._test_update_routing_table_ecmp(enable_ha=True)
 
     def test_process_router_interface_added(self):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)

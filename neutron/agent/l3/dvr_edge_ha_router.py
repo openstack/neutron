@@ -154,3 +154,7 @@ class DvrEdgeHaRouter(dvr_edge_router.DvrEdgeRouter,
                          namespace=self.snat_namespace.name,
                          prefix=constants.SNAT_INT_DEV_PREFIX,
                          mtu=port.get('mtu'))
+
+    def _should_update_snat_routing_table(self):
+        # NOTE: keepalived is responsible for routes updating
+        return False
