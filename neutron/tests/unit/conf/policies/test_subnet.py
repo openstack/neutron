@@ -29,19 +29,33 @@ class SubnetAPITestCase(base.PolicyBaseTestCase):
 
         self.network = {
             'id': uuidutils.generate_uuid(),
+            'tenant_id': self.project_id,
             'project_id': self.project_id}
+        self.alt_network = {
+            'id': uuidutils.generate_uuid(),
+            'tenant_id': self.alt_project_id,
+            'project_id': self.alt_project_id}
+
+        networks = {
+            self.network['id']: self.network,
+            self.alt_network['id']: self.alt_network}
 
         self.target = {
             'project_id': self.project_id,
+            'tenant_id': self.project_id,
             'network_id': self.network['id'],
             'ext_parent_network_id': self.network['id']}
         self.alt_target = {
             'project_id': self.alt_project_id,
-            'network_id': self.network['id'],
-            'ext_parent_network_id': self.network['id']}
+            'tenant_id': self.alt_project_id,
+            'network_id': self.alt_network['id'],
+            'ext_parent_network_id': self.alt_network['id']}
+
+        def get_network(context, id, fields=None):
+            return networks.get(id)
 
         self.plugin_mock = mock.Mock()
-        self.plugin_mock.get_network.return_value = self.network
+        self.plugin_mock.get_network.side_effect = get_network
         mock.patch(
             'neutron_lib.plugins.directory.get_plugin',
             return_value=self.plugin_mock).start()
