@@ -206,6 +206,10 @@ class DhcpAgent(manager.Manager):
                      action, action_kwargs)
             # There is nothing we can do.
             return
+        if action == 'get_metadata_bind_interface':
+            # Special condition, this action returns a string instead of a
+            # bool.
+            return self._call_driver(action, network, **action_kwargs)
         if 'segments' in network and network.segments:
             # In case of multi-segments network, let's group network per
             # segments.  We can then create DHPC process per segmentation
