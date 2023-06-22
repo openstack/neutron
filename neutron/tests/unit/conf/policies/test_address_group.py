@@ -91,3 +91,16 @@ class ProjectReaderTests(ProjectMemberTests):
     def setUp(self):
         super(ProjectReaderTests, self).setUp()
         self.context = self.project_reader_ctx
+
+
+class ServiceRoleTests(AddressGroupAPITestCase):
+
+    def setUp(self):
+        super(ServiceRoleTests, self).setUp()
+        self.context = self.service_ctx
+
+    def test_get_address_group(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "get_address_group", self.target)

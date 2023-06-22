@@ -317,3 +317,46 @@ class ProjectReaderTests(ProjectMemberTests):
                 policy.enforce,
                 self.context, 'delete_floatingip_port_forwarding',
                 self.alt_target)
+
+
+class ServiceRoleTests(FloatingipPortForwardingAPITestCase):
+
+    def setUp(self):
+        super(ServiceRoleTests, self).setUp()
+        self.context = self.service_ctx
+
+    def test_create_fip_pf(self):
+        with mock.patch.object(self.plugin_mock, 'get_floatingip',
+                               return_value=self.fip):
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'create_floatingip_port_forwarding',
+                self.target)
+
+    def test_get_fip_pf(self):
+        with mock.patch.object(self.plugin_mock, 'get_floatingip',
+                               return_value=self.fip):
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'get_floatingip_port_forwarding',
+                self.target)
+
+    def test_update_fip_pf(self):
+        with mock.patch.object(self.plugin_mock, 'get_floatingip',
+                               return_value=self.fip):
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'update_floatingip_port_forwarding',
+                self.target)
+
+    def test_delete_fip_pf(self):
+        with mock.patch.object(self.plugin_mock, 'get_floatingip',
+                               return_value=self.fip):
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'delete_floatingip_port_forwarding',
+                self.target)

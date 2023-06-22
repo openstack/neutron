@@ -268,3 +268,42 @@ class ProjectReaderTests(ProjectMemberTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'delete_rbac_policy', self.alt_target)
+
+
+class ServiceRoleTests(RbacAPITestCase):
+
+    def setUp(self):
+        super(ServiceRoleTests, self).setUp()
+        self.context = self.service_ctx
+
+    def test_create_rbac_policy(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_rbac_policy', self.target)
+
+    def test_create_rbac_policy_target_tenant(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_rbac_policy:target_tenant',
+            self.wildcard_target)
+
+    def test_update_rbac_policy(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_rbac_policy', self.target)
+
+    def test_update_rbac_policy_target_tenant(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_rbac_policy:target_tenant',
+            self.wildcard_target)
+
+    def test_get_rbac_policy(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_rbac_policy', self.target)

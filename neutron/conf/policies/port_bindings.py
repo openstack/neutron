@@ -22,7 +22,7 @@ ACTIVATE_BINDING_PATH = '/ports/{port_id}/bindings/{host}'
 rules = [
     policy.DocumentedRuleDefault(
         name='get_port_binding',
-        check_str=base.ADMIN,
+        check_str=base.ADMIN_OR_SERVICE,
         scope_types=['project'],
         description='Get port binding information',
         operations=[
@@ -34,7 +34,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_port_binding',
-        check_str=base.ADMIN,
+        check_str=base.SERVICE,
         scope_types=['project'],
         description='Create port binding on the host',
         operations=[
@@ -46,7 +46,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_port_binding',
-        check_str=base.ADMIN,
+        check_str=base.SERVICE,
         scope_types=['project'],
         description='Delete port binding on the host',
         operations=[
@@ -58,7 +58,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='activate',
-        check_str=base.ADMIN,
+        check_str=base.SERVICE,
         scope_types=['project'],
         description='Activate port binding on the host',
         operations=[

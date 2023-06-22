@@ -228,3 +228,41 @@ class ProjectReaderTests(ProjectMemberTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, "delete_floatingip", self.alt_target)
+
+
+class ServiceRoleTests(FloatingIPAPITestCase):
+
+    def setUp(self):
+        super(ServiceRoleTests, self).setUp()
+        self.context = self.service_ctx
+
+    def test_create_floatingip(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "create_floatingip", self.target)
+
+    def test_create_floatingip_with_ip_address(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "create_floatingip:floating_ip_address",
+            self.target)
+
+    def test_get_floatingip(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "get_floatingip", self.target)
+
+    def test_update_floatingip(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "update_floatingip", self.target)
+
+    def test_delete_floatingip(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "delete_floatingip", self.target)

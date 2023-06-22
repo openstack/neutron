@@ -82,31 +82,6 @@ class AdminTests(PortBindingsAPITestCase):
             policy.enforce(self.context, "get_port_binding", self.target))
 
     def test_create_port_binding(self):
-        self.assertTrue(
-            policy.enforce(self.context, "create_port_binding", self.target))
-
-    def test_delete_port_binding(self):
-        self.assertTrue(
-            policy.enforce(self.context, "delete_port_binding", self.target))
-
-    def test_activate_port_binding(self):
-        self.assertTrue(
-            policy.enforce(self.context, "activate", self.target))
-
-
-class ProjectMemberTests(AdminTests):
-
-    def setUp(self):
-        super(ProjectMemberTests, self).setUp()
-        self.context = self.project_member_ctx
-
-    def test_get_port_binding(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce,
-            self.context, "get_port_binding", self.target)
-
-    def test_create_port_binding(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
@@ -125,8 +100,44 @@ class ProjectMemberTests(AdminTests):
             self.context, "activate", self.target)
 
 
+class ProjectMemberTests(AdminTests):
+
+    def setUp(self):
+        super(ProjectMemberTests, self).setUp()
+        self.context = self.project_member_ctx
+
+    def test_get_port_binding(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "get_port_binding", self.target)
+
+
 class ProjectReaderTests(ProjectMemberTests):
 
     def setUp(self):
         super(ProjectReaderTests, self).setUp()
         self.context = self.project_reader_ctx
+
+
+class ServiceRoleTests(PortBindingsAPITestCase):
+
+    def setUp(self):
+        super(ServiceRoleTests, self).setUp()
+        self.context = self.service_ctx
+
+    def test_get_port_binding(self):
+        self.assertTrue(
+            policy.enforce(self.context, "get_port_binding", self.target))
+
+    def test_create_port_binding(self):
+        self.assertTrue(
+            policy.enforce(self.context, "create_port_binding", self.target))
+
+    def test_delete_port_binding(self):
+        self.assertTrue(
+            policy.enforce(self.context, "delete_port_binding", self.target))
+
+    def test_activate_port_binding(self):
+        self.assertTrue(
+            policy.enforce(self.context, "activate", self.target))

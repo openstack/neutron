@@ -382,3 +382,70 @@ class ProjectReaderTests(ProjectMemberTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'remove_prefixes', self.alt_target)
+
+
+class ServiceRoleTests(SubnetpoolAPITestCase):
+
+    def setUp(self):
+        super(ServiceRoleTests, self).setUp()
+        self.context = self.service_ctx
+
+    def test_create_subnetpool(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_subnetpool', self.target)
+
+    def test_create_subnetpool_shared(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_subnetpool:shared', self.target)
+
+    def test_create_subnetpool_default(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_subnetpool:is_default', self.target)
+
+    def test_get_subnetpool(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_subnetpool', self.target)
+
+    def test_update_subnetpool(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_subnetpool', self.target)
+
+    def test_update_subnetpool_default(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_subnetpool:is_default', self.target)
+
+    def test_delete_subnetpool(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_subnetpool', self.target)
+
+    def test_onboard_network_subnets(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'onboard_network_subnets', self.target)
+
+    def test_add_prefixes(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'add_prefixes', self.target)
+
+    def test_remove_prefixes(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'remove_prefixes', self.target)

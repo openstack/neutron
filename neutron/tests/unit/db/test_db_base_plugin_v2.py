@@ -260,6 +260,15 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             roles=['admin', 'member', 'reader'])
         return req
 
+    def _service_req(self, method, resource, data=None, fmt=None, id=None,
+                     params=None, action=None, subresource=None, sub_id=None,
+                     ctx=None, headers=None):
+        req = self._req(method, resource, data, fmt, id, params, action,
+                        subresource, sub_id, ctx, headers)
+        req.environ['neutron.context'] = context.Context(
+            'service-user', 'service-project', roles=['service'])
+        return req
+
     def _member_req(self, method, resource, data=None, fmt=None, id=None,
                     params=None, action=None, subresource=None, sub_id=None,
                     ctx=None, headers=None, tenant_id=None):

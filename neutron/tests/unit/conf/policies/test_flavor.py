@@ -220,3 +220,66 @@ class ProjectReaderTests(ProjectMemberTests):
     def setUp(self):
         super(ProjectReaderTests, self).setUp()
         self.context = self.project_reader_ctx
+
+
+class ServiceRoleTests(FlavorAPITestCase):
+
+    def setUp(self):
+        super(ServiceRoleTests, self).setUp()
+        self.context = self.service_ctx
+
+    def test_create_flavor(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_flavor', self.target)
+
+    def test_update_flavor(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_flavor', self.target)
+
+    def test_delete_flavor(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_flavor', self.target)
+
+    def test_create_service_profile(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_service_profile', self.target)
+
+    def test_get_service_profile(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_service_profile', self.target)
+
+    def test_update_service_profile(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_service_profile', self.target)
+
+    def test_delete_service_profile(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_service_profile', self.target)
+
+    def test_create_flavor_service_profile(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_flavor_service_profile',
+            self.target)
+
+    def test_delete_flavor_service_profile(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_flavor_service_profile',
+            self.target)

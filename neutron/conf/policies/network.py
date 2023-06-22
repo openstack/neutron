@@ -168,6 +168,7 @@ rules = [
         name='get_network',
         check_str=neutron_policy.policy_or(
             base.ADMIN_OR_PROJECT_READER,
+            base.SERVICE,
             'rule:shared',
             'rule:external',
             neutron_policy.RULE_ADVSVC

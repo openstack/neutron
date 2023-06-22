@@ -68,6 +68,7 @@ class PolicyBaseTestCase(tests_base.BaseTestCase):
         self.user_id = uuidutils.generate_uuid()
         self._prepare_system_scope_personas()
         self._prepare_project_scope_personas()
+        self._prepare_service_persona()
         self.alt_project_id = uuidutils.generate_uuid()
 
     def _prepare_system_scope_personas(self):
@@ -97,6 +98,12 @@ class PolicyBaseTestCase(tests_base.BaseTestCase):
             user_id=self.user_id,
             roles=['reader'],
             project_id=self.project_id)
+
+    def _prepare_service_persona(self):
+        self.service_ctx = context.Context(
+            user_id='service',
+            roles=['service'],
+            project_id='service')
 
 
 class RuleScopesTestCase(PolicyBaseTestCase):

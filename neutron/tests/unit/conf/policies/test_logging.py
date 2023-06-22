@@ -136,3 +136,35 @@ class ProjectReaderTests(ProjectMemberTests):
     def setUp(self):
         super(ProjectReaderTests, self).setUp()
         self.context = self.project_reader_ctx
+
+
+class ServiceRoleTests(LoggingAPITestCase):
+
+    def setUp(self):
+        super(ServiceRoleTests, self).setUp()
+        self.context = self.service_ctx
+
+    def test_get_loggable_resource(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'get_loggable_resource', self.target)
+
+    def test_create_log(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'create_log', self.target)
+
+    def test_get_log(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'get_log', self.target)
+
+    def test_update_log(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'update_log', self.target)
+
+    def test_delete_log(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'delete_log', self.target)

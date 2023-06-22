@@ -153,3 +153,24 @@ class ProjectReaderTests(ProjectMemberTests):
             policy.enforce,
             self.context, DELETE_POLICY, self.alt_target
         )
+
+
+class ServiceRoleTests(AutoAllocatedTopologyAPITestCase):
+
+    def setUp(self):
+        super(ServiceRoleTests, self).setUp()
+        self.context = self.service_ctx
+
+    def test_get_topology(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, GET_POLICY, self.target
+        )
+
+    def test_delete_topology(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, DELETE_POLICY, self.target
+        )
