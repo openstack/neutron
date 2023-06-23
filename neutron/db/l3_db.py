@@ -82,6 +82,13 @@ FIP_ASSOC_MSG = ('Floating IP %(fip_id)s %(assoc)s. External IP: %(ext_ip)s, '
                  'port: %(port_id)s.')
 
 
+# TODO(froyo): Move this exception to neutron-lib as soon as possible, and when
+# a new release is created and pointed to in the requirements remove this code.
+class FipAssociated(n_exc.InUse):
+    message = _('Unable to complete the operation on port "%(port_id)s" '
+                'because the port still has an associated floating IP.')
+
+
 @registry.has_registry_receivers
 class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                           base_services.WorkerBase,
@@ -1774,12 +1781,27 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         @return: set of router-ids that require notification updates
         """
         with db_api.CONTEXT_WRITER.using(context):
+            # NOTE(froyo): Context is elevated to confirm the presence of at
+            # least one FIP associated to the port_id. Additional checks
+            # regarding the tenant's grants will be carried out in following
+            # lines.
             if not l3_obj.FloatingIP.objects_exist(
-                    context, fixed_port_id=port_id):
+                    context.elevated(), fixed_port_id=port_id):
                 return []
 
             floating_ip_objs = l3_obj.FloatingIP.get_objects(
                 context, fixed_port_id=port_id)
+
+            # NOTE(froyo): To ensure that a FIP assigned by an admin user
+            # cannot be disassociated by a tenant user, we raise exception to
+            # generate a 409 Conflict response message that prompts the tenant
+            # user to contact an admin, rather than a 500 error message.
+            if not context.is_admin:
+                floating_ip_objs_admin = l3_obj.FloatingIP.get_objects(
+                    context.elevated(), fixed_port_id=port_id)
+                if floating_ip_objs_admin != floating_ip_objs:
+                    raise FipAssociated(port_id=port_id)
+
             router_ids = {fip.router_id for fip in floating_ip_objs}
             old_fips = {fip.id: self._make_floatingip_dict(fip)
                         for fip in floating_ip_objs}
