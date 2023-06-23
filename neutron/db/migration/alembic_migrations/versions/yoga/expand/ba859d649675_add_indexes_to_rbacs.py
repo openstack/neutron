@@ -14,6 +14,7 @@
 #
 
 from alembic import op
+import sqlalchemy as sa
 
 
 """Add indexes to RBACs
@@ -31,6 +32,27 @@ down_revision = 'c181bb1d89e4'
 OBJECTS = ('network', 'qospolicy', 'securitygroup', 'addressscope',
            'subnetpool', 'addressgroup')
 COLUMNS = ('target_tenant', 'action')
+_INSPECTOR = None
+
+
+def get_inspector():
+    global _INSPECTOR
+    if _INSPECTOR:
+        return _INSPECTOR
+    else:
+        _INSPECTOR = sa.inspect(op.get_bind())
+
+    return _INSPECTOR
+
+
+def has_index(table, column):
+    """Check if the table has an index *using only* the column name provided"""
+    inspector = get_inspector()
+    table_indexes = inspector.get_indexes(table)
+    for index in table_indexes:
+        if [column] == index['column_names']:
+            return True
+    return False
 
 
 def upgrade():
@@ -38,4 +60,6 @@ def upgrade():
         table = object + 'rbacs'
         ix = 'ix_' + table + '_'
         for column in COLUMNS:
-            op.create_index(op.f(ix + column), table, [column], unique=False)
+            if not has_index(table, column):
+                op.create_index(op.f(ix + column), table, [column],
+                                unique=False)
