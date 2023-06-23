@@ -328,7 +328,9 @@ class PortForwardingTestCase(PortForwardingTestCaseBase):
         # There is already a port forwarding. We create another port forwarding
         # with the new_port, and update the new one with the same params of the
         # existing one.
-        new_port = self._create_port(self.fmt, self.net['id']).json['port']
+        fixed_ips = [{'subnet_id': self.subnet['id']}]
+        new_port = self._create_port(self.fmt, self.net['id'],
+                                     fixed_ips=fixed_ips).json['port']
         self.port_forwarding[apidef.RESOURCE_NAME].update({
             'internal_port_id': new_port['id'],
             'internal_ip_address': new_port['fixed_ips'][0]['ip_address'],
