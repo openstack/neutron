@@ -16,6 +16,7 @@ import copy
 from unittest import mock
 
 from neutron_lib.api.definitions import external_net
+from neutron_lib.api.definitions import l3 as l3_def
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib.callbacks import events
@@ -26,12 +27,14 @@ from neutron_lib.exceptions import availability_zone as az_exc
 from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
+from neutron_lib.services.qos import constants as qos_consts
 from oslo_config import cfg
 from oslo_utils import uuidutils
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as config
+from neutron.db import extraroute_db
 from neutron.services.revisions import revision_plugin
 from neutron.tests.unit.api import test_extensions
 from neutron.tests.unit.extensions import test_extraroute
@@ -1200,7 +1203,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         uf.return_value = self.fake_floating_ip_new
         self.l3_inst._ovn.get_floatingip.return_value = (
             self.fake_ovn_nat_rule)
-        self.l3_inst.update_floatingip(self.context, 'id', 'floatingip')
+        fip = {l3_def.FLOATINGIP: {'port_id': 'port1'}}
+        self.l3_inst.update_floatingip(self.context, 'id', fip)
         self.l3_inst._ovn.delete_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-router-id',
             type='dnat_and_snat',
@@ -1224,13 +1228,30 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             logical_port='new-port_id',
             external_ids=expected_ext_ids)
 
+    @mock.patch.object(extraroute_db.ExtraRoute_dbonly_mixin,
+                       'update_floatingip')
+    def test_update_floatingip_qos(self, uf):
+        nb_ovn = self.l3_inst._ovn
+        nb_ovn.is_col_present.return_value = True
+        uf.return_value = self.fake_floating_ip_new
+        nb_ovn.get_floatingip.return_value = (
+            self.fake_ovn_nat_rule)
+        fip = {l3_def.FLOATINGIP: {qos_consts.QOS_POLICY_ID: 'qos_id_1'}}
+        with mock.patch.object(self.l3_inst._ovn_client._qos_driver,
+                               'update_floatingip') as ufip:
+            self.l3_inst.update_floatingip(self.context, 'id', fip)
+        nb_ovn.delete_nat_rule_in_lrouter.assert_not_called()
+        nb_ovn.add_nat_rule_in_lrouter.assert_not_called()
+        ufip.assert_called_once_with(mock.ANY, self.fake_floating_ip_new)
+
     @mock.patch('neutron.db.extraroute_db.ExtraRoute_dbonly_mixin.'
                 'update_floatingip')
     def test_update_floatingip_associate(self, uf):
         self.l3_inst._ovn.is_col_present.return_value = True
         self.fake_floating_ip.update({'fixed_port_id': None})
         uf.return_value = self.fake_floating_ip_new
-        self.l3_inst.update_floatingip(self.context, 'id', 'floatingip')
+        fip = {l3_def.FLOATINGIP: {'port_id': 'port1'}}
+        self.l3_inst.update_floatingip(self.context, 'id', fip)
         self.l3_inst._ovn.delete_nat_rule_in_lrouter.assert_not_called()
         expected_ext_ids = {
             ovn_const.OVN_FIP_EXT_ID_KEY: self.fake_floating_ip_new['id'],
@@ -1266,7 +1287,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
 
         config.cfg.CONF.set_override(
             'enable_distributed_floating_ip', True, group='ovn')
-        self.l3_inst.update_floatingip(self.context, 'id', 'floatingip')
+        fip = {l3_def.FLOATINGIP: {'port_id': 'port1'}}
+        self.l3_inst.update_floatingip(self.context, 'id', fip)
         self.l3_inst._ovn.delete_nat_rule_in_lrouter.assert_not_called()
         expected_ext_ids = {
             ovn_const.OVN_FIP_EXT_ID_KEY: self.fake_floating_ip_new['id'],
@@ -1293,7 +1315,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.fake_floating_ip.update({'fixed_port_id': 'foo'})
         self.fake_floating_ip_new.update({'port_id': 'foo'})
         uf.return_value = self.fake_floating_ip_new
-        self.l3_inst.update_floatingip(self.context, 'id', 'floatingip')
+        fip = {l3_def.FLOATINGIP: {'port_id': 'port1'}}
+        self.l3_inst.update_floatingip(self.context, 'id', fip)
         self.l3_inst._ovn.delete_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-router-id',
             type='dnat_and_snat',
@@ -1327,7 +1350,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.fake_floating_ip_new.update({'port_id': 'port_id',
                                           'fixed_port_id': 'port_id'})
         uf.return_value = self.fake_floating_ip_new
-        self.l3_inst.update_floatingip(self.context, 'id', 'floatingip')
+        fip = {l3_def.FLOATINGIP: {'port_id': 'port1'}}
+        self.l3_inst.update_floatingip(self.context, 'id', fip)
 
         self.l3_inst._ovn.delete_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-router-id',
