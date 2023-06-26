@@ -1745,15 +1745,6 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             return
         if port['device_owner'] not in self.router_device_owners:
             return
-        # Raise port in use only if the port has IP addresses
-        # Otherwise it's a stale port that can be removed
-        fixed_ips = port['fixed_ips']
-        if not fixed_ips:
-            LOG.debug("Port %(port_id)s has owner %(port_owner)s, but "
-                      "no IP address, so it can be deleted",
-                      {'port_id': port['id'],
-                       'port_owner': port['device_owner']})
-            return
         # NOTE(kevinbenton): we also check to make sure that the
         # router still exists. It's possible for HA router interfaces
         # to remain after the router is deleted if they encounter an
