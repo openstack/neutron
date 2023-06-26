@@ -253,6 +253,10 @@ class DietTestCase(base.BaseTestCase, metaclass=_CatchTimeoutMetaclass):
         # for more info.
         db_options.set_defaults(cfg.CONF, connection='sqlite://')
 
+        # NOTE(ykarel): Disable pool recycle as tables are dropped with sqlite
+        # memory db with connection close or reconnect
+        cfg.CONF.set_override('connection_recycle_time', -1, group='database')
+
         # Configure this first to ensure pm debugging support for setUp()
         debugger = os.environ.get('OS_POST_MORTEM_DEBUGGER')
         if debugger:
