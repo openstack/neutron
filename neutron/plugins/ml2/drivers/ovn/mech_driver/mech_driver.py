@@ -43,6 +43,7 @@ from oslo_config import cfg
 from oslo_db import exception as os_db_exc
 from oslo_log import log
 from oslo_utils import timeutils
+from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron._i18n import _
 from neutron.common.ovn import acl as ovn_acl
@@ -1381,6 +1382,14 @@ def delete_agent(self, context, id, _driver=None):
     chassis_name = agent['configurations']['chassis_name']
     _driver.sb_ovn.chassis_del(chassis_name, if_exists=True).execute(
         check_error=True)
+    if _driver.sb_ovn.is_table_present('Chassis_Private'):
+        # TODO(ralonsoh): implement the corresponding chassis_private
+        # commands in ovsdbapp.
+        try:
+            _driver.sb_ovn.db_destroy('Chassis_Private', chassis_name).execute(
+                check_error=True)
+        except idlutils.RowNotFound:
+            pass
     # Send a specific event that all API workers can get to delete the agent
     # from their caches. Ideally we could send a single transaction that both
     # created and deleted the key, but alas python-ovs is too "smart"
