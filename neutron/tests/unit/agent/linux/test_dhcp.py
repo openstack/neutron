@@ -87,6 +87,19 @@ class FakeDhcpPort(object):
         self.extra_dhcp_opts = []
 
 
+class FakeOvnMetadataPort(object):
+    def __init__(self):
+        self.id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa'
+        self.admin_state_up = True
+        self.device_owner = constants.DEVICE_OWNER_DISTRIBUTED
+        self.fixed_ips = [
+            FakeIPAllocation('192.168.0.10',
+                             'dddddddd-dddd-dddd-dddd-dddddddddddd')]
+        self.mac_address = '00:00:80:aa:bb:ee'
+        self.device_id = 'ovnmeta-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+        self.extra_dhcp_opts = []
+
+
 class FakeReservedPort(object):
     def __init__(self, id='reserved-aaaa-aaaa-aaaa-aaaaaaaaaaa'):
         self.admin_state_up = True
@@ -751,6 +764,14 @@ class FakeNetworkDhcpPort(object):
         self.id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
         self.subnets = [FakeV4Subnet()]
         self.ports = [FakePort1(), FakeDhcpPort()]
+        self.namespace = 'qdhcp-ns'
+
+
+class FakeNetworkDhcpandOvnMetadataPort(object):
+    def __init__(self):
+        self.id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+        self.subnets = [FakeV4Subnet()]
+        self.ports = [FakePort1(), FakeDhcpPort(), FakeOvnMetadataPort()]
         self.namespace = 'qdhcp-ns'
 
 
@@ -3048,6 +3069,10 @@ class TestDnsmasq(TestBase):
         self.assertFalse(dhcp.Dnsmasq.has_metadata_subnet(
             [FakeV4Subnet()]))
 
+    def test_should_enable_metadata_ovn_metadata_port_returns_false(self):
+        self.assertFalse(dhcp.Dnsmasq.should_enable_metadata(
+            self.conf, FakeNetworkDhcpandOvnMetadataPort()))
+
     def test_should_enable_metadata_isolated_network_returns_true(self):
         self.assertTrue(dhcp.Dnsmasq.should_enable_metadata(
             self.conf, FakeV4NetworkNoRouter()))
@@ -3095,6 +3120,12 @@ class TestDnsmasq(TestBase):
         config = {'enable_isolated_metadata': False,
                   'force_metadata': False}
         self._test__generate_opts_per_subnet_helper(config, False)
+
+    def test__generate_opts_per_subnet_with_metadata_port(self):
+        config = {'enable_isolated_metadata': False,
+                  'force_metadata': False}
+        self._test__generate_opts_per_subnet_helper(config, True,
+            network_class=FakeNetworkDhcpandOvnMetadataPort)
 
     def test__generate_opts_per_subnet_isolated_metadata_with_router(self):
         config = {'enable_isolated_metadata': True,
