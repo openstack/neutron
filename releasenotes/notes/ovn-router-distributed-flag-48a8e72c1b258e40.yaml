@@ -1,0 +1,12 @@
+---
+features:
+  - |
+    OVN routers now expose the "distributed" flag depending on the
+    configuration option ``enable_distributed_floating_ip``. Because this is a
+    common configuration option, all routers will expose the same value. This
+    value can flap if the Neutron API is restarted and the configuration option
+    changes.
+    NOTE: Once the RFE that allows us to define the distributed flag per
+    floating IP address is implemented in ML2/OVN, this flag will be useless
+    (no Launchpad bug has been created yet for this RFE, that is only a
+    proposed idea during several PTGs).

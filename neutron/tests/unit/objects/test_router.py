@@ -61,6 +61,16 @@ class RouterExtraAttrsDbObjTestCase(obj_test_base.BaseDbObjectTestCase,
         self.update_obj_fields(
             {'router_id': lambda: self._create_test_router_id()})
 
+    def test_update_distributed_flag(self):
+        for obj in self.objs:
+            obj.distributed = False
+            obj.create()
+        router.RouterExtraAttributes.update_distributed_flag(self.context,
+                                                             True)
+        r_e_a_list = router.RouterExtraAttributes.get_objects(self.context)
+        for obj in r_e_a_list:
+            self.assertTrue(obj.distributed)
+
 
 class RouterIfaceObjectTestCase(obj_test_base.BaseObjectIfaceTestCase):
 

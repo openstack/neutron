@@ -35,6 +35,7 @@ from neutron._i18n import _
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import extensions
 from neutron.common.ovn import utils
+from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db.availability_zone import router as router_az_db
 from neutron.db import dns_db
 from neutron.db import extraroute_db
@@ -174,6 +175,10 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         context.session.flush()
         router_id = payload.resource_id
         router_db = payload.metadata['router_db']
+        # NOTE(ralonsoh): the "distributed" flag is a static configuration
+        # parameter that needs to be defined only during the router creation.
+        extra_attr = router_db['extra_attributes']
+        extra_attr.distributed = ovn_conf.is_ovn_distributed_floating_ip()
 
         db_rev.create_initial_revision(
             context, router_id, ovn_const.TYPE_ROUTERS,

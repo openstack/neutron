@@ -136,6 +136,12 @@ class RouterExtraAttributes(base.NeutronDbObject):
 
         return list(query)
 
+    @classmethod
+    @db_api.CONTEXT_WRITER
+    def update_distributed_flag(cls, context, distributed):
+        query = context.session.query(cls.db_model)
+        query.update({'distributed': distributed})
+
     def obj_make_compatible(self, primitive, target_version):
         _target_version = versionutils.convert_version_to_tuple(target_version)
         if _target_version < (1, 1):
