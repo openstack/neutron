@@ -17,6 +17,7 @@ import sys
 
 from neutron.common import config
 from neutron.common import utils
+from neutron.conf import common as common_config
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_service import service
@@ -29,7 +30,9 @@ LOG = logging.getLogger(__name__)
 
 
 def main():
-    config.register_common_config_options()
+    logging.register_options(cfg.CONF)
+    common_config.register_cli_script_opts()
+
     config_ovn_agent.register_opts()
     config.init(sys.argv[1:])
     config.setup_logging()
