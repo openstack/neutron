@@ -47,6 +47,9 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         self.rtr_fip_connect = False
         self.fip_ns = None
         self._pending_arp_set = set()
+
+    def initialize(self, process_monitor):
+        super().initialize(process_monitor)
         self._load_used_fip_information()
 
     def _load_used_fip_information(self):

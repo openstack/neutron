@@ -287,6 +287,15 @@ class TestDvrRouterOperations(base.BaseTestCase):
         self.assertEqual(sorted(ret, key=lambda ret: ret[0]),
                          fip_rule_prio_list)
 
+    @mock.patch.object(router_info.RouterInfo, 'initialize')
+    def test_initialize_dvr_local_router(self, super_initialize):
+        ri = self._create_router()
+        self.mock_load_fip.assert_not_called()
+
+        ri.initialize(self.process_monitor)
+        super_initialize.assert_called_once_with(self.process_monitor)
+        self.mock_load_fip.assert_called_once()
+
     def test_get_floating_ips_dvr(self):
         router = mock.MagicMock()
         router.get.return_value = [{'host': HOSTNAME},
