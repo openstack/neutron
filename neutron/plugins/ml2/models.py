@@ -19,7 +19,6 @@ from neutron_lib.db import model_base
 import sqlalchemy as sa
 from sqlalchemy import orm
 
-from neutron.common import _constants as n_const
 from neutron.db.models import segment as segment_models
 from neutron.db import models_v2
 
@@ -46,10 +45,10 @@ class PortBinding(model_base.BASEV2):
                           default=portbindings.VNIC_NORMAL,
                           server_default=portbindings.VNIC_NORMAL)
     profile = sa.Column(sa.String(BINDING_PROFILE_LEN), nullable=False,
-                        default='', server_default=n_const.SQL_EMPTY_STRING)
+                        default='', server_default='')
     vif_type = sa.Column(sa.String(64), nullable=False)
     vif_details = sa.Column(sa.String(4095), nullable=False, default='',
-                            server_default=n_const.SQL_EMPTY_STRING)
+                            server_default='')
     status = sa.Column(sa.String(16), nullable=False,
                        default=constants.ACTIVE,
                        server_default=constants.ACTIVE)
@@ -116,12 +115,12 @@ class DistributedPortBinding(model_base.BASEV2):
     router_id = sa.Column(sa.String(36), nullable=True)
     vif_type = sa.Column(sa.String(64), nullable=False)
     vif_details = sa.Column(sa.String(4095), nullable=False, default='',
-                            server_default=n_const.SQL_EMPTY_STRING)
+                            server_default='')
     vnic_type = sa.Column(sa.String(64), nullable=False,
                           default=portbindings.VNIC_NORMAL,
                           server_default=portbindings.VNIC_NORMAL)
     profile = sa.Column(sa.String(BINDING_PROFILE_LEN), nullable=False,
-                        default='', server_default=n_const.SQL_EMPTY_STRING)
+                        default='', server_default='')
     status = sa.Column(sa.String(16), nullable=False)
 
     # Add a relationship to the Port model in order to instruct SQLAlchemy to
