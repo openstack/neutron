@@ -81,7 +81,7 @@ class PluginReportStateAPI(object):
     doc/source/contributor/internals/rpc_api.rst.
     """
     def __init__(self, topic):
-        target = oslo_messaging.Target(topic=topic, version='1.2',
+        target = oslo_messaging.Target(topic=topic, version='1.3',
                                        namespace=constants.RPC_NAMESPACE_STATE)
         self.client = lib_rpc.get_client(target)
         self.timeout = cfg.CONF.AGENT.report_interval
