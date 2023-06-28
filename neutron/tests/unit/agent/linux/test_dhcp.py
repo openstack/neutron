@@ -719,6 +719,17 @@ class FakeDualNetwork(object):
                       FakeRouterPort(domain=domain)]
 
 
+class FakeDualNetworkV2(object):
+    def __init__(self, domain='openstacklocal'):
+        self.id = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
+        self.subnets = [FakeV4Subnet(), FakeV6SubnetDHCPStateful()]
+        self.namespace = 'qdhcp-ns-v2'
+        self.ports = [FakePort1(domain=domain), FakeV6Port(domain=domain),
+                      FakeDualPort(domain=domain),
+                      FakeRouterHAPort(),
+                      FakeRouterPort(domain=domain)]
+
+
 class FakeDeviceManagerNetwork(object):
     def __init__(self):
         self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
@@ -1258,6 +1269,37 @@ class TestDhcpLocalProcess(TestBase):
             self._assert_disabled(lp)
 
         delete_ns.assert_called_with('qdhcp-ns')
+
+    def test_enable_disable_two_networks(self):
+        attrs_to_mock = {'active': mock.DEFAULT}
+
+        with mock.patch.multiple(LocalChild, **attrs_to_mock) as mocks:
+            mocks['active'].__get__ = mock.Mock(return_value=False)
+            lp = LocalChild(self.conf, FakeDualNetwork())
+            lp2 = LocalChild(self.conf, FakeDualNetworkV2())
+            lp.enable()
+            lp2.enable()
+            with mock.patch('neutron.agent.linux.ip_lib.'
+                            'delete_network_namespace') as delete_ns:
+                lp.disable()
+                self.rmtree.assert_called_once()
+
+            self._assert_disabled(lp)
+
+            delete_ns.assert_called_once()
+            delete_ns.assert_called_with('qdhcp-ns')
+
+            delete_ns.reset_mock()
+            self.rmtree.reset_mock()
+            with mock.patch('neutron.agent.linux.ip_lib.'
+                            'delete_network_namespace') as delete_ns:
+                lp2.disable()
+                self.rmtree.assert_called_once()
+
+            self._assert_disabled(lp2)
+
+            delete_ns.assert_called_once()
+            delete_ns.assert_called_with('qdhcp-ns-v2')
 
     def test_disable_config_dir_removed_after_destroy(self):
         parent = mock.MagicMock()
