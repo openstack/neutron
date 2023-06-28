@@ -1,0 +1,10 @@
+---
+other:
+  - |
+    The external_mac entry in the NAT table is used to distribute/centralize
+    the traffic to the FIPs. When there is an external_mac set the traffic
+    is distributed (DVR). When it is empty it is centralized through the
+    gateway port (no DVR). Upon port status transition to down, the
+    external_mac was removed regardless of DVR being enabled or not, leading
+    to centralize the FIP traffic for DVR -- though it was for down ports that
+    won't accept traffic anyway.
