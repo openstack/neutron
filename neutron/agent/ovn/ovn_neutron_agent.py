@@ -32,6 +32,7 @@ LOG = logging.getLogger(__name__)
 def main():
     logging.register_options(cfg.CONF)
     common_config.register_cli_script_opts()
+    common_config.register_core_common_config_opts()
 
     config_ovn_agent.register_opts()
     config.init(sys.argv[1:])
