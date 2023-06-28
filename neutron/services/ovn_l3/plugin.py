@@ -187,7 +187,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         except Exception:
             with excutils.save_and_reraise_exception():
                 # Delete the logical router
-                LOG.error('Unable to create lrouter for %s', router['id'])
+                LOG.exception('Unable to create lrouter %s', router['id'])
                 super(OVNL3RouterPlugin, self).delete_router(context,
                                                              router['id'])
         return router
@@ -201,7 +201,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                                            original_router)
         except Exception:
             with excutils.save_and_reraise_exception():
-                LOG.exception('Unable to update lrouter for %s', id)
+                LOG.exception('Unable to update lrouter %s', id)
                 revert_router = {'router': original_router}
                 super(OVNL3RouterPlugin, self).update_router(context, id,
                                                              revert_router)
@@ -214,6 +214,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
             self._ovn_client.delete_router(context, id)
         except Exception:
             with excutils.save_and_reraise_exception():
+                LOG.exception('Unable to delete lrouter %s', id)
                 super(OVNL3RouterPlugin, self).create_router(
                     context, {'router': original_router})
 
@@ -250,6 +251,9 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                 context, router_id, router_interface_info)
         except Exception:
             with excutils.save_and_reraise_exception():
+                LOG.exception(
+                    'Unable to add router interface to lrouter %s. '
+                    'Interface info: %s', router_id, interface_info)
                 super(OVNL3RouterPlugin, self).remove_router_interface(
                     context, router_id, router_interface_info)
 
@@ -266,6 +270,9 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                 context, port_id, router_id=router_id, subnet_ids=subnet_ids)
         except Exception:
             with excutils.save_and_reraise_exception():
+                LOG.exception(
+                    'Unable to remove router interface from lrouter %s. '
+                    'Interface info: %s', router_id, interface_info)
                 super(OVNL3RouterPlugin, self).add_router_interface(
                     context, router_id, interface_info)
         return router_interface_info
