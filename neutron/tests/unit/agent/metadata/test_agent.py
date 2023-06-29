@@ -412,7 +412,9 @@ class _TestMetadataProxyHandlerCacheMixin(object):
         body = 'body'
 
         req = mock.Mock(path_info='/the_path', query_string='', headers=hdrs,
-                        method=method, body=body)
+                        method=method, body=body,
+                        url='https://example.com/my/request',
+                        host_url='https://example.com')
         resp = mock.MagicMock(status_code=response_code)
         resp.status.__str__.side_effect = AttributeError
         resp.content = 'content'
