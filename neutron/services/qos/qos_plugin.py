@@ -602,9 +602,9 @@ class QoSPlugin(qos.QoSPluginBase):
         network_id = payload.resource_id
         network = network_object.Network.get_object(context, id=network_id)
 
-        policy_id = network.qos_policy_id
-        if policy_id is None:
+        if not network or not getattr(network, 'qos_policy_id', None):
             return
+        policy_id = network.qos_policy_id
 
         policy = policy_object.QosPolicy.get_object(
             context.elevated(), id=policy_id)
