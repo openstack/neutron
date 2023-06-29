@@ -245,7 +245,8 @@ class TestExtendFipPortForwardingExtension(
                   extnet_apidef.EXTERNAL: True}
         with self.network(as_admin=True, **kwargs) as extnet,\
                 self.network() as innet:
-            with self.subnet(network=extnet, cidr='200.0.0.0/22'),\
+            with self.subnet(network=extnet, cidr='200.0.0.0/22',
+                             as_admin=True),\
                     self.subnet(network=innet, cidr='10.0.0.0/24') as insub,\
                     self.subnet(network=innet, cidr='10.0.8.0/24') as insub2,\
                     self.subnet(network=innet, cidr='10.0.9.0/24') as insub3,\
