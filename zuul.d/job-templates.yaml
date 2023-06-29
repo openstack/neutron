@@ -114,6 +114,7 @@
         - neutron-functional-with-oslo-master
         - neutron-ovs-tempest-with-oslo-master
         - neutron-ovn-tempest-ovs-release-with-oslo-master
+        - neutron-tempest-plugin-linuxbridge
     experimental:
       jobs: *neutron-periodic-jobs
 
