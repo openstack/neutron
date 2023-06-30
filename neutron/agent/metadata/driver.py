@@ -29,6 +29,7 @@ from neutron.common import coordination
 LOG = logging.getLogger(__name__)
 
 _HEADER_CONFIG_TEMPLATE = """
+    http-request del-header X-Forwarded-For
     http-request del-header X-Neutron-%(res_type_del)s-ID
     http-request set-header X-Neutron-%(res_type)s-ID %(res_id)s
 """
