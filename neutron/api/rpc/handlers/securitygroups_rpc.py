@@ -302,8 +302,12 @@ class SecurityGroupServerAPIShim(sg_rpc_base.SecurityGroupInfoAPIMixin):
         # the server can delete an entire security group without notifying
         # about the security group rules. so we need to emulate a rule deletion
         # when a security group is removed.
-        filters = {'security_group_id': (existing.id, )}
-        for rule in self.rcache.get_resources('SecurityGroupRule', filters):
+
+        rules = self.rcache.match_resources_with_func(
+            'SecurityGroupRule',
+            lambda rule: rule.security_group_id == existing.id)
+
+        for rule in rules:
             self.rcache.record_resource_delete(context, 'SecurityGroupRule',
                                                rule.id)
 

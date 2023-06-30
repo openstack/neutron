@@ -15,6 +15,7 @@
 from unittest import mock
 
 import netaddr
+from neutron_lib.callbacks import events
 from neutron_lib import context
 from oslo_utils import uuidutils
 
@@ -152,6 +153,70 @@ class SecurityGroupServerAPIShimTestCase(base.BaseTestCase):
             self.rcache.get_resources('SecurityGroupRule', filters))
         self.sg_agent.security_groups_rule_updated.assert_called_once_with(
             [s1.id])
+
+    def test_sg_deletion_affects_only_own_rules(self):
+        s1 = self._make_security_group_ovo()
+        s2 = self._make_security_group_ovo()
+        filters = {'security_group_id': (s1.id, s2.id)}
+        self.assertEqual(
+            s1.rules + s2.rules,
+            self.rcache.get_resources('SecurityGroupRule', filters))
+        # reset the mock: we care only about what happens at deletion
+        self.sg_agent.security_groups_rule_updated.reset_mock()
+        # Recode resource_cache.record_resource_delete for the test's sake
+        s1_existing = self.rcache._type_cache('SecurityGroup').pop(s1.id, None)
+        self.shim._clear_child_sg_rules('SecurityGroup', events.AFTER_DELETE,
+                                        self.rcache,
+                                        payload=events.DBEventPayload(
+                                            self.ctx,
+                                            resource_id=s1.id,
+                                            states=(s1_existing,)
+                                        ))
+        self.assertEqual(
+            s2.rules,
+            self.rcache.get_resources('SecurityGroupRule', filters))
+        self.sg_agent.security_groups_rule_updated.assert_called_once_with(
+            [s1.id])
+
+        self.sg_agent.security_groups_rule_updated.reset_mock()
+        s2_existing = self.rcache._type_cache('SecurityGroup').pop(s2.id, None)
+        self.shim._clear_child_sg_rules('SecurityGroup', events.AFTER_DELETE,
+                                        self.rcache,
+                                        payload=events.DBEventPayload(
+                                            self.ctx,
+                                            resource_id=s2.id,
+                                            states=(s2_existing,)
+                                        ))
+        self.assertEqual(
+            [],
+            self.rcache.get_resources('SecurityGroupRule', filters))
+        self.sg_agent.security_groups_rule_updated.assert_called_once_with(
+            [s2.id])
+
+    def test_sg_deletion_of_non_cached_sg_changes_nothing(self):
+        s1 = self._make_security_group_ovo()
+        s2 = self._make_security_group_ovo()
+        s3_id = uuidutils.generate_uuid()
+        filters = {'security_group_id': (s1.id, s2.id, s3_id)}
+        self.sg_agent.security_groups_rule_updated.reset_mock()
+
+        # resource_cache.record_resource_delete would set existing to None
+        # when the resource is not in the local resource cache. So do the same
+        # here.
+        s3_existing = None
+        self.shim._clear_child_sg_rules('SecurityGroup', events.AFTER_DELETE,
+                                        self.rcache,
+                                        payload=events.DBEventPayload(
+                                            self.ctx,
+                                            resource_id=s3_id,
+                                            states=(s3_existing,)
+                                        ))
+
+        # Verify that the other rules remain untouched.
+        self.assertEqual(
+            s1.rules + s2.rules,
+            self.rcache.get_resources('SecurityGroupRule', filters))
+        self.sg_agent.security_groups_rule_updated.assert_not_called()
 
     def test_security_group_info_for_devices(self):
         s1 = self._make_security_group_ovo()
