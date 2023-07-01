@@ -121,13 +121,14 @@ class SecurityGroupServerAPIShimTestCase(base.BaseTestCase):
                        return_value=False)
     def _make_security_group_ovo(self, *args, **kwargs):
         attrs = {'id': uuidutils.generate_uuid(), 'revision_number': 1}
+        r_group = kwargs.get('remote_group_id') or attrs['id']
         sg_rule = securitygroup.SecurityGroupRule(
             id=uuidutils.generate_uuid(),
             security_group_id=attrs['id'],
             direction='ingress',
             ethertype='IPv4', protocol='tcp',
             port_range_min=400,
-            remote_group_id=attrs['id'],
+            remote_group_id=r_group,
             revision_number=1,
             remote_address_group_id=kwargs.get('remote_address_group_id',
                                                None),
@@ -262,6 +263,52 @@ class SecurityGroupServerAPIShimTestCase(base.BaseTestCase):
         self.rcache.record_resource_delete(self.ctx, 'Port', p1.id)
         self.sg_agent.security_groups_member_updated.assert_called_with(
             {s1.id})
+
+    def test_sg_delete_events_with_remote(self):
+        s1 = self._make_security_group_ovo(remote_group_id='')
+        s2 = self._make_security_group_ovo(remote_group_id=s1.id)
+        rules = self.rcache.get_resources(
+            'SecurityGroupRule',
+            filters={'security_group_id': (s1.id, s2.id)})
+        self.assertEqual(2, len(rules))
+        self.assertEqual(s1.id, rules[0].remote_group_id)
+
+        self.shim._clear_child_sg_rules(
+            'SecurityGroup', 'after_delete', '',
+            events.DBEventPayload(
+                context=self.ctx,
+                states=[s1]
+            )
+        )
+        rules = self.rcache.get_resources(
+            'SecurityGroupRule',
+            filters={'security_group_id': (s1.id, s2.id)})
+        self.assertEqual(0, len(rules))
+
+    def test_sg_delete_events_without_remote(self):
+        s1 = self._make_security_group_ovo()
+        s2 = self._make_security_group_ovo()
+        rules = self.rcache.get_resources(
+            'SecurityGroupRule',
+            filters={'security_group_id': (s1.id, s2.id)})
+        self.assertEqual(2, len(rules))
+        self.assertEqual(s1.id, rules[0].remote_group_id)
+
+        self.shim._clear_child_sg_rules(
+            'SecurityGroup', 'after_delete', '',
+            events.DBEventPayload(
+                context=self.ctx,
+                states=[s1]
+            )
+        )
+        s1_rules = self.rcache.get_resources(
+            'SecurityGroupRule',
+            filters={'security_group_id': (s1.id, )})
+        self.assertEqual(0, len(s1_rules))
+        s2_rules = self.rcache.get_resources(
+            'SecurityGroupRule',
+            filters={'security_group_id': (s2.id, )})
+        self.assertEqual(1, len(s2_rules))
 
     def test_get_secgroup_ids_for_address_group(self):
         ag = self._make_address_group_ovo()
