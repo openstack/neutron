@@ -54,11 +54,11 @@ class Quota(model_base.BASEV2, model_base.HasId, model_base.HasProject):
                       model_base.BASEV2.__table_args__)
 
 
-class QuotaUsage(model_base.BASEV2, model_base.HasProjectPrimaryKeyIndex):
+class QuotaUsage(model_base.BASEV2, model_base.HasProjectPrimaryKey):
     """Represents the current usage for a given resource."""
 
     resource = sa.Column(sa.String(255), nullable=False,
-                         primary_key=True, index=True)
+                         primary_key=True)
     dirty = sa.Column(sa.Boolean, nullable=False, server_default=sql.false())
 
     in_use = sa.Column(sa.Integer, nullable=False,

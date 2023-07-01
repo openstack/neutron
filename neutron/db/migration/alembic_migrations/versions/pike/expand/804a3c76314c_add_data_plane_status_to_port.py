@@ -34,6 +34,6 @@ def upgrade():
                     sa.Column('port_id', sa.String(36),
                               sa.ForeignKey('ports.id',
                                             ondelete="CASCADE"),
-                              primary_key=True, index=True),
+                              primary_key=True),
                     sa.Column('data_plane_status', sa.String(length=16),
                               nullable=True))

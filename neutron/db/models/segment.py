@@ -71,11 +71,9 @@ class SegmentHostMapping(model_base.BASEV2):
                            sa.ForeignKey('networksegments.id',
                                          ondelete="CASCADE"),
                            primary_key=True,
-                           index=True,
                            nullable=False)
     host = sa.Column(sa.String(255),
                      primary_key=True,
-                     index=True,
                      nullable=False)
 
     # Add a relationship to the NetworkSegment model in order to instruct

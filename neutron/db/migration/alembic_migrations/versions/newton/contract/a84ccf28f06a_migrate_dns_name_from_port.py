@@ -36,7 +36,7 @@ portdnses = sa.Table('portdnses', sa.MetaData(),
                      sa.Column('port_id', sa.String(36),
                                sa.ForeignKey('ports.id',
                                              ondelete="CASCADE"),
-                               primary_key=True, index=True),
+                               primary_key=True),
                      sa.Column('dns_name', sa.String(length=255),
                                nullable=False),
 

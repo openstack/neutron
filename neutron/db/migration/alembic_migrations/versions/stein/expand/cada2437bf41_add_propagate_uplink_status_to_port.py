@@ -35,7 +35,7 @@ def upgrade():
                     sa.Column('port_id', sa.String(36),
                               sa.ForeignKey('ports.id',
                                             ondelete="CASCADE"),
-                              primary_key=True, index=True),
+                              primary_key=True),
                     sa.Column('propagate_uplink_status', sa.Boolean(),
                               nullable=False,
                               server_default=sa.sql.false()))
