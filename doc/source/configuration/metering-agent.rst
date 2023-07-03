@@ -26,7 +26,7 @@ The metering agent has the following configurations:
    packets information from the network plane. The default value is ``30``
    seconds;
 
-*  ``report_interval``: the interval in secodns used to generated the report
+*  ``report_interval``: the interval in seconds used to generated the report
    (message) of the data that is gathered. The default value is ``300``
    seconds.
 
