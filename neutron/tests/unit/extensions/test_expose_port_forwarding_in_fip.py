@@ -263,8 +263,9 @@ class TestExtendFipPortForwardingExtension(
                 self._router_interface_action('add', router['router']['id'],
                                               insub3['subnet']['id'], None)
 
-                with self.port(subnet=insub) as port1,\
-                        self.port(subnet=insub) as port2:
+                fixed_ips = [{'subnet_id': insub['subnet']['id']}]
+                with self.port(subnet=insub, fixed_ips=fixed_ips) as port1,\
+                        self.port(subnet=insub, fixed_ips=fixed_ips) as port2:
                     update_dict1 = {
                         apidef.INTERNAL_PORT_ID: port1['port']['id'],
                         apidef.INTERNAL_IP_ADDRESS:
