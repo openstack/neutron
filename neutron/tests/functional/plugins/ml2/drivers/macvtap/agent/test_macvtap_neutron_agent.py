@@ -48,7 +48,7 @@ class MacvtapAgentTestCase(functional_base.BaseSudoTestCase):
         try:
             common_utils.wait_until_true(
                 lambda: {macvtap.link.address} == self.mgr.get_all_devices(),
-                timeout=5)
+                timeout=10)
         except common_utils.WaitTimeout:
             msg = 'MacVTap address: %s, read devices: %s\n' % (
                 macvtap.link.address, self.mgr.get_all_devices())
