@@ -35,7 +35,6 @@ from neutron._i18n import _
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import extensions
 from neutron.common.ovn import utils
-from neutron.common import utils as common_utils
 from neutron.db.availability_zone import router as router_az_db
 from neutron.db import dns_db
 from neutron.db import extraroute_db
@@ -379,22 +378,6 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
 
             if port['status'] != status:
                 self._plugin.update_port_status(context, port['id'], status)
-
-    def _get_availability_zones_from_router_port(self, lrp_name):
-        """Return the availability zones hints for the router port.
-
-        Return a list of availability zones hints associated with the
-        router that the router port belongs to.
-        """
-        context = n_context.get_admin_context()
-        if not self._plugin_driver.list_availability_zones(context):
-            return []
-
-        lrp = self._nb_ovn.get_lrouter_port(lrp_name)
-        router = self.get_router(
-            context, lrp.external_ids[ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY])
-        az_hints = common_utils.get_az_hints(router)
-        return az_hints
 
     def schedule_unhosted_gateways(self, event_from_chassis=None):
         # GW ports and its physnets.
