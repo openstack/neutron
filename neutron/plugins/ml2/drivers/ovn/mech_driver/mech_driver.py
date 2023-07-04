@@ -1070,7 +1070,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         # See doc/source/design/ovn_worker.rst for more details.
         return [worker.MaintenanceWorker()]
 
-    def _update_dnat_entry_if_needed(self, port_id, up=True):
+    def _update_dnat_entry_if_needed(self, port_id):
         """Update DNAT entry if using distributed floating ips."""
         if not self.nb_ovn:
             self.nb_ovn = self._ovn_client._nb_idl
@@ -1091,9 +1091,9 @@ class OVNMechanismDriver(api.MechanismDriver):
                                 {ovn_const.OVN_FIP_EXT_MAC_KEY:
                                  nat['external_mac']})).execute()
 
-        if up and ovn_conf.is_ovn_distributed_floating_ip():
-            mac = nat['external_ids'][ovn_const.OVN_FIP_EXT_MAC_KEY]
-            if nat['external_mac'] != mac:
+        if ovn_conf.is_ovn_distributed_floating_ip():
+            mac = nat['external_ids'].get(ovn_const.OVN_FIP_EXT_MAC_KEY)
+            if mac and nat['external_mac'] != mac:
                 LOG.debug("Setting external_mac of port %s to %s",
                           port_id, mac)
                 self.nb_ovn.db_set(
@@ -1161,7 +1161,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         # to prevent another entity from bypassing the block with its own
         # port status update.
         LOG.info("OVN reports status down for port: %s", port_id)
-        self._update_dnat_entry_if_needed(port_id, False)
+        self._update_dnat_entry_if_needed(port_id)
         admin_context = n_context.get_admin_context()
         try:
             db_port = ml2_db.get_port(admin_context, port_id)
