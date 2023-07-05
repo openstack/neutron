@@ -105,7 +105,7 @@ class TestAddLSwitchPortCommand(TestBaseCommand):
 
     def test_lswitch_port_exists(self):
         with mock.patch.object(idlutils, 'row_by_value',
-                               return_value=mock.ANY):
+                               return_value=mock.Mock()):
             cmd = commands.AddLSwitchPortCommand(
                 self.ovn_api, 'fake-lsp', 'fake-lswitch', may_exist=True)
             cmd.run_idl(self.transaction)
