@@ -148,8 +148,6 @@ class Port(standard_attr.HasStandardAttributes, model_base.BASEV2,
 
     __table_args__ = (
         sa.Index(
-            'ix_ports_network_id_mac_address', 'network_id', 'mac_address'),
-        sa.Index(
             'ix_ports_network_id_device_owner', 'network_id', 'device_owner'),
         sa.Index('ix_ports_device_id', 'device_id'),
         sa.UniqueConstraint(
