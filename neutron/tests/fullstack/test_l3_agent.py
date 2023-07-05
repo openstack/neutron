@@ -395,8 +395,11 @@ class TestLegacyL3Agent(TestL3Agent):
         v6network = self.useFixture(
             ip_network.ExclusiveIPNetwork(
                 "2001:db8:1234::1", "2001:db8:1234::10", "64")).network
+        # NOTE(ykarel): gateway_ip is explicitly added as iputils package
+        # requires fix for https://github.com/iputils/iputils/issues/371
+        # is not available in CentOS 9-Stream
         ext_v6sub = self.safe_client.create_subnet(
-            tenant_id, ext_net['id'], v6network)
+            tenant_id, ext_net['id'], v6network, gateway_ip='2001:db8:1234::1')
 
         router = self.safe_client.create_router(tenant_id,
                                                 external_network=ext_net['id'])

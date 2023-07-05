@@ -27,11 +27,15 @@
         MYSQL_GATHER_PERFORMANCE={{ MYSQL_GATHER_PERFORMANCE | default(true) }}
 
         source $NEUTRON_DIR/tools/configure_for_func_testing.sh
-
         if is_fedora; then
             # NOTE(slqweq) Running functional job e.g. on Centos requires to
             # have repo with rabbitmq-server and some other packages available
-            install_package centos-release-openstack-victoria
+            OPENSTACK_RELEASE=victoria
+            # For CentOS 9-Stream need to setup yoga repos
+            if [[ $os_VENDOR == "CentOSStream" && $os_RELEASE -gt 8 ]]; then
+                OPENSTACK_RELEASE=yoga
+            fi
+            install_package centos-release-openstack-${OPENSTACK_RELEASE}
             install_package iproute-tc haproxy keepalived
 
             # NOTE(slaweq) On Fedora/CentOS systems make sure that SELinux is
