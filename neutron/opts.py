@@ -50,6 +50,7 @@ import neutron.conf.plugins.ml2.drivers.mech_sriov.agent_common
 import neutron.conf.plugins.ml2.drivers.mech_sriov.mech_sriov_conf
 import neutron.conf.plugins.ml2.drivers.openvswitch.mech_ovs_conf
 import neutron.conf.plugins.ml2.drivers.ovs_conf
+import neutron.conf.policy
 import neutron.conf.quota
 import neutron.conf.service
 import neutron.conf.services.extdns_designate_driver
@@ -185,7 +186,8 @@ def list_opts():
              neutron.conf.common.core_opts,
              neutron.conf.wsgi.socket_opts,
              neutron.conf.service.SERVICE_OPTS,
-             neutron.conf.service.RPC_EXTRA_OPTS)
+             neutron.conf.service.RPC_EXTRA_OPTS,
+             neutron.conf.policy.OWNER_CHECK_OPTS)
          ),
         (neutron.conf.common.NOVA_CONF_SECTION,
          itertools.chain(
