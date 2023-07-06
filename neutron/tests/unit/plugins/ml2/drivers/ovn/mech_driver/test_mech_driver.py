@@ -1124,7 +1124,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 resources.PORT,
                 provisioning_blocks.L2_AGENT_ENTITY
             )
-            ude.assert_called_once_with(port1['port']['id'], False)
+            ude.assert_called_once_with(port1['port']['id'])
 
             # If the port does NOT bellong to compute, do not notify Nova
             # about it's status changes
@@ -1174,7 +1174,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 resources.PORT,
                 provisioning_blocks.L2_AGENT_ENTITY
             )
-            ude.assert_called_once_with(port1['port']['id'], False)
+            ude.assert_called_once_with(port1['port']['id'])
 
     def test_bind_port_unsupported_vnic_type(self):
         fake_port = fakes.FakePort.create_one_port(
@@ -2368,9 +2368,10 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         self.assertTrue(agent.alive, "Agent of type %s alive=%s" % (
             agent.agent_type, agent.alive))
 
-    def _test__update_dnat_entry_if_needed(self, up=True):
-        ovn_conf.cfg.CONF.set_override(
-            'enable_distributed_floating_ip', True, group='ovn')
+    def _test__update_dnat_entry_if_needed(self, dvr=True):
+        if dvr:
+            ovn_conf.cfg.CONF.set_override(
+                'enable_distributed_floating_ip', True, group='ovn')
         port_id = 'fake-port-id'
         fake_ext_mac_key = 'fake-ext-mac-key'
         fake_nat_uuid = uuidutils.generate_uuid()
@@ -2383,22 +2384,24 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         fake_db_find.execute.return_value = [nat_row]
         self.nb_ovn.db_find.return_value = fake_db_find
 
-        self.mech_driver._update_dnat_entry_if_needed(port_id, up=up)
+        self.mech_driver._update_dnat_entry_if_needed(port_id)
 
-        if up:
+        if dvr:
             # Assert that we are setting the external_mac in the NAT table
             self.nb_ovn.db_set.assert_called_once_with(
                 'NAT', fake_nat_uuid, ('external_mac', fake_ext_mac_key))
+            self.nb_ovn.db_clear.assert_not_called()
         else:
+            self.nb_ovn.db_set.assert_not_called()
             # Assert that we are cleaning the external_mac from the NAT table
             self.nb_ovn.db_clear.assert_called_once_with(
                 'NAT', fake_nat_uuid, 'external_mac')
 
-    def test__update_dnat_entry_if_needed_up(self):
+    def test__update_dnat_entry_if_needed_dvr(self):
         self._test__update_dnat_entry_if_needed()
 
-    def test__update_dnat_entry_if_needed_down(self):
-        self._test__update_dnat_entry_if_needed(up=False)
+    def test__update_dnat_entry_if_needed_no_dvr(self):
+        self._test__update_dnat_entry_if_needed(dvr=False)
 
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
                 'ovn_client.OVNClient._get_router_ports')
