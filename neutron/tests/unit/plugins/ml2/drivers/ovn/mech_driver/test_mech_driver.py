@@ -4356,7 +4356,7 @@ class TestOVNVVirtualPort(OVNMechanismDriverTestCase):
             self.fmt, name='net1', admin_state_up=True)['network']
         self.subnet = self._make_subnet(
             self.fmt, {'network': self.net},
-            '10.0.0.1', '10.0.0.0/24')['subnet']
+            '10.0.0.1', '10.0.0.0/24')
 
     @mock.patch.object(ovn_utils, 'determine_bind_host')
     def test_create_port_with_virtual_type_and_options(self, *args):
@@ -4367,7 +4367,7 @@ class TestOVNVVirtualPort(OVNMechanismDriverTestCase):
                     'mac_address': '00:00:00:00:00:00',
                     'device_owner': device_owner,
                     'network_id': self.net['id'],
-                    'fixed_ips': [{'subnet_id': self.subnet['id'],
+                    'fixed_ips': [{'subnet_id': self.subnet['subnet']['id'],
                                    'ip_address': '10.0.0.55'}],
                     portbindings.PROFILE: {},
                     }
@@ -4429,6 +4429,25 @@ class TestOVNVVirtualPort(OVNMechanismDriverTestCase):
         self.mech_driver._ovn_client.delete_port(self.context, parent['id'])
         self.nb_idl.unset_lswitch_port_to_virtual_type.assert_called_once_with(
             virt_port['id'], parent['id'], if_exists=True)
+
+    def test_update_port_bound(self):
+        with self.port(subnet=self.subnet, is_admin=True) as port:
+            port = port['port']
+            updated_port = copy.deepcopy(port)
+            updated_port[portbindings.HOST_ID] = 'host1'
+            context = mock.Mock(current=updated_port, original=port)
+            with mock.patch.object(self.mech_driver._plugin, 'get_subnets') \
+                    as mock_get_subnets:
+                mock_get_subnets.return_value = [self.subnet['subnet']]
+                # 1) The port is not virtual, it has no parents.
+                self.mock_vp_parents.return_value = ''
+                self.mech_driver.update_port_precommit(context)
+                # 2) The port (LSP) has parents, that means it is a virtual
+                # port.
+                self.mock_vp_parents.return_value = ['parent-0', 'parent-1']
+                self.assertRaises(n_exc.BadRequest,
+                                  self.mech_driver.update_port_precommit,
+                                  context)
 
 
 class TestOVNAvailabilityZone(OVNMechanismDriverTestCase):

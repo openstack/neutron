@@ -1051,3 +1051,27 @@ def determine_bind_host(sb_idl, port, port_context=None):
             bp_info.bp_param[
                 constants.VIF_DETAILS_CARD_SERIAL_NUMBER]).hostname
     return ''
+
+
+def validate_port_binding_and_virtual_port(
+        port_context, nb_idl, sb_idl, ml2_plugin, port):
+    """If the port is type=virtual and it is bound, raise BadRequest"""
+    if not determine_bind_host(sb_idl, port, port_context=port_context):
+        # The port is not bound, exit.
+        return
+
+    fixed_ips = port.get('fixed_ips', [])
+    subnet_ids = set([fixed_ip['subnet_id'] for fixed_ip in fixed_ips
+                      if 'subnet_id' in fixed_ip])
+    if not subnet_ids:
+        # If the port has no fixed_ips/subnets, it cannot be virtual.
+        return
+
+    subnets = ml2_plugin.get_subnets(port_context.plugin_context,
+                                     filters={'id': list(subnet_ids)})
+    port_type, _, _ = get_port_type_virtual_and_parents(
+        subnets, fixed_ips, port['network_id'], port['id'], nb_idl)
+    if port_type == constants.LSP_TYPE_VIRTUAL:
+        raise n_exc.BadRequest(
+            resource='port',
+            msg='A virtual logical switch port cannot be bound to a host')
