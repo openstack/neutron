@@ -19,6 +19,7 @@ import itertools
 import re
 import sys
 
+from neutron.conf.policy import register_owner_check_opts
 from neutron_lib.api import attributes
 from neutron_lib.api.definitions import network as net_apidef
 from neutron_lib import constants
@@ -60,6 +61,8 @@ opts.set_defaults(
     DEFAULT_POLICY_FILE,
     enforce_scope=True,
     enforce_new_defaults=True)
+
+register_owner_check_opts()
 
 
 def reset():
@@ -278,7 +281,8 @@ class OwnerCheck(policy.Check):
             raise exceptions.PolicyInitError(
                 policy="%s:%s" % (kind, match),
                 reason=err_reason)
-        self._cache = cache._get_memory_cache_region(expiration_time=5)
+        et = cfg.CONF.owner_check_cache_expiration_time
+        self._cache = cache._get_memory_cache_region(expiration_time=et)
         super(OwnerCheck, self).__init__(kind, match)
 
     # NOTE(slaweq): It seems we need to have it like that, otherwise we hit
