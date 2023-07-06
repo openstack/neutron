@@ -303,6 +303,13 @@ class SecurityGroupServerAPIShim(sg_rpc_base.SecurityGroupInfoAPIMixin):
         for rule in self.rcache.get_resources('SecurityGroupRule', filters):
             self.rcache.record_resource_delete(context, 'SecurityGroupRule',
                                                rule.id)
+        # If there's a rule which remote is the deleted sg, remove that also.
+        rules = self.rcache.match_resources_with_func(
+            'SecurityGroupRule',
+            lambda sg_rule: sg_rule.remote_group_id == existing.id)
+        for rule in rules:
+            self.rcache.record_resource_delete(context, 'SecurityGroupRule',
+                                               rule.id)
 
     def _handle_sg_rule_delete(self, rtype, event, trigger, payload):
         existing = payload.states[0]
