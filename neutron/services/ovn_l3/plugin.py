@@ -299,7 +299,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
     def update_floatingip(self, context, id, floatingip):
         fip = super(OVNL3RouterPlugin, self).update_floatingip(context, id,
                                                                floatingip)
-        self._ovn_client.update_floatingip(context, fip)
+        self._ovn_client.update_floatingip(context, fip, floatingip)
         return fip
 
     def update_floatingip_status(self, context, floatingip_id, status):
