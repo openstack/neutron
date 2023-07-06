@@ -226,7 +226,7 @@ class TestTrackedResources(BaseTestTrackedResources):
         net = self._make_network('json', 'meh', True)['network']
         self._verify_dirty_bit('network')
         # Clear the dirty bit
-        quota_db_api.set_quota_usage_dirty(
+        quota_db_api.set_resources_quota_usage_dirty(
             self.ctx, 'network', self._project_id, dirty=False)
         self._delete('networks', net['id'])
         self._verify_dirty_bit('network')
@@ -243,7 +243,7 @@ class TestTrackedResources(BaseTestTrackedResources):
         port = self._make_port('json', net['id'])['port']
         self._verify_dirty_bit('port')
         # Clear the dirty bit
-        quota_db_api.set_quota_usage_dirty(
+        quota_db_api.set_resources_quota_usage_dirty(
             self.ctx, 'port', self._project_id, dirty=False)
         self._delete('ports', port['id'])
         self._verify_dirty_bit('port')
@@ -262,7 +262,7 @@ class TestTrackedResources(BaseTestTrackedResources):
                                    '10.0.0.0/24')['subnet']
         self._verify_dirty_bit('subnet')
         # Clear the dirty bit
-        quota_db_api.set_quota_usage_dirty(
+        quota_db_api.set_resources_quota_usage_dirty(
             self.ctx, 'subnet', self._project_id, dirty=False)
         self._delete('subnets', subnet['id'])
         self._verify_dirty_bit('subnet')
@@ -275,7 +275,7 @@ class TestTrackedResources(BaseTestTrackedResources):
                           '10.0.0.0/24')['subnet']
         self._verify_dirty_bit('subnet')
         # Clear the dirty bit
-        quota_db_api.set_quota_usage_dirty(
+        quota_db_api.set_resources_quota_usage_dirty(
             self.ctx, 'subnet', self._project_id, dirty=False)
         self._delete('networks', net['network']['id'])
         self._verify_dirty_bit('network')
@@ -294,7 +294,7 @@ class TestTrackedResources(BaseTestTrackedResources):
                                      name='meh')['subnetpool']
         self._verify_dirty_bit('subnetpool')
         # Clear the dirty bit
-        quota_db_api.set_quota_usage_dirty(
+        quota_db_api.set_resources_quota_usage_dirty(
             self.ctx, 'subnetpool', self._project_id, dirty=False)
         self._delete('subnetpools', pool['id'])
         self._verify_dirty_bit('subnetpool')
@@ -311,7 +311,7 @@ class TestTrackedResources(BaseTestTrackedResources):
             'json', 'meh', 'meh')['security_group']
         self._verify_dirty_bit('security_group')
         # Clear the dirty bit
-        quota_db_api.set_quota_usage_dirty(
+        quota_db_api.set_resources_quota_usage_dirty(
             self.ctx, 'security_group', self._project_id, dirty=False)
         self._delete('security-groups', sec_group['id'])
         self._verify_dirty_bit('security_group')
@@ -333,7 +333,7 @@ class TestTrackedResources(BaseTestTrackedResources):
             'json', rule_req)['security_group_rule']
         self._verify_dirty_bit('security_group_rule')
         # Clear the dirty bit
-        quota_db_api.set_quota_usage_dirty(
+        quota_db_api.set_resources_quota_usage_dirty(
             self.ctx, 'security_group_rule', self._project_id, dirty=False)
         self._delete('security-group-rules', sec_group_rule['id'])
         self._verify_dirty_bit('security_group_rule')

@@ -21,6 +21,7 @@ from neutron_lib.plugins import directory
 from oslo_config import cfg
 
 from neutron.db.quota import api as quota_api
+from neutron import policy  # noqa
 from neutron.tests.unit.db.quota import test_driver
 from neutron.tests.unit import testlib_api
 
@@ -94,17 +95,17 @@ class TestQuotaDbApi(testlib_api.SqlTestCaseLight):
         self._verify_quota_usage(usage_info_1,
                                  expected_used=28)
 
-    def test_set_quota_usage_dirty(self):
+    def test_set_resources_quota_usage_dirty_one_resource_only(self):
         self._create_quota_usage('goals', 26)
         # Higuain needs a shower after the match
-        self.assertEqual(1, quota_api.set_quota_usage_dirty(
+        self.assertEqual(1, quota_api.set_resources_quota_usage_dirty(
             self.context, 'goals', self.project_id))
         usage_info = quota_api.get_quota_usage_by_resource_and_project(
             self.context, 'goals', self.project_id)
         self._verify_quota_usage(usage_info,
                                  expected_dirty=True)
         # Higuain is clean now
-        self.assertEqual(1, quota_api.set_quota_usage_dirty(
+        self.assertEqual(1, quota_api.set_resources_quota_usage_dirty(
             self.context, 'goals', self.project_id, dirty=False))
         usage_info = quota_api.get_quota_usage_by_resource_and_project(
             self.context, 'goals', self.project_id)
@@ -112,8 +113,10 @@ class TestQuotaDbApi(testlib_api.SqlTestCaseLight):
                                  expected_dirty=False)
 
     def test_set_dirty_non_existing_quota_usage(self):
-        self.assertEqual(0, quota_api.set_quota_usage_dirty(
+        self.assertEqual(0, quota_api.set_resources_quota_usage_dirty(
             self.context, 'meh', self.project_id))
+        self.assertEqual(0, quota_api.set_resources_quota_usage_dirty(
+            self.context, ['meh1', 'meh2'], self.project_id))
 
     def test_set_resources_quota_usage_dirty(self):
         self._create_quota_usage('goals', 26)
@@ -151,7 +154,7 @@ class TestQuotaDbApi(testlib_api.SqlTestCaseLight):
         self._verify_quota_usage(usage_info_bookings, expected_dirty=True)
 
         # Higuain is clean now
-        self.assertEqual(1, quota_api.set_quota_usage_dirty(
+        self.assertEqual(1, quota_api.set_resources_quota_usage_dirty(
             self.context, 'goals', self.project_id, dirty=False))
         usage_info = quota_api.get_quota_usage_by_resource_and_project(
             self.context, 'goals', self.project_id)
