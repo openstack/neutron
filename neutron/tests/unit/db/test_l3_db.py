@@ -248,6 +248,27 @@ class TestL3_NAT_dbonly_mixin(
 
             self.db.prevent_l3_port_deletion(ctx, None)
 
+    @mock.patch.object(l3_obj.FloatingIP, 'objects_exist')
+    @mock.patch.object(l3_obj.FloatingIP, 'get_objects')
+    def test_disassociate_floatingips_conflict_by_fip_attached(self,
+                                                               get_objects,
+                                                               objects_exist):
+        context_tenant = context.Context('tenant', 'tenant', is_admin=False)
+        objects_exist.return_value = True
+        get_objects.side_effect = [
+            [],
+            [{'id': 'floating_ip1', 'port_id': 'port_id'}]]
+        self.assertRaises(l3_db.FipAssociated,
+                          self.db.disassociate_floatingips,
+                          context_tenant,
+                          'port_id')
+        objects_exist.assert_called_once_with(
+            mock.ANY, fixed_port_id='port_id')
+        expected_calls = [
+                mock.call(context_tenant, fixed_port_id='port_id'),
+                mock.call(mock.ANY, fixed_port_id='port_id')]
+        get_objects.assert_has_calls(expected_calls)
+
     @mock.patch.object(directory, 'get_plugin')
     def test_subscribe_address_scope_of_subnetpool(self, gp):
         l3_db.L3RpcNotifierMixin()
