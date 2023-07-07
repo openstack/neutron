@@ -271,6 +271,36 @@ class OVNClient(object):
                     ovn_const.VIF_DETAILS_CARD_SERIAL_NUMBER]).hostname
         return ''
 
+    def update_lsp_host_info(self, context, db_port, up=True):
+        """Update the binding hosting information for the LSP.
+
+        Update the binding hosting information in the Logical_Switch_Port
+        external_ids column. See LP #2020058 for more information.
+
+        :param context: Neutron API context.
+        :param db_port: The Neutron port.
+        :param up: If True add the host information, if False remove it.
+                   Defaults to True.
+        """
+        cmd = []
+        if up:
+            if not db_port.port_bindings:
+                return
+            host = db_port.port_bindings[0].host
+
+            ext_ids = ('external_ids',
+                       {ovn_const.OVN_HOST_ID_EXT_ID_KEY: host})
+            cmd.append(
+                self._nb_idl.db_set(
+                    'Logical_Switch_Port', db_port.id, ext_ids))
+        else:
+            cmd.append(
+                self._nb_idl.db_remove(
+                    'Logical_Switch_Port', db_port.id, 'external_ids',
+                    ovn_const.OVN_HOST_ID_EXT_ID_KEY, if_exists=True))
+
+        self._transaction(cmd)
+
     def _get_port_options(self, port):
         context = n_context.get_admin_context()
         binding_prof = utils.validate_and_get_data_from_binding_profile(port)
@@ -426,7 +456,12 @@ class OVNClient(object):
                         # a RARP packet from it to inform network about the new
                         # location of the port
                         options['activation-strategy'] = 'rarp'
-            options[ovn_const.LSP_OPTIONS_REQUESTED_CHASSIS_KEY] = chassis
+
+            # Virtual ports can not be bound by using the
+            # requested-chassis mechanism, ovn-controller will create the
+            # Port_Binding entry when it sees an ARP coming from the VIP
+            if port_type != ovn_const.LSP_TYPE_VIRTUAL:
+                options[ovn_const.LSP_OPTIONS_REQUESTED_CHASSIS_KEY] = chassis
 
         # TODO(lucasagomes): Enable the mcast_flood_reports by default,
         # according to core OVN developers it shouldn't cause any harm
