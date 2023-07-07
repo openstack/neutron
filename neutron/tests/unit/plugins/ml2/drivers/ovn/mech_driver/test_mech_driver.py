@@ -1029,7 +1029,9 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 mock.patch.object(self.mech_driver,
                                   '_update_dnat_entry_if_needed') as ude, \
                 mock.patch.object(self.mech_driver, '_should_notify_nova',
-                                  return_value=is_compute_port):
+                                  return_value=is_compute_port), \
+                mock.patch.object(self.mech_driver._ovn_client,
+                                  'update_lsp_host_info') as ulsp:
             self.mech_driver.set_port_status_up(port1['port']['id'])
             pc.assert_called_once_with(
                 mock.ANY,
@@ -1048,6 +1050,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 self.mech_driver._plugin.nova_notifier.\
                     notify_port_active_direct.assert_called_once_with(
                         mock.ANY)
+
+            ulsp.assert_called_once_with(mock.ANY, mock.ANY)
 
     def test_set_port_status_up(self):
         self._test_set_port_status_up(is_compute_port=False)
@@ -1068,7 +1072,9 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 mock.patch.object(self.mech_driver,
                                   '_update_dnat_entry_if_needed') as ude, \
                 mock.patch.object(self.mech_driver, '_should_notify_nova',
-                                  return_value=is_compute_port):
+                                  return_value=is_compute_port), \
+                mock.patch.object(self.mech_driver._ovn_client,
+                                  'update_lsp_host_info') as ulsp:
             self.mech_driver.set_port_status_down(port1['port']['id'])
             apc.assert_called_once_with(
                 mock.ANY,
@@ -1093,6 +1099,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 self.mech_driver._plugin.nova_notifier.\
                     send_port_status.assert_called_once_with(
                         None, None, mock.ANY)
+
+            ulsp.assert_called_once_with(mock.ANY, mock.ANY, up=False)
 
     def test_set_port_status_down(self):
         self._test_set_port_status_down(is_compute_port=False)

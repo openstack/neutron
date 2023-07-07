@@ -52,6 +52,8 @@ OVN_PORT_BINDING_PROFILE_PARAMS = [{'parent_name': str,
                                     'tag': int},
                                    {'vtep-physical-switch': str,
                                     'vtep-logical-switch': str}]
+OVN_HOST_ID_EXT_ID_KEY = 'neutron:host_id'
+
 MIGRATING_ATTR = 'migrating_to'
 OVN_ROUTER_PORT_OPTION_KEYS = ['router-port', 'nat-addresses',
                                'exclude-lb-vips-from-garp']
