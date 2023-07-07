@@ -1118,6 +1118,8 @@ class OVNMechanismDriver(api.MechanismDriver):
                                                 const.PORT_STATUS_ACTIVE)
             elif self._should_notify_nova(db_port):
                 self._plugin.nova_notifier.notify_port_active_direct(db_port)
+
+            self._ovn_client.update_lsp_host_info(admin_context, db_port)
         except (os_db_exc.DBReferenceError, n_exc.PortNotFound):
             LOG.debug('Port not found during OVN status up report: %s',
                       port_id)
@@ -1146,6 +1148,9 @@ class OVNMechanismDriver(api.MechanismDriver):
                     None)
                 self._plugin.nova_notifier.send_port_status(
                     None, None, db_port)
+
+            self._ovn_client.update_lsp_host_info(
+                admin_context, db_port, up=False)
         except (os_db_exc.DBReferenceError, n_exc.PortNotFound):
             LOG.debug("Port not found during OVN status down report: %s",
                       port_id)
