@@ -73,6 +73,17 @@
         - neutron-ovn-tempest-ovs-release
         - neutron-ovs-tempest-with-neutron-lib-master
         - neutron-ovn-tempest-with-uwsgi-loki
+        # Jobs added to the periodic queue by templates defined in
+        # https://opendev.org/openstack/openstack-zuul-jobs/src/branch/master/zuul.d/project-templates.yaml
+        - openstack-tox-py310-with-neutron-lib-master:
+            timeout: 3600
+            irrelevant-files:  *irrelevant-files
+        - openstack-tox-py310-with-oslo-master:
+            timeout: 3600
+            irrelevant-files:  *irrelevant-files
+        - openstack-tox-py310-with-ovsdbapp-master:
+            timeout: 3600
+            irrelevant-files:  *irrelevant-files
 
 - project-template:
     name: neutron-periodic-jobs
@@ -82,6 +93,7 @@
         # and added to "openstack-python3-jobs" template.
         - tox-py311:
             timeout: 3600
+            irrelevant-files:  *irrelevant-files
         - neutron-functional
         - neutron-functional-with-uwsgi-fips
         - neutron-functional-with-pyroute2-master
