@@ -290,9 +290,10 @@ class TestL3_NAT_dbonly_mixin(
         # without fixed IPs is allowed
         gp.return_value.get_port.return_value = {
             'device_owner': n_const.DEVICE_OWNER_ROUTER_INTF, 'fixed_ips': [],
-            'id': 'f'
+            'device_id': '44', 'id': 'f',
         }
-        self.db.prevent_l3_port_deletion(None, None)
+        with testtools.ExpectedException(n_exc.ServicePortInUse):
+            self.db.prevent_l3_port_deletion(mock.Mock(), None)
 
     @mock.patch.object(directory, 'get_plugin')
     def test_prevent_l3_port_no_router(self, gp):
