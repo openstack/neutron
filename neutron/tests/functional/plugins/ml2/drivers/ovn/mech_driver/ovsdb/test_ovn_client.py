@@ -66,3 +66,21 @@ class TestOVNClient(base.TestOVNFunctionalBase):
             # because it checks first if the metadata port exists.
             ovn_client.create_metadata_port(self.context, network)
             check_metadata_port(enable_dhcp)
+
+    def test_create_port(self):
+        with self.network('test-ovn-client') as net:
+            with self.subnet(net) as subnet:
+                with self.port(subnet) as port:
+                    port_data = port['port']
+                    nb_ovn = self.mech_driver.nb_ovn
+                    lsp = nb_ovn.lsp_get(port_data['id']).execute()
+                    # The logical switch port has been created during the
+                    # port creation.
+                    self.assertIsNotNone(lsp)
+                    ovn_client = self.mech_driver._ovn_client
+                    port_data = self.plugin.get_port(self.context,
+                                                     port_data['id'])
+                    # Call the create_port again to ensure that the create
+                    # command automatically checks for existing logical
+                    # switch ports
+                    ovn_client.create_port(self.context, port_data)
