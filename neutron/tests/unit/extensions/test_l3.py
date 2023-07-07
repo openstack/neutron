@@ -3364,7 +3364,9 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             l3_models.RouterPort.router_id,
             models_v2.IPAllocation.ip_address
         ).join(
-            l3_models.RouterPort.port, models_v2.Port.fixed_ips
+            l3_models.RouterPort.port
+        ).join(
+            models_v2.Port.fixed_ips
         ).filter(
             models_v2.Port.network_id == internal_port['network_id'],
             l3_models.RouterPort.port_type.in_(
