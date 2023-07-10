@@ -16,6 +16,7 @@
 import re
 import signal
 
+from neutron_lib import constants
 from neutron_lib.plugins.ml2 import ovs_constants
 from oslo_log import log as logging
 
@@ -25,6 +26,9 @@ from neutron.common import utils as common_utils
 from neutron.plugins.ml2.common import constants as comm_consts
 
 LOG = logging.getLogger(__name__)
+
+PACKET_RATE_LIMIT = ovs_constants.PACKET_RATE_LIMIT
+BANDWIDTH_RATE_LIMIT = ovs_constants.BANDWIDTH_RATE_LIMIT
 
 
 class TcpdumpException(Exception):
@@ -98,14 +102,16 @@ def wait_until_pkt_meter_rule_applied_ovs(bridge, port_vif, port_id,
         meter_id = bridge.get_value_from_other_config(
             port_vif, key, value_type=int)
 
-        if direction == "egress":
-            flows = bridge.dump_flows_for(
-                table=ovs_constants.PACKET_RATE_LIMIT, in_port=str(port_num),
-                dl_src=str(mac))
+        table = (str(PACKET_RATE_LIMIT) if
+                 type_ == comm_consts.METER_FLAG_PPS else
+                 str(BANDWIDTH_RATE_LIMIT))
+
+        if direction == constants.EGRESS_DIRECTION:
+            flows = bridge.dump_flows_for(table=table, in_port=str(port_num),
+                                          dl_src=str(mac))
         else:
-            flows = bridge.dump_flows_for(
-                table=ovs_constants.PACKET_RATE_LIMIT, dl_vlan=str(port_vlan),
-                dl_dst=str(mac))
+            flows = bridge.dump_flows_for(table=table, dl_vlan=str(port_vlan),
+                                          dl_dst=str(mac))
         if mac:
             return bool(flows) and meter_id
         else:

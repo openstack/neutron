@@ -29,6 +29,7 @@ from os_ken.lib.packet import icmpv6
 from os_ken.lib.packet import in_proto
 from oslo_log import log as logging
 
+from neutron.plugins.ml2.common import constants as comm_consts
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
     import br_dvr_process
 from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
@@ -43,6 +44,12 @@ IPV4_NETWORK_BROADCAST = "255.255.255.255"
 # [RFC8415] https://datatracker.ietf.org/doc/html/rfc8415
 IPV6_All_DHCP_RELAY_AGENYS_AND_SERVERS = "ff02::1:2"
 
+METER_FLAG_PPS = comm_consts.METER_FLAG_PPS
+METER_FLAG_BPS = comm_consts.METER_FLAG_BPS
+
+PACKET_RATE_LIMIT = constants.PACKET_RATE_LIMIT
+BANDWIDTH_RATE_LIMIT = constants.BANDWIDTH_RATE_LIMIT
+
 
 class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
                            br_dvr_process.OVSDVRInterfaceMixin):
@@ -54,9 +61,9 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
                             enable_dhcpv6=False):
         (_dp, ofp, ofpp) = self._get_dp()
         self.setup_canary_table()
-        self.install_goto(dest_table_id=constants.PACKET_RATE_LIMIT)
+        self.install_goto(dest_table_id=PACKET_RATE_LIMIT)
         self.install_goto(dest_table_id=constants.TRANSIENT_TABLE,
-                          table_id=constants.PACKET_RATE_LIMIT)
+                          table_id=PACKET_RATE_LIMIT)
         self.install_normal(table_id=constants.TRANSIENT_TABLE, priority=3)
         self.init_dhcp(enable_openflow_dhcp=enable_openflow_dhcp,
                        enable_dhcpv6=enable_dhcpv6)
@@ -72,9 +79,9 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
                             priority=3)
 
         # Local IP defaults
-        self.install_goto(dest_table_id=constants.PACKET_RATE_LIMIT,
+        self.install_goto(dest_table_id=PACKET_RATE_LIMIT,
                           table_id=constants.LOCAL_EGRESS_TABLE)
-        self.install_goto(dest_table_id=constants.PACKET_RATE_LIMIT,
+        self.install_goto(dest_table_id=PACKET_RATE_LIMIT,
                           table_id=constants.LOCAL_IP_TABLE)
 
     def init_dhcp(self, enable_openflow_dhcp=False, enable_dhcpv6=False):
@@ -187,7 +194,8 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
         ]
         instructions = [
             ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, actions),
-            ofpp.OFPInstructionGotoTable(table_id=constants.PACKET_RATE_LIMIT),
+            ofpp.OFPInstructionGotoTable(
+                table_id=PACKET_RATE_LIMIT),
         ]
         self.install_instructions(
             instructions=instructions,
@@ -268,7 +276,8 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
         ]
         instructions = [
             ofpp.OFPInstructionActions(ofp.OFPIT_APPLY_ACTIONS, actions),
-            ofpp.OFPInstructionGotoTable(table_id=constants.PACKET_RATE_LIMIT),
+            ofpp.OFPInstructionGotoTable(
+                table_id=PACKET_RATE_LIMIT),
         ]
         self.install_instructions(table_id=table_id,
                                   priority=20,
@@ -369,7 +378,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
                 ip_proto=in_proto.IPPROTO_ICMPV6,
                 icmpv6_type=icmpv6.ND_NEIGHBOR_ADVERT,
                 ipv6_nd_target=masked_ip, in_port=port,
-                dest_table_id=constants.PACKET_RATE_LIMIT)
+                dest_table_id=PACKET_RATE_LIMIT)
 
         # Now that the rules are ready, direct icmpv6 neighbor advertisement
         # traffic from the port into the anti-spoof table.
@@ -451,13 +460,27 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
                              "max_color": stat.max_color})
         return features
 
-    def create_meter(self, meter_id, rate, burst=0):
+    def create_meter(self, meter_id, rate, burst=0, type_=METER_FLAG_PPS):
         (dp, ofp, ofpp) = self._get_dp()
 
         bands = [
             ofpp.OFPMeterBandDrop(rate=rate, burst_size=burst)]
+
+        if type_ == METER_FLAG_PPS:
+            if burst != 0:
+                flags = ofp.OFPMF_PKTPS | ofp.OFPMF_BURST
+            else:
+                flags = ofp.OFPMF_PKTPS
+        elif type_ == METER_FLAG_BPS:
+            if burst != 0:
+                flags = ofp.OFPMF_KBPS | ofp.OFPMF_BURST
+            else:
+                flags = ofp.OFPMF_KBPS
+        else:
+            return
+
         req = ofpp.OFPMeterMod(datapath=dp, command=ofp.OFPMC_ADD,
-                               flags=ofp.OFPMF_PKTPS, meter_id=meter_id,
+                               flags=flags, meter_id=meter_id,
                                bands=bands)
         self._send_msg(req)
 
@@ -468,18 +491,33 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
                                flags=ofp.OFPMF_PKTPS, meter_id=meter_id)
         self._send_msg(req)
 
-    def update_meter(self, meter_id, rate, burst=0):
+    def update_meter(self, meter_id, rate, burst=0, type_=METER_FLAG_PPS):
         (dp, ofp, ofpp) = self._get_dp()
 
         bands = [
             ofpp.OFPMeterBandDrop(rate=rate, burst_size=burst)]
+
+        if type_ == METER_FLAG_PPS:
+            if burst != 0:
+                flags = ofp.OFPMF_PKTPS | ofp.OFPMF_BURST
+            else:
+                flags = ofp.OFPMF_PKTPS
+        elif type_ == METER_FLAG_BPS:
+            if burst != 0:
+                flags = ofp.OFPMF_KBPS | ofp.OFPMF_BURST
+            else:
+                flags = ofp.OFPMF_KBPS
+        else:
+            return
+
         req = ofpp.OFPMeterMod(datapath=dp, command=ofp.OFPMC_MODIFY,
-                               flags=ofp.OFPMF_PKTPS, meter_id=meter_id,
+                               flags=flags, meter_id=meter_id,
                                bands=bands)
         self._send_msg(req)
 
     def apply_meter_to_port(self, meter_id, direction, mac,
-                            in_port=None, local_vlan=None):
+                            in_port=None, local_vlan=None,
+                            type_=METER_FLAG_PPS):
         """Add meter flows to port.
 
         Ingress: match dst MAC and local_vlan ID
@@ -496,17 +534,27 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
             LOG.warning("Invalid inputs to add meter flows to port.")
             return
 
+        if type_ == METER_FLAG_PPS:
+            table_id = PACKET_RATE_LIMIT
+            dest_table = BANDWIDTH_RATE_LIMIT
+        elif type_ == METER_FLAG_BPS:
+            table_id = BANDWIDTH_RATE_LIMIT
+            dest_table = constants.TRANSIENT_TABLE
+        else:
+            return
+
         instructions = [
             ofpp.OFPInstructionMeter(meter_id, type_=ofp.OFPIT_METER),
-            ofpp.OFPInstructionGotoTable(table_id=constants.TRANSIENT_TABLE)]
+            ofpp.OFPInstructionGotoTable(table_id=dest_table)]
 
-        self.install_instructions(table_id=constants.PACKET_RATE_LIMIT,
+        self.install_instructions(table_id=table_id,
                                   priority=100,
                                   instructions=instructions,
                                   match=match)
 
     def remove_meter_from_port(self, direction, mac,
-                               in_port=None, local_vlan=None):
+                               in_port=None, local_vlan=None,
+                               type_=METER_FLAG_PPS):
         """Remove meter flows from port.
 
         Ingress: match dst MAC and local_vlan ID
@@ -523,7 +571,14 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
             LOG.warning("Invalid inputs to remove meter flows from port.")
             return
 
-        self.uninstall_flows(table_id=constants.PACKET_RATE_LIMIT,
+        if type_ == METER_FLAG_PPS:
+            table_id = PACKET_RATE_LIMIT
+        elif type_ == METER_FLAG_BPS:
+            table_id = BANDWIDTH_RATE_LIMIT
+        else:
+            return
+
+        self.uninstall_flows(table_id=table_id,
                              match=match)
 
     def delete_arp_spoofing_protection(self, port):
@@ -617,7 +672,7 @@ class OVSIntegrationBridge(ovs_bridge.OVSAgentBridge,
     def install_garp_blocker_exception(self, vlan, ip, except_ip,
                                        table_id=constants.LOCAL_SWITCHING):
         match = self._garp_blocker_exception_match(vlan, ip, except_ip)
-        self.install_goto(dest_table_id=constants.PACKET_RATE_LIMIT,
+        self.install_goto(dest_table_id=PACKET_RATE_LIMIT,
                           table_id=table_id,
                           priority=11,
                           match=match)
