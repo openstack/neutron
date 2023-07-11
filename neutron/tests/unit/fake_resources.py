@@ -157,6 +157,7 @@ class FakeOvsdbNbOvnIdl(object):
         self.ha_chassis_group_add_chassis = mock.Mock()
         self.ha_chassis_group_del_chassis = mock.Mock()
         self.get_lrouter_port = mock.Mock()
+        self.get_schema_version = mock.Mock(return_value='3.6.0')
 
 
 class FakeOvsdbSbOvnIdl(object):
@@ -182,6 +183,7 @@ class FakeOvsdbSbOvnIdl(object):
         self.chassis_list = mock.MagicMock()
         self.is_table_present = mock.Mock()
         self.is_table_present.return_value = False
+        self.get_schema_version = mock.Mock(return_value='3.6.0')
 
 
 class FakeOvsdbTransaction(object):
