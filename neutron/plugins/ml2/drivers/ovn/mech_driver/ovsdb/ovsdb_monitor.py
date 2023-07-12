@@ -660,9 +660,8 @@ class BaseOvnSbIdl(Ml2OvnIdlBase):
         helper.register_table('Encap')
         helper.register_table('Port_Binding')
         helper.register_table('Datapath_Binding')
-        # Used by MaintenanceWorker which can use ovsdb locking
         try:
-            return cls(connection_string, helper, leader_only=True)
+            return cls(connection_string, helper, leader_only=False)
         except TypeError:
             # TODO(twilson) We can remove this when we require ovs>=2.12.0
             return cls(connection_string, helper)
