@@ -56,16 +56,16 @@ class TestNovaNotify(base.BaseTestCase):
     def test_notify_port_status_all_values(self):
         states = [n_const.PORT_STATUS_ACTIVE, n_const.PORT_STATUS_DOWN,
                   n_const.PORT_STATUS_ERROR, n_const.PORT_STATUS_BUILD,
-                  sql_attr.NO_VALUE]
+                  None]
         device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
         # test all combinations
         for previous_port_status in states:
             for current_port_status in states:
-
-                port = port_obj.Port(self.ctx, id=self.port_uuid,
-                                     device_id=device_id,
-                                     device_owner=DEVICE_OWNER_COMPUTE,
-                                     status=current_port_status)
+                params = {'id': self.port_uuid, 'device_id': device_id,
+                          'device_owner': DEVICE_OWNER_COMPUTE}
+                if current_port_status:
+                    params['status'] = current_port_status
+                port = port_obj.Port(self.ctx, **params)
                 self._record_port_status_changed_helper(current_port_status,
                                                         previous_port_status,
                                                         port)
