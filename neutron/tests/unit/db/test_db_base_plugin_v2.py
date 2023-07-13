@@ -6718,15 +6718,12 @@ class DbModelMixin(object):
                                     admin_state_up=True)
         actual_repr_output = repr(network)
         exp_start_with = "<neutron.db.models_v2.Network"
-        exp_middle = "[object at %x]" % id(network)
-        exp_end_with = (" {project_id=None, id=None, "
-                        "name='net_net', status='OK', "
-                        "admin_state_up=True, "
-                        "vlan_transparent=None, "
-                        "availability_zone_hints=None, "
-                        "mtu=None, "
-                        "standard_attr_id=None}>")
-        final_exp = exp_start_with + exp_middle + exp_end_with
+        exp_middle = '[object at %x]' % id(network) + ' {'
+        values = [(val[0], (val[1] if not isinstance(val[1], str)
+                            else "'%s'" % val[1])) for val in iter(network)]
+        exp_values = ', '.join('%s=%s' % (val[0], val[1]) for val in values)
+        exp_end_with = '}>'
+        final_exp = exp_start_with + exp_middle + exp_values + exp_end_with
         self.assertEqual(final_exp, actual_repr_output)
 
     def _make_security_group_and_rule(self, ctx):
