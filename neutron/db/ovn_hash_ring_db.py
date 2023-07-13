@@ -50,10 +50,12 @@ def remove_nodes_from_host(context, group_name):
              CONF.host, group_name)
 
 
-def _touch(context, **filter_args):
+def _touch(context, updated_at=None, **filter_args):
+    if updated_at is None:
+        updated_at = timeutils.utcnow()
     with db_api.CONTEXT_WRITER.using(context):
         context.session.query(ovn_models.OVNHashRing).filter_by(
-            **filter_args).update({'updated_at': timeutils.utcnow()})
+            **filter_args).update({'updated_at': updated_at})
 
 
 def touch_nodes_from_host(context, group_name):
@@ -92,3 +94,9 @@ def get_active_nodes(context, interval, group_name, from_host=False):
 def count_offline_nodes(context, interval, group_name):
     query = _get_nodes_query(context, interval, group_name, offline=True)
     return query.count()
+
+
+def set_nodes_from_host_as_offline(context, group_name):
+    timestamp = datetime.datetime(day=26, month=10, year=1985, hour=9)
+    _touch(context, updated_at=timestamp, hostname=CONF.host,
+           group_name=group_name)
