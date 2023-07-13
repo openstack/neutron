@@ -123,6 +123,9 @@
         - openstack-tox-py39-with-oslo-master:
             timeout: 3600
             irrelevant-files:  *irrelevant-files
+        - openstack-tox-py310-with-sqlalchemy-master:
+            timeout: 3600
+            irrelevant-files: *irrelevant-files
         - neutron-functional-with-oslo-master
         - neutron-ovs-tempest-with-oslo-master
         - neutron-ovn-tempest-ovs-release-with-oslo-master
