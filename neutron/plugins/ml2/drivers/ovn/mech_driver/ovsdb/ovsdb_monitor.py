@@ -277,6 +277,15 @@ class PortBindingChassisUpdateEvent(row_event.RowEvent):
                         {'port': row.logical_port, 'binding': row.uuid})
             return False
 
+        req_chassis = utils.get_requested_chassis(
+            row.options.get(ovn_const.LSP_OPTIONS_REQUESTED_CHASSIS_KEY, ''))
+        if len(req_chassis) > 1:
+            # This event has been issued during a LSP migration. During this
+            # process, the LSP will change the port binding but the port status
+            # will be handled by the ``LogicalSwitchPortUpdateDownEvent`` and
+            # ``LogicalSwitchPortUpdateUpEvent`` events.
+            return False
+
         return bool(lsp.up)
 
     def run(self, event, row, old=None):
