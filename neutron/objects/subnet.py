@@ -178,6 +178,15 @@ class SubnetServiceType(base.NeutronDbObject):
             # service type when DHCP is enabled on the subnet.
             and_(Subnet.enable_dhcp.is_(True),
                  service_type == const.DEVICE_OWNER_DHCP)))
+
+        if query._group_by_clauses:
+            # If the "Subnet" query has a "GROUP BY" clause (that happens when
+            # a non-admin user has executed the query, that requires the join
+            # of the RBAC registers), it is needed to add the
+            # "SubnetServiceType" fields to this clause too.
+            query = query.group_by(ServiceType.subnet_id,
+                                   ServiceType.service_type)
+
         return query.from_self(Subnet)
 
 
