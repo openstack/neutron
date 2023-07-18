@@ -15,7 +15,7 @@ from oslo_policy import policy
 from neutron.conf.policies import base
 
 
-GET_BINDING_PATH = '/ports/{port_id}/bindings/'
+BINDING_PATH = '/ports/{port_id}/bindings/'
 ACTIVATE_BINDING_PATH = '/ports/{port_id}/bindings/{host}'
 
 
@@ -28,7 +28,31 @@ rules = [
         operations=[
             {
                 'method': 'GET',
-                'path': GET_BINDING_PATH,
+                'path': BINDING_PATH,
+            },
+        ],
+    ),
+    policy.DocumentedRuleDefault(
+        name='create_port_binding',
+        check_str=base.ADMIN,
+        scope_types=['project'],
+        description='Create port binding on the host',
+        operations=[
+            {
+                'method': 'POST',
+                'path': BINDING_PATH,
+            },
+        ],
+    ),
+    policy.DocumentedRuleDefault(
+        name='delete_port_binding',
+        check_str=base.ADMIN,
+        scope_types=['project'],
+        description='Delete port binding on the host',
+        operations=[
+            {
+                'method': 'DELETE',
+                'path': BINDING_PATH,
             },
         ],
     ),
@@ -39,7 +63,7 @@ rules = [
         description='Activate port binding on the host',
         operations=[
             {
-                'method': 'GET',
+                'method': 'PUT',
                 'path': ACTIVATE_BINDING_PATH,
             },
         ],
