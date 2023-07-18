@@ -97,13 +97,23 @@ class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
         if trunk.get('status'):
             self.assertEqual(trunk_consts.TRUNK_ACTIVE_STATUS, trunk['status'])
 
-    def _bind_port(self, port_id, host):
+    def _bind_port(self, port_id, host_source, host_dest=None):
         with db_api.CONTEXT_WRITER.using(self.context):
-            pb = port_obj.PortBinding.get_object(self.context,
-                                                 port_id=port_id, host='')
-            pb.delete()
-            port_obj.PortBinding(self.context, port_id=port_id, host=host,
-                                 vif_type=portbindings.VIF_TYPE_OVS).create()
+            for pb in port_obj.PortBinding.get_objects(self.context,
+                                                       port_id=port_id):
+                pb.delete()
+            profile = {}
+            if host_dest:
+                # When "host_dest" there are 2 port bindings, as in a live
+                # migration; the second one (destination host) is inactive.
+                profile[ovn_const.MIGRATING_ATTR] = host_dest
+                port_obj.PortBinding(
+                    self.context, port_id=port_id, host=host_dest,
+                    vif_type=portbindings.VIF_TYPE_OVS,
+                    status=n_consts.INACTIVE).create()
+            port_obj.PortBinding(
+                self.context, port_id=port_id, host=host_source,
+                profile=profile, vif_type=portbindings.VIF_TYPE_OVS).create()
 
     def test_trunk_create(self):
         with self.trunk() as trunk:
@@ -147,6 +157,21 @@ class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
                 self.mech_driver.set_port_status_up(trunk['port_id'])
                 self._verify_trunk_info(new_trunk, has_items=True,
                                         host='host1')
+
+    def test_subport_add_live_migration_multiple_port_binding(self):
+        with self.subport() as subport:
+            with self.trunk() as trunk:
+                self.trunk_plugin.add_subports(self.context, trunk['id'],
+                                               {'sub_ports': [subport]})
+                new_trunk = self.trunk_plugin.get_trunk(self.context,
+                                                        trunk['id'])
+                self._verify_trunk_info(new_trunk, has_items=True)
+                # Bind parent port. That will trigger the binding of the
+                # trunk subports too, using the same host ID.
+                self._bind_port(trunk['port_id'], 'host1', host_dest='host2')
+                self.mech_driver.set_port_status_up(trunk['port_id'])
+                self._verify_trunk_info(new_trunk, has_items=True,
+                                        host='host2')
 
     def test_subport_delete(self):
         with self.subport() as subport:
