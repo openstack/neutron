@@ -42,7 +42,7 @@ class InstanceSnapshot(object):
         object and updates the object with the column values stored in this
         snapshot.
         """
-        db_obj = session.query(self._model_class).get(self._identity_key)
+        db_obj = session.get(self._model_class, self._identity_key)
         if db_obj:
             for col in self._cols:
                 setattr(db_obj, col, getattr(self, col))
