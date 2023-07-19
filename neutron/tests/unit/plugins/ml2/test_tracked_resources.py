@@ -40,11 +40,11 @@ class BaseTestTrackedResources(test_plugin.Ml2PluginV2TestCase,
                                SgTestCaseWrapper):
 
     def setUp(self):
-        self.ctx = context.get_admin_context()
         self.addCleanup(self._cleanup)
         test_db_base_plugin_v2.NeutronDbPluginV2TestCase.quota_db_driver = (
             'neutron.db.quota.driver.DbQuotaDriver')
         super(BaseTestTrackedResources, self).setUp()
+        self.ctx = context.get_admin_context()
         self._project_id = uuidutils.generate_uuid()
         # TODO(ralonsoh): "tenant_id" reference should be removed.
         self._tenant_id = self._project_id
