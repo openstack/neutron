@@ -1896,7 +1896,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         d['fixed_ip_address_scope'] = scope_id
         return d
 
-    def _get_sync_floating_ips(self, context, router_ids):
+    def _get_sync_floating_ips(self, context, router_ids, host=None):
         """Query floating_ips that relate to list of router_ids with scope.
 
         This is different than the regular get_floatingips in that it finds the
@@ -1912,7 +1912,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         return [
             self._make_floatingip_dict_with_scope(*scoped_fip)
             for scoped_fip in l3_obj.FloatingIP.get_scoped_floating_ips(
-                context, router_ids)
+                context, router_ids, host)
         ]
 
     def _get_sync_interfaces(self, context, router_ids, device_owners=None):
@@ -2062,7 +2062,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 router[constants.INTERFACE_KEY] = router_interfaces
 
     def _get_router_info_list(self, context, router_ids=None, active=None,
-                              device_owners=None):
+                              device_owners=None, fip_host_filter=None):
         """Query routers and their related floating_ips, interfaces."""
         with db_api.CONTEXT_WRITER.using(context):
             routers = self._get_sync_routers(context,
@@ -2071,7 +2071,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             router_ids = [router['id'] for router in routers]
             interfaces = self._get_sync_interfaces(
                 context, router_ids, device_owners)
-            floating_ips = self._get_sync_floating_ips(context, router_ids)
+            floating_ips = self._get_sync_floating_ips(
+                context, router_ids, host=fip_host_filter)
             return (routers, interfaces, floating_ips)
 
     def get_sync_data(self, context, router_ids=None, active=None):
