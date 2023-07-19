@@ -299,7 +299,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                          'remove': num_acls_to_remove})
 
         if self.mode == SYNC_MODE_REPAIR:
-            pg_resync_count = 0
+            one_time_pg_resync = True
             while True:
                 try:
                     with self.ovn_api.transaction(check_error=True) as txn:
@@ -311,13 +311,13 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                                 **acla, may_exist=True))
                 except idlutils.RowNotFound as row_err:
                     if row_err.msg.startswith("Cannot find Port_Group"):
-                        if pg_resync_count < 1:
+                        if one_time_pg_resync:
                             LOG.warning('Port group row was not found during '
                                         'ACLs sync. Will attempt to sync port '
                                         'groups one more time. The caught '
                                         'exception is: %s', row_err)
                             self.sync_port_groups(ctx)
-                            pg_resync_count += 1
+                            one_time_pg_resync = False
                             continue
                         LOG.error('Port group exception during ACL sync '
                                   'even after one more port group resync. '
