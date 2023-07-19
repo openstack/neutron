@@ -979,9 +979,17 @@ class _DVRAgentInterfaceMixin(object):
     @log_helper.log_method_call
     def _get_dvr_sync_data(self, context, host, agent, router_ids=None,
                            active=None):
+        # If the requesting agent is in normal dvr mode, we can fetch
+        # only FIPs bound to the particular host requesting the update
+        requesting_agent_mode = self._get_agent_mode(agent)
+        fip_host_filter = None
+        if requesting_agent_mode == const.L3_AGENT_MODE_DVR:
+            fip_host_filter = host
+
         routers, interfaces, floating_ips = self._get_router_info_list(
             context, router_ids=router_ids, active=active,
-            device_owners=const.ROUTER_INTERFACE_OWNERS)
+            device_owners=const.ROUTER_INTERFACE_OWNERS,
+            fip_host_filter=fip_host_filter)
         dvr_router_ids = set(router['id'] for router in routers
                              if is_distributed_router(router))
         floating_ip_port_ids = [fip['port_id'] for fip in floating_ips
@@ -1014,7 +1022,6 @@ class _DVRAgentInterfaceMixin(object):
                     if len(l3_agent_on_host):
                         l3_agent_mode = self._get_agent_mode(
                             l3_agent_on_host[0])
-                    requesting_agent_mode = self._get_agent_mode(agent)
                     # Consider the ports where the portbinding host and
                     # request host match.
                     if port_host == host:
