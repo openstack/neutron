@@ -953,9 +953,8 @@ class OVNMechanismDriver(api.MechanismDriver):
             # we need to take into account, thus passing both the port Dict
             # and the PortContext instance so that the helper can decide
             # which to use.
-            bind_host = self._ovn_client.determine_bind_host(
-                port,
-                port_context=context)
+            bind_host = ovn_utils.determine_bind_host(self._sb_ovn, port,
+                                                      port_context=context)
         except n_exc.InvalidInput as e:
             # The port binding profile is validated both on port creation and
             # update.  The new rules apply to a VNIC type previously not

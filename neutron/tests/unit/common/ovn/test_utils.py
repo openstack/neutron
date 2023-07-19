@@ -1049,3 +1049,98 @@ class GetPortTypeVirtualAndParentsTestCase(base.BaseTestCase):
         self.assertEqual((constants.LSP_TYPE_VIRTUAL, '1.2.3.4',
                           'parent1,parent2'),
                          (port_type, virtual_ip, virtual_parents))
+
+
+class DetermineBindHostTestCase(base.BaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.mock_sb_idl = mock.Mock()
+        self.get_chassis_by_card_serial_from_cms_options = (
+            self.mock_sb_idl.get_chassis_by_card_serial_from_cms_options)
+        self.fake_smartnic_hostname = 'fake-chassis-hostname'
+        self.get_chassis_by_card_serial_from_cms_options.return_value = (
+            fakes.FakeChassis.create(
+                attrs={'hostname': self.fake_smartnic_hostname}))
+
+    def test_vnic_normal_unbound_port(self):
+        self.assertEqual(
+            '',
+            utils.determine_bind_host(self.mock_sb_idl, {}))
+
+    def test_vnic_normal_bound_port(self):
+        port = {
+            portbindings.HOST_ID: 'fake-binding-host-id',
+        }
+        self.assertEqual(
+            'fake-binding-host-id',
+            utils.determine_bind_host(self.mock_sb_idl, port))
+
+    def test_vnic_normal_port_context(self):
+        context = mock.MagicMock()
+        context.host = 'fake-binding-host-id'
+        self.assertEqual(
+            'fake-binding-host-id',
+            utils.determine_bind_host(self.mock_sb_idl, {},
+                                      port_context=context))
+
+    def test_vnic_remote_managed_unbound_port_no_binding_profile(self):
+        port = {
+            portbindings.VNIC_TYPE: portbindings.VNIC_REMOTE_MANAGED,
+            constants.OVN_PORT_BINDING_PROFILE: {},
+        }
+        self.assertEqual(
+            '',
+            utils.determine_bind_host(self.mock_sb_idl, port))
+
+    def test_vnic_remote_managed_unbound_port(self):
+        port = {
+            portbindings.VNIC_TYPE: portbindings.VNIC_REMOTE_MANAGED,
+            constants.OVN_PORT_BINDING_PROFILE: {
+                constants.VIF_DETAILS_PCI_VENDOR_INFO: 'fake-pci-vendor-info',
+                constants.VIF_DETAILS_PCI_SLOT: 'fake-pci-slot',
+                constants.VIF_DETAILS_PHYSICAL_NETWORK: None,
+                constants.VIF_DETAILS_CARD_SERIAL_NUMBER: 'fake-serial',
+                constants.VIF_DETAILS_PF_MAC_ADDRESS: 'fake-pf-mac',
+                constants.VIF_DETAILS_VF_NUM: 42,
+            },
+        }
+        self.assertEqual(
+            self.fake_smartnic_hostname,
+            utils.determine_bind_host(self.mock_sb_idl, port))
+
+    def test_vnic_remote_managed_bound_port(self):
+        port = {
+            portbindings.VNIC_TYPE: portbindings.VNIC_REMOTE_MANAGED,
+            portbindings.HOST_ID: 'fake-binding-host-id',
+            constants.OVN_PORT_BINDING_PROFILE: {
+                constants.VIF_DETAILS_PCI_VENDOR_INFO: 'fake-pci-vendor-info',
+                constants.VIF_DETAILS_PCI_SLOT: 'fake-pci-slot',
+                constants.VIF_DETAILS_PHYSICAL_NETWORK: None,
+                constants.VIF_DETAILS_CARD_SERIAL_NUMBER: 'fake-serial',
+                constants.VIF_DETAILS_PF_MAC_ADDRESS: 'fake-pf-mac',
+                constants.VIF_DETAILS_VF_NUM: 42,
+            },
+        }
+        self.assertEqual(
+            self.fake_smartnic_hostname,
+            utils.determine_bind_host(self.mock_sb_idl, port))
+
+    def test_vnic_remote_managed_port_context(self):
+        context = mock.MagicMock()
+        context.current = {
+            portbindings.VNIC_TYPE: portbindings.VNIC_REMOTE_MANAGED,
+            constants.OVN_PORT_BINDING_PROFILE: {
+                constants.VIF_DETAILS_PCI_VENDOR_INFO: 'fake-pci-vendor-info',
+                constants.VIF_DETAILS_PCI_SLOT: 'fake-pci-slot',
+                constants.VIF_DETAILS_PHYSICAL_NETWORK: None,
+                constants.VIF_DETAILS_CARD_SERIAL_NUMBER: 'fake-serial',
+                constants.VIF_DETAILS_PF_MAC_ADDRESS: 'fake-pf-mac',
+                constants.VIF_DETAILS_VF_NUM: 42,
+            },
+        }
+        context.host = 'fake-binding-host-id'
+        self.assertEqual(
+            self.fake_smartnic_hostname,
+            utils.determine_bind_host(self.mock_sb_idl, {},
+                                      port_context=context))
