@@ -339,6 +339,9 @@ class OVNClient(object):
             ]
             subnets = self._plugin.get_subnets(
                 context, filters={'id': subnet_ids})
+            address4_scope_id, address6_scope_id = (
+                utils.get_subnets_address_scopes(context, subnets, ip_subnets,
+                                                 self._plugin))
             if subnets:
                 for ip in ip_subnets:
                     ip_addr = ip['ip_address']
@@ -355,26 +358,6 @@ class OVNClient(object):
                         LOG.debug('Subnet not found for ip address %s',
                                   ip_addr)
                         continue
-
-                    if subnet["subnetpool_id"]:
-                        try:
-                            subnet_pool = self._plugin.get_subnetpool(
-                                context, id=subnet["subnetpool_id"]
-                            )
-                            if subnet_pool["address_scope_id"]:
-                                ip_version = subnet_pool["ip_version"]
-                                if ip_version == const.IP_VERSION_4:
-                                    address4_scope_id = subnet_pool[
-                                        "address_scope_id"
-                                    ]
-                                elif ip_version == const.IP_VERSION_6:
-                                    address6_scope_id = subnet_pool[
-                                        "address_scope_id"
-                                    ]
-                        except n_exc.SubnetPoolNotFound:
-                            # swallow the exception and just continue if the
-                            # lookup failed
-                            pass
 
                     cidrs += ' {}/{}'.format(ip['ip_address'],
                                              subnet['cidr'].split('/')[1])

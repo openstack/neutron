@@ -23,6 +23,7 @@ import neutron_lib
 from neutron_lib.api.definitions import extra_dhcp_opt as edo_ext
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as n_const
+from neutron_lib import exceptions as n_exc
 from oslo_concurrency import processutils
 from oslo_config import cfg
 import testtools
@@ -943,3 +944,62 @@ class TestOvsdbClientCommand(base.BaseTestCase):
     def test_run_bad_schema(self):
         with testtools.ExpectedException(KeyError):
             self.OvsdbClientTestCommand.run(['foo'])
+
+
+class GetSubnetsAddressScopeTestCase(base.BaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.ml2_plugin = mock.Mock()
+
+    def test_no_subnets(self):
+        subnets = []
+        fixed_ips = mock.ANY
+        address4, address6 = utils.get_subnets_address_scopes(
+            mock.ANY, subnets, fixed_ips, self.ml2_plugin)
+        self.assertEqual(('', ''), (address4, address6))
+
+    def test_no_subnetpool(self):
+        subnets = [
+            {'id': 'subnet1', 'subnetpool_id': None},
+            {'id': 'subnet2', 'subnetpool_id': None},
+        ]
+        fixed_ips = [
+            {'subnet_id': 'subnet1'},
+            {'subnet_id': 'subnet2'},
+        ]
+        address4, address6 = utils.get_subnets_address_scopes(
+            mock.ANY, subnets, fixed_ips, self.ml2_plugin)
+        self.assertEqual(('', ''), (address4, address6))
+
+    def test_no_address_scope(self):
+        subnets = [
+            {'id': 'subnet1', 'subnetpool_id': 'pool_ipv4'},
+            {'id': 'subnet2', 'subnetpool_id': 'pool_ipv6'},
+        ]
+        fixed_ips = [
+            {'subnet_id': 'subnet1'},
+            {'subnet_id': 'subnet2'},
+        ]
+        self.ml2_plugin.get_subnetpool.side_effect = n_exc.SubnetPoolNotFound(
+            subnetpool_id='snp')
+        address4, address6 = utils.get_subnets_address_scopes(
+            mock.ANY, subnets, fixed_ips, self.ml2_plugin)
+        self.assertEqual(('', ''), (address4, address6))
+
+    def test_address_scope(self):
+        subnets = [
+            {'id': 'subnet1', 'subnetpool_id': 'pool_ipv4'},
+            {'id': 'subnet2', 'subnetpool_id': 'pool_ipv6'},
+        ]
+        fixed_ips = [
+            {'subnet_id': 'subnet1'},
+            {'subnet_id': 'subnet2'},
+        ]
+        self.ml2_plugin.get_subnetpool.side_effect = [
+            {'address_scope_id': 'scope4', 'ip_version': n_const.IP_VERSION_4},
+            {'address_scope_id': 'scope6', 'ip_version': n_const.IP_VERSION_6},
+        ]
+        address4, address6 = utils.get_subnets_address_scopes(
+            mock.ANY, subnets, fixed_ips, self.ml2_plugin)
+        self.assertEqual(('scope4', 'scope6'), (address4, address6))
