@@ -814,6 +814,8 @@ class OVNMechanismDriver(api.MechanismDriver):
         self._validate_ignored_port(port, original_port)
         ovn_utils.validate_and_get_data_from_binding_profile(port)
         self._validate_port_extra_dhcp_opts(port)
+        ovn_utils.validate_port_binding_and_virtual_port(
+            context, self.nb_ovn, self.sb_ovn, self._plugin, port)
         if self._is_port_provisioning_required(port, context.host,
                                                context.original_host):
             self._insert_port_provisioning_block(context.plugin_context,
