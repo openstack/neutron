@@ -266,6 +266,24 @@ class DietTestCase(base.BaseTestCase, metaclass=_CatchTimeoutMetaclass):
 
         config.register_common_config_options()
 
+        self.addCleanup(CONF.reset)
+        self.setup_config()
+
+    @staticmethod
+    def config_parse(conf=None, args=None):
+        """Create the default configurations."""
+        if args is None:
+            args = []
+        args += ['--config-file', etcdir('neutron.conf')]
+        if conf is None:
+            config.init(args=args)
+        else:
+            conf(args)
+
+    def setup_config(self, args=None):
+        """Tests that need a non-default config can override this method."""
+        self.config_parse(args=args)
+
     def addOnException(self, handler):
 
         def safe_handler(*args, **kwargs):
@@ -352,17 +370,6 @@ class ProcessMonitorFixture(fixtures.Fixture):
 
 class BaseTestCase(DietTestCase):
 
-    @staticmethod
-    def config_parse(conf=None, args=None):
-        """Create the default configurations."""
-        if args is None:
-            args = []
-        args += ['--config-file', etcdir('neutron.conf')]
-        if conf is None:
-            config.init(args=args)
-        else:
-            conf(args)
-
     def setUp(self):
         super(BaseTestCase, self).setUp()
 
@@ -371,7 +378,6 @@ class BaseTestCase(DietTestCase):
 
         cfg.CONF.set_override('state_path', self.get_default_temp_dir().path)
 
-        self.addCleanup(CONF.reset)
         self.useFixture(ProcessMonitorFixture())
 
         self.useFixture(fixtures.MonkeyPatch(
@@ -383,8 +389,6 @@ class BaseTestCase(DietTestCase):
             lambda project=None, prog=None, extension=None: []))
 
         self.useFixture(fixture.RPCFixture())
-
-        self.setup_config()
 
         self._callback_manager = registry_manager.CallbacksManager()
         self.useFixture(fixture.CallbackRegistryFixture(
@@ -435,10 +439,6 @@ class BaseTestCase(DietTestCase):
         """
         root = root or self.get_default_temp_dir()
         return root.join(filename)
-
-    def setup_config(self, args=None):
-        """Tests that need a non-default config can override this method."""
-        self.config_parse(args=args)
 
     def config(self, **kw):
         """Override some configuration values.
