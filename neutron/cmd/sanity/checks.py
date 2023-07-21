@@ -46,6 +46,7 @@ LOG = logging.getLogger(__name__)
 MINIMUM_DNSMASQ_VERSION = '2.67'
 DNSMASQ_VERSION_DHCP_RELEASE6 = '2.76'
 DNSMASQ_VERSION_HOST_ADDR6_LIST = '2.81'
+DNSMASQ_VERSION_SEGFAULT_ISSUE = '2.86'
 DIRECT_PORT_QOS_MIN_OVS_VERSION = '2.11'
 MINIMUM_DIBBLER_VERSION = '1.0.1'
 CONNTRACK_GRE_MODULE = 'nf_conntrack_proto_gre'
@@ -262,6 +263,12 @@ def dnsmasq_version_supported():
         if ver < versionutils.convert_version_to_tuple(
                 MINIMUM_DNSMASQ_VERSION):
             return False
+        if ver == versionutils.convert_version_to_tuple(
+                DNSMASQ_VERSION_SEGFAULT_ISSUE):
+            LOG.warning('Found dnsmasq version %(current)s installed, this '
+                        'version has a known issue, more details in: '
+                        'https://bugs.launchpad.net/bugs/2026757.',
+                        {'current': ver})
         if (cfg.CONF.dnsmasq_enable_addr6_list is True and
                 ver < versionutils.convert_version_to_tuple(
                     DNSMASQ_VERSION_HOST_ADDR6_LIST)):
