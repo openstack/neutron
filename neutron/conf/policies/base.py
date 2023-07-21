@@ -56,6 +56,19 @@ ADMIN_OR_PARENT_OWNER_MEMBER = (
 ADMIN_OR_PARENT_OWNER_READER = (
     '(' + ADMIN + ') or (' + PARENT_OWNER_READER + ')')
 
+# Those rules related to the network owner are very similar (almost the same)
+# as parent owner defined above. The only reason why they are kept here is that
+# in case of some resources like ports or subnets neutron have got policies
+# related to the "network owner" and network isn't really parent of the subnet
+# or port. Because of that, using parent owner in those cases may be
+# missleading for users so it's better to keep also "network owner" rules.
+NET_OWNER_MEMBER = 'role:member and ' + RULE_NET_OWNER
+NET_OWNER_READER = 'role:reader and ' + RULE_NET_OWNER
+ADMIN_OR_NET_OWNER_MEMBER = (
+    '(' + ADMIN + ') or (' + NET_OWNER_MEMBER + ')')
+ADMIN_OR_NET_OWNER_READER = (
+    '(' + ADMIN + ') or (' + NET_OWNER_READER + ')')
+
 
 rules = [
     policy.RuleDefault(
