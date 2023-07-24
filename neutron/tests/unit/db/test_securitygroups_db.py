@@ -25,6 +25,8 @@ import sqlalchemy
 import testtools
 
 from neutron.db import securitygroups_db
+from neutron.extensions import security_groups_default_rules as \
+    ext_sg_default_rules
 from neutron.extensions import securitygroup
 from neutron import quota
 from neutron.services.revisions import revision_plugin
@@ -672,3 +674,116 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             self.mixin._ensure_default_security_group(context, 'tenant_1')
             create_sg.assert_not_called()
             get_default_sg_id.assert_not_called()
+
+    def test__check_for_duplicate_default_rules_does_not_drop_protocol(self):
+        with mock.patch.object(self.mixin, 'get_default_security_group_rules',
+                               return_value=None):
+            context = mock.Mock()
+            rule_dict = {
+                'default_security_group_rule': {'protocol': None,
+                                                'direction': 'fake'}
+            }
+            self.mixin._check_for_duplicate_default_rules(
+                context, [rule_dict])
+        self.assertIn('protocol', rule_dict['default_security_group_rule'])
+
+    def test__check_for_duplicate_default_rules_ignores_rule_id(self):
+        rules = [
+            {'default_security_group_rule': {
+                'protocol': 'tcp', 'id': 'fake1'}},
+            {'default_security_group_rule': {
+                'protocol': 'tcp', 'id': 'fake2'}}]
+
+        # NOTE(arosen): the name of this exception is a little misleading
+        # in this case as this test, tests that the id fields are dropped
+        # while being compared. This is in the case if a plugin specifies
+        # the rule ids themselves.
+        with mock.patch.object(self.mixin, 'get_default_security_group_rules',
+                               return_value=None):
+            self.assertRaises(
+                ext_sg_default_rules.DuplicateDefaultSgRuleInPost,
+                self.mixin._check_for_duplicate_default_rules, context, rules)
+
+    def test__check_for_duplicate_default_rules_rule_used_in_non_default_sg(
+            self):
+        fake_rules = [
+            {'id': 'fake',
+             'used_in_default_sg': True,
+             'used_in_non_default_sg': True}
+        ]
+        with mock.patch.object(self.mixin, 'get_default_security_group_rules',
+                               return_value=fake_rules):
+            context = mock.Mock()
+            rule_dict = {
+                'default_security_group_rule': {
+                    'id': 'fake2',
+                    'used_in_default_sg': False,
+                    'used_in_non_default_sg': True}
+            }
+            self.assertRaises(
+                ext_sg_default_rules.DefaultSecurityGroupRuleExists,
+                self.mixin._check_for_duplicate_default_rules,
+                context, [rule_dict])
+
+    def test__check_for_duplicate_default_rules_rule_used_in_default_sg(
+            self):
+        fake_rules = [
+            {'id': 'fake',
+             'used_in_default_sg': True,
+             'used_in_non_default_sg': True}
+        ]
+        with mock.patch.object(self.mixin, 'get_default_security_group_rules',
+                               return_value=fake_rules):
+            context = mock.Mock()
+            rule_dict = {
+                'default_security_group_rule': {
+                    'id': 'fake2',
+                    'used_in_default_sg': True,
+                    'used_in_non_default_sg': False}
+            }
+            self.assertRaises(
+                ext_sg_default_rules.DefaultSecurityGroupRuleExists,
+                self.mixin._check_for_duplicate_default_rules,
+                context, [rule_dict])
+
+    def test__check_for_duplicate_diff_default_rules_remote_ip_prefix_ipv4(
+            self):
+        fake_rules = [
+            {'id': 'fake', 'ethertype': 'IPv4',
+             'direction': 'ingress', 'remote_ip_prefix': None}
+        ]
+        with mock.patch.object(self.mixin, 'get_default_security_group_rules',
+                               return_value=fake_rules):
+            context = mock.Mock()
+            rule_dict = {
+                'default_security_group_rule': {
+                    'id': 'fake2',
+                    'ethertype': 'IPv4',
+                    'direction': 'ingress',
+                    'remote_ip_prefix': '0.0.0.0/0'}
+            }
+            self.assertRaises(
+                ext_sg_default_rules.DefaultSecurityGroupRuleExists,
+                self.mixin._check_for_duplicate_default_rules,
+                context, [rule_dict])
+
+    def test__check_for_duplicate_diff_default_rules_remote_ip_prefix_ipv6(
+            self):
+        fake_rules = [
+            {'id': 'fake', 'ethertype': 'IPv6',
+             'direction': 'ingress', 'remote_ip_prefix': None}
+        ]
+        with mock.patch.object(self.mixin, 'get_default_security_group_rules',
+                               return_value=fake_rules):
+            context = mock.Mock()
+            rule_dict = {
+                'default_security_group_rule': {
+                    'id': 'fake2',
+                    'ethertype': 'IPv6',
+                    'direction': 'ingress',
+                    'remote_ip_prefix': '::/0'}
+            }
+            self.assertRaises(
+                ext_sg_default_rules.DefaultSecurityGroupRuleExists,
+                self.mixin._check_for_duplicate_default_rules,
+                context, [rule_dict])

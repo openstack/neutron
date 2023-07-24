@@ -39,10 +39,13 @@ from neutron.common import _constants as const
 from neutron.db import address_group_db as ag_db
 from neutron.db.models import securitygroup as sg_models
 from neutron.db import rbac_db_mixin as rbac_mixin
+from neutron.extensions import security_groups_default_rules as \
+    ext_sg_default_rules
 from neutron.extensions import securitygroup as ext_sg
 from neutron.objects import base as base_obj
 from neutron.objects import ports as port_obj
 from neutron.objects import securitygroup as sg_obj
+from neutron.objects import securitygroup_default_rules as sg_default_rules_obj
 from neutron import quota
 
 
@@ -53,8 +56,10 @@ DEFAULT_SG_DESCRIPTION = _('Default security group')
 
 @resource_extend.has_resource_extenders
 @registry.has_registry_receivers
-class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
-                           rbac_mixin.RbacPluginMixin):
+class SecurityGroupDbMixin(
+        ext_sg.SecurityGroupPluginBase,
+        ext_sg_default_rules.SecurityGroupDefaultRulesPluginBase,
+        rbac_mixin.RbacPluginMixin):
     """Mixin class to add security group to db_base_plugin_v2."""
 
     __native_bulk_support = True
@@ -482,6 +487,190 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
 
         return res_rule_dict
 
+    def _validate_multiple_remote_entites(self, rule):
+        remote = None
+        for key in ['remote_ip_prefix', 'remote_group_id',
+                    'remote_address_group_id']:
+            if remote and rule.get(key):
+                raise ext_sg.SecurityGroupMultipleRemoteEntites()
+            remote = rule.get(key) or remote
+
+    def _validate_default_security_group_rule(self, rule):
+        self._validate_base_security_group_rule_attributes(rule)
+
+    def _make_default_security_group_rule_dict(self, rule_obj, fields=None):
+        res = {
+            'id': rule_obj['id'],
+            'ethertype': rule_obj['ethertype'],
+            'direction': rule_obj['direction'],
+            'protocol': rule_obj['protocol'],
+            'port_range_min': rule_obj['port_range_min'],
+            'port_range_max': rule_obj['port_range_max'],
+            'remote_ip_prefix': rule_obj['remote_ip_prefix'],
+            'remote_address_group_id': rule_obj[
+                'remote_address_group_id'],
+            'remote_group_id': rule_obj['remote_group_id'],
+            'standard_attr_id': rule_obj.db_obj.standard_attr.id,
+            'description': rule_obj['description'],
+            'used_in_default_sg': rule_obj['used_in_default_sg'],
+            'used_in_non_default_sg': rule_obj['used_in_non_default_sg']
+        }
+        return db_utils.resource_fields(res, fields)
+
+    def _get_default_security_group_rule(self, context, rule_id):
+        rule_obj = sg_default_rules_obj.SecurityGroupDefaultRule.get_object(
+            context, id=rule_id)
+        if rule_obj is None:
+            raise ext_sg_default_rules.DefaultSecurityGroupRuleNotFound(
+                id=rule_id)
+        return rule_obj
+
+    def _check_for_duplicate_default_rules(self, context, new_rules):
+        # We need to divide rules for those used in default security groups for
+        # projects and for those which are used only for custom security groups
+        self._check_for_duplicate_default_rules_in_template(
+            context,
+            rules=[rule['default_security_group_rule'] for rule in new_rules
+                   if rule.get('used_in_default_sg', False)],
+            filters={'used_in_default_sg': True})
+        self._check_for_duplicate_default_rules_in_template(
+            context,
+            rules=[rule['default_security_group_rule'] for rule in new_rules
+                   if rule.get('used_in_non_default_sg', True)],
+            filters={'used_in_non_default_sg': True})
+
+    def _check_for_duplicate_default_rules_in_template(self, context,
+                                                       rules, filters):
+        new_rules_set = set()
+        for i in rules:
+            rule_key = self._rule_to_key(rule=i)
+            if rule_key in new_rules_set:
+                raise ext_sg_default_rules.DuplicateDefaultSgRuleInPost(rule=i)
+            new_rules_set.add(rule_key)
+
+        # Now, let's make sure none of the new rules conflict with
+        # existing rules; note that we do *not* store the db rules
+        # in the set, as we assume they were already checked,
+        # when added.
+        template_sg_rules = self.get_default_security_group_rules(
+            context, filters=filters) or []
+        for i in template_sg_rules:
+            rule_key = self._rule_to_key(i)
+            if rule_key in new_rules_set:
+                raise ext_sg_default_rules.DefaultSecurityGroupRuleExists(
+                    rule_id=i.get('id'))
+
+    def create_default_security_group_rule(self, context,
+                                           default_security_group_rule):
+        """Create a default security rule template.
+
+        :param context: neutron api request context
+        :type context: neutron.context.Context
+        :param default_security_group_rule: security group rule template data
+                                            to be applied
+        :type sg_rule_template: dict
+
+        :returns: a SecurityGroupDefaultRule object
+        """
+        self._validate_default_security_group_rule(
+            default_security_group_rule['default_security_group_rule'])
+        self._check_for_duplicate_default_rules(context,
+                                                [default_security_group_rule])
+        rule_dict = default_security_group_rule['default_security_group_rule']
+        remote_ip_prefix = rule_dict.get('remote_ip_prefix')
+        if remote_ip_prefix:
+            remote_ip_prefix = net.AuthenticIPNetwork(remote_ip_prefix)
+
+        protocol = rule_dict.get('protocol')
+        if protocol:
+            # object expects strings only
+            protocol = str(protocol)
+
+        args = {
+            'id': (rule_dict.get('id') or
+                   uuidutils.generate_uuid()),
+            'direction': rule_dict.get('direction'),
+            'remote_group_id': rule_dict.get('remote_group_id'),
+            'remote_address_group_id': rule_dict.get(
+                'remote_address_group_id'),
+            'ethertype': rule_dict.get('ethertype'),
+            'protocol': protocol,
+            'remote_ip_prefix': remote_ip_prefix,
+            'description': rule_dict.get('description'),
+            'used_in_default_sg': rule_dict.get('used_in_default_sg'),
+            'used_in_non_default_sg': rule_dict.get('used_in_non_default_sg')
+        }
+
+        port_range_min = self._safe_int(rule_dict.get('port_range_min'))
+        if port_range_min is not None:
+            args['port_range_min'] = port_range_min
+
+        port_range_max = self._safe_int(rule_dict.get('port_range_max'))
+        if port_range_max is not None:
+            args['port_range_max'] = port_range_max
+
+        with db_api.CONTEXT_WRITER.using(context):
+            default_sg_rule_obj = (
+                sg_default_rules_obj.SecurityGroupDefaultRule(context, **args))
+            default_sg_rule_obj.create()
+        return self._make_default_security_group_rule_dict(default_sg_rule_obj)
+
+    @db_api.CONTEXT_WRITER
+    def delete_default_security_group_rule(self, context, sg_rule_template_id):
+        """Delete a default security rule template.
+
+        :param context: neutron api request context
+        :type context: neutron.context.Context
+        :param sg_rule_template_id: the id of the SecurityGroupDefaultRule to
+                                    delete
+        :type sg_rule_template_id: str uuid
+
+        :returns: None
+        """
+        default_sg_rule_obj = (
+            sg_default_rules_obj.SecurityGroupDefaultRule(context))
+        default_sg_rule_obj.id = sg_rule_template_id
+        default_sg_rule_obj.delete()
+
+    def get_default_security_group_rules(self, context, filters=None,
+                                         fields=None, sorts=None, limit=None,
+                                         marker=None, page_reverse=False):
+        """Get default security rule templates.
+
+        :param context: neutron api request context
+        :type context: neutron.context.Context
+        :param filters: search criteria
+        :type filters: dict
+
+        :returns: SecurityGroupDefaultRule objects meeting the search criteria
+        """
+        filters = filters or {}
+        pager = base_obj.Pager(
+            sorts=sorts, marker=marker, limit=limit, page_reverse=page_reverse)
+        rule_objs = sg_default_rules_obj.SecurityGroupDefaultRule.get_objects(
+            context, _pager=pager, **filters)
+        return [
+            self._make_default_security_group_rule_dict(obj, fields)
+            for obj in rule_objs
+        ]
+
+    def get_default_security_group_rule(self, context, sg_rule_template_id,
+                                        fields=None):
+        """Get default security rule template.
+
+        :param context: neutron api request context
+        :type context: neutron.context.Context
+        :param sg_rule_template_id: the id of the SecurityGroupDefaultRule to
+                                    get
+        :type sg_rule_template_id: str uuid
+
+        :returns: a SecurityGroupDefaultRule object
+        """
+        rule_obj = self._get_default_security_group_rule(context,
+                                                         sg_rule_template_id)
+        return self._make_default_security_group_rule_dict(
+            rule_obj, fields=fields)
+
     def _get_ip_proto_number(self, protocol):
         if protocol is None:
             return
@@ -629,20 +818,22 @@ class SecurityGroupDbMixin(ext_sg.SecurityGroupPluginBase,
                           'new_protocol': str(constants.PROTO_NUM_IPV6_ICMP)})
                 rule['protocol'] = str(constants.PROTO_NUM_IPV6_ICMP)
 
-    def _validate_security_group_rule(self, context, security_group_rule):
-        rule = security_group_rule['security_group_rule']
+    def _validate_base_security_group_rule_attributes(self, rule):
+        """Validate values of the basic attributes of the SG rule.
+
+        This method validates attributes which are common for the actual SG
+        rule as well as SG rule template.
+        """
         self._make_canonical_ipv6_icmp_protocol(rule)
         self._make_canonical_port_range(rule)
         self._validate_port_range(rule)
         self._validate_ip_prefix(rule)
         self._validate_ethertype_and_protocol(rule)
+        self._validate_multiple_remote_entites(rule)
 
-        remote = None
-        for key in ['remote_ip_prefix', 'remote_group_id',
-                    'remote_address_group_id']:
-            if remote and rule.get(key):
-                raise ext_sg.SecurityGroupMultipleRemoteEntites()
-            remote = rule.get(key) or remote
+    def _validate_security_group_rule(self, context, security_group_rule):
+        rule = security_group_rule['security_group_rule']
+        self._validate_base_security_group_rule_attributes(rule)
 
         remote_group_id = rule['remote_group_id']
         # Check that remote_group_id exists for tenant
