@@ -25,6 +25,7 @@ from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.utils import helpers
 from oslo_log import log
+from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron.common.ovn import acl as acl_utils
 from neutron.common.ovn import constants as ovn_const
@@ -99,7 +100,6 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         LOG.debug("Starting OVN-Northbound DB sync process")
 
         ctx = context.get_admin_context()
-
         self.sync_port_groups(ctx)
         self.sync_networks_ports_and_dhcp_opts(ctx)
         self.sync_port_dns_records(ctx)
@@ -298,11 +298,32 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                          'remove': num_acls_to_remove})
 
         if self.mode == SYNC_MODE_REPAIR:
-            with self.ovn_api.transaction(check_error=True) as txn:
-                for acla in neutron_acls:
-                    LOG.warning('ACL found in Neutron but not in '
-                                'OVN DB for port group %s', acla['port_group'])
-                    txn.add(self.ovn_api.pg_acl_add(**acla, may_exist=True))
+            pg_resync_count = 0
+            while True:
+                try:
+                    with self.ovn_api.transaction(check_error=True) as txn:
+                        for acla in neutron_acls:
+                            LOG.warning('ACL found in Neutron but not in '
+                                        'OVN DB for port group %s',
+                                        acla['port_group'])
+                            txn.add(self.ovn_api.pg_acl_add(
+                                **acla, may_exist=True))
+                except idlutils.RowNotFound as row_err:
+                    if row_err.msg.startswith("Cannot find Port_Group"):
+                        if pg_resync_count < 1:
+                            LOG.warning('Port group row was not found during '
+                                        'ACLs sync. Will attempt to sync port '
+                                        'groups one more time. The caught '
+                                        'exception is: %s', row_err)
+                            self.sync_port_groups(ctx)
+                            pg_resync_count += 1
+                            continue
+                        LOG.error('Port group exception during ACL sync '
+                                  'even after one more port group resync. '
+                                  'The caught exception is: %s', row_err)
+                    else:
+                        raise
+                break
 
             with self.ovn_api.transaction(check_error=True) as txn:
                 for aclr in ovn_acls:
