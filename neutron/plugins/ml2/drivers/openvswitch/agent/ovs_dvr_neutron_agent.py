@@ -263,16 +263,20 @@ class OVSDVRNeutronAgent(object):
         if not self.enable_tunneling:
             return
 
-        self.tun_br.install_goto(dest_table_id=constants.DVR_PROCESS,
-                                 priority=1,
-                                 in_port=self.patch_int_ofport)
+        self._setup_dvr_flows_on_tun_br(self.tun_br, self.patch_int_ofport)
+
+    @staticmethod
+    def _setup_dvr_flows_on_tun_br(tun_br, patch_int_ofport):
+        tun_br.install_goto(dest_table_id=constants.DVR_PROCESS,
+                            priority=1,
+                            in_port=patch_int_ofport)
 
         # table-miss should be sent to learning table
-        self.tun_br.install_goto(table_id=constants.DVR_NOT_LEARN,
-                                 dest_table_id=constants.LEARN_FROM_TUN)
+        tun_br.install_goto(table_id=constants.DVR_NOT_LEARN,
+                            dest_table_id=constants.LEARN_FROM_TUN)
 
-        self.tun_br.install_goto(table_id=constants.DVR_PROCESS,
-                                 dest_table_id=constants.PATCH_LV_TO_TUN)
+        tun_br.install_goto(table_id=constants.DVR_PROCESS,
+                            dest_table_id=constants.PATCH_LV_TO_TUN)
 
     def setup_dvr_flows_on_phys_br(self, bridge_mappings=None):
         '''Setup up initial dvr flows into br-phys'''
