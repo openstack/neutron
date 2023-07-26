@@ -1435,7 +1435,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         Add all flows to the tunnel bridge.
         '''
         self.tun_br.setup_default_table(self.patch_int_ofport,
-                                        self.arp_responder_enabled)
+                                        self.arp_responder_enabled,
+                                        self.enable_distributed_routing)
 
     def _reconfigure_physical_bridges(self, bridges):
         try:
