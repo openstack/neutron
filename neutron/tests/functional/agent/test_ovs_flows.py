@@ -25,6 +25,8 @@ from neutron.agent.linux import ip_lib
 from neutron.cmd.sanity import checks
 from neutron.common import utils as common_utils
 from neutron.plugins.ml2.drivers.openvswitch.agent \
+    import ovs_dvr_neutron_agent as ovsdvragt
+from neutron.plugins.ml2.drivers.openvswitch.agent \
     import ovs_neutron_agent as ovsagt
 from neutron.tests.common import base as common_base
 from neutron.tests.common import helpers
@@ -299,8 +301,9 @@ class OVSFlowTestCase(OVSAgentTestBase):
     """
 
     def setUp(self):
+        dvr_enabled = True
         cfg.CONF.set_override('enable_distributed_routing',
-                              True,
+                              dvr_enabled,
                               group='AGENT')
         super(OVSFlowTestCase, self).setUp()
         self.phys_br = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
@@ -322,7 +325,9 @@ class OVSFlowTestCase(OVSAgentTestBase):
                 prefix=cfg.CONF.OVS.tun_peer_patch_port),
             common_utils.get_rand_device_name(
                 prefix=cfg.CONF.OVS.int_peer_patch_port))
-        self.br_tun.setup_default_table(self.tun_p, True)
+        self.br_tun.setup_default_table(self.tun_p, True, dvr_enabled)
+        ovsdvragt.OVSDVRNeutronAgent._setup_dvr_flows_on_tun_br(self.br_tun,
+                                                                self.tun_p)
 
     def test_provision_local_vlan(self):
         kwargs = {'port': 123, 'lvid': 888, 'segmentation_id': 777}
