@@ -123,6 +123,18 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 port=payload.metadata.get('port'))
 
     @staticmethod
+    @registry.receives(resources.PORT, [events.BEFORE_UPDATE])
+    def _prevent_internal_ip_change_for_fip(resource, event,
+                                            trigger, payload=None):
+        l3plugin = directory.get_plugin(plugin_constants.L3)
+        new_port = payload.states[1]
+        if (l3plugin and payload.metadata and
+                payload.metadata.get('fixed_ips_updated', False)):
+            l3plugin.prevent_internal_ip_change_for_fip(
+                payload.context, payload.resource_id,
+                new_port['fixed_ips'])
+
+    @staticmethod
     def _validate_subnet_address_mode(subnet):
         if (subnet['ip_version'] == 6 and subnet['ipv6_ra_mode'] is None and
                 subnet['ipv6_address_mode'] is not None):
@@ -1728,6 +1740,21 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
     def get_floatingips_count(self, context, filters=None):
         filters = filters or {}
         return l3_obj.FloatingIP.count(context, **filters)
+
+    def prevent_internal_ip_change_for_fip(self, context, port_id,
+                                           new_fixed_ips):
+        fips = self._get_floatingips_by_port_id(context, port_id)
+        if not fips or not fips[0].fixed_ip_address:
+            return
+        internal_ip = str(fips[0].fixed_ip_address)
+        for fixed_ip in new_fixed_ips:
+            if fixed_ip.get('ip_address') == internal_ip:
+                return
+        msg = (_('Cannot update the fixed_ips of the port %s, because '
+                 'its original fixed_ip has been associated to a '
+                 'floating ip') %
+               port_id)
+        raise n_exc.BadRequest(resource='port', msg=msg)
 
     def prevent_l3_port_deletion(self, context, port_id, port=None):
         """Checks to make sure a port is allowed to be deleted.

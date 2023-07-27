@@ -1856,10 +1856,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         need_port_update_notify = False
         bound_mech_contexts = []
         original_port = self.get_port(context, id)
+        metadata = {'fixed_ips_updated': bool('fixed_ips' in attrs)}
         registry.publish(resources.PORT, events.BEFORE_UPDATE, self,
                          payload=events.DBEventPayload(
                              context,
                              resource_id=id,
+                             metadata=metadata,
                              states=(original_port, attrs)))
         with db_api.CONTEXT_WRITER.using(context):
             port_db = self._get_port(context, id)

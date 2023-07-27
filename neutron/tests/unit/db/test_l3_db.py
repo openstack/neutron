@@ -310,6 +310,25 @@ class TestL3_NAT_dbonly_mixin(
 
     @mock.patch.object(l3_obj.FloatingIP, 'objects_exist')
     @mock.patch.object(l3_obj.FloatingIP, 'get_objects')
+    def test_prevent_internal_ip_change_for_fip(self,
+                                                get_objects,
+                                                objects_exist):
+        ctx = context.get_admin_context()
+        port_id = 'test_internal_port'
+        new_fixed_ips = [{'subnet_id': 'test_subnet',
+                          'ip_address': '192.168.2.110'}]
+        fip_obj_dict = {'fixed_ip_address': '192.168.2.120',
+                        'id': 'floating_ip1',
+                        'port_id': port_id}
+        fip_obj = mock.Mock(**fip_obj_dict)
+        objects_exist.return_value = True
+        get_objects.return_value = [fip_obj]
+        with testtools.ExpectedException(n_exc.BadRequest):
+            self.db.prevent_internal_ip_change_for_fip(ctx, port_id,
+                                                       new_fixed_ips)
+
+    @mock.patch.object(l3_obj.FloatingIP, 'objects_exist')
+    @mock.patch.object(l3_obj.FloatingIP, 'get_objects')
     def test_disassociate_floatingips_conflict_by_fip_attached(self,
                                                                get_objects,
                                                                objects_exist):

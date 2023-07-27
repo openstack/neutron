@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    [`bug 1999209 <https://bugs.launchpad.net/neutron/+bug/1999209>`_]
+    Neutron-API now prevents internal IP change for floating IP. It
+    will raise an error when deleting/changing the fixed IP which is
+    linked to a floating IP.
