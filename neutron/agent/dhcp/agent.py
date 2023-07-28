@@ -223,7 +223,13 @@ class DhcpAgent(manager.Manager):
             ret = []
             for seg_id, subnets in sid_subnets.items():
 
-                # TODO(sahid): This whole part should be removed in future.
+                # TODO(sahid): This whole block bellow should be removed in
+                # future, when we know that all environements have migrated to
+                # at least zed.  This is expected to help for environements
+                # that already have deployed RPN.  For any first segment
+                # associated to a subnet we want to disable its dhcp
+                # agent. Then the process will recreate it considering a dhcp
+                # agent per segmentation id.
                 segment = sid_segment.get(seg_id)
                 if segment and segment.segment_index == 0:
                     if action in ['enable', 'disable']:
