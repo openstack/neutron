@@ -1967,8 +1967,8 @@ class OVNClient(object):
             if self.is_external_ports_supported():
                 # If there are no external ports in this  network, there's
                 # no need to check the AZs
-                if any([p for p in lswitch.ports if
-                        p.type == ovn_const.LSP_TYPE_EXTERNAL]):
+                if any(p for p in lswitch.ports if
+                       p.type == ovn_const.LSP_TYPE_EXTERNAL):
                     # Check for changes in the network Availability Zones
                     ovn_ls_azs = lswitch.external_ids.get(
                         ovn_const.OVN_AZ_HINTS_EXT_ID_KEY, '')

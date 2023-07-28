@@ -97,15 +97,8 @@ disable=
  too-many-statements,
  consider-using-set-comprehension,
  useless-object-inheritance,
- use-a-generator,
- unnecessary-lambda-assignment,
  super-with-arguments,
- consider-using-max-builtin,
- use-dict-literal,
- consider-using-generator,
- consider-using-in,
- use-list-literal,
- consider-using-from-import
+ use-dict-literal
 
 [BASIC]
 # Variable names can be 1 to 31 characters long, with lowercase and underscores

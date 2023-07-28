@@ -923,14 +923,14 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                 del self.sg_members[sg_id]
 
     def _find_deleted_sg_rules(self, sg_id):
-        del_rules = list()
+        del_rules = []
         for pre_rule in self.pre_sg_rules.get(sg_id, []):
             if pre_rule not in self.sg_rules.get(sg_id, []):
                 del_rules.append(pre_rule)
         return del_rules
 
     def _find_devices_on_security_group(self, sg_id):
-        device_list = list()
+        device_list = []
         for device in self.filtered_ports.values():
             if sg_id in device.get('security_groups', []):
                 device_list.append(device)

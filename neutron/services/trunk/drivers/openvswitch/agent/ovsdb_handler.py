@@ -94,12 +94,15 @@ def bridge_has_port(bridge, is_port_predicate):
     return any(iface for iface in ifaces if is_port_predicate(iface))
 
 
+def _is_instance_port(port_name):
+    return not is_trunk_service_port(port_name)
+
+
 def bridge_has_instance_port(bridge):
     """True if there is an OVS port that doesn't have bridge or patch ports
        prefix.
     """
-    is_instance_port = lambda p: not is_trunk_service_port(p)
-    return bridge_has_port(bridge, is_instance_port)
+    return bridge_has_port(bridge, _is_instance_port)
 
 
 def bridge_has_service_port(bridge):

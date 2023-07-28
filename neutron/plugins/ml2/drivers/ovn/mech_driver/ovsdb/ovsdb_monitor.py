@@ -105,7 +105,7 @@ class ChassisEvent(row_event.RowEvent):
     def _get_min_priority_in_hcg(self, ha_chassis_group):
         """Find the next lowest priority number within a HA Chassis Group."""
         min_priority = min(
-            [ch.priority for ch in ha_chassis_group.ha_chassis],
+            (ch.priority for ch in ha_chassis_group.ha_chassis),
             default=ovn_const.HA_CHASSIS_GROUP_HIGHEST_PRIORITY)
         return min_priority - 1
 

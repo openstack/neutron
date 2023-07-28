@@ -177,8 +177,7 @@ def _get_rpc_workers(plugin=None):
     if workers is None:
         # By default, half as many rpc workers as api workers
         workers = int(_get_api_workers() / 2)
-    if workers < 1:
-        workers = 1
+    workers = max(workers, 1)
 
     # If workers > 0 then start_rpc_listeners would be called in a
     # subprocess and we cannot simply catch the NotImplementedError.  It is

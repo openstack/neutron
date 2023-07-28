@@ -123,7 +123,7 @@ class TrunkPlugin(service_base.ServicePluginBase):
 
     def check_driver_compatibility(self):
         """Fail to load if no compatible driver is found."""
-        if not any([driver.is_loaded for driver in self._drivers]):
+        if not any(driver.is_loaded for driver in self._drivers):
             raise trunk_exc.IncompatibleTrunkPluginConfiguration()
 
     def check_segmentation_compatibility(self):

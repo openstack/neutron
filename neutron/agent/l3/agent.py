@@ -609,6 +609,10 @@ class L3NATAgent(ha.AgentMixin,
             self._queue.add(update)
 
     def _process_network_update(self, router_id, network_id):
+
+        def _port_belongs(p):
+            return p['network_id'] == network_id
+
         ri = self.router_info.get(router_id)
         if not ri:
             return
@@ -617,8 +621,7 @@ class L3NATAgent(ha.AgentMixin,
         ports = list(ri.internal_ports)
         if ri.ex_gw_port:
             ports.append(ri.ex_gw_port)
-        port_belongs = lambda p: p['network_id'] == network_id
-        if any(port_belongs(p) for p in ports):
+        if any(_port_belongs(p) for p in ports):
             update = queue.ResourceUpdate(
                 ri.router_id, PRIORITY_SYNC_ROUTERS_TASK)
             self._resync_router(update)

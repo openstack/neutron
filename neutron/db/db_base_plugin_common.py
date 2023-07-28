@@ -69,11 +69,13 @@ def filter_fields(f):
             except (IndexError, ValueError):
                 return result
 
-        do_filter = lambda d: {k: v for k, v in d.items() if k in fields}
+        def _do_filter(d):
+            return {k: v for k, v in d.items() if k in fields}
+
         if isinstance(result, list):
-            return [do_filter(obj) for obj in result]
+            return [_do_filter(obj) for obj in result]
         else:
-            return do_filter(result)
+            return _do_filter(result)
     return inner_filter
 
 

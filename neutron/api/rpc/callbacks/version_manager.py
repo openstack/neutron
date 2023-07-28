@@ -167,9 +167,12 @@ class ResourceConsumerTracker(object):
 
     def report(self):
         """Output debug information about the consumer versions."""
-        format = lambda versions: pprint.pformat(dict(versions), indent=4)
-        debug_dict = {'pushed_versions': format(self._versions),
-                      'consumer_versions': format(self._versions_by_consumer)}
+
+        def _format(versions):
+            return pprint.pformat(dict(versions), indent=4)
+
+        debug_dict = {'pushed_versions': _format(self._versions),
+                      'consumer_versions': _format(self._versions_by_consumer)}
         if self.last_report != debug_dict:
             self.last_report = debug_dict
             LOG.debug('Tracked resource versions report:\n'

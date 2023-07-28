@@ -16,9 +16,9 @@
 from neutron_lib.api.definitions import network_ip_availability as apidef
 from neutron_lib.api import extensions as api_extensions
 
-import neutron.api.extensions as extensions
-import neutron.api.v2.base as base
-import neutron.services.network_ip_availability.plugin as plugin
+from neutron.api import extensions
+from neutron.api.v2 import base
+from neutron.services.network_ip_availability import plugin
 
 
 class Network_ip_availability(api_extensions.APIExtensionDescriptor):
