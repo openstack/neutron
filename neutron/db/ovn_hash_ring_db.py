@@ -29,6 +29,7 @@ LOG = log.getLogger(__name__)
 
 # NOTE(ralonsoh): this was migrated from networking-ovn to neutron and should
 #                 be refactored to be integrated in a OVO.
+@db_api.retry_if_session_inactive()
 def add_node(context, group_name, node_uuid=None):
     if node_uuid is None:
         node_uuid = uuidutils.generate_uuid()
@@ -41,6 +42,7 @@ def add_node(context, group_name, node_uuid=None):
     return node_uuid
 
 
+@db_api.retry_if_session_inactive()
 def remove_nodes_from_host(context, group_name):
     with db_api.CONTEXT_WRITER.using(context):
         context.session.query(ovn_models.OVNHashRing).filter(
@@ -50,6 +52,7 @@ def remove_nodes_from_host(context, group_name):
              CONF.host, group_name)
 
 
+@db_api.retry_if_session_inactive()
 def remove_node_by_uuid(context, node_uuid):
     with db_api.CONTEXT_WRITER.using(context):
         context.session.query(ovn_models.OVNHashRing).filter(
@@ -57,6 +60,7 @@ def remove_node_by_uuid(context, node_uuid):
     LOG.info('Node "%s" removed from the Hash Ring', node_uuid)
 
 
+@db_api.retry_if_session_inactive()
 def _touch(context, updated_at=None, **filter_args):
     if updated_at is None:
         updated_at = timeutils.utcnow()
@@ -90,6 +94,7 @@ def _get_nodes_query(context, interval, group_name, offline=False,
     return query
 
 
+@db_api.retry_if_session_inactive()
 @db_api.CONTEXT_READER
 def get_active_nodes(context, interval, group_name, from_host=False):
     query = _get_nodes_query(context, interval, group_name,
@@ -97,12 +102,14 @@ def get_active_nodes(context, interval, group_name, from_host=False):
     return query.all()
 
 
+@db_api.retry_if_session_inactive()
 @db_api.CONTEXT_READER
 def count_offline_nodes(context, interval, group_name):
     query = _get_nodes_query(context, interval, group_name, offline=True)
     return query.count()
 
 
+@db_api.retry_if_session_inactive()
 @db_api.CONTEXT_READER
 def count_nodes_from_host(context, group_name):
     query = context.session.query(ovn_models.OVNHashRing).filter(
