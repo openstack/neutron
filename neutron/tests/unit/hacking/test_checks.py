@@ -238,6 +238,19 @@ class HackingTestCase(base.BaseTestCase):
                 1, len(list(checks.check_no_import_six(
                     fail_line, mock.ANY, None))))
 
+    def test_check_no_import_packaging(self):
+        pass_line = 'import other_library import packaging'
+        fail_lines = ('import packaging',
+                      'from packaging import version')
+        self.assertEqual(
+            0,
+            len(list(checks.check_no_import_packaging(pass_line, mock.ANY,
+                                                      None))))
+        for fail_line in fail_lines:
+            self.assertEqual(
+                1, len(list(checks.check_no_import_packaging(
+                    fail_line, mock.ANY, None))))
+
     def test_check_oslo_i18n_wrapper(self):
         def _pass(line, filename, noqa=False):
             self.assertLinePasses(

@@ -42,6 +42,10 @@ import_from_mock = re.compile(r"\bfrom[\s]+mock[\s]+import\b")
 import_six = re.compile(r"\bimport[\s]+six\b")
 import_from_six = re.compile(r"\bfrom[\s]+six[\s]+import\b")
 
+import_packaging = re.compile(r"\bimport[\s]+packaging\b")
+import_version_from_packaging = (
+    re.compile(r"\bfrom[\s]+packaging[\s]+import[\s]version\b"))
+
 
 @core.flake8ext
 def check_assert_called_once_with(logical_line, filename):
@@ -262,5 +266,19 @@ def check_no_import_six(logical_line, filename, noqa):
         return
 
     for regex in import_six, import_from_six:
+        if re.match(regex, logical_line):
+            yield(0, msg)
+
+
+@core.flake8ext
+def check_no_import_packaging(logical_line, filename, noqa):
+    """N349 - Code must not import packaging library
+    """
+    msg = "N349: Code must not import packaging library"
+
+    if noqa:
+        return
+
+    for regex in import_packaging, import_version_from_packaging:
         if re.match(regex, logical_line):
             yield(0, msg)
