@@ -15,7 +15,12 @@ from oslo_config import cfg
 from neutron._i18n import _
 
 AGENT_OPTS = [
+    # The agent_down_time value can only be a max of INT_MAX (as defined in C),
+    # where int is usually 32 bits. The agent_down_time will be passed to
+    # eventlet in milliseconds and any number higher will produce an OverFlow
+    # error. More details here: https://bugs.launchpad.net/neutron/+bug/2028724
     cfg.IntOpt('agent_down_time', default=75,
+               max=((2**32 / 2 - 1) // 1000),
                help=_("Seconds to regard the agent is down; should be at "
                       "least twice report_interval, to be sure the "
                       "agent is down for good.")),
