@@ -60,7 +60,6 @@ disable=
  arguments-renamed,
  broad-exception-raised,
  unspecified-encoding,
- missing-timeout,
  redundant-u-string-prefix,
  unused-private-member,
 # "C" Coding convention violations

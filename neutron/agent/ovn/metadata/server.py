@@ -153,7 +153,8 @@ class MetadataProxyHandler(object):
                                 headers=headers,
                                 data=req.body,
                                 cert=client_cert,
-                                verify=verify_cert)
+                                verify=verify_cert,
+                                timeout=60)
 
         if resp.status_code == 200:
             req.response.content_type = resp.headers['content-type']

@@ -167,7 +167,8 @@ class TestMetadataProxyHandler(base.BaseTestCase):
                     data=body,
                     cert=(self.fake_conf.nova_client_cert,
                           self.fake_conf.nova_client_priv_key),
-                    verify=False)
+                    verify=False,
+                    timeout=60)
 
                 return retval
 
