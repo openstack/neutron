@@ -507,9 +507,9 @@
       devstack_localrc:
         MYSQL_GATHER_PERFORMANCE: false
         MYSQL_REDUCE_MEMORY: true
-        CIRROS_VERSION: 0.6.1
-        DEFAULT_IMAGE_NAME: cirros-0.6.1-x86_64-uec
-        DEFAULT_IMAGE_FILE_NAME: cirros-0.6.1-x86_64-uec.tar.gz
+        CIRROS_VERSION: 0.6.2
+        DEFAULT_IMAGE_NAME: cirros-0.6.2-x86_64-uec
+        DEFAULT_IMAGE_FILE_NAME: cirros-0.6.2-x86_64-uec.tar.gz
         Q_AGENT: ovn
         ML2_L3_PLUGIN: ovn-router,trunk
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger
@@ -735,9 +735,9 @@
       devstack_localrc:
         MYSQL_GATHER_PERFORMANCE: false
         MYSQL_REDUCE_MEMORY: true
-        CIRROS_VERSION: 0.6.1
-        DEFAULT_IMAGE_NAME: cirros-0.6.1-x86_64-uec
-        DEFAULT_IMAGE_FILE_NAME: cirros-0.6.1-x86_64-uec.tar.gz
+        CIRROS_VERSION: 0.6.2
+        DEFAULT_IMAGE_NAME: cirros-0.6.2-x86_64-uec
+        DEFAULT_IMAGE_FILE_NAME: cirros-0.6.2-x86_64-uec.tar.gz
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
