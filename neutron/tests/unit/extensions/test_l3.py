@@ -4482,9 +4482,15 @@ class L3NatDBSepTestCase(L3BaseForSepTests, L3NatTestCaseBase,
 
     def test_port_deletion_prevention_handles_missing_port(self):
         pl = directory.get_plugin(plugin_constants.L3)
-        self.assertIsNone(
-            pl.prevent_l3_port_deletion(context.get_admin_context(), 'fakeid')
-        )
+        # NOTE(slaweq): it's needed to make at least one API call to the
+        # application to initialize all models which are using lazy loading of
+        # some attributes,
+        # check https://bugs.launchpad.net/neutron/+bug/2028285 for details
+        with self.network():
+            self.assertIsNone(
+                pl.prevent_l3_port_deletion(context.get_admin_context(),
+                                            'fakeid')
+            )
 
 
 class L3TestExtensionManagerWithDNS(L3TestExtensionManager):
