@@ -1969,8 +1969,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
 
     def test_update_port(self):
         with mock.patch.object(
-                self.mech_driver._ovn_client, 'is_metadata_port') as \
-                mock_is_metadata_port, \
+                ovn_utils, 'is_ovn_metadata_port') as \
+                mock_is_ovn_metadata_port, \
                 mock.patch.object(self.mech_driver._plugin, 'get_subnets') as \
                 mock_get_subnets, \
                 mock.patch.object(self.mech_driver._plugin, 'get_network') as \
@@ -1998,7 +1998,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 for ip in port.get('fixed_ips')
             ]
 
-            mock_is_metadata_port.return_value = [True]
+            mock_is_ovn_metadata_port.return_value = [True]
             mock_get_network.return_value = fake_net
             self.mech_driver._ovn_client.update_port(
                 self.context, port)

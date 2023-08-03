@@ -33,7 +33,6 @@ from neutron.common.ovn import utils
 from neutron.common import utils as n_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_revision_numbers_db as db_rev
-from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovsdb_monitor
 from neutron.tests import base as tests_base
 from neutron.tests.functional import base
@@ -1022,7 +1021,7 @@ class TestMetadataPorts(base.TestOVNFunctionalBase):
 
     def _check_metadata_port(self, net_id, fixed_ip, fail=True):
         for port in self._list_ports_ovn(net_id=net_id):
-            if ovn_client.OVNClient.is_metadata_port(port):
+            if utils.is_ovn_metadata_port(port):
                 self.assertEqual(net_id, port['network_id'])
                 if fixed_ip:
                     self.assertIn(fixed_ip, port['fixed_ips'])
