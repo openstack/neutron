@@ -33,13 +33,19 @@ class OVSTunnelBridge(ovs_bridge.OVSAgentBridge,
     dvr_process_next_table_id = constants.PATCH_LV_TO_TUN
     of_tables = constants.TUN_BR_ALL_TABLES
 
-    def setup_default_table(self, patch_int_ofport, arp_responder_enabled):
+    def setup_default_table(
+            self, patch_int_ofport, arp_responder_enabled, dvr_enabled):
         (dp, ofp, ofpp) = self._get_dp()
 
-        # Table 0 (default) will sort incoming traffic depending on in_port
-        self.install_goto(dest_table_id=constants.PATCH_LV_TO_TUN,
-                          priority=1,
-                          in_port=patch_int_ofport)
+        if not dvr_enabled:
+            # Table 0 (default) will sort incoming traffic depending on in_port
+            # This table is needed only for non-dvr environment because
+            # OVSDVRProcessMixin overwrites this flow in its
+            # install_dvr_process() method.
+            self.install_goto(dest_table_id=constants.PATCH_LV_TO_TUN,
+                              priority=1,
+                              in_port=patch_int_ofport)
+
         self.install_drop()  # default drop
 
         if arp_responder_enabled:
