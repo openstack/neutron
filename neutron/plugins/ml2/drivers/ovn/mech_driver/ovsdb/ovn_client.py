@@ -97,6 +97,7 @@ class OVNClient(object):
         self._plugin_property = None
         self._l3_plugin_property = None
         self._is_mcast_flood_broken = None
+        self._is_ipxe_over_ipv6_supported = None
 
         # TODO(ralonsoh): handle the OVN client extensions with an ext. manager
         self._qos_driver = qos_extension.OVNClientQosExtension(driver=self)
@@ -312,6 +313,19 @@ class OVNClient(object):
                 versionutils.convert_version_to_tuple(schema_version) <
                 (6, 3, 0))
         return self._is_mcast_flood_broken
+
+    # TODO(slaweq): Remove this method when min supported OVN version will be
+    # >= v23.06.0 which is the one which have support for IPv6 iPXE booting
+    # added:
+    # https://github.com/ovn-org/ovn/commit/c5fd51bd154147a567097eaf61fbebc0b5b39e28
+    @property
+    def is_ipxe_over_ipv6_supported(self):
+        if self._is_ipxe_over_ipv6_supported is None:
+            schema_version = self._nb_idl.get_schema_version()
+            self._is_ipxe_over_ipv6_supported = (
+                versionutils.convert_version_to_tuple(schema_version) >=
+                (7, 0, 4))
+        return self._is_ipxe_over_ipv6_supported
 
     def _get_port_options(self, port):
         context = n_context.get_admin_context()

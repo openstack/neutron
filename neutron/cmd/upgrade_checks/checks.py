@@ -28,6 +28,8 @@ from sqlalchemy import or_
 
 from neutron._i18n import _
 from neutron.cmd.upgrade_checks import base
+from neutron.conf.plugins.ml2 import config as ml2_conf
+from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.conf import service as conf_service
 from neutron.db.extra_dhcp_opt import models as extra_dhcp_opt_models
 from neutron.db.models import agent as agent_model
@@ -39,11 +41,16 @@ from neutron.db.models import segment
 from neutron.db import models_v2
 from neutron.db.qos import models as qos_models
 from neutron.objects import ports as port_obj
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import worker
 
 
 OVN_ALEMBIC_TABLE_NAME = "ovn_alembic_version"
 LAST_NETWORKING_OVN_EXPAND_HEAD = "e55d09277410"
 LAST_NETWORKING_OVN_CONTRACT_HEAD = "1d271ead4eb6"
+
+_OVN_CLIENT = None
 
 
 def get_agents(agt_type):
@@ -175,7 +182,22 @@ def get_duplicated_ha_networks_per_project():
         return query.all()
 
 
+def get_ovn_client():
+    global _OVN_CLIENT
+    if _OVN_CLIENT is None:
+        mech_worker = worker.MaintenanceWorker
+        ovn_api = impl_idl_ovn.OvsdbNbOvnIdl.from_worker(mech_worker)
+        ovn_sb_api = impl_idl_ovn.OvsdbSbOvnIdl.from_worker(mech_worker)
+        _OVN_CLIENT = ovn_client.OVNClient(ovn_api, ovn_sb_api)
+    return _OVN_CLIENT
+
+
 class CoreChecks(base.BaseChecks):
+
+    def __init__(self):
+        super().__init__()
+        ml2_conf.register_ml2_plugin_opts()
+        ovn_conf.register_opts()
 
     def get_checks(self):
         return [
@@ -205,6 +227,8 @@ class CoreChecks(base.BaseChecks):
              self.extra_dhcp_options_check),
             (_('Duplicated HA network per project check'),
              self.extra_dhcp_options_check),
+            (_('OVN support for BM provisioning over IPv6 check'),
+             self.ovn_for_bm_provisioning_over_ipv6_check),
         ]
 
     @staticmethod
@@ -570,3 +594,48 @@ class CoreChecks(base.BaseChecks):
         return upgradecheck.Result(
             upgradecheck.Code.SUCCESS,
             _('There are no duplicated HA networks in the system.'))
+
+    @staticmethod
+    def ovn_for_bm_provisioning_over_ipv6_check(checker):
+        """Check if OVN version is new enough to handle IPv6 provisioning
+
+        Support for the required DHCPv6 options was recently added in core
+        OVN with c5fd51bd154147a567097eaf61fbebc0b5b39e28 in OVN.
+        This check function will raise warning if user is using older OVN
+        version, withouth this patch and will have
+        ``disable_ovn_dhcp_for_baremetal_ports`` option set to False.
+        """
+
+        if cfg.CONF.ovn.disable_ovn_dhcp_for_baremetal_ports:
+            return upgradecheck.Result(
+                upgradecheck.Code.SUCCESS,
+                _("Native OVN DHCP is disabed for baremetal ports."))
+        try:
+            ovn_client = get_ovn_client()
+        except RuntimeError:
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _("Invalid OVN connection parameters provided."))
+        except Exception as err:
+            err_msg = "Failed to connect to OVN. Error: %s" % err
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _(err_msg))
+
+        if ovn_client.is_ipxe_over_ipv6_supported:
+            return upgradecheck.Result(
+                upgradecheck.Code.SUCCESS,
+                _('Version of OVN supports iPXE over IPv6.'))
+        else:
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _('Version of OVN does not support iPXE over IPv6 but '
+                  '``disable_ovn_dhcp_for_baremetal_ports`` is set to '
+                  '``False``. In case if provisioning of baremetal nodes '
+                  'is required, please make sure that either '
+                  '``disable_ovn_dhcp_for_baremetal_ports`` option is set to '
+                  '``True`` and Neutron DHCP agent is available or use '
+                  'OVN with patch https://github.com/ovn-org/ovn/commit/'
+                  'c5fd51bd154147a567097eaf61fbebc0b5b39e28 which added '
+                  'support for iPXE over IPv6. It is available in '
+                  'OVN >= 23.06.0.'))
