@@ -34,8 +34,7 @@ Firewalls are used to restrict traffic to a host based on the rules
 defined on the host. They can filter packets based on several criteria such as
 source IP address, destination IP address, port numbers, connection state,
 and so on. It is primarily used to protect the hosts from unauthorized access
-and malicious attacks. Linux-based operating systems implement firewalls
-through ``iptables``.
+and malicious attacks.
 
 Load balancers
 ~~~~~~~~~~~~~~
