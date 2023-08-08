@@ -52,7 +52,8 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
         patch_int_ofport = 5555
         arp_responder_enabled = False
         self.br.setup_default_table(patch_int_ofport=patch_int_ofport,
-            arp_responder_enabled=arp_responder_enabled)
+            arp_responder_enabled=arp_responder_enabled,
+            dvr_enabled=False)
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
             call._send_msg(ofpp.OFPFlowMod(dp,
@@ -160,7 +161,8 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
         patch_int_ofport = 5555
         arp_responder_enabled = True
         self.br.setup_default_table(patch_int_ofport=patch_int_ofport,
-            arp_responder_enabled=arp_responder_enabled)
+            arp_responder_enabled=arp_responder_enabled,
+            dvr_enabled=False)
         (dp, ofp, ofpp) = self._get_dp()
         expected = [
             call._send_msg(ofpp.OFPFlowMod(dp,
@@ -279,6 +281,33 @@ class OVSTunnelBridgeTest(ovs_bridge_test_base.OVSBridgeTestBase,
                            active_bundle=None)
         ]
         self.assertEqual(expected, self.mock.mock_calls)
+
+    def _test_setup_default_table_dvr_helper(self, dvr_enabled):
+        patch_int_ofport = 5555
+        arp_responder_enabled = True
+        self.br.setup_default_table(patch_int_ofport=patch_int_ofport,
+            arp_responder_enabled=arp_responder_enabled,
+            dvr_enabled=dvr_enabled)
+        (dp, ofp, ofpp) = self._get_dp()
+        non_dvr_specific_call = call._send_msg(
+            ofpp.OFPFlowMod(
+                dp,
+                cookie=self.stamp,
+                instructions=[ofpp.OFPInstructionGotoTable(table_id=2)],
+                match=ofpp.OFPMatch(in_port=patch_int_ofport),
+                priority=1, table_id=0),
+            active_bundle=None)
+
+        if dvr_enabled:
+            self.assertNotIn(non_dvr_specific_call, self.mock.mock_calls)
+        else:
+            self.assertIn(non_dvr_specific_call, self.mock.mock_calls)
+
+    def test_setup_default_table_dvr_enabled(self):
+        self._test_setup_default_table_dvr_helper(dvr_enabled=True)
+
+    def test_setup_default_table_dvr_disabled(self):
+        self._test_setup_default_table_dvr_helper(dvr_enabled=False)
 
     def test_provision_local_vlan(self):
         network_type = 'vxlan'
