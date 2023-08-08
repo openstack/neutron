@@ -36,18 +36,11 @@ ACTION_GET = [
     {'method': 'GET', 'path': RESOURCE_PATH},
 ]
 
-# TODO(slaweq): remove it once network will be added to the
-# EXT_PARENT_RESOURCE_MAPPING in neutron_lib and rule base.PARENT_OWNER_MEMBER
-# will be possible to use instead of RULE_NET_OWNER_MEMBER
-RULE_NET_OWNER_MEMBER = 'role:member and ' + base.RULE_NET_OWNER
-
 
 rules = [
     policy.DocumentedRuleDefault(
         name='create_subnet',
-        check_str=neutron_policy.policy_or(
-            base.ADMIN,
-            RULE_NET_OWNER_MEMBER),
+        check_str=base.ADMIN_OR_NET_OWNER_MEMBER,
         scope_types=['project'],
         description='Create a subnet',
         operations=ACTION_POST,
@@ -115,9 +108,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_subnet',
-        check_str=neutron_policy.policy_or(
-            base.ADMIN_OR_PROJECT_MEMBER,
-            RULE_NET_OWNER_MEMBER),
+        check_str=base.ADMIN_OR_NET_OWNER_MEMBER,
         scope_types=['project'],
         description='Update a subnet',
         operations=ACTION_PUT,
@@ -153,9 +144,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_subnet',
-        check_str=neutron_policy.policy_or(
-            base.ADMIN_OR_PROJECT_MEMBER,
-            RULE_NET_OWNER_MEMBER),
+        check_str=base.ADMIN_OR_NET_OWNER_MEMBER,
         scope_types=['project'],
         description='Delete a subnet',
         operations=ACTION_DELETE,
