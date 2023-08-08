@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Now the ML2/OVN trunk driver prevents a trunk creation if the parent port
+    is already bound. In the same way, if a parent port being used in a trunk
+    is bound, the trunk cannot be deleted.
