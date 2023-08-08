@@ -50,6 +50,13 @@ def remove_nodes_from_host(context, group_name):
              CONF.host, group_name)
 
 
+def remove_node_by_uuid(context, node_uuid):
+    with db_api.CONTEXT_WRITER.using(context):
+        context.session.query(ovn_models.OVNHashRing).filter(
+            ovn_models.OVNHashRing.node_uuid == node_uuid).delete()
+    LOG.info('Node "%s" removed from the Hash Ring', node_uuid)
+
+
 def _touch(context, updated_at=None, **filter_args):
     if updated_at is None:
         updated_at = timeutils.utcnow()
@@ -96,7 +103,9 @@ def count_offline_nodes(context, interval, group_name):
     return query.count()
 
 
-def set_nodes_from_host_as_offline(context, group_name):
-    timestamp = datetime.datetime(day=26, month=10, year=1985, hour=9)
-    _touch(context, updated_at=timestamp, hostname=CONF.host,
-           group_name=group_name)
+@db_api.CONTEXT_READER
+def count_nodes_from_host(context, group_name):
+    query = context.session.query(ovn_models.OVNHashRing).filter(
+        ovn_models.OVNHashRing.group_name == group_name,
+        ovn_models.OVNHashRing.hostname == CONF.host)
+    return query.count()
