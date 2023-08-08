@@ -380,7 +380,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
             return
 
         LOG.debug('Maintenance task: Synchronizing Neutron '
-                  'and OVN databases')
+                  'and OVN databases started')
         self._log_maintenance_inconsistencies(create_update_inconsistencies,
                                               delete_inconsistencies)
         self._sync_timer.restart()
@@ -430,7 +430,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                                'res_type': row.resource_type})
 
         self._sync_timer.stop()
-        LOG.info('Maintenance task: Synchronization finished '
+        LOG.info('Maintenance task: Synchronization completed '
                  '(took %.2f seconds)', self._sync_timer.elapsed())
 
     def _create_lrouter_port(self, context, port):
@@ -508,7 +508,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                                   subnet['id'])
 
         self._sync_timer.stop()
-        LOG.info('Maintenance task: DHCP options check finished '
+        LOG.info('Maintenance task: DHCP options check completed '
                  '(took %.2f seconds)', self._sync_timer.elapsed())
 
         raise periodics.NeverAgain()
