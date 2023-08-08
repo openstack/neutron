@@ -455,6 +455,36 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         self.l3_plugin.port_forwarding.db_sync_delete(
             context, fip_id, txn)
 
+    def _is_router_port_changed(self, db_router_port, lrport_nets):
+        """Check if the router port needs to be updated.
+
+        This method checks for networks and ipv6_ra_configs (if supported)
+        changes on a given router port.
+         """
+        db_lrport_nets = db_router_port['networks']
+        if db_lrport_nets != lrport_nets:
+            return True
+
+        # Check for ipv6_ra_configs changes
+        db_lrport_ra = db_router_port['ipv6_ra_configs']
+        lrport_ra = {}
+        ipv6_ra_supported = self.ovn_api.is_col_present(
+            'Logical_Router_Port', 'ipv6_ra_configs')
+        if ipv6_ra_supported:
+            lrp_name = utils.ovn_lrouter_port_name(db_router_port['id'])
+            try:
+                ovn_lrport = self.ovn_api.lrp_get(
+                    lrp_name).execute(check_error=True)
+            except idlutils.RowNotFound:
+                # If the port is not found in the OVN database the
+                # ovn-db-sync script will recreate this port later
+                # and it will have the latest information. No need
+                # to update it.
+                return False
+            lrport_ra = ovn_lrport.ipv6_ra_configs
+
+        return db_lrport_ra != lrport_ra
+
     def sync_routers_and_rports(self, ctx):
         """Sync Routers between neutron and NB.
 
@@ -534,6 +564,12 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
              constants.DEVICE_OWNER_HA_REPLICATED_INT])
         for interface in interfaces:
             db_router_ports[interface['id']] = interface
+            networks, ipv6_ra_configs = (
+                self._ovn_client._get_nets_and_ipv6_ra_confs_for_router_port(
+                    ctx, interface))
+            db_router_ports[interface['id']]['networks'] = networks
+            db_router_ports[interface['id']][
+                'ipv6_ra_configs'] = ipv6_ra_configs
 
         lrouters = self.ovn_api.get_all_logical_routers_with_rports()
 
@@ -550,11 +586,9 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
             if lrouter['name'] in db_routers:
                 for lrport, lrport_nets in lrouter['ports'].items():
                     if lrport in db_router_ports:
-                        # We dont have to check for the networks and
-                        # ipv6_ra_configs values. Lets add it to the
-                        # update_lrport_list. If they are in sync, then
-                        # update_router_port will be a no-op.
-                        update_lrport_list.append(db_router_ports[lrport])
+                        if self._is_router_port_changed(
+                                db_router_ports[lrport], lrport_nets):
+                            update_lrport_list.append(db_router_ports[lrport])
                         del db_router_ports[lrport]
                     else:
                         del_lrouter_ports_list.append(

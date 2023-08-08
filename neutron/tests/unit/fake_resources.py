@@ -164,6 +164,7 @@ class FakeOvsdbNbOvnIdl(object):
         self.ha_chassis_group_add_chassis = mock.Mock()
         self.ha_chassis_group_del_chassis = mock.Mock()
         self.get_lrouter_gw_ports = mock.Mock()
+        self.lrp_get = mock.Mock()
 
 
 class FakeOvsdbSbOvnIdl(object):
