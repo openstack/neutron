@@ -71,7 +71,8 @@ class RouterRoute(base.NeutronDbObject):
 @base.NeutronObjectRegistry.register
 class RouterExtraAttributes(base.NeutronDbObject):
     # Version 1.0: Initial version
-    VERSION = '1.0'
+    # Version 1.1: Added ECMP and BFD attributes
+    VERSION = '1.1'
 
     db_model = l3_attrs.RouterExtraAttributes
 
@@ -81,7 +82,10 @@ class RouterExtraAttributes(base.NeutronDbObject):
         'service_router': obj_fields.BooleanField(default=False),
         'ha': obj_fields.BooleanField(default=False),
         'ha_vr_id': obj_fields.IntegerField(nullable=True),
-        'availability_zone_hints': obj_fields.ListOfStringsField(nullable=True)
+        'availability_zone_hints': obj_fields.ListOfStringsField(
+            nullable=True),
+        'enable_default_route_bfd': obj_fields.BooleanField(default=False),
+        'enable_default_route_ecmp': obj_fields.BooleanField(default=False),
     }
 
     primary_keys = ['router_id']
@@ -129,6 +133,12 @@ class RouterExtraAttributes(base.NeutronDbObject):
             query = query.filter(count < less_than)
 
         return list(query)
+
+    def obj_make_compatible(self, primitive, target_version):
+        _target_version = versionutils.convert_version_to_tuple(target_version)
+        if _target_version < (1, 1):
+            primitive.pop('enable_default_route_bfd', None)
+            primitive.pop('enable_default_route_ecmp', None)
 
 
 @base.NeutronObjectRegistry.register

@@ -35,6 +35,7 @@ import neutron.conf.db.dvr_mac_db
 import neutron.conf.db.extraroute_db
 import neutron.conf.db.l3_agentschedulers_db
 import neutron.conf.db.l3_dvr_db
+import neutron.conf.db.l3_extra_gws_db
 import neutron.conf.db.l3_gwmode_db
 import neutron.conf.db.l3_hamode_db
 import neutron.conf.experimental
@@ -168,7 +169,8 @@ def list_db_opts():
              neutron.conf.db.dvr_mac_db.DVR_MAC_ADDRESS_OPTS,
              neutron.conf.db.l3_dvr_db.ROUTER_DISTRIBUTED_OPTS,
              neutron.conf.db.l3_agentschedulers_db.L3_AGENTS_SCHEDULER_OPTS,
-             neutron.conf.db.l3_hamode_db.L3_HA_OPTS)
+             neutron.conf.db.l3_hamode_db.L3_HA_OPTS,
+             neutron.conf.db.l3_extra_gws_db.L3_EXTRA_GWS_OPTS)
          ),
         ('database',
          neutron.db.migration.cli.get_engine_config())

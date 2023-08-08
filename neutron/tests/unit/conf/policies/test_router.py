@@ -114,6 +114,30 @@ class SystemAdminTests(RouterAPITestCase):
             'create_router:external_gateway_info:external_fixed_ips',
             self.alt_target)
 
+    def test_create_router_enable_default_route_bfd(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_router:enable_default_route_bfd',
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_router:enable_default_route_bfd',
+            self.alt_target)
+
+    def test_create_router_enable_default_route_ecmp(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_router:enable_default_route_ecmp',
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_router:enable_default_route_ecmp',
+            self.alt_target)
+
     def test_get_router(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -222,6 +246,30 @@ class SystemAdminTests(RouterAPITestCase):
             policy.enforce,
             self.context,
             'update_router:external_gateway_info:external_fixed_ips',
+            self.alt_target)
+
+    def test_update_router_enable_default_route_bfd(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_router:enable_default_route_bfd',
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_router:enable_default_route_bfd',
+            self.alt_target)
+
+    def test_update_router_enable_default_route_ecmp(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_router:enable_default_route_ecmp',
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_router:enable_default_route_ecmp',
             self.alt_target)
 
     def test_delete_router(self):
@@ -335,6 +383,30 @@ class AdminTests(RouterAPITestCase):
             policy.enforce(
                 self.context,
                 'create_router:external_gateway_info:external_fixed_ips',
+                self.alt_target))
+
+    def test_update_router_enable_default_route_bfd(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'update_router:enable_default_route_bfd',
+                self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'update_router:enable_default_route_bfd',
+                self.alt_target))
+
+    def test_update_router_enable_default_route_ecmp(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'update_router:enable_default_route_ecmp',
+                self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context,
+                'update_router:enable_default_route_ecmp',
                 self.alt_target))
 
     def test_get_router(self):
@@ -522,6 +594,34 @@ class ProjectMemberTests(AdminTests):
             policy.enforce,
             self.context,
             'create_router:external_gateway_info:external_fixed_ips',
+            self.alt_target)
+
+    def test_update_router_enable_default_route_bfd(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_router:enable_default_route_bfd',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_router:enable_default_route_bfd',
+            self.alt_target)
+
+    def test_update_router_enable_default_route_ecmp(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_router:enable_default_route_ecmp',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_router:enable_default_route_ecmp',
             self.alt_target)
 
     def test_get_router(self):

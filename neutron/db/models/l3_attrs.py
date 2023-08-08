@@ -40,6 +40,12 @@ class RouterExtraAttributes(model_base.BASEV2):
     ha_vr_id = sa.Column(sa.Integer())
     # Availability Zone support
     availability_zone_hints = sa.Column(sa.String(255))
+    enable_default_route_ecmp = sa.Column(sa.Boolean, default=False,
+                                          server_default=sa.sql.false(),
+                                          nullable=False)
+    enable_default_route_bfd = sa.Column(sa.Boolean, default=False,
+                                         server_default=sa.sql.false(),
+                                         nullable=False)
 
     router = orm.relationship(
         'Router', load_on_pending=True,

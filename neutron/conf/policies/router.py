@@ -127,6 +127,22 @@ rules = [
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
+    policy.DocumentedRuleDefault(
+        name='create_router:enable_default_route_bfd',
+        check_str=base.ADMIN,
+        scope_types=['project'],
+        description=('Specify ``enable_default_route_bfd`` attribute when'
+                     ' creating a router'),
+        operations=ACTION_POST,
+    ),
+    policy.DocumentedRuleDefault(
+        name='create_router:enable_default_route_ecmp',
+        check_str=base.ADMIN,
+        scope_types=['project'],
+        description=('Specify ``enable_default_route_ecmp`` attribute when'
+                     ' creating a router'),
+        operations=ACTION_POST,
+    ),
 
     policy.DocumentedRuleDefault(
         name='get_router',
@@ -251,6 +267,22 @@ rules = [
             check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_router:enable_default_route_bfd',
+        check_str=base.ADMIN,
+        scope_types=['project'],
+        description=('Specify ``enable_default_route_bfd`` attribute when '
+                     'updating a router'),
+        operations=ACTION_POST,
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_router:enable_default_route_ecmp',
+        check_str=base.ADMIN,
+        scope_types=['project'],
+        description=('Specify ``enable_default_route_ecmp`` attribute when '
+                     'updating a router'),
+        operations=ACTION_POST,
     ),
 
     policy.DocumentedRuleDefault(

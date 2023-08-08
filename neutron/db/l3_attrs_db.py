@@ -18,7 +18,11 @@ from neutron_lib.db import resource_extend
 from oslo_config import cfg
 
 from neutron._i18n import _
+from neutron.conf.db import l3_extra_gws_db
 from neutron.db.models import l3_attrs
+
+
+l3_extra_gws_db.register_db_l3_extragws_opts()
 
 
 def get_attr_info():
@@ -29,7 +33,11 @@ def get_attr_info():
             'availability_zone_hints': {
                 'default': '[]',
                 'transform_to_db': az_validator.convert_az_list_to_string,
-                'transform_from_db': az_validator.convert_az_string_to_list}
+                'transform_from_db': az_validator.convert_az_string_to_list},
+            'enable_default_route_ecmp': {
+                'default': cfg.CONF.enable_default_route_ecmp},
+            'enable_default_route_bfd': {
+                'default': cfg.CONF.enable_default_route_bfd},
             }
 
 

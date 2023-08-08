@@ -106,7 +106,7 @@ object_data = {
     'ResourceDelta': '1.0-a980b37e0a52618b5af8db29af18be76',
     'Route': '1.0-a9883a63b416126f9e345523ec09483b',
     'Router': '1.1-614fa16cc99c60e4fc19ac1b31a52291',
-    'RouterExtraAttributes': '1.0-ef8d61ae2864f0ec9af0ab7939cab318',
+    'RouterExtraAttributes': '1.1-19c45c32098d2aae8e1a22d18944a954',
     'RouterL3AgentBinding': '1.0-c5ba6c95e3a4c1236a55f490cd67da82',
     'RouterNDPProxyState': '1.0-4042e475bf173d1d8d17adb962eae1b2',
     'RouterPort': '1.0-c8c8f499bcdd59186fcd83f323106908',
