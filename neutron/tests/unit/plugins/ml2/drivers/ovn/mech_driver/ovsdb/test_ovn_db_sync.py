@@ -23,6 +23,7 @@ from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
 from neutron.services.ovn_l3 import plugin as ovn_plugin
+from neutron.tests.unit import fake_resources as fakes
 from neutron.tests.unit.plugins.ml2.drivers.ovn.mech_driver import \
     test_mech_driver
 
@@ -1105,6 +1106,47 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                                                        db_routes,
                                                        expected_added,
                                                        expected_deleted)
+
+
+class TestIsRouterPortChanged(test_mech_driver.OVNMechanismDriverTestCase):
+
+    def setUp(self):
+        super(TestIsRouterPortChanged, self).setUp()
+        self.ovn_nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
+            self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
+            'log', self.mech_driver)
+
+        self.db_router_port = {
+            'id': 'aa076509-915d-4b1c-8d9d-3db53d9c5faf',
+            'networks': ['fdf9:ad62:3a04::1/64'],
+            'ipv6_ra_configs': {'address_mode': 'slaac',
+                                'send_periodic': 'true',
+                                'mtu': '1442'}
+        }
+        self.lrport_nets = ['fdf9:ad62:3a04::1/64']
+        self.ovn_lrport = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'ipv6_ra_configs': {'address_mode': 'slaac',
+                                       'send_periodic': 'true',
+                                       'mtu': '1442'}})
+
+        self.ovn_nb_synchronizer.ovn_api.is_col_present.return_value = True
+        self.ovn_nb_synchronizer.ovn_api.get_lrouter_port.return_value = (
+            self.ovn_lrport)
+
+    def test__is_router_port_changed_not_changed(self):
+        self.assertFalse(self.ovn_nb_synchronizer._is_router_port_changed(
+            self.db_router_port, self.lrport_nets))
+
+    def test__is_router_port_changed_network_changed(self):
+        self.db_router_port['networks'] = ['172.24.4.26/24',
+                                           '2001:db8::206/64']
+        self.assertTrue(self.ovn_nb_synchronizer._is_router_port_changed(
+            self.db_router_port, self.lrport_nets))
+
+    def test__is_router_port_changed_ipv6_ra_configs_changed(self):
+        self.db_router_port['ipv6_ra_configs']['mtu'] = '1500'
+        self.assertTrue(self.ovn_nb_synchronizer._is_router_port_changed(
+            self.db_router_port, self.lrport_nets))
 
 
 class TestOvnSbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
