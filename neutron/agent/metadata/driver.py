@@ -278,7 +278,13 @@ class MetadataDriver(object):
         pm = cls._get_metadata_proxy_process_manager(uuid, conf,
                                                      ns_name=ns_name,
                                                      callback=callback)
-        pm.enable()
+        try:
+            pm.enable()
+        except exceptions.ProcessExecutionError as exec_err:
+            LOG.error("Encountered process execution error %(err)s while "
+                      "starting process in namespace %(ns)s",
+                      {"err": exec_err, "ns": ns_name})
+            return
         monitor.register(uuid, METADATA_SERVICE_NAME, pm)
         cls.monitors[router_id] = pm
 
