@@ -122,9 +122,9 @@ def upgrade():
     session = sa.orm.Session(bind=connection)
     for template_rule in default_template_rules:
         res = session.execute(
-            standardattr.insert({
+            sa.insert(standardattr).values({
                 'description': template_rule.pop('description'),
                 'resource_type': table_name})
         )
         template_rule['standard_attr_id'] = res.inserted_primary_key[0]
-        session.execute(sg_templates_table.insert(template_rule))
+        session.execute(sa.insert(sg_templates_table).values(template_rule))
