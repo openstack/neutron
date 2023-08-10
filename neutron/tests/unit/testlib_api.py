@@ -156,7 +156,7 @@ class OpportunisticSqlFixture(lib_fixtures.SqlFixture):
 
         key = (driver, None)
         if test.BUILD_SCHEMA:
-            if key not in test._schema_resources:
+            if test.FORCE_DB_MIGRATION or key not in test._schema_resources:
                 test._schema_resources[key] = provision.SchemaResource(
                     database_resource,
                     cls._generate_schema_w_migrations
@@ -209,6 +209,7 @@ class OpportunisticDBTestMixin(object):
     FIXTURE = OpportunisticSqlFixture
 
     BUILD_WITH_MIGRATIONS = False
+    FORCE_DB_MIGRATION = False
 
     def _setup_database_fixtures(self):
         self.useFixture(self.FIXTURE(self))

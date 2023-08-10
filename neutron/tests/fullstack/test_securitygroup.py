@@ -49,6 +49,12 @@ class OVSVersionChecker(object):
 
 class BaseSecurityGroupsSameNetworkTest(base.BaseFullStackTestCase):
 
+    # NOTE(slaweq): Those SG tests are run serially by same worker thus we need
+    # to run db migration script before each test because in some cases cleanup
+    # after one test may clean data from the db and next test run by same
+    # worker will have empty tables
+    FORCE_DB_MIGRATION = True
+
     def setUp(self):
         debug_iptables = self.firewall_driver.startswith("iptables")
         host_descriptions = [
