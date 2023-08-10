@@ -553,7 +553,14 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         # Made a simple RPC call to Neutron Server.
         while True:
             try:
-                self.state_rpc.has_alive_neutron_server(self.context)
+                alive = self.state_rpc.has_alive_neutron_server(self.context)
+                if not alive:
+                    LOG.warning(
+                        'neutron server cannot contact the database or the '
+                        'database is slow to respond. Check connectivity '
+                        'from neutron server to db. Retrying... ')
+                    time.sleep(self.conf.AGENT.report_interval)
+                    continue
             except oslo_messaging.MessagingTimeout as e:
                 LOG.warning('l2-agent cannot contact neutron server. '
                             'Check connectivity to neutron server. '

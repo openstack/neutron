@@ -382,3 +382,7 @@ class TestAgentExtRpcCallback(TestAgentsDbBase):
                 agent_objs[0].heartbeat_timestamp - datetime.timedelta(
                     hours=1))
             agent_objs[0].update()
+
+    def test_has_alive_neutron_server(self):
+        alive = self.callback.has_alive_neutron_server(self.context)
+        self.assertTrue(alive)

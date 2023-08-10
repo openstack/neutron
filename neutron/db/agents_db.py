@@ -33,6 +33,7 @@ from neutron_lib.exceptions import agent as agent_exc
 from neutron_lib.exceptions import availability_zone as az_exc
 from neutron_lib.plugins import directory
 from oslo_config import cfg
+from oslo_db import exception as db_exc
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_serialization import jsonutils
@@ -472,9 +473,10 @@ class AgentExtRpcCallback(object):
         1.0 - Initial version.
         1.1 - report_state now returns agent state.
         1.2 - add method has_alive_neutron_server.
+        1.3 - has_alive_neutron_server tests db connection.
     """
 
-    target = oslo_messaging.Target(version='1.2',
+    target = oslo_messaging.Target(version='1.3',
                                    namespace=constants.RPC_NAMESPACE_STATE)
     START_TIME = timeutils.utcnow()
 
@@ -488,8 +490,23 @@ class AgentExtRpcCallback(object):
         # Initialize RPC api directed to other neutron-servers
         self.server_versions_rpc = resources_rpc.ResourcesPushToServersRpcApi()
 
+    @db_api.CONTEXT_READER
     def has_alive_neutron_server(self, context, **kwargs):
-        return True
+        """Give basic server status to agents.
+
+        Method for agents to check basic server status. In version 1.2 returned
+        always True so MQ connectivity could be checked. From version 1.3
+        return True or False according to a DB connection liveness check, so
+        both MQ and DB connectivity can be checked from the agent.
+        """
+        try:
+            context.session.execute('SELECT 1;')
+            return True
+        except db_exc.DBConnectionError:
+            return False
+        except Exception:
+            LOG.exception('Unexpected exception')
+            return False
 
     @db_api.retry_if_session_inactive()
     def report_state(self, context, **kwargs):

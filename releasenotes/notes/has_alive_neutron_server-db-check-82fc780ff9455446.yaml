@@ -1,0 +1,7 @@
+---
+other:
+  - |
+    PluginReportStateAPI has a new version (1.3) in which
+    has_alive_neutron_server() no longer returns always True, but performs
+    a DB connection check and returns True/False accordingly. Using this, an
+    agent can check not just MQ but the server's DB connectivity too.

@@ -3008,6 +3008,20 @@ class TestOvsNeutronAgent(object):
                 {"invalid": "thread"}),
         )
 
+    def test_setup_rpc_waits_for_alive_neutron_server(self):
+        with mock.patch(
+                'neutron.plugins.ml2.drivers.openvswitch.agent.'
+                'ovs_neutron_agent.OVSPluginApi'),\
+            mock.patch(
+                'neutron.agent.rpc.PluginReportStateAPI.'
+                'has_alive_neutron_server') as mock_has_alive:
+            mock_has_alive.side_effect = [
+                oslo_messaging.MessagingTimeout,
+                False,
+                True
+            ]
+            self.agent.setup_rpc()
+
 
 class TestOvsNeutronAgentOSKen(TestOvsNeutronAgent,
                                ovs_test_base.OVSOSKenTestBase):
