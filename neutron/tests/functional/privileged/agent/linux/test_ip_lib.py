@@ -239,18 +239,33 @@ class GetDevicesInfoTestCase(functional_base.BaseSudoTestCase):
         self.assertEqual(veth1_2['index'], veth1_1_link)
 
 
-class ListIpRulesTestCase(functional_base.BaseSudoTestCase):
-
-    RULE_TABLES = {'default': 253, 'main': 254, 'local': 255}
+class BaseIpRuleTestCase(functional_base.BaseSudoTestCase):
 
     def setUp(self):
-        super(ListIpRulesTestCase, self).setUp()
+        super().setUp()
         self.namespace = 'ns_test-' + uuidutils.generate_uuid()
         self.ns = priv_ip_lib.create_netns(self.namespace)
         self.addCleanup(self._remove_ns)
 
     def _remove_ns(self):
         priv_ip_lib.remove_netns(self.namespace)
+
+    def _check_rules(self, rules, parameters, values, exception_string=None,
+                     raise_exception=True):
+        for rule in rules:
+            if all(rule.get(parameter) == value
+                   for parameter, value in zip(parameters, values)):
+                return True
+        else:
+            if raise_exception:
+                self.fail('Rule with %s was expected' % exception_string)
+            else:
+                return False
+
+
+class ListIpRulesTestCase(BaseIpRuleTestCase):
+
+    RULE_TABLES = {'default': 253, 'main': 254, 'local': 255}
 
     def test_list_default_rules_ipv4(self):
         rules_ipv4 = priv_ip_lib.list_ip_rules(self.namespace, 4)
@@ -291,28 +306,7 @@ class ListIpRulesTestCase(functional_base.BaseSudoTestCase):
             self.fail('Rule added (2001:db8::1/64, table 20) not found')
 
 
-class RuleTestCase(functional_base.BaseSudoTestCase):
-
-    def setUp(self):
-        super(RuleTestCase, self).setUp()
-        self.namespace = 'ns_test-' + uuidutils.generate_uuid()
-        self.ns = priv_ip_lib.create_netns(self.namespace)
-        self.addCleanup(self._remove_ns)
-
-    def _remove_ns(self):
-        priv_ip_lib.remove_netns(self.namespace)
-
-    def _check_rules(self, rules, parameters, values, exception_string=None,
-                     raise_exception=True):
-        for rule in rules:
-            if all(rule.get(parameter) == value
-                   for parameter, value in zip(parameters, values)):
-                return True
-        else:
-            if raise_exception:
-                self.fail('Rule with %s was expected' % exception_string)
-            else:
-                return False
+class AddIpRulesTestCase(BaseIpRuleTestCase):
 
     def test_add_rule_ip(self):
         ip_addresses = ['192.168.200.250', '2001::250']
@@ -437,6 +431,23 @@ class RuleTestCase(functional_base.BaseSudoTestCase):
         rules = ip_lib.list_ip_rules(self.namespace, 4)
         self._check_rules(rules, ['iif'], [iif], 'iif name %s' % iif)
         self.assertEqual(4, len(rules))
+
+
+class DeleteIpRulesTestCase(BaseIpRuleTestCase):
+
+    def test_delete_rule_no_entry(self):
+        iif = 'iif_device'
+        priv_ip_lib.create_interface(iif, self.namespace, 'dummy')
+
+        try:
+            # This should not raise for a non-existent entry
+            priv_ip_lib.delete_ip_rule(self.namespace, iifname=iif)
+        except Exception:
+            self.fail('Delete IP rule threw unexpected exception')
+
+        rules = ip_lib.list_ip_rules(self.namespace, 4)
+        # There are always 3 rules by default
+        self.assertEqual(3, len(rules))
 
 
 class GetIpAddressesTestCase(functional_base.BaseSudoTestCase):
@@ -664,6 +675,21 @@ class RouteTestCase(functional_base.BaseSudoTestCase):
         priv_ip_lib.add_ip_route(self.namespace, '192.168.0.0/24',
                                  n_cons.IP_VERSION_4, via=multipath)
         self._check_routes(['192.168.0.0/24'], gateway=multipath)
+
+    def test_delete_route_no_entry(self):
+        cidr = '192.168.0.0/24'
+        self.device.addr.add('10.1.0.1/24')
+        try:
+            # This should not raise for a non-existent entry
+            priv_ip_lib.delete_ip_route(self.namespace, cidr,
+                                        n_cons.IP_VERSION_4,
+                                        device=self.device_name)
+        except Exception:
+            self.fail('Delete IP route threw unexpected exception')
+
+        routes = ip_lib.list_ip_routes(self.namespace, n_cons.IP_VERSION_4)
+        # There will be a single interface route since we added an IP
+        self.assertEqual(1, len(routes))
 
 
 class GetLinkAttributesTestCase(functional_base.BaseSudoTestCase):
