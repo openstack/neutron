@@ -159,6 +159,17 @@ class IpLibTestCase(base.BaseTestCase):
                 priv_lib._run_iproute_neigh,
                 "test_cmd", "eth0", None, test_param="test_value")
 
+    def test_run_iproute_neigh_no_entry(self):
+        with mock.patch.object(iproute, "IPRoute") as iproute_mock:
+            iproute_mock.side_effect = netlink_exceptions.NetlinkError(
+                code=errno.ENOENT)
+            try:
+                priv_lib._run_iproute_neigh(
+                    "test_cmd", "eth0", None, test_param="test_value")
+                self.fail("NetlinkError exception not raised")
+            except netlink_exceptions.NetlinkError as e:
+                self.assertEqual(errno.ENOENT, e.code)
+
     def test_run_iproute_neigh_error(self):
         with mock.patch.object(iproute, "IPRoute") as iproute_mock:
             iproute_mock.side_effect = OSError(
