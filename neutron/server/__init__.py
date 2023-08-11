@@ -53,6 +53,7 @@ def _init_configuration():
     conf_files = _get_config_files()
     config.register_common_config_options()
     config.init(sys.argv[1:], default_config_files=conf_files)
+    config.setup_logging()
     config.set_config_defaults()
     if not cfg.CONF.config_file:
         sys.exit(_("ERROR: Unable to find configuration file via the default"

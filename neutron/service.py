@@ -75,8 +75,6 @@ class NeutronApiService(WsgiService):
 
     @classmethod
     def create(cls, app_name='neutron'):
-        # Setup logging early
-        config.setup_logging()
         service = cls(app_name)
         return service
 
