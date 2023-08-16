@@ -39,6 +39,7 @@ import oslo_messaging
 from oslo_serialization import jsonutils
 from oslo_utils import importutils
 from oslo_utils import timeutils
+from sqlalchemy.sql import expression
 
 from neutron.agent.common import utils
 from neutron.api.rpc.callbacks import version_manager
@@ -500,7 +501,7 @@ class AgentExtRpcCallback(object):
         both MQ and DB connectivity can be checked from the agent.
         """
         try:
-            context.session.execute('SELECT 1;')
+            context.session.scalar(expression.select(1))
             return True
         except db_exc.DBConnectionError:
             return False
