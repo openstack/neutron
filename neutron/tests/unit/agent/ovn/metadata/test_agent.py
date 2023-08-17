@@ -83,7 +83,8 @@ class TestMetadataAgent(base.BaseTestCase):
 
         self.ports = []
         for i in range(0, 3):
-            self.ports.append(makePort(datapath=DatapathInfo(uuid=str(i),
+            self.ports.append(makePort(
+                datapath=DatapathInfo(uuid=str(uuid.uuid4()),
                 external_ids={'name': 'neutron-%d' % i})))
         self.agent.sb_idl.get_ports_on_chassis.return_value = self.ports
 
