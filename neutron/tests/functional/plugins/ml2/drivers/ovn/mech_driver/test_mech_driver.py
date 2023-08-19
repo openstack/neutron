@@ -43,6 +43,8 @@ OVS_VIF_DETAILS = {
     portbindings.CAP_PORT_FILTER: True,
     portbindings.VIF_DETAILS_CONNECTIVITY: portbindings.CONNECTIVITY_L2,
     portbindings.VIF_DETAILS_BOUND_DRIVERS: {'0': 'ovn'},
+    portbindings.VIF_DETAILS_BRIDGE_NAME: 'br-int',
+    portbindings.OVS_DATAPATH_TYPE: 'system',
 }
 VHOSTUSER_VIF_DETAILS = {
     portbindings.CAP_PORT_FILTER: False,
@@ -50,34 +52,39 @@ VHOSTUSER_VIF_DETAILS = {
     'vhostuser_ovs_plug': True,
     portbindings.VIF_DETAILS_CONNECTIVITY: portbindings.CONNECTIVITY_L2,
     portbindings.VIF_DETAILS_BOUND_DRIVERS: {'0': 'ovn'},
+    portbindings.VIF_DETAILS_BRIDGE_NAME: 'br-int',
+    portbindings.OVS_DATAPATH_TYPE: 'netdev',
 }
 
 
 class TestPortBinding(base.TestOVNFunctionalBase):
 
-    def setUp(self):
-        super(TestPortBinding, self).setUp()
+    def setUp(self, **kwargs):
+        super().setUp(**kwargs)
         self.ovs_host = 'ovs-host'
         self.dpdk_host = 'dpdk-host'
         self.invalid_dpdk_host = 'invalid-host'
         self.insecure_host = 'insecure-host'
         self.smartnic_dpu_host = 'smartnic-dpu-host'
         self.smartnic_dpu_serial = 'fake-smartnic-dpu-serial'
-        self.add_fake_chassis(self.ovs_host)
+        self.add_fake_chassis(
+            self.ovs_host,
+            other_config={ovn_const.OVN_DATAPATH_TYPE: 'system'})
         self.add_fake_chassis(
             self.dpdk_host,
-            other_config={'datapath-type': 'netdev',
+            other_config={ovn_const.OVN_DATAPATH_TYPE: 'netdev',
                           'iface-types': 'dummy,dummy-internal,dpdkvhostuser'})
 
         self.add_fake_chassis(
             self.invalid_dpdk_host,
-            other_config={'datapath-type': 'netdev',
+            other_config={ovn_const.OVN_DATAPATH_TYPE: 'netdev',
                           'iface-types': 'dummy,dummy-internal,geneve,vxlan'})
         self.add_fake_chassis(
             self.smartnic_dpu_host,
             other_config={ovn_const.OVN_CMS_OPTIONS: '{}={}'.format(
                 ovn_const.CMS_OPT_CARD_SERIAL_NUMBER,
-                self.smartnic_dpu_serial)})
+                self.smartnic_dpu_serial),
+                ovn_const.OVN_DATAPATH_TYPE: 'system'})
         self.n1 = self._make_network(self.fmt, 'n1', True)
         res = self._create_subnet(self.fmt, self.n1['network']['id'],
                                   '10.0.0.0/24')
@@ -152,9 +159,13 @@ class TestPortBinding(base.TestOVNFunctionalBase):
         self._verify_vif_details(port_id, self.dpdk_host, 'vhostuser',
                                  expected_vif_details)
 
+        expected_vif_details = copy.deepcopy(VHOSTUSER_VIF_DETAILS)
+        expected_vif_details.pop('vhostuser_mode')
+        expected_vif_details.pop('vhostuser_ovs_plug')
+        expected_vif_details[portbindings.CAP_PORT_FILTER] = True
         port_id = self._create_or_update_port(hostname=self.invalid_dpdk_host)
         self._verify_vif_details(port_id, self.invalid_dpdk_host, 'ovs',
-                                 OVS_VIF_DETAILS)
+                                 expected_vif_details)
 
     def test_port_binding_create_remote_managed_port(self):
         pci_vendor_info = 'fake-pci-vendor-info'
@@ -206,8 +217,12 @@ class TestPortBinding(base.TestOVNFunctionalBase):
 
         port_id = self._create_or_update_port(port_id=port_id,
                                               hostname=self.invalid_dpdk_host)
+        expected_vif_details = copy.deepcopy(VHOSTUSER_VIF_DETAILS)
+        expected_vif_details.pop('vhostuser_mode')
+        expected_vif_details.pop('vhostuser_ovs_plug')
+        expected_vif_details[portbindings.CAP_PORT_FILTER] = True
         self._verify_vif_details(port_id, self.invalid_dpdk_host, 'ovs',
-                                 OVS_VIF_DETAILS)
+                                 expected_vif_details)
 
     def test_port_binding_update_remote_managed_port(self):
         port_id = self._create_or_update_port(
