@@ -309,6 +309,25 @@ class MetadataAgent(object):
         LOG.debug("Loaded chassis name %s (UUID: %s) and ovn bridge %s.",
                   self.chassis, self.chassis_id, self.ovn_bridge)
 
+    def _update_chassis_config(self):
+        """Update the Chassis register information
+
+        This method should be called once the Metadata Agent has been
+        registered (method ``register_metadata_agent`` has been called) and
+        the corresponding Chasis or Chassis_Private register has been
+        created/updated. The Chassis table is used in an event when OVN does
+        not have the Chassis_Private.
+        """
+        external_ids = {ovn_const.OVN_AGENT_OVN_BRIDGE: self.ovn_bridge}
+        if self.has_chassis_private:
+            self.sb_idl.db_set(
+                'Chassis_Private', self.chassis,
+                ('external_ids', external_ids)).execute(check_error=True)
+        else:
+            self.sb_idl.db_set(
+                'Chassis', self.chassis,
+                ('external_ids', external_ids)).execute(check_error=True)
+
     @_sync_lock
     def resync(self):
         """Resync the agent.
@@ -316,6 +335,7 @@ class MetadataAgent(object):
         Reload the configuration and sync the agent again.
         """
         self._load_config()
+        self._update_chassis_config()
         self.sync()
 
     def start(self):
@@ -361,6 +381,7 @@ class MetadataAgent(object):
 
         # Register the agent with its corresponding Chassis
         self.register_metadata_agent()
+        self._update_chassis_config()
 
         self._proxy.wait()
 

@@ -11,7 +11,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-
+import copy
 from unittest import mock
 
 from neutron_lib.api.definitions import portbindings as pb
@@ -21,6 +21,7 @@ from neutron_lib.db import api as db_api
 from neutron_lib import exceptions
 from oslo_utils import uuidutils
 
+from neutron.common import _constants as n_const
 from neutron.db.models.plugins.ml2 import geneveallocation
 from neutron.db.models.plugins.ml2 import vxlanallocation
 from neutron.objects import ports as port_obj
@@ -46,11 +47,12 @@ class TestMigrateNeutronDatabaseToOvn(
 
         for vif_details in vif_details_list:
             port = self._make_port(self.fmt, network_id)['port']
-            port_o = port_obj.PortBinding.get_object(
-                ctx, port_id=port['id'], host='')
-            port_o.vif_type = 'ovs'
-            port_o.vif_details = vif_details
-            port_o.update()
+            with db_api.CONTEXT_WRITER.using(ctx):
+                port_o = port_obj.PortBinding.get_object(
+                    ctx, port_id=port['id'], host='')
+                port_o.vif_type = 'ovs'
+                port_o.vif_details = vif_details
+                port_o.update()
 
         for i in range(1, 4):
             port = self._make_port(self.fmt, network_id)['port']
@@ -150,14 +152,10 @@ class TestMigrateNeutronDatabaseToOvn(
             {"foo": "bar"},
             {},
         ]
-        expected_vif_details = [
-            {pb.CAP_PORT_FILTER: "true",
-             pb.OVS_HYBRID_PLUG: "true",
-             pb.VIF_DETAILS_CONNECTIVITY: pb.CONNECTIVITY_L2},
-            {pb.CAP_PORT_FILTER: "true"},
-            {"foo": "bar"},
-            {},
-        ]
+        expected_vif_details = copy.deepcopy(vif_details_list)
+        for vif_detail in expected_vif_details:
+            vif_detail[pb.VIF_DETAILS_BRIDGE_NAME] = n_const.DEFAULT_BR_INT
+        expected_vif_details.append({})
 
         self._create_ml2_ovs_test_resources(vif_details_list)
         db_migration.migrate_neutron_database_to_ovn()
