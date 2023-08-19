@@ -114,6 +114,11 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
         with mock.patch.object(metadata_server.UnixDomainMetadataProxy,
                                'wait'):
             agt.start()
+            external_ids = agt.sb_idl.db_get(
+                'Chassis_Private', agt.chassis, 'external_ids').execute(
+                check_error=True)
+            self.assertEqual(external_ids[ovn_const.OVN_AGENT_OVN_BRIDGE],
+                             self.OVN_BRIDGE)
 
         # Metadata agent will open connections to OVS and SB databases.
         # Close connections to them when the test ends,

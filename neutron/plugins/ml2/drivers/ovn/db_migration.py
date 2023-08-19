@@ -11,6 +11,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+import copy
 
 from neutron_lib.api.definitions import portbindings as pb_api
 from neutron_lib import constants
@@ -21,6 +22,7 @@ from oslo_db import exception as db_exc
 from oslo_log import log as logging
 from sqlalchemy.orm import exc as sqla_exc
 
+from neutron.common import _constants as n_const
 from neutron.db.models.plugins.ml2 import geneveallocation
 from neutron.db.models.plugins.ml2 import vxlanallocation
 from neutron.objects import network as network_obj
@@ -29,10 +31,6 @@ from neutron.objects import trunk as trunk_obj
 
 
 LOG = logging.getLogger(__name__)
-
-VIF_DETAILS_TO_REMOVE = (
-    pb_api.VIF_DETAILS_BRIDGE_NAME,
-)
 
 
 def migrate_neutron_database_to_ovn():
@@ -75,18 +73,22 @@ def migrate_neutron_database_to_ovn():
                 with db_api.CONTEXT_WRITER.using(ctx):
                     pb = port_obj.PortBinding.get_object(ctx, port_id=port_id,
                                                          host=host)
-                    if not pb or not pb.vif_details:
+                    if not pb:
                         continue
 
-                    vif_details = pb.vif_details.copy()
-                    for detail in VIF_DETAILS_TO_REMOVE:
-                        try:
-                            del vif_details[detail]
-                        except KeyError:
-                            pass
-                    if vif_details == pb.vif_details:
+                    # Update the OVS bridge name in the VIF details: now all
+                    # port are directly connected to the integration bridge.
+                    # Because the name of each host integration bridge is not
+                    # know by the Neutron API at this point, the default value
+                    # "br-int" will be used.
+                    # The OVS datapath type is unchanged.
+                    vif_details = copy.deepcopy(pb.vif_details) or {}
+                    if (vif_details.get(pb_api.VIF_DETAILS_BRIDGE_NAME) ==
+                            n_const.DEFAULT_BR_INT):
                         continue
 
+                    vif_details[pb_api.VIF_DETAILS_BRIDGE_NAME] = (
+                        n_const.DEFAULT_BR_INT)
                     pb.vif_details = vif_details
                     pb.update()
             except (exceptions.ObjectNotFound,

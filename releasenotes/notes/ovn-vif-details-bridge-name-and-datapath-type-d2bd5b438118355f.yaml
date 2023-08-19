@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    [`bug 2045889 <https://bugs.launchpad.net/neutron/+bug/2045889>`_]
+    The ports bound to ML2/OVN now contain the OVS bridge name and datapath
+    type in the VIF details dictionary. NOTE: in the ML2/OVS to ML2/OVN
+    migration, the local host OVN bridge (integration bridge) per port is not
+    known; "br-int" will be used by default (that value is rarely changed).
