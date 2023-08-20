@@ -906,7 +906,9 @@ class TestMaintenance(_TestMaintenanceHelper):
                 pf_def.INTERNAL_IP_ADDRESS: p1_ip}
             pf_obj = self.pf_plugin.create_floatingip_port_forwarding(
                 self.context, fip_id, **fip_attrs(fip_pf_args))
-            m_publish.assert_called_once()
+            call = mock.call('port_forwarding', 'after_create', self.pf_plugin,
+                             payload=mock.ANY)
+            m_publish.assert_has_calls([call])
 
             # Assert load balancer for port forwarding was not created
             self.assertFalse(self._find_pf_lb(router_id, fip_id))
@@ -924,7 +926,9 @@ class TestMaintenance(_TestMaintenanceHelper):
             m_publish.reset_mock()
             self.pf_plugin.update_floatingip_port_forwarding(
                 self.context, pf_obj['id'], fip_id, **fip_attrs(fip_pf_args))
-            m_publish.assert_called_once()
+            call = mock.call('port_forwarding', 'after_update', self.pf_plugin,
+                             payload=mock.ANY)
+            m_publish.assert_has_calls([call])
 
             # Assert load balancer for port forwarding is stale
             _verify_lb(self, 'tcp', 2222, 22)
