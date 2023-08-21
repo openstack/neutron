@@ -603,6 +603,11 @@ def ovn_metadata_name(id_):
     return 'metadata-%s' % id_
 
 
+def is_ovn_metadata_port(port):
+    return (port['device_owner'] == const.DEVICE_OWNER_DISTRIBUTED and
+            port['device_id'].startswith('ovnmeta'))
+
+
 def is_gateway_chassis_invalid(chassis_name, gw_chassis,
                                physnet, chassis_physnets,
                                az_hints, chassis_with_azs):

@@ -364,7 +364,7 @@ class OVNClient(object):
                                              subnet['cidr'].split('/')[1])
 
             # Metadata port.
-            if port['device_owner'] == const.DEVICE_OWNER_DISTRIBUTED:
+            if utils.is_ovn_metadata_port(port):
                 port_type = ovn_const.LSP_TYPE_LOCALPORT
 
             if utils.is_port_external(port):
@@ -632,7 +632,7 @@ class OVNClient(object):
             dhcpv4_options, dhcpv6_options = self.update_port_dhcp_options(
                 port_info, txn=txn)
 
-            if self.is_metadata_port(port):
+            if utils.is_ovn_metadata_port(port):
                 context = n_context.get_admin_context()
                 network = self._plugin.get_network(context, port['network_id'])
                 subnet_ids = [
@@ -2359,10 +2359,6 @@ class OVNClient(object):
         self._process_security_group_rule(rule, is_add_acl=False)
         db_rev.delete_revision(
             context, rule['id'], ovn_const.TYPE_SECURITY_GROUP_RULES)
-
-    @staticmethod
-    def is_metadata_port(port):
-        return port['device_owner'] == const.DEVICE_OWNER_DISTRIBUTED
 
     def _find_metadata_port(self, context, network_id):
         if not ovn_conf.is_ovn_metadata_enabled():
