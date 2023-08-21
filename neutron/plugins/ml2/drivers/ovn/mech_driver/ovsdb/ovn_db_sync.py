@@ -1054,7 +1054,8 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                                                 'lswitch': lswitch['name']})
                 db_network = db_networks[lswitch['name']]
                 db_segments = self.segments_plugin.get_segments(
-                    ctx, filters={'network_id': [db_network['id']]})
+                    ctx, filters={'network_id': [db_network['id']],
+                                  'is_dynamic': False})
                 segments_provnet_port_names = []
                 for db_segment in db_segments:
                     physnet = db_segment.get(segment_def.PHYSICAL_NETWORK)
