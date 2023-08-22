@@ -29,10 +29,7 @@
         - openstack-tox-py310: # from openstack-python3-jobs template
             timeout: 3600
             irrelevant-files:  *irrelevant-files
-        # NOTE(ralonsoh): to be updated when "openstack-tox-py311" is defined
-        # and added to "openstack-python3-jobs" template.
-        - tox-py311:
-            voting: false
+        - openstack-tox-py311: # from openstack-python3-jobs template
             timeout: 3600
             irrelevant-files:  *irrelevant-files
         - openstack-tox-cover:  # from openstack-cover-jobs template
@@ -47,6 +44,9 @@
             timeout: 4800
             irrelevant-files:  *irrelevant-files
         - openstack-tox-py310-arm64: # from openstack-python3-jobs-arm64 template
+            timeout: 4800
+            irrelevant-files:  *irrelevant-files
+        - openstack-tox-py311-arm64: # from openstack-python3-jobs-arm64 template
             timeout: 4800
             irrelevant-files:  *irrelevant-files
     gate:
@@ -89,11 +89,6 @@
     name: neutron-periodic-jobs
     periodic:
       jobs: &neutron-periodic-jobs
-        # NOTE(ralonsoh): to be removed when "openstack-tox-py311" is defined
-        # and added to "openstack-python3-jobs" template.
-        - tox-py311:
-            timeout: 3600
-            irrelevant-files:  *irrelevant-files
         - neutron-functional
         - neutron-functional-with-uwsgi-fips
         - neutron-functional-with-pyroute2-master
