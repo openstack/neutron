@@ -42,6 +42,7 @@ from oslo_utils import timeutils
 from ovsdbapp.backend.ovs_idl import idlutils
 import tenacity
 
+from neutron._i18n import _
 from neutron.common.ovn import acl as ovn_acl
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
@@ -49,6 +50,7 @@ from neutron.common import utils as common_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.db import segments_db
+from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions \
     import placement as placement_extension
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions \
@@ -272,6 +274,29 @@ class OVNClient(object):
                     ovn_const.VIF_DETAILS_CARD_SERIAL_NUMBER]).hostname
         return ''
 
+    @tenacity.retry(retry=tenacity.retry_if_exception_type(RuntimeError),
+                    wait=tenacity.wait_random(min=2, max=3),
+                    stop=tenacity.stop_after_attempt(3),
+                    reraise=True)
+    def _wait_for_port_bindings_host(self, context, port_id):
+        db_port = ml2_db.get_port(context, port_id)
+        # This is already checked previously but, just to stay on
+        # the safe side in case the port is deleted mid-operation
+        if not db_port:
+            raise RuntimeError(
+                _('No port found with ID %s') % port_id)
+
+        if not db_port.port_bindings:
+            raise RuntimeError(
+                _('No port bindings information found for  '
+                  'port %s') % port_id)
+
+        if not db_port.port_bindings[0].host:
+            raise RuntimeError(
+                _('No hosting information found for port %s') % port_id)
+
+        return db_port
+
     def update_lsp_host_info(self, context, db_port, up=True):
         """Update the binding hosting information for the LSP.
 
@@ -287,8 +312,19 @@ class OVNClient(object):
         if up:
             if not db_port.port_bindings:
                 return
-            host = db_port.port_bindings[0].host
 
+            if not db_port.port_bindings[0].host:
+                # NOTE(lucasgomes): There might be a sync issue between
+                # the moment that this port was fetched from the database
+                # and the hosting information being set, retry a few times
+                try:
+                    db_port = self._wait_for_port_bindings_host(
+                        context, db_port.id)
+                except RuntimeError as e:
+                    LOG.warning(e)
+                    return
+
+            host = db_port.port_bindings[0].host
             ext_ids = ('external_ids',
                        {ovn_const.OVN_HOST_ID_EXT_ID_KEY: host})
             cmd.append(
