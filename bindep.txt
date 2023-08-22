@@ -13,12 +13,13 @@ libffi-devel [platform:rpm]
 # MySQL and PostgreSQL databases since some jobs are set up in
 # OpenStack infra that need these like
 # periodic-neutron-py35-with-neutron-lib-master.
-libmysqlclient-dev [platform:dpkg test]
+libmariadb-dev-compat [platform:debian]
+libmysqlclient-dev [platform:ubuntu]
 mariadb [platform:rpm test]
 mariadb-devel [platform:rpm test]
-mariadb-server [platform:rpm test]
-mysql-client [platform:dpkg test]
-mysql-server [platform:dpkg test]
+mariadb-server [platform:rpm platform:redhat platform:debian test]
+mysql-client [platform:dpkg !platform:debian test]
+mysql-server [platform:dpkg !platform:debian test]
 postgresql [test]
 postgresql-client [platform:dpkg test]
 postgresql-devel [platform:rpm test]
