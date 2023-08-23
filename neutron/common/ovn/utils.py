@@ -1059,10 +1059,13 @@ def determine_bind_host(sb_idl, port, port_context=None):
 
 
 def validate_port_binding_and_virtual_port(
-        port_context, nb_idl, sb_idl, ml2_plugin, port):
+        port_context, nb_idl, ml2_plugin, port, original_port):
     """If the port is type=virtual and it is bound, raise BadRequest"""
-    if not determine_bind_host(sb_idl, port, port_context=port_context):
-        # The port is not bound, exit.
+    # If the port receives an update of the device ID and the binding profile
+    # host ID fields, at the same time, this is because Nova is trying to bind
+    # the port to a VM (device ID) in a host (host ID).
+    if not (port['device_id'] != original_port['device_id'] and
+            port[portbindings.HOST_ID] != original_port[portbindings.HOST_ID]):
         return
 
     fixed_ips = port.get('fixed_ips', [])

@@ -6,4 +6,5 @@ other:
     first one is considered a virtual port. If the second port (non-virtual)
     is bound to ML2/OVN, the virtual port cannot be bound to a virtual
     machine; a virtual port is created only to reserve a set of IP addresses
-    to be used by other ports.
+    to be used by other ports. The OVN mechanism driver prevents that a virtual
+    port has a device ID; a device ID is provided when the port is being bound.
