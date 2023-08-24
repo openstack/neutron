@@ -1787,10 +1787,12 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                       chassis_physnets=chassis_mappings,
                       cms=chassis, availability_zone_hints=[])] * 3)
         self.mock_schedule.assert_has_calls([
-            mock.call(self.nb_idl(), 'lrp-foo-1', [],
-                      ['chassis1', 'chassis2']),
-            mock.call(self.nb_idl(), 'lrp-foo-2', [], ['chassis2']),
-            mock.call(self.nb_idl(), 'lrp-foo-3', [], [])])
+            mock.call(self.nb_idl(), self.sb_idl(),
+                      'lrp-foo-1', [], ['chassis1', 'chassis2']),
+            mock.call(self.nb_idl(), self.sb_idl(),
+                      'lrp-foo-2', [], ['chassis2']),
+            mock.call(self.nb_idl(), self.sb_idl(),
+                      'lrp-foo-3', [], [])])
         # make sure that for second port primary chassis stays untouched
         self.nb_idl().update_lrouter_port.assert_has_calls([
             mock.call('lrp-foo-1',
@@ -1873,13 +1875,13 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                       chassis_physnets=chassis_mappings,
                       cms=chassis, availability_zone_hints=[])] * 3)
         self.mock_schedule.assert_has_calls([
-            mock.call(self.nb_idl(), 'lrp-foo-1',
+            mock.call(self.nb_idl(), self.sb_idl(), 'lrp-foo-1',
                       ['chassis1', 'chassis3', 'chassis4'],
                       ['chassis1']),
-            mock.call(self.nb_idl(), 'lrp-foo-2',
+            mock.call(self.nb_idl(), self.sb_idl(), 'lrp-foo-2',
                       ['chassis1', 'chassis3', 'chassis4'],
                       ['chassis4']),
-            mock.call(self.nb_idl(), 'lrp-foo-3',
+            mock.call(self.nb_idl(), self.sb_idl(), 'lrp-foo-3',
                       ['chassis1', 'chassis3', 'chassis4'],
                       ['chassis4', 'chassis3', 'chassis1'])])
         # make sure that the primary chassis stays untouched
