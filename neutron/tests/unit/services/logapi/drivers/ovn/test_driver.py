@@ -21,6 +21,7 @@ from neutron.common import utils as neutron_utils
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
+from neutron.objects import securitygroup as sg_obj
 from neutron.services.logapi.drivers.ovn import driver as ovn_driver
 from neutron.tests import base
 from neutron.tests.unit import fake_resources
@@ -88,6 +89,15 @@ class TestOVNDriverBase(base.BaseTestCase):
             'uuid': 'test_band',
             'rate': self.fake_cfg_network_log.rate_limit,
             'burst_size': self.fake_cfg_network_log.burst_limit,
+        }
+        meter_band_obj_dict = {**meter_band_defaults_dict, **kwargs}
+        return mock.Mock(**meter_band_obj_dict)
+
+    def _fake_meter_band_stateless(self, **kwargs):
+        meter_band_defaults_dict = {
+            'uuid': 'tb_stateless',
+            'rate': int(self.fake_cfg_network_log.rate_limit / 2),
+            'burst_size': int(self.fake_cfg_network_log.burst_limit / 2),
         }
         meter_band_obj_dict = {**meter_band_defaults_dict, **kwargs}
         return mock.Mock(**meter_band_obj_dict)
@@ -287,7 +297,8 @@ class TestOVNDriver(TestOVNDriverBase):
                          self._nb_ovn.db_set.call_count)
 
     @mock.patch.object(ovn_driver.LOG, 'info')
-    def test__set_acls_log(self, m_info):
+    @mock.patch.object(sg_obj.SecurityGroup, 'get_sg_by_id')
+    def test__set_acls_log(self, get_sg, m_info):
         pg_dict = self._fake_pg_dict(acls=['acl1', 'acl2', 'acl3', 'acl4'])
         log_name = 'test_obj_name'
         used_name = 'test_used_name'
@@ -297,10 +308,14 @@ class TestOVNDriver(TestOVNDriverBase):
                 return self._fake_acl()
             return self._fake_acl(name=used_name)
 
+        sg = fake_resources.FakeSecurityGroup.create_one_security_group(
+            attrs={'stateful': True})
+        get_sg.return_value = sg
         self._nb_ovn.lookup.side_effect = _mock_lookup
         actions_enabled = self._log_driver._acl_actions_enabled(
             self._fake_log_obj(event=log_const.ALL_EVENT))
-        self._log_driver._set_acls_log([pg_dict], self._nb_ovn.transaction,
+        self._log_driver._set_acls_log([pg_dict], self.context,
+                                       self._nb_ovn.transaction,
                                        actions_enabled, log_name)
         info_args, _info_kwargs = m_info.call_args_list[0]
         self.assertIn('Set %d (out of %d visited) ACLs for network log %s',
