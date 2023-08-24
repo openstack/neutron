@@ -1026,10 +1026,9 @@ class TestLogMaintenance(_TestMaintenanceHelper,
         # Check a meter and fair meter exist
         self.assertTrue(self.nb_api._tables['Meter'].rows)
         self.assertTrue(self.nb_api._tables['Meter_Band'].rows)
-        self.assertEqual(cfg.CONF.network_log.burst_limit,
-            [*self.nb_api._tables['Meter_Band'].rows.values()][0].burst_size)
-        self.assertEqual(cfg.CONF.network_log.rate_limit,
-            [*self.nb_api._tables['Meter_Band'].rows.values()][0].rate)
+        self.assertEqual(len([*self.nb_api._tables['Meter'].rows.values()]),
+            len([*self.nb_api._tables['Meter_Band'].rows.values()]))
+        self._check_meters_consistency()
         # Update burst and rate limit values on the configuration
         ovn_config.cfg.CONF.set_override('burst_limit', CFG_NEW_BURST,
                                          group='network_log')
@@ -1039,7 +1038,16 @@ class TestLogMaintenance(_TestMaintenanceHelper,
         self.assertRaises(periodics.NeverAgain,
                           self.maint.check_fair_meter_consistency)
         # Check meter band was effectively changed after the maintenance call
-        self.assertEqual(CFG_NEW_BURST,
-            [*self.nb_api._tables['Meter_Band'].rows.values()][0].burst_size)
-        self.assertEqual(CFG_NEW_RATE,
-            [*self.nb_api._tables['Meter_Band'].rows.values()][0].rate)
+        self._check_meters_consistency(CFG_NEW_BURST, CFG_NEW_RATE)
+
+    def _check_meters_consistency(self, new_burst=None, new_rate=None):
+        burst, rate = (new_burst, new_rate) if new_burst else (
+            cfg.CONF.network_log.burst_limit, cfg.CONF.network_log.rate_limit)
+        for meter in [*self.nb_api._tables['Meter'].rows.values()]:
+            meter_band = self.nb_api.lookup('Meter_Band', meter.bands[0].uuid)
+            if "_stateless" in meter.name:
+                self.assertEqual(int(burst / 2), meter_band.burst_size)
+                self.assertEqual(int(rate / 2), meter_band.rate)
+            else:
+                self.assertEqual(burst, meter_band.burst_size)
+                self.assertEqual(rate, meter_band.rate)
