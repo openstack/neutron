@@ -1849,6 +1849,30 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             if security_groups:
                 raise psec_exc.PortSecurityPortHasSecurityGroup()
 
+    @staticmethod
+    def _validate_port_update(old_port, new_port, binding):
+        if not binding:
+            raise exc.PortNotFound(port_id=old_port.id)
+        try:
+            old_vnic_type, new_vnic_type = (
+                binding.vnic_type, new_port[portbindings.VNIC_TYPE])
+        except KeyError:
+            return
+
+        if (old_vnic_type != new_vnic_type and
+                binding.vif_type != portbindings.VIF_TYPE_UNBOUND):
+            LOG.info("Attempting to change VNIC TYPE from {old_type} to "
+                     "{new_type} on port {port_id}, this operation is not "
+                     "allowed because the port is bound".format(
+                         old_type=old_vnic_type,
+                         new_type=new_vnic_type,
+                         port_id=old_port.id))
+            raise exc.PortInUse(
+                port_id=old_port.id,
+                net_id=old_port.network_id,
+                device_id=old_port.device_id,
+            )
+
     @utils.transaction_guard
     @db_api.retry_if_session_inactive()
     def update_port(self, context, id, port):
@@ -1865,8 +1889,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             port_db = self._get_port(context, id)
             binding = p_utils.get_port_binding_by_status_and_host(
                 port_db.port_bindings, const.ACTIVE)
-            if not binding:
-                raise exc.PortNotFound(port_id=id)
+            self._validate_port_update(port_db, attrs, binding)
             mac_address_updated = self._check_mac_update_allowed(
                 port_db, attrs, binding)
             mac_address_updated |= self._reset_mac_for_direct_physical(

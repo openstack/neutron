@@ -2819,6 +2819,48 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
             self.assertTrue(update_mock.mock_calls)
             self.assertEqual('test', binding.host)
 
+    def _test__validate_port_update_prepare(self):
+        plugin, port_context, bound_context = (
+            self._create_port_and_bound_context(
+                portbindings.VIF_TYPE_OVS,
+                portbindings.VIF_TYPE_OVS))
+        port_db = plugin._get_port(self.context, port_context.current['id'])
+
+        return plugin, port_db, port_context._binding
+
+    def test__validate_port_update_no_port_binding(self):
+        plugin, port_db, binding = self._test__validate_port_update_prepare()
+        new_port = {portbindings.VNIC_TYPE: portbindings.VNIC_DIRECT_PHYSICAL}
+
+        with testtools.ExpectedException(exc.PortNotFound):
+            plugin._validate_port_update(port_db, new_port, None)
+
+    def test__validate_port_update_no_vnic_type(self):
+        plugin, port_db, binding = self._test__validate_port_update_prepare()
+        new_port = {portbindings.HOST_ID: 'foo'}
+
+        plugin._validate_port_update(port_db, new_port, binding)
+
+    def test__validate_port_update_vnic_type_unbound_port(self):
+        plugin, port_db, binding = self._test__validate_port_update_prepare()
+        new_port = {portbindings.VNIC_TYPE: portbindings.VNIC_DIRECT_PHYSICAL}
+        binding.vif_type = portbindings.VIF_TYPE_UNBOUND
+
+        plugin._validate_port_update(port_db, new_port, binding)
+
+    def test__validate_port_update_vnic_type_bound_port_same_vnic_type(self):
+        plugin, port_db, binding = self._test__validate_port_update_prepare()
+        new_port = {portbindings.VNIC_TYPE: portbindings.VNIC_NORMAL}
+
+        plugin._validate_port_update(port_db, new_port, binding)
+
+    def test__validate_port_update_vnic_type_bound_port(self):
+        plugin, port_db, binding = self._test__validate_port_update_prepare()
+        new_port = {portbindings.VNIC_TYPE: portbindings.VNIC_DIRECT_PHYSICAL}
+
+        with testtools.ExpectedException(exc.PortInUse):
+            plugin._validate_port_update(port_db, new_port, binding)
+
     def test_process_distributed_port_binding_update_router_id(self):
         host_id = 'host'
         binding = models.DistributedPortBinding(

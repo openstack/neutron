@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    In previous versions, an administrator was allowed to update a port
+    ``binding:vnic_type`` attribute even if it was bound. This is now blocked
+    and the update operation of the attribute returns the ``Conflict (409)``
+    response code.
