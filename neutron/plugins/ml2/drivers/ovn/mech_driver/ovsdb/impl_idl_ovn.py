@@ -160,6 +160,10 @@ class Backend(ovs_idl.Backend):
         return cls._schema_helper
 
     @classmethod
+    def get_schema_version(cls):
+        return cls.schema_helper.schema_json['version']
+
+    @classmethod
     def schema_has_table(cls, table_name):
         return table_name in cls.schema_helper.schema_json['tables']
 
