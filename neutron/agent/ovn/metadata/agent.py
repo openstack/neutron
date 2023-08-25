@@ -396,7 +396,8 @@ class MetadataAgent(object):
             for ns in ip_lib.list_network_namespaces())
         net_datapaths = self.get_networks_datapaths()
         metadata_namespaces = [
-            self._get_namespace_name(str(datapath.uuid))
+            self._get_namespace_name(
+                ovn_utils.get_network_name_from_datapath(datapath))
             for datapath in net_datapaths
         ]
         unused_namespaces = [ns for ns in system_namespaces if
@@ -405,8 +406,9 @@ class MetadataAgent(object):
         for ns in unused_namespaces:
             self.teardown_datapath(self._get_datapath_name(ns))
 
-        # now that all obsolete namespaces are cleaned up, deploy required
-        # networks
+        # resync all network namespaces based on the associated datapaths,
+        # even those that are already running. This is to make sure
+        # everything within each namespace is up to date.
         for datapath in net_datapaths:
             self.provision_datapath(datapath)
 
