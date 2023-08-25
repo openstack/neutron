@@ -1080,3 +1080,10 @@ def validate_port_binding_and_virtual_port(
         raise n_exc.BadRequest(
             resource='port',
             msg='A virtual logical switch port cannot be bound to a host')
+
+
+def get_requested_chassis(requested_chassis):
+    """Returns a list with the items in the LSP.options:requested-chassis"""
+    if isinstance(requested_chassis, str):
+        return requested_chassis.split(',')
+    return []
