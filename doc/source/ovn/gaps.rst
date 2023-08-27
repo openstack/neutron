@@ -28,12 +28,6 @@ at [1]_.
   routers have this capability implemented in [4]_ and we have an open RFE to
   fill this gap [5]_.
 
-* East/West Fragmentation
-
-  The core OVN implementation does not support east/west fragmentation. There is
-  no known production use-case for this feature hence we don't even have an RFE
-  open for it and it's not on the roadmap to be implemented.
-
 * DHCP service for instances
 
   ML2/OVS adds packet filtering rules to every instance that allow DHCP queries
@@ -71,6 +65,26 @@ at [1]_.
 
   The OVN metadata agent currently does not allow access via IPv6.
 
+* East/West Fragmentation
+
+  The core OVN implementation does not support fragmentation of East/West
+  traffic using an OVN router between two private networks. This is being
+  tracked in [9]_ and [10]_.
+
+* North/South Fragmentation and path MTU discovery
+
+  OVN does not correctly fragment IPv4 packets when the MTU of the target
+  network is smaller than the MTU of the source network. Instead, affected
+  packets could be silently dropped depending on the direction. OVN will
+  also not generate ICMP "packet too big" responses for packets that have
+  the DF bit set, even when the necessary configuration option is used
+  in ``ml2_conf.ini``::
+
+    [ovn]
+    ovn_emit_need_to_frag = true
+
+  This makes path MTU discovery fail, and is being tracked in [9]_ and [11]_.
+
 References
 ----------
 
@@ -82,3 +96,6 @@ References
 .. [6] https://bugs.launchpad.net/neutron/+bug/1926515
 .. [7] https://review.opendev.org/c/openstack/neutron/+/788594
 .. [8] https://docs.openstack.org/neutron/latest/admin/config-dns-res.html
+.. [9] https://bugs.launchpad.net/neutron/+bug/2032817
+.. [10] https://bugzilla.redhat.com/show_bug.cgi?id=2238494
+.. [11] https://bugzilla.redhat.com/show_bug.cgi?id=2238969
