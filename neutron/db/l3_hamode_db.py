@@ -53,6 +53,7 @@ from neutron.db import l3_dvr_db
 from neutron.objects import base
 from neutron.objects import l3_hamode
 from neutron.objects import router as l3_obj
+from neutron.objects import subnet as subnet_obj
 
 
 VR_ID_RANGE = set(range(1, 255))
@@ -222,8 +223,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             network[providernet.PHYSICAL_NETWORK] = (
                 cfg.CONF.l3_ha_network_physical_name)
 
-    def _create_ha_network(self, context, tenant_id):
-        admin_ctx = context.elevated()
+    def _create_ha_network(self, admin_ctx, tenant_id):
         # The project ID is needed to create the ``L3HARouterNetwork``
         # resource; the project ID cannot be retrieved from the network because
         # is explicitly created without it.
@@ -371,13 +371,32 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         """Event handler to create HA resources before router creation."""
         if not self._is_ha(router):
             return
+
+        admin_ctx = context.elevated()
         # ensure the HA network exists before we start router creation so
         # we can provide meaningful errors back to the user if no network
         # can be allocated
         # TODO(ralonsoh): remove once bp/keystone-v3 migration finishes.
         project_id = router.get('project_id') or router['tenant_id']
-        if not self.get_ha_network(context, project_id):
-            self._create_ha_network(context, project_id)
+        ha_network = self.get_ha_network(admin_ctx, project_id)
+        if not ha_network:
+            self._create_ha_network(admin_ctx, project_id)
+        else:
+            # Check the HA network subnet. As reported in LP#2016198, two
+            # consecutive router creation can try to create the HA network at
+            # the same time. Because the network and subnet creation operations
+            # cannot be executed in the same transaction, it is needed to make
+            # this check before leaving this callback.
+            network_id = ha_network['network_id']
+            if subnet_obj.Subnet.count(admin_ctx, network_id=network_id) > 0:
+                return
+            try:
+                self._create_ha_subnet(admin_ctx, network_id, project_id)
+            except n_exc.InvalidInput:
+                # That could happen when the previous method tries to create
+                # the HA subnet with the same CIDR. In this case, dismiss the
+                # exception.
+                pass
 
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_CREATE],
                        priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)

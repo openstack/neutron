@@ -48,6 +48,7 @@ from neutron.db import l3_agentschedulers_db
 from neutron.db import l3_hamode_db
 from neutron.objects import l3_hamode
 from neutron.objects import network as network_obj
+from neutron.objects import subnet as subnet_obj
 from neutron import quota
 from neutron.scheduler import l3_agent_scheduler
 from neutron.services.revisions import revision_plugin
@@ -1399,7 +1400,7 @@ class L3HAModeDbTestCase(L3HATestFramework):
         self.assertEqual(self.agent2['host'], routers[0]['gw_port_host'])
 
     def test__before_router_create_no_network(self):
-        project_id = 'project1'
+        project_id = uuidutils.generate_uuid()
         ha_network = self.plugin.get_ha_network(self.admin_ctx, project_id)
         self.assertIsNone(ha_network)
 
@@ -1412,6 +1413,35 @@ class L3HAModeDbTestCase(L3HATestFramework):
         self.plugin._before_router_create(mock.ANY, self.admin_ctx, router)
         ha_network = self.plugin.get_ha_network(self.admin_ctx, project_id)
         self.assertEqual(project_id, ha_network.project_id)
+
+    def test__before_router_create_no_subnet(self):
+        project_id = uuidutils.generate_uuid()
+        admin_ctx = self.admin_ctx
+        admin_ctx.project_id = project_id
+        self._create_network(self.core_plugin, admin_ctx,
+                             tenant_id=project_id, ha=True)
+        ha_network = self.plugin.get_ha_network(self.admin_ctx, project_id)
+        self.assertEqual(project_id, ha_network.project_id)
+        subnets = subnet_obj.Subnet.get_objects(
+            admin_ctx, network_id=ha_network.network_id)
+        self.assertEqual([], subnets)
+
+        router = {'ha': True, 'project_id': project_id}
+        self.plugin._before_router_create(mock.ANY, admin_ctx, router)
+        ha_network = self.plugin.get_ha_network(admin_ctx, project_id)
+        self.assertEqual(project_id, ha_network.project_id)
+        subnets = subnet_obj.Subnet.get_objects(
+            admin_ctx, network_id=ha_network.network_id)
+        self.assertEqual(1, len(subnets))
+
+        # This test is simulating a concurrent update. The "Subnet.count"
+        # method returns 0 and "_before_router_create" tries to create the
+        # subnet again. The exception is catch and dismissed.
+        with mock.patch.object(subnet_obj.Subnet, 'count', return_value=0):
+            self.plugin._before_router_create(mock.ANY, admin_ctx, router)
+        subnets = subnet_obj.Subnet.get_objects(
+            admin_ctx, network_id=ha_network.network_id)
+        self.assertEqual(1, len(subnets))
 
 
 class L3HAUserTestCase(L3HATestFramework):
