@@ -1039,7 +1039,9 @@ class TestMaintenance(_TestMaintenanceHelper):
             m_notify.reset_mock()
             self.pf_plugin.delete_floatingip_port_forwarding(
                 self.context, pf_obj['id'], fip_id)
-            m_notify.assert_called_once()
+            call = mock.call('port_forwarding', 'after_delete', self.pf_plugin,
+                             payload=mock.ANY)
+            m_notify.assert_has_calls([call])
 
             # Assert load balancer for port forwarding is stale
             _verify_lb(self, 'udp', 5353, 53)
