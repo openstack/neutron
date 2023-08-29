@@ -39,6 +39,7 @@ from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import excutils
 from oslo_utils import timeutils
+from oslo_utils import versionutils
 from ovsdbapp.backend.ovs_idl import idlutils
 import tenacity
 
@@ -94,6 +95,7 @@ class OVNClient(object):
 
         self._plugin_property = None
         self._l3_plugin_property = None
+        self._is_mcast_flood_broken = None
 
         # TODO(ralonsoh): handle the OVN client extensions with an ext. manager
         self._qos_driver = qos_extension.OVNClientQosExtension(driver=self)
@@ -338,6 +340,20 @@ class OVNClient(object):
 
         self._transaction(cmd)
 
+    # TODO(lucasagomes): Remove this method and the logic around the broken
+    # mcast_flood_reports configuration option on any other port that is not
+    # type "localnet" when the fixed version of OVN becomes the norm.
+    # The commit in core OVN fixing this issue is the
+    # https://github.com/ovn-org/ovn/commit/6aeeccdf272bc60630581e46aa42d97f4f56d4fa
+    @property
+    def is_mcast_flood_broken(self):
+        if self._is_mcast_flood_broken is None:
+            schema_version = self._nb_idl.get_schema_version()
+            self._is_mcast_flood_broken = (
+                versionutils.convert_version_to_tuple(schema_version) <
+                (6, 3, 0))
+        return self._is_mcast_flood_broken
+
     def _get_port_options(self, port):
         context = n_context.get_admin_context()
         binding_prof = utils.validate_and_get_data_from_binding_profile(port)
@@ -500,12 +516,8 @@ class OVNClient(object):
             if port_type != ovn_const.LSP_TYPE_VIRTUAL:
                 options[ovn_const.LSP_OPTIONS_REQUESTED_CHASSIS_KEY] = chassis
 
-        # TODO(lucasagomes): Enable the mcast_flood_reports by default,
-        # according to core OVN developers it shouldn't cause any harm
-        # and will be ignored when mcast_snoop is False. We can revise
-        # this once https://bugzilla.redhat.com/show_bug.cgi?id=1933990
-        # (see comment #3) is fixed in Core OVN.
-        if port_type not in ('vtep', ovn_const.LSP_TYPE_LOCALPORT, 'router'):
+        if self.is_mcast_flood_broken and port_type not in (
+                'vtep', ovn_const.LSP_TYPE_LOCALPORT, 'router'):
             options.update({ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true'})
 
         device_owner = port.get('device_owner', '')
