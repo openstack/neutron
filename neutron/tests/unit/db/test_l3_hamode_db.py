@@ -14,10 +14,12 @@
 
 from unittest import mock
 
+from neutron_lib.api import attributes
 from neutron_lib.api.definitions import dvr as dvr_apidef
 from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import l3_ext_ha_mode
+from neutron_lib.api.definitions import network_ha
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as providernet
@@ -31,7 +33,6 @@ from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.exceptions import l3_ext_ha_mode as l3ha_exc
-from neutron_lib.objects import exceptions
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
@@ -84,6 +85,10 @@ class L3HATestFramework(testlib_api.SqlTestCase):
         self.agent1 = helpers.register_l3_agent()
         self.agent2 = helpers.register_l3_agent(
             'host_2', constants.L3_AGENT_MODE_DVR_SNAT)
+        # Extend network HA extension.
+        rname = network_ha.COLLECTION_NAME
+        attributes.RESOURCES[rname].update(
+            network_ha.RESOURCE_ATTRIBUTE_MAP[rname])
 
     @property
     def admin_ctx(self):
@@ -630,7 +635,8 @@ class L3HATestCase(L3HATestFramework):
 
         with mock.patch.object(l3_hamode, 'L3HARouterNetwork',
                                side_effect=ValueError):
-            self.assertRaises(ValueError, self.plugin._create_ha_network,
+            self.assertRaises(c_exc.CallbackFailure,
+                              self.plugin._create_ha_network,
                               self.admin_ctx, _uuid())
 
         networks_after = self.core_plugin.get_networks(self.admin_ctx)
@@ -682,15 +688,24 @@ class L3HATestCase(L3HATestFramework):
                           self.admin_ctx, binding.port_id)
 
     def test_create_ha_network_tenant_binding_raises_duplicate(self):
-        router = self._create_router()
-        network = self.plugin.get_ha_network(self.admin_ctx,
-                                             router['tenant_id'])
-        self.plugin._create_ha_network_tenant_binding(
-            self.admin_ctx, 't1', network['network_id'])
-        with testtools.ExpectedException(
-                exceptions.NeutronDbObjectDuplicateEntry):
+        # The router creation calls first the HA network creation and the
+        # HA network-tenant binding ("ha_router_networks" register)
+        project_id = uuidutils.generate_uuid()
+        self._create_router(tenant_id=project_id)
+        network = self.core_plugin.get_networks(self.admin_ctx)[0]
+        ha_network = self.plugin.get_ha_network(self.admin_ctx, project_id)
+        self.assertEqual(project_id, ha_network.project_id)
+        self.assertEqual(network['id'], ha_network.network_id)
+
+        with testtools.ExpectedException(l3_hamode_db.DuplicatedHANetwork):
+            network[network_ha.HA] = True
+            ctx = self.admin_ctx  # That will create a new admin context
+            ctx.project_id = project_id
+            payload = events.DBEventPayload(
+                ctx, states=(network, ), resource_id=network['id'],
+                request_body=network)
             self.plugin._create_ha_network_tenant_binding(
-                self.admin_ctx, 't1', network['network_id'])
+                mock.ANY, mock.ANY, mock.ANY, payload=payload)
 
     def test_create_router_db_vr_id_allocation_goes_to_error(self):
         for method in ('_ensure_vr_id',
@@ -956,12 +971,15 @@ class L3HATestCase(L3HATestFramework):
 class L3HAModeDbTestCase(L3HATestFramework):
 
     def _create_network(self, plugin, ctx, name='net',
-                        tenant_id='tenant1', external=False):
+                        tenant_id='tenant1', external=False, ha=False):
         network = {'network': {'name': name,
                                'shared': False,
                                'admin_state_up': True,
                                'tenant_id': tenant_id,
-                               extnet_apidef.EXTERNAL: external}}
+                               'project_id': tenant_id,
+                               extnet_apidef.EXTERNAL: external,
+                               network_ha.HA: ha,
+                               }}
         return plugin.create_network(ctx, network)['id']
 
     def _create_subnet(self, plugin, ctx, network_id, cidr='10.0.0.0/8',
@@ -1379,6 +1397,21 @@ class L3HAModeDbTestCase(L3HATestFramework):
         routers = self.plugin._get_sync_routers(self.admin_ctx,
                                                 router_ids=[router['id']])
         self.assertEqual(self.agent2['host'], routers[0]['gw_port_host'])
+
+    def test__before_router_create_no_network(self):
+        project_id = 'project1'
+        ha_network = self.plugin.get_ha_network(self.admin_ctx, project_id)
+        self.assertIsNone(ha_network)
+
+        router = {'ha': True, 'project_id': project_id}
+        self.plugin._before_router_create(mock.ANY, self.admin_ctx, router)
+        ha_network = self.plugin.get_ha_network(self.admin_ctx, project_id)
+        self.assertEqual(project_id, ha_network.project_id)
+
+        # This second call ensures the method is idempotent.
+        self.plugin._before_router_create(mock.ANY, self.admin_ctx, router)
+        ha_network = self.plugin.get_ha_network(self.admin_ctx, project_id)
+        self.assertEqual(project_id, ha_network.project_id)
 
 
 class L3HAUserTestCase(L3HATestFramework):

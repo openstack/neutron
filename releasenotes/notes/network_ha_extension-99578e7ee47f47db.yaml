@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    A new API extension ``network-ha`` has been added. This extension adds a
+    new field to the network API: "ha". This field is not visible and can be
+    passed only in POST (create) operations. That will define that this network
+    is a high availability (HA) network and will create, in the same database
+    transaction, a ``ha_router_networks`` register.
