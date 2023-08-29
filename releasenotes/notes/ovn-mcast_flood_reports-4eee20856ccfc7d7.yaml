@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    For OVN versions v22.09.0 and above, the ``mcast_flood_reports`` option
+    is now set to ``false`` on all ports except "localnet" types. In the past,
+    this option was set to ``true`` as a workaround for a bug in core OVN
+    multicast implementation.
