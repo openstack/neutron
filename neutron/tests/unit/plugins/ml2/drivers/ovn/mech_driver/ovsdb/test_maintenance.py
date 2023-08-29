@@ -537,7 +537,8 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
             "lsp1", external_ids=external_ids
         )
 
-    def test_check_for_mcast_flood_reports(self):
+    def test_check_for_mcast_flood_reports_broken(self):
+        self.fake_ovn_client.is_mcast_flood_broken = True
         nb_idl = self.fake_ovn_client._nb_idl
         lsp0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'name': 'lsp0',
@@ -578,14 +579,86 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         self.assertRaises(periodics.NeverAgain,
                           self.periodic.check_for_mcast_flood_reports)
 
-        # Assert only lsp1, lsp5 and lsp6 were called because they are the
-        # only ones meeting the criteria
+        # Assert only lsp1 and lsp5 were called because they are the
+        # only ones meeting to set mcast_flood_reports to 'true'
         expected_calls = [
             mock.call('lsp1', mcast_flood_reports='true'),
-            mock.call('lsp5', mcast_flood_reports='true', mcast_flood='false'),
-            mock.call('lsp6', mcast_flood_reports='true', mcast_flood='false')]
+            mock.call('lsp5', mcast_flood_reports='true')]
 
         nb_idl.lsp_set_options.assert_has_calls(expected_calls)
+        self.assertEqual(2, nb_idl.lsp_set_options.call_count)
+
+        # Assert only lsp6 and lsp7 were called because they are the
+        # only ones meeting to remove mcast_flood
+        expected_calls = [
+            mock.call('Logical_Switch_Port', 'lsp6', 'options',
+                      constants.LSP_OPTIONS_MCAST_FLOOD,
+                      if_exists=True),
+            mock.call('Logical_Switch_Port', 'lsp7', 'options',
+                      constants.LSP_OPTIONS_MCAST_FLOOD,
+                      if_exists=True)]
+
+        nb_idl.db_remove.assert_has_calls(expected_calls)
+        self.assertEqual(2, nb_idl.db_remove.call_count)
+
+    def test_check_for_mcast_flood_reports(self):
+        self.fake_ovn_client.is_mcast_flood_broken = False
+        nb_idl = self.fake_ovn_client._nb_idl
+
+        lsp0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'lsp0',
+                   'options': {
+                       constants.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true'},
+                   'type': ""})
+        lsp1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'lsp1', 'options': {}, 'type': ""})
+        lsp2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'lsp2',
+                   'options': {
+                       constants.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true'},
+                   'type': "vtep"})
+        lsp3 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'lsp3', 'options': {},
+                   'type': constants.LSP_TYPE_LOCALPORT})
+        lsp4 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'lsp4', 'options': {},
+                   'type': "router"})
+        lsp5 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'lsp5', 'options': {},
+                   'type': constants.LSP_TYPE_LOCALNET})
+        lsp6 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'lsp6',
+                   'options': {
+                       constants.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true',
+                       constants.LSP_OPTIONS_MCAST_FLOOD: 'true'},
+                   'type': constants.LSP_TYPE_LOCALNET})
+        lsp7 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'name': 'lsp7',
+                   'options': {
+                       constants.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true',
+                       constants.LSP_OPTIONS_MCAST_FLOOD: 'false'},
+                   'type': constants.LSP_TYPE_LOCALNET})
+
+        nb_idl.lsp_list.return_value.execute.return_value = [
+            lsp0, lsp1, lsp2, lsp3, lsp4, lsp5, lsp6, lsp7]
+
+        # Invoke the periodic method, it meant to run only once at startup
+        # so NeverAgain will be raised at the end
+        self.assertRaises(periodics.NeverAgain,
+                          self.periodic.check_for_mcast_flood_reports)
+
+        # Assert only lsp0 and lsp2 were called because they are the
+        # only ones meeting the criteria
+        expected_calls = [
+            mock.call('Logical_Switch_Port', 'lsp0', 'options',
+                      constants.LSP_OPTIONS_MCAST_FLOOD_REPORTS,
+                      if_exists=True),
+            mock.call('Logical_Switch_Port', 'lsp2', 'options',
+                      constants.LSP_OPTIONS_MCAST_FLOOD_REPORTS,
+                      if_exists=True)]
+
+        nb_idl.db_remove.assert_has_calls(expected_calls)
+        self.assertEqual(2, nb_idl.db_remove.call_count)
 
     def test_check_router_mac_binding_options(self):
         nb_idl = self.fake_ovn_client._nb_idl
