@@ -61,6 +61,15 @@ def remove_node_by_uuid(context, node_uuid):
 
 
 @db_api.retry_if_session_inactive()
+def cleanup_old_nodes(context, days):
+    age = timeutils.utcnow() - datetime.timedelta(days=days)
+    with db_api.CONTEXT_WRITER.using(context):
+        context.session.query(ovn_models.OVNHashRing).filter(
+            ovn_models.OVNHashRing.updated_at < age).delete()
+    LOG.info('Cleaned up Hash Ring nodes older than %d days', days)
+
+
+@db_api.retry_if_session_inactive()
 def _touch(context, updated_at=None, **filter_args):
     if updated_at is None:
         updated_at = timeutils.utcnow()
