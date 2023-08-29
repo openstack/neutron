@@ -1049,6 +1049,20 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                     for table in ('Chassis_Private', 'Chassis'):
                         txn.add(self._sb_idl.db_destroy(table, ch.name))
 
+    @periodics.periodic(spacing=86400, run_immediately=True)
+    def cleanup_old_hash_ring_nodes(self):
+        """Daily task to cleanup old stable Hash Ring node entries.
+
+        Runs once a day and clean up Hash Ring entries that haven't
+        been updated in more than 5 days. See LP #2033281 for more
+        information.
+
+        """
+        if not self.has_lock:
+            return
+        context = n_context.get_admin_context()
+        hash_ring_db.cleanup_old_nodes(context, days=5)
+
 
 class HashRingHealthCheckPeriodics(object):
 

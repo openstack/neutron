@@ -1,0 +1,6 @@
+---
+other:
+  - |
+    Adds a maintenance task that runs once a day and is responsible for
+    cleaning up Hash Ring nodes that haven't been updated in 5 days or
+    more. See LP #2033281 for more information.
