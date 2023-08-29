@@ -52,9 +52,24 @@ at [1]_.
     [ovn]
     dns_servers = 203.0.113.8, 198.51.100.53
 
+  OVN answers queries for hosts and IP addresses in tenant networks by spoofing
+  responses from the configured DNS servers. This may lead to confusion in
+  debugging.
+
+  OVN can only answer queries that are sent via UDP, queries that use TCP will be
+  ignored by OVN and forwarded to the configured resolvers.
+
+  OVN can only answer queries with no additional options being set (EDNS). Such
+  queries depending on the OVN version will either get broken responses or will
+  also be forwarded to the configured resolvers.
+
 * IPv6 NDP proxy
 
   The NDP proxy functionality for IPv6 addresses is not supported by OVN.
+
+* Metadata via IPv6
+
+  The OVN metadata agent currently does not allow access via IPv6.
 
 References
 ----------
