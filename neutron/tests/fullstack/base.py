@@ -48,6 +48,11 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
 
     BUILD_WITH_MIGRATIONS = True
 
+    # NOTE(slaweq): In fullstack tests there need to be new database created
+    # for every test, and one db shouldn't be really shared between tests
+    # running by the same worker
+    CLEAN_DB_AFTER_TEST = True
+
     def setUp(self, environment):
         super(BaseFullStackTestCase, self).setUp()
 

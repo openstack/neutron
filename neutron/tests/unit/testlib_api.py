@@ -122,16 +122,21 @@ class OpportunisticSqlFixture(lib_fixtures.SqlFixture):
     def _init_resources(self):
         testresources.setUpResources(
             self.test, self.test.resources, testresources._get_result())
-        self.addCleanup(
-            testresources.tearDownResources,
-            self.test, self.test.resources, testresources._get_result()
-        )
+        self.addCleanup(self._cleanup_resources)
 
         # unfortunately, fixtures won't let us call a skip() from
         # here.  So the test has to check this also.
         # see https://github.com/testing-cabal/fixtures/issues/31
         if hasattr(self.test, 'db'):
             self.engine = self.test.engine = self.test.db.engine
+
+    def _cleanup_resources(self):
+        testresources.tearDownResources(
+            self.test, self.test.resources, testresources._get_result())
+
+        if self.test.CLEAN_DB_AFTER_TEST:
+            self.test._database_resources.pop(self.test.DRIVER)
+            self.test._schema_resources.pop((self.test.DRIVER, None))
 
     @classmethod
     def resources_collection(cls, test):
@@ -156,7 +161,7 @@ class OpportunisticSqlFixture(lib_fixtures.SqlFixture):
 
         key = (driver, None)
         if test.BUILD_SCHEMA:
-            if test.FORCE_DB_MIGRATION or key not in test._schema_resources:
+            if key not in test._schema_resources:
                 test._schema_resources[key] = provision.SchemaResource(
                     database_resource,
                     cls._generate_schema_w_migrations
@@ -209,7 +214,7 @@ class OpportunisticDBTestMixin(object):
     FIXTURE = OpportunisticSqlFixture
 
     BUILD_WITH_MIGRATIONS = False
-    FORCE_DB_MIGRATION = False
+    CLEAN_DB_AFTER_TEST = False
 
     def _setup_database_fixtures(self):
         self.useFixture(self.FIXTURE(self))
