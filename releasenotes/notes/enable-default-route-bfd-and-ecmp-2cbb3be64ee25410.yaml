@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    Add ``enable_default_route_bfd`` and ``enable_default_route_ecmp``
+    configuration options which control default behavior for enabling BFD and
+    ECMP on default routes for newly created routers.  Both configuration
+    options have a default value of 'False' and are only supported with the
+    OVN driver.

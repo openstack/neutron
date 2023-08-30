@@ -1,0 +1,6 @@
+---
+features:
+  - |
+    Added support for the ``external-gateway-multihoming`` API extension. The
+    L3 service plugins supporting it can now create multiple gateway ports per
+    router. At the time of writing this is limited to the OVN L3 plugin.
