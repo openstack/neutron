@@ -49,6 +49,7 @@ from neutron.db import l3_hamode_db
 from neutron.objects import l3_hamode
 from neutron.objects import network as network_obj
 from neutron.objects import subnet as subnet_obj
+from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron import quota
 from neutron.scheduler import l3_agent_scheduler
 from neutron.services.revisions import revision_plugin
@@ -90,6 +91,12 @@ class L3HATestFramework(testlib_api.SqlTestCase):
         rname = network_ha.COLLECTION_NAME
         attributes.RESOURCES[rname].update(
             network_ha.RESOURCE_ATTRIBUTE_MAP[rname])
+        self._max_bind_retries = ml2_plugin.MAX_BIND_TRIES
+        ml2_plugin.MAX_BIND_TRIES = 1
+        self.addCleanup(self._restore_max_bind_retries)
+
+    def _restore_max_bind_retries(self):
+        ml2_plugin.MAX_BIND_TRIES = self._max_bind_retries
 
     @property
     def admin_ctx(self):
