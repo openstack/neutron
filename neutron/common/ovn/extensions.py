@@ -74,6 +74,7 @@ from neutron_lib.api.definitions import stateful_security_group
 from neutron_lib.api.definitions import subnet_dns_publish_fixed_ip
 from neutron_lib.api.definitions import subnet_service_types
 from neutron_lib.api.definitions import trunk
+from neutron_lib.api.definitions import uplink_status_propagation
 from neutron_lib.api.definitions import vlantransparent
 from neutron_lib.api.definitions import vpn
 from neutron_lib.api.definitions import vpn_endpoint_groups
@@ -171,4 +172,5 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     bgp.ALIAS,
     bgp_4byte_asn.ALIAS,
     bgp_dragentscheduler.ALIAS,
+    uplink_status_propagation.ALIAS,
 ]
