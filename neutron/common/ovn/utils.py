@@ -828,3 +828,10 @@ def get_ovn_chassis_other_config(chassis):
         return chassis.other_config
     except AttributeError:
         return chassis.external_ids
+
+
+def get_requested_chassis(requested_chassis):
+    """Returns a list with the items in the LSP.options:requested-chassis"""
+    if isinstance(requested_chassis, str):
+        return requested_chassis.split(',')
+    return []
