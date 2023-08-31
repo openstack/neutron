@@ -120,24 +120,8 @@ class SecurityGroupDbMixin(
                 name=s['name'], is_default=default_sg, stateful=stateful)
             sg.create()
 
-            for ethertype in ext_sg.sg_supported_ethertypes:
-                if default_sg:
-                    # Allow intercommunication
-                    ingress_rule = sg_obj.SecurityGroupRule(
-                        context, id=uuidutils.generate_uuid(),
-                        project_id=tenant_id, security_group_id=sg.id,
-                        direction='ingress', ethertype=ethertype,
-                        remote_group_id=sg.id)
-                    ingress_rule.create()
-                    sg.rules.append(ingress_rule)
-
-                egress_rule = sg_obj.SecurityGroupRule(
-                    context, id=uuidutils.generate_uuid(),
-                    project_id=tenant_id, security_group_id=sg.id,
-                    direction='egress', ethertype=ethertype)
-                egress_rule.create()
-                sg.rules.append(egress_rule)
-            sg.obj_reset_changes(['rules'])
+            self._create_rules_from_template(
+                context, tenant_id, sg, default_sg)
 
             # fetch sg from db to load the sg rules with sg model.
             # NOTE(slaweq): With new system/project scopes it may happen that
@@ -631,6 +615,32 @@ class SecurityGroupDbMixin(
             sg_default_rules_obj.SecurityGroupDefaultRule(context))
         default_sg_rule_obj.id = sg_rule_template_id
         default_sg_rule_obj.delete()
+
+    def _create_rules_from_template(self, context, project_id, sg, default_sg):
+        if default_sg:
+            filters = {'used_in_default_sg': True}
+        else:
+            filters = {'used_in_non_default_sg': True}
+        template_sg_rules = self.get_default_security_group_rules(
+            context, filters=filters)
+        for rule_args in template_sg_rules:
+            # We need to filter out attributes which are relevant only to
+            # the template rule and not to the rule itself
+            rule_args.pop('standard_attr_id', None)
+            rule_args.pop('description', None)
+            rule_args.pop('used_in_default_sg', None)
+            rule_args.pop('used_in_non_default_sg', None)
+            rule_args.pop('id', None)
+            if rule_args.get(
+                    'remote_group_id') == ext_sg_default_rules.PARENT_SG:
+                rule_args['remote_group_id'] = sg.id
+            new_rule = sg_obj.SecurityGroupRule(
+                context, id=uuidutils.generate_uuid(),
+                project_id=project_id, security_group_id=sg.id,
+                **rule_args)
+            new_rule.create()
+            sg.rules.append(new_rule)
+        sg.obj_reset_changes(['rules'])
 
     def get_default_security_group_rules(self, context, filters=None,
                                          fields=None, sorts=None, limit=None,

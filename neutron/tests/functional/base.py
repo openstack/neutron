@@ -13,6 +13,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 from datetime import datetime
 import errno
 import os
@@ -49,6 +50,7 @@ from neutron.tests import base
 from neutron.tests.common import base as common_base
 from neutron.tests.common import helpers
 from neutron.tests.functional.resources import process
+from neutron.tests.unit.extensions import test_securitygroup
 from neutron.tests.unit.plugins.ml2 import test_plugin
 import neutron.wsgi
 
@@ -201,6 +203,11 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         self._start_ovn_northd()
         self.addCleanup(self._reset_agent_cache_singleton)
         self.addCleanup(self._reset_ovn_client_placement_extension)
+        plugin = directory.get_plugin()
+        mock.patch.object(
+            plugin, 'get_default_security_group_rules',
+            return_value=copy.deepcopy(
+                test_securitygroup.RULES_TEMPLATE_FOR_DEFAULT_SG)).start()
 
     def _reset_agent_cache_singleton(self):
         neutron_agent.AgentCache._instance = None

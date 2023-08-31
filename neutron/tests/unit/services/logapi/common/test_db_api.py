@@ -13,11 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 from unittest import mock
 
 from neutron_lib import constants as const
 from neutron_lib import context
 from neutron_lib.db import api as n_db_api
+from neutron_lib.plugins import directory
 from neutron_lib.services.logapi import constants as log_const
 from neutron_lib.utils import net as net_utils
 from oslo_utils import uuidutils
@@ -188,6 +190,11 @@ class LoggingRpcCallbackTestCase(test_sg.SecurityGroupDBTestCase):
 
     def setUp(self):
         super(LoggingRpcCallbackTestCase, self).setUp()
+        plugin = directory.get_plugin()
+        mock.patch.object(
+            plugin, 'get_default_security_group_rules',
+            return_value=copy.deepcopy(
+                test_sg.RULES_TEMPLATE_FOR_CUSTOM_SG)).start()
         self.context = context.get_admin_context()
         self.rpc_callback = server_rpc.LoggingApiSkeleton()
 

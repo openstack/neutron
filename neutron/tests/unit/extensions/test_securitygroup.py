@@ -38,6 +38,8 @@ from neutron.db import address_group_db
 from neutron.db import db_base_plugin_v2
 from neutron.db import securitygroups_db
 from neutron.extensions import address_group as ext_ag
+from neutron.extensions import security_groups_default_rules as \
+        ext_sg_default_rules
 from neutron.extensions import securitygroup as ext_sg
 from neutron.extensions import standardattrdescription
 from neutron.tests import base
@@ -48,6 +50,53 @@ DB_PLUGIN_KLASS = ('neutron.tests.unit.extensions.test_securitygroup.'
                    'SecurityGroupTestPlugin')
 LONG_NAME_OK = 'x' * (db_const.NAME_FIELD_SIZE)
 LONG_NAME_NG = 'x' * (db_const.NAME_FIELD_SIZE + 1)
+
+RULES_TEMPLATE_FOR_CUSTOM_SG = [
+    {
+        'direction': 'egress',
+        'ethertype': const.IPv4,
+        'remote_group_id': None,
+        'remote_ip_prefix': None,
+        'protocol': None,
+        'port_range_max': None,
+        'port_range_min': None,
+        'used_in_default_sg': True,
+        'used_in_non_default_sg': True
+    }, {
+        'direction': 'egress',
+        'ethertype': const.IPv6,
+        'remote_group_id': None,
+        'remote_ip_prefix': None,
+        'protocol': None,
+        'port_range_max': None,
+        'port_range_min': None,
+        'used_in_default_sg': True,
+        'used_in_non_default_sg': True
+    }
+]
+RULES_TEMPLATE_FOR_DEFAULT_SG = RULES_TEMPLATE_FOR_CUSTOM_SG + [
+    {
+        'direction': 'ingress',
+        'ethertype': const.IPv4,
+        'remote_group_id': ext_sg_default_rules.PARENT_SG,
+        'remote_ip_prefix': None,
+        'protocol': None,
+        'port_range_max': None,
+        'port_range_min': None,
+        'used_in_default_sg': True,
+        'used_in_non_default_sg': False
+    }, {
+        'direction': 'ingress',
+        'ethertype': const.IPv6,
+        'remote_group_id': ext_sg_default_rules.PARENT_SG,
+        'remote_ip_prefix': None,
+        'protocol': None,
+        'port_range_max': None,
+        'port_range_min': None,
+        'used_in_default_sg': True,
+        'used_in_non_default_sg': False
+    }
+]
 
 
 class SecurityGroupTestExtensionManager(object):
@@ -293,11 +342,16 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         description = 'my webservers'
         keys = [('name', name,), ('description', description),
                 ('shared', False)]
-        with self.security_group(name, description) as security_group:
-            for k, v, in keys:
-                self.assertEqual(v, security_group['security_group'][k])
+        with mock.patch.object(
+                SecurityGroupTestPlugin,
+                'get_default_security_group_rules',
+                return_value=RULES_TEMPLATE_FOR_CUSTOM_SG):
+            with self.security_group(name, description) as security_group:
+                for k, v, in keys:
+                    self.assertEqual(v, security_group['security_group'][k])
 
-        # Verify that default egress rules have been created
+        # Verify that egress rules have been created as defined in the template
+        # above
 
         sg_rules = security_group['security_group']['security_group_rules']
         self.assertEqual(2, len(sg_rules))
@@ -717,37 +771,40 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
     def test_get_security_group(self):
         name = 'webservers'
         description = 'my webservers'
-        with self.security_group(name, description) as sg:
-            remote_group_id = sg['security_group']['id']
-            res = self.new_show_request('security-groups', remote_group_id)
-            security_group_id = sg['security_group']['id']
-            direction = "ingress"
-            remote_ip_prefix = "10.0.0.0/24"
-            protocol = const.PROTO_NAME_TCP
-            port_range_min = 22
-            port_range_max = 22
-            keys = [('remote_ip_prefix', remote_ip_prefix),
-                    ('security_group_id', security_group_id),
-                    ('direction', direction),
-                    ('protocol', protocol),
-                    ('port_range_min', port_range_min),
-                    ('port_range_max', port_range_max)]
-            with self.security_group_rule(security_group_id,
-                                          direction=direction,
-                                          protocol=protocol,
-                                          port_range_min=port_range_min,
-                                          port_range_max=port_range_max,
-                                          remote_ip_prefix=remote_ip_prefix):
+        with mock.patch.object(
+                SecurityGroupTestPlugin,
+                'get_default_security_group_rules', return_value=[]):
+            with self.security_group(name, description) as sg:
+                remote_group_id = sg['security_group']['id']
+                res = self.new_show_request('security-groups', remote_group_id)
+                security_group_id = sg['security_group']['id']
+                direction = "ingress"
+                remote_ip_prefix = "10.0.0.0/24"
+                protocol = const.PROTO_NAME_TCP
+                port_range_min = 22
+                port_range_max = 22
+                keys = [('remote_ip_prefix', remote_ip_prefix),
+                        ('security_group_id', security_group_id),
+                        ('direction', direction),
+                        ('protocol', protocol),
+                        ('port_range_min', port_range_min),
+                        ('port_range_max', port_range_max)]
+                with self.security_group_rule(
+                        security_group_id,
+                        direction=direction,
+                        protocol=protocol,
+                        port_range_min=port_range_min,
+                        port_range_max=port_range_max,
+                        remote_ip_prefix=remote_ip_prefix):
 
-                group = self.deserialize(
-                    self.fmt, res.get_response(self.ext_api))
-                sg_rule = group['security_group']['security_group_rules']
-                self.assertEqual(remote_group_id,
-                                 group['security_group']['id'])
-                self.assertEqual(3, len(sg_rule))
-                sg_rule = [r for r in sg_rule if r['direction'] == 'ingress']
-                for k, v, in keys:
-                    self.assertEqual(v, sg_rule[0][k])
+                    group = self.deserialize(
+                        self.fmt, res.get_response(self.ext_api))
+                    sg_rules = group['security_group']['security_group_rules']
+                    self.assertEqual(remote_group_id,
+                                     group['security_group']['id'])
+                    self.assertEqual(1, len(sg_rules))
+                    for k, v, in keys:
+                        self.assertEqual(v, sg_rules[0][k])
 
     def test_get_security_group_empty_rules(self):
         name = 'webservers'
@@ -825,9 +882,9 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
             for sg in sgs['security_groups']:
                 if sg['name'] == "webservers":
                     rules = sg['security_group_rules']
-                    self.assertEqual(5, len(rules))
-                    self.assertNotEqual('admin-tenant', rules[3]['tenant_id'])
-                    self.assertEqual('admin-tenant', rules[4]['tenant_id'])
+                    self.assertEqual(3, len(rules))
+                    self.assertNotEqual('admin-tenant', rules[1]['tenant_id'])
+                    self.assertEqual('admin-tenant', rules[2]['tenant_id'])
 
     def test_get_security_group_on_port_from_wrong_tenant(self):
         plugin = directory.get_plugin()
@@ -900,7 +957,10 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
         self.assertEqual(1, len(sg))
 
     def test_default_security_group_rules(self):
-        with self.network():
+        with mock.patch.object(
+                SecurityGroupTestPlugin,
+                'get_default_security_group_rules',
+                return_value=copy.deepcopy(RULES_TEMPLATE_FOR_DEFAULT_SG)):
             res = self.new_list_request('security-groups')
             groups = self.deserialize(self.fmt, res.get_response(self.ext_api))
             self.assertEqual(1, len(groups['security_groups']))

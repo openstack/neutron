@@ -170,6 +170,32 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
         super(SGServerRpcCallBackTestCase, self).setUp(plugin)
         self.notifier = directory.get_plugin().notifier
         self.rpc = securitygroups_rpc.SecurityGroupServerRpcCallback()
+        default_sg_rules = [
+            {
+                'direction': 'egress',
+                'ethertype': const.IPv4,
+                'remote_group_id': None,
+                'remote_ip_prefix': None,
+                'protocol': None,
+                'port_range_max': None,
+                'port_range_min': None,
+                'used_in_default_sg': True,
+                'used_in_non_default_sg': True
+            }, {
+                'direction': 'egress',
+                'ethertype': const.IPv6,
+                'remote_group_id': None,
+                'remote_ip_prefix': None,
+                'protocol': None,
+                'port_range_max': None,
+                'port_range_min': None,
+                'used_in_default_sg': True,
+                'used_in_non_default_sg': True
+            }
+        ]
+        mock.patch.object(
+            SecurityGroupRpcTestPlugin, 'get_default_security_group_rules',
+            return_value=default_sg_rules).start()
 
     def _test_security_group_port(self, device_owner, gw_ip,
                                   cidr, ip_version, ip_address):

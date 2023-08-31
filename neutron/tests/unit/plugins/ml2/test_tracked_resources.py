@@ -10,6 +10,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import copy
 from unittest import mock
 
 from neutron_lib import context
@@ -66,6 +67,11 @@ class BaseTestEventHandler(object):
         def_sec_group_patch = mock.patch(
             'neutron.db.securitygroups_db.SecurityGroupDbMixin.'
             '_ensure_default_security_group')
+        mock.patch(
+            'neutron.db.securitygroups_db.SecurityGroupDbMixin.'
+            'get_default_security_group_rules',
+            return_value=copy.deepcopy(
+                test_securitygroup.RULES_TEMPLATE_FOR_CUSTOM_SG)).start()
         def_sec_group_patch.start()
         get_sec_group_port_patch = mock.patch(
             'neutron.db.securitygroups_db.SecurityGroupDbMixin.'

@@ -25,6 +25,9 @@ from neutron.extensions import securitygroup
 from neutron.extensions import standardattrdescription as stdattr_ext
 
 
+PARENT_SG = 'PARENT'
+
+
 class DefaultSecurityGroupRuleNotFound(exceptions.NotFound):
     message = _("Default Security Group rule %(id)s does not exist")
 
