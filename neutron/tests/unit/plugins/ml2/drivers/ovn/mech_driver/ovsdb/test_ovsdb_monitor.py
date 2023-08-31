@@ -360,6 +360,7 @@ class TestPortBindingChassisUpdateEvent(base.BaseTestCase):
             self.driver.set_port_status_up.assert_called()
         else:
             self.driver.set_port_status_up.assert_not_called()
+        self.driver.set_port_status_up.reset_mock()
 
     def test_event_matches(self):
         # NOTE(twilson) This primarily tests implementation details. If a
@@ -369,10 +370,24 @@ class TestPortBindingChassisUpdateEvent(base.BaseTestCase):
             attrs={'name': 'Port_Binding'})
         ovsdb_row = fakes.FakeOvsdbRow.create_one_ovsdb_row
         self.driver.nb_ovn.lookup.return_value = ovsdb_row(attrs={'up': True})
+
+        # Port binding change.
         self._test_event(
             self.event.ROW_UPDATE,
             ovsdb_row(attrs={'_table': pbtable, 'chassis': 'one',
-                             'type': '_fake_', 'logical_port': 'foo'}),
+                             'type': '_fake_', 'logical_port': 'foo',
+                             'options': {}}),
+            ovsdb_row(attrs={'_table': pbtable, 'chassis': 'two',
+                             'type': '_fake_'}))
+
+        # Port binding change because of a live migration in progress.
+        options = {
+            ovn_const.LSP_OPTIONS_REQUESTED_CHASSIS_KEY: 'chassis1,chassis2'}
+        self._test_event(
+            self.event.ROW_UPDATE,
+            ovsdb_row(attrs={'_table': pbtable, 'chassis': 'one',
+                             'type': '_fake_', 'logical_port': 'foo',
+                             'options': options}),
             ovsdb_row(attrs={'_table': pbtable, 'chassis': 'two',
                              'type': '_fake_'}))
 
