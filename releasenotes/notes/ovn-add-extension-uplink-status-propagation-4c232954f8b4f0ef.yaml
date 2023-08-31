@@ -1,0 +1,7 @@
+---
+other:
+  - |
+    Added the missing extension ``uplink-status-propagation`` to the ML2/OVN
+    mechanism driver. This extension is used by the ML2/SR-IOV mechanism
+    driver, that could be loaded with ML2/OVN. Now it is possible to create
+    ports with the "uplink-status-propagation" flag defined.
