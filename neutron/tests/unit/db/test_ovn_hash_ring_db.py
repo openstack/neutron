@@ -285,3 +285,29 @@ class TestHashRing(testlib_api.SqlTestCaseLight):
             self.admin_ctx, interval=60, group_name=HASH_RING_TEST_GROUP)
         self.assertEqual(2, len(active_nodes))
         self.assertNotIn(node_to_remove, [n.node_uuid for n in active_nodes])
+
+    def test_cleanup_old_nodes(self):
+        # Add 2 new nodes
+        self._add_nodes_and_assert_exists(count=2)
+
+        # Subtract 5 days from utcnow() and touch the nodes to make
+        # them to appear stale
+        fake_utcnow = timeutils.utcnow() - datetime.timedelta(days=5)
+        with mock.patch.object(timeutils, 'utcnow') as mock_utcnow:
+            mock_utcnow.return_value = fake_utcnow
+            ovn_hash_ring_db.touch_nodes_from_host(self.admin_ctx,
+                                                   HASH_RING_TEST_GROUP)
+
+        # Add 3 new nodes
+        self._add_nodes_and_assert_exists(count=3)
+
+        # Assert we have 5 nodes in the hash ring
+        self.assertEqual(5, ovn_hash_ring_db.count_nodes_from_host(
+            self.admin_ctx, HASH_RING_TEST_GROUP))
+
+        # Clean up the 2 stale nodes
+        ovn_hash_ring_db.cleanup_old_nodes(self.admin_ctx, days=5)
+
+        # Assert we only have 3 node entries after the clean up
+        self.assertEqual(3, ovn_hash_ring_db.count_nodes_from_host(
+            self.admin_ctx, HASH_RING_TEST_GROUP))
