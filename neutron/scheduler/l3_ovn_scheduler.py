@@ -35,7 +35,8 @@ class OVNGatewayScheduler(object, metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def select(self, nb_idl, gateway_name, candidates=None):
+    def select(self, nb_idl, gateway_name, candidates=None,
+               existing_chassis=None):
         """Schedule the gateway port of a router to an OVN chassis.
 
         Schedule the gateway router port only if it is not already
@@ -73,12 +74,16 @@ class OVNGatewayScheduler(object, metaclass=abc.ABCMeta):
             LOG.warning('Gateway %s was not scheduled on any chassis, no '
                         'candidates are available', gateway_name)
             return [ovn_const.OVN_GATEWAY_INVALID_CHASSIS]
-        chassis_count = ovn_const.MAX_GW_CHASSIS - len(existing_chassis)
+        chassis_count = min(
+            ovn_const.MAX_GW_CHASSIS - len(existing_chassis),
+            len(candidates)
+        )
         # The actual binding of the gateway to a chassis via the options
         # column or gateway_chassis column in the OVN_Northbound is done
         # by the caller
         chassis = self._select_gateway_chassis(
-            nb_idl, candidates)[:chassis_count]
+            nb_idl, candidates, 1, chassis_count
+        )[:chassis_count]
         # priority of existing chassis is higher than candidates
         chassis = existing_chassis + chassis
 
@@ -87,8 +92,14 @@ class OVNGatewayScheduler(object, metaclass=abc.ABCMeta):
         return chassis
 
     @abc.abstractmethod
-    def _select_gateway_chassis(self, nb_idl, candidates):
-        """Choose a chassis from candidates based on a specific policy."""
+    def _select_gateway_chassis(self, nb_idl, candidates,
+                                priority_min, priority_max):
+        """Choose a chassis from candidates based on a specific policy.
+
+        Returns a list of chassis to use for scheduling. The value at
+        ``ret[0]`` will be used for the chassis with ``priority_max``, the
+        value at ``ret[-1]`` will be used for the chassis with ``priority_min``
+        """
 
 
 class OVNGatewayChanceScheduler(OVNGatewayScheduler):
@@ -99,7 +110,8 @@ class OVNGatewayChanceScheduler(OVNGatewayScheduler):
         return self._schedule_gateway(nb_idl, gateway_name,
                                       candidates, existing_chassis)
 
-    def _select_gateway_chassis(self, nb_idl, candidates):
+    def _select_gateway_chassis(self, nb_idl, candidates,
+                                priority_min, priority_max):
         candidates = copy.deepcopy(candidates)
         random.shuffle(candidates)
         return candidates
@@ -113,31 +125,31 @@ class OVNGatewayLeastLoadedScheduler(OVNGatewayScheduler):
         return self._schedule_gateway(nb_idl, gateway_name,
                                       candidates, existing_chassis)
 
-    @staticmethod
-    def _get_chassis_load_by_prios(chassis_info):
-        """Retrieve the amount of ports by priorities hosted in the chassis.
-
-        @param   chassis_info: list of (port, prio) hosted by this chassis
-        @type    chassis_info: []
-        @return: A list of (prio, number_of_ports) tuples.
+    def _select_gateway_chassis(self, nb_idl, candidates,
+                                priority_min, priority_max):
+        """Returns a lit of chassis from candidates ordered by priority
+        (highest first). Each chassis in every priority will be selected, as it
+        is the least loaded for that specific priority.
         """
-        chassis_load = {}
-        for lrp, prio in chassis_info:
-            chassis_load[prio] = chassis_load.get(prio, 0) + 1
-        return chassis_load.items()
-
-    @staticmethod
-    def _get_chassis_load(chassis):
-        chassis_ports_prios = chassis[1]
-        return sorted(
-            OVNGatewayLeastLoadedScheduler._get_chassis_load_by_prios(
-                chassis_ports_prios), reverse=True)
-
-    def _select_gateway_chassis(self, nb_idl, candidates):
-        chassis_bindings = nb_idl.get_all_chassis_gateway_bindings(candidates)
-        return [chassis for chassis, load in
-                sorted(chassis_bindings.items(),
-                       key=OVNGatewayLeastLoadedScheduler._get_chassis_load)]
+        selected_chassis = []
+        priorities = list(range(priority_max, priority_min - 1, -1))
+        all_chassis_bindings = nb_idl.get_all_chassis_gateway_bindings(
+                candidates, priorities=priorities)
+        for priority in priorities:
+            chassis_load = {}
+            for chassis, lrps in all_chassis_bindings.items():
+                if chassis in selected_chassis:
+                    continue
+                chassis_load[chassis] = len(
+                    [lrp for lrp, prio in lrps if prio == priority])
+            if len(chassis_load) == 0:
+                break
+            leastload = min(chassis_load.values())
+            chassis = random.choice(
+                [chassis for chassis, load in chassis_load.items()
+                 if load == leastload])
+            selected_chassis.append(chassis)
+        return selected_chassis
 
 
 OVN_SCHEDULER_STR_TO_CLASS = {
