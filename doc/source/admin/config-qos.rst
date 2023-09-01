@@ -323,47 +323,47 @@ Modify ``/etc/neutron/policy.yaml`` policy entries as follows:
 
 .. code-block:: none
 
-   "get_policy": "rule:regular_user",
-   "create_policy": "rule:regular_user",
-   "update_policy": "rule:regular_user",
-   "delete_policy": "rule:regular_user",
-   "get_rule_type": "rule:regular_user",
+   "get_policy": "rule:regular_user"
+   "create_policy": "rule:regular_user"
+   "update_policy": "rule:regular_user"
+   "delete_policy": "rule:regular_user"
+   "get_rule_type": "rule:regular_user"
 
 To enable bandwidth limit rule:
 
 .. code-block:: none
 
-   "get_policy_bandwidth_limit_rule": "rule:regular_user",
-   "create_policy_bandwidth_limit_rule": "rule:regular_user",
-   "delete_policy_bandwidth_limit_rule": "rule:regular_user",
-   "update_policy_bandwidth_limit_rule": "rule:regular_user",
+   "get_policy_bandwidth_limit_rule": "rule:regular_user"
+   "create_policy_bandwidth_limit_rule": "rule:regular_user"
+   "delete_policy_bandwidth_limit_rule": "rule:regular_user"
+   "update_policy_bandwidth_limit_rule": "rule:regular_user"
 
 To enable DSCP marking rule:
 
 .. code-block:: none
 
-   "get_policy_dscp_marking_rule": "rule:regular_user",
-   "create_policy_dscp_marking_rule": "rule:regular_user",
-   "delete_policy_dscp_marking_rule": "rule:regular_user",
-   "update_policy_dscp_marking_rule": "rule:regular_user",
+   "get_policy_dscp_marking_rule": "rule:regular_user"
+   "create_policy_dscp_marking_rule": "rule:regular_user"
+   "delete_policy_dscp_marking_rule": "rule:regular_user"
+   "update_policy_dscp_marking_rule": "rule:regular_user"
 
 To enable minimum bandwidth rule:
 
 .. code-block:: none
 
-    "get_policy_minimum_bandwidth_rule": "rule:regular_user",
-    "create_policy_minimum_bandwidth_rule": "rule:regular_user",
-    "delete_policy_minimum_bandwidth_rule": "rule:regular_user",
-    "update_policy_minimum_bandwidth_rule": "rule:regular_user",
+    "get_policy_minimum_bandwidth_rule": "rule:regular_user"
+    "create_policy_minimum_bandwidth_rule": "rule:regular_user"
+    "delete_policy_minimum_bandwidth_rule": "rule:regular_user"
+    "update_policy_minimum_bandwidth_rule": "rule:regular_user"
 
 To enable minimum packet rate rule:
 
 .. code-block:: none
 
-    "get_policy_minimum_packet_rate_rule": "rule:regular_user",
-    "create_policy_minimum_packet_rate_rule": "rule:regular_user",
-    "delete_policy_minimum_packet_rate_rule": "rule:regular_user",
-    "update_policy_minimum_packet_rate_rule": "rule:regular_user",
+    "get_policy_minimum_packet_rate_rule": "rule:regular_user"
+    "create_policy_minimum_packet_rate_rule": "rule:regular_user"
+    "delete_policy_minimum_packet_rate_rule": "rule:regular_user"
+    "update_policy_minimum_packet_rate_rule": "rule:regular_user"
 
 User workflow
 ~~~~~~~~~~~~~
