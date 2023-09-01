@@ -1,0 +1,6 @@
+---
+other:
+  - |
+    The OVN L3 scheduler will now update lower priorities of exising LRPs in
+    case of a chassis change. This can create increased load on OVN during
+    chassis shutdown, but improves the load distribution of LRPs.

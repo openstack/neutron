@@ -414,18 +414,44 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         unhosted_gateways = self._nb_ovn.get_unhosted_gateways(
             port_physnet_dict, chassis_with_physnets,
             all_gw_chassis, chassis_with_azs)
-        for g_name in unhosted_gateways:
+
+        self._reschedule_lrps(unhosted_gateways)
+
+    def _reschedule_lrps(self, lrps):
+        # GW ports and its physnets.
+        port_physnet_dict = self._get_gateway_port_physnet_mapping()
+        # All chassis with physnets configured.
+        chassis_with_physnets = self._sb_ovn.get_chassis_and_physnets()
+        # All chassis with enable_as_gw_chassis set
+        all_gw_chassis = self._sb_ovn.get_gateway_chassis_from_cms_options()
+        chassis_with_azs = self._sb_ovn.get_chassis_and_azs()
+
+        for g_name in lrps:
             physnet = port_physnet_dict.get(g_name[len(ovn_const.LRP_PREFIX):])
             # Remove any invalid gateway chassis from the list, otherwise
             # we can have a situation where all existing_chassis are invalid
             existing_chassis = self._nb_ovn.get_gateway_chassis_binding(g_name)
             primary = existing_chassis[0] if existing_chassis else None
             az_hints = self._nb_ovn.get_gateway_chassis_az_hints(g_name)
-            existing_chassis = self.scheduler.filter_existing_chassis(
-                nb_idl=self._nb_ovn, gw_chassis=all_gw_chassis,
-                physnet=physnet, chassis_physnets=chassis_with_physnets,
-                existing_chassis=existing_chassis, az_hints=az_hints,
-                chassis_with_azs=chassis_with_azs)
+            filtered_existing_chassis = \
+                self.scheduler.filter_existing_chassis(
+                    nb_idl=self._nb_ovn, gw_chassis=all_gw_chassis,
+                    physnet=physnet,
+                    chassis_physnets=chassis_with_physnets,
+                    existing_chassis=existing_chassis, az_hints=az_hints,
+                    chassis_with_azs=chassis_with_azs)
+            if existing_chassis != filtered_existing_chassis:
+                first_diff = None
+                for i in range(len(filtered_existing_chassis)):
+                    if existing_chassis[i] != filtered_existing_chassis[i]:
+                        first_diff = i
+                        break
+                if first_diff is not None:
+                    LOG.debug(
+                        "A chassis for this gateway has been filtered. "
+                        "Rebalancing priorities %s and lower", first_diff)
+                    filtered_existing_chassis = filtered_existing_chassis[
+                        :max(first_diff, 1)]
 
             candidates = self._ovn_client.get_candidates_for_scheduling(
                 physnet, cms=all_gw_chassis,
@@ -433,7 +459,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                 availability_zone_hints=az_hints)
             chassis = self.scheduler.select(
                 self._nb_ovn, g_name, candidates=candidates,
-                existing_chassis=existing_chassis)
+                existing_chassis=filtered_existing_chassis)
             if primary and primary != chassis[0]:
                 if primary not in chassis:
                     LOG.debug("Primary gateway chassis %(old)s "
