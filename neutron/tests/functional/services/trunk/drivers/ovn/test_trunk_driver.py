@@ -17,7 +17,7 @@ import contextlib
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import exceptions as n_exc
 from neutron_lib import constants as n_consts
-from neutron_lib.db import api as db_api
+from neutron_lib.objects import registry as obj_reg
 from neutron_lib.plugins import utils
 from neutron_lib.services.trunk import constants as trunk_consts
 from oslo_utils import uuidutils
@@ -30,8 +30,8 @@ from neutron.tests.functional import base
 
 class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
 
-    def setUp(self, **kwargs):
-        super().setUp(**kwargs)
+    def setUp(self):
+        super(TestOVNTrunkDriver, self).setUp()
         self.trunk_plugin = trunk_plugin.TrunkPlugin()
         self.trunk_plugin.add_segmentation_type(
             trunk_consts.SEGMENTATION_TYPE_VLAN,
@@ -42,8 +42,7 @@ class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
         sub_ports = sub_ports or []
         with self.network() as network:
             with self.subnet(network=network) as subnet:
-                with self.port(subnet=subnet,
-                               device_owner='compute:nova') as parent_port:
+                with self.port(subnet=subnet) as parent_port:
                     tenant_id = uuidutils.generate_uuid()
                     trunk = {'trunk': {
                         'port_id': parent_port['port']['id'],
@@ -68,14 +67,17 @@ class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
             if row.parent_name and row.tag:
                 device_owner = row.external_ids[
                     ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY]
+                revision_number = row.external_ids[
+                    ovn_const.OVN_REV_NUM_EXT_ID_KEY]
                 ovn_trunk_info.append({'port_id': row.name,
                                        'parent_port_id': row.parent_name,
                                        'tag': row.tag,
                                        'device_owner': device_owner,
+                                       'revision_number': revision_number,
                                        })
         return ovn_trunk_info
 
-    def _verify_trunk_info(self, trunk, has_items, host=''):
+    def _verify_trunk_info(self, trunk, has_items):
         ovn_subports_info = self._get_ovn_trunk_info()
         neutron_subports_info = []
         for subport in trunk.get('sub_ports', []):
@@ -84,26 +86,18 @@ class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
                  'parent_port_id': [trunk['port_id']],
                  'tag': [subport['segmentation_id']],
                  'device_owner': trunk_consts.TRUNK_SUBPORT_OWNER,
+                 'revision_number': '2',
                  })
-            # Check the subport binding.
-            pb = port_obj.PortBinding.get_object(
-                self.context, port_id=subport['port_id'], host=host)
-            self.assertEqual(n_consts.PORT_STATUS_ACTIVE, pb.status)
-            self.assertEqual(host, pb.host)
+            # Check that the subport has the binding is active.
+            binding = obj_reg.load_class('PortBinding').get_object(
+                self.context, port_id=subport['port_id'], host='')
+            self.assertEqual(n_consts.PORT_STATUS_ACTIVE, binding['status'])
 
         self.assertCountEqual(ovn_subports_info, neutron_subports_info)
         self.assertEqual(has_items, len(neutron_subports_info) != 0)
 
         if trunk.get('status'):
             self.assertEqual(trunk_consts.TRUNK_ACTIVE_STATUS, trunk['status'])
-
-    def _bind_port(self, port_id, host):
-        with db_api.CONTEXT_WRITER.using(self.context):
-            pb = port_obj.PortBinding.get_object(self.context,
-                                                 port_id=port_id, host='')
-            pb.delete()
-            port_obj.PortBinding(self.context, port_id=port_id, host=host,
-                                 vif_type=portbindings.VIF_TYPE_OVS).create()
 
     def test_trunk_create(self):
         with self.trunk() as trunk:
@@ -141,22 +135,10 @@ class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
                 new_trunk = self.trunk_plugin.get_trunk(self.context,
                                                         trunk['id'])
                 self._verify_trunk_info(new_trunk, has_items=True)
-                # Bind parent port. That will trigger the binding of the
-                # trunk subports too, using the same host ID.
-                self._bind_port(trunk['port_id'], 'host1')
-                self.mech_driver.set_port_status_up(trunk['port_id'])
-                self._verify_trunk_info(new_trunk, has_items=True,
-                                        host='host1')
 
     def test_subport_delete(self):
         with self.subport() as subport:
             with self.trunk([subport]) as trunk:
-                # Bind parent port.
-                self._bind_port(trunk['port_id'], 'host1')
-                self.mech_driver.set_port_status_up(trunk['port_id'])
-                self._verify_trunk_info(trunk, has_items=True,
-                                        host='host1')
-
                 self.trunk_plugin.remove_subports(self.context, trunk['id'],
                                                   {'sub_ports': [subport]})
                 new_trunk = self.trunk_plugin.get_trunk(self.context,
