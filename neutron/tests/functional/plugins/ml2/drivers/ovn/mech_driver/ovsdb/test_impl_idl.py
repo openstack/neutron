@@ -383,6 +383,27 @@ class TestNbApi(BaseOvnIdlTest):
         lsp = self.nbapi.lookup('Logical_Switch_Port', lsp_name)
         self.assertEqual([], lsp.ha_chassis_group)
 
+    def test_set_router_mac_aging(self):
+        name = "aging_router1"
+        with self.nbapi.transaction(check_error=True) as txn:
+            r = txn.add(self.nbapi.lr_add(name))
+            txn.add(self.nbapi.set_router_mac_age_limit(router=name))
+        self.assertEqual(r.result.options[ovn_const.LR_OPTIONS_MAC_AGE_LIMIT],
+                         ovn_conf.get_ovn_mac_binding_age_threshold())
+
+    def test_set_router_mac_aging_all(self):
+        ovn_conf.cfg.CONF.set_override("mac_binding_age_threshold", 5,
+                                       group="ovn")
+        names = ["aging_router2", "aging_router3"]
+        with self.nbapi.transaction(check_error=True) as txn:
+            for name in names:
+                txn.add(self.nbapi.lr_add(name))
+            txn.add(self.nbapi.set_router_mac_age_limit())
+        for name in names:
+            r = self.nbapi.lookup("Logical_Router", name)
+            self.assertEqual(r.options[ovn_const.LR_OPTIONS_MAC_AGE_LIMIT],
+                             ovn_conf.get_ovn_mac_binding_age_threshold())
+
 
 class TestIgnoreConnectionTimeout(BaseOvnIdlTest):
     @classmethod

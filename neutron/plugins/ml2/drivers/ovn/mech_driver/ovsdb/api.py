@@ -183,6 +183,15 @@ class API(api.API, metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
+    def set_router_mac_age_limit(self, router=None):
+        """Set the OVN MAC_Binding age threshold
+
+        :param router: The name or UUID of a router, or None for all routers
+        :type router:  uuid.UUID or string or None
+        :returns:      :class:`Command` with no result
+        """
+
+    @abc.abstractmethod
     def add_acl(self, lswitch, lport, **columns):
         """Create an ACL for a logical port.
 

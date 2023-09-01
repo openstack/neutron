@@ -232,6 +232,11 @@ ovn_opts = [
                help=_('The number of seconds to keep FDB entries in the OVN '
                       'DB. The value defaults to 0, which means disabled. '
                       'This is supported by OVN >= 23.09.')),
+    cfg.IntOpt('mac_binding_age_threshold',
+               min=0,
+               default=0,
+               help=_('The number of seconds to keep MAC_Binding entries in '
+                      'the OVN DB. 0 to disable aging.')),
 ]
 
 nb_global_opts = [
@@ -255,6 +260,14 @@ nb_global_opts = [
                       'is 0, which is unlimited. When the limit is reached, '
                       'the next batch removal is delayed by 5 seconds. '
                       'This is supported by OVN >= 23.09.')),
+    cfg.IntOpt('mac_binding_removal_limit',
+               min=0,
+               default=0,
+               help=_('MAC binding aging bulk removal limit. This limits how '
+                      'many entries can expire in a single transaction. '
+                      'The default is 0 which is unlimited. When the limit '
+                      'is reached, the next batch removal is delayed by '
+                      '5 seconds.')),
 ]
 
 
@@ -382,3 +395,8 @@ def get_fdb_age_threshold():
 
 def get_fdb_removal_limit():
     return str(cfg.CONF.ovn_nb_global.fdb_removal_limit)
+
+
+def get_ovn_mac_binding_age_threshold():
+    # This value is always stored as a string in the OVN DB
+    return str(cfg.CONF.ovn.mac_binding_age_threshold)

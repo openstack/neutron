@@ -853,6 +853,11 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         LOG.debug("Setting NB_Global options: %s", options)
         return self.db_set("NB_Global", ".", options=options)
 
+    def set_router_mac_age_limit(self, router=None):
+        # Set the MAC_Binding age limit on OVN Logical Routers
+        return cmd.SetLRouterMacAgeLimitCommand(
+            self, router, cfg.get_ovn_mac_binding_age_threshold())
+
 
 class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
     def __init__(self, connection):
