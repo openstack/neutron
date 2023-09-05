@@ -4434,20 +4434,21 @@ class TestOVNVVirtualPort(OVNMechanismDriverTestCase):
         with self.port(subnet=self.subnet, is_admin=True) as port:
             port = port['port']
             updated_port = copy.deepcopy(port)
-            updated_port[portbindings.HOST_ID] = 'host1'
-            context = mock.Mock(current=updated_port, original=port)
+            updated_port['device_id'] = 'device_id_new'
+            updated_port[portbindings.HOST_ID] = 'host_id_new'
+            _context = mock.Mock(current=updated_port, original=port)
             with mock.patch.object(self.mech_driver._plugin, 'get_subnets') \
                     as mock_get_subnets:
                 mock_get_subnets.return_value = [self.subnet['subnet']]
                 # 1) The port is not virtual, it has no parents.
                 self.mock_vp_parents.return_value = ''
-                self.mech_driver.update_port_precommit(context)
+                self.mech_driver.update_port_precommit(_context)
                 # 2) The port (LSP) has parents, that means it is a virtual
                 # port.
                 self.mock_vp_parents.return_value = ['parent-0', 'parent-1']
                 self.assertRaises(n_exc.BadRequest,
                                   self.mech_driver.update_port_precommit,
-                                  context)
+                                  _context)
 
 
 class TestOVNAvailabilityZone(OVNMechanismDriverTestCase):
