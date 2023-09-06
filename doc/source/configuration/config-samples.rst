@@ -15,7 +15,6 @@ Sample Configuration Files
    samples/macvtap-agent.rst
    samples/openvswitch-agent.rst
    samples/sriov-agent.rst
-   samples/ovn.rst
 
 .. toctree::
    :maxdepth: 1
