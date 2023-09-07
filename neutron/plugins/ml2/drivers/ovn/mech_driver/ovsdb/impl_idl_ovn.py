@@ -926,7 +926,7 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
         return cmd.UpdateChassisExtIdsCommand(
             self, chassis, {desc_key: description}, if_exists=False)
 
-    def get_network_port_bindings_by_ip(self, network, ip_address):
+    def get_network_port_bindings_by_ip(self, network, ip_address, mac=None):
         rows = self.db_list_rows('Port_Binding').execute(check_error=True)
         # TODO(twilson) It would be useful to have a db_find that takes a
         # comparison function
@@ -935,12 +935,23 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
             # If the port is not bound to any chassis it is not relevant
             if not port.chassis:
                 return False
+            if not port.mac:
+                return False
+            # The MAC and IP address(es) are both present in port.mac as
+            # ["MAC IP {IP2...IPN}"]. If either one is present that is a
+            # match, since for link-local clients we can only match the MAC.
+            mac_ip = port.mac[0].split(' ')
+            address_match = False
+            if mac and mac in mac_ip:
+                address_match = True
+            elif ip_address in mac_ip:
+                address_match = True
+            if not address_match:
+                return False
 
             is_in_network = utils.get_network_name_from_datapath(
                 port.datapath) == network
-            return (port.mac and
-                    is_in_network and
-                    (ip_address in port.mac[0].split(' ')))
+            return is_in_network
 
         return [r for r in rows if check_net_and_ip(r)]
 

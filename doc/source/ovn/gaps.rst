@@ -61,10 +61,6 @@ at [1]_.
 
   The NDP proxy functionality for IPv6 addresses is not supported by OVN.
 
-* Metadata via IPv6
-
-  The OVN metadata agent currently does not allow access via IPv6.
-
 * East/West Fragmentation
 
   The core OVN implementation does not support fragmentation of East/West

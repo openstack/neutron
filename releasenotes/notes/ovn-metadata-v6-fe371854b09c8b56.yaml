@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    IPv6 Metadata support was added to the ML2/OVN driver. The agent now
+    provisions the ``fe80::a9fe:a9fe/128`` address to the OVN metadata
+    namespace and makes haproxy listen on it to serve metadata requests
+    to instances over IPv6.

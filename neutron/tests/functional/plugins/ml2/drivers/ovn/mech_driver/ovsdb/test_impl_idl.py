@@ -16,7 +16,9 @@ import copy
 from unittest import mock
 import uuid
 
+import netaddr
 from neutron_lib import constants
+from oslo_utils import netutils
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import connection
 from ovsdbapp import constants as const
@@ -159,12 +161,10 @@ class TestSbApi(BaseOvnIdlTest):
         val = str(uuid.uuid4())
         self.assertIsNone(self.api.get_metadata_port_network(val))
 
-    def _create_bound_port_with_ip(self):
+    def _create_bound_port_with_ip(self, mac, ipaddr):
         chassis, switch = self._add_switch(
             self.data['chassis'][0]['name'])
         port, binding = self._add_port_to_switch(switch)
-        mac = 'de:ad:be:ef:4d:ad'
-        ipaddr = '192.0.2.1'
         mac_ip = '%s %s' % (mac, ipaddr)
         pb_update_event = events.WaitForUpdatePortBindingEvent(
             port.name, mac=[mac_ip])
@@ -174,16 +174,29 @@ class TestSbApi(BaseOvnIdlTest):
         self.assertTrue(pb_update_event.wait())
         self.api.lsp_bind(port.name, chassis.name).execute(check_error=True)
 
-        return binding, ipaddr, switch
+        return binding, switch
 
     def test_get_network_port_bindings_by_ip(self):
-        binding, ipaddr, switch = self._create_bound_port_with_ip()
+        mac = 'de:ad:be:ef:4d:ad'
+        ipaddr = '192.0.2.1'
+        binding, switch = self._create_bound_port_with_ip(mac, ipaddr)
+        # binding, ipaddr, switch = self._create_bound_port_with_ip()
+        network_id = switch.name.replace('neutron-', '')
+        result = self.api.get_network_port_bindings_by_ip(network_id, ipaddr)
+        self.assertIn(binding, result)
+
+    def test_get_network_port_bindings_by_ip_ipv6_ll(self):
+        ipaddr = 'fe80::99'
+        mac = str(netutils.get_mac_addr_by_ipv6(netaddr.IPAddress(ipaddr)))
+        binding, switch = self._create_bound_port_with_ip(mac, ipaddr)
         network_id = switch.name.replace('neutron-', '')
         result = self.api.get_network_port_bindings_by_ip(network_id, ipaddr)
         self.assertIn(binding, result)
 
     def test_get_network_port_bindings_by_ip_with_unbound_port(self):
-        binding, ipaddr, switch = self._create_bound_port_with_ip()
+        mac = 'de:ad:be:ef:4d:ad'
+        ipaddr = '192.0.2.1'
+        binding, switch = self._create_bound_port_with_ip(mac, ipaddr)
         unbound_port_name = utils.get_rand_device_name(prefix="port")
         mac_ip = "de:ad:be:ef:4d:ab %s" % ipaddr
         with self.nbapi.transaction(check_error=True) as txn:
