@@ -1,0 +1,14 @@
+---
+features:
+  - |
+    In OVN 22.09 the option ``localnet_learn_fdb`` was added, enabling localnet
+    ports to learn MAC addresses and store them at the FDB table. There was no
+    aging mechanism for those MACs until OVN 23.06, where the configuration
+    option ``fdb_age_threshold`` was added. This enables to set the maximum
+    time the learned MACs will stay in the FDB table (in seconds). When the
+    ``localnet_learn_fdb`` configuration option is enabled, the proper value
+    for ``fdb_age_threshold`` should also be set, to avoid
+    performance/scalability issues due to the table growing too much --
+    especially when provider networks are large. In addition the configuration
+    option ``fdb_removal_limit`` was also added to avoid removing a large
+    number of entries at once.

@@ -20,6 +20,7 @@ from oslo_config import cfg
 from futurist import periodics
 from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import floating_ip_port_forwarding as pf_def
+from neutron_lib.api.definitions import provider_net as provnet_apidef
 from neutron_lib import constants as n_const
 from neutron_lib import context as n_context
 from neutron_lib.exceptions import l3 as lib_l3_exc
@@ -60,8 +61,12 @@ class _TestMaintenanceHelper(base.TestOVNFunctionalBase):
                     ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY) == name):
                 return row
 
-    def _create_network(self, name, external=False):
-        data = {'network': {'name': name, extnet_apidef.EXTERNAL: external}}
+    def _create_network(self, name, external=False, provider=None):
+        data = {'network': {'name': name,
+                            extnet_apidef.EXTERNAL: external}}
+        if provider:
+            data['network'][provnet_apidef.NETWORK_TYPE] = 'flat'
+            data['network'][provnet_apidef.PHYSICAL_NETWORK] = provider
         req = self.new_create_request('networks', data, self.fmt,
                                       as_admin=True)
         res = req.get_response(self.api)
@@ -755,6 +760,26 @@ class TestMaintenance(_TestMaintenanceHelper):
         self.assertEqual('true', ls['other_config'][ovn_const.MCAST_SNOOP])
         self.assertEqual(
             'false', ls['other_config'][ovn_const.MCAST_FLOOD_UNREGISTERED])
+
+    def test_check_for_aging_settings(self):
+        net = self._create_network('net', provider='datacentre')
+        ls = self.nb_api.get_lswitch(utils.ovn_name(net['id']))
+
+        self.assertEqual(
+            '0', ls.other_config.get(ovn_const.LS_OPTIONS_FDB_AGE_THRESHOLD))
+
+        # Change the value of the configuration
+        cfg.CONF.set_override('fdb_age_threshold', 5, group='ovn')
+
+        # Call the maintenance task and check that the value has been
+        # updated in the Logical Switch
+        self.assertRaises(periodics.NeverAgain,
+                          self.maint.check_fdb_aging_settings)
+
+        ls = self.nb_api.get_lswitch(utils.ovn_name(net['id']))
+
+        self.assertEqual(
+            '5', ls.other_config.get(ovn_const.LS_OPTIONS_FDB_AGE_THRESHOLD))
 
     def test_floating_ip(self):
         ext_net = self._create_network('ext_networktest', external=True)

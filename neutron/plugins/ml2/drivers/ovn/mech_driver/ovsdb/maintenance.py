@@ -798,6 +798,39 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                     txn.add(cmd)
         raise periodics.NeverAgain()
 
+    # A static spacing value is used here, but this method will only run
+    # once per lock due to the use of periodics.NeverAgain().
+    @has_lock_periodic(spacing=600, run_immediately=True)
+    def check_fdb_aging_settings(self):
+        """Check FDB aging settings
+        Ensure FDB aging settings are enforced.
+        """
+        context = n_context.get_admin_context()
+        cmds = []
+
+        config_fdb_age_threshold = ovn_conf.get_fdb_age_threshold()
+        # Get provider networks
+        nets = self._ovn_client._plugin.get_networks(context)
+        for net in nets:
+            if not utils.is_provider_network(net):
+                continue
+            ls_name = utils.ovn_name(net['id'])
+            ls = self._nb_idl.get_lswitch(ls_name)
+            ls_fdb_age_threshold = ls.other_config.get(
+                ovn_const.LS_OPTIONS_FDB_AGE_THRESHOLD)
+
+            if config_fdb_age_threshold != ls_fdb_age_threshold:
+                other_config = {ovn_const.LS_OPTIONS_FDB_AGE_THRESHOLD:
+                                config_fdb_age_threshold}
+                cmds.append(self._nb_idl.db_set(
+                    'Logical_Switch', ls_name,
+                    ('other_config', other_config)))
+        if cmds:
+            with self._nb_idl.transaction(check_error=True) as txn:
+                for cmd in cmds:
+                    txn.add(cmd)
+        raise periodics.NeverAgain()
+
     # TODO(fnordahl): Remove this in the B+3 cycle. This method removes the
     # now redundant  "external_ids:OVN_GW_NETWORK_EXT_ID_KEY" and
     # "external_ids:OVN_GW_PORT_EXT_ID_KEY" from to each router.

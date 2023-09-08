@@ -226,6 +226,12 @@ ovn_opts = [
                        'flooding for traffic towards unknown IPs when port '
                        'security is disabled. It requires OVN 22.09 or '
                        'newer.')),
+    cfg.IntOpt('fdb_age_threshold',
+               min=0,
+               default=0,
+               help=_('The number of seconds to keep FDB entries in the OVN '
+                      'DB. The value defaults to 0, which means disabled. '
+                      'This is supported by OVN >= 23.09.')),
 ]
 
 nb_global_opts = [
@@ -241,6 +247,14 @@ nb_global_opts = [
                        'is not an issue, setting it to True can reduce '
                        'the load and latency of the control plane. '
                        'The default value is False.')),
+    cfg.IntOpt('fdb_removal_limit',
+               min=0,
+               default=0,
+               help=_('FDB aging bulk removal limit. This limits how many '
+                      'rows can expire in a single transaction. Default '
+                      'is 0, which is unlimited. When the limit is reached, '
+                      'the next batch removal is delayed by 5 seconds. '
+                      'This is supported by OVN >= 23.09.')),
 ]
 
 
@@ -360,3 +374,11 @@ def is_ovn_dhcp_disabled_for_baremetal():
 
 def is_learn_fdb_enabled():
     return cfg.CONF.ovn.localnet_learn_fdb
+
+
+def get_fdb_age_threshold():
+    return str(cfg.CONF.ovn.fdb_age_threshold)
+
+
+def get_fdb_removal_limit():
+    return str(cfg.CONF.ovn_nb_global.fdb_removal_limit)

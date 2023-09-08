@@ -891,6 +891,37 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         self.fake_ovn_client._nb_idl.db_set.assert_has_calls(
             expected_calls)
 
+    def test_check_fdb_aging_settings(self):
+        cfg.CONF.set_override('fdb_age_threshold', 5, group='ovn')
+        networks = [{'id': 'foo',
+                     'provider:physical_network': 'datacentre'}]
+        self.fake_ovn_client._plugin.get_networks.return_value = networks
+        fake_ls = mock.Mock(other_config={})
+        self.fake_ovn_client._nb_idl.get_lswitch.return_value = fake_ls
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.periodic.check_fdb_aging_settings)
+
+        self.fake_ovn_client._nb_idl.db_set.assert_called_once_with(
+            'Logical_Switch', 'neutron-foo',
+            ('other_config', {constants.LS_OPTIONS_FDB_AGE_THRESHOLD: '5'}))
+
+    def test_check_fdb_aging_settings_with_threshold_set(self):
+        cfg.CONF.set_override('fdb_age_threshold', 5, group='ovn')
+        networks = [{'id': 'foo',
+                     'provider:network_type': n_const.TYPE_VLAN}]
+        self.fake_ovn_client._plugin.get_networks.return_value = networks
+        fake_ls = mock.Mock(other_config={
+            constants.LS_OPTIONS_FDB_AGE_THRESHOLD: '5'})
+        self.fake_ovn_client._nb_idl.get_lswitch.return_value = fake_ls
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.periodic.check_fdb_aging_settings)
+
+        self.fake_ovn_client._nb_idl.db_set.assert_not_called()
+
     def test_remove_gw_ext_ids_from_logical_router(self):
         nb_idl = self.fake_ovn_client._nb_idl
         # lr0: GW port ID, not GW network ID --> we need to remove port ID.
