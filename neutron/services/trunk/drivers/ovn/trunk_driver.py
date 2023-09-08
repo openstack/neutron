@@ -14,7 +14,6 @@ from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
-from neutron_lib import constants as n_const
 from neutron_lib import context as n_context
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
@@ -52,11 +51,7 @@ class OVNTrunkHandler(object):
         context = n_context.get_admin_context()
         db_parent_port = port_obj.Port.get_object(context, id=parent_port)
         parent_port_status = db_parent_port.status
-        try:
-            parent_port_bindings = [pb for pb in db_parent_port.bindings
-                                    if pb.status == n_const.ACTIVE][-1]
-        except IndexError:
-            parent_port_bindings = None
+        parent_port_bindings = db_parent_port.bindings[0]
         for subport in subports:
             with db_api.CONTEXT_WRITER.using(context), (
                     txn(check_error=True)) as ovn_txn:
@@ -90,10 +85,8 @@ class OVNTrunkHandler(object):
             db_port.id, db_port, ovn_const.TYPE_PORTS)
         ovn_txn.add(check_rev_cmd)
         parent_binding_host = ''
-        if parent_port_bindings and parent_port_bindings.host:
-            migrating_to = parent_port_bindings.profile.get(
-                ovn_const.MIGRATING_ATTR)
-            parent_binding_host = migrating_to or parent_port_bindings.host
+        if parent_port_bindings.host:
+            parent_binding_host = parent_port_bindings.host
         try:
             # NOTE(flaviof): We expect binding's host to be set. Otherwise,
             # sub-port will not transition from DOWN to ACTIVE.
