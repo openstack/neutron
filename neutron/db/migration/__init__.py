@@ -39,6 +39,7 @@ YOGA = 'yoga'
 ZED = 'zed'
 RELEASE_2023_1 = '2023.1'
 RELEASE_2023_2 = '2023.2'
+RELEASE_2024_1 = '2024.1'
 
 NEUTRON_MILESTONES = [
     # earlier milestones were not tagged

@@ -17,6 +17,8 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import sql
 
+from neutron.db import migration
+
 
 """Add ECMP and BFD router-level policy attributes
 Revision ID: 89c58a70ceba
@@ -28,6 +30,9 @@ Create Date: 2023-02-22 21:08:33.593101
 # revision identifiers, used by Alembic.
 revision = '89c58a70ceba'
 down_revision = 'c33da356b165'
+
+# milestone identifier, used by neutron-db-manage
+neutron_milestone = [migration.RELEASE_2023_2]
 
 
 def upgrade():
