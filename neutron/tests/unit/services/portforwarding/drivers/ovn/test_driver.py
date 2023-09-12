@@ -14,14 +14,6 @@
 
 from unittest import mock
 
-from neutron.common.ovn import constants as ovn_const
-from neutron.objects import port_forwarding as port_forwarding_obj
-from neutron.services.portforwarding.constants import PORT_FORWARDING
-from neutron.services.portforwarding.constants import PORT_FORWARDING_PLUGIN
-from neutron.services.portforwarding.drivers.ovn import driver \
-    as port_forwarding
-from neutron.tests import base
-from neutron.tests.unit import fake_resources
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -29,6 +21,18 @@ from neutron_lib import constants as const
 from neutron_lib.plugins import constants as plugin_constants
 from oslo_utils import uuidutils
 from ovsdbapp import constants as ovsdbapp_const
+
+from neutron.common.ovn import constants as ovn_const
+from neutron.common.ovn import exceptions as ovn_exc
+from neutron.common.ovn import utils as ovn_utils
+from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
+from neutron.objects import port_forwarding as port_forwarding_obj
+from neutron.services.portforwarding.constants import PORT_FORWARDING
+from neutron.services.portforwarding.constants import PORT_FORWARDING_PLUGIN
+from neutron.services.portforwarding.drivers.ovn import driver \
+    as port_forwarding
+from neutron.tests import base
+from neutron.tests.unit import fake_resources
 
 
 class TestOVNPortForwardingBase(base.BaseTestCase):
@@ -450,6 +454,7 @@ class TestOVNPortForwardingHandler(TestOVNPortForwardingBase):
 class TestOVNPortForwarding(TestOVNPortForwardingBase):
     def setUp(self):
         super(TestOVNPortForwarding, self).setUp()
+        ovn_conf.register_opts()
         self.pf_plugin = mock.Mock()
         self.handler = mock.Mock()
         get_mock_pf_plugin = lambda alias: self.pf_plugin if (
@@ -474,6 +479,25 @@ class TestOVNPortForwarding(TestOVNPortForwardingBase):
         self.assertEqual(self._ovn_pf._l3_plugin, self.l3_plugin)
         self.assertEqual(self._ovn_pf._handler, self.handler)
         self.assertEqual(self._ovn_pf._pf_plugin, self.pf_plugin)
+
+    def test__validate_configuration_ok(self):
+        with mock.patch.object(
+                port_forwarding.LOG, "warning") as mock_warning, \
+                mock.patch.object(ovn_utils,
+                                  "validate_port_forwarding_configuration"):
+
+            self._ovn_pf._validate_configuration()
+            mock_warning.assert_not_called()
+
+    def test__validate_configuration_wrong(self):
+        with mock.patch.object(
+                port_forwarding.LOG, "warning") as mock_warning, \
+                mock.patch.object(
+                    ovn_utils,
+                    "validate_port_forwarding_configuration",
+                    side_effect=ovn_exc.InvalidPortForwardingConfiguration):
+            self._ovn_pf._validate_configuration()
+            mock_warning.assert_called_once_with(mock.ANY)
 
     def test_register(self):
         with mock.patch.object(registry, 'subscribe') as mock_subscribe:
