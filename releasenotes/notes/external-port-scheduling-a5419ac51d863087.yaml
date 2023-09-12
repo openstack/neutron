@@ -1,0 +1,14 @@
+---
+features:
+  - |
+    A new ovn-cms-options option called ``enable-chassis-as-extport-host``
+    is now recognized by ML2/OVN and is used to identify nodes that are
+    eligible for scheduling OVN's external ports. This feature is backward
+    compatible and if no nodes contain this new option the external
+    ports will continue to be scheduled using the ``enable-chassis-as-gw``
+    option as before.
+    This change also introduces a limit to the number of members for each
+    HA Chassis Group to 5, matching the limit of gateway router port
+    replicas. This is because OVN uses BFD to monitor the connectivity
+    of each member and having an unlimited number of members could
+    potentially put a lot of stress in OVN.

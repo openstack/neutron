@@ -664,6 +664,20 @@ class SbAPI(api.API, metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
+    def get_extport_chassis_from_cms_options(self):
+        """Get chassis eligible for hosting external ports from CMS options.
+
+        When admin wants to enable hosting external ports on different
+        chassis than gateway chassis as
+
+        ovs-vsctl set open .
+           external_ids:ovn-cms-options="enable-chassis-as-extport-host"
+        In this function, we parse ovn-cms-options and return these chassis
+
+        :returns: List with chassis
+        """
+
+    @abc.abstractmethod
     def get_chassis_and_physnets(self):
         """Return a dict contains chassis name and physnets mapping.
 
@@ -677,4 +691,12 @@ class SbAPI(api.API, metaclass=abc.ABCMeta):
 
         :param chassis_type:    The type of chassis
         :type chassis_type:     string
+        """
+
+    @abc.abstractmethod
+    def get_chassis_host_for_port(self, port_id):
+        """Return a list of Chassis name hosting the port
+
+        :param port_id: The port ID
+        :type port_id:  string
         """
