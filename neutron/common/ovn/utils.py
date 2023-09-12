@@ -1242,3 +1242,20 @@ def get_requested_chassis(requested_chassis):
 # becomes the norm and older versions of OVN are no longer supported
 def is_additional_chassis_supported(idl):
     return idl.is_col_present('Port_Binding', 'additional_chassis')
+
+
+def validate_port_forwarding_configuration():
+    if not ovn_conf.is_ovn_distributed_floating_ip():
+        return
+
+    pf_plugin_names = [
+        'port_forwarding',
+        'neutron.services.portforwarding.pf_plugin.PortForwardingPlugin']
+    if not any(plugin in pf_plugin_names
+               for plugin in cfg.CONF.service_plugins):
+        return
+
+    provider_network_types = ['vlan', 'flat']
+    if any(net_type in provider_network_types
+           for net_type in cfg.CONF.ml2.tenant_network_types):
+        raise ovn_exc.InvalidPortForwardingConfiguration()

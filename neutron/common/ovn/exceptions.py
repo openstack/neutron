@@ -37,3 +37,10 @@ class HashRingIsEmpty(n_exc.NeutronException):
                 '%(node_count)d nodes were found offline. This should never '
                 'happen in a normal situation, please check the status '
                 'of your cluster')
+
+
+class InvalidPortForwardingConfiguration(n_exc.NeutronException):
+    message = _('Neutron configuration is invalid. Port forwardings '
+                'can not be used with ML2/OVN backend, distributed '
+                'floating IPs and provider network type(s) used as '
+                'tenant networks.')

@@ -18,6 +18,8 @@ from oslo_config import cfg
 from oslo_upgradecheck.upgradecheck import Code
 
 from neutron.cmd.upgrade_checks import checks
+from neutron.common.ovn import exceptions as ovn_exc
+from neutron.common.ovn import utils as ovn_utils
 from neutron.tests import base
 
 
@@ -297,3 +299,25 @@ class TestChecks(base.BaseTestCase):
         result = checks.CoreChecks.duplicated_ha_network_per_project_check(
             mock.ANY)
         self.assertEqual(Code.WARNING, result.code)
+
+    def test_ovn_port_forwarding_configuration_check_ovn_l3_success(self):
+        cfg.CONF.set_override("service_plugins", 'ovn-router')
+        with mock.patch.object(
+                ovn_utils,
+                'validate_port_forwarding_configuration') as validate_mock:
+            result = checks.CoreChecks.ovn_port_forwarding_configuration_check(
+                mock.ANY)
+            self.assertEqual(Code.SUCCESS, result.code)
+            validate_mock.assert_called_once_with()
+
+    def test_ovn_port_forwarding_configuration_check_ovn_l3_failure(self):
+        cfg.CONF.set_override("service_plugins", 'ovn-router')
+        with mock.patch.object(
+                ovn_utils,
+                'validate_port_forwarding_configuration',
+                side_effect=ovn_exc.InvalidPortForwardingConfiguration
+        ) as validate_mock:
+            result = checks.CoreChecks.ovn_port_forwarding_configuration_check(
+                mock.ANY)
+            self.assertEqual(Code.WARNING, result.code)
+            validate_mock.assert_called_once_with()
