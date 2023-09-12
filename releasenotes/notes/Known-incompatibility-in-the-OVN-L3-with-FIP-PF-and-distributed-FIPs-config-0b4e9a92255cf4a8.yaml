@@ -1,0 +1,13 @@
+---
+issues:
+  - |
+    When ``ML2/OVN`` backend and it's L3 service plugin (``ovn-router``) are
+    used together with "vlan" or "flat" network types used as tenant network
+    type, floating IP port forwarding (FIP PF) will not work if distributed
+    Floating IPs are enabled (``enable_distributed_floating_ip`` = ``True``).
+    To workaround this issue one of the following changes needs to be done:
+
+    * tunnel networks ("geneve" or "vxlan") should be used as tenant network types or
+    * Floating IPs should be centralized (``enable_distributed_floating_ip`` = ``False``).
+
+    For more details see `bug 2028846 <https://bugs.launchpad.net/neutron/+bug/2028846>`_.
