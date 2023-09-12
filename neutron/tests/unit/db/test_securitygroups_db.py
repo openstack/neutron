@@ -126,8 +126,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                                   '_check_for_duplicate_rules'),\
                 mock.patch.object(registry, "publish") as mock_publish:
             mock_publish.side_effect = exceptions.CallbackFailure(Exception())
-            with testtools.ExpectedException(
-                    securitygroup.SecurityGroupConflict):
+            with testtools.ExpectedException(exceptions.CallbackFailure):
                 self.mixin.create_security_group_rule(
                     self.ctx, FAKE_SECGROUP_RULE)
 
@@ -203,8 +202,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
     def test_delete_security_group_rule_in_use(self):
         with mock.patch.object(registry, "publish") as mock_publish:
             mock_publish.side_effect = exceptions.CallbackFailure(Exception())
-            with testtools.ExpectedException(
-                    securitygroup.SecurityGroupRuleInUse):
+            with testtools.ExpectedException(exceptions.CallbackFailure):
                 self.mixin.delete_security_group_rule(self.ctx, mock.ANY)
 
     def test_delete_security_group_rule_raise_error_on_not_found(self):

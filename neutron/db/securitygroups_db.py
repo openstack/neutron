@@ -441,13 +441,10 @@ class SecurityGroupDbMixin(
         if port_range_max is not None:
             args['port_range_max'] = port_range_max
 
-        self._registry_publish(
-            resources.SECURITY_GROUP_RULE,
-            events.BEFORE_CREATE,
-            exc_cls=ext_sg.SecurityGroupConflict,
-            payload=events.DBEventPayload(
-                context, resource_id=args['id'],
-                states=(args,)))
+        registry.publish(
+            resources.SECURITY_GROUP_RULE, events.BEFORE_CREATE, self,
+            payload=events.DBEventPayload(context, resource_id=args['id'],
+                                          states=(args,)))
 
         with db_api.CONTEXT_WRITER.using(context):
             if validate:
@@ -1048,11 +1045,11 @@ class SecurityGroupDbMixin(
 
     @db_api.retry_if_session_inactive()
     def delete_security_group_rule(self, context, id):
-        self._registry_publish(resources.SECURITY_GROUP_RULE,
-                               events.BEFORE_DELETE,
-                               exc_cls=ext_sg.SecurityGroupRuleInUse,
-                               payload=events.DBEventPayload(
-                                   context, resource_id=id,))
+        registry.publish(resources.SECURITY_GROUP_RULE,
+                         events.BEFORE_DELETE,
+                         self,
+                         payload=events.DBEventPayload(
+                             context, resource_id=id))
 
         with db_api.CONTEXT_WRITER.using(context):
             sgr = self._get_security_group_rule(context, id)
