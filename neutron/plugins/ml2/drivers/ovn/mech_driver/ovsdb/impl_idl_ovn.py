@@ -875,9 +875,11 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
     def get_gateway_chassis_from_cms_options(self, name_only=True):
         return [ch.name if name_only else ch
                 for ch in self.chassis_list().execute(check_error=True)
-                if ovn_const.CMS_OPT_CHASSIS_AS_GW in
-                utils.get_ovn_chassis_other_config(ch).get(
-                    ovn_const.OVN_CMS_OPTIONS, '').split(',')]
+                if utils.is_gateway_chassis(ch)]
+
+    def get_extport_chassis_from_cms_options(self):
+        return [ch for ch in self.chassis_list().execute(check_error=True)
+                if utils.is_extport_host_chassis(ch)]
 
     def get_chassis_and_physnets(self):
         chassis_info_dict = {}
@@ -964,3 +966,19 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
     def db_set(self, table, record, *col_values, if_exists=True, **columns):
         return cmd.DbSetCommand(self, table, record, *col_values,
                                 if_exists=if_exists, **columns)
+
+    def get_chassis_host_for_port(self, port_id):
+        chassis = set()
+        cmd = self.db_find_rows('Port_Binding', ('logical_port', '=', port_id))
+        for row in cmd.execute(check_error=True):
+            try:
+                chassis.add(row.chassis[0].name)
+            except IndexError:
+                # Do not short-circuit here. Proceed to additional
+                # chassis handling
+                pass
+
+            if utils.is_additional_chassis_supported(self):
+                for ch in row.additional_chassis:
+                    chassis.add(ch.name)
+        return chassis

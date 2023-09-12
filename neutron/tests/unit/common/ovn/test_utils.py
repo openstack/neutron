@@ -61,17 +61,30 @@ class TestUtils(base.BaseTestCase):
             resolver_file=resolver_file_name)
         self.assertEqual(expected_dns_resolvers, observed_dns_resolvers)
 
-    def test_is_gateway_chassis(self):
+    def _test_is_chassis(self, is_gateway=False, is_extport=False):
+        if is_gateway:
+            cms_option_value = constants.CMS_OPT_CHASSIS_AS_GW
+            func = utils.is_gateway_chassis
+        if is_extport:
+            cms_option_value = constants.CMS_OPT_CHASSIS_AS_EXTPORT_HOST
+            func = utils.is_extport_host_chassis
+
         chassis = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
-            'other_config': {'ovn-cms-options': 'enable-chassis-as-gw'}})
-        non_gw_chassis_0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
+            'other_config': {'ovn-cms-options': cms_option_value}})
+        wrong_chassis_0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
             'other_config': {'ovn-cms-options': ''}})
-        non_gw_chassis_1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
+        wrong_chassis_1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
             'other_config': {}})
 
-        self.assertTrue(utils.is_gateway_chassis(chassis))
-        self.assertFalse(utils.is_gateway_chassis(non_gw_chassis_0))
-        self.assertFalse(utils.is_gateway_chassis(non_gw_chassis_1))
+        self.assertTrue(func(chassis))
+        self.assertFalse(func(wrong_chassis_0))
+        self.assertFalse(func(wrong_chassis_1))
+
+    def test_is_gateway_chassis(self):
+        self._test_is_chassis(is_gateway=True)
+
+    def test_is_extport_host_chassis(self):
+        self._test_is_chassis(is_extport=True)
 
     def test_get_chassis_availability_zones_no_azs(self):
         chassis = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
@@ -179,7 +192,7 @@ class TestUtils(base.BaseTestCase):
             set(),
             utils.get_chassis_in_azs(chassis_list, ['az6']))
 
-    def test_get_gateway_chassis_without_azs(self):
+    def test_get_chassis_without_azs(self):
         ch0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={
             'name': 'ch0',
             'other_config': {
@@ -200,8 +213,8 @@ class TestUtils(base.BaseTestCase):
 
         chassis_list = [ch0, ch1, ch2, ch3]
         self.assertEqual(
-            {'ch1'},
-            utils.get_gateway_chassis_without_azs(chassis_list))
+            {'ch1', 'ch3'},
+            utils.get_chassis_without_azs(chassis_list))
 
     def test_is_ovn_lb_hm_port(self):
         ovn_lb_hm_port = {

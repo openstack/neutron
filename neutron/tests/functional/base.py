@@ -425,7 +425,7 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
 
     def add_fake_chassis(self, host, physical_nets=None, external_ids=None,
                          name=None, azs=None, enable_chassis_as_gw=False,
-                         other_config=None):
+                         enable_chassis_as_extport=False, other_config=None):
         def append_cms_options(ext_ids, value):
             if 'ovn-cms-options' not in ext_ids:
                 ext_ids['ovn-cms-options'] = value
@@ -442,6 +442,8 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
             other_config['ovn-cms-options'] += ':'.join(azs)
         if enable_chassis_as_gw:
             append_cms_options(other_config, 'enable-chassis-as-gw')
+        if enable_chassis_as_extport:
+            append_cms_options(other_config, 'enable-chassis-as-extport-host')
 
         bridge_mapping = ",".join(["%s:br-provider%s" % (phys_net, i)
                                   for i, phys_net in enumerate(physical_nets)])

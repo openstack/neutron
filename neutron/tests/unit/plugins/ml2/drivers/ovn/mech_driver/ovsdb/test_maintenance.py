@@ -451,10 +451,10 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
 
         # Assert sync_ha_chassis_group() is called for both networks
         expected_calls = [
-            mock.call(mock.ANY, 'net0',
+            mock.call(mock.ANY, 'p0', 'net0',
                       self.fake_ovn_client._nb_idl,
                       self.fake_ovn_client._sb_idl, mock.ANY),
-            mock.call(mock.ANY, 'net1',
+            mock.call(mock.ANY, 'p1', 'net1',
                       self.fake_ovn_client._nb_idl,
                       self.fake_ovn_client._sb_idl, mock.ANY),
         ]
