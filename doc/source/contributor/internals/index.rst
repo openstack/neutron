@@ -48,6 +48,7 @@ Neutron Internals
    linuxbridge_agent
    live_migration
    local_ips
+   metadata
    ml2_ext_manager
    network_ip_availability
    objects_usage
