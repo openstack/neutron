@@ -1,23 +1,23 @@
 ---
 features:
   - |
-    New API which allows to define own set of the security group rules used
-    automatically in every new ``default`` and/or custom security group created
-    for projects.
+    A new API which allows a cloud administrator to define their own set of
+    security group rules added automatically to every new ``default`` and/or
+    custom security group created for projects.
 upgrade:
   - |
-    During upgrade process set of 4 default security group rules will be created
-    in the Neutron database. Those rules are the same as default rules added to
-    every new security group up to now:
+    During the upgrade process, a set of four default security group rules will
+    be created in the Neutron database. Those rules are the same default
+    rules added to every new security group up to now:
 
-      * rule to allow all egress IPv4 traffic (for all default and custom
-        Security groups),
-      * rule to allow all egress IPv6 traffic (for all default and custom
-        Security groups),
-      * rule to allow all ingress IPv4 traffic from the same security group
-        (for default security group in each project),
-      * rule to allow all ingress IPv6 traffic from the same security group
-        (for default security group in each project).
+    * rule to allow all egress IPv4 traffic (for all default and custom
+      Security groups),
+    * rule to allow all egress IPv6 traffic (for all default and custom
+      Security groups),
+    * rule to allow all ingress IPv4 traffic from the same security group
+      (for default security group in each project),
+    * rule to allow all ingress IPv6 traffic from the same security group
+      (for default security group in each project).
 
-    Those rules can now be modified by cloud administrator using
+    Those rules can now be modified by a cloud administrator using the
     ``default-security-group-rules`` API.
