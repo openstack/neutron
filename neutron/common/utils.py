@@ -34,8 +34,11 @@ import uuid
 import eventlet
 from eventlet.green import subprocess
 import netaddr
+from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import portbindings_extended
 from neutron_lib import constants as n_const
 from neutron_lib.db import api as db_api
+from neutron_lib.plugins import utils as plugin_utils
 from neutron_lib.services.trunk import constants as trunk_constants
 from neutron_lib.utils import helpers
 from oslo_config import cfg
@@ -1021,3 +1024,16 @@ def skip_exceptions(exceptions):
                         ctx.reraise = False
         return wrapper
     return decorator
+
+
+# TODO(slaweq): this should be moved to neutron_lib.plugins.utils module
+def is_port_bound(port, log_message=True):
+    active_binding = plugin_utils.get_port_binding_by_status_and_host(
+        port.get('port_bindings', []), n_const.ACTIVE)
+    if not active_binding:
+        if log_message:
+            LOG.warning('Binding for port %s was not found.', port)
+        return False
+    return active_binding[portbindings_extended.VIF_TYPE] not in (
+        portbindings.VIF_TYPE_UNBOUND,
+        portbindings.VIF_TYPE_BINDING_FAILED)

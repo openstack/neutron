@@ -290,6 +290,7 @@ class TestTrunkHandler(base.BaseTestCase):
         original_subport.port_id = 'original_subport_port_id'
         payload.current_trunk.sub_ports = [current_subport]
         payload.original_trunk.sub_ports = [original_subport]
+        payload.states = [payload.original_trunk, mock.ANY]
         return payload
 
     @mock.patch.object(trunk_driver.OVNTrunkHandler, '_set_sub_ports')

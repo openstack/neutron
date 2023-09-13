@@ -1514,7 +1514,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             self.assertTrue(
                 self.mixin.is_router_distributed(self.ctx, router_id))
 
-    @mock.patch.object(l3_dvr_db, "is_port_bound")
+    @mock.patch.object(common_utils, 'is_port_bound')
     def test_get_ports_under_dvr_connected_subnet(self, is_port_bound_mock):
         router_dict = {'name': 'test_router', 'admin_state_up': True,
                        'distributed': True}

@@ -171,10 +171,14 @@ class TrunkPluginTestCase(test_plugin.Ml2PluginV2TestCase):
             trunk = self._create_test_trunk(parent_port)
             trunk_obj = self._get_trunk_obj(trunk['id'])
             self.trunk_plugin.delete_trunk(self.context, trunk['id'])
-            payload = callbacks.TrunkPayload(self.context, trunk['id'],
-                                             original_trunk=trunk_obj)
             callback.assert_called_once_with(
-                resources.TRUNK, event, self.trunk_plugin, payload=payload)
+                resources.TRUNK, event, self.trunk_plugin, payload=mock.ANY)
+            payload = callback.mock_calls[0][2]['payload']
+            self.assertEqual(self.context, payload.context)
+            self.assertEqual(trunk_obj, payload.original_trunk)
+            self.assertEqual(parent_port['port']['id'],
+                             payload.current_trunk.id)
+            self.assertEqual(trunk['id'], payload.trunk_id)
 
     def test_delete_trunk_notify_after_delete(self):
         self._test_trunk_delete_notify(events.AFTER_DELETE)
