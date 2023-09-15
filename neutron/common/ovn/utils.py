@@ -1216,3 +1216,7 @@ def get_requested_chassis(requested_chassis):
 # becomes the norm and older versions of OVN are no longer supported
 def is_additional_chassis_supported(idl):
     return idl.is_col_present('Port_Binding', 'additional_chassis')
+
+
+def is_nat_gateway_port_supported(idl):
+    return idl.is_col_present('NAT', 'gateway_port')

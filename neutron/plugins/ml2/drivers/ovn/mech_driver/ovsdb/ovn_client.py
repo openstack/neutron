@@ -847,6 +847,14 @@ class OVNClient(object):
                    'logical_port': floatingip['port_id'],
                    'external_ids': ext_ids}
 
+        # If OVN supports gateway_port column for NAT rules set gateway port
+        # uuid to any floating IP without gw port reference - LP#2035281.
+        if utils.is_nat_gateway_port_supported(self._nb_idl):
+            router_db = self._l3_plugin.get_router(admin_context, router_id)
+            gw_port_id = router_db.get('gw_port_id')
+            lrp = self._nb_idl.get_lrouter_port(gw_port_id)
+            columns['gateway_port'] = lrp.uuid
+
         if ovn_conf.is_ovn_distributed_floating_ip():
             if self._nb_idl.lsp_get_up(floatingip['port_id']).execute():
                 columns['external_mac'] = port_db['mac_address']
