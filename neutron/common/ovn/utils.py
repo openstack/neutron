@@ -1268,3 +1268,7 @@ def validate_port_forwarding_configuration():
     if any(net_type in provider_network_types
            for net_type in cfg.CONF.ml2.tenant_network_types):
         raise ovn_exc.InvalidPortForwardingConfiguration()
+
+
+def is_nat_gateway_port_supported(idl):
+    return idl.is_col_present('NAT', 'gateway_port')

@@ -307,6 +307,9 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             'neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.ovn_client.'
             'OVNClient.delete_mac_binding_entries_by_mac',
             return_value=1)
+        self._start_mock(
+            'neutron.common.ovn.utils.is_nat_gateway_port_supported',
+            return_value=False)
 
     def test__plugin_driver(self):
         # No valid mech drivers should raise an exception.
@@ -1142,6 +1145,58 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.l3_inst._nb_ovn.db_clear.assert_has_calls([
             mock.call('NAT', self.fake_ovn_nat_rule.uuid, 'external_mac'),
             mock.call('NAT', self.fake_ovn_nat_rule.uuid, 'logical_port')])
+
+    def _test_create_floatingip_gateway_port_option(self, is_gw_port):
+        _nb_ovn = self.l3_inst._nb_ovn
+        _nb_ovn.is_col_present.return_value = True
+        self._get_floatingip.return_value = {'floating_port_id': 'fip-port-id'}
+        _nb_ovn.get_lrouter_nat_rules.return_value = [
+            {'external_ip': '192.168.0.10', 'logical_ip': '10.0.0.0/24',
+             'type': 'snat', 'uuid': 'uuid1'}]
+        utils.is_nat_gateway_port_supported.return_value = is_gw_port
+
+        lrp = fake_resources.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'options': {}})
+        _nb_ovn.get_lrouter_port.return_value = lrp
+        self.l3_inst.get_router.return_value = self.fake_router_with_ext_gw
+
+        self.l3_inst.create_floatingip(self.context, 'floatingip')
+        _nb_ovn.set_nat_rule_in_lrouter.assert_not_called()
+
+        expected_ext_ids = {
+            ovn_const.OVN_FIP_EXT_ID_KEY: self.fake_floating_ip['id'],
+            ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
+            ovn_const.OVN_FIP_PORT_EXT_ID_KEY:
+                self.fake_floating_ip['port_id'],
+            ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: utils.ovn_name(
+                self.fake_floating_ip['router_id']),
+            ovn_const.OVN_FIP_EXT_MAC_KEY: 'aa:aa:aa:aa:aa:aa',
+            ovn_const.OVN_FIP_NET_ID:
+                self.fake_floating_ip['floating_network_id']}
+
+        if is_gw_port:
+            _nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
+                'neutron-router-id',
+                type='dnat_and_snat',
+                logical_ip='10.0.0.10',
+                external_ip='192.168.0.10',
+                logical_port='port_id',
+                external_ids=expected_ext_ids,
+                gateway_port=lrp.uuid)
+        else:
+            _nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
+                'neutron-router-id',
+                type='dnat_and_snat',
+                logical_ip='10.0.0.10',
+                external_ip='192.168.0.10',
+                logical_port='port_id',
+                external_ids=expected_ext_ids)
+
+    def test_create_floatingip_with_gateway_port(self):
+        self._test_create_floatingip_gateway_port_option(True)
+
+    def test_create_floatingip_without_gateway_port(self):
+        self._test_create_floatingip_gateway_port_option(False)
 
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.delete_floatingip')
     def test_delete_floatingip(self, df):

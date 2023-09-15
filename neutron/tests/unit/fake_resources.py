@@ -165,6 +165,7 @@ class FakeOvsdbNbOvnIdl(object):
         self.get_lrouter_gw_ports = mock.Mock()
         self.lrp_get = mock.Mock()
         self.get_schema_version = mock.Mock(return_value='3.6.0')
+        self.get_lrouter_port = mock.Mock()
 
 
 class FakeOvsdbSbOvnIdl(object):

@@ -1038,6 +1038,65 @@ class TestMaintenance(_TestMaintenanceHelper):
         # "Chassis_Private" register was missing.
         self.assertEqual(2, len(chassis_result))
 
+    def test_floating_ip_with_gateway_port(self):
+        ext_net = self._create_network('ext_networktest', external=True)
+        ext_subnet = self._create_subnet(
+            'ext_subnettest',
+            ext_net['id'],
+            **{'cidr': '100.0.0.0/24',
+               'gateway_ip': '100.0.0.254',
+               'allocation_pools': [
+                   {'start': '100.0.0.2', 'end': '100.0.0.253'}],
+               'enable_dhcp': False})
+        net1 = self._create_network('network1test', external=False)
+        subnet1 = self._create_subnet('subnet1test', net1['id'])
+        external_gateway_info = {
+            'enable_snat': True,
+            'network_id': ext_net['id'],
+            'external_fixed_ips': [
+                {'ip_address': '100.0.0.2', 'subnet_id': ext_subnet['id']}]}
+        router = self._create_router(
+            'routertest', external_gateway_info=external_gateway_info)
+        self._add_router_interface(router['id'], subnet1['id'])
+
+        p1 = self._create_port('testp1', net1['id'])
+        logical_ip = p1['fixed_ips'][0]['ip_address']
+        fip_info = {'floatingip': {
+            'tenant_id': self._tenant_id,
+            'description': 'test_fip',
+            'floating_network_id': ext_net['id'],
+            'port_id': p1['id'],
+            'fixed_ip_address': logical_ip}}
+
+        # Create floating IP without gateway_port
+        with mock.patch.object(utils,
+                'is_nat_gateway_port_supported', return_value=False):
+            fip = self.l3_plugin.create_floatingip(self.context, fip_info)
+
+        self.assertEqual(router['id'], fip['router_id'])
+        self.assertEqual('testp1', fip['port_details']['name'])
+        self.assertIsNotNone(self.nb_api.get_lswitch_port(fip['port_id']))
+
+        rules = self.nb_api.get_all_logical_routers_with_rports()[0]
+        fip_rule = rules['dnat_and_snats'][0]
+        if utils.is_nat_gateway_port_supported(self.nb_api):
+            self.assertEqual([], fip_rule['gateway_port'])
+        else:
+            self.assertNotIn('gateway_port', fip_rule)
+
+        # Call the maintenance task and check that the value has been
+        # updated in the NAT rule
+        self.assertRaises(periodics.NeverAgain,
+            self.maint.update_nat_floating_ip_with_gateway_port_reference)
+
+        rules = self.nb_api.get_all_logical_routers_with_rports()[0]
+        fip_rule = rules['dnat_and_snats'][0]
+
+        if utils.is_nat_gateway_port_supported(self.nb_api):
+            self.assertNotEqual([], fip_rule['gateway_port'])
+        else:
+            self.assertNotIn('gateway_port', fip_rule)
+
 
 class TestLogMaintenance(_TestMaintenanceHelper,
                          test_log_driver.LogApiTestCaseBase):

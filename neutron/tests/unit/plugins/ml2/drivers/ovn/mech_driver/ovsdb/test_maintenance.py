@@ -1130,3 +1130,66 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
                                     external_ids=external_ids)]
         nb_idl.set_lswitch_port.assert_has_calls(expected_calls)
         self.assertEqual(2, nb_idl.set_lswitch_port.call_count)
+
+    def test_update_nat_floating_ip_with_gateway_port(self):
+        _nb_idl = self.fake_ovn_client._nb_idl
+        utils.is_nat_gateway_port_supported.return_value = True
+
+        lrp = fakes.FakeOvsdbRow.create_one_ovsdb_row(attrs={'options': {}})
+        _nb_idl.get_lrouter_port.return_value = lrp
+        self.fake_external_fixed_ips = {
+            'network_id': 'ext-network-id',
+            'external_fixed_ips': [{'ip_address': '20.0.2.1',
+                                    'subnet_id': 'ext-subnet-id'}]}
+        lrouter = {
+            'id': 'lr-id-b',
+            'name': utils.ovn_name('lr-id-b'),
+            'admin_state_up': True,
+            'external_gateway_info': self.fake_external_fixed_ips,
+            'gw_port_id': 'gw-port-id'
+        }
+        _nb_idl._l3_plugin.get_router.return_value = lrouter
+
+        lra_nat = {'external_ip': '20.0.2.4', 'logical_ip': '10.0.0.4',
+                   'type': 'dnat_and_snat', 'external_mac': [],
+                   'logical_port': [],
+                   'external_ids': {constants.OVN_FIP_EXT_ID_KEY: 'fip_id_1'},
+                   'gateway_port': uuidutils.generate_uuid(),
+                   'uuid': uuidutils.generate_uuid()}
+
+        lrb_nat = {'external_ip': '20.0.2.5', 'logical_ip': '10.0.0.5',
+                   'type': 'dnat_and_snat',
+                   'external_mac': ['00:01:02:03:04:05'],
+                   'logical_port': ['lsp-id-001'],
+                   'external_ids': {constants.OVN_FIP_EXT_ID_KEY: 'fip_id_2'},
+                   'gateway_port': [],
+                   'uuid': uuidutils.generate_uuid()}
+
+        expected = [{'name': 'lr-id-a',
+                     'ports': {'orp-id-a1': ['10.0.1.0/24'],
+                               'orp-id-a2': ['10.0.2.0/24'],
+                               'orp-id-a3': ['10.0.3.0/24']},
+                     'static_routes': [{'destination': '20.0.0.0/16',
+                                        'nexthop': '10.0.3.253'}],
+                     'snats': [{'external_ip': '10.0.3.1',
+                                'logical_ip': '20.0.0.0/16',
+                                'type': 'snat'}],
+                     'dnat_and_snats': []},
+                    {'name': 'lr-id-b',
+                     'ports': {'xrp-id-b1': ['20.0.1.0/24'],
+                               'orp-id-b2': ['20.0.2.0/24']},
+                     'static_routes': [{'destination': '10.0.0.0/16',
+                                        'nexthop': '20.0.2.253'}],
+                     'snats': [{'external_ip': '20.0.2.1',
+                                'logical_ip': '10.0.0.0/24',
+                                'type': 'snat'}],
+                     'dnat_and_snats': [lra_nat, lrb_nat]}]
+        _nb_idl.get_all_logical_routers_with_rports.return_value = expected
+
+        self.assertRaises(periodics.NeverAgain,
+            self.periodic.update_nat_floating_ip_with_gateway_port_reference)
+
+        _nb_idl.set_nat_rule_in_lrouter.assert_called_once_with(
+            utils.ovn_name('lr-id-b'),
+            lrb_nat['uuid'],
+            gateway_port=lrp.uuid)
