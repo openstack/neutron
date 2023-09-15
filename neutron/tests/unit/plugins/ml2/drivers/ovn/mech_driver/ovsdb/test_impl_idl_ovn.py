@@ -15,6 +15,7 @@ import collections
 import copy
 from unittest import mock
 
+from oslo_utils import uuidutils
 from ovsdbapp.backend import ovs_idl
 
 from neutron.common.ovn import constants as ovn_const
@@ -193,11 +194,15 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
                   'type': 'snat'},
                  {'external_ip': '20.0.2.4', 'logical_ip': '10.0.0.4',
                   'type': 'dnat_and_snat', 'external_mac': [],
-                  'logical_port': []},
+                  'logical_port': [],
+                  'external_ids': {ovn_const.OVN_FIP_EXT_ID_KEY: 'fip_id_a'},
+                  'gateway_port': uuidutils.generate_uuid()},
                  {'external_ip': '20.0.2.5', 'logical_ip': '10.0.0.5',
                   'type': 'dnat_and_snat',
                   'external_mac': ['00:01:02:03:04:05'],
-                  'logical_port': ['lsp-id-001']}],
+                  'logical_port': ['lsp-id-001'],
+                  'external_ids': {ovn_const.OVN_FIP_EXT_ID_KEY: 'fip_id_b'},
+                  'gateway_port': []}],
         'acls': [
             {'unit_test_id': 1,
              'action': 'allow-related', 'direction': 'from-lport',
@@ -446,13 +451,39 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
                      'provnet_ports': []}]
         self.assertCountEqual(mapping, expected)
 
-    def test_get_all_logical_routers_with_rports(self):
+    def _test_get_all_logical_routers_with_rports(self, is_gw_port):
         # Test empty
         mapping = self.nb_ovn_idl.get_all_logical_switches_with_ports()
         self.assertCountEqual(mapping, {})
         # Test loaded values
         self._load_nb_db()
+
+        # Test with gateway_port_support enabled
+        utils.is_nat_gateway_port_supported = mock.Mock()
+        utils.is_nat_gateway_port_supported.return_value = is_gw_port
         mapping = self.nb_ovn_idl.get_all_logical_routers_with_rports()
+        lra_nat = self._find_ovsdb_fake_row(self.nat_table,
+                                            'external_ip', '20.0.2.4')
+        lrb_nat = self._find_ovsdb_fake_row(self.nat_table,
+                                            'external_ip', '20.0.2.5')
+
+        lra_fip = {'external_ip': '20.0.2.4',
+                   'logical_ip': '10.0.0.4',
+                   'type': 'dnat_and_snat',
+                   'external_ids': {ovn_const.OVN_FIP_EXT_ID_KEY: 'fip_id_a'},
+                   'uuid': lra_nat.uuid}
+        lrb_fip = {'external_ip': '20.0.2.5',
+                   'logical_ip': '10.0.0.5',
+                   'type': 'dnat_and_snat',
+                   'external_mac': '00:01:02:03:04:05',
+                   'logical_port': 'lsp-id-001',
+                   'external_ids': {ovn_const.OVN_FIP_EXT_ID_KEY: 'fip_id_b'},
+                   'uuid': lrb_nat.uuid}
+
+        if is_gw_port:
+            lra_fip['gateway_port'] = lra_nat.gateway_port
+            lrb_fip['gateway_port'] = lrb_nat.gateway_port
+
         expected = [{'name': 'lr-id-a',
                      'ports': {'orp-id-a1': ['10.0.1.0/24'],
                                'orp-id-a2': ['10.0.2.0/24'],
@@ -471,14 +502,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
                      'snats': [{'external_ip': '20.0.2.1',
                                 'logical_ip': '10.0.0.0/24',
                                 'type': 'snat'}],
-                     'dnat_and_snats': [{'external_ip': '20.0.2.4',
-                                         'logical_ip': '10.0.0.4',
-                                         'type': 'dnat_and_snat'},
-                                        {'external_ip': '20.0.2.5',
-                                         'logical_ip': '10.0.0.5',
-                                         'type': 'dnat_and_snat',
-                                         'external_mac': '00:01:02:03:04:05',
-                                         'logical_port': 'lsp-id-001'}]},
+                     'dnat_and_snats': [lra_fip, lrb_fip]},
                     {'name': 'lr-id-c', 'ports': {}, 'static_routes': [],
                      'snats': [], 'dnat_and_snats': []},
                     {'name': 'lr-id-d', 'ports': {}, 'static_routes': [],
@@ -486,6 +510,12 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
                     {'name': 'lr-id-e', 'ports': {}, 'static_routes': [],
                      'snats': [], 'dnat_and_snats': []}]
         self.assertCountEqual(mapping, expected)
+
+    def test_get_all_logical_routers_with_rports(self):
+        self._test_get_all_logical_routers_with_rports(True)
+
+    def test_get_all_logical_routers_with_rports_without_nat_gw_port(self):
+        self._test_get_all_logical_routers_with_rports(False)
 
     def test_get_acls_for_lswitches(self):
         self._load_nb_db()

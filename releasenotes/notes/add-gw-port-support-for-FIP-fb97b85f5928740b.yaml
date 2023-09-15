@@ -1,0 +1,15 @@
+---
+prelude: >
+    The OVN changed support for NAT rules including a new column and
+    auto-discovery logic to know about logical router gateway ports for NAT on
+    a Logical Router.
+features:
+  - |
+    A new OVN driver Northbound DB column has been added to allow configuring
+    gateway port for NAT rule. If the OVN backend supports the `gateway_port`
+    column in the Northbound DB NAT table, the gateway port uuid will be
+    configured to any floating IP to prevent North/South traffic issues.
+    Previously created FIP rules will be updated only once during the
+    maintenance task to include the gateway_port reference (if OVN backend
+    supports it). In case all FIP entries are already configured no maintenance
+    action will be performed.

@@ -851,3 +851,7 @@ def get_requested_chassis(requested_chassis):
     if isinstance(requested_chassis, str):
         return requested_chassis.split(',')
     return []
+
+
+def is_nat_gateway_port_supported(idl):
+    return idl.is_col_present('NAT', 'gateway_port')

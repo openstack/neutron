@@ -1248,3 +1248,103 @@ class TestAgentApi(base.TestOVNFunctionalBase):
         self.plugin.delete_agent(self.context, metadata_id)
         self.assertRaises(agent_exc.AgentNotFound, self.plugin.get_agent,
                           self.context, metadata_id)
+
+
+class TestNATRuleGatewayPort(base.TestOVNFunctionalBase):
+
+    def setUp(self):
+        super().setUp()
+        self._ovn_client = self.mech_driver._ovn_client
+
+    def deserialize(self, content_type, response):
+        ctype = 'application/%s' % content_type
+        data = self._deserializers[ctype].deserialize(response.body)['body']
+        return data
+
+    def _create_router(self, name, external_gateway_info=None):
+        data = {'router': {'name': name, 'tenant_id': self._tenant_id,
+                           'external_gateway_info': external_gateway_info}}
+        req = self.new_create_request('routers', data, self.fmt)
+        res = req.get_response(self.api)
+        return self.deserialize(self.fmt, res)['router']
+
+    def _process_router_interface(self, action, router_id, subnet_id):
+        req = self.new_action_request(
+            'routers', {'subnet_id': subnet_id}, router_id,
+            '%s_router_interface' % action)
+        res = req.get_response(self.api)
+        return self.deserialize(self.fmt, res)
+
+    def _add_router_interface(self, router_id, subnet_id):
+        return self._process_router_interface('add', router_id, subnet_id)
+
+    def _create_port(self, name, net_id, security_groups=None,
+                     device_owner=None):
+        data = {'port': {'name': name,
+                         'tenant_id': self._tenant_id,
+                         'network_id': net_id}}
+
+        if security_groups is not None:
+            data['port']['security_groups'] = security_groups
+
+        if device_owner is not None:
+            data['port']['device_owner'] = device_owner
+
+        req = self.new_create_request('ports', data, self.fmt)
+        res = req.get_response(self.api)
+        return self.deserialize(self.fmt, res)['port']
+
+    def test_create_floatingip(self):
+        ext_net = self._make_network(
+            self.fmt, 'ext_networktest', True,
+            arg_list=('router:external',
+                      'provider:network_type',
+                      'provider:physical_network'),
+            **{'router:external': True,
+               'provider:network_type': 'flat',
+               'provider:physical_network': 'public'})['network']
+        res = self._create_subnet(self.fmt, ext_net['id'],
+            '100.0.0.0/24', gateway_ip='100.0.0.254',
+            allocation_pools=[{'start': '100.0.0.2',
+                               'end': '100.0.0.253'}],
+            enable_dhcp=False)
+        ext_subnet = self.deserialize(self.fmt, res)['subnet']
+        net1 = self._make_network(
+            self.fmt, 'network1test', True)['network']
+        res = self._create_subnet(self.fmt, net1['id'],
+            '192.168.0.0/24', gateway_ip='192.168.0.1',
+            allocation_pools=[{'start': '192.168.0.2',
+                               'end': '192.168.0.253'}],
+            enable_dhcp=False)
+        subnet1 = self.deserialize(self.fmt, res)['subnet']
+        external_gateway_info = {
+            'enable_snat': True,
+            'network_id': ext_net['id'],
+            'external_fixed_ips': [
+                {'ip_address': '100.0.0.2', 'subnet_id': ext_subnet['id']}]}
+        router = self._create_router(
+            'routertest', external_gateway_info=external_gateway_info)
+        self._add_router_interface(router['id'], subnet1['id'])
+
+        p1 = self._create_port('testp1', net1['id'])
+        logical_ip = p1['fixed_ips'][0]['ip_address']
+        fip_info = {'floatingip': {
+            'tenant_id': self._tenant_id,
+            'description': 'test_fip',
+            'floating_network_id': ext_net['id'],
+            'port_id': p1['id'],
+            'fixed_ip_address': logical_ip}}
+
+        fip = self.l3_plugin.create_floatingip(self.context, fip_info)
+
+        self.assertEqual(router['id'], fip['router_id'])
+        self.assertEqual('testp1', fip['port_details']['name'])
+        self.assertIsNotNone(self.nb_api.get_lswitch_port(fip['port_id']))
+
+        rules = self.nb_api.get_all_logical_routers_with_rports()[0]
+        fip_rule = rules['dnat_and_snats'][0]
+
+        if utils.is_nat_gateway_port_supported(self.nb_api):
+            self.assertNotEqual([], fip_rule['gateway_port'])
+        else:
+            self.assertNotIn('gateway_port', fip_rule)
