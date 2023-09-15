@@ -1,7 +1,7 @@
 .. _config-metadata-rate-limiting:
 
 ====================================
-Metadata service query rate limiting
+Metadata Service Query Rate-limiting
 ====================================
 
 The OpenStack Networking service proxies the requests that VMs send to the

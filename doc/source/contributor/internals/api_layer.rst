@@ -21,8 +21,8 @@
       (Avoid deeper levels because they do not render well.)
 
 
-Neutron WSGI/HTTP API layer
-===========================
+API Layer for Neutron WSGI/HTTP
+===============================
 
 This section will cover the internals of Neutron's HTTP API, and the classes
 in Neutron that can be used to create Extensions to the Neutron API.

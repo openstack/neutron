@@ -1,4 +1,4 @@
-Subnet Pools and Address Scopes
+Address Scopes and Subnet Pools
 ===============================
 
 This page discusses subnet pools and address scopes

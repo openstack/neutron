@@ -1,7 +1,7 @@
 .. _config-bgp-dynamic-routing:
 
 ===================
-BGP dynamic routing
+BGP Dynamic Routing
 ===================
 
 BGP dynamic routing enables advertisement of self-service (private) network

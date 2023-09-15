@@ -21,8 +21,8 @@
       (Avoid deeper levels because they do not render well.)
 
 
-Neutron RPC API Layer
-=====================
+RPC API Layer
+=============
 
 Neutron uses the oslo.messaging library to provide an internal communication
 channel between Neutron services.  This communication is typically done via

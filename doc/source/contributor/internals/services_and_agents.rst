@@ -21,7 +21,7 @@
       (Avoid deeper levels because they do not render well.)
 
 
-Services and agents
+Services and Agents
 ===================
 
 A usual Neutron setup consists of multiple services and agents running on one

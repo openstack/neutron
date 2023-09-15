@@ -21,8 +21,8 @@
       (Avoid deeper levels because they do not render well.)
 
 
-Guided Tour: The Neutron Security Group API
-===========================================
+Security Group API
+==================
 
 https://wiki.openstack.org/wiki/Neutron/SecurityGroups
 

@@ -1,7 +1,7 @@
 .. _config-ovsfwdriver:
 
 ===================================
-Native Open vSwitch firewall driver
+Open vSwitch Native Firewall Driver
 ===================================
 
 Historically, Open vSwitch (OVS) could not interact directly with *iptables*

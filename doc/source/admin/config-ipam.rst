@@ -1,7 +1,7 @@
 .. _config-ipam:
 
 ==================
-IPAM configuration
+IPAM Configuration
 ==================
 
 Starting with the Liberty release, OpenStack Networking includes a pluggable

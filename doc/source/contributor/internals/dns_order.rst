@@ -21,8 +21,8 @@
       (Avoid deeper levels because they do not render well.)
 
 
-Keep DNS Nameserver Order Consistency In Neutron
-================================================
+DNS Nameserver Order Consistency
+================================
 
 In Neutron subnets, DNS nameservers are given priority when created or updated.
 This means if you create a subnet with multiple DNS servers, the order will

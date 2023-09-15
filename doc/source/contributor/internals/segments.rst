@@ -12,7 +12,7 @@
       under the License.
 
 
-Segments extension
+Segments Extension
 ==================
 
 Neutron has an extension that allows CRUD operations on the ``/segments``

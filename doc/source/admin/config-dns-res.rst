@@ -1,7 +1,7 @@
 .. _config-dns-res:
 
 ============================
-DNS resolution for instances
+DNS Resolution for Instances
 ============================
 
 The Networking service offers several methods to configure name

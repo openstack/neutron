@@ -1,7 +1,7 @@
 .. _adv-config-sfc:
 
 =========================
-Service function chaining
+Service Function Chaining
 =========================
 
 Service function chain (SFC) essentially refers to the

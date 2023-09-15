@@ -26,9 +26,9 @@ items.
 
    blueprints
    bugs
-   contributor-onboarding
-   neutron-teams
-   gate-failure-triage
    code-reviews
+   contributor-onboarding
+   gate-failure-triage
    release-checklist
+   neutron-teams
    thirdparty-ci

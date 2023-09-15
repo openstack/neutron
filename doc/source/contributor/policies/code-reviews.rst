@@ -1,7 +1,7 @@
 .. _code_review:
 
-Neutron Code Reviews
-====================
+Code Reviews
+============
 
 Code reviews are a critical component of all OpenStack projects. Neutron accepts patches from many
 diverse people with diverse backgrounds, employers, and experience levels. Code reviews provide a

@@ -1,8 +1,8 @@
 .. _config-dhcp-ha:
 
-==========================
-High-availability for DHCP
-==========================
+======================
+DHCP High-availability
+======================
 
 This section describes how to use the agent management (alias agent) and
 scheduler (alias agent_scheduler) extensions for DHCP agents

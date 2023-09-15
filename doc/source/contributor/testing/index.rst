@@ -32,10 +32,10 @@ Testing
 
    testing
    fullstack
-   coverage
-   template_model_sync_test
-   db_transient_failure_injection
+   ml2_ovs_devstack
    ci_scenario_jobs
    ml2_ovn_devstack
-   ml2_ovs_devstack
    tempest
+   template_model_sync_test
+   coverage
+   db_transient_failure_injection

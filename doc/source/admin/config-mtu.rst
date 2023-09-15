@@ -1,7 +1,7 @@
 .. _config-mtu:
 
 ==================
-MTU considerations
+MTU Considerations
 ==================
 
 The Networking service uses the MTU of the underlying physical network to

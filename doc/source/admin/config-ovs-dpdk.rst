@@ -1,7 +1,7 @@
 .. _config-ovs-dpdk:
 
 ===============================
-Open vSwitch with DPDK datapath
+Open vSwitch with DPDK Datapath
 ===============================
 
 This page serves as a guide for how to use the OVS with DPDK datapath

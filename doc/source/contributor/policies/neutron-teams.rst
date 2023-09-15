@@ -1,8 +1,8 @@
 .. _neutron_teams:
 
-======================
-Neutron Team Structure
-======================
+==============
+Team Structure
+==============
 
 Neutron Core Reviewers
 ======================

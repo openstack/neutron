@@ -21,8 +21,8 @@
       (Avoid deeper levels because they do not render well.)
 
 
-L2 Networking with Linux Bridge
-===============================
+Linux Bridge Networking L2 Agent
+================================
 
 This Agent uses the `Linux Bridge
 <http://www.linuxfoundation.org/collaborate/workgroups/networking/bridge>`_ to

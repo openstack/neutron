@@ -21,7 +21,7 @@
       (Avoid deeper levels because they do not render well.)
 
 
-L2 agent extensions
+L2 Agent Extensions
 ===================
 
 L2 agent extensions are part of a generalized L2/L3 extension framework. See

@@ -21,7 +21,7 @@
       (Avoid deeper levels because they do not render well.)
 
 
-Agent extensions
+Agent Extensions
 ================
 
 All reference agents utilize a common extension mechanism that allows for the

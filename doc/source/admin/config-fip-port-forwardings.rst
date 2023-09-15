@@ -1,7 +1,7 @@
 .. _config-fip-port-forwardings:
 
 ===========================
-Floating IP port forwarding
+Floating IP Port Forwarding
 ===========================
 
 Floating IP port forwarding enables users to forward traffic from a

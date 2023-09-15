@@ -21,8 +21,8 @@
       (Avoid deeper levels because they do not render well.)
 
 
-Composite Object Status via Provisioning Blocks
-===============================================
+Provisioning Blocks in relation to Composite Object Status
+==========================================================
 
 We use the STATUS field on objects to indicate when a resource is ready
 by setting it to ACTIVE so external systems know when it's safe to use

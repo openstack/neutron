@@ -1,5 +1,6 @@
-Neutron Gate Failure Triage
-===========================
+
+Gate Failure Triage
+===================
 
 This page provides guidelines for spotting and assessing neutron gate failures. Some hints for triaging
 failures are also provided.

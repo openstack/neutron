@@ -1,7 +1,7 @@
 .. _config-metadata-caching:
 
 ========================
-Metadata service caching
+Metadata Service Caching
 ========================
 
 The OpenStack Networking service proxies requests that VMs send to the

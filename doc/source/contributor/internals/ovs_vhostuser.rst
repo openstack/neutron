@@ -20,7 +20,7 @@
       '''''''  Heading 4
       (Avoid deeper levels because they do not render well.)
 
-Neutron Open vSwitch vhost-user support
+Neutron Open vSwitch vhost-user Support
 =======================================
 
 Neutron supports using Open vSwitch + DPDK vhost-user interfaces directly in

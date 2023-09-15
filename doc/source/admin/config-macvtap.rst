@@ -1,7 +1,7 @@
 .. _config-macvtap:
 
 ========================
-Macvtap mechanism driver
+Macvtap Mechanism Driver
 ========================
 
 The Macvtap mechanism driver for the ML2 plug-in generally increases

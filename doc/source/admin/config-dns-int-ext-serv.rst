@@ -1,7 +1,7 @@
 .. _config-dns-int-ext-serv:
 
 ========================================
-DNS integration with an external service
+DNS Integration with an External Service
 ========================================
 
 This page serves as a guide for how to use the DNS integration functionality of

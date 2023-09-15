@@ -1,8 +1,8 @@
 .. _config-bgp-floating-ip-over-l2-segmented-network:
 
-==========================================
-BGP floating IPs over l2 segmented network
-==========================================
+===========================================
+BGP Floating IPs over L2 Segmented Networks
+===========================================
 
 The general principle is that L2 connectivity will be bound to a single rack.
 Everything outside the switches of the rack will be routed using BGP. To

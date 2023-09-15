@@ -22,7 +22,7 @@
 
 .. _ci_jobs:
 
-Neutron jobs running in Zuul CI
+Neutron Jobs Running in Zuul CI
 ===============================
 
 Tempest jobs running in Neutron CI
