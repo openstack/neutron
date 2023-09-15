@@ -129,18 +129,16 @@ class TestOVNDriver(TestOVNDriverBase):
             self.__dict__ = {**acl_defaults_dict, **acl_dict}
 
     def _fake_pg_dict(self, **kwargs):
+        uuid = uuidutils.generate_uuid()
         pg_defaults_dict = {
-            "name": ovn_utils.ovn_port_group_name(uuidutils.generate_uuid()),
+            "name": ovn_utils.ovn_port_group_name(uuid),
+            "external_ids": {ovn_const.OVN_SG_EXT_ID_KEY: uuid},
             "acls": []
         }
         return {**pg_defaults_dict, **kwargs}
 
     def _fake_pg(self, **kwargs):
-        pg_defaults_dict = {
-            "name": ovn_utils.ovn_port_group_name(uuidutils.generate_uuid()),
-            "acls": []
-        }
-        pg_dict = {**pg_defaults_dict, **kwargs}
+        pg_dict = self._fake_pg_dict(**kwargs)
         return mock.Mock(**pg_dict)
 
     def _fake_log_obj(self, **kwargs):
@@ -190,7 +188,9 @@ class TestOVNDriver(TestOVNDriverBase):
             pgs = self._log_driver._pgs_from_log_obj(self.context, log_obj)
             mock_pgs_all.assert_not_called()
             self.assertEqual(2, self._nb_ovn.lookup.call_count)
-            self.assertEqual([{'acls': [], 'name': pg.name}], pgs)
+            self.assertEqual([{'acls': [],
+                               'external_ids': pg.external_ids,
+                               'name': pg.name}], pgs)
 
     def test__pgs_from_log_obj_pg(self):
         with mock.patch.object(self._log_driver, '_pgs_all',
@@ -204,7 +204,9 @@ class TestOVNDriver(TestOVNDriverBase):
             mock_pgs_all.assert_not_called()
             self._nb_ovn.lookup.assert_called_once_with(
                 "Port_Group", ovn_utils.ovn_port_group_name('resource_id'))
-            self.assertEqual([{'acls': [], 'name': pg.name}], pgs)
+            self.assertEqual([{'acls': [],
+                               'external_ids': pg.external_ids,
+                               'name': pg.name}], pgs)
 
     def test__pgs_from_log_obj_port(self):
         with mock.patch.object(self._log_driver, '_pgs_all',
@@ -221,7 +223,9 @@ class TestOVNDriver(TestOVNDriverBase):
             self._nb_ovn.lookup.assert_called_once_with("Port_Group", pg_name)
             self.fake_get_sgs_attached_to_port.assert_called_once_with(
                 self.context, 'target_id')
-            self.assertEqual([{'acls': [], 'name': pg.name}], pgs)
+            self.assertEqual([{'acls': [],
+                               'external_ids': pg.external_ids,
+                               'name': pg.name}], pgs)
 
     @mock.patch.object(ovn_driver.LOG, 'info')
     def test__remove_acls_log(self, m_info):
