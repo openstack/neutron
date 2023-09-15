@@ -1160,6 +1160,52 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         context = n_context.get_admin_context()
         hash_ring_db.cleanup_old_nodes(context, days=5)
 
+    @periodics.periodic(spacing=600, run_immediately=True)
+    def update_nat_floating_ip_with_gateway_port_reference(self):
+        """Set NAT rule gateway_port column to any floating IP without
+        router gateway port uuid reference - LP#2035281.
+        """
+
+        if not utils.is_nat_gateway_port_supported(self._nb_idl):
+            raise periodics.NeverAgain()
+
+        context = n_context.get_admin_context()
+        fip_update = []
+        lrouters = self._nb_idl.get_all_logical_routers_with_rports()
+        for router in lrouters:
+            ovn_fips = router['dnat_and_snats']
+            for ovn_fip in ovn_fips:
+                # Skip FIPs that are already configured with gateway_port
+                if ovn_fip['gateway_port']:
+                    continue
+                fip_id = ovn_fip['external_ids'].get(
+                    ovn_const.OVN_FIP_EXT_ID_KEY)
+                if fip_id:
+                    fip_update.append({'uuid': ovn_fip['uuid'],
+                                       'router_id': router['name']})
+
+        # Simple caching mechanism to avoid unnecessary DB calls
+        gw_port_id_cache = {}
+        lrp_cache = {}
+        cmds = []
+        for fip in fip_update:
+            lrouter = utils.ovn_name(fip['router_id'])
+            if lrouter not in gw_port_id_cache.keys():
+                router_db = self._ovn_client._l3_plugin.get_router(
+                    context, fip['router_id'], fields=['gw_port_id'])
+                gw_port_id_cache[lrouter] = router_db.get('gw_port_id')
+                lrp_cache[lrouter] = self._nb_idl.get_lrouter_port(
+                    gw_port_id_cache[lrouter])
+            columns = {'gateway_port': lrp_cache[lrouter].uuid}
+            cmds.append(self._nb_idl.set_nat_rule_in_lrouter(
+                lrouter, fip['uuid'], **columns))
+
+        if cmds:
+            with self._nb_idl.transaction(check_error=True) as txn:
+                for cmd in cmds:
+                    txn.add(cmd)
+        raise periodics.NeverAgain()
+
 
 class HashRingHealthCheckPeriodics(object):
 
