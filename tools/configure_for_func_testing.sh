@@ -69,13 +69,11 @@ INSTALL_MYSQL_ONLY=${INSTALL_MYSQL_ONLY:-False}
 INSTALL_BASE_DEPENDENCIES=${INSTALL_BASE_DEPENDENCIES:-$IS_GATE}
 INSTALL_OVN=${INSTALL_OVN:-True}
 Q_BUILD_OVS_FROM_GIT=${Q_BUILD_OVS_FROM_GIT:-True}
-# TODO(ihrachys): switch back to a tagged version when it's released
-# OVN_BRANCH=${OVN_BRANCH:-v22.03.3}
-OVN_BRANCH=${OVN_BRANCH:-36e3ab9b47e93af0599a818e9d6b2930e49473f0}
+OVN_BRANCH=${OVN_BRANCH:-v23.09.0}
 # OVS_BRANCH needs to be updated along with OVN_BRANCH, ovs is
 # being used as submodule in ovn repo, to get a working ovs
 # version can use git submodule status command on ovn repo
-OVS_BRANCH=${OVS_BRANCH:-2410b95597fcec5f733caf77febdb46f4ffacd27}
+OVS_BRANCH=${OVS_BRANCH:-v3.2.0-20-g1d78a3f31}
 
 
 if [ ! -f "$DEVSTACK_PATH/stack.sh" ]; then

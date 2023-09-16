@@ -175,10 +175,8 @@
         OVN_L3_CREATE_PUBLIC_NETWORK: true
         KEYSTONE_ADMIN_ENDPOINT: true
         OVN_BUILD_FROM_SOURCE: True
-        # TODO(ihrachys): switch back to a tagged version when it's released
-        # OVN_BRANCH: "v22.03.3"
-        OVN_BRANCH: "36e3ab9b47e93af0599a818e9d6b2930e49473f0"
-        OVS_BRANCH: "2410b95597fcec5f733caf77febdb46f4ffacd27"
+        OVN_BRANCH: "v23.09.0"
+        OVS_BRANCH: "v3.2.0-20-g1d78a3f31"
       devstack_local_conf:
         post-config:
           "${RALLY_CONF_DIR}/${RALLY_CONF_FILE}":
