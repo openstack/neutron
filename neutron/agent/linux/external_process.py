@@ -87,7 +87,19 @@ class ProcessManager(MonitoredProcess):
         if not self.active:
             if not cmd_callback:
                 cmd_callback = self.default_cmd_callback
-            cmd = cmd_callback(self.get_pid_file_name())
+            # Always try and remove the pid file, as it's existence could
+            # stop the process from starting
+            pid_file = self.get_pid_file_name()
+            try:
+                utils.delete_if_exists(pid_file, run_as_root=self.run_as_root)
+            except Exception as e:
+                LOG.error("Could not delete file %(pid_file)s, %(service)s "
+                          "could fail to start. Exception: %(exc)s",
+                          {'pid_file': pid_file,
+                           'service': self.service,
+                           'exc': e})
+
+            cmd = cmd_callback(pid_file)
 
             ip_wrapper = ip_lib.IPWrapper(namespace=self.namespace)
             ip_wrapper.netns.execute(cmd, addl_env=self.cmd_addl_env,
@@ -99,12 +111,14 @@ class ProcessManager(MonitoredProcess):
 
     def reload_cfg(self):
         if self.custom_reload_callback:
-            self.disable(get_stop_command=self.custom_reload_callback)
+            self.disable(get_stop_command=self.custom_reload_callback,
+                         delete_pid_file=False)
         else:
-            self.disable('HUP')
+            self.disable('HUP', delete_pid_file=False)
 
-    def disable(self, sig='9', get_stop_command=None):
+    def disable(self, sig='9', get_stop_command=None, delete_pid_file=True):
         pid = self.pid
+        delete_pid_file = delete_pid_file or sig == '9'
 
         if self.active:
             if get_stop_command:
@@ -118,10 +132,10 @@ class ProcessManager(MonitoredProcess):
                 utils.execute(cmd, addl_env=self.cmd_addl_env,
                               run_as_root=self.run_as_root,
                               privsep_exec=True)
-                # In the case of shutting down, remove the pid file
-                if sig == '9':
-                    utils.delete_if_exists(self.get_pid_file_name(),
-                                           run_as_root=self.run_as_root)
+
+            if delete_pid_file:
+                utils.delete_if_exists(self.get_pid_file_name(),
+                                       run_as_root=self.run_as_root)
         elif pid:
             LOG.debug('%(service)s process for %(uuid)s pid %(pid)d is stale, '
                       'ignoring signal %(signal)s',

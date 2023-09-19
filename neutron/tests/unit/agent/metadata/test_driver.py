@@ -99,7 +99,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
         mock.patch('neutron.agent.l3.ha.AgentMixin'
                    '._init_ha_conf_path').start()
         self.delete_if_exists = mock.patch.object(linux_utils,
-                                                  'delete_if_exists')
+                                                  'delete_if_exists').start()
         self.mock_get_process = mock.patch.object(
             metadata_driver.MetadataDriver,
             '_get_metadata_proxy_process_manager')
@@ -264,6 +264,9 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 router_id, metadata_driver.METADATA_SERVICE_NAME,
                 mock.ANY)
 
+            self.delete_if_exists.assert_called_once_with(
+                mock.ANY, run_as_root=True)
+
     def test_spawn_metadata_proxy(self):
         self._test_spawn_metadata_proxy()
 
@@ -311,9 +314,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                               config.create_config_file)
 
     def test_destroy_monitored_metadata_proxy(self):
-        delete_if_exists = self.delete_if_exists.start()
-        mproxy_process = mock.Mock(
-            active=False, get_pid_file_name=mock.Mock(return_value='pid_file'))
+        mproxy_process = mock.Mock(active=False)
         mock_get_process = self.mock_get_process.start()
         mock_get_process.return_value = mproxy_process
         driver = metadata_driver.MetadataDriver(FakeL3NATAgent())
@@ -321,13 +322,11 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                                                 'ns_name')
         mproxy_process.disable.assert_called_once_with(
             sig=str(int(signal.SIGTERM)))
-        delete_if_exists.assert_has_calls([
-            mock.call('pid_file', run_as_root=True)])
+        self.delete_if_exists.assert_called_once_with(
+            mock.ANY, run_as_root=True)
 
     def test_destroy_monitored_metadata_proxy_force(self):
-        delete_if_exists = self.delete_if_exists.start()
-        mproxy_process = mock.Mock(
-            active=True, get_pid_file_name=mock.Mock(return_value='pid_file'))
+        mproxy_process = mock.Mock(active=True)
         mock_get_process = self.mock_get_process.start()
         mock_get_process.return_value = mproxy_process
         driver = metadata_driver.MetadataDriver(FakeL3NATAgent())
@@ -337,5 +336,5 @@ class TestMetadataDriverProcess(base.BaseTestCase):
         mproxy_process.disable.assert_has_calls([
             mock.call(sig=str(int(signal.SIGTERM))),
             mock.call(sig=str(int(signal.SIGKILL)))])
-        delete_if_exists.assert_has_calls([
-            mock.call('pid_file', run_as_root=True)])
+        self.delete_if_exists.assert_called_once_with(
+            mock.ANY, run_as_root=True)
