@@ -36,12 +36,11 @@ from neutron.db.migration.alembic_migrations import secgroup_init_ops
 from neutron.db.migration.alembic_migrations import vmware_init_ops
 from neutron.db.migration.alembic_migrations import vpn_init_ops
 
-"""kilo_initial
 
-Revision ID: kilo
-Revises: None
-
-"""
+# kilo_initial
+#
+# Revision ID: kilo
+# Revises: None
 
 # revision identifiers, used by Alembic.
 revision = 'kilo'
