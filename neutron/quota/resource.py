@@ -222,7 +222,8 @@ class TrackedResource(BaseResource):
             # won't be harmful.
             dirty_projects_snap = self._dirty_projects.copy()
             for project_id in dirty_projects_snap:
-                quota_api.set_quota_usage_dirty(context, self.name, project_id)
+                quota_api.set_resources_quota_usage_dirty(context, self.name,
+                                                          project_id)
         self._out_of_sync_projects |= dirty_projects_snap
         self._dirty_projects -= dirty_projects_snap
 

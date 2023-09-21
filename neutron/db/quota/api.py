@@ -114,39 +114,21 @@ def set_quota_usage(context, resource, project_id, in_use=None, delta=False):
 
 @db_api.retry_if_session_inactive()
 @db_api.CONTEXT_WRITER
-def set_quota_usage_dirty(context, resource, project_id, dirty=True):
-    """Set quota usage dirty bit for a given resource and project.
-
-    :param resource: a resource for which quota usage if tracked
-    :param project_id: project identifier
-    :param dirty: the desired value for the dirty bit (defaults to True)
-    :returns: 1 if the quota usage data were updated, 0 otherwise.
-    """
-    obj = quota_obj.QuotaUsage.get_object(
-        context, resource=resource, project_id=project_id)
-    if obj:
-        obj.dirty = dirty
-        obj.update()
-        return 1
-    return 0
-
-
-@db_api.retry_if_session_inactive()
-@db_api.CONTEXT_WRITER
 def set_resources_quota_usage_dirty(context, resources, project_id,
                                     dirty=True):
-    """Set quota usage dirty bit for a given project and multiple resources.
+    """Set quota usage dirty bit for a given project and one/multiple resources
 
-    :param resources: list of resource for which the dirty bit is going
-                      to be set
+    :param resources: (list of strings, string) list of resources or one single
+                      resource, for which the dirty bit is going to be set
     :param project_id: project identifier
     :param dirty: the desired value for the dirty bit (defaults to True)
     :returns: the number of records for which the bit was actually set.
     """
-    filters = {'project_id': project_id}
+    filters = {}
     if resources:
         filters['resource'] = resources
-    objs = quota_obj.QuotaUsage.get_objects(context, **filters)
+    objs = quota_obj.QuotaUsage.get_objects(context, project_id=project_id,
+                                            **filters)
     for obj in objs:
         obj.dirty = dirty
         obj.update()

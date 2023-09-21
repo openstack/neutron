@@ -214,9 +214,9 @@ class TestTrackedResource(testlib_api.SqlTestCase):
         res = self._test_count()
         set_quota_usage = 'neutron.db.quota.api.set_quota_usage'
         with mock.patch(set_quota_usage) as mock_set_quota_usage:
-            quota_api.set_quota_usage_dirty(self.context,
-                                            self.resource,
-                                            self.project_id)
+            quota_api.set_resources_quota_usage_dirty(self.context,
+                                                      self.resource,
+                                                      self.project_id)
             res.count(self.context, None, self.project_id,
                       resync_usage=True)
             mock_set_quota_usage.assert_called_once_with(
@@ -226,9 +226,9 @@ class TestTrackedResource(testlib_api.SqlTestCase):
         res = self._test_count()
         set_quota_usage = 'neutron.db.quota.api.set_quota_usage'
         with mock.patch(set_quota_usage) as mock_set_quota_usage:
-            quota_api.set_quota_usage_dirty(self.context,
-                                            self.resource,
-                                            self.project_id)
+            quota_api.set_resources_quota_usage_dirty(self.context,
+                                                      self.resource,
+                                                      self.project_id)
             res.count_used(self.context, self.project_id,
                            resync_usage=True)
             mock_set_quota_usage.assert_called_once_with(
@@ -253,9 +253,9 @@ class TestTrackedResource(testlib_api.SqlTestCase):
         self._add_data()
         set_quota_usage = 'neutron.db.quota.api.set_quota_usage'
         with mock.patch(set_quota_usage) as mock_set_quota_usage:
-            quota_api.set_quota_usage_dirty(self.context,
-                                            self.resource,
-                                            self.project_id)
+            quota_api.set_resources_quota_usage_dirty(self.context,
+                                                      self.resource,
+                                                      self.project_id)
             res.count(self.context, None, self.project_id, resync_usage=True)
             mock_set_quota_usage.assert_called_once_with(
                 self.context, self.resource, self.project_id, in_use=2)
@@ -266,9 +266,9 @@ class TestTrackedResource(testlib_api.SqlTestCase):
         self._add_data()
         set_quota_usage = 'neutron.db.quota.api.set_quota_usage'
         with mock.patch(set_quota_usage) as mock_set_quota_usage:
-            quota_api.set_quota_usage_dirty(self.context,
-                                            self.resource,
-                                            self.project_id)
+            quota_api.set_resources_quota_usage_dirty(self.context,
+                                                      self.resource,
+                                                      self.project_id)
             res.count_used(self.context, self.project_id, resync_usage=True)
             mock_set_quota_usage.assert_called_once_with(
                 self.context, self.resource, self.project_id, in_use=2)
@@ -311,7 +311,8 @@ class TestTrackedResource(testlib_api.SqlTestCase):
         res = self._create_resource()
         self._add_data()
         self._add_data('someone_else')
-        set_quota_usage = 'neutron.db.quota.api.set_quota_usage_dirty'
+        set_quota_usage = (
+            'neutron.db.quota.api.set_resources_quota_usage_dirty')
         with mock.patch(set_quota_usage) as mock_set_quota_usage:
             res.mark_dirty(self.context)
             self.assertEqual(2, mock_set_quota_usage.call_count)
@@ -322,7 +323,8 @@ class TestTrackedResource(testlib_api.SqlTestCase):
 
     def test_mark_dirty_no_dirty_project(self):
         res = self._create_resource()
-        set_quota_usage = 'neutron.db.quota.api.set_quota_usage_dirty'
+        set_quota_usage = (
+            'neutron.db.quota.api.set_resources_quota_usage_dirty')
         with mock.patch(set_quota_usage) as mock_set_quota_usage:
             res.mark_dirty(self.context)
             self.assertFalse(mock_set_quota_usage.call_count)
