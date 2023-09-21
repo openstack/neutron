@@ -67,6 +67,15 @@ def _sync_lock(f):
     return wrapped
 
 
+def _match_only_if_additional_chassis_is_supported(f):
+    @functools.wraps(f)
+    def wrapped(self, row, old):
+        if not ovn_utils.is_additional_chassis_supported(self.agent.sb_idl):
+            return False
+        return f(self, row, old)
+    return wrapped
+
+
 class ConfigException(Exception):
     """Misconfiguration of the agent
 
@@ -118,6 +127,8 @@ class PortBindingUpdatedEvent(PortBindingEvent):
             self._is_localport_ext_ids_update,
             self._is_new_chassis_set,
             self._is_chassis_removed,
+            self._additional_chassis_added,
+            self._additional_chassis_removed,
         ]
 
     def match_fn(self, event, row, old):
@@ -154,6 +165,15 @@ class PortBindingUpdatedEvent(PortBindingEvent):
     def _is_new_chassis_set(self, row, old):
         self._log_msg = "Port %s in datapath %s bound to our chassis"
         try:
+            if ovn_utils.is_additional_chassis_supported(self.agent.sb_idl):
+                try:
+                    # If the additional chassis used to be in the old version
+                    # the resources are already provisioned
+                    if self.agent.chassis in {c.name for c in
+                                              old.additional_chassis}:
+                        return False
+                except AttributeError:
+                    pass
             return (row.chassis[0].name == self.agent.chassis and
                     not old.chassis)
         except (IndexError, AttributeError):
@@ -166,6 +186,56 @@ class PortBindingUpdatedEvent(PortBindingEvent):
                     not row.chassis)
         except (IndexError, AttributeError):
             return False
+
+    @_match_only_if_additional_chassis_is_supported
+    def _additional_chassis_added(self, row, old):
+        # Additional chassis of the target node is set during an instance
+        # live migration. We can provision resources early before the
+        # instance lands on this chassis. After the VM finishes live
+        # migration, it already has the resources provisioned therefore we
+        # do not need to check when the chassis is moved from
+        # the Additional_Chassis column to the Chassis column.
+        additional_chassis = {ch for ch in row.additional_chassis
+                              if ch.name == self.agent.chassis}
+        self.log_msg = (
+            "Live migrating port %s from network %s was added to this "
+            "chassis. Provisioning resources early.")
+        try:
+            # Return True if the agent chassis was added to additional_chassis
+            # column
+            return bool(
+                additional_chassis.difference(old.additional_chassis))
+        except AttributeError:
+            # If additional_chassis column was not changed then the old object
+            # raises AttributeError when reading the column
+            return False
+
+    @_match_only_if_additional_chassis_is_supported
+    def _additional_chassis_removed(self, row, old):
+        # The method needs to check only for a case when agent chassis was set
+        # in additional_chassis column, was removed but at the same time the
+        # agent chassis was not set to chassis column. If the agent chassis is
+        # set to chassis then it means live migration was successful and we do
+        # not need to teardown the resources.
+        try:
+            old_a_chassis = {ch for ch in old.additional_chassis
+                             if ch.name == self.agent.chassis}
+        except AttributeError:
+            # If additional chassis was not updated, the old object has no
+            # additional_chassis attribute and raises an AttributeError
+            return False
+
+        # If was changed to the agent chassis then we do not need to teardown
+        # the resources
+        try:
+            if (hasattr(old, 'chassis') and
+                    row.chassis[0].name == self.agent.chassis):
+                return False
+        except IndexError:
+            pass
+        # We match the event only if the agent chassis was in the old
+        # additional_chassis column and was removed
+        return bool(old_a_chassis.difference(row.additional_chassis))
 
 
 class PortBindingDeletedEvent(PortBindingEvent):
@@ -392,7 +462,8 @@ class MetadataAgent(object):
         """Return a set of datapath objects of the VIF ports on the current
         chassis.
         """
-        ports = self.sb_idl.get_ports_on_chassis(self.chassis)
+        ports = self.sb_idl.get_ports_on_chassis(
+            self.chassis, include_additional_chassis=True)
         return set(p.datapath for p in self._vif_ports(ports))
 
     @_sync_lock
@@ -581,7 +652,8 @@ class MetadataAgent(object):
         metadata_port_info = MetadataPortInfo(mac, ip_addresses,
                                               metadata_port.logical_port)
 
-        chassis_ports = self.sb_idl.get_ports_on_chassis(self.chassis)
+        chassis_ports = self.sb_idl.get_ports_on_chassis(
+            self.chassis, include_additional_chassis=True)
         datapath_ports_ips = []
         for chassis_port in self._vif_ports(chassis_ports):
             if str(chassis_port.datapath.uuid) == datapath_uuid:

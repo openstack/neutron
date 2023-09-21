@@ -13,6 +13,7 @@
 #
 
 import copy
+from unittest import mock
 import uuid
 
 from neutron_lib import constants
@@ -29,6 +30,7 @@ from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb \
     import impl_idl_ovn as impl
 from neutron.services.portforwarding import constants as pf_const
 from neutron.tests.functional import base as n_base
+from neutron.tests.functional.common import ovn as ovn_common
 from neutron.tests.functional.resources.ovsdb import events
 
 OWNER = ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY
@@ -200,6 +202,50 @@ class TestSbApi(BaseOvnIdlTest):
         self.api.lsp_bind(port.name, chassis.name).execute(check_error=True)
         self.assertEqual([binding],
                          self.api.get_ports_on_chassis(chassis.name))
+
+    def _test_get_ports_on_chassis_with_additional_chassis(
+            self, ports, chassis, bindings, expected):
+        self.api.lsp_bind(
+            ports[0].name, chassis[0].name).execute(check_error=True)
+        self.api.lsp_bind(
+            ports[1].name, chassis[1].name).execute(check_error=True)
+
+        self.api.db_set('Port_Binding', bindings[1].uuid,
+            additional_chassis=[chassis[0].uuid]).execute(
+                check_error=True, log_errors=True)
+
+        result = self.api.get_ports_on_chassis(
+            chassis[0].name, include_additional_chassis=True)
+
+        self.assertEqual(expected, result)
+
+    @ovn_common.skip_if_additional_chassis_not_supported('api')
+    def test_get_ports_on_chassis_with_additional_chassis(self):
+        chassis, switch = self._add_switch(self.data['chassis'][0]['name'])
+        port, binding = self._add_port_to_switch(switch)
+        chassis2, switch2 = self._add_switch(self.data['chassis'][1]['name'])
+        port2, binding2 = self._add_port_to_switch(switch2)
+
+        self._test_get_ports_on_chassis_with_additional_chassis(
+            ports=[port, port2],
+            chassis=[chassis, chassis2],
+            bindings=[binding, binding2],
+            expected=[binding, binding2])
+
+    def test_get_ports_on_chassis_with_additional_chassis_not_supported(self):
+        chassis, switch = self._add_switch(self.data['chassis'][0]['name'])
+        port, binding = self._add_port_to_switch(switch)
+        chassis2, switch2 = self._add_switch(self.data['chassis'][1]['name'])
+        port2, binding2 = self._add_port_to_switch(switch2)
+
+        with mock.patch(
+                'neutron.common.ovn.utils.is_additional_chassis_supported',
+                return_value=False):
+            self._test_get_ports_on_chassis_with_additional_chassis(
+                ports=[port, port2],
+                chassis=[chassis, chassis2],
+                bindings=[binding, binding2],
+                expected=[binding])
 
 
 class TestNbApi(BaseOvnIdlTest):

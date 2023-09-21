@@ -435,8 +435,7 @@ class OVNClient(object):
                 # If OVN supports multi-chassis port bindings, use it for live
                 # migration to asynchronously configure destination port while
                 # VM is migrating
-                if self._sb_idl.is_col_present('Port_Binding',
-                                               'additional_chassis'):
+                if utils.is_additional_chassis_supported(self._sb_idl):
                     mdst = port.get(
                         portbindings.PROFILE, {}).get(
                             ovn_const.MIGRATING_ATTR)
