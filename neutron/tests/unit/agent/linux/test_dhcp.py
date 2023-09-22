@@ -74,10 +74,10 @@ class DhcpOpt(object):
 # an instance as a dict.
 class Dictable(object):
     def __getitem__(self, k):
-        return self.__class__.__dict__.get(k)
+        return self.__dict__.get(k)
 
 
-class FakeDhcpPort(object):
+class FakeDhcpPort(Dictable):
     def __init__(self):
         self.id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa'
         self.admin_state_up = True
@@ -90,7 +90,7 @@ class FakeDhcpPort(object):
         self.extra_dhcp_opts = []
 
 
-class FakeOvnMetadataPort(object):
+class FakeOvnMetadataPort(Dictable):
     def __init__(self):
         self.id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa'
         self.admin_state_up = True
@@ -103,7 +103,7 @@ class FakeOvnMetadataPort(object):
         self.extra_dhcp_opts = []
 
 
-class FakeReservedPort(object):
+class FakeReservedPort(Dictable):
     def __init__(self, id='reserved-aaaa-aaaa-aaaa-aaaaaaaaaaa'):
         self.admin_state_up = True
         self.device_owner = constants.DEVICE_OWNER_DHCP
@@ -118,7 +118,7 @@ class FakeReservedPort(object):
         self.id = id
 
 
-class FakePort1(object):
+class FakePort1(Dictable):
     def __init__(self, domain='openstacklocal'):
         self.id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
         self.admin_state_up = True
@@ -132,7 +132,7 @@ class FakePort1(object):
         self.dns_assignment = [FakeDNSAssignment('192.168.0.2', domain=domain)]
 
 
-class FakePort2(object):
+class FakePort2(Dictable):
     def __init__(self):
         self.id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
         self.admin_state_up = False
@@ -146,7 +146,7 @@ class FakePort2(object):
         self.extra_dhcp_opts = []
 
 
-class FakePort3(object):
+class FakePort3(Dictable):
     def __init__(self):
         self.id = '44444444-4444-4444-4444-444444444444'
         self.admin_state_up = True
@@ -163,7 +163,7 @@ class FakePort3(object):
         self.extra_dhcp_opts = []
 
 
-class FakePort4(object):
+class FakePort4(Dictable):
     def __init__(self):
         self.id = 'gggggggg-gggg-gggg-gggg-gggggggggggg'
         self.admin_state_up = False
@@ -181,7 +181,7 @@ class FakePort4(object):
         self.extra_dhcp_opts = []
 
 
-class FakePort5(object):
+class FakePort5(Dictable):
     def __init__(self):
         self.id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeee'
         self.admin_state_up = True
@@ -197,7 +197,7 @@ class FakePort5(object):
                     opt_value='test5')]
 
 
-class FakePort6(object):
+class FakePort6(Dictable):
     def __init__(self):
         self.id = 'ccccccccc-cccc-cccc-cccc-ccccccccc'
         self.admin_state_up = True
@@ -217,7 +217,7 @@ class FakePort6(object):
                     ip_version=constants.IP_VERSION_4)]
 
 
-class FakeV6Port(object):
+class FakeV6Port(Dictable):
     def __init__(self, domain='openstacklocal'):
         self.id = 'hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh'
         self.admin_state_up = True
@@ -232,7 +232,7 @@ class FakeV6Port(object):
                                domain=domain)]
 
 
-class FakeV6PortExtraOpt(object):
+class FakeV6PortExtraOpt(Dictable):
     def __init__(self):
         self.id = 'hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh'
         self.admin_state_up = True
@@ -253,7 +253,7 @@ class FakeV6PortExtraOpt(object):
                     ip_version=constants.IP_VERSION_6)]
 
 
-class FakeV6PortMultipleFixedIpsSameSubnet(object):
+class FakeV6PortMultipleFixedIpsSameSubnet(Dictable):
     def __init__(self, domain='openstacklocal'):
         self.id = 'hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh'
         self.admin_state_up = True
@@ -272,7 +272,7 @@ class FakeV6PortMultipleFixedIpsSameSubnet(object):
                                                  domain=domain)]
 
 
-class FakeDualPortWithV6ExtraOpt(object):
+class FakeDualPortWithV6ExtraOpt(Dictable):
     def __init__(self):
         self.id = 'hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh'
         self.admin_state_up = True
@@ -293,7 +293,7 @@ class FakeDualPortWithV6ExtraOpt(object):
                     ip_version=constants.IP_VERSION_6)]
 
 
-class FakeDualPort(object):
+class FakeDualPort(Dictable):
     def __init__(self, domain='openstacklocal'):
         self.id = 'hhhhhhhh-hhhh-hhhh-hhhh-hhhhhhhhhhhh'
         self.admin_state_up = True
@@ -311,7 +311,7 @@ class FakeDualPort(object):
                                                  domain=domain)]
 
 
-class FakeRouterPort(object):
+class FakeRouterPort(Dictable):
     def __init__(self, dev_owner=constants.DEVICE_OWNER_ROUTER_INTF,
                  ip_address='192.168.0.1', domain='openstacklocal'):
         self.id = 'rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr'
@@ -327,7 +327,7 @@ class FakeRouterPort(object):
                                for ip in self.fixed_ips]
 
 
-class FakeRouterHAPort(object):
+class FakeRouterHAPort(Dictable):
     def __init__(self):
         self.id = 'hahahaha-haha-haha-haha-hahahahahaha'
         self.admin_state_up = True
@@ -340,7 +340,7 @@ class FakeRouterHAPort(object):
             '169.254.169.20', 'dddddddd-dddd-dddd-dddd-dddddddddddd')]
 
 
-class FakeRouterPortNoDHCP(object):
+class FakeRouterPortNoDHCP(Dictable):
     def __init__(self, dev_owner=constants.DEVICE_OWNER_ROUTER_INTF,
                  ip_address='192.168.0.1', domain='openstacklocal'):
         self.id = 'ssssssss-ssss-ssss-ssss-ssssssssssss'
@@ -356,7 +356,7 @@ class FakeRouterPortNoDHCP(object):
                                for ip in self.fixed_ips]
 
 
-class FakeRouterPort2(object):
+class FakeRouterPort2(Dictable):
     def __init__(self):
         self.id = 'rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr'
         self.admin_state_up = True
@@ -370,7 +370,7 @@ class FakeRouterPort2(object):
         self.extra_dhcp_opts = []
 
 
-class FakeRouterPortSegmentID(object):
+class FakeRouterPortSegmentID(Dictable):
     def __init__(self):
         self.id = 'qqqqqqqq-qqqq-qqqq-qqqq-qqqqqqqqqqqq'
         self.admin_state_up = True
@@ -384,7 +384,7 @@ class FakeRouterPortSegmentID(object):
         self.extra_dhcp_opts = []
 
 
-class FakePortMultipleAgents1(object):
+class FakePortMultipleAgents1(Dictable):
     def __init__(self):
         self.id = 'rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr'
         self.admin_state_up = True
@@ -398,7 +398,7 @@ class FakePortMultipleAgents1(object):
         self.extra_dhcp_opts = []
 
 
-class FakePortMultipleAgents2(object):
+class FakePortMultipleAgents2(Dictable):
     def __init__(self):
         self.id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
         self.admin_state_up = True
