@@ -46,7 +46,7 @@ agents_db.register_db_agents_opts()
 _SYNC_STATE_LOCK = lockutils.ReaderWriterLock()
 CHASSIS_METADATA_LOCK = 'chassis_metadata_lock'
 
-NS_PREFIX = 'ovnmeta-'
+NS_PREFIX = ovn_const.OVN_METADATA_PREFIX
 MAC_PATTERN = re.compile(r'([0-9A-F]{2}[:-]){5}([0-9A-F]{2})', re.I)
 OVN_VIF_PORT_TYPES = (
     "", ovn_const.LSP_TYPE_EXTERNAL, ovn_const.LSP_TYPE_LOCALPORT)

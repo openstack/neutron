@@ -161,7 +161,8 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
                 addresses='AA:AA:AA:AA:AA:AA 192.168.122.123',
                 external_ids={
                     ovn_const.OVN_CIDRS_EXT_ID_KEY: '192.168.122.123/24',
-                    ovn_const.OVN_DEVID_EXT_ID_KEY: 'ovnmeta-' + lswitch_name,
+                    ovn_const.OVN_DEVID_EXT_ID_KEY:
+                        ovn_const.OVN_METADATA_PREFIX + lswitch_name,
                     ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY:
                         constants.DEVICE_OWNER_DISTRIBUTED
                 }))
@@ -170,7 +171,7 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
         external_ids = {
             ovn_const.OVN_CIDRS_EXT_ID_KEY: "192.168.122.2/24",
             ovn_const.OVN_DEVID_EXT_ID_KEY:
-                'ovnmeta-' + uuidutils.generate_uuid()
+                ovn_const.OVN_METADATA_PREFIX + uuidutils.generate_uuid()
         }
         self.nb_api.set_lswitch_port(lport_name=metadata_port_name,
                                      external_ids=external_ids).execute()

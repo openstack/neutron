@@ -26,6 +26,7 @@ from oslo_utils import netutils
 from oslo_utils import uuidutils
 import webob.exc
 
+from neutron.common.ovn import constants as ovn_const
 from neutron.conf import common as base_config
 from neutron.db import ipam_backend_mixin
 from neutron.db import ipam_pluggable_backend
@@ -752,11 +753,12 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         mocks['ipam']._test_fixed_ips_for_port = fixed_ips_mock
         mocks['ipam']._update_ips_for_pd_subnet = mock.Mock(return_value=[])
 
+        uuid = uuidutils.generate_uuid()
         port_dict = {
             'device_owner': constants.DEVICE_OWNER_DISTRIBUTED,
-            'device_id': 'ovnmeta-%s' % uuidutils.generate_uuid(),
+            'device_id': ovn_const.OVN_METADATA_PREFIX + uuid,
             'mac_address': 'aa:bb:cc:dd:ee:ff',
-            'network_id': uuidutils.generate_uuid()}
+            'network_id': uuid}
 
         mocks['ipam']._update_ips_for_port(context, port_dict, None,
                                            original_ips, new_ips, mac)

@@ -34,6 +34,7 @@ from neutron.agent.linux import dhcp
 from neutron.agent.linux import ip_lib
 from neutron.cmd import runtime_checks as checks
 from neutron.common import _constants as common_constants
+from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils as common_utils
 from neutron.conf.agent import common as config
 from neutron.conf.agent import dhcp as dhcp_config
@@ -99,7 +100,8 @@ class FakeOvnMetadataPort(Dictable):
             FakeIPAllocation('192.168.0.10',
                              'dddddddd-dddd-dddd-dddd-dddddddddddd')]
         self.mac_address = '00:00:80:aa:bb:ee'
-        self.device_id = 'ovnmeta-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+        self.device_id = (ovn_const.OVN_METADATA_PREFIX +
+                          'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
         self.extra_dhcp_opts = []
 
 

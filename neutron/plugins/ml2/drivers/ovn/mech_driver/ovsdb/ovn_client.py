@@ -2437,19 +2437,20 @@ class OVNClient(object):
         if not ovn_conf.is_ovn_metadata_enabled():
             return
 
-        metadata_port = self._find_metadata_port(context, network['id'])
+        net_id = network['id']
+        metadata_port = self._find_metadata_port(context, net_id)
         if metadata_port:
             return metadata_port
 
         # Create a neutron port for DHCP/metadata services
-        filters = {'network_id': [network['id']]}
+        filters = {'network_id': [net_id]}
         subnets = self._plugin.get_subnets(context, filters=filters)
         fixed_ips = [{'subnet_id': s['id']}
                      for s in subnets if s['enable_dhcp']]
-        port = {'port': {'network_id': network['id'],
+        port = {'port': {'network_id': net_id,
                          'tenant_id': network['project_id'],
                          'device_owner': const.DEVICE_OWNER_DISTRIBUTED,
-                         'device_id': 'ovnmeta-%s' % network['id'],
+                         'device_id': ovn_const.OVN_METADATA_PREFIX + net_id,
                          'fixed_ips': fixed_ips,
                          }
                 }

@@ -28,6 +28,7 @@ from neutron.agent.linux.ip_lib import IpNetnsCommand as ip_netns
 from neutron.agent.linux.ip_lib import IPWrapper as ip_wrap
 from neutron.agent.ovn.metadata import agent
 from neutron.agent.ovn.metadata import driver
+from neutron.common.ovn import constants as ovn_const
 from neutron.conf.agent.metadata import config as meta_conf
 from neutron.conf.agent.ovn.metadata import config as ovn_meta_conf
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
@@ -96,7 +97,8 @@ class TestMetadataAgent(base.BaseTestCase):
                     ip_lib, 'list_network_namespaces') as lnn,\
                 mock.patch.object(
                     self.agent, 'teardown_datapath') as tdp:
-            lnn.return_value = ['ovnmeta-1', 'ovnmeta-2']
+            lnn.return_value = [ovn_const.OVN_METADATA_PREFIX + '1',
+                                ovn_const.OVN_METADATA_PREFIX + '2']
 
             self.agent.sync()
 
@@ -119,7 +121,9 @@ class TestMetadataAgent(base.BaseTestCase):
                     ip_lib, 'list_network_namespaces') as lnn,\
                 mock.patch.object(
                     self.agent, 'teardown_datapath') as tdp:
-            lnn.return_value = ['ovnmeta-1', 'ovnmeta-2', 'ovnmeta-3',
+            lnn.return_value = [ovn_const.OVN_METADATA_PREFIX + '1',
+                                ovn_const.OVN_METADATA_PREFIX + '2',
+                                ovn_const.OVN_METADATA_PREFIX + '3',
                                 'ns1', 'ns2']
 
             self.agent.sync()
@@ -195,7 +199,7 @@ class TestMetadataAgent(base.BaseTestCase):
             self.agent.teardown_datapath('1')
 
             destroy_mdp.assert_called_once_with(
-                mock.ANY, '1', mock.ANY, 'ovnmeta-1')
+                mock.ANY, '1', mock.ANY, ovn_const.OVN_METADATA_PREFIX + '1')
             self.agent.ovs_idl.del_port.assert_called_once_with('veth_0')
             del_veth.assert_called_once_with('veth_0')
             garbage_collect.assert_called_once_with()

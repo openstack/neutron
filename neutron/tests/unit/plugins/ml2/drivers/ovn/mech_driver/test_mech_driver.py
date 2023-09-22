@@ -2166,7 +2166,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             port = {'id': 'metadata_id',
                     'network_id': 'net_id',
                     'device_owner': const.DEVICE_OWNER_DISTRIBUTED,
-                    'device_id': 'ovnmeta-%s' % 'net_id',
+                    'device_id': ovn_const.OVN_METADATA_PREFIX + 'net_id',
                     'fixed_ips': fixed_ips}
             mock_get_subnets.return_value = [subnet]
             mock_find_metaport.return_value = None
@@ -3282,7 +3282,7 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
         # Make sure both updates where on same metadata port
         args_list = ovn_nb_api.set_lswitch_port.call_args_list
         self.assertEqual(
-            'ovnmeta-%s' % self.net['network']['id'],
+            ovn_const.OVN_METADATA_PREFIX + self.net['network']['id'],
             args_list[6][1]['external_ids']['neutron:device_id'])
         self.assertEqual(
             args_list[6][1]['external_ids']['neutron:device_id'],
@@ -3333,7 +3333,7 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
             port[1]['lport_name']
             for port in ovn_nb_api.delete_lswitch_port.call_args_list]
         self.assertNotIn(
-            'ovnmeta-%s' % self.net['network']['id'],
+            ovn_const.OVN_METADATA_PREFIX + self.net['network']['id'],
             deleted_ports)
         self.assertEqual(
             2,

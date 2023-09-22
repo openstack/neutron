@@ -23,6 +23,7 @@ from neutron_lib.exceptions import address_scope as addr_scope_exc
 from oslo_utils import uuidutils
 import webob.exc
 
+from neutron.common.ovn import constants as ovn_const
 from neutron.db import ipam_backend_mixin
 from neutron.objects import subnet as subnet_obj
 from neutron.plugins.ml2 import plugin as ml2_plugin
@@ -88,18 +89,19 @@ class TestIpamBackendMixin(base.BaseTestCase):
             side_effect=_get_subnet_object)
 
     def test__is_distributed_service(self):
+        uuid = uuidutils.generate_uuid()
         port = {'device_owner':
                 '%snova' % constants.DEVICE_OWNER_COMPUTE_PREFIX,
-                'device_id': uuidutils.generate_uuid()}
+                'device_id': uuid}
         self.assertFalse(self.mixin._is_distributed_service(port))
         port = {'device_owner': constants.DEVICE_OWNER_DHCP,
-                'device_id': uuidutils.generate_uuid()}
+                'device_id': uuid}
         self.assertFalse(self.mixin._is_distributed_service(port))
         port = {'device_owner': constants.DEVICE_OWNER_DHCP,
-                'device_id': 'ovnmeta-%s' % uuidutils.generate_uuid()}
+                'device_id': ovn_const.OVN_METADATA_PREFIX + uuid}
         self.assertFalse(self.mixin._is_distributed_service(port))
         port = {'device_owner': constants.DEVICE_OWNER_DISTRIBUTED,
-                'device_id': 'ovnmeta-%s' % uuidutils.generate_uuid()}
+                'device_id': ovn_const.OVN_METADATA_PREFIX + uuid}
         self.assertTrue(self.mixin._is_distributed_service(port))
 
     def _test_get_changed_ips_for_port(self, expected, original_ips,

@@ -39,6 +39,7 @@ from neutron.agent.linux import utils as linux_utils
 from neutron.agent.metadata import driver as metadata_driver
 from neutron.common import _constants as common_constants
 from neutron.common import config as common_config
+from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils
 from neutron.conf.agent import common as config
 from neutron.conf.agent import dhcp as dhcp_config
@@ -167,7 +168,8 @@ fake_ovn_port = dhcp.DictModel(id='12345678-1234-aaaa-123456789000',
 fake_ovn_metadata_port = dhcp.DictModel(id='12345678-1234-aaaa-123456789000',
                                         device_owner=const.
                                         DEVICE_OWNER_DISTRIBUTED,
-                                        device_id='ovnmeta-{}'.format(
+                                        device_id='{}{}'.format(
+                                            ovn_const.OVN_METADATA_PREFIX,
                                             FAKE_NETWORK_UUID),
                                         mac_address='aa:bb:cc:dd:ee:99',
                                         network_id=FAKE_NETWORK_UUID,

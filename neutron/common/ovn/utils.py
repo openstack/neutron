@@ -641,7 +641,7 @@ def ovn_metadata_name(id_):
 
 def is_ovn_metadata_port(port):
     return (port['device_owner'] == const.DEVICE_OWNER_DISTRIBUTED and
-            port['device_id'].startswith('ovnmeta'))
+            port['device_id'].startswith(constants.OVN_METADATA_PREFIX))
 
 
 def is_ovn_lb_hm_port(port):
