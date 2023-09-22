@@ -259,7 +259,22 @@ class IPWrapper(SubProcessBase):
         return ip
 
     def namespace_is_empty(self):
-        return not self.get_devices()
+        try:
+            return not self.get_devices()
+        except OSError as e:
+            # This can happen if we previously got terminated in the middle of
+            # removing this namespace. In this case the bind mount of the
+            # namespace under /var/run/netns will be removed, but the namespace
+            # file is still there. As the bind mount is gone we can no longer
+            # access the namespace to validate that it is empty. But since it
+            # should have already been removed we are sure that the check has
+            # passed the last time and since the namespace is unuseable that
+            # can not have changed.
+            # Future calls to pyroute2 to remove that namespace will clean up
+            # the leftover file.
+            if e.errno == errno.EINVAL:
+                return True
+            raise e
 
     def garbage_collect_namespace(self):
         """Conditionally destroy the namespace if it is empty."""
