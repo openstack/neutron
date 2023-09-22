@@ -490,7 +490,10 @@ class MetadataAgent(object):
                              ns.startswith(NS_PREFIX) and
                              ns not in metadata_namespaces]
         for ns in unused_namespaces:
-            self.teardown_datapath(self._get_datapath_name(ns))
+            try:
+                self.teardown_datapath(self._get_datapath_name(ns))
+            except Exception:
+                LOG.exception('Error unable to destroy namespace: %s', ns)
 
         # resync all network namespaces based on the associated datapaths,
         # even those that are already running. This is to make sure
