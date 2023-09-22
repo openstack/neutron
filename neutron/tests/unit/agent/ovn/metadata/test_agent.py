@@ -138,6 +138,32 @@ class TestMetadataAgent(base.BaseTestCase):
             lnn.assert_called_once_with()
             tdp.assert_called_once_with('3')
 
+    def test_sync_teardown_namespace_does_not_crash_on_error(self):
+        """Test that sync tears down unneeded metadata namespaces.
+        Even if that fails it continues to provision other datapaths
+        """
+        with mock.patch.object(
+                self.agent, 'provision_datapath') as pdp,\
+                mock.patch.object(
+                    ip_lib, 'list_network_namespaces') as lnn,\
+                mock.patch.object(
+                    self.agent, 'teardown_datapath') as tdp:
+            lnn.return_value = ['ovnmeta-1', 'ovnmeta-2', 'ovnmeta-3',
+                                'ns1', 'ns2']
+            tdp.side_effect = Exception()
+
+            self.agent.sync()
+
+            pdp.assert_has_calls(
+                [
+                    mock.call(p.datapath)
+                    for p in self.ports
+                ],
+                any_order=True
+            )
+            lnn.assert_called_once_with()
+            tdp.assert_called_once_with('3')
+
     def test_get_networks_datapaths(self):
         """Test get_networks_datapaths returns only datapath objects for the
         networks containing vif ports of type ''(blank) and 'external'.

@@ -357,6 +357,23 @@ class TestIpWrapper(base.BaseTestCase):
                 self.assertNotIn(mock.call().delete('ns'),
                                  ip_ns_cmd_cls.mock_calls)
 
+    def test_garbage_collect_namespace_existing_broken(self):
+        with mock.patch.object(ip_lib, 'IpNetnsCommand') as ip_ns_cmd_cls:
+            ip_ns_cmd_cls.return_value.exists.return_value = True
+
+            ip = ip_lib.IPWrapper(namespace='ns')
+
+            with mock.patch.object(ip, 'get_devices') as mock_get_devices:
+                mock_get_devices.side_effect = OSError(errno.EINVAL, None)
+
+                self.assertTrue(ip.garbage_collect_namespace())
+
+                mock_get_devices.assert_called_once_with()
+                expected = [mock.call(ip),
+                            mock.call().exists('ns'),
+                            mock.call().delete('ns')]
+                self.assertEqual(ip_ns_cmd_cls.mock_calls, expected)
+
     @mock.patch.object(priv_lib, 'create_interface')
     def test_add_vlan(self, create):
         retval = ip_lib.IPWrapper().add_vlan('eth0.1', 'eth0', '1')
