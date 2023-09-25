@@ -848,6 +848,10 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
     def update_lb_external_ids(self, lb_name, values, if_exists=True):
         return cmd.UpdateLbExternalIds(self, lb_name, values, if_exists)
 
+    def set_nb_global_options(self, **options):
+        LOG.debug("Setting NB_Global options: %s", options)
+        return self.db_set("NB_Global", ".", options=options)
+
 
 class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
     def __init__(self, connection):

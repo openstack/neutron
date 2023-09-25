@@ -623,6 +623,10 @@ class API(api.API, metaclass=abc.ABCMeta):
         :returns: The NAT rule row or Load_Balancer row or None
         """
 
+    @abc.abstractmethod
+    def set_nb_global_options(self, key, value):
+        """Set NB_Global options configuration"""
+
 
 class SbAPI(api.API, metaclass=abc.ABCMeta):
 

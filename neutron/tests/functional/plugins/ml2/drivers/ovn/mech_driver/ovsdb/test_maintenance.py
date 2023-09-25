@@ -1032,6 +1032,39 @@ class TestMaintenance(_TestMaintenanceHelper):
         # "Chassis_Private" register was missing.
         self.assertEqual(2, len(chassis_result))
 
+    def test_configure_nb_global(self):
+        def options_intersect(options1, options2):
+            return bool(set(
+                new_nb_global_options.keys()).intersection(nb_options.keys()))
+
+        new_nb_global_options = {
+            'foo': 'bar',
+            'baz': 'qux',
+        }
+
+        cfg_nb_global_options = [
+            ovn_config.cfg.StrOpt(key) for key in new_nb_global_options
+        ]
+
+        def get_opt(key):
+            return new_nb_global_options[key]
+
+        nb_options = self.nb_api.db_get('NB_Global', '.', 'options').execute(
+            check_error=True, log_errors=True)
+        self.assertFalse(options_intersect(new_nb_global_options, nb_options))
+
+        with mock.patch.object(
+                ovn_config, 'nb_global_opts', cfg_nb_global_options), \
+                mock.patch.object(
+                    ovn_config.cfg.CONF.ovn_nb_global, 'get',
+                    side_effect=get_opt):
+            self.assertRaises(periodics.NeverAgain,
+                              self.maint.configure_nb_global)
+
+        nb_options = self.nb_api.db_get('NB_Global', '.', 'options').execute(
+            check_error=True, log_errors=True)
+        self.assertTrue(options_intersect(new_nb_global_options, nb_options))
+
 
 class TestLogMaintenance(_TestMaintenanceHelper,
                          test_log_driver.LogApiTestCaseBase):
