@@ -53,6 +53,16 @@ class SystemAdminTests(TrunkAPITestCase):
             policy.enforce,
             self.context, 'get_trunk', self.alt_target)
 
+    def test_get_trunks_tags(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_trunks_tags', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_trunks_tags', self.alt_target)
+
     def test_update_trunk(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -63,6 +73,16 @@ class SystemAdminTests(TrunkAPITestCase):
             policy.enforce,
             self.context, 'update_trunk', self.alt_target)
 
+    def test_update_trunks_tags(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_trunks_tags', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_trunks_tags', self.alt_target)
+
     def test_delete_trunk(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -72,6 +92,16 @@ class SystemAdminTests(TrunkAPITestCase):
             base_policy.InvalidScope,
             policy.enforce,
             self.context, 'delete_trunk', self.alt_target)
+
+    def test_delete_trunks_tags(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_trunks_tags', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_trunks_tags', self.alt_target)
 
     def test_get_subports(self):
         self.assertRaises(
