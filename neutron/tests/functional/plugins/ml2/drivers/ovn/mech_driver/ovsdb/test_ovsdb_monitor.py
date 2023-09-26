@@ -360,12 +360,6 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         # and the corresponding "virtual-parents".
         self._check_port_binding_type(vip['id'], ovn_const.LSP_TYPE_VIRTUAL)
         self._check_port_virtual_parents(vip['id'], port['id'])
-        n_utils.wait_until_true(lambda: mock_update_vip_host.called,
-                                timeout=10)
-        # The "Port_Binding" has been deleted. Then the "Port_Binding" register
-        # is created again without virtual_parents, but this event doesn't
-        # call "update_virtual_port_host".
-        mock_update_vip_host.assert_called_once_with(vip['id'], None)
 
         # 2) Unset the allowed address pairs.
         # Assign the VIP again and delete the virtual port.
@@ -405,6 +399,19 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         # TODO(lajoskatona): check when new OVN version is out
         # if this behaviour is changed.
         mock_update_vip_host.assert_called_with(vip['id'], None)
+
+    @mock.patch.object(mech_driver.OVNMechanismDriver,
+                       'update_virtual_port_host')
+    def test_non_virtual_port_no_host_update(self, mock_update_vip_host):
+        # The ``PortBindingUpdateVirtualPortsEvent`` delete event should affect
+        # only to virtual ports. This check is done for virtual ports in
+        # ``test_virtual_port_host_update``.
+        port = self.create_port()
+        self._delete('ports', port['id'])
+        # We actively wait for 5 seconds for the ``Port_Binding`` event to
+        # arrive and be processed, but the port host must not be updated.
+        self.assertRaises(n_utils.WaitTimeout, n_utils.wait_until_true,
+                          lambda: mock_update_vip_host.called, timeout=5)
 
 
 class TestNBDbMonitorOverTcp(TestNBDbMonitor):
