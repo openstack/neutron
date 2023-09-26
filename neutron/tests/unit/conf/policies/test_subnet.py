@@ -146,6 +146,20 @@ class SystemAdminTests(SubnetAPITestCase):
             policy.enforce,
             self.context, 'get_subnet:segment_id', self.alt_target)
 
+    def test_get_subnets_tags(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_subnets_tags', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_subnets_tags', self.target_net_alt_target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_subnets_tags', self.alt_target)
+
     def test_update_subnet(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -190,6 +204,20 @@ class SystemAdminTests(SubnetAPITestCase):
             policy.enforce,
             self.context, 'update_subnet:service_types', self.alt_target)
 
+    def test_update_subnets_tags(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_subnets_tags', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_subnets_tags', self.target_net_alt_target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_subnets_tags', self.alt_target)
+
     def test_delete_subnet(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -203,6 +231,20 @@ class SystemAdminTests(SubnetAPITestCase):
             base_policy.InvalidScope,
             policy.enforce,
             self.context, 'delete_subnet', self.alt_target)
+
+    def test_delete_subnets_tags(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_subnets_tags', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_subnets_tags', self.target_net_alt_target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_subnets_tags', self.alt_target)
 
 
 class SystemMemberTests(SystemAdminTests):
@@ -277,6 +319,15 @@ class AdminTests(SubnetAPITestCase):
             policy.enforce(
                 self.context, 'get_subnet:segment_id', self.alt_target))
 
+    def test_get_subnets_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'get_subnets_tags', self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'get_subnets_tags',
+                           self.target_net_alt_target))
+        self.assertTrue(
+            policy.enforce(self.context, 'get_subnets_tags', self.alt_target))
+
     def test_update_subnet(self):
         self.assertTrue(
             policy.enforce(self.context, 'update_subnet', self.target))
@@ -310,6 +361,16 @@ class AdminTests(SubnetAPITestCase):
             policy.enforce(
                 self.context, 'update_subnet:service_types', self.alt_target))
 
+    def test_update_subnets_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'update_subnets_tags', self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'update_subnets_tags',
+                           self.target_net_alt_target))
+        self.assertTrue(
+            policy.enforce(self.context, 'update_subnets_tags',
+                           self.alt_target))
+
     def test_delete_subnet(self):
         self.assertTrue(
             policy.enforce(self.context, 'delete_subnet', self.target))
@@ -318,6 +379,16 @@ class AdminTests(SubnetAPITestCase):
                            self.target_net_alt_target))
         self.assertTrue(
             policy.enforce(self.context, 'delete_subnet', self.alt_target))
+
+    def test_delete_subnets_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_subnets_tags', self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_subnets_tags',
+                           self.target_net_alt_target))
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_subnets_tags',
+                           self.alt_target))
 
 
 class ProjectMemberTests(AdminTests):
@@ -393,6 +464,17 @@ class ProjectMemberTests(AdminTests):
             policy.enforce,
             self.context, 'get_subnet:segment_id', self.alt_target)
 
+    def test_get_subnets_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'get_subnets_tags', self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'get_subnets_tags',
+                           self.target_net_alt_target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_subnets_tags', self.alt_target)
+
     def test_update_subnet(self):
         self.assertTrue(
             policy.enforce(self.context, 'update_subnet', self.target))
@@ -434,6 +516,17 @@ class ProjectMemberTests(AdminTests):
             policy.enforce,
             self.context, 'update_subnet:service_types', self.alt_target)
 
+    def test_update_subnets_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'update_subnets_tags', self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'update_subnets_tags',
+                           self.target_net_alt_target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_subnets_tags', self.alt_target)
+
     def test_delete_subnet(self):
         self.assertTrue(
             policy.enforce(self.context, 'delete_subnet', self.target))
@@ -444,6 +537,17 @@ class ProjectMemberTests(AdminTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'delete_subnet', self.alt_target)
+
+    def test_delete_subnets_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_subnets_tags', self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_subnets_tags',
+                           self.target_net_alt_target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_subnets_tags', self.alt_target)
 
 
 class ProjectReaderTests(ProjectMemberTests):
@@ -480,6 +584,20 @@ class ProjectReaderTests(ProjectMemberTests):
             policy.enforce,
             self.context, 'update_subnet', self.alt_target)
 
+    def test_update_subnets_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_subnets_tags', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_subnets_tags', self.target_net_alt_target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_subnets_tags', self.alt_target)
+
     def test_delete_subnet(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
@@ -493,6 +611,20 @@ class ProjectReaderTests(ProjectMemberTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'delete_subnet', self.alt_target)
+
+    def test_delete_subnets_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_subnets_tags', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_subnets_tags', self.target_net_alt_target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_subnets_tags', self.alt_target)
 
 
 class ServiceRoleTests(SubnetAPITestCase):

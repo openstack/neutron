@@ -13,6 +13,7 @@
 import netaddr
 from neutron_lib.api import validators
 from neutron_lib import constants as const
+from neutron_lib.db import api as db_api
 from neutron_lib.db import model_query
 from neutron_lib.objects import common_types
 from neutron_lib.utils import net as net_utils
@@ -22,6 +23,7 @@ from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 from sqlalchemy import and_, or_
 from sqlalchemy import orm
+from sqlalchemy.orm import exc as orm_exc
 from sqlalchemy.sql import exists
 
 from neutron.db.models import dns as dns_models
@@ -544,6 +546,15 @@ class Subnet(base.NeutronDbObject):
             query = query.filter(cls.db_model.id != subnet_id)
 
         return [segment_id for (segment_id,) in query.all()]
+
+    @classmethod
+    @db_api.CONTEXT_READER
+    def get_network_id(cls, context, subnet_id):
+        try:
+            return context.session.query(cls.db_model.network_id).filter(
+                cls.db_model.id == subnet_id).one()[0]
+        except orm_exc.NoResultFound:
+            return None
 
 
 @base.NeutronObjectRegistry.register

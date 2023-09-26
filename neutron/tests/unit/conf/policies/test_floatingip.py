@@ -69,6 +69,16 @@ class SystemAdminTests(FloatingIPAPITestCase):
             policy.enforce,
             self.context, "get_floatingip", self.alt_target)
 
+    def test_get_floatingips_tags(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, "get_floatingips_tags", self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, "get_floatingips_tags", self.alt_target)
+
     def test_update_floatingip(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -78,6 +88,16 @@ class SystemAdminTests(FloatingIPAPITestCase):
             base_policy.InvalidScope,
             policy.enforce,
             self.context, "update_floatingip", self.alt_target)
+
+    def test_update_floatingips_tags(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, "update_floatingips_tags", self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, "update_floatingips_tags", self.alt_target)
 
     def test_delete_floatingip(self):
         self.assertRaises(
@@ -132,11 +152,26 @@ class AdminTests(FloatingIPAPITestCase):
         self.assertTrue(
             policy.enforce(self.context, "get_floatingip", self.alt_target))
 
+    def test_get_floatingips_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, "get_floatingips_tags", self.target))
+        self.assertTrue(
+            policy.enforce(self.context, "get_floatingips_tags",
+                           self.alt_target))
+
     def test_update_floatingip(self):
         self.assertTrue(
             policy.enforce(self.context, "update_floatingip", self.target))
         self.assertTrue(
             policy.enforce(self.context, "update_floatingip", self.alt_target))
+
+    def test_update_floatingips_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, "update_floatingips_tags",
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context, "update_floatingips_tags",
+                           self.alt_target))
 
     def test_delete_floatingip(self):
         self.assertTrue(
@@ -178,12 +213,29 @@ class ProjectMemberTests(AdminTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, "get_floatingip", self.alt_target)
 
+    def test_get_floatingips_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, "get_floatingips_tags", self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, "get_floatingips_tags",
+            self.alt_target)
+
     def test_update_floatingip(self):
         self.assertTrue(
             policy.enforce(self.context, "update_floatingip", self.target))
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, "update_floatingip", self.alt_target)
+
+    def test_update_floatingips_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, "update_floatingips_tags",
+                           self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, "update_floatingips_tags",
+            self.alt_target)
 
     def test_delete_floatingip(self):
         self.assertTrue(
@@ -218,6 +270,16 @@ class ProjectReaderTests(ProjectMemberTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, "update_floatingip", self.alt_target)
+
+    def test_update_floatingips_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "update_floatingips_tags", self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "update_floatingips_tags", self.alt_target)
 
     def test_delete_floatingip(self):
         self.assertRaises(

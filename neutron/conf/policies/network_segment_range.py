@@ -25,6 +25,21 @@ The network segment range API now supports project scope and default roles.
 
 COLLECTION_PATH = '/network_segment_ranges'
 RESOURCE_PATH = '/network_segment_ranges/{id}'
+TAGS_PATH = RESOURCE_PATH + '/tags'
+TAG_PATH = RESOURCE_PATH + '/tags/{tag_id}'
+
+ACTION_GET_TAGS = [
+    {'method': 'GET', 'path': TAGS_PATH},
+    {'method': 'GET', 'path': TAG_PATH},
+]
+ACTION_PUT_TAGS = [
+    {'method': 'PUT', 'path': TAGS_PATH},
+    {'method': 'PUT', 'path': TAG_PATH},
+]
+ACTION_DELETE_TAGS = [
+    {'method': 'DELETE', 'path': TAGS_PATH},
+    {'method': 'DELETE', 'path': TAG_PATH},
+]
 
 
 rules = [
@@ -45,6 +60,7 @@ rules = [
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
+
     policy.DocumentedRuleDefault(
         name='get_network_segment_range',
         check_str=base.ADMIN,
@@ -67,6 +83,14 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
+        name='get_network_segment_ranges_tags',
+        check_str=base.ADMIN,
+        scope_types=['project'],
+        description='Get the network segment range tags',
+        operations=ACTION_GET_TAGS,
+    ),
+
+    policy.DocumentedRuleDefault(
         name='update_network_segment_range',
         check_str=base.ADMIN,
         scope_types=['project'],
@@ -84,6 +108,14 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
+        name='update_network_segment_ranges_tags',
+        check_str=base.ADMIN,
+        scope_types=['project'],
+        description='Update the network segment range tags',
+        operations=ACTION_PUT_TAGS,
+    ),
+
+    policy.DocumentedRuleDefault(
         name='delete_network_segment_range',
         check_str=base.ADMIN,
         scope_types=['project'],
@@ -99,6 +131,13 @@ rules = [
             check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
+    ),
+    policy.DocumentedRuleDefault(
+        name='delete_network_segment_ranges_tags',
+        check_str=base.ADMIN,
+        scope_types=['project'],
+        description='Delete the network segment range tags',
+        operations=ACTION_DELETE_TAGS,
     ),
 ]
 

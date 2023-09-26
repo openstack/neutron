@@ -246,6 +246,14 @@ class SystemAdminTests(PortAPITestCase):
             policy.enforce, self.context, 'get_port:resource_request',
             self.alt_target)
 
+    def test_get_ports_tags(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce, self.context, 'get_ports_tags', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce, self.context, 'get_ports_tags', self.alt_target)
+
     def test_update_port(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -595,6 +603,12 @@ class AdminTests(PortAPITestCase):
         self.assertTrue(
             policy.enforce(
                 self.context, 'get_port:hints', self.alt_target))
+
+    def test_get_ports_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'get_ports_tags', self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'get_ports_tags', self.alt_target))
 
     def test_update_port(self):
         self.assertTrue(
@@ -957,6 +971,13 @@ class ProjectMemberTests(AdminTests):
             policy.enforce, self.context, 'get_port:hints',
             self.alt_target)
 
+    def test_get_ports_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'get_ports_tags', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'get_ports_tags', self.alt_target)
+
     def test_update_port(self):
         self.assertTrue(
             policy.enforce(self.context, 'update_port', self.target))
@@ -1113,6 +1134,13 @@ class ProjectMemberTests(AdminTests):
             policy.enforce,
             self.context, 'update_port:hints', self.alt_target)
 
+    def test_update_ports_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'update_ports_tags', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'update_ports_tags', self.alt_target)
+
     def test_delete_port(self):
         self.assertTrue(
             policy.enforce(self.context, 'delete_port', self.target))
@@ -1162,6 +1190,14 @@ class ProjectReaderTests(ProjectMemberTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, 'update_port:binding:vnic_type',
             self.alt_target)
+
+    def test_update_ports_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'update_ports_tags', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'update_ports_tags', self.alt_target)
 
     def test_delete_port(self):
         self.assertRaises(

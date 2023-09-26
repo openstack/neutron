@@ -44,17 +44,35 @@ class SystemAdminTests(SegmentAPITestCase):
             policy.enforce,
             self.context, 'get_segment', self.target)
 
+    def test_get_segments_tags(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'get_segments_tags', self.target)
+
     def test_update_segment(self):
         self.assertRaises(
             base_policy.InvalidScope,
             policy.enforce,
             self.context, 'update_segment', self.target)
 
+    def test_update_segments_tags(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'update_segments_tags', self.target)
+
     def test_delete_segment(self):
         self.assertRaises(
             base_policy.InvalidScope,
             policy.enforce,
             self.context, 'delete_segment', self.target)
+
+    def test_delete_segments_tags(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'delete_segments_tags', self.target)
 
 
 class SystemMemberTests(SystemAdminTests):
@@ -85,13 +103,25 @@ class AdminTests(SegmentAPITestCase):
         self.assertTrue(
             policy.enforce(self.context, 'get_segment', self.target))
 
+    def test_get_segments_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'get_segments_tags', self.target))
+
     def test_update_segment(self):
         self.assertTrue(
             policy.enforce(self.context, 'update_segment', self.target))
 
+    def test_update_segments_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'update_segments_tags', self.target))
+
     def test_delete_segment(self):
         self.assertTrue(
             policy.enforce(self.context, 'delete_segment', self.target))
+
+    def test_delete_segments_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_segments_tags', self.target))
 
 
 class ProjectMemberTests(AdminTests):
@@ -112,17 +142,35 @@ class ProjectMemberTests(AdminTests):
             policy.enforce,
             self.context, 'get_segment', self.target)
 
+    def test_get_segments_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_segments_tags', self.target)
+
     def test_update_segment(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'update_segment', self.target)
 
+    def test_update_segments_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_segments_tags', self.target)
+
     def test_delete_segment(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'delete_segment', self.target)
+
+    def test_delete_segments_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_segments_tags', self.target)
 
 
 class ProjectReaderTests(ProjectMemberTests):
