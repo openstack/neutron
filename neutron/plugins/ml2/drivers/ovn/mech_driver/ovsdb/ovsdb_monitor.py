@@ -557,7 +557,7 @@ class PortBindingUpdateVirtualPortsEvent(row_event.RowEvent):
         if event == self.ROW_DELETE:
             # The port binding has been deleted, delete the host ID (if the
             # port was not deleted before).
-            return True
+            return row.type == ovn_const.LSP_TYPE_VIRTUAL
 
         virtual_parents = (row.options or {}).get(
             ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY)
