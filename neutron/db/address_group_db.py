@@ -166,6 +166,7 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
     def get_address_groups(self, context, filters=None, fields=None,
                            sorts=None, limit=None, marker=None,
                            page_reverse=False):
+        filters = filters or {}
         pager = base_obj.Pager(sorts, limit, page_reverse, marker)
         address_groups = ag_obj.AddressGroup.get_objects(
             context, _pager=pager, **filters)
