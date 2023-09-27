@@ -21,7 +21,6 @@ import netaddr
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as lib_constants
 from neutron_lib.exceptions import l3 as l3_exc
-import testtools
 
 from neutron.agent.l3 import agent as neutron_l3_agent
 from neutron.agent.l3 import dvr_edge_ha_router as dvr_ha_router
@@ -2181,7 +2180,6 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         test_machine1.assert_no_ping(test_machine2.ip)
         test_machine2.assert_no_ping(test_machine1.ip)
 
-    @testtools.skip('bug/1543885')
     def test_fip_connection_for_address_scope(self):
         self.agent.conf.agent_mode = 'dvr_snat'
         (machine_same_scope, machine_diff_scope,
