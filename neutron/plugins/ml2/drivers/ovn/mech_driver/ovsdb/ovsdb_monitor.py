@@ -286,7 +286,7 @@ class PortBindingChassisUpdateEvent(row_event.RowEvent):
             # ``LogicalSwitchPortUpdateUpEvent`` events.
             return False
 
-        return bool(lsp.up)
+        return utils.is_lsp_enabled(lsp) and utils.is_lsp_up(lsp)
 
     def run(self, event, row, old=None):
         self.driver.set_port_status_up(row.logical_port)
@@ -461,80 +461,83 @@ class PortBindingChassisEvent(row_event.RowEvent):
             router, host)
 
 
-class LogicalSwitchPortCreateUpEvent(row_event.RowEvent):
-    """Row create event - Logical_Switch_Port 'up' = True.
+class LogicalSwitchPortCreateEvent(row_event.RowEvent):
+    """Row create event - Checks Logical_Switch_Port is UP and enabled.
 
     On connection, we get a dump of all ports, so if there is a neutron
-    port that is down that has since been activated, we'll catch it here.
-    This event will not be generated for new ports getting created.
+    port that has been activated or deactivated, we'll catch it here.
     """
 
     def __init__(self, driver):
         self.driver = driver
         table = 'Logical_Switch_Port'
         events = (self.ROW_CREATE,)
-        super(LogicalSwitchPortCreateUpEvent, self).__init__(
-            events, table, (('up', '=', True),))
-        self.event_name = 'LogicalSwitchPortCreateUpEvent'
+        super().__init__(events, table, [])
+        self.event_name = 'LogicalSwitchPortCreateEvent'
 
     def run(self, event, row, old):
-        self.driver.set_port_status_up(row.name)
-
-
-class LogicalSwitchPortCreateDownEvent(row_event.RowEvent):
-    """Row create event - Logical_Switch_Port 'up' = False
-
-    On connection, we get a dump of all ports, so if there is a neutron
-    port that is up that has since been deactivated, we'll catch it here.
-    This event will not be generated for new ports getting created.
-    """
-    def __init__(self, driver):
-        self.driver = driver
-        table = 'Logical_Switch_Port'
-        events = (self.ROW_CREATE,)
-        super(LogicalSwitchPortCreateDownEvent, self).__init__(
-            events, table, (('up', '=', False),))
-        self.event_name = 'LogicalSwitchPortCreateDownEvent'
-
-    def run(self, event, row, old):
-        self.driver.set_port_status_down(row.name)
+        if utils.is_lsp_up(row) and utils.is_lsp_enabled(row):
+            self.driver.set_port_status_up(row.name)
+        else:
+            self.driver.set_port_status_down(row.name)
 
 
 class LogicalSwitchPortUpdateUpEvent(row_event.RowEvent):
-    """Row update event - Logical_Switch_Port 'up' going from False to True
+    """Row update event - Logical_Switch_Port UP or enabled going True
 
     This happens when the VM goes up.
-    New value of Logical_Switch_Port 'up' will be True and the old value will
-    be False.
     """
     def __init__(self, driver):
         self.driver = driver
         table = 'Logical_Switch_Port'
         events = (self.ROW_UPDATE,)
         super(LogicalSwitchPortUpdateUpEvent, self).__init__(
-            events, table, (('up', '=', True),),
-            old_conditions=(('up', '!=', True),))
+            events, table, None)
         self.event_name = 'LogicalSwitchPortUpdateUpEvent'
+
+    def match_fn(self, event, row, old):
+        if not (utils.is_lsp_up(row) and utils.is_lsp_enabled(row)):
+            return False
+
+        if hasattr(old, 'up') and not utils.is_lsp_up(old):
+            # The port has transitioned from DOWN to UP, and the admin state
+            # is UP (lsp.enabled=True)
+            return True
+        if hasattr(old, 'enabled') and not utils.is_lsp_enabled(old):
+            # The user has set the admin state to UP and the port is UP too.
+            return True
+        return False
 
     def run(self, event, row, old):
         self.driver.set_port_status_up(row.name)
 
 
 class LogicalSwitchPortUpdateDownEvent(row_event.RowEvent):
-    """Row update event - Logical_Switch_Port 'up' going from True to False
+    """Row update event - Logical_Switch_Port UP or enabled going to False
 
-    This happens when the VM goes down.
-    New value of Logical_Switch_Port 'up' will be False and the old value will
-    be True.
+    This happens when the VM goes down or the port is disabled.
     """
     def __init__(self, driver):
         self.driver = driver
         table = 'Logical_Switch_Port'
         events = (self.ROW_UPDATE,)
         super(LogicalSwitchPortUpdateDownEvent, self).__init__(
-            events, table, (('up', '=', False),),
-            old_conditions=(('up', '=', True),))
+            events, table, None)
         self.event_name = 'LogicalSwitchPortUpdateDownEvent'
+
+    def match_fn(self, event, row, old):
+        if (hasattr(old, 'up') and
+                utils.is_lsp_up(old) and
+                not utils.is_lsp_up(row)):
+            # If the port goes DOWN, update the port status to DOWN.
+            return True
+        if (hasattr(old, 'enabled') and
+                utils.is_lsp_enabled(old) and
+                not utils.is_lsp_enabled(row)):
+            # If the port is disabled by the user, update the port status to
+            # DOWN.
+            return True
+        return False
 
     def run(self, event, row, old):
         self.driver.set_port_status_down(row.name)
@@ -779,12 +782,10 @@ class OvnNbIdl(OvnIdlDistributedLock):
         super(OvnNbIdl, self).__init__(driver, remote, schema)
         self._lsp_update_up_event = LogicalSwitchPortUpdateUpEvent(driver)
         self._lsp_update_down_event = LogicalSwitchPortUpdateDownEvent(driver)
-        self._lsp_create_up_event = LogicalSwitchPortCreateUpEvent(driver)
-        self._lsp_create_down_event = LogicalSwitchPortCreateDownEvent(driver)
+        self._lsp_create_event = LogicalSwitchPortCreateEvent(driver)
         self._fip_create_delete_event = FIPAddDeleteEvent(driver)
 
-        self.notify_handler.watch_events([self._lsp_create_up_event,
-                                          self._lsp_create_down_event,
+        self.notify_handler.watch_events([self._lsp_create_event,
                                           self._lsp_update_up_event,
                                           self._lsp_update_down_event,
                                           self._fip_create_delete_event])
@@ -804,10 +805,8 @@ class OvnNbIdl(OvnIdlDistributedLock):
         After the startup, there is no need to watch these events.
         So unwatch these events.
         """
-        self.notify_handler.unwatch_events([self._lsp_create_up_event,
-                                            self._lsp_create_down_event])
-        self._lsp_create_up_event = None
-        self._lsp_create_down_event = None
+        self.notify_handler.unwatch_events([self._lsp_create_event])
+        del self._lsp_create_event
 
     def post_connect(self):
         self.unwatch_logical_switch_port_create_events()
