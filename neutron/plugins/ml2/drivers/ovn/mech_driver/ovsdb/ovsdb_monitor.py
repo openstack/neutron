@@ -426,11 +426,13 @@ class PortBindingChassisEvent(row_event.RowEvent):
         self.l3_plugin = directory.get_plugin(constants.L3)
         table = 'Port_Binding'
         events = (self.ROW_UPDATE,)
-        super(PortBindingChassisEvent, self).__init__(
-            events, table, (('type', '=', ovn_const.OVN_CHASSIS_REDIRECT),))
+        super().__init__(events, table, None)
         self.event_name = 'PortBindingChassisEvent'
 
     def match_fn(self, event, row, old):
+        if row.type != ovn_const.OVN_CHASSIS_REDIRECT:
+            return False
+
         if len(old._data) == 1 and 'external_ids' in old._data:
             # NOTE: since [1], the NB logical_router_port.external_ids are
             # copied into the SB port_binding.external_ids. If only the
