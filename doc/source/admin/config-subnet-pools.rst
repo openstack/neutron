@@ -1,7 +1,7 @@
 .. _config-subnet-pools:
 
 ============
-Subnet pools
+Subnet Pools
 ============
 
 Subnet pools have been made available since the Kilo release. It is a simple

@@ -1,7 +1,7 @@
 .. _config-experimental-framework:
 
 ===============================
-Experimental features framework
+Experimental Features Framework
 ===============================
 
 Some Neutron features are not supported because the community doesn't have

@@ -1,7 +1,7 @@
 .. _config-ndp-proxy:
 
 =========
-NDP proxy
+NDP Proxy
 =========
 
 If NDP proxy is set on a router, it is used to publish IPv6 addresses to

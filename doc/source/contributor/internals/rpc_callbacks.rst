@@ -23,8 +23,8 @@
 
 .. _rpc_callbacks:
 
-Neutron Messaging Callback System
-=================================
+RPC Messaging Callback System
+=============================
 
 Neutron already has a `callback system
 <https://docs.openstack.org/neutron-lib/latest/contributor/callbacks.html>`_

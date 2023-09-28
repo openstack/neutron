@@ -22,7 +22,7 @@
 
 .. _tempest_testing:
 
-Tempest testing
+Tempest Testing
 ===============
 
 Tempest basics in Networking projects

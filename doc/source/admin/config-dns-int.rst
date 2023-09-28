@@ -1,7 +1,7 @@
 .. _config-dns-int:
 
 ===============
-DNS integration
+DNS Integration
 ===============
 
 This page serves as a guide for how to use the DNS integration functionality of

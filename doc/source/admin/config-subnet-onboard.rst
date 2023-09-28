@@ -1,8 +1,8 @@
 .. _config-subnet-onboard:
 
-==============
-Subnet onboard
-==============
+=================
+Subnet Onboarding
+=================
 
 The subnet onboard feature allows you to take existing subnets that have been
 created outside of a subnet pool and move them into an existing subnet pool.

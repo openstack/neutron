@@ -21,8 +21,8 @@
       (Avoid deeper levels because they do not render well.)
 
 
-Add Tags to Neutron Resources
-=============================
+Tags in Neutron Resources
+=========================
 
 Tag service plugin allows users to set tags on their resources. Tagging
 resources can be used by external systems or any other clients of the Neutron

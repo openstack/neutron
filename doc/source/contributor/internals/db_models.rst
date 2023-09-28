@@ -12,8 +12,8 @@
       under the License.
 
 
-Relocation of Database Models
-=============================
+Database Models Relocation
+==========================
 
 This document is intended to track and notify developers that db models in
 neutron will be centralized and moved to a new tree under neutron/db/models.

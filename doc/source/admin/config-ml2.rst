@@ -1,7 +1,7 @@
 .. _config-plugin-ml2:
 
 ===========
-ML2 plug-in
+ML2 Plug-in
 ===========
 
 Architecture

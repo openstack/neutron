@@ -1,7 +1,7 @@
 .. _config-service-subnets:
 
 ===============
-Service subnets
+Service Subnets
 ===============
 
 Service subnets enable operators to define valid port types for each

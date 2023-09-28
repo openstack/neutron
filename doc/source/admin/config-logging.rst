@@ -1,8 +1,8 @@
 .. _config-logging:
 
-================================
-Neutron Packet Logging Framework
-================================
+========================
+Packet Logging Framework
+========================
 
 Packet logging service is designed as a Neutron plug-in that captures network
 packets for relevant resources (e.g. security group or firewall group) when the

@@ -21,8 +21,8 @@
       (Avoid deeper levels because they do not render well.)
 
 
-Objects in neutron
-==================
+Objects
+=======
 
 Object versioning is a key concept in achieving rolling upgrades. Since its
 initial implementation by the nova community, a versioned object model has been

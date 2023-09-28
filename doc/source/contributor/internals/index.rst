@@ -54,6 +54,7 @@ Neutron Internals
    objects_usage
    openvswitch_agent
    openvswitch_firewall
+   ovn/index
    ovs_vhostuser
    plugin-api
    policy
@@ -70,4 +71,3 @@ Neutron Internals
    sriov_nic_agent
    tag
    upgrade
-   ovn/index

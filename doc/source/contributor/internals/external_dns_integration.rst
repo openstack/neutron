@@ -12,8 +12,8 @@
       under the License.
 
 
-Integration with external DNS services
-======================================
+External DNS Service Integration
+================================
 
 Since the Mitaka release, neutron has an interface defined to interact with an
 external DNS service. This interface is based on an abstract driver that can be

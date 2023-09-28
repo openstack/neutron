@@ -1,7 +1,7 @@
 .. _config-az:
 
 ==================
-Availability zones
+Availability Zones
 ==================
 
 An availability zone groups network nodes that run services like DHCP, L3, FW,

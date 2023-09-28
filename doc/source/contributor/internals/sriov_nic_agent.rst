@@ -21,8 +21,9 @@
       (Avoid deeper levels because they do not render well.)
 
 
-L2 Networking with SR-IOV enabled NICs
-======================================
+SR-IOV Networking L2 Agent
+==========================
+
 SR-IOV (Single Root I/O Virtualization) is a specification that allows
 a PCIe device to appear to be multiple separate physical PCIe devices.
 SR-IOV works by introducing the idea of physical functions (PFs) and virtual functions (VFs).

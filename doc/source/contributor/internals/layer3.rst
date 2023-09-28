@@ -21,8 +21,8 @@
       (Avoid deeper levels because they do not render well.)
 
 
-Layer 3 Networking in Neutron - via Layer 3 agent & OpenVSwitch
-===============================================================
+Layer 3 Networking via Layer 3 & OpenVSwitch Agents
+===================================================
 
 This page discusses the usage of Neutron with Layer 3 functionality enabled.
 

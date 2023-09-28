@@ -21,8 +21,8 @@
       (Avoid deeper levels because they do not render well.)
 
 
-Neutron Database Layer
-======================
+Database Layer
+==============
 
 This section contains some common information that will be useful for
 developers that need to do some database changes as well as to execute queries

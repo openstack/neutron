@@ -21,8 +21,8 @@
       (Avoid deeper levels because they do not render well.)
 
 
-Authorization Policy Enforcement
-================================
+Policy Enforcement and Authorization
+====================================
 
 As most OpenStack projects, Neutron leverages oslo_policy [#]_. However, since
 Neutron loves to be special and complicate every developer's life, it also

@@ -1,9 +1,9 @@
 .. _config-wsgi:
 
-Installing Neutron API via WSGI
+WSGI Usage with the Neutron API
 ===============================
 
-This document is a guide to deploying neutron using WSGI. There are two ways to
+This document is a guide to deploying Neutron using WSGI. There are two ways to
 deploy using WSGI: ``uwsgi`` and Apache ``mod_wsgi``.
 
 Please note that if you intend to use mode uwsgi, you should install the

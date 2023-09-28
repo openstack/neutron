@@ -1,7 +1,7 @@
 .. _config-services-agent:
 
 ===================
-Services and agents
+Agents and Services
 ===================
 
 A usual neutron setup consists of multiple services and agents running on one

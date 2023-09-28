@@ -1,7 +1,7 @@
 .. _config-network-segment-ranges:
 
 ======================
-Network segment ranges
+Network Segment Ranges
 ======================
 
 The network segment range service exposes the segment range management to be

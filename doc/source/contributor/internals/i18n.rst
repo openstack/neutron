@@ -21,8 +21,8 @@
       (Avoid deeper levels because they do not render well.)
 
 
-Neutron Stadium i18n
-====================
+i18n for the Neutron Stadium
+============================
 
 * Refer to oslo_i18n documentation for the general mechanisms that should
   be used: https://docs.openstack.org/oslo.i18n/latest/user/usage.html

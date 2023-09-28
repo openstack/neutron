@@ -1,8 +1,8 @@
 .. _ml2_ovs_devstack:
 
-=============================
-Testing ML2 OVS with DevStack
-=============================
+=====================
+ML2 OVS with DevStack
+=====================
 
 This document describes how to test OpenStack Neutron with ML2 OpenvSwitch using
 DevStack. We will start by describing how to test on a single host.

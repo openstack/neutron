@@ -21,8 +21,8 @@
       (Avoid deeper levels because they do not render well.)
 
 
-Profiling Neutron Code
-======================
+Code Profiling
+==============
 
 As more functionality is added to Neutron over time, efforts to improve
 performance become more difficult, given the rising complexity of the code.

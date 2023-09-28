@@ -1,8 +1,8 @@
 .. _ml2_ovn_devstack:
 
-=========================
-Testing OVN with DevStack
-=========================
+=================
+OVN with DevStack
+=================
 
 This document describes how to test OpenStack with OVN using DevStack. We will
 start by describing how to test on a single host.

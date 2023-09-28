@@ -1,7 +1,7 @@
 .. _config-address-scopes:
 
 ==============
-Address scopes
+Address Scopes
 ==============
 
 Address scopes build from subnet pools. While subnet pools provide a mechanism

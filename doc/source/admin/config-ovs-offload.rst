@@ -1,7 +1,7 @@
 .. _config-ovs-offload:
 
 ================================
-Open vSwitch hardware offloading
+Open vSwitch Hardware Offloading
 ================================
 
 The purpose of this page is to describe how to enable Open vSwitch hardware
