@@ -12,10 +12,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from unittest import mock
-
-from oslo_utils import uuidutils
-
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.tests.functional import base
@@ -67,10 +63,8 @@ class TestCreateNeutronPgDrop(base.TestOVNFunctionalBase):
 class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
 
     def test_sync_ha_chassis_group(self):
-        plugin = mock.Mock()
-        plugin.get_network.return_value = {}
-        network_id = uuidutils.generate_uuid()
-        hcg_name = utils.ovn_name(network_id)
+        net = self._make_network(self.fmt, 'n1', True)['network']
+        hcg_name = utils.ovn_name(net['id'])
         chassis1 = self.add_fake_chassis('host1', azs=[],
                                          enable_chassis_as_gw=True)
         chassis2 = self.add_fake_chassis('host2', azs=[],
@@ -78,7 +72,7 @@ class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
         self.add_fake_chassis('host3')
 
         with self.nb_api.transaction(check_error=True) as txn:
-            utils.sync_ha_chassis_group(self.context, network_id, self.nb_api,
+            utils.sync_ha_chassis_group(self.context, net['id'], self.nb_api,
                                         self.sb_api, txn)
 
         ha_chassis = self.nb_api.db_find('HA_Chassis').execute(
@@ -100,7 +94,7 @@ class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
         # HA Chassis Group register but will update the "ha_chassis" list.
         self.del_fake_chassis(chassis2)
         with self.nb_api.transaction(check_error=True) as txn:
-            utils.sync_ha_chassis_group(self.context, network_id, self.nb_api,
+            utils.sync_ha_chassis_group(self.context, net['id'], self.nb_api,
                                         self.sb_api, txn)
 
         ha_chassis = self.nb_api.db_find('HA_Chassis').execute(
