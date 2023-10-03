@@ -17,6 +17,8 @@ import collections
 import copy
 
 from neutron_lib.api import attributes
+from neutron_lib.api.definitions import \
+    security_groups_rules_belongs_to_default_sg as sg_rule_default
 from neutron_lib.api import faults
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
@@ -467,6 +469,7 @@ class Controller(object):
         for item in items:
             self._validate_network_tenant_ownership(request,
                                                     item[self._resource])
+            self._belongs_to_default_sg(request, item[self._resource])
             # For ext resources policy check, we support two types, such as
             # parent_id is in request body, another type is parent_id is in
             # request url, which we can get from kwargs.
@@ -829,6 +832,16 @@ class Controller(object):
             resource_item.setdefault(
                 "%s_%s" % (constants.EXT_PARENT_PREFIX, self._parent_id_name),
                 parent_id)
+
+    def _belongs_to_default_sg(self, request, resource_item):
+        """Add the SG default flag to the SG rules during the creation"""
+        if self._resource != 'security_group_rule':
+            return
+
+        default_sg_id = self._plugin.get_default_security_group(
+            request.context.elevated(), resource_item['project_id'])
+        resource_item[sg_rule_default.BELONGS_TO_DEFAULT_SG] = (
+            default_sg_id == resource_item['security_group_id'])
 
 
 def create_resource(collection, resource, plugin, params, allow_bulk=False,

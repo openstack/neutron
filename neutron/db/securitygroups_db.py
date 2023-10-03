@@ -228,6 +228,13 @@ class SecurityGroupDbMixin(
                 context.tenant_id = tmp_context_tenant_id
 
     @db_api.retry_if_session_inactive()
+    def get_default_security_group(self, context, project_id):
+        default_sg = sg_obj.DefaultSecurityGroup.get_object(
+            context, project_id=project_id)
+        if default_sg:
+            return default_sg.security_group_id
+
+    @db_api.retry_if_session_inactive()
     def delete_security_group(self, context, id):
         filters = {'security_group_id': [id]}
         with db_api.CONTEXT_READER.using(context):
