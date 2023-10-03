@@ -115,7 +115,7 @@ def setup_logging():
     # that Neutron needs.
     logging.set_defaults(default_log_levels=logging.get_default_log_levels() +
                          EXTRA_LOG_LEVEL_DEFAULTS)
-    logging.setup(cfg.CONF, product_name)
+    logging.setup(cfg.CONF, product_name, fix_eventlet=False)
     LOG.info("Logging enabled!")
     LOG.info("%(prog)s version %(version)s",
              {'prog': sys.argv[0],
