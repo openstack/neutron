@@ -818,7 +818,6 @@ class IptablesDriverTestCase(base.BaseTestCase):
         try:
             self.metering.granular_traffic_data = False
             counters = self.metering.get_traffic_counters(None, TEST_ROUTERS)
-            print("%s" % counters)
             self.assertEqual(expected_total_number_of_data_granularity,
                              len(counters))
             self.assertEqual(expected_response, counters)
