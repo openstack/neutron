@@ -58,6 +58,8 @@ from neutron_lib.api.definitions import rbac_subnetpool
 from neutron_lib.api.definitions import security_groups_normalized_cidr
 from neutron_lib.api.definitions import security_groups_port_filtering
 from neutron_lib.api.definitions import security_groups_remote_address_group
+from neutron_lib.api.definitions import \
+    security_groups_rules_belongs_to_default_sg as sg_rules_default_sg
 from neutron_lib.api.definitions import security_groups_shared_filtering
 from neutron_lib.api.definitions import stateful_security_group
 from neutron_lib.api.definitions import subnet as subnet_def
@@ -242,6 +244,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     quota_check_limit.ALIAS,
                                     port_mac_address_override.ALIAS,
                                     sg_default_rules_ext.ALIAS,
+                                    sg_rules_default_sg.ALIAS,
                                     ]
 
     # List of agent types for which all binding_failed ports should try to be
