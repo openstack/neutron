@@ -203,6 +203,21 @@ class TestUtils(base.BaseTestCase):
             {'ch1'},
             utils.get_gateway_chassis_without_azs(chassis_list))
 
+    def test_is_ovn_lb_hm_port(self):
+        ovn_lb_hm_port = {
+            'device_owner': constants.OVN_LB_HM_PORT_DISTRIBUTED,
+            'device_id': 'ovn-lb-hm-12345'}
+        non_ovn_lb_hm_port_0 = {
+            'device_owner': n_const.DEVICE_OWNER_DISTRIBUTED,
+            'device_id': 'ovnmeta-12345'}
+        non_ovn_lb_hm_port_1 = {
+            'device_owner': n_const.DEVICE_OWNER_DHCP,
+            'device_id': 'dhcp-12345'}
+
+        self.assertTrue(utils.is_ovn_lb_hm_port(ovn_lb_hm_port))
+        self.assertFalse(utils.is_ovn_lb_hm_port(non_ovn_lb_hm_port_0))
+        self.assertFalse(utils.is_ovn_lb_hm_port(non_ovn_lb_hm_port_1))
+
 
 class TestGateWayChassisValidity(base.BaseTestCase):
 

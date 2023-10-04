@@ -15,6 +15,7 @@
 import copy
 import uuid
 
+from neutron_lib import constants
 from ovsdbapp.backend.ovs_idl import connection
 from ovsdbapp import constants as const
 from ovsdbapp import event as ovsdb_event
@@ -103,34 +104,62 @@ class TestSbApi(BaseOvnIdlTest):
         self.load_test_data()
         self.assertRaises(ValueError, self.api.get_chassis_and_physnets)
 
-    def _add_switch_port(self, chassis_name,
-                         type=ovn_const.LSP_TYPE_LOCALPORT):
-        sname, pname = (utils.get_rand_device_name(prefix=p)
-                        for p in ('switch', 'port'))
+    def _add_switch(self, chassis_name):
+        sname = utils.get_rand_device_name(prefix='switch')
         chassis = self.api.lookup('Chassis', chassis_name)
+        with self.nbapi.transaction(check_error=True) as txn:
+            switch = txn.add(self.nbapi.ls_add(sname))
+        return chassis, switch.result
+
+    def _add_port_to_switch(
+            self, switch, type=ovn_const.LSP_TYPE_LOCALPORT,
+            device_owner=constants.DEVICE_OWNER_DISTRIBUTED):
+        pname = utils.get_rand_device_name(prefix='port')
         row_event = events.WaitForCreatePortBindingEvent(pname)
         self.handler.watch_event(row_event)
         with self.nbapi.transaction(check_error=True) as txn:
-            switch = txn.add(self.nbapi.ls_add(sname))
-            port = txn.add(self.nbapi.lsp_add(sname, pname, type=type))
+            port = txn.add(self.nbapi.lsp_add(
+                switch.uuid, pname, type=type,
+                external_ids={
+                    ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY: device_owner}))
         row_event.wait()
-        return chassis, switch.result, port.result, row_event.row
+        return port.result, row_event.row
 
     def test_get_metadata_port_network(self):
-        chassis, switch, port, binding = self._add_switch_port(
-            self.data['chassis'][0]['name'])
+        chassis, switch = self._add_switch(self.data['chassis'][0]['name'])
+        port, binding = self._add_port_to_switch(switch)
         result = self.api.get_metadata_port_network(str(binding.datapath.uuid))
         self.assertEqual(binding, result)
         self.assertEqual(binding.datapath.external_ids['logical-switch'],
                          str(switch.uuid))
+        self.assertEqual(
+            port.external_ids[ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY],
+            constants.DEVICE_OWNER_DISTRIBUTED)
+
+    def test_get_metadata_port_network_other_non_metadata_port(self):
+        chassis, switch = self._add_switch(self.data['chassis'][0]['name'])
+        port, binding = self._add_port_to_switch(switch)
+        port_lbhm, binding_port_lbhm = self._add_port_to_switch(
+            switch, device_owner=ovn_const.OVN_LB_HM_PORT_DISTRIBUTED)
+        result = self.api.get_metadata_port_network(str(binding.datapath.uuid))
+        self.assertEqual(binding, result)
+        self.assertEqual(binding.datapath.external_ids['logical-switch'],
+                         str(switch.uuid))
+        self.assertEqual(
+            binding_port_lbhm.datapath.external_ids['logical-switch'],
+            str(switch.uuid))
+        self.assertEqual(
+            port_lbhm.external_ids[ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY],
+            ovn_const.OVN_LB_HM_PORT_DISTRIBUTED)
 
     def test_get_metadata_port_network_missing(self):
         val = str(uuid.uuid4())
         self.assertIsNone(self.api.get_metadata_port_network(val))
 
     def _create_bound_port_with_ip(self):
-        chassis, switch, port, binding = self._add_switch_port(
+        chassis, switch = self._add_switch(
             self.data['chassis'][0]['name'])
+        port, binding = self._add_port_to_switch(switch)
         mac = 'de:ad:be:ef:4d:ad'
         ipaddr = '192.0.2.1'
         mac_ip = '%s %s' % (mac, ipaddr)
@@ -164,8 +193,9 @@ class TestSbApi(BaseOvnIdlTest):
         self.assertEqual(1, len(result))
 
     def test_get_ports_on_chassis(self):
-        chassis, switch, port, binding = self._add_switch_port(
+        chassis, switch = self._add_switch(
             self.data['chassis'][0]['name'])
+        port, binding = self._add_port_to_switch(switch)
         self.api.lsp_bind(port.name, chassis.name).execute(check_error=True)
         self.assertEqual([binding],
                          self.api.get_ports_on_chassis(chassis.name))

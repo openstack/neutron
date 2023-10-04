@@ -1,0 +1,9 @@
+---
+other:
+  - |
+    The new value for 'device_owner' for OVN loadbalancer health monitor ports
+    (ovn-lb-hm:distributed) is now supported by Neutron, providing a LOCALPORT
+    behavior to these ports. The responsibility to define these ports with the
+    new value instead of the old one (network:distributed) is under the
+    OVN-Octavia Provider driver, which will take care of database conversion
+    for these ports.
