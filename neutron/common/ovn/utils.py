@@ -608,6 +608,11 @@ def is_ovn_metadata_port(port):
             port['device_id'].startswith('ovnmeta'))
 
 
+def is_ovn_lb_hm_port(port):
+    return (port['device_owner'] == constants.OVN_LB_HM_PORT_DISTRIBUTED and
+            port['device_id'].startswith('ovn-lb-hm'))
+
+
 def is_gateway_chassis_invalid(chassis_name, gw_chassis,
                                physnet, chassis_physnets,
                                az_hints, chassis_with_azs):
