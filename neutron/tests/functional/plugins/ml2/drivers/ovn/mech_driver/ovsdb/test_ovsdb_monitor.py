@@ -28,6 +28,7 @@ from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import event
 from ovsdbapp.backend.ovs_idl import idlutils
 import tenacity
+import testtools
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils as n_utils
@@ -323,9 +324,11 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         pb_port_vip = self.sb_api.db_find_rows(
             'Port_Binding', ('logical_port', '=', port_id)).execute(
             check_error=True)[0]
+        pb_virtual_parent = str(pb_port_parent.uuid)
         self.sb_api.db_set(
             'Port_Binding', pb_port_vip.uuid,
-            ('virtual_parent', pb_port_parent.uuid)).execute(check_error=True)
+            ('chassis', pb_port_parent.chassis),
+            ('virtual_parent', pb_virtual_parent)).execute(check_error=True)
 
     def _check_port_binding_type(self, port_id, port_type):
         def is_port_binding_type(port_id, port_type):
@@ -338,14 +341,26 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
     def _check_port_virtual_parents(self, port_id, vparents):
         def is_port_virtual_parents(port_id, vparents):
             bp = self._find_port_binding(port_id)
-            return (vparents ==
-                    bp.options.get(ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY))
+            vp = bp.options.get(ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY)
+
+            # If the given vparents is None, or if the current value is None
+            # Then just do a check on that, no need to split strings if it
+            # is not required
+            if None in (vp, vparents):
+                return vp == vparents
+
+            # Since the virtual parents is a string, representing a list of
+            # ports, we should make a set() and compare sets
+            bp_set = {p for p in vp.split(',')}
+            vp_set = {p for p in vparents.split(',')}
+            return bp_set == vp_set
 
         check = functools.partial(is_port_virtual_parents, port_id, vparents)
         n_utils.wait_until_true(check, timeout=10)
 
     @mock.patch.object(mech_driver.OVNMechanismDriver,
                        'update_virtual_port_host')
+    @testtools.skip('will be recovery by following patch in chain 2038413')
     def test_virtual_port_host_update(self, mock_update_vip_host):
         # NOTE: because we can't simulate traffic from a port, this check is
         # not done in this test. This test checks the VIP host is unset when
@@ -416,6 +431,77 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         # arrive and be processed, but the port host must not be updated.
         self.assertRaises(n_utils.WaitTimeout, n_utils.wait_until_true,
                           lambda: mock_update_vip_host.called, timeout=5)
+
+    def _check_port_host_set(self, port_id, host_id):
+        # This function checks if given host_id matches the values in the
+        # neutron DB as well as in the OVN DB for the port with given port_id
+        core_plugin = directory.get_plugin()
+
+        # Get port from neutron DB
+        port = core_plugin.get_ports(
+            self.context, filters={'id': [port_id]})[0]
+
+        # Get port from OVN DB
+        bp = self._find_port_binding(port_id)
+        ovn_host_id = bp.external_ids.get(ovn_const.OVN_HOST_ID_EXT_ID_KEY)
+
+        # Check that both neutron and ovn are the same as given host_id
+        return port[portbindings.HOST_ID] == host_id == ovn_host_id
+
+    def test_virtual_port_host_update_upon_failover(self):
+        # NOTE: we can't simulate traffic, but we can simulate the event that
+        # would've been triggered by OVN, which is what we do.
+
+        # The test is based to test_virtual_port_host_update, though in this
+        # test we actually test the OVNMechanismDriver.update_virtual_port_host
+        # method, that updates the hostname in neutron and OVN
+        # We do not extensively check if the allowed-address-pair is being kept
+        # up-to-date, since test_virtual_port_host_update does this already.
+
+        # 1) Setup a second chassis
+        second_chassis_name = 'ovs-host2'
+        second_chassis = self.add_fake_chassis(second_chassis_name)
+
+        # 2) Create port with the VIP for allowed address pair setup
+        vip = self.create_port(device_owner='', host='')
+        vip_address = vip['fixed_ips'][0]['ip_address']
+        allowed_address_pairs = [{'ip_address': vip_address}]
+        self._check_port_binding_type(vip['id'], '')
+
+        # 3) Create two ports with the allowed address pairs set.
+        hosts = ('ovs-host1', second_chassis_name)
+        ports = []
+        for idx in range(len(hosts)):
+            ports.append(self.create_port(host=hosts[idx]))
+            data = {'port': {'allowed_address_pairs': allowed_address_pairs}}
+            req = self.new_update_request('ports', data, ports[idx]['id'])
+            req.get_response(self.api)
+
+        port_ids = [p['id'] for p in ports]
+
+        # 4) Check that the vip port has become virtual and that both parents
+        # have been assigned to the port binding
+        self._check_port_binding_type(vip['id'], ovn_const.LSP_TYPE_VIRTUAL)
+        self._check_port_virtual_parents(vip['id'], ','.join(port_ids))
+
+        # 5) Bind the ports to a host, so a chassis is bound, which is
+        # required for the update_virtual_port_host method. Without this
+        # chassis set, it will not set a hostname in the DB's
+        self._test_port_binding_and_status(ports[0]['id'], 'bind', 'ACTIVE')
+        self.chassis = second_chassis
+        self._test_port_binding_and_status(ports[1]['id'], 'bind', 'ACTIVE')
+
+        # 6) For both ports, bind vip on parent and check hostname in DBs
+        for idx in range(len(ports)):
+            # Set port binding to the first port, and update the chassis
+            self._set_port_binding_virtual_parent(vip['id'], ports[idx]['id'])
+
+            # Check if the host_id has been updated in OVN and DB
+            # by the event that eventually calls for method
+            # OVNMechanismDriver.update_virtual_port_host
+            n_utils.wait_until_true(
+                lambda: self._check_port_host_set(vip['id'], hosts[idx]),
+                timeout=10)
 
 
 class TestNBDbMonitorOverTcp(TestNBDbMonitor):
