@@ -2382,4 +2382,8 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         self._test_router_interface_mtu_update(ha=False)
 
     def test_dvr_ha_router_interface_mtu_update(self):
+        self.skipTest(
+            'Skip this test in 2023.2 until this patch and '
+            'https://review.opendev.org/c/openstack/neutron/+/897439 are '
+            'merged')
         self._test_router_interface_mtu_update(ha=True)

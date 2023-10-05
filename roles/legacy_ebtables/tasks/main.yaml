@@ -10,7 +10,8 @@
     executable: /bin/bash
   become: yes
   when:
-    - ansible_facts['distribution_release'] == "focal"
+    - ansible_facts['distribution_release'] == "focal" or
+      ansible_facts['distribution_release'] == "jammy"
     - ansible_facts['distribution'] == "Ubuntu"
 
 
