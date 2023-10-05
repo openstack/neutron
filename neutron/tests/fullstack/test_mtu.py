@@ -44,7 +44,9 @@ class MTUNetworkTestSetup(base.BaseFullStackTestCase):
 
 class TestMTUScenarios(MTUNetworkTestSetup):
 
-    def test_mtu_update_network_neg(self):
+    def test_mtu_update(self):
+        # 1) Unable to update the network MTU above the maximum configured
+        # value.
         network = self.safe_client.create_network(self.tenant_id,
                                                   name='mtu-test-network',
                                                   mtu=1450)
@@ -52,17 +54,17 @@ class TestMTUScenarios(MTUNetworkTestSetup):
                           self.safe_client.update_network,
                           network['id'], mtu=9000)
 
-    def test_mtu_update_delete_network(self):
+        # 2) Update and delete a network.
         network = self.safe_client.create_network(self.tenant_id,
-                                                  name='mtu-test-network',
+                                                  name='mtu-test-network-2',
                                                   mtu=1200)
         self.safe_client.update_network(network['id'], mtu=1450)
         res = self.safe_client.delete_network(network['id'])
         self.assertEqual((), res)
 
-    def test_global_physnet_mtu_update_delete_network(self):
+        # 3) Update the global physnet MTU and delete a network.
         network = self.safe_client.create_network(self.tenant_id,
-                                                  name='mtu-test-network',
+                                                  name='mtu-test-network-3',
                                                   mtu=1450)
         self._restart_neutron_server(1400)
         res = self.safe_client.delete_network(network['id'])
