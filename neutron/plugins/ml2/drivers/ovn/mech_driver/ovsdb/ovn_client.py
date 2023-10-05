@@ -448,11 +448,12 @@ class OVNClient(object):
                         # location of the port
                         options['activation-strategy'] = 'rarp'
 
-            # Virtual ports can not be bound by using the
-            # requested-chassis mechanism, ovn-controller will create the
-            # Port_Binding entry when it sees an ARP coming from the VIP
-            if port_type != ovn_const.LSP_TYPE_VIRTUAL:
-                options[ovn_const.LSP_OPTIONS_REQUESTED_CHASSIS_KEY] = chassis
+                # Virtual ports can not be bound by using the requested-chassis
+                # mechanism, ovn-controller will create the Port_Binding entry
+                # when it sees an ARP coming from the VIP
+                if port_type != ovn_const.LSP_TYPE_VIRTUAL:
+                    options[ovn_const.LSP_OPTIONS_REQUESTED_CHASSIS_KEY] = \
+                        chassis
 
         if self.is_mcast_flood_broken and port_type not in (
                 'vtep', ovn_const.LSP_TYPE_LOCALPORT, 'router'):
