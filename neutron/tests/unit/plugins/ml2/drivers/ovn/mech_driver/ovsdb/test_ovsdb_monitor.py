@@ -540,7 +540,8 @@ class TestOvnSbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
             "name": "fake-name",
             "hostname": "fake-hostname",
             "other_config": ['map', [["ovn-bridge-mappings",
-                                      "fake-phynet1:fake-br1"]]]
+                                      "fake-phynet1:fake-br1"]]],
+            "external_ids": ['map', []],
         }
         self._mock_hash_ring = mock.patch.object(
             self.sb_idl._hash_ring, 'get_node',
