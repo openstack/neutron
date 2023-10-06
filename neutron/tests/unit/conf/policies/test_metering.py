@@ -229,3 +229,46 @@ class ProjectReaderTests(ProjectMemberTests):
     def setUp(self):
         super(ProjectReaderTests, self).setUp()
         self.context = self.project_reader_ctx
+
+
+class ServiceRoleTests(MeteringAPITestCase):
+
+    def setUp(self):
+        super(ServiceRoleTests, self).setUp()
+        self.context = self.service_ctx
+
+    def test_create_metering_label(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_metering_label', self.target)
+
+    def test_get_metering_label(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_metering_label', self.target)
+
+    def test_delete_metering_label(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_metering_label', self.target)
+
+    def test_create_metering_label_rule(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_metering_label_rule', self.target)
+
+    def test_get_metering_label_rule(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_metering_label_rule', self.target)
+
+    def test_delete_metering_label_rule(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_metering_label_rule', self.target)

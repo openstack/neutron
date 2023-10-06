@@ -1,0 +1,10 @@
+---
+features:
+  - |
+    Support for new ``service`` role is added to the Neutron API policies as
+    part of the Secure-RBAC initiative. This new role is designed to be used for
+    the service-to-service communication.
+deprecations:
+  - |
+    Old role ``advsvc`` used in the Neutron API policies is now deprecated. New
+    ``service`` role should be used for service-to-service communication.

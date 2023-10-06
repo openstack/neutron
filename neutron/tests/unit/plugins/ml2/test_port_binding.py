@@ -372,7 +372,9 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
             data['binding'].update(kwargs)
         binding_resource = 'ports/%s/bindings' % port_id
         binding_req = self.new_create_request(
-            binding_resource, data, fmt, as_admin=True)
+            binding_resource, data, fmt)
+        binding_req.environ['neutron.context'] = context.Context(
+            'service', 'service', roles=['service'])
         return binding_req.get_response(self.api)
 
     def _make_port_binding(self, fmt, port_id, host, **kwargs):
@@ -396,10 +398,11 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         return self.deserialize(fmt, res)
 
     def _activate_port_binding(self, port_id, host, raw_response=True):
-        response = self._req('PUT', 'ports', id=port_id,
-                             data={'port_id': port_id},
-                             subresource='bindings', sub_id=host,
-                             action='activate').get_response(self.api)
+        response = self._service_req(
+            'PUT', 'ports', id=port_id,
+            data={'port_id': port_id},
+            subresource='bindings', sub_id=host,
+            action='activate').get_response(self.api)
         return self._check_code_and_serialize(response, raw_response)
 
     def _check_code_and_serialize(self, response, raw_response):
@@ -410,20 +413,20 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         return self.deserialize(self.fmt, response)
 
     def _list_port_bindings(self, port_id, params=None, raw_response=True):
-        response = self._req(
+        response = self._service_req(
             'GET', 'ports', fmt=self.fmt, id=port_id, subresource='bindings',
             params=params).get_response(self.api)
         return self._check_code_and_serialize(response, raw_response)
 
     def _show_port_binding(self, port_id, host, params=None,
                            raw_response=True):
-        response = self._req(
+        response = self._service_req(
             'GET', 'ports', fmt=self.fmt, id=port_id, subresource='bindings',
             sub_id=host, params=params).get_response(self.api)
         return self._check_code_and_serialize(response, raw_response)
 
     def _delete_port_binding(self, port_id, host):
-        response = self._req(
+        response = self._service_req(
             'DELETE', 'ports', fmt=self.fmt, id=port_id,
             subresource='bindings', sub_id=host).get_response(self.api)
         return response

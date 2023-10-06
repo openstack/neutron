@@ -13,6 +13,9 @@
 from neutron_lib import policy as neutron_policy
 from oslo_policy import policy
 
+# This role is used only for communication between services, it shouldn't be
+# used by human users
+SERVICE = 'rule:service_api'
 
 # For completion of the phase 1
 # https://governance.openstack.org/tc/goals/selected/consistent-and-secure-rbac.html#phase-1
@@ -33,6 +36,8 @@ PROJECT_READER = 'role:reader and project_id:%(project_id)s'
 # protecting APIs designed to operate with multiple scopes (e.g.,
 # an administrator should be able to delete any router in the deployment, a
 # project member should only be able to delete routers in their project).
+ADMIN_OR_SERVICE = (
+    '(' + ADMIN + ') or (' + SERVICE + ')')
 ADMIN_OR_PROJECT_MEMBER = (
     '(' + ADMIN + ') or (' + PROJECT_MEMBER + ')')
 ADMIN_OR_PROJECT_READER = (
@@ -76,6 +81,10 @@ rules = [
         'role:admin',
         description='Rule for cloud admin access'),
     policy.RuleDefault(
+        "service_api",
+        "role:service",
+        description="Default rule for the service-to-service APIs."),
+    policy.RuleDefault(
         'owner',
         'tenant_id:%(tenant_id)s',
         description='Rule for resource owner access'),
@@ -87,7 +96,10 @@ rules = [
     policy.RuleDefault(
         'context_is_advsvc',
         'role:advsvc',
-        description='Rule for advsvc role access'),
+        description='Rule for advsvc role access',
+        deprecated_reason=('Neutron now supports service role for '
+                           'service to service communication.'),
+        deprecated_since='2024.1'),
     policy.RuleDefault(
         'admin_or_network_owner',
         neutron_policy.policy_or('rule:context_is_admin',

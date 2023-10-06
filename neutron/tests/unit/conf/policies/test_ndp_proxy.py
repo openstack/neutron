@@ -190,3 +190,34 @@ class ProjectReaderTests(ProjectMemberTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, "delete_ndp_proxy", self.alt_target)
+
+
+class ServiceRoleTests(NDPProxyAPITestCase):
+
+    def setUp(self):
+        super(ServiceRoleTests, self).setUp()
+        self.context = self.service_ctx
+
+    def test_create_ndp_proxy(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "create_ndp_proxy", self.target)
+
+    def test_get_ndp_proxy(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "get_ndp_proxy", self.target)
+
+    def test_update_ndp_proxy(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "update_ndp_proxy", self.target)
+
+    def test_delete_ndp_proxy(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "delete_ndp_proxy", self.target)

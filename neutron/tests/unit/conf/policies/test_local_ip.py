@@ -182,3 +182,30 @@ class ProjectReaderTests(LocalIPAPITestCase):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, "delete_local_ip", self.alt_target)
+
+
+class ServiceRoleTests(LocalIPAPITestCase):
+
+    def setUp(self):
+        super(ServiceRoleTests, self).setUp()
+        self.context = self.service_ctx
+
+    def test_create_local_ip(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, "create_local_ip", self.target)
+
+    def test_get_local_ip(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, "get_local_ip", self.target)
+
+    def test_update_local_ip(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, "update_local_ip", self.target)
+
+    def test_delete_local_ip(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, "delete_local_ip", self.target)

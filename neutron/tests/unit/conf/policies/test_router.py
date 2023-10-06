@@ -987,3 +987,140 @@ class ProjectReaderExtrarouteTests(ProjectMemberExtrarouteTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'remove_extraroutes', self.alt_target)
+
+
+class ServiceRoleTests(RouterAPITestCase):
+
+    def setUp(self):
+        super(ServiceRoleTests, self).setUp()
+        self.context = self.service_ctx
+
+    def test_create_router(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_router', self.target)
+
+    def test_create_router_distributed(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_router:distributed', self.target)
+
+    def test_create_router_ha(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_router:ha', self.target)
+
+    def test_create_router_external_gateway_info(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_router:external_gateway_info',
+            self.target)
+
+    def test_create_router_external_gateway_info_network_id(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_router:external_gateway_info:network_id',
+            self.target)
+
+    def test_create_router_external_gateway_info_enable_snat(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_router:external_gateway_info:enable_snat',
+            self.target)
+
+    def test_create_router_external_gateway_info_external_fixed_ips(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'create_router:external_gateway_info:external_fixed_ips',
+            self.target)
+
+    def test_get_router(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_router', self.target)
+
+    def test_get_router_distributed(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_router:distributed', self.target)
+
+    def test_get_router_ha(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_router:ha', self.target)
+
+    def test_update_router(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_router', self.target)
+
+    def test_update_router_distributed(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_router:distributed', self.target)
+
+    def test_update_router_ha(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_router:ha', self.target)
+
+    def test_update_router_external_gateway_info(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_router:external_gateway_info',
+            self.target)
+
+    def test_update_router_external_gateway_info_network_id(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_router:external_gateway_info:network_id',
+            self.target)
+
+    def test_update_router_external_gateway_info_enable_snat(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_router:external_gateway_info:enable_snat',
+            self.target)
+
+    def test_update_router_external_gateway_info_external_fixed_ips(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context,
+            'update_router:external_gateway_info:external_fixed_ips',
+            self.target)
+
+    def test_delete_router(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_router', self.target)
+
+    def test_add_router_interface(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'add_router_interface', self.target)
+
+    def test_remove_router_interface(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'remove_router_interface', self.target)

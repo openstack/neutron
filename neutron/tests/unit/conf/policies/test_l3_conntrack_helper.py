@@ -224,3 +224,34 @@ class ProjectReaderTests(ProjectMemberTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'delete_router_conntrack_helper', self.alt_target)
+
+
+class ServiceRoleTests(L3ConntrackHelperAPITestCase):
+
+    def setUp(self):
+        super(ServiceRoleTests, self).setUp()
+        self.context = self.service_ctx
+
+    def test_create_router_conntrack_helper(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_router_conntrack_helper', self.target)
+
+    def test_get_router_conntrack_helper(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_router_conntrack_helper', self.target)
+
+    def test_update_router_conntrack_helper(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_router_conntrack_helper', self.target)
+
+    def test_delete_router_conntrack_helper(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_router_conntrack_helper', self.target)

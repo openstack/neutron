@@ -202,6 +202,37 @@ class ProjectReaderSecurityGroupTests(ProjectMemberSecurityGroupTests):
             self.context, 'delete_security_group', self.alt_target)
 
 
+class ServiceRoleSecurityGroupTests(SecurityGroupAPITestCase):
+
+    def setUp(self):
+        super(ServiceRoleSecurityGroupTests, self).setUp()
+        self.context = self.service_ctx
+
+    def test_create_security_group(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_security_group', self.target)
+
+    def test_get_security_group(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_security_group', self.target)
+
+    def test_update_security_group(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_security_group', self.target)
+
+    def test_delete_security_group(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_security_group', self.target)
+
+
 class SecurityGroupRuleAPITestCase(base.PolicyBaseTestCase):
 
     def setUp(self):
@@ -378,3 +409,28 @@ class ProjectReaderSecurityGroupRuleTests(ProjectMemberSecurityGroupRuleTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'delete_security_group_rule', self.alt_target)
+
+
+class ServiceRoleSecurityGroupRuleTests(SecurityGroupRuleAPITestCase):
+
+    def setUp(self):
+        super(ServiceRoleSecurityGroupRuleTests, self).setUp()
+        self.context = self.service_ctx
+
+    def test_create_security_group_rule(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_security_group_rule', self.target)
+
+    def test_get_security_group_rule(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_security_group_rule', self.target)
+
+    def test_delete_security_group_rule(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_security_group_rule', self.target)
