@@ -170,7 +170,7 @@ def main():
         LOG.error('Error parsing the configuration values. Please verify.')
         return
 
-    logging.setup(conf, 'neutron_ovn_db_sync_util')
+    logging.setup(conf, 'neutron_ovn_db_sync_util', fix_eventlet=False)
     LOG.info('Started Neutron OVN db sync')
     mode = ovn_conf.get_ovn_neutron_sync_mode()
     # Migrate mode will run as repair mode in the synchronizer
