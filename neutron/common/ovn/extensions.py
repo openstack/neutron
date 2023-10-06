@@ -18,6 +18,7 @@ from neutron_lib.api.definitions import allowedaddresspairs
 from neutron_lib.api.definitions import auto_allocated_topology
 from neutron_lib.api.definitions import availability_zone as az_def
 from neutron_lib.api.definitions import default_subnetpools
+from neutron_lib.api.definitions import dhcpagentscheduler
 from neutron_lib.api.definitions import dns
 from neutron_lib.api.definitions import dns_domain_keywords
 from neutron_lib.api.definitions import dns_domain_ports
@@ -106,6 +107,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     portbindings.ALIAS,
     pbe_ext.ALIAS,
     default_subnetpools.ALIAS,
+    dhcpagentscheduler.ALIAS,
     dns.ALIAS,
     external_net.ALIAS,
     extra_dhcp_opt.ALIAS,
