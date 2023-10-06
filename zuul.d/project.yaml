@@ -4,7 +4,10 @@
 # Please update this document always when any changes to jobs are made.
 - project:
     templates:
-      - neutron-tempest-plugin-jobs-2023-1
+      # Disable neutron-tempest-plugin jobs temporarily to fix a cyclic
+      # dependency between two patches. This will be restored once the Neutron
+      # patch is merged.
+      #- neutron-tempest-plugin-jobs-2023-1
       - openstack-cover-jobs
       - openstack-python3-jobs
       - openstack-python3-jobs-arm64
@@ -17,8 +20,8 @@
       - neutron-tox-override-jobs
     check:
       jobs:
-        - neutron-functional-with-uwsgi
-        - neutron-fullstack-with-uwsgi
+        #- neutron-functional-with-uwsgi
+        #- neutron-fullstack-with-uwsgi
         - neutron-ovs-grenade-multinode
         - neutron-ovs-grenade-multinode-skip-level:
             voting: false
@@ -71,8 +74,8 @@
 
     gate:
       jobs:
-        - neutron-functional-with-uwsgi
-        - neutron-fullstack-with-uwsgi
+        #- neutron-functional-with-uwsgi
+        #- neutron-fullstack-with-uwsgi
         - neutron-ovs-tempest-multinode-full
         - neutron-ovs-grenade-multinode
         - neutron-ovs-grenade-dvr-multinode
