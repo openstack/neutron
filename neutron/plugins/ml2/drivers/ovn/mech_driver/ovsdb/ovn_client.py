@@ -2685,7 +2685,8 @@ class OVNClient(object):
                 txn.add(self._nb_idl.dns_remove_record(
                     ls_dns_record.uuid, ptr_record, if_exists=True))
 
-    def create_ovn_fair_meter(self, meter_name, from_reload=False, txn=None):
+    def _create_ovn_fair_meter(self, meter_name, from_reload=False, txn=None,
+                               stateless=False):
         """Create row in Meter table with fair attribute set to True.
 
         Create a row in OVN's NB Meter table based on well-known name. This
@@ -2700,11 +2701,26 @@ class OVNClient(object):
         """
         meter = self._nb_idl.db_find_rows(
             "Meter", ("name", "=", meter_name)).execute(check_error=True)
-        # The meter is created when a log object is created, not by default.
-        # This condition avoids creating the meter if it wasn't there already
+        # The meters are created when a log object is created, not by default.
+        # This condition avoids creating the meter if it wasn't there already.
         commands = []
         if from_reload and not meter:
             return
+
+        burst_limit = cfg.CONF.network_log.burst_limit
+        rate_limit = cfg.CONF.network_log.rate_limit
+        if stateless:
+            meter_name = meter_name + "_stateless"
+            burst_limit = int(burst_limit / 2)
+            rate_limit = int(rate_limit / 2)
+        # The stateless meter is only created once the stateful meter was
+        # successfully created.
+        # The treatment of limits is not equal for stateful and stateless
+        # traffic at a kernel level according to:
+        # https://bugzilla.redhat.com/show_bug.cgi?id=2212952
+        # The stateless meter is created to adjust this issue.
+        meter = self._nb_idl.db_find_rows(
+            "Meter", ("name", "=", meter_name)).execute(check_error=True)
         if meter:
             meter = meter[0]
             meter_band = self._nb_idl.lookup("Meter_Band",
@@ -2712,9 +2728,8 @@ class OVNClient(object):
             if meter_band:
                 if all((meter.unit == "pktps",
                         meter.fair[0],
-                        meter_band.rate == cfg.CONF.network_log.rate_limit,
-                        meter_band.burst_size ==
-                        cfg.CONF.network_log.burst_limit)):
+                        meter_band.rate == rate_limit,
+                        meter_band.burst_size == burst_limit)):
                     # Meter (and its meter-band) unchanged: noop.
                     return
             # Re-create meter (and its meter-band) with the new attributes.
@@ -2728,10 +2743,15 @@ class OVNClient(object):
         commands.append(self._nb_idl.meter_add(
                         name=meter_name,
                         unit="pktps",
-                        rate=cfg.CONF.network_log.rate_limit,
+                        rate=rate_limit,
                         fair=True,
-                        burst_size=cfg.CONF.network_log.burst_limit,
+                        burst_size=burst_limit,
                         may_exist=False,
                         external_ids={ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY:
                                       log_const.LOGGING_PLUGIN}))
         self._transaction(commands, txn=txn)
+
+    def create_ovn_fair_meter(self, meter_name, from_reload=False, txn=None):
+        self._create_ovn_fair_meter(meter_name, from_reload, txn)
+        self._create_ovn_fair_meter(meter_name, from_reload, txn,
+                                    stateless=True)

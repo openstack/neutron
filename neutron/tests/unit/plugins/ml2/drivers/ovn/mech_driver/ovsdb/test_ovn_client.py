@@ -222,7 +222,16 @@ class TestOVNClientFairMeter(TestOVNClientBase,
         self.ovn_client.create_ovn_fair_meter(self._log_driver.meter_name)
         self.assertFalse(self.nb_idl.meter_del.called)
         self.assertTrue(self.nb_idl.meter_add.called)
-        self.nb_idl.meter_add.assert_called_once_with(
+        self.nb_idl.meter_add.assert_any_call(
+            name=self._log_driver.meter_name + "_stateless",
+            unit="pktps",
+            rate=int(self.fake_cfg_network_log.rate_limit / 2),
+            fair=True,
+            burst_size=int(self.fake_cfg_network_log.burst_limit / 2),
+            may_exist=False,
+            external_ids={constants.OVN_DEVICE_OWNER_EXT_ID_KEY:
+                          log_const.LOGGING_PLUGIN})
+        self.nb_idl.meter_add.assert_any_call(
             name=self._log_driver.meter_name,
             unit="pktps",
             rate=self.fake_cfg_network_log.rate_limit,
@@ -234,10 +243,17 @@ class TestOVNClientFairMeter(TestOVNClientBase,
 
     def test_create_ovn_fair_meter_unchanged(self):
         mock_find_rows = mock.Mock()
-        mock_find_rows.execute.return_value = [self._fake_meter()]
+        fake_meter1 = [self._fake_meter()]
+        fake_meter2 = [self._fake_meter(
+            name=self._log_driver.meter_name + "_stateless",
+            bands=[mock.Mock(uuid='tb_stateless')])]
+        mock_find_rows.execute.side_effect = [fake_meter1, fake_meter1,
+                                              fake_meter2, fake_meter2]
         self.nb_idl.db_find_rows.return_value = mock_find_rows
         self.nb_idl.lookup.side_effect = lambda table, key, default: (
-            self._fake_meter_band() if key == "test_band" else default)
+            self._fake_meter_band() if key == "test_band" else
+            self._fake_meter_band_stateless() if key == "tb_stateless" else
+            default)
         self.ovn_client.create_ovn_fair_meter(self._log_driver.meter_name)
         self.assertFalse(self.nb_idl.meter_del.called)
         self.assertFalse(self.nb_idl.meter_add.called)
