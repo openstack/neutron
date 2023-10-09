@@ -262,7 +262,8 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
             net_id = gw_info['network_id']
             # Find any gateways that might be attached to the same network.
             gw_ports = port_obj.Port.get_ports_by_router_and_network(
-                context, router_id, constants.DEVICE_OWNER_ROUTER_GW, net_id)
+                context.elevated(), router_id,
+                constants.DEVICE_OWNER_ROUTER_GW, net_id)
 
             if not gw_ports:
                 nonexistent_port_info.append(gw_info)
@@ -314,11 +315,12 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
     def _remove_external_gateways(self, context, router_id, gw_info_list,
                                   payload):
         """Remove external gateways from a router."""
+        admin_ctx = context.elevated()
         removed_gateways = []
         if not gw_info_list:
             return removed_gateways
 
-        gw_ports = l3_obj.RouterPort.get_gw_port_ids_by_router_id(context,
+        gw_ports = l3_obj.RouterPort.get_gw_port_ids_by_router_id(admin_ctx,
                                                                   router_id)
         if not gw_ports:
             raise mh_exc.UnableToRemoveGateways(
@@ -367,12 +369,12 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
         # and its removal was done, make sure the remaining port becomes
         # the compatibility port. This is not atomic but the extra GW port
         # should not be removed in the process.
-        gw_ports = l3_obj.RouterPort.get_gw_port_ids_by_router_id(context,
+        gw_ports = l3_obj.RouterPort.get_gw_port_ids_by_router_id(admin_ctx,
                                                                   router_id)
         if not router_db['gw_port_id'] and len(gw_ports) > 0:
             new_gw_port_id = gw_ports[0]
             new_network_id = port_obj.Port.get_object(
-                context, id=new_gw_port_id).network_id
+                admin_ctx, id=new_gw_port_id).network_id
             # Replace the gw_port_id on the router object with an existing one.
             self._replace_compat_gw_port(context, router_db, new_gw_port_id)
             # Generate a compatibility payload.
@@ -399,7 +401,7 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
 
     def _delete_extra_gw_port(self, context, router_id, gw_port_id):
         admin_ctx = context.elevated()
-        gw_port = port_obj.Port.get_object(context, id=gw_port_id)
+        gw_port = port_obj.Port.get_object(admin_ctx, id=gw_port_id)
         fip_count = self._router_extra_gw_port_has_floating_ips(context,
                                                                 router_id,
                                                                 gw_port)
@@ -407,7 +409,7 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
             # Check that there are still other gateway ports attached to the
             # same network, otherwise this gateway port cannot be deleted.
             gw_ports = port_obj.Port.get_ports_by_router_and_network(
-                context, router_id, constants.DEVICE_OWNER_ROUTER_GW,
+                admin_ctx, router_id, constants.DEVICE_OWNER_ROUTER_GW,
                 gw_port.network_id)
             if len(gw_ports) < 2:
                 raise l3_exc.RouterExternalGatewayInUseByFloatingIp(
@@ -463,8 +465,8 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
     def _remove_all_gateways(self, context, router_id):
         router_db = self._get_router(context, router_id)
         compat_gw_port_id = router_db['gw_port_id']
-        gw_ports = l3_obj.RouterPort.get_gw_port_ids_by_router_id(context,
-                                                                  router_id)
+        gw_ports = l3_obj.RouterPort.get_gw_port_ids_by_router_id(
+            context.elevated(), router_id)
         for gw_port_id in gw_ports:
             if gw_port_id != compat_gw_port_id:
                 self._delete_extra_gw_port(context, router_id, gw_port_id)
@@ -523,8 +525,8 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
                 gw_port_id,
                 {'port': {'fixed_ips': fixed_ips}})
 
-        gw_ports = l3_obj.RouterPort.get_gw_port_ids_by_router_id(context,
-                                                                  router_id)
+        gw_ports = l3_obj.RouterPort.get_gw_port_ids_by_router_id(
+            context.elevated(), router_id)
         # Identify the set of ports to remove based on the ones that could not
         # be matched based on the supplied external gateways in the request.
         ports_to_remove = set(gw_ports).difference(
@@ -570,8 +572,8 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
         # If a compatibility port got removed as a result of a router update
         # (by passing empty info for external_gateway_info) replace it with
         # one of the existing ones.
-        gw_ports = l3_obj.RouterPort.get_gw_port_ids_by_router_id(context,
-                                                                  router_id)
+        gw_ports = l3_obj.RouterPort.get_gw_port_ids_by_router_id(
+            context.elevated(), router_id)
         if gw_ports and not router_db['gw_port_id']:
             new_gw_port_id = gw_ports[0]
             self._replace_compat_gw_port(context, router_db, new_gw_port_id)
