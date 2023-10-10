@@ -83,8 +83,8 @@
         - neutron-ovn-tripleo-ci-centos-9-containers-multinode:
             vars: *consumer_vars
             dependencies: *consumer_deps
-        - neutron-linuxbridge-tempest-plugin-scenario-nftables
-        - neutron-ovs-tempest-plugin-scenario-iptables_hybrid-nftables
+        - neutron-linuxbridge-tempest-plugin-nftables
+        - neutron-ovs-tempest-plugin-iptables_hybrid-nftables
         - devstack-enforce-scope
         - tempest-integrated-networking:
             irrelevant-files:
