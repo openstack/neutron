@@ -20,3 +20,11 @@ from neutron_lib.api import extensions
 class L3_enable_default_route_bfd(extensions.APIExtensionDescriptor):
 
     api_definition = apidef
+
+    def __init__(self):
+        # NOTE(fnordahl): Temporary fix awaiting permanent fix in neutron-lib,
+        # drop when change I9096685fb79a84e11a8547a5aaa16f7f2df48a56 is merged.
+        apidef.RESOURCE_ATTRIBUTE_MAP[
+            apidef.COLLECTION_NAME][apidef.ENABLE_DEFAULT_ROUTE_BFD].update(
+                {'default': None})
+        super().__init__()
