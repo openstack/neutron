@@ -77,22 +77,22 @@ class TestAsyncProcess(base.BaseTestCase):
             self.assertEqual(self.proc.pid, 1)
             func.assert_not_called()
 
-    def test__handle_process_error_kills_with_respawn(self):
-        with mock.patch.object(self.proc, '_kill') as kill:
-            self.proc._handle_process_error()
-
-        kill.assert_has_calls([mock.call(signal.SIGKILL)])
-
-    def test__handle_process_error_kills_without_respawn(self):
+    def test__handle_process_error_kills(self):
         self.proc.respawn_interval = 1
-        with mock.patch.object(self.proc, '_kill') as kill:
-            with mock.patch.object(self.proc, '_spawn') as spawn:
-                with mock.patch('eventlet.sleep') as sleep:
-                    self.proc._handle_process_error()
 
-        kill.assert_has_calls([mock.call(signal.SIGKILL)])
-        sleep.assert_has_calls([mock.call(self.proc.respawn_interval)])
-        spawn.assert_called_once_with()
+        for is_started in (True, False):
+            self.proc._is_started = is_started
+            with mock.patch.object(self.proc, '_kill') as kill:
+                with mock.patch.object(self.proc, '_spawn') as spawn:
+                    with mock.patch('eventlet.sleep') as sleep:
+                        self.proc._handle_process_error()
+
+            kill.assert_has_calls([mock.call(signal.SIGKILL)])
+            sleep.assert_has_calls([mock.call(self.proc.respawn_interval)])
+            if is_started:
+                spawn.assert_called_once_with()
+            else:
+                spawn.assert_not_called()
 
     def test__handle_process_error_no_crash_if_started(self):
         self.proc._is_running = True

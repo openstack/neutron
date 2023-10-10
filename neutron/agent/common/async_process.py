@@ -84,6 +84,7 @@ class AsyncProcess(object):
         self._process = None
         self._pid = None
         self._is_running = False
+        self._is_started = False
         self._kill_event = None
         self._reset_queues()
         self._watchers = []
@@ -98,6 +99,17 @@ class AsyncProcess(object):
     @property
     def is_running(self):
         return self._is_running
+
+    @property
+    def is_started(self):
+        """Returns if the 'start' method has been called
+
+        This flag is unset when the 'stop' method is called. It is different
+        from 'is_running' flag, that informs about the status of the process.
+        This flag informs about if the process should be running or not; in
+        other words, about the start/stop switch position.
+        """
+        return self._is_started
 
     def _reset_queues(self):
         self._stdout_lines = eventlet.queue.LightQueue()
@@ -119,6 +131,7 @@ class AsyncProcess(object):
                 did not start in time.
         """
         LOG.debug('Launching async process [%s].', self.cmd)
+        self._is_started = True
         if self._is_running:
             raise AsyncProcessException(_('Process is already started'))
         self._spawn()
@@ -138,6 +151,7 @@ class AsyncProcess(object):
         :raises utils.WaitTimeout if blocking is True and the process
                 did not stop in time.
         """
+        self._is_started = False
         kill_signal = kill_signal or getattr(signal, 'SIGKILL', signal.SIGTERM)
         if self._is_running:
             LOG.debug('Halting async process [%s].', self.cmd)
@@ -228,6 +242,9 @@ class AsyncProcess(object):
         self._kill(getattr(signal, 'SIGKILL', signal.SIGTERM))
         if self.respawn_interval is not None and self.respawn_interval >= 0:
             eventlet.sleep(self.respawn_interval)
+            if not self.is_started:
+                return
+
             LOG.debug('Respawning async process [%s].', self.cmd)
             try:
                 self.start()
