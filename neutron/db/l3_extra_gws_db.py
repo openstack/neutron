@@ -79,7 +79,7 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
         self._remove_all_gateways(payload.context, payload.resource_id)
 
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_CREATE])
-    def _process_bfd_ecmp_request(self, resource, event, trigger, payload):
+    def _process_bfd_ecmp_create(self, resource, event, trigger, payload):
         attr_defaults = {
             l3_enable_default_route_ecmp.ENABLE_DEFAULT_ROUTE_ECMP: (
                 cfg.CONF.enable_default_route_ecmp),
@@ -90,6 +90,16 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
         router_db = payload.metadata['router_db']
         for attr in attr_defaults.keys():
             value = router.get(attr, attr_defaults[attr])
+            if value is not None:
+                self.set_extra_attr_value(router_db, attr, value)
+
+    @registry.receives(resources.ROUTER, [events.PRECOMMIT_UPDATE])
+    def _process_bfd_ecmp_update(self, resource, event, trigger, payload):
+        router = payload.request_body
+        router_db = payload.desired_state
+        for attr in (l3_enable_default_route_bfd.ENABLE_DEFAULT_ROUTE_BFD,
+                     l3_enable_default_route_ecmp.ENABLE_DEFAULT_ROUTE_ECMP):
+            value = router.get(attr, None)
             if value is not None:
                 self.set_extra_attr_value(router_db, attr, value)
 
