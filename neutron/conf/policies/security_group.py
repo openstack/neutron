@@ -48,6 +48,13 @@ rules = [
         check_str='field:security_groups:shared=True',
         description='Definition of a shared security group'
     ),
+    policy.RuleDefault(
+        name='rule_default_sg',
+        check_str='field:security_group_rules:belongs_to_default_sg=True',
+        description='Definition of a security group rule that belongs to the '
+                    'project default security group'
+    ),
+
     # TODO(amotoki): admin_or_owner is the right rule?
     # Does an empty string make more sense for create_security_group?
     policy.DocumentedRuleDefault(

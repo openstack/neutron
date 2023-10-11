@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import tempfile
 import warnings
 
 from neutron_lib import context
@@ -130,3 +131,16 @@ class RuleScopesTestCase(PolicyBaseTestCase):
                 self.assertListEqual(expected_scope_types,
                                      rule.scope_types,
                                      fail_msg)
+
+
+def write_policies(policies):
+    env_path = tempfile.mkdtemp(prefix='policy_test_', dir='/tmp/')
+    with tempfile.NamedTemporaryFile('w+', dir=env_path,
+                                     delete=False) as policy_file:
+        policy_file.write(str(policies))
+    return policy_file.name
+
+
+def reload_policies(policy_file):
+    policy.reset()
+    policy.init(policy_file=policy_file, suppress_deprecation_warnings=True)

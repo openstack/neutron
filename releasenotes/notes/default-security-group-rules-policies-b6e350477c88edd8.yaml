@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    A new policy rule check ``rule_default_sg`` has been added. This rule
+    allows to check if a security group rule belongs or not to the project
+    default security group. The administrator can override the rule creation
+    and rule deletion, disallowing a non-privileged user from these actions.

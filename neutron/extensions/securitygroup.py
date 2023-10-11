@@ -381,6 +381,10 @@ class SecurityGroupPluginBase(object, metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
+    def get_default_security_group(self, context, project_id):
+        pass
+
+    @abc.abstractmethod
     def create_security_group_rule(self, context, security_group_rule):
         pass
 

@@ -256,6 +256,24 @@ class SecurityGroupRuleAPITestCase(base.PolicyBaseTestCase):
             'neutron_lib.plugins.directory.get_plugin',
             return_value=self.plugin_mock).start()
 
+    def override_create_security_group_rule(self):
+        self._override_security_group_rule('create_security_group_rule')
+
+    def override_delete_security_group_rule(self):
+        self._override_security_group_rule('delete_security_group_rule')
+
+    def _override_security_group_rule(self, rule_name):
+        # Admin or (member and not default SG) --> only admin can perform the
+        # ``rule_name`` action in the default SG.
+        rule = {rule_name:
+                'role:admin or (role:member and project_id:%(project_id)s '
+                'and not rule:rule_default_sg)'}
+        policy_file = base.write_policies(rule)
+        self.target['belongs_to_default_sg'] = 'True'
+        base.reload_policies(policy_file)
+        self.plugin_mock.get_default_security_group.return_value = (
+            self.sg['id'])
+
 
 class SystemAdminSecurityGroupRuleTests(SecurityGroupRuleAPITestCase):
 
@@ -322,6 +340,15 @@ class AdminSecurityGroupRuleTests(SecurityGroupRuleAPITestCase):
             policy.enforce(self.context,
                            'create_security_group_rule', self.alt_target))
 
+    def test_create_security_group_rule_default_sg(self):
+        self.override_create_security_group_rule()
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_security_group_rule', self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_security_group_rule', self.alt_target))
+
     def test_get_security_group_rule(self):
         self.assertTrue(
             policy.enforce(self.context,
@@ -331,6 +358,15 @@ class AdminSecurityGroupRuleTests(SecurityGroupRuleAPITestCase):
                            'get_security_group_rule', self.alt_target))
 
     def test_delete_security_group_rule(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'delete_security_group_rule', self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'delete_security_group_rule', self.alt_target))
+
+    def test_delete_security_group_rule_default_sg(self):
+        self.override_delete_security_group_rule()
         self.assertTrue(
             policy.enforce(self.context,
                            'delete_security_group_rule', self.target))
@@ -349,6 +385,17 @@ class ProjectMemberSecurityGroupRuleTests(AdminSecurityGroupRuleTests):
         self.assertTrue(
             policy.enforce(self.context,
                            'create_security_group_rule', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_security_group_rule', self.alt_target)
+
+    def test_create_security_group_rule_default_sg(self):
+        self.override_create_security_group_rule()
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_security_group_rule', self.target)
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
@@ -378,6 +425,17 @@ class ProjectMemberSecurityGroupRuleTests(AdminSecurityGroupRuleTests):
         self.assertTrue(
             policy.enforce(self.context,
                            'delete_security_group_rule', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_security_group_rule', self.alt_target)
+
+    def test_delete_security_group_rule_default_sg(self):
+        self.override_delete_security_group_rule()
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_security_group_rule', self.target)
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
