@@ -577,3 +577,45 @@ class TestOvnIdlProbeInterval(base.TestOVNFunctionalBase):
         interval = ovn_conf.get_ovn_ovsdb_probe_interval()
         for idl in idls:
             self.assertEqual(interval, idl._session.reconnect.probe_interval)
+
+
+class TestPortBindingChassisEvent(base.TestOVNFunctionalBase,
+                                  test_l3.L3NatTestCaseMixin):
+
+    def setUp(self, **kwargs):
+        super().setUp(**kwargs)
+        self.chassis = self.add_fake_chassis('ovs-host1')
+        self.l3_plugin = directory.get_plugin(plugin_constants.L3)
+        kwargs = {'arg_list': (external_net.EXTERNAL,),
+                  external_net.EXTERNAL: True}
+        self.net = self._make_network(
+            self.fmt, 'ext_net', True, as_admin=True, **kwargs)
+        self._make_subnet(self.fmt, self.net, '20.0.10.1', '20.0.10.0/24')
+        port_res = self._create_port(self.fmt, self.net['network']['id'])
+        self.port = self.deserialize(self.fmt, port_res)['port']
+
+        self.ext_api = test_extensions.setup_extensions_middleware(
+            test_l3.L3TestExtensionManager())
+        self.pb_event_match = mock.patch.object(
+            self.sb_api.idl._portbinding_event, 'match_fn').start()
+
+    def _check_pb_type(self, _type):
+        def check_pb_type(_type):
+            if len(self.pb_event_match.call_args_list) < 1:
+                return False
+
+            pb_row = self.pb_event_match.call_args_list[0].args[1]
+            return _type == pb_row.type
+
+        n_utils.wait_until_true(lambda: check_pb_type(_type), timeout=5)
+
+    def test_pb_type_patch(self):
+        router = self._make_router(self.fmt, self._tenant_id)
+        self._add_external_gateway_to_router(router['router']['id'],
+                                             self.net['network']['id'])
+        self._check_pb_type('patch')
+
+    def test_pb_type_empty(self):
+        self.sb_api.lsp_bind(self.port['id'], self.chassis,
+                             may_exist=True).execute(check_error=True)
+        self._check_pb_type('')
