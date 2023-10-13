@@ -8,8 +8,14 @@
   shell:
     cmd: |
       /usr/bin/update-alternatives --set iptables /usr/sbin/iptables-nft
+      /usr/bin/update-alternatives --set iptables-save /usr/sbin/iptables-nft-save
+      /usr/bin/update-alternatives --set iptables-restore /usr/sbin/iptables-nft-restore
       /usr/bin/update-alternatives --set ip6tables /usr/sbin/ip6tables-nft
+      /usr/bin/update-alternatives --set ip6tables-save /usr/sbin/ip6tables-nft-save
+      /usr/bin/update-alternatives --set ip6tables-restore /usr/sbin/ip6tables-nft-restore
       /usr/bin/update-alternatives --set ebtables /usr/sbin/ebtables-nft
+      /usr/bin/update-alternatives --set ebtables-save /usr/sbin/ebtables-nft-save
+      /usr/bin/update-alternatives --set ebtables-restore /usr/sbin/ebtables-nft-restore
       /usr/bin/update-alternatives --set arptables /usr/sbin/arptables-nft
     executable: /bin/bash
   become: yes
