@@ -1,0 +1,7 @@
+---
+fixes:
+  - |
+    During the port bulk creation, if an IPAM allocation fails (for example, if
+    the IP address is outside of the subnet CIDR), the other IPAM allocations
+    already created are deleted before raising the exception. Fixes bug
+    `2039550 <https://launchpad.net/bugs/2039550>`_.
