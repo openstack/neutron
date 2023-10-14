@@ -1652,10 +1652,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         for port in port_list:
             self._before_create_port(context, port)
 
-        port_list, net_cache = self.allocate_macs_and_ips_for_ports(
-            context, port_list)
-
         try:
+            port_list, net_cache = self.allocate_macs_and_ips_for_ports(
+                context, port_list)
             return self._create_port_bulk(context, port_list, net_cache)
         except Exception:
             with excutils.save_and_reraise_exception():
@@ -1663,7 +1662,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 # deallocated now
                 for port in port_list:
                     self.ipam.deallocate_ips_from_port(
-                        context, port, port['ipams'])
+                        context, port, port.get('ipams'))
 
     @db_api.retry_if_session_inactive()
     def _create_port_bulk(self, context, port_list, network_cache):
