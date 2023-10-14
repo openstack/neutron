@@ -30,13 +30,18 @@ from neutron.tests import base
 from neutron.tests.unit import fake_resources
 
 
+class FakePayload:
+    def __init__(self, trunk, subports=None):
+        self.states = (trunk,)
+        self.metadata = {'subports': subports or []}
+
+
 class TestTrunkHandler(base.BaseTestCase):
     def setUp(self):
         super(TestTrunkHandler, self).setUp()
         self.context = mock.Mock()
         self.plugin_driver = mock.Mock()
         self.plugin_driver._plugin = mock.Mock()
-        self.plugin_driver._plugin.update_port = mock.Mock()
         self.plugin_driver.nb_ovn = fake_resources.FakeOvsdbNbOvnIdl()
         self.handler = trunk_driver.OVNTrunkHandler(self.plugin_driver)
         self.trunk_1 = mock.Mock()
@@ -108,12 +113,20 @@ class TestTrunkHandler(base.BaseTestCase):
 
     def test_create_trunk(self):
         self.trunk_1.sub_ports = []
-        self.handler.trunk_created(self.trunk_1)
+        self.handler.trunk_created(
+            resources.TRUNK,
+            events.AFTER_CREATE,
+            self.plugin_driver,
+            FakePayload(self.trunk_1))
         self.plugin_driver.nb_ovn.set_lswitch_port.assert_not_called()
         self.mock_update_pb.assert_not_called()
 
         self.trunk_1.sub_ports = [self.sub_port_1, self.sub_port_2]
-        self.handler.trunk_created(self.trunk_1)
+        self.handler.trunk_created(
+            resources.TRUNK,
+            events.AFTER_CREATE,
+            self.plugin_driver,
+            FakePayload(self.trunk_1))
 
         calls = [mock.call(), mock.call()]
         self._assert_calls(self.mock_port_update, calls)
@@ -141,14 +154,22 @@ class TestTrunkHandler(base.BaseTestCase):
 
     def test_create_trunk_port_not_found(self):
         self.trunk_1.sub_ports = [self.sub_port_4]
-        self.handler.trunk_created(self.trunk_1)
+        self.handler.trunk_created(
+            resources.TRUNK,
+            events.AFTER_CREATE,
+            self.plugin_driver,
+            FakePayload(self.trunk_1))
         self.plugin_driver.nb_ovn.set_lswitch_port.assert_not_called()
         self.mock_update_pb.assert_not_called()
 
     def test_create_trunk_port_db_exception(self):
         self.trunk_1.sub_ports = [self.sub_port_1]
         self.mock_update_pb.side_effect = [n_exc.ObjectNotFound(id=1)]
-        self.handler.trunk_created(self.trunk_1)
+        self.handler.trunk_created(
+            resources.TRUNK,
+            events.AFTER_CREATE,
+            self.plugin_driver,
+            FakePayload(self.trunk_1))
         self.mock_update_pb.assert_called_once_with(
             mock.ANY, {'profile': {'parent_name': self.sub_port_1.trunk_id,
                                    'tag': self.sub_port_1.segmentation_id},
@@ -159,7 +180,11 @@ class TestTrunkHandler(base.BaseTestCase):
 
     def test_delete_trunk(self):
         self.trunk_1.sub_ports = []
-        self.handler.trunk_deleted(self.trunk_1)
+        self.handler.trunk_deleted(
+            resources.TRUNK,
+            events.AFTER_DELETE,
+            self.plugin_driver,
+            FakePayload(self.trunk_1))
         self.plugin_driver.nb_ovn.set_lswitch_port.assert_not_called()
         self.mock_update_pb.assert_not_called()
         self.mock_clear_levels.assert_not_called()
@@ -173,7 +198,11 @@ class TestTrunkHandler(base.BaseTestCase):
             'tag': self.sub_port_2.segmentation_id,
             'parent_name': self.sub_port_2.trunk_id,
             'foo_field': self.sub_port_2.trunk_id})
-        self.handler.trunk_deleted(self.trunk_1)
+        self.handler.trunk_deleted(
+            resources.TRUNK,
+            events.AFTER_DELETE,
+            self.plugin_driver,
+            FakePayload(self.trunk_1))
 
         calls = [mock.call(), mock.call()]
         self._assert_calls(self.mock_port_update, calls)
@@ -210,7 +239,11 @@ class TestTrunkHandler(base.BaseTestCase):
         self.sub_port_1_obj.bindings[0].profile.update({
             'foo_field': self.sub_port_1.trunk_id})
         self.trunk_1.sub_ports = [self.sub_port_1]
-        self.handler.trunk_deleted(self.trunk_1)
+        self.handler.trunk_deleted(
+            resources.TRUNK,
+            events.AFTER_DELETE,
+            self.plugin_driver,
+            FakePayload(self.trunk_1))
         calls = [
             mock.call(mock.ANY,
                       {'profile': {'foo_field': s_port.trunk_id},
@@ -237,7 +270,11 @@ class TestTrunkHandler(base.BaseTestCase):
 
     def test_delete_trunk_port_not_found(self):
         self.trunk_1.sub_ports = [self.sub_port_4]
-        self.handler.trunk_deleted(self.trunk_1)
+        self.handler.trunk_deleted(
+            resources.TRUNK,
+            events.AFTER_DELETE,
+            self.plugin_driver,
+            FakePayload(self.trunk_1))
         self.plugin_driver.nb_ovn.set_lswitch_port.assert_not_called()
         self.mock_update_pb.assert_not_called()
         self.mock_clear_levels.assert_not_called()
@@ -245,7 +282,11 @@ class TestTrunkHandler(base.BaseTestCase):
     def test_delete_trunk_port_db_exception(self):
         self.trunk_1.sub_ports = [self.sub_port_1]
         self.mock_update_pb.side_effect = [n_exc.ObjectNotFound(id=1)]
-        self.handler.trunk_deleted(self.trunk_1)
+        self.handler.trunk_deleted(
+            resources.TRUNK,
+            events.AFTER_DELETE,
+            self.plugin_driver,
+            FakePayload(self.trunk_1))
         self.mock_update_pb.assert_called_once_with(
             mock.ANY, {'profile': {},
                        'vif_type': portbindings.VIF_TYPE_UNBOUND},
@@ -254,25 +295,8 @@ class TestTrunkHandler(base.BaseTestCase):
         self.plugin_driver.nb_ovn.set_lswitch_port.assert_not_called()
         self.mock_clear_levels.assert_not_called()
 
-    def test_subports_added(self):
-        with mock.patch.object(self.handler, '_set_sub_ports') as set_s:
-            self.handler.subports_added(self.trunk_1,
-                                        [self.sub_port_1, self.sub_port_2])
-        set_s.assert_called_once_with(
-            self.trunk_1.port_id, [self.sub_port_1, self.sub_port_2])
-        self.trunk_1.update.assert_called_once_with(
-            status=trunk_consts.TRUNK_ACTIVE_STATUS)
-
-    def test_subports_deleted(self):
-        with mock.patch.object(self.handler, '_unset_sub_ports') as unset_s:
-            self.handler.subports_deleted(self.trunk_1,
-                                          [self.sub_port_1, self.sub_port_2])
-        unset_s.assert_called_once_with(
-            [self.sub_port_1, self.sub_port_2])
-        self.trunk_1.update.assert_called_once_with(
-            status=trunk_consts.TRUNK_ACTIVE_STATUS)
-
-    def _fake_trunk_event_payload(self):
+    @staticmethod
+    def _fake_trunk_event_payload():
         original_trunk = mock.Mock()
         original_trunk.port_id = 'original_trunk_port_id'
         current_trunk = mock.Mock()
@@ -295,10 +319,13 @@ class TestTrunkHandler(base.BaseTestCase):
         return payload
 
     @mock.patch.object(trunk_driver.OVNTrunkHandler, '_set_sub_ports')
-    def test_trunk_event_create(self, set_subports):
+    def test_trunk_created(self, set_subports):
         fake_payload = self._fake_trunk_event_payload()
-        self.handler.trunk_event(
-            mock.ANY, events.AFTER_CREATE, mock.ANY, fake_payload)
+        self.handler.trunk_created(
+            resources.TRUNK,
+            events.AFTER_CREATE,
+            self.plugin_driver,
+            fake_payload)
         set_subports.assert_called_once_with(
             fake_payload.states[0].port_id,
             fake_payload.states[0].sub_ports)
@@ -306,23 +333,18 @@ class TestTrunkHandler(base.BaseTestCase):
             status=trunk_consts.TRUNK_ACTIVE_STATUS)
 
     @mock.patch.object(trunk_driver.OVNTrunkHandler, '_unset_sub_ports')
-    def test_trunk_event_delete(self, unset_subports):
+    def test_trunk_deleted(self, unset_subports):
         fake_payload = self._fake_trunk_event_payload()
-        self.handler.trunk_event(
-            mock.ANY, events.AFTER_DELETE, mock.ANY, fake_payload)
+        self.handler.trunk_deleted(
+            resources.TRUNK,
+            events.AFTER_DELETE,
+            self.plugin_driver,
+            fake_payload)
         unset_subports.assert_called_once_with(
             fake_payload.states[0].sub_ports)
 
-    @mock.patch.object(trunk_driver.OVNTrunkHandler, '_set_sub_ports')
-    @mock.patch.object(trunk_driver.OVNTrunkHandler, '_unset_sub_ports')
-    def test_trunk_event_invalid(self, unset_subports, set_subports):
-        fake_payload = self._fake_trunk_event_payload()
-        self.handler.trunk_event(
-            mock.ANY, events.BEFORE_DELETE, mock.ANY, fake_payload)
-        set_subports.assert_not_called()
-        unset_subports.assert_not_called()
-
-    def _fake_subport_event_payload(self):
+    @staticmethod
+    def _fake_subport_event_payload():
         original_trunk = mock.Mock()
         original_trunk.port_id = 'original_trunk_port_id'
 
@@ -337,30 +359,75 @@ class TestTrunkHandler(base.BaseTestCase):
 
         return payload
 
-    @mock.patch.object(trunk_driver.OVNTrunkHandler, 'subports_added')
-    def test_subport_event_create(self, s_added):
-        fake_payload = self._fake_subport_event_payload()
-        self.handler.subport_event(
-            mock.ANY, events.AFTER_CREATE, mock.ANY, fake_payload)
-        s_added.assert_called_once_with(
-            fake_payload.states[0], fake_payload.metadata['subports'])
+    def test_subports_added(self):
+        with mock.patch.object(self.handler, '_set_sub_ports') as set_s:
+            self.handler.subports_added(
+                resources.SUBPORTS,
+                events.AFTER_CREATE,
+                self.plugin_driver,
+                FakePayload(self.trunk_1,
+                            [self.sub_port_1, self.sub_port_2]))
+        set_s.assert_called_once_with(
+            self.trunk_1.port_id, [self.sub_port_1, self.sub_port_2])
+        self.trunk_1.update.assert_called_once_with(
+            status=trunk_consts.TRUNK_ACTIVE_STATUS)
 
-    @mock.patch.object(trunk_driver.OVNTrunkHandler, 'subports_deleted')
-    def test_subport_event_delete(self, s_deleted):
+    @mock.patch.object(trunk_driver.OVNTrunkHandler, '_set_sub_ports')
+    def test_subports_added_no_subports(self, m__set_sub_ports):
         fake_payload = self._fake_subport_event_payload()
-        self.handler.subport_event(
-            mock.ANY, events.AFTER_DELETE, mock.ANY, fake_payload)
-        s_deleted.assert_called_once_with(
-            fake_payload.states[0], fake_payload.metadata['subports'])
+        fake_payload.metadata['subports'] = []
+        self.handler.subports_added(
+            resources.SUBPORTS,
+            events.AFTER_CREATE,
+            self.plugin_driver,
+            fake_payload)
+        m__set_sub_ports.assert_not_called()
 
-    @mock.patch.object(trunk_driver.OVNTrunkHandler, 'subports_added')
-    @mock.patch.object(trunk_driver.OVNTrunkHandler, 'subports_deleted')
-    def test_subport_event_invalid(self, s_deleted, s_added):
-        fake_payload = self._fake_trunk_event_payload()
-        self.handler.subport_event(
-            mock.ANY, events.BEFORE_DELETE, mock.ANY, fake_payload)
-        s_added.assert_not_called()
-        s_deleted.assert_not_called()
+    @mock.patch.object(trunk_driver.OVNTrunkHandler, '_set_sub_ports')
+    def test_subports_added_no_parent(self, m__set_sub_ports):
+        fake_payload = self._fake_subport_event_payload()
+        self.plugin_driver.nb_ovn.lookup.return_value = None
+        self.handler.subports_added(
+            resources.SUBPORTS,
+            events.AFTER_CREATE,
+            self.plugin_driver,
+            fake_payload)
+        m__set_sub_ports.assert_not_called()
+
+    def test_subports_deleted(self):
+        with mock.patch.object(self.handler, '_unset_sub_ports') as unset_s:
+            self.handler.subports_deleted(
+                resources.SUBPORTS,
+                events.AFTER_DELETE,
+                self.plugin_driver,
+                FakePayload(self.trunk_1,
+                            [self.sub_port_1, self.sub_port_2]))
+        unset_s.assert_called_once_with(
+            [self.sub_port_1, self.sub_port_2])
+        self.trunk_1.update.assert_called_once_with(
+            status=trunk_consts.TRUNK_ACTIVE_STATUS)
+
+    @mock.patch.object(trunk_driver.OVNTrunkHandler, '_unset_sub_ports')
+    def test_subports_deleted_no_subports(self, m__unset_sub_ports):
+        fake_payload = self._fake_subport_event_payload()
+        fake_payload.metadata['subports'] = []
+        self.handler.subports_deleted(
+            resources.SUBPORTS,
+            events.AFTER_DELETE,
+            self.plugin_driver,
+            fake_payload)
+        m__unset_sub_ports.assert_not_called()
+
+    @mock.patch.object(trunk_driver.OVNTrunkHandler, '_unset_sub_ports')
+    def test_subports_deleted_no_parent(self, m__unset_sub_ports):
+        fake_payload = self._fake_subport_event_payload()
+        self.plugin_driver.nb_ovn.lookup.return_value = None
+        self.handler.subports_deleted(
+            resources.SUBPORTS,
+            events.AFTER_DELETE,
+            self.plugin_driver,
+            fake_payload)
+        m__unset_sub_ports.assert_not_called()
 
 
 class TestTrunkDriver(base.BaseTestCase):
@@ -386,16 +453,18 @@ class TestTrunkDriver(base.BaseTestCase):
         driver = trunk_driver.OVNTrunkDriver.create(mock.Mock())
         with mock.patch.object(registry, 'subscribe') as mock_subscribe:
             driver.register(mock.ANY, mock.ANY, mock.Mock())
-            calls = [mock.call.mock_subscribe(mock.ANY,
-                                              resources.TRUNK,
-                                              events.AFTER_CREATE),
-                     mock.call.mock_subscribe(mock.ANY,
-                                              resources.SUBPORTS,
-                                              events.AFTER_CREATE),
-                     mock.call.mock_subscribe(mock.ANY,
-                                              resources.TRUNK,
-                                              events.AFTER_DELETE),
-                     mock.call.mock_subscribe(mock.ANY,
-                                              resources.SUBPORTS,
-                                              events.AFTER_DELETE)]
+            calls = [
+                mock.call.mock_subscribe(
+                    mock.ANY, resources.TRUNK, events.PRECOMMIT_CREATE),
+                mock.call.mock_subscribe(
+                    mock.ANY, resources.TRUNK, events.PRECOMMIT_DELETE),
+                mock.call.mock_subscribe(
+                    mock.ANY, resources.TRUNK, events.AFTER_CREATE),
+                mock.call.mock_subscribe(
+                    mock.ANY, resources.TRUNK, events.AFTER_DELETE),
+                mock.call.mock_subscribe(
+                    mock.ANY, resources.SUBPORTS, events.AFTER_CREATE),
+                mock.call.mock_subscribe(
+                    mock.ANY, resources.SUBPORTS, events.AFTER_DELETE),
+            ]
             mock_subscribe.assert_has_calls(calls, any_order=True)
