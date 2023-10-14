@@ -55,6 +55,7 @@ from neutron.db import ipam_pluggable_backend
 from neutron.db import provisioning_blocks
 from neutron.db import securitygroups_db as sg_db
 from neutron.db import segments_db
+from neutron.ipam import driver
 from neutron.objects import base as base_obj
 from neutron.objects import ports as port_obj
 from neutron.objects import router as l3_obj
@@ -1729,6 +1730,39 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                 }}]}
             ports_out = self.plugin.create_port_bulk(ctx, ports_in)
             self.assertEqual(edo, ports_out[0]['extra_dhcp_opts'])
+
+    def test_create_ports_bulk_with_wrong_fixed_ips(self):
+        cidr = '10.0.10.0/24'
+        with self.network() as net:
+            with self.subnet(net, cidr=cidr) as snet:
+                net_id = net['network']['id']
+                data = [{'network_id': net_id,
+                         'fixed_ips': [{'subnet_id': snet['subnet']['id'],
+                                        'ip_address': '10.0.10.100'}],
+                         'tenant_id': snet['subnet']['tenant_id']
+                         },
+                        {'network_id': net_id,
+                         'fixed_ips': [{'subnet_id': snet['subnet']['id'],
+                                        'ip_address': '10.0.20.101'}],
+                         'tenant_id': snet['subnet']['tenant_id']
+                         }]
+                res = self._create_bulk_from_list(self.fmt, 'port',
+                                                  data, as_admin=True)
+                self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
+                self.assertIn('IP address 10.0.20.101 is not a valid IP for '
+                              'the specified subnet.',
+                              res.json['NeutronError']['message'])
+
+                ipam_driver = driver.Pool.get_instance(None, self.context)
+                ipam_allocator = ipam_driver.get_allocator([cidr])
+                with db_api.CONTEXT_READER.using(self.context):
+                    ipam_subnet = ipam_allocator._driver.get_subnet(
+                        snet['subnet']['id'])
+                    allocations = ipam_subnet.subnet_manager.list_allocations(
+                        self.context)
+                    # There are no leftovers (e.g.: 10.0.10.100) in the
+                    # "IpamAllocation" registers
+                    self.assertEqual([], allocations)
 
     def test_delete_port_no_notify_in_disassociate_floatingips(self):
         ctx = context.get_admin_context()
