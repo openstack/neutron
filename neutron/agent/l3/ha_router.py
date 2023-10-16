@@ -536,7 +536,9 @@ class HaRouter(router.RouterInfo):
         super(HaRouter, self).process()
 
         self.set_ha_port()
-        LOG.debug("Processing HA router with HA port: %s", self.ha_port)
+        LOG.debug("Processing HA router %(router_id)s with HA port: %(port)s",
+                  {"router_id": self.router_id,
+                   "port": self.ha_port})
         if (self.ha_port and
                 self.ha_port['status'] == n_consts.PORT_STATUS_ACTIVE):
             self.enable_keepalived()
