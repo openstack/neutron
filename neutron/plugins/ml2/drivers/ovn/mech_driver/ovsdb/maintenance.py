@@ -1079,6 +1079,22 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         context = n_context.get_admin_context()
         hash_ring_db.cleanup_old_nodes(context, days=5)
 
+    @has_lock_periodic(spacing=86400, run_immediately=True)
+    def configure_nb_global(self):
+        """Configure Northbound OVN NB_Global options
+
+        The method goes over all config options from ovn_nb_global config
+        sections and configures same key/value pairs to the NB_Global:options
+        column.
+        """
+        options = {opt.name: str(cfg.CONF.ovn_nb_global.get(opt.name)).lower()
+                   for opt in ovn_conf.nb_global_opts}
+
+        self._nb_idl.set_nb_global_options(**options).execute(
+            check_error=True)
+
+        raise periodics.NeverAgain()
+
 
 class HashRingHealthCheckPeriodics(object):
 

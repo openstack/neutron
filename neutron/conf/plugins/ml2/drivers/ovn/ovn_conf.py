@@ -28,6 +28,8 @@ VLOG_LEVELS = {'CRITICAL': vlog.CRITICAL, 'ERROR': vlog.ERROR, 'WARNING':
 
 MIGRATE_MODE = "migrate"
 
+OVN_NB_GLOBAL = "ovn_nb_global"
+
 ovn_opts = [
     cfg.StrOpt('ovn_nb_connection',
                default='tcp:127.0.0.1:6641',
@@ -226,16 +228,33 @@ ovn_opts = [
                        'newer.')),
 ]
 
+nb_global_opts = [
+    cfg.BoolOpt('ignore_lsp_down',
+                default=False,
+                help=_('If set to False, ARP/ND reply flows for logical '
+                       'switch ports will be installed only if the port is '
+                       'UP, i.e. claimed by a Chassis. If set to True, these '
+                       'flows are installed regardless of the status of the '
+                       'port, which can result in a situation that an ARP '
+                       'request to an IP is resolved even before the relevant '
+                       'VM/container is running. For environments where this '
+                       'is not an issue, setting it to True can reduce '
+                       'the load and latency of the control plane. '
+                       'The default value is False.')),
+]
+
 
 def register_opts():
     cfg.CONF.register_opts(ovn_opts, group='ovn')
     ovs_conf.register_ovs_agent_opts()
+    cfg.CONF.register_opts(nb_global_opts, group=OVN_NB_GLOBAL)
 
 
 def list_opts():
     return [
         ('ovn', ovn_opts),
-        ('ovs', ovs_conf.OPTS)
+        ('ovs', ovs_conf.OPTS),
+        (OVN_NB_GLOBAL, nb_global_opts),
     ]
 
 

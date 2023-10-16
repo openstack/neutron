@@ -1,0 +1,11 @@
+---
+upgrade:
+  - |
+    Starting with OVN version v21.12.0, OVN replies to ARP requests for ports
+    that are in a DOWN status. It does not reply in versions older than
+    v21.12.0.  In order to keep the same behavior in Neutron, the default OVN
+    behavior is overridden by Neutron and Neutron ports will no longer reply to
+    ARP packets if the ports are in a DOWN state. If it is required to reply to
+    ARP for such ports, the config option ``ignore_lsp_down`` from
+    ``[ovn_nb_global]`` section can be set to True in the Neutron config. It is
+    set to False by default.
