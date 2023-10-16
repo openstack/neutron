@@ -201,7 +201,9 @@ def _delete_vif_mac_rules(vif, current_rules):
     chain = _mac_chain_name(vif)
     for rule in current_rules:
         if '-i %s' % vif in rule and '--among-src' in rule:
-            ebtables(['-D', chain] + rule.split())
+            # Flush the table and recreate the default DROP rule.
+            ebtables(['-F', chain])
+            ebtables(['-A', chain, '-j', 'DROP'])
 
 
 def _delete_mac_spoofing_protection(vifs, current_rules, table, chain):
