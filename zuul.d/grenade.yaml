@@ -381,9 +381,11 @@
       specific releases as prescribed by our process.
     vars:
       # Move this forward when master changes to a new skip-level-allowed
-      # target release. Right now, this is Zed because master is Bobcat (2023.2).
-      # When master is C, this should become Antelope (2023.1), and so forth.
-      grenade_from_branch: stable/zed
+      # target release. Right now, this is Antelope (2023.1) because master is
+      # Caracal (2024.1).
+      # When master is E (2025.1), this should become Caracal (2024.1),
+      # and so forth.
+      grenade_from_branch: stable/2023.1
       grenade_localrc:
         NOVA_ENABLE_UPGRADE_WORKAROUND: True
 
@@ -395,8 +397,10 @@
       specific releases as prescribed by our process.
     vars:
       # Move this forward when master changes to a new skip-level-allowed
-      # target release. Right now, this is Zed because master is Bobcat (2023.2).
-      # When master is C, this should become Antelope (2023.1), and so forth.
-      grenade_from_branch: stable/zed
+      # target release. Right now, this is Antelope (2023.1) because master is
+      # Caracal (2024.1).
+      # When master is E (2025.1), this should become Caracal (2024.1),
+      # and so forth.
+      grenade_from_branch: stable/2023.1
       grenade_localrc:
         NOVA_ENABLE_UPGRADE_WORKAROUND: True
