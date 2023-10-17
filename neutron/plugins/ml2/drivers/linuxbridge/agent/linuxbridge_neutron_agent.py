@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#
 # Copyright 2012 Cisco Systems, Inc.
 # All Rights Reserved.
 #

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Copyright 2018 Red Hat, Inc.
 # All Rights Reserved.
 #
