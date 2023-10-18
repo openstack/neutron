@@ -48,7 +48,7 @@ class AgentCacheTestCase(base.BaseTestCase):
                 eventlet.sleep(0)
 
     def _add_and_delete_agents(self):
-        del self.agent_cache['chassis8']
+        self.agent_cache.delete('chassis8')
         chassis_private = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'name': 'chassis10'})
         self.agent_cache.update(ovn_const.OVN_CONTROLLER_AGENT,
