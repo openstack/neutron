@@ -39,9 +39,9 @@
     vars:
       tox_envlist: integrated-network
       devstack_localrc:
-        CIRROS_VERSION: 0.5.1
-        DEFAULT_IMAGE_NAME: cirros-0.5.1-x86_64-uec
-        DEFAULT_IMAGE_FILE_NAME: cirros-0.5.1-x86_64-uec.tar.gz
+        CIRROS_VERSION: 0.5.2
+        DEFAULT_IMAGE_NAME: cirros-0.5.2-x86_64-uec
+        DEFAULT_IMAGE_FILE_NAME: cirros-0.5.2-x86_64-uec.tar.gz
       devstack_services:
         br-ex-tcpdump: true
         br-int-flows: true
@@ -139,9 +139,9 @@
     vars:
       tox_envlist: integrated-network
       devstack_localrc:
-        CIRROS_VERSION: 0.5.1
-        DEFAULT_IMAGE_NAME: cirros-0.5.1-x86_64-uec
-        DEFAULT_IMAGE_FILE_NAME: cirros-0.5.1-x86_64-uec.tar.gz
+        CIRROS_VERSION: 0.5.2
+        DEFAULT_IMAGE_NAME: cirros-0.5.2-x86_64-uec
+        DEFAULT_IMAGE_FILE_NAME: cirros-0.5.2-x86_64-uec.tar.gz
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
@@ -179,9 +179,9 @@
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_localrc:
-        CIRROS_VERSION: 0.5.1
-        DEFAULT_IMAGE_NAME: cirros-0.5.1-x86_64-uec
-        DEFAULT_IMAGE_FILE_NAME: cirros-0.5.1-x86_64-uec.tar.gz
+        CIRROS_VERSION: 0.5.2
+        DEFAULT_IMAGE_NAME: cirros-0.5.2-x86_64-uec
+        DEFAULT_IMAGE_FILE_NAME: cirros-0.5.2-x86_64-uec.tar.gz
       devstack_services:
         br-ex-tcpdump: true
         br-int-flows: true
@@ -259,9 +259,9 @@
             ovn:
               enable_distributed_floating_ip: True
       devstack_localrc:
-        CIRROS_VERSION: 0.5.1
-        DEFAULT_IMAGE_NAME: cirros-0.5.1-x86_64-uec
-        DEFAULT_IMAGE_FILE_NAME: cirros-0.5.1-x86_64-uec.tar.gz
+        CIRROS_VERSION: 0.5.2
+        DEFAULT_IMAGE_NAME: cirros-0.5.2-x86_64-uec
+        DEFAULT_IMAGE_FILE_NAME: cirros-0.5.2-x86_64-uec.tar.gz
         Q_AGENT: ovn
         ML2_L3_PLUGIN: ovn-router,trunk
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: ovn,logger
