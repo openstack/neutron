@@ -116,20 +116,6 @@
       zuul_work_dir: src/opendev.org/openstack/neutron
 
 - job:
-    name: neutron-fullstack-with-uwsgi-with-neutron-lib-master
-    branches: ^master$
-    parent: neutron-fullstack-with-uwsgi
-    required-projects:
-      - openstack/neutron-lib
-
-- job:
-    name: neutron-fullstack-with-pyroute2-master
-    branches: ^master$
-    parent: neutron-fullstack
-    required-projects:
-      - name: github.com/svinota/pyroute2
-
-- job:
     name: neutron-functional-with-uwsgi
     parent: neutron-functional
     vars:
@@ -143,13 +129,6 @@
       zuul_work_dir: src/opendev.org/openstack/neutron
 
 - job:
-    name: neutron-functional-with-uwsgi-with-neutron-lib-master
-    branches: ^master$
-    parent: neutron-functional-with-uwsgi
-    required-projects:
-      - openstack/neutron-lib
-
-- job:
     name: neutron-functional-with-uwsgi-fips
     parent: neutron-functional-with-uwsgi
     nodeset: devstack-single-node-centos-9-stream
@@ -161,78 +140,6 @@
       devstack_localrc:
         ISCSI_CHAP_ALGORITHMS: SHA3-256,SHA256
         Q_BUILD_OVS_FROM_GIT: true
-
-- job:
-    name: neutron-functional-with-pyroute2-master
-    branches: ^master$
-    parent: neutron-functional
-    required-projects:
-      - name: github.com/svinota/pyroute2
-
-- job:
-    name: neutron-functional-with-oslo-master
-    branches: ^master$
-    parent: neutron-functional
-    description: |
-      This job installs all oslo libraries from source and executes the
-      Neutron functional tests.
-    # NOTE(ralonsoh): the list of required projects is retrieved from
-    # "openstack-tox-with-oslo-master-base" job.
-    # TODO(ralonsoh): push a patch to "openstack-zuul-jobs" to create
-    # a list reference of the required projects for "-oslo-master" jobs.
-    required-projects:
-      - openstack/automaton
-      - openstack/debtcollector
-      - openstack/futurist
-      - openstack/osprofiler
-      - openstack/oslo.cache
-      - openstack/oslo.concurrency
-      - openstack/oslo.config
-      - openstack/oslo.context
-      - openstack/oslo.db
-      - openstack/oslo.i18n
-      - openstack/oslo.log
-      - openstack/oslo.messaging
-      - openstack/oslo.middleware
-      - openstack/oslo.policy
-      - openstack/oslo.privsep
-      - openstack/oslo.reports
-      - openstack/oslo.rootwrap
-      - openstack/oslo.serialization
-      - openstack/oslo.service
-      - openstack/oslo.utils
-      - openstack/oslo.versionedobjects
-      - openstack/oslo.vmware
-      - openstack/oslotest
-      - openstack/pycadf
-      - openstack/stevedore
-      - openstack/taskflow
-      - openstack/tooz
-      - openstack/pbr
-
-- job:
-    name: neutron-functional-with-sqlalchemy-master
-    branches: ^master$
-    parent: neutron-functional
-    required-projects:
-      - name: github.com/sqlalchemy/sqlalchemy
-        override-checkout: main
-      - openstack/oslo.db
-      - openstack/neutron-lib
-      - name: github.com/sqlalchemy/alembic
-        override-checkout: main
-
-- job:
-    name: openstack-tox-py310-with-sqlalchemy-master
-    branches: ^master$
-    parent: openstack-tox-py310
-    required-projects:
-      - name: github.com/sqlalchemy/sqlalchemy
-        override-checkout: main
-      - openstack/oslo.db
-      - openstack/neutron-lib
-      - name: github.com/sqlalchemy/alembic
-        override-checkout: main
 
 - job:
     name: neutron-fullstack-with-uwsgi-fips
