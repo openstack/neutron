@@ -60,7 +60,9 @@ OVN_NB_SCHEMA = {
                 "port_security": {"type": {"key": "string",
                                            "min": 0,
                                            "max": "unlimited"}},
-                "up": {"type": {"key": "boolean", "min": 0, "max": 1}}},
+                "up": {"type": {"key": "boolean", "min": 0, "max": 1}},
+                "enabled": {"type": {"key": "boolean", "min": 0, "max": 1}},
+            },
             "indexes": [["name"]],
             "isRoot": False,
         },
@@ -366,7 +368,8 @@ class TestPortBindingChassisUpdateEvent(base.BaseTestCase):
         pbtable = fakes.FakeOvsdbTable.create_one_ovsdb_table(
             attrs={'name': 'Port_Binding'})
         ovsdb_row = fakes.FakeOvsdbRow.create_one_ovsdb_row
-        self.driver.nb_ovn.lookup.return_value = ovsdb_row(attrs={'up': True})
+        self.driver.nb_ovn.lookup.return_value = ovsdb_row(
+            attrs={'up': True, 'enabled': True})
 
         # Port binding change.
         self._test_event(
@@ -422,28 +425,46 @@ class TestOvnNbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
         # Execute the notifications queued
         self.idl.notify_handler.notify_loop()
 
-    def test_lsp_up_create_event(self):
-        row_data = {"up": True, "name": "foo-name"}
+    def test_lsp_create_event(self):
+        row_data = {'name': 'foo'}
+
+        # up and enabled
+        row_data.update({'up': True, 'enabled': True})
         self._test_lsp_helper('create', row_data)
-        self.mech_driver.set_port_status_up.assert_called_once_with("foo-name")
+        self.mech_driver.set_port_status_up.assert_called_once_with('foo')
         self.assertFalse(self.mech_driver.set_port_status_down.called)
+        self.mech_driver.set_port_status_up.reset_mock()
 
-    def test_lsp_down_create_event(self):
-        row_data = {"up": False, "name": "foo-name"}
-        self._test_lsp_helper('create', row_data)
-        self.mech_driver.set_port_status_down.assert_called_once_with(
-            "foo-name")
-        self.assertFalse(self.mech_driver.set_port_status_up.called)
-
-    def test_lsp_up_not_set_event(self):
-        row_data = {"up": ['set', []], "name": "foo-name"}
+        # up and disabled
+        row_data.update({'up': True, 'enabled': False})
         self._test_lsp_helper('create', row_data)
         self.assertFalse(self.mech_driver.set_port_status_up.called)
-        self.assertFalse(self.mech_driver.set_port_status_down.called)
+        self.mech_driver.set_port_status_down.assert_called_once_with('foo')
+        self.mech_driver.set_port_status_down.reset_mock()
+
+        # down and enabled
+        row_data.update({'up': False, 'enabled': True})
+        self._test_lsp_helper('create', row_data)
+        self.assertFalse(self.mech_driver.set_port_status_up.called)
+        self.mech_driver.set_port_status_down.assert_called_once_with('foo')
+        self.mech_driver.set_port_status_down.reset_mock()
+
+        # down and disabled
+        row_data.update({'up': False, 'enabled': False})
+        self._test_lsp_helper('create', row_data)
+        self.assertFalse(self.mech_driver.set_port_status_up.called)
+        self.mech_driver.set_port_status_down.assert_called_once_with('foo')
+        self.mech_driver.set_port_status_down.reset_mock()
+
+        # Not set to up
+        row_data.update({'up': ['set', []], 'enabled': True})
+        self._test_lsp_helper('create', row_data)
+        self.assertFalse(self.mech_driver.set_port_status_up.called)
+        self.mech_driver.set_port_status_down.assert_called_once_with('foo')
 
     def test_unwatch_logical_switch_port_create_events(self):
         self.idl.unwatch_logical_switch_port_create_events()
-        row_data = {"up": True, "name": "foo-name"}
+        row_data = {'up': False, 'name': 'foo-name'}
         self._test_lsp_helper('create', row_data)
         self.assertFalse(self.mech_driver.set_port_status_up.called)
         self.assertFalse(self.mech_driver.set_port_status_down.called)
@@ -455,11 +476,10 @@ class TestOvnNbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
 
     def test_post_connect(self):
         self.idl.post_connect()
-        self.assertIsNone(self.idl._lsp_create_up_event)
-        self.assertIsNone(self.idl._lsp_create_down_event)
+        self.assertIsNone(getattr(self.idl, '_lsp_create_event', None))
 
     def test_lsp_up_update_event(self):
-        new_row_json = {"up": True, "name": "foo-name"}
+        new_row_json = {'up': True, 'enabled': True, 'name': 'foo-name'}
         old_row_json = {"up": False}
         self._test_lsp_helper('update', new_row_json,
                               old_row_json=old_row_json)
@@ -467,7 +487,7 @@ class TestOvnNbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
         self.assertFalse(self.mech_driver.set_port_status_down.called)
 
     def test_lsp_down_update_event(self):
-        new_row_json = {"up": False, "name": "foo-name"}
+        new_row_json = {'up': False, 'enabled': False, 'name': 'foo-name'}
         old_row_json = {"up": True}
         self._test_lsp_helper('update', new_row_json,
                               old_row_json=old_row_json)
@@ -476,7 +496,7 @@ class TestOvnNbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
         self.assertFalse(self.mech_driver.set_port_status_up.called)
 
     def test_lsp_up_update_event_no_old_data(self):
-        new_row_json = {"up": True, "name": "foo-name"}
+        new_row_json = {'up': True, 'enabled': True, 'name': 'foo-name'}
         self._test_lsp_helper('update', new_row_json,
                               old_row_json=None)
         self.assertFalse(self.mech_driver.set_port_status_up.called)
