@@ -43,6 +43,15 @@ from neutron.privileged.agent.linux import dhcp as priv_dhcp
 LOG = logging.getLogger(__name__)
 
 
+# PLEASE DO NOT ADD NEW VERSION CHECK TESTS. The entire point of the sanity
+# check system is to avoid doing version number checking since different
+# distros may backport fixes/features to different versioned releases and they
+# are not a reliable way to test for features/bugs. Please write sanity checks
+# that actually test for the usage of the feature in combination with it being
+# configured to use on the running system (e.g. via a config option).
+
+# TODO(twilson) Remove/rework tests that check version numbers into more
+# generic tests of features.
 MINIMUM_DNSMASQ_VERSION = '2.67'
 DNSMASQ_VERSION_DHCP_RELEASE6 = '2.76'
 DNSMASQ_VERSION_HOST_ADDR6_LIST = '2.81'
