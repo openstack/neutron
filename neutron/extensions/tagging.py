@@ -28,6 +28,8 @@ import webob.exc
 from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import resource as api_resource
+from neutron.objects import subnet
+from neutron import policy
 
 
 TAG = 'tag'
@@ -55,6 +57,7 @@ TAG_ATTRIBUTE_MAP_PORTS[TAGS] = {
         'validate': {'type:list_of_unique_strings': MAX_TAG_LEN},
         'default': [], 'is_visible': True, 'is_filter': True
 }
+RESOURCES_AND_PARENTS = {'subnets': ('network', subnet.Subnet.get_network_id)}
 
 
 class TagResourceNotFound(exceptions.NotFound):
@@ -95,75 +98,113 @@ class TaggingController(object):
         self.plugin = directory.get_plugin(TAG_PLUGIN_TYPE)
         self.supported_resources = TAG_SUPPORTED_RESOURCES
 
-    def _get_parent_resource_and_id(self, kwargs):
+    @staticmethod
+    def _get_target(ctx, res_id, p_res, p_res_id, tag_id=None):
+        target = {'id': res_id,
+                  'tenant_id': ctx.project_id,
+                  'project_id': ctx.project_id}
+        if p_res:
+            target[p_res + '_id'] = p_res_id
+        if tag_id:
+            target['tag_id'] = tag_id
+        return target
+
+    @staticmethod
+    def _get_pparent_resource_and_id(context, resource, resource_id):
+        """Retrieve the parent of the resource and ID (e.g.: subnet->net)"""
+        parent, getter_id = RESOURCES_AND_PARENTS[resource]
+        parent_id = getter_id(context.elevated(), resource_id)
+        return parent, parent_id
+
+    def _get_parent_resource_and_id(self, context, kwargs):
+        parent, parent_id = None, None
         for key in kwargs:
             for resource in self.supported_resources:
                 if key == self.supported_resources[resource] + '_id':
-                    return resource, kwargs[key]
-        return None, None
+                    if resource in RESOURCES_AND_PARENTS.keys():
+                        parent, parent_id = self._get_pparent_resource_and_id(
+                            context, resource, kwargs[key])
+                    return resource, kwargs[key], parent, parent_id
+        return None, None, None, None
 
     def index(self, request, **kwargs):
-        # GET /v2.0/networks/{network_id}/tags
-        parent, parent_id = self._get_parent_resource_and_id(kwargs)
-        return self.plugin.get_tags(request.context, parent, parent_id)
+        # GET /v2.0/{parent_resource}/{parent_resource_id}/tags
+        ctx = request.context
+        res, res_id, p_res, p_res_id = self._get_parent_resource_and_id(
+            ctx, kwargs)
+        target = self._get_target(ctx, res_id, p_res, p_res_id)
+        policy.enforce(ctx, 'get_%s_%s' % (res, TAGS), target)
+        return self.plugin.get_tags(ctx, res, res_id)
 
     def show(self, request, id, **kwargs):
-        # GET /v2.0/networks/{network_id}/tags/{tag}
+        # GET /v2.0/{parent_resource}/{parent_resource_id}/tags/{tag}
         # id == tag
         validate_tag(id)
-        parent, parent_id = self._get_parent_resource_and_id(kwargs)
-        return self.plugin.get_tag(request.context, parent, parent_id, id)
+        ctx = request.context
+        res, res_id, p_res, p_res_id = self._get_parent_resource_and_id(
+            ctx, kwargs)
+        target = self._get_target(ctx, res_id, p_res, p_res_id, tag_id=id)
+        policy.enforce(ctx, 'get_%s_%s' % (res, TAGS), target)
+        return self.plugin.get_tag(ctx, res, res_id, id)
 
     def create(self, request, **kwargs):
         # not supported
-        # POST /v2.0/networks/{network_id}/tags
+        # POST /v2.0/{parent_resource}/{parent_resource_id}/tags
         raise webob.exc.HTTPNotFound("not supported")
 
     def update(self, request, id, **kwargs):
-        # PUT /v2.0/networks/{network_id}/tags/{tag}
+        # PUT /v2.0/{parent_resource}/{parent_resource_id}/tags/{tag}
         # id == tag
         validate_tag(id)
-        parent, parent_id = self._get_parent_resource_and_id(kwargs)
-        notify_tag_action(request.context, 'create.start',
-                          parent, parent_id, [id])
-        result = self.plugin.update_tag(request.context, parent, parent_id, id)
-        notify_tag_action(request.context, 'create.end',
-                          parent, parent_id, [id])
+        ctx = request.context
+        res, res_id, p_res, p_res_id = self._get_parent_resource_and_id(
+            ctx, kwargs)
+        target = self._get_target(ctx, res_id, p_res, p_res_id, tag_id=id)
+        policy.enforce(ctx, 'update_%s_%s' % (res, TAGS), target)
+        notify_tag_action(ctx, 'create.start', res, res_id, [id])
+        result = self.plugin.update_tag(ctx, res, res_id, id)
+        notify_tag_action(ctx, 'create.end', res, res_id, [id])
         return result
 
     def update_all(self, request, body, **kwargs):
-        # PUT /v2.0/networks/{network_id}/tags
+        # PUT /v2.0/{parent_resource}/{parent_resource_id}/tags
         # body: {"tags": ["aaa", "bbb"]}
         validate_tags(body)
-        parent, parent_id = self._get_parent_resource_and_id(kwargs)
-        notify_tag_action(request.context, 'update.start',
-                          parent, parent_id, body['tags'])
-        result = self.plugin.update_tags(request.context, parent,
-                                         parent_id, body)
-        notify_tag_action(request.context, 'update.end',
-                          parent, parent_id, body['tags'])
+        ctx = request.context
+        res, res_id, p_res, p_res_id = self._get_parent_resource_and_id(
+            ctx, kwargs)
+        target = self._get_target(ctx, res_id, p_res, p_res_id)
+        policy.enforce(ctx, 'update_%s_%s' % (res, TAGS), target)
+        notify_tag_action(ctx, 'update.start', res, res_id, body['tags'])
+        result = self.plugin.update_tags(ctx, res, res_id, body)
+        notify_tag_action(ctx, 'update.end', res, res_id,
+                          body['tags'])
         return result
 
     def delete(self, request, id, **kwargs):
-        # DELETE /v2.0/networks/{network_id}/tags/{tag}
+        # DELETE /v2.0/{parent_resource}/{parent_resource_id}/tags/{tag}
         # id == tag
         validate_tag(id)
-        parent, parent_id = self._get_parent_resource_and_id(kwargs)
-        notify_tag_action(request.context, 'delete.start',
-                          parent, parent_id, [id])
-        result = self.plugin.delete_tag(request.context, parent, parent_id, id)
-        notify_tag_action(request.context, 'delete.end',
-                          parent, parent_id, [id])
+        ctx = request.context
+        res, res_id, p_res, p_res_id = self._get_parent_resource_and_id(
+            ctx, kwargs)
+        target = self._get_target(ctx, res_id, p_res, p_res_id, tag_id=id)
+        policy.enforce(ctx, 'delete_%s_%s' % (res, TAGS), target)
+        notify_tag_action(ctx, 'delete.start', res, res_id, [id])
+        result = self.plugin.delete_tag(ctx, res, res_id, id)
+        notify_tag_action(ctx, 'delete.end', res, res_id, [id])
         return result
 
     def delete_all(self, request, **kwargs):
-        # DELETE /v2.0/networks/{network_id}/tags
-        parent, parent_id = self._get_parent_resource_and_id(kwargs)
-        notify_tag_action(request.context, 'delete_all.start',
-                          parent, parent_id)
-        result = self.plugin.delete_tags(request.context, parent, parent_id)
-        notify_tag_action(request.context, 'delete_all.end',
-                          parent, parent_id)
+        # DELETE /v2.0/{parent_resource}/{parent_resource_id}/tags
+        ctx = request.context
+        res, res_id, p_res, p_res_id = self._get_parent_resource_and_id(
+            ctx, kwargs)
+        target = self._get_target(ctx, res_id, p_res, p_res_id)
+        policy.enforce(ctx, 'delete_%s_%s' % (res, TAGS), target)
+        notify_tag_action(ctx, 'delete_all.start', res, res_id)
+        result = self.plugin.delete_tags(ctx, res, res_id)
+        notify_tag_action(ctx, 'delete_all.end', res, res_id)
         return result
 
 

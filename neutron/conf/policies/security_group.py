@@ -22,11 +22,29 @@ DEPRECATED_REASON = (
 
 SG_COLLECTION_PATH = '/security-groups'
 SG_RESOURCE_PATH = '/security-groups/{id}'
+SG_TAGS_PATH = SG_RESOURCE_PATH + '/tags'
+SG_TAG_PATH = SG_RESOURCE_PATH + '/tags/{tag_id}'
 RULE_COLLECTION_PATH = '/security-group-rules'
 RULE_RESOURCE_PATH = '/security-group-rules/{id}'
+RULE_TAGS_PATH = RULE_RESOURCE_PATH + '/tags'
+RULE_TAG_PATH = RULE_RESOURCE_PATH + '/tags/{tag_id}'
 
 RULE_ADMIN_OR_SG_OWNER = 'rule:admin_or_sg_owner'
 RULE_ADMIN_OWNER_OR_SG_OWNER = 'rule:admin_owner_or_sg_owner'
+
+
+SG_ACTION_GET_TAGS = [
+    {'method': 'GET', 'path': SG_TAGS_PATH},
+    {'method': 'GET', 'path': SG_TAG_PATH},
+]
+SG_ACTION_PUT_TAGS = [
+    {'method': 'PUT', 'path': SG_TAGS_PATH},
+    {'method': 'PUT', 'path': SG_TAG_PATH},
+]
+SG_ACTION_DELETE_TAGS = [
+    {'method': 'DELETE', 'path': SG_TAGS_PATH},
+    {'method': 'DELETE', 'path': SG_TAG_PATH},
+]
 
 
 rules = [
@@ -99,6 +117,16 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
+        name='get_security_groups_tags',
+        check_str=neutron_policy.policy_or(
+            base.ADMIN_OR_PROJECT_READER,
+            'rule:shared_security_group'
+        ),
+        scope_types=['project'],
+        description='Get the security group tags',
+        operations=SG_ACTION_GET_TAGS,
+    ),
+    policy.DocumentedRuleDefault(
         name='update_security_group',
         check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
@@ -116,6 +144,13 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
+        name='update_security_groups_tags',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Update the security group tags',
+        operations=SG_ACTION_PUT_TAGS,
+    ),
+    policy.DocumentedRuleDefault(
         name='delete_security_group',
         check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
@@ -131,6 +166,13 @@ rules = [
             check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
+    ),
+    policy.DocumentedRuleDefault(
+        name='delete_security_groups_tags',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Delete the security group tags',
+        operations=SG_ACTION_DELETE_TAGS,
     ),
 
     # TODO(amotoki): admin_or_owner is the right rule?

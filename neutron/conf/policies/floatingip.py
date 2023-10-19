@@ -19,6 +19,21 @@ from neutron.conf.policies import base
 
 COLLECTION_PATH = '/floatingips'
 RESOURCE_PATH = '/floatingips/{id}'
+TAGS_PATH = RESOURCE_PATH + '/tags'
+TAG_PATH = RESOURCE_PATH + '/tags/{tag_id}'
+
+ACTION_GET_TAGS = [
+    {'method': 'GET', 'path': TAGS_PATH},
+    {'method': 'GET', 'path': TAG_PATH},
+]
+ACTION_PUT_TAGS = [
+    {'method': 'PUT', 'path': TAGS_PATH},
+    {'method': 'PUT', 'path': TAG_PATH},
+]
+ACTION_DELETE_TAGS = [
+    {'method': 'DELETE', 'path': TAGS_PATH},
+    {'method': 'DELETE', 'path': TAG_PATH},
+]
 
 DEPRECATION_REASON = (
     "The Floating IP API now supports system scope and default roles.")
@@ -80,6 +95,14 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
+        name='get_floatingips_tags',
+        check_str=base.ADMIN_OR_PROJECT_READER,
+        description='Get the floating IP tags',
+        operations=ACTION_GET_TAGS,
+        scope_types=['project'],
+    ),
+
+    policy.DocumentedRuleDefault(
         name='update_floatingip',
         check_str=base.ADMIN_OR_PROJECT_MEMBER,
         description='Update a floating IP',
@@ -97,6 +120,14 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
+        name='update_floatingips_tags',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        description='Update the floating IP tags',
+        operations=ACTION_PUT_TAGS,
+        scope_types=['project'],
+    ),
+
+    policy.DocumentedRuleDefault(
         name='delete_floatingip',
         check_str=base.ADMIN_OR_PROJECT_MEMBER,
         description='Delete a floating IP',
@@ -112,6 +143,13 @@ rules = [
             check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATION_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
+    ),
+    policy.DocumentedRuleDefault(
+        name='delete_floatingips_tags',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        description='Delete the floating IP tags',
+        operations=ACTION_DELETE_TAGS,
+        scope_types=['project'],
     ),
 ]
 
