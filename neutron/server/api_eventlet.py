@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#
 # Copyright (c) 2022, OVH SAS
 # All Rights Reserved.
 #

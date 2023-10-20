@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright (C) 2014 VA Linux Systems Japan K.K.
 # Copyright (C) 2014 YAMAMOTO Takashi <yamamoto at valinux co jp>
