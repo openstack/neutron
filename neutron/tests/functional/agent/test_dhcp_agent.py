@@ -34,7 +34,7 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import interface
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
-from neutron.agent.metadata import driver as metadata_driver
+from neutron.agent.metadata import driver_base
 from neutron.common import utils as common_utils
 from neutron.conf.agent import common as config
 from neutron.tests.common import net_helpers
@@ -272,7 +272,7 @@ class DHCPAgentOVSTestFramework(base.BaseSudoTestCase):
             self.conf,
             network.id,
             network.namespace,
-            service=metadata_driver.HAPROXY_SERVICE)
+            service=driver_base.HAPROXY_SERVICE)
 
 
 class DHCPAgentOVSTestCase(DHCPAgentOVSTestFramework):
