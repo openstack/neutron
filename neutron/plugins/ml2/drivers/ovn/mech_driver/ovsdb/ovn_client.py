@@ -1914,6 +1914,9 @@ class OVNClient(object):
         params['other_config'] = {ovn_const.MCAST_SNOOP: value,
                                   ovn_const.MCAST_FLOOD_UNREGISTERED: 'false',
                                   ovn_const.VLAN_PASSTHRU: vlan_transparent}
+        if utils.is_provider_network(network):
+            params['other_config'][ovn_const.LS_OPTIONS_FDB_AGE_THRESHOLD] = (
+                ovn_conf.get_fdb_age_threshold())
         return params
 
     def create_network(self, context, network):

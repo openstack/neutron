@@ -402,6 +402,9 @@ LRP_OPTIONS_RESIDE_REDIR_CH = 'reside-on-redirect-chassis'
 LRP_OPTIONS_REDIRECT_TYPE = 'redirect-type'
 BRIDGE_REDIRECT_TYPE = "bridged"
 
+# FDB AGE Settings
+LS_OPTIONS_FDB_AGE_THRESHOLD = 'fdb_age_threshold'
+
 # Port Binding types
 PB_TYPE_VIRTUAL = 'virtual'
 
