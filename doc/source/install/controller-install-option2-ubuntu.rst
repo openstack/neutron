@@ -45,7 +45,7 @@ Configure the server component
        ``[database]`` section.
 
   * In the ``[DEFAULT]`` section, enable the Modular Layer 2 (ML2)
-    plug-in, router service, and overlapping IP addresses:
+    plug-in and router service:
 
     .. path /etc/neutron/neutron.conf
     .. code-block:: ini
