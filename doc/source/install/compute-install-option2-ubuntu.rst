@@ -13,13 +13,15 @@ networking infrastructure for instances and handles security groups.
   complete the following actions:
 
   * In the ``[ovs]`` section, map the provider virtual network to the
-    provider physical network interface:
+    provider physical network interface and configure the IP address of
+    the physical network interface that handles overlay networks:
 
     .. path /etc/neutron/plugins/ml2/openvswitch_agent.ini
     .. code-block:: ini
 
        [ovs]
        bridge_mappings = provider:PROVIDER_INTERFACE_NAME
+       local_ip = OVERLAY_INTERFACE_IP_ADDRESS
 
     .. end
 
@@ -27,25 +29,24 @@ networking infrastructure for instances and handles security groups.
     provider physical network interface.
     See :doc:`environment-networking-ubuntu` for more information.
 
-  * In the ``[vxlan]`` section, configure the IP address of the physical
-    network interface that handles overlay networks and enable layer-2
-    population:
-
-    .. path /etc/neutron/plugins/ml2/openvswitch_agent.ini
-    .. code-block:: ini
-
-       [vxlan]
-       local_ip = OVERLAY_INTERFACE_IP_ADDRESS
-       l2_population = true
-
-    .. end
-
-    Replace ``OVERLAY_INTERFACE_IP_ADDRESS`` with the IP address of the
+    Also replace ``OVERLAY_INTERFACE_IP_ADDRESS`` with the IP address of the
     underlying physical network interface that handles overlay networks. The
     example architecture uses the management interface to tunnel traffic to
     the other nodes. Therefore, replace ``OVERLAY_INTERFACE_IP_ADDRESS`` with
     the management IP address of the compute node. See
-    :doc:`environment-networking-obs` for more information.
+    :doc:`environment-networking-ubuntu` for more information.
+
+  * In the ``[agent]`` section, enable VXLAN overlay networks and enable
+    layer-2 population:
+
+    .. path /etc/neutron/plugins/ml2/openvswitch_agent.ini
+    .. code-block:: ini
+
+       [agent]
+       tunnel_types = vxlan
+       l2_population = true
+
+    .. end
 
   * In the ``[securitygroup]`` section, enable security groups and
     configure the Open vSwitch native or the hybrid iptables firewall driver:
