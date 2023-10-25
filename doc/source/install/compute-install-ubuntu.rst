@@ -45,38 +45,6 @@ authentication mechanism, message queue, and plug-in.
     Replace ``RABBIT_PASS`` with the password you chose for the ``openstack``
     account in RabbitMQ.
 
-  * In the ``[DEFAULT]`` and ``[keystone_authtoken]`` sections, configure
-    Identity service access:
-
-    .. path /etc/neutron/neutron.conf
-    .. code-block:: ini
-
-       [DEFAULT]
-       # ...
-       auth_strategy = keystone
-
-       [keystone_authtoken]
-       # ...
-       www_authenticate_uri = http://controller:5000
-       auth_url = http://controller:5000
-       memcached_servers = controller:11211
-       auth_type = password
-       project_domain_name = Default
-       user_domain_name = Default
-       project_name = service
-       username = neutron
-       password = NEUTRON_PASS
-
-    .. end
-
-    Replace ``NEUTRON_PASS`` with the password you chose for the ``neutron``
-    user in the Identity service.
-
-    .. note::
-
-       Comment out or remove any other options in the
-       ``[keystone_authtoken]`` section.
-
 
 * In the ``[oslo_concurrency]`` section, configure the lock path:
 
