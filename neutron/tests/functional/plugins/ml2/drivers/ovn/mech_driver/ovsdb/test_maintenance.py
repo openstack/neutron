@@ -50,6 +50,8 @@ class _TestMaintenanceHelper(base.TestOVNFunctionalBase):
         ext_mgr = test_extraroute.ExtraRouteTestExtensionManager()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
         self.maint = maintenance.DBInconsistenciesPeriodics(self._ovn_client)
+        # Release the unneeded lock
+        self.maint._idl.set_lock(None)
         self.context = n_context.get_admin_context()
         # Always verify inconsistencies for all objects.
         db_rev.INCONSISTENCIES_OLDER_THAN = -1
