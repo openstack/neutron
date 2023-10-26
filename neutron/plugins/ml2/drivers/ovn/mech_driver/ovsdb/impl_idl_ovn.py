@@ -758,16 +758,6 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         result = fip.execute(check_error=True)
         return result[0] if result else None
 
-    def get_floatingip_by_ips(self, router_id, logical_ip, external_ip):
-        if not all([router_id, logical_ip, external_ip]):
-            return
-
-        for nat in self.get_lrouter_nat_rules(utils.ovn_name(router_id)):
-            if (nat['type'] == 'dnat_and_snat' and
-                    nat['logical_ip'] == logical_ip and
-                    nat['external_ip'] == external_ip):
-                return nat
-
     def check_revision_number(self, name, resource, resource_type,
                               if_exists=True):
         return cmd.CheckRevisionNumberCommand(

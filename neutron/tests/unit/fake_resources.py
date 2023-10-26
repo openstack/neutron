@@ -114,11 +114,6 @@ class FakeOvsdbNbOvnIdl(object):
         self.get_floatingip.return_value = None
         self.check_revision_number = mock.Mock()
         self.lookup = mock.MagicMock()
-        # TODO(lucasagomes): The get_floatingip_by_ips() method is part
-        # of a backwards compatibility layer for the Pike -> Queens release,
-        # remove it in the Rocky release.
-        self.get_floatingip_by_ips = mock.Mock()
-        self.get_floatingip_by_ips.return_value = None
         self.get_router_floatingip_lbs = mock.Mock()
         self.get_router_floatingip_lbs.return_value = []
         self.is_col_present = mock.Mock()
