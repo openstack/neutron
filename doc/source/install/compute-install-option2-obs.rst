@@ -13,21 +13,22 @@ networking infrastructure for instances and handles security groups.
   complete the following actions:
 
   * In the ``[ovs]`` section, map the provider virtual network to the
-    provider physical network interface and configure the IP address of
+    provider physical bridge and configure the IP address of
     the physical network interface that handles overlay networks:
 
     .. path /etc/neutron/plugins/ml2/openvswitch_agent.ini
     .. code-block:: ini
 
        [ovs]
-       bridge_mappings = provider:PROVIDER_INTERFACE_NAME
+       bridge_mappings = provider:PROVIDER_BRIDGE_NAME
        local_ip = OVERLAY_INTERFACE_IP_ADDRESS
 
     .. end
 
-    Replace ``PROVIDER_INTERFACE_NAME`` with the name of the underlying
-    provider physical network interface. See :doc:`environment-networking-obs`
-    for more information.
+    Replace ``PROVIDER_BRIDGE_NAME`` with the name of the bridge connected to
+    the underlying provider physical network.
+    See :doc:`environment-networking-obs`
+    and :doc:`../admin/deploy-ovs-provider` for more information.
 
     Also replace ``OVERLAY_INTERFACE_IP_ADDRESS`` with the IP address of the
     underlying physical network interface that handles overlay networks. The
@@ -35,6 +36,16 @@ networking infrastructure for instances and handles security groups.
     the other nodes. Therefore, replace ``OVERLAY_INTERFACE_IP_ADDRESS`` with
     the management IP address of the compute node. See
     :doc:`environment-networking-obs` for more information.
+
+  * Ensure ``PROVIDER_BRIDGE_NAME`` external bridge is created and
+    ``PROVIDER_INTERFACE_NAME`` is added to that bridge
+
+    .. code-block:: bash
+
+       # ovs-vsctl add-br $PROVIDER_BRIDGE_NAME
+       # ovs-vsctl add-port $PROVIDER_BRIDGE_NAME $PROVIDER_INTERFACE_NAME
+
+    .. end
 
   * In the ``[agent]`` section, enable VXLAN overlay networks and enable
     layer-2 population:
