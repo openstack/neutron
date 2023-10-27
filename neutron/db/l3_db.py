@@ -1607,7 +1607,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             old_floatingip = self._make_floatingip_dict(floatingip_obj)
             old_fixed_port_id = floatingip_obj.fixed_port_id
             assoc_result = self._update_fip_assoc(context, fip, floatingip_obj)
-            if self._is_fip_qos_supported:
+            if self._is_fip_qos_supported and 'qos_policy_id' in fip:
                 floatingip_obj.qos_policy_id = fip.get(qos_const.QOS_POLICY_ID)
 
             floatingip_obj.update()
