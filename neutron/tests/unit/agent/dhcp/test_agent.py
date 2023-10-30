@@ -70,7 +70,8 @@ fake_subnet1 = dhcp.DictModel(id='bbbbbbbb-bbbb-bbbb-bbbbbbbbbbbb',
                               ip_version=const.IP_VERSION_4,
                               subnetpool_id=FAKE_V4_SUBNETPOOL_ID,
                               ipv6_ra_mode=None, ipv6_address_mode=None,
-                              allocation_pools=fake_subnet1_allocation_pools)
+                              allocation_pools=fake_subnet1_allocation_pools,
+                              created_at='2023-10-30T15:21:46Z')
 
 fake_subnet2_allocation_pools = dhcp.DictModel(id='', start='172.9.8.2',
                                                end='172.9.8.254')
@@ -81,7 +82,8 @@ fake_subnet2 = dhcp.DictModel(id='dddddddd-dddd-dddd-dddddddddddd',
                               gateway_ip='172.9.8.1',
                               host_routes=[], dns_nameservers=[],
                               ip_version=const.IP_VERSION_4,
-                              allocation_pools=fake_subnet2_allocation_pools)
+                              allocation_pools=fake_subnet2_allocation_pools,
+                              created_at='2023-10-30T15:21:46Z')
 
 fake_subnet3 = dhcp.DictModel(id='bbbbbbbb-1111-2222-bbbbbbbbbbbb',
                               network_id=FAKE_NETWORK_UUID,
@@ -1827,11 +1829,13 @@ class TestNetworkCache(base.BaseTestCase):
 class FakePort1(object):
     def __init__(self):
         self.id = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
+        self.fixed_ips = []
 
 
 class FakePort2(object):
     def __init__(self):
         self.id = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
+        self.fixed_ips = []
 
 
 class FakeV4Subnet(object):
@@ -1842,6 +1846,7 @@ class FakeV4Subnet(object):
         self.gateway_ip = '192.168.0.1'
         self.enable_dhcp = True
         self.subnetpool_id = FAKE_V4_SUBNETPOOL_ID
+        self.created_at = "2023-10-30T15:21:46Z"
 
 
 class FakeV6Subnet(object):
@@ -1852,12 +1857,14 @@ class FakeV6Subnet(object):
         self.gateway_ip = '2001:db8:0:1::1'
         self.enable_dhcp = True
         self.subnetpool_id = FAKE_V6_SUBNETPOOL_ID
+        self.created_at = "2023-10-30T15:21:46Z"
 
 
 class FakeV4SubnetOutsideGateway(FakeV4Subnet):
     def __init__(self):
         super(FakeV4SubnetOutsideGateway, self).__init__()
         self.gateway_ip = '192.168.1.1'
+        self.created_at = "2023-10-30T15:21:46Z"
 
 
 class FakeV6SubnetOutsideGateway(FakeV6Subnet):
@@ -1873,6 +1880,7 @@ class FakeV4SubnetNoGateway(object):
         self.cidr = '192.168.1.0/24'
         self.gateway_ip = None
         self.enable_dhcp = True
+        self.created_at = "2023-10-30T15:21:46Z"
 
 
 class FakeV6SubnetNoGateway(object):
@@ -1882,6 +1890,7 @@ class FakeV6SubnetNoGateway(object):
         self.cidr = '2001:db8:1:0::/64'
         self.gateway_ip = None
         self.enable_dhcp = True
+        self.created_at = "2023-10-30T15:21:46Z"
 
 
 class FakeV4Network(object):
