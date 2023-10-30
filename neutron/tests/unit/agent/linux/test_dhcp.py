@@ -458,6 +458,7 @@ class FakeV4Subnet(Dictable):
         self.host_routes = [FakeV4HostRoute()]
         self.dns_nameservers = ['8.8.8.8']
         self.subnetpool_id = 'kkkkkkkk-kkkk-kkkk-kkkk-kkkkkkkkkkkk'
+        self.created_at = "2023-10-27T05:21:46Z"
 
 
 class FakeV4Subnet2(FakeV4Subnet):
@@ -467,6 +468,7 @@ class FakeV4Subnet2(FakeV4Subnet):
         self.cidr = '192.168.1.0/24'
         self.gateway_ip = '192.168.1.1'
         self.host_routes = []
+        self.created_at = "2023-10-20T05:21:46Z"
 
 
 class FakeV4SubnetSegmentID(FakeV4Subnet):
@@ -597,6 +599,7 @@ class FakeV4SubnetNoDHCP(object):
         self.enable_dhcp = False
         self.host_routes = []
         self.dns_nameservers = []
+        self.created_at = "2023-10-26T05:21:46Z"
 
 
 class FakeV6SubnetDHCPStateful(Dictable):
@@ -611,6 +614,7 @@ class FakeV6SubnetDHCPStateful(Dictable):
         self.ipv6_ra_mode = None
         self.ipv6_address_mode = constants.DHCPV6_STATEFUL
         self.subnetpool_id = 'mmmmmmmm-mmmm-mmmm-mmmm-mmmmmmmmmmmm'
+        self.created_at = "2023-10-25T05:21:46Z"
 
 
 class FakeV6SubnetSlaac(object):
@@ -823,6 +827,14 @@ class FakeDualNetworkDualDHCP(object):
         self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
         self.subnets = [FakeV4Subnet(), FakeV4Subnet2()]
         self.ports = [FakePort1(), FakeRouterPort(), FakeRouterPort2()]
+        self.namespace = 'qdhcp-ns'
+
+
+class FakeDualNetworkDualDHCPOneRouter(object):
+    def __init__(self):
+        self.id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+        self.subnets = [FakeV4Subnet(), FakeV4Subnet2()]
+        self.ports = [FakePort1(), FakeRouterPort2()]
         self.namespace = 'qdhcp-ns'
 
 
@@ -3509,6 +3521,17 @@ class TestDeviceManager(TestConfBase):
 
         with testtools.ExpectedException(oslo_messaging.RemoteError):
             dh.setup_dhcp_port(fake_network, None)
+
+    def test_prefer_subnet_with_gateway_ip_on_port_as_default_gateway(self):
+        with mock.patch.object(dhcp.ip_lib, 'IPDevice') as mock_IPDevice:
+            device = mock.Mock()
+            mock_IPDevice.return_value = device
+            device.route.get_gateway.return_value = None
+            plugin = mock.Mock()
+            mgr = dhcp.DeviceManager(self.conf, plugin)
+            network = FakeDualNetworkDualDHCPOneRouter()
+            mgr._set_default_route(network, "LOL")
+            device.route.add_gateway.assert_called_with("192.168.1.1")
 
 
 class TestDictModel(base.BaseTestCase):

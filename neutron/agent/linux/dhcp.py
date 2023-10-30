@@ -1536,7 +1536,19 @@ class DeviceManager(object):
         if gateway:
             gateway = gateway.get('gateway')
 
+        # sort subnets by if they have their gateway ip present on a port
+        # and then by subnet created time
+        subnets_extended = []
         for subnet in network.subnets:
+            gw_ip_on_port = False
+            if subnet.gateway_ip:
+                gw_ip_on_port = any(fixed_ip.ip_address == subnet.gateway_ip
+                                    for port in network.ports
+                                    for fixed_ip in port.fixed_ips)
+            subnets_extended.append((subnet, gw_ip_on_port))
+        subnets_extended.sort(key=lambda sn: (not sn[1], sn[0].created_at))
+
+        for subnet, gw_ip_on_port in subnets_extended:
             skip_subnet = (
                 subnet.ip_version != ip_version or
                 not subnet.enable_dhcp or
@@ -1564,6 +1576,12 @@ class DeviceManager(object):
                           'on net %(n)s to %(ip)s',
                           {'n': network.id, 'ip': subnet.gateway_ip,
                            'version': ip_version})
+                if not gw_ip_on_port:
+                    LOG.warning('No port with gateway ip found for '
+                                'IPv%(version)s gateway on '
+                                'net %(n)s for %(ip)s',
+                                {'n': network.id, 'ip': subnet.gateway_ip,
+                                 'version': ip_version})
 
                 # Check for and remove the on-link route for the old
                 # gateway being replaced, if it is outside the subnet
