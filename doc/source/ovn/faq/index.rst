@@ -24,9 +24,10 @@ Frequently Asked Questions
 |               | VRRP traffic.             | tunnel endpoints to detect     |
 |               |                           | connectivity issues to nodes.  |
 +---------------+---------------------------+--------------------------------+
-| DVR           | exposes the "distributed" | no "distributed" flag is shown |
-| API           | flag on routers only      | or available on routers via    |
-|               | modifiable by admin.      | API.                           |
+| DVR           | exposes the "distributed" | exposes the "distributed" flag |
+| API           | flag on routers only      | based on the configuration     |
+|               | modifiable by admin.      | option                         |
+|               |                           | enable_distributed_floating_ip |
 +---------------+---------------------------+--------------------------------+
 | DVR           | uses namespaces, veths,   | Uses OpenFlow rules on the     |
 | dataplane     | ip routing, ip rules and  | compute nodes.                 |

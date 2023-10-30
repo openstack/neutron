@@ -1128,6 +1128,25 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
         raise periodics.NeverAgain()
 
+    @has_lock_periodic(spacing=86400, run_immediately=True)
+    def update_router_distributed_flag(self):
+        """Set "enable_distributed_floating_ip" on the router.distributed flag.
+
+        This method is needed to sync the static configuration parameter
+        "enable_distributed_floating_ip", loaded when the Neutron API starts,
+        and the router.distributed flag.
+
+        NOTE: remove this method when the RFE that allows to define the
+        distributed flag per FIP is implemented. At this point, the
+        router.distributed flag will be useless.
+            RFE: https://bugs.launchpad.net/neutron/+bug/1978039
+        """
+        distributed = ovn_conf.is_ovn_distributed_floating_ip()
+        router_obj.RouterExtraAttributes.update_distributed_flag(
+            n_context.get_admin_context(), distributed)
+
+        raise periodics.NeverAgain()
+
 
 class HashRingHealthCheckPeriodics(object):
 
