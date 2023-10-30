@@ -459,7 +459,7 @@ def keepalived_ipv6_supported():
 
 
 def keepalived_garp_on_sighup_supported():
-    keepalived_garp_on_sighup = ('1.2.20')
+    keepalived_garp_on_sighup = (1, 2, 20)
     keepalived_version = runtime_checks.get_keepalived_version()
     if keepalived_version:
         return keepalived_version >= keepalived_garp_on_sighup

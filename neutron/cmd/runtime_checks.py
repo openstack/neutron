@@ -13,10 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from packaging import version
-
 from neutron_lib import exceptions
 from oslo_log import log as logging
+from oslo_utils import versionutils
 
 from neutron.agent.linux import utils as agent_utils
 
@@ -46,7 +45,9 @@ def get_keepalived_version():
                                   return_stderr=True)
         # First line is the interesting one here from stderr
         version_line = res[1].split('\n')[0]
-        keepalived_version = version.parse(version_line.split()[1])
+        # Version string is of form 'v2.0.19', must remove 'v'
+        keepalived_version = versionutils.convert_version_to_tuple(
+            version_line.split()[1].lstrip('v'))
         return keepalived_version
     except exceptions.ProcessExecutionError:
         LOG.exception("Failed to get keepalived version")
@@ -55,7 +56,7 @@ def get_keepalived_version():
 
 def keepalived_use_no_track_support():
 
-    keepalived_with_track = version.parse('2.0.3')
+    keepalived_with_track = (2, 0, 3)
     keepalived_version = get_keepalived_version()
     if keepalived_version:
         return keepalived_version >= keepalived_with_track
