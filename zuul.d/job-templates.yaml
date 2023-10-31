@@ -29,7 +29,7 @@
         - openstack-tox-cover:  # from openstack-cover-jobs template
             timeout: 4800
             irrelevant-files:  *irrelevant-files
-        - openstack-tox-py310-with-sqlalchemy-master:
+        - openstack-tox-py311-with-sqlalchemy-master:
             timeout: 3600
             irrelevant-files: *irrelevant-files
     check-arm64:
@@ -74,13 +74,13 @@
         - neutron-ovn-tempest-with-uwsgi-loki
         # Jobs added to the periodic queue by templates defined in
         # https://opendev.org/openstack/openstack-zuul-jobs/src/branch/master/zuul.d/project-templates.yaml
-        - openstack-tox-py310-with-neutron-lib-master:
+        - openstack-tox-py311-with-neutron-lib-master:
             timeout: 3600
             irrelevant-files:  *irrelevant-files
-        - openstack-tox-py310-with-oslo-master:
+        - openstack-tox-py311-with-oslo-master:
             timeout: 3600
             irrelevant-files:  *irrelevant-files
-        - openstack-tox-py310-with-ovsdbapp-master:
+        - openstack-tox-py311-with-ovsdbapp-master:
             timeout: 3600
             irrelevant-files:  *irrelevant-files
 
