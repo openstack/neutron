@@ -223,115 +223,66 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
             timeout=10,
             exception=exc)
 
-    def _test_agent_events(self, delete, type_=None, update=False):
-        m_pb_created = mock.patch.object(
-            agent.PortBindingChassisCreatedEvent, 'run').start()
-        m_pb_deleted = mock.patch.object(
-            agent.PortBindingChassisDeletedEvent, 'run').start()
-        m_pb_updated = mock.patch.object(
-            agent.PortBindingMetaPortUpdatedEvent, 'run').start()
-
+    def _test_agent_events_prepare(self, lsp_type=None):
         lswitchport_name, lswitch_name = self._create_logical_switch_port(
-            type_)
-        self.sb_api.lsp_bind(lswitchport_name, self.chassis_name).execute(
-            check_error=True, log_errors=True)
-        if update and type_ == ovn_const.LSP_TYPE_LOCALPORT:
-            with self.nb_api.transaction(
-                    check_error=True, log_errors=True) as txn:
-                mdt_port_name = 'ovn-mdt-' + uuidutils.generate_uuid()
-                metadata_port_create_event = MetadataPortCreateEvent(
-                    mdt_port_name)
-                self.agent.sb_idl.idl.notify_handler.watch_event(
-                    metadata_port_create_event)
-                self._create_metadata_port(txn, lswitch_name, mdt_port_name)
-            self.assertTrue(metadata_port_create_event.wait())
-
-            self.sb_api.lsp_bind(mdt_port_name, self.chassis_name).execute(
+            lsp_type)
+        with mock.patch.object(
+                agent.MetadataAgent, 'provision_datapath') as m_provision:
+            self.sb_api.lsp_bind(lswitchport_name, self.chassis_name).execute(
                 check_error=True, log_errors=True)
-            self._update_metadata_port_ip(mdt_port_name)
 
-        def pb_created():
-            if m_pb_created.call_count < 1:
-                return False
-            args = m_pb_created.call_args[0]
-            self.assertEqual('update', args[0])
-            self.assertEqual(self.chassis_name, args[1].chassis[0].name)
-            self.assertFalse(args[2].chassis)
-            return True
-
-        n_utils.wait_until_true(
-            pb_created,
-            timeout=10,
-            exception=Exception(
-                "PortBindingChassisCreatedEvent didn't happen on port "
-                "binding."))
-
-        def pb_updated():
-            if m_pb_updated.call_count < 1:
-                return False
-            args = m_pb_updated.call_args[0]
-            self.assertEqual('update', args[0])
-            self.assertTrue(args[1].external_ids)
-            self.assertTrue(args[2].external_ids)
-            device_id = args[1].external_ids.get(
-                ovn_const.OVN_DEVID_EXT_ID_KEY, "")
-            self.assertTrue(device_id.startswith("ovnmeta-"))
-            new_cidrs = args[1].external_ids.get(
-                ovn_const.OVN_CIDRS_EXT_ID_KEY, "")
-            old_cidrs = args[2].external_ids.get(
-                ovn_const.OVN_CIDRS_EXT_ID_KEY, "")
-            self.assertNotEqual(new_cidrs, old_cidrs)
-            self.assertNotEqual(old_cidrs, "")
-            return True
-        if update and type_ == ovn_const.LSP_TYPE_LOCALPORT:
+            # Wait until port is bound
             n_utils.wait_until_true(
-                pb_updated,
+                lambda: m_provision.called,
                 timeout=10,
                 exception=Exception(
-                    "PortBindingMetaPortUpdatedEvent didn't happen on "
-                    "metadata port ip address updated."))
+                    "Datapath provisioning did not happen on port binding"))
 
-        if delete:
-            self.nb_api.delete_lswitch_port(
-                lswitchport_name, lswitch_name).execute(
-                    check_error=True, log_errors=True)
-        else:
+        return lswitchport_name, lswitch_name
+
+    def test_agent_unbind_port(self):
+        lswitchport_name, lswitch_name = self._test_agent_events_prepare()
+
+        with mock.patch.object(
+                agent.MetadataAgent, 'provision_datapath') as m_provision:
             self.sb_api.lsp_unbind(lswitchport_name).execute(
                 check_error=True, log_errors=True)
 
-        def pb_deleted():
-            if m_pb_deleted.call_count < 1:
-                return False
-            args = m_pb_deleted.call_args[0]
-            if delete:
-                self.assertEqual('delete', args[0])
-                self.assertTrue(args[1].chassis)
-                self.assertEqual(self.chassis_name, args[1].chassis[0].name)
+            n_utils.wait_until_true(
+                lambda: m_provision.called,
+                timeout=10,
+                exception=Exception(
+                    "Datapath teardown did not happen after the port was "
+                    "unbound"))
+
+    def _test_agent_delete_bound_external_port(self, lsp_type=None):
+        lswitchport_name, lswitch_name = self._test_agent_events_prepare(
+            lsp_type)
+
+        with mock.patch.object(
+                agent.MetadataAgent, 'provision_datapath') as m_provision,\
+                mock.patch.object(agent.LOG, 'warning') as m_log_warn:
+            self.nb_api.delete_lswitch_port(
+                lswitchport_name, lswitch_name).execute(
+                    check_error=True, log_errors=True)
+
+            n_utils.wait_until_true(
+                lambda: m_provision.called,
+                timeout=10,
+                exception=Exception(
+                    "Datapath teardown did not happen after external port was "
+                    "deleted"))
+            if lsp_type == ovn_const.LSP_TYPE_EXTERNAL:
+                m_log_warn.assert_not_called()
             else:
-                self.assertEqual('update', args[0])
-                self.assertFalse(args[1].chassis)
-                self.assertEqual(self.chassis_name, args[2].chassis[0].name)
-            return True
-
-        n_utils.wait_until_true(
-            pb_deleted,
-            timeout=10,
-            exception=Exception(
-                "PortBindingChassisDeletedEvent didn't happen on port "
-                "unbind or delete."))
-
-        self.assertEqual(1, m_pb_deleted.call_count)
-
-    def test_agent_unbind_port(self):
-        self._test_agent_events(delete=False)
+                m_log_warn.assert_called()
 
     def test_agent_delete_bound_external_port(self):
-        self._test_agent_events(delete=True, type_='external')
+        self._test_agent_delete_bound_external_port(
+            lsp_type=ovn_const.LSP_TYPE_EXTERNAL)
 
     def test_agent_delete_bound_nonexternal_port(self):
-        with mock.patch.object(agent.LOG, 'warning') as m_warn:
-            self._test_agent_events(delete=True)
-        self.assertTrue(m_warn.called)
+        self._test_agent_delete_bound_external_port()
 
     def test_agent_registration_at_chassis_create_event(self):
         def check_for_metadata():
@@ -363,8 +314,42 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
             exception=exc)
 
     def test_agent_metadata_port_ip_update_event(self):
-        self._test_agent_events(
-            delete=False, type_=ovn_const.LSP_TYPE_LOCALPORT, update=True)
+        lswitch_name = 'ovn-' + uuidutils.generate_uuid()
+        mdt_port_name = 'ovn-mdt-' + uuidutils.generate_uuid()
+
+        mdt_pb_event = test_event.WaitForPortBindingEvent(mdt_port_name)
+        self.handler.watch_event(mdt_pb_event)
+
+        with self.nb_api.transaction(
+                check_error=True, log_errors=True) as txn:
+            txn.add(
+                self.nb_api.ls_add(lswitch_name))
+            self._create_metadata_port(txn, lswitch_name, mdt_port_name)
+
+        self.assertTrue(mdt_pb_event.wait())
+
+        with mock.patch.object(
+                agent.MetadataAgent, 'provision_datapath') as m_provision:
+            self.sb_api.lsp_bind(mdt_port_name, self.chassis_name).execute(
+                check_error=True, log_errors=True)
+
+            # Wait until port is bound
+            n_utils.wait_until_true(
+                lambda: m_provision.called,
+                timeout=10,
+                exception=Exception(
+                    "Datapath provisioning did not happen on port binding"))
+
+            m_provision.reset_mock()
+
+            self._update_metadata_port_ip(mdt_port_name)
+
+            n_utils.wait_until_true(
+                lambda: m_provision.called,
+                timeout=10,
+                exception=Exception(
+                    "Datapath provisioning not called after external ids was "
+                    "changed"))
 
     def test_metadata_agent_only_monitors_own_chassis(self):
         # We already have the fake chassis which we should be monitoring, so
