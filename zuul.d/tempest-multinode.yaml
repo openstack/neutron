@@ -57,6 +57,7 @@
       - ^tools/.*$
       - ^tox.ini$
       - ^plugin.spec$
+      - ^pyproject.toml$
       - ^tools/ovn_migration/.*$
       - ^neutron/agent/ovn/.*$
       - ^neutron/plugins/ml2/drivers/macvtap/.*$
@@ -390,6 +391,7 @@
       - ^tools/.*$
       - ^tox.ini$
       - ^plugin.spec$
+      - ^pyproject.toml$
       - ^tools/ovn_migration/.*$
       - ^neutron/agent/dhcp/.*$
       - ^neutron/agent/l2/.*$

@@ -72,6 +72,7 @@
       - ^tools/.*$
       - ^tox.ini$
       - ^plugin.spec$
+      - ^pyproject.toml$
       - ^tools/ovn_migration/.*$
       - ^vagrant/.*$
       - ^neutron/agent/ovn/.*$
@@ -221,6 +222,7 @@
       - ^tools/.*$
       - ^tox.ini$
       - ^plugin.spec$
+      - ^pyproject.toml$
       - ^tools/ovn_migration/.*$
       - ^vagrant/.*$
       - ^neutron/agent/.*$
@@ -275,6 +277,7 @@
       - ^tools/.*$
       - ^tox.ini$
       - ^plugin.spec$
+      - ^pyproject.toml$
       - ^tools/ovn_migration/.*$
       - ^vagrant/.*$
       - ^neutron/plugins/ml2/drivers/macvtap/.*$
@@ -435,6 +438,7 @@
       - ^tools/.*$
       - ^tox.ini$
       - ^plugin.spec$
+      - ^pyproject.toml$
       - ^tools/ovn_migration/.*$
       - ^vagrant/.*$
       - ^roles/.*functional.*$
@@ -568,6 +572,7 @@
       - ^tools/.*$
       - ^tox.ini$
       - ^plugin.spec$
+      - ^pyproject.toml$
       - ^tools/ovn_migration/.*$
       - ^neutron/agent/dhcp/.*$
       - ^neutron/agent/l2/.*$

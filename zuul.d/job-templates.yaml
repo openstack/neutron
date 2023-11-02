@@ -16,6 +16,7 @@
               - ^releasenotes/.*$
               - ^setup.cfg$
               - ^plugin.spec$
+              - ^pyproject.toml$
               - ^tools/ovn_migration/.*$
               - ^tools/.*$
               - ^vagrant/.*$

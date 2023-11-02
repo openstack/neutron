@@ -18,6 +18,7 @@
       - ^tools/.*$
       - ^tox.ini$
       - ^plugin.spec$
+      - ^pyproject.toml$
       - ^tools/ovn_migration/.*$
       - ^neutron/agent/ovn/.*$
       - ^neutron/plugins/ml2/drivers/macvtap/.*$
@@ -234,6 +235,7 @@
       - ^releasenotes/.*$
       - ^doc/.*$
       - ^setup.cfg$
+      - ^pyproject.toml$
       - ^.*\.conf\.sample$
       - ^.*\.rst$
       - ^neutron/locale/.*$

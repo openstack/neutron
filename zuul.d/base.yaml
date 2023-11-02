@@ -24,6 +24,7 @@
       - ^releasenotes/.*$
       - ^setup.cfg$
       - ^plugin.spec$
+      - ^pyproject.toml$
       - ^tools/ovn_migration/.*$
       - ^vagrant/.*$
       - ^devstack/.*\.sample$
@@ -88,6 +89,7 @@
       - ^doc/.*$
       - ^setup.cfg$
       - ^plugin.spec$
+      - ^pyproject.toml$
       - ^tools/ovn_migration/.*$
       - ^.*\.conf\.sample$
       - ^.*\.rst$

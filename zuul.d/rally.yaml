@@ -59,6 +59,7 @@
       - ^releasenotes/.*$
       - ^doc/.*$
       - ^setup.cfg$
+      - ^pyproject.toml$
       - ^.*\.conf\.sample$
       - ^.*\.rst$
       - ^neutron/locale/.*$
@@ -102,6 +103,7 @@
       - ^releasenotes/.*$
       - ^doc/.*$
       - ^setup.cfg$
+      - ^pyproject.toml$
       - ^.*\.conf\.sample$
       - ^.*\.rst$
       - ^neutron/locale/.*$
