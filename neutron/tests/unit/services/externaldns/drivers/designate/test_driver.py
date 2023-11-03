@@ -254,25 +254,37 @@ class TestDesignateDriver(base.BaseTestCase):
         )
 
     def test_ipv4_ptr_is_misconfigured(self):
-        cfg.CONF.set_override(
-            'ipv4_ptr_zone_prefix_size', -1, group='designate'
+        self.assertRaises(
+            ValueError,
+            cfg.CONF.set_override,
+            'ipv4_ptr_zone_prefix_size', 0, group='designate'
         )
-
+        self.assertRaises(
+            ValueError,
+            cfg.CONF.set_override,
+            'ipv4_ptr_zone_prefix_size', 32, group='designate'
+        )
         self.assertRaisesRegex(
-            dns_exc.InvalidPTRZoneConfiguration,
-            'Value of ipv4_ptr_zone_size has to be multiple of 8, with '
-            'maximum value of 24 and minimum value of 8',
-            driver.Designate
+            ValueError,
+            'Should be multiple of 8',
+            cfg.CONF.set_override,
+            'ipv4_ptr_zone_prefix_size', 9, group='designate'
         )
 
     def test_ipv6_ptr_is_misconfigured(self):
-        cfg.CONF.set_override(
-            'ipv6_ptr_zone_prefix_size', -1, group='designate'
+        self.assertRaises(
+            ValueError,
+            cfg.CONF.set_override,
+            'ipv6_ptr_zone_prefix_size', 0, group='designate'
         )
-
+        self.assertRaises(
+            ValueError,
+            cfg.CONF.set_override,
+            'ipv6_ptr_zone_prefix_size', 128, group='designate'
+        )
         self.assertRaisesRegex(
-            dns_exc.InvalidPTRZoneConfiguration,
-            'Value of ipv6_ptr_zone_size has to be multiple of 4, with '
-            'maximum value of 124 and minimum value of 4',
-            driver.Designate
+            ValueError,
+            'Should be multiple of 4',
+            cfg.CONF.set_override,
+            'ipv6_ptr_zone_prefix_size', 5, group='designate'
         )
