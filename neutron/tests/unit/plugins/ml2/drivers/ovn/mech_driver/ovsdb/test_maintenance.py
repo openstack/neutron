@@ -31,7 +31,6 @@ from neutron.db.models import ovn as ovn_models
 from neutron.db import ovn_revision_numbers_db
 from neutron.objects import ports as ports_obj
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import maintenance
-from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
 from neutron.tests.unit import fake_resources as fakes
 from neutron.tests.unit.plugins.ml2 import test_security_group as test_sg
 from neutron.tests.unit import testlib_api
@@ -108,44 +107,6 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         mock_get_incon_res.return_value = [fake_row, ]
         self.periodic.check_for_inconsistencies()
         mock_fix_net.assert_called_once_with(mock.ANY, fake_row)
-
-    def _test_migrate_to_port_groups_helper(self, a_sets, migration_expected,
-                                            never_again):
-        self.fake_ovn_client._nb_idl.get_address_sets.return_value = a_sets
-        with mock.patch.object(ovn_db_sync.OvnNbSynchronizer,
-                               'migrate_to_port_groups') as mtpg:
-            if never_again:
-                self.assertRaises(periodics.NeverAgain,
-                                  self.periodic.migrate_to_port_groups)
-            else:
-                self.periodic.migrate_to_port_groups()
-
-            if migration_expected:
-                mtpg.assert_called_once_with(mock.ANY)
-            else:
-                mtpg.assert_not_called()
-
-    def test_migrate_to_port_groups_not_needed(self):
-        self._test_migrate_to_port_groups_helper(a_sets=None,
-                                                 migration_expected=False,
-                                                 never_again=True)
-
-    def test_migrate_to_port_groups(self):
-        # Check normal migration path: if the migration has to be done, it will
-        # take place and won't be attempted in the future.
-        self._test_migrate_to_port_groups_helper(a_sets=['as1', 'as2'],
-                                                 migration_expected=True,
-                                                 never_again=True)
-
-    def test_migrate_to_port_groups_no_lock(self):
-        with mock.patch.object(maintenance.DBInconsistenciesPeriodics,
-                               'has_lock', mock.PropertyMock(
-                                   return_value=False)):
-            # Check that if this worker doesn't have the lock, it won't
-            # perform the migration and it will try again later.
-            self._test_migrate_to_port_groups_helper(a_sets=['as1', 'as2'],
-                                                     migration_expected=False,
-                                                     never_again=False)
 
     def _test_fix_create_update_network(self, ovn_rev, neutron_rev):
         with db_api.CONTEXT_WRITER.using(self.ctx):

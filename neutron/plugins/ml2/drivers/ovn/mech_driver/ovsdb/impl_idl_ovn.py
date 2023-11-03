@@ -466,9 +466,6 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         return cmd.DelStaticRouteCommand(self, lrouter, ip_prefix, nexthop,
                                          if_exists)
 
-    def delete_address_set(self, name, if_exists=True, **columns):
-        return cmd.DelAddrSetCommand(self, name, if_exists)
-
     def _get_logical_router_port_gateway_chassis(self, lrp):
         """Get the list of chassis hosting this gateway port.
 
@@ -634,18 +631,6 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
                     self._format_dhcp_row(row))
 
         return dhcp_options
-
-    def get_address_sets(self):
-        address_sets = {}
-        for row in self._tables['Address_Set'].rows.values():
-            if not (ovn_const.OVN_SG_EXT_ID_KEY in row.external_ids):
-                continue
-            name = getattr(row, 'name')
-            data = {}
-            for row_key in getattr(row, "_data", {}):
-                data[row_key] = getattr(row, row_key)
-            address_sets[name] = data
-        return address_sets
 
     def get_router_port_options(self, lsp_name):
         try:

@@ -569,26 +569,6 @@ class DelStaticRouteCommand(command.BaseCommand):
                 break
 
 
-class DelAddrSetCommand(command.BaseCommand):
-    def __init__(self, api, name, if_exists):
-        super(DelAddrSetCommand, self).__init__(api)
-        self.name = name
-        self.if_exists = if_exists
-
-    def run_idl(self, txn):
-        try:
-            addrset = idlutils.row_by_value(self.api.idl, 'Address_Set',
-                                            'name', self.name)
-        except idlutils.RowNotFound:
-            if self.if_exists:
-                return
-            msg = _("Address set %s does not exist. "
-                    "Can't delete.") % self.name
-            raise RuntimeError(msg)
-
-        self.api._tables['Address_Set'].rows[addrset.uuid].delete()
-
-
 class UpdateObjectExtIdsCommand(command.BaseCommand):
     table = None
     field = 'name'
