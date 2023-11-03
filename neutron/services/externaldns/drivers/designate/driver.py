@@ -17,7 +17,6 @@ import netaddr
 
 from designateclient import exceptions as d_exc
 from designateclient.v2 import client as d_client
-from keystoneauth1.identity.generic import password
 from keystoneauth1 import loading
 from keystoneauth1 import token_endpoint
 from neutron_lib import constants
@@ -50,17 +49,7 @@ def get_clients(context):
 
     auth = token_endpoint.Token(CONF.designate.url, context.auth_token)
     client = d_client.Client(session=_SESSION, auth=auth)
-    if CONF.designate.auth_type:
-        admin_auth = loading.load_auth_from_conf_options(
-            CONF, 'designate')
-    else:
-        # TODO(tkajinam): Make this fail when admin_* parameters are removed.
-        admin_auth = password.Password(
-            auth_url=CONF.designate.admin_auth_url,
-            username=CONF.designate.admin_username,
-            password=CONF.designate.admin_password,
-            tenant_name=CONF.designate.admin_tenant_name,
-            tenant_id=CONF.designate.admin_tenant_id)
+    admin_auth = loading.load_auth_from_conf_options(CONF, 'designate')
     admin_client = d_client.Client(session=_SESSION, auth=admin_auth,
                                    endpoint_override=CONF.designate.url)
     return client, admin_client
