@@ -454,8 +454,6 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         ovn_api.get_all_logical_switches_with_ports.return_value = (
             self.lswitches_with_ports)
 
-        ovn_api.get_all_stateless_fip_nats = mock.Mock()
-        ovn_api.get_all_stateless_fip_nats.return_value = []
         ovn_api.get_all_logical_routers_with_rports = mock.Mock()
         ovn_api.get_all_logical_routers_with_rports.return_value = (
             self.lrouters_with_rports)

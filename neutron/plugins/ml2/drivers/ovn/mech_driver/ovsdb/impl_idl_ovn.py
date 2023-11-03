@@ -300,14 +300,6 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
             raise RuntimeError(_("Currently only supports "
                                  "delete by lport-name"))
 
-    def get_all_stateless_fip_nats(self):
-        cmd = self.db_find(
-            'NAT',
-            ('external_ids', '!=', {ovn_const.OVN_FIP_EXT_ID_KEY: ''}),
-            ('options', '=', {'stateless': 'true'}),
-            ('type', '=', 'dnat_and_snat'))
-        return cmd.execute(check_error=True)
-
     def get_all_logical_switches_with_ports(self):
         result = []
         for lswitch in self._tables['Logical_Switch'].rows.values():

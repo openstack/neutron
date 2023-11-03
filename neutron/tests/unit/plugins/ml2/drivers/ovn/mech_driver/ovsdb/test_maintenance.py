@@ -147,36 +147,6 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
                                                      migration_expected=False,
                                                      never_again=False)
 
-    def _test_migrate_to_stateful_fips_helper(
-            self, migration_expected, never_again):
-        with mock.patch.object(ovn_db_sync.OvnNbSynchronizer,
-                               'migrate_to_stateful_fips') as mtsf:
-            if never_again:
-                self.assertRaises(periodics.NeverAgain,
-                                  self.periodic.migrate_to_stateful_fips)
-            else:
-                self.periodic.migrate_to_stateful_fips()
-
-            if migration_expected:
-                mtsf.assert_called_once_with(mock.ANY)
-            else:
-                mtsf.assert_not_called()
-
-    def test_migrate_to_stateful_fips(self):
-        # Check normal migration path: if the migration has to be done, it will
-        # take place and won't be attempted in the future.
-        self._test_migrate_to_stateful_fips_helper(migration_expected=True,
-                                                   never_again=True)
-
-    def test_migrate_to_stateful_fips_no_lock(self):
-        with mock.patch.object(maintenance.DBInconsistenciesPeriodics,
-                               'has_lock', mock.PropertyMock(
-                                   return_value=False)):
-            # Check that if this worker doesn't have the lock, it won't
-            # perform the migration and it will try again later.
-            self._test_migrate_to_stateful_fips_helper(
-                migration_expected=False, never_again=False)
-
     def _test_fix_create_update_network(self, ovn_rev, neutron_rev):
         with db_api.CONTEXT_WRITER.using(self.ctx):
             self.net['revision_number'] = neutron_rev

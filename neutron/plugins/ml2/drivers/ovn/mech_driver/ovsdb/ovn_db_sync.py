@@ -109,7 +109,6 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         self.sync_port_dns_records(ctx)
         self.sync_acls(ctx)
         self.sync_routers_and_rports(ctx)
-        self.migrate_to_stateful_fips_and_log(ctx)
         self.sync_port_qos_policies(ctx)
         self.sync_fip_qos_policies(ctx)
 
@@ -1274,23 +1273,6 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                 for sg in port['security_groups']:
                     txn.add(self.ovn_api.pg_add_ports(
                         utils.ovn_port_group_name(sg), port['id']))
-
-    def migrate_to_stateful_fips_and_log(self, ctx):
-        # migrate_to_stateful_fips() is also called from the maintenance
-        # task so log only if called from above
-        LOG.debug('OVN-NB Sync migrate to stateful Floating IPs started @ %s',
-                  str(datetime.now()))
-        self.migrate_to_stateful_fips(ctx)
-        LOG.debug('OVN-NB Sync migrate to stateful Floating IPs completed @ '
-                  '%s', str(datetime.now()))
-
-    def migrate_to_stateful_fips(self, ctx):
-        # This routine will clear options:stateless=true for all dnat_and_snats
-        # that belong to neutron fips. Since we don't set any other options,
-        # just clear the whole column.
-        with self.ovn_api.transaction(check_error=True) as txn:
-            for nat in self.ovn_api.get_all_stateless_fip_nats():
-                txn.add(self.ovn_api.db_clear('NAT', nat['_uuid'], 'options'))
 
     def migrate_to_port_groups(self, ctx):
         # This routine is responsible for migrating the current Security
