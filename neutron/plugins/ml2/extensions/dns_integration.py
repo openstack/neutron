@@ -485,28 +485,34 @@ def _send_data_to_external_dns_service(context, dns_driver, dns_domain,
                                        dns_name, records):
     try:
         dns_driver.create_record_set(context, dns_domain, dns_name, records)
-    except (dns_exc.DNSDomainNotFound, dns_exc.DuplicateRecordSet) as e:
-        LOG.exception("Error publishing port data in external DNS "
-                      "service. Name: '%(name)s'. Domain: '%(domain)s'. "
-                      "DNS service driver message '%(message)s'",
-                      {"name": dns_name,
-                       "domain": dns_domain,
-                       "message": e.msg})
+    except dns_exc.DNSDomainNotFound:
+        LOG.error("Error publishing port data. The DNS domain %(domain)s "
+                  "was not found, creation of recordset %(name)s in "
+                  "external DNS service will be skipped.",
+                  {"name": dns_name,
+                   "domain": dns_domain})
+    except dns_exc.DuplicateRecordSet:
+        LOG.error("Error publishing port data. A recordset for %(name)s in "
+                  "domain %(domain)s already exists, recordset creation in "
+                  "external DNS service will be skipped.",
+                  {"name": dns_name,
+                   "domain": dns_domain})
 
 
 def _remove_data_from_external_dns_service(context, dns_driver, dns_domain,
                                            dns_name, records):
     try:
         dns_driver.delete_record_set(context, dns_domain, dns_name, records)
-    except (dns_exc.DNSDomainNotFound, dns_exc.DuplicateRecordSet) as e:
-        LOG.exception("Error deleting port data from external DNS "
-                      "service. Name: '%(name)s'. Domain: '%(domain)s'. "
-                      "IP addresses '%(ips)s'. DNS service driver message "
-                      "'%(message)s'",
-                      {"name": dns_name,
-                       "domain": dns_domain,
-                       "message": e.msg,
-                       "ips": ', '.join(records)})
+    except dns_exc.DNSDomainNotFound:
+        LOG.error("Error deleting port data from external DNS service. "
+                  "The DNS domain %(domain)s was not found.",
+                  {"domain": dns_domain})
+    except dns_exc.DuplicateRecordSet:
+        LOG.error("Error deleting port data from external DNS service. "
+                  "Duplicate recordsets for %(name)s in domain %(domain)s "
+                  "were found.",
+                  {"name": dns_name,
+                   "domain": dns_domain})
 
 
 def _update_port_in_external_dns_service(resource, event, trigger, payload):

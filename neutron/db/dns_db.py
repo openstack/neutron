@@ -213,15 +213,18 @@ class DNSDbMixin(object):
         try:
             self.dns_driver.delete_record_set(context, dns_domain, dns_name,
                                               ips)
-        except (dns_exc.DNSDomainNotFound, dns_exc.DuplicateRecordSet) as e:
-            LOG.exception("Error deleting Floating IP data from external "
-                          "DNS service. Name: '%(name)s'. Domain: "
-                          "'%(domain)s'. IP addresses '%(ips)s'. DNS "
-                          "service driver message '%(message)s'",
-                          {"name": dns_name,
-                           "domain": dns_domain,
-                           "message": e.msg,
-                           "ips": ', '.join(ips)})
+        except dns_exc.DNSDomainNotFound:
+            LOG.error("Error deleting Floating IP record %(name)s from "
+                      "external DNS service. The DNS domain %(domain)s was "
+                      "not found.",
+                      {"name": dns_name,
+                       "domain": dns_domain})
+        except dns_exc.DuplicateRecordSet:
+            LOG.error("Error deleting Floating IP record from external DNS "
+                      "service. Duplicate Floating IP records for %(name)s in "
+                      "domain %(domain)s were found.",
+                      {"name": dns_name,
+                       "domain": dns_domain})
 
     def _get_requested_state_for_external_dns_service_create(self, context,
                                                              floatingip_data,
@@ -245,11 +248,15 @@ class DNSDbMixin(object):
         try:
             self.dns_driver.create_record_set(context, dns_domain, dns_name,
                                               ips)
-        except (dns_exc.DNSDomainNotFound, dns_exc.DuplicateRecordSet) as e:
-            LOG.exception("Error publishing floating IP data in external "
-                          "DNS service. Name: '%(name)s'. Domain: "
-                          "'%(domain)s'. DNS service driver message "
-                          "'%(message)s'",
-                          {"name": dns_name,
-                           "domain": dns_domain,
-                           "message": e.msg})
+        except dns_exc.DNSDomainNotFound:
+            LOG.error("The DNS domain %(domain)s was not found. Creation of "
+                      "Floating IP record %(name)s from external DNS service "
+                      "will be skipped.",
+                      {"name": dns_name,
+                       "domain": dns_domain})
+        except dns_exc.DuplicateRecordSet:
+            LOG.error("A Floating IP record for %(name)s in domain %(domain)s "
+                      "already exists. record creation in external DNS "
+                      "service will be skipped.",
+                      {"name": dns_name,
+                       "domain": dns_domain})
