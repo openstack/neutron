@@ -15,8 +15,34 @@
 
 from keystoneauth1 import loading
 from oslo_config import cfg
+from oslo_config import types
 
 from neutron._i18n import _
+
+
+class ZonePrefixIPv4(types.Integer):
+    def __init__(self):
+        super(ZonePrefixIPv4, self).__init__(
+            min=8, max=24, type_name='IPv4 zone prefix')
+
+    def __call__(self, value):
+        value = super(ZonePrefixIPv4, self).__call__(value)
+        if value % 8 != 0:
+            raise ValueError(_('Should be multiple of 8'))
+        return value
+
+
+class ZonePrefixIPv6(types.Integer):
+    def __init__(self):
+        super(ZonePrefixIPv6, self).__init__(
+            min=4, max=124, type_name='IPv6 zone prefix')
+
+    def __call__(self, value):
+        value = super(ZonePrefixIPv6, self).__call__(value)
+        if value % 4 != 0:
+            raise ValueError(_('Should be multiple of 4'))
+        return value
+
 
 designate_opts = [
     cfg.StrOpt('url',
@@ -59,14 +85,16 @@ designate_opts = [
                       'context')),
     cfg.BoolOpt('allow_reverse_dns_lookup', default=True,
                 help=_('Allow the creation of PTR records')),
-    cfg.IntOpt(
+    cfg.Opt(
         'ipv4_ptr_zone_prefix_size', default=24,
+        type=ZonePrefixIPv4(),
         help=_('Number of bits in an IPv4 PTR zone that will be considered '
                'network prefix. It has to align to byte boundary. Minimum '
                'value is 8. Maximum value is 24. As a consequence, range '
                'of values is 8, 16 and 24')),
-    cfg.IntOpt(
+    cfg.Opt(
         'ipv6_ptr_zone_prefix_size', default=120,
+        type=ZonePrefixIPv6(),
         help=_('Number of bits in an IPv6 PTR zone that will be considered '
                'network prefix. It has to align to nyble boundary. Minimum '
                'value is 4. Maximum value is 124. As a consequence, range '

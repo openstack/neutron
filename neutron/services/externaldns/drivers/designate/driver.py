@@ -28,11 +28,6 @@ from oslo_log import log
 from neutron.conf.services import extdns_designate_driver
 from neutron.services.externaldns import driver
 
-IPV4_PTR_ZONE_PREFIX_MIN_SIZE = 8
-IPV4_PTR_ZONE_PREFIX_MAX_SIZE = 24
-IPV6_PTR_ZONE_PREFIX_MIN_SIZE = 4
-IPV6_PTR_ZONE_PREFIX_MAX_SIZE = 124
-
 _SESSION = None
 
 CONF = cfg.CONF
@@ -73,26 +68,6 @@ def get_all_projects_client(context):
 
 class Designate(driver.ExternalDNSService):
     """Driver for Designate."""
-
-    def __init__(self):
-        ipv4_ptr_zone_size = CONF.designate.ipv4_ptr_zone_prefix_size
-        ipv6_ptr_zone_size = CONF.designate.ipv6_ptr_zone_prefix_size
-
-        if (ipv4_ptr_zone_size < IPV4_PTR_ZONE_PREFIX_MIN_SIZE or
-                ipv4_ptr_zone_size > IPV4_PTR_ZONE_PREFIX_MAX_SIZE or
-                (ipv4_ptr_zone_size % 8) != 0):
-            raise dns_exc.InvalidPTRZoneConfiguration(
-                parameter='ipv4_ptr_zone_size', number='8',
-                maximum=str(IPV4_PTR_ZONE_PREFIX_MAX_SIZE),
-                minimum=str(IPV4_PTR_ZONE_PREFIX_MIN_SIZE))
-
-        if (ipv6_ptr_zone_size < IPV6_PTR_ZONE_PREFIX_MIN_SIZE or
-                ipv6_ptr_zone_size > IPV6_PTR_ZONE_PREFIX_MAX_SIZE or
-                (ipv6_ptr_zone_size % 4) != 0):
-            raise dns_exc.InvalidPTRZoneConfiguration(
-                parameter='ipv6_ptr_zone_size', number='4',
-                maximum=str(IPV6_PTR_ZONE_PREFIX_MAX_SIZE),
-                minimum=str(IPV6_PTR_ZONE_PREFIX_MIN_SIZE))
 
     def create_record_set(self, context, dns_domain, dns_name, records):
         designate, designate_admin = get_clients(context)
