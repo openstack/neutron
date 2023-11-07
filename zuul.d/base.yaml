@@ -151,7 +151,7 @@
 
 - job:
     name: neutron-linuxbridge-tempest-plugin-scenario-nftables
-    parent: neutron-tempest-plugin-scenario-linuxbridge
+    parent: neutron-tempest-plugin-scenario-linuxbridge-yoga
     pre-run: playbooks/install_nftables.yaml
     vars:
       devstack_local_conf:
@@ -162,7 +162,7 @@
 
 - job:
     name: neutron-ovs-tempest-plugin-scenario-iptables_hybrid-nftables
-    parent: neutron-tempest-plugin-scenario-openvswitch-iptables_hybrid
+    parent: neutron-tempest-plugin-scenario-openvswitch-iptables_hybrid-yoga
     pre-run: playbooks/install_nftables.yaml
     vars:
       devstack_local_conf:
