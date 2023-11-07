@@ -36,6 +36,9 @@
             timeout: 4800
             irrelevant-files:  *irrelevant-files
         - openstack-tox-py310-with-sqlalchemy-master:
+            # TODO(slaweq): make it voting once bug
+            # https://bugs.launchpad.net/neutron/+bug/2042939 will be fixed
+            voting: false
             timeout: 3600
             irrelevant-files: *irrelevant-files
     check-arm64:
