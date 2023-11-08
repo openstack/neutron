@@ -156,7 +156,7 @@
 
 - job:
     name: neutron-linuxbridge-tempest-plugin-nftables
-    parent: neutron-tempest-plugin-linuxbridge
+    parent: neutron-tempest-plugin-linuxbridge-2023-2
     pre-run: playbooks/install_nftables.yaml
     vars:
       devstack_local_conf:
@@ -167,7 +167,7 @@
 
 - job:
     name: neutron-ovs-tempest-plugin-iptables_hybrid-nftables
-    parent: neutron-tempest-plugin-openvswitch-iptables_hybrid
+    parent: neutron-tempest-plugin-openvswitch-iptables_hybrid-2023-2
     pre-run: playbooks/install_nftables.yaml
     vars:
       devstack_local_conf:
