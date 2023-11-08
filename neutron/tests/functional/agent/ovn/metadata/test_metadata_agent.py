@@ -22,6 +22,7 @@ from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import event
 from ovsdbapp.backend.ovs_idl import idlutils
 from ovsdbapp.tests.functional.schema.ovn_southbound import event as test_event
+import testtools
 
 from neutron.agent.linux import iptables_manager
 from neutron.agent.ovn.metadata import agent
@@ -33,6 +34,11 @@ from neutron.conf.agent.metadata import config as meta_config
 from neutron.conf.agent.ovn.metadata import config as meta_config_ovn
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
+from neutron.tests.functional.common import ovn as ovn_common
+
+
+class NoDatapathProvision(Exception):
+    pass
 
 
 class MetadataAgentHealthEvent(event.WaitEvent):
@@ -404,3 +410,236 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
         proxy_sb_idl = self.agent._proxy.server._server._application.sb_idl
         agent_sb_idl = self.agent.sb_idl
         self.assertEqual(agent_sb_idl, proxy_sb_idl)
+
+    @ovn_common.skip_if_additional_chassis_not_supported('sb_api')
+    def test_metadata_provisioned_on_additional_chassis_change(self):
+        other_chassis_name = uuidutils.generate_uuid()
+        self.add_fake_chassis("other_chassis", name=other_chassis_name)
+
+        agent_chassis = idlutils.row_by_value(
+            self.sb_api, 'Chassis', 'name', self.chassis_name)
+
+        lswitchport_name, lswitch_name = self._create_logical_switch_port()
+
+        self.sb_api.lsp_bind(
+            lswitchport_name, other_chassis_name).execute(
+                check_error=True, log_errors=True)
+        pb = idlutils.row_by_value(
+            self.sb_api, 'Port_Binding', 'logical_port', lswitchport_name)
+
+        with mock.patch.object(
+                agent.MetadataAgent, 'provision_datapath') as m_provision:
+
+            # Update the additional_chassis
+            self.sb_api.db_set('Port_Binding', pb.uuid,
+                additional_chassis=[agent_chassis.uuid]).execute(
+                    check_error=True, log_errors=True)
+
+            n_utils.wait_until_true(
+                lambda: m_provision.called,
+                timeout=10,
+                exception=NoDatapathProvision(
+                    "Additional chassis didn't trigger Port Binding event"))
+
+    @ovn_common.skip_if_additional_chassis_not_supported('sb_api')
+    def test_metadata_not_provisioned_on_foreign_additional_chassis_change(
+            self):
+        other_chassis_name = uuidutils.generate_uuid()
+        self.add_fake_chassis("other_chassis", name=other_chassis_name)
+
+        agent_chassis = idlutils.row_by_value(
+            self.sb_api, 'Chassis', 'name', self.chassis_name)
+        other_chassis = idlutils.row_by_value(
+            self.sb_api, 'Chassis', 'name', other_chassis_name)
+
+        lswitchport_name, lswitch_name = self._create_logical_switch_port()
+
+        self.sb_api.lsp_bind(
+            lswitchport_name, agent_chassis.name).execute(
+                check_error=True, log_errors=True)
+        pb = idlutils.row_by_value(
+            self.sb_api, 'Port_Binding', 'logical_port', lswitchport_name)
+
+        with mock.patch.object(
+                agent.MetadataAgent, 'provision_datapath') as m_provision:
+
+            # Update the additional_chassis, the agent should not see the
+            # notification because it has only its own chassis row locally and
+            # does not see other chassis
+            self.sb_api.db_set('Port_Binding', pb.uuid,
+                additional_chassis=[other_chassis.uuid]).execute(
+                    check_error=True, log_errors=True)
+
+            with testtools.ExpectedException(NoDatapathProvision):
+                n_utils.wait_until_true(
+                    lambda: m_provision.called,
+                    timeout=1,
+                    exception=NoDatapathProvision(
+                        "Provisioning wasn't triggered"))
+
+    @ovn_common.skip_if_additional_chassis_not_supported
+    def test_metadata_teardown_on_additional_chassis_removed(self):
+        other_chassis_name = uuidutils.generate_uuid()
+        self.add_fake_chassis("other_chassis", name=other_chassis_name)
+
+        agent_chassis = idlutils.row_by_value(
+            self.sb_api, 'Chassis', 'name', self.chassis_name)
+
+        lswitchport_name, lswitch_name = self._create_logical_switch_port()
+
+        self.sb_api.lsp_bind(
+            lswitchport_name, other_chassis_name).execute(
+                check_error=True, log_errors=True)
+        pb = idlutils.row_by_value(
+            self.sb_api, 'Port_Binding', 'logical_port', lswitchport_name)
+
+        with mock.patch.object(
+                agent.MetadataAgent, 'provision_datapath') as m_provision:
+
+            # Update the additional_chassis
+            self.sb_api.db_set('Port_Binding', pb.uuid,
+                additional_chassis=[agent_chassis.uuid]).execute(
+                    check_error=True, log_errors=True)
+
+            n_utils.wait_until_true(
+                lambda: m_provision.called,
+                timeout=10,
+                exception=NoDatapathProvision(
+                    "Additional chassis didn't trigger Port Binding event"))
+
+            m_provision.reset_mock()
+
+            # Remove the additional_chassis but keep the chassis. This is
+            # simulates the live migration has failed
+            self.sb_api.db_set('Port_Binding', pb.uuid,
+                additional_chassis=[]).execute(
+                    check_error=True, log_errors=True)
+
+            n_utils.wait_until_true(
+                lambda: m_provision.called,
+                timeout=10,
+                exception=NoDatapathProvision(
+                    "Removing additional chassis did not call teardown"))
+
+    @ovn_common.skip_if_additional_chassis_not_supported('sb_api')
+    def test_metadata_additional_chassis_removed_chassis_set(self):
+        other_chassis_name = uuidutils.generate_uuid()
+        self.add_fake_chassis("other_chassis", name=other_chassis_name)
+
+        agent_chassis = idlutils.row_by_value(
+            self.sb_api, 'Chassis', 'name', self.chassis_name)
+
+        lswitchport_name, lswitch_name = self._create_logical_switch_port()
+
+        self.sb_api.lsp_bind(
+            lswitchport_name, other_chassis_name).execute(
+                check_error=True, log_errors=True)
+        pb = idlutils.row_by_value(
+            self.sb_api, 'Port_Binding', 'logical_port', lswitchport_name)
+
+        with mock.patch.object(
+                agent.MetadataAgent, 'provision_datapath') as m_provision:
+
+            # Update the additional_chassis
+            self.sb_api.db_set('Port_Binding', pb.uuid,
+                additional_chassis=[agent_chassis.uuid]).execute(
+                    check_error=True, log_errors=True)
+
+            n_utils.wait_until_true(
+                lambda: m_provision.called,
+                timeout=10,
+                exception=NoDatapathProvision(
+                    "Additional chassis didn't trigger Port Binding event"))
+
+            m_provision.reset_mock()
+
+            self.sb_api.db_set('Port_Binding', pb.uuid,
+                additional_chassis=[], chassis=agent_chassis.uuid).execute(
+                    check_error=True, log_errors=True)
+
+            with testtools.ExpectedException(NoDatapathProvision):
+                n_utils.wait_until_true(
+                    lambda: m_provision.called,
+                    timeout=1,
+                    exception=NoDatapathProvision(
+                        "Removing additional chassis did not call teardown"))
+
+    def _test_metadata_additional_chassis_removed(self, new_chassis_uuid):
+        other_chassis_name = uuidutils.generate_uuid()
+        self.add_fake_chassis("other_chassis", name=other_chassis_name)
+
+        agent_chassis = idlutils.row_by_value(
+            self.sb_api, 'Chassis', 'name', self.chassis_name)
+
+        lswitchport_name, lswitch_name = self._create_logical_switch_port()
+
+        self.sb_api.lsp_bind(
+            lswitchport_name, other_chassis_name).execute(
+                check_error=True, log_errors=True)
+        pb = idlutils.row_by_value(
+            self.sb_api, 'Port_Binding', 'logical_port', lswitchport_name)
+
+        with mock.patch.object(
+                agent.MetadataAgent, 'provision_datapath') as m_provision:
+
+            # Update the additional_chassis
+            self.sb_api.db_set('Port_Binding', pb.uuid,
+                additional_chassis=[agent_chassis.uuid]).execute(
+                    check_error=True, log_errors=True)
+
+            n_utils.wait_until_true(
+                lambda: m_provision.called,
+                timeout=10,
+                exception=NoDatapathProvision(
+                    "Additional chassis didn't trigger Port Binding event"))
+
+            m_provision.reset_mock()
+
+            self.sb_api.db_set('Port_Binding', pb.uuid,
+                additional_chassis=[], chassis=new_chassis_uuid).execute(
+                    check_error=True, log_errors=True)
+
+            n_utils.wait_until_true(
+                lambda: m_provision.called,
+                timeout=10,
+                exception=NoDatapathProvision(
+                    "Removing additional chassis did not call teardown"))
+
+    @ovn_common.skip_if_additional_chassis_not_supported('sb_api')
+    def test_metadata_additional_chassis_removed_different_chassis_set(self):
+        other_chassis_name2 = uuidutils.generate_uuid()
+        self.add_fake_chassis("other_chassis2", name=other_chassis_name2)
+        other_chassis2 = idlutils.row_by_value(
+            self.sb_api, 'Chassis', 'name', other_chassis_name2)
+        self._test_metadata_additional_chassis_removed(other_chassis2.uuid)
+
+    @ovn_common.skip_if_additional_chassis_not_supported('sb_api')
+    def test_metadata_additional_chassis_removed_chassis_unset(self):
+        self._test_metadata_additional_chassis_removed(new_chassis_uuid=[])
+
+    @ovn_common.skip_if_additional_chassis_not_supported('sb_api')
+    def test_metadata_port_binding_column_updated(self):
+        agent_chassis = idlutils.row_by_value(
+            self.sb_api, 'Chassis', 'name', self.chassis_name)
+
+        lswitchport_name, lswitch_name = self._create_logical_switch_port()
+
+        self.sb_api.lsp_bind(
+            lswitchport_name, agent_chassis.name).execute(
+                check_error=True, log_errors=True)
+        pb = idlutils.row_by_value(
+            self.sb_api, 'Port_Binding', 'logical_port', lswitchport_name)
+
+        with mock.patch.object(
+                agent.MetadataAgent, 'provision_datapath') as m_provision:
+
+            self.sb_api.db_add('Port_Binding', pb.uuid,
+                'external_ids', {'foo': 'bar'}).execute(
+                    check_error=True, log_errors=True)
+
+            with testtools.ExpectedException(NoDatapathProvision):
+                n_utils.wait_until_true(
+                    lambda: m_provision.called,
+                    timeout=1,
+                    exception=NoDatapathProvision(
+                        "Provisioning wasn't triggered"))

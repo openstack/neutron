@@ -971,8 +971,15 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
         return self.db_set('Port_Binding', name, 'external_ids',
                            {'neutron-port-cidrs': cidrs})
 
-    def get_ports_on_chassis(self, chassis):
+    def get_ports_on_chassis(self, chassis, include_additional_chassis=False):
         # TODO(twilson) Some day it would be nice to stop passing names around
         # and just start using chassis objects so db_find_rows could be used
         rows = self.db_list_rows('Port_Binding').execute(check_error=True)
-        return [r for r in rows if r.chassis and r.chassis[0].name == chassis]
+        if (include_additional_chassis and
+                utils.is_additional_chassis_supported(self)):
+            return [r for r in rows
+                    if r.chassis and r.chassis[0].name == chassis or
+                    chassis in [ch.name for ch in r.additional_chassis]]
+        else:
+            return [r for r in rows
+                    if r.chassis and r.chassis[0].name == chassis]
