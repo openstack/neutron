@@ -736,7 +736,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                          {'id': 'provnet-orphaned-segment',
                           'lswitch': 'neutron-n4'}]
         create_port_list = self.ports
-        for port in create_port_list:
+        for port in create_port_list.copy():
             if port['id'] in ['p1n1', 'fp1']:
                 # this will be skipped by the logic,
                 # because p1n1 is already in lswitch-port list
