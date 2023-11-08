@@ -75,7 +75,7 @@ LOG = logging.getLogger(__name__)
 
 
 def _ensure_subnet_not_used(context, subnet_id):
-    models_v2.Subnet.lock_register(
+    models_v2.Subnet.write_lock_register(
         context, exc.SubnetInUse(subnet_id=subnet_id), id=subnet_id)
     try:
         registry.publish(

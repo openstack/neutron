@@ -688,7 +688,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             msg = ('This subnet is being modified by another concurrent '
                    'operation')
             for subnet in subnets:
-                subnet.lock_register(
+                subnet.read_lock_register(
                     context, exc.SubnetInUse(subnet_id=subnet.id, reason=msg),
                     id=subnet.id)
             subnet_dicts = [self._make_subnet_dict(subnet, context=context)
