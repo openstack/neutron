@@ -1877,22 +1877,6 @@ class OVNClient(object):
 
     def delete_provnet_port(self, network_id, segment):
         port_to_del = utils.ovn_provnet_port_name(segment['id'])
-        legacy_port_name = utils.ovn_provnet_port_name(network_id)
-        physnet = segment.get(segment_def.PHYSICAL_NETWORK)
-        lswitch = self._nb_idl.get_lswitch(utils.ovn_name(network_id))
-        lports = [lp.name for lp in lswitch.ports]
-
-        # Cover the situation where localnet ports
-        # were named after network_id and not segment_id.
-        # TODO(mjozefcz): Remove this in w-release.
-        if (port_to_del not in lports and
-                legacy_port_name in lports):
-            for lport in lswitch.ports:
-                if (legacy_port_name == lport.name and
-                        lport.options['network_name'] == physnet):
-                    port_to_del = legacy_port_name
-                    break
-
         cmd = self._nb_idl.delete_lswitch_port(
             lport_name=port_to_del,
             lswitch_name=utils.ovn_name(network_id))
