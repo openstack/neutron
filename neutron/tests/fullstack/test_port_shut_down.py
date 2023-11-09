@@ -37,8 +37,6 @@ class PortShutDownTest(base.BaseFullStackTestCase):
     num_hosts = 1
 
     scenarios = [
-        (constants.AGENT_TYPE_LINUXBRIDGE,
-         {'l2_agent_type': constants.AGENT_TYPE_LINUXBRIDGE}),
         (constants.AGENT_TYPE_OVS,
          {'l2_agent_type': constants.AGENT_TYPE_OVS})
     ]

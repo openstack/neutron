@@ -20,7 +20,6 @@ from neutron_lib.services.qos import constants as qos_consts
 from neutronclient.common import exceptions
 from oslo_utils import uuidutils
 
-from neutron.agent.linux import tc_lib
 from neutron.common import utils
 from neutron.tests.common.agents import l2_extensions
 from neutron.tests.fullstack import base
@@ -30,11 +29,6 @@ from neutron.tests.fullstack.resources import machine
 from neutron.tests.unit import testlib_api
 
 from neutron.agent.common import ovs_lib
-from neutron.conf.plugins.ml2.drivers import linuxbridge as \
-    linuxbridge_agent_config
-from neutron.plugins.ml2.drivers.linuxbridge.agent import \
-    linuxbridge_neutron_agent as linuxbridge_agent
-from neutron.services.qos.drivers.linuxbridge import driver as lb_drv
 from neutron.services.qos.drivers.openvswitch import driver as ovs_drv
 
 
@@ -404,46 +398,6 @@ class TestBwLimitQoSOvs(_TestBwLimitQoS, base.BaseFullStackTestCase):
         self.assertIsNone(qos_queues)
 
 
-class TestBwLimitQoSLinuxbridge(_TestBwLimitQoS, base.BaseFullStackTestCase):
-    l2_agent_type = constants.AGENT_TYPE_LINUXBRIDGE
-    scenarios = [
-        ('egress', {'direction': constants.EGRESS_DIRECTION}),
-        ('ingress', {'direction': constants.INGRESS_DIRECTION}),
-    ]
-
-    @staticmethod
-    def _get_expected_burst_value(limit, direction):
-        # For egress bandwidth limit this value should be calculated as
-        # bandwidth_limit * qos_consts.DEFAULT_BURST_RATE
-        if direction == constants.EGRESS_DIRECTION:
-            return TestBwLimitQoSLinuxbridge._get_expected_egress_burst_value(
-                limit)
-        else:
-            return TestBwLimitQoSLinuxbridge._get_expected_ingress_burst_value(
-                limit)
-
-    @staticmethod
-    def _get_expected_ingress_burst_value(limit):
-        return int(
-            float(limit) /
-            float(linuxbridge_agent_config.DEFAULT_KERNEL_HZ_VALUE))
-
-    def _wait_for_bw_rule_applied(self, vm, limit, burst, direction):
-        port_name = linuxbridge_agent.LinuxBridgeManager.get_tap_device_name(
-            vm.neutron_port['id'])
-        tc = tc_lib.TcCommand(
-            port_name,
-            linuxbridge_agent_config.DEFAULT_KERNEL_HZ_VALUE,
-            namespace=vm.host.host_namespace
-        )
-        if direction == constants.EGRESS_DIRECTION:
-            utils.wait_until_true(
-                lambda: tc.get_filters_bw_limits() == (limit, burst))
-        elif direction == constants.INGRESS_DIRECTION:
-            utils.wait_until_true(
-                lambda: tc.get_tbf_bw_limits() == (limit, burst))
-
-
 class _TestDscpMarkingQoS(BaseQoSRuleTestCase):
 
     number_of_hosts = 2
@@ -538,15 +492,6 @@ class TestDscpMarkingQoSOvs(_TestDscpMarkingQoS, base.BaseFullStackTestCase):
     def _wait_for_dscp_marking_rule_applied(self, vm, dscp_mark):
         l2_extensions.wait_until_dscp_marking_rule_applied_ovs(
             vm.bridge, vm.port.name, dscp_mark)
-
-
-class TestDscpMarkingQoSLinuxbridge(_TestDscpMarkingQoS,
-                                    base.BaseFullStackTestCase):
-    l2_agent_type = constants.AGENT_TYPE_LINUXBRIDGE
-
-    def _wait_for_dscp_marking_rule_applied(self, vm, dscp_mark):
-        l2_extensions.wait_until_dscp_marking_rule_applied_linuxbridge(
-            vm.host.host_namespace, vm.port.name, dscp_mark)
 
 
 class _TestPacketRateLimitQoS(BaseQoSRuleTestCase):
@@ -644,9 +589,6 @@ class TestQoSWithL2Population(base.BaseFullStackTestCase):
         (constants.AGENT_TYPE_OVS,
          {'mech_drivers': 'openvswitch',
           'supported_rules': ovs_drv.SUPPORTED_RULES}),
-        (constants.AGENT_TYPE_LINUXBRIDGE,
-         {'mech_drivers': 'linuxbridge',
-          'supported_rules': lb_drv.SUPPORTED_RULES})
     ]
 
     def setUp(self):
