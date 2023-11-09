@@ -20,7 +20,6 @@ from oslo_utils import uuidutils
 import testscenarios
 
 from neutron.common import utils as common_utils
-from neutron.tests import base as tests_base
 from neutron.tests.common import net_helpers
 from neutron.tests.fullstack import base
 from neutron.tests.fullstack.resources import config
@@ -150,22 +149,6 @@ class TestOvsConnectivitySameNetworkOnOvsBridgeControllerStop(
             signal.SIGKILL)
 
 
-class TestLinuxBridgeConnectivitySameNetwork(BaseConnectivitySameNetworkTest):
-
-    l2_agent_type = constants.AGENT_TYPE_LINUXBRIDGE
-    scenarios = [
-        ('VXLAN', {'network_type': 'vxlan',
-                   'l2_pop': False}),
-        ('VLANs', {'network_type': 'vlan',
-                   'l2_pop': False}),
-        ('VXLAN and l2pop', {'network_type': 'vxlan',
-                             'l2_pop': True})
-    ]
-
-    def test_connectivity(self):
-        self._test_connectivity()
-
-
 class _TestUninterruptedConnectivityOnL2AgentRestart(
         BaseConnectivitySameNetworkTest):
 
@@ -208,22 +191,5 @@ class TestUninterruptedConnectivityOnL2AgentRestartOvs(
             scenario,
             _TestUninterruptedConnectivityOnL2AgentRestart.network_scenarios))
 
-    def test_l2_agent_restart(self, agent_restart_timeout=20):
-        self._test_l2_agent_restart(agent_restart_timeout)
-
-
-class TestUninterruptedConnectivityOnL2AgentRestartLB(
-        _TestUninterruptedConnectivityOnL2AgentRestart):
-
-    scenario = [('LB',
-                 {'l2_agent_type': constants.AGENT_TYPE_LINUXBRIDGE})]
-
-    scenarios = (
-        testscenarios.multiply_scenarios(
-            scenario,
-            _TestUninterruptedConnectivityOnL2AgentRestart.network_scenarios)
-    )
-
-    @tests_base.unstable_test("bug 1928764")
     def test_l2_agent_restart(self, agent_restart_timeout=20):
         self._test_l2_agent_restart(agent_restart_timeout)

@@ -32,10 +32,6 @@ class TestPortsRebind(base.BaseFullStackTestCase):
         ('Open vSwitch Agent', {
             'l2_agent_type': constants.AGENT_TYPE_OVS,
             'l2_mechdriver_name': 'openvswitch',
-        }),
-        ('Linux Bridge Agent', {
-            'l2_agent_type': constants.AGENT_TYPE_LINUXBRIDGE,
-            'l2_mechdriver_name': 'linuxbridge',
         })]
 
     def setUp(self):
@@ -169,9 +165,6 @@ class TestRouterPortRebind(TestPortsRebind):
         4. Turn on L2 agent
         5. Router's port created in p.3 should be now bound properly
         """
-
-        if self.l2_agent_type == constants.AGENT_TYPE_LINUXBRIDGE:
-            self.skipTest("Bug 1798085")
 
         gw_port = self.safe_client.client.list_ports(
             device_id=self.router['id'],
