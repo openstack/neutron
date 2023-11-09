@@ -188,7 +188,7 @@ class TestPlacementBandwidthReport(base.BaseFullStackTestCase):
     scenarios = [
         (constants.AGENT_TYPE_OVS,
          {'l2_agent_type': constants.AGENT_TYPE_OVS,
-          'mech_drivers': 'openvswitch,linuxbridge',
+          'mech_drivers': 'openvswitch',
           'placement_port': '8080'}),
         (constants.AGENT_TYPE_NIC_SWITCH,
          {'l2_agent_type': constants.AGENT_TYPE_NIC_SWITCH,

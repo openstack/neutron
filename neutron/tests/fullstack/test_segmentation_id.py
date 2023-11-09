@@ -11,7 +11,6 @@
 #    under the License.
 
 from neutron_lib import constants
-from neutronclient.common import exceptions
 from oslo_utils import uuidutils
 
 from neutron.tests.common.agents import l2_extensions
@@ -72,8 +71,7 @@ class TestSegmentationId(BaseSegmentationIdTest):
 
     scenarios = [
         ('Open vSwitch Agent', {'l2_agent_type': constants.AGENT_TYPE_OVS}),
-        ('Linux Bridge Agent', {
-            'l2_agent_type': constants.AGENT_TYPE_LINUXBRIDGE})]
+    ]
     num_hosts = 1
 
     def test_change_segmentation_id_no_ports_in_network(self):
@@ -103,13 +101,7 @@ class TestSegmentationId(BaseSegmentationIdTest):
         self.safe_client.create_port(self.project_id, network['id'],
                                      self.environment.hosts[0].hostname)
 
-        if self.l2_agent_type == constants.AGENT_TYPE_LINUXBRIDGE:
-            # Linuxbridge agent don't support update of segmentation_id for
-            # the network so this should raise an exception
-            self.assertRaises(exceptions.BadRequest,
-                              self._update_segmentation_id, network)
-        else:
-            self._update_segmentation_id(network)
+        self._update_segmentation_id(network)
 
 
 class TestSegmentationIdConnectivity(BaseSegmentationIdTest):
