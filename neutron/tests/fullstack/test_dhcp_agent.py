@@ -33,8 +33,6 @@ class BaseDhcpAgentTest(base.BaseFullStackTestCase):
     scenarios = [
         (constants.AGENT_TYPE_OVS,
          {'l2_agent_type': constants.AGENT_TYPE_OVS}),
-        (constants.AGENT_TYPE_LINUXBRIDGE,
-         {'l2_agent_type': constants.AGENT_TYPE_LINUXBRIDGE})
     ]
     boot_vm_for_test = True
     dhcp_scheduler_class = None

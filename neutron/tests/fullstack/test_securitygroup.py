@@ -94,9 +94,6 @@ class TestSecurityGroupsSameNetwork(BaseSecurityGroupsSameNetworkTest):
 
     network_type = 'vxlan'
     scenarios = [
-        # TODO(njohnston): Re-add the linuxbridge scenario once it is stable
-        # The iptables_hybrid driver lacks isolation between agents and
-        # because of that using only one host is enough
         ('ovs-hybrid', {
             'firewall_driver': 'iptables_hybrid',
             'l2_agent_type': constants.AGENT_TYPE_OVS,
