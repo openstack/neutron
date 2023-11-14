@@ -1,0 +1,9 @@
+---
+fixes:
+  - |
+    Fixed the scenario where the DHCP agent is deployed in conjunction with
+    the OVN metadata agent in order to serve metadata for baremetal nodes.
+    In this scenario, the DHCP agent would not set the route needed for the
+    OVN metadata agent service resulting in baremetal nodes not being able
+    to query the metadata service. For more information see
+    `bug 1982569 <https://bugs.launchpad.net/neutron/+bug/1982569>`_.

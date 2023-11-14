@@ -152,9 +152,26 @@ fake_port_subnet_2 = dhcp.DictModel(
 
 fake_ipv6_port = dhcp.DictModel(id='12345678-1234-aaaa-123456789000',
                                 device_owner='',
+                                device_id='',
                                 mac_address='aa:bb:cc:dd:ee:99',
                                 network_id=FAKE_NETWORK_UUID,
                                 fixed_ips=[fake_fixed_ipv6])
+
+fake_ovn_port = dhcp.DictModel(id='12345678-1234-aaaa-123456789000',
+                               device_owner='',
+                               device_id='',
+                               mac_address='aa:bb:cc:dd:ee:98',
+                               network_id=FAKE_NETWORK_UUID,
+                               fixed_ips=[fake_fixed_ip2])
+
+fake_ovn_metadata_port = dhcp.DictModel(id='12345678-1234-aaaa-123456789000',
+                                        device_owner=const.
+                                        DEVICE_OWNER_DISTRIBUTED,
+                                        device_id='ovnmeta-{}'.format(
+                                            FAKE_NETWORK_UUID),
+                                        mac_address='aa:bb:cc:dd:ee:99',
+                                        network_id=FAKE_NETWORK_UUID,
+                                        fixed_ips=[fake_fixed_ip1])
 
 fake_meta_port = dhcp.DictModel(id='12345678-1234-aaaa-1234567890ab',
                                 mac_address='aa:bb:cc:dd:ee:ff',
@@ -190,6 +207,12 @@ fake_network_ipv6 = dhcp.NetModel(id=FAKE_NETWORK_UUID,
                                   admin_state_up=True,
                                   subnets=[fake_ipv6_subnet],
                                   ports=[fake_ipv6_port])
+
+fake_ovn_network = dhcp.NetModel(id=FAKE_NETWORK_UUID,
+                                 project_id=FAKE_PROJECT_ID,
+                                 admin_state_up=True,
+                                 subnets=[fake_ipv6_subnet],
+                                 ports=[fake_ovn_metadata_port, fake_ovn_port])
 
 fake_network_ipv6_ipv4 = dhcp.NetModel(
     id=FAKE_NETWORK_UUID,
@@ -803,7 +826,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                          default_cmd_callback=mock.ANY)
 
     def _enable_dhcp_helper(self, network, enable_isolated_metadata=False,
-                            is_isolated_network=False):
+                            is_isolated_network=False, is_ovn_network=False):
         self.dhcp._process_monitor = mock.Mock()
         if enable_isolated_metadata:
             cfg.CONF.set_override('enable_isolated_metadata', True)
@@ -813,7 +836,8 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             mock.call.get_network_info(network.id)])
         self.call_driver.assert_called_once_with('enable', network)
         self.cache.assert_has_calls([mock.call.put(network)])
-        if is_isolated_network and enable_isolated_metadata:
+        if (is_isolated_network and enable_isolated_metadata and not
+                is_ovn_network):
             self.external_process.assert_has_calls([
                 self._process_manager_constructor_call(),
                 mock.call().enable()], any_order=True)
@@ -857,6 +881,21 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self._enable_dhcp_helper(nonisolated_dvr_network,
                                  enable_isolated_metadata=True,
                                  is_isolated_network=False)
+
+    def test_enable_dhcp_helper_enable_metadata_ovn_network(self):
+        # Metadata should not be enabled when the dhcp agent is used
+        # in ML2/OVN where the ovn metadata agent is responsible for the
+        # metadata service.
+        self._enable_dhcp_helper(fake_ovn_network, is_ovn_network=True)
+
+    def test_enable_dhcp_helper_ovn_network_with_enable_isolated_metadata(
+            self):
+        # Metadata should not be enabled when the dhcp agent is used
+        # in ML2/OVN where the ovn metadata agent is responsible for the
+        # metadata service. Even if the enable_isolated_metadata is enabled
+        self._enable_dhcp_helper(fake_ovn_network,
+                                 enable_isolated_metadata=True,
+                                 is_ovn_network=True)
 
     def test_enable_dhcp_helper_enable_metadata_empty_network(self):
         self._enable_dhcp_helper(empty_network,
