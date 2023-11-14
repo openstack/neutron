@@ -3309,8 +3309,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         self.assertFalse(ri.remove_floating_ip.called)
 
     @mock.patch.object(os, 'geteuid', return_value=mock.ANY)
+    @mock.patch.object(linux_utils, 'delete_if_exists')
     @mock.patch.object(pwd, 'getpwuid')
-    def test_spawn_radvd(self, mock_getpwuid, *args):
+    def test_spawn_radvd(self, mock_getpwuid, mock_delete, *args):
         router = l3_test_common.prepare_router_data(
             ip_version=lib_constants.IP_VERSION_6)
 
@@ -3346,6 +3347,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
             self.conf.set_override('radvd_user', radvd_user)
             mock_getpwuid.return_value = FakeUser(os_user)
             radvd.enable(router['_interfaces'])
+            mock_delete.assert_called_once_with(pidfile, run_as_root=True)
+            mock_delete.reset_mock()
             cmd = execute.call_args[0][0]
             _join = lambda *args: ' '.join(args)
             cmd = _join(*cmd)

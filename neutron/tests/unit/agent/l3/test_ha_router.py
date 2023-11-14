@@ -35,6 +35,9 @@ class TestBasicRouterOperations(base.BaseTestCase):
         self.device_exists_p = mock.patch(
             'neutron.agent.linux.ip_lib.device_exists')
         self.device_exists = self.device_exists_p.start()
+        self.delete_if_exists_p = mock.patch(
+            'neutron.agent.linux.utils.delete_if_exists')
+        self.delete_if_exists = self.delete_if_exists_p.start()
 
     def _create_router(self, router=None, **kwargs):
         if not router:
