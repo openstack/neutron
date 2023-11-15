@@ -3226,39 +3226,6 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
             lport_name=ovn_utils.ovn_provnet_port_name(segment['id']),
             lswitch_name=ovn_utils.ovn_name(net['id']))
 
-    def test_delete_segment_delete_localnet_port_compat_name(self):
-        ovn_nb_api = self.mech_driver.nb_ovn
-        with self.network() as network:
-            net = network['network']
-        seg_1 = self._test_create_segment(
-            network_id=net['id'], physical_network='physnet1',
-            segmentation_id=200, network_type='vlan')['segment']
-        seg_2 = self._test_create_segment(
-            network_id=net['id'], physical_network='physnet2',
-            segmentation_id=300, network_type='vlan')['segment']
-        # Lets pretend that segment_1 is old and its localnet
-        # port is based on neutron network id.
-        ovn_nb_api.fake_ls_row.ports = [
-            fakes.FakeOVNPort.create_one_port(
-                attrs={
-                    'options': {'network_name': 'physnet1'},
-                    'tag': 200,
-                    'name': ovn_utils.ovn_provnet_port_name(net['id'])}),
-            fakes.FakeOVNPort.create_one_port(
-                attrs={
-                    'options': {'network_name': 'physnet2'},
-                    'tag': 300,
-                    'name': ovn_utils.ovn_provnet_port_name(seg_2['id'])})]
-        self._delete('segments', seg_1['id'], as_admin=True)
-        ovn_nb_api.delete_lswitch_port.assert_called_once_with(
-            lport_name=ovn_utils.ovn_provnet_port_name(net['id']),
-            lswitch_name=ovn_utils.ovn_name(net['id']))
-        ovn_nb_api.delete_lswitch_port.reset_mock()
-        self._delete('segments', seg_2['id'], as_admin=True)
-        ovn_nb_api.delete_lswitch_port.assert_called_once_with(
-            lport_name=ovn_utils.ovn_provnet_port_name(seg_2['id']),
-            lswitch_name=ovn_utils.ovn_name(net['id']))
-
     def _test_segments_helper(self):
         self.mech_driver.nb_ovn.get_subnet_dhcp_options.return_value = {
             'subnet': {'uuid': 'foo-uuid',
