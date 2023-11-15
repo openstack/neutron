@@ -222,19 +222,6 @@
       - name: github.com/sqlalchemy/alembic
         override-checkout: main
 
-# TODO(ykarel) remove once https://review.opendev.org/901009 merges
-- job:
-    name: openstack-tox-py310-with-sqlalchemy-master
-    branches: ^master$
-    parent: openstack-tox-py310
-    required-projects:
-      - name: github.com/sqlalchemy/sqlalchemy
-        override-checkout: main
-      - openstack/oslo.db
-      - openstack/neutron-lib
-      - name: github.com/sqlalchemy/alembic
-        override-checkout: main
-
 - job:
     name: openstack-tox-py311-with-sqlalchemy-master
     branches: ^master$
