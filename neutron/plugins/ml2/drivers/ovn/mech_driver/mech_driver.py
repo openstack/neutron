@@ -1164,6 +1164,22 @@ class OVNMechanismDriver(api.MechanismDriver):
             LOG.debug('Port not found during OVN status up report: %s',
                       port_id)
 
+        # NOTE(lucasagomes): If needed, re-sync the HA Chassis Group for
+        # the external port removing the chassis which the port is bound
+        # to from the group so the external port does not live in the
+        # same chassis as the VM
+        if (ovn_utils.is_port_external(db_port) and
+                self.sb_ovn.get_extport_chassis_from_cms_options()):
+            try:
+                with self.nb_ovn.transaction(check_error=True) as txn:
+                    ovn_utils.sync_ha_chassis_group(
+                        admin_context, db_port['id'], db_port['network_id'],
+                        self.nb_ovn, self.sb_ovn, txn)
+            except Exception as e:
+                LOG.error('Error while syncing the HA Chassis Group for the '
+                          'external port %s during set port status up. '
+                          'Error: %s', db_port['id'], e)
+
     def set_port_status_down(self, port_id):
         # Port provisioning is required now that OVN has reported that the
         # port is down. Insert a provisioning block and mark the port down
