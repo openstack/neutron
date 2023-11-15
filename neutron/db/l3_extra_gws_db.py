@@ -36,6 +36,7 @@ from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.exceptions import l3_ext_gw_multihoming as mh_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
+from oslo_config import cfg
 
 
 def format_gateway_info(gw_port):
@@ -79,11 +80,16 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
 
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_CREATE])
     def _process_bfd_ecmp_request(self, resource, event, trigger, payload):
+        attr_defaults = {
+            l3_enable_default_route_ecmp.ENABLE_DEFAULT_ROUTE_ECMP: (
+                cfg.CONF.enable_default_route_ecmp),
+            l3_enable_default_route_bfd.ENABLE_DEFAULT_ROUTE_BFD: (
+                cfg.CONF.enable_default_route_bfd),
+        }
         router = payload.latest_state
         router_db = payload.metadata['router_db']
-        for attr in (l3_enable_default_route_ecmp.ENABLE_DEFAULT_ROUTE_ECMP,
-                     l3_enable_default_route_bfd.ENABLE_DEFAULT_ROUTE_BFD):
-            value = router.get(attr)
+        for attr in attr_defaults.keys():
+            value = router.get(attr, attr_defaults[attr])
             if value is not None:
                 self.set_extra_attr_value(router_db, attr, value)
 
