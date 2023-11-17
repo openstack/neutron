@@ -23,6 +23,7 @@ from neutron_lib.api.definitions import dns as dns_apidef
 from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import l3 as l3_apidef
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import subnet_service_types
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import exceptions
 from neutron_lib.callbacks import registry
@@ -304,7 +305,8 @@ class TestL3NatIntPlugin(TestL3NatBasePlugin,
     __native_sorting_support = True
 
     supported_extension_aliases = [extnet_apidef.ALIAS, l3_apidef.ALIAS,
-                                   dns_apidef.ALIAS]
+                                   dns_apidef.ALIAS,
+                                   subnet_service_types.ALIAS]
 
 
 # This plugin class is for tests with plugin that integrates L3 and L3 agent
@@ -326,7 +328,8 @@ class TestNoL3NatPlugin(TestL3NatBasePlugin):
     __native_pagination_support = True
     __native_sorting_support = True
 
-    supported_extension_aliases = [extnet_apidef.ALIAS]
+    supported_extension_aliases = [extnet_apidef.ALIAS,
+                                   subnet_service_types.ALIAS]
 
 
 # This plugin class is for tests with plugin for OVN L3.
@@ -3972,6 +3975,30 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                      port_id=p['port']['id'])
                 self.assertEqual(exc.HTTPBadRequest.code, res.status_int)
 
+    def test_create_router_gateway_fails(self):
+        """Force _update_router_gw_info failure and see
+        the exception is propagated.
+        """
+
+        plugin = directory.get_plugin(plugin_constants.L3)
+        ctx = context.Context('', 'foo')
+
+        class MyException(Exception):
+            pass
+
+        mock.patch.object(plugin, '_update_router_gw_info',
+                          side_effect=MyException).start()
+        with self.network() as n:
+            data = {'router': {
+                'name': 'router1', 'admin_state_up': True,
+                'tenant_id': ctx.tenant_id,
+                'external_gateway_info': {'network_id': n['network']['id']}}}
+
+            self.assertRaises(MyException, plugin.create_router, ctx, data)
+            # Verify router doesn't persist on failure
+            routers = plugin.get_routers(ctx)
+            self.assertEqual(0, len(routers))
+
 
 class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
 
@@ -4476,29 +4503,37 @@ class L3NatDBTestCaseMixin(object):
         if not isinstance(plugin, l3_db.L3_NAT_dbonly_mixin):
             self.skipTest("Plugin is not L3_NAT_dbonly_mixin")
 
-    def test_create_router_gateway_fails(self):
-        """Force _update_router_gw_info failure and see
-        the exception is propagated.
-        """
+    def test_not_update_router_gateway_if_service_type_not_related(self):
+        with self.router() as r, self.network() as n:
+            with self.subnet(cidr='10.0.0.0/24', network=n) as s1, (
+                    self.subnet(ip_version=lib_constants.IP_VERSION_6,
+                        cidr='2001:db8::/64',
+                        network=n)) as s2:
+                self._set_net_external(n['network']['id'])
+                self._add_external_gateway_to_router(
+                        r['router']['id'],
+                        n['network']['id'],
+                        ext_ips=[{'subnet_id': s1['subnet']['id']},
+                                 {'subnet_id': s2['subnet']['id']}],
+                        expected_code=exc.HTTPOk.code,
+                        as_admin=True)
+                plugin = directory.get_plugin(plugin_constants.L3)
+                get_router = mock.patch.object(
+                    plugin, 'get_router',
+                    side_effect=l3_exc.RouterNotFound(router_id='1')).start()
 
-        plugin = directory.get_plugin(plugin_constants.L3)
-        ctx = context.Context('', 'foo')
+                self._create_subnet(self.fmt, net_id=n['network']['id'],
+                                    cidr='10.0.1.0/24',
+                                    service_types=['network:floatingip'],
+                                    expected_res_status=exc.HTTPCreated.code)
+                get_router.assert_not_called()
 
-        class MyException(Exception):
-            pass
-
-        mock.patch.object(plugin, '_update_router_gw_info',
-                          side_effect=MyException).start()
-        with self.network() as n:
-            data = {'router': {
-                'name': 'router1', 'admin_state_up': True,
-                'tenant_id': ctx.tenant_id,
-                'external_gateway_info': {'network_id': n['network']['id']}}}
-
-            self.assertRaises(MyException, plugin.create_router, ctx, data)
-            # Verify router doesn't persist on failure
-            routers = plugin.get_routers(ctx)
-            self.assertEqual(0, len(routers))
+                self._create_subnet(self.fmt, net_id=n['network']['id'],
+                                    cidr='10.0.2.0/24',
+                                    service_types=['network:router_gateway'],
+                                    expected_res_status=exc.HTTPCreated.code)
+                get_router.assert_called_once_with(
+                    mock.ANY, r['router']['id'])
 
 
 class L3NatDBIntTestCase(L3BaseForIntTests, L3NatTestCaseBase,
