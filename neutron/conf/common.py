@@ -134,7 +134,6 @@ core_opts = [
                        'Filter validation is enabled if this config '
                        'is turned on and it is supported by all plugins')),
     cfg.IntOpt('global_physnet_mtu', default=constants.DEFAULT_NETWORK_MTU,
-               deprecated_name='segment_mtu', deprecated_group='ml2',
                help=_('MTU of the underlying physical network. Neutron uses '
                       'this value to calculate MTU for all virtual network '
                       'components. For flat and VLAN networks, neutron uses '
