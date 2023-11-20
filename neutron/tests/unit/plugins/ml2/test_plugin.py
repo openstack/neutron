@@ -1412,17 +1412,6 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             plugin.update_port(ctx, port['port']['id'], port)
             self.assertFalse(sg_member_update.called)
 
-    def test_update_port_status_with_network(self):
-        registry.clear()  # don't care about callback behavior
-        ctx = context.get_admin_context()
-        plugin = directory.get_plugin()
-        with self.port() as port:
-            net = plugin.get_network(ctx, port['port']['network_id'])
-            with mock.patch.object(plugin, 'get_networks') as get_nets:
-                plugin.update_port_status(ctx, port['port']['id'], 'UP',
-                                          network=net)
-                self.assertFalse(get_nets.called)
-
     def test_update_port_mac(self):
         self.check_update_port_mac(
             host_arg={portbindings.HOST_ID: HOST},

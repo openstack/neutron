@@ -2341,13 +2341,11 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         return {d: self._bind_port_if_needed(pctx) if pctx else None
                 for d, pctx in result.items()}
 
-    def update_port_status(self, context, port_id, status, host=None,
-                           network=None):
+    def update_port_status(self, context, port_id, status, host=None):
         """Update port status
 
         Returns port_id (non-truncated uuid) if the port exists.
         Otherwise returns None.
-        'network' is deprecated and has no effect
         """
         full = db.partial_port_ids_to_full_ids(context, [port_id])
         if port_id not in full:
