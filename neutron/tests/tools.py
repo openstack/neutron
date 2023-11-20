@@ -19,6 +19,7 @@ import unittest
 
 import fixtures
 import netaddr
+from neutron_lib.callbacks import priority_group
 from neutron_lib import constants
 from neutron_lib.services.logapi import constants as log_const
 from neutron_lib.utils import helpers
@@ -27,15 +28,15 @@ from oslo_utils import netutils
 from oslo_utils import timeutils
 
 
-# NOTE(yamahata): from neutron-lib 1.9.1, callback priority was added and
-# priority_group module was added for constants of priority.
-# test the existence of the module of priority_group to check if
-# callback priority is supported or not.
-_CALLBACK_PRIORITY_SUPPORTED = True
+# NOTE(ykarel): from neutron-lib 3.9.0, cancellable flag was added
+# test the existence of the is_cancellable_event function to check if
+# cancellable flag is supported or not. This compatibility check can
+# be removed once neutron-lib >= 3.9.0 in requirements.txt.
+_CANCELLABLE_FLAG_SUPPORTED = True
 try:
-    from neutron_lib.callbacks import priority_group  # noqa
+    from neutron_lib.callbacks.events import is_cancellable_event  # noqa
 except ImportError:
-    _CALLBACK_PRIORITY_SUPPORTED = False
+    _CANCELLABLE_FLAG_SUPPORTED = False
 
 LAST_RANDOM_PORT_RANGE_GENERATED = 1
 
@@ -146,12 +147,14 @@ def make_mock_plugin_json_encodable(plugin_instance_mock):
 
 
 def get_subscribe_args(*args):
-    # NOTE(yamahata): from neutron-lib 1.9.1, callback priority was added.
-    # old signature: (callback, resource, event)
-    # new signature: (callback, resource, event, priority=PRIORITY_DEFAULT)
-    if len(args) == 3 and _CALLBACK_PRIORITY_SUPPORTED:
-        args = list(args)  # don't modify original list
-        args.append(priority_group.PRIORITY_DEFAULT)
+    args = list(args)  # don't modify original list
+    args.append(priority_group.PRIORITY_DEFAULT)
+    # NOTE(ykarel): from neutron-lib 3.9.0, cancellable flag was added.
+    # old signature: (callback, resource, event, priority=PRIORITY_DEFAULT)
+    # new signature: (callback, resource, event, priority=PRIORITY_DEFAULT,
+    # cancellable=False)
+    if len(args) == 4 and _CANCELLABLE_FLAG_SUPPORTED:
+        args.append(False)
     return args
 
 
