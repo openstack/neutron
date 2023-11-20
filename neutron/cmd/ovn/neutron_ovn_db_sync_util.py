@@ -171,7 +171,7 @@ def main():
         return
 
     logging.setup(conf, 'neutron_ovn_db_sync_util', fix_eventlet=False)
-    LOG.info('Started Neutron OVN db sync')
+    LOG.info('Neutron OVN DB sync started')
     mode = ovn_conf.get_ovn_neutron_sync_mode()
     # Migrate mode will run as repair mode in the synchronizer
     migrate = False
@@ -180,7 +180,7 @@ def main():
         migrate = True
     if mode not in [ovn_db_sync.SYNC_MODE_LOG, ovn_db_sync.SYNC_MODE_REPAIR]:
         LOG.error(
-            'Invalid sync mode : ["%s"]. Should be "log" or "repair"', mode)
+            'Invalid sync mode: ["%s"]. Should be "log" or "repair"', mode)
         return
 
     # Validate and modify core plugin and ML2 mechanism drivers for syncing.
@@ -189,11 +189,11 @@ def main():
         cfg.CONF.core_plugin = (
             'neutron.cmd.ovn.neutron_ovn_db_sync_util.Ml2Plugin')
         if not cfg.CONF.ml2.mechanism_drivers:
-            LOG.error('please use --config-file to specify '
+            LOG.error('Please use --config-file to specify '
                       'neutron and ml2 configuration file.')
             return
         if 'ovn' not in cfg.CONF.ml2.mechanism_drivers:
-            LOG.error('No "ovn" mechanism driver found : "%s".',
+            LOG.error('No "ovn" mechanism driver found: "%s".',
                       cfg.CONF.ml2.mechanism_drivers)
             return
         cfg.CONF.set_override('mechanism_drivers', ['ovn-sync'], 'ml2')
@@ -207,7 +207,7 @@ def main():
         cfg.CONF.set_override('extension_drivers', extension_drivers, 'ml2')
 
     else:
-        LOG.error('Invalid core plugin : ["%s"].', cfg.CONF.core_plugin)
+        LOG.error('Invalid core plugin: ["%s"].', cfg.CONF.core_plugin)
         return
 
     mech_worker = worker.MaintenanceWorker
@@ -237,18 +237,20 @@ def main():
     synchronizer = ovn_db_sync.OvnNbSynchronizer(
         core_plugin, ovn_api, ovn_sb_api, mode, ovn_driver)
 
-    LOG.info('Sync for Northbound db started with mode : %s', mode)
+    LOG.info('Neutron OVN Northbound DB sync started with mode: %s', mode)
     synchronizer.do_sync()
-    LOG.info('Sync completed for Northbound db')
+    LOG.info('Neutron OVN Northbound DB sync completed')
 
     sb_synchronizer = ovn_db_sync.OvnSbSynchronizer(
         core_plugin, ovn_sb_api, ovn_driver)
 
-    LOG.info('Sync for Southbound db started with mode : %s', mode)
+    LOG.info('Neutron OVN Southbound DB sync started with mode: %s', mode)
     sb_synchronizer.do_sync()
-    LOG.info('Sync completed for Southbound db')
+    LOG.info('Neutron OVN Southbound DB sync completed')
 
     if migrate:
-        LOG.info("Migrating Neutron database from OVS to OVN")
+        LOG.info("Neutron database migration from OVS to OVN started")
         db_migration.migrate_neutron_database_to_ovn()
         LOG.info("Neutron database migration from OVS to OVN completed")
+
+    LOG.info('Neutron OVN DB sync completed')
