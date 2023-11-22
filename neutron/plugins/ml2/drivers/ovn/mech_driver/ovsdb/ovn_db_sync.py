@@ -1390,7 +1390,8 @@ class OvnSbSynchronizer(OvnDbSynchronizer):
                   str(datetime.now()))
         host_phynets_map = self.ovn_api.get_chassis_hostname_and_physnets()
         current_hosts = set(host_phynets_map)
-        previous_hosts = segments_db.get_hosts_mapped_with_segments(ctx)
+        previous_hosts = segments_db.get_hosts_mapped_with_segments(
+            ctx, include_agent_types={ovn_const.OVN_CONTROLLER_AGENT})
 
         stale_hosts = previous_hosts - current_hosts
         for host in stale_hosts:
