@@ -334,8 +334,14 @@ class OVSBridge(BaseOVS):
 
     def set_igmp_snooping_state(self, state):
         state = bool(state)
+        # NOTE(lucasagomes): The mcast-snooping-disable-flood-unregistered
+        # has the opposite value of the config in Neutron. That's because
+        # IGMP Neutron configs are more value consistent using True to
+        # enable a feature and False to disable it.
+        flood_value = ('false' if
+            cfg.CONF.OVS.igmp_flood_unregistered else 'true')
         other_config = {
-            'mcast-snooping-disable-flood-unregistered': 'false'}
+            'mcast-snooping-disable-flood-unregistered': flood_value}
         with self.ovsdb.transaction() as txn:
             txn.add(
                 self.ovsdb.db_set('Bridge', self.br_name,
@@ -344,11 +350,10 @@ class OVSBridge(BaseOVS):
                 self.ovsdb.db_set('Bridge', self.br_name,
                                   ('other_config', other_config)))
 
-    def set_igmp_snooping_flood(self, port_name, state):
-        state = str(state)
+    def set_igmp_snooping_flood(self, port_name):
         other_config = {
-            'mcast-snooping-flood-reports': state,
-            'mcast-snooping-flood': state}
+            'mcast-snooping-flood-reports': ovs_conf.get_igmp_flood_reports(),
+            'mcast-snooping-flood': ovs_conf.get_igmp_flood()}
         self.ovsdb.db_set(
             'Port', port_name,
             ('other_config', other_config)).execute(

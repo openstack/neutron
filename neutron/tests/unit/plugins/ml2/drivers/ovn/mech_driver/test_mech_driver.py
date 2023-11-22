@@ -52,6 +52,7 @@ from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import exceptions as ovn_exceptions
 from neutron.common.ovn import hash_ring_manager
 from neutron.common.ovn import utils as ovn_utils
+from neutron.conf.agent import ovs_conf
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import db_base_plugin_v2
 from neutron.db import ovn_revision_numbers_db
@@ -881,10 +882,13 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             external_ids={},
             lport_name=ovn_utils.ovn_provnet_port_name(segments[0]['id']),
             lswitch_name=ovn_utils.ovn_name(net['id']),
-            options={'network_name': 'physnet1',
-                     ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true',
-                     ovn_const.LSP_OPTIONS_MCAST_FLOOD: 'false',
-                     ovn_const.LSP_OPTIONS_LOCALNET_LEARN_FDB: 'false'},
+            options={
+                'network_name': 'physnet1',
+                ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS:
+                    ovs_conf.get_igmp_flood_reports(),
+                ovn_const.LSP_OPTIONS_MCAST_FLOOD:
+                    ovs_conf.get_igmp_flood(),
+                ovn_const.LSP_OPTIONS_LOCALNET_LEARN_FDB: 'false'},
             tag=2,
             type='localnet')
 
@@ -3190,10 +3194,13 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
             external_ids={},
             lport_name=ovn_utils.ovn_provnet_port_name(new_segment['id']),
             lswitch_name=ovn_utils.ovn_name(net['id']),
-            options={'network_name': 'physnet1',
-                     ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true',
-                     ovn_const.LSP_OPTIONS_MCAST_FLOOD: 'false',
-                     ovn_const.LSP_OPTIONS_LOCALNET_LEARN_FDB: 'false'},
+            options={
+                'network_name': 'physnet1',
+                ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS:
+                    ovs_conf.get_igmp_flood_reports(),
+                ovn_const.LSP_OPTIONS_MCAST_FLOOD:
+                    ovs_conf.get_igmp_flood(),
+                ovn_const.LSP_OPTIONS_LOCALNET_LEARN_FDB: 'false'},
             tag=200,
             type='localnet')
         ovn_nb_api.create_lswitch_port.reset_mock()
@@ -3205,10 +3212,13 @@ class TestOVNMechanismDriverSegment(MechDriverSetupBase,
             external_ids={},
             lport_name=ovn_utils.ovn_provnet_port_name(new_segment['id']),
             lswitch_name=ovn_utils.ovn_name(net['id']),
-            options={'network_name': 'physnet2',
-                     ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true',
-                     ovn_const.LSP_OPTIONS_MCAST_FLOOD: 'false',
-                     ovn_const.LSP_OPTIONS_LOCALNET_LEARN_FDB: 'false'},
+            options={
+                'network_name': 'physnet2',
+                ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS:
+                    ovs_conf.get_igmp_flood_reports(),
+                ovn_const.LSP_OPTIONS_MCAST_FLOOD:
+                    ovs_conf.get_igmp_flood(),
+                ovn_const.LSP_OPTIONS_LOCALNET_LEARN_FDB: 'false'},
             tag=300,
             type='localnet')
         segments = segments_db.get_network_segments(

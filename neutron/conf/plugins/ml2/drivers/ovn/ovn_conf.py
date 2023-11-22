@@ -370,10 +370,6 @@ def is_ovn_emit_need_to_frag_enabled():
     return cfg.CONF.ovn.ovn_emit_need_to_frag
 
 
-def is_igmp_snooping_enabled():
-    return cfg.CONF.OVS.igmp_snooping_enable
-
-
 def is_ovn_dhcp_disabled_for_baremetal():
     return cfg.CONF.ovn.disable_ovn_dhcp_for_baremetal_ports
 

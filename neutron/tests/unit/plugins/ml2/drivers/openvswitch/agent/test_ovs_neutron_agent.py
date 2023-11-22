@@ -1684,8 +1684,7 @@ class TestOvsNeutronAgent(object):
                         'int-br-eth', ovs_constants.NONEXISTENT_PEER),
                 ]
             expected_calls += [
-                mock.call.int_br.set_igmp_snooping_flood(
-                    'int-br-eth', igmp_snooping_enabled),
+                mock.call.int_br.set_igmp_snooping_flood('int-br-eth'),
                 mock.call.phys_br.port_exists('phy-br-eth'),
             ]
             if port_exists:
@@ -1778,8 +1777,7 @@ class TestOvsNeutronAgent(object):
                         'int-br-eth', ovs_constants.NONEXISTENT_PEER),
                 ]
             expected_calls += [
-                mock.call.int_br.set_igmp_snooping_flood(
-                    'int-br-eth', False),
+                mock.call.int_br.set_igmp_snooping_flood('int-br-eth'),
                 mock.call.phys_br.port_exists('phy-br-eth'),
             ]
             if port_exists:

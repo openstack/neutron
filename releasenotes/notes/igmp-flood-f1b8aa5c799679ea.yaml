@@ -1,0 +1,31 @@
+---
+prelude: >
+    The ML2/OVS and ML2/OVN drivers had inconsistencies on how IGMP was
+    configured. Prior to this patch Neutron only exposed a single IGMP
+    configuration option (``igmp_snooping_enabled``) and other features
+    such as flooding IGMP packets, flooding reports and flooding to
+    unregistered ports were hard coded differently in each driver.
+    This patch introduces Neutron configuration options for those listed
+    IGMP features.
+    As part of this work, default values in the IGMP snooping
+    configuration had to be changed for the ML2/OVS backend. Please
+    check in the following sections for more details.
+features:
+  - |
+    New configuration options for IGMP were added in the [OVS] section:
+    ``igmp_flood``, ``igmp_flood_reports`` and ``igmp_flood_unregistered``.
+    This gives operators full control on how IGMP should be configured for
+    their deployments.
+upgrade:
+  - |
+    In order to make IGMP configuration consistent across drivers
+    some defaults had to be changed for ML2/OVS. This change did not
+    affect the defaults in the ML2/OVN driver.
+
+    If ML2/OVS is used and ``igmp_snooping_enable`` is enabled, in order
+    to make the IGMP related traffic run as before please ensure that
+    the following configuration options are enabled after the upgrade.
+
+    ``[OVS]/igmp_flood_unregistered`` = True
+    ``[OVS]/igmp_flood`` = True
+    ``[OVS]/igmp_flood_reports`` = True
