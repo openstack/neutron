@@ -1289,7 +1289,7 @@ class Dnsmasq(DhcpLocalProcess):
                     if subnet_dhcp_ip:
                         metadata_route_ip = subnet_dhcp_ip
 
-                if not isolated_subnets[subnet.id] and gateway:
+                elif not isolated_subnets[subnet.id] and gateway:
                     metadata_route_ip = gateway
 
                 if metadata_route_ip:
