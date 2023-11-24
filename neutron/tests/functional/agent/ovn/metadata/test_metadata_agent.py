@@ -35,6 +35,7 @@ from neutron.conf.agent.ovn.metadata import config as meta_config_ovn
 from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
 from neutron.tests.functional.common import ovn as ovn_common
+from neutron.tests.functional.resources.ovsdb import events
 
 
 class NoDatapathProvision(Exception):
@@ -331,6 +332,52 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
             txn.add(
                 self.nb_api.ls_add(lswitch_name))
             self._create_metadata_port(txn, lswitch_name, mdt_port_name)
+
+        self.assertTrue(mdt_pb_event.wait())
+
+        with mock.patch.object(
+                agent.MetadataAgent, 'provision_datapath') as m_provision:
+            self.sb_api.lsp_bind(mdt_port_name, self.chassis_name).execute(
+                check_error=True, log_errors=True)
+
+            # Wait until port is bound
+            n_utils.wait_until_true(
+                lambda: m_provision.called,
+                timeout=10,
+                exception=Exception(
+                    "Datapath provisioning did not happen on port binding"))
+
+            m_provision.reset_mock()
+
+            self._update_metadata_port_ip(mdt_port_name)
+
+            n_utils.wait_until_true(
+                lambda: m_provision.called,
+                timeout=10,
+                exception=Exception(
+                    "Datapath provisioning not called after external ids was "
+                    "changed"))
+
+    def test_agent_metadata_port_dhcp_reenable_event(self):
+        # Test the Port_Binding update event triggered by reenable DHCP after
+        # disable DHCP on the subnet where the metadata's port is located.
+        lswitch_name = 'ovn-' + uuidutils.generate_uuid()
+        mdt_port_name = 'ovn-mdt-' + uuidutils.generate_uuid()
+        mac_ip = 'AA:AA:AA:AA:AA:AA 192.168.122.123'
+
+        mdt_pb_event = events.WaitForUpdatePortBindingEvent(
+            mdt_port_name, mac=[mac_ip])
+        self.handler.watch_event(mdt_pb_event)
+
+        with self.nb_api.transaction(
+                check_error=True, log_errors=True) as txn:
+            txn.add(
+                self.nb_api.ls_add(lswitch_name))
+            self._create_metadata_port(txn, lswitch_name, mdt_port_name)
+
+        external_ids = {ovn_const.OVN_CIDRS_EXT_ID_KEY: ""}
+        self.nb_api.set_lswitch_port(lport_name=mdt_port_name,
+                                     external_ids=external_ids).execute()
 
         self.assertTrue(mdt_pb_event.wait())
 

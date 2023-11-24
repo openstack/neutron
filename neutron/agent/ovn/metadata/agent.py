@@ -153,10 +153,8 @@ class PortBindingUpdatedEvent(PortBindingEvent):
             ovn_const.OVN_CIDRS_EXT_ID_KEY, "")
         old_cidrs = old.external_ids.get(
             ovn_const.OVN_CIDRS_EXT_ID_KEY, "")
-        # If old_cidrs is "", it is create event,
-        # nothing needs to be done.
         # If old_cidrs equals new_cidrs, the ip does not change.
-        if old_cidrs not in ("", new_cidrs):
+        if old_cidrs != new_cidrs:
             self._log_msg = (
                 "Metadata Port %s in datapath %s updated")
             return True
