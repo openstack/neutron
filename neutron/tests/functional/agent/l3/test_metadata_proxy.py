@@ -156,7 +156,7 @@ class MetadataL3AgentTestCase(framework.L3AgentTestFramework):
         self.conf.set_override('rate_limit_enabled', True,
                                'metadata_rate_limiting')
         if ipv6:
-            self.conf.set_override('ip_versions', ['6'],
+            self.conf.set_override('ip_versions', [6],
                                    'metadata_rate_limiting')
         machine, qr_lla = self._create_resources()
         interface = self._setup_for_ipv6(machine, qr_lla) if ipv6 else None
@@ -236,7 +236,7 @@ class MetadataL3AgentTestCase(framework.L3AgentTestFramework):
     def test_metadata_proxy_rate_limiting_invalid_ip_versions(self):
         self.conf.set_override('base_query_rate_limit', 2,
                                'metadata_rate_limiting')
-        self.conf.set_override('ip_versions', ['4', '6'],
+        self.conf.set_override('ip_versions', [4, 6],
                                'metadata_rate_limiting')
         machine, _ = self._set_up_for_rate_limiting_test()
         # Since we are passing an invalid ip_versions configuration, rate

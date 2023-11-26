@@ -12,7 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
 from oslo_config import cfg
+from oslo_config import types
 
 from neutron._i18n import _
 
@@ -109,7 +111,11 @@ METADATA_RATE_LIMITING_OPTS = [
                 default=False,
                 help=_('Enable rate limiting on the metadata API.')),
     cfg.ListOpt('ip_versions',
-                default=['4'],
+                item_type=types.Integer(choices=[
+                    (constants.IP_VERSION_4, 'IPv4'),
+                    (constants.IP_VERSION_6, 'IPv6')
+                ]),
+                default=[constants.IP_VERSION_4],
                 help=_('Comma separated list of the metadata address IP '
                        'versions (4, 6) for which rate limiting will be '
                        'enabled. The default is to rate limit only for the '
