@@ -1,0 +1,6 @@
+---
+upgrade:
+  - |
+    The ``[DEFAULT] segment_mtu`` configuration option has been removed.
+    It was replaced by the ``[DEFAULT] global_physnet_mtu`` option
+    in the Mitaka release.
