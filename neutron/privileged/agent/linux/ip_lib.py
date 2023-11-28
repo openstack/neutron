@@ -473,6 +473,10 @@ def delete_neigh_entry(ip_version, ip_address, mac_address, device, namespace,
         if e.code == errno.ENOENT:
             return
         raise
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise NetworkNamespaceNotFound(netns_name=namespace)
+        raise
 
 
 @tenacity.retry(
@@ -682,6 +686,11 @@ def delete_ip_rule(namespace, **kwargs):
     try:
         with get_iproute(namespace) as ip:
             ip.rule('del', **kwargs)
+    except netlink_exceptions.NetlinkError as e:
+        # trying to delete a non-existent entry shouldn't raise an error
+        if e.code == errno.ENOENT:
+            return
+        raise
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
@@ -787,6 +796,11 @@ def delete_ip_route(namespace, cidr, ip_version, device=None, via=None,
     try:
         with get_iproute(namespace) as ip:
             ip.route('del', **kwargs)
+    except netlink_exceptions.NetlinkError as e:
+        # trying to delete a non-existent entry shouldn't raise an error
+        if e.code == errno.ESRCH:
+            return
+        raise
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
@@ -821,6 +835,11 @@ def _command_bridge_fdb(command, mac, device, dst_ip=None, namespace=None,
             kwargs['dst'] = dst_ip
         with get_iproute(namespace) as ip:
             return make_serializable(ip.fdb(command, **kwargs))
+    except netlink_exceptions.NetlinkError as e:
+        # trying to delete a non-existent entry shouldn't raise an error
+        if command == 'del' and e.code == errno.ENOENT:
+            return
+        raise
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise NetworkNamespaceNotFound(netns_name=namespace)
@@ -836,20 +855,20 @@ def add_bridge_fdb(mac, device, dst_ip=None, namespace=None, **kwargs):
 
 @privileged.default.entrypoint
 def append_bridge_fdb(mac, device, dst_ip=None, namespace=None, **kwargs):
-    """Add a FDB entry"""
+    """Append a FDB entry"""
     _command_bridge_fdb('append', mac, device, dst_ip=dst_ip,
                         namespace=namespace, **kwargs)
 
 
 @privileged.default.entrypoint
 def replace_bridge_fdb(mac, device, dst_ip=None, namespace=None, **kwargs):
-    """Add a FDB entry"""
+    """Replace a FDB entry"""
     _command_bridge_fdb('replace', mac, device, dst_ip=dst_ip,
                         namespace=namespace, **kwargs)
 
 
 @privileged.default.entrypoint
 def delete_bridge_fdb(mac, device, dst_ip=None, namespace=None, **kwargs):
-    """Add a FDB entry"""
+    """Delete a FDB entry"""
     _command_bridge_fdb('del', mac, device, dst_ip=dst_ip,
                         namespace=namespace, **kwargs)
