@@ -118,34 +118,6 @@
     irrelevant-files: *irrelevant-files
 
 - job:
-    name: neutron-tempest-mariadb-full
-    parent: tempest-integrated-networking
-    timeout: 7800
-    required-projects:
-      - openstack/devstack-gate
-      - openstack/neutron
-      - openstack/tempest
-    vars:
-      devstack_localrc:
-        MYSQL_SERVICE_NAME: mariadb
-      devstack_services:
-        # Cinder services
-        c-api: false
-        c-bak: false
-        c-sch: false
-        c-vol: false
-        cinder: false
-        # Swift services
-        s-account: false
-        s-container: false
-        s-object: false
-        s-proxy: false
-    # NOTE(ralonsoh): once MariaDB default version in Ubuntu is bumped to
-    # >10.1, this workaround can be removed (bug 1855912)
-    pre-run: playbooks/add_mariadb_repo.yaml
-    irrelevant-files: *irrelevant-files
-
-- job:
     name: neutron-tempest-with-uwsgi
     parent: tempest-integrated-networking
     description: Run neutron Tempest tests with uwsgi

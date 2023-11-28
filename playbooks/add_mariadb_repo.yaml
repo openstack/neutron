@@ -1,3 +1,0 @@
-- hosts: all
-  roles:
-    - add_mariadb_repo

@@ -32,8 +32,6 @@
             irrelevant-files: *irrelevant-files
         - neutron-fullstack-with-uwsgi:
             irrelevant-files: *irrelevant-files
-        - neutron-rally-task:
-            irrelevant-files: *irrelevant-files
         - neutron-grenade-multinode:
             irrelevant-files: *irrelevant-files
         - neutron-grenade-dvr-multinode:
@@ -72,9 +70,6 @@
             voting: false
         - neutron-functional-with-uwsgi:
             voting: false
-        - neutron-ovn-rally-task:
-            voting: false
-            irrelevant-files: *irrelevant-files
         - neutron-ovn-tempest-slow:
             voting: false
         - openstack-tox-py36:  # from openstack-python3-ussuri-jobs template
@@ -101,7 +96,6 @@
             timeout: 3600
         - openstack-tox-py37:  # from openstack-python3-ussuri-jobs template
             timeout: 3600
-        #- neutron-ovn-rally-task
 
     experimental:
       jobs:
@@ -111,4 +105,3 @@
       jobs:
         - neutron-functional
         - neutron-tempest-postgres-full
-        - neutron-tempest-mariadb-full
