@@ -236,7 +236,9 @@ def list_dhcp_agent_opts():
              neutron.conf.agent.dhcp.DHCP_AGENT_OPTS,
              neutron.conf.agent.dhcp.DHCP_OPTS,
              neutron.conf.agent.dhcp.DNSMASQ_OPTS)
-         )
+         ),
+        (meta_conf.RATE_LIMITING_GROUP,
+         meta_conf.METADATA_RATE_LIMITING_OPTS)
     ]
 
 
@@ -274,7 +276,9 @@ def list_l3_agent_opts():
         ('agent',
          neutron.conf.agent.agent_extensions_manager.AGENT_EXT_MANAGER_OPTS),
         ('network_log',
-         neutron.conf.services.logging.log_driver_opts)
+         neutron.conf.services.logging.log_driver_opts),
+        (meta_conf.RATE_LIMITING_GROUP,
+         meta_conf.METADATA_RATE_LIMITING_OPTS)
     ]
 
 

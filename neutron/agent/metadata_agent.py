@@ -33,9 +33,6 @@ def main():
     meta.register_meta_conf_opts(meta.SHARED_OPTS)
     meta.register_meta_conf_opts(meta.UNIX_DOMAIN_METADATA_PROXY_OPTS)
     meta.register_meta_conf_opts(meta.METADATA_PROXY_HANDLER_OPTS)
-    meta.register_meta_conf_opts(meta.METADATA_RATE_LIMITING_OPTS,
-                                 cfg=cfg.CONF,
-                                 group=meta.RATE_LIMITING_GROUP)
     cache.register_oslo_configs(cfg.CONF)
     agent_conf.register_agent_state_opts_helper(cfg.CONF)
     service_conf.register_service_opts(service_conf.RPC_EXTRA_OPTS, cfg.CONF)

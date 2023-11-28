@@ -46,7 +46,9 @@ def list_metadata_agent_opts():
              meta_conf.METADATA_PROXY_HANDLER_OPTS,
              meta_conf.UNIX_DOMAIN_METADATA_PROXY_OPTS)
          ),
-        ('ovs', OVS_OPTS)
+        ('ovs', OVS_OPTS),
+        (meta_conf.RATE_LIMITING_GROUP,
+         meta_conf.METADATA_RATE_LIMITING_OPTS)
     ]
 
 
