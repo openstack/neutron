@@ -179,12 +179,6 @@ class TestDvrServices(base.BaseTestCase):
     def _test_is_dvr_serviced(self, device_owner, expected):
         self.assertEqual(expected, utils.is_dvr_serviced(device_owner))
 
-    def test_is_dvr_serviced_with_lb_port(self):
-        self._test_is_dvr_serviced(constants.DEVICE_OWNER_LOADBALANCER, True)
-
-    def test_is_dvr_serviced_with_lbv2_port(self):
-        self._test_is_dvr_serviced(constants.DEVICE_OWNER_LOADBALANCERV2, True)
-
     def test_is_dvr_serviced_with_dhcp_port(self):
         self._test_is_dvr_serviced(constants.DEVICE_OWNER_DHCP, True)
 
@@ -196,12 +190,6 @@ class TestFipServices(base.BaseTestCase):
 
     def _test_is_fip_serviced(self, device_owner, expected):
         self.assertEqual(expected, utils.is_fip_serviced(device_owner))
-
-    def test_is_fip_serviced_with_lb_port(self):
-        self._test_is_fip_serviced(constants.DEVICE_OWNER_LOADBALANCER, True)
-
-    def test_is_fip_serviced_with_lbv2_port(self):
-        self._test_is_fip_serviced(constants.DEVICE_OWNER_LOADBALANCERV2, True)
 
     def test_is_fip_serviced_with_dhcp_port(self):
         self._test_is_fip_serviced(constants.DEVICE_OWNER_DHCP, False)
