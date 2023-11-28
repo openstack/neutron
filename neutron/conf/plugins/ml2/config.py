@@ -13,7 +13,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib import constants
 from oslo_config import cfg
+from oslo_config import types
 
 from neutron._i18n import _
 from neutron.common import _constants as common_const
@@ -64,10 +66,13 @@ ml2_opts = [
                       "values for external_network_type config option depend "
                       "on the network type values configured in type_drivers "
                       "config option.")),
-    cfg.IntOpt('overlay_ip_version',
-               default=4,
-               help=_("IP version of all overlay (tunnel) network endpoints. "
-                      "Use a value of 4 for IPv4 or 6 for IPv6.")),
+    cfg.Opt('overlay_ip_version',
+            default=constants.IP_VERSION_4,
+            type=types.Integer(choices=[
+                (constants.IP_VERSION_4, 'IPv4'),
+                (constants.IP_VERSION_6, 'IPv6')
+            ]),
+            help=_("IP version of all overlay (tunnel) network endpoints.")),
     cfg.StrOpt('tunnelled_network_rp_name',
                default=common_const.RP_TUNNELLED,
                help=_("Resource provider name for the host with tunnelled "

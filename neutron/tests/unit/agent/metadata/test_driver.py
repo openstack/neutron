@@ -279,10 +279,10 @@ class TestMetadataDriverProcess(base.BaseTestCase):
         return self._test_spawn_metadata_proxy(rate_limited=True)
 
     def test_metadata_proxy_conf_parse_ip_versions(self):
-        self.assertEqual('4', comm_meta.parse_ip_versions(['4']))
-        self.assertEqual('6', comm_meta.parse_ip_versions(['6']))
-        self.assertIsNone(comm_meta.parse_ip_versions(['4', '6']))
-        self.assertIsNone(comm_meta.parse_ip_versions(['5', '6']))
+        self.assertEqual(4, comm_meta.parse_ip_versions([4]))
+        self.assertEqual(6, comm_meta.parse_ip_versions([6]))
+        self.assertIsNone(comm_meta.parse_ip_versions([4, 6]))
+        self.assertIsNone(comm_meta.parse_ip_versions([5, 6]))
 
     def test_spawn_metadata_proxy_dad_failed(self):
         self._test_spawn_metadata_proxy(dad_failed=True)

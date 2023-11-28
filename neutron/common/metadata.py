@@ -71,8 +71,8 @@ listen listener
 
 
 def parse_ip_versions(ip_versions):
-    if not set(ip_versions).issubset({str(constants.IP_VERSION_4),
-                                      str(constants.IP_VERSION_6)}):
+    if not set(ip_versions).issubset({constants.IP_VERSION_4,
+                                      constants.IP_VERSION_6}):
         LOG.warning('Invalid metadata address IP versions: %s. Metadata rate '
                     'limiting will not be enabled.', ip_versions)
         return
@@ -90,7 +90,7 @@ def get_haproxy_config(cfg_info, rate_limiting_config, header_config_template,
     ip_version = parse_ip_versions(rate_limiting_config.ip_versions)
     if rate_limiting_config.rate_limit_enabled and ip_version:
         cfg_info['ip_version'] = (
-            'ipv6' if ip_version == '6' else 'ip')
+            'ipv6' if ip_version == 6 else 'ip')
         cfg_info['base_window_duration'] = (
             rate_limiting_config['base_window_duration'])
         cfg_info['base_query_rate_limit'] = (
