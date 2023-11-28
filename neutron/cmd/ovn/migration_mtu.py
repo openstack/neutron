@@ -18,7 +18,7 @@
 import os
 import sys
 
-from neutron_lib import constants
+from neutron_lib import constants as const
 from openstack import connection
 
 
@@ -27,8 +27,8 @@ GENEVE_ENCAP_OVERHEAD = 38
 # map of network types to migrate and the difference in overhead size when
 # converted to Geneve.
 NETWORK_TYPE_OVERHEAD_DIFF = {
-    'vxlan': GENEVE_ENCAP_OVERHEAD - constants.VXLAN_ENCAP_OVERHEAD,
-    'gre': GENEVE_ENCAP_OVERHEAD - constants.GRE_ENCAP_OVERHEAD,
+    const.TYPE_VXLAN: GENEVE_ENCAP_OVERHEAD - const.VXLAN_ENCAP_OVERHEAD,
+    const.TYPE_GRE: GENEVE_ENCAP_OVERHEAD - const.GRE_ENCAP_OVERHEAD,
 }
 
 

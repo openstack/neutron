@@ -353,9 +353,9 @@ class DNSExtensionDriverML2(DNSExtensionDriver):
         LOG.info("DNSExtensionDriverML2 initialization complete")
 
     def _is_tunnel_tenant_network(self, provider_net):
-        if provider_net['network_type'] == 'geneve':
+        if provider_net['network_type'] == lib_const.TYPE_GENEVE:
             tunnel_ranges = cfg.CONF.ml2_type_geneve.vni_ranges
-        elif provider_net['network_type'] == 'vxlan':
+        elif provider_net['network_type'] == lib_const.TYPE_VXLAN:
             tunnel_ranges = cfg.CONF.ml2_type_vxlan.vni_ranges
         else:
             tunnel_ranges = cfg.CONF.ml2_type_gre.tunnel_id_ranges
@@ -392,13 +392,15 @@ class DNSExtensionDriverML2(DNSExtensionDriver):
         if len(segments) > 1:
             return False
         provider_net = segments[0]
-        if provider_net['network_type'] == 'local':
+        if provider_net['network_type'] == lib_const.TYPE_LOCAL:
             return True
-        if provider_net['network_type'] == 'flat':
+        if provider_net['network_type'] == lib_const.TYPE_FLAT:
             return False
-        if provider_net['network_type'] == 'vlan':
+        if provider_net['network_type'] == lib_const.TYPE_VLAN:
             return self._is_vlan_tenant_network(provider_net)
-        if provider_net['network_type'] in ['gre', 'vxlan', 'geneve']:
+        if provider_net['network_type'] in [
+                lib_const.TYPE_GRE, lib_const.TYPE_VXLAN,
+                lib_const.TYPE_GENEVE]:
             return self._is_tunnel_tenant_network(provider_net)
         return True
 

@@ -15,6 +15,7 @@
 
 import sys
 
+from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import log as logging
 
@@ -454,11 +455,11 @@ def enable_tests_from_config():
 
     cfg.CONF.set_default('arp_header_match', True)
     cfg.CONF.set_default('icmpv6_header_match', True)
-    if 'vxlan' in cfg.CONF.AGENT.tunnel_types:
+    if constants.TYPE_VXLAN in cfg.CONF.AGENT.tunnel_types:
         cfg.CONF.set_default('ovs_vxlan', True)
-    if 'geneve' in cfg.CONF.AGENT.tunnel_types:
+    if constants.TYPE_GENEVE in cfg.CONF.AGENT.tunnel_types:
         cfg.CONF.set_default('ovs_geneve', True)
-    if ('vxlan' in cfg.CONF.ml2.type_drivers or
+    if (constants.TYPE_VXLAN in cfg.CONF.ml2.type_drivers or
             cfg.CONF.VXLAN.enable_vxlan):
         cfg.CONF.set_default('iproute2_vxlan', True)
     if (cfg.CONF.notify_nova_on_port_status_changes or
