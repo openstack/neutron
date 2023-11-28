@@ -211,6 +211,13 @@ class FdbInterfaceTestCase(testscenarios.WithScenarios, base.BaseSudoTestCase):
                                        namespace=self.namespace)
         self._assert_mac(self.MAC1, self.device, present=False)
 
+        try:
+            # This should not raise for a non-existent entry
+            bridge_lib.FdbInterface.delete(self.MAC1, self.device,
+                                           namespace=self.namespace)
+        except Exception:
+            self.fail('Delete FDB entry threw unexpected exception')
+
     def test_add_delete_dst(self):
         self._assert_mac(self.MAC1, self.device_vxlan, present=False)
         bridge_lib.FdbInterface.add(
