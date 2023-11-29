@@ -3125,6 +3125,8 @@ class TestDnsmasq(TestBase):
     def test__generate_opts_per_subnet_with_metadata_port(self):
         config = {'enable_isolated_metadata': False,
                   'force_metadata': False}
+        self.mock_mgr.return_value.plugin.get_dhcp_port.return_value = \
+            FakeOvnMetadataPort()
         self._test__generate_opts_per_subnet_helper(config, True,
             network_class=FakeNetworkDhcpandOvnMetadataPort)
 
