@@ -1180,8 +1180,7 @@ class IptablesManagerStateFulTestCase(IptablesManagerBaseTestCase):
                          '-I run.py-test-filter 1 '
                          '-i tap-xxx -d 192.168.0.2 -j ACCEPT\n'
                          'COMMIT\n'
-                         '# Completed by iptables_manager\n'
-                         % IPTABLES_ARG)
+                         '# Completed by iptables_manager\n')
 
         expected_calls_and_values = [
             (mock.call(['iptables-save'], run_as_root=True, privsep_exec=True),
