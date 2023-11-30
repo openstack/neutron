@@ -207,7 +207,7 @@ class NetworkSegmentRangeDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         for subclass in ml2_base.SegmentAllocation.__subclasses__():
             # Build segment ranges: default one and project specific ones.
             for name, ranges in self.segment_ranges.items():
-                default = True if name == 'default' else False
+                default = name == 'default'
                 project = name if not default else None
                 if default and not default_range:
                     continue
