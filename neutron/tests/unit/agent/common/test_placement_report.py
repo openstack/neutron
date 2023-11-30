@@ -246,7 +246,6 @@ class PlacementStateTestCase(base.BaseTestCase):
             actual_traits)
 
     def test_deferred_update_resource_provider_traits_shared_rp(self):
-        import uuid
         self.kwargs.update({
             'device_mappings': {
                 'physnet0': ['eth0'],
