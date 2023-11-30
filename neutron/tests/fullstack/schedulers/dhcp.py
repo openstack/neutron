@@ -40,8 +40,7 @@ class AlwaysTheOtherAgentScheduler(base_scheduler.BaseChanceScheduler,
         for agent in resource_hostable_agents:
             if agent.id in self.last_selected_agent_ids:
                 continue
-            else:
-                possible_agents.append(agent)
+            possible_agents.append(agent)
         num_agents = min(len(possible_agents), num_agents_needed)
         self.last_selected_agent_ids = [
             ag.id for ag in possible_agents[0:num_agents]]

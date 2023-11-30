@@ -401,9 +401,8 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
         for rule in iptables_mgr.get_rules_for_table('mangle'):
             if regex.match(rule):
                 return
-        else:
-            self.fail('Rule not found in "mangle" table, in namespace %s' %
-                      namespace)
+        self.fail('Rule not found in "mangle" table, in namespace %s' %
+                  namespace)
 
     def test_metadata_proxy_handler_idl(self):
         # This test relies on the configuration option metadata_workers=0

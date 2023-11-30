@@ -121,16 +121,14 @@ class RuleScopesTestCase(PolicyBaseTestCase):
             if len(rule.scope_types) == 1:
                 # If rule has only one scope, it's fine
                 continue
-            else:
-                expected_scope_types = SCOPE_TYPES_EXCEPTIONS.get(
-                    rule_name, [])
-                fail_msg = (
-                    "Rule %s have scope types %s which are not defined "
-                    "in the exceptions list: %s" % (
-                        rule_name, rule.scope_types, expected_scope_types))
-                self.assertListEqual(expected_scope_types,
-                                     rule.scope_types,
-                                     fail_msg)
+            expected_scope_types = SCOPE_TYPES_EXCEPTIONS.get(rule_name, [])
+            fail_msg = (
+                "Rule %s have scope types %s which are not defined "
+                "in the exceptions list: %s" % (
+                    rule_name, rule.scope_types, expected_scope_types))
+            self.assertListEqual(expected_scope_types,
+                                 rule.scope_types,
+                                 fail_msg)
 
 
 def write_policies(policies):

@@ -525,8 +525,7 @@ class BaseTestCase(DietTestCase):
             if e:
                 if raise_on_exception:
                     raise e
-                else:
-                    threads_exceptions.append(e)
+                threads_exceptions.append(e)
 
         return threads_exceptions
 

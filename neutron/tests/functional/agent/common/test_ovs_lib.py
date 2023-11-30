@@ -83,8 +83,7 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
             for queue in (queue for queue in queues
                           if queue['_uuid'] == queue_id):
                 return queue
-            else:
-                return None
+            return None
         return queues
 
     def _create_queue(self,
@@ -121,8 +120,7 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         if qos_id:
             for qos in (qos for qos in qoses if qos['_uuid'] == qos_id):
                 return qos
-            else:
-                return None
+            return None
         return qoses
 
     def _create_bridge(self, br_name=None):
