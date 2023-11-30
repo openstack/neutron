@@ -38,7 +38,7 @@ def sigterm_handler(_signo, _stack_frame):
     EVENT_STOP.set()
     IP_MONITOR.join()
     READ_QUEUE.join()
-    exit(0)
+    sys.exit(0)
 
 
 signal.signal(signal.SIGTERM, sigterm_handler)
