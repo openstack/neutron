@@ -1366,16 +1366,6 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 self.ctx, port)
             self.assertEqual(3, l3_notify.del_arp_entry.call_count)
 
-    def test_update_arp_entry_for_dvr_service_port_added(self):
-        action = 'add'
-        device_owner = const.DEVICE_OWNER_LOADBALANCER
-        self._test_update_arp_entry_for_dvr_service_port(device_owner, action)
-
-    def test_update_arp_entry_for_dvr_service_port_deleted(self):
-        action = 'del'
-        device_owner = const.DEVICE_OWNER_LOADBALANCER
-        self._test_update_arp_entry_for_dvr_service_port(device_owner, action)
-
     def test_add_router_interface_csnat_ports_failure(self):
         router_dict = {'name': 'test_router', 'admin_state_up': True,
                        'distributed': True}

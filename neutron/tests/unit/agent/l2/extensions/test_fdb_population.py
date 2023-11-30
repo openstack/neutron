@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import copy
 from unittest import mock
 
 from neutron_lib import constants
@@ -119,16 +118,6 @@ class FdbPopulationExtensionTestCase(base.BaseTestCase):
         updated_macs_for_device = (
             fdb_extension.fdb_tracker.device_to_macs.get(self.DEVICE))
         self.assertIn(updated_mac, updated_macs_for_device)
-        self.assertNotIn(mac, updated_macs_for_device)
-
-    def test_unpermitted_device_owner(self):
-        fdb_extension = self._get_fdb_extension()
-        details = copy.deepcopy(self.UPDATE_MSG)
-        details['device_owner'] = constants.DEVICE_OWNER_LOADBALANCER
-        fdb_extension.handle_port(context=None, details=details)
-        updated_macs_for_device = (
-            fdb_extension.fdb_tracker.device_to_macs.get(self.DEVICE))
-        mac = self.UPDATE_MSG['mac_address']
         self.assertNotIn(mac, updated_macs_for_device)
 
     def test_catch_init_exception(self):

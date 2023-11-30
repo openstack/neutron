@@ -196,9 +196,7 @@ def get_other_dvr_serviced_device_owners(host_dvr_for_dhcp=True):
     prefix, not a complete device_owner name, so should be handled
     separately (see is_dvr_serviced() below)
     """
-    device_owners = [n_const.DEVICE_OWNER_LOADBALANCER,
-                     n_const.DEVICE_OWNER_LOADBALANCERV2,
-                     trunk_constants.TRUNK_SUBPORT_OWNER]
+    device_owners = [trunk_constants.TRUNK_SUBPORT_OWNER]
     if host_dvr_for_dhcp:
         device_owners.append(n_const.DEVICE_OWNER_DHCP)
     return device_owners
@@ -213,10 +211,7 @@ def get_dvr_allowed_address_pair_device_owners():
     Later if other device owners are used for allowed_address_pairs those
     device_owners should be added to the list below.
     """
-    # TODO(Swami): Convert these methods to constants.
-    # Add the constants variable to the neutron-lib
-    return [n_const.DEVICE_OWNER_LOADBALANCER,
-            n_const.DEVICE_OWNER_LOADBALANCERV2]
+    return []
 
 
 def is_dvr_serviced(device_owner):

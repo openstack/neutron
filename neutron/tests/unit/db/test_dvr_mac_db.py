@@ -195,10 +195,6 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
                           device_owner=constants.DEVICE_OWNER_DHCP,
                           is_admin=True,
                           arg_list=arg_list, **host_arg) as dhcp_port,\
-                self.port(subnet=subnet,
-                          device_owner=constants.DEVICE_OWNER_LOADBALANCER,
-                          is_admin=True,
-                          arg_list=arg_list, **host_arg) as lb_port,\
                 self.port(device_owner=constants.DEVICE_OWNER_COMPUTE_PREFIX,
                           is_admin=True,
                           arg_list=arg_list, **host_arg),\
@@ -212,7 +208,7 @@ class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
                           is_admin=True,
                           arg_list=arg_list, **host_arg):
             expected_ids = [port['port']['id'] for port in
-                            [compute_port, dhcp_port, lb_port]]
+                            [compute_port, dhcp_port]]
             dvr_ports = self.mixin.get_ports_on_host_by_subnet(
                 self.ctx, HOST, subnet['subnet']['id'])
             self.assertEqual(len(expected_ids), len(dvr_ports))
