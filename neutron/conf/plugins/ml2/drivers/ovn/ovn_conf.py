@@ -116,14 +116,6 @@ ovn_opts = [
                       ' will sync the DB just like repair mode but it will'
                       ' additionally fix the Neutron DB resource from OVS to'
                       ' OVN.') % {'migrate': MIGRATE_MODE}),
-    cfg.BoolOpt('ovn_l3_mode',
-                default=True,
-                deprecated_for_removal=True,
-                deprecated_reason="This option is no longer used. Native L3 "
-                                  "support in OVN is always used.",
-                help=_('Whether to use OVN native L3 support. Do not change '
-                       'the value for existing deployments that contain '
-                       'routers.')),
     cfg.StrOpt("ovn_l3_scheduler",
                default='leastloaded',
                choices=('leastloaded', 'chance'),
@@ -318,10 +310,6 @@ def get_ovn_ovsdb_probe_interval():
 
 def get_ovn_neutron_sync_mode():
     return cfg.CONF.ovn.neutron_sync_mode
-
-
-def is_ovn_l3():
-    return cfg.CONF.ovn.ovn_l3_mode
 
 
 def get_ovn_l3_scheduler():
