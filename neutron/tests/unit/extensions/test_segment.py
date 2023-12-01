@@ -3001,6 +3001,7 @@ class TestSegmentHostMappingNoStore(
         test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def setUp(self):
+        config.register_common_config_options()
         driver_type.register_ml2_drivers_vlan_opts()
         cfg.CONF.set_override('network_vlan_ranges', ['phys_net1'],
                               group='ml2_type_vlan')
