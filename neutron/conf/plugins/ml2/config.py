@@ -23,11 +23,13 @@ from neutron.common import _constants as common_const
 
 ml2_opts = [
     cfg.ListOpt('type_drivers',
-                default=['local', 'flat', 'vlan', 'gre', 'vxlan', 'geneve'],
+                default=[constants.TYPE_LOCAL, constants.TYPE_FLAT,
+                         constants.TYPE_VLAN, constants.TYPE_GRE,
+                         constants.TYPE_VXLAN, constants.TYPE_GENEVE],
                 help=_("List of network type driver entrypoints to be loaded "
                        "from the neutron.ml2.type_drivers namespace.")),
     cfg.ListOpt('tenant_network_types',
-                default=['local'],
+                default=[constants.TYPE_LOCAL],
                 help=_("Ordered list of network_types to allocate as tenant "
                        "networks. The default value 'local' is useful for "
                        "single-box testing but provides no connectivity "

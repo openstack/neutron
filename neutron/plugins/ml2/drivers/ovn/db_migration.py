@@ -13,6 +13,7 @@
 #    under the License.
 
 from neutron_lib.api.definitions import portbindings as pb_api
+from neutron_lib import constants
 from neutron_lib import context as n_context
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions
@@ -46,9 +47,9 @@ def migrate_neutron_database_to_ovn():
     with db_api.CONTEXT_WRITER.using(ctx) as session:
         # Change network type from vxlan geneve
         segments = network_obj.NetworkSegment.get_objects(
-            ctx, network_type='vxlan')
+            ctx, network_type=constants.TYPE_VXLAN)
         for segment in segments:
-            segment.network_type = 'geneve'
+            segment.network_type = constants.TYPE_GENEVE
             segment.update()
             # Update Geneve allocation for the segment
             session.query(geneveallocation.GeneveAllocation).filter(

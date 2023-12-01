@@ -1020,7 +1020,7 @@ class OVNMechanismDriver(api.MechanismDriver):
                          {'port_id': port['id'],
                           'network_type': network_type})
 
-            if ((network_type in ['flat', 'vlan']) and
+            if ((network_type in [const.TYPE_FLAT, const.TYPE_VLAN]) and
                     (physical_network not in chassis_physnets)):
                 LOG.info('Refusing to bind port %(port_id)s on '
                          'host %(host)s due to the OVN chassis '
@@ -1236,7 +1236,7 @@ class OVNMechanismDriver(api.MechanismDriver):
 
         available_seg_ids = {
             segment['id'] for segment in segments
-            if segment['network_type'] in ('flat', 'vlan')}
+            if segment['network_type'] in (const.TYPE_FLAT, const.TYPE_VLAN)}
 
         segment_service_db.update_segment_host_mapping(
             ctx, host, available_seg_ids)
