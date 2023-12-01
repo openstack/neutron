@@ -1,0 +1,6 @@
+---
+upgrade:
+  - |
+    Remove ``[DEFAULT] ovs_integration_bridge`` configuration option,
+    which was deprecated in the 'Ussuri' release, as it was a duplicate of
+    ``[OVS] integration_bridge``.

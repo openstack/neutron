@@ -26,7 +26,6 @@ DEFAULT_TUNNEL_TYPES = []
 
 ovs_opts = [
     cfg.StrOpt('integration_bridge', default='br-int',
-               deprecated_name='ovs_integration_bridge',
                help=_("Integration bridge to use. "
                       "Do not change this parameter unless you have a good "
                       "reason to. This is the name of the OVS integration "
