@@ -349,7 +349,7 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
 
         # If the compatibility gw_port_id is to be removed, do it after
         # the removal of extra gateway ports but stash up some information.
-        compat_gw_port_info = part_matches.pop(router_db['gw_port_id'])
+        compat_gw_port_info = part_matches.pop(router_db['gw_port_id'], None)
 
         # Actually remove extra gateways first.
         for extra_gw_port_id in part_matches.keys():
