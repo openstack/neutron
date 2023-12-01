@@ -626,40 +626,34 @@ class TestQoSPolicyIsDefault(base.BaseFullStackTestCase):
         return self.client.update_qos_policy(
             qos_policy_id, body={'policy': {'is_default': is_default}})
 
-    def test_create_one_default_qos_policy_per_project(self):
+    def test_qos_policy_is_default(self):
+        # 1) Create one default QoS policy per project.
         project_ids = [uuidutils.generate_uuid(), uuidutils.generate_uuid()]
         for project_id in project_ids:
-            qos_policy = self._create_qos_policy(project_id, True)
-            self.assertTrue(qos_policy['is_default'])
-            self.assertEqual(project_id, qos_policy['project_id'])
-            qos_policy = self._create_qos_policy(project_id, False)
-            self.assertFalse(qos_policy['is_default'])
-            self.assertEqual(project_id, qos_policy['project_id'])
+            qos_policy1 = self._create_qos_policy(project_id, True)
+            self.assertTrue(qos_policy1['is_default'])
+            self.assertEqual(project_id, qos_policy1['project_id'])
+            qos_policy2 = self._create_qos_policy(project_id, False)
+            self.assertFalse(qos_policy2['is_default'])
+            self.assertEqual(project_id, qos_policy2['project_id'])
 
-    def test_create_two_default_qos_policies_per_project(self):
-        project_id = uuidutils.generate_uuid()
-        qos_policy = self._create_qos_policy(project_id, True)
-        self.assertTrue(qos_policy['is_default'])
-        self.assertEqual(project_id, qos_policy['project_id'])
+        # 2) Try to add a second default policy to the first project, that has
+        # already one QoS default policy
         self.assertRaises(exceptions.Conflict,
-                          self._create_qos_policy, project_id, True)
+                          self._create_qos_policy, project_ids[0], True)
 
-    def test_update_default_status(self):
-        project_ids = [uuidutils.generate_uuid(), uuidutils.generate_uuid()]
-        for project_id in project_ids:
-            qos_policy = self._create_qos_policy(project_id, True)
-            self.assertTrue(qos_policy['is_default'])
-            qos_policy = self._update_qos_policy(qos_policy['id'], False)
-            self.assertFalse(qos_policy['policy']['is_default'])
+        # 3) Update default status of a QoS policy.
+        qos_policy1 = self._update_qos_policy(qos_policy1['id'], False)
+        self.assertFalse(qos_policy1['policy']['is_default'])
+        qos_policy2 = self._update_qos_policy(qos_policy2['id'], True)
+        self.assertTrue(qos_policy2['policy']['is_default'])
 
-    def test_update_default_status_conflict(self):
-        project_id = uuidutils.generate_uuid()
-        qos_policy_1 = self._create_qos_policy(project_id, True)
-        self.assertTrue(qos_policy_1['is_default'])
-        qos_policy_2 = self._create_qos_policy(project_id, False)
-        self.assertFalse(qos_policy_2['is_default'])
+        # 4) Try to update the QoS policy status if a default QoS policy
+        # already exists in this project.
+        qos_policy_3 = self._create_qos_policy(project_ids[1], False)
+        self.assertFalse(qos_policy_3['is_default'])
         self.assertRaises(exceptions.Conflict,
-                          self._update_qos_policy, qos_policy_2['id'], True)
+                          self._update_qos_policy, qos_policy_3['id'], True)
 
 
 class _TestMinBwQoS(BaseQoSRuleTestCase):
