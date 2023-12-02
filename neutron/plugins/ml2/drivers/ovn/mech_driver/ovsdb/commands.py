@@ -472,6 +472,40 @@ class SetLRouterPortInLSwitchPortCommand(command.BaseCommand):
         setattr(port, 'addresses', self.lsp_address)
 
 
+class SetLRouterMacAgeLimitCommand(command.BaseCommand):
+    def __init__(self, api, router, threshold):
+        super().__init__(api)
+        self.router = router
+        self.threshold = str(threshold)  # Just in case an integer sneaks in
+
+    def run_idl(self, txn):
+        # Creating a Command object that iterates over the list of Routers
+        # from inside a transaction avoids the issue of doing two
+        # transactions: one for list_rows() and the other for setting the
+        # values on routers, which would allow routers to be added and removed
+        # between the two transactions.
+        if self.router is None:
+            routers = self.api.tables["Logical_Router"].rows.values()
+        else:
+            routers = [self.api.lookup("Logical_Router", self.router)]
+
+        for router in routers:
+            # It's not technically necessary to check the value before setting
+            # it as python-ovs is smart enough to avoid sending operations to
+            # the server that would result in no change. The overhead of
+            # setkey() though is > than the overhead of checking the value here
+            try:
+                if (router.options.get(ovn_const.LR_OPTIONS_MAC_AGE_LIMIT) ==
+                        self.threshold):
+                    continue
+            except AttributeError:
+                # The Logical_Router is newly created in this txn and has no
+                # "options" set yet, which the following setkey will rectify
+                pass
+            router.setkey("options", ovn_const.LR_OPTIONS_MAC_AGE_LIMIT,
+                          self.threshold)
+
+
 class AddACLCommand(command.BaseCommand):
     def __init__(self, api, lswitch, lport, **columns):
         super(AddACLCommand, self).__init__(api)

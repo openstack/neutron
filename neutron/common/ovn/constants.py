@@ -405,6 +405,8 @@ LSP_OPTIONS_MCAST_FLOOD = 'mcast_flood'
 LSP_OPTIONS_QOS_MIN_RATE = 'qos_min_rate'
 LSP_OPTIONS_LOCALNET_LEARN_FDB = 'localnet_learn_fdb'
 
+LR_OPTIONS_MAC_AGE_LIMIT = 'mac_binding_age_threshold'
+
 LRP_OPTIONS_RESIDE_REDIR_CH = 'reside-on-redirect-chassis'
 LRP_OPTIONS_REDIRECT_TYPE = 'redirect-type'
 BRIDGE_REDIRECT_TYPE = "bridged"

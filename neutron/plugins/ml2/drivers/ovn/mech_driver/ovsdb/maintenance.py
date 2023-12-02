@@ -832,6 +832,15 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                     txn.add(cmd)
         raise periodics.NeverAgain()
 
+    # A static spacing value is used here, but this method will only run
+    # once per lock due to the use of periodics.NeverAgain().
+    @has_lock_periodic(spacing=600, run_immediately=True)
+    def update_mac_aging_settings(self):
+        """Ensure that MAC_Binding aging options are set"""
+        with self._nb_idl.transaction(check_error=True) as txn:
+            txn.add(self._nb_idl.set_router_mac_age_limit())
+        raise periodics.NeverAgain()
+
     # TODO(fnordahl): Remove this in the B+3 cycle. This method removes the
     # now redundant  "external_ids:OVN_GW_NETWORK_EXT_ID_KEY" and
     # "external_ids:OVN_GW_PORT_EXT_ID_KEY" from to each router.

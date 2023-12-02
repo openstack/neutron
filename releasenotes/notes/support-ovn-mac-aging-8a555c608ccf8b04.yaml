@@ -1,0 +1,9 @@
+---
+features:
+  - |
+    MAC address aging in the OVN ML2 mech driver is now supported and can
+    be configured globally with the new ``[ovn] mac_binding_aging_threshold``
+    and ``[ovn_nb_global] mac_binding_removal_limit`` configuration
+    options. Setting the value per-router is not currently supported. This
+    feature is available in OVN versions >= 22.09.0+. Previous versions will
+    ignore the new options.

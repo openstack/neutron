@@ -26,6 +26,7 @@ from ovsdbapp.backend.ovs_idl import idlutils
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils as ovn_utils
 from neutron.common import utils as n_utils
+from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.scheduler import l3_ovn_scheduler as l3_sched
 from neutron.tests.functional import base
 from neutron.tests.functional.resources.ovsdb import events
@@ -595,3 +596,12 @@ class TestRouter(base.TestOVNFunctionalBase):
                 'Logical_Router_Port'].rows.values():
             self.assertEqual(ovn_const.MAX_GW_CHASSIS,
                              len(row.gateway_chassis))
+
+    def test_set_router_mac_age_limit(self):
+        name = "macage_router1"
+        router = self._create_router(name)
+        lr_name = ovn_utils.ovn_name(router['id'])
+        options = self.nb_api.db_get(
+            "Logical_Router", lr_name, "options").execute(check_error=True)
+        self.assertEqual(ovn_conf.get_ovn_mac_binding_age_threshold(),
+                         options[ovn_const.LR_OPTIONS_MAC_AGE_LIMIT])

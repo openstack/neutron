@@ -1354,7 +1354,9 @@ class OVNClient(object):
         lrouter_name = utils.ovn_name(router['id'])
         added_gw_port = None
         options = {'always_learn_from_arp_request': 'false',
-                   'dynamic_neigh_routers': 'true'}
+                   'dynamic_neigh_routers': 'true',
+                   ovn_const.LR_OPTIONS_MAC_AGE_LIMIT:
+                   ovn_conf.get_ovn_mac_binding_age_threshold()}
         with self._nb_idl.transaction(check_error=True) as txn:
             txn.add(self._nb_idl.create_lrouter(lrouter_name,
                                                 external_ids=external_ids,
