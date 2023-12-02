@@ -302,8 +302,7 @@ class TestAgentsDbGetAgents(TestAgentsDbBase):
                 if self.agents_alive else None)
             self.assertEqual(self.expected_agents, len(returned_agents))
             if self.agents_alive:
-                alive = (self.agents_alive == 'True' or
-                         self.agents_alive == 'true')
+                alive = self.agents_alive in ('True', 'true')
                 for agent in returned_agents:
                     self.assertEqual(alive, agent['alive'])
 
