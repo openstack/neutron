@@ -173,7 +173,7 @@ class L3AgentTestCase(framework.L3AgentTestFramework):
         # l3 agent should be able to rebuild the ns when it is deleted
         self.manage_router(self.agent, router_info)
         # Assert the router ports are there in namespace
-        self.assertTrue(all([port.exists() for port in router_ports]))
+        self.assertTrue(all(port.exists() for port in router_ports))
 
         self._delete_router(self.agent, router.router_id)
 

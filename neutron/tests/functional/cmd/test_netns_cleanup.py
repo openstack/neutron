@@ -152,7 +152,7 @@ class NetnsCleanupTest(base.BaseSudoTestCase):
     def _get_num_spawned_procs():
         cmd = ['ps', '-f', '-u', 'root']
         out = utils.execute(cmd, run_as_root=True)
-        return sum([1 for line in out.splitlines() if 'process_spawn' in line])
+        return sum(1 for line in out.splitlines() if 'process_spawn' in line)
 
 
 class TestNETNSCLIConfig(basetest.BaseTestCase):

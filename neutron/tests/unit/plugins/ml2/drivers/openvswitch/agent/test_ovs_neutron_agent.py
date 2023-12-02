@@ -4366,7 +4366,7 @@ class TestOvsDvrNeutronAgent(object):
                 self.agent.rpc_loop(polling_manager=mock.Mock())
             except TypeError:
                 pass
-        self.assertTrue(all([x.called for x in reset_mocks]))
+        self.assertTrue(all(x.called for x in reset_mocks))
 
     def test_rpc_loop_survives_error_in_check_canary_table(self):
         with mock.patch.object(self.agent.int_br,
