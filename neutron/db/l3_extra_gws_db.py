@@ -244,7 +244,8 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
                     self._raise_on_subnets_overlap(sub, new_s)
 
     def _match_requested_gateway_ports(self, context, router_id,
-                                       gw_info_list):
+                                       gw_info_list,
+                                       no_match_fixed_ip_fatal=True):
         """Match indirect references to gateway ports to the actual ports.
 
         Returns 3 parameters:
@@ -300,12 +301,14 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
                         matched_port_ids[gw_port['id']] = gw_info
                     break
             else:
-                raise mh_exc.UnableToMatchGateways(
-                    router_id=router_id,
-                    reason=_('could not match a gateway port attached to '
-                             'network %s based on the specified fixed IPs '
-                             '%s') % (net_id,
-                                      gw_info['external_fixed_ips']))
+                if no_match_fixed_ip_fatal:
+                    raise mh_exc.UnableToMatchGateways(
+                        router_id=router_id,
+                        reason=_('could not match a gateway port attached to '
+                                 'network %s based on the specified fixed IPs '
+                                 '%s') % (net_id,
+                                          gw_info['external_fixed_ips']))
+                nonexistent_port_info.append(gw_info)
         return matched_port_ids, part_matched_port_ids, nonexistent_port_info
 
     def _replace_compat_gw_port(self, context, router_db, new_gw_port_id):
@@ -492,8 +495,9 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
 
         # Find a match for the first gateway in the list.
         found_gw_port_ids, part_matches, nonexistent_port_info = (
-            self._match_requested_gateway_ports(context, router_id,
-                                                gw_info_list[:1]))
+            self._match_requested_gateway_ports(
+                context, router_id, gw_info_list[:1],
+                no_match_fixed_ip_fatal=False))
         # If there is already an existing extra gateway port matching what was
         # requested in the update for the compatibility gw port, simply update
         # the compatibility gw_port_id.
@@ -504,13 +508,14 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
 
         # The first gw info dict is special as it designates a compat gw. So
         # we simply try to make an update using the compatibility API.
-        self._update_router_gw_info(context, router_id, gw_info_list[0], {})
+        router_db = self._update_router_gw_info(context, router_id,
+                                                gw_info_list[0], {})
 
         # Find a match for the rest of the gateway list.
         found_gw_port_ids, part_matches, nonexistent_port_info = (
-            self._match_requested_gateway_ports(context, router_id,
-                                                gw_info_list[1:]))
-        router = l3_obj.Router.get_object(context, id=router_id)
+            self._match_requested_gateway_ports(
+                context, router_id, gw_info_list[1:],
+                no_match_fixed_ip_fatal=False))
 
         # For partial matches, we need to update the set of fixed IPs for
         # existing ports.
@@ -525,17 +530,17 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
                 gw_port_id,
                 {'port': {'fixed_ips': fixed_ips}})
 
-        gw_ports = l3_obj.RouterPort.get_gw_port_ids_by_router_id(
-            context.elevated(), router_id)
         # Identify the set of ports to remove based on the ones that could not
         # be matched based on the supplied external gateways in the request.
-        ports_to_remove = set(gw_ports).difference(
-            set(found_gw_port_ids.keys())).difference(set([router.gw_port_id]))
-
-        for gw_port_id in ports_to_remove:
-            self._remove_external_gateways(
-                context, router_id, [v for k, v in found_gw_port_ids.items()
-                                     if k == gw_port_id], {})
+        ports_to_remove = [
+            format_gateway_info(rp.port)
+            for rp in router_db.attached_ports
+            if (rp.port.device_owner == constants.DEVICE_OWNER_ROUTER_GW and
+                rp.port.id not in found_gw_port_ids.keys() and
+                rp.port.id not in part_matches.keys() and
+                rp.port.id != router_db.gw_port_id)
+        ]
+        self._remove_external_gateways(context, router_id, ports_to_remove, {})
 
         if nonexistent_port_info:
             synthetic_payload = {
