@@ -335,11 +335,16 @@ class IptablesManager(object):
         self.ipv4.update({'raw': IptablesTable(binary_name=self.wrap_name)})
         self.ipv6.update({'raw': IptablesTable(binary_name=self.wrap_name)})
 
+        self.ipv4.update({'nat': IptablesTable(binary_name=self.wrap_name)})
+        self.ipv6.update({'nat': IptablesTable(binary_name=self.wrap_name)})
+
         # Wrap the built-in chains
         builtin_chains = {4: {'filter': ['INPUT', 'OUTPUT', 'FORWARD']},
                           6: {'filter': ['INPUT', 'OUTPUT', 'FORWARD']}}
         builtin_chains[4].update({'raw': ['PREROUTING', 'OUTPUT']})
         builtin_chains[6].update({'raw': ['PREROUTING', 'OUTPUT']})
+        builtin_chains[4].update({'nat': ['PREROUTING']})
+        builtin_chains[6].update({'nat': ['PREROUTING']})
         self._configure_builtin_chains(builtin_chains)
 
         if not state_less:

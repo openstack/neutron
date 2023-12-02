@@ -1358,8 +1358,8 @@ class IptablesManagerStateLessTestCase(base.BaseTestCase):
         cfg.CONF.set_override('comment_iptables_rules', False, 'AGENT')
         self.iptables = (iptables_manager.IptablesManager(state_less=True))
 
-    def test_nat_not_found(self):
-        self.assertNotIn('nat', self.iptables.ipv4)
+    def test_nat_found(self):
+        self.assertIn('nat', self.iptables.ipv4)
 
     def test_mangle_not_found(self):
         self.assertNotIn('mangle', self.iptables.ipv4)
@@ -1368,7 +1368,7 @@ class IptablesManagerStateLessTestCase(base.BaseTestCase):
         iptables = iptables_manager.IptablesManager(state_less=True)
         iptables.initialize_mangle_table()
         self.assertIn('mangle', iptables.ipv4)
-        self.assertNotIn('nat', iptables.ipv4)
+        self.assertIn('nat', iptables.ipv4)
 
     def test_initialize_nat_table(self):
         iptables = iptables_manager.IptablesManager(state_less=True)
@@ -1384,8 +1384,8 @@ class IptablesManagerNoNatTestCase(base.BaseTestCase):
         cfg.CONF.set_override('comment_iptables_rules', False, 'AGENT')
         self.iptables = (iptables_manager.IptablesManager(nat=False))
 
-    def test_nat_not_found(self):
-        self.assertNotIn('nat', self.iptables.ipv4)
+    def test_nat_found(self):
+        self.assertIn('nat', self.iptables.ipv4)
 
     def test_mangle_found(self):
         self.assertIn('mangle', self.iptables.ipv4)
