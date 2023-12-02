@@ -42,6 +42,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.cmd import runtime_checks as checks
 from neutron.common import _constants as common_constants
+from neutron.common.ovn import utils as ovn_utils
 from neutron.common import utils as common_utils
 from neutron.ipam import utils as ipam_utils
 from neutron.privileged.agent.linux import dhcp as priv_dhcp
@@ -1210,7 +1211,7 @@ class Dnsmasq(DhcpLocalProcess):
 
     def _get_ovn_metadata_port_ip(self, subnet):
         m_ports = [port for port in self.network.ports if
-                   self._is_ovn_metadata_port(port, self.network.id)]
+                   ovn_utils.is_ovn_metadata_port(port)]
         if m_ports:
             port = self.device_manager.plugin.get_dhcp_port(m_ports[0].id)
             for fixed_ip in port.fixed_ips:
@@ -1461,11 +1462,6 @@ class Dnsmasq(DhcpLocalProcess):
             return True
         return False
 
-    @staticmethod
-    def _is_ovn_metadata_port(port, network_id):
-        return (port.device_id == 'ovnmeta-' + network_id and
-                port.device_owner == constants.DEVICE_OWNER_DISTRIBUTED)
-
     @classmethod
     def should_enable_metadata(cls, conf, network):
         """Determine whether the metadata proxy is needed for a network
@@ -1485,7 +1481,7 @@ class Dnsmasq(DhcpLocalProcess):
         with 3rd party backends.
         """
         for port in network.ports:
-            if cls._is_ovn_metadata_port(port, network.id):
+            if ovn_utils.is_ovn_metadata_port(port):
                 return False
 
         all_subnets = cls._get_all_subnets(network)
