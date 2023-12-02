@@ -23,6 +23,10 @@ from neutron.common.ovn import exceptions as ovn_exc
 from neutron.common.ovn import utils
 from neutron.services.portforwarding.constants import PORT_FORWARDING_PREFIX
 
+from oslo_log import log
+
+LOG = log.getLogger(__name__)
+
 RESOURCE_TYPE_MAP = {
     ovn_const.TYPE_NETWORKS: 'Logical_Switch',
     ovn_const.TYPE_PORTS: 'Logical_Switch_Port',
@@ -82,6 +86,11 @@ def _add_gateway_chassis(api, txn, lrp_name, val):
                 gwc.name = gwc_name
             gwc.chassis_name = chassis
             gwc.priority = prio
+            LOG.info(
+                "Schedule LRP %(lrp)s on gateway %(gtw)s with priority"
+                " %(prio)s",
+                {"lrp": lrp_name, "gtw": chassis, "prio": prio},
+            )
             prio = prio - 1
             uuid_list.append(gwc.uuid)
         return 'gateway_chassis', uuid_list
