@@ -34,6 +34,9 @@ class TestHostMedataHAProxyDaemonMonitor(base.BaseTestCase):
             'neutron.agent.linux.utils.execute')
         self.utils_exec = self.utils_exec_p.start()
 
+        self.delete_if_exists = mock.patch(
+            'neutron.agent.linux.utils.delete_if_exists').start()
+
         self.utils_replace_file_p = mock.patch(
             'neutron_lib.utils.file.replace_file')
         self.utils_replace_file = self.utils_replace_file_p.start()
@@ -70,6 +73,8 @@ class TestHostMedataHAProxyDaemonMonitor(base.BaseTestCase):
         self.assertIn('haproxy', cmd)
         self.assertIn(_join('-f', conffile), cmd)
         self.assertIn(_join('-p', pidfile), cmd)
+        self.delete_if_exists.assert_called_once_with(pidfile,
+                                                      run_as_root=True)
 
     def test_generate_host_metadata_haproxy_config(self):
         cfg.CONF.set_override('metadata_proxy_shared_secret',

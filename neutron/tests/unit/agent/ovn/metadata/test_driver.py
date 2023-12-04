@@ -21,6 +21,7 @@ from oslo_config import cfg
 from oslo_utils import uuidutils
 
 from neutron.agent.linux import external_process as ep
+from neutron.agent.linux import utils as linux_utils
 from neutron.agent.ovn.metadata import agent as metadata_agent
 from neutron.agent.ovn.metadata import driver as metadata_driver
 from neutron.common import metadata as comm_meta
@@ -51,6 +52,8 @@ class TestMetadataDriverProcess(base.BaseTestCase):
     def setUp(self):
         super(TestMetadataDriverProcess, self).setUp()
         mock.patch('eventlet.spawn').start()
+        self.delete_if_exists = mock.patch.object(linux_utils,
+                                                  'delete_if_exists').start()
 
         ovn_meta_conf.register_meta_conf_opts(meta_conf.SHARED_OPTS, cfg.CONF)
         ovn_meta_conf.register_meta_conf_opts(
@@ -152,6 +155,9 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 mock.call().netns.execute(netns_execute_args, addl_env=env,
                                           run_as_root=True)
             ])
+
+            self.delete_if_exists.assert_called_once_with(
+                mock.ANY, run_as_root=True)
 
     def test_create_config_file_wrong_user(self):
         with mock.patch('pwd.getpwnam', side_effect=KeyError):

@@ -427,15 +427,6 @@ class KeepalivedManager(object):
 
         return config_path
 
-    @staticmethod
-    def _safe_remove_pid_file(pid_file):
-        try:
-            os.remove(pid_file)
-        except OSError as e:
-            if e.errno != errno.ENOENT:
-                LOG.error("Could not delete file %s, keepalived can "
-                          "refuse to start.", pid_file)
-
     def get_vrrp_pid_file_name(self, base_pid_file):
         return '%s-vrrp' % base_pid_file
 
@@ -515,9 +506,6 @@ class KeepalivedManager(object):
             # and spawn keepalived successfully.
             if vrrp_pm.active:
                 vrrp_pm.disable()
-
-            self._safe_remove_pid_file(pid_file)
-            self._safe_remove_pid_file(self.get_vrrp_pid_file_name(pid_file))
 
             cmd = ['keepalived', '-P',
                    '-f', config_path,
