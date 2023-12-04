@@ -379,8 +379,9 @@ class OVNClient(object):
                     cidrs += ' {}/{}'.format(ip['ip_address'],
                                              subnet['cidr'].split('/')[1])
 
-            # Metadata port.
-            if utils.is_ovn_metadata_port(port):
+            # Metadata or OVN LB HM port.
+            if (utils.is_ovn_metadata_port(port) or
+                    utils.is_ovn_lb_hm_port(port)):
                 port_type = ovn_const.LSP_TYPE_LOCALPORT
 
             if utils.is_port_external(port):
