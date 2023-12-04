@@ -134,8 +134,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
                 plugin.update_port_status(rpc_context,
                                           port_id,
                                           new_status,
-                                          host,
-                                          port_context.network.current)
+                                          host)
         return result
 
     def _get_device_details(self, rpc_context, agent_id, host, device,
