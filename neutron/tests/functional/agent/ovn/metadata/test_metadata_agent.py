@@ -16,6 +16,7 @@
 import re
 from unittest import mock
 
+from neutron_lib import constants
 from oslo_config import fixture as fixture_config
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import event
@@ -154,7 +155,9 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
                 addresses='AA:AA:AA:AA:AA:AA 192.168.122.123',
                 external_ids={
                     ovn_const.OVN_CIDRS_EXT_ID_KEY: '192.168.122.123/24',
-                    ovn_const.OVN_DEVID_EXT_ID_KEY: 'ovnmeta-' + lswitch_name
+                    ovn_const.OVN_DEVID_EXT_ID_KEY: 'ovnmeta-' + lswitch_name,
+                    ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY:
+                        constants.DEVICE_OWNER_DISTRIBUTED
                 }))
 
     def _update_metadata_port_ip(self, metadata_port_name):
