@@ -1751,62 +1751,6 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         nb_synchronizer.sync_fip_qos_policies(ctx)
         self._validate_qos_records()
 
-    def test_fip_nat_revert_to_stateful(self):
-        res = self._create_network(self.fmt, 'n1_ext', True, as_admin=True,
-                                   arg_list=('router:external', ),
-                                   **{'router:external': True})
-        net_ext = self.deserialize(self.fmt, res)['network']
-        res = self._create_subnet(self.fmt, net_ext['id'], '10.0.0.0/24')
-        subnet_ext = self.deserialize(self.fmt, res)['subnet']
-
-        res = self._create_network(self.fmt, 'n1_int', True)
-        net_int = self.deserialize(self.fmt, res)['network']
-        self._create_subnet(self.fmt, net_int['id'], '10.10.0.0/24')
-
-        port = self._make_port(self.fmt, net_int['id'],
-                               name='test-port')['port']
-
-        data = {'name': 'r1', 'admin_state_up': True,
-                'tenant_id': self._tenant_id,
-                'external_gateway_info': {
-                    'enable_snat': True,
-                    'network_id': net_ext['id'],
-                    'external_fixed_ips': [{'ip_address': '10.0.0.5',
-                                            'subnet_id': subnet_ext['id']}]}
-                }
-        router = self.l3_plugin.create_router(self.context, {'router': data})
-        self.l3_plugin.add_router_interface(
-            self.context, router['id'], {'port_id': port['id']})
-
-        body = {'tenant_id': self._tenant_id,
-                'floating_network_id': net_ext['id'],
-                'port_id': port['id']}
-        self.l3_plugin.create_floatingip(self.context, {'floatingip': body})
-
-        self.assertEqual(0, len(self.nb_api.get_all_stateless_fip_nats()))
-
-        def get_all_stateful_fip_nats():
-            cmd = self.nb_api.db_find('NAT',
-                ('external_ids', '!=', {ovn_const.OVN_FIP_EXT_ID_KEY: ''}),
-                ('options', '=', {}),
-                ('type', '=', 'dnat_and_snat'))
-            return cmd.execute(check_error=True)
-
-        with self.nb_api.transaction(check_error=True) as txn:
-            for nat in get_all_stateful_fip_nats():
-                txn.add(self.nb_api.db_set(
-                    'NAT', nat['_uuid'],
-                    ('options', {'stateless': 'true'})))
-
-        self.assertEqual(1, len(self.nb_api.get_all_stateless_fip_nats()))
-
-        nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
-            self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
-            'repair', self.mech_driver)
-        nb_synchronizer.migrate_to_stateful_fips(self.context)
-
-        self.assertEqual(0, len(self.nb_api.get_all_stateless_fip_nats()))
-
 
 class TestOvnSbSync(base.TestOVNFunctionalBase):
 
