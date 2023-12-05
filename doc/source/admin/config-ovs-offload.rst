@@ -355,7 +355,7 @@ Validate Open vSwitch hardware offloading
 
    .. code-block:: bash
 
-      # openstack port create --network private --vnic-type=direct --binding-profile '{"capabilities": ["switchdev"]}' direct_port1
+      # openstack port create --network private --vnic-type=direct direct_port1
 
 
 #. Create an instance using the direct port on 'First Compute Node'
@@ -369,7 +369,7 @@ Validate Open vSwitch hardware offloading
 
    .. code-block:: bash
 
-      # openstack port create --network private --vnic-type=direct --binding-profile '{"capabilities": ["switchdev"]}' direct_port2
+      # openstack port create --network private --vnic-type=direct direct_port2
       # openstack server create --flavor m1.small --image mellanox_fedora --nic port-id=direct_port2 vm2
 
    .. note::
