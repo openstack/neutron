@@ -90,7 +90,7 @@ class TestMovedGlobals(base.BaseTestCase):
 
         delete_g()
         self.assertRaises(AttributeError, lambda: mod.g)
-        self.failUnlessRaises(AttributeError, delete_g)
+        self.assertRaises(AttributeError, delete_g)
 
     def test_not_last_line(self):
         self.assertRaises(SystemExit, import_code, 'code2')
