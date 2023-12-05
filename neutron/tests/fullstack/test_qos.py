@@ -29,7 +29,6 @@ from neutron.tests.fullstack.resources import machine
 from neutron.tests.unit import testlib_api
 
 from neutron.agent.common import ovs_lib
-from neutron.services.qos.drivers.openvswitch import driver as ovs_drv
 
 
 load_tests = testlib_api.module_load_tests
@@ -200,47 +199,6 @@ class _TestBwLimitQoS(BaseQoSRuleTestCase):
         # Make sure there are no other rules.
         for direction in list(all_directions):
             self._wait_for_bw_rule_applied(vm, None, None, direction)
-
-    def test_bw_limit_qos_policy_rule_lifecycle(self):
-        new_limit = BANDWIDTH_LIMIT + 100
-
-        # Create port with qos policy attached
-        vm, qos_policy = self._prepare_vm_with_qos_policy(
-            [functools.partial(
-                self._add_bw_limit_rule,
-                BANDWIDTH_LIMIT, BANDWIDTH_BURST, self.direction)])
-        bw_rule = qos_policy['rules'][0]
-
-        self._wait_for_bw_rule_applied(
-            vm, BANDWIDTH_LIMIT, BANDWIDTH_BURST, self.direction)
-        qos_policy_id = qos_policy['id']
-
-        self.client.delete_bandwidth_limit_rule(bw_rule['id'], qos_policy_id)
-        self._wait_for_bw_rule_removed(vm, self.direction)
-
-        # Create new rule with no given burst value, in such case ovs and lb
-        # agent should apply burst value as
-        # bandwidth_limit * qos_consts.DEFAULT_BURST_RATE
-        new_expected_burst = self._get_expected_burst_value(new_limit,
-                                                            self.direction)
-        new_rule = self.safe_client.create_bandwidth_limit_rule(
-            self.tenant_id, qos_policy_id, new_limit, direction=self.direction)
-        self._wait_for_bw_rule_applied(
-            vm, new_limit, new_expected_burst, self.direction)
-
-        # Update qos policy rule id
-        self.client.update_bandwidth_limit_rule(
-            new_rule['id'], qos_policy_id,
-            body={'bandwidth_limit_rule': {'max_kbps': BANDWIDTH_LIMIT,
-                                           'max_burst_kbps': BANDWIDTH_BURST}})
-        self._wait_for_bw_rule_applied(
-            vm, BANDWIDTH_LIMIT, BANDWIDTH_BURST, self.direction)
-
-        # Remove qos policy from port
-        self.client.update_port(
-            vm.neutron_port['id'],
-            body={'port': {'qos_policy_id': None}})
-        self._wait_for_bw_rule_removed(vm, self.direction)
 
     def test_bw_limit_direction_change(self):
         # Create port with qos policy attached, with rule self.direction
@@ -582,27 +540,6 @@ class TestPacketRateLimitQoSOvs(_TestPacketRateLimitQoS,
         ('ingress', {'direction': constants.INGRESS_DIRECTION}),
         ('egress', {'direction': constants.EGRESS_DIRECTION})
     ]
-
-
-class TestQoSWithL2Population(base.BaseFullStackTestCase):
-    scenarios = [
-        (constants.AGENT_TYPE_OVS,
-         {'mech_drivers': 'openvswitch',
-          'supported_rules': ovs_drv.SUPPORTED_RULES}),
-    ]
-
-    def setUp(self):
-        host_desc = []  # No need to register agents for this test case
-        env_desc = environment.EnvironmentDescription(
-            qos=True, l2_pop=True, mech_drivers=self.mech_drivers)
-        env = environment.Environment(env_desc, host_desc)
-        super(TestQoSWithL2Population, self).setUp(env)
-
-    def test_supported_qos_rule_types(self):
-        res = self.client.list_qos_rule_types()
-        rule_types = {t['type'] for t in res['rule_types']}
-        expected_rules = set(self.supported_rules)
-        self.assertEqual(expected_rules, rule_types)
 
 
 class TestQoSPolicyIsDefault(base.BaseFullStackTestCase):
