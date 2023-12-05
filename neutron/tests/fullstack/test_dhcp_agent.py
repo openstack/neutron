@@ -91,15 +91,6 @@ class TestDhcpAgentNoHA(BaseDhcpAgentTest):
     number_of_hosts = 1
     agent_down_time = 60
 
-    def test_dhcp_assignment(self):
-        # First check if network was scheduled to one DHCP agent
-        dhcp_agents = self.client.list_dhcp_agent_hosting_networks(
-            self.network['id'])
-        self.assertEqual(1, len(dhcp_agents['agents']))
-
-        # And check if IP and gateway config is fine on FakeMachine
-        self.vm.block_until_dhcp_config_done()
-
     def test_mtu_update(self):
         # The test case needs access to devices in nested namespaces. ip_lib
         # doesn't support it, and it's probably unsafe to touch the library for

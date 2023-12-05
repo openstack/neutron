@@ -22,23 +22,7 @@ from neutron.agent.common import ovs_lib
 from neutron.agent.common import polling
 from neutron.agent.l2.extensions import qos as qos_extension
 from neutron.common import config
-from neutron.services.trunk.drivers.openvswitch.agent \
-    import driver as trunk_driver
 from neutron.tests.common.agents import ovs_agent
-
-
-def monkeypatch_init_handler():
-    original_handler = trunk_driver.init_handler
-
-    def new_init_handler(resource, event, trigger, payload=None):
-        # NOTE(slaweq): make this setup conditional based on server-side
-        # capabilities for fullstack tests we can assume that server-side
-        # and agent-side conf are in sync
-        if "trunk" not in cfg.CONF.service_plugins:
-            return
-        original_handler(resource, event, trigger, payload)
-
-    trunk_driver.init_handler = new_init_handler
 
 
 def monkeypatch_qos():
@@ -63,7 +47,6 @@ def main():
     # ovs-vswitchd processes for each test will be isolated in separate
     # namespace
     config.register_common_config_options()
-    monkeypatch_init_handler()
     monkeypatch_qos()
     monkeypatch_event_filtering()
     ovs_agent.main()

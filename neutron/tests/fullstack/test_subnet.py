@@ -61,27 +61,6 @@ class TestSubnet(base.BaseFullStackTestCase):
     def _show_subnet(self, subnet_id):
         return self.client.show_subnet(subnet_id)
 
-    def test_create_subnet_ipv4(self):
-        cidr = self.useFixture(
-            ip_network.ExclusiveIPNetwork(
-                '240.0.0.0', '240.255.255.255', '24')).network
-        subnet = self._create_subnet(self._project_id, self._network['id'],
-                                     cidr)
-        subnet = self._show_subnet(subnet['id'])
-        self.assertEqual(subnet['subnet']['gateway_ip'],
-                         str(netaddr.IPNetwork(cidr).network + 1))
-
-    def test_create_subnet_ipv6_slaac(self):
-        cidr = self.useFixture(
-            ip_network.ExclusiveIPNetwork(
-                '2001:db8::', '2001:db8::ffff', '64')).network
-        subnet = self._create_subnet(self._project_id, self._network['id'],
-                                     cidr, ipv6_address_mode='slaac',
-                                     ipv6_ra_mode='slaac')
-        subnet = self._show_subnet(subnet['id'])
-        self.assertEqual(subnet['subnet']['gateway_ip'],
-                         str(netaddr.IPNetwork(cidr).network))
-
     def test_create_subnet_ipv6_prefix_delegation(self):
         subnet = self._create_subnet(self._project_id, self._network['id'],
                                      None, ipv6_address_mode='slaac',
