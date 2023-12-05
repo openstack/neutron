@@ -41,7 +41,6 @@ from neutron.db import ovn_hash_ring_db as hash_ring_db
 from neutron.db import ovn_revision_numbers_db as revision_numbers_db
 from neutron.objects import ports as ports_obj
 from neutron.objects import router as router_obj
-from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
 from neutron import service
 from neutron.services.logapi.drivers.ovn import driver as log_driver
 
@@ -298,35 +297,6 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
             self._ovn_client.create_subnet(context, sn_db_obj, n_db_obj)
         else:
             self._ovn_client.update_subnet(context, sn_db_obj, n_db_obj)
-
-    # The migration will run just once per neutron-server instance. If the lock
-    # is held by some other neutron-server instance in the cloud, we'll attempt
-    # to perform the migration every 10 seconds until completed.
-    # TODO(jlibosva): Remove the migration to port groups at some point. It's
-    # been around since Queens release so it is good to drop this soon.
-    @periodics.periodic(spacing=10, run_immediately=True)
-    @rerun_on_schema_updates
-    def migrate_to_port_groups(self):
-        """Perform the migration from Address Sets to Port Groups. """
-        # TODO(dalvarez): Remove this in U cycle when we're sure that all
-        # versions are running using Port Groups (and OVS >= 2.10).
-
-        # If Port Groups are not supported or we've already migrated, we don't
-        # need to attempt to migrate again.
-        if not self._nb_idl.get_address_sets():
-            raise periodics.NeverAgain()
-
-        # Only the worker holding a valid lock within OVSDB will perform the
-        # migration.
-        if not self.has_lock:
-            return
-
-        admin_context = n_context.get_admin_context()
-        nb_sync = ovn_db_sync.OvnNbSynchronizer(
-            self._ovn_client._plugin, self._nb_idl, self._ovn_client._sb_idl,
-            None, None)
-        nb_sync.migrate_to_port_groups(admin_context)
-        raise periodics.NeverAgain()
 
     def _log_maintenance_inconsistencies(self, create_update_inconsistencies,
                                          delete_inconsistencies):

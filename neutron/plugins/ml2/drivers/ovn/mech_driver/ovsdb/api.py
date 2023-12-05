@@ -272,17 +272,6 @@ class API(api.API, metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def delete_address_set(self, name, if_exists=True):
-        """Delete an address set
-
-        :param name:        The name of the address set
-        :type name:         string
-        :param if_exists:   Do not fail if the address set does not exist
-        :type if_exists:    bool
-        :returns:           :class:`Command` with no result
-        """
-
-    @abc.abstractmethod
     def get_all_chassis_gateway_bindings(self,
                                          chassis_candidate_list=None):
         """Return a dictionary of chassis name:list of gateways
@@ -388,13 +377,6 @@ class API(api.API, metaclass=abc.ABCMeta):
         :returns:              Returns the columns of the DHCP_Options as list
                                of dictionary. Empty list is returned if no
                                DHCP_Options matched found.
-        """
-
-    @abc.abstractmethod
-    def get_address_sets(self):
-        """Gets all address sets in the OVN_Northbound DB
-
-        :returns: dictionary indexed by name, DB columns as values
         """
 
     @abc.abstractmethod

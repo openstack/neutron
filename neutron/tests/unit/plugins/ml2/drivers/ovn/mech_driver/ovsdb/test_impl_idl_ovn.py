@@ -865,11 +865,6 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         self.assertEqual(len(dhcp_options['subnets']), 3)
         self.assertEqual(len(dhcp_options['ports_v4']), 2)
 
-    def test_get_address_sets(self):
-        self._load_nb_db()
-        address_sets = self.nb_ovn_idl.get_address_sets()
-        self.assertEqual(len(address_sets), 4)
-
     def test_get_router_floatingip_lbs(self):
         lrouter_name = 'rtr_name'
         # Empty
