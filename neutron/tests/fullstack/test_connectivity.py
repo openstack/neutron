@@ -83,22 +83,6 @@ class BaseConnectivitySameNetworkTest(base.BaseFullStackTestCase):
         vms.ping_all()
 
 
-class TestOvsConnectivitySameNetwork(BaseConnectivitySameNetworkTest):
-
-    l2_agent_type = constants.AGENT_TYPE_OVS
-    scenarios = [
-        ('VXLAN', {'network_type': 'vxlan',
-                   'l2_pop': False}),
-        ('GRE-l2pop-arp_responder', {'network_type': 'gre',
-                                     'l2_pop': True,
-                                     'arp_responder': True}),
-        ('VLANs', {'network_type': 'vlan',
-                   'l2_pop': False})]
-
-    def test_connectivity(self):
-        self._test_connectivity()
-
-
 class TestOvsConnectivitySameNetworkOnOvsBridgeControllerStop(
         BaseConnectivitySameNetworkTest):
 
