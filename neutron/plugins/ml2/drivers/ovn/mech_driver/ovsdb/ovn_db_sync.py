@@ -863,10 +863,20 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
             LOG.warning('DHCP options for subnet %s is present in '
                         'Neutron but out of sync for OVN', subnet_id)
             if self.mode == SYNC_MODE_REPAIR:
+                # If neutron-server is running we could race and find a
+                # subnet without a cached network, just skip it to avoid
+                # a KeyError below.
+                network_id = utils.ovn_name(subnet['network_id'])
+                if network_id not in db_networks:
+                    LOG.warning('Network %s for subnet %s not found in OVN NB '
+                                'DB network cache, possible race condition, '
+                                'please check that neutron-server is stopped! '
+                                'Skipping subnet.', network_id, subnet_id)
+                    continue
                 try:
-                    LOG.debug('Adding/Updating DHCP options for subnet %s in '
-                              ' OVN NB DB', subnet_id)
-                    network = db_networks[utils.ovn_name(subnet['network_id'])]
+                    LOG.warning('Adding/Updating DHCP options for subnet %s '
+                                'in OVN NB DB', subnet_id)
+                    network = db_networks[network_id]
                     # _ovn_client._add_subnet_dhcp_options doesn't create
                     # a new row in DHCP_Options if the row already exists.
                     # See commands.AddDHCPOptionsCommand.
