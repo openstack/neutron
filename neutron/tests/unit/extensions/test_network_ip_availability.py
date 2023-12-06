@@ -16,16 +16,16 @@
 import netaddr
 from neutron_lib import constants
 
-import neutron.api.extensions as api_ext
-import neutron.common.config as config
-import neutron.extensions
-import neutron.services.network_ip_availability.plugin as plugin_module
-import neutron.tests.unit.db.test_db_base_plugin_v2 as test_db_base_plugin_v2
+from neutron.api import extensions as api_ext
+from neutron.common import config
+from neutron import extensions
+from neutron.services.network_ip_availability import plugin as plugin_module
+from neutron.tests.unit.db import test_db_base_plugin_v2
 
 API_RESOURCE = 'network-ip-availabilities'
 IP_AVAIL_KEY = 'network_ip_availability'
 IP_AVAILS_KEY = 'network_ip_availabilities'
-EXTENSIONS_PATH = ':'.join(neutron.extensions.__path__)
+EXTENSIONS_PATH = ':'.join(extensions.__path__)
 PLUGIN_NAME = '%s.%s' % (plugin_module.NetworkIPAvailabilityPlugin.__module__,
                          plugin_module.NetworkIPAvailabilityPlugin.__name__)
 
