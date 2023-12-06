@@ -142,10 +142,13 @@ class TcLibTestCase(functional_base.BaseSudoTestCase):
             common_constants.INGRESS_DIRECTION,
             ip_addr)
         self.assertIsNotNone(filter_id)
-        filter_id = l3_tc.clear_ip_rate_limit(
+        l3_tc.clear_ip_rate_limit(
             common_constants.INGRESS_DIRECTION,
             ip_addr)
-        self.assertIsNone(filter_id)
+        self.assertRaises(exceptions.FilterIDForIPNotFound,
+                          l3_tc.get_filter_id_for_ip,
+                          common_constants.INGRESS_DIRECTION,
+                          ip_addr)
 
         # testing: IP filter does not exist
         l3_tc.clear_ip_rate_limit(

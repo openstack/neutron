@@ -122,8 +122,7 @@ class FlatTypeTest(testlib_api.SqlTestCase):
                           self.context, segment)
 
     def test_allocate_tenant_segment(self):
-        observed = self.driver.allocate_tenant_segment(self.context)
-        self.assertIsNone(observed)
+        self.assertIsNone(self.driver.allocate_tenant_segment(self.context))
 
     def test_get_mtu(self):
         cfg.CONF.set_override('global_physnet_mtu', 1475)
