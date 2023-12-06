@@ -104,6 +104,17 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                          'gateway_ip': '20.0.0.1',
                          'dns_nameservers': [],
                          'host_routes': [],
+                         'ip_version': 4},
+                        # A subnet without a known network should be skipped,
+                        # see bug #2045811
+                        {'id': 'notfound',
+                         'network_id': 'notfound',
+                         'enable_dhcp': True,
+                         'cidr': '30.0.0.0/24',
+                         'tenant_id': 'tenant1',
+                         'gateway_ip': '30.0.0.1',
+                         'dns_nameservers': [],
+                         'host_routes': [],
                          'ip_version': 4}]
 
         self.security_groups = [
