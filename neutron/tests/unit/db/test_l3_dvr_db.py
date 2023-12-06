@@ -1451,8 +1451,7 @@ class L3DvrTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 call_info['count'] += 1
                 if call_info['count'] == 2:
                     raise RuntimeError()
-                else:
-                    return orig_update_port(*args, **kwargs)
+                return orig_update_port(*args, **kwargs)
 
             # NOTE(trananhkma): expect that update_port() only raises an error
             # at the 2nd function call (Update owner after actual process

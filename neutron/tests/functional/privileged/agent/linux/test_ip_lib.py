@@ -204,8 +204,7 @@ class GetLinkDevicesTestCase(functional_base.BaseSudoTestCase):
         for device in priv_ip_lib.get_link_devices(namespace):
             if interface_name == linux_utils.get_attr(device, 'IFLA_IFNAME'):
                 return device
-        else:
-            self.fail('Interface "%s" not found' % interface_name)
+        self.fail('Interface "%s" not found' % interface_name)
 
     def test_get_link_devices_veth_different_namespaces(self):
         namespace2 = 'ns_test-' + uuidutils.generate_uuid()
@@ -280,8 +279,7 @@ class BaseIpRuleTestCase(functional_base.BaseSudoTestCase):
         else:
             if raise_exception:
                 self.fail('Rule with %s was expected' % exception_string)
-            else:
-                return False
+            return False
 
 
 class ListIpRulesTestCase(BaseIpRuleTestCase):

@@ -126,8 +126,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
             if isinstance(request, ipam_req.SpecificAddressRequest):
                 if request.address == netaddr.IPAddress(fail_ip):
                     raise exception
-                else:
-                    return str(request.address), subnet_id
+                return str(request.address), subnet_id
             else:
                 return auto_ip, subnet_id
 

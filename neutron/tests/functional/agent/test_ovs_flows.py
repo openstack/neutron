@@ -66,7 +66,7 @@ class OVSAgentTestBase(test_ovs_lib.OVSBridgeTestBase,
             (l, sep, r) = line.partition(':')
             if not sep:
                 continue
-            elif l in required_keys:
+            if l in required_keys:
                 trace[l] = r
         for k in required_keys:
             if k not in trace:
