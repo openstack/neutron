@@ -699,6 +699,15 @@ class TestOVSFirewallDriver(base.BaseTestCase):
             in_port=self.port_ofport,
             priority=100,
             table=ovs_consts.TRANSIENT_TABLE)
+        exp_egress_rarp_classifier = mock.call(
+            actions='resubmit(,{:d})'.format(
+                        ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE),
+            in_port=self.port_ofport,
+            reg5=self.port_ofport,
+            priority=95,
+            dl_src=self.port_mac,
+            dl_type='0x8035',
+            table=ovs_consts.BASE_EGRESS_TABLE)
         exp_ingress_classifier = mock.call(
             actions='set_field:{:d}->reg5,set_field:{:d}->reg6,'
                     'strip_vlan,resubmit(,{:d})'.format(
@@ -721,7 +730,8 @@ class TestOVSFirewallDriver(base.BaseTestCase):
             table=ovs_consts.RULES_INGRESS_TABLE,
             tcp_dst='0x007b')
         calls = self.mock_bridge.br.add_flow.call_args_list
-        for call in exp_ingress_classifier, exp_egress_classifier, filter_rule:
+        for call in (exp_ingress_classifier, exp_egress_classifier,
+                     exp_egress_rarp_classifier, filter_rule):
             self.assertIn(call, calls)
         self._assert_invalid_conntrack_entries_deleted(port_dict)
 
