@@ -213,10 +213,14 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             self._core_plugin.delete_port(
                 context, port_id, l3_port_check=False)
 
+    @db_api.CONTEXT_READER
     def _get_dead_floating_port_candidates(self, context):
-        filters = {'device_id': ['PENDING'],
-                   'device_owner': [DEVICE_OWNER_FLOATINGIP]}
-        return {p['id'] for p in self._core_plugin.get_ports(context, filters)}
+        query = context.session.query(models_v2.Port)
+        query = query.filter(
+            models_v2.Port.device_id == 'PENDING',
+            models_v2.Port.device_owner == DEVICE_OWNER_FLOATINGIP)
+
+        return {p['id'] for p in query.all()}
 
     @db_api.CONTEXT_READER
     def _get_router(self, context, router_id):
