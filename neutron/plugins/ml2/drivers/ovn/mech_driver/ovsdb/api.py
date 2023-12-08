@@ -477,23 +477,6 @@ class API(api.API, metaclass=abc.ABCMeta):
         :returns: The NAT rule row or None
         """
 
-    @abc.abstractmethod
-    def get_floatingip_by_ips(self, router_id, logical_ip, external_ip):
-        """Get a Floating IP based on it's logical and external IPs.
-
-        DEPRECATED. In the Rocky release of OpenStack this method can be
-        removed and get_floatingip() should be used instead. This method
-        is a backward compatibility layer for the Pike -> Queens release.
-
-        :param router_id: The ID of the router to which the FIP belongs to.
-        :type lrouter:  string
-        :param logical_ip: The FIP's logical IP address
-        :type logical_ip: string
-        :param external_ip: The FIP's external IP address
-        :type external_ip: string
-        :returns: The NAT rule row or None
-        """
-
     def check_revision_number(self, name, resource, resource_type,
                               if_exists=True):
         """Compare the revision number from Neutron and OVN.
