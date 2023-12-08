@@ -339,39 +339,35 @@ class OVNClient(object):
             tag = bp_info.bp_param.get('tag', [])
             address = port['mac_address']
 
-            ip_subnets = port.get('fixed_ips', [])
+            port_fixed_ips = port.get('fixed_ips', [])
             subnet_ids = [
                 ip['subnet_id']
-                for ip in ip_subnets
+                for ip in port_fixed_ips
                 if 'subnet_id' in ip
             ]
             subnets = self._plugin.get_subnets(
                 context, filters={'id': subnet_ids})
+            subnets_by_id = {subnet['id']: subnet for subnet in subnets}
             address4_scope_id, address6_scope_id = (
-                utils.get_subnets_address_scopes(context, subnets, ip_subnets,
+                utils.get_subnets_address_scopes(context, subnets_by_id,
+                                                 port_fixed_ips,
                                                  self._plugin))
             p_type, virtual_ip, virtual_parents = (
                 utils.get_port_type_virtual_and_parents(
-                    subnets, ip_subnets, port['network_id'], port['id'],
-                    self._nb_idl))
+                    subnets_by_id, port_fixed_ips, port['network_id'],
+                    port['id'], self._nb_idl))
             if p_type:
                 port_type = ovn_const.LSP_TYPE_VIRTUAL
                 options[ovn_const.LSP_OPTIONS_VIRTUAL_IP_KEY] = virtual_ip
                 options[ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY] = (
                     virtual_parents)
-
-            if subnets:
-                for ip in ip_subnets:
+            if subnets_by_id:
+                for ip in port_fixed_ips:
                     ip_addr = ip['ip_address']
                     address += ' ' + ip_addr
 
-                    try:
-                        subnet = [
-                            sub
-                            for sub in subnets
-                            if sub["id"] == ip["subnet_id"]
-                        ][0]
-                    except IndexError:
+                    subnet = subnets_by_id.get(ip['subnet_id'])
+                    if not subnet:
                         LOG.debug('Subnet not found for ip address %s',
                                   ip_addr)
                         continue
