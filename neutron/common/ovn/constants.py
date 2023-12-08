@@ -70,6 +70,7 @@ OVN_ROUTER_PORT_GW_MTU_OPTION = 'gateway_mtu'
 OVN_PROVNET_PORT_NAME_PREFIX = 'provnet-'
 OVN_NAME_PREFIX = 'neutron-'
 OVN_HA_CH_GROUP_EXTPORT_PREFIX = 'neutron-extport-'
+OVN_METADATA_PREFIX = 'ovnmeta-'
 
 # TODO(froyo): Move this to neutron-lib as soon as possible, and when a new
 # release is created and pointed to in the requirements remove this code
