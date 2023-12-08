@@ -26,7 +26,6 @@ from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions as n_exc
 from neutron_lib import fixture
-from neutron_lib.plugins import directory
 from neutron_lib.tests.unit import fake_notifier
 from oslo_config import cfg
 from oslo_db import exception as db_exc
@@ -45,7 +44,6 @@ from neutron import policy
 from neutron import quota
 from neutron.tests import base
 from neutron.tests import tools
-from neutron.tests.unit import dummy_plugin
 from neutron.tests.unit import testlib_api
 
 
@@ -1160,144 +1158,6 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         api = webtest.TestApp(router.APIRouter())
         api.get(_get_path('networks', _uuid(), fmt=self.fmt))
         self.assertTrue(instance.get_network.called)
-
-
-class SubresourceTest(base.BaseTestCase):
-    def setUp(self):
-        super(SubresourceTest, self).setUp()
-        raise self.skipException('this class will be deleted')
-        plugin = 'neutron.tests.unit.api.v2.test_base.TestSubresourcePlugin'
-        extensions.PluginAwareExtensionManager._instance = None
-
-        self.useFixture(fixture.APIDefinitionFixture())
-
-        self.config_parse()
-        self.setup_coreplugin(plugin, load_plugins=False)
-
-        self._plugin_patcher = mock.patch(plugin, autospec=True)
-        self.plugin = self._plugin_patcher.start()
-
-        api = router.APIRouter()
-
-        SUB_RESOURCES = {}
-        RESOURCE_ATTRIBUTE_MAP = {}
-        SUB_RESOURCES[dummy_plugin.RESOURCE_NAME] = {
-            'collection_name': 'dummies',
-            'parent': {'collection_name': 'networks',
-                       'member_name': 'network'}
-        }
-        RESOURCE_ATTRIBUTE_MAP['dummies'] = {
-            'foo': {'allow_post': True, 'allow_put': True,
-                    'validate': {'type:string': None},
-                    'default': '', 'is_visible': True},
-            'tenant_id': {'allow_post': True, 'allow_put': False,
-                          'validate': {'type:string': None},
-                          'required_by_policy': True,
-                          'is_visible': True}
-        }
-        collection_name = SUB_RESOURCES[
-            dummy_plugin.RESOURCE_NAME].get('collection_name')
-        resource_name = dummy_plugin.RESOURCE_NAME
-        parent = SUB_RESOURCES[dummy_plugin.RESOURCE_NAME].get('parent')
-        params = RESOURCE_ATTRIBUTE_MAP['dummies']
-        member_actions = {'mactions': 'GET'}
-        _plugin = directory.get_plugin()
-        controller = v2_base.create_resource(collection_name, resource_name,
-                                             _plugin, params,
-                                             member_actions=member_actions,
-                                             parent=parent,
-                                             allow_bulk=True,
-                                             allow_pagination=True,
-                                             allow_sorting=True)
-
-        path_prefix = "/%s/{%s_id}/%s" % (parent['collection_name'],
-                                          parent['member_name'],
-                                          collection_name)
-        mapper_kwargs = dict(controller=controller,
-                             path_prefix=path_prefix)
-        api.map.collection(collection_name, resource_name, **mapper_kwargs)
-        api.map.resource(collection_name, collection_name,
-                         controller=controller,
-                         parent_resource=parent,
-                         member=member_actions)
-        self.api = webtest.TestApp(api)
-
-    def test_index_sub_resource(self):
-        instance = self.plugin.return_value
-
-        self.api.get('/networks/id1/dummies')
-        instance.get_network_dummies.assert_called_once_with(mock.ANY,
-                                                             filters=mock.ANY,
-                                                             fields=mock.ANY,
-                                                             network_id='id1')
-
-    def test_show_sub_resource(self):
-        instance = self.plugin.return_value
-
-        dummy_id = _uuid()
-        self.api.get('/networks/id1' + _get_path('dummies', id=dummy_id))
-        instance.get_network_dummy.assert_called_once_with(mock.ANY,
-                                                           dummy_id,
-                                                           network_id='id1',
-                                                           fields=mock.ANY)
-
-    def test_create_sub_resource(self):
-        instance = self.plugin.return_value
-        tenant_id = _uuid()
-
-        body = {
-            dummy_plugin.RESOURCE_NAME: {
-                'foo': 'bar', 'tenant_id': tenant_id,
-                'project_id': tenant_id
-            }
-        }
-        self.api.post_json('/networks/id1/dummies', body)
-        instance.create_network_dummy.assert_called_once_with(mock.ANY,
-                                                              network_id='id1',
-                                                              dummy=body)
-
-    def test_update_sub_resource(self):
-        instance = self.plugin.return_value
-
-        dummy_id = _uuid()
-        body = {dummy_plugin.RESOURCE_NAME: {'foo': 'bar'}}
-        self.api.put_json('/networks/id1' + _get_path('dummies', id=dummy_id),
-                          body)
-        instance.update_network_dummy.assert_called_once_with(mock.ANY,
-                                                              dummy_id,
-                                                              network_id='id1',
-                                                              dummy=body)
-
-    def test_update_subresource_to_none(self):
-        instance = self.plugin.return_value
-
-        dummy_id = _uuid()
-        body = {dummy_plugin.RESOURCE_NAME: {}}
-        self.api.put_json('/networks/id1' + _get_path('dummies', id=dummy_id),
-                          body)
-        instance.update_network_dummy.assert_called_once_with(mock.ANY,
-                                                              dummy_id,
-                                                              network_id='id1',
-                                                              dummy=body)
-
-    def test_delete_sub_resource(self):
-        instance = self.plugin.return_value
-
-        dummy_id = _uuid()
-        self.api.delete('/networks/id1' + _get_path('dummies', id=dummy_id))
-        instance.delete_network_dummy.assert_called_once_with(mock.ANY,
-                                                              dummy_id,
-                                                              network_id='id1')
-
-    def test_sub_resource_member_actions(self):
-        instance = self.plugin.return_value
-
-        dummy_id = _uuid()
-        self.api.get('/networks/id1' + _get_path('dummies', id=dummy_id,
-                                                 action='mactions'))
-        instance.mactions.assert_called_once_with(mock.ANY,
-                                                  dummy_id,
-                                                  network_id='id1')
 
 
 # Note: since all resources use the same controller and validation
