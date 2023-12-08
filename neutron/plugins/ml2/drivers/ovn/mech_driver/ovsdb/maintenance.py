@@ -523,14 +523,6 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                         LOG.exception('Failed to update port %s', port.name)
         raise periodics.NeverAgain()
 
-    def _delete_default_ha_chassis_group(self, txn):
-        # TODO(lucasgomes): Remove the deletion of the
-        # HA_CHASSIS_GROUP_DEFAULT_NAME in the Y cycle. We no longer
-        # have a default HA Chassis Group.
-        cmd = [self._nb_idl.ha_chassis_group_del(
-            ovn_const.HA_CHASSIS_GROUP_DEFAULT_NAME, if_exists=True)]
-        self._ovn_client._transaction(cmd, txn=txn)
-
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
     @periodics.periodic(spacing=600, run_immediately=True)
@@ -558,8 +550,6 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                     self._sb_idl, txn)
                 txn.add(self._nb_idl.set_lswitch_port(
                     port.name, ha_chassis_group=ha_ch_grp))
-
-            self._delete_default_ha_chassis_group(txn)
 
         raise periodics.NeverAgain()
 
