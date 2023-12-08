@@ -410,7 +410,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.ovo_notifier = None
         rpc_workers = conf_service.get_rpc_workers()
         if rpc_workers is None or rpc_workers >= 1:
-            self.ovo_notifier = ovo_rpc.OVOServerRpcInterface()
+            self.ovo_notifier = ovo_rpc.OVOServerRpcInterface(
+                cfg.CONF.enable_signals)
         self.notifier = rpc.AgentNotifierApi(topics.AGENT)
         if cfg.CONF.enable_traditional_dhcp:
             self.agent_notifiers[const.AGENT_TYPE_DHCP] = (

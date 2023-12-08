@@ -164,6 +164,10 @@ core_opts = [
                help=_('IPv6 address of this host. If no address is provided '
                       'and one cannot be determined, ::1 will be '
                       'used.')),
+    cfg.BoolOpt('enable_signals', default=True,
+                help=_('If False, neutron-server will not listen for signals '
+                       'like SIGINT or SIGTERM. This is useful when running '
+                       'behind a WSGI server like apache/mod_wsgi.')),
 ]
 
 core_cli_opts = [
