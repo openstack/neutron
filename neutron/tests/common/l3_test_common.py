@@ -182,9 +182,8 @@ def router_append_interface(router, count=1,
                             ra_mode=None, addr_mode=None, dual_stack=False,
                             same_port=False):
     interfaces = router[lib_constants.INTERFACE_KEY]
-    current = sum(
-        [netaddr.IPNetwork(subnet['cidr']).version == ip_version
-         for p in interfaces for subnet in p['subnets']])
+    current = sum(netaddr.IPNetwork(subnet['cidr']).version == ip_version
+                  for p in interfaces for subnet in p['subnets'])
 
     # If dual_stack=True, create IPv4 and IPv6 subnets on each port
     # If same_port=True, create ip_version number of subnets on a single port

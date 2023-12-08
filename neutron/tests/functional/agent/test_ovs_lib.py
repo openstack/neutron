@@ -305,7 +305,7 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         vif_ports = [self.create_ovs_vif_port() for i in range(3)]
         ports = self.br.get_vif_ports()
         self.assertEqual(3, len(ports))
-        self.assertTrue(all([isinstance(x, ovs_lib.VifPort) for x in ports]))
+        self.assertTrue(all(isinstance(x, ovs_lib.VifPort) for x in ports))
         self.assertEqual(sorted([x.port_name for x in vif_ports]),
                          sorted([x.port_name for x in ports]))
 
@@ -321,7 +321,7 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
                           new=new_port_name_list).start()
         ports = self.br.get_vif_ports()
         self.assertEqual(3, len(ports))
-        self.assertTrue(all([isinstance(x, ovs_lib.VifPort) for x in ports]))
+        self.assertTrue(all(isinstance(x, ovs_lib.VifPort) for x in ports))
         self.assertEqual(sorted([x.port_name for x in vif_ports]),
                          sorted([x.port_name for x in ports]))
 

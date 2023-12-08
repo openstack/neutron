@@ -3195,8 +3195,8 @@ class TestDnsmasq(TestBase):
                                       for alloc in FakeDhcpPort().fixed_ips]
             options, idx_map = dm._generate_opts_per_subnet()
 
-        contains_metadata_ip = any(['%s' % constants.METADATA_CIDR in line
-                                    for line in options])
+        contains_metadata_ip = any('%s' % constants.METADATA_CIDR in line
+                                   for line in options)
         self.assertEqual(expected_mdt_ip, contains_metadata_ip)
 
     def test__generate_opts_per_subnet_no_metadata(self):

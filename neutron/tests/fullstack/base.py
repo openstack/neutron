@@ -130,7 +130,7 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
 
             futures.wait(restarts, timeout=restart_timeout)
 
-            self.assertTrue(all([r.done() for r in restarts]))
+            self.assertTrue(all(r.done() for r in restarts))
             LOG.debug("Restarting agents - done")
 
             # It is necessary to give agents time to initialize
