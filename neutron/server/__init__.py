@@ -16,13 +16,17 @@
 # If ../neutron/__init__.py exists, add ../ to Python search path, so that
 # it will override what happens to be installed in /usr/(local/)lib/python...
 
+import logging as sys_logging
 import os
 import sys
 
 from oslo_config import cfg
+from oslo_reports import guru_meditation_report as gmr
+from oslo_reports import opts as gmr_opts
 
 from neutron._i18n import _
 from neutron.common import config
+from neutron import version
 
 # NOTE(annp): These environment variables are required for deploying
 # neutron-api under mod_wsgi. Currently, these variables are set as DevStack's
@@ -62,7 +66,22 @@ def _init_configuration():
 
 
 def boot_server(server_func):
+    # During the call to gmr.TextGuruMeditation.setup_autorun(), Guru
+    # Meditation Report tries to start logging.
+    # Set a handler here to accommodate this.
+    # NOTE(amorin) This was introduced to mitigate bug #1532053 which seems
+    # not triggered anymore.
+    # But, while fixing bug #2021814 we decided to be conservative and keep
+    # this to avoid any further side effect.
+    logger = sys_logging.getLogger(None)
+    if not logger.handlers:
+        logger.addHandler(sys_logging.StreamHandler())
+
+    _version_string = version.version_info.release_string()
     _init_configuration()
+    gmr_opts.set_defaults(cfg.CONF)
+    gmr.TextGuruMeditation.setup_autorun(version=_version_string,
+                                         conf=cfg.CONF)
     try:
         return server_func()
     except KeyboardInterrupt:
