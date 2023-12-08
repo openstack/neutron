@@ -105,6 +105,7 @@ class MechDriverSetupBase(abc.ABC):
         chassis_private.nb_cfg = nb_cfg
         chassis_private.uuid = uuid.uuid4()
         chassis_private.name = name if name else str(uuid.uuid4())
+        chassis_private.nb_cfg_timestamp = timeutils.utcnow_ts() * 1000
         return chassis_private
 
     def _add_chassis_agent(self, nb_cfg, agent_type, chassis_private=None):

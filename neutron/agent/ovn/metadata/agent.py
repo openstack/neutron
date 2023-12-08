@@ -311,10 +311,8 @@ class SbGlobalUpdateEvent(row_event.RowEvent):
     def run(self, event, row, old):
 
         def _update_chassis(self, row):
-            table = ('Chassis_Private' if self.agent.has_chassis_private
-                     else 'Chassis')
             self.agent.sb_idl.db_set(
-                table, self.agent.chassis, ('external_ids', {
+                'Chassis_Private', self.agent.chassis, ('external_ids', {
                     ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY:
                         str(row.nb_cfg)})).execute()
 
@@ -384,27 +382,16 @@ class MetadataAgent(object):
         self._load_config()
 
         tables = ('Encap', 'Port_Binding', 'Datapath_Binding', 'SB_Global',
-                  'Chassis')
+                  'Chassis', 'Chassis_Private')
         events = (PortBindingUpdatedEvent(self),
                   PortBindingDeletedEvent(self),
                   SbGlobalUpdateEvent(self),
+                  ChassisPrivateCreateEvent(self),
                   )
 
-        # TODO(lucasagomes): Remove this in the future. Try to register
-        # the Chassis_Private table, if not present, fallback to the normal
-        # Chassis table.
-        # Open the connection to OVN SB database.
-        self.has_chassis_private = False
         self._post_fork_event.clear()
-        try:
-            self.sb_idl = ovsdb.MetadataAgentOvnSbIdl(
-                chassis=self.chassis, tables=tables + ('Chassis_Private', ),
-                events=events + (ChassisPrivateCreateEvent(self), )).start()
-            self.has_chassis_private = True
-        except AssertionError:
-            self.sb_idl = ovsdb.MetadataAgentOvnSbIdl(
-                chassis=self.chassis, tables=tables,
-                events=events + (ChassisCreateEvent(self), )).start()
+        self.sb_idl = ovsdb.MetadataAgentOvnSbIdl(
+            chassis=self.chassis, tables=tables, events=events).start()
 
         # Now IDL connections can be safely used.
         self._post_fork_event.set()
@@ -426,11 +413,10 @@ class MetadataAgent(object):
     def register_metadata_agent(self):
         # NOTE(lucasagomes): db_add() will not overwrite the UUID if
         # it's already set.
-        table = ('Chassis_Private' if self.has_chassis_private else 'Chassis')
         # Generate unique, but consistent metadata id for chassis name
         agent_id = uuid.uuid5(self.chassis_id, 'metadata_agent')
         ext_ids = {ovn_const.OVN_AGENT_METADATA_ID_KEY: str(agent_id)}
-        self.sb_idl.db_add(table, self.chassis, 'external_ids',
+        self.sb_idl.db_add('Chassis_Private', self.chassis, 'external_ids',
                            ext_ids).execute(check_error=True)
 
     def _get_own_chassis_name(self):

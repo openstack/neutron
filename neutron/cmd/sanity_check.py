@@ -353,6 +353,13 @@ def check_ovn_localnet_learn_fdb_support():
     if not result:
         LOG.warning('OVN does not support localnet_learn_fdb option. '
                     'This support was added in OVN 22.09.')
+
+
+def check_ovn_sb_db_schema_chassis_private():
+    result = checks.ovn_sb_db_schema_chassis_private_supported()
+    if not result:
+        LOG.warning('OVN SB DB schema does not support chassis private. This '
+                    'support was added in DB schema version 2.9.0.')
     return result
 
 
@@ -443,6 +450,10 @@ OPTS = [
     BoolOptCallback('ovn_localnet_learn_fdb_support',
                     check_ovn_localnet_learn_fdb_support,
                     help=_('Check OVN supports localnet_learn_fdb option'),
+                    default=False),
+    BoolOptCallback('ovn_sb_db_schema_chassis_private_support',
+                    check_ovn_sb_db_schema_chassis_private,
+                    help=_('Check OVN SB DB schema supports Chassis_Private'),
                     default=False),
 ]
 
