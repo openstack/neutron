@@ -6683,6 +6683,47 @@ class TestSubnetPoolsV2(NeutronDbPluginV2TestCase):
             res = req.get_response(self.api)
             self.assertEqual(400, res.status_int)
 
+    def _test_allocate_any_subnet_wrong_dns(self, pool_cidr, ip_version,
+                                            nameservers):
+        with self.network() as network:
+            sp = self._test_create_subnetpool([pool_cidr],
+                                              tenant_id=self._tenant_id,
+                                              name=self._POOL_NAME)
+
+            # Specify a DNS nameserver of the wrong IP version
+            data = {'subnet': {'network_id': network['network']['id'],
+                               'subnetpool_id': sp['subnetpool']['id'],
+                               'ip_version': ip_version,
+                               'dns_nameservers': nameservers,
+                               'tenant_id': network['network']['tenant_id']}}
+            req = self.new_create_request('subnets', data)
+            res = req.get_response(self.api)
+            self.assertEqual(400, res.status_int)
+
+    def test_allocate_any_v4_subnet_wrong_dns_v6(self):
+        self._test_allocate_any_subnet_wrong_dns('10.0.0.0/16',
+            constants.IP_VERSION_4, ['2001:db8:1:2::1'])
+
+    def test_allocate_any_v6_subnet_wrong_dns_v4(self):
+        self._test_allocate_any_subnet_wrong_dns('2001:db8:1:2::/63',
+            constants.IP_VERSION_6, ['10.0.0.1'])
+
+    def test_allocate_any_v4_subnet_wrong_dns_v6_multiple(self):
+        self._test_allocate_any_subnet_wrong_dns('10.0.0.0/16',
+            constants.IP_VERSION_4, ['2001:db8:1:2::1', '2001:db8:2:2::1'])
+
+    def test_allocate_any_v6_subnet_wrong_dns_v4_multiple(self):
+        self._test_allocate_any_subnet_wrong_dns('2001:db8:1:2::/63',
+            constants.IP_VERSION_6, ['11.0.0.11', '12.0.0.12'])
+
+    def test_allocate_any_v4_subnet_wrong_dns_mixed(self):
+        self._test_allocate_any_subnet_wrong_dns('10.0.0.0/16',
+            constants.IP_VERSION_4, ['11.0.0.11', '2001:db8:1:2::1'])
+
+    def test_allocate_any_v6_subnet_wrong_dns_mixed(self):
+        self._test_allocate_any_subnet_wrong_dns('2001:db8:1:2::/63',
+            constants.IP_VERSION_6, ['11.0.0.11', '2001:db8:1:2::1'])
+
 
 class DbModelMixin(object):
     """DB model tests."""

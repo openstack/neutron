@@ -336,7 +336,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         if project_ids - allowed_projects:
             raise exc.InvalidSharedSetting(network=network.name)
 
-    def _validate_ipv6_attributes(self, subnet, cur_subnet):
+    def _validate_ipv6_attributes(self, subnet, cur_subnet, has_cidr):
         if cur_subnet:
             self._validate_ipv6_update_dhcp(subnet, cur_subnet)
             return
@@ -348,7 +348,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         if ra_mode_set and address_mode_set:
             self._validate_ipv6_combination(subnet['ipv6_ra_mode'],
                                             subnet['ipv6_address_mode'])
-        if address_mode_set or ra_mode_set:
+        if has_cidr and (address_mode_set or ra_mode_set):
             self._validate_eui64_applicable(subnet)
 
     def _validate_eui64_applicable(self, subnet):
@@ -652,8 +652,13 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
         ip_ver = s['ip_version']
 
+        # We could be called without a cidr if a subnet pool is being used,
+        # so remember that since some checks below require one and should
+        # be skipped.
+        has_cidr = False
         if validators.is_attr_set(s.get('cidr')):
             self._validate_ip_version(ip_ver, s['cidr'], 'cidr')
+            has_cidr = True
 
         # TODO(watanabe.isao): After we found a way to avoid the re-sync
         # from the agent side, this restriction could be removed.
@@ -661,7 +666,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             dhcp_was_enabled = cur_subnet.enable_dhcp
         else:
             dhcp_was_enabled = False
-        if s.get('enable_dhcp') and not dhcp_was_enabled:
+        if has_cidr and s.get('enable_dhcp') and not dhcp_was_enabled:
             subnet_prefixlen = netaddr.IPNetwork(s['cidr']).prefixlen
             error_message = _("Subnet has a prefix length that is "
                               "incompatible with DHCP service enabled")
@@ -685,12 +690,13 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
         if validators.is_attr_set(s.get('gateway_ip')):
             self._validate_ip_version(ip_ver, s['gateway_ip'], 'gateway_ip')
-            is_gateway_not_valid = (
-                ipam.utils.check_gateway_invalid_in_subnet(
-                    s['cidr'], s['gateway_ip']))
-            if is_gateway_not_valid:
-                error_message = _("Gateway is not valid on subnet")
-                raise exc.InvalidInput(error_message=error_message)
+            if has_cidr:
+                is_gateway_not_valid = (
+                    ipam.utils.check_gateway_invalid_in_subnet(
+                        s['cidr'], s['gateway_ip']))
+                if is_gateway_not_valid:
+                    error_message = _("Gateway is not valid on subnet")
+                    raise exc.InvalidInput(error_message=error_message)
             # Ensure the gateway IP is not assigned to any port
             # skip this check in case of create (s parameter won't have id)
             # NOTE(salv-orlando): There is slight chance of a race, when
@@ -743,7 +749,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     error_message=(_("ipv6_address_mode is not valid when "
                                      "ip_version is 4")))
         if ip_ver == 6:
-            self._validate_ipv6_attributes(s, cur_subnet)
+            self._validate_ipv6_attributes(s, cur_subnet, has_cidr)
 
     def _validate_subnet_for_pd(self, subnet):
         """Validates that subnet parameters are correct for IPv6 PD"""
@@ -922,6 +928,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             msg = _('a subnetpool must be specified in the absence of a cidr')
             raise exc.BadRequest(resource='subnets', msg=msg)
 
+        validate = True
         if subnetpool_id:
             self.ipam.validate_pools_with_subnetpool(s)
             if subnetpool_id == constants.IPV6_PD_POOL_ID:
@@ -930,16 +937,18 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     # cidr with IPv6 prefix delegation. Set the subnetpool_id
                     # to None and allow the request to continue as normal.
                     subnetpool_id = None
-                    self._validate_subnet(context, s)
                 else:
                     prefix = constants.PROVISIONAL_IPV6_PD_PREFIX
                     subnet['subnet']['cidr'] = prefix
                     self._validate_subnet_for_pd(s)
+                    validate = False
         else:
             if not has_cidr:
                 msg = _('A cidr must be specified in the absence of a '
                         'subnet pool')
                 raise exc.BadRequest(resource='subnets', msg=msg)
+
+        if validate:
             self._validate_subnet(context, s)
 
         with db_api.CONTEXT_WRITER.using(context):
