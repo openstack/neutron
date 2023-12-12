@@ -25,7 +25,7 @@ class StatusTest(base.BaseLoggingTestCase):
     def test_neutron_status_cli(self):
         """This test runs "neutron-status upgrade check" command and check if
         stdout contains header "Upgrade Check Results". It also checks if
-        stderr is empty.
+        stderr contains only expected message.
         Example output from this CLI tool looks like:
 
         +----------------------------------------------------------------+
@@ -49,6 +49,14 @@ class StatusTest(base.BaseLoggingTestCase):
         """
 
         expected_result_title = "Upgrade Check Results"
+        # NOTE(slaweq): it seems that ovsdbapp raises Exception() and prints
+        # it's message to the stderr when it can't connect to the OVSDBs.
+        # This upgrade check's test is just testing that tool is working fine
+        # and don't really need to connect to the ovn databases so lets simply
+        # expect that error message in the test
+        expected_stderr = (
+            'Unable to open stream to tcp:127.0.0.1:6641 to retrieve schema: '
+            'Connection refused')
         try:
             stdout, stderr = utils.execute(
                 cmd=["neutron-status", "upgrade", "check"],
@@ -57,7 +65,9 @@ class StatusTest(base.BaseLoggingTestCase):
                                 upgradecheck.Code.WARNING,
                                 upgradecheck.Code.FAILURE],
                 return_stderr=True)
-            self.assertEqual('', stderr)
+            self.assertEqual(
+                expected_stderr,
+                stderr.replace('\n', ''))
             self.assertTrue(expected_result_title in stdout)
         except exceptions.ProcessExecutionError as error:
             self.fail("neutron-status upgrade check command failed to run. "

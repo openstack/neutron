@@ -199,9 +199,14 @@ ovn_opts = [
     cfg.BoolOpt('disable_ovn_dhcp_for_baremetal_ports',
                 default=False,
                 help=_('Disable OVN\'s built-in DHCP for baremetal ports '
-                       '(VNIC type "baremetal"). This alllow operators to '
+                       '(VNIC type "baremetal"). This allows operators to '
                        'plug their own DHCP server of choice for PXE booting '
-                       'baremetal nodes. Defaults to False.')),
+                       'baremetal nodes. OVN 23.06.0 and newer also supports '
+                       'baremetal ``PXE`` based provisioning over IPv6. '
+                       'If an older version of OVN is used for baremetal '
+                       'provisioning over IPv6 this option should be set '
+                       'to "True" and neutron-dhcp-agent should be used '
+                       'instead. Defaults to "False".')),
     cfg.BoolOpt('allow_stateless_action_supported',
                 default=True,
                 deprecated_for_removal=True,

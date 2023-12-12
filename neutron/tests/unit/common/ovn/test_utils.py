@@ -438,17 +438,29 @@ class TestDHCPUtils(base.BaseTestCase):
         self.assertEqual(expected_options, options)
 
     def test_get_lsp_dhcp_opts_for_baremetal(self):
-        opt0 = {'opt_name': 'tag:ipxe,bootfile-name',
-                'opt_value': 'http://172.7.27.29/ipxe',
-                'ip_version': 4}
-        opt1 = {'opt_name': 'tag:!ipxe,bootfile-name',
-                'opt_value': 'undionly.kpxe',
-                'ip_version': 4}
-        opt2 = {'opt_name': 'tftp-server',
-                'opt_value': '"172.7.27.29"',
-                'ip_version': 4}
+        opts = [{
+            'opt_name': 'tag:ipxe,bootfile-name',
+            'opt_value': 'http://172.7.27.29/ipxe',
+            'ip_version': 4
+        }, {
+            'opt_name': 'tag:!ipxe,bootfile-name',
+            'opt_value': 'undionly.kpxe',
+            'ip_version': 4
+        }, {
+            'opt_name': 'tftp-server',
+            'opt_value': '"172.7.27.29"',
+            'ip_version': 4
+        }, {
+            'opt_name': 'tag:ipxe6,bootfile-name',
+            'opt_value': 'http://[2001:db8::1]/ipxe',
+            'ip_version': 6
+        }, {
+            'opt_name': 'tag:!ipxe6,bootfile-name',
+            'opt_value': 'undionly.kpxe',
+            'ip_version': 6
+        }]
         port = {portbindings.VNIC_TYPE: portbindings.VNIC_BAREMETAL,
-                edo_ext.EXTRADHCPOPTS: [opt0, opt1, opt2]}
+                edo_ext.EXTRADHCPOPTS: opts}
 
         dhcp_disabled, options = utils.get_lsp_dhcp_opts(port, 4)
         self.assertFalse(dhcp_disabled)
@@ -458,18 +470,37 @@ class TestDHCPUtils(base.BaseTestCase):
                             'bootfile_name': '"http://172.7.27.29/ipxe"',
                             'bootfile_name_alt': '"undionly.kpxe"'}
         self.assertEqual(expected_options, options)
+        # Now the same for IPv6 options
+        dhcp_disabled, options = utils.get_lsp_dhcp_opts(port, 6)
+        self.assertFalse(dhcp_disabled)
+        expected_options = {'bootfile_name': '"http://[2001:db8::1]/ipxe"',
+                            'bootfile_name_alt': '"undionly.kpxe"'}
+        self.assertEqual(expected_options, options)
 
     def test_get_lsp_dhcp_opts_dhcp_disabled_for_baremetal(self):
         cfg.CONF.set_override(
             'disable_ovn_dhcp_for_baremetal_ports', True, group='ovn')
 
-        opt = {'opt_name': 'tag:ipxe,bootfile-name',
-               'opt_value': 'http://172.7.27.29/ipxe',
-               'ip_version': 4}
+        opts = [{
+            'opt_name': 'tag:ipxe,bootfile-name',
+            'opt_value': 'http://172.7.27.29/ipxe',
+            'ip_version': 4
+        }, {
+            'opt_name': 'tag:ipxe,bootfile-name',
+            'opt_value': 'http://[2001:db8::1]/ipxe',
+            'ip_version': 6
+        }]
         port = {portbindings.VNIC_TYPE: portbindings.VNIC_BAREMETAL,
-                edo_ext.EXTRADHCPOPTS: [opt]}
+                edo_ext.EXTRADHCPOPTS: [opts]}
 
         dhcp_disabled, options = utils.get_lsp_dhcp_opts(port, 4)
+        # Assert DHCP is disabled for this port
+        self.assertTrue(dhcp_disabled)
+        # Assert no options were passed
+        self.assertEqual({}, options)
+
+        # and the same for dhcpv6
+        dhcp_disabled, options = utils.get_lsp_dhcp_opts(port, 6)
         # Assert DHCP is disabled for this port
         self.assertTrue(dhcp_disabled)
         # Assert no options were passed

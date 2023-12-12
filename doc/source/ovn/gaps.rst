@@ -8,15 +8,6 @@ It is not a complete list, but is enough to be used as a starting point for
 implementors working on closing these gaps. A TODO list for OVN is located
 at [1]_.
 
-* Baremetal provisioning with iPXE without Neutron DHCP agent for IPv6
-
-  The core OVN built-in DHCP server implementation does not
-  yet support PXE booting for IPv6. This can be achieved at
-  the moment if used with the Neutron DHCP agent by deploying it
-  on OVN gateway nodes and disabling the OVN DHCP by setting the
-  ``[ovn]/disable_ovn_dhcp_for_baremetal_ports`` configuration option
-  to True.
-
 * QoS minimum bandwidth allocation in Placement API
 
   ML2/OVN integration with the Nova placement API to provide guaranteed

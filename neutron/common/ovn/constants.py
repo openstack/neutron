@@ -203,6 +203,12 @@ SUPPORTED_BM_DHCP_OPTS_MAPPING[4].update({
     'tag:ipxe,67': 'bootfile_name',
     'tag:!ipxe,bootfile-name': 'bootfile_name_alt',
     'tag:!ipxe,67': 'bootfile_name_alt'})
+SUPPORTED_BM_DHCP_OPTS_MAPPING[6].update({
+    'tag:ipxe6,bootfile-name': 'bootfile_name',
+    'tag:ipxe6,59': 'bootfile_name',
+    'tag:!ipxe6,bootfile-name': 'bootfile_name_alt',
+    'tag:!ipxe6,59': 'bootfile_name_alt'})
+
 
 # OVN string type DHCP options
 OVN_STR_TYPE_DHCP_OPTS = [

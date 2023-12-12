@@ -1,0 +1,5 @@
+---
+features:
+  - |
+    Support for PXE baremetal provisioning using OVN's built-in DHCP server
+    has been added for IPv6.
