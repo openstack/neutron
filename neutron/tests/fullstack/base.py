@@ -16,6 +16,7 @@ from concurrent import futures
 import itertools
 import os
 import random
+import time
 
 import netaddr
 from neutron_lib.tests import tools
@@ -101,6 +102,17 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
     def _wait_until_agent_down(self, agent_id):
         def _agent_down():
             agent = self.client.show_agent(agent_id)['agent']
+            if not agent.get('alive'):
+                # NOTE(slaweq): to avoid race between heartbeat written in the
+                # database and response to this API call, lets make sure that
+                # agent is really dead. See bug
+                # https://bugs.launchpad.net/neutron/+bug/2045757
+                # for details.
+                # 2 seconds delay should be more than enough to make sure that
+                # all pending heartbeats are already written in the Neutron
+                # database
+                time.sleep(2)
+                agent = self.client.show_agent(agent_id)['agent']
             return not agent.get('alive')
 
         common_utils.wait_until_true(_agent_down)
