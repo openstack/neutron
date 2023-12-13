@@ -394,6 +394,9 @@ class OVNMechanismDriver(api.MechanismDriver):
             self._maintenance_thread.start()
             LOG.info("Maintenance task thread has started")
 
+        LOG.info('%s process has finished the post initialization',
+                 worker_class.__name__)
+
     def _create_security_group_precommit(self, resource, event, trigger,
                                          payload):
         context = payload.context
