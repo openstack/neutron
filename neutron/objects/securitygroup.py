@@ -133,6 +133,13 @@ class SecurityGroup(rbac_db.NeutronRbacObject):
                                            security_group_ids=[obj_id])
         return {port.project_id for port in port_objs}
 
+    @classmethod
+    @db_api.CONTEXT_READER
+    def get_sgs_stateful_flag(cls, context, sg_ids):
+        query = context.session.query(cls.db_model.id, cls.db_model.stateful)
+        query = query.filter(cls.db_model.id.in_(sg_ids))
+        return dict(query.all())
+
 
 @base.NeutronObjectRegistry.register
 class DefaultSecurityGroup(base.NeutronDbObject):
