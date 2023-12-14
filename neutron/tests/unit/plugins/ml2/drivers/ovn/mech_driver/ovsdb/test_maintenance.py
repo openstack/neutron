@@ -339,14 +339,15 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         self.assertFalse(
             self.fake_ovn_client._nb_idl.ha_chassis_group_add.called)
 
-    def test_check_for_ha_chassis_group_no_external_ports(self):
+    @mock.patch.object(utils, 'sync_ha_chassis_group')
+    def test_check_for_ha_chassis_group_no_external_ports(
+            self, mock_sync_ha_chassis_group):
         self.fake_ovn_client.is_external_ports_supported.return_value = True
         nb_idl = self.fake_ovn_client._nb_idl
         nb_idl.db_find_rows.return_value.execute.return_value = []
         self.assertRaises(periodics.NeverAgain,
                           self.periodic.check_for_ha_chassis_group)
-        self.assertFalse(
-            self.fake_ovn_client.sync_ha_chassis_group.called)
+        self.assertFalse(mock_sync_ha_chassis_group.called)
 
     @mock.patch.object(utils, 'sync_ha_chassis_group')
     def test_check_for_ha_chassis_group(self, mock_sync_ha_chassis_group):
