@@ -748,10 +748,37 @@ class TestMl2HostSegmentMappingNoAgent(HostSegmentMappingTestCase):
         actual_hosts = db.get_hosts_mapped_with_segments(ctx)
         self.assertEqual(hosts, actual_hosts)
 
+    def test_get_all_hosts_mapped_with_segments_agent_type_filter(self):
+        ctx = context.get_admin_context()
+        hosts = set()
+        with self.network() as network:
+            network_id = network['network']['id']
+        for i in range(1, 3):
+            host = "host%s" % i
+            segment = self._test_create_segment(
+                network_id=network_id, physical_network='physnet%s' % i,
+                segmentation_id=200 + i, network_type=constants.TYPE_VLAN)
+            db.update_segment_host_mapping(
+                ctx, host, {segment['segment']['id']})
+            hosts.add(host)
+
+        # Now they are 2 hosts with segment being mapped.
+        #  host1 does not have an agent
+        #  host2 does not have an agent
+        # Any agent_type filter excludes hosts that does not have an agent
+        actual_hosts = db.get_hosts_mapped_with_segments(
+            ctx, exclude_agent_types={'fake-agent-type'})
+        self.assertEqual(set(), actual_hosts)
+        actual_hosts = db.get_hosts_mapped_with_segments(
+            ctx, include_agent_types={'fake-agent-type'})
+        self.assertEqual(set(), actual_hosts)
+
 
 class TestMl2HostSegmentMappingOVS(HostSegmentMappingTestCase):
     _mechanism_drivers = ['openvswitch', 'logger']
     mock_path = 'neutron.services.segments.db.update_segment_host_mapping'
+    agent_type_a = constants.AGENT_TYPE_OVS
+    agent_type_b = constants.AGENT_TYPE_LINUXBRIDGE
 
     def test_new_agent(self):
         host = 'host1'
@@ -871,9 +898,118 @@ class TestMl2HostSegmentMappingOVS(HostSegmentMappingTestCase):
         self.assertFalse(segments_host_db)
         self.assertFalse(mock.mock_calls)
 
+    def test_get_all_hosts_mapped_with_segments(self):
+        ctx = context.get_admin_context()
+        hosts = set()
+        with self.network() as network:
+            network_id = network['network']['id']
+        for i in range(1, 3):
+            host = "host%s" % i
+            segment = self._test_create_segment(
+                network_id=network_id, physical_network='physnet%s' % i,
+                segmentation_id=200 + i, network_type=constants.TYPE_VLAN)
+            self._register_agent(host, mappings={'physnet%s' % i: 'br-eth-1'},
+                                 plugin=self.plugin)
+            db.update_segment_host_mapping(
+                ctx, host, {segment['segment']['id']})
+            hosts.add(host)
+
+        # Now they are 2 hosts with segment being mapped.
+        actual_hosts = db.get_hosts_mapped_with_segments(ctx)
+        self.assertEqual(hosts, actual_hosts)
+
+    def test_get_all_hosts_mapped_with_segments_agent_type_filters(self):
+        ctx = context.get_admin_context()
+        with self.network() as network:
+            network_id = network['network']['id']
+        for i in range(1, 3):
+            host = "host%s" % i
+            segment = self._test_create_segment(
+                network_id=network_id, physical_network='physnet%s' % i,
+                segmentation_id=200 + i, network_type=constants.TYPE_VLAN)
+            if i == 2:
+                agent_type = self.agent_type_a
+            else:
+                agent_type = self.agent_type_b
+            helpers.register_ovs_agent(
+                host, agent_type=agent_type,
+                bridge_mappings={'physnet%s' % i: 'br-eth-1'},
+                plugin=self.plugin, start_flag=True)
+            db.update_segment_host_mapping(
+                ctx, host, {segment['segment']['id']})
+
+        # Now they are 2 hosts with segment being mapped.
+        #   host1 is agent_type_b
+        #   host2 is agent_type_a
+        # get all hosts (host1 and host2) when not using any filtering
+        actual_hosts = db.get_hosts_mapped_with_segments(ctx)
+        self.assertEqual({"host1", "host2"}, actual_hosts)
+        # get host1 when exclude agent_type_a agents
+        actual_hosts = db.get_hosts_mapped_with_segments(
+            ctx, exclude_agent_types={self.agent_type_a})
+        self.assertEqual({"host1"}, actual_hosts)
+        # get host2 when exclude agent_type_b agents
+        actual_hosts = db.get_hosts_mapped_with_segments(
+            ctx, exclude_agent_types={self.agent_type_b})
+        self.assertEqual({"host2"}, actual_hosts)
+        # get host2 when include agent_type_a agents
+        actual_hosts = db.get_hosts_mapped_with_segments(
+            ctx, include_agent_types={self.agent_type_a})
+        self.assertEqual({"host2"}, actual_hosts)
+        # get host1 when include agent_type_b agents
+        actual_hosts = db.get_hosts_mapped_with_segments(
+            ctx, include_agent_types={self.agent_type_b})
+        self.assertEqual({"host1"}, actual_hosts)
+        # get host1 and host2 when include both agent_type_a and agent_type_b
+        actual_hosts = db.get_hosts_mapped_with_segments(
+            ctx, include_agent_types={self.agent_type_b, self.agent_type_a})
+        self.assertEqual({"host1", "host2"}, actual_hosts)
+        # When using both include and exclude, exclude is most significant
+        actual_hosts = db.get_hosts_mapped_with_segments(
+            ctx,
+            include_agent_types={self.agent_type_b, self.agent_type_a},
+            exclude_agent_types={self.agent_type_b}
+        )
+        self.assertEqual({"host2"}, actual_hosts)
+        # include and exclude both agent types - exclude is most significant
+        actual_hosts = db.get_hosts_mapped_with_segments(
+            ctx,
+            include_agent_types={self.agent_type_b, self.agent_type_a},
+            exclude_agent_types={self.agent_type_b, self.agent_type_a}
+        )
+        self.assertEqual(set(), actual_hosts)
+
+    def test_get_all_hosts_mapped_with_segments_agent_type_filter(self):
+        ctx = context.get_admin_context()
+        hosts = set()
+        with self.network() as network:
+            network_id = network['network']['id']
+        for i in range(1, 3):
+            host = "host%s" % i
+            segment = self._test_create_segment(
+                network_id=network_id, physical_network='physnet%s' % i,
+                segmentation_id=200 + i, network_type=constants.TYPE_VLAN)
+            self._register_agent(host, mappings={'physnet%s' % i: 'br-eth-1'},
+                                 plugin=self.plugin)
+            db.update_segment_host_mapping(
+                ctx, host, {segment['segment']['id']})
+            hosts.add(host)
+
+        # Now they are 2 hosts with segment being mapped.
+        #  host1 is agent_type_a
+        #  host2 is agent_type_a
+        actual_hosts = db.get_hosts_mapped_with_segments(
+            ctx, exclude_agent_types={self.agent_type_a})
+        self.assertEqual(set(), actual_hosts)
+        actual_hosts = db.get_hosts_mapped_with_segments(
+            ctx, include_agent_types={self.agent_type_a})
+        self.assertEqual(hosts, actual_hosts)
+
 
 class TestMl2HostSegmentMappingLinuxBridge(TestMl2HostSegmentMappingOVS):
     _mechanism_drivers = ['linuxbridge', 'logger']
+    agent_type_a = constants.AGENT_TYPE_LINUXBRIDGE
+    agent_type_b = constants.AGENT_TYPE_OVS
 
     def setUp(self, plugin=None):
         cfg.CONF.set_override(c_experimental.EXPERIMENTAL_LINUXBRIDGE, True,
@@ -888,6 +1024,8 @@ class TestMl2HostSegmentMappingLinuxBridge(TestMl2HostSegmentMappingOVS):
 
 class TestMl2HostSegmentMappingMacvtap(TestMl2HostSegmentMappingOVS):
     _mechanism_drivers = ['macvtap', 'logger']
+    agent_type_a = constants.AGENT_TYPE_MACVTAP
+    agent_type_b = constants.AGENT_TYPE_OVS
 
     def _register_agent(self, host, mappings=None, plugin=None):
         helpers.register_macvtap_agent(host=host, interface_mappings=mappings,
@@ -896,6 +1034,8 @@ class TestMl2HostSegmentMappingMacvtap(TestMl2HostSegmentMappingOVS):
 
 class TestMl2HostSegmentMappingSriovNicSwitch(TestMl2HostSegmentMappingOVS):
     _mechanism_drivers = ['sriovnicswitch', 'logger']
+    agent_type_a = constants.AGENT_TYPE_NIC_SWITCH
+    agent_type_b = constants.AGENT_TYPE_OVS
 
     def _register_agent(self, host, mappings=None, plugin=None):
         helpers.register_sriovnicswitch_agent(host=host,

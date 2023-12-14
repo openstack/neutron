@@ -31,6 +31,8 @@ from oslo_log import helpers as log_helpers
 from oslo_log import log as logging
 from oslo_utils import uuidutils
 
+from neutron.db.models import agent as agent_model
+from neutron.db.models import segment as segment_model
 from neutron.db import segments_db as db
 from neutron import manager
 from neutron.objects import base as base_obj
@@ -243,14 +245,43 @@ def update_segment_host_mapping(context, host, current_segment_ids):
                               entry.segment_id, entry.host)
 
 
-def get_hosts_mapped_with_segments(context):
+def get_hosts_mapped_with_segments(context, include_agent_types=None,
+                                   exclude_agent_types=None):
     """Get hosts that are mapped with segments.
 
     L2 providers can use this method to get an overview of SegmentHostMapping,
     and then delete the stale SegmentHostMapping.
+
+    When using both include_agent_types and exclude_agent_types,
+    exclude_agent_types is most significant.
+    All hosts without agent are excluded when using any agent_type filter.
+
+    :param context: current running context information
+    :param include_agent_types: (set) List of agent types, include hosts
+        with matching agents.
+    :param exclude_agent_types: (set) List of agent types, exclude hosts
+        with matching agents.
     """
-    segment_host_mapping = network.SegmentHostMapping.get_objects(context)
-    return {row.host for row in segment_host_mapping}
+    def add_filter_by_agent_types(qry, include, exclude):
+        qry = qry.join(
+            agent_model.Agent,
+            segment_model.SegmentHostMapping.host == agent_model.Agent.host)
+        if include:
+            qry = qry.filter(agent_model.Agent.agent_type.in_(include))
+        if exclude:
+            qry = qry.filter(agent_model.Agent.agent_type.not_in(exclude))
+
+        return qry
+
+    with db_api.CONTEXT_READER.using(context):
+        query = context.session.query(segment_model.SegmentHostMapping)
+        if include_agent_types or exclude_agent_types:
+            query = add_filter_by_agent_types(query, include_agent_types,
+                                              exclude_agent_types)
+
+        res = query.all()
+
+    return {row.host for row in res}
 
 
 def _get_phys_nets(agent):
