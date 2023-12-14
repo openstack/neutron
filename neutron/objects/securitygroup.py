@@ -11,6 +11,7 @@
 #    under the License.
 
 from neutron_lib import context as context_lib
+from neutron_lib.db import api as db_api
 from neutron_lib.objects import common_types
 from neutron_lib.utils import net as net_utils
 from oslo_utils import versionutils
@@ -129,6 +130,13 @@ class SecurityGroup(rbac_db.NeutronRbacObject):
         port_objs = ports.Port.get_objects(context,
                                            security_group_ids=[obj_id])
         return {port.tenant_id for port in port_objs}
+
+    @classmethod
+    @db_api.CONTEXT_READER
+    def get_sgs_stateful_flag(cls, context, sg_ids):
+        query = context.session.query(cls.db_model.id, cls.db_model.stateful)
+        query = query.filter(cls.db_model.id.in_(sg_ids))
+        return dict(query.all())
 
 
 @base.NeutronObjectRegistry.register

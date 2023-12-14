@@ -209,12 +209,10 @@ class SecurityGroupInfoAPIMixin(object):
                     # this set will be serialized into a list by rpc code
                     remote_address_group_info[remote_ag_id][ethertype] = set()
             direction = rule_in_db['direction']
-            stateful = self._is_security_group_stateful(context,
-                                                        security_group_id)
             rule_dict = {
                 'direction': direction,
                 'ethertype': ethertype,
-                'stateful': stateful}
+            }
 
             for key in ('protocol', 'port_range_min', 'port_range_max',
                         'remote_ip_prefix', 'remote_group_id',
@@ -232,6 +230,13 @@ class SecurityGroupInfoAPIMixin(object):
             if rule_dict not in sg_info['security_groups'][security_group_id]:
                 sg_info['security_groups'][security_group_id].append(
                     rule_dict)
+
+        # Populate the security group "stateful" flag in the SGs list of rules.
+        for sg_id, stateful in self._get_sgs_stateful_flag(
+                context, sg_info['security_groups'].keys()).items():
+            for rule in sg_info['security_groups'][sg_id]:
+                rule['stateful'] = stateful
+
         # Update the security groups info if they don't have any rules
         sg_ids = self._select_sg_ids_for_ports(context, ports)
         for (sg_id, ) in sg_ids:
@@ -425,13 +430,13 @@ class SecurityGroupInfoAPIMixin(object):
         """
         raise NotImplementedError()
 
-    def _is_security_group_stateful(self, context, sg_id):
-        """Return whether the security group is stateful or not.
+    def _get_sgs_stateful_flag(self, context, sg_id):
+        """Return the security groups stateful flag.
 
-        Return True if the security group associated with the given ID
-        is stateful, else False.
+        Returns a dictionary with the SG ID as key and the stateful flag:
+        {sg_1: True, sg_2: False, ...}
         """
-        return True
+        raise NotImplementedError()
 
 
 class SecurityGroupServerRpcMixin(SecurityGroupInfoAPIMixin,
@@ -524,5 +529,5 @@ class SecurityGroupServerRpcMixin(SecurityGroupInfoAPIMixin,
         return ips_by_group
 
     @db_api.retry_if_session_inactive()
-    def _is_security_group_stateful(self, context, sg_id):
-        return sg_obj.SecurityGroup.get_sg_by_id(context, sg_id).stateful
+    def _get_sgs_stateful_flag(self, context, sg_ids):
+        return sg_obj.SecurityGroup.get_sgs_stateful_flag(context, sg_ids)
