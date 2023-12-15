@@ -15,6 +15,8 @@
 import threading
 import urllib
 
+import netaddr
+
 from neutron._i18n import _
 from neutron.agent.linux import utils as agent_utils
 from neutron.agent.ovn.metadata import ovsdb
@@ -25,8 +27,10 @@ from neutron.conf.agent.metadata import config
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
+from neutron_lib import constants
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import netutils
 import requests
 import webob
 
@@ -95,11 +99,26 @@ class MetadataProxyHandler(object):
             return webob.exc.HTTPInternalServerError(explanation=explanation)
 
     def _get_instance_and_project_id(self, req):
-        remote_address = req.headers.get('X-Forwarded-For')
+        forwarded_for = req.headers.get('X-Forwarded-For')
         network_id = req.headers.get('X-OVN-Network-ID')
 
+        remote_mac = None
+        remote_ip = netaddr.IPAddress(forwarded_for)
+        if remote_ip.version == constants.IP_VERSION_6:
+            if remote_ip.is_ipv4_mapped():
+                # When haproxy listens on v4 AND v6 then it inserts ipv4
+                # addresses as ipv4-mapped v6 addresses into X-Forwarded-For.
+                forwarded_for = str(remote_ip.ipv4())
+            if remote_ip.is_link_local():
+                # When haproxy sees an ipv6 link-local client address
+                # (and sends that to us in X-Forwarded-For) we must rely
+                # on the EUI encoded in it, because that's all we can
+                # recognize.
+                remote_mac = str(netutils.get_mac_addr_by_ipv6(remote_ip))
+
         ports = self.sb_idl.get_network_port_bindings_by_ip(network_id,
-                                                            remote_address)
+                                                            forwarded_for,
+                                                            mac=remote_mac)
         num_ports = len(ports)
         if num_ports == 1:
             external_ids = ports[0].external_ids
@@ -107,14 +126,14 @@ class MetadataProxyHandler(object):
                     external_ids[ovn_const.OVN_PROJID_EXT_ID_KEY])
         elif num_ports == 0:
             LOG.error("No port found in network %s with IP address %s",
-                      network_id, remote_address)
+                      network_id, forwarded_for)
         elif num_ports > 1:
             port_uuids = ', '.join([str(port.uuid) for port in ports])
             LOG.error("More than one port found in network %s with IP address "
                       "%s. Please run the neutron-ovn-db-sync-util script as "
                       "there seems to be inconsistent data between Neutron "
                       "and OVN databases. OVN Port uuids: %s", network_id,
-                      remote_address, port_uuids)
+                      forwarded_for, port_uuids)
 
         return None, None
 

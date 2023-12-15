@@ -208,14 +208,18 @@ class TestMetadataAgent(base.BaseTestCase):
         current_namespace_cidrs = set()
         datapath_port_ips = ['10.0.0.2', '10.0.0.3', '10.0.1.5']
         metadaport_subnet_cidrs = ['10.0.0.0/30', '10.0.1.0/28', '11.0.1.2/24']
+        lla = 'fe80::f816:3eff:fe63:8dc5/64'
 
         expected_cidrs_to_add = set(['10.0.0.0/30', '10.0.1.0/28',
-                                     n_const.METADATA_CIDR])
+                                     n_const.METADATA_CIDR,
+                                     n_const.METADATA_V6_CIDR,
+                                     lla])
         expected_cidrs_to_delete = set()
 
         actual_result = self.agent._process_cidrs(current_namespace_cidrs,
                                                   datapath_port_ips,
-                                                  metadaport_subnet_cidrs)
+                                                  metadaport_subnet_cidrs,
+                                                  lla)
         actual_cidrs_to_add, actual_cidrs_to_delete = actual_result
 
         self.assertSetEqual(actual_cidrs_to_add, expected_cidrs_to_add)
@@ -226,29 +230,36 @@ class TestMetadataAgent(base.BaseTestCase):
         current_namespace_cidrs = set([n_const.METADATA_CIDR])
         datapath_port_ips = ['10.0.0.2', '10.0.0.3', '10.0.1.5']
         metadaport_subnet_cidrs = ['10.0.0.0/30', '10.0.1.0/28', '11.0.1.2/24']
+        lla = 'fe80::f816:3eff:fe63:8dc5/64'
 
-        expected_cidrs_to_add = set(['10.0.0.0/30', '10.0.1.0/28'])
+        expected_cidrs_to_add = set(['10.0.0.0/30', '10.0.1.0/28',
+                                     n_const.METADATA_V6_CIDR, lla])
         expected_cidrs_to_delete = set()
 
         actual_result = self.agent._process_cidrs(current_namespace_cidrs,
                                                   datapath_port_ips,
-                                                  metadaport_subnet_cidrs)
+                                                  metadaport_subnet_cidrs,
+                                                  lla)
         actual_cidrs_to_add, actual_cidrs_to_delete = actual_result
 
         self.assertSetEqual(actual_cidrs_to_add, expected_cidrs_to_add)
         self.assertSetEqual(actual_cidrs_to_delete, expected_cidrs_to_delete)
 
     def test__process_cidrs_when_current_namespace_contains_stale_cidr(self):
-        current_namespace_cidrs = set([n_const.METADATA_CIDR, '10.0.1.0/31'])
+        lla = 'fe80::f816:3eff:fe63:8dc5/64'
+        current_namespace_cidrs = set([n_const.METADATA_CIDR, '10.0.1.0/31',
+                                       lla])
         datapath_port_ips = ['10.0.0.2', '10.0.0.3', '10.0.1.5']
         metadaport_subnet_cidrs = ['10.0.0.0/30', '10.0.1.0/28', '11.0.1.2/24']
 
-        expected_cidrs_to_add = set(['10.0.0.0/30', '10.0.1.0/28'])
+        expected_cidrs_to_add = set(['10.0.0.0/30', '10.0.1.0/28',
+                                     n_const.METADATA_V6_CIDR])
         expected_cidrs_to_delete = set(['10.0.1.0/31'])
 
         actual_result = self.agent._process_cidrs(current_namespace_cidrs,
                                                   datapath_port_ips,
-                                                  metadaport_subnet_cidrs)
+                                                  metadaport_subnet_cidrs,
+                                                  lla)
         actual_cidrs_to_add, actual_cidrs_to_delete = actual_result
 
         self.assertSetEqual(actual_cidrs_to_add, expected_cidrs_to_add)
@@ -258,18 +269,22 @@ class TestMetadataAgent(base.BaseTestCase):
         """Current namespace cidrs contains stale cidrs and it is missing
         new required cidrs.
         """
+        lla = 'fe80::f816:3eff:fe63:8dc5/64'
         current_namespace_cidrs = set([n_const.METADATA_CIDR,
                                       '10.0.1.0/31',
-                                      '10.0.1.0/28'])
+                                      '10.0.1.0/28',
+                                      'fe77::/64',
+                                      lla])
         datapath_port_ips = ['10.0.0.2', '10.0.1.5']
         metadaport_subnet_cidrs = ['10.0.0.0/30', '10.0.1.0/28', '11.0.1.2/24']
 
-        expected_cidrs_to_add = set(['10.0.0.0/30'])
-        expected_cidrs_to_delete = set(['10.0.1.0/31'])
+        expected_cidrs_to_add = set(['10.0.0.0/30', n_const.METADATA_V6_CIDR])
+        expected_cidrs_to_delete = set(['10.0.1.0/31', 'fe77::/64'])
 
         actual_result = self.agent._process_cidrs(current_namespace_cidrs,
                                                   datapath_port_ips,
-                                                  metadaport_subnet_cidrs)
+                                                  metadaport_subnet_cidrs,
+                                                  lla)
         actual_cidrs_to_add, actual_cidrs_to_delete = actual_result
 
         self.assertSetEqual(actual_cidrs_to_add, expected_cidrs_to_add)
@@ -440,13 +455,17 @@ class TestMetadataAgent(base.BaseTestCase):
                 ('external_ids', {'iface-id': metadaport_logical_port}))
             # Check that the metadata port has the IP addresses properly
             # configured and that IPv6 address has been skipped.
-            expected_call = [n_const.METADATA_CIDR, '10.0.0.1/23']
+            expected_call = [n_const.METADATA_CIDR, n_const.METADATA_V6_CIDR,
+                             '10.0.0.1/23',
+                             ip_lib.get_ipv6_lladdr('aa:bb:cc:dd:ee:ff')]
             self.assertCountEqual(expected_call,
                                   ip_addr_add_multiple.call_args.args[0])
             # Check that metadata proxy has been spawned
             spawn_mdp.assert_called_once_with(
                 mock.ANY, nemaspace_name, 80, mock.ANY,
-                bind_address=n_const.METADATA_V4_IP, network_id=net_name)
+                bind_address=n_const.METADATA_V4_IP, network_id=net_name,
+                bind_address_v6=n_const.METADATA_V6_IP,
+                bind_interface='veth_1')
             mock_checksum.assert_called_once_with(nemaspace_name)
 
     def test__load_config(self):

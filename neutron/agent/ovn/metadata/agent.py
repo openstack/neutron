@@ -344,6 +344,9 @@ class MetadataAgent(object):
             resource_type='metadata')
         self._sb_idl = None
         self._post_fork_event = threading.Event()
+        # We'll restart all haproxy instances upon start so that they honor
+        # any potential changes in their configuration.
+        self.restarted_metadata_proxy_set = set()
 
     @property
     def sb_idl(self):
@@ -543,8 +546,8 @@ class MetadataAgent(object):
         iptables_mgr.ipv4['mangle'].add_rule('POSTROUTING', rule, wrap=False)
         iptables_mgr.apply()
 
-    def _get_port_ips(self, port):
-        # Retrieve IPs from the port mac column which is in form
+    def _get_port_ip4_ips(self, port):
+        # Retrieve IPv4 addresses from the port mac column which is in form
         # ["<port_mac> <ip1> <ip2> ... <ipN>"]
         if not port.mac:
             LOG.warning("Port %s MAC column is empty, cannot retrieve IP "
@@ -555,7 +558,8 @@ class MetadataAgent(object):
         if not ips:
             LOG.debug("Port %s IP addresses were not retrieved from the "
                       "Port_Binding MAC column %s", port.uuid, mac_field_attrs)
-        return ips
+        return [ip for ip in ips if (
+            utils.get_ip_version(ip) == n_const.IP_VERSION_4)]
 
     def _active_subnets_cidrs(self, datapath_ports_ips, metadata_port_cidrs):
         active_subnets_cidrs = set()
@@ -564,7 +568,7 @@ class MetadataAgent(object):
         # reconstruct IPNetwork objects repeatedly in the for loop
         metadata_cidrs_to_network_objects = {
             metadata_port_cidr: netaddr.IPNetwork(metadata_port_cidr)
-            for metadata_port_cidr in metadata_port_cidrs
+            for metadata_port_cidr in metadata_port_cidrs if metadata_port_cidr
         }
 
         for datapath_port_ip in datapath_ports_ips:
@@ -577,16 +581,18 @@ class MetadataAgent(object):
         return active_subnets_cidrs
 
     def _process_cidrs(self, current_namespace_cidrs,
-                       datapath_ports_ips, metadata_port_subnet_cidrs):
+                       datapath_ports_ips, metadata_port_subnet_cidrs, lla):
         active_subnets_cidrs = self._active_subnets_cidrs(
             datapath_ports_ips, metadata_port_subnet_cidrs)
 
         cidrs_to_add = active_subnets_cidrs - current_namespace_cidrs
 
-        if n_const.METADATA_CIDR not in current_namespace_cidrs:
-            cidrs_to_add.add(n_const.METADATA_CIDR)
-        else:
-            active_subnets_cidrs.add(n_const.METADATA_CIDR)
+        # Make sure that all addresses, including the LLA, are present
+        for addr in (n_const.METADATA_CIDR, n_const.METADATA_V6_CIDR, lla):
+            if addr not in current_namespace_cidrs:
+                cidrs_to_add.add(addr)
+            else:
+                active_subnets_cidrs.add(addr)
 
         cidrs_to_delete = current_namespace_cidrs - active_subnets_cidrs
 
@@ -597,7 +603,7 @@ class MetadataAgent(object):
         needed to provision namespace.
 
         Function will confirm that:
-        1. Datapath metadata port has valid MAC and subnet CIDRs
+        1. Datapath metadata port has valid MAC
         2. There are datapath port IPs
 
         If any of those rules are not valid the nemaspace for the
@@ -609,15 +615,11 @@ class MetadataAgent(object):
         datapath_uuid = str(datapath.uuid)
 
         metadata_port = self.sb_idl.get_metadata_port_network(datapath_uuid)
-        # If there's no metadata port or it doesn't have a MAC or IP
-        # addresses, then tear the namespace down if needed. This might happen
-        # when there are no subnets yet created so metadata port doesn't have
-        # an IP address.
-        if not (metadata_port and metadata_port.mac and
-                metadata_port.external_ids.get(
-                    ovn_const.OVN_CIDRS_EXT_ID_KEY, None)):
+        # If there's no metadata port or it doesn't have a MAC address, then
+        # tear the namespace down if needed.
+        if not (metadata_port and metadata_port.mac):
             LOG.debug("There is no metadata port for network %s or it has no "
-                      "MAC or IP addresses configured, tearing the namespace "
+                      "MAC address configured, tearing the namespace "
                       "down if needed", net_name)
             self.teardown_datapath(net_name)
             return
@@ -643,7 +645,7 @@ class MetadataAgent(object):
         datapath_ports_ips = []
         for chassis_port in self._vif_ports(chassis_ports):
             if str(chassis_port.datapath.uuid) == datapath_uuid:
-                datapath_ports_ips.extend(self._get_port_ips(chassis_port))
+                datapath_ports_ips.extend(self._get_port_ip4_ips(chassis_port))
 
         if not datapath_ports_ips:
             LOG.debug("No valid VIF ports were found for network %s, "
@@ -691,34 +693,26 @@ class MetadataAgent(object):
             ip1, ip2 = ip_lib.IPWrapper().add_veth(
                 veth_name[0], veth_name[1], namespace)
 
+        # Configure the MAC address.
+        ip2.link.set_address(metadata_port_info.mac)
+
         # Make sure both ends of the VETH are up
         ip1.link.set_up()
         ip2.link.set_up()
 
-        # Configure the MAC address.
-        ip2.link.set_address(metadata_port_info.mac)
-
         cidrs_to_add, cidrs_to_delete = self._process_cidrs(
             {dev['cidr'] for dev in ip2.addr.list()},
             datapath_ports_ips,
-            metadata_port_info.ip_addresses
+            metadata_port_info.ip_addresses,
+            ip_lib.get_ipv6_lladdr(metadata_port_info.mac)
         )
+
         # Delete any non active addresses from the network namespace
         if cidrs_to_delete:
             ip2.addr.delete_multiple(list(cidrs_to_delete))
 
-        # NOTE(dalvarez): metadata only works on IPv4. We're doing this
-        # extra check here because it could be that the metadata port has
-        # an IPv6 address if there's an IPv6 subnet with SLAAC in its
-        # network. Neutron IPAM will autoallocate an IPv6 address for every
-        # port in the network.
-        ipv4_cidrs_to_add = [
-            cidr
-            for cidr in cidrs_to_add
-            if utils.get_ip_version(cidr) == n_const.IP_VERSION_4]
-
-        if ipv4_cidrs_to_add:
-            ip2.addr.add_multiple(ipv4_cidrs_to_add)
+        if cidrs_to_add:
+            ip2.addr.add_multiple(list(cidrs_to_add))
 
         # Check that this port is not attached to any other OVS bridge. This
         # can happen when the OVN bridge changes (for example, during a
@@ -749,8 +743,14 @@ class MetadataAgent(object):
         # Ensure the correct checksum in the metadata traffic.
         self._ensure_datapath_checksum(namespace)
 
+        if net_name not in self.restarted_metadata_proxy_set:
+            metadata_driver.MetadataDriver.destroy_monitored_metadata_proxy(
+                self._process_monitor, net_name, self.conf, namespace)
+            self.restarted_metadata_proxy_set.add(net_name)
+
         # Spawn metadata proxy if it's not already running.
         metadata_driver.MetadataDriver.spawn_monitored_metadata_proxy(
             self._process_monitor, namespace, n_const.METADATA_PORT,
             self.conf, bind_address=n_const.METADATA_V4_IP,
-            network_id=net_name)
+            network_id=net_name, bind_address_v6=n_const.METADATA_V6_IP,
+            bind_interface=veth_name[1])

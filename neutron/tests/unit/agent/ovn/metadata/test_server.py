@@ -29,7 +29,7 @@ from neutron.conf.agent.ovn.metadata import config as ovn_meta_conf
 from neutron.tests import base
 
 OvnPortInfo = collections.namedtuple(
-        'OvnPortInfo', ['external_ids', 'chassis'])
+        'OvnPortInfo', ['external_ids', 'chassis', 'mac'])
 
 
 class ConfFixture(config_fixture.Config):
@@ -88,14 +88,18 @@ class TestMetadataProxyHandler(base.BaseTestCase):
             self.assertIsInstance(retval, webob.exc.HTTPInternalServerError)
             self.assertEqual(len(self.log.mock_calls), 2)
 
-    def _get_instance_and_project_id_helper(self, headers, list_ports_retval,
-                                            network=None):
-        remote_address = '192.168.1.1'
-        headers['X-Forwarded-For'] = remote_address
+    def _get_instance_and_project_id_helper(self, forwarded_for, ports,
+                                            mac=None):
+        network_id = 'the_id'
+        headers = {
+            'X-Forwarded-For': forwarded_for,
+            'X-OVN-Network-ID': network_id
+        }
+
         req = mock.Mock(headers=headers)
 
         def mock_get_network_port_bindings_by_ip(*args, **kwargs):
-            return list_ports_retval.pop(0)
+            return ports.pop(0)
 
         self.handler.sb_idl.get_network_port_bindings_by_ip.side_effect = (
             mock_get_network_port_bindings_by_ip)
@@ -103,40 +107,66 @@ class TestMetadataProxyHandler(base.BaseTestCase):
         instance_id, project_id = (
             self.handler._get_instance_and_project_id(req))
 
-        expected = [mock.call(network, '192.168.1.1')]
+        expected = [mock.call(network_id, forwarded_for, mac=mac)]
         self.handler.sb_idl.get_network_port_bindings_by_ip.assert_has_calls(
             expected)
         return (instance_id, project_id)
 
-    def test_get_instance_id_network_id(self):
-        network_id = 'the_id'
-        headers = {
-            'X-OVN-Network-ID': network_id
-        }
-
+    def test_get_instance_id_network_id_ipv4(self):
+        forwarded_for = '192.168.1.1'
+        mac = 'fa:16:3e:12:34:56'
         ovn_port = OvnPortInfo(
             external_ids={'neutron:device_id': 'device_id',
                           'neutron:project_id': 'project_id'},
-            chassis=['chassis1'])
+            chassis=['chassis1'],
+            mac=mac)
         ports = [[ovn_port]]
 
         self.assertEqual(
-            self._get_instance_and_project_id_helper(headers, ports,
-                                                     network='the_id'),
+            self._get_instance_and_project_id_helper(forwarded_for, ports),
+            ('device_id', 'project_id')
+        )
+
+    def test_get_instance_id_network_id_ipv6(self):
+        forwarded_for = '2001:db8::1'
+        mac = 'fa:16:3e:12:34:56'
+        ovn_port = OvnPortInfo(
+            external_ids={'neutron:device_id': 'device_id',
+                          'neutron:project_id': 'project_id'},
+            chassis=['chassis1'],
+            mac=mac)
+        ports = [[ovn_port]]
+
+        self.assertEqual(
+            self._get_instance_and_project_id_helper(forwarded_for, ports),
+            ('device_id', 'project_id')
+        )
+
+    def test_get_instance_id_network_id_ipv6_ll(self):
+        forwarded_for = 'fe80::99'
+        # This is the EUI encoded MAC based on the IPv6 address
+        forwarded_mac = '02:00:00:00:00:99'
+        ovn_port = OvnPortInfo(
+            external_ids={'neutron:device_id': 'device_id',
+                          'neutron:project_id': 'project_id'},
+            chassis=['chassis1'],
+            mac=forwarded_mac)
+        ports = [[ovn_port]]
+
+        # IPv6 and link-local, the MAC will be passed
+        self.assertEqual(
+            self._get_instance_and_project_id_helper(forwarded_for, ports,
+                                                     mac=forwarded_mac),
             ('device_id', 'project_id')
         )
 
     def test_get_instance_id_network_id_no_match(self):
-        network_id = 'the_id'
-        headers = {
-            'X-OVN-Network-ID': network_id
-        }
-
+        forwarded_for = '192.168.1.1'
         ports = [[]]
 
         expected = (None, None)
-        observed = self._get_instance_and_project_id_helper(headers, ports,
-                                                            network='the_id')
+        observed = self._get_instance_and_project_id_helper(forwarded_for,
+                                                            ports)
         self.assertEqual(expected, observed)
 
     def _proxy_request_test_helper(self, response_code=200, method='GET'):
