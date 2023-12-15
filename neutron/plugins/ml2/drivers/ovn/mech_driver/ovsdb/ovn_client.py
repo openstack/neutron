@@ -550,8 +550,8 @@ class OVNClient(object):
             if (self.is_external_ports_supported() and
                     port_info.type == ovn_const.LSP_TYPE_EXTERNAL):
                 kwargs['ha_chassis_group'] = utils.sync_ha_chassis_group(
-                    context, port['network_id'], self._nb_idl, self._sb_idl,
-                    txn)
+                    context, port['id'], port['network_id'], self._nb_idl,
+                    self._sb_idl, txn)
 
             # NOTE(mjozefcz): Do not set addresses if the port is not
             # bound, has no device_owner and it is OVN LB VIP port.
@@ -673,8 +673,8 @@ class OVNClient(object):
                 if port_info.type == ovn_const.LSP_TYPE_EXTERNAL:
                     columns_dict['ha_chassis_group'] = (
                         utils.sync_ha_chassis_group(
-                            context, port['network_id'], self._nb_idl,
-                            self._sb_idl, txn))
+                            context, port['id'], port['network_id'],
+                            self._nb_idl, self._sb_idl, txn))
                 else:
                     # Clear the ha_chassis_group field
                     columns_dict['ha_chassis_group'] = []
@@ -775,6 +775,15 @@ class OVNClient(object):
                     if port_id in lsp.options.get(
                             ovn_const.LSP_OPTIONS_VIRTUAL_PARENTS_KEY, ''):
                         txn.add(cmd(lsp.name, port_id, if_exists=True))
+
+        # NOTE(lucasagomes): We need to delete the LSP before we attempt
+        # to remove the HA Chassis Group or it will fail with a violation
+        # error due to the LSP reference in the group
+        with self._nb_idl.transaction(check_error=True) as txn:
+            if ovn_port.type == ovn_const.LSP_TYPE_EXTERNAL:
+                ha_ch_grp_name = utils.ovn_extport_chassis_group_name(port_id)
+                txn.add(self._nb_idl.ha_chassis_group_del(
+                    ha_ch_grp_name, if_exists=True))
 
     # TODO(lucasagomes): The ``port_object`` parameter was added to
     # keep things backward compatible. Remove it in the Rocky release.
@@ -1958,6 +1967,52 @@ class OVNClient(object):
             commands.append(self._nb_idl.lrp_set_options(lrp_name, **options))
         self._transaction(commands, txn=txn)
 
+    def _check_network_changes_in_ha_chassis_groups(self,
+            context, lswitch, lswitch_params, txn):
+        """Check for changes in the HA Chassis Groups.
+
+        Check for changes in the HA Chassis Groups upon a network update.
+        """
+        # If there are no external ports in this network, there's
+        # no need to check the AZs
+        if self.is_external_ports_supported():
+            return
+
+        # Check for changes in the network Availability Zones
+        ovn_ls_azs = lswitch.external_ids.get(
+            ovn_const.OVN_AZ_HINTS_EXT_ID_KEY, '')
+        neutron_net_azs = lswitch_params['external_ids'].get(
+            ovn_const.OVN_AZ_HINTS_EXT_ID_KEY, '')
+
+        # Check if there are changes to the AZs
+        if ovn_ls_azs != neutron_net_azs:
+            return
+
+        extport_list = [p for p in lswitch.ports if
+                        p.type == ovn_const.LSP_TYPE_EXTERNAL]
+
+        # Check if there are dedicated chassis for external ports
+        if self._sb_idl.get_extport_chassis_from_cms_options():
+            for extport in extport_list:
+                port_id = extport.name
+                network_id = extport.external_ids[
+                    ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY].replace(
+                        ovn_const.OVN_NAME_PREFIX, '')
+                utils.sync_ha_chassis_group(
+                    context, port_id, network_id, self._nb_idl,
+                    self._sb_idl, txn)
+        elif extport_list:
+            # If there's no dedicated chassis for external ports, there will
+            # be 1 HA Chassis Group per network, so the sync is at the network
+            # level. Just pass any external port from that network to the
+            # sync method
+            port_id = extport_list[0].name
+            network_id = extport_list[0].external_ids[
+                ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY].replace(
+                    ovn_const.OVN_NAME_PREFIX, '')
+            utils.sync_ha_chassis_group(
+                context, port_id, network_id, self._nb_idl, self._sb_idl, txn)
+
     def update_network(self, context, network, original_network=None):
         lswitch_name = utils.ovn_name(network['id'])
         check_rev_cmd = self._nb_idl.check_revision_number(
@@ -2013,20 +2068,8 @@ class OVNClient(object):
                     self.set_gateway_mtu(n_context.get_admin_context(),
                                          network, txn)
 
-            if self.is_external_ports_supported():
-                # If there are no external ports in this  network, there's
-                # no need to check the AZs
-                if any(p for p in lswitch.ports if
-                       p.type == ovn_const.LSP_TYPE_EXTERNAL):
-                    # Check for changes in the network Availability Zones
-                    ovn_ls_azs = lswitch.external_ids.get(
-                        ovn_const.OVN_AZ_HINTS_EXT_ID_KEY, '')
-                    neutron_net_azs = lswitch_params['external_ids'].get(
-                        ovn_const.OVN_AZ_HINTS_EXT_ID_KEY, '')
-                    if ovn_ls_azs != neutron_net_azs:
-                        utils.sync_ha_chassis_group(
-                            context, network['id'], self._nb_idl,
-                            self._sb_idl, txn)
+            self._check_network_changes_in_ha_chassis_groups(
+                context, lswitch, lswitch_params, txn)
 
             # Update the segment tags, if any
             segments = segments_db.get_network_segments(context, network['id'])

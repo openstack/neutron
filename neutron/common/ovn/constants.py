@@ -69,6 +69,7 @@ OVN_ROUTER_PORT_GW_MTU_OPTION = 'gateway_mtu'
 
 OVN_PROVNET_PORT_NAME_PREFIX = 'provnet-'
 OVN_NAME_PREFIX = 'neutron-'
+OVN_HA_CH_GROUP_EXTPORT_PREFIX = 'neutron-extport-'
 
 # TODO(froyo): Move this to neutron-lib as soon as possible, and when a new
 # release is created and pointed to in the requirements remove this code
@@ -307,6 +308,12 @@ HASH_RING_ML2_GROUP = 'mechanism_driver'
 # Maximum chassis count where a gateway port can be hosted
 MAX_GW_CHASSIS = 5
 
+# Maximum number of Chassis in a HA Chassis Group. Limiting the number
+# of members because OVN uses BFD to monitor the connectivity of each member
+# in the group. Having an unlimited number of members can potentially
+# put a lot of stress on OVN to monitor it all.
+MAX_CHASSIS_IN_HA_GROUP = 5
+
 UNKNOWN_ADDR = 'unknown'
 
 PORT_CAP_SWITCHDEV = 'switchdev'
@@ -421,6 +428,7 @@ EXTERNAL_PORT_TYPES = (portbindings.VNIC_DIRECT,
 NEUTRON_AVAILABILITY_ZONES = 'neutron-availability-zones'
 OVN_CMS_OPTIONS = 'ovn-cms-options'
 CMS_OPT_CHASSIS_AS_GW = 'enable-chassis-as-gw'
+CMS_OPT_CHASSIS_AS_EXTPORT_HOST = 'enable-chassis-as-extport-host'
 CMS_OPT_AVAILABILITY_ZONES = 'availability-zones'
 CMS_OPT_CARD_SERIAL_NUMBER = 'card-serial-number'
 
