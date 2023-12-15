@@ -130,6 +130,8 @@
     description: |
       Functional testing for a FIPS enabled Centos 8 system
     vars:
+      tox_environment:
+        TOX_PYTHON: python3.8
       nslookup_target: 'opendev.org'
       enable_fips: True
       devstack_localrc:

@@ -47,6 +47,7 @@
     name: neutron-experimental-jobs
     experimental:
       jobs:
+        - neutron-functional-with-uwsgi-fips
         - neutron-ovn-grenade-multinode
         - neutron-ovn-tempest-with-uwsgi-loki
         - tempest-integrated-networking:

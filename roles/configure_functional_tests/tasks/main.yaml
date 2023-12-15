@@ -34,6 +34,9 @@
             # NOTE(slaweq) On Fedora/CentOS systems make sure that SELinux is
             # not in enforcing mode
             sudo setenforce 0
+            if [[ $os_VENDOR == "CentOSStream" && $os_RELEASE -eq 8 ]]; then
+                install_package python3.8 python38-devel
+            fi
         fi
 
         configure_host_for_func_testing
