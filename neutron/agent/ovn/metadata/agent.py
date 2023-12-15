@@ -109,6 +109,16 @@ class PortBindingEvent(row_event.RowEvent):
             self.agent.resync()
 
 
+class PortBindingCreateWithChassis(PortBindingEvent):
+    EVENT = PortBindingEvent.ROW_CREATE
+
+    def match_fn(self, event, row, old):
+        self._log_msg = "Port %s in datapath %s bound to our chassis on insert"
+        if not (super().match_fn(event, row, old) and row.chassis):
+            return False
+        return row.chassis[0].name == self.agent.chassis
+
+
 class PortBindingUpdatedEvent(PortBindingEvent):
     EVENT = PortBindingEvent.ROW_UPDATE
 
@@ -316,6 +326,7 @@ class MetadataAgent(object):
         tables = ('Encap', 'Port_Binding', 'Datapath_Binding', 'SB_Global',
                   'Chassis')
         events = (PortBindingUpdatedEvent(self),
+                  PortBindingCreateWithChassis(self),
                   PortBindingDeletedEvent(self),
                   SbGlobalUpdateEvent(self),
                   )
@@ -345,7 +356,8 @@ class MetadataAgent(object):
         self._proxy.run()
 
         # Do the initial sync.
-        self.sync()
+        # Provisioning handled by PortBindingCreateWithChassis
+        self.sync(provision=False)
 
         # Register the agent with its corresponding Chassis
         self.register_metadata_agent()
@@ -396,7 +408,7 @@ class MetadataAgent(object):
         return set(p.datapath for p in self._vif_ports(ports))
 
     @_sync_lock
-    def sync(self):
+    def sync(self, provision=True):
         """Agent sync.
 
         This function will make sure that all networks with ports in our
@@ -423,8 +435,9 @@ class MetadataAgent(object):
         # resync all network namespaces based on the associated datapaths,
         # even those that are already running. This is to make sure
         # everything within each namespace is up to date.
-        for datapath in net_datapaths:
-            self.provision_datapath(datapath)
+        if provision:
+            for datapath in net_datapaths:
+                self.provision_datapath(datapath)
 
     @staticmethod
     def _get_veth_name(datapath):
