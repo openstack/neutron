@@ -14,7 +14,6 @@
 #    under the License.
 
 import collections
-from datetime import datetime
 import itertools
 
 import netaddr
@@ -31,6 +30,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_serialization import jsonutils
+from oslo_utils import timeutils
 from oslo_utils import uuidutils
 
 from neutron.agent import resource_cache
@@ -99,7 +99,7 @@ class PluginReportStateAPI(object):
         agent_state['uuid'] = uuidutils.generate_uuid()
         kwargs = {
             'agent_state': {'agent_state': agent_state},
-            'time': datetime.utcnow().strftime(constants.ISO8601_TIME_FORMAT),
+            'time': timeutils.utcnow().strftime(constants.ISO8601_TIME_FORMAT),
         }
         method = cctxt.call if use_call else cctxt.cast
         return method(context, 'report_state', **kwargs)

@@ -17,6 +17,7 @@ import datetime
 
 from neutron_lib.db import api as db_api
 from oslo_db import exception as db_exc
+from oslo_utils import timeutils
 
 from neutron.common import utils
 from neutron.objects import quota as quota_obj
@@ -28,7 +29,7 @@ UNLIMITED_QUOTA = -1
 
 # Wrapper for utcnow - needed for mocking it in unit tests
 def utcnow():
-    return datetime.datetime.utcnow()
+    return timeutils.utcnow()
 
 
 class QuotaUsageInfo(collections.namedtuple(

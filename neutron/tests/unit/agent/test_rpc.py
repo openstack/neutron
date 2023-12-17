@@ -25,9 +25,11 @@ from neutron_lib import rpc as n_rpc
 from oslo_config import cfg
 from oslo_context import context as oslo_context
 from oslo_serialization import jsonutils
+from oslo_utils import timeutils
 from oslo_utils import uuidutils
 
 from neutron.agent import rpc
+from neutron.conf.agent import common as conf_common
 from neutron.objects import network
 from neutron.objects.port.extensions import port_hints
 from neutron.objects import ports
@@ -77,6 +79,7 @@ class AgentRPCPluginApi(base.BaseTestCase):
 
 class AgentPluginReportState(base.BaseTestCase):
     def test_plugin_report_state_timeout_report_interval(self):
+        conf_common.register_agent_state_opts_helper(cfg.CONF)
         cfg.CONF.set_override('report_interval', 15, 'AGENT')
         reportStateAPI = rpc.PluginReportStateAPI('test')
         self.assertEqual(reportStateAPI.timeout, 15)
@@ -124,9 +127,9 @@ class AgentPluginReportState(base.BaseTestCase):
         expected_time = datetime.datetime(2015, 7, 27, 15, 33, 30, 0)
         expected_time_str = '2015-07-27T15:33:30.000000'
         expected_agent_state = {'agent': 'test'}
-        with mock.patch('neutron.agent.rpc.datetime') as mock_datetime:
+        with mock.patch.object(timeutils, 'utcnow',
+                               return_value=expected_time):
             reportStateAPI = rpc.PluginReportStateAPI(topic)
-            mock_datetime.utcnow.return_value = expected_time
             with mock.patch.object(reportStateAPI.client, 'call'), \
                     mock.patch.object(reportStateAPI.client, 'cast'
                                       ) as mock_cast, \

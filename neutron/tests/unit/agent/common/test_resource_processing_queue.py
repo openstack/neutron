@@ -15,6 +15,7 @@
 
 import datetime
 
+from oslo_utils import timeutils
 from oslo_utils import uuidutils
 
 from neutron.agent.common import resource_processing_queue as queue
@@ -80,8 +81,8 @@ class TestExclusiveResourceProcessor(base.BaseTestCase):
         self.assertEqual(datetime.datetime.min,
                          primary._get_resource_data_timestamp())
 
-        ts1 = datetime.datetime.utcnow() - datetime.timedelta(seconds=10)
-        ts2 = datetime.datetime.utcnow()
+        ts1 = timeutils.utcnow() - datetime.timedelta(seconds=10)
+        ts2 = timeutils.utcnow()
 
         primary.fetched_and_processed(ts2)
         self.assertEqual(ts2, primary._get_resource_data_timestamp())

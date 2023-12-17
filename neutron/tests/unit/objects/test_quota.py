@@ -15,6 +15,7 @@
 import datetime
 
 from neutron_lib.db import api as db_api
+from oslo_utils import timeutils
 from oslo_utils import uuidutils
 
 from neutron.objects import quota
@@ -60,7 +61,7 @@ class ReservationDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         return reservation
 
     def test_delete_expired(self):
-        dt = datetime.datetime.utcnow()
+        dt = timeutils.utcnow()
         resources = {'goals': 2, 'assists': 1}
         exp_date1 = datetime.datetime(2016, 3, 31, 14, 30)
         exp_date2 = datetime.datetime(2015, 3, 31, 14, 30)

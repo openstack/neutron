@@ -31,6 +31,7 @@ from neutron_lib.tests.unit import fake_notifier
 from oslo_config import cfg
 from oslo_db import exception as db_exc
 import oslo_messaging
+from oslo_utils import timeutils
 from oslo_utils import uuidutils
 from webob import exc
 
@@ -199,7 +200,7 @@ class AgentSchedulerTestMixIn(object):
 
     def test_agent_registration_bad_timestamp(self):
         callback = agents_db.AgentExtRpcCallback()
-        delta_time = datetime.datetime.now() - datetime.timedelta(days=1)
+        delta_time = timeutils.utcnow() - datetime.timedelta(days=1)
         str_time = delta_time.strftime('%Y-%m-%dT%H:%M:%S.%f')
         callback.report_state(
             self.adminContext,
@@ -209,7 +210,7 @@ class AgentSchedulerTestMixIn(object):
 
     def test_agent_registration_invalid_timestamp_allowed(self):
         callback = agents_db.AgentExtRpcCallback()
-        utc_time = datetime.datetime.utcnow()
+        utc_time = timeutils.utcnow()
         delta_time = utc_time - datetime.timedelta(seconds=10)
         str_time = delta_time.strftime('%Y-%m-%dT%H:%M:%S.%f')
         callback.report_state(
