@@ -19,6 +19,7 @@ from unittest import mock
 from neutron_lib import constants as p_const
 from neutron_lib.plugins.ml2 import ovs_constants
 from neutron_lib.services.qos import constants as qos_constants
+from oslo_config import cfg
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import event
 
@@ -638,7 +639,11 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
         port_name = 'test_output_port_2'
         self._create_bridge()
         self._create_port(port_name)
-        self.ovs.set_igmp_snooping_flood(port_name, True)
+
+        # Enable flood
+        cfg.CONF.set_override('igmp_flood', True, group='OVS')
+        cfg.CONF.set_override('igmp_flood_reports', True, group='OVS')
+        self.ovs.set_igmp_snooping_flood(port_name)
         ports_other_config = self.ovs.db_get_val('Port', port_name,
                                                  'other_config')
         self.assertEqual(
@@ -648,7 +653,10 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
             'true',
             ports_other_config.get('mcast-snooping-flood-reports', '').lower())
 
-        self.ovs.set_igmp_snooping_flood(port_name, False)
+        # Disable flood
+        cfg.CONF.set_override('igmp_flood', False, group='OVS')
+        cfg.CONF.set_override('igmp_flood_reports', False, group='OVS')
+        self.ovs.set_igmp_snooping_flood(port_name)
         ports_other_config = self.ovs.db_get_val('Port', port_name,
                                                  'other_config')
         self.assertEqual(

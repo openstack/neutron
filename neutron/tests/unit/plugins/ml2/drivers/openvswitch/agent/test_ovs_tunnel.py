@@ -228,8 +228,7 @@ class TunnelTest(object):
             mock.call.port_exists('int-%s' % self.MAP_TUN_BRIDGE),
             mock.call.add_patch_port('int-%s' % self.MAP_TUN_BRIDGE,
                                      ovs_constants.NONEXISTENT_PEER),
-            mock.call.set_igmp_snooping_flood('int-%s' % self.MAP_TUN_BRIDGE,
-                                              igmp_snooping),
+            mock.call.set_igmp_snooping_flood('int-%s' % self.MAP_TUN_BRIDGE),
         ]
 
         self.mock_int_bridge_expected += [
@@ -259,7 +258,7 @@ class TunnelTest(object):
         self.mock_int_bridge_expected += [
             mock.call.port_exists('patch-tun'),
             mock.call.add_patch_port('patch-tun', 'patch-int'),
-            mock.call.set_igmp_snooping_flood('patch-tun', igmp_snooping),
+            mock.call.set_igmp_snooping_flood('patch-tun'),
         ]
         self.mock_int_bridge_expected += [
             mock.call.get_vif_ports((ovs_lib.INVALID_OFPORT,

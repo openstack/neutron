@@ -205,8 +205,10 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         br_other_config = self.ovs.ovsdb.db_find(
             'Bridge', ('name', '=', self.br.br_name), columns=['other_config']
         ).execute()[0]['other_config']
+        expected_flood_value = ('false' if
+            cfg.CONF.OVS.igmp_flood_unregistered else 'true')
         self.assertEqual(
-            'false',
+            expected_flood_value,
             br_other_config.get(
                 'mcast-snooping-disable-flood-unregistered', '').lower())
 

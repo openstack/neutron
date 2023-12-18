@@ -229,6 +229,8 @@ class CoreChecks(base.BaseChecks):
              self.extra_dhcp_options_check),
             (_('OVN support for BM provisioning over IPv6 check'),
              self.ovn_for_bm_provisioning_over_ipv6_check),
+            (_('ML2/OVS IGMP Flood check'),
+             self.ml2_ovs_igmp_flood_check),
         ]
 
     @staticmethod
@@ -639,3 +641,31 @@ class CoreChecks(base.BaseChecks):
                   'c5fd51bd154147a567097eaf61fbebc0b5b39e28 which added '
                   'support for iPXE over IPv6. It is available in '
                   'OVN >= 23.06.0.'))
+
+    @staticmethod
+    def ml2_ovs_igmp_flood_check(checker):
+        """Check for IGMP related traffic behavior changes for ML2/OVS
+
+        Since LP#2044272, the default behavior of IGMP related traffic has
+        changed for the ML2/OVS driver. This check raises a warning and
+        instruct the user how to configure IGMP to keep the same behavior
+        as prior to the upgrade.
+        """
+        # NOTE(lucasagomes): igmp_flood_reports is not checked as part
+        # of this function because its default is already True.
+        if ('ovn' not in cfg.CONF.ml2.mechanism_drivers and
+                cfg.CONF.OVS.igmp_snooping_enable and
+                not cfg.CONF.OVS.igmp_flood_unregistered and
+                not cfg.CONF.OVS.igmp_flood):
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _('For non-ML2/OVN deployments where ``igmp_snooping_enable`` '
+                  'is enabled, the default behavior of IGMP related traffic '
+                  'has changed after LP#2044272. To keep the same behavior '
+                  'as before please ensure that the configuration options: '
+                  '``igmp_flood_unregistered`` and ``igmp_flood`` are also '
+                  'enabled in the [OVS] section of the configuration file.'))
+
+        return upgradecheck.Result(
+            upgradecheck.Code.SUCCESS,
+            _('IGMP related traffic configuration is not affected.'))

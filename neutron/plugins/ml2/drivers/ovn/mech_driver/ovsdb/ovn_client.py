@@ -47,6 +47,7 @@ from neutron.common.ovn import acl as ovn_acl
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.common import utils as common_utils
+from neutron.conf.agent import ovs_conf
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.db import segments_db
@@ -1889,10 +1890,13 @@ class OVNClient(object):
         physnet = segment.get(segment_def.PHYSICAL_NETWORK)
         fdb_enabled = ('true' if ovn_conf.is_learn_fdb_enabled()
                        else 'false')
-        options = {'network_name': physnet,
-                   ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true',
-                   ovn_const.LSP_OPTIONS_MCAST_FLOOD: 'false',
-                   ovn_const.LSP_OPTIONS_LOCALNET_LEARN_FDB: fdb_enabled}
+        options = {
+            'network_name': physnet,
+            ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS:
+                ovs_conf.get_igmp_flood_reports(),
+            ovn_const.LSP_OPTIONS_MCAST_FLOOD:
+                ovs_conf.get_igmp_flood(),
+            ovn_const.LSP_OPTIONS_LOCALNET_LEARN_FDB: fdb_enabled}
         cmd = self._nb_idl.create_lswitch_port(
             lport_name=utils.ovn_provnet_port_name(segment['id']),
             lswitch_name=utils.ovn_name(network_id),
@@ -1920,12 +1924,14 @@ class OVNClient(object):
                 ','.join(common_utils.get_az_hints(network))}}
 
         # Enable IGMP snooping if igmp_snooping_enable is enabled in Neutron
-        value = 'true' if ovn_conf.is_igmp_snooping_enabled() else 'false'
         vlan_transparent = (
             'true' if network.get('vlan_transparent') else 'false')
-        params['other_config'] = {ovn_const.MCAST_SNOOP: value,
-                                  ovn_const.MCAST_FLOOD_UNREGISTERED: 'false',
-                                  ovn_const.VLAN_PASSTHRU: vlan_transparent}
+        params['other_config'] = {
+            ovn_const.MCAST_SNOOP:
+                ovs_conf.get_igmp_snooping_enabled(),
+            ovn_const.MCAST_FLOOD_UNREGISTERED:
+                ovs_conf.get_igmp_flood_unregistered(),
+            ovn_const.VLAN_PASSTHRU: vlan_transparent}
         if utils.is_provider_network(network):
             params['other_config'][ovn_const.LS_OPTIONS_FDB_AGE_THRESHOLD] = (
                 ovn_conf.get_fdb_age_threshold())

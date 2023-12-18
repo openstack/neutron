@@ -36,8 +36,7 @@ OVN Database information
 
 The ``igmp_snooping_enable`` configuration from Neutron is translated
 into the ``mcast_snoop`` option set in the ``other_config`` column
-from the ``Logical_Switch`` table in the OVN Northbound Database
-(``mcast_flood_unregistered`` is always "false"):
+from the ``Logical_Switch`` table in the OVN Northbound Database:
 
 .. code-block:: bash
 
@@ -71,7 +70,6 @@ command below (populated only when igmp_snooping_enable is True):
    groups and broadcast all the multicast traffic. This behavior can
    impact when updating/upgrading the OVN services.
 
-
 Extra information
 ~~~~~~~~~~~~~~~~~
 
@@ -91,6 +89,12 @@ The permutations from different configurations are:
 
 * With IGMP snooping enabled and multicast group address **is in**
   the 224.0.0.X range: IP Multicast traffic **is** flooded.
+
+* Apart from the ``igmp_snooping_enable`` configuration option mentioned
+  before, there are 3 other configuration options supported by the OVN
+  driver: ``igmp_flood``, ``igmp_flood_reports`` and
+  ``igmp_flood_unregistered``. Check the :ref:`ML2 configuration
+  reference page <ML2_CONF>` for more information.
 
 
 .. _`RFC 4541 session 2.1.2`: https://tools.ietf.org/html/rfc4541

@@ -34,6 +34,7 @@ from ovsdbapp.backend.ovs_idl import event as row_event
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
+from neutron.conf.agent import ovs_conf
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import l3_attrs_db
 from neutron.db import ovn_hash_ring_db as hash_ring_db
@@ -471,18 +472,28 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
     # once per lock due to the use of periodics.NeverAgain().
     @has_lock_periodic(spacing=600, run_immediately=True)
     def check_for_igmp_snoop_support(self):
-        with self._nb_idl.transaction(check_error=True) as txn:
-            value = ('true' if ovn_conf.is_igmp_snooping_enabled()
-                     else 'false')
-            for ls in self._nb_idl.ls_list().execute(check_error=True):
-                if (ls.other_config.get(ovn_const.MCAST_SNOOP,
-                                        None) == value or not ls.name):
-                    continue
-                txn.add(self._nb_idl.db_set(
+        snooping_conf = ovs_conf.get_igmp_snooping_enabled()
+        flood_conf = ovs_conf.get_igmp_flood_unregistered()
+
+        cmds = []
+        for ls in self._nb_idl.ls_list().execute(check_error=True):
+            snooping = ls.other_config.get(ovn_const.MCAST_SNOOP)
+            flood = ls.other_config.get(ovn_const.MCAST_FLOOD_UNREGISTERED)
+
+            if (not ls.name or (snooping == snooping_conf and
+                    flood == flood_conf)):
+                continue
+
+            cmds.append(self._nb_idl.db_set(
                     'Logical_Switch', ls.name,
                     ('other_config', {
-                        ovn_const.MCAST_SNOOP: value,
-                        ovn_const.MCAST_FLOOD_UNREGISTERED: 'false'})))
+                        ovn_const.MCAST_SNOOP: snooping_conf,
+                        ovn_const.MCAST_FLOOD_UNREGISTERED: flood_conf})))
+
+        if cmds:
+            with self._nb_idl.transaction(check_error=True) as txn:
+                for cmd in cmds:
+                    txn.add(cmd)
 
         raise periodics.NeverAgain()
 
@@ -557,12 +568,16 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
     # once per lock due to the use of periodics.NeverAgain().
     @has_lock_periodic(spacing=600, run_immediately=True)
     def check_for_mcast_flood_reports(self):
+        mcast_flood_conf = ovs_conf.get_igmp_flood()
+        mcast_flood_reports_conf = ovs_conf.get_igmp_flood_reports()
         cmds = []
         for port in self._nb_idl.lsp_list().execute(check_error=True):
             port_type = port.type.strip()
             options = port.options
             mcast_flood_reports_value = options.get(
                     ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS)
+            mcast_flood_value = options.get(
+                    ovn_const.LSP_OPTIONS_MCAST_FLOOD)
 
             if self._ovn_client.is_mcast_flood_broken:
                 if port_type in ("vtep", ovn_const.LSP_TYPE_LOCALPORT,
@@ -590,6 +605,15 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                 cmds.append(self._nb_idl.db_remove(
                     'Logical_Switch_Port', port.name, 'options',
                     ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS, if_exists=True))
+
+            elif (port_type == ovn_const.LSP_TYPE_LOCALNET and (
+                    mcast_flood_conf != mcast_flood_value or
+                    mcast_flood_reports_conf != mcast_flood_reports_value)):
+                options.update({
+                    ovn_const.LSP_OPTIONS_MCAST_FLOOD: mcast_flood_conf,
+                    ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS:
+                        mcast_flood_reports_conf})
+                cmds.append(self._nb_idl.lsp_set_options(port.name, **options))
 
         if cmds:
             with self._nb_idl.transaction(check_error=True) as txn:
