@@ -79,4 +79,4 @@ class FakeOVNAgentExtension(ext_mgr.OVNAgentExtension):
         return [OVNSBChassisEvent]
 
     def start(self):
-        self._is_ext_started = True
+        self._is_started = True
