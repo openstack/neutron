@@ -25,6 +25,9 @@ from neutron.tests.common import net_helpers
 from neutron.tests.functional import base
 
 
+TEST_EXTENSION = 'testing'
+
+
 class TestOVNNeutronAgent(base.TestOVNFunctionalBase):
 
     OVN_BRIDGE = 'br-int'
@@ -36,9 +39,13 @@ class TestOVNNeutronAgent(base.TestOVNFunctionalBase):
             agent_ovsdb, 'get_own_chassis_name').start()
         self.ovn_agent = self._start_ovn_neutron_agent()
 
+    def _check_loaded_extensions(self, ovn_agent):
+        loaded_ext = ovn_agent[TEST_EXTENSION]
+        self.assertEqual('Fake OVN agent extension', loaded_ext.name)
+
     def _start_ovn_neutron_agent(self):
         conf = self.useFixture(fixture_config.Config()).conf
-        conf.set_override('extensions', 'testing', group='agent')
+        conf.set_override('extensions', TEST_EXTENSION, group='agent')
         ovn_nb_db = self.ovsdb_server_mgr.get_ovsdb_connection_path('nb')
         conf.set_override('ovn_nb_connection', ovn_nb_db, group='ovn')
         ovn_sb_db = self.ovsdb_server_mgr.get_ovsdb_connection_path('sb')
@@ -52,6 +59,7 @@ class TestOVNNeutronAgent(base.TestOVNFunctionalBase):
         agt.test_ovn_sb_idl = []
         agt.test_ovn_nb_idl = []
         agt.start()
+        self._check_loaded_extensions(agt)
 
         self.add_fake_chassis(self.FAKE_CHASSIS_HOST, name=self.chassis_name)
 

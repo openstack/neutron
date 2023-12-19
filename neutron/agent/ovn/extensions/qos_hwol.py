@@ -27,6 +27,7 @@ from neutron.plugins.ml2.drivers.mech_sriov.agent import pci_lib
 
 
 LOG = logging.getLogger(__name__)
+EXT_NAME = 'qos_hwol'
 # NOTE(ralonsoh): move these constants from ``eswitch_manager`` to ``pci_lib``.
 MAX_TX_RATE = eswitch_manager.IP_LINK_CAPABILITY_RATE
 MIN_TX_RATE = eswitch_manager.IP_LINK_CAPABILITY_MIN_TX_RATE
@@ -59,10 +60,10 @@ class OVSInterfaceEvent(row_event.RowEvent):
 
     def run(self, event, row, old):
         if event in (self.ROW_CREATE, self.ROW_UPDATE):
-            self.ovn_agent.qos_hwol_ext.add_port(
+            self.ovn_agent[EXT_NAME].add_port(
                 row.external_ids['iface-id'], row.name)
         elif event == self.ROW_DELETE:
-            self.ovn_agent.qos_hwol_ext.remove_egress(
+            self.ovn_agent[EXT_NAME].remove_egress(
                 row.external_ids['iface-id'])
         LOG.debug(self.LOG_MSG, row.external_ids['iface-id'], row.name, event)
 
@@ -82,7 +83,7 @@ class QoSBandwidthLimitEvent(row_event.RowEvent):
 
         # Check if the port has a Port ID and if this ID is bound to this host.
         port_id = row.external_ids.get(ovn_const.OVN_PORT_EXT_ID_KEY)
-        if not port_id or not self.ovn_agent.qos_hwol_ext.get_port(port_id):
+        if not port_id or not self.ovn_agent[EXT_NAME].get_port(port_id):
             return False
 
         if event in (self.ROW_CREATE, self.ROW_DELETE):
@@ -104,7 +105,7 @@ class QoSBandwidthLimitEvent(row_event.RowEvent):
         max_kbps, min_kbps = agent_ovsdb.get_port_qos(self.ovn_agent.nb_idl,
                                                       port_id)
         LOG.debug(self.LOG_MSG, str(row.uuid), port_id, max_kbps, event)
-        self.ovn_agent.qos_hwol_ext.update_egress(port_id, max_kbps, min_kbps)
+        self.ovn_agent[EXT_NAME].update_egress(port_id, max_kbps, min_kbps)
 
 
 class QoSMinimumBandwidthEvent(row_event.RowEvent):
@@ -129,7 +130,7 @@ class QoSMinimumBandwidthEvent(row_event.RowEvent):
         except (KeyError, AttributeError):
             return False
 
-        if not self.ovn_agent.qos_hwol_ext.get_port(row.name):
+        if not self.ovn_agent[EXT_NAME].get_port(row.name):
             return False
 
         return True
@@ -138,7 +139,7 @@ class QoSMinimumBandwidthEvent(row_event.RowEvent):
         max_kbps, min_kbps = agent_ovsdb.get_port_qos(self.ovn_agent.nb_idl,
                                                       row.name)
         LOG.debug(self.LOG_MSG, row.name, min_kbps, event)
-        self.ovn_agent.qos_hwol_ext.update_egress(row.name, max_kbps, min_kbps)
+        self.ovn_agent[EXT_NAME].update_egress(row.name, max_kbps, min_kbps)
 
 
 class _PortBindingChassisEvent(row_event.RowEvent):
@@ -176,8 +177,8 @@ class PortBindingChassisCreatedEvent(_PortBindingChassisEvent):
                   event)
         max_kbps, min_kbps = agent_ovsdb.get_port_qos(self.ovn_agent.nb_idl,
                                                       row.logical_port)
-        self.ovn_agent.qos_hwol_ext.update_egress(row.logical_port, max_kbps,
-                                                  min_kbps)
+        self.ovn_agent[EXT_NAME].update_egress(row.logical_port, max_kbps,
+                                               min_kbps)
 
 
 class QoSHardwareOffloadExtension(extension_manager.OVNAgentExtension):
@@ -186,6 +187,10 @@ class QoSHardwareOffloadExtension(extension_manager.OVNAgentExtension):
         super().__init__()
         # _ovs_ports = {Neutron port ID: OVS port name}
         self._ovs_ports = {}
+
+    @property
+    def name(self):
+        return 'QoS hardware offloaded extension'
 
     @property
     def ovs_idl_events(self):
