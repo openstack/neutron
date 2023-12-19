@@ -1123,10 +1123,9 @@ class AgentWaitEvent(event.WaitEvent):
     ONETIME = False
 
     def __init__(self, driver, chassis_names, events=None):
-        table = driver.agent_chassis_table
         events = events or (self.ROW_CREATE,)
         self.chassis_names = chassis_names
-        super().__init__(events, table, None)
+        super().__init__(events, 'Chassis_Private', None)
         self.event_name = "AgentWaitEvent"
 
     def match_fn(self, event, row, old):

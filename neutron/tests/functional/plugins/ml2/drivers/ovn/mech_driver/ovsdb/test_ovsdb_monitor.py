@@ -56,10 +56,10 @@ class WaitForDataPathBindingCreateEvent(event.WaitEvent):
 class WaitForChassisPrivateCreateEvent(event.WaitEvent):
     event_name = 'WaitForChassisPrivateCreateEvent'
 
-    def __init__(self, chassis_name, chassis_table):
+    def __init__(self, chassis_name):
         events = (self.ROW_CREATE,)
         conditions = (('name', '=', chassis_name),)
-        super().__init__(events, chassis_table, conditions, timeout=15)
+        super().__init__(events, 'Chassis_Private', conditions, timeout=15)
 
 
 class DistributedLockTestEvent(event.WaitEvent):
@@ -493,8 +493,7 @@ class TestAgentMonitor(base.TestOVNFunctionalBase):
         self.handler = self.sb_api.idl.notify_handler
         self.mock_ovsdb_idl = mock.Mock()
         chassis_name = uuidutils.generate_uuid()
-        row_event = WaitForChassisPrivateCreateEvent(
-            chassis_name, self.mech_driver.agent_chassis_table)
+        row_event = WaitForChassisPrivateCreateEvent(chassis_name)
         self.mech_driver.sb_ovn.idl.notify_handler.watch_event(row_event)
         self.chassis_name = self.add_fake_chassis(
             self.FAKE_CHASSIS_HOST, name=chassis_name,
@@ -509,10 +508,16 @@ class TestAgentMonitor(base.TestOVNFunctionalBase):
         self.sb_api.db_set('Chassis', self.chassis_name, ('other_config',
                 {'ovn-cms-options': ''})).execute(check_error=True)
         n_utils.wait_until_true(lambda:
-                neutron_agent.AgentCache().get(self.chassis_name).
-                chassis.other_config['ovn-cms-options'] == '')
-        self.assertEqual(neutron_agent.ControllerAgent,
-                type(neutron_agent.AgentCache().get(self.chassis_name)))
+                type(neutron_agent.AgentCache().get(self.chassis_name)) is
+                neutron_agent.ControllerAgent)
+
+        # Change back to gw chassis
+        self.sb_api.db_set('Chassis', self.chassis_name, ('other_config',
+            {'ovn-cms-options': 'enable-chassis-as-gw'})).execute(
+                check_error=True)
+        n_utils.wait_until_true(lambda:
+                type(neutron_agent.AgentCache().get(self.chassis_name)) is
+                neutron_agent.ControllerGatewayAgent)
 
     def test_agent_updated_at_use_nb_cfg_timestamp(self):
         def check_agent_ts():

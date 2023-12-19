@@ -283,44 +283,6 @@ class TestOvnIdlDistributedLock(base.BaseTestCase):
         self.idl.notify_handler.notify.assert_called_once_with(
             self.fake_event, self.fake_row, None, global_=True)
 
-    @staticmethod
-    def _create_fake_row(table_name):
-        # name is a parameter in Mock() so it can't be passed to constructor
-        table = mock.Mock()
-        table.name = table_name
-        return fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={'_table': table, 'schema': ['foo']})
-
-    def test_handle_db_schema_changes_no_match_events(self):
-        other_table_row = self._create_fake_row('other')
-        database_table_row = self._create_fake_row('Database')
-
-        self.idl.handle_db_schema_changes(
-            ovsdb_monitor.BaseEvent.ROW_UPDATE, other_table_row)
-        self.idl.handle_db_schema_changes(
-            ovsdb_monitor.BaseEvent.ROW_CREATE, other_table_row)
-        self.idl.handle_db_schema_changes(
-            ovsdb_monitor.BaseEvent.ROW_UPDATE, database_table_row)
-
-        self.assertFalse(self.mock_update_tables.called)
-
-    def _test_handle_db_schema(self, agent_table):
-        database_table_row = self._create_fake_row('Database')
-        self.idl._tables_to_register[database_table_row.name] = 'foo'
-
-        self.fake_driver.agent_chassis_table = agent_table
-        self.idl.tables['Chassis_Private'] = 'foo'
-        self.idl.handle_db_schema_changes(
-            ovsdb_monitor.BaseEvent.ROW_CREATE, database_table_row)
-
-    def test_handle_db_schema_changes_new_schema_to_new_schema(self):
-        """Agents use Chassis_Private and should keep using Chassis_Private
-           table.
-        """
-        self._test_handle_db_schema('Chassis_Private')
-        self.assertEqual('Chassis_Private',
-                         self.fake_driver.agent_chassis_table)
-
 
 class TestPortBindingChassisUpdateEvent(base.BaseTestCase):
     def setUp(self):
@@ -377,7 +339,6 @@ class TestOvnNbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
         self.lp_table = self.idl.tables.get('Logical_Switch_Port')
         self.mech_driver.set_port_status_up = mock.Mock()
         self.mech_driver.set_port_status_down = mock.Mock()
-        mock.patch.object(self.idl, 'handle_db_schema_changes').start()
         self._mock_hash_ring = mock.patch.object(
             self.idl._hash_ring, 'get_node', return_value=self.idl._node_uuid)
         self._mock_hash_ring.start()
@@ -522,7 +483,6 @@ class TestOvnSbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
         super(TestOvnSbIdlNotifyHandler, self).setUp()
         sb_helper = ovs_idl.SchemaHelper(schema_json=OVN_SB_SCHEMA)
         sb_helper.register_table('Chassis')
-        self.driver.agent_chassis_table = 'Chassis'
         self.sb_idl = ovsdb_monitor.OvnSbIdl(self.mech_driver, "remote",
                                              sb_helper)
         self.sb_idl.post_connect()
