@@ -55,6 +55,10 @@ class OVNNBLogicalSwitchEvent(row_event.RowEvent):
 class FakeOVNAgentExtension(ext_mgr.OVNAgentExtension):
 
     @property
+    def name(self):
+        return 'Fake OVN agent extension'
+
+    @property
     def ovs_idl_events(self):
         return [OVSInterfaceEvent]
 
