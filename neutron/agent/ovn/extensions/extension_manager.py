@@ -41,6 +41,11 @@ class OVNAgentExtensionManager(agent_ext_mgr.AgentExtensionsManager):
                         '"OVNAgentExtension"')
                 raise ConfigException(description=desc)
 
+    def start(self):
+        """Start the extensions, once the OVN agent has been initialized."""
+        for ext in self:
+            ext.obj.start()
+
 
 class OVNAgentExtension(extension.AgentExtension, metaclass=abc.ABCMeta):
 
@@ -64,6 +69,14 @@ class OVNAgentExtension(extension.AgentExtension, metaclass=abc.ABCMeta):
         neutron agent and otherwise unavailable to the extension.
         """
         self.agent_api = agent_api
+
+    def start(self):
+        """Start the extension, once the OVN agent has been initialized.
+
+        This method executes any action needed after the initialization of the
+        OVN agent and the extension manager API. It is executed at the end of
+        the OVN agent ``start`` method.
+        """
 
     @property
     @abc.abstractmethod

@@ -141,7 +141,8 @@ class OVNNeutronAgent(service.Service):
         # "load_config" to populate self.chassis.
         self.ext_manager_api.sb_idl = self._load_sb_idl()
         self.ext_manager_api.nb_idl = self._load_nb_idl()
-        LOG.info('Starting OVN Neutron Agent')
+        self.ext_manager.start()
+        LOG.info('OVN Neutron Agent started')
 
     def stop(self, graceful=True):
         LOG.info('Stopping OVN Neutron Agent')
