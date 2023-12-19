@@ -37,7 +37,7 @@ class OVSInterfaceEventTestCase(base.TestOVNFunctionalBase):
     def test_port_creation_and_deletion(self):
         def check_add_port_called():
             try:
-                mock_agent.qos_hwol_ext.add_port.assert_has_calls(
+                mock_agent[qos_hwol.EXT_NAME].add_port.assert_has_calls(
                     [mock.call(port_iface_id, self.port_name)])
                 return True
             except AssertionError:
@@ -52,7 +52,7 @@ class OVSInterfaceEventTestCase(base.TestOVNFunctionalBase):
                 return False
 
         port_iface_id = 'port_iface-id'
-        mock_agent = mock.Mock()
+        mock_agent = mock.MagicMock()
         events = [qos_hwol.OVSInterfaceEvent(mock_agent)]
         self.ovs_idl = agent_ovsdb.MonitorAgentOvsIdl(events=events).start()
         self.br_name = ('brtest-' + uuidutils.generate_uuid())[:13]
@@ -91,13 +91,13 @@ class QoSBandwidthLimitEventTestCase(base.TestOVNFunctionalBase):
     def test_qos_bw_limit_created_and_updated(self):
         def check_update_egress_called(rate):
             try:
-                mock_agent.qos_hwol_ext.update_egress.assert_has_calls(
+                mock_agent[qos_hwol.EXT_NAME].update_egress.assert_has_calls(
                     [mock.call(port_id, rate, 0)])
                 return True
             except AssertionError:
                 return False
 
-        mock_agent = mock.Mock(nb_idl=self.nb_api)
+        mock_agent = mock.MagicMock(nb_idl=self.nb_api)
         events = [qos_hwol.QoSBandwidthLimitEvent(mock_agent)]
         agent_ovsdb.MonitorAgentOvnNbIdl(qos_hwol.NB_IDL_TABLES,
                                          events).start()
@@ -133,13 +133,13 @@ class QoSMinimumBandwidthEventTestCase(base.TestOVNFunctionalBase):
     def test_qos_min_bw_created_and_updated(self):
         def check_update_egress_called(max_kbps, min_kbps):
             try:
-                mock_agent.qos_hwol_ext.update_egress.assert_has_calls(
+                mock_agent[qos_hwol.EXT_NAME].update_egress.assert_has_calls(
                     [mock.call(port_id, max_kbps, min_kbps)])
                 return True
             except AssertionError:
                 return False
 
-        mock_agent = mock.Mock(nb_idl=self.nb_api)
+        mock_agent = mock.MagicMock(nb_idl=self.nb_api)
         events = [qos_hwol.QoSMinimumBandwidthEvent(mock_agent)]
         agent_ovsdb.MonitorAgentOvnNbIdl(qos_hwol.NB_IDL_TABLES,
                                          events).start()
@@ -169,7 +169,7 @@ class PortBindingChassisCreatedEventTestCase(base.TestOVNFunctionalBase):
                                                *args):
         def check_update_egress_called(max_kbps, min_kbps):
             try:
-                mock_agent.qos_hwol_ext.update_egress.assert_has_calls(
+                mock_agent[qos_hwol.EXT_NAME].update_egress.assert_has_calls(
                     [mock.call(self.port['id'], max_kbps, min_kbps)])
                 return True
             except AssertionError:
@@ -177,7 +177,7 @@ class PortBindingChassisCreatedEventTestCase(base.TestOVNFunctionalBase):
 
         max_kbps, min_kbps = 1000, 800
         mock_get_port_qos.return_value = max_kbps, min_kbps
-        mock_agent = mock.Mock(nb_idl=self.nb_api)
+        mock_agent = mock.MagicMock(nb_idl=self.nb_api)
         events = [qos_hwol.PortBindingChassisCreatedEvent(mock_agent)]
         chassis_name = self.add_fake_chassis('ovn-host-fake')
         mock_agent.chassis = chassis_name
