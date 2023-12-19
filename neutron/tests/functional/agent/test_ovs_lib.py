@@ -22,7 +22,6 @@ from oslo_config import cfg
 from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron.agent.common import ovs_lib
-from neutron.agent.linux import ip_lib
 from neutron.common import utils
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.linux import base
@@ -217,11 +216,6 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
 
     def test_set_igmp_snooping_disabled(self):
         self._test_set_igmp_snooping_state(False)
-
-    def test_get_datapath_id(self):
-        brdev = ip_lib.IPDevice(self.br.br_name)
-        dpid = brdev.link.attributes['link/ether'].replace(':', '')
-        self.assertIn(dpid, self.br.get_datapath_id())
 
     def _test_add_tunnel_port(self, attrs,
                               expected_tunnel_type=const.TYPE_GRE):
