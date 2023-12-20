@@ -48,7 +48,7 @@ class OVSInterfaceEvent(row_event.RowEvent):
 
     def __init__(self, ovn_agent):
         self.ovn_agent = ovn_agent
-        events = (self.ROW_CREATE, self.ROW_DELETE)
+        events = (self.ROW_CREATE, self.ROW_UPDATE, self.ROW_DELETE)
         table = 'Interface'
         super().__init__(events, table, None)
 
@@ -58,7 +58,7 @@ class OVSInterfaceEvent(row_event.RowEvent):
         return True
 
     def run(self, event, row, old):
-        if event == self.ROW_CREATE:
+        if event in (self.ROW_CREATE, self.ROW_UPDATE):
             self.ovn_agent.qos_hwol_ext.add_port(
                 row.external_ids['iface-id'], row.name)
         elif event == self.ROW_DELETE:
