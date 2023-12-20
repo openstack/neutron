@@ -771,7 +771,7 @@ class FakeOVNPort(object):
 
         # Overwrite default attributes.
         port_attrs.update(attrs)
-        return type('Logical_Switch_Port', (object, ), port_attrs)
+        return type('Logical_Switch_Port', (object, ), port_attrs)()
 
     @staticmethod
     def from_neutron_port(port):
@@ -814,7 +814,7 @@ class FakeOVNRouter(object):
 
         # Overwrite default attributes.
         router_attrs.update(attrs)
-        return type('Logical_Router', (object, ), router_attrs)
+        return type('Logical_Router', (object, ), router_attrs)()
 
     @staticmethod
     def from_neutron_router(router):
@@ -917,4 +917,4 @@ class FakeChassis(object):
 
         # Overwrite default attributes.
         chassis_attrs.update(attrs or {})
-        return type('Chassis', (object, ), chassis_attrs)
+        return type('Chassis', (object, ), chassis_attrs)()
