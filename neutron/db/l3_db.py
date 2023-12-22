@@ -1485,6 +1485,14 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
             msg = _("Network %s does not contain any IPv4 subnet") % f_net_id
             raise n_exc.BadRequest(resource='floatingip', msg=msg)
 
+        if validators.is_attr_set(fip.get('floating_ip_address')):
+            for subnet in f_net_db.subnets:
+                if subnet.gateway_ip == fip['floating_ip_address']:
+                    msg = _("Floating ip %s cannot be allocated, "
+                            "as it is also the gateway ip of subnet %s") % (
+                            fip['floating_ip_address'], subnet.id)
+                    raise n_exc.BadRequest(resource='floatingip', msg=msg)
+
         # This external port is never exposed to the tenant.
         # it is used purely for internal system and admin use when
         # managing floating IPs.
