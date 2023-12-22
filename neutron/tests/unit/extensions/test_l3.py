@@ -3536,6 +3536,18 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                                   http_status=exc.HTTPBadRequest.code,
                                   as_admin=True)
 
+    def test_create_floatingip_with_specific_ip_gateway_of_subnet(self):
+
+        with self.subnet(cidr='10.0.0.0/24', gateway_ip='10.0.0.1') as s:
+            network_id = s['subnet']['network_id']
+            self._set_net_external(network_id)
+            req = self._make_floatingip(self.fmt, network_id,
+                                        floating_ip='10.0.0.1',
+                                        http_status=exc.HTTPBadRequest.code)
+            self.assertRegex(req['NeutronError']['message'],
+                             "ip 10.0.0.1 cannot be allocated, as it is also "
+                             f"the gateway ip of subnet {s['subnet']['id']}")
+
     def test_create_floatingip_with_duplicated_specific_ip(self):
 
         with self.subnet(cidr='10.0.0.0/24') as s:
