@@ -1,0 +1,10 @@
+---
+fixes:
+  - |
+    When synchronizing the OVN databases, either when running the migration
+    command or during startup, the code responsible for synchronization will
+    only clean up segment-to-host mappings for hosts with agent_type
+    ``OVN Controller agent``. Before, the synchronization would clean up
+    (delete) segment-to-host mappings for non-OVN hosts. Fixes bug:
+    `2040172 <https://bugs.launchpad.net/neutron/+bug/2040172>`_.
+
