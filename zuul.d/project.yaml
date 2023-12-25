@@ -55,4 +55,3 @@
         - neutron-ovn-tempest-ovs-release-ipv6-only
         - neutron-ovn-tempest-slow
         #- neutron-ovn-rally-task
-        #- neutron-ovn-tripleo-ci-centos-8-containers-multinode
