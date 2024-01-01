@@ -862,14 +862,14 @@ class TestRouterController(TestResourceController):
 
     def test_member_actions_processing(self):
         response = self.app.put_json(
-            '/v2.0/routers/%s/add_router_interface.json' % self.router['id'],
+            f"/v2.0/routers/{self.router['id']}/add_router_interface.json",
             params={'subnet_id': self.subnet['id']},
             headers={'X-Project-Id': 'tenid'})
         self.assertEqual(200, response.status_int)
 
     def test_non_existing_member_action_returns_404(self):
         response = self.app.put_json(
-            '/v2.0/routers/%s/do_meh.json' % self.router['id'],
+            f"/v2.0/routers/{self.router['id']}/do_meh.json",
             params={'subnet_id': 'doesitevenmatter'},
             headers={'X-Project-Id': 'tenid'},
             expect_errors=True)
@@ -877,14 +877,14 @@ class TestRouterController(TestResourceController):
 
     def test_unsupported_method_member_action(self):
         response = self.app.post_json(
-            '/v2.0/routers/%s/add_router_interface.json' % self.router['id'],
+            f"/v2.0/routers/{self.router['id']}/add_router_interface.json",
             params={'subnet_id': self.subnet['id']},
             headers={'X-Project-Id': 'tenid'},
             expect_errors=True)
         self.assertEqual(405, response.status_int)
 
         response = self.app.get(
-            '/v2.0/routers/%s/add_router_interface.json' % self.router['id'],
+            f"/v2.0/routers/{self.router['id']}/add_router_interface.json",
             headers={'X-Project-Id': 'tenid'},
             expect_errors=True)
         self.assertEqual(405, response.status_int)
@@ -912,30 +912,29 @@ class TestDHCPAgentShimControllers(test_functional.PecanFunctionalTest):
 
     def test_list_dhcp_agents_hosting_network(self):
         response = self.app.get(
-            '/v2.0/networks/%s/dhcp-agents.json' % self.network['id'],
+            f"/v2.0/networks/{self.network['id']}/dhcp-agents.json",
             headers={'X-Roles': 'admin'})
         self.assertEqual(200, response.status_int)
 
     def test_list_networks_on_dhcp_agent(self):
         response = self.app.get(
-            '/v2.0/agents/%s/dhcp-networks.json' % self.agent.id,
+            f'/v2.0/agents/{self.agent.id}/dhcp-networks.json',
             headers={'X-Project-Id': 'tenid', 'X-Roles': 'admin'})
         self.assertEqual(200, response.status_int)
 
     def test_add_remove_dhcp_agent(self):
         headers = {'X-Project-Id': 'tenid', 'X-Roles': 'admin'}
         self.app.post_json(
-            '/v2.0/agents/%s/dhcp-networks.json' % self.agent.id,
+            f"/v2.0/agents/{self.agent.id}/dhcp-networks.json",
             headers=headers, params={'network_id': self.network['id']})
         response = self.app.get(
-            '/v2.0/networks/%s/dhcp-agents.json' % self.network['id'],
+            f"/v2.0/networks/{self.network['id']}/dhcp-agents.json",
             headers=headers)
         self.assertIn(self.agent.id,
                       [a['id'] for a in response.json['agents']])
-        self.app.delete('/v2.0/agents/%(a)s/dhcp-networks/%(n)s.json' % {
-            'a': self.agent.id, 'n': self.network['id']}, headers=headers)
+        self.app.delete(f"/v2.0/agents/{self.agent.id}/dhcp-networks/{self.network['id']}.json", headers=headers)
         response = self.app.get(
-            '/v2.0/networks/%s/dhcp-agents.json' % self.network['id'],
+            f"/v2.0/networks/{self.network['id']}/dhcp-agents.json",
             headers=headers)
         self.assertNotIn(self.agent.id,
                          [a['id'] for a in response.json['agents']])
@@ -965,34 +964,33 @@ class TestL3AgentShimControllers(test_functional.PecanFunctionalTest):
 
     def test_list_l3_agents_hosting_router(self):
         response = self.app.get(
-            '/v2.0/routers/%s/l3-agents.json' % self.router['id'],
+            f"/v2.0/routers/{self.router['id']}/l3-agents.json",
             headers={'X-Roles': 'admin'})
         self.assertEqual(200, response.status_int)
 
     def test_list_routers_on_l3_agent(self):
         response = self.app.get(
-            '/v2.0/agents/%s/l3-routers.json' % self.agent.id,
+            f'/v2.0/agents/{self.agent.id}/l3-routers.json',
             headers={'X-Roles': 'admin'})
         self.assertEqual(200, response.status_int)
 
     def test_add_remove_l3_agent(self):
         headers = {'X-Project-Id': 'tenid', 'X-Roles': 'admin'}
         response = self.app.post_json(
-            '/v2.0/agents/%s/l3-routers.json' % self.agent.id,
+            f'/v2.0/agents/{self.agent.id}/l3-routers.json',
             headers=headers, params={'router_id': self.router['id']})
         self.assertEqual(201, response.status_int)
         response = self.app.get(
-            '/v2.0/routers/%s/l3-agents.json' % self.router['id'],
+            f"/v2.0/routers/{self.router['id']}/l3-agents.json",
             headers=headers)
         self.assertIn(self.agent.id,
                       [a['id'] for a in response.json['agents']])
         response = self.app.delete(
-            '/v2.0/agents/%(a)s/l3-routers/%(n)s.json' % {
-                'a': self.agent.id, 'n': self.router['id']}, headers=headers)
+            "/v2.0/agents/{self.agent.id}/l3-routers/{self.router['id'}.json", headers=headers)
         self.assertEqual(204, response.status_int)
         self.assertFalse(response.body)
         response = self.app.get(
-            '/v2.0/routers/%s/l3-agents.json' % self.router['id'],
+            f"/v2.0/routers/{self.router['id']}/l3-agents.json",
             headers=headers)
         self.assertNotIn(self.agent.id,
                          [a['id'] for a in response.json['agents']])
