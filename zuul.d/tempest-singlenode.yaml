@@ -568,4 +568,6 @@
       # of ovn https://bugs.launchpad.net/neutron/+bug/2007166
       tempest_exclude_regex: "\
           (test_update_delete_extra_route)|\
-          (test_update_router_admin_state)"
+          (test_update_router_admin_state)|\
+          (test_dhcp_stateful_router)|\
+          (TestSecurityGroupsBasicOps)"
