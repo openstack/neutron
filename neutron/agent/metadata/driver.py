@@ -288,9 +288,8 @@ class MetadataDriver(object):
                         pm.pid, SIGTERM_TIMEOUT)
             pm.disable(sig=str(int(signal.SIGKILL)))
 
-        # Delete metadata proxy config and PID files.
+        # Delete metadata proxy config.
         HaproxyConfigurator.cleanup_config_file(uuid, cfg.CONF.state_path)
-        linux_utils.delete_if_exists(pm.get_pid_file_name(), run_as_root=True)
 
         cls.monitors.pop(uuid, None)
 

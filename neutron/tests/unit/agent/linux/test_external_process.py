@@ -120,9 +120,11 @@ class TestProcessManager(base.BaseTestCase):
         self.execute_p = mock.patch('neutron.agent.common.utils.execute')
         self.execute = self.execute_p.start()
         self.delete_if_exists = mock.patch(
-            'oslo_utils.fileutils.delete_if_exists').start()
+            'neutron.agent.linux.utils.delete_if_exists').start()
         self.ensure_dir = mock.patch.object(
             fileutils, 'ensure_tree').start()
+        self.error_log = mock.patch("neutron.agent.linux.external_process."
+                                    "LOG.error").start()
 
         self.conf = mock.Mock()
         self.conf.external_pids = '/var/path'
@@ -167,6 +169,8 @@ class TestProcessManager(base.BaseTestCase):
                 with mock.patch.object(ep, 'ip_lib') as ip_lib:
                     manager.enable(callback)
                     callback.assert_called_once_with('pidfile')
+                    self.delete_if_exists.assert_called_once_with(
+                        'pidfile', run_as_root=True)
                     env = {ep.PROCESS_TAG: ep.DEFAULT_SERVICE_NAME + '-uuid'}
                     ip_lib.assert_has_calls([
                         mock.call.IPWrapper(namespace='ns'),
@@ -253,11 +257,34 @@ class TestProcessManager(base.BaseTestCase):
                           (service_name, uuid))
         self.assertEqual(expected_value, ret_value)
 
+    def test_enable_delete_pid_file_raises(self):
+        callback = mock.Mock()
+        cmd = ['the', 'cmd']
+        callback.return_value = cmd
+        self.delete_if_exists.side_effect = OSError
+
+        with mock.patch.object(ep.ProcessManager, 'get_pid_file_name') as name:
+            name.return_value = 'pidfile'
+            with mock.patch.object(ep.ProcessManager, 'active') as active:
+                active.__get__ = mock.Mock(return_value=False)
+
+                manager = ep.ProcessManager(self.conf, 'uuid')
+                manager.enable(callback)
+                callback.assert_called_once_with('pidfile')
+                cmd = ['env', DEFAULT_ENVVAR + '-uuid'] + cmd
+                self.execute.assert_called_once_with(cmd,
+                                                     check_exit_code=True,
+                                                     extra_ok_codes=None,
+                                                     run_as_root=False,
+                                                     log_fail_as_error=True,
+                                                     privsep_exec=False)
+                self.error_log.assert_called_once()
+
     def test_reload_cfg_without_custom_reload_callback(self):
         with mock.patch.object(ep.ProcessManager, 'disable') as disable:
             manager = ep.ProcessManager(self.conf, 'uuid', namespace='ns')
             manager.reload_cfg()
-            disable.assert_called_once_with('HUP')
+            disable.assert_called_once_with('HUP', delete_pid_file=False)
 
     def test_reload_cfg_with_custom_reload_callback(self):
         reload_callback = mock.sentinel.callback
@@ -266,7 +293,8 @@ class TestProcessManager(base.BaseTestCase):
                 self.conf, 'uuid', namespace='ns',
                 custom_reload_callback=reload_callback)
             manager.reload_cfg()
-            disable.assert_called_once_with(get_stop_command=reload_callback)
+            disable.assert_called_once_with(get_stop_command=reload_callback,
+                                            delete_pid_file=False)
 
     def test_disable_get_stop_command(self):
         cmd = ['the', 'cmd']
