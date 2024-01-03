@@ -807,23 +807,37 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
     def _enable_dhcp_helper(self, network, enable_isolated_metadata=False,
                             is_isolated_network=False, is_ovn_network=False):
         self.dhcp._process_monitor = mock.Mock()
+        # The disable() call
+        gmppm_expected_calls = [mock.call(FAKE_NETWORK_UUID, cfg.CONF,
+                                ns_name=FAKE_NETWORK_DHCP_NS)]
         if enable_isolated_metadata:
             cfg.CONF.set_override('enable_isolated_metadata', True)
+            if is_isolated_network:
+                # The enable() call
+                gmppm_expected_calls.append(
+                    mock.call(FAKE_NETWORK_UUID, cfg.CONF,
+                              ns_name=FAKE_NETWORK_DHCP_NS,
+                              callback=mock.ANY))
         self.plugin.get_network_info.return_value = network
-        self.dhcp.enable_dhcp_helper(network.id)
+        process_instance = mock.Mock(active=False)
+        with mock.patch.object(metadata_driver.MetadataDriver,
+                               '_get_metadata_proxy_process_manager',
+                               return_value=process_instance) as gmppm:
+            self.dhcp.enable_dhcp_helper(network.id)
+            gmppm.assert_has_calls(gmppm_expected_calls)
         self.plugin.assert_has_calls([
             mock.call.get_network_info(network.id)])
         self.call_driver.assert_called_once_with('enable', network)
         self.cache.assert_has_calls([mock.call.put(network)])
         if (is_isolated_network and enable_isolated_metadata and not
                 is_ovn_network):
-            self.external_process.assert_has_calls([
-                self._process_manager_constructor_call(),
-                mock.call().enable()], any_order=True)
+            process_instance.assert_has_calls([
+                mock.call.disable(sig=str(int(signal.SIGTERM))),
+                mock.call.get_pid_file_name(),
+                mock.call.enable()])
         else:
-            self.external_process.assert_has_calls([
-                self._process_manager_constructor_call(),
-                mock.call().disable(sig=str(int(signal.SIGTERM)))])
+            process_instance.assert_has_calls([
+                mock.call.disable(sig=str(int(signal.SIGTERM)))])
 
     def test_enable_dhcp_helper_enable_metadata_isolated_network(self):
         self._enable_dhcp_helper(isolated_network,
@@ -997,11 +1011,16 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
 
     def test_enable_isolated_metadata_proxy(self):
         self.dhcp._process_monitor = mock.Mock()
-        self.dhcp.enable_isolated_metadata_proxy(fake_network)
-        self.external_process.assert_has_calls([
-            self._process_manager_constructor_call(),
-            mock.call().enable()
-        ], any_order=True)
+        process_instance = mock.Mock(active=False)
+        with mock.patch.object(metadata_driver.MetadataDriver,
+                               '_get_metadata_proxy_process_manager',
+                               return_value=process_instance) as gmppm:
+            self.dhcp.enable_isolated_metadata_proxy(fake_network)
+            gmppm.assert_called_with(FAKE_NETWORK_UUID,
+                                     cfg.CONF,
+                                     ns_name=FAKE_NETWORK_DHCP_NS,
+                                     callback=mock.ANY)
+        process_instance.enable.assert_called_once()
 
     def test_disable_isolated_metadata_proxy(self):
         method_path = ('neutron.agent.metadata.driver.MetadataDriver'
