@@ -1,6 +1,7 @@
 ---
-features:
+fixes:
   - |
+    [`bug 2036705 <https://bugs.launchpad.net/neutron/+bug/2036705>`_]
     The Neutron ``port.status`` field ("ACTIVE", "DOWN") is now set based on
     the ML2/OVN Logical Switch Port ``up`` and ``enabled`` flags. The user can
     now set the ``port.admin_state_up``, that is replicated in the
