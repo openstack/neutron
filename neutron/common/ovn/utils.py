@@ -299,6 +299,33 @@ def get_lsp_security_groups(port, skip_trusted_port=True):
                   ) else port.get('security_groups', [])
 
 
+def is_lsp_enabled(lsp):
+    """Return if a Logical Switch Port is enabled
+
+    This method mimics the OVN northd method ``lsp_is_enabled``
+    https://shorturl.at/rBSZ7. The "enabled" field can have three values:
+    * []: from older OVN versions, in this case the LSP is enabled by default.
+    * [True]: the LSP is enabled.
+    * [False]: the LSP is disabled.
+
+    :param lsp: ``ovs.db.Row`` with a Logical Switch Port register.
+    :return: True if the port is enabled, False if not.
+    """
+    return not lsp.enabled or lsp.enabled == [True]
+
+
+def is_lsp_up(lsp):
+    """Return if a Logical Switch Port is UP
+
+    This method mimics the OVN northd method ``lsp_is_up``
+    https://shorturl.at/aoKR6
+
+    :param lsp: ``ovs.db.Row`` with a Logical Switch Port register.
+    :return: True if the port is UP, False if not.
+    """
+    return lsp.up == [True]
+
+
 def is_snat_enabled(router):
     return router.get(l3.EXTERNAL_GW_INFO, {}).get('enable_snat', True)
 
