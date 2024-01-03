@@ -431,6 +431,10 @@ class SecurityGroupServerAPIShim(sg_rpc_base.SecurityGroupInfoAPIMixin):
                       for sg_id in p['security_group_ids']))
         return [(sg_id, ) for sg_id in sg_ids]
 
-    def _is_security_group_stateful(self, context, sg_id):
-        sg = self.rcache.get_resource_by_id(resources.SECURITYGROUP, sg_id)
-        return sg.stateful
+    def _get_sgs_stateful_flag(self, context, sg_ids):
+        sgs_stateful = {}
+        for sg_id in sg_ids:
+            sg = self.rcache.get_resource_by_id(resources.SECURITYGROUP, sg_id)
+            sgs_stateful[sg_id] = sg.stateful
+
+        return sgs_stateful

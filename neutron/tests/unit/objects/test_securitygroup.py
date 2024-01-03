@@ -210,6 +210,22 @@ class SecurityGroupDbObjTestCase(test_base.BaseDbObjectTestCase,
         self.assertEqual(len(sg_obj.rules), 0)
         self.assertIsNone(listed_objs[0].rules)
 
+    def test_get_sgs_stateful_flag(self):
+        for obj in self.objs:
+            obj.create()
+
+        sg_ids = tuple(sg.id for sg in self.objs)
+        sgs_stateful = securitygroup.SecurityGroup.get_sgs_stateful_flag(
+            self.context, sg_ids)
+        for sg_id, stateful in sgs_stateful.items():
+            for obj in (obj for obj in self.objs if obj.id == sg_id):
+                self.assertEqual(obj.stateful, stateful)
+
+        sg_ids = sg_ids + ('random_id_not_present', )
+        sgs_stateful = securitygroup.SecurityGroup.get_sgs_stateful_flag(
+            self.context, sg_ids)
+        self.assertEqual(len(self.objs), len(sgs_stateful))
+
 
 class DefaultSecurityGroupIfaceObjTestCase(test_base.BaseObjectIfaceTestCase):
 
