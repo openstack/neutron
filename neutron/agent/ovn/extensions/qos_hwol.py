@@ -159,13 +159,13 @@ class PortBindingChassisCreatedEvent(_PortBindingChassisEvent):
     LOG_MSG = 'Port ID %s, datapath %s, OVS port name: %s (event: %s)'
 
     def __init__(self, ovn_agent):
-        events = (self.ROW_UPDATE,)
+        events = (self.ROW_CREATE, self.ROW_UPDATE,)
         super().__init__(ovn_agent, events)
 
     def match_fn(self, event, row, old):
         try:
             return (row.chassis[0].name == self.ovn_agent.chassis and
-                    not old.chassis)
+                    (event == self.ROW_CREATE or not old.chassis))
         except (IndexError, AttributeError):
             return False
 
