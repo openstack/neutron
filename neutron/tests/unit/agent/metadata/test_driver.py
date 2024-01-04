@@ -18,6 +18,7 @@ import signal
 from unittest import mock
 
 from neutron_lib import constants
+from neutron_lib import exceptions as lib_exceptions
 from neutron_lib import fixture as lib_fixtures
 from oslo_config import cfg
 from oslo_utils import uuidutils
@@ -247,6 +248,26 @@ class TestMetadataDriverProcess(base.BaseTestCase):
 
     def test_spawn_metadata_proxy_dad_failed(self):
         self._test_spawn_metadata_proxy(dad_failed=True)
+
+    @mock.patch.object(metadata_driver.LOG, 'error')
+    def test_spawn_metadata_proxy_handles_process_exception(self, error_log):
+        process_instance = mock.Mock(active=False)
+        process_instance.enable.side_effect = (
+            lib_exceptions.ProcessExecutionError('Something happened', -1))
+        with mock.patch.object(metadata_driver.MetadataDriver,
+                               '_get_metadata_proxy_process_manager',
+                               return_value=process_instance):
+            process_monitor = mock.Mock()
+            network_id = 123456
+            metadata_driver.MetadataDriver.spawn_monitored_metadata_proxy(
+                process_monitor,
+                'dummy_namespace',
+                self.METADATA_PORT,
+                cfg.CONF,
+                network_id=network_id)
+        error_log.assert_called_once()
+        process_monitor.register.assert_not_called()
+        self.assertNotIn(network_id, metadata_driver.MetadataDriver.monitors)
 
     def test_create_config_file_wrong_user(self):
         with mock.patch('pwd.getpwnam', side_effect=KeyError):
