@@ -48,7 +48,8 @@ CHASSIS_METADATA_LOCK = 'chassis_metadata_lock'
 
 NS_PREFIX = 'ovnmeta-'
 MAC_PATTERN = re.compile(r'([0-9A-F]{2}[:-]){5}([0-9A-F]{2})', re.I)
-OVN_VIF_PORT_TYPES = ("", "external", ovn_const.LSP_TYPE_LOCALPORT, )
+OVN_VIF_PORT_TYPES = (
+    "", ovn_const.LSP_TYPE_EXTERNAL, ovn_const.LSP_TYPE_LOCALPORT)
 
 MetadataPortInfo = collections.namedtuple('MetadataPortInfo', ['mac',
                                                                'ip_addresses',
@@ -74,39 +75,31 @@ class ConfigException(Exception):
     """
 
 
-class PortBindingChassisEvent(row_event.RowEvent):
-    def __init__(self, metadata_agent, events):
+class PortBindingEvent(row_event.RowEvent):
+    def __init__(self, metadata_agent):
         self.agent = metadata_agent
         table = 'Port_Binding'
-        super(PortBindingChassisEvent, self).__init__(
-            events, table, None)
+        super().__init__((self.__class__.EVENT,), table, None)
         self.event_name = self.__class__.__name__
+        self._log_msg = (
+            "PortBindingEvent matched for logical port %s and network %s")
+
+    def log_row(self, row):
+        net_name = ovn_utils.get_network_name_from_datapath(
+            row.datapath)
+        LOG.info(self._log_msg, row.logical_port, net_name)
+
+    def match_fn(self, event, row, old):
+        return row.type in OVN_VIF_PORT_TYPES
 
     def run(self, event, row, old):
         # Check if the port has been bound/unbound to our chassis and update
         # the metadata namespace accordingly.
         resync = False
-        if row.type not in OVN_VIF_PORT_TYPES:
-            return
-        if row.type == ovn_const.LSP_TYPE_LOCALPORT:
-            new_ext_ids = row.external_ids
-            old_ext_ids = old.external_ids
-            device_id = row.external_ids.get(
-                ovn_const.OVN_DEVID_EXT_ID_KEY, "")
-            if not device_id.startswith(NS_PREFIX):
-                return
-            new_cidrs = new_ext_ids.get(ovn_const.OVN_CIDRS_EXT_ID_KEY, "")
-            old_cidrs = old_ext_ids.get(ovn_const.OVN_CIDRS_EXT_ID_KEY, "")
-            # If old_cidrs is "", it is create event,
-            # nothing needs to be done.
-            # If old_cidrs equals new_cidrs, the ip does not change.
-            if old_cidrs in ("", new_cidrs, ):
-                return
+
         with _SYNC_STATE_LOCK.read_lock():
+            self.log_row(row)
             try:
-                net_name = ovn_utils.get_network_name_from_datapath(
-                    row.datapath)
-                LOG.info(self.LOG_MSG, row.logical_port, net_name)
                 self.agent.provision_datapath(row.datapath)
             except ConfigException:
                 # We're now in the reader lock mode, we need to exit the
@@ -116,63 +109,84 @@ class PortBindingChassisEvent(row_event.RowEvent):
             self.agent.resync()
 
 
-class PortBindingMetaPortUpdatedEvent(PortBindingChassisEvent):
-    LOG_MSG = "Metadata Port %s in datapath %s updated."
+class PortBindingUpdatedEvent(PortBindingEvent):
+    EVENT = PortBindingEvent.ROW_UPDATE
 
-    def __init__(self, metadata_agent):
-        events = (self.ROW_UPDATE,)
-        super(PortBindingMetaPortUpdatedEvent, self).__init__(
-            metadata_agent, events)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._match_checks = [
+            self._is_localport_ext_ids_update,
+            self._is_new_chassis_set,
+            self._is_chassis_removed,
+        ]
 
     def match_fn(self, event, row, old):
-        if row.type == ovn_const.LSP_TYPE_LOCALPORT:
-            if hasattr(row, 'external_ids') and hasattr(old, 'external_ids'):
-                device_id = row.external_ids.get(
-                    ovn_const.OVN_DEVID_EXT_ID_KEY, "")
-                if device_id.startswith(NS_PREFIX):
-                    return True
+        if not super().match_fn(event, row, old):
+            return False
+        # if any of the check functions is true, the event should be triggered
+        return any(check(row, old) for check in self._match_checks)
+
+    def _is_localport_ext_ids_update(self, row, old):
+        if row.type != ovn_const.LSP_TYPE_LOCALPORT:
+            return False
+
+        if not hasattr(old, 'external_ids'):
+            return False
+
+        device_id = row.external_ids.get(
+            ovn_const.OVN_DEVID_EXT_ID_KEY, "")
+        if not device_id.startswith(NS_PREFIX):
+            return False
+
+        new_cidrs = row.external_ids.get(
+            ovn_const.OVN_CIDRS_EXT_ID_KEY, "")
+        old_cidrs = old.external_ids.get(
+            ovn_const.OVN_CIDRS_EXT_ID_KEY, "")
+        # If old_cidrs is "", it is create event,
+        # nothing needs to be done.
+        # If old_cidrs equals new_cidrs, the ip does not change.
+        if old_cidrs not in ("", new_cidrs):
+            self._log_msg = (
+                "Metadata Port %s in datapath %s updated")
+            return True
         return False
 
-
-class PortBindingChassisCreatedEvent(PortBindingChassisEvent):
-    LOG_MSG = "Port %s in datapath %s bound to our chassis"
-
-    def __init__(self, metadata_agent):
-        events = (self.ROW_UPDATE,)
-        super(PortBindingChassisCreatedEvent, self).__init__(
-            metadata_agent, events)
-
-    def match_fn(self, event, row, old):
+    def _is_new_chassis_set(self, row, old):
+        self._log_msg = "Port %s in datapath %s bound to our chassis"
         try:
             return (row.chassis[0].name == self.agent.chassis and
                     not old.chassis)
         except (IndexError, AttributeError):
             return False
 
-
-class PortBindingChassisDeletedEvent(PortBindingChassisEvent):
-    LOG_MSG = "Port %s in datapath %s unbound from our chassis"
-
-    def __init__(self, metadata_agent):
-        events = (self.ROW_UPDATE, self.ROW_DELETE)
-        super(PortBindingChassisDeletedEvent, self).__init__(
-            metadata_agent, events)
-
-    def match_fn(self, event, row, old):
+    def _is_chassis_removed(self, row, old):
+        self._log_msg = "Port %s in datapath %s unbound from our chassis"
         try:
-            if event == self.ROW_UPDATE:
-                return (old.chassis[0].name == self.agent.chassis and
-                        not row.chassis)
-            else:
-                if row.chassis[0].name == self.agent.chassis:
-                    if row.type != "external":
-                        LOG.warning(
-                            'Removing non-external type port %(port_id)s with '
-                            'type "%(type)s"',
-                            {"port_id": row.uuid, "type": row.type})
-                    return True
+            return (old.chassis[0].name == self.agent.chassis and
+                    not row.chassis)
         except (IndexError, AttributeError):
             return False
+
+
+class PortBindingDeletedEvent(PortBindingEvent):
+    EVENT = PortBindingEvent.ROW_DELETE
+
+    def match_fn(self, event, row, old):
+        if not super().match_fn(event, row, old):
+            return False
+        try:
+            if row.chassis[0].name != self.agent.chassis:
+                return False
+        except (IndexError, AttributeError):
+            return False
+        if row.type != ovn_const.LSP_TYPE_EXTERNAL:
+            LOG.warning(
+                'Removing non-external type port %(port_id)s with '
+                'type "%(type)s"',
+                {"port_id": row.uuid, "type": row.type})
+        self._log_msg = (
+            "Port %s in datapath %s unbound from our chassis")
+        return True
 
 
 class ChassisCreateEventBase(row_event.RowEvent):
@@ -301,10 +315,10 @@ class MetadataAgent(object):
 
         tables = ('Encap', 'Port_Binding', 'Datapath_Binding', 'SB_Global',
                   'Chassis')
-        events = (PortBindingChassisCreatedEvent(self),
-                  PortBindingChassisDeletedEvent(self),
+        events = (PortBindingUpdatedEvent(self),
+                  PortBindingDeletedEvent(self),
                   SbGlobalUpdateEvent(self),
-                  PortBindingMetaPortUpdatedEvent(self))
+                  )
 
         # TODO(lucasagomes): Remove this in the future. Try to register
         # the Chassis_Private table, if not present, fallback to the normal
