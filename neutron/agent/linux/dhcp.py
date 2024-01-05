@@ -1209,11 +1209,15 @@ class Dnsmasq(DhcpLocalProcess):
         return name
 
     def _get_ovn_metadata_port_ip(self, subnet):
-        m_ports = [port for port in self.network.ports if
-                   self._is_ovn_metadata_port(port, self.network.id)]
-        if m_ports:
-            port = self.device_manager.plugin.get_dhcp_port(m_ports[0].id)
-            for fixed_ip in port.fixed_ips:
+        """Check if provided subnet contains OVN metadata port"""
+        ports_result = self.device_manager.plugin.get_ports(
+            port_filters={
+                'device_owner': [constants.DEVICE_OWNER_DISTRIBUTED],
+                'device_id': ['ovnmeta-' + self.network.id]
+            },
+        )
+        if ports_result:
+            for fixed_ip in ports_result[0].get('fixed_ips', []):
                 if fixed_ip.subnet_id == subnet.id:
                     return fixed_ip.ip_address
 
