@@ -19,17 +19,16 @@ import netaddr
 from neutron_lib.agent import topics
 from neutron_lib import constants
 from neutron_lib import context
-from neutron_lib import rpc as n_rpc
 from neutron_lib.utils import host
 from oslo_config import cfg
 from oslo_log import log as logging
-import oslo_messaging
 from oslo_service import loopingcall
 from oslo_utils import netutils
 import requests
 import webob
 
 from neutron._i18n import _
+from neutron.agent.common import base_agent_rpc
 from neutron.agent.linux import utils as agent_utils
 from neutron.agent import rpc as agent_rpc
 from neutron.common import cache_utils as cache
@@ -46,7 +45,7 @@ MODE_MAP = {
 }
 
 
-class MetadataPluginAPI(object):
+class MetadataPluginAPI(base_agent_rpc.BasePluginApi):
     """Agent-side RPC for metadata agent-to-plugin interaction.
 
     This class implements the client side of an rpc interface used by the
@@ -61,15 +60,10 @@ class MetadataPluginAPI(object):
     """
 
     def __init__(self, topic):
-        target = oslo_messaging.Target(
+        super().__init__(
             topic=topic,
             namespace=constants.RPC_NAMESPACE_METADATA,
             version='1.0')
-        self.client = n_rpc.get_client(target)
-
-    def get_ports(self, context, filters):
-        cctxt = self.client.prepare()
-        return cctxt.call(context, 'get_ports', filters=filters)
 
 
 class MetadataProxyHandler(object):

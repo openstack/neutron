@@ -74,8 +74,11 @@ class DhcpOpt(object):
 # A base class where class attributes can also be accessed by treating
 # an instance as a dict.
 class Dictable(object):
-    def __getitem__(self, k):
-        return self.__dict__.get(k)
+    def __getitem__(self, k, default_value=None):
+        return self.__dict__.get(k, default_value)
+
+    def get(self, k, default_value=None):
+        return self.__getitem__(k, default_value)
 
 
 class FakeDhcpPort(Dictable):
@@ -3207,8 +3210,8 @@ class TestDnsmasq(TestBase):
     def test__generate_opts_per_subnet_with_metadata_port(self):
         config = {'enable_isolated_metadata': False,
                   'force_metadata': False}
-        self.mock_mgr.return_value.plugin.get_dhcp_port.return_value = \
-            FakeOvnMetadataPort()
+        self.mock_mgr.return_value.plugin.get_ports.return_value = \
+            [FakeOvnMetadataPort()]
         self._test__generate_opts_per_subnet_helper(config, True,
             network_class=FakeNetworkDhcpandOvnMetadataPort)
 
