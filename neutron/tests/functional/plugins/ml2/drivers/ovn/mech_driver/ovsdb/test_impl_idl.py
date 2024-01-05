@@ -16,6 +16,7 @@ import copy
 import uuid
 
 from neutron_lib import constants
+from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import connection
 from ovsdbapp import constants as const
 from ovsdbapp import event as ovsdb_event
@@ -298,6 +299,43 @@ class TestNbApi(BaseOvnIdlTest):
             lb_match = f(exp_fip_id)
             self.assertIn((lb_match['name'], lb_match['external_ids']),
                           exp_values)
+
+    def test_create_lswitch_port_ha_chassis_group(self):
+        ls_name = uuidutils.generate_uuid()
+        lsp_name = uuidutils.generate_uuid()
+        hcg_name = uuidutils.generate_uuid()
+        self.nbapi.ha_chassis_group_add(hcg_name).execute(check_error=True)
+        hcg = self.nbapi.lookup('HA_Chassis_Group', hcg_name)
+        self.nbapi.ls_add(ls_name).execute(check_error=True)
+        self.nbapi.create_lswitch_port(
+            lsp_name, ls_name, ha_chassis_group=hcg.uuid).execute(
+            check_error=True)
+        lsp = self.nbapi.lookup('Logical_Switch_Port', lsp_name)
+        self.assertEqual(hcg.uuid, lsp.ha_chassis_group[0].uuid)
+
+    def test_set_lswitch_port_ha_chassis_group(self):
+        ls_name = uuidutils.generate_uuid()
+        lsp_name = uuidutils.generate_uuid()
+        self.nbapi.ls_add(ls_name).execute(check_error=True)
+        self.nbapi.create_lswitch_port(lsp_name, ls_name).execute(
+            check_error=True)
+        lsp = self.nbapi.lookup('Logical_Switch_Port', lsp_name)
+        self.assertEqual([], lsp.ha_chassis_group)
+
+        # Create an HA Chassis Group register and assign to the LSP.
+        hcg_name = uuidutils.generate_uuid()
+        self.nbapi.ha_chassis_group_add(hcg_name).execute(check_error=True)
+        hcg = self.nbapi.lookup('HA_Chassis_Group', hcg_name)
+        self.nbapi.set_lswitch_port(
+            lsp_name, ha_chassis_group=hcg.uuid).execute(check_error=True)
+        lsp = self.nbapi.lookup('Logical_Switch_Port', lsp_name)
+        self.assertEqual(hcg.uuid, lsp.ha_chassis_group[0].uuid)
+
+        # Unassign the HA Chassis Group from the LSP.
+        self.nbapi.set_lswitch_port(
+            lsp_name, ha_chassis_group=[]).execute(check_error=True)
+        lsp = self.nbapi.lookup('Logical_Switch_Port', lsp_name)
+        self.assertEqual([], lsp.ha_chassis_group)
 
 
 class TestIgnoreConnectionTimeout(BaseOvnIdlTest):

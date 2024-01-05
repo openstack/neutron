@@ -76,7 +76,7 @@ class _TestMaintenanceHelper(base.TestOVNFunctionalBase):
         return self.deserialize(self.fmt, res)['network']
 
     def _create_port(self, name, net_id, security_groups=None,
-                     device_owner=None):
+                     device_owner=None, vnic_type=None):
         data = {'port': {'name': name,
                          'tenant_id': self._tenant_id,
                          'network_id': net_id}}
@@ -86,6 +86,9 @@ class _TestMaintenanceHelper(base.TestOVNFunctionalBase):
 
         if device_owner is not None:
             data['port']['device_owner'] = device_owner
+
+        if vnic_type is not None:
+            data['port']['binding:vnic_type'] = vnic_type
 
         req = self.new_create_request('ports', data, self.fmt)
         res = req.get_response(self.api)
@@ -1015,6 +1018,26 @@ class TestMaintenance(_TestMaintenanceHelper):
         # Both "Chassis" registers are still in the DB because one
         # "Chassis_Private" register was missing.
         self.assertEqual(2, len(chassis_result))
+
+    def test_check_for_ha_chassis_group(self):
+        net1 = self._create_network('network1test', external=False)
+        self._create_subnet('subnet1test', net1['id'])
+        p1 = self._create_port('testp1', net1['id'], vnic_type='direct')
+
+        # Remove the HA Chassis Group register, created during the port
+        # creation.
+        self.nb_api.set_lswitch_port(p1['id'], ha_chassis_group=[]).execute(
+            check_error=True)
+        hcg_uuid = next(iter(self.nb_api._tables['HA_Chassis_Group'].rows))
+        self.nb_api.ha_chassis_group_del(hcg_uuid).execute(check_error=True)
+        lsp = self.nb_api.lookup('Logical_Switch_Port', p1['id'])
+        self.assertEqual([], lsp.ha_chassis_group)
+
+        self.assertRaises(periodics.NeverAgain,
+                          self.maint.check_for_ha_chassis_group)
+        hcg_uuid = next(iter(self.nb_api._tables['HA_Chassis_Group'].rows))
+        lsp = self.nb_api.lookup('Logical_Switch_Port', p1['id'])
+        self.assertEqual(hcg_uuid, lsp.ha_chassis_group[0].uuid)
 
 
 class TestLogMaintenance(_TestMaintenanceHelper,
