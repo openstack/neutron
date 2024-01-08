@@ -640,7 +640,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                     "the ip_version '%(ip_version)s'") % data
             raise exc.InvalidInput(error_message=msg)
 
-    def _validate_subnet(self, context, s, cur_subnet=None):
+    def _validate_subnet(self, context, s, cur_subnet=None, is_pd=False):
         """Validate a subnet spec."""
 
         # This method will validate attributes which may change during
@@ -658,6 +658,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         has_cidr = False
         if validators.is_attr_set(s.get('cidr')):
             self._validate_ip_version(ip_ver, s['cidr'], 'cidr')
+            net = netaddr.IPNetwork(s['cidr'])
             has_cidr = True
 
         # TODO(watanabe.isao): After we found a way to avoid the re-sync
@@ -666,15 +667,21 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             dhcp_was_enabled = cur_subnet.enable_dhcp
         else:
             dhcp_was_enabled = False
+        # A subnet cidr of '::' is invalid, unless the caller has
+        # indicated they are doing Prefix Delegation,
+        # see https://bugs.launchpad.net/neutron/+bug/2028159
+        if (has_cidr and ip_ver == constants.IP_VERSION_6 and
+                net.network == netaddr.IPAddress('::') and not
+                is_pd):
+            error_message = _("IPv6 subnet '::' is not supported")
+            raise exc.InvalidInput(error_message=error_message)
         if has_cidr and s.get('enable_dhcp') and not dhcp_was_enabled:
-            subnet_prefixlen = netaddr.IPNetwork(s['cidr']).prefixlen
             error_message = _("Subnet has a prefix length that is "
                               "incompatible with DHCP service enabled")
-            if ((ip_ver == 4 and subnet_prefixlen > 30) or
-                    (ip_ver == 6 and subnet_prefixlen > 126)):
+            if ((ip_ver == 4 and net.prefixlen > 30) or
+                    (ip_ver == 6 and net.prefixlen > 126)):
                 raise exc.InvalidInput(error_message=error_message)
 
-            net = netaddr.IPNetwork(s['cidr'])
             if net.is_multicast():
                 error_message = _("Multicast IP subnet is not supported "
                                   "if enable_dhcp is True")
@@ -929,9 +936,11 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             raise exc.BadRequest(resource='subnets', msg=msg)
 
         validate = True
+        is_pd = False
         if subnetpool_id:
             self.ipam.validate_pools_with_subnetpool(s)
             if subnetpool_id == constants.IPV6_PD_POOL_ID:
+                is_pd = True
                 if has_cidr:
                     # We do not currently support requesting a specific
                     # cidr with IPv6 prefix delegation. Set the subnetpool_id
@@ -949,7 +958,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 raise exc.BadRequest(resource='subnets', msg=msg)
 
         if validate:
-            self._validate_subnet(context, s)
+            self._validate_subnet(context, s, is_pd=is_pd)
 
         with db_api.CONTEXT_WRITER.using(context):
             network = self._get_network(context,
@@ -1006,7 +1015,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         # Fill 'network_id' field with the current value since this is expected
         # by _validate_segment() in ipam_pluggable_backend.
         s['network_id'] = subnet_obj.network_id
-        self._validate_subnet(context, s, cur_subnet=subnet_obj)
+        is_pd = s['subnetpool_id'] == constants.IPV6_PD_POOL_ID
+        self._validate_subnet(context, s, cur_subnet=subnet_obj, is_pd=is_pd)
         db_pools = [netaddr.IPRange(p.start, p.end)
                     for p in subnet_obj.allocation_pools]
 
