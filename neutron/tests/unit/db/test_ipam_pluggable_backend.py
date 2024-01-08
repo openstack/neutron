@@ -375,6 +375,7 @@ class TestDbBasePluginIpam(test_db_base.NeutronDbPluginV2TestCase):
         context = mock.Mock()
         pluggable_backend = ipam_pluggable_backend.IpamPluggableBackend()
         with self.subnet(cidr=constants.PROVISIONAL_IPV6_PD_PREFIX,
+                         subnetpool_id=constants.IPV6_PD_POOL_ID,
                          ip_version=constants.IP_VERSION_6) as subnet:
             subnet = subnet['subnet']
             fixed_ips = [{'subnet_id': subnet['id'],
