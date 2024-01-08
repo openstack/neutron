@@ -126,6 +126,11 @@ class NeutronAgent(abc.ABC):
     def agent_id(self):
         pass
 
+    @property
+    @abc.abstractmethod
+    def description(self):
+        pass
+
 
 class ControllerAgent(NeutronAgent):
     agent_type = ovn_const.OVN_CONTROLLER_AGENT
