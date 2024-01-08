@@ -356,39 +356,6 @@ oslo.i18n
      registered by **gettext.install()** in ``neutron/__init__.py``.
      It is now deprecated as described in oslo.18n documentation.
 
-Setting up translation support
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-You need to create or edit the following files to start translation support:
-
-* setup.cfg
-* babel.cfg
-
-We have a good example for an oslo project at
-https://review.opendev.org/#/c/98248/.
-
-Add the following to ``setup.cfg``::
-
-    [extract_messages]
-    keywords = _ gettext ngettext l_ lazy_gettext
-    mapping_file = babel.cfg
-    output_file = ${MODULE_NAME}/locale/${MODULE_NAME}.pot
-
-    [compile_catalog]
-    directory = ${MODULE_NAME}/locale
-    domain = ${MODULE_NAME}
-
-    [update_catalog]
-    domain = ${MODULE_NAME}
-    output_dir = ${MODULE_NAME}/locale
-    input_file = ${MODULE_NAME}/locale/${MODULE_NAME}.pot
-
-Note that ``${MODULE_NAME}`` is used in all names.
-
-Create ``babel.cfg`` with the following contents::
-
-    [python: **.py]
-
 Enable Translation
 ~~~~~~~~~~~~~~~~~~
 
