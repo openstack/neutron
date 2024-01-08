@@ -269,7 +269,7 @@ class PortBindingDeletedEvent(PortBindingEvent):
         return True
 
 
-class ChassisCreateEventBase(row_event.RowEvent):
+class ChassisPrivateCreateEvent(row_event.RowEvent):
     """Row create event - Chassis name == our_chassis.
 
     On connection, we get a dump of all chassis so if we catch a creation
@@ -277,14 +277,12 @@ class ChassisCreateEventBase(row_event.RowEvent):
     to do a full sync to make sure that we capture all changes while the
     connection to OVSDB was down.
     """
-    table = None
-
     def __init__(self, metadata_agent):
         self.agent = metadata_agent
         self.first_time = True
         events = (self.ROW_CREATE,)
-        super(ChassisCreateEventBase, self).__init__(
-            events, self.table, (('name', '=', self.agent.chassis),))
+        super(ChassisPrivateCreateEvent, self).__init__(
+            events, 'Chassis_Private', (('name', '=', self.agent.chassis),))
         self.event_name = self.__class__.__name__
 
     def run(self, event, row, old):
@@ -297,14 +295,6 @@ class ChassisCreateEventBase(row_event.RowEvent):
             self.agent.register_metadata_agent()
             LOG.info("Connection to OVSDB established, doing a full sync")
             self.agent.sync()
-
-
-class ChassisCreateEvent(ChassisCreateEventBase):
-    table = 'Chassis'
-
-
-class ChassisPrivateCreateEvent(ChassisCreateEventBase):
-    table = 'Chassis_Private'
 
 
 class SbGlobalUpdateEvent(row_event.RowEvent):

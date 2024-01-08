@@ -194,8 +194,7 @@ class TestOVNClientPlacementExtension(base.TestOVNFunctionalBase):
     def test_chassis_bandwidth_config_event(self, mock_send_placement):
         ch_host = 'fake-chassis-host'
         ch_name = uuidutils.generate_uuid()
-        ch_event = test_ovsdb_monitor.WaitForChassisPrivateCreateEvent(
-            ch_name, self.mech_driver.agent_chassis_table)
+        ch_event = test_ovsdb_monitor.WaitForChassisPrivateCreateEvent(ch_name)
         self.mech_driver.sb_ovn.idl.notify_handler.watch_event(ch_event)
         self.chassis_name = self.add_fake_chassis(ch_host, name=ch_name)
         self.assertTrue(ch_event.wait())

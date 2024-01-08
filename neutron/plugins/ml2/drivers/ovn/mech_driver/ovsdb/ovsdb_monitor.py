@@ -294,6 +294,7 @@ class PortBindingChassisUpdateEvent(row_event.RowEvent):
 
 class ChassisAgentEvent(BaseEvent):
     GLOBAL = True
+    table = 'Chassis_Private'
 
     # NOTE (twilson) Do not run new transactions out of a GLOBAL Event since
     # it will be running on every single process, and you almost certainly
@@ -301,16 +302,6 @@ class ChassisAgentEvent(BaseEvent):
     def __init__(self, driver):
         self.driver = driver
         super().__init__()
-
-    @property
-    def table(self):
-        # It probably doesn't matter, but since agent_chassis_table changes
-        # in post_fork_initialize(), resolve this at runtime
-        return self.driver.agent_chassis_table
-
-    @table.setter
-    def table(self, value):
-        pass
 
 
 class ChassisAgentDownEvent(ChassisAgentEvent):
@@ -346,9 +337,7 @@ class ChassisAgentWriteEvent(ChassisAgentEvent):
         # On updates to Chassis_Private because the Chassis has been deleted,
         # don't update the AgentCache. We use chassis_private.chassis to return
         # data about the agent.
-        return event == self.ROW_CREATE or (
-            hasattr(old, 'nb_cfg') and not
-            (self.table == 'Chassis_Private' and not row.chassis))
+        return event == self.ROW_CREATE or hasattr(old, 'nb_cfg')
 
     def run(self, event, row, old):
         n_agent.AgentCache().update(ovn_const.OVN_CONTROLLER_AGENT, row,
@@ -361,21 +350,29 @@ class ChassisAgentTypeChangeEvent(ChassisEvent):
     events = (BaseEvent.ROW_UPDATE,)
 
     def match_fn(self, event, row, old=None):
-        # NOTE(ralonsoh): LP#1990229 to be removed when min OVN version is
-        # 22.09
-        other_config = ('other_config' if hasattr(row, 'other_config') else
-                        'external_ids')
-        if not getattr(old, other_config, False):
+        try:
+            return row.other_config.get('ovn-cms-options', []) != (
+                old.other_config.get('ovn-cms-options', []))
+        except AttributeError:
+            # No change to other_config
             return False
-        new_other_config = utils.get_ovn_chassis_other_config(row)
-        old_other_config = utils.get_ovn_chassis_other_config(old)
-        agent_type_change = new_other_config.get('ovn-cms-options', []) != (
-            old_other_config.get('ovn-cms-options', []))
-        return agent_type_change
 
     def run(self, event, row, old):
-        n_agent.AgentCache().update(ovn_const.OVN_CONTROLLER_AGENT, row,
-                                    clear_down=event == self.ROW_CREATE)
+        # the row is in the Chassis table but the agent cache uses
+        # Chassis_Private rows
+        try:
+            ch_private = self.driver.sb_ovn.db_find_rows(
+                'Chassis_Private', ('chassis', '=', row.uuid)).execute(
+                    check_error=True)[0]
+        except IndexError:
+            # The chassis private row was not found, this should never happen
+            LOG.error("The Chassis_Private row for Chassis %s was not found.",
+                      row.uuid)
+            return
+        # The passed agent type is significant to the method obtaining the
+        # agent chassis id. This method is the same for both Gateway and
+        # Controller agent types so the type below can be either.
+        n_agent.AgentCache().update(ovn_const.OVN_CONTROLLER_AGENT, ch_private)
 
 
 class ChassisMetadataAgentWriteEvent(ChassisAgentEvent):
@@ -400,7 +397,7 @@ class ChassisMetadataAgentWriteEvent(ChassisAgentEvent):
             # On updates to Chassis_Private because the Chassis has been
             # deleted, don't update the AgentCache. We use
             # chassis_private.chassis to return data about the agent.
-            if self.table == 'Chassis_Private' and not row.chassis:
+            if not row.chassis:
                 return False
             return self._metadata_nb_cfg(row) != self._metadata_nb_cfg(old)
         except (AttributeError, KeyError):
@@ -710,24 +707,9 @@ class OvnIdlDistributedLock(BaseOvnIdl):
         self._hash_ring = hash_ring_manager.HashRingManager(
             self.driver.hash_ring_group)
         self._last_touch = None
-        # This is a map of tables that may be new after OVN database is updated
-        self._tables_to_register = {
-            'OVN_Southbound': ['Chassis_Private'],
-        }
-
-    def handle_db_schema_changes(self, event, row):
-        if (event == row_event.RowEvent.ROW_CREATE and
-                row._table.name == 'Database'):
-            try:
-                tables = self._tables_to_register[row.name]
-            except KeyError:
-                return
-
-            self.update_tables(tables, row.schema[0])
 
     def notify(self, event, row, updates=None):
         try:
-            self.handle_db_schema_changes(event, row)
             self.notify_handler.notify(event, row, updates, global_=True)
             try:
                 target_node = self._hash_ring.get_node(str(row.uuid))

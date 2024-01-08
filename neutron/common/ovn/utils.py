@@ -902,11 +902,7 @@ def create_neutron_pg_drop():
 
 
 def get_ovn_chassis_other_config(chassis):
-    # NOTE(ralonsoh): LP#1990229 to be removed when min OVN version is 22.09
-    try:
-        return chassis.other_config
-    except AttributeError:
-        return chassis.external_ids
+    return chassis.other_config
 
 
 def get_subnets_address_scopes(context, subnets_by_id, fixed_ips, ml2_plugin):

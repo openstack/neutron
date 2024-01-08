@@ -45,33 +45,21 @@ class NeutronAgent(abc.ABC):
 
     def update(self, chassis_private, clear_down=False):
         self.chassis_private = chassis_private
-        # When use the Chassis_Private table for agents health check,
-        # chassis_private has attribute nb_cfg_timestamp.
-        # nb_cfg_timestamp: the timestamp when ovn-controller finishes
-        # processing the change corresponding to nb_cfg(
-        # https://www.ovn.org/support/dist-docs/ovn-sb.5.html).
-        # it can better reflect the status of chassis.
-        # nb_cfg_timestamp is milliseconds, need to convert to datetime.
-        if hasattr(chassis_private, 'nb_cfg_timestamp'):
-            updated_at = datetime.datetime.fromtimestamp(
-                chassis_private.nb_cfg_timestamp / 1000,
-                datetime.timezone.utc)
-        else:
-            updated_at = timeutils.utcnow(with_timezone=True)
+        updated_at = datetime.datetime.fromtimestamp(
+            chassis_private.nb_cfg_timestamp / 1000,
+            datetime.timezone.utc)
         self.updated_at = updated_at
         if clear_down:
             self.set_down = False
 
     @staticmethod
-    def _get_chassis(chassis_or_chassis_private):
+    def _get_chassis(chassis_private):
         """Return the chassis register
 
         The input could be the chassis register itself or the chassis private.
         """
         try:
-            return chassis_or_chassis_private.chassis[0]
-        except AttributeError:
-            return chassis_or_chassis_private
+            return chassis_private.chassis[0]
         except IndexError:
             # Chassis register has been deleted but not Chassis_Private.
             return DeletedChassis
@@ -93,8 +81,7 @@ class NeutronAgent(abc.ABC):
             'configurations': {
                 'chassis_name': self.chassis.name,
                 'bridge-mappings':
-                    ovn_utils.get_ovn_chassis_other_config(self.chassis).get(
-                        'ovn-bridge-mappings', '')},
+                    self.chassis.other_config.get('ovn-bridge-mappings', '')},
             'start_flag': True,
             'agent_type': self.agent_type,
             'id': self.agent_id,
@@ -147,8 +134,8 @@ class ControllerAgent(NeutronAgent):
     @staticmethod  # it is by default, but this makes pep8 happy
     def __new__(cls, chassis_private, driver):
         _chassis = cls._get_chassis(chassis_private)
-        other_config = ovn_utils.get_ovn_chassis_other_config(_chassis)
-        if 'enable-chassis-as-gw' in other_config.get('ovn-cms-options', []):
+        if 'enable-chassis-as-gw' in _chassis.other_config.get(
+                'ovn-cms-options', []):
             cls = ControllerGatewayAgent
         return super().__new__(cls)
 
@@ -171,9 +158,8 @@ class ControllerAgent(NeutronAgent):
 
     def update(self, chassis_private, clear_down=False):
         super().update(chassis_private, clear_down)
-        _chassis = self._get_chassis(chassis_private)
-        other_config = ovn_utils.get_ovn_chassis_other_config(_chassis)
-        if 'enable-chassis-as-gw' in other_config.get('ovn-cms-options', []):
+        if 'enable-chassis-as-gw' in self.chassis.other_config.get(
+                'ovn-cms-options', []):
             self.__class__ = ControllerGatewayAgent
 
 
@@ -182,10 +168,8 @@ class ControllerGatewayAgent(ControllerAgent):
 
     def update(self, chassis_private, clear_down=False):
         super().update(chassis_private, clear_down)
-        _chassis = self._get_chassis(chassis_private)
-        other_config = ovn_utils.get_ovn_chassis_other_config(_chassis)
         if ('enable-chassis-as-gw' not in
-                other_config.get('ovn-cms-options', [])):
+                self.chassis.other_config.get('ovn-cms-options', [])):
             self.__class__ = ControllerAgent
 
 
