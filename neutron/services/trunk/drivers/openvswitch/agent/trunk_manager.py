@@ -91,7 +91,7 @@ class TrunkParentPort(object):
             self.DEV_PREFIX, port_id)
         self._transaction = None
 
-    def plug(self, br_int):
+    def plug(self, br_int, tag=0):
         """Plug patch ports between trunk bridge and given bridge.
 
         The method plugs one patch port on the given bridge side using
@@ -124,6 +124,9 @@ class TrunkParentPort(object):
                                    self.patch_port_trunk_name))
             txn.add(ovsdb.db_set('Interface', self.patch_port_trunk_name,
                                  *patch_trunk_attrs))
+            txn.add(ovsdb.db_set('Port', self.patch_port_trunk_name,
+                                 ('vlan_mode', 'access'),
+                                 ('tag', tag)))
 
     def unplug(self, bridge):
         """Unplug the trunk from bridge.
@@ -167,12 +170,7 @@ class SubPort(TrunkParentPort):
         :param br_int: an integration bridge where peer endpoint of patch port
                        will be created.
         """
-        ovsdb = self.bridge.ovsdb
-        with ovsdb.transaction() as txn:
-            super(SubPort, self).plug(br_int)
-            txn.add(ovsdb.db_set(
-                "Port", self.patch_port_trunk_name,
-                ("tag", self.segmentation_id)))
+        super(SubPort, self).plug(br_int, tag=self.segmentation_id)
 
     def unplug(self, bridge):
         """Unplug the sub port from the bridge.

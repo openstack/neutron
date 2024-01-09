@@ -494,7 +494,7 @@ The IDs used for bridge and port names are truncated.
          |          tbr-trunk-id          |
          |                                |
          | tpt-parent-id   spt-subport-id |
-         |                   (tag 100)    |
+         |  (tag 0)          (tag 100)    |
          +-----+-----------------+--------+
                |                 |
                |                 |
@@ -514,27 +514,27 @@ spi-subport-id: int bridge side of the patch port that implements a subport.
 Trunk creation
 ++++++++++++++
 
-A VM is spawned passing to Nova the port-id of a parent port associated with
-a trunk. Neutron will pass to Nova the bridge where to plug the vif as part of the vif details.
-The os-vif driver creates the trunk bridge tbr-trunk-id if it does not exist in plug().
-It will create the tap interface tap1 and plug it into tbr-trunk-id setting the parent port ID in the external-ids.
-The OVS agent will be monitoring the creation of ports on the trunk bridges. When it detects
-that a new port has been created on the trunk bridge, it will do the following:
+A VM is spawned passing to Nova the port-id of a parent port associated
+with a trunk. Neutron will pass to Nova the bridge where to plug the
+vif as part of the vif details.  The os-vif driver creates the trunk
+bridge tbr-trunk-id if it does not exist in plug().  It will create the
+tap interface tap1 and plug it into tbr-trunk-id setting the parent port
+ID in the external-ids.  The trunk driver will wire the parent port via
+a patch port to connect the trunk bridge to the integration bridge:
 
 ::
 
- ovs-vsctl add-port tbr-trunk-id tpt-parent-id -- set Interface tpt-parent-id type=patch options:peer=tpi-parent-id
- ovs-vsctl add-port br-int tpi-parent-id tag=3 -- set Interface tpi-parent-id type=patch options:peer=tpt-parent-id
+ ovs-vsctl add-port tbr-trunk-id tpt-parent-id -- set Interface tpt-parent-id type=patch options:peer=tpi-parent-id -- set Port tpt-parent-id vlan_mode=access tag=0
+ ovs-vsctl add-port br-int tpi-parent-id -- set Interface tpi-parent-id type=patch options:peer=tpt-parent-id
 
 
-A patch port is created to connect the trunk bridge to the integration bridge.
-tpt-parent-id, the trunk bridge side of the patch is not associated to any
-tag. It will carry untagged traffic.
-tpi-parent-id, the br-int side the patch port is tagged with VLAN 3. We assume that the
-trunk is on network1 that on this host is associated with VLAN 3.
-The OVS agent will set the trunk ID in the external-ids of tpt-parent-id and tpi-parent-id.
-If the parent port is associated with one or more subports the agent will process them as
-described in the next paragraph.
+tpt-parent-id, the trunk bridge side of the patch will carry untagged
+traffic (vlan_mode=access tag=0).  The OVS agent will be monitoring the
+creation of ports on the integration bridge.  tpi-parent-id, the br-int
+side the patch port is tagged with VLAN 3 by ovs-agent.  We assume that
+the trunk is on network1 that on this host is associated with VLAN 3.
+If the parent port is associated with one or more subports the agent
+will process them as described in the next paragraph.
 
 Subport creation
 ++++++++++++++++
