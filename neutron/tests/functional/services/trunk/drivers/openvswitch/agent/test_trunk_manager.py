@@ -55,6 +55,14 @@ class TrunkParentPortTestCase(base.BaseSudoTestCase):
                       self.trunk.bridge.get_port_name_list())
         self.assertIn(self.trunk.patch_port_int_name,
                       self.br_int.get_port_name_list())
+        self.assertEqual(
+            'access',
+            self.trunk.bridge.db_get_val(
+                'Port', self.trunk.patch_port_trunk_name, 'vlan_mode'))
+        self.assertEqual(
+            0,
+            self.trunk.bridge.db_get_val(
+                'Port', self.trunk.patch_port_trunk_name, 'tag'))
 
     def test_plug_failure_doesnt_create_ports(self):
         with mock.patch.object(

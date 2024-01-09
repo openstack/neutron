@@ -1,0 +1,8 @@
+---
+issues:
+  - |
+    The fix of `bug 2048785 <https://bugs.launchpad.net/neutron/+bug/2048785>`_
+    only fixes newly created trunk parent ports. If the fix of already existing
+    trunks is needed, then either delete and re-create the affected trunks
+    or set tpt ports' vlan_mode and tag manually:
+    ``ovs-vsctl set Port tpt-... vlan_mode=access tag=0``
