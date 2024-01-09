@@ -1,0 +1,11 @@
+---
+features:
+  - |
+    Introduce the attribute ``hardware_offload_type`` to ports, that specifies
+    the hardware offload type this port will request when attached to the
+    network backend.
+
+    Operators can turn on this feature via the configuration option::
+
+      [ml2]
+      extension_drivers = port_hardware_offload_type

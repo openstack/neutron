@@ -47,6 +47,7 @@ from neutron.objects import flavor
 from neutron.objects import local_ip
 from neutron.objects import network as net_obj
 from neutron.objects.port.extensions import port_device_profile
+from neutron.objects.port.extensions import port_hardware_offload_type
 from neutron.objects.port.extensions import port_numa_affinity_policy
 from neutron.objects import ports
 from neutron.objects.qos import policy as qos_policy
@@ -559,7 +560,9 @@ FIELD_TYPE_VALUE_GENERATOR_MAP = {
         tools.get_random_port_numa_affinity_policy,
     port_device_profile.PortDeviceProfile:
         lambda: helpers.get_random_string(255),
-    common_types.PortRangesField: get_random_port_ranges
+    common_types.PortRangesField: get_random_port_ranges,
+    port_hardware_offload_type.PortHardwareOffloadTypeEnumField:
+        tools.get_random_port_hardware_offload_type,
 }
 
 

@@ -527,7 +527,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                     'mac_address', 'name', 'fixed_ips',
                     'tenant_id', 'device_owner', 'security_groups',
                     'propagate_uplink_status', 'numa_affinity_policy',
-                    'device_profile', 'hints') + (arg_list or ())):
+                    'device_profile', 'hints', 'hardware_offload_type') +
+                    (arg_list or ())):
             # Arg must be present
             if arg in kwargs:
                 data['port'][arg] = kwargs[arg]
