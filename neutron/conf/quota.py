@@ -101,7 +101,6 @@ l3_quota_opts = [
 # rbac_quota_opts from neutron/extensions/rbac.py
 rbac_quota_opts = [
     cfg.IntOpt('quota_rbac_policy', default=DEFAULT_QUOTA_RBAC,
-               deprecated_name='quota_rbac_entry',
                help=_('Default number of RBAC entries allowed per tenant. '
                       'A negative value means unlimited.'))
 ]
