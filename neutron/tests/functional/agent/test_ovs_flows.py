@@ -403,35 +403,31 @@ class OVSFlowTestCase(OVSAgentTestBase):
         self.assertEqual(" unchanged", trace["Final flow"])
         self.assertIn("drop", trace["Datapath actions"])
 
-    def test_install_instructions_str(self):
-        kwargs = {'in_port': 345, 'vlan_tci': 0x1123}
-        dst_p = self.useFixture(
-            net_helpers.OVSPortFixture(self.br_tun, self.namespace)).port
-        dst_ofp = self.br_tun.get_port_ofport(dst_p.name)
-        self.br_tun.install_instructions("pop_vlan,output:%d" % dst_ofp,
-                                         priority=10, **kwargs)
-        trace = self._run_trace(self.br_tun.br_name,
-                                "in_port=%(in_port)d,dl_src=12:34:56:78:aa:bb,"
-                                "dl_dst=24:12:56:78:aa:bb,dl_type=0x0800,"
-                                "nw_src=192.168.0.1,nw_dst=192.168.0.2,"
-                                "nw_proto=1,nw_tos=0,nw_ttl=128,"
-                                "icmp_type=8,icmp_code=0,vlan_tci=%(vlan_tci)d"
-                                % kwargs)
-        self.assertIn("pop_vlan,", trace["Datapath actions"])
-
     def test_bundled_install(self):
-        kwargs = {'in_port': 345, 'vlan_tci': 0x1321}
-        dst_p = self.useFixture(
-            net_helpers.OVSPortFixture(self.br_tun, self.namespace)).port
-        dst_ofp = self.br_tun.get_port_ofport(dst_p.name)
-        with self.br_tun.bundled() as br:
-            br.install_instructions("pop_vlan,output:%d" % dst_ofp,
-                                    priority=10, **kwargs)
-        trace = self._run_trace(self.br_tun.br_name,
+        kwargs = {'in_port': 345}
+        with self.br_int.bundled() as br:
+            br.install_goto(dest_table_id=ovs_constants.LOCAL_IP_TABLE)
+            br.install_goto(dest_table_id=ovs_constants.TRANSIENT_TABLE,
+                            table_id=ovs_constants.LOCAL_IP_TABLE,
+                            priority=100)
+            br.install_drop(table_id=ovs_constants.TRANSIENT_TABLE,
+                            priority=101, **kwargs)
+            br.install_normal(table_id=ovs_constants.TRANSIENT_TABLE,
+                              priority=10)
+
+        trace = self._run_trace(self.br_int.br_name,
                                 "in_port=%(in_port)d,dl_src=12:34:56:78:aa:bb,"
                                 "dl_dst=24:12:56:78:aa:bb,dl_type=0x0800,"
                                 "nw_src=192.168.0.1,nw_dst=192.168.0.2,"
                                 "nw_proto=1,nw_tos=0,nw_ttl=128,"
-                                "icmp_type=8,icmp_code=0,vlan_tci=%(vlan_tci)d"
+                                "icmp_type=8,icmp_code=0"
                                 % kwargs)
-        self.assertIn("pop_vlan,", trace["Datapath actions"])
+        self.assertIn("drop", trace["Datapath actions"])
+
+        trace = self._run_trace(self.br_int.br_name,
+                                "dl_src=12:34:56:78:aa:bb,"
+                                "dl_dst=24:12:56:78:aa:bb,dl_type=0x0800,"
+                                "nw_src=192.168.0.1,nw_dst=192.168.0.2,"
+                                "nw_proto=1,nw_tos=0,nw_ttl=128,"
+                                "icmp_type=8,icmp_code=0")
+        self.assertNotIn("drop", trace["Datapath actions"])

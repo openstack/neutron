@@ -17,15 +17,12 @@
 import functools
 import random
 
-import debtcollector
 import eventlet
 import netaddr
 from neutron_lib import exceptions
 import os_ken.app.ofctl.api as ofctl_api
 from os_ken.app.ofctl import exception as ofctl_exc
 import os_ken.exception as os_ken_exc
-from os_ken.lib import ofctl_string
-from os_ken.ofproto import ofproto_parser
 from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_utils import excutils
@@ -230,13 +227,6 @@ class OpenFlowSwitchMixin(object):
                              match=None, active_bundle=None, **match_kwargs):
         (dp, ofp, ofpp) = self._get_dp()
         match = self._match(ofp, ofpp, match, **match_kwargs)
-        if isinstance(instructions, str):
-            debtcollector.deprecate(
-                "Use of string instruction is deprecated", removal_version='U')
-            jsonlist = ofctl_string.ofp_instruction_from_str(
-                ofp, instructions)
-            instructions = ofproto_parser.ofp_instruction_from_jsondict(
-                dp, jsonlist)
         msg = ofpp.OFPFlowMod(dp,
                               table_id=table_id,
                               cookie=self.default_cookie,
