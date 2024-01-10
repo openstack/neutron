@@ -55,7 +55,7 @@ class OVNAgentExtension(extension.AgentExtension, metaclass=abc.ABCMeta):
 
     def initialize(self, *args):
         """Initialize agent extension."""
-        self.agent_api = None
+        pass
 
     def consume_api(self, agent_api):
         """Configure the Agent API.
