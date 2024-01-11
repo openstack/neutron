@@ -51,7 +51,6 @@ from oslo_log import log as logging
 from neutron._i18n import _
 from neutron.common import _constants as n_const
 from neutron.db import db_base_plugin_common
-from neutron.exceptions import qos as neutron_qos_exc
 from neutron.extensions import qos
 from neutron.objects import base as base_obj
 from neutron.objects import network as network_object
@@ -570,7 +569,7 @@ class QoSPlugin(qos.QoSPluginBase):
                 self._placement_client.update_qos_allocation(
                     consumer_uuid=device_id, alloc_diff=alloc_diff)
             except ks_exc.Conflict:
-                raise neutron_qos_exc.QosPlacementAllocationUpdateConflict(
+                raise qos_exc.QosPlacementAllocationUpdateConflict(
                     alloc_diff=alloc_diff, consumer=device_id)
 
         # NOTE(przszc): Upon successful allocation update in Placement we can

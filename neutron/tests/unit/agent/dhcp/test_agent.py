@@ -37,7 +37,6 @@ from neutron.agent.linux import dhcp
 from neutron.agent.linux import interface
 from neutron.agent.linux import utils as linux_utils
 from neutron.agent.metadata import driver as metadata_driver
-from neutron.common import _constants as common_constants
 from neutron.common import config as common_config
 from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils
@@ -2000,7 +1999,7 @@ class TestDeviceManager(base.BaseTestCase):
             expected_ips = ['172.9.9.9/24', const.METADATA_CIDR]
 
         if ipv6_enabled:
-            expected_ips.append(common_constants.METADATA_V6_CIDR)
+            expected_ips.append(const.METADATA_V6_CIDR)
 
         expected = [mock.call.get_device_name(port)]
 

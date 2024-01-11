@@ -2474,7 +2474,6 @@ class OVNClient(object):
                          'fixed_ips': fixed_ips,
                          }
                 }
-        # TODO(boden): rehome create_port into neutron-lib
         return p_utils.create_port(self._plugin, context, port)
 
     def update_metadata_port(self, context, network, subnet=None):

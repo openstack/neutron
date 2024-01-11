@@ -33,7 +33,6 @@ import testtools
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import ip_lib
 from neutron.cmd import runtime_checks as checks
-from neutron.common import _constants as common_constants
 from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils as common_utils
 from neutron.conf.agent import common as config
@@ -3378,7 +3377,7 @@ class TestDeviceManager(TestConfBase):
             if enable_isolated_metadata or force_metadata:
                 expect_ips.extend([
                     constants.METADATA_CIDR,
-                    common_constants.METADATA_V6_CIDR])
+                    constants.METADATA_V6_CIDR])
             mgr.driver.init_l3.assert_called_with('ns-XXX',
                                                   expect_ips,
                                                   namespace='qdhcp-ns')

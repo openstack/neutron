@@ -83,13 +83,6 @@ FIP_ASSOC_MSG = ('Floating IP %(fip_id)s %(assoc)s. External IP: %(ext_ip)s, '
                  'port: %(port_id)s.')
 
 
-# TODO(froyo): Move this exception to neutron-lib as soon as possible, and when
-# a new release is created and pointed to in the requirements remove this code.
-class FipAssociated(n_exc.InUse):
-    message = _('Unable to complete the operation on port "%(port_id)s" '
-                'because the port still has an associated floating IP.')
-
-
 @registry.has_registry_receivers
 class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                           base_services.WorkerBase,
@@ -1832,7 +1825,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                 floating_ip_objs_admin = l3_obj.FloatingIP.get_objects(
                     context.elevated(), fixed_port_id=port_id)
                 if floating_ip_objs_admin != floating_ip_objs:
-                    raise FipAssociated(port_id=port_id)
+                    raise l3_exc.FipAssociated(port_id=port_id)
 
             router_ids = {fip.router_id for fip in floating_ip_objs}
             old_fips = {fip.id: self._make_floatingip_dict(fip)

@@ -35,7 +35,6 @@ from oslo_utils import uuidutils
 import webob.exc
 
 from neutron.common import _constants as n_const
-from neutron.exceptions import qos as neutron_qos_exc
 from neutron.extensions import qos_pps_minimum_rule_alias
 from neutron.extensions import qos_rules_alias
 from neutron import manager
@@ -2802,7 +2801,7 @@ class TestQosPluginDB(base.BaseQosTestCase):
                 response={'errors': [{'code': 'placement.concurrent_update'}]}
             )
             self.assertRaises(
-                neutron_qos_exc.QosPlacementAllocationUpdateConflict,
+                qos_exc.QosPlacementAllocationUpdateConflict,
                 self.qos_plugin._change_placement_allocation,
                 qos1, qos2, orig_port, port)
 

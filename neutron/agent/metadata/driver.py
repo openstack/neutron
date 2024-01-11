@@ -33,7 +33,6 @@ from neutron.agent.l3 import namespaces
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils as linux_utils
-from neutron.common import _constants as common_constants
 from neutron.common import coordination
 from neutron.common import metadata as comm_meta
 from neutron.common import utils as common_utils
@@ -377,6 +376,6 @@ def apply_metadata_nat_rules(router, proxy):
     if netutils.is_ipv6_enabled():
         for c, r in proxy.metadata_nat_rules(
                 proxy.metadata_port,
-                metadata_address=(common_constants.METADATA_V6_CIDR)):
+                metadata_address=(constants.METADATA_V6_CIDR)):
             router.iptables_manager.ipv6['nat'].add_rule(c, r)
     router.iptables_manager.apply()

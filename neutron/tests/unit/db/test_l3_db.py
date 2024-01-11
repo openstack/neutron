@@ -27,6 +27,7 @@ from neutron_lib import context
 from neutron_lib.db import api as db_api
 from neutron_lib import exceptions as n_exc
 from neutron_lib.exceptions import extraroute as xroute_exc
+from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from neutron_lib.plugins import utils as plugin_utils
@@ -414,7 +415,7 @@ class TestL3_NAT_dbonly_mixin(
         get_objects.side_effect = [
             [],
             [{'id': 'floating_ip1', 'port_id': 'port_id'}]]
-        self.assertRaises(l3_db.FipAssociated,
+        self.assertRaises(l3_exc.FipAssociated,
                           self.db.disassociate_floatingips,
                           context_tenant,
                           'port_id')
