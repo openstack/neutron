@@ -34,8 +34,6 @@ class PortNumaAffinityPolicy(base.NeutronDbObject):
 
     primary_keys = ['port_id']
 
-    new_facade = True
-
     fields = {
         'port_id': common_types.UUIDField(),
         'numa_affinity_policy': NumaAffinityPoliciesEnumField(),
