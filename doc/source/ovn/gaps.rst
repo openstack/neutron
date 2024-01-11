@@ -72,6 +72,12 @@ at [1]_.
 
   This makes path MTU discovery fail, and is being tracked in [9]_ and [11]_.
 
+* Traffic metering
+
+  Currently ``neutron-metering-agent`` can only work with the Neutron L3 agent.
+  It is not supported by the ``ovn-router`` service plugin nor by the
+  ``neutron-ovn-agent``. This is being reported and tracked in [12]_.
+
 References
 ----------
 
@@ -86,3 +92,4 @@ References
 .. [9] https://bugs.launchpad.net/neutron/+bug/2032817
 .. [10] https://bugzilla.redhat.com/show_bug.cgi?id=2238494
 .. [11] https://bugzilla.redhat.com/show_bug.cgi?id=2238969
+.. [12] https://bugs.launchpad.net/neutron/+bug/2048773
