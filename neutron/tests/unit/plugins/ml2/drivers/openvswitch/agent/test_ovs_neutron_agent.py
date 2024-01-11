@@ -1212,7 +1212,7 @@ class TestOvsNeutronAgent(object):
             setup_port_filters.assert_called_once_with(
                 (added_devices - set(skipped_devices) -
                     binding_no_activated_devices),
-                port_info.get('updated', set()))
+                port_info.get('updated', set()) - binding_no_activated_devices)
             devices_added_updated = (added_devices |
                                      port_info.get('updated', set()))
             if devices_added_updated:
