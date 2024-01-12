@@ -666,6 +666,8 @@ class BaseOvnIdl(Ml2OvnIdlBase):
 class BaseOvnSbIdl(Ml2OvnIdlBase):
     @classmethod
     def from_server(cls, connection_string, helper):
+        if 'Chassis_Private' in helper.schema_json['tables']:
+            helper.register_table('Chassis_Private')
         helper.register_table('Chassis')
         helper.register_table('Encap')
         helper.register_table('Port_Binding')
