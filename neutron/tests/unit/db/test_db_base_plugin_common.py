@@ -78,7 +78,7 @@ class FilterFieldsTestCase(base.BaseTestCase):
 
     def test_multiple_arguments_positional(self):
         expected = {'two': 2}
-        observed = self.method_multiple_arguments(list(), ['two'])
+        observed = self.method_multiple_arguments([], ['two'])
         self.assertEqual(expected, observed)
 
     def test_multiple_arguments_positional_and_keywords(self):
@@ -89,5 +89,5 @@ class FilterFieldsTestCase(base.BaseTestCase):
 
     def test_multiple_arguments_keyword(self):
         expected = {'two': 2}
-        observed = self.method_multiple_arguments(list(), fields=['two'])
+        observed = self.method_multiple_arguments([], fields=['two'])
         self.assertEqual(expected, observed)

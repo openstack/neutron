@@ -354,7 +354,7 @@ class TestOVSAgentQosExtension(OVSAgentQoSExtensionTestFramework):
         port_dict = self._create_port_with_qos()
 
         policy_copy = copy.deepcopy(self.qos_policies[TEST_POLICY_ID1])
-        policy_copy.rules = list()
+        policy_copy.rules = []
         context = mock.Mock()
         consumer_reg.push(context, resources.QOS_POLICY, [policy_copy],
                           events.UPDATED)

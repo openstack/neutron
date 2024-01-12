@@ -560,7 +560,7 @@ class FirewallTestCase(BaseFirewallTestCase):
         self._apply_security_group_rules(self.FAKE_SECURITY_GROUP_ID, sg_rules)
         self.tester.establish_connection(**connection)
 
-        self._apply_security_group_rules(self.FAKE_SECURITY_GROUP_ID, list())
+        self._apply_security_group_rules(self.FAKE_SECURITY_GROUP_ID, [])
         self.tester.assert_no_established_connection(**connection)
 
     def test_preventing_firewall_blink(self):

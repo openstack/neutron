@@ -162,9 +162,9 @@ class _TestBwLimitQoS(BaseQoSRuleTestCase):
         # update_rules: rules that need to be updated during the l2-agent stop.
         # delete_rules:rules that need to be deleted during the l2-agent stop.
 
-        add_rules = list() if not add_rules else add_rules
-        update_rules = list() if not update_rules else update_rules
-        delete_rules = list() if not delete_rules else delete_rules
+        add_rules = [] if not add_rules else add_rules
+        update_rules = [] if not update_rules else update_rules
+        delete_rules = [] if not delete_rules else delete_rules
         # Stop l2_agent and clear/update/reset the port qos rules
         self.l2_agent_process.stop()
         self._wait_until_agent_down(self.l2_agent['id'])
