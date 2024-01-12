@@ -461,7 +461,8 @@ class FlavorPluginTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
         self.service_providers.return_value = providers
         for provider in providers:
             self.service_manager.add_provider_configuration(
-                provider.split(':')[0], provconf.ProviderConfiguration())
+                provider.split(':', maxsplit=1)[0],
+                provconf.ProviderConfiguration())
 
         db_api.CONTEXT_WRITER.get_engine()
 
