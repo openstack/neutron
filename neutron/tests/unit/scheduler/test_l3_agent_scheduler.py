@@ -1280,9 +1280,8 @@ class L3DvrSchedulerTestCase(L3SchedulerBaseMixin,
         ]
         agent_on_host = {'id': 'agent1'}
 
-        with mock.patch(
-            'neutron.db.db_base_plugin_v2.NeutronDbPluginV2' '.get_ports',
-            return_value=dvr_ports),\
+        with mock.patch.object(db_v2.NeutronDbPluginV2, 'get_ports',
+                               return_value=dvr_ports),\
                 mock.patch('neutron.api.rpc.agentnotifiers.l3_rpc_agent_api'
                            '.L3AgentNotifyAPI'),\
                 mock.patch.object(
@@ -1318,11 +1317,10 @@ class L3DvrSchedulerTestCase(L3SchedulerBaseMixin,
               'distributed': True,
         }
 
-        with mock.patch(
-            'neutron.db.db_base_plugin_v2.NeutronDbPluginV2' '.get_port',
-            return_value=dvr_port),\
-                mock.patch('neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
-                           '.get_ports', return_value=[dvr_port]):
+        with mock.patch.object(db_v2.NeutronDbPluginV2, 'get_port',
+                               return_value=dvr_port),\
+                mock.patch.object(db_v2.NeutronDbPluginV2, 'get_ports',
+                                  return_value=[dvr_port]):
             router_id = self.dut.get_dvr_routers_by_subnet_ids(
                 self.adminContext, [subnet_id])
             self.assertEqual(r1['id'], router_id.pop())
@@ -1344,9 +1342,8 @@ class L3DvrSchedulerTestCase(L3SchedulerBaseMixin,
               'distributed': True,
         }
 
-        with mock.patch(
-                'neutron.db.db_base_plugin_v2.NeutronDbPluginV2' '.get_ports',
-                return_value=[dvr_port]):
+        with mock.patch.object(db_v2.NeutronDbPluginV2, 'get_ports',
+                               return_value=[dvr_port]):
             sub_ids = self.dut.get_subnet_ids_on_router(self.adminContext,
                                                         r1['id'])
             self.assertEqual(sub_ids.pop(),
