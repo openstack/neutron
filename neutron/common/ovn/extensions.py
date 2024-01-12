@@ -34,6 +34,8 @@ from neutron_lib.api.definitions import fip_pf_description
 from neutron_lib.api.definitions import fip_pf_detail
 from neutron_lib.api.definitions import fip_pf_port_range
 from neutron_lib.api.definitions import fip_port_details
+from neutron_lib.api.definitions import firewall_v2
+from neutron_lib.api.definitions import firewall_v2_stdattrs
 from neutron_lib.api.definitions import floating_ip_port_forwarding
 from neutron_lib.api.definitions import floatingip_pools
 from neutron_lib.api.definitions import l3
@@ -179,5 +181,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     bgp.ALIAS,
     bgp_4byte_asn.ALIAS,
     bgp_dragentscheduler.ALIAS,
+    firewall_v2.ALIAS,
+    firewall_v2_stdattrs.ALIAS,
     uplink_status_propagation.ALIAS,
 ]
