@@ -240,7 +240,7 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
             ports.append(neutron_port_id)
 
         for idx, port in enumerate(ports):
-            external_ids = {'port': str(ports[idx]),
+            external_ids = {'port': str(port),
                             'type': qos_constants.RULE_TYPE_MINIMUM_BANDWIDTH,
                             'queue-num': 'queue_num'}
             expected = {'_uuid': queue_ids[idx],
