@@ -116,9 +116,11 @@ class ConntrackHelperTestCase(ml2_test_base.ML2TestFramework,
     def test_delete_conntrack_helper(self):
         res = self.cth_plugin.create_router_conntrack_helper(
             self.context, self.router['id'], self.conntack_helper)
-        delete = self.cth_plugin.delete_router_conntrack_helper(
+        self.cth_plugin.delete_router_conntrack_helper(
             self.context, res['id'], self.router['id'])
-        self.assertIsNone(delete)
+        self.assertRaises(cth_exc.ConntrackHelperNotFound,
+                          self.cth_plugin.delete_router_conntrack_helper,
+                          self.context, res['id'], self.router['id'])
 
     def test_negative_delete_conntrack_helper(self):
         self.assertRaises(cth_exc.ConntrackHelperNotFound,
