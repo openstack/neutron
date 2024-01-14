@@ -643,32 +643,39 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                                   "supported if enable_dhcp is True.")
                 raise exc.InvalidInput(error_message=error_message)
 
-        if validators.is_attr_set(s.get('gateway_ip')):
-            self._validate_ip_version(ip_ver, s['gateway_ip'], 'gateway_ip')
-            if has_cidr:
-                is_gateway_not_valid = (
-                    ipam.utils.check_gateway_invalid_in_subnet(
-                        s['cidr'], s['gateway_ip']))
-                if is_gateway_not_valid:
-                    error_message = _("Gateway is not valid on subnet")
-                    raise exc.InvalidInput(error_message=error_message)
-            # Ensure the gateway IP is not assigned to any port
-            # skip this check in case of create (s parameter won't have id)
+        gateway_ip = s.get('gateway_ip', constants.ATTR_NOT_SPECIFIED)
+        if validators.is_attr_set(gateway_ip) or gateway_ip is None:
+            # Validate the gateway IP, if defined in the request.
+            if s['gateway_ip']:
+                self._validate_ip_version(ip_ver, gateway_ip, 'gateway_ip')
+                if has_cidr:
+                    is_gateway_not_valid = (
+                        ipam.utils.check_gateway_invalid_in_subnet(
+                            s['cidr'], gateway_ip))
+                    if is_gateway_not_valid:
+                        error_message = _("Gateway is not valid on subnet")
+                        raise exc.InvalidInput(error_message=error_message)
+
+            # Ensure the current subnet gateway IP is not assigned to any port.
+            # The subnet gateway IP cannot be modified or removed if in use
+            # (assigned to a router interface).
+            # Skip this check in case of create (s parameter won't have id).
             # NOTE(salv-orlando): There is slight chance of a race, when
             # a subnet-update and a router-interface-add operation are
             # executed concurrently
-            s_gateway_ip = netaddr.IPAddress(s['gateway_ip'])
+            s_gateway_ip = (netaddr.IPAddress(gateway_ip) if gateway_ip else
+                            None)
             if (cur_subnet and
                     s_gateway_ip != cur_subnet['gateway_ip'] and
                     not ipv6_utils.is_ipv6_pd_enabled(s)):
-                gateway_ip = str(cur_subnet['gateway_ip'])
+                current_gateway_ip = str(cur_subnet['gateway_ip'])
                 alloc = port_obj.IPAllocation.get_alloc_routerports(
-                    context, cur_subnet['id'], gateway_ip=gateway_ip,
+                    context, cur_subnet['id'], gateway_ip=current_gateway_ip,
                     first=True)
 
                 if alloc and alloc.port_id:
                     raise exc.GatewayIpInUse(
-                        ip_address=gateway_ip,
+                        ip_address=current_gateway_ip,
                         port_id=alloc.port_id)
 
         if validators.is_attr_set(s.get('dns_nameservers')):
