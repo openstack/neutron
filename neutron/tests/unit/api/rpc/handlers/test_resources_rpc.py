@@ -50,7 +50,7 @@ def _create_test_resource(context=None, resource_cls=None):
 class BaseFakeResource(objects_base.NeutronObject):
     @classmethod
     def get_objects(cls, context, **kwargs):
-        return list()
+        return []
 
 
 class FakeResource(BaseFakeResource):
