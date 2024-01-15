@@ -10,7 +10,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron_lib.api.definitions import portbindings
 from oslo_config import cfg
 from oslo_log import log as logging
 from ovsdbapp.backend.ovs_idl import vlog
@@ -132,18 +131,6 @@ ovn_opts = [
                        'saves the path to the external network. This requires '
                        'the user to configure the physical network map '
                        '(i.e. ovn-bridge-mappings) on each compute node.')),
-    cfg.StrOpt("vif_type",
-               deprecated_for_removal=True,
-               deprecated_reason="The port VIF type is now determined based "
-                                 "on the OVN chassis information when the "
-                                 "port is bound to a host.",
-               default=portbindings.VIF_TYPE_OVS,
-               help=_("Type of VIF to be used for ports valid values are "
-                      "(%(ovs)s, %(dpdk)s) default %(ovs)s") % {
-                          "ovs": portbindings.VIF_TYPE_OVS,
-                          "dpdk": portbindings.VIF_TYPE_VHOST_USER},
-               choices=[portbindings.VIF_TYPE_OVS,
-                        portbindings.VIF_TYPE_VHOST_USER]),
     cfg.StrOpt("vhost_sock_dir",
                default="/var/run/openvswitch",
                help=_("The directory in which vhost virtio sockets "
