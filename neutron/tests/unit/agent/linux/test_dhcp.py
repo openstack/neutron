@@ -1468,12 +1468,14 @@ class TestDnsmasq(TestBase):
                     s.ipv6_address_mode == constants.DHCPV6_STATEFUL):
                 if s.ip_version == constants.IP_VERSION_4:
                     expected.extend([prefix % (
-                        s.id, s.cidr.split('/')[0],
+                        s.id, s.cidr.split('/', maxsplit=1)[0],
                         netaddr.IPNetwork(s.cidr).netmask, lease_duration,
                         seconds)])
                 else:
                     expected.extend([prefix6 % (
-                        s.id, s.cidr.split('/')[0], s.cidr.split('/')[1],
+                        s.id,
+                        s.cidr.split('/', maxsplit=1)[0],
+                        s.cidr.split('/', maxsplit=1)[1],
                         lease_duration, seconds)])
                 possible_leases += netaddr.IPNetwork(s.cidr).size
 

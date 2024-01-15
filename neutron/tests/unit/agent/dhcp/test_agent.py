@@ -2282,7 +2282,7 @@ class TestDeviceManager(base.BaseTestCase):
         expected = ('dhcp1ae5f96c-c527-5079-82ea-371a01645457-12345678-1234-'
                     '5678-1234567890ab')
         # the DHCP port name only contains the hostname and not the domain name
-        local_hostname = cfg.CONF.host.split('.')[0]
+        local_hostname = cfg.CONF.host.split('.', maxsplit=1)[0]
 
         with mock.patch('uuid.uuid5') as uuid5:
             uuid5.return_value = '1ae5f96c-c527-5079-82ea-371a01645457'

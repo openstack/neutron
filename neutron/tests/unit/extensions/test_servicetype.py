@@ -244,7 +244,7 @@ class ServiceTypeManagerExtTestCase(ServiceTypeExtensionTestCaseBase):
         st_db.ServiceTypeManager._instance = None
         self.manager = st_db.ServiceTypeManager.get_instance()
         for provider in service_providers:
-            service_type = provider.split(':')[0]
+            service_type = provider.split(':', maxsplit=1)[0]
             self.manager.add_provider_configuration(
                 service_type, provconf.ProviderConfiguration(
                     svc_type=service_type))
