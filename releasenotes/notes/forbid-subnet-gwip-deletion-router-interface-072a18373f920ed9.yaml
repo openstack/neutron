@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    [`bug 2036423 <https://bugs.launchpad.net/neutron/+bug/2036423>`_]
+    Now it is not possible to delete a subnet gateway IP if that subnet has a
+    router interface; the subnet gateway IP modification was already forbidden.
