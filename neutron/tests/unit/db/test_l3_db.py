@@ -252,27 +252,6 @@ class TestL3_NAT_dbonly_mixin(
             'fixed_ip_address_scope': mock.sentinel.address_scope_id,
             'id': mock.sentinel.fip_ip}, result)
 
-    def test__unique_floatingip_iterator(self):
-        context = mock.MagicMock()
-        query = mock.MagicMock()
-        query.order_by().__iter__.return_value = [
-            ({'id': 'id1'}, 'scope1'),
-            ({'id': 'id1'}, 'scope1'),
-            ({'id': 'id2'}, 'scope2'),
-            ({'id': 'id2'}, 'scope2'),
-            ({'id': 'id2'}, 'scope2'),
-            ({'id': 'id3'}, 'scope3')]
-        query.reset_mock()
-        with mock.patch.object(
-                l3_obj.FloatingIP, '_load_object',
-                side_effect=({'id': 'id1'}, {'id': 'id2'}, {'id': 'id3'})):
-            result = list(
-                l3_obj.FloatingIP._unique_floatingip_iterator(context, query))
-            query.order_by.assert_called_once_with(l3_models.FloatingIP.id)
-            self.assertEqual([({'id': 'id1'}, 'scope1'),
-                              ({'id': 'id2'}, 'scope2'),
-                              ({'id': 'id3'}, 'scope3')], result)
-
     @mock.patch.object(directory, 'get_plugin')
     def test_prevent_l3_port_deletion_port_not_found(self, gp):
         # port not found doesn't prevent
