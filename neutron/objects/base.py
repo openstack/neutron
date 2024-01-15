@@ -26,7 +26,6 @@ from neutron_lib.objects import exceptions as o_exc
 from neutron_lib.objects.extensions import standardattributes
 from oslo_config import cfg
 from oslo_db import exception as obj_exc
-from oslo_db.sqlalchemy import enginefacade
 from oslo_db.sqlalchemy import utils as db_utils
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
@@ -597,15 +596,6 @@ class NeutronDbObject(NeutronObject, metaclass=DeclarativeObject):
             return super(NeutronDbObject, self).obj_load_attr(attrname)
         if is_attr_nullable:
             self[attrname] = None
-
-    # TODO(ihrachys) remove once we switch plugin code to enginefacade
-    @staticmethod
-    def _use_db_facade(context):
-        try:
-            enginefacade._transaction_ctx_for_context(context)
-        except obj_exc.NoEngineContextEstablished:
-            return False
-        return True
 
     @classmethod
     def db_context_writer(cls, context):

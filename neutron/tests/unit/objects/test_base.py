@@ -1842,22 +1842,8 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
             obj.delete()
         self.assertEqual(1, mock_commit.call_count)
 
-    def _get_ro_txn_exit_func_name(self):
-        # with no engine facade, we didn't have distinction between r/o and
-        # r/w transactions and so we always call commit even for getters when
-        # no facade is used
-        return (
-            SQLALCHEMY_CLOSE
-            if self._test_class._use_db_facade else SQLALCHEMY_COMMIT)
-
     def test_get_objects_single_transaction(self):
-        with mock.patch(self._get_ro_txn_exit_func_name()) as mock_exit:
-            with db_api.CONTEXT_READER.using(self.context):
-                self._test_class.get_objects(self.context)
-        self.assertEqual(1, mock_exit.call_count)
-
-    def test_get_objects_single_transaction_enginefacade(self):
-        with mock.patch(self._get_ro_txn_exit_func_name()) as mock_exit:
+        with mock.patch(SQLALCHEMY_CLOSE) as mock_exit:
             with db_api.CONTEXT_READER.using(self.context):
                 self._test_class.get_objects(self.context)
         self.assertEqual(1, mock_exit.call_count)
@@ -1866,17 +1852,7 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
         obj = self._make_object(self.obj_fields[0])
         obj.create()
 
-        with mock.patch(self._get_ro_txn_exit_func_name()) as mock_exit:
-            with db_api.CONTEXT_READER.using(self.context):
-                obj = self._test_class.get_object(self.context,
-                                                  **obj._get_composite_keys())
-        self.assertEqual(1, mock_exit.call_count)
-
-    def test_get_object_single_transaction_enginefacade(self):
-        obj = self._make_object(self.obj_fields[0])
-        obj.create()
-
-        with mock.patch(self._get_ro_txn_exit_func_name()) as mock_exit:
+        with mock.patch(SQLALCHEMY_CLOSE) as mock_exit:
             with db_api.CONTEXT_READER.using(self.context):
                 obj = self._test_class.get_object(self.context,
                                                   **obj._get_composite_keys())
