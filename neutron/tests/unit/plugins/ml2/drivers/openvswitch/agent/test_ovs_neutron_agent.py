@@ -166,7 +166,7 @@ class TestOvsNeutronAgent(object):
                 mock.patch('oslo_service.loopingcall.FixedIntervalLoopingCall',
                            new=MockFixedIntervalLoopingCall),\
                 mock.patch(
-                    'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
+                    'neutron.agent.common.ovs_lib.OVSBridge.get_vif_ports',
                     return_value=[]),\
                 mock.patch('neutron.agent.rpc.PluginReportStateAPI.'
                            'has_alive_neutron_server'):
@@ -241,7 +241,7 @@ class TestOvsNeutronAgent(object):
             mock.patch('oslo_service.loopingcall.FixedIntervalLoopingCall',
                        new=MockFixedIntervalLoopingCall), \
             mock.patch(
-                'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
+                'neutron.agent.common.ovs_lib.OVSBridge.get_vif_ports',
                 return_value=[]), \
             mock.patch('neutron.agent.common.ovs_lib.BaseOVS.config',
                        new_callable=mock.PropertyMock,
@@ -3102,7 +3102,7 @@ class AncillaryBridgesTest(object):
                     'get_ports_attributes',
                     return_value=[]),\
                 mock.patch(
-                    'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
+                    'neutron.agent.common.ovs_lib.OVSBridge.get_vif_ports',
                     return_value=[]),\
                 mock.patch('neutron.agent.rpc.PluginReportStateAPI.'
                            'has_alive_neutron_server'):
@@ -3219,7 +3219,7 @@ class TestOvsDvrNeutronAgent(object):
                     'get_ports_attributes',
                     return_value=[]),\
                 mock.patch(
-                    'neutron.agent.common.ovs_lib.OVSBridge.' 'get_vif_ports',
+                    'neutron.agent.common.ovs_lib.OVSBridge.get_vif_ports',
                     return_value=[]),\
                 mock.patch('neutron.agent.rpc.PluginReportStateAPI.'
                            'has_alive_neutron_server'):
