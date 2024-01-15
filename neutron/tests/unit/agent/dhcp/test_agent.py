@@ -373,6 +373,34 @@ class TestDhcpAgent(base.BaseTestCase):
                                             mock.ANY,
                                             None)
 
+    def test_call_driver_enable_with_segments(self):
+        seg0 = dhcp.DictModel(id='seg0', segment_index=0)
+        seg1 = dhcp.DictModel(id='seg1', segment_index=1)
+
+        sub0 = dhcp.DictModel(id='sub0', segment_id=seg0.id)
+        sub1 = dhcp.DictModel(id='sub1', segment_id=seg1.id)
+
+        network = dhcp.NetModel(
+            id=FAKE_NETWORK_UUID,
+            project_id=FAKE_PROJECT_ID,
+            admin_state_up=True,
+            subnets=[sub0, sub1],
+            # We don't know order of segments stored.
+            segments=[seg1, seg0])
+
+        agent = dhcp_agent.DhcpAgent(cfg.CONF)
+        with mock.patch.object(agent,
+                               '_call_driver') as _call_driver:
+            self.assertTrue(agent.call_driver('enable', network))
+            # The public function call_driver() is calling the private
+            # _call_driver().
+            _call_driver.assert_has_calls([
+                mock.call("disable", network, segment=None, block=True),
+                # It is not possible to assert on 'network' as there is a copy
+                # happening. The copy will be removed, see bug #2051729.
+                mock.call("enable", mock.ANY, segment=seg0),
+                mock.call("enable", mock.ANY, segment=seg1)])
+
     def test_call_driver_no_network(self):
         network = None
         dhcp = dhcp_agent.DhcpAgent(cfg.CONF)
