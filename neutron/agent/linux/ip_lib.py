@@ -25,6 +25,7 @@ from neutron_lib import constants
 from neutron_lib import exceptions
 from oslo_config import cfg
 from oslo_log import log as logging
+from oslo_utils import excutils
 from oslo_utils import netutils
 from pyroute2.netlink import exceptions as netlink_exceptions
 from pyroute2.netlink import rtnl
@@ -477,16 +478,16 @@ class IpLinkCommand(IpDeviceCommandBase):
             self.name, self._parent.namespace, state='down')
 
     def set_netns(self, namespace, is_ovs_port=False):
-        privileged.set_link_attribute(
-            self.name, self._parent.namespace, net_ns_fd=namespace)
-        self._parent.namespace = namespace
-        if is_ovs_port:
-            # NOTE(slaweq): because of the "shy port" which may dissapear for
-            # short time after it's moved to the namespace we need to wait
-            # a bit before checking if port really exists in the namespace
-            time.sleep(1)
-        common_utils.wait_until_true(lambda: self.exists, timeout=5,
-                                     sleep=0.5)
+        old_namespace = self._parent.namespace
+        try:
+            privileged.set_link_attribute(
+                self.name, self._parent.namespace, net_ns_fd=namespace)
+            self._parent.namespace = namespace
+            common_utils.wait_until_true(lambda: self.exists, timeout=3,
+                                         sleep=0.5)
+        except common_utils.WaitTimeout:
+            with excutils.save_and_reraise_exception():
+                self._parent.namespace = old_namespace
 
     def set_name(self, name):
         privileged.set_link_attribute(
