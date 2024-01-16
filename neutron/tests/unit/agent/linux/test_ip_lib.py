@@ -522,7 +522,8 @@ class TestIpWrapper(base.BaseTestCase):
     def test_add_device_to_namespace(self):
         dev = mock.Mock()
         ip_lib.IPWrapper(namespace='ns').add_device_to_namespace(dev)
-        dev.assert_has_calls([mock.call.link.set_netns('ns')])
+        dev.assert_has_calls(
+            [mock.call.link.set_netns('ns', is_ovs_port=False)])
 
     def test_add_device_to_namespace_is_none(self):
         dev = mock.Mock()
