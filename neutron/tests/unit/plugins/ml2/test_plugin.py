@@ -1344,15 +1344,19 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
             with self.port(device_owner="fake:test"):
                 self.assertTrue(cp.called)
 
+    @mock.patch('neutron.objects.router.Router.get_object')
     def _test_no_dhcp_provisioning_blocks_removed_empty_device_owner(
-            self, device_owner):
+            self, device_owner, gr):
+        gr.return_value = {'flavor_id': ''}
         with mock.patch.object(provisioning_blocks,
                                'remove_provisioning_component') as cp:
             with self.port(device_owner=device_owner):
                 self.assertFalse(cp.called)
 
+    @mock.patch('neutron.objects.router.Router.get_object')
     def _test_no_dhcp_provisioning_blocks_added_empty_device_owner(
-            self, device_owner):
+            self, device_owner, gr):
+        gr.return_value = {'flavor_id': ''}
         with mock.patch.object(provisioning_blocks,
                                'add_provisioning_component') as cp:
             with self.port(device_owner=device_owner):

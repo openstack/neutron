@@ -1,0 +1,8 @@
+---
+features:
+    - Neutron allows users to create routers with flavors with the L3 OVN
+      plugin. This new feature can be configured in the neutron.conf file.
+      Please see the "Creating a L3 OVN router with a user defined flavor"
+      section under Neutron configuration in the documentation for more
+      details. This document also describes the steps users have to take to
+      create a router with a flavor assigned to it.

@@ -620,7 +620,8 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
             'ports', port_upt_data, port['id'], self.fmt)
         port_res = port_req.get_response(self.api)
 
-    def test_add_external_port_avoid_flapping(self):
+    @mock.patch('neutron.objects.router.Router.get_object')
+    def test_add_external_port_avoid_flapping(self, gr):
         class LogicalSwitchPortUpdateUpEventTest(event.RowEvent):
             def __init__(self):
                 self.count = 0
@@ -651,6 +652,7 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
             def get_count(self):
                 return self.count
 
+        gr.return_value = {'flavor_id': None}
         og_up_event = ovsdb_monitor.LogicalSwitchPortUpdateUpEvent(None)
         og_down_event = ovsdb_monitor.LogicalSwitchPortUpdateDownEvent(None)
         test_down_event = LogicalSwitchPortUpdateDownEventTest()
@@ -666,7 +668,8 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
         # status as up, triggering only a LogicalSwitchPortUpdateUpEvent.
         self._create_router_port(portbindings.VNIC_DIRECT)
         self.assertEqual(test_down_event.get_count(), 0)
-        self.assertEqual(test_up_event.get_count(), 1)
+        n_utils.wait_until_true(lambda: test_up_event.get_count() == 1,
+                                timeout=10)
 
     def test_external_port_create_vnic_direct(self):
         self._test_external_port_create(portbindings.VNIC_DIRECT)

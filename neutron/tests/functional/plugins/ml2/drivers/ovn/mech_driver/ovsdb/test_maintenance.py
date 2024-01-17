@@ -21,6 +21,8 @@ from futurist import periodics
 from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import floating_ip_port_forwarding as pf_def
 from neutron_lib.api.definitions import provider_net as provnet_apidef
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
 from neutron_lib import constants as n_const
 from neutron_lib import context as n_context
 from neutron_lib.exceptions import l3 as lib_l3_exc
@@ -30,6 +32,7 @@ from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as ovn_config
 from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import maintenance
+from neutron.services.portforwarding import constants as pf_consts
 from neutron.tests.functional import base
 from neutron.tests.functional.services.logapi.drivers.ovn \
     import test_driver as test_log_driver
@@ -925,65 +928,69 @@ class TestMaintenance(_TestMaintenanceHelper):
         p1 = self._create_port('testp1', net1['id'])
         p1_ip = p1['fixed_ips'][0]['ip_address']
 
-        with mock.patch('neutron_lib.callbacks.registry.publish') as m_publish:
-            # > Create
-            fip_pf_args = {
-                pf_def.EXTERNAL_PORT: 2222,
-                pf_def.INTERNAL_PORT: 22,
-                pf_def.INTERNAL_PORT_ID: p1['id'],
-                pf_def.PROTOCOL: 'tcp',
-                pf_def.INTERNAL_IP_ADDRESS: p1_ip}
-            pf_obj = self.pf_plugin.create_floatingip_port_forwarding(
-                self.context, fip_id, **fip_attrs(fip_pf_args))
-            call = mock.call('port_forwarding', 'after_create', self.pf_plugin,
-                             payload=mock.ANY)
-            m_publish.assert_has_calls([call])
+        callbacks = registry._get_callback_manager()._callbacks
+        pf_cb = callbacks[pf_consts.PORT_FORWARDING]
+        key = list(pf_cb[events.AFTER_UPDATE][0][1].keys())[0]
+        pf_cb[events.AFTER_CREATE][0][1][key] = mock.MagicMock()
 
-            # Assert load balancer for port forwarding was not created
-            self.assertFalse(self._find_pf_lb(router_id, fip_id))
+        # > Create
+        fip_pf_args = {
+            pf_def.EXTERNAL_PORT: 2222,
+            pf_def.INTERNAL_PORT: 22,
+            pf_def.INTERNAL_PORT_ID: p1['id'],
+            pf_def.PROTOCOL: 'tcp',
+            pf_def.INTERNAL_IP_ADDRESS: p1_ip}
+        pf_obj = self.pf_plugin.create_floatingip_port_forwarding(
+            self.context, fip_id, **fip_attrs(fip_pf_args))
+        call = mock.call('port_forwarding', 'after_create', self.pf_plugin,
+                         payload=mock.ANY)
+        pf_cb[events.AFTER_CREATE][0][1][key].assert_has_calls([call])
 
-            # Call the maintenance thread to fix the problem
-            self.maint.check_for_inconsistencies()
+        # Assert load balancer for port forwarding was not created
+        self.assertFalse(self._find_pf_lb(router_id, fip_id))
 
-            # Assert load balancer for port forwarding was created
-            _verify_lb(self, 'tcp', 2222, 22)
+        # Call the maintenance thread to fix the problem
+        self.maint.check_for_inconsistencies()
 
-            # > Update
-            fip_pf_args = {pf_def.EXTERNAL_PORT: 5353,
-                           pf_def.INTERNAL_PORT: 53,
-                           pf_def.PROTOCOL: 'udp'}
-            m_publish.reset_mock()
-            self.pf_plugin.update_floatingip_port_forwarding(
-                self.context, pf_obj['id'], fip_id, **fip_attrs(fip_pf_args))
-            call = mock.call('port_forwarding', 'after_update', self.pf_plugin,
-                             payload=mock.ANY)
-            m_publish.assert_has_calls([call])
+        # Assert load balancer for port forwarding was created
+        _verify_lb(self, 'tcp', 2222, 22)
 
-            # Assert load balancer for port forwarding is stale
-            _verify_lb(self, 'tcp', 2222, 22)
+        # > Update
+        fip_pf_args = {pf_def.EXTERNAL_PORT: 5353,
+                       pf_def.INTERNAL_PORT: 53,
+                       pf_def.PROTOCOL: 'udp'}
+        pf_cb[events.AFTER_UPDATE][0][1][key] = mock.MagicMock()
+        self.pf_plugin.update_floatingip_port_forwarding(
+            self.context, pf_obj['id'], fip_id, **fip_attrs(fip_pf_args))
+        call = mock.call('port_forwarding', 'after_update', self.pf_plugin,
+                         payload=mock.ANY)
+        pf_cb[events.AFTER_UPDATE][0][1][key].assert_has_calls([call])
 
-            # Call the maintenance thread to fix the problem
-            self.maint.check_for_inconsistencies()
+        # Assert load balancer for port forwarding is stale
+        _verify_lb(self, 'tcp', 2222, 22)
 
-            # Assert load balancer for port forwarding was updated
-            _verify_lb(self, 'udp', 5353, 53)
+        # Call the maintenance thread to fix the problem
+        self.maint.check_for_inconsistencies()
 
-            # > Delete
-            m_publish.reset_mock()
-            self.pf_plugin.delete_floatingip_port_forwarding(
-                self.context, pf_obj['id'], fip_id)
-            call = mock.call('port_forwarding', 'after_delete', self.pf_plugin,
-                             payload=mock.ANY)
-            m_publish.assert_has_calls([call])
+        # Assert load balancer for port forwarding was updated
+        _verify_lb(self, 'udp', 5353, 53)
 
-            # Assert load balancer for port forwarding is stale
-            _verify_lb(self, 'udp', 5353, 53)
+        # > Delete
+        pf_cb[events.AFTER_DELETE][0][1][key] = mock.MagicMock()
+        self.pf_plugin.delete_floatingip_port_forwarding(
+            self.context, pf_obj['id'], fip_id)
+        call = mock.call('port_forwarding', 'after_delete', self.pf_plugin,
+                         payload=mock.ANY)
+        pf_cb[events.AFTER_DELETE][0][1][key].assert_has_calls([call])
 
-            # Call the maintenance thread to fix the problem
-            self.maint.check_for_inconsistencies()
+        # Assert load balancer for port forwarding is stale
+        _verify_lb(self, 'udp', 5353, 53)
 
-            # Assert load balancer for port forwarding is gone
-            self.assertFalse(self._find_pf_lb(router_id, fip_id))
+        # Call the maintenance thread to fix the problem
+        self.maint.check_for_inconsistencies()
+
+        # Assert load balancer for port forwarding is gone
+        self.assertFalse(self._find_pf_lb(router_id, fip_id))
 
     def test_check_for_ha_chassis_group(self):
         net1 = self._create_network('network1test', external=False)

@@ -57,6 +57,7 @@ from neutron.db import ovn_hash_ring_db
 from neutron.db import ovn_revision_numbers_db
 from neutron.db import provisioning_blocks
 from neutron.extensions import securitygroup as ext_sg
+from neutron.objects import router
 from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent as n_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions \
@@ -689,11 +690,17 @@ class OVNMechanismDriver(api.MechanismDriver):
 
         # in the case of router ports we also need to
         # track the creation and update of the LRP OVN objects
-        if ovn_utils.is_lsp_router_port(port):
+        if (ovn_utils.is_lsp_router_port(port) and
+                self._is_ovn_router_flavor_port(context, port)):
             ovn_revision_numbers_db.create_initial_revision(
                 context.plugin_context, port['id'],
                 ovn_const.TYPE_ROUTER_PORTS,
                 std_attr_id=context.current['standard_attr_id'])
+
+    def _is_ovn_router_flavor_port(self, context, port):
+        router_obj = router.Router.get_object(context.plugin_context,
+                                              id=port['device_id'])
+        return ovn_utils.is_ovn_provider_router(router_obj)
 
     def _is_port_provisioning_required(self, port, host, original_host=None):
         vnic_type = port.get(portbindings.VNIC_TYPE, portbindings.VNIC_NORMAL)
@@ -829,7 +836,8 @@ class OVNMechanismDriver(api.MechanismDriver):
             self._insert_port_provisioning_block(context.plugin_context,
                                                  port['id'])
 
-        if ovn_utils.is_lsp_router_port(port):
+        if (ovn_utils.is_lsp_router_port(port) and
+                self._is_ovn_router_flavor_port(context, port)):
             # handle the case when an existing port is added to a
             # logical router so we need to track the creation of the lrp
             if not ovn_utils.is_lsp_router_port(original_port):
