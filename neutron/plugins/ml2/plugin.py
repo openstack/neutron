@@ -2522,7 +2522,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 return port.id
         return device
 
-    def _get_ports_query(self, context, filters=None, *args, **kwargs):
+    def _get_ports_query(self, context, *args, filters=None, **kwargs):
         filters = filters or {}
         security_groups = filters.pop("security_groups", None)
         limit = kwargs.pop('limit', None)
@@ -2538,8 +2538,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 filters['id'] = [entry['port_id'] for entry in port_bindings]
         fixed_ips = filters.get('fixed_ips', {})
         ip_addresses_s = fixed_ips.get('ip_address_substr')
-        query = super(Ml2Plugin, self)._get_ports_query(context, filters,
-                                                        *args, **kwargs)
+        query = super(Ml2Plugin, self)._get_ports_query(context, *args,
+                                                        filters=filters,
+                                                        **kwargs)
         if ip_addresses_s:
             substr_filter = or_(*[models_v2.Port.fixed_ips.any(
                 models_v2.IPAllocation.ip_address.like('%%%s%%' % ip))

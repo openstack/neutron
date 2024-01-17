@@ -1656,8 +1656,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         port = self._get_port(context, id, lazy_fields=lazy_fields)
         return self._make_port_dict(port, fields)
 
-    def _get_ports_query(self, context, filters=None, lazy_fields=None,
-                         *args, **kwargs):
+    def _get_ports_query(self, context, *args, filters=None, lazy_fields=None,
+                         **kwargs):
         Port = models_v2.Port
         IPAllocation = models_v2.IPAllocation
 
@@ -1713,7 +1713,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     @db_api.retry_if_session_inactive()
     @db_api.CONTEXT_READER
     def get_ports_count(self, context, filters=None):
-        return self._get_ports_query(context, filters).count()
+        return self._get_ports_query(context, filters=filters).count()
 
     def _enforce_device_owner_not_router_intf_or_device_id(self, context,
                                                            device_owner,

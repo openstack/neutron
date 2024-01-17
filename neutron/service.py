@@ -346,9 +346,9 @@ class Service(n_rpc.Service):
     on topic. It also periodically runs tasks on the manager.
     """
 
-    def __init__(self, host, binary, topic, manager, report_interval=None,
-                 periodic_interval=None, periodic_fuzzy_delay=None,
-                 *args, **kwargs):
+    def __init__(self, host, binary, topic, manager, *args,
+                 report_interval=None, periodic_interval=None,
+                 periodic_fuzzy_delay=None, **kwargs):
 
         self.binary = binary
         self.manager_class_name = manager
