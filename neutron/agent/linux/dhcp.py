@@ -1776,7 +1776,7 @@ class DeviceManager(object):
 
     def cleanup_stale_devices(self, network, dhcp_port):
         """Unplug unrelated or stale devices found in the namespace."""
-        LOG.debug("Cleaning stale devices for network %s", network.id)
+        LOG.info("Cleaning stale devices for network %s", network.id)
         skip_dev_name = (self.driver.get_device_name(dhcp_port)
                          if dhcp_port else None)
         ns_ip = ip_lib.IPWrapper(namespace=network.namespace)
@@ -1789,7 +1789,7 @@ class DeviceManager(object):
 
         for dev_name in hw_ports - db_ports:
             if dev_name != skip_dev_name:
-                LOG.debug("Found stale device %s, deleting", dev_name)
+                LOG.warning("Found stale device %s, deleting", dev_name)
                 try:
                     self.unplug(dev_name, network)
                 except Exception:
