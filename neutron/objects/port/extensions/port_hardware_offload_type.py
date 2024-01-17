@@ -34,8 +34,6 @@ class PortHardwareOffloadType(base.NeutronDbObject):
 
     primary_keys = ['port_id']
 
-    new_facade = True
-
     fields = {
         'port_id': common_types.UUIDField(),
         'hardware_offload_type': PortHardwareOffloadTypeEnumField(),
