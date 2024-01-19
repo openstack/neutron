@@ -931,14 +931,15 @@ class IpRouteCommandTestCase(functional_base.BaseSudoTestCase):
     def _assert_route(self, ip_version, table=None, source_prefix=None,
                       cidr=None, scope=None, via=None, metric=None,
                       not_in=False):
+        routes = self.device.route.list_routes(ip_version, table=table)
         if not_in:
-            fn = lambda: cmp not in self.device.route.list_routes(ip_version,
-                                                                  table=table)
-            msg = 'Route found: %s'
+            fn = lambda: cmp not in routes
+            msg = 'Route found: %s\nRoutes present: {routes}'.format(
+                routes=routes)
         else:
-            fn = lambda: cmp in self.device.route.list_routes(ip_version,
-                                                              table=table)
-            msg = 'Route not found: %s'
+            fn = lambda: cmp in routes
+            msg = 'Route not found: %s\nRoutes present: {routes}'.format(
+                routes=routes)
 
         if cidr:
             ip_version = utils.get_ip_version(cidr)
