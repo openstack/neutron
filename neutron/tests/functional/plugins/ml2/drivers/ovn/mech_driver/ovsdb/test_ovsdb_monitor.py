@@ -13,6 +13,7 @@
 #    under the License.
 import datetime
 import functools
+import subprocess
 from unittest import mock
 
 import fixtures as og_fixtures
@@ -26,6 +27,7 @@ from oslo_utils import timeutils
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import event
 from ovsdbapp.backend.ovs_idl import idlutils
+import tenacity
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils as n_utils
@@ -144,6 +146,10 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
                 'port_id': port['id']}})
         return r1_f2
 
+    @tenacity.retry(
+        retry=tenacity.retry_if_exception_type(subprocess.TimeoutExpired),
+        wait=tenacity.wait_exponential(multiplier=0.02, max=1),
+        reraise=True)
     def _check_mac_binding_exists(self, macb_id):
         cmd = ['ovsdb-client', 'transact',
                self.mech_driver.sb_ovn.connection_string]
@@ -156,8 +162,7 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         cmd += ['["OVN_Southbound", {"op": "select", "table": "MAC_Binding", '
                 '"where": [["_uuid", "==", ["uuid", "%s"]]]}]' % macb_id]
 
-        out, _ = processutils.execute(*cmd,
-                                      log_errors=False)
+        out, _ = processutils.execute(*cmd, log_errors=False, timeout=3)
         return str(macb_id) in out
 
     def test_floatingip_mac_bindings(self):
