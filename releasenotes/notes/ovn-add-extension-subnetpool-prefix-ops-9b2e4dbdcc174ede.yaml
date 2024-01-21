@@ -1,0 +1,3 @@
+other:
+  - |
+    Added extension ``subnetpool-prefix-ops`` to the ML2/OVN mechanism driver.

@@ -81,6 +81,7 @@ from neutron_lib.api.definitions import sorting
 from neutron_lib.api.definitions import stateful_security_group
 from neutron_lib.api.definitions import subnet_dns_publish_fixed_ip
 from neutron_lib.api.definitions import subnet_service_types
+from neutron_lib.api.definitions import subnetpool_prefix_ops
 from neutron_lib.api.definitions import trunk
 from neutron_lib.api.definitions import uplink_status_propagation
 from neutron_lib.api.definitions import vlantransparent
@@ -171,6 +172,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     constants.SUBNET_ALLOCATION_EXT_ALIAS,
     'standard-attr-tag',
     'standard-attr-timestamp',
+    subnetpool_prefix_ops.ALIAS,
     subnet_service_types.ALIAS,
     trunk.ALIAS,
     seg_def.ALIAS,
