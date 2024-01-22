@@ -39,6 +39,9 @@
         - openstack-tox-py36:  # from openstack-python3-xena-jobs template
             timeout: 3600
             irrelevant-files:  *irrelevant-files
+        - openstack-tox-py38:  # from openstack-python3-xena-jobs template
+            timeout: 3600
+            irrelevant-files:  *irrelevant-files
 
 - project-template:
     name: neutron-experimental-jobs
