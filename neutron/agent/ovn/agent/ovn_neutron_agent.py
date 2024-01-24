@@ -61,6 +61,10 @@ class OVNNeutronAgent(service.Service):
         self.ext_manager = ext_mgr.OVNAgentExtensionManager(self._conf)
         self.ext_manager.initialize(None, 'ovn', self.ext_manager_api)
 
+    def __getitem__(self, name):
+        """Return the named extension objet from ``self.ext_manager``"""
+        return self.ext_manager[name].obj
+
     @property
     def ovs_idl(self):
         return self.ext_manager_api.ovs_idl

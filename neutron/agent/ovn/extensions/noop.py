@@ -19,6 +19,10 @@ from neutron.agent.ovn.extensions import extension_manager
 class NoopOVNAgentExtension(extension_manager.OVNAgentExtension):
 
     @property
+    def name(self):
+        return 'Noop OVN agent extension'
+
+    @property
     def ovs_idl_events(self):
         return []
 
