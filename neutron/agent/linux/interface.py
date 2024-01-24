@@ -355,7 +355,7 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
         namespace_obj = ip_wrapper.ensure_namespace(namespace)
         for i in range(9):
             try:
-                namespace_obj.add_device_to_namespace(device, is_ovs_port=True)
+                namespace_obj.add_device_to_namespace(device)
                 break
             except ip_lib.NetworkInterfaceNotFound:
                 # NOTE(slaweq): if the exception was NetworkInterfaceNotFound
