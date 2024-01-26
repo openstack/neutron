@@ -353,19 +353,19 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                     'external_ids': {'subnet_id': 'n1-s1'}}
         return {'cidr': '', 'options': '', 'external_ids': {}}
 
-    def _fake_get_gw_info(self, ctx, router):
+    def _fake_get_gw_info(self, ctx, port):
         return {
-            'r1': [ovn_client.GW_INFO(router_ip='90.0.0.2',
-                                      gateway_ip='90.0.0.1',
-                                      network_id='', subnet_id='ext-subnet',
-                                      ip_version=4,
-                                      ip_prefix=const.IPv4_ANY)],
-            'r2': [ovn_client.GW_INFO(router_ip='100.0.0.2',
-                                      gateway_ip='100.0.0.1',
-                                      network_id='', subnet_id='ext-subnet',
-                                      ip_version=4,
-                                      ip_prefix=const.IPv4_ANY)]
-        }.get(router['id'], [])
+            'p1r1': [ovn_client.GW_INFO(router_ip='90.0.0.2',
+                                        gateway_ip='90.0.0.1',
+                                        network_id='', subnet_id='ext-subnet',
+                                        ip_version=4,
+                                        ip_prefix=const.IPv4_ANY)],
+            'p1r2': [ovn_client.GW_INFO(router_ip='100.0.0.2',
+                                        gateway_ip='100.0.0.1',
+                                        network_id='', subnet_id='ext-subnet',
+                                        ip_version=4,
+                                        ip_prefix=const.IPv4_ANY)]
+        }.get(port['id'], [])
 
     def _fake_get_v4_network_of_all_router_ports(self, ctx, router_id):
         return {'r1': ['172.16.0.0/24', '172.16.2.0/24'],
@@ -532,6 +532,11 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         ovn_api.delete_dhcp_options = mock.Mock()
         ovn_nb_synchronizer._ovn_client.get_port_dns_records = mock.Mock()
         ovn_nb_synchronizer._ovn_client.get_port_dns_records.return_value = {}
+        ovn_nb_synchronizer._ovn_client._get_router_gw_ports.side_effect = (
+            [self.get_sync_router_ports[0]],
+            [self.get_sync_router_ports[1]],
+            [self.get_sync_router_ports[2]],
+        )
 
     def _test_ovn_nb_sync_helper(self, ovn_nb_synchronizer,
                                  networks, ports,

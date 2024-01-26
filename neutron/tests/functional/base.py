@@ -139,7 +139,7 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
     OVN_SCHEMA_FILES = ['ovn-nb.ovsschema', 'ovn-sb.ovsschema']
 
     _mechanism_drivers = ['logger', 'ovn']
-    _extension_drivers = ['port_security']
+    _extension_drivers = ['port_security', 'external-gateway-multihoming']
     _counter = 0
     l3_plugin = 'neutron.services.ovn_l3.plugin.OVNL3RouterPlugin'
 

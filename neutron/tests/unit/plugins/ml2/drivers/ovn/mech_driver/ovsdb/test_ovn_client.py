@@ -21,6 +21,7 @@ from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.plugins.ml2 import db as ml2_db
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.tests import base
+from neutron.tests.unit import fake_resources as fakes
 from neutron.tests.unit.services.logapi.drivers.ovn \
     import test_driver as test_log_driver
 from neutron_lib.api.definitions import l3
@@ -55,24 +56,28 @@ class TestOVNClient(TestOVNClientBase):
         plugin = mock.MagicMock()
         self.get_plugin.return_value = plugin
         subnet = {
-            'subnet_id': 'fake-subnet-id',
+            'id': 'fake-subnet-id',
             'gateway_ip': '10.42.0.1',
             'ip_version': const.IP_VERSION_4,
         }
         plugin.get_subnet.return_value = subnet
+        plugin.get_subnets_by_network.return_value = [subnet]
         router = {
             'id': 'fake-router-id',
-            l3.EXTERNAL_GW_INFO: {
-                'external_fixed_ips': [{
-                        'subnet_id': subnet.get('subnet_id'),
-                        'ip_address': '10.42.0.42'}],
-            },
             'gw_port_id': 'fake-port-id',
         }
         networks = mock.MagicMock()
         txn = mock.MagicMock()
+        self.ovn_client._get_router_gw_ports = mock.MagicMock()
+        gw_port = fakes.FakePort().create_one_port(
+            attrs={
+                'fixed_ips': [{
+                    'subnet_id': subnet.get('id'),
+                    'ip_address': '10.42.0.42'}]
+            })
+        self.ovn_client._get_router_gw_ports.return_value = [gw_port]
         self.assertEqual(
-            self.get_plugin().get_port(),
+            [self.get_plugin().get_port()],
             self.ovn_client._add_router_ext_gw(mock.Mock(), router, networks,
                                                txn))
         self.nb_idl.add_static_route.assert_called_once_with(
@@ -81,30 +86,39 @@ class TestOVNClient(TestOVNClientBase):
             nexthop='10.42.0.1',
             external_ids={
                 'neutron:is_ext_gw': 'true',
-                'neutron:subnet_id': subnet['subnet_id']})
+                'neutron:subnet_id': subnet['id']})
 
     def test__add_router_ext_gw_no_default_route(self):
         plugin = mock.MagicMock()
         self.get_plugin.return_value = plugin
         subnet = {
-            'subnet_id': 'fake-subnet-id',
+            'id': 'fake-subnet-id',
             'gateway_ip': None,
             'ip_version': const.IP_VERSION_4
         }
         plugin.get_subnet.return_value = subnet
+        plugin.get_subnets_by_network.return_value = [subnet]
         router = {
             'id': 'fake-router-id',
             l3.EXTERNAL_GW_INFO: {
                 'external_fixed_ips': [{
-                        'subnet_id': subnet.get('subnet_id'),
+                        'subnet_id': subnet.get('id'),
                         'ip_address': '10.42.0.42'}],
             },
             'gw_port_id': 'fake-port-id',
         }
         networks = mock.MagicMock()
         txn = mock.MagicMock()
+        self.ovn_client._get_router_gw_ports = mock.MagicMock()
+        gw_port = fakes.FakePort().create_one_port(
+            attrs={
+                'fixed_ips': [{
+                    'subnet_id': subnet.get('id'),
+                    'ip_address': '10.42.0.42'}]
+            })
+        self.ovn_client._get_router_gw_ports.return_value = [gw_port]
         self.assertEqual(
-            self.get_plugin().get_port(),
+            [self.get_plugin().get_port()],
             self.ovn_client._add_router_ext_gw(mock.Mock(), router, networks,
                                                txn))
         self.nb_idl.add_static_route.assert_not_called()

@@ -19,7 +19,6 @@ from neutron_lib.api.definitions import dns as dns_apidef
 from neutron_lib.api.definitions import fip_pf_description as ext_pf_def
 from neutron_lib.api.definitions import fip_pf_port_range as ranges_pf_def
 from neutron_lib.api.definitions import floating_ip_port_forwarding as pf_def
-from neutron_lib.api.definitions import l3
 from neutron_lib.api.definitions import port_security as ps
 from neutron_lib import constants
 from neutron_lib import context
@@ -1192,10 +1191,10 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                                           db_route['nexthop']
                                           for db_route in db_router['routes']]
             db_nats[db_router['id']] = []
-            if db_router.get(l3.EXTERNAL_GW_INFO):
-                gateways = self.l3_plugin._ovn_client._get_gw_info(
-                    self.context, db_router)
-                for gw_info in gateways:
+            for gw_port in self.l3_plugin._ovn_client._get_router_gw_ports(
+                    self.context, db_router['id']):
+                for gw_info in self.l3_plugin._ovn_client._get_gw_info(
+                        self.context, gw_port):
                     # Add gateway default route and snats
                     if gw_info.gateway_ip:
                         db_routes[db_router['id']].append(gw_info.ip_prefix +
