@@ -13,11 +13,13 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import time
 from unittest import mock
 
 from neutron_lib import constants
 from neutron_lib.plugins.ml2 import ovs_constants as ovs_const
 from oslo_utils import excutils
+from oslo_utils import uuidutils
 from pyroute2.netlink import exceptions as pyroute2_exc
 
 from neutron.agent.common import ovs_lib
@@ -387,6 +389,10 @@ class TestABCDriver(TestBase):
 
 class TestOVSInterfaceDriver(TestBase):
 
+    def setUp(self):
+        super().setUp()
+        self.mock_sleep = mock.patch.object(time, 'sleep').start()
+
     def test_get_device_name(self):
         br = interface.OVSInterfaceDriver(self.conf)
         device_name = br.get_device_name(FakePort())
@@ -525,13 +531,14 @@ class TestOVSInterfaceDriver(TestBase):
         self.ip.ensure_namespace.return_value = namespace_obj
         namespace_obj.add_device_to_namespace.side_effect = (
             ip_lib.NetworkInterfaceNotFound)
-        device = mock.MagicMock()
+        namespace_name = uuidutils.generate_uuid()
+        device = mock.MagicMock(namespace=namespace_name)
         self.assertRaises(
             ip_lib.NetworkInterfaceNotFound,
             ovs._add_device_to_namespace,
             self.ip, device, "test-ns")
         self.assertEqual(10, namespace_obj.add_device_to_namespace.call_count)
-        self.assertIsNone(device.namespace)
+        self.assertEqual(namespace_name, device.namespace)
 
 
 class TestOVSInterfaceDriverWithVeth(TestOVSInterfaceDriver):
