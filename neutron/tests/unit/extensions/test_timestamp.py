@@ -241,16 +241,20 @@ class TimeStampChangedsinceTestCase(test_db_base_plugin_v2.
 class TimeStampDBMixinTestCase(TimeStampChangedsinceTestCase):
     """Test timestamp_db.TimeStamp_db_mixin()"""
 
-    def _save_network(self, network_id):
+    def _save_network(self, network_id, timenow):
         ctx = context.get_admin_context()
+        # getting admin context will have called timeutils, reset now
+        timenow.reset_mock()
         obj = net_obj.Network(ctx, id=network_id)
         obj.create()
         return obj
 
     # Use tag as non StandardAttribute object
-    def _save_tag(self, tags, standard_attr_id):
+    def _save_tag(self, tags, standard_attr_id, timenow):
         ctx = context.get_admin_context()
         ret = []
+        # getting admin context will have called timeutils, reset now
+        timenow.reset_mock()
         for tag in tags:
             _tag_obj = tag_obj.Tag(ctx, standard_attr_id=standard_attr_id,
                                   tag=tag)
@@ -265,25 +269,15 @@ class TimeStampDBMixinTestCase(TimeStampChangedsinceTestCase):
         def save_network():
             if self._network:
                 self._network.delete()
-            timenow.reset_mock()
-            self._network = self._save_network(network_id)
-            # NOTE(ralonsoh): ``timeutils.utcnow()`` is called from the tested
-            # method ``neutron.service.timestamp.timestamp_db._add_timestamp``
-            # and ``neutron_lib.context.ContextBase.__init__``.
-            # TODO(ralonsoh): change to "return 2 == timenow.call_count" when
-            # neutron-lib > 3.10.0
-            return timenow.call_count in (2, 1)
+            self._network = self._save_network(network_id, timenow)
+            return 1 == timenow.call_count
 
         def save_tag():
             for tag in self._tags:
                 tag.delete()
-            timenow.reset_mock()
-            self._tags = self._save_tag(tags, self._network.standard_attr_id)
-            # NOTE(ralonsoh): ``timeutils.utcnow()`` is called from
-            # ``neutron_lib.context.ContextBase.__init__``.
-            # TODO(ralonsoh): change to "return 1 == timenow.call_count" when
-            # neutron-lib > 3.10.0
-            return timenow.call_count in (1, 0)
+            self._tags = self._save_tag(tags, self._network.standard_attr_id,
+                                        timenow)
+            return 0 == timenow.call_count
 
         network_id = uuidutils.generate_uuid()
         tags = ["red", "blue"]
