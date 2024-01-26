@@ -1257,6 +1257,8 @@ class OVNClient(object):
 
     def _add_router_ext_gw(self, context, router, networks, txn):
         lrouter_name = utils.ovn_name(router['id'])
+        router_default_route_ecmp_enabled = router.get(
+            'enable_default_route_ecmp', False)
 
         # 1. Add the external gateway router port.
         admin_context = context.elevated()
@@ -1267,6 +1269,11 @@ class OVNClient(object):
             added_ports.append(port)
 
             # 2. Add default route with nexthop as gateway ip
+            if (gw_port['id'] != router.get('gw_port_id') and
+                    not router_default_route_ecmp_enabled):
+                # The `enable_default_route_ecmp` option is not enabled for
+                # the router, only adding routes for the first gw_port.
+                continue
             for gw_info in self._get_gw_info(admin_context, gw_port):
                 if gw_info.gateway_ip is None:
                     continue

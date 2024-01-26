@@ -835,7 +835,13 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         grps.return_value = self.fake_router_ports
         fake_old_ext_gw_port = self.fake_ext_gw_port.copy()
         fake_old_ext_gw_port['id'] = 'old-gw-port-id'
-        self._get_router_gw_ports.return_value = [fake_old_ext_gw_port]
+        self._get_router_gw_ports.return_value = None
+        self._get_router_gw_ports.side_effect = [
+            [fake_old_ext_gw_port],
+            [fake_old_ext_gw_port],
+            [self.fake_ext_gw_port],
+            [self.fake_ext_gw_port],
+        ]
 
         payload = self._create_payload_for_router_update(
             self.get_router.return_value, self.fake_router_with_ext_gw)
