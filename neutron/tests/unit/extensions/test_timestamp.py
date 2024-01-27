@@ -267,14 +267,23 @@ class TimeStampDBMixinTestCase(TimeStampChangedsinceTestCase):
                 self._network.delete()
             timenow.reset_mock()
             self._network = self._save_network(network_id)
-            return 1 == timenow.call_count
+            # NOTE(ralonsoh): ``timeutils.utcnow()`` is called from the tested
+            # method ``neutron.service.timestamp.timestamp_db._add_timestamp``
+            # and ``neutron_lib.context.ContextBase.__init__``.
+            # TODO(ralonsoh): change to "return 2 == timenow.call_count" when
+            # neutron-lib > 3.10.0
+            return timenow.call_count in (2, 1)
 
         def save_tag():
             for tag in self._tags:
                 tag.delete()
             timenow.reset_mock()
             self._tags = self._save_tag(tags, self._network.standard_attr_id)
-            return 0 == timenow.call_count
+            # NOTE(ralonsoh): ``timeutils.utcnow()`` is called from
+            # ``neutron_lib.context.ContextBase.__init__``.
+            # TODO(ralonsoh): change to "return 1 == timenow.call_count" when
+            # neutron-lib > 3.10.0
+            return timenow.call_count in (1, 0)
 
         network_id = uuidutils.generate_uuid()
         tags = ["red", "blue"]
