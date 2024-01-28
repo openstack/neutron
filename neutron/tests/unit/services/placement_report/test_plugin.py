@@ -349,6 +349,6 @@ class PlacementReporterAgentsTestCases(test_plugin.Ml2PluginV2TestCase):
     def test_mechanism_driver_by_agent_type_not_found(self):
         self.agents = plugin.PlacementReporterAgents(ml2_plugin=self.plugin)
         self.assertRaises(
-            Exception,  # noqa
+            KeyError,
             self.agents.mechanism_driver_by_agent_type,
             'agent_not_belonging_to_any_mechanism_driver')

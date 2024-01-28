@@ -289,17 +289,17 @@ class TestL3Agent(base.BaseFullStackTestCase):
         exception_requests = self._simulate_concurrent_requests_process(
             funcs, args)
 
-        if not all(type(e) == exceptions.BadRequest
+        if not all(isinstance(e, exceptions.BadRequest)
                    for e in exception_requests):
             self.fail('Unexpected exception adding interfaces to router from '
                       'different subnets overlapping')
 
-        if not len(exception_requests) >= (subnets - 1):
+        if len(exception_requests) < subnets - 1:
             self.fail('If we have tried to associate %s subnets overlapping '
                       'cidr to the router, we should have received at least '
                       '%s or %s rejected requests, but we have only received '
-                      '%s', (str(subnets), str(subnets - 1), str(subnets),
-                             str(len(exception_requests))))
+                      '%s' % (str(subnets), str(subnets - 1), str(subnets),
+                              str(len(exception_requests))))
 
 
 class TestLegacyL3Agent(TestL3Agent):

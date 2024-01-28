@@ -68,7 +68,7 @@ class StatusTest(base.BaseLoggingTestCase):
             self.assertEqual(
                 expected_stderr,
                 stderr.replace('\n', ''))
-            self.assertTrue(expected_result_title in stdout)
+            self.assertIn(expected_result_title, stdout)
         except exceptions.ProcessExecutionError as error:
             self.fail("neutron-status upgrade check command failed to run. "
                       "Error: %s" % error)

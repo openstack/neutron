@@ -807,7 +807,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
             for k in (ovn_const.OVN_GW_PORT_EXT_ID_KEY,
                       ovn_const.OVN_GW_NETWORK_EXT_ID_KEY):
                 if k in external_ids:
-                    del(external_ids[k])
+                    del external_ids[k]
 
             cmds.append(self._nb_idl.db_set(
                 'Logical_Router', lr.uuid, ('external_ids', external_ids)))

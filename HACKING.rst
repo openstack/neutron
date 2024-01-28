@@ -28,7 +28,6 @@ Below you can find a list of checks specific to this repository.
 - [N344] Python 3: Do not use filter(lambda obj: test(obj), data). Replace it
   with [obj for obj in data if test(obj)].
 - [N346] Use neutron_lib.db.api.sqla_listen rather than sqlalchemy
-- [N347] Test code must not import mock library
 - [N348] Test code must not import six library
 
 .. note::

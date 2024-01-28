@@ -37,8 +37,6 @@ tests_imports_dot = re.compile(r"\bimport[\s]+neutron.tests\b")
 tests_imports_from1 = re.compile(r"\bfrom[\s]+neutron.tests\b")
 tests_imports_from2 = re.compile(r"\bfrom[\s]+neutron[\s]+import[\s]+tests\b")
 
-import_mock = re.compile(r"\bimport[\s]+mock\b")
-import_from_mock = re.compile(r"\bfrom[\s]+mock[\s]+import\b")
 import_six = re.compile(r"\bimport[\s]+six\b")
 import_from_six = re.compile(r"\bfrom[\s]+six[\s]+import\b")
 
@@ -207,7 +205,7 @@ def check_no_imports_from_tests(logical_line, filename, noqa):
 
     for regex in tests_imports_dot, tests_imports_from1, tests_imports_from2:
         if re.match(regex, logical_line):
-            yield(0, msg)
+            yield (0, msg)
 
 
 @core.flake8ext
@@ -218,7 +216,7 @@ def check_python3_no_filter(logical_line):
            "filter(lambda obj: test(obj), data) on python3.")
 
     if filter_match.match(logical_line):
-        yield(0, msg)
+        yield (0, msg)
 
 
 # TODO(boden): rehome this check to neutron-lib
@@ -240,23 +238,6 @@ def check_no_sqlalchemy_event_import(logical_line, filename, noqa):
 
 
 @core.flake8ext
-def check_no_import_mock(logical_line, filename, noqa):
-    """N347 - Test code must not import mock library
-    """
-    msg = ("N347: Test code must not import mock library")
-
-    if noqa:
-        return
-
-    if 'neutron/tests/' not in filename:
-        return
-
-    for regex in import_mock, import_from_mock:
-        if re.match(regex, logical_line):
-            yield(0, msg)
-
-
-@core.flake8ext
 def check_no_import_six(logical_line, filename, noqa):
     """N348 - Test code must not import six library
     """
@@ -267,7 +248,7 @@ def check_no_import_six(logical_line, filename, noqa):
 
     for regex in import_six, import_from_six:
         if re.match(regex, logical_line):
-            yield(0, msg)
+            yield (0, msg)
 
 
 @core.flake8ext
@@ -281,4 +262,4 @@ def check_no_import_packaging(logical_line, filename, noqa):
 
     for regex in import_packaging, import_version_from_packaging:
         if re.match(regex, logical_line):
-            yield(0, msg)
+            yield (0, msg)

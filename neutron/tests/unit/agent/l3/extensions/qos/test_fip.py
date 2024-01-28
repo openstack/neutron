@@ -412,16 +412,16 @@ class RouterFipRateLimitMapsTestCase(base.BaseTestCase):
     def _check_policy_map_fip(self, router_id, fip_res):
         if router_id is None:
             self.assertIsNone(self.policy_map.get_router_id_by_fip(fip_res))
-            self.assertTrue(fip_res not in self.policy_map._fips_2_router)
+            self.assertNotIn(fip_res, self.policy_map._fips_2_router)
             for router_fips in self.policy_map._router_2_fips.values():
-                self.assertTrue(fip_res not in router_fips)
+                self.assertNotIn(fip_res, router_fips)
         else:
             self.assertEqual(router_id,
                              self.policy_map.get_router_id_by_fip(fip_res))
             self.assertEqual(router_id,
                              self.policy_map._fips_2_router[fip_res])
-            self.assertTrue(fip_res in
-                            self.policy_map._router_2_fips[router_id])
+            self.assertIn(fip_res,
+                          self.policy_map._router_2_fips[router_id])
 
     def test_get_router_id_by_fip(self):
         router_id_1, router_id_2 = _uuid(), _uuid()

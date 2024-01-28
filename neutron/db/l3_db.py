@@ -1517,7 +1517,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         dns_data = None
         with plugin_utils.delete_port_on_error(
                 self._core_plugin, context.elevated(),
-                external_port['id']),\
+                external_port['id']), \
                 db_api.CONTEXT_WRITER.using(context):
             # Ensure IPv4 addresses are allocated on external port
             external_ipv4_ips = self._port_ipv4_fixed_ips(external_port)

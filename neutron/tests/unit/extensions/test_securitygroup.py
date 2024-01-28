@@ -838,7 +838,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 self.fmt, res.get_response(self.ext_api))
 
             secgroup = group['security_group']
-            self.assertFalse('security_group_rules' in secgroup)
+            self.assertNotIn('security_group_rules', secgroup)
             self.assertEqual(remote_group_id, group['security_group']['id'])
 
     # This test case checks that admins from a different tenant can add rules

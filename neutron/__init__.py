@@ -16,12 +16,12 @@
 import builtins
 import gettext
 
-from debtcollector import removals
+from neutron._i18n import _ as n_under
 
 
 gettext.install('neutron')
 
 
-builtins.__dict__['_'] = removals.remove(
-    message='Builtin _ translation function is deprecated in OpenStack; '
-            'use the function from _i18n module for your project.')(_)  # noqa
+# gettext will install its own translation function, override it to be
+# the one from neutron
+builtins.__dict__['_'] = n_under

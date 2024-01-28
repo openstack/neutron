@@ -2193,7 +2193,7 @@ class OVNClient(object):
                 options[option] = value
             else:
                 try:
-                    del(options[option])
+                    del options[option]
                 except KeyError:
                     # Option not present, job done
                     pass

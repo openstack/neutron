@@ -171,7 +171,7 @@ class PlacementReportPlugin(service_base.ServicePluginBase):
 
             for deferred in deferred_batch:
                 try:
-                    LOG.debug('placement client: {}'.format(deferred))
+                    LOG.debug('placement client: %s', deferred)
                     deferred.execute()
                 except Exception as e:
                     errors = True
