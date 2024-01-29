@@ -1203,7 +1203,13 @@ class OVNClient(object):
 
         for fixed_ip in port_fixed_ips:
             subnet_id = fixed_ip['subnet_id']
-            subnet = self._plugin.get_subnet(context, subnet_id)
+            # NOTE(ralonsoh): it is needed to use the "admin" context here to
+            # retrieve the subnet. The subnet object is not handling correctly
+            # the RBAC filtering because is not filtering by
+            # "access_as_external", as network object is doing in
+            # ``_network_filter_hook``. See LP#2051831.
+            # TODO(ralonsoh): once LP#2051831 is fixed, remove "elevated()".
+            subnet = self._plugin.get_subnet(context.elevated(), subnet_id)
             cidr = netaddr.IPNetwork(subnet['cidr'])
             networks.add("%s/%s" % (fixed_ip['ip_address'],
                                     str(cidr.prefixlen)))
