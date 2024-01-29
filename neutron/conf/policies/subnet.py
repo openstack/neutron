@@ -52,6 +52,12 @@ ACTION_DELETE_TAGS = [
 
 
 rules = [
+    policy.RuleDefault(
+        name='external_network',
+        check_str='field:subnets:router:external=True',
+        description='Definition of a subnet that belongs to an external '
+                    'network'
+    ),
     policy.DocumentedRuleDefault(
         name='create_subnet',
         check_str=base.ADMIN_OR_NET_OWNER_MEMBER,
@@ -97,6 +103,7 @@ rules = [
         check_str=neutron_policy.policy_or(
             base.PROJECT_READER,
             'rule:shared',
+            'rule:external_network',
             base.ADMIN_OR_NET_OWNER_MEMBER,
         ),
         scope_types=['project'],
@@ -106,6 +113,7 @@ rules = [
             name='get_subnet',
             check_str=neutron_policy.policy_or(
                 'rule:shared',
+                'rule:external_network',
                 neutron_policy.RULE_ADMIN_OR_OWNER,
             ),
             deprecated_reason=DEPRECATED_REASON,
@@ -128,6 +136,7 @@ rules = [
         check_str=neutron_policy.policy_or(
             base.PROJECT_READER,
             'rule:shared',
+            'rule:external_network',
             base.ADMIN_OR_NET_OWNER_MEMBER,
         ),
         scope_types=['project'],

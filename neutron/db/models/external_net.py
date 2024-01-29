@@ -35,4 +35,9 @@ class ExternalNetwork(model_base.BASEV2):
         models_v2.Network, load_on_pending=True,
         backref=orm.backref("external", lazy='joined',
                             uselist=False, cascade='delete'))
+    subnet = orm.relationship(
+        models_v2.Subnet, load_on_pending=True,
+        backref=orm.backref('external', lazy='joined', uselist=False),
+        primaryjoin='foreign(Subnet.network_id) == ExternalNetwork.network_id',
+        viewonly=True)
     revises_on_change = ('network', )

@@ -85,6 +85,7 @@ from neutron_lib.api.definitions import segment as seg_def
 from neutron_lib.api.definitions import sorting
 from neutron_lib.api.definitions import stateful_security_group
 from neutron_lib.api.definitions import subnet_dns_publish_fixed_ip
+from neutron_lib.api.definitions import subnet_external_network
 from neutron_lib.api.definitions import subnet_service_types
 from neutron_lib.api.definitions import subnetpool_prefix_ops
 from neutron_lib.api.definitions import trunk
@@ -183,6 +184,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     'standard-attr-tag',
     'standard-attr-timestamp',
     subnetpool_prefix_ops.ALIAS,
+    subnet_external_network.ALIAS,
     subnet_service_types.ALIAS,
     trunk.ALIAS,
     seg_def.ALIAS,

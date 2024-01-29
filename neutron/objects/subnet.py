@@ -11,6 +11,7 @@
 #    under the License.
 
 import netaddr
+from neutron_lib.api.definitions import external_net
 from neutron_lib.api import validators
 from neutron_lib import constants as const
 from neutron_lib.db import api as db_api
@@ -208,7 +209,8 @@ class SubnetServiceType(base.NeutronDbObject):
 class Subnet(base.NeutronDbObject):
     # Version 1.0: Initial version
     # Version 1.1: Add dns_publish_fixed_ip field
-    VERSION = '1.1'
+    # Version 1.2: Add external field
+    VERSION = '1.2'
 
     db_model = models_v2.Subnet
 
@@ -234,12 +236,13 @@ class Subnet(base.NeutronDbObject):
         'host_routes': obj_fields.ListOfObjectsField('Route', nullable=True),
         'ipv6_ra_mode': common_types.IPV6ModeEnumField(nullable=True),
         'ipv6_address_mode': common_types.IPV6ModeEnumField(nullable=True),
-        'service_types': obj_fields.ListOfStringsField(nullable=True)
+        'service_types': obj_fields.ListOfStringsField(nullable=True),
+        'external': obj_fields.BooleanField(nullable=True),
     }
 
     synthetic_fields = ['allocation_pools', 'dns_nameservers',
                         'dns_publish_fixed_ip', 'host_routes',
-                        'service_types', 'shared']
+                        'service_types', 'shared', 'external']
 
     foreign_keys = {'Network': {'network_id': 'id'}}
 
@@ -260,6 +263,8 @@ class Subnet(base.NeutronDbObject):
             return self._load_shared()
         if attrname == 'service_types':
             return self._load_service_types()
+        if attrname == 'external':
+            return self._load_external()
         super(Subnet, self).obj_load_attr(attrname)
 
     def _load_dns_publish_fixed_ip(self, db_obj=None):
@@ -306,11 +311,37 @@ class Subnet(base.NeutronDbObject):
                               service_type in service_types]
         self.obj_reset_changes(['service_types'])
 
+    def _load_external(self, db_obj=None):
+        if db_obj:
+            external_network = bool(db_obj.get('external'))
+        else:
+            external_network = network.ExternalNetwork.get_objects(
+                self.obj_context, network_id=self.network_id)
+
+        setattr(self, 'external', external_network)
+        self.obj_reset_changes(['external'])
+
+    @classmethod
+    def get_objects(cls, context, _pager=None, validate_filters=True,
+                    fields=None, return_db_obj=False, **kwargs):
+        external = kwargs.pop(external_net.EXTERNAL, None)
+        if isinstance(external, list):
+            external = external[0]
+        subnets = super().get_objects(
+            context, _pager=_pager, validate_filters=validate_filters,
+            fields=fields, return_db_obj=return_db_obj, **kwargs)
+
+        if external is not None:
+            return [subnet for subnet in subnets if
+                    subnet.external == external]
+        return subnets
+
     def from_db_object(self, db_obj):
         super(Subnet, self).from_db_object(db_obj)
         self._load_dns_publish_fixed_ip(db_obj)
         self._load_shared(db_obj)
         self._load_service_types(db_obj)
+        self._load_external(db_obj)
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
@@ -520,6 +551,8 @@ class Subnet(base.NeutronDbObject):
         _target_version = versionutils.convert_version_to_tuple(target_version)
         if _target_version < (1, 1):  # version 1.1 adds "dns_publish_fixed_ip"
             primitive.pop('dns_publish_fixed_ip', None)
+        if _target_version < (1, 2):  # version 1.2 adds "external"
+            primitive.pop('external', None)
 
     @classmethod
     def get_subnet_segment_ids(cls, context, network_id,

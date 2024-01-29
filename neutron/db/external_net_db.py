@@ -15,6 +15,7 @@
 
 from neutron_lib.api.definitions import external_net as extnet_apidef
 from neutron_lib.api.definitions import network as net_def
+from neutron_lib.api.definitions import subnet as subnet_def
 from neutron_lib.api import validators
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
@@ -78,6 +79,12 @@ class External_net_db_mixin(object):
             query_hook=None,
             filter_hook=_network_filter_hook,
             result_filters=_network_result_filter_hook)
+        model_query.register_hook(
+            models_v2.Subnet,
+            "external_subnet",
+            query_hook=None,
+            filter_hook=_network_filter_hook,
+            result_filters=None)
         return super(External_net_db_mixin, cls).__new__(cls, *args, **kwargs)
 
     def _network_is_external(self, context, net_id):
@@ -90,6 +97,13 @@ class External_net_db_mixin(object):
         # Comparing with None for converting uuid into bool
         network_res[extnet_apidef.EXTERNAL] = network_db.external is not None
         return network_res
+
+    @staticmethod
+    @resource_extend.extends([subnet_def.COLLECTION_NAME])
+    def _extend_subnet_dict_l3(subnet_res, subnet_db):
+        # Comparing with None for converting uuid into bool
+        subnet_res[extnet_apidef.EXTERNAL] = bool(subnet_db.external)
+        return subnet_res
 
     def _process_l3_create(self, context, net_data, req_data):
         external = req_data.get(extnet_apidef.EXTERNAL)
