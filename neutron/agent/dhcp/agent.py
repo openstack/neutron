@@ -25,7 +25,6 @@ from neutron_lib.agent import topics
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib import exceptions
-from neutron_lib import rpc as n_rpc
 from oslo_concurrency import lockutils
 from oslo_config import cfg
 from oslo_log import helpers as log_helpers
@@ -38,6 +37,7 @@ from oslo_utils import netutils
 from oslo_utils import timeutils
 
 from neutron._i18n import _
+from neutron.agent.common import base_agent_rpc
 from neutron.agent.common import resource_processing_queue as queue
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import external_process
@@ -844,7 +844,7 @@ class DhcpAgent(manager.Manager):
             del self._metadata_routers[network.id]
 
 
-class DhcpPluginApi(object):
+class DhcpPluginApi(base_agent_rpc.BasePluginApi):
     """Agent side of the dhcp rpc API.
 
     This class implements the client side of an rpc interface.  The server side
@@ -864,11 +864,10 @@ class DhcpPluginApi(object):
 
     def __init__(self, topic, host):
         self.host = host
-        target = oslo_messaging.Target(
+        super().__init__(
             topic=topic,
             namespace=constants.RPC_NAMESPACE_DHCP_PLUGIN,
             version='1.0')
-        self.client = n_rpc.get_client(target)
 
     @property
     def context(self):
@@ -923,6 +922,11 @@ class DhcpPluginApi(object):
         port = cctxt.call(self.context, 'get_dhcp_port', port_id=port_id)
         if port:
             return dhcp.DictModel(port)
+
+    def get_ports(self, port_filters):
+        ports = super().get_ports(self.context, port_filters)
+        if ports:
+            return [dhcp.DictModel(port) for port in ports]
 
     def dhcp_ready_on_ports(self, port_ids):
         """Notify the server that DHCP is configured for the port."""
