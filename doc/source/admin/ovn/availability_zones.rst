@@ -231,7 +231,8 @@ Each entry on this table represents an instance of the gateway port
 the ``chassis_name`` column indicates which Chassis that port instance
 is scheduled onto. If we co-relate each entry and their ``chassis_name``
 we will see that this port has been only scheduled to Chassis matching
-with the router's availability zones.
+with the router's availability zones and with priority to distribute
+over each zones.
 
 Network Availability Zones
 --------------------------

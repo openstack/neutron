@@ -35,7 +35,7 @@ class OVNGatewayScheduler(object, metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def select(self, nb_idl, gateway_name, candidates=None,
+    def select(self, nb_idl, sb_idl, gateway_name, candidates=None,
                existing_chassis=None):
         """Schedule the gateway port of a router to an OVN chassis.
 
@@ -58,7 +58,7 @@ class OVNGatewayScheduler(object, metaclass=abc.ABCMeta):
                 chassis_list.remove(chassis_name)
         return chassis_list
 
-    def _schedule_gateway(self, nb_idl, gateway_name, candidates,
+    def _schedule_gateway(self, nb_idl, sb_idl, gateway_name, candidates,
                           existing_chassis):
         existing_chassis = existing_chassis or []
         candidates = candidates or []
@@ -82,7 +82,7 @@ class OVNGatewayScheduler(object, metaclass=abc.ABCMeta):
         # column or gateway_chassis column in the OVN_Northbound is done
         # by the caller
         chassis = self._select_gateway_chassis(
-            nb_idl, candidates, 1, chassis_count
+            nb_idl, sb_idl, candidates, 1, chassis_count
         )[:chassis_count]
         # priority of existing chassis is higher than candidates
         chassis = existing_chassis + chassis
@@ -91,8 +91,44 @@ class OVNGatewayScheduler(object, metaclass=abc.ABCMeta):
                   gateway_name, chassis)
         return chassis
 
+    def _reorder_by_az(self, nb_idl, sb_idl, candidates):
+        chassis_selected = []
+        other_chassis = []
+        azs = set()
+
+        # Check if candidates list valid
+        if not candidates or (
+                candidates == [ovn_const.OVN_GATEWAY_INVALID_CHASSIS]):
+            return candidates
+
+        chassis_with_azs = sb_idl.get_chassis_and_azs()
+
+        # Get list of all AZs
+        for chassis in candidates:
+            try:
+                azs.update(chassis_with_azs[chassis])
+            except KeyError:
+                continue
+
+        for chassis in candidates:
+            # Verify if chassis is in an AZ not already used
+            # and delete AZs of chassis from list
+            try:
+                chassis_azs = chassis_with_azs[chassis]
+                if azs.intersection(chassis_azs):
+                    azs = azs.difference(chassis_azs)
+                    chassis_selected += [chassis]
+                else:
+                    other_chassis += [chassis]
+            except KeyError:
+                other_chassis += [chassis]
+
+        chassis_selected += other_chassis
+
+        return chassis_selected
+
     @abc.abstractmethod
-    def _select_gateway_chassis(self, nb_idl, candidates,
+    def _select_gateway_chassis(self, nb_idl, sb_idl, candidates,
                                 priority_min, priority_max):
         """Choose a chassis from candidates based on a specific policy.
 
@@ -105,27 +141,27 @@ class OVNGatewayScheduler(object, metaclass=abc.ABCMeta):
 class OVNGatewayChanceScheduler(OVNGatewayScheduler):
     """Randomly select an chassis for a gateway port of a router"""
 
-    def select(self, nb_idl, gateway_name, candidates=None,
+    def select(self, nb_idl, sb_idl, gateway_name, candidates=None,
                existing_chassis=None):
-        return self._schedule_gateway(nb_idl, gateway_name,
-                                      candidates, existing_chassis)
+        return self._schedule_gateway(nb_idl, sb_idl, gateway_name,
+              candidates, existing_chassis)
 
-    def _select_gateway_chassis(self, nb_idl, candidates,
+    def _select_gateway_chassis(self, nb_idl, sb_idl, candidates,
                                 priority_min, priority_max):
         candidates = copy.deepcopy(candidates)
         random.shuffle(candidates)
-        return candidates
+        return self._reorder_by_az(nb_idl, sb_idl, candidates)
 
 
 class OVNGatewayLeastLoadedScheduler(OVNGatewayScheduler):
     """Select the least loaded chassis for a gateway port of a router"""
 
-    def select(self, nb_idl, gateway_name, candidates=None,
+    def select(self, nb_idl, sb_idl, gateway_name, candidates=None,
                existing_chassis=None):
-        return self._schedule_gateway(nb_idl, gateway_name,
+        return self._schedule_gateway(nb_idl, sb_idl, gateway_name,
                                       candidates, existing_chassis)
 
-    def _select_gateway_chassis(self, nb_idl, candidates,
+    def _select_gateway_chassis(self, nb_idl, sb_idl, candidates,
                                 priority_min, priority_max):
         """Returns a lit of chassis from candidates ordered by priority
         (highest first). Each chassis in every priority will be selected, as it
@@ -149,7 +185,7 @@ class OVNGatewayLeastLoadedScheduler(OVNGatewayScheduler):
                 [chassis for chassis, load in chassis_load.items()
                  if load == leastload])
             selected_chassis.append(chassis)
-        return selected_chassis
+        return self._reorder_by_az(nb_idl, sb_idl, selected_chassis)
 
 
 OVN_SCHEDULER_STR_TO_CLASS = {

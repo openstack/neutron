@@ -1687,7 +1687,8 @@ class OVNClient(object):
                 physnet, availability_zone_hints=common_utils.get_az_hints(
                     router))
             selected_chassis = self._ovn_scheduler.select(
-                self._nb_idl, lrouter_port_name, candidates=candidates)
+                self._nb_idl, self._sb_idl, lrouter_port_name,
+                candidates=candidates)
             if selected_chassis:
                 columns['gateway_chassis'] = selected_chassis
 

@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Fixes L3 OVN schedulers (chance, leastloaded) to distribute Logical
+    Router Port (LRP) gateways among all eligible AZs (if any).
+    For more information, see bug `2030741 <https://launchpad.net/bugs/2030741>`_
