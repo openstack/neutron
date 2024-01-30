@@ -1094,6 +1094,12 @@ class FakeV6NetworkStatefulDHCPSameSubnetFixedIps(object):
         self.namespace = 'qdhcp-ns'
 
 
+class FakeSegment(object):
+    def __init__(self):
+        self.id = 'iiiiiiii-iiii-iiii-iiii-iiiiiiiiiiii'
+        self.segmentation_id = 1212
+
+
 class LocalChild(dhcp.DhcpLocalProcess):
     PORTS = {4: [4], 6: [6]}
 
@@ -1292,6 +1298,26 @@ class TestDhcpLocalProcess(TestBase):
                 self.rmtree.assert_called_once()
 
             self._assert_disabled(lp)
+
+        delete_ns.assert_called_with('qdhcp-ns')
+
+    def test_disable_with_segment(self):
+        attrs_to_mock = {'active': mock.DEFAULT}
+
+        self.external_process().uuid = "1212/net-id"
+
+        with mock.patch.multiple(LocalChild, **attrs_to_mock) as mocks:
+            mocks['active'].__get__ = mock.Mock(return_value=False)
+            lp = LocalChild(
+                self.conf, FakeDualNetwork(), segment=FakeSegment())
+            with mock.patch('neutron.agent.linux.ip_lib.'
+                            'delete_network_namespace') as delete_ns:
+                lp.disable()
+                self.rmtree.assert_called_once()
+
+            lp.process_monitor.unregister.assert_called_once_with(
+                '1212/net-id', 'dnsmasq')
+            self.assertTrue(self.external_process().disable.called)
 
         delete_ns.assert_called_with('qdhcp-ns')
 
