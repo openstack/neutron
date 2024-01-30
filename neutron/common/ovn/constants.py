@@ -72,6 +72,8 @@ OVN_NAME_PREFIX = 'neutron-'
 OVN_HA_CH_GROUP_EXTPORT_PREFIX = 'neutron-extport-'
 OVN_METADATA_PREFIX = 'ovnmeta-'
 
+OVN_DATAPATH_TYPE = 'datapath-type'
+
 # TODO(froyo): Move this to neutron-lib as soon as possible, and when a new
 # release is created and pointed to in the requirements remove this code
 OVN_LB_HM_PORT_DISTRIBUTED = 'ovn-lb-hm:distributed'
@@ -84,6 +86,7 @@ OVN_AGENT_METADATA_ID_KEY = 'neutron:ovn-metadata-id'
 OVN_AGENT_NEUTRON_SB_CFG_KEY = 'neutron:ovn-neutron-agent-sb-cfg'
 OVN_AGENT_NEUTRON_DESC_KEY = 'neutron:description-neutron-agent'
 OVN_AGENT_NEUTRON_ID_KEY = 'neutron:ovn-neutron-agent-id'
+OVN_AGENT_OVN_BRIDGE = 'neutron:ovn-bridge'
 OVN_CONTROLLER_AGENT = 'OVN Controller agent'
 OVN_CONTROLLER_GW_AGENT = 'OVN Controller Gateway agent'
 OVN_METADATA_AGENT = 'OVN Metadata agent'
