@@ -21,6 +21,7 @@ from neutron_lib.utils import net as net_utils
 from oslo_utils import versionutils
 from oslo_versionedobjects import fields as obj_fields
 from sqlalchemy import func
+from sqlalchemy import or_
 from sqlalchemy import sql
 
 from neutron.db.models import dvr as dvr_models
@@ -30,6 +31,7 @@ from neutron.db.models import l3agent as rb_model
 from neutron.db import models_v2
 from neutron.objects import base
 from neutron.objects.qos import binding as qos_binding
+from neutron.plugins.ml2 import models as ml2_models
 
 
 @base.NeutronObjectRegistry.register
@@ -390,7 +392,7 @@ class FloatingIP(base.NeutronDbObject):
 
     @classmethod
     @db_api.CONTEXT_READER
-    def get_scoped_floating_ips(cls, context, router_ids):
+    def get_scoped_floating_ips(cls, context, router_ids, host=None):
         query = context.session.query(l3.FloatingIP,
                                       models_v2.SubnetPool.address_scope_id)
         query = query.join(
@@ -404,6 +406,19 @@ class FloatingIP(base.NeutronDbObject):
         query = query.outerjoin(
             models_v2.SubnetPool,
             models_v2.Subnet.subnetpool_id == models_v2.SubnetPool.id)
+
+        # If a host value is provided, filter output to a specific host
+        if host is not None:
+            query = query.outerjoin(
+                ml2_models.PortBinding,
+                models_v2.Port.id == ml2_models.PortBinding.port_id)
+            # Also filter for ports with migrating_to as they may be relevant
+            # to this host but might not yet have the 'host' column updated
+            # if the migration is in a pre-live migration state
+            query = query.filter(or_(
+                ml2_models.PortBinding.host == host,
+                ml2_models.PortBinding.profile.like('%migrating_to%'),
+            ))
 
         # Filter out on router_ids
         query = query.filter(l3.FloatingIP.router_id.in_(router_ids))
