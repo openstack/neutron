@@ -67,6 +67,8 @@ class OVNNeutronAgent(service.Service):
 
     @property
     def ovs_idl(self):
+        if not self.ext_manager_api.ovs_idl:
+            self.ext_manager_api.ovs_idl = self._load_ovs_idl()
         return self.ext_manager_api.ovs_idl
 
     @property
@@ -85,15 +87,15 @@ class OVNNeutronAgent(service.Service):
     def sb_post_fork_event(self):
         return self.ext_manager_api.sb_post_fork_event
 
-    def _load_config(self, ovs_idl):
-        self.chassis = ovsdb.get_own_chassis_name(ovs_idl)
+    def load_config(self):
+        self.chassis = ovsdb.get_own_chassis_name(self.ovs_idl)
         try:
             self.chassis_id = uuid.UUID(self.chassis)
         except ValueError:
             # OVS system-id could be a non UUID formatted string.
             self.chassis_id = uuid.uuid5(OVN_MONITOR_UUID_NAMESPACE,
                                          self.chassis)
-        self.ovn_bridge = ovsdb.get_ovn_bridge(ovs_idl)
+        self.ovn_bridge = ovsdb.get_ovn_bridge(self.ovs_idl)
         LOG.info("Loaded chassis name %s (UUID: %s) and ovn bridge %s.",
                  self.chassis, self.chassis_id, self.ovn_bridge)
 
@@ -134,10 +136,9 @@ class OVNNeutronAgent(service.Service):
 
     def start(self):
         self.ext_manager_api.ovs_idl = self._load_ovs_idl()
-        # Before executing "_load_config", it is needed to create the OVS IDL.
-        self._load_config(self.ext_manager_api.ovs_idl)
+        self.load_config()
         # Before executing "_load_sb_idl", is is needed to execute
-        # "_load_config" to populate self.chassis.
+        # "load_config" to populate self.chassis.
         self.ext_manager_api.sb_idl = self._load_sb_idl()
         self.ext_manager_api.nb_idl = self._load_nb_idl()
         LOG.info('Starting OVN Neutron Agent')
