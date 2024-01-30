@@ -357,8 +357,8 @@ class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
 
     def disable(self, retain_port=False, block=False, **kwargs):
         """Disable DHCP for this network by killing the local process."""
-        self.process_monitor.unregister(self.network.id, DNSMASQ_SERVICE_NAME)
         pm = self._get_process_manager()
+        self.process_monitor.unregister(pm.uuid, DNSMASQ_SERVICE_NAME)
         pm.disable(sig=str(int(signal.SIGTERM)))
         if block:
             try:
@@ -602,7 +602,7 @@ class Dnsmasq(DhcpLocalProcess):
 
         pm.enable(reload_cfg=reload_with_HUP, ensure_active=True)
 
-        self.process_monitor.register(uuid=self.get_process_uuid(),
+        self.process_monitor.register(uuid=pm.uuid,
                                       service_name=DNSMASQ_SERVICE_NAME,
                                       monitored_process=pm)
 
