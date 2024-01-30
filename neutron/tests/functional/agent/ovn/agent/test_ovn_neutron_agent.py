@@ -39,9 +39,10 @@ class TestOVNNeutronAgent(base.TestOVNFunctionalBase):
             agent_ovsdb, 'get_own_chassis_name').start()
         self.ovn_agent = self._start_ovn_neutron_agent()
 
-    def _check_loaded_extensions(self, ovn_agent):
+    def _check_loaded_and_started_extensions(self, ovn_agent):
         loaded_ext = ovn_agent[TEST_EXTENSION]
         self.assertEqual('Fake OVN agent extension', loaded_ext.name)
+        self.assertTrue(loaded_ext._is_ext_started)
 
     def _start_ovn_neutron_agent(self):
         conf = self.useFixture(fixture_config.Config()).conf
@@ -59,7 +60,7 @@ class TestOVNNeutronAgent(base.TestOVNFunctionalBase):
         agt.test_ovn_sb_idl = []
         agt.test_ovn_nb_idl = []
         agt.start()
-        self._check_loaded_extensions(agt)
+        self._check_loaded_and_started_extensions(agt)
 
         self.add_fake_chassis(self.FAKE_CHASSIS_HOST, name=self.chassis_name)
 

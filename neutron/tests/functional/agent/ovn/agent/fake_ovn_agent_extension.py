@@ -77,3 +77,6 @@ class FakeOVNAgentExtension(ext_mgr.OVNAgentExtension):
     @property
     def sb_idl_events(self):
         return [OVNSBChassisEvent]
+
+    def start(self):
+        self._is_ext_started = True
