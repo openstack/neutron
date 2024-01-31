@@ -92,3 +92,7 @@ METADATA_V6_CIDR = constants.METADATA_V6_IP + '/128'
 
 # TODO(haleyb): move this constant to neutron_lib.constants
 IPV4_MIN_MTU = 68
+
+
+# TODO(ralonsoh): move this constant to neutron_lib.plugins.ml2.ovs_constants
+DEFAULT_BR_INT = 'br-int'
