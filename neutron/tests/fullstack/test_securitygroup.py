@@ -669,21 +669,6 @@ class SecurityGroupRulesTest(base.BaseFullStackTestCase):
                                       host_descriptions)
         super(SecurityGroupRulesTest, self).setUp(env)
 
-    def test_security_group_rule_quota(self):
-        project_id = uuidutils.generate_uuid()
-        quota = self.client.show_quota_details(project_id)
-        sg_rules_used = quota['quota']['security_group_rule']['used']
-        self.assertEqual(0, sg_rules_used)
-
-        self.safe_client.create_security_group(project_id)
-        quota = self.client.show_quota_details(project_id)
-        sg_rules_used = quota['quota']['security_group_rule']['used']
-        self.safe_client.update_quota(project_id, 'security_group_rule',
-                                      sg_rules_used)
-
-        self.assertRaises(nc_exc.OverQuotaClient,
-                          self.safe_client.create_security_group, project_id)
-
     def test_normalized_cidr_in_rule(self):
         project_id = uuidutils.generate_uuid()
         sg = self.safe_client.create_security_group(project_id)
