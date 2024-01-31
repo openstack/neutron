@@ -296,7 +296,7 @@ class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
         """Returns the file name for a given kind of config file."""
         return os.path.join(self.network_conf_dir, kind)
 
-    def get_process_uuid(self):
+    def _get_process_uuid(self):
         if self.segment:
             # NOTE(sahid): Keep the order to match directory path. This is used
             # by external_process.ProcessManager to check whether the process
@@ -349,7 +349,7 @@ class DhcpLocalProcess(DhcpBase, metaclass=abc.ABCMeta):
     def _get_process_manager(self, cmd_callback=None):
         return external_process.ProcessManager(
             conf=self.conf,
-            uuid=self.get_process_uuid(),
+            uuid=self._get_process_uuid(),
             namespace=self.network.namespace,
             service=DNSMASQ_SERVICE_NAME,
             default_cmd_callback=cmd_callback,

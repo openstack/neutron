@@ -1222,6 +1222,19 @@ class TestDhcpLocalProcess(TestBase):
             self.assertEqual(lp.called, ['spawn'])
             self.assertTrue(self.mock_mgr.return_value.setup.called)
 
+    def test_get_process_uuid(self):
+        net = FakeV4Network()
+
+        lp = LocalChild(self.conf, net)
+        self.assertEqual(
+            "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            lp._get_process_uuid())
+
+        lp.segment = FakeSegment()
+        self.assertEqual(
+            "1212/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            lp._get_process_uuid())
+
     @mock.patch.object(fileutils, 'ensure_tree')
     def test_enable(self, ensure_dir):
         attrs_to_mock = dict(
