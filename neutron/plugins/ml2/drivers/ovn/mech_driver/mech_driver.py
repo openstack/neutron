@@ -244,7 +244,8 @@ class OVNMechanismDriver(api.MechanismDriver):
                            events.BEFORE_SPAWN)
         registry.subscribe(self.post_fork_initialize,
                            resources.PROCESS,
-                           events.AFTER_INIT)
+                           events.AFTER_INIT,
+                           cancellable=True)
         registry.subscribe(self._add_segment_host_mapping_for_segment,
                            resources.SEGMENT,
                            events.AFTER_CREATE)
