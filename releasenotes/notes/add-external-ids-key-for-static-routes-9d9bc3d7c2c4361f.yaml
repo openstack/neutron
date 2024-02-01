@@ -1,0 +1,12 @@
+---
+features:
+  - |
+    The OVN ML2 mechanism driver for static routes will now include the key
+    ``neutron:is_static_route`` in the external_ids register for external
+    gateway router ports. This is required for the OVN DB sync tool to
+    distinguish the Neutron created Static Routes from those added externally
+    in the OVN database. Previously created static route rules will be updated
+    only once during the maintenance task to include the
+    ``neutron:is_static_route`` key in the external_ids register. In case all
+    static route entries are already configured using this key, no maintenance
+    action will be performed.

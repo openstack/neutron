@@ -1304,7 +1304,8 @@ class OVNClient(object):
                     continue
                 columns = {'external_ids': {
                     ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
-                    ovn_const.OVN_SUBNET_EXT_ID_KEY: gw_info.subnet_id}}
+                    ovn_const.OVN_SUBNET_EXT_ID_KEY: gw_info.subnet_id,
+                    ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'}}
                 if router_default_route_bfd_enabled:
                     columns.update({
                         'output_port': utils.ovn_lrouter_port_name(
@@ -1380,10 +1381,12 @@ class OVNClient(object):
         lrouter_name = utils.ovn_name(router_id)
         commands = []
         for route in add:
+            columns = {'external_ids': {
+                ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'}}
             commands.append(
                 self._nb_idl.add_static_route(
                     lrouter_name, ip_prefix=route['destination'],
-                    nexthop=route['nexthop']))
+                    nexthop=route['nexthop'], **columns))
         routes_to_delete = [
             (r['destination'], r['nexthop'])
             for r in remove

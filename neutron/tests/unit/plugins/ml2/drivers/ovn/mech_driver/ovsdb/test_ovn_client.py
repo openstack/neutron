@@ -88,7 +88,8 @@ class TestOVNClient(TestOVNClientBase):
             maintain_bfd=False,
             external_ids={
                 'neutron:is_ext_gw': 'true',
-                'neutron:subnet_id': subnet['id']})
+                'neutron:subnet_id': subnet['id'],
+                constants.OVN_LRSR_EXT_ID_KEY: 'true'})
 
     def test__add_router_ext_gw_default_route_ecmp(self):
         plugin = mock.MagicMock()
@@ -140,7 +141,8 @@ class TestOVNClient(TestOVNClientBase):
                       maintain_bfd=False,
                       external_ids={
                          'neutron:is_ext_gw': 'true',
-                         'neutron:subnet_id': subnet1['id']},
+                         'neutron:subnet_id': subnet1['id'],
+                         constants.OVN_LRSR_EXT_ID_KEY: 'true'},
                       ),
             mock.call('neutron-' + router['id'],
                       ip_prefix='0.0.0.0/0',
@@ -148,7 +150,8 @@ class TestOVNClient(TestOVNClientBase):
                       maintain_bfd=False,
                       external_ids={
                          'neutron:is_ext_gw': 'true',
-                         'neutron:subnet_id': subnet2['id']},
+                         'neutron:subnet_id': subnet2['id'],
+                         constants.OVN_LRSR_EXT_ID_KEY: 'true'},
                       ),
         ])
 

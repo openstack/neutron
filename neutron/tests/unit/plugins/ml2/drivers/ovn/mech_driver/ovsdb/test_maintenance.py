@@ -1228,3 +1228,46 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
 
         # Assert there was no transactions because the value was already set
         self.fake_ovn_client._nb_idl.db_set.assert_not_called()
+
+    def test_update_static_routes_with_external_ids(self):
+        _nb_idl = self.fake_ovn_client._nb_idl
+
+        sroute_a = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'ip_prefix': '30.0.0.0/24', 'nexthop': '20.0.2.5',
+                   'external_ids': {}})
+        sroute_b = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'ip_prefix': '30.1.0.0/24', 'nexthop': '20.0.2.6',
+                   'external_ids': {}})
+
+        self.fake_external_fixed_ips = {
+            'network_id': 'ext-network-id',
+            'external_fixed_ips': [{'ip_address': '20.0.2.1',
+                                    'subnet_id': 'ext-subnet-id'}]}
+        lrouter = {
+            'id': 'lr-test',
+            'routes': [{'nexthop': '20.0.2.5',
+                        'destination': '30.0.0.0/24'},
+                       {'nexthop': '20.0.2.6',
+                        'destination': '30.1.0.0/24'}],
+            'name': 'lr-test',
+            'admin_state_up': True,
+            'external_gateway_info': self.fake_external_fixed_ips
+        }
+        self.fake_ovn_client._l3_plugin.get_router.return_value = lrouter
+
+        expected = [{'name': 'lr-test',
+                     'static_routes': [sroute_a, sroute_b]}]
+        _nb_idl.get_all_logical_routers_static_routes.return_value = expected
+
+        # Call the maintenance task and check that the value has been
+        # updated in the external_ids
+        self.assertRaises(periodics.NeverAgain,
+            self.periodic.update_router_static_routes)
+
+        # Check static routes calls to verify if the maintenance task work
+        # as expected
+        external_ids = {constants.OVN_LRSR_EXT_ID_KEY: 'true'}
+        _nb_idl.set_static_route.assert_has_calls([
+            mock.call(sroute_a, external_ids=external_ids),
+            mock.call(sroute_b, external_ids=external_ids),
+        ])
