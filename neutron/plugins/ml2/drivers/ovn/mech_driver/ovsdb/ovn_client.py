@@ -1524,7 +1524,10 @@ class OVNClient(object):
             ovn_const.OVN_SUBNET_EXT_IDS_KEY:
                 ' '.join(utils.get_port_subnet_ids(port)),
             ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY:
-                utils.ovn_name(port['network_id'])}
+                utils.ovn_name(port['network_id']),
+            ovn_const.OVN_ROUTER_IS_EXT_GW:
+                str(const.DEVICE_OWNER_ROUTER_GW == port.get('device_owner')),
+        }
 
         router_id = port.get('device_id')
         if router_id:
