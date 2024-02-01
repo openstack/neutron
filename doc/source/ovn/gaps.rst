@@ -78,6 +78,17 @@ at [1]_.
   It is not supported by the ``ovn-router`` service plugin nor by the
   ``neutron-ovn-agent``. This is being reported and tracked in [12]_.
 
+* Floating IP Port Forwarding in provider networks and with distributed routing
+
+  Currently, when provider network types like ``vlan`` or ``flat`` are plugged
+  to a router as internal networks while the ``enable_distributed_floating_ip``
+  configuration option is enabled, Floating IP port forwardings
+  which are using such router will not work properly.
+  Due to an incompatible setting of the router to make traffic in the vlan/flat
+  networks to be distributed but port forwardings are always centralized in
+  ML2/OVN backend.
+  This is being reported in [13]_.
+
 References
 ----------
 
@@ -93,3 +104,4 @@ References
 .. [10] https://bugzilla.redhat.com/show_bug.cgi?id=2238494
 .. [11] https://bugzilla.redhat.com/show_bug.cgi?id=2238969
 .. [12] https://bugs.launchpad.net/neutron/+bug/2048773
+.. [13] https://bugs.launchpad.net/neutron/+bug/2028846
