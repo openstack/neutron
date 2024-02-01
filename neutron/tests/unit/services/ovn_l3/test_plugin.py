@@ -100,7 +100,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 ovn_const.OVN_SUBNET_EXT_IDS_KEY: 'subnet-id',
                 ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
                 ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY:
-                utils.ovn_name(self.fake_network['id'])}}
+                utils.ovn_name(self.fake_network['id']),
+                ovn_const.OVN_ROUTER_IS_EXT_GW: 'False'}}
         self.fake_router_ports = [self.fake_router_port]
         self.fake_subnet = {'id': 'subnet-id',
                             'ip_version': 4,
@@ -160,7 +161,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 ovn_const.OVN_SUBNET_EXT_IDS_KEY: 'ext-subnet-id',
                 ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
                 ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY:
-                utils.ovn_name('ext-network-id')},
+                utils.ovn_name('ext-network-id'),
+                ovn_const.OVN_ROUTER_IS_EXT_GW: 'True'},
             'gateway_chassis': ['hv1'],
             'options': {}}
         self.fake_floating_ip_attrs = {'floating_ip_address': '192.168.0.10',
@@ -450,7 +452,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 ovn_const.OVN_SUBNET_EXT_IDS_KEY: 'subnet-id',
                 ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
                 ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY:
-                utils.ovn_name(self.fake_network['id'])})
+                utils.ovn_name(self.fake_network['id']),
+                ovn_const.OVN_ROUTER_IS_EXT_GW: 'False'})
 
     def test_remove_router_interface_router_not_found(self):
         router_id = 'router-id'
@@ -1951,6 +1954,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         fake_router_port_assert['options'] = {
             ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION:
             str(prov_net['mtu'])}
+        fake_router_port_assert['external_ids'][
+            ovn_const.OVN_ROUTER_IS_EXT_GW] = 'True'
 
         self.l3_inst._nb_ovn.add_lrouter_port.assert_called_once_with(
             **fake_router_port_assert)
@@ -1998,6 +2003,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         fake_router_port_assert = self.fake_router_port_assert
         fake_router_port_assert['gateway_chassis'] = mock.ANY
         fake_router_port_assert['options'] = {}
+        fake_router_port_assert['external_ids'][
+            ovn_const.OVN_ROUTER_IS_EXT_GW] = 'True'
 
         self.l3_inst._nb_ovn.add_lrouter_port.assert_called_once_with(
             **fake_router_port_assert)
