@@ -1,0 +1,12 @@
+---
+features:
+  - |
+    Neutron now sets different process titles for RPC workers ('rpc worker') and
+    RPC reports worker ('rpc reports worker') so that these two types of workers
+    can be distinguished.
+
+upgrade:
+  - |
+    The process title for RPC reports worker has been changed from
+    'rpc worker' to 'rpc reports worker'. Please update any external scripts or
+    services which look up the process title accordingly.
