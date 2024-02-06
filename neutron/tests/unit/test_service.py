@@ -92,8 +92,8 @@ class TestRunWsgiApp(base.BaseTestCase):
             workers=expected_passed_value)
         self.assertEqual(expected_call, start_call)
 
-    def test_api_workers_zero(self):
-        self._test_api_workers(0, 0)
+    def test_api_workers_one(self):
+        self._test_api_workers(1, 1)
 
     def test_api_workers_default(self):
         self._test_api_workers(None, self.worker_count)
@@ -102,7 +102,7 @@ class TestRunWsgiApp(base.BaseTestCase):
         self._test_api_workers(42, 42)
 
     def test_start_all_workers(self):
-        cfg.CONF.set_override('api_workers', 0)
+        cfg.CONF.set_override('api_workers', 1)
         mock.patch.object(service, '_get_rpc_workers').start()
         mock.patch.object(service, '_get_plugins_workers').start()
         mock.patch.object(service, '_start_workers').start()
