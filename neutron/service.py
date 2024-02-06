@@ -175,7 +175,7 @@ def _get_rpc_workers(plugin=None):
     if workers is None:
         # By default, half as many rpc workers as api workers
         workers = int(_get_api_workers() / 2)
-    workers = max(workers, 1)
+        workers = max(workers, 1)
 
     # If workers > 0 then start_rpc_listeners would be called in a
     # subprocess and we cannot simply catch the NotImplementedError.  It is
@@ -189,9 +189,15 @@ def _get_rpc_workers(plugin=None):
                       workers)
         raise NotImplementedError()
 
-    # passing service plugins only, because core plugin is among them
-    rpc_workers = [RpcWorker(service_plugins,
-                             worker_process_count=workers)]
+    rpc_workers = []
+
+    if workers > 0:
+        # passing service plugins only, because core plugin is among them
+        rpc_workers.append(
+            RpcWorker(service_plugins, worker_process_count=workers))
+    else:
+        LOG.warning('No rpc workers are launched. Make sure no agent is used '
+                    'in this deployment.')
 
     if (cfg.CONF.rpc_state_report_workers > 0 and
             plugin.rpc_state_report_workers_supported()):

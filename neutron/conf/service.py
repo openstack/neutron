@@ -31,7 +31,8 @@ SERVICE_OPTS = [
     cfg.IntOpt('rpc_workers',
                help=_('Number of RPC worker processes for service. '
                       'If not specified, the default is equal to half the '
-                      'number of API workers.')),
+                      'number of API workers. If set to 0, no RPC worker '
+                      'is launched.')),
     cfg.IntOpt('rpc_state_report_workers',
                default=1,
                help=_('Number of RPC worker processes dedicated to the state '
