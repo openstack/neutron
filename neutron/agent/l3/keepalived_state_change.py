@@ -28,6 +28,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils as agent_utils
 from neutron.common import config
 from neutron.common import utils as common_utils
+from neutron.conf.agent import common as agent_config
 from neutron.conf.agent.l3 import keepalived
 from neutron import privileged
 
@@ -177,6 +178,7 @@ def configure(conf):
 def main():
     keepalived.register_cli_l3_agent_keepalived_opts()
     keepalived.register_l3_agent_keepalived_opts()
+    agent_config.register_root_helper()
     configure(cfg.CONF)
     MonitorDaemon(cfg.CONF.pid_file,
                   cfg.CONF.router_id,
