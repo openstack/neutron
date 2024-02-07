@@ -2643,24 +2643,27 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                     return ch
         ovn_client._sb_idl.lookup = fake_lookup
 
-        # The target physnet and availability zones
-        physnet = 'public'
-        az_hints = ['az0', 'az2']
-
+        # List of chassis and chassis:physnet mappings.
+        physnet_name = 'public'
         cms = [ch0.name, ch1.name, ch2.name, ch3.name, ch4.name, ch5.name]
-        ch_physnet = {ch0.name: [physnet], ch1.name: [physnet],
-                      ch2.name: [physnet], ch3.name: [physnet],
+        ch_physnet = {ch0.name: [physnet_name], ch1.name: [physnet_name],
+                      ch2.name: [physnet_name], ch3.name: [physnet_name],
                       ch4.name: ['another-physnet'],
                       ch5.name: ['yet-another-physnet']}
 
-        candidates = ovn_client.get_candidates_for_scheduling(
-            physnet, cms=cms, chassis_physnets=ch_physnet,
-            availability_zone_hints=az_hints)
-
-        # Only chassis ch0 and ch2 should match the availability zones
-        # hints and physnet we passed to get_candidates_for_scheduling()
-        expected_candidates = [ch0.name, ch2.name]
-        self.assertEqual(sorted(expected_candidates), sorted(candidates))
+        # The target physnets, the availability zones and the expected
+        # candidates.
+        results = [{'physnet': physnet_name, 'az_hints': ['az0', 'az2'],
+                    'expected_candidates': [ch0.name, ch2.name]},
+                   {'physnet': None, 'az_hints': ['az0', 'az2'],
+                    'expected_candidates': []},
+                   ]
+        for result in results:
+            candidates = ovn_client.get_candidates_for_scheduling(
+                result['physnet'], cms=cms, chassis_physnets=ch_physnet,
+                availability_zone_hints=result['az_hints'])
+            self.assertEqual(sorted(result['expected_candidates']),
+                             sorted(candidates))
 
     def test__get_info_for_ha_chassis_group_as_extport(self):
         net_attrs = {az_def.AZ_HINTS: ['az0', 'az1', 'az2']}
