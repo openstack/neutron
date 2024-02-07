@@ -141,8 +141,9 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
         ctx = context.get_admin_context()
         tenant_id = 'an_admin'
         ctx.tenant_id = tenant_id
-        res, data = self._post_network_with_provider_attrs(ctx)
         instance = self.plugin.return_value
+        instance.create_network.return_value = {}
+        res, data = self._post_network_with_provider_attrs(ctx)
         exp_input = {'network': data}
         exp_input['network'].update({'admin_state_up': True,
                                      'tenant_id': tenant_id,
@@ -163,8 +164,9 @@ class ProvidernetExtensionTestCase(testlib_api.WebTestCase):
     def test_network_update_with_provider_attrs(self):
         ctx = context.get_admin_context()
         ctx.tenant_id = 'an_admin'
-        res, data, net_id = self._put_network_with_provider_attrs(ctx)
         instance = self.plugin.return_value
+        instance.update_network.return_value = {}
+        res, data, net_id = self._put_network_with_provider_attrs(ctx)
         exp_input = {'network': data}
         instance.update_network.assert_called_with(mock.ANY,
                                                    net_id,
