@@ -32,12 +32,14 @@ from neutron.tests.functional.resources.ovsdb import events
 
 
 class TestRouter(base.TestOVNFunctionalBase):
-    def setUp(self):
-        super(TestRouter, self).setUp()
+    def setUp(self, **kwargs):
+        super().setUp(**kwargs)
         self.chassis1 = self.add_fake_chassis(
-            'ovs-host1', physical_nets=['physnet1', 'physnet3'])
+            'ovs-host1', physical_nets=['physnet1', 'physnet3'],
+            enable_chassis_as_gw=True, azs=[])
         self.chassis2 = self.add_fake_chassis(
-            'ovs-host2', physical_nets=['physnet2', 'physnet3'])
+            'ovs-host2', physical_nets=['physnet2', 'physnet3'],
+            enable_chassis_as_gw=True, azs=[])
         self.cr_lrp_pb_event = events.WaitForCrLrpPortBindingEvent()
         self.sb_api.idl.notify_handler.watch_event(self.cr_lrp_pb_event)
 
@@ -95,12 +97,14 @@ class TestRouter(base.TestOVNFunctionalBase):
                 self.assertIn(rc, expected)
 
     def _check_gateway_chassis_candidates(self, candidates,
-                                          router_az_hints=None):
+                                          router_az_hints=None,
+                                          physnet='physnet1'):
         # In this test, fake_select() is called once from _create_router()
         # and later from schedule_unhosted_gateways()
         ovn_client = self.l3_plugin._ovn_client
+        net_type = 'vlan' if physnet else 'geneve'
         ext1 = self._create_ext_network(
-            'ext1', 'vlan', 'physnet1', 1, "10.0.0.1", "10.0.0.0/24")
+            'ext1', net_type, physnet, 1, "10.0.0.1", "10.0.0.0/24")
         # mock select function and check if it is called with expected
         # candidates.
 
@@ -131,12 +135,11 @@ class TestRouter(base.TestOVNFunctionalBase):
 
     def test_gateway_chassis_with_cms_and_bridge_mappings(self):
         # Both chassis1 and chassis3 are having proper bridge mappings,
-        # but only chassis3 is having enable-chassis-as-gw.
-        # Test if chassis3 is selected as candidate or not.
+        # but only chassis1 is having enable-chassis-as-gw.
+        # Test if chassis1 is selected as candidate or not.
         self.chassis3 = self.add_fake_chassis(
-            'ovs-host3', physical_nets=['physnet1'],
-            other_config={'ovn-cms-options': 'enable-chassis-as-gw'})
-        self._check_gateway_chassis_candidates([self.chassis3])
+            'ovs-host3', physical_nets=['physnet1'], azs=[])
+        self._check_gateway_chassis_candidates([self.chassis1])
 
     def test_gateway_chassis_with_cms_and_no_bridge_mappings(self):
         # chassis1 is having proper bridge mappings.
@@ -170,12 +173,10 @@ class TestRouter(base.TestOVNFunctionalBase):
         # Test if chassis3 is selected as candidate or not.
         self.chassis3 = self.add_fake_chassis(
             'ovs-host3', physical_nets=['physnet1'],
-            other_config={'ovn-cms-options': 'enable-chassis-as-gw'},
-            azs=['ovn'])
+            azs=['ovn'], enable_chassis_as_gw=True)
         self.chassis4 = self.add_fake_chassis(
             'ovs-host4', physical_nets=['physnet1'],
-            other_config={'ovn-cms-options': 'enable-chassis-as-gw'},
-            azs=['ovn2'])
+            azs=['ovn2'], enable_chassis_as_gw=True)
         self._check_gateway_chassis_candidates([self.chassis3],
                                                router_az_hints=['ovn'])
 
@@ -185,11 +186,9 @@ class TestRouter(base.TestOVNFunctionalBase):
         # AvailabilityZoneNotFound. after create will delete if.
         # add chassis4 is having azs [ovn2], not match routers az_hints [ovn]
         self.chassis3 = self.add_fake_chassis(
-            'ovs-host3', physical_nets=['physnet1'],
-            other_config={'ovn-cms-options': 'enable-chassis-as-gw'})
+            'ovs-host3', physical_nets=['physnet1'], enable_chassis_as_gw=True)
         self.chassis4 = self.add_fake_chassis(
-            'ovs-host4', physical_nets=['physnet1'],
-            other_config={'ovn-cms-options': 'enable-chassis-as-gw'},
+            'ovs-host4', physical_nets=['physnet1'], enable_chassis_as_gw=True,
             azs=['ovn2'])
         ovn_client = self.l3_plugin._ovn_client
         ext1 = self._create_ext_network(
@@ -216,6 +215,11 @@ class TestRouter(base.TestOVNFunctionalBase):
         # but none of the chassis having enable-chassis-as-gw.
         # Test if chassis1 is selected as candidate or not.
         self._check_gateway_chassis_candidates([self.chassis1])
+
+    def test_gateway_chassis_no_physnet_tunnelled_network(self):
+        # The GW network is tunnelled, no physnet defined --> no possible
+        # candidates.
+        self._check_gateway_chassis_candidates([], physnet=None)
 
     def _l3_ha_supported(self):
         # If the Gateway_Chassis table exists in SB database, then it
