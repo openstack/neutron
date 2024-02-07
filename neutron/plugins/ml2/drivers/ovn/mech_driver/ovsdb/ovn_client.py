@@ -1473,11 +1473,13 @@ class OVNClient(object):
         """Return chassis for scheduling gateway router.
 
         Criteria for selecting chassis as candidates
-        1) chassis from cms with proper bridge mappings
-        2) if no chassis is available from 1) then,
-           select chassis with proper bridge mappings
-        3) Filter the available chassis accordingly to the routers
+        1) Chassis from cms with proper bridge mappings only (that means these
+           gateway chassis with the requested physical network).
+        2) Filter the available chassis accordingly to the routers
            availability zone hints (if present)
+
+        If the logical router port belongs to a tunnelled network, there won't
+        be any candidate.
         """
         # TODO(lucasagomes): Simplify the logic here, the CMS option has
         # been introduced long ago and by now all gateway chassis should
@@ -1486,15 +1488,13 @@ class OVNClient(object):
         cms = cms or self._sb_idl.get_gateway_chassis_from_cms_options()
         chassis_physnets = (chassis_physnets or
                             self._sb_idl.get_chassis_and_physnets())
-        cms_bmaps = []
-        bmaps = []
+        candidates = set()
         for chassis, physnets in chassis_physnets.items():
-            if physnet and physnet in physnets:
-                if chassis in cms:
-                    cms_bmaps.append(chassis)
-                else:
-                    bmaps.append(chassis)
-        candidates = cms_bmaps or bmaps or cms
+            if (physnet and
+                    physnet in physnets and
+                    chassis in cms):
+                candidates.add(chassis)
+        candidates = list(candidates)
 
         # Filter for availability zones
         if availability_zone_hints:
@@ -1505,11 +1505,8 @@ class OVNClient(object):
                           if az in utils.get_chassis_availability_zones(
                               self._sb_idl.lookup('Chassis', ch, None))]
 
-        if not cms_bmaps:
-            LOG.debug("No eligible chassis with external connectivity"
-                      " through ovn-cms-options for %s", physnet)
-        LOG.debug("Chassis candidates for scheduling gateway router ports: %s",
-                  candidates)
+        LOG.debug('Chassis candidates for scheduling gateway router ports '
+                  'for "%s" physical network: %s', physnet, candidates)
         return candidates
 
     def _get_physnet(self, network):
