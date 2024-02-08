@@ -302,11 +302,6 @@ class DbBasePluginCommon(object):
         return subnet_obj.Route.get_objects(context,
                                             subnet_id=subnet_id)
 
-    def _get_router_gw_ports_by_network(self, context, network_id):
-        return port_obj.Port.get_objects(
-            context, network_id=network_id,
-            device_owner=constants.DEVICE_OWNER_ROUTER_GW)
-
     @db_api.CONTEXT_READER
     def _get_subnets_by_network(self, context, network_id):
         return subnet_obj.Subnet.get_objects(context, network_id=network_id)

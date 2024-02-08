@@ -73,7 +73,6 @@ from neutron.objects import network as network_obj
 from neutron.objects import ports as port_obj
 from neutron.objects import subnet as subnet_obj
 from neutron.objects import subnetpool as subnetpool_obj
-from neutron.services.ovn_l3 import plugin as l3_ovn
 
 
 LOG = logging.getLogger(__name__)
@@ -807,47 +806,10 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
 
     def _update_router_gw_ports(self, context, network, subnet):
         l3plugin = directory.get_plugin(plugin_constants.L3)
-        if l3plugin:
-            s = subnet_obj.Subnet.get_object(context, id=subnet['id'])
-            service_types = s.service_types
-            update_types = ['', constants.DEVICE_OWNER_ROUTER_GW]
-            if (not isinstance(l3plugin, l3_ovn.OVNL3RouterPlugin) and
-                    subnet['ip_version'] == constants.IP_VERSION_4 and
-                    all(s not in update_types for s in service_types)):
-                return
-            gw_ports = self._get_router_gw_ports_by_network(context,
-                                                            network['id'])
-            router_ids = [p.device_id for p in gw_ports]
-            for id in router_ids:
-                try:
-                    self._update_router_gw_port(context, id, network, subnet)
-                except l3_exc.RouterNotFound:
-                    LOG.debug("Router %(id)s was concurrently deleted while "
-                              "updating GW port for subnet %(s)s",
-                              {'id': id, 's': subnet})
-
-    def _update_router_gw_port(self, context, router_id, network, subnet):
-        l3plugin = directory.get_plugin(plugin_constants.L3)
-        ctx_admin = context.elevated()
-        ext_subnets_dict = {s['id']: s for s in network['subnets']}
-        router = l3plugin.get_router(ctx_admin, router_id)
-        external_gateway_info = router['external_gateway_info']
-        # Get all stateful (i.e. non-SLAAC/DHCPv6-stateless) fixed ips
-        fips = [f for f in external_gateway_info['external_fixed_ips']
-                if not ipv6_utils.is_auto_address_subnet(
-                    ext_subnets_dict[f['subnet_id']])]
-        num_fips = len(fips)
-        # Don't add the fixed IP to the port if it already
-        # has a stateful fixed IP of the same IP version
-        if num_fips > 1:
-            return
-        if num_fips == 1 and netaddr.IPAddress(
-                fips[0]['ip_address']).version == subnet['ip_version']:
-            return
-        external_gateway_info['external_fixed_ips'].append(
-            {'subnet_id': subnet['id']})
-        info = {'router': {'external_gateway_info': external_gateway_info}}
-        l3plugin.update_router(ctx_admin, router_id, info)
+        # The hasattr check for customized l3 plugins that may have no such
+        # function.
+        if l3plugin and hasattr(l3plugin, "update_router_gw_ports"):
+            l3plugin.update_router_gw_ports(context, network, subnet)
 
     @db_api.retry_if_session_inactive()
     def _create_subnet_postcommit(self, context, result,
