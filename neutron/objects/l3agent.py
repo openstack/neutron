@@ -14,8 +14,6 @@ from neutron_lib.db import api as db_api
 from neutron_lib.objects import common_types
 from oslo_versionedobjects import fields as obj_fields
 
-from sqlalchemy import sql
-
 from neutron.common import _constants as n_const
 from neutron.db.models import agent as agent_model
 from neutron.db.models import l3_attrs
@@ -59,9 +57,7 @@ class RouterL3AgentBinding(base.NeutronDbObject):
                         agent_model.Agent.admin_state_up).outerjoin(
                             l3_attrs.RouterExtraAttributes,
                             l3_attrs.RouterExtraAttributes.router_id ==
-                            l3agent.RouterL3AgentBinding.router_id).filter(
-                                l3_attrs.RouterExtraAttributes.ha.in_(
-                                    [sql.false(), sql.null()])))
+                            l3agent.RouterL3AgentBinding.router_id))
         bindings = [cls._load_object(context, db_obj) for db_obj in
                     query.all()]
         return bindings

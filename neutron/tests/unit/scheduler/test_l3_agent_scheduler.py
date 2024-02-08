@@ -1718,7 +1718,7 @@ class L3AgentSchedulerDbMixinTestCase(L3HATestCaseMixin):
         self._set_l3_agent_dead(self.agent_id1)
         with mock.patch.object(self.plugin, 'reschedule_router') as reschedule:
             self.plugin.reschedule_routers_from_down_agents()
-            self.assertFalse(reschedule.called)
+            self.assertTrue(reschedule.called)
 
     def test_list_l3_agents_hosting_ha_router(self):
         router = self._create_ha_router()
