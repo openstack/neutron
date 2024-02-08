@@ -1208,11 +1208,13 @@ class NotificationTest(APIv2TestBase):
         instance.get_networks_count.return_value = 0
         expected_code = exc.HTTPCreated.code
         if opname == 'create':
+            instance.create_network.return_value = network_obj
             res = self._post_request(
                 _get_path('networks'),
                 initial_input, expect_errors=expected_errors,
                 req_tenant_id=tenant_id)
         if opname == 'update':
+            instance.update_network.return_value = network_obj
             op_input = {resource: {'name': 'myname'}}
             res = self._put_request(
                 _get_path('networks', id=tenant_id),
@@ -1266,10 +1268,12 @@ class RegistryNotificationTest(APIv2TestBase):
         expected_code = exc.HTTPCreated.code
         with mock.patch.object(registry, 'publish') as publish:
             if opname == 'create':
+                instance.create_network.return_value = initial_input
                 res = self.api.post_json(
                     _get_path('networks'),
                     initial_input)
             if opname == 'update':
+                instance.update_network.return_value = initial_input
                 res = self.api.put_json(
                     _get_path('networks', id=_uuid()),
                     initial_input)
@@ -1305,6 +1309,8 @@ class QuotaTest(APIv2TestBase):
 
     def test_create_network_quota_exceeded(self):
         initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid()}}
+        instance = self.plugin.return_value
+        instance.create_network.return_value = initial_input
         with mock.patch.object(quota.QUOTAS, 'make_reservation',
                                side_effect=n_exc.OverQuota(overs='network')):
             res = self.api.post_json(
@@ -1314,6 +1320,8 @@ class QuotaTest(APIv2TestBase):
 
     def test_create_network_quota_without_limit(self):
         initial_input = {'network': {'name': 'net1', 'tenant_id': _uuid()}}
+        instance = self.plugin.return_value
+        instance.create_network.return_value = initial_input
         with mock.patch.object(quota.QUOTAS, 'make_reservation'), \
                 mock.patch.object(quota.QUOTAS, 'commit_reservation'):
             res = self.api.post_json(
