@@ -20,3 +20,4 @@ OVN Driver Administration Guide
    baremetal
    external_ports
    rpc
+   l3_scheduler
