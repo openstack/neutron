@@ -2272,8 +2272,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                        binding_no_activated_devices - migrating_devices)
         self.process_install_ports_egress_flows(need_binding_devices)
         added_to_datapath = added_ports - devices_not_in_datapath
-        self.sg_agent.setup_port_filters(added_to_datapath,
-                                         port_info.get('updated', set()))
+        self.sg_agent.setup_port_filters(
+            added_to_datapath,
+            port_info.get('updated', set()) - binding_no_activated_devices)
 
         LOG.info("process_network_ports - iteration:%(iter_num)d - "
                  "agent port security group processed in %(elapsed).3f",
