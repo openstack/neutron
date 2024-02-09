@@ -29,6 +29,7 @@ from oslo_config import cfg
 import testtools
 
 from neutron.common.ovn import constants
+from neutron.common.ovn import exceptions as ovn_exc
 from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.tests import base
@@ -1217,3 +1218,44 @@ class DetermineBindHostTestCase(base.BaseTestCase):
             self.fake_smartnic_hostname,
             utils.determine_bind_host(self.mock_sb_idl, {},
                                       port_context=context))
+
+
+class ValidatePortForwardingConfigurationTestCase(base.BaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        ovn_conf.register_opts()
+
+    def test_validation_when_distributed_fip_disabled(self):
+        cfg.CONF.set_override(
+            'enable_distributed_floating_ip', False, group='ovn')
+        cfg.CONF.set_override('service_plugins', 'some_plugin,port_forwarding')
+        cfg.CONF.set_override('tenant_network_types', 'geneve,vlan',
+                              group='ml2')
+        utils.validate_port_forwarding_configuration()
+
+    def test_validation_when_no_pf_plugin_enabled(self):
+        cfg.CONF.set_override(
+            'enable_distributed_floating_ip', True, group='ovn')
+        cfg.CONF.set_override('service_plugins', 'some_plugin')
+        cfg.CONF.set_override('tenant_network_types', 'geneve,vlan',
+                              group='ml2')
+        utils.validate_port_forwarding_configuration()
+
+    def test_validation_when_no_provider_net_configured(self):
+        cfg.CONF.set_override(
+            'enable_distributed_floating_ip', True, group='ovn')
+        cfg.CONF.set_override('service_plugins', 'some_plugin,port_forwarding')
+        cfg.CONF.set_override('tenant_network_types', 'geneve,vxlan',
+                              group='ml2')
+        utils.validate_port_forwarding_configuration()
+
+    def test_validation_when_pf_and_provider_net_enabled(self):
+        cfg.CONF.set_override(
+            'enable_distributed_floating_ip', True, group='ovn')
+        cfg.CONF.set_override('service_plugins', 'some_plugin,port_forwarding')
+        cfg.CONF.set_override('tenant_network_types', 'geneve,vlan',
+                              group='ml2')
+        self.assertRaises(
+            ovn_exc.InvalidPortForwardingConfiguration,
+            utils.validate_port_forwarding_configuration)

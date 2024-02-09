@@ -1246,3 +1246,20 @@ def is_nat_gateway_port_supported(idl):
 def is_ovn_provider_router(router):
     flavor_id = router.get('flavor_id')
     return flavor_id is None or flavor_id is const.ATTR_NOT_SPECIFIED
+
+
+def validate_port_forwarding_configuration():
+    if not ovn_conf.is_ovn_distributed_floating_ip():
+        return
+
+    pf_plugin_names = [
+        'port_forwarding',
+        'neutron.services.portforwarding.pf_plugin.PortForwardingPlugin']
+    if not any(plugin in pf_plugin_names
+               for plugin in cfg.CONF.service_plugins):
+        return
+
+    provider_network_types = ['vlan', 'flat']
+    if any(net_type in provider_network_types
+           for net_type in cfg.CONF.ml2.tenant_network_types):
+        raise ovn_exc.InvalidPortForwardingConfiguration()
