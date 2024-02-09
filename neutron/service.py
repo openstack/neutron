@@ -96,6 +96,7 @@ def serve_wsgi(cls):
 class RpcWorker(neutron_worker.NeutronBaseWorker):
     """Wraps a worker to be handled by ProcessLauncher"""
     start_listeners_method = 'start_rpc_listeners'
+    desc = 'rpc worker'
 
     def __init__(self, plugins, worker_process_count=1):
         super(RpcWorker, self).__init__(
@@ -106,7 +107,7 @@ class RpcWorker(neutron_worker.NeutronBaseWorker):
         self._servers = []
 
     def start(self):
-        super(RpcWorker, self).start(desc="rpc worker")
+        super(RpcWorker, self).start(desc=self.desc)
         for plugin in self._plugins:
             if hasattr(plugin, self.start_listeners_method):
                 try:
@@ -146,6 +147,7 @@ class RpcWorker(neutron_worker.NeutronBaseWorker):
 
 class RpcReportsWorker(RpcWorker):
     start_listeners_method = 'start_rpc_state_reports_listener'
+    desc = 'rpc reports worker'
 
 
 def _get_worker_count():
