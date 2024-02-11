@@ -558,9 +558,9 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                 network_id = port.external_ids[
                     ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY].replace(
                         ovn_const.OVN_NAME_PREFIX, '')
-                ha_ch_grp = utils.sync_ha_chassis_group(
-                    context, port.name, network_id, self._nb_idl,
-                    self._sb_idl, txn)
+                ha_ch_grp, high_prio_ch = utils.sync_ha_chassis_group_network(
+                    context, self._nb_idl, self._sb_idl, port.name,
+                    network_id, txn)
                 txn.add(self._nb_idl.set_lswitch_port(
                     port.name, ha_chassis_group=ha_ch_grp))
 

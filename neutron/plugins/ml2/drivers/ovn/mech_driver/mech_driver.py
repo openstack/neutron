@@ -1195,9 +1195,9 @@ class OVNMechanismDriver(api.MechanismDriver):
                 self.sb_ovn.get_extport_chassis_from_cms_options()):
             try:
                 with self.nb_ovn.transaction(check_error=True) as txn:
-                    ovn_utils.sync_ha_chassis_group(
-                        admin_context, db_port['id'], db_port['network_id'],
-                        self.nb_ovn, self.sb_ovn, txn)
+                    ovn_utils.sync_ha_chassis_group_network(
+                        admin_context, self.nb_ovn, self.sb_ovn,
+                        db_port['id'], db_port['network_id'], txn)
             except Exception as e:
                 LOG.error('Error while syncing the HA Chassis Group for the '
                           'external port %s during set port status up. '

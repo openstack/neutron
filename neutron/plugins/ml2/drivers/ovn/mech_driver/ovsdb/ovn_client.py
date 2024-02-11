@@ -564,9 +564,10 @@ class OVNClient(object):
 
             if (self.is_external_ports_supported() and
                     port_info.type == ovn_const.LSP_TYPE_EXTERNAL):
-                kwargs['ha_chassis_group'] = utils.sync_ha_chassis_group(
-                    context, port['id'], port['network_id'], self._nb_idl,
-                    self._sb_idl, txn)
+                kwargs['ha_chassis_group'], _ = (
+                    utils.sync_ha_chassis_group_network(
+                        context, self._nb_idl, self._sb_idl, port['id'],
+                        port['network_id'], txn))
 
             # NOTE(mjozefcz): Do not set addresses if the port is not
             # bound, has no device_owner and it is OVN LB VIP port.
@@ -689,10 +690,10 @@ class OVNClient(object):
 
             if self.is_external_ports_supported():
                 if port_info.type == ovn_const.LSP_TYPE_EXTERNAL:
-                    columns_dict['ha_chassis_group'] = (
-                        utils.sync_ha_chassis_group(
-                            context, port['id'], port['network_id'],
-                            self._nb_idl, self._sb_idl, txn))
+                    columns_dict['ha_chassis_group'], _ = (
+                        utils.sync_ha_chassis_group_network(
+                            context, self._nb_idl, self._sb_idl, port['id'],
+                            port['network_id'], txn))
                 else:
                     # Clear the ha_chassis_group field
                     columns_dict['ha_chassis_group'] = []
@@ -1714,8 +1715,7 @@ class OVNClient(object):
         networks, ipv6_ra_configs = (
             self._get_nets_and_ipv6_ra_confs_for_router_port(context, port))
         lrouter_port_name = utils.ovn_lrouter_port_name(port['id'])
-        is_gw_port = const.DEVICE_OWNER_ROUTER_GW == port.get(
-            'device_owner')
+        is_gw_port = const.DEVICE_OWNER_ROUTER_GW == port.get('device_owner')
         columns = {}
         columns['options'] = self._gen_router_port_options(port)
 
@@ -1738,17 +1738,32 @@ class OVNClient(object):
             port_net = self._plugin.get_network(
                 n_context.get_admin_context(), port['network_id'])
             physnet = self._get_physnet(port_net)
-            az_hints = common_utils.get_az_hints(router)
-            commands.append(
-                self._nb_idl.schedule_new_gateway(lrouter_port_name,
-                                                  self._sb_idl,
-                                                  lrouter, self._l3_plugin,
-                                                  physnet, az_hints))
+            if physnet is None:
+                # The external network is tunnelled, pin the router to a
+                # chassis.
+                _, selected_chassis = utils.sync_ha_chassis_group_router(
+                    context, self._nb_idl, self._sb_idl, router['id'], txn)
+                if selected_chassis:
+                    options = {'chassis': selected_chassis}
+                    commands.append(self._nb_idl.db_set(
+                        'Logical_Router', lrouter, ('options', options)))
+                else:
+                    LOG.info('Router %s is not pinned to any gateway chassis',
+                             router['id'])
+            else:
+                # VLAN/flat network with a physical network, bind the LRP to
+                # a chassis using the OVN L3 scheduler.
+                az_hints = common_utils.get_az_hints(router)
+                commands.append(
+                    self._nb_idl.schedule_new_gateway(lrouter_port_name,
+                                                      self._sb_idl,
+                                                      lrouter, self._l3_plugin,
+                                                      physnet, az_hints))
+
         commands.append(
             self._nb_idl.set_lrouter_port_in_lswitch_port(
                 port['id'], lrouter_port_name, is_gw_port=is_gw_port,
                 lsp_address=lsp_address))
-
         self._transaction(commands, txn=txn)
 
     def create_router_port(self, context, router_id, router_interface):
@@ -2098,9 +2113,9 @@ class OVNClient(object):
                 network_id = extport.external_ids[
                     ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY].replace(
                         ovn_const.OVN_NAME_PREFIX, '')
-                utils.sync_ha_chassis_group(
-                    context, port_id, network_id, self._nb_idl,
-                    self._sb_idl, txn)
+                utils.sync_ha_chassis_group_network(
+                    context, self._nb_idl, self._sb_idl, port_id, network_id,
+                    txn)
         elif extport_list:
             # If there's no dedicated chassis for external ports, there will
             # be 1 HA Chassis Group per network, so the sync is at the network
@@ -2110,8 +2125,8 @@ class OVNClient(object):
             network_id = extport_list[0].external_ids[
                 ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY].replace(
                     ovn_const.OVN_NAME_PREFIX, '')
-            utils.sync_ha_chassis_group(
-                context, port_id, network_id, self._nb_idl, self._sb_idl, txn)
+            utils.sync_ha_chassis_group_network(
+                context, self._nb_idl, self._sb_idl, port_id, network_id, txn)
 
     def update_network(self, context, network, original_network=None):
         lswitch_name = utils.ovn_name(network['id'])

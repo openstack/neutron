@@ -80,6 +80,11 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.fake_network = \
             fake_resources.FakeNetwork.create_one_network(
                 attrs=network_attrs).info()
+        network_attrs.update({'provider:network_type': 'vlan',
+                              'provider:physical_network': 'physnet1'})
+        self.fake_ext_network = fake_resources.FakeNetwork.create_one_network(
+            attrs=network_attrs).info()
+
         self.fake_router_port = {'device_id': '',
                                  'network_id': self.fake_network['id'],
                                  'tenant_id': 'tenant-id',
@@ -127,7 +132,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.fake_external_fixed_ips = {
             'network_id': 'ext-network-id',
             'external_fixed_ips': [{'ip_address': '192.168.1.1',
-                                    'subnet_id': 'ext-subnet-id'}]}
+                                    'subnet_id': 'ext-subnet-id'}],}
         self.fake_router_with_ext_gw = {
             'id': 'router-id',
             'name': 'router',
@@ -251,7 +256,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             'neutron.services.ovn_l3.plugin.OVNL3RouterPlugin._sb_ovn',
             new_callable=mock.PropertyMock,
             return_value=fake_resources.FakeOvsdbSbOvnIdl())
-        self._start_mock(
+        self._get_network = self._start_mock(
             'neutron.plugins.ml2.plugin.Ml2Plugin.get_network',
             return_value=self.fake_network)
         self.get_port = self._start_mock(
@@ -623,6 +628,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
                 'ovn_client.OVNClient._get_v4_network_of_all_router_ports')
     def test_create_router_with_ext_gw(self, get_rps):
+        self._get_network.return_value = self.fake_ext_network
         self.l3_inst._nb_ovn.is_col_present.return_value = True
         self.get_subnet.return_value = self.fake_ext_subnet
         self.get_port.return_value = self.fake_ext_gw_port
@@ -807,6 +813,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
     @mock.patch('neutron.db.extraroute_db.ExtraRoute_dbonly_mixin.'
                 'update_router')
     def test_update_router_with_ext_gw(self, ur, grps):
+        self._get_network.return_value = self.fake_ext_network
         self.l3_inst._nb_ovn.is_col_present.return_value = True
         ur.return_value = self.fake_router_with_ext_gw
         self.get_subnet.side_effect = lambda ctx, sid: {
@@ -846,6 +853,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 'update_router')
     def test_update_router_ext_gw_change_subnet(self, ur,
                                                 grps, mock_get_gw):
+        self._get_network.return_value = self.fake_ext_network
         self.l3_inst._nb_ovn.is_col_present.return_value = True
         mock_get_gw.return_value = [mock.sentinel.GwRoute]
         fake_old_ext_subnet = {'id': 'old-ext-subnet-id',
@@ -919,6 +927,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 'update_router')
     def test_update_router_ext_gw_change_ip_address(self, ur,
                                                     grps, mock_get_gw):
+        self._get_network.return_value = self.fake_ext_network
         self.l3_inst._nb_ovn.is_col_present.return_value = True
         mock_get_gw.return_value = [mock.sentinel.GwRoute]
         # Old gateway info with same subnet and different ip address
@@ -994,9 +1003,13 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             'ext-subnet-id': self.fake_ext_subnet}.get(sid, self.fake_subnet)
         self.get_port.return_value = self.fake_ext_gw_port
         grps.return_value = self.fake_router_ports
+        chassis = mock.Mock(name='chassis1', other_config={})
+        self.sb_idl().get_gateway_chassis_from_cms_options.return_value = (
+            [chassis])
 
         payload = self._create_payload_for_router_update(
             self.fake_router_without_ext_gw, self.fake_router_with_ext_gw)
+
         self.ovn_drv._process_router_update(resources.ROUTER,
                                             events.AFTER_UPDATE,
                                             self, payload)
@@ -1904,7 +1917,9 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         grps.return_value = [interface_info]
         self.get_router.return_value = self.fake_router_with_ext_gw
         mtu = 1200
-        network_attrs = {'id': 'prov-net', 'mtu': mtu}
+        network_attrs = {'id': 'prov-net', 'mtu': 1200,
+                         'provider:network_type': 'vlan',
+                         'provider:physical_network': 'physnet1'}
         prov_net = fake_resources.FakeNetwork.create_one_network(
                 attrs=network_attrs).info()
         self.fake_router_port['device_owner'] = (
@@ -1927,7 +1942,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         fake_router_port_assert = self.fake_router_port_assert
         fake_router_port_assert['options'] = {
             ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION:
-            str(prov_net['mtu'])}
+            str(prov_net['mtu']),
+        }
         fake_router_port_assert['external_ids'][
             ovn_const.OVN_ROUTER_IS_EXT_GW] = 'True'
 
@@ -1960,7 +1976,9 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         # _get_routers_ports will be RouterNotFound
         grps.side_effect = l3_exc.RouterNotFound(router_id=router_id)
         self.get_router.return_value = self.fake_router_with_ext_gw
-        network_attrs = {'id': 'prov-net', 'mtu': 1200}
+        network_attrs = {'id': 'prov-net', 'mtu': 1200,
+                         'provider:network_type': 'vlan',
+                         'provider:physical_network': 'physnet1'}
         prov_net = fake_resources.FakeNetwork.create_one_network(
                 attrs=network_attrs).info()
         self.fake_router_port['device_owner'] = (

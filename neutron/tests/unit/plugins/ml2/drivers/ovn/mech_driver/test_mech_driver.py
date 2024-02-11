@@ -44,6 +44,7 @@ from oslo_serialization import jsonutils
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import idlutils
+from ovsdbapp.backend.ovs_idl import rowview
 from webob import exc
 
 from neutron.common import _constants as n_const
@@ -65,6 +66,7 @@ from neutron.plugins.ml2.drivers.ovn.mech_driver import mech_driver
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.plugins.ml2.drivers import type_geneve  # noqa
+from neutron.plugins.ml2 import plugin as ml2_plugin
 from neutron.services.revisions import revision_plugin
 from neutron.tests.unit.extensions import test_segment
 from neutron.tests.unit import fake_resources as fakes
@@ -1080,7 +1082,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                                                          port['port']['id'],
                                                          ovn_const.TYPE_PORTS)
 
-    @mock.patch.object(ovn_utils, 'sync_ha_chassis_group')
+    @mock.patch.object(ovn_utils, 'sync_ha_chassis_group_network')
     @mock.patch.object(ovn_utils, 'is_port_external')
     def _test_set_port_status_up(self, mock_is_ext, mock_sync,
                                  is_compute_port=False,
@@ -1125,8 +1127,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
 
             if is_extport_present:
                 mock_sync.assert_called_once_with(
-                    mock.ANY, port1['port']['id'], port1['port']['network_id'],
-                    self.nb_ovn, self.sb_ovn, mock.ANY)
+                    mock.ANY, self.nb_ovn, self.sb_ovn, port1['port']['id'],
+                    port1['port']['network_id'], mock.ANY)
             else:
                 mock_sync.assert_not_called()
 
@@ -2675,7 +2677,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             self.assertEqual(sorted(result['expected_candidates']),
                              sorted(candidates))
 
-    def test__get_info_for_ha_chassis_group_as_extport(self):
+    @mock.patch.object(ovn_utils, '_sync_ha_chassis_group')
+    def test_sync_ha_chassis_group_network_as_extport(self, mock_sync_hcg):
         net_attrs = {az_def.AZ_HINTS: ['az0', 'az1', 'az2']}
         fake_net = (
             fakes.FakeNetwork.create_one_network(attrs=net_attrs).info())
@@ -2701,9 +2704,12 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         self.sb_ovn.get_chassis_host_for_port.return_value = {
             ch4.name, ch5.name}
 
-        hcg_info = ovn_utils._get_info_for_ha_chassis_group(
-            self.context, fake_port['id'], fake_net['id'], self.sb_ovn)
+        ovn_utils.sync_ha_chassis_group_network(
+            self.context, self.nb_ovn, self.sb_ovn, fake_port['id'],
+            fake_net['id'], None)
 
+        mock_sync_hcg.assert_called_once()
+        hcg_info = mock_sync_hcg.call_args.args[1]
         expected_group_name = ovn_utils.ovn_extport_chassis_group_name(
             fake_port['id'])
         expected_ch_list = [ch0, ch1, ch2, ch3, ch4, ch5]
@@ -2716,7 +2722,8 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         self.assertEqual(sorted(expected_ignore_chassis),
                          sorted(hcg_info.ignore_chassis))
 
-    def test__get_info_for_ha_chassis_group_as_gw(self):
+    @mock.patch.object(ovn_utils, '_sync_ha_chassis_group')
+    def test_sync_ha_chassis_group_network_as_gw(self, mock_sync_hcg):
         net_attrs = {az_def.AZ_HINTS: ['az0', 'az1', 'az2']}
         fake_net = (
             fakes.FakeNetwork.create_one_network(attrs=net_attrs).info())
@@ -2740,9 +2747,12 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         self.sb_ovn.get_gateway_chassis_from_cms_options.return_value = [
             ch0, ch1, ch2, ch3, ch4, ch5]
 
-        hcg_info = ovn_utils._get_info_for_ha_chassis_group(
-            self.context, fake_port['id'], fake_net['id'], self.sb_ovn)
+        ovn_utils.sync_ha_chassis_group_network(
+            self.context, self.nb_ovn, self.sb_ovn, fake_port['id'],
+            fake_net['id'], None)
 
+        mock_sync_hcg.assert_called_once()
+        hcg_info = mock_sync_hcg.call_args.args[1]
         expected_group_name = ovn_utils.ovn_name(fake_net['id'])
         expected_ch_list = [ch0, ch1, ch2, ch3, ch4, ch5]
         expected_az_hints = ['az0', 'az1', 'az2']
@@ -2752,7 +2762,29 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         self.assertEqual(expected_az_hints, hcg_info.az_hints)
         self.assertEqual(set(), hcg_info.ignore_chassis)
 
-    def _build_hcg_info(self, with_az=False, with_ignore_chassis=False):
+    @mock.patch.object(ovn_utils, '_sync_ha_chassis_group')
+    def test_sync_ha_chassis_group_router(self, mock_sync_hcg):
+        fake_router = fakes.FakeRouter.create_one_router().info()
+        l3_plugin = mock.patch.object(directory, 'get_plugin').start()
+        l3_plugin.get_router.return_value = fake_router
+        chassis_list = []
+        for _ in range(5):
+            chassis_list.append(fakes.FakeChassis.create(chassis_as_gw=True))
+
+        self.sb_ovn.get_gateway_chassis_from_cms_options.return_value = (
+            chassis_list)
+        ovn_utils.sync_ha_chassis_group_router(
+            self.context, self.nb_ovn, self.sb_ovn, fake_router['id'], None)
+
+        mock_sync_hcg.assert_called_once()
+        hcg_info = mock_sync_hcg.call_args.args[1]
+        expected_group_name = ovn_utils.ovn_name(fake_router['id'])
+        self.assertEqual(expected_group_name, hcg_info.group_name)
+        self.assertEqual(chassis_list, hcg_info.chassis_list)
+        self.assertEqual(set(), hcg_info.ignore_chassis)
+
+    def _build_hcg_info(self, with_az=False, with_ignore_chassis=False,
+                        network_id=None):
         az_hints = []
         if with_az:
             az_hints = ['az0', 'az1']
@@ -2775,10 +2807,12 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         ignore_chassis = set()
         if with_ignore_chassis:
             ignore_chassis = {ch1.name, ch2.name}
+        group_name = (ovn_utils.ovn_name(network_id) if network_id else
+                      'fake-hcg-name')
 
         return ovn_utils.HAChassisGroupInfo(
-            group_name='fake-hcg-name', chassis_list=chassis_list,
-            az_hints=az_hints, ignore_chassis=ignore_chassis)
+            group_name=group_name, chassis_list=chassis_list,
+            az_hints=az_hints, ignore_chassis=ignore_chassis, external_ids={})
 
     def test__filter_candidates_for_ha_chassis_group(self):
         fake_hcg_info = self._build_hcg_info()
@@ -2805,18 +2839,18 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             fake_hcg_info)
         self.assertEqual(['ch0', 'ch3'], sorted(candidates))
 
-    @mock.patch.object(ovn_utils, '_get_info_for_ha_chassis_group')
-    def test_sync_ha_chassis_group(self, mock_hcg_info):
+    @mock.patch.object(ml2_plugin.Ml2Plugin, 'get_network', return_value={})
+    @mock.patch.object(ovn_utils, '_filter_candidates_for_ha_chassis_group')
+    def test_sync_ha_chassis_group_network(self, mock_candidates, *args):
         self.nb_ovn.ha_chassis_group_get.side_effect = idlutils.RowNotFound
         fake_txn = mock.Mock()
-
-        hcg_info = self._build_hcg_info()
-        mock_hcg_info.return_value = hcg_info
+        hcg_info = self._build_hcg_info(network_id='fake-net-id')
+        mock_candidates.return_value = {'ch0', 'ch1', 'ch2', 'ch3'}
 
         # Invoke the method
-        ovn_utils.sync_ha_chassis_group(
-            self.context, 'fake-port-id', 'fake-net-id',
-            self.nb_ovn, self.sb_ovn, fake_txn)
+        ovn_utils.sync_ha_chassis_group_network(
+            self.context, self.nb_ovn, self.sb_ovn, 'fake-port-id',
+            'fake-net-id', fake_txn)
 
         # Assert it creates the HA Chassis Group
         ext_ids = {ovn_const.OVN_AZ_HINTS_EXT_ID_KEY:
@@ -2832,11 +2866,12 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         self.nb_ovn.ha_chassis_group_add_chassis.assert_has_calls(
             expected_calls, any_order=True)
 
-    @mock.patch.object(ovn_utils, '_get_info_for_ha_chassis_group')
-    def test_sync_ha_chassis_group_existing_group(self, mock_hcg_info):
+    @mock.patch.object(ml2_plugin.Ml2Plugin, 'get_network', return_value={})
+    @mock.patch.object(ovn_utils, '_filter_candidates_for_ha_chassis_group')
+    def test_sync_ha_chassis_group_network_existing_group(
+            self, mock_candidates, *args):
         fake_txn = mock.Mock()
-        hcg_info = self._build_hcg_info()
-        mock_hcg_info.return_value = hcg_info
+        hcg_info = self._build_hcg_info(network_id='fake-net-id')
 
         hc0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'chassis_name': 'ch0', 'priority': 1})
@@ -2852,18 +2887,20 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         hcg_attrs = {
             'name': hcg_info.group_name,
             'ha_chassis': [hc0, hc1, hc2, hc3]}
-        fake_ha_chassis_group = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs=hcg_attrs)
-        self.nb_ovn.ha_chassis_group_get().execute.return_value = (
-            fake_ha_chassis_group)
+        fake_txn.add.return_value.result = mock.Mock(
+            spec=rowview.RowView, uuid=uuidutils.generate_uuid(), **hcg_attrs)
+        mock_candidates.return_value = {'ch0', 'ch1', 'ch2', 'ch3'}
 
         # Invoke the method
-        ovn_utils.sync_ha_chassis_group(
-            self.context, 'fake-port-id', 'fake-net-id',
-            self.nb_ovn, self.sb_ovn, fake_txn)
+        ovn_utils.sync_ha_chassis_group_network(
+            self.context, self.nb_ovn, self.sb_ovn, 'fake-port-id',
+            'fake-net-id', fake_txn)
 
-        # Assert the group was not re-created
-        self.nb_ovn.ha_chassis_group_add.assert_not_called()
+        self.nb_ovn.ha_chassis_group_add.assert_has_calls(
+            [mock.call(hcg_info.group_name, may_exist=True,
+                       external_ids={'neutron:availability_zone_hints': ''})]
+        )
+        self.nb_ovn.ha_chassis_group_add.reset_mock()
 
         # Assert the chassis that are no longer part of the candidates list
         # are removed from group
@@ -4168,10 +4205,10 @@ class TestOVNMechanismDriverSecurityGroup(MechDriverSetupBase,
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
                 'ovn_client.OVNClient.is_external_ports_supported',
                 lambda *_: True)
-    @mock.patch.object(ovn_utils, 'sync_ha_chassis_group')
+    @mock.patch.object(ovn_utils, 'sync_ha_chassis_group_network')
     def _test_create_port_with_vnic_type(self, vnic_type, sync_mock):
         fake_grp = 'fake-default-ha-group-uuid'
-        sync_mock.return_value = fake_grp
+        sync_mock.return_value = fake_grp, mock.ANY
 
         with self.network() as n, self.subnet(n):
             self._create_port(
@@ -4188,8 +4225,8 @@ class TestOVNMechanismDriverSecurityGroup(MechDriverSetupBase,
                 self.assertEqual(ovn_const.LSP_TYPE_EXTERNAL, kwargs['type'])
                 self.assertEqual(fake_grp, kwargs['ha_chassis_group'])
                 sync_mock.assert_called_once_with(
-                    mock.ANY, mock.ANY, n['network']['id'],
-                    self.mech_driver.nb_ovn, self.mech_driver.sb_ovn, mock.ANY)
+                    mock.ANY, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
+                    mock.ANY, n['network']['id'], mock.ANY)
 
     def test_create_port_with_vnic_direct(self):
         self._test_create_port_with_vnic_type(portbindings.VNIC_DIRECT)

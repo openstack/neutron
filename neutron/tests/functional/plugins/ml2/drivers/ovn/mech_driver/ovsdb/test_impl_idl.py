@@ -28,6 +28,7 @@ from ovsdbapp.tests.functional import base
 from ovsdbapp.tests import utils
 
 from neutron.common.ovn import constants as ovn_const
+from neutron.common.ovn import utils as ovn_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb \
     import impl_idl_ovn as impl
@@ -607,6 +608,23 @@ class TestNbApi(BaseOvnIdlTest):
 
         lsp = self.nbapi.lookup('Logical_Switch_Port', lsp_name)
         self.assertEqual(hcg.result.uuid, lsp.ha_chassis_group[0].uuid)
+
+    def test_delete_lrouter(self):
+        router_name = ovn_utils.ovn_name(uuidutils.generate_uuid())
+        with self.nbapi.transaction(check_error=True) as txn:
+            txn.add(self.nbapi.lr_add(router_name))
+            txn.add(self.nbapi.ha_chassis_group_add(router_name))
+
+        r = self.nbapi.lookup('Logical_Router', router_name)
+        self.assertEqual(router_name, r.name)
+        hcg = self.nbapi.lookup('HA_Chassis_Group', router_name)
+        self.assertEqual(router_name, hcg.name)
+
+        self.nbapi.lr_del(router_name).execute(check_error=True)
+        self.assertIsNone(
+            self.nbapi.lookup('Logical_Router', router_name, default=None))
+        self.assertIsNone(
+            self.nbapi.lookup('HA_Chassis_Group', router_name, default=None))
 
 
 class TestIgnoreConnectionTimeout(BaseOvnIdlTest):
