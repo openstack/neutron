@@ -926,6 +926,41 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
         raise periodics.NeverAgain()
 
+    # TODO(slaweq): Remove this in the E cycle (C+2 as it will be next SLURP)
+    @has_lock_periodic(spacing=600, run_immediately=True)
+    def add_gw_port_info_to_logical_router_port(self):
+        """Add info if LRP is connecting internal subnet or ext gateway."""
+        cmds = []
+        context = n_context.get_admin_context()
+        for router in self._ovn_client._l3_plugin.get_routers(context):
+            ext_gw_networks = [
+                ext_gw['network_id'] for ext_gw in router['external_gateways']]
+            rtr_name = 'neutron-{}'.format(router['id'])
+            ovn_lr = self._nb_idl.get_lrouter(rtr_name)
+            for lrp in ovn_lr.ports:
+                if ovn_const.OVN_ROUTER_IS_EXT_GW in lrp.external_ids:
+                    continue
+                ovn_network_name = lrp.external_ids.get(
+                    ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY)
+                if not ovn_network_name:
+                    continue
+                network_id = ovn_network_name.replace('neutron-', '')
+                if not network_id:
+                    continue
+                is_ext_gw = str(network_id in ext_gw_networks)
+                external_ids = lrp.external_ids
+                external_ids[ovn_const.OVN_ROUTER_IS_EXT_GW] = is_ext_gw
+                cmds.append(
+                    self._nb_idl.update_lrouter_port(
+                        name=lrp.name,
+                        external_ids=external_ids))
+
+        if cmds:
+            with self._nb_idl.transaction(check_error=True) as txn:
+                for cmd in cmds:
+                    txn.add(cmd)
+        raise periodics.NeverAgain()
+
     @has_lock_periodic(spacing=600, run_immediately=True)
     def check_router_default_route_empty_dst_ip(self):
         """Check routers with default route with empty dst-ip (LP: #2002993).
