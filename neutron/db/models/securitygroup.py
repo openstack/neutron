@@ -87,9 +87,13 @@ class SecurityGroupRule(standard_attr.HasStandardAttributes, model_base.BASEV2,
     port_range_min = sa.Column(sa.Integer)
     port_range_max = sa.Column(sa.Integer)
     remote_ip_prefix = sa.Column(sa.String(255))
+    # NOTE(ralonsoh): loading method is temporarily changed to "joined" until
+    # a proper way to only load the security groups "shared" field, without
+    # loading the rest of the synthetic fields, is implemented. LP#2052419
+    # description for more information and context.
     security_group = orm.relationship(
         SecurityGroup, load_on_pending=True,
-        backref=orm.backref('rules', cascade='all,delete', lazy='dynamic'),
+        backref=orm.backref('rules', cascade='all,delete', lazy='joined'),
         primaryjoin="SecurityGroup.id==SecurityGroupRule.security_group_id")
     source_group = orm.relationship(
         SecurityGroup,

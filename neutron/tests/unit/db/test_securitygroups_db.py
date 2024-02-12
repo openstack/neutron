@@ -350,6 +350,10 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
             # Especially we want to check the revision number here.
             sg_dict_got = self.mixin.get_security_group(
                 self.ctx, sg_dict['id'])
+            # Order the SG rules to avoid issues in the assertion.
+            for _sg_dict in (sg_dict, sg_dict_got):
+                _sg_dict['security_group_rules'] = sorted(
+                    _sg_dict['security_group_rules'], key=lambda d: d['id'])
             self.assertEqual(sg_dict, sg_dict_got)
 
     def test_security_group_precommit_create_event_with_revisions(self):
