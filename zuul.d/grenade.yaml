@@ -374,7 +374,7 @@
       # Move this forward when master changes to a new skip-level-allowed
       # target release. Right now, this is xena because master is zed.
       # When master is A, this should become yoga, and so forth.
-      grenade_from_branch: stable/yoga
+      grenade_from_branch: unmaintained/yoga
       grenade_localrc:
         NOVA_ENABLE_UPGRADE_WORKAROUND: True
 
@@ -388,6 +388,6 @@
       # Move this forward when master changes to a new skip-level-allowed
       # target release. Right now, this is xena because master is zed.
       # When master is A, this should become yoga, and so forth.
-      grenade_from_branch: stable/yoga
+      grenade_from_branch: unmaintained/yoga
       grenade_localrc:
         NOVA_ENABLE_UPGRADE_WORKAROUND: True
