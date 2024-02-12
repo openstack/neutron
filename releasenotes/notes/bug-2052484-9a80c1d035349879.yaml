@@ -1,0 +1,16 @@
+---
+upgrade:
+  - |
+    Now setting ``[DEFAULT] rpc_workers = 0`` completely disables rpc workers.
+    In a deployment with additional agents, like the dhcp-agent, this option
+    should be set to a positive value. Note that all notifications from
+    neutron-server to agents were disabled when ``[DEFAULT] rpc_workers = 0``
+    is set in 22.0.0 release, so this was the requiremenet actually added in
+    that release.
+
+fixes:
+  - |
+    [`bug 2052484 <https://bugs.launchpad.net/neutron/+bug/2002484>`_]
+    Now setting ``[DEFAULT] rpc_workers = 0`` completely disables rpc workers.
+    Previously one rpc worker was launched even though ``0`` is specifically
+    requested.

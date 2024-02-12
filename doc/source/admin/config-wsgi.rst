@@ -150,3 +150,13 @@ events from the various neutron agents. Signs that there are too few
 can be agent heartbeats arriving late, nova vif bindings timing out
 on the hypervisors, or rpc message timeout exceptions in agent logs
 (for example, "broken pipe" errors).
+
+There is also the rpc_state_report_workers option, which determines
+the number fo RPC worker processes dedicated to process state reports
+from the various agents. This may be increased to resolve frequent delay
+in processing agents heartbeats.
+
+.. note::
+   If OVN ML2 plugin is used without any additional agents, neutron requires
+   no worker for RPC message processing. Set both rpc_workers and
+   rpc_state_report_workers to 0, to disable RPC workers.

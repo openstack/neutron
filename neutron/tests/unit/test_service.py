@@ -54,12 +54,15 @@ class TestRunRpcWorkers(base.BaseTestCase):
             with mock.patch('neutron.service.RpcReportsWorker'):
                 service._get_rpc_workers(plugin=mock.Mock())
         init_call = mock_rpc_worker.call_args
-        expected_call = mock.call(
-            mock.ANY, worker_process_count=expected_passed_value)
-        self.assertEqual(expected_call, init_call)
+        if expected_passed_value > 0:
+            expected_call = mock.call(
+                mock.ANY, worker_process_count=expected_passed_value)
+            self.assertEqual(expected_call, init_call)
+        else:
+            mock_rpc_worker.assert_not_called()
 
     def test_rpc_workers_zero(self):
-        self._test_rpc_workers(0, 1)
+        self._test_rpc_workers(0, 0)
 
     def test_rpc_workers_default_api_workers_default(self):
         workers = max(int(self.worker_count / 2), 1)
