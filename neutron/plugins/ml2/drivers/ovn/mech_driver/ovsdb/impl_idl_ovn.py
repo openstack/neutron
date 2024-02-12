@@ -647,7 +647,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
             options = getattr(lsp, 'options')
             for key in list(options.keys()):
                 if key not in ovn_const.OVN_ROUTER_PORT_OPTION_KEYS:
-                    del(options[key])
+                    del options[key]
             return options
         except idlutils.RowNotFound:
             return {}

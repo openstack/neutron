@@ -231,7 +231,7 @@ class TestDhcpRpcCallback(base.BaseTestCase):
 
         def _make_subnet_dict(subnet):
             ret = {'id': subnet.id}
-            if type(subnet.segment_id) == str:
+            if isinstance(subnet.segment_id, str):
                 ret['segment_id'] = subnet.segment_id
             return ret
 

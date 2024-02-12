@@ -354,7 +354,7 @@ class TestMl2NetworksV2(test_plugin.TestNetworksV2,
                 result_macs.append(port_mac)
                 for ip_addr in port.get('fixed_ips'):
                     self.assertIsNone(validators.validate_ip_address(ip_addr))
-            self.assertTrue(test_mac in result_macs)
+            self.assertIn(test_mac, result_macs)
 
     def test_bulk_network_before_and_after_events_outside_of_txn(self):
         # capture session states during each before and after event
@@ -1511,7 +1511,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                         [mock.call(mock.ANY, [sg]) for sg in used_sg],
                         any_order=True)
             else:
-                self.assertTrue('ports' in ports)
+                self.assertIn('ports', ports)
 
     def test_create_ports_bulk_with_portbinding_attrs(self):
         with self.network() as net:

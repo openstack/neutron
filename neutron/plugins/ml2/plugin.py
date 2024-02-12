@@ -1866,12 +1866,12 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         if (old_vnic_type != new_vnic_type and
                 binding.vif_type != portbindings.VIF_TYPE_UNBOUND):
-            LOG.info("Attempting to change VNIC TYPE from {old_type} to "
-                     "{new_type} on port {port_id}, this operation is not "
-                     "allowed because the port is bound".format(
-                         old_type=old_vnic_type,
-                         new_type=new_vnic_type,
-                         port_id=old_port.id))
+            LOG.info("Attempting to change VNIC TYPE from %(old_type)s to "
+                     "%(new_type)s on port %(port_id)s, this operation is not "
+                     "allowed because the port is bound",
+                     {'old_type': old_vnic_type,
+                      'new_type': new_vnic_type,
+                      'port_id': old_port.id})
             raise exc.PortInUse(
                 port_id=old_port.id,
                 net_id=old_port.network_id,

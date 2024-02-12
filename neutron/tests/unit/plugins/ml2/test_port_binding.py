@@ -481,8 +481,7 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                                  'host-fail')
             self.assertEqual(webob.exc.HTTPInternalServerError.code,
                              response.status_int)
-            self.assertTrue(exceptions.PortBindingError.__name__ in
-                            response.text)
+            self.assertIn(exceptions.PortBindingError.__name__, response.text)
 
     def test_create_port_binding_for_non_compute_owner(self):
         with self.port() as port:
@@ -538,8 +537,7 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
                                                  self.host, **kwargs)
             self.assertEqual(webob.exc.HTTPInternalServerError.code,
                              response.status_int)
-            self.assertTrue(exceptions.PortBindingError.__name__ in
-                            response.text)
+            self.assertIn(exceptions.PortBindingError.__name__, response.text)
 
     def test_activate_port_binding(self):
         port, new_binding = self._create_port_and_binding()
@@ -613,8 +611,7 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
             response = self._activate_port_binding(port['id'], self.host)
             self.assertEqual(webob.exc.HTTPInternalServerError.code,
                              response.status_int)
-            self.assertTrue(exceptions.PortBindingError.__name__ in
-                            response.text)
+            self.assertIn(exceptions.PortBindingError.__name__, response.text)
             self.assertEqual(ml2_plugin.MAX_BIND_TRIES, p_mock.call_count)
 
     def test_activate_port_binding_non_existing_binding(self):
@@ -687,8 +684,7 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
 
             self.assertEqual(webob.exc.HTTPInternalServerError.code,
                              response.status_int)
-            self.assertTrue(exceptions.PortBindingError.__name__ in
-                            response.text)
+            self.assertIn(exceptions.PortBindingError.__name__, response.text)
 
     def _create_unbound_port(self):
         with self.port() as port:

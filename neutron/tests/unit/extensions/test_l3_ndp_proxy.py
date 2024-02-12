@@ -277,7 +277,7 @@ class L3NDPProxyTestCase(test_address_scope.AddressScopeTestCase,
                 "The external network %s don't support IPv6 ndp proxy, the "
                 "network has no IPv6 subnets or has no IPv6 address "
                 "scope.") % ext_net['network']['id']
-            self.assertTrue(expected_msg in res['NeutronError']['message'])
+            self.assertIn(expected_msg, res['NeutronError']['message'])
             router = self._make_router(
                 self.fmt, self._tenant_id,
                 external_gateway_info={'network_id': ext_net['network']['id']})

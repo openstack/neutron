@@ -78,7 +78,7 @@ class Notifier(object):
             os_exc.raise_from_response(response)
         except Exception as e:
             LOG.exception('Error encountered posting the event to '
-                          'ironic. {error}'.format(error=e))
+                          'ironic, error: %s', e)
 
     @registry.receives(resources.PORT, [events.AFTER_UPDATE])
     def process_port_update_event(self, resource, event, trigger,
@@ -102,10 +102,10 @@ class Notifier(object):
               current_port_status in [n_const.PORT_STATUS_ACTIVE,
                                       n_const.PORT_STATUS_ERROR]):
             port_event = 'bind_port'
-        LOG.debug('Queuing event for {event_type} for port {port} '
-                  'for status {status}.'.format(event_type=port_event,
-                                                port=port['id'],
-                                                status=current_port_status))
+        LOG.debug('Queuing event for %(event_type)s for port %(port)s '
+                  'for status %(status)s.', {'event_type': port_event,
+                                             'port': port['id'],
+                                             'status': current_port_status})
         if port_event:
             notify_event = {
                 'event': '.'.join([BAREMETAL_EVENT_TYPE, port_event]),
@@ -132,10 +132,10 @@ class Notifier(object):
             return
 
         port_event = 'delete_port'
-        LOG.debug('Queuing event for {event_type} for port {port} '
-                  'for status {status}.'.format(event_type=port_event,
-                                                port=port['id'],
-                                                status='DELETED'))
+        LOG.debug('Queuing event for %(event_type)s for port %(port)s '
+                  'for status %(status)s.', {'event_type': port_event,
+                                             'port': port['id'],
+                                             'status': 'DELETED'})
         notify_event = {
             'event': '.'.join([BAREMETAL_EVENT_TYPE, port_event]),
             'port_id': port['id'],

@@ -241,7 +241,7 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
         configs = agent.get('configurations', {})
         load_type = None
         load = 0
-        if(agent['agent_type'] == constants.AGENT_TYPE_DHCP):
+        if (agent['agent_type'] == constants.AGENT_TYPE_DHCP):
             load_type = cfg.CONF.dhcp_load_type
         if load_type:
             load = int(configs.get(load_type, 0))
