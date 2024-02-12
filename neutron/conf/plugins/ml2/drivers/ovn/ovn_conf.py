@@ -137,7 +137,7 @@ ovn_opts = [
                       "are created by all the vswitch daemons")),
     cfg.IntOpt('dhcp_default_lease_time',
                default=(12 * 60 * 60),
-               help=_('Default least time (in seconds) to use with '
+               help=_('Default lease time (in seconds) to use with '
                       'OVN\'s native DHCP service.')),
     cfg.StrOpt("ovsdb_log_level",
                default="INFO",
