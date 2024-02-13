@@ -1,0 +1,11 @@
+---
+upgrade:
+  - |
+    The ``[DEFAULT] api_workers`` option no longer accepts 0 or negative
+    values. Previously 0 or a negative value was translated to 1 and
+    neutron-server launched 1 api worker.
+
+  - |
+    The ``[DEFAULT] rpc_workers`` option and
+    the ``[DEFAULT] rpc_state_report_workers`` option no longer accept negative
+    values. To disable these workers, set these options to 0.
