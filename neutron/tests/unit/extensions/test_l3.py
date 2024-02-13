@@ -2784,11 +2784,14 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                     publish.assert_any_call(
                         resources.FLOATING_IP, events.AFTER_UPDATE, mock.ANY,
                         payload=mock.ANY)
+                    aue_kwargs = None
                     for _, call_args, call_kwargs in publish.mock_calls:
                         resource, event, trigger = call_args
                         if event == events.AFTER_UPDATE:
+                            aue_kwargs = call_kwargs
                             break
-                    payload = call_kwargs['payload']
+                    self.assertIsNotNone(aue_kwargs)
+                    payload = aue_kwargs['payload']
                     previous = dict(
                         fixed_ip_address=None,
                         floating_ip_address=fip['floating_ip_address'],
@@ -2832,11 +2835,14 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                     publish.assert_any_call(
                         resources.FLOATING_IP, events.AFTER_UPDATE, mock.ANY,
                         payload=mock.ANY)
+                    aue_kwargs = None
                     for _, call_args, call_kwargs in publish.mock_calls:
                         resource, event, trigger = call_args
                         if event == events.AFTER_UPDATE:
+                            aue_kwargs = call_kwargs
                             break
-                    payload = call_kwargs['payload']
+                    self.assertIsNotNone(aue_kwargs)
+                    payload = aue_kwargs['payload']
                     previous = dict(
                         fixed_ip_address=ip_address,
                         floating_ip_address=fip['floating_ip_address'],
@@ -2879,11 +2885,14 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
                     publish.assert_any_call(
                         resources.FLOATING_IP, events.AFTER_UPDATE, mock.ANY,
                         payload=mock.ANY)
+                    aue_kwargs = None
                     for _, call_args, call_kwargs in publish.mock_calls:
                         resource, event, trigger = call_args
                         if event == events.AFTER_UPDATE:
+                            aue_kwargs = call_kwargs
                             break
-                    payload = call_kwargs['payload']
+                    self.assertIsNotNone(aue_kwargs)
+                    payload = aue_kwargs['payload']
                     previous = dict(
                         fixed_ip_address=ip_address,
                         floating_ip_address=fip['floating_ip_address'],
@@ -4178,11 +4187,14 @@ class L3AgentDbTestCaseBase(L3NatTestCaseMixin):
                 fake_method.assert_called_once_with(
                     resources.FLOATING_IP, events.AFTER_DELETE, mock.ANY,
                     payload=mock.ANY)
+                ade_kwargs = None
                 for _, call_args, call_kwargs in fake_method.mock_calls:
                     resource, event, trigger = call_args
                     if event == events.AFTER_DELETE:
+                        ade_kwargs = call_kwargs
                         break
-                payload = call_kwargs['payload']
+                self.assertIsNotNone(ade_kwargs)
+                payload = ade_kwargs['payload']
                 fip = f['floatingip']
                 previous = dict(
                     fixed_ip_address=fip['fixed_ip_address'],
