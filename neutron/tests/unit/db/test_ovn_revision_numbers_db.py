@@ -110,7 +110,7 @@ class TestRevisionNumber(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                 # DBDuplicateEntry is raised when may_exist is False (default)
                 self._create_initial_revision(*args)
         except Exception as exc:
-            if type(exc) is not db_exc.DBDuplicateEntry:
+            if not isinstance(exc, db_exc.DBDuplicateEntry):
                 self.fail("create_initial_revision with the same parameters "
                           "should have raised a DBDuplicateEntry exception")
 

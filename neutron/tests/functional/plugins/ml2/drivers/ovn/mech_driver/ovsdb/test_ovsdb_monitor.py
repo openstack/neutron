@@ -592,21 +592,22 @@ class TestAgentMonitor(base.TestOVNFunctionalBase):
             lambda: len(list(neutron_agent.AgentCache())) == 1)
 
     def test_agent_change_controller(self):
-        self.assertEqual(neutron_agent.ControllerGatewayAgent,
-                type(neutron_agent.AgentCache().get(self.chassis_name)))
+        self.assertIsInstance(
+            neutron_agent.AgentCache().get(self.chassis_name),
+            neutron_agent.ControllerGatewayAgent)
         self.sb_api.db_set('Chassis', self.chassis_name, ('other_config',
-                {'ovn-cms-options': ''})).execute(check_error=True)
+            {'ovn-cms-options': ''})).execute(check_error=True)
         n_utils.wait_until_true(lambda:
-                type(neutron_agent.AgentCache().get(self.chassis_name)) is
-                neutron_agent.ControllerAgent)
+            isinstance(neutron_agent.AgentCache().get(self.chassis_name),
+                       neutron_agent.ControllerAgent))
 
         # Change back to gw chassis
         self.sb_api.db_set('Chassis', self.chassis_name, ('other_config',
             {'ovn-cms-options': 'enable-chassis-as-gw'})).execute(
                 check_error=True)
         n_utils.wait_until_true(lambda:
-                type(neutron_agent.AgentCache().get(self.chassis_name)) is
-                neutron_agent.ControllerGatewayAgent)
+            isinstance(neutron_agent.AgentCache().get(self.chassis_name),
+                       neutron_agent.ControllerGatewayAgent))
 
     def test_agent_updated_at_use_nb_cfg_timestamp(self):
         def check_agent_ts():
