@@ -455,7 +455,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         data = {'subnet': {'network_id': net_id,
                            'ip_version': constants.IP_VERSION_4,
                            'tenant_id': tenant_id}}
-        if cidr:
+        if cidr and cidr is not constants.ATTR_NOT_SPECIFIED:
             data['subnet']['cidr'] = cidr
         for arg in ('ip_version', 'tenant_id', 'subnetpool_id', 'prefixlen',
                     'enable_dhcp', 'allocation_pools', 'segment_id',
@@ -824,7 +824,9 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                as_admin=False):
         if project_id:
             tenant_id = project_id
-        cidr = netaddr.IPNetwork(cidr) if cidr else None
+        if (cidr is not None and
+                cidr != constants.ATTR_NOT_SPECIFIED):
+            cidr = netaddr.IPNetwork(cidr)
         if (gateway_ip is not None and
                 gateway_ip != constants.ATTR_NOT_SPECIFIED):
             gateway_ip = netaddr.IPAddress(gateway_ip)
@@ -1008,7 +1010,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                     if (k == 'gateway_ip' and ipv6_zero_gateway and
                             keys[k][-3:] == "::0"):
                         self.assertEqual(keys[k][:-1], resource[res_name][k])
-                    else:
+                    elif keys[k] != constants.ATTR_NOT_SPECIFIED:
                         self.assertEqual(keys[k], resource[res_name][k])
 
 
@@ -3321,7 +3323,6 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
 
     def _test_create_subnet(self, network=None, expected=None, **kwargs):
         keys = kwargs.copy()
-        keys.setdefault('cidr', '10.0.0.0/24')
         keys.setdefault('ip_version', constants.IP_VERSION_4)
         keys.setdefault('enable_dhcp', True)
         with self.subnet(network=network, **keys) as subnet:
@@ -4062,6 +4063,7 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
     @testtools.skipIf(tools.is_bsd(), 'bug/1484837')
     def test_create_subnet_ipv6_pd_gw_values(self):
         cidr = constants.PROVISIONAL_IPV6_PD_PREFIX
+        subnetpool_id = constants.IPV6_PD_POOL_ID
         # Gateway is last IP in IPv6 DHCPv6 Stateless subnet
         gateway = '::ffff:ffff:ffff:ffff'
         allocation_pools = [{'start': '::1',
@@ -4069,10 +4071,17 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         expected = {'gateway_ip': gateway,
                     'cidr': cidr,
                     'allocation_pools': allocation_pools}
+        # We do not specify a CIDR in the API call for a PD subnet, as it
+        # is unsupported. Instead we specify the subnetpool_id as
+        # "prefix_delegation" which is what happens via OSC's
+        # --use-prefix-delegation argument. But the expected result is a
+        # subnet object with the "::/64" PD prefix. Same comment applies below.
         self._test_create_subnet(expected=expected, gateway_ip=gateway,
-                                 cidr=cidr, ip_version=constants.IP_VERSION_6,
+                                 cidr=constants.ATTR_NOT_SPECIFIED,
+                                 ip_version=constants.IP_VERSION_6,
                                  ipv6_ra_mode=constants.DHCPV6_STATELESS,
-                                 ipv6_address_mode=constants.DHCPV6_STATELESS)
+                                 ipv6_address_mode=constants.DHCPV6_STATELESS,
+                                 subnetpool_id=subnetpool_id)
         # Gateway is first IP in IPv6 DHCPv6 Stateless subnet
         gateway = '::1'
         allocation_pools = [{'start': '::2',
@@ -4081,18 +4090,22 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                     'cidr': cidr,
                     'allocation_pools': allocation_pools}
         self._test_create_subnet(expected=expected, gateway_ip=gateway,
-                                 cidr=cidr, ip_version=constants.IP_VERSION_6,
+                                 cidr=constants.ATTR_NOT_SPECIFIED,
+                                 ip_version=constants.IP_VERSION_6,
                                  ipv6_ra_mode=constants.DHCPV6_STATELESS,
-                                 ipv6_address_mode=constants.DHCPV6_STATELESS)
+                                 ipv6_address_mode=constants.DHCPV6_STATELESS,
+                                 subnetpool_id=subnetpool_id)
         # If gateway_ip is not specified and the subnet is using prefix
         # delegation, until the CIDR is assigned, this value should be first
         # IP from the subnet
         expected = {'gateway_ip': str(netaddr.IPNetwork(cidr).network),
                     'cidr': cidr}
         self._test_create_subnet(expected=expected,
-                                 cidr=cidr, ip_version=constants.IP_VERSION_6,
+                                 cidr=constants.ATTR_NOT_SPECIFIED,
+                                 ip_version=constants.IP_VERSION_6,
                                  ipv6_ra_mode=constants.IPV6_SLAAC,
-                                 ipv6_address_mode=constants.IPV6_SLAAC)
+                                 ipv6_address_mode=constants.IPV6_SLAAC,
+                                 subnetpool_id=subnetpool_id)
 
     def test_create_subnet_gw_outside_cidr_returns_201(self):
         with self.network() as network:
@@ -4189,14 +4202,21 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
                                  allocation_pools=allocation_pools)
 
     @testtools.skipIf(tools.is_bsd(), 'bug/1484837')
-    def test_create_subnet_with_v6_pd_allocation_pool(self):
+    def test_create_subnet_with_v6_pd_allocation_pool_returns_400(self):
         gateway_ip = '::1'
         cidr = constants.PROVISIONAL_IPV6_PD_PREFIX
         allocation_pools = [{'start': '::2',
                              'end': '::ffff:ffff:ffff:fffe'}]
-        self._test_create_subnet(gateway_ip=gateway_ip,
-                                 cidr=cidr, ip_version=constants.IP_VERSION_6,
-                                 allocation_pools=allocation_pools)
+        # Creating a subnet object with the "::/64" PD prefix is invalid
+        # unless the subnetpool_id is also passed as "prefix_delegation"
+        with testlib_api.ExpectedException(
+                webob.exc.HTTPClientError) as ctx_manager:
+            self._test_create_subnet(gateway_ip=gateway_ip,
+                                     cidr=cidr,
+                                     ip_version=constants.IP_VERSION_6,
+                                     allocation_pools=allocation_pools)
+        self.assertEqual(webob.exc.HTTPClientError.code,
+                         ctx_manager.exception.code)
 
     def test_create_subnet_with_large_allocation_pool(self):
         gateway_ip = '10.0.0.1'
@@ -4407,10 +4427,10 @@ class TestSubnetsV2(NeutronDbPluginV2TestCase):
         for mode, value in modes.items():
             new_subnet[mode] = value
         if expect_success:
-            plugin._validate_subnet(ctx, new_subnet, cur_subnet)
+            plugin._validate_subnet(ctx, new_subnet, cur_subnet, True)
         else:
             self.assertRaises(lib_exc.InvalidInput, plugin._validate_subnet,
-                              ctx, new_subnet, cur_subnet)
+                              ctx, new_subnet, cur_subnet, True)
 
     def test_create_subnet_ipv6_ra_modes(self):
         # Test all RA modes with no address mode specified

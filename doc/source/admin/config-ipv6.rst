@@ -723,18 +723,19 @@ First, create a network and IPv6 subnet:
    +---------------------------+--------------------------------------+
 
    $ openstack subnet create --ip-version 6 --ipv6-ra-mode slaac \
-   --ipv6-address-mode slaac --use-default-subnet-pool \
+   --ipv6-address-mode slaac --use-prefix-delegation \
    --network ipv6-pd ipv6-pd-1
    +------------------------+--------------------------------------+
    | Field                  | Value                                |
    +------------------------+--------------------------------------+
-   | allocation_pools       | ::2-::ffff:ffff:ffff:ffff            |
+   | allocation_pools       | ::1-::ffff:ffff:ffff:ffff            |
    | cidr                   | ::/64                                |
    | created_at             | 2017-01-25T19:31:53Z                 |
    | description            |                                      |
    | dns_nameservers        |                                      |
+   | dns_publish_fixed_ip   | None                                 |
    | enable_dhcp            | True                                 |
-   | gateway_ip             | ::1                                  |
+   | gateway_ip             | ::                                   |
    | headers                |                                      |
    | host_routes            |                                      |
    | id                     | 1319510d-c92c-4532-bf5d-8bcf3da761a1 |
@@ -747,9 +748,8 @@ First, create a network and IPv6 subnet:
    | revision_number        | 2                                    |
    | service_types          |                                      |
    | subnetpool_id          | prefix_delegation                    |
-   | tags                   | []                                   |
+   | tags                   |                                      |
    | updated_at             | 2017-01-25T19:31:53Z                 |
-   | use_default_subnetpool | True                                 |
    +------------------------+--------------------------------------+
 
 The subnet is initially created with a temporary CIDR before one can be
