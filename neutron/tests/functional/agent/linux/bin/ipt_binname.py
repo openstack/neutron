@@ -25,6 +25,7 @@ def print_binary_name():
     # NOTE(yamamoto): Don't move this import to module-level.
     # The aim is to test importing from eventlet non-main thread.
     # See Bug #1367075 for details.
+    # pylint: disable=import-outside-toplevel
     from neutron.agent.linux import iptables_manager
 
     print(iptables_manager.binary_name)
