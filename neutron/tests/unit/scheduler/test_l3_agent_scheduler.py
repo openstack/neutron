@@ -62,10 +62,9 @@ from neutron.tests.unit import testlib_api
 
 # the below code is required for the following reason
 # (as documented in testscenarios)
-"""Multiply tests depending on their 'scenarios' attribute.
-   This can be assigned to 'load_tests' in any test module to make this
-   automatically work across tests in the module.
-"""
+# Multiply tests depending on their 'scenarios' attribute.
+# This can be assigned to 'load_tests' in any test module to make this
+# automatically work across tests in the module.
 load_tests = testscenarios.load_tests_apply_scenarios
 
 HOST_DVR = 'my_l3_host_dvr'
