@@ -276,10 +276,10 @@ class BaseIpRuleTestCase(functional_base.BaseSudoTestCase):
             if all(rule.get(parameter) == value
                    for parameter, value in zip(parameters, values)):
                 return True
-        else:
-            if raise_exception:
-                self.fail('Rule with %s was expected' % exception_string)
-            return False
+
+        if raise_exception:
+            self.fail('Rule with %s was expected' % exception_string)
+        return False
 
 
 class ListIpRulesTestCase(BaseIpRuleTestCase):
