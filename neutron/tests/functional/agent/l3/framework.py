@@ -237,8 +237,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             (fip['id'], constants.FLOATINGIP_STATUS_ACTIVE) for fip in
             router.router[constants.FLOATINGIP_KEY]])
         call = [args[0] for args in rpc.call_args_list][0]
-        actual_fips = set(
-            [(fip_id, status) for fip_id, status in call[2].items()])
+        actual_fips = set(list(call[2].items()))
         self.assertEqual(expected_fips, actual_fips)
 
     def _gateway_check(self, gateway_ip, external_device):

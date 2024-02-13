@@ -351,8 +351,8 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
 
             # Since the virtual parents is a string, representing a list of
             # ports, we should make a set() and compare sets
-            bp_set = {p for p in vp.split(',')}
-            vp_set = {p for p in vparents.split(',')}
+            bp_set = set(vp.split(','))
+            vp_set = set(vparents.split(','))
             return bp_set == vp_set
 
         check = functools.partial(is_port_virtual_parents, port_id, vparents)

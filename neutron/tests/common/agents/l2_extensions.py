@@ -160,7 +160,7 @@ def wait_for_dscp_marked_packet(sender_vm, receiver_vm, dscp_mark):
             return
         tcpdump_stderr_lines.append(line)
 
-    tcpdump_stdout_lines = [line for line in tcpdump_async.iter_stdout()]
+    tcpdump_stdout_lines = list(tcpdump_async.iter_stdout())
     LOG.debug("Captured output lines from tcpdump. Stdout: %s; Stderr: %s",
               tcpdump_stdout_lines, tcpdump_stderr_lines)
 
