@@ -34,57 +34,81 @@ Get Subnet Details Info
 -----------------------
 ::
 
-        changzhi@stack:~/devstack$ neutron subnet-list
-        +--------------------------------------+------+-------------+--------------------------------------------+
-        | id                                   | name | cidr        | allocation_pools                           |
-        +--------------------------------------+------+-------------+--------------------------------------------+
-        | 1a2d261b-b233-3ab9-902e-88576a82afa6 |      | 10.0.0.0/24 | {"start": "10.0.0.2", "end": "10.0.0.254"} |
-        +--------------------------------------+------+-------------+--------------------------------------------+
+    $ openstack subnet list
+    +--------------------------------------+---------+--------------------------------------+-------------+
+    | ID                                   | Name    | Network                              | Subnet      |
+    +--------------------------------------+---------+--------------------------------------+-------------+
+    | 1a2d261b-b233-3ab9-902e-88576a82afa6 | private | a404518c-800d-2353-9193-57dbb42ac5ee | 10.0.0.0/24 |
+    +--------------------------------------+---------+--------------------------------------+-------------+
 
-        changzhi@stack:~/devstack$ neutron subnet-show 1a2d261b-b233-3ab9-902e-88576a82afa6
-        +------------------+--------------------------------------------+
-        | Field            | Value                                      |
-        +------------------+--------------------------------------------+
-        | allocation_pools | {"start": "10.0.0.2", "end": "10.0.0.254"} |
-        | cidr             | 10.0.0.0/24                                |
-        | dns_nameservers  | 1.1.1.1                                    |
-        |                  | 2.2.2.2                                    |
-        |                  | 3.3.3.3                                    |
-        | enable_dhcp      | True                                       |
-        | gateway_ip       | 10.0.0.1                                   |
-        | host_routes      |                                            |
-        | id               | 1a2d26fb-b733-4ab3-992e-88554a87afa6       |
-        | ip_version       | 4                                          |
-        | name             |                                            |
-        | network_id       | a404518c-800d-2353-9193-57dbb42ac5ee       |
-        | tenant_id        | 3868290ab10f417390acbb754160dbb2           |
-        +------------------+--------------------------------------------+
+    $ openstack subnet show 1a2d261b-b233-3ab9-902e-88576a82afa6
+    +----------------------+--------------------------------------+
+    | Field                | Value                                |
+    +----------------------+--------------------------------------+
+    | allocation_pools     | 10.0.0.2-10.0.0.254                  |
+    | cidr                 | 10.0.0.0/24                          |
+    | created_at           | 2024-02-13T21:42:34Z                 |
+    | description          |                                      |
+    | dns_nameservers      | 8.8.4.4, 8.8.8.8                     |
+    | dns_publish_fixed_ip | None                                 |
+    | enable_dhcp          | True                                 |
+    | gateway_ip           | 10.0.0.1                             |
+    | host_routes          |                                      |
+    | id                   | 1a2d26fb-b733-4ab3-992e-88554a87afa6 |
+    | ip_version           | 4                                    |
+    | ipv6_address_mode    | None                                 |
+    | ipv6_ra_mode         | None                                 |
+    | name                 | private                              |
+    | network_id           | a404518c-800d-2353-9193-57dbb42ac5ee |
+    | project_id           | 3868290ab10f417390acbb754160dbb2     |
+    | revision_number      | 0                                    |
+    | segment_id           | None                                 |
+    | service_types        |                                      |
+    | subnetpool_id        |                                      |
+    | tags                 |                                      |
+    | updated_at           | 2024-02-13T21:42:34Z                 |
+    +----------------------+--------------------------------------+
 
 Update Subnet DNS Nameservers
 -----------------------------
+
+.. note::
+
+   ``--no-dns-nameserver`` must be passed to clear the current list,
+   otherwise a conflict will be raised if there are duplicates.
+
 ::
 
-    neutron subnet-update 1a2d261b-b233-3ab9-902e-88576a82afa6 \
-    --dns_nameservers list=true 3.3.3.3 2.2.2.2 1.1.1.1
+    $ openstack subnet set --no-dns-nameserver --dns-nameserver 8.8.8.8 \
+      --dns-nameserver 8.8.4.4 1a2d261b-b233-3ab9-902e-88576a82afa6
 
-    changzhi@stack:~/devstack$ neutron subnet-show 1a2d261b-b233-3ab9-902e-88576a82afa6
-    +------------------+--------------------------------------------+
-    | Field            | Value                                      |
-    +------------------+--------------------------------------------+
-    | allocation_pools | {"start": "10.0.0.2", "end": "10.0.0.254"} |
-    | cidr             | 10.0.0.0/24                                |
-    | dns_nameservers  | 3.3.3.3                                    |
-    |                  | 2.2.2.2                                    |
-    |                  | 1.1.1.1                                    |
-    | enable_dhcp      | True                                       |
-    | gateway_ip       | 10.0.0.1                                   |
-    | host_routes      |                                            |
-    | id               | 1a2d26fb-b733-4ab3-992e-88554a87afa6       |
-    | ip_version       | 4                                          |
-    | name             |                                            |
-    | network_id       | a404518c-800d-2353-9193-57dbb42ac5ee       |
-    | tenant_id        | 3868290ab10f417390acbb754160dbb2           |
-    +------------------+--------------------------------------------+
+    $ openstack subnet show 1a2d261b-b233-3ab9-902e-88576a82afa6
+    +----------------------+--------------------------------------+
+    | Field                | Value                                |
+    +----------------------+--------------------------------------+
+    | allocation_pools     | 10.0.0.2-10.0.0.254                  |
+    | cidr                 | 10.0.0.0/24                          |
+    | created_at           | 2024-02-13T21:42:34Z                 |
+    | description          |                                      |
+    | dns_nameservers      | 8.8.8.8, 8.8.4.4                     |
+    | dns_publish_fixed_ip | None                                 |
+    | enable_dhcp          | True                                 |
+    | gateway_ip           | 10.0.0.1                             |
+    | host_routes          |                                      |
+    | id                   | 1a2d26fb-b733-4ab3-992e-88554a87afa6 |
+    | ip_version           | 4                                    |
+    | ipv6_address_mode    | None                                 |
+    | ipv6_ra_mode         | None                                 |
+    | name                 | private                              |
+    | network_id           | a404518c-800d-2353-9193-57dbb42ac5ee |
+    | project_id           | 3868290ab10f417390acbb754160dbb2     |
+    | revision_number      | 1                                    |
+    | segment_id           | None                                 |
+    | service_types        |                                      |
+    | subnetpool_id        |                                      |
+    | tags                 |                                      |
+    | updated_at           | 2024-02-13T21:42:34Z                 |
+    +----------------------+--------------------------------------+
 
 As shown in above output, the order of the DNS nameservers has been updated.
 New virtual machines deployed to this subnet will receive the DNS nameservers

@@ -102,8 +102,7 @@ Let's add a DHCP option to a Neutron port:
 
 .. code-block:: bash
 
-    $ neutron port-update --extra-dhcp-opt opt_name='server-ip-address',opt_value='10.0.0.1' b4c3f265-369e-4bf5-8789-7caa9a1efb9c
-    Updated port: b4c3f265-369e-4bf5-8789-7caa9a1efb9c
+    $ openstack port set --extra-dhcp-option name='server-ip-address',value='10.0.0.1' b4c3f265-369e-4bf5-8789-7caa9a1efb9c
 
 .. end
 
