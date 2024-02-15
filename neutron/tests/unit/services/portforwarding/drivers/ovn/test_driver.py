@@ -450,6 +450,48 @@ class TestOVNPortForwardingHandler(TestOVNPortForwardingBase):
         self.l3_plugin._nb_ovn.lb_del.assert_called_once_with(
             exp_lb_name, exp_vip, if_exists=mock.ANY)
 
+    @mock.patch.object(port_forwarding.LOG, 'warning')
+    def test__validate_router_networks_provider_networks(self, mock_warning):
+        lr_ports = [
+            mock.MagicMock(external_ids={
+                ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY: 'neutron-ext-net-id',
+                ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'True'}),
+            mock.MagicMock(external_ids={
+                ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY: 'neutron-net-id',
+                ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'False'})]
+        lr_mock = mock.MagicMock(ports=lr_ports)
+        ovn_nb_mock = mock.Mock()
+        ovn_nb_mock.get_lrouter.return_value = lr_mock
+        with mock.patch.object(
+                ovn_conf, 'is_ovn_distributed_floating_ip',
+                return_value=True), mock.patch.object(
+                    ovn_utils, 'is_provider_network',
+                    return_value=True):
+            self.handler._validate_router_networks(
+                ovn_nb_mock, 'router-id')
+        self.assertEqual(1, mock_warning.call_count)
+
+    @mock.patch.object(port_forwarding.LOG, 'warning')
+    def test__validate_router_networks_tunnel_networks(self, mock_warning):
+        lr_ports = [
+            mock.MagicMock(external_ids={
+                ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY: 'neutron-ext-net-id',
+                ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'True'}),
+            mock.MagicMock(external_ids={
+                ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY: 'neutron-net-id',
+                ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'False'})]
+        lr_mock = mock.MagicMock(ports=lr_ports)
+        ovn_nb_mock = mock.Mock()
+        ovn_nb_mock.get_lrouter.return_value = lr_mock
+        with mock.patch.object(
+                ovn_conf, 'is_ovn_distributed_floating_ip',
+                return_value=True), mock.patch.object(
+                    ovn_utils, 'is_provider_network',
+                    return_value=False):
+            self.handler._validate_router_networks(
+                ovn_nb_mock, 'router-id')
+        mock_warning.assert_not_called()
+
 
 class TestOVNPortForwarding(TestOVNPortForwardingBase):
     def setUp(self):
