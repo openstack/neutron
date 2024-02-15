@@ -1,0 +1,17 @@
+---
+other:
+  - |
+    When the following configuration is enabled at the same time:
+
+    * OVN L3 service plugin (``ovn-router``)
+    * Port forwarding service plugin (``port_forwarding``)
+    * "vlan" or "flat" network types configured in the ML2 configuration
+      variable ``tenant_network_types``
+    * The OVN floating IP traffic is distributed
+      (``enable_distributed_floating_ip`` = ``True``)
+
+    the Neutron server will report a warning during plugin initialization
+    because this is an invalid configuration matrix. Floating IPs need to
+    always be centralized in such a case.
+    For more details see `bug report
+    <https://bugs.launchpad.net/neutron/+bug/2028846>`_.
