@@ -56,6 +56,17 @@ at [1]_.
 
   The NDP proxy functionality for IPv6 addresses is not supported by OVN.
 
+* Floating IP Port Forwarding in provider networks and with distributed routing
+
+  Currently, when provider network types like ``vlan`` or ``flat`` are plugged
+  to a router as internal networks while the ``enable_distributed_floating_ip``
+  configuration option is enabled, Floating IP port forwardings
+  which are using such router will not work properly.
+  Due to an incompatible setting of the router to make traffic in the vlan/flat
+  networks to be distributed but port forwardings are always centralized in
+  ML2/OVN backend.
+  This is being reported in [9]_.
+
 References
 ----------
 
@@ -67,3 +78,4 @@ References
 .. [6] https://bugs.launchpad.net/neutron/+bug/1926515
 .. [7] https://review.opendev.org/c/openstack/neutron/+/788594
 .. [8] https://docs.openstack.org/neutron/latest/admin/config-dns-res.html
+.. [9] https://bugs.launchpad.net/neutron/+bug/2028846
