@@ -27,6 +27,10 @@ from sqlalchemy import or_
 
 from neutron._i18n import _
 from neutron.cmd.upgrade_checks import base
+from neutron.common.ovn import exceptions as ovn_exc
+from neutron.common.ovn import utils as ovn_utils
+from neutron.conf.plugins.ml2 import config as ml2_conf
+from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.conf import service as conf_service
 from neutron.db.extra_dhcp_opt import models as extra_dhcp_opt_models
 from neutron.db.models import agent as agent_model
@@ -179,6 +183,8 @@ class CoreChecks(base.BaseChecks):
              self.floatingip_inherit_qos_from_network),
             (_('Port extra DHCP options check'),
              self.extra_dhcp_options_check),
+            (_('Floating IP Port forwarding and OVN L3 plugin configuration'),
+             self.ovn_port_forwarding_configuration_check),
         ]
 
     @staticmethod
@@ -515,3 +521,28 @@ class CoreChecks(base.BaseChecks):
             upgradecheck.Code.SUCCESS,
             _('There are no extra_dhcp_opts with the newline character '
               'in the option name or option value.'))
+
+    @staticmethod
+    def ovn_port_forwarding_configuration_check(checker):
+        ovn_l3_plugin_names = [
+            'ovn-router',
+            'neutron.services.ovn_l3.plugin.OVNL3RouterPlugin']
+        if not any(plugin in ovn_l3_plugin_names
+                   for plugin in cfg.CONF.service_plugins):
+            return upgradecheck.Result(
+                upgradecheck.Code.SUCCESS, _('No OVN L3 plugin enabled.'))
+
+        ml2_conf.register_ml2_plugin_opts()
+        ovn_conf.register_opts()
+        try:
+            ovn_utils.validate_port_forwarding_configuration()
+            return upgradecheck.Result(
+                upgradecheck.Code.SUCCESS,
+                _('OVN L3 plugin and Port Forwarding configuration are fine.'))
+        except ovn_exc.InvalidPortForwardingConfiguration:
+            return upgradecheck.Result(
+                upgradecheck.Code.WARNING,
+                _('Neutron configuration is invalid. Port forwardings '
+                  'can not be used with ML2/OVN backend, distributed '
+                  'floating IPs and provider network type(s) used as '
+                  'tenant networks.'))
