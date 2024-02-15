@@ -679,6 +679,15 @@ def is_gateway_chassis_invalid(chassis_name, gw_chassis,
 
 
 def is_provider_network(network):
+    """Check if given network is provider network
+    :param network: (str, dict) it can be given as network object or as string
+                    with network ID only. In the latter case, network object
+                    will be loaded from the database
+    """
+    if isinstance(network, str):
+        ctx = n_context.get_admin_context()
+        plugin = directory.get_plugin()
+        network = plugin.get_network(ctx, network)
     return network.get(provider_net.PHYSICAL_NETWORK, False)
 
 

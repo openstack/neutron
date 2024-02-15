@@ -937,6 +937,70 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
                                     ('type', constants.LSP_TYPE_VIRTUAL))]
         nb_idl.db_set.assert_has_calls(expected_calls)
 
+    def test_add_gw_port_info_to_logical_router_port(self):
+        nb_idl = self.fake_ovn_client._nb_idl
+        ext_net_id = uuidutils.generate_uuid()
+        internal_net_id = uuidutils.generate_uuid()
+        routers_db = [{
+            'id': uuidutils.generate_uuid(),
+            'external_gateways': [{'network_id': ext_net_id}]}]
+        ext_gw_lrp = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'external_ids': {
+                constants.OVN_NETWORK_NAME_EXT_ID_KEY:
+                    'neutron-{}'.format(ext_net_id)}})
+        internal_net_lrp = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'external_ids': {
+                constants.OVN_NETWORK_NAME_EXT_ID_KEY:
+                    'neutron-{}'.format(internal_net_id)}})
+        fake_router = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={
+                'ports': [ext_gw_lrp, internal_net_lrp]})
+
+        expected_new_ext_gw_lrp_ids = ext_gw_lrp.external_ids
+        expected_new_ext_gw_lrp_ids[constants.OVN_ROUTER_IS_EXT_GW] = 'True'
+        expected_new_internal_lrp_ids = internal_net_lrp.external_ids
+        expected_new_internal_lrp_ids[constants.OVN_ROUTER_IS_EXT_GW] = 'False'
+
+        self.fake_ovn_client._l3_plugin.get_routers.return_value = routers_db
+        nb_idl.get_lrouter.return_value = fake_router
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.periodic.add_gw_port_info_to_logical_router_port)
+        nb_idl.update_lrouter_port.assert_has_calls([
+            mock.call(name=ext_gw_lrp.name,
+                      external_ids=expected_new_ext_gw_lrp_ids),
+            mock.call(name=internal_net_lrp.name,
+                      external_ids=expected_new_internal_lrp_ids)],
+            any_order=True)
+
+    def test_add_gw_port_info_to_logical_router_port_no_action_needed(self):
+        nb_idl = self.fake_ovn_client._nb_idl
+        ext_net_id = uuidutils.generate_uuid()
+        internal_net_id = uuidutils.generate_uuid()
+        routers_db = [{
+            'id': uuidutils.generate_uuid(),
+            'external_gateways': [{'network_id': ext_net_id}]}]
+        ext_gw_lrp = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'external_ids': {
+                constants.OVN_NETWORK_NAME_EXT_ID_KEY:
+                    'neutron-{}'.format(ext_net_id),
+                constants.OVN_ROUTER_IS_EXT_GW: 'True'}})
+        internal_net_lrp = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'external_ids': {
+                constants.OVN_NETWORK_NAME_EXT_ID_KEY:
+                    'neutron-{}'.format(internal_net_id),
+                constants.OVN_ROUTER_IS_EXT_GW: 'False'}})
+        fake_router = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={
+                'ports': [ext_gw_lrp, internal_net_lrp]})
+
+        self.fake_ovn_client._l3_plugin.get_routers.return_value = routers_db
+        nb_idl.get_lrouter.return_value = fake_router
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.periodic.add_gw_port_info_to_logical_router_port)
+        nb_idl.update_lrouter_port.assert_not_called()
+
     def test_check_router_default_route_empty_dst_ip(self):
         nb_idl = self.fake_ovn_client._nb_idl
         route0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
