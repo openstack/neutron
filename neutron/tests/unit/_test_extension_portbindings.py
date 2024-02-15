@@ -87,7 +87,7 @@ class PortBindingsTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def _test_create_port_binding_profile(self, profile):
         profile_arg = {portbindings.PROFILE: profile}
-        with self.port(is_admin=True,
+        with self.port(is_service=True,
                        arg_list=(portbindings.PROFILE,),
                        **profile_arg) as port:
             port_id = port['port']['id']
@@ -107,7 +107,7 @@ class PortBindingsTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             self._check_port_binding_profile(port['port'])
             port_id = port['port']['id']
             port = self._update('ports', port_id, {'port': profile_arg},
-                                as_admin=True)['port']
+                                as_service=True)['port']
             self._check_port_binding_profile(port, profile)
             port = self._show('ports', port_id, as_admin=True)['port']
             self._check_port_binding_profile(port, profile)

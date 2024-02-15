@@ -1,0 +1,4 @@
+---
+# Those are API policy rule overwritten to use in the fullstack tests only
+"create_port:binding:profile": "rule:admin_only or rule:service_api"
+"update_port:binding:profile": "rule:admin_only or rule:service_api"

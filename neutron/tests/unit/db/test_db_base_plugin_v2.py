@@ -262,11 +262,12 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
     def _service_req(self, method, resource, data=None, fmt=None, id=None,
                      params=None, action=None, subresource=None, sub_id=None,
-                     ctx=None, headers=None):
+                     ctx=None, headers=None, tenant_id=None):
+        tenant_id = tenant_id or 'service-project'
         req = self._req(method, resource, data, fmt, id, params, action,
                         subresource, sub_id, ctx, headers)
         req.environ['neutron.context'] = context.Context(
-            'service-user', 'service-project', roles=['service'])
+            'service-user', tenant_id, roles=['service'])
         return req
 
     def _member_req(self, method, resource, data=None, fmt=None, id=None,
@@ -291,10 +292,14 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
     def new_create_request(self, resource, data, fmt=None, id=None,
                            subresource=None, context=None, tenant_id=None,
-                           as_admin=False):
+                           as_admin=False, as_service=False):
         tenant_id = tenant_id or self._tenant_id
         if as_admin:
             return self._admin_req(
+                'POST', resource, data, fmt, id=id,
+                subresource=subresource, ctx=context, tenant_id=tenant_id)
+        elif as_service:
+            return self._service_req(
                 'POST', resource, data, fmt, id=id,
                 subresource=subresource, ctx=context, tenant_id=tenant_id)
         return self._member_req('POST', resource, data, fmt, id=id,
@@ -345,7 +350,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
     def new_update_request(self, resource, data, id, fmt=None,
                            subresource=None, context=None, sub_id=None,
-                           headers=None, as_admin=False, tenant_id=None):
+                           headers=None, as_admin=False, as_service=False,
+                           tenant_id=None):
         tenant_id = tenant_id or self._tenant_id
         if as_admin:
             return self._admin_req(
@@ -353,6 +359,10 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                 sub_id=sub_id, ctx=context, headers=headers,
                 tenant_id=tenant_id
             )
+        elif as_service:
+            return self._service_req(
+                'PUT', resource, data, fmt, id=id,
+                subresource=subresource, ctx=context, tenant_id=tenant_id)
         return self._member_req(
             'PUT', resource, data, fmt, id=id, subresource=subresource,
             sub_id=sub_id, ctx=context, headers=headers, tenant_id=tenant_id
@@ -407,7 +417,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         return req.get_response(self.api)
 
     def _create_bulk(self, fmt, number, resource, data, name='test',
-                     tenant_id=None, as_admin=False, **kwargs):
+                     tenant_id=None, as_admin=False, as_service=False,
+                     **kwargs):
         """Creates a bulk request for any kind of resource."""
         tenant_id = tenant_id or self._tenant_id
         objects = []
@@ -421,7 +432,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         req_data = {collection: objects}
         req = self.new_create_request(collection, req_data, fmt,
                                       tenant_id=tenant_id,
-                                      as_admin=as_admin)
+                                      as_admin=as_admin,
+                                      as_service=as_service)
         return req.get_response(self.api)
 
     def _create_network(self, fmt, name, admin_state_up,
@@ -517,7 +529,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         return subnetpool_res
 
     def _create_port(self, fmt, net_id, expected_res_status=None,
-                     arg_list=None, is_admin=False,
+                     arg_list=None, is_admin=False, is_service=False,
                      tenant_id=None, **kwargs):
         tenant_id = tenant_id or self._tenant_id
         data = {'port': {'network_id': net_id,
@@ -541,7 +553,8 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
             data['port']['device_id'] = device_id
         port_req = self.new_create_request('ports', data, fmt,
                                            tenant_id=tenant_id,
-                                           as_admin=is_admin)
+                                           as_admin=is_admin,
+                                           as_service=is_service)
 
         port_res = port_req.get_response(self.api)
         if expected_res_status:
@@ -564,12 +577,12 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
     def _create_port_bulk(self, fmt, number, net_id, name,
                           admin_state_up, tenant_id=None, as_admin=False,
-                          **kwargs):
+                          as_service=False, **kwargs):
         base_data = {'port': {'network_id': net_id,
                               'admin_state_up': admin_state_up}}
         return self._create_bulk(fmt, number, 'port', base_data,
                                  tenant_id=tenant_id, as_admin=as_admin,
-                                 **kwargs)
+                                 as_service=as_service, **kwargs)
 
     def _make_network(self, fmt, name, admin_state_up, as_admin=False,
                       **kwargs):
@@ -732,10 +745,11 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
 
     def _update(self, resource, id, new_data,
                 expected_code=webob.exc.HTTPOk.code, headers=None,
-                request_tenant_id=None, as_admin=False):
+                request_tenant_id=None, as_admin=False, as_service=False):
         req = self.new_update_request(
             resource, new_data, id, headers=headers,
-            tenant_id=request_tenant_id, as_admin=as_admin)
+            tenant_id=request_tenant_id, as_admin=as_admin,
+            as_service=as_service)
         res = req.get_response(self._api_for_resource(resource))
         self.assertEqual(expected_code, res.status_int)
         return self.deserialize(self.fmt, res)

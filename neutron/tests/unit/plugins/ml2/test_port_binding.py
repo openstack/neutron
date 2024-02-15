@@ -716,7 +716,7 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
                 mechanism_test.TestMechanismDriver, '_check_port_context'
         ):
             req = self.new_update_request('ports', update_body, port_id,
-                                          as_admin=True)
+                                          as_service=True)
             self.assertEqual(200, req.get_response(self.api).status_int)
 
     def test_bind_non_pf_port_with_mac_port_not_updated(self):
@@ -857,7 +857,7 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
                 mechanism_test.TestMechanismDriver, '_check_port_context'
         ):
             req = self.new_update_request('ports', update_body, port['id'],
-                                          as_admin=True)
+                                          as_service=True)
             self.assertEqual(200, req.get_response(self.api).status_int)
 
         # Neutron expected to reset the MAC to a generated one so that the
