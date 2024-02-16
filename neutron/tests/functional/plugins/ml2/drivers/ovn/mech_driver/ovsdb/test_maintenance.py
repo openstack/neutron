@@ -26,11 +26,13 @@ from neutron_lib.callbacks import registry
 from neutron_lib import constants as n_const
 from neutron_lib import context as n_context
 from neutron_lib.exceptions import l3 as lib_l3_exc
+from oslo_utils import uuidutils
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as ovn_config
 from neutron.db import ovn_revision_numbers_db as db_rev
+from neutron.objects import servicetype as servicetype_obj
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import maintenance
 from neutron.services.portforwarding import constants as pf_consts
 from neutron.tests.functional import base
@@ -1161,6 +1163,32 @@ class TestMaintenance(_TestMaintenanceHelper):
             self.assertNotEqual([], fip_rule['gateway_port'])
         else:
             self.assertNotIn('gateway_port', fip_rule)
+
+    def test_add_provider_resource_association_to_routers(self):
+        provider_name = 'ovn'
+        router1 = self._create_router(uuidutils.generate_uuid())
+        router2 = self._create_router(uuidutils.generate_uuid())
+
+        # NOTE(ralonsoh): now each Neutron router will create a
+        # ``ProviderResourceAssociation`` register. In order to be able to test
+        # the maintenance method, the router2 ``ProviderResourceAssociation``
+        # register is deleted.
+        servicetype_obj.ProviderResourceAssociation.delete_objects(
+            self.context, resource_id=router2['id'])
+        pra_list = servicetype_obj.ProviderResourceAssociation.get_objects(
+            self.context, provider_name=provider_name)
+        pra_res_ids = set(pra.resource_id for pra in pra_list)
+        self.assertIn(router1['id'], pra_res_ids)
+        self.assertNotIn(router2['id'], pra_res_ids)
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.maint.add_provider_resource_association_to_routers)
+        pra_list = servicetype_obj.ProviderResourceAssociation.get_objects(
+            self.context, provider_name=provider_name)
+        pra_res_ids = set(pra.resource_id for pra in pra_list)
+        self.assertIn(router1['id'], pra_res_ids)
+        self.assertIn(router2['id'], pra_res_ids)
 
 
 class TestLogMaintenance(_TestMaintenanceHelper,
