@@ -669,10 +669,7 @@ def is_gateway_chassis_invalid(chassis_name, gw_chassis,
     @type     chassis_with_azs: {}
     @return   Boolean
     """
-
-    if chassis_name == constants.OVN_GATEWAY_INVALID_CHASSIS:
-        return True
-    elif chassis_name not in chassis_physnets:
+    if chassis_name not in chassis_physnets:
         return True
     elif physnet and physnet not in chassis_physnets.get(chassis_name):
         return True

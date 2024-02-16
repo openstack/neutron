@@ -1,0 +1,13 @@
+---
+other:
+  - |
+    The artifact of creating a gateway chassis called
+    "neutron-ovn-invalid-chassis" when a "Logical_Router_Port" cannot be
+    assigned to any chassis is removed. Now no gateway chassis is created and
+    the "Logical_Router_Port" field will be empty.
+upgrade:
+  - |
+    Any "Logical_Router_Port" with a gateway chassis named
+    "neutron-ovn-invalid-chassis" will be updated and this chassis will be
+    deleted. An unhosted (unbound) "Logical_Router_Port" will have no gateway
+    assigned.

@@ -181,8 +181,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
              'external_ids': {ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'lr-id-a',
                               ovn_const.OVN_ROUTER_IS_EXT_GW: str(True)},
              'networks': ['10.0.3.0/24'],
-             'options': {ovn_const.OVN_GATEWAY_CHASSIS_KEY:
-                         ovn_const.OVN_GATEWAY_INVALID_CHASSIS}},
+             'options': {ovn_const.OVN_GATEWAY_CHASSIS_KEY: None}},
             {'name': 'xrp-id-b1',
              'external_ids': {}, 'networks': ['20.0.1.0/24']},
             {'name': utils.ovn_lrouter_port_name('orp-id-b2'),
@@ -627,8 +626,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         expected = {'host-1': [utils.ovn_lrouter_port_name('orp-id-a1'),
                                utils.ovn_lrouter_port_name('orp-id-a2')],
                     'host-2': [utils.ovn_lrouter_port_name('orp-id-b2')],
-                    ovn_const.OVN_GATEWAY_INVALID_CHASSIS: [
-                        utils.ovn_name('orp-id-a3')]}
+                    }
         self.assertCountEqual(bindings, expected)
 
         bindings = self.nb_ovn_idl.get_all_chassis_gateway_bindings([])
@@ -654,7 +652,7 @@ class TestNBImplIdlOvn(TestDBImplIdlOvn):
         self.assertEqual(chassis, ['host-2'])
         chassis = self.nb_ovn_idl.get_gateway_chassis_binding(
             utils.ovn_lrouter_port_name('orp-id-a3'))
-        self.assertEqual(chassis, ['neutron-ovn-invalid-chassis'])
+        self.assertEqual([], chassis)
         chassis = self.nb_ovn_idl.get_gateway_chassis_binding(
             utils.ovn_lrouter_port_name('orp-id-b3'))
         self.assertEqual([], chassis)

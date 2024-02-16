@@ -47,7 +47,7 @@ class OVNGatewayScheduler(object, metaclass=abc.ABCMeta):
                                 physnet, chassis_physnets,
                                 existing_chassis, az_hints, chassis_with_azs):
         chassis_list = copy.copy(existing_chassis)
-        for chassis_name in existing_chassis:
+        for chassis_name in existing_chassis or []:
             if utils.is_gateway_chassis_invalid(chassis_name, gw_chassis,
                                                 physnet, chassis_physnets,
                                                 az_hints, chassis_with_azs):
@@ -73,7 +73,7 @@ class OVNGatewayScheduler(object, metaclass=abc.ABCMeta):
         if not candidates:
             LOG.warning('Gateway %s was not scheduled on any chassis, no '
                         'candidates are available', gateway_name)
-            return [ovn_const.OVN_GATEWAY_INVALID_CHASSIS]
+            return
         chassis_count = min(
             ovn_const.MAX_GW_CHASSIS - len(existing_chassis),
             len(candidates)
@@ -97,8 +97,7 @@ class OVNGatewayScheduler(object, metaclass=abc.ABCMeta):
         azs = set()
 
         # Check if candidates list valid
-        if not candidates or (
-                candidates == [ovn_const.OVN_GATEWAY_INVALID_CHASSIS]):
+        if not candidates:
             return candidates
 
         chassis_with_azs = sb_idl.get_chassis_and_azs()

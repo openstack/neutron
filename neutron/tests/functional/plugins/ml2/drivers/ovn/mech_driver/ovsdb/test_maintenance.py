@@ -175,9 +175,9 @@ class _TestMaintenanceHelper(base.TestOVNFunctionalBase):
         res = req.get_response(self.api)
         return self.deserialize(self.fmt, res)['router']
 
-    def _update_router_name(self, net_id, new_name):
-        data = {'router': {'name': new_name}}
-        req = self.new_update_request('routers', data, net_id, self.fmt)
+    def _update_router(self, router_id, router_dict):
+        data = {'router': router_dict}
+        req = self.new_update_request('routers', data, router_id, self.fmt)
         res = req.get_response(self.api)
         return self.deserialize(self.fmt, res)['router']
 
@@ -591,8 +591,8 @@ class TestMaintenance(_TestMaintenanceHelper):
 
         new_obj_name = 'routertest_updated'
         with mock.patch.object(self._l3_ovn_client, 'update_router'):
-            new_neutron_obj = self._update_router_name(neutron_obj['id'],
-                                                       new_obj_name)
+            new_neutron_obj = self._update_router(neutron_obj['id'],
+                                                  {'name': new_obj_name})
 
         # Assert the revision numbers are out-of-sync
         ovn_obj = self._find_router_row_by_name(obj_name)
@@ -1189,6 +1189,36 @@ class TestMaintenance(_TestMaintenanceHelper):
         pra_res_ids = set(pra.resource_id for pra in pra_list)
         self.assertIn(router1['id'], pra_res_ids)
         self.assertIn(router2['id'], pra_res_ids)
+
+    def test_remove_invalid_gateway_chassis_from_unbound_lrp(self):
+        net1 = self._create_network(uuidutils.generate_uuid(), external=True)
+        subnet1 = self._create_subnet(uuidutils.generate_uuid(), net1['id'])
+        external_gateway_info = {
+            'enable_snat': True, 'network_id': net1['id'],
+            'external_fixed_ips': [{'ip_address': '10.0.0.2',
+                                    'subnet_id': subnet1['id']}]}
+        router = self._create_router(
+            uuidutils.generate_uuid(),
+            external_gateway_info=external_gateway_info)
+
+        # Manually add the LRP.gateway_chassis with name
+        # 'neutron-ovn-invalid-chassis'
+        lr = self.nb_api.lookup('Logical_Router', utils.ovn_name(router['id']))
+        lrp = lr.ports[0]
+        self.nb_api.lrp_set_gateway_chassis(
+            lrp.uuid, 'neutron-ovn-invalid-chassis').execute(check_error=True)
+        gc = self.nb_api.db_find_rows(
+            'Gateway_Chassis',
+            ('chassis_name', '=', 'neutron-ovn-invalid-chassis')).execute(
+            check_error=True)[0]
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.maint.remove_invalid_gateway_chassis_from_unbound_lrp)
+        self.assertIsNone(self.nb_api.lookup('Gateway_Chassis', gc.uuid,
+                                             default=None))
+        lr = self.nb_api.lookup('Logical_Router', utils.ovn_name(router['id']))
+        self.assertEqual([], lr.ports[0].gateway_chassis)
 
 
 class TestLogMaintenance(_TestMaintenanceHelper,

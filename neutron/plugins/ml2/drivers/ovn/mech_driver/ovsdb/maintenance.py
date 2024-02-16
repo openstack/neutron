@@ -29,6 +29,7 @@ from neutron_lib.exceptions import l3 as l3_exc
 from oslo_config import cfg
 from oslo_log import log
 from oslo_serialization import jsonutils
+from oslo_utils import strutils
 from oslo_utils import timeutils
 from ovsdbapp.backend.ovs_idl import event as row_event
 
@@ -1201,6 +1202,29 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                     servicetype_obj.ProviderResourceAssociation(
                         context, provider_name=provider_name,
                         resource_id=router_id).create()
+
+        raise periodics.NeverAgain()
+
+    # TODO(ralonsoh): Remove this method in the C+2 cycle (next SLURP release)
+    @has_lock_periodic(spacing=600, run_immediately=True)
+    def remove_invalid_gateway_chassis_from_unbound_lrp(self):
+        """Removes all invalid 'Gateway_Chassis' from unbound LRPs"""
+        is_gw = ovn_const.OVN_ROUTER_IS_EXT_GW
+        lrp_list = []
+        for lr in self._nb_idl.lr_list().execute(check_error=True):
+            for lrp in self._nb_idl.lrp_list(lr.uuid).execute(
+                    check_error=True):
+                if (is_gw in lrp.external_ids and
+                        strutils.bool_from_string(lrp.external_ids[is_gw]) and
+                        lrp.gateway_chassis and
+                        lrp.gateway_chassis[0].chassis_name ==
+                        'neutron-ovn-invalid-chassis'):
+                    lrp_list.append(lrp)
+
+        with self._nb_idl.transaction(check_error=True) as txn:
+            for lrp in lrp_list:
+                txn.add(self._nb_idl.lrp_del_gateway_chassis(
+                    lrp.uuid, 'neutron-ovn-invalid-chassis'))
 
         raise periodics.NeverAgain()
 
