@@ -584,11 +584,13 @@ class _TestWalkMigrations(object):
         url_str = render_url_str(engine.url)
         config = self._get_alembic_config(url_str)
         revisions = self._revisions()
+        upgrade_dest = None
         for dest, curr in revisions:
             self._migrate_up(config, engine, dest, curr)
+            upgrade_dest = dest
 
-        if dest:
-            migration.do_alembic_command(config, 'upgrade', dest)
+        if upgrade_dest:
+            migration.do_alembic_command(config, 'upgrade', upgrade_dest)
 
 
 class TestWalkMigrationsMySQL(testlib_api.MySQLTestCaseMixin,
