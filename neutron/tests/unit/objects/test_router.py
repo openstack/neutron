@@ -341,9 +341,8 @@ class FloatingIPDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
 
     def test_get_scoped_floating_ips(self):
         def compare_results(router_ids, original_fips, host=None):
-            fips_scope = [fip for fip in
-                          router.FloatingIP.get_scoped_floating_ips(
-                              self.context, router_ids, host=host)]
+            fips_scope = list(router.FloatingIP.get_scoped_floating_ips(
+                              self.context, router_ids, host=host))
             fip_ids = [fip[0].id for fip in fips_scope]
             as_ids = {fip[1] for fip in fips_scope}
             self.assertCountEqual(original_fips, fip_ids)

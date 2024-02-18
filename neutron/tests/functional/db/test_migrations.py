@@ -514,8 +514,7 @@ class TestWalkDowngrade(oslotest_base.BaseTestCase):
     def test_no_downgrade(self):
         script_dir = alembic_script.ScriptDirectory.from_config(
             self.alembic_config)
-        versions = [v for v in script_dir.walk_revisions(base='base',
-                                                         head='heads')]
+        versions = list(script_dir.walk_revisions(base='base', head='heads'))
         failed_revisions = []
         for version in versions:
             if hasattr(version.module, 'downgrade'):
