@@ -36,12 +36,12 @@ are overridden. In order to map the port DHCP_Options row with the port,
 the OVN ML2 driver stores both the subnet id and port id in the 'external_ids'
 column.
 
-If admin wants to disable native OVN DHCPv4 for any particular port, then the
-admin needs to define the 'dhcp_disabled' with the value 'true' in the extra
-DHCP options.
+If an admin wants to disable native OVN DHCPv4 for any particular port, then
+the admin needs to define the 'dhcp_disabled' with the value 'true' in the
+extra DHCP options.
 
-Ex. neutron port-update <PORT_ID> \
---extra-dhcp-opt ip_version=4, opt_name=dhcp_disabled, opt_value=false
+Ex. openstack port set \
+--extra-dhcp-option name='dhcp_disabled',value=true,ip-version=4 <PORT_ID>
 
 
 DHCPv6
