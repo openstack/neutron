@@ -662,6 +662,53 @@ class FIPAddDeleteEvent(row_event.RowEvent):
         self.driver.delete_mac_binding_entries(row.external_ip)
 
 
+class HAChassisGroupRouterEvent(row_event.RowEvent):
+    """Row update event - the HA_Chassis list changes in a router HCG
+
+    When the HA_Chassis list changes (a chassis has been added, deleted or
+    updated), those routers with a HA_Chassis_Group related should update the
+    "LR.options.chassis" value.
+    """
+    def __init__(self, driver):
+        self.driver = driver
+        table = 'HA_Chassis_Group'
+        events = (self.ROW_UPDATE,)
+        super().__init__(events, table, None)
+        self.event_name = 'HAChassisGroupRouterEvent'
+
+    def match_fn(self, event, row, old):
+        if ovn_const.OVN_ROUTER_ID_EXT_ID_KEY not in row.external_ids:
+            # "HA_Chassis_Group" not assigned to a router.
+            return False
+        elif getattr(old, 'ha_chassis', None) is None:
+            # No changes in the "ha_chassis" list has been done.
+            return False
+
+        return True
+
+    def run(self, event, row, old):
+        router_id = row.external_ids[ovn_const.OVN_ROUTER_ID_EXT_ID_KEY]
+        router_name = utils.ovn_name(router_id)
+        if not row.ha_chassis:
+            # No GW chassis are present in the environment.
+            self.driver.nb_ovn.db_remove(
+                'Logical_Router', router_name, 'options', 'chassis',
+                if_exists=True).execute(check_error=True)
+            LOG.info('Router %s is not pinned to any gateway chassis',
+                     router_id)
+            return
+
+        highest_prio_hc = None
+        for hc in row.ha_chassis:
+            if not highest_prio_hc or hc.priority > highest_prio_hc.priority:
+                highest_prio_hc = hc
+
+        options = {'chassis': highest_prio_hc.chassis_name}
+        self.driver.nb_ovn.db_set(
+            'Logical_Router', router_name, ('options', options)).execute(
+            check_error=True)
+
+
 class OvnDbNotifyHandler(row_event.RowEventHandler):
     def __init__(self, driver):
         self.driver = driver
@@ -815,12 +862,14 @@ class OvnNbIdl(OvnIdlDistributedLock):
         self._lsp_lrp_event = (
             LogicalSwitchPortUpdateLogicalRouterPortEvent(driver))
         self._fip_create_delete_event = FIPAddDeleteEvent(driver)
+        self._ha_chassis_group_event = HAChassisGroupRouterEvent(driver)
 
         self.notify_handler.watch_events([self._lsp_create_event,
                                           self._lsp_update_up_event,
                                           self._lsp_update_down_event,
                                           self._fip_create_delete_event,
                                           self._lsp_lrp_event,
+                                          self._ha_chassis_group_event,
                                           ])
 
     @classmethod
