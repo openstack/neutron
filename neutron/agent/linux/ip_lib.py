@@ -285,9 +285,9 @@ class IPWrapper(SubProcessBase):
                 return True
         return False
 
-    def add_device_to_namespace(self, device, is_ovs_port=False):
+    def add_device_to_namespace(self, device):
         if self.namespace:
-            device.link.set_netns(self.namespace, is_ovs_port=is_ovs_port)
+            device.link.set_netns(self.namespace)
 
     def add_vlan(self, name, physical_interface, vlan_id):
         privileged.create_interface(name,
@@ -477,7 +477,7 @@ class IpLinkCommand(IpDeviceCommandBase):
         privileged.set_link_attribute(
             self.name, self._parent.namespace, state='down')
 
-    def set_netns(self, namespace, is_ovs_port=False):
+    def set_netns(self, namespace):
         old_namespace = self._parent.namespace
         try:
             privileged.set_link_attribute(
