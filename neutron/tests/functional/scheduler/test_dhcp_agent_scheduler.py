@@ -27,6 +27,7 @@ from neutron.db import agentschedulers_db
 from neutron.objects import network
 from neutron.scheduler import dhcp_agent_scheduler
 from neutron.tests.common import helpers
+from neutron.tests.functional import base
 from neutron.tests.unit.plugins.ml2 import test_plugin
 from neutron.tests.unit.scheduler import (test_dhcp_agent_scheduler as
                                           test_dhcp_sch)
@@ -105,7 +106,8 @@ class BaseTestScheduleNetwork(object):
 class TestChanceScheduleNetwork(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
                                 agentschedulers_db.DhcpAgentSchedulerDbMixin,
                                 agents_db.AgentDbMixin,
-                                BaseTestScheduleNetwork):
+                                BaseTestScheduleNetwork,
+                                base.BaseLoggingTestCase):
     """Test various scenarios for ChanceScheduler.schedule."""
 
     def test_schedule_network(self):
@@ -142,7 +144,8 @@ class TestChanceScheduleNetwork(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
 class TestWeightScheduleNetwork(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
                                 agentschedulers_db.DhcpAgentSchedulerDbMixin,
                                 agents_db.AgentDbMixin,
-                                BaseTestScheduleNetwork):
+                                BaseTestScheduleNetwork,
+                                base.BaseLoggingTestCase):
     """Test various scenarios for WeightScheduler.schedule."""
 
     def test_weight_schedule_network(self):
@@ -187,7 +190,8 @@ class TestWeightScheduleNetwork(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
 
 class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
                        agentschedulers_db.DhcpAgentSchedulerDbMixin,
-                       agents_db.AgentDbMixin):
+                       agents_db.AgentDbMixin,
+                       base.BaseLoggingTestCase):
     """Test various scenarios for ChanceScheduler.auto_schedule_networks.
 
         Below is the brief description of the scenario variables
@@ -415,7 +419,8 @@ class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
 
 class TestAZAwareWeightScheduler(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
                                  agentschedulers_db.DhcpAgentSchedulerDbMixin,
-                                 agents_db.AgentDbMixin):
+                                 agents_db.AgentDbMixin,
+                                 base.BaseLoggingTestCase):
     """Test various scenarios for AZAwareWeightScheduler.schedule.
 
         az_count
@@ -554,7 +559,8 @@ class TestAZAwareWeightScheduler(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
 
 
 class TestDHCPSchedulerWithNetworkAccessibility(
-        test_plugin.Ml2PluginV2TestCase):
+        test_plugin.Ml2PluginV2TestCase,
+        base.BaseLoggingTestCase):
 
     _mechanism_drivers = ['openvswitch']
 
