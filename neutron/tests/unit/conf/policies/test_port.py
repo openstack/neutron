@@ -496,12 +496,14 @@ class AdminTests(PortAPITestCase):
                            'create_port:binding:host_id', self.alt_target))
 
     def test_create_port_with_binding_profile(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'create_port:binding:profile', self.target))
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'create_port:binding:profile', self.alt_target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'create_port:binding:profile',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'create_port:binding:profile',
+            self.alt_target)
 
     def test_create_port_with_binding_vnic_type(self):
         self.assertTrue(
@@ -679,12 +681,14 @@ class AdminTests(PortAPITestCase):
                            'update_port:binding:host_id', self.alt_target))
 
     def test_update_port_with_binding_profile(self):
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'update_port:binding:profile', self.target))
-        self.assertTrue(
-            policy.enforce(self.context,
-                           'update_port:binding:profile', self.alt_target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'update_port:binding:profile',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'update_port:binding:profile',
+            self.alt_target)
 
     def test_update_port_with_binding_vnic_type(self):
         self.assertTrue(
@@ -1215,9 +1219,8 @@ class ServiceRoleTests(PortAPITestCase):
         self.context = self.service_ctx
 
     def test_create_port(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, 'create_port', self.target)
+        self.assertTrue(
+            policy.enforce(self.context, 'create_port', self.target))
 
     def test_create_port_with_device_owner(self):
         self.assertTrue(
@@ -1251,22 +1254,19 @@ class ServiceRoleTests(PortAPITestCase):
                 self.target))
 
     def test_create_port_with_binding_host_id(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, 'create_port:binding:host_id',
-            self.target)
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_port:binding:host_id', self.target))
 
     def test_create_port_with_binding_profile(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, 'create_port:binding:profile',
-            self.target)
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_port:binding:profile', self.target))
 
     def test_create_port_with_binding_vnic_type(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, 'create_port:binding:vnic_type',
-            self.target)
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_port:binding:vnic_type', self.target))
 
     def test_create_port_with_allowed_address_pairs(self):
         self.assertRaises(
@@ -1294,28 +1294,24 @@ class ServiceRoleTests(PortAPITestCase):
             policy.enforce(self.context, 'get_port', self.target))
 
     def test_get_port_binding_vif_type(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, 'get_port:binding:vif_type',
-            self.target)
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_port:binding:vif_type', self.target))
 
     def test_get_port_binding_vif_details(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, 'get_port:binding:vif_details',
-            self.target)
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_port:binding:vif_details', self.target))
 
     def test_get_port_binding_host_id(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, 'get_port:binding:host_id',
-            self.target)
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_port:binding:host_id', self.target))
 
     def test_get_port_binding_profile(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, 'get_port:binding:profile',
-            self.target)
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'get_port:binding:profile', self.target))
 
     def test_get_port_resource_request(self):
         self.assertRaises(
@@ -1359,16 +1355,14 @@ class ServiceRoleTests(PortAPITestCase):
                 self.target))
 
     def test_update_port_with_binding_host_id(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, 'update_port:binding:host_id',
-            self.target)
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_port:binding:host_id', self.target))
 
     def test_update_port_with_binding_profile(self):
-        self.assertRaises(
-            base_policy.PolicyNotAuthorized,
-            policy.enforce, self.context, 'update_port:binding:profile',
-            self.target)
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_port:binding:profile', self.target))
 
     def test_update_port_with_binding_vnic_type(self):
         self.assertTrue(

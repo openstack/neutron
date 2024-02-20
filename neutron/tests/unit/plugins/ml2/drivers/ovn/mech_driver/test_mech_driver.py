@@ -4449,7 +4449,7 @@ class TestOVNParentTagPortBinding(OVNMechanismDriverTestCase):
                 self._create_port(
                     self.fmt, n['network']['id'],
                     expected_res_status=404,
-                    is_admin=True,
+                    is_service=True,
                     arg_list=(OVN_PROFILE,),
                     **binding)
 
@@ -4461,7 +4461,7 @@ class TestOVNParentTagPortBinding(OVNMechanismDriverTestCase):
                 with self.port(s) as p:
                     binding[OVN_PROFILE]['parent_name'] = p['port']['id']
                     res = self._create_port(self.fmt, n['network']['id'],
-                                            is_admin=True,
+                                            is_service=True,
                                             arg_list=(OVN_PROFILE,),
                                             **binding)
                     port = self.deserialize(self.fmt, res)
@@ -4476,7 +4476,7 @@ class TestOVNParentTagPortBinding(OVNMechanismDriverTestCase):
                 with self.port(s) as p:
                     binding[OVN_PROFILE]['parent_name'] = p['port']['id']
                     self._create_port(self.fmt, n['network']['id'],
-                                      is_admin=True,
+                                      is_service=True,
                                       arg_list=(OVN_PROFILE,),
                                       expected_res_status=400,
                                       **binding)
@@ -4490,7 +4490,7 @@ class TestOVNVtepPortBinding(OVNMechanismDriverTestCase):
         with self.network() as n:
             with self.subnet(n):
                 res = self._create_port(self.fmt, n['network']['id'],
-                                        is_admin=True,
+                                        is_service=True,
                                         arg_list=(OVN_PROFILE,),
                                         **binding)
                 port = self.deserialize(self.fmt, res)
@@ -4502,7 +4502,7 @@ class TestOVNVtepPortBinding(OVNMechanismDriverTestCase):
         with self.network() as n:
             with self.subnet(n):
                 self._create_port(self.fmt, n['network']['id'],
-                                  is_admin=True,
+                                  is_service=True,
                                   arg_list=(OVN_PROFILE,),
                                   expected_res_status=400,
                                   **binding)
@@ -4512,7 +4512,7 @@ class TestOVNVtepPortBinding(OVNMechanismDriverTestCase):
         with self.network() as n:
             with self.subnet(n):
                 self._create_port(self.fmt, n['network']['id'],
-                                  is_admin=True,
+                                  is_service=True,
                                   arg_list=(OVN_PROFILE,),
                                   expected_res_status=400,
                                   **binding)
@@ -4523,7 +4523,7 @@ class TestOVNVtepPortBinding(OVNMechanismDriverTestCase):
         with self.network() as n:
             with self.subnet(n):
                 self._create_port(self.fmt, n['network']['id'],
-                                  is_admin=True,
+                                  is_service=True,
                                   arg_list=(OVN_PROFILE,),
                                   expected_res_status=400,
                                   **binding)
@@ -4535,7 +4535,7 @@ class TestOVNVtepPortBinding(OVNMechanismDriverTestCase):
         with self.network() as n:
             with self.subnet(n):
                 self._create_port(self.fmt, n['network']['id'],
-                                  is_admin=True,
+                                  is_service=True,
                                   arg_list=(OVN_PROFILE,),
                                   expected_res_status=404,
                                   **binding)

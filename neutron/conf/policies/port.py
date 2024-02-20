@@ -66,7 +66,9 @@ rules = [
 
     policy.DocumentedRuleDefault(
         name='create_port',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=neutron_policy.policy_or(
+            base.ADMIN_OR_PROJECT_MEMBER,
+            base.SERVICE),
         scope_types=['project'],
         description='Create a port',
         operations=ACTION_POST,
@@ -184,7 +186,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_port:binding:host_id',
-        check_str=base.ADMIN,
+        check_str=base.ADMIN_OR_SERVICE,
         scope_types=['project'],
         description=(
             'Specify ``binding:host_id`` '
@@ -199,7 +201,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_port:binding:profile',
-        check_str=base.ADMIN,
+        check_str=base.SERVICE,
         scope_types=['project'],
         description=(
             'Specify ``binding:profile`` attribute '
@@ -214,7 +216,9 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_port:binding:vnic_type',
-        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        check_str=neutron_policy.policy_or(
+            base.ADMIN_OR_PROJECT_MEMBER,
+            base.SERVICE),
         scope_types=['project'],
         description=(
             'Specify ``binding:vnic_type`` '
@@ -302,7 +306,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_port:binding:vif_type',
-        check_str=base.ADMIN,
+        check_str=base.ADMIN_OR_SERVICE,
         scope_types=['project'],
         description='Get ``binding:vif_type`` attribute of a port',
         operations=ACTION_GET,
@@ -314,7 +318,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_port:binding:vif_details',
-        check_str=base.ADMIN,
+        check_str=base.ADMIN_OR_SERVICE,
         scope_types=['project'],
         description='Get ``binding:vif_details`` attribute of a port',
         operations=ACTION_GET,
@@ -326,7 +330,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_port:binding:host_id',
-        check_str=base.ADMIN,
+        check_str=base.ADMIN_OR_SERVICE,
         scope_types=['project'],
         description='Get ``binding:host_id`` attribute of a port',
         operations=ACTION_GET,
@@ -338,7 +342,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='get_port:binding:profile',
-        check_str=base.ADMIN,
+        check_str=base.ADMIN_OR_SERVICE,
         scope_types=['project'],
         description='Get ``binding:profile`` attribute of a port',
         operations=ACTION_GET,
@@ -511,7 +515,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_port:binding:host_id',
-        check_str=base.ADMIN,
+        check_str=base.ADMIN_OR_SERVICE,
         scope_types=['project'],
         description='Update ``binding:host_id`` attribute of a port',
         operations=ACTION_PUT,
@@ -523,7 +527,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_port:binding:profile',
-        check_str=base.ADMIN,
+        check_str=base.SERVICE,
         scope_types=['project'],
         description='Update ``binding:profile`` attribute of a port',
         operations=ACTION_PUT,

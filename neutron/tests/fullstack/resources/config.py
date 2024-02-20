@@ -164,7 +164,7 @@ class NeutronConfigFixture(ConfigFixture):
         return c_helpers.find_sample_file('api-paste.ini')
 
     def _generate_policy_yaml(self):
-        return c_helpers.find_sample_file('policy.yaml')
+        return c_helpers.find_sample_file('fullstack_tests_policy.yaml')
 
     def get_host(self):
         return self.config['DEFAULT']['host']

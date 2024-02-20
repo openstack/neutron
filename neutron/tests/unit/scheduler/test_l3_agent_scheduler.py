@@ -1379,7 +1379,7 @@ class L3DvrSchedulerTestCase(L3SchedulerBaseMixin,
                 subnet_ids = []
                 subnet_ids.append(subnet['subnet']['id'])
                 with self.port(subnet=subnet,
-                               is_admin=True,
+                               is_service=True,
                                device_owner=DEVICE_OWNER_COMPUTE,
                                arg_list=('admin_state_up',
                                portbindings.PROFILE,), **host_args):

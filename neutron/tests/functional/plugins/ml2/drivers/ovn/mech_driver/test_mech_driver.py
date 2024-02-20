@@ -109,13 +109,13 @@ class TestPortBinding(base.TestOVNFunctionalBase):
                 'tenant_id': self._tenant_id})
 
             port_req = self.new_create_request('ports', port_data, self.fmt,
-                                               as_admin=True)
+                                               as_service=True)
             port_res = port_req.get_response(self.api)
             p = self.deserialize(self.fmt, port_res)
             port_id = p['port']['id']
         else:
             port_req = self.new_update_request('ports', port_data, port_id,
-                                               self.fmt, as_admin=True)
+                                               self.fmt, as_service=True)
             port_res = port_req.get_response(self.api)
             self.deserialize(self.fmt, port_res)
 
@@ -740,7 +740,7 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
                              ovn_const.PORT_CAP_SWITCHDEV]}}}
 
         port_req = self.new_create_request('ports', port_data, self.fmt,
-                                           as_admin=True)
+                                           as_service=True)
         port_res = port_req.get_response(self.api)
         port = self.deserialize(self.fmt, port_res)['port']
 
@@ -789,7 +789,7 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
                          ovn_const.PORT_CAP_SWITCHDEV]}}}
         port_req = self.new_update_request(
             'ports', port_upt_data, port['id'], self.fmt,
-            as_admin=True)
+            as_service=True)
         port_res = port_req.get_response(self.api)
         port = self.deserialize(self.fmt, port_res)['port']
 

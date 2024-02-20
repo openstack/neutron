@@ -1522,7 +1522,7 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                              portbindings.VNIC_TYPE: 'macvtap',
                              portbindings.PROFILE: {'bar': 'bar'}}}
             res = self._create_port_bulk(self.fmt, 2, net['network']['id'],
-                                         'test', True, as_admin=True,
+                                         'test', True, as_service=True,
                                          override=overrides)
             ports = self.deserialize(self.fmt, res)['ports']
             self.assertCountEqual(['direct', 'macvtap'],
@@ -2577,7 +2577,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
         profile_arg = {portbindings.PROFILE: {'d': s}}
         try:
             with self.port(expected_res_status=400,
-                           is_admin=True,
+                           is_service=True,
                            arg_list=(portbindings.PROFILE,),
                            **profile_arg):
                 pass
@@ -2587,7 +2587,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
     def test_remove_port_binding_profile(self):
         profile = {'e': 5}
         profile_arg = {portbindings.PROFILE: profile}
-        with self.port(is_admin=True,
+        with self.port(is_service=True,
                        arg_list=(portbindings.PROFILE,),
                        **profile_arg) as port:
             self._check_port_binding_profile(port['port'], profile)
@@ -2595,7 +2595,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
             profile_arg = {portbindings.PROFILE: None}
             port = self._update('ports', port_id,
                                 {'port': profile_arg},
-                                as_admin=True)['port']
+                                as_service=True)['port']
             self._check_port_binding_profile(port)
             port = self._show('ports', port_id, as_admin=True)['port']
             self._check_port_binding_profile(port)
@@ -2790,7 +2790,7 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
     def test_port_binding_profile_not_changed(self):
         profile = {'e': 5}
         profile_arg = {portbindings.PROFILE: profile}
-        with self.port(is_admin=True,
+        with self.port(is_service=True,
                        arg_list=(portbindings.PROFILE,),
                        **profile_arg) as port:
             self._check_port_binding_profile(port['port'], profile)
