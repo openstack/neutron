@@ -29,6 +29,7 @@ from neutron.objects import network as net_obj
 from neutron.scheduler import l3_agent_scheduler
 from neutron.services.l3_router import l3_router_plugin
 from neutron.tests.common import helpers
+from neutron.tests.functional import base
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
 _uuid = uuidutils.generate_uuid
@@ -39,7 +40,8 @@ PLUGIN_NAME = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 load_tests = testscenarios.load_tests_apply_scenarios
 
 
-class L3SchedulerBaseTest(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
+class L3SchedulerBaseTest(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
+                          base.BaseLoggingTestCase):
 
     """Base class for functional test of L3 schedulers.
        Provides basic setup and utility functions.
@@ -293,7 +295,8 @@ class L3LeastRoutersSchedulerTestCase(L3SchedulerBaseTest):
         self._test_auto_schedule(self.expected_scheduled_router_count)
 
 
-class L3AZSchedulerBaseTest(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
+class L3AZSchedulerBaseTest(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
+                            base.BaseLoggingTestCase):
 
     def setUp(self):
         super(L3AZSchedulerBaseTest, self).setUp(plugin='ml2')
