@@ -544,10 +544,10 @@ class TestDvrRouterOperations(base.BaseTestCase):
         self.assertIsNone(ri._get_internal_port(mock.sentinel.subnet_id2))
 
     def test__get_snat_idx_ipv4(self):
-        ip_cidr = '101.12.13.00/24'
+        ip_cidr = '101.12.13.0/24'
         ri = self._create_router(mock.MagicMock())
         snat_idx = ri._get_snat_idx(ip_cidr)
-        # 0x650C0D00 is numerical value of 101.12.13.00
+        # 0x650C0D00 is numerical value of 101.12.13.0
         self.assertEqual(0x650C0D00, snat_idx)
 
     def test__get_snat_idx_ipv6(self):
