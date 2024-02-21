@@ -686,8 +686,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
             create_router_port_calls,
             any_order=True)
 
-        self.assertEqual(len(del_router_list),
-                         ovn_api.delete_lrouter.call_count)
+        self.assertEqual(len(del_router_list), ovn_api.lr_del.call_count)
         update_router_port_calls = [mock.call(mock.ANY, p)
                                     for p in update_router_port_list]
         self.assertEqual(
@@ -697,10 +696,9 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
             update_router_port_calls,
             any_order=True)
 
-        delete_lrouter_calls = [mock.call(r['router'])
+        delete_lrouter_calls = [mock.call(r['router'], if_exists=True)
                                 for r in del_router_list]
-        ovn_api.delete_lrouter.assert_has_calls(
-            delete_lrouter_calls, any_order=True)
+        ovn_api.lr_del.assert_has_calls(delete_lrouter_calls, any_order=True)
 
         self.assertEqual(
             len(del_router_port_list),

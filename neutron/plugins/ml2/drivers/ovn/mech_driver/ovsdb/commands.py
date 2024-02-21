@@ -297,26 +297,6 @@ class DelLSwitchPortCommand(command.BaseCommand):
         self.api._tables['Logical_Switch_Port'].rows[lport.uuid].delete()
 
 
-class AddLRouterCommand(command.BaseCommand):
-    def __init__(self, api, name, may_exist, **columns):
-        super(AddLRouterCommand, self).__init__(api)
-        self.name = name
-        self.columns = columns
-        self.may_exist = may_exist
-
-    def run_idl(self, txn):
-        if self.may_exist:
-            lrouter = idlutils.row_by_value(self.api.idl, 'Logical_Router',
-                                            'name', self.name, None)
-            if lrouter:
-                return
-
-        row = txn.insert(self.api._tables['Logical_Router'])
-        row.name = self.name
-        for col, val in self.columns.items():
-            setattr(row, col, val)
-
-
 class UpdateLRouterCommand(command.BaseCommand):
     def __init__(self, api, name, if_exists, **columns):
         super(UpdateLRouterCommand, self).__init__(api)
@@ -338,25 +318,6 @@ class UpdateLRouterCommand(command.BaseCommand):
             for col, val in self.columns.items():
                 setattr(lrouter, col, val)
             return
-
-
-class DelLRouterCommand(command.BaseCommand):
-    def __init__(self, api, name, if_exists):
-        super(DelLRouterCommand, self).__init__(api)
-        self.name = name
-        self.if_exists = if_exists
-
-    def run_idl(self, txn):
-        try:
-            lrouter = idlutils.row_by_value(self.api.idl, 'Logical_Router',
-                                            'name', self.name)
-        except idlutils.RowNotFound:
-            if self.if_exists:
-                return
-            msg = _("Logical Router %s does not exist") % self.name
-            raise RuntimeError(msg)
-
-        self.api._tables['Logical_Router'].rows[lrouter.uuid].delete()
 
 
 class AddLRouterPortCommand(command.BaseCommand):

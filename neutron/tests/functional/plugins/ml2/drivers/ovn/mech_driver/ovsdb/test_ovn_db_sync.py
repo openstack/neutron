@@ -775,11 +775,11 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
             for lrouter_name in self.create_lrouters:
                 external_ids = {ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
                                 lrouter_name}
-                txn.add(self.nb_api.create_lrouter(lrouter_name, True,
-                                                   external_ids=external_ids))
+                txn.add(self.nb_api.lr_add(router=lrouter_name, may_exist=True,
+                                           external_ids=external_ids))
 
             for lrouter_name in self.delete_lrouters:
-                txn.add(self.nb_api.delete_lrouter(lrouter_name, True))
+                txn.add(self.nb_api.lr_del(lrouter_name, if_exists=True))
 
             for lrport, lrouter_name in self.create_lrouter_ports:
                 txn.add(self.nb_api.add_lrouter_port(lrport, lrouter_name))

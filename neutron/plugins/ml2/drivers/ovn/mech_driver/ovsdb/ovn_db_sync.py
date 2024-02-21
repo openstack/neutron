@@ -711,8 +711,8 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                 if self.mode == SYNC_MODE_REPAIR:
                     LOG.warning("Deleting the router %s from OVN NB DB",
                                 lrouter['name'])
-                    txn.add(self.ovn_api.delete_lrouter(
-                        utils.ovn_name(lrouter['name'])))
+                    txn.add(self.ovn_api.lr_del(
+                        utils.ovn_name(lrouter['name']), if_exists=True))
 
             for lrport_info in del_lrouter_ports_list:
                 LOG.warning("Router Port found in OVN NB DB but not in "
