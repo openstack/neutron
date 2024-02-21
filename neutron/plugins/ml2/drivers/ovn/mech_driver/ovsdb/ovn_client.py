@@ -78,6 +78,7 @@ OvnPortInfo = collections.namedtuple(
         "security_group_ids",
         "address4_scope_id",
         "address6_scope_id",
+        "mtu",
     ],
 )
 
@@ -366,6 +367,7 @@ class OVNClient(object):
         address6_scope_id = ""
         dhcpv4_options = self._get_port_dhcp_options(port, const.IP_VERSION_4)
         dhcpv6_options = self._get_port_dhcp_options(port, const.IP_VERSION_6)
+        mtu = ''
         if vtep_physical_switch:
             vtep_logical_switch = binding_prof.get('vtep-logical-switch')
             port_type = 'vtep'
@@ -482,10 +484,10 @@ class OVNClient(object):
                     ovn_const.VIF_DETAILS_PF_MAC_ADDRESS in binding_prof):
                 port_net = self._plugin.get_network(
                     context, port['network_id'])
+                mtu = str(port_net['mtu'])
                 options.update({
                     ovn_const.LSP_OPTIONS_VIF_PLUG_TYPE_KEY: 'representor',
-                    ovn_const.LSP_OPTIONS_VIF_PLUG_MTU_REQUEST_KEY: str(
-                        port_net['mtu']),
+                    ovn_const.LSP_OPTIONS_VIF_PLUG_MTU_REQUEST_KEY: mtu,
                     ovn_const.LSP_OPTIONS_VIF_PLUG_REPRESENTOR_PF_MAC_KEY: (
                         binding_prof.get(
                             ovn_const.VIF_DETAILS_PF_MAC_ADDRESS)),
@@ -525,7 +527,7 @@ class OVNClient(object):
         return OvnPortInfo(port_type, options, addresses, port_security,
                            parent_name, tag, dhcpv4_options, dhcpv6_options,
                            cidrs.strip(), device_owner, sg_ids,
-                           address4_scope_id, address6_scope_id
+                           address4_scope_id, address6_scope_id, mtu
                            )
 
     def sync_ha_chassis_group(self, context, network_id, txn):
@@ -633,7 +635,8 @@ class OVNClient(object):
                             port_info.security_group_ids,
                         ovn_const.OVN_REV_NUM_EXT_ID_KEY: str(
                             utils.get_revision_number(
-                                port, ovn_const.TYPE_PORTS))}
+                                port, ovn_const.TYPE_PORTS)),
+                        ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY: port_info.mtu}
         return port_info, external_ids
 
     def create_port(self, context, port):

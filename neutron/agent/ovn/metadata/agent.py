@@ -93,7 +93,7 @@ class PortBindingChassisEvent(row_event.RowEvent):
                 net_name = ovn_utils.get_network_name_from_datapath(
                         row.datapath)
                 LOG.info(self.LOG_MSG, row.logical_port, net_name)
-                self.agent.provision_datapath(row.datapath)
+                self.agent.provision_datapath(row)
             except ConfigException:
                 # We're now in the reader lock mode, we need to exit the
                 # context and then use writer lock
@@ -341,12 +341,12 @@ class MetadataAgent(object):
                         "br-int instead.")
             return 'br-int'
 
-    def get_networks_datapaths(self):
-        """Return a set of datapath objects of the VIF ports on the current
+    def get_networks_port_bindings(self):
+        """Return a set of Port_Binding objects of the VIF ports on the current
         chassis.
         """
         ports = self.sb_idl.get_ports_on_chassis(self.chassis)
-        return set(p.datapath for p in self._vif_ports(ports))
+        return list(self._vif_ports(ports))
 
     @_sync_lock
     def sync(self):
@@ -361,12 +361,12 @@ class MetadataAgent(object):
         system_namespaces = tuple(
             ns.decode('utf-8') if isinstance(ns, bytes) else ns
             for ns in ip_lib.list_network_namespaces())
-        net_datapaths = self.get_networks_datapaths()
-        metadata_namespaces = [
+        net_port_bindings = self.get_networks_port_bindings()
+        metadata_namespaces = set(
             self._get_namespace_name(
                 ovn_utils.get_network_name_from_datapath(datapath))
-            for datapath in net_datapaths
-        ]
+            for datapath in (pb.datapath for pb in net_port_bindings)
+        )
         unused_namespaces = [ns for ns in system_namespaces if
                              ns.startswith(NS_PREFIX) and
                              ns not in metadata_namespaces]
@@ -376,8 +376,8 @@ class MetadataAgent(object):
         # resync all network namespaces based on the associated datapaths,
         # even those that are already running. This is to make sure
         # everything within each namespace is up to date.
-        for datapath in net_datapaths:
-            self.provision_datapath(datapath)
+        for port_binding in net_port_bindings:
+            self.provision_datapath(port_binding)
 
     @staticmethod
     def _get_veth_name(datapath):
@@ -548,7 +548,7 @@ class MetadataAgent(object):
 
         return net_name, datapath_ports_ips, metadata_port_info
 
-    def provision_datapath(self, datapath):
+    def provision_datapath(self, port_binding):
         """Provision the datapath so that it can serve metadata.
 
         This function will create the namespace and VETH pair if needed
@@ -556,11 +556,13 @@ class MetadataAgent(object):
         metadata port of the network. It will also remove existing IP from
         the namespace if they are no longer needed.
 
-        :param datapath: datapath object.
-        :return: The metadata namespace name for the datapath or None
-                 if namespace was not provisioned
+        :param port_binding: Port_Binding object.
+        :return: The metadata namespace name for the Port_Binding.datapath or
+                 None if namespace was not provisioned
         """
-
+        datapath = port_binding.datapath
+        mtu = int(port_binding.external_ids.get(
+            ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY) or '0')
         provision_params = self._get_provision_params(datapath)
         if not provision_params:
             return
@@ -588,6 +590,11 @@ class MetadataAgent(object):
 
         # Configure the MAC address.
         ip2.link.set_address(metadata_port_info.mac)
+
+        # Set VETH ports MTU.
+        if mtu:
+            ip1.link.set_mtu(mtu)
+            ip2.link.set_mtu(mtu)
 
         # Make sure both ends of the VETH are up
         ip1.link.set_up()
