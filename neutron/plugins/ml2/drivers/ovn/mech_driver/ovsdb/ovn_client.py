@@ -81,6 +81,7 @@ OvnPortInfo = collections.namedtuple(
         "address6_scope_id",
         "vnic_type",
         "capabilities",
+        "mtu",
     ],
 )
 
@@ -339,6 +340,7 @@ class OVNClient(object):
         address6_scope_id = ""
         dhcpv4_options = self._get_port_dhcp_options(port, const.IP_VERSION_4)
         dhcpv6_options = self._get_port_dhcp_options(port, const.IP_VERSION_6)
+        mtu = ''
         if vtep_physical_switch:
             vtep_logical_switch = bp_info.bp_param.get('vtep-logical-switch')
             port_type = 'vtep'
@@ -432,10 +434,10 @@ class OVNClient(object):
                     ovn_const.VIF_DETAILS_PF_MAC_ADDRESS in bp_info.bp_param):
                 port_net = self._plugin.get_network(
                     context, port['network_id'])
+                mtu = str(port_net['mtu'])
                 options.update({
                     ovn_const.LSP_OPTIONS_VIF_PLUG_TYPE_KEY: 'representor',
-                    ovn_const.LSP_OPTIONS_VIF_PLUG_MTU_REQUEST_KEY: str(
-                        port_net['mtu']),
+                    ovn_const.LSP_OPTIONS_VIF_PLUG_MTU_REQUEST_KEY: mtu,
                     ovn_const.LSP_OPTIONS_VIF_PLUG_REPRESENTOR_PF_MAC_KEY: (
                         bp_info.bp_param.get(
                             ovn_const.VIF_DETAILS_PF_MAC_ADDRESS)),
@@ -476,7 +478,7 @@ class OVNClient(object):
                            parent_name, tag, dhcpv4_options, dhcpv6_options,
                            cidrs.strip(), device_owner, sg_ids,
                            address4_scope_id, address6_scope_id,
-                           bp_info.vnic_type, bp_info.capabilities
+                           bp_info.vnic_type, bp_info.capabilities, mtu
                            )
 
     def update_port_dhcp_options(self, port_info, txn):
@@ -517,6 +519,7 @@ class OVNClient(object):
             ovn_const.OVN_PORT_VNIC_TYPE_KEY: port_info.vnic_type,
             ovn_const.OVN_PORT_BP_CAPABILITIES_KEY:
                 ';'.join(port_info.capabilities),
+            ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY: port_info.mtu,
         }
         return port_info, external_ids
 
