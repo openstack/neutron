@@ -658,6 +658,7 @@ class TestDhcpAgent(base.BaseTestCase):
                         'IpAddrCommand.wait_until_address_ready') as mock_wait:
             mock_wait.return_value = True
             dhcp = dhcp_agent.DhcpAgent(HOSTNAME)
+            dhcp.update_isolated_metadata_proxy = mock.Mock()
             self.assertEqual(set(), dhcp.dhcp_ready_ports)
             dhcp.configure_dhcp_for_network(fake_network)
             self.assertEqual({fake_port1.id}, dhcp.dhcp_ready_ports)
@@ -854,7 +855,7 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                 is_ovn_network):
             process_instance.assert_has_calls([
                 mock.call.disable(sig=str(int(signal.SIGTERM))),
-                mock.call.enable()])
+                mock.call.enable(ensure_active=True)])
         else:
             process_instance.assert_has_calls([
                 mock.call.disable(sig=str(int(signal.SIGTERM)))])
