@@ -215,7 +215,7 @@ class MetadataDriver(object):
                 parent=ip_lib.IPDevice(name=bind_interface, namespace=ns_name)
             ).wait_until_address_ready(address=bind_address_v6)
         try:
-            pm.enable()
+            pm.enable(ensure_active=True)
         except exceptions.ProcessExecutionError as exec_err:
             LOG.error("Encountered process execution error %(err)s while "
                       "starting process in namespace %(ns)s",
