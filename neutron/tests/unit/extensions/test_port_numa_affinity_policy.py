@@ -23,6 +23,12 @@ from neutron.db import port_numa_affinity_policy_db as pnap_db
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
 
+TESTED_POLICIES = (constants.PORT_NUMA_POLICY_REQUIRED,
+                   constants.PORT_NUMA_POLICY_PREFERRED,
+                   constants.PORT_NUMA_POLICY_LEGACY,
+                   )
+
+
 class PortNumaAffinityPolicyExtensionTestPlugin(
         db_base_plugin_v2.NeutronDbPluginV2,
         pnap_db.PortNumaAffinityPolicyDbMixin):
@@ -78,9 +84,9 @@ class PortNumaAffinityPolicyExtensionTestCase(
         self.assertEqual(numa_affinity_policy,
                          res['port']['numa_affinity_policy'])
 
-    @ddt.data(*constants.PORT_NUMA_POLICIES, None)
+    @ddt.data(*TESTED_POLICIES, None)
     def test_create_and_update_port_numa_affinity_policy(self,
                                                          numa_affinity_policy):
         port = self._create_and_check_port_nap(numa_affinity_policy)
-        for new_nap in (*constants.PORT_NUMA_POLICIES, None):
+        for new_nap in (*TESTED_POLICIES, None):
             self._update_and_check_port_nap(port, new_nap)
