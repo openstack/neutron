@@ -295,7 +295,7 @@ class MetadataDriver(object):
                                                      ns_name=ns_name,
                                                      callback=callback)
         try:
-            pm.enable()
+            pm.enable(ensure_active=True)
         except exceptions.ProcessExecutionError as exec_err:
             LOG.error("Encountered process execution error %(err)s while "
                       "starting process in namespace %(ns)s",

@@ -68,7 +68,12 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                            return_value=test_utils.FakeUser(self.EUNAME)),\
                 mock.patch('grp.getgrnam',
                            return_value=test_utils.FakeGroup(self.EGNAME)),\
-                mock.patch('os.makedirs'):
+                mock.patch('os.makedirs'),\
+                mock.patch(
+                    'neutron.agent.linux.external_process.'
+                    'ProcessManager.active',
+                    new_callable=mock.PropertyMock,
+                    side_effect=[False, True]):
             cfg_file = os.path.join(
                 metadata_driver.HaproxyConfigurator.get_config_path(
                     cfg.CONF.state_path),
