@@ -127,7 +127,7 @@ class TestSbApi(BaseOvnIdlTest):
                 switch.uuid, pname, type=type,
                 external_ids={
                     ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY: device_owner}))
-        row_event.wait()
+        self.assertTrue(row_event.wait())
         return port.result, row_event.row
 
     def test_get_metadata_port_network(self):
