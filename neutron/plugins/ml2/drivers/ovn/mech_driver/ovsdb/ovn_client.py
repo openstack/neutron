@@ -1606,8 +1606,8 @@ class OVNClient(object):
                                               const.TYPE_VLAN]:
             return network.get(pnet.PHYSICAL_NETWORK)
 
-    def _gen_router_port_ext_ids(self, port):
-        ext_ids = {
+    def _gen_router_port_ext_ids(self, port, router_id):
+        return {
             ovn_const.OVN_REV_NUM_EXT_ID_KEY: str(utils.get_revision_number(
                 port, ovn_const.TYPE_ROUTER_PORTS)),
             ovn_const.OVN_SUBNET_EXT_IDS_KEY:
@@ -1616,13 +1616,8 @@ class OVNClient(object):
                 utils.ovn_name(port['network_id']),
             ovn_const.OVN_ROUTER_IS_EXT_GW:
                 str(const.DEVICE_OWNER_ROUTER_GW == port.get('device_owner')),
+            ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: router_id,
         }
-
-        router_id = port.get('device_id')
-        if router_id:
-            ext_ids[ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY] = router_id
-
-        return ext_ids
 
     def _get_reside_redir_for_gateway_port(self, device_id):
         admin_context = n_context.get_admin_context()
@@ -1730,7 +1725,7 @@ class OVNClient(object):
                 mac=port['mac_address'],
                 networks=networks,
                 may_exist=True,
-                external_ids=self._gen_router_port_ext_ids(port),
+                external_ids=self._gen_router_port_ext_ids(port, router['id']),
                 **columns)
         ]
 
@@ -1808,10 +1803,14 @@ class OVNClient(object):
         update = {'networks': networks, 'ipv6_ra_configs': ipv6_ra_configs}
         is_gw_port = const.DEVICE_OWNER_ROUTER_GW == port.get(
             'device_owner')
+        external_ids = self._nb_idl.db_get(
+            'Logical_Router_Port', lrp_name,
+            'external_ids').execute(check_error=True)
+        router_id = external_ids[ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY]
         commands = [
             self._nb_idl.update_lrouter_port(
                 name=lrp_name,
-                external_ids=self._gen_router_port_ext_ids(port),
+                external_ids=self._gen_router_port_ext_ids(port, router_id),
                 options=self._gen_router_port_options(port),
                 if_exists=if_exists,
                 **update),
@@ -1854,17 +1853,15 @@ class OVNClient(object):
         ]
         return utils.OvsdbClientTransactCommand.run(cmd)
 
-    def _delete_lrouter_port(self, context, port_id, router_id=None, txn=None):
+    def _delete_lrouter_port(self, context, port_id, router_id, txn=None):
         """Delete a logical router port."""
         commands = [self._nb_idl.lrp_del(
             utils.ovn_lrouter_port_name(port_id),
-            utils.ovn_name(router_id) if router_id else None,
-            if_exists=True)]
+            utils.ovn_name(router_id), if_exists=True)]
         self._transaction(commands, txn=txn)
         db_rev.delete_revision(context, port_id, ovn_const.TYPE_ROUTER_PORTS)
 
-    def delete_router_port(self, context, port_id, router_id=None,
-                           subnet_ids=None):
+    def delete_router_port(self, context, port_id, subnet_ids=None):
         try:
             ovn_port = self._nb_idl.lookup(
                 'Logical_Router_Port', utils.ovn_lrouter_port_name(port_id))
@@ -1887,20 +1884,16 @@ class OVNClient(object):
                 # rules in the router itself if we have to
                 port_removed = True
 
-            router_id = router_id or ovn_port.external_ids.get(
-                ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY)
-            if port and not router_id:
-                router_id = port.get('device_id')
-
+            router_id = ovn_port.external_ids[
+                ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY]
             router = None
             gw_ports = []
-            if router_id:
-                try:
-                    router = self._l3_plugin.get_router(context, router_id)
-                    gw_ports = self._get_router_gw_ports(context, router_id)
-                except l3_exc.RouterNotFound:
-                    # If the router is gone, the router port is also gone
-                    port_removed = True
+            try:
+                router = self._l3_plugin.get_router(context, router_id)
+                gw_ports = self._get_router_gw_ports(context, router_id)
+            except l3_exc.RouterNotFound:
+                # If the router is gone, the router port is also gone
+                port_removed = True
 
             if not router or not gw_ports:
                 if port_removed:

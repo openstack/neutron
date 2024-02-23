@@ -143,7 +143,6 @@ class OvnDriver(base.L3ServiceProvider):
             subnet_ids[0], subnet_ids)
         try:
             self.l3plugin._ovn_client.delete_router_port(context, port['id'],
-                                                         router_id=router.id,
                                                          subnet_ids=subnet_ids)
         except Exception:
             with excutils.save_and_reraise_exception():
