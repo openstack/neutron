@@ -58,6 +58,7 @@ from neutron_lib.api.definitions import port_device_profile
 from neutron_lib.api.definitions import port_hardware_offload_type
 from neutron_lib.api.definitions import port_mac_address_regenerate
 from neutron_lib.api.definitions import port_numa_affinity_policy
+from neutron_lib.api.definitions import port_numa_affinity_policy_socket
 from neutron_lib.api.definitions import port_resource_request
 from neutron_lib.api.definitions import port_security
 from neutron_lib.api.definitions import portbindings
@@ -153,6 +154,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     port_hardware_offload_type.ALIAS,
     port_mac_address_regenerate.ALIAS,
     port_numa_affinity_policy.ALIAS,
+    port_numa_affinity_policy_socket.ALIAS,
     port_security.ALIAS,
     provider_net.ALIAS,
     port_resource_request.ALIAS,

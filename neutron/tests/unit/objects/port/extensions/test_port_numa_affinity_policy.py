@@ -12,9 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-from neutron_lib import constants
-
 from neutron.objects.port.extensions import port_numa_affinity_policy
+from neutron.tests import tools as test_tools
 from neutron.tests.unit.objects import test_base as obj_test_base
 from neutron.tests.unit import testlib_api
 
@@ -33,6 +32,7 @@ class PortNumaAffinityPolicyDbObjectTestCase(
 
     def setUp(self):
         super(PortNumaAffinityPolicyDbObjectTestCase, self).setUp()
+        numa = test_tools.get_random_port_numa_affinity_policy()
         self.update_obj_fields(
             {'port_id': lambda: self._create_test_port_id(),
-             'numa_affinity_policy': constants.PORT_NUMA_POLICY_PREFERRED})
+             'numa_affinity_policy': numa})

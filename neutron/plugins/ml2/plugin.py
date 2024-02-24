@@ -47,6 +47,8 @@ from neutron_lib.api.definitions import port_hardware_offload_type as phot_def
 from neutron_lib.api.definitions import port_mac_address_override
 from neutron_lib.api.definitions import port_mac_address_regenerate
 from neutron_lib.api.definitions import port_numa_affinity_policy as pnap_def
+from neutron_lib.api.definitions import port_numa_affinity_policy_socket as \
+    pnaps_def
 from neutron_lib.api.definitions import port_security as psec
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import portbindings_extended as pbe_ext
@@ -241,6 +243,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     stateful_security_group.ALIAS,
                                     addrgrp_def.ALIAS,
                                     pnap_def.ALIAS,
+                                    pnaps_def.ALIAS,
                                     pdp_def.ALIAS,
                                     quota_check_limit.ALIAS,
                                     port_mac_address_override.ALIAS,
