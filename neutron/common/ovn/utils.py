@@ -12,6 +12,7 @@
 
 import collections
 import copy
+import functools
 import inspect
 import os
 import random
@@ -37,6 +38,7 @@ from oslo_utils import netutils
 from oslo_utils import strutils
 from ovsdbapp.backend.ovs_idl import idlutils
 from ovsdbapp import constants as ovsdbapp_const
+from pecan import util as pecan_util
 import tenacity
 
 from neutron._i18n import _
@@ -129,6 +131,68 @@ class OvsdbClientCommand(object):
 
 class OvsdbClientTransactCommand(OvsdbClientCommand):
     COMMAND = 'transact'
+
+
+def ovn_context(txn_var_name='txn', idl_var_name='idl'):
+    """Provide an OVN IDL transaction context
+
+    This decorator provides an OVN IDL database transaction context if the
+    'txn_var_name' variable, that should have an
+    ``ovsdbapp.backend.ovs_idl.transaction.Transaction`` derived object, is
+    empty. In that case (an empty transaction), that means the decorated method
+    has been called outside a transaction. In this case, the decorator creates
+    a transaction from the provided IDL and assigns it to the 'txn_var_name'
+    variable.
+    """
+    def decorator(f):
+        signature = inspect.signature(f)
+        if (txn_var_name not in signature.parameters or
+                idl_var_name not in signature.parameters):
+            msg = (_('Could not find variables %s and %s in the method '
+                     'signature') %
+                   (txn_var_name, idl_var_name))
+            raise RuntimeError(msg)
+
+        def retrieve_parameter(param_name, _args, _kwargs):
+            # Position of the parameter "param_name" in the "args" tuple.
+            param_index = pecan_util.getargspec(f).args.index(param_name)
+            try:  # Parameter passed as a positional argument.
+                value = _args[param_index]
+            except IndexError:  # Parameter passed as keyword argument.
+                # Reset the "param_index" value, that means the parameter is
+                # passed as keyword and if needed, it will be replaced in
+                # "kwargs".
+                param_index = None
+                try:
+                    value = _kwargs[param_name]
+                except KeyError:
+                    # Parameter is not passed as keyword nor positional, read
+                    # the keyword default value.
+                    value = signature.parameters[param_name].default
+
+            return value, param_index
+
+        @functools.wraps(f)
+        def wrapped(*args, **kwargs):
+            _txn, txn_index = retrieve_parameter(txn_var_name, args, kwargs)
+            _idl, idl_index = retrieve_parameter(idl_var_name, args, kwargs)
+            if not _txn and not _idl:
+                msg = (_('If no transaction is defined, it is needed at least '
+                         'an IDL connection'))
+                raise RuntimeError(msg)
+
+            if not _txn:
+                with _idl.transaction(check_error=True) as new_txn:
+                    if txn_index:
+                        args = (args[:txn_index] + (new_txn,) +
+                                args[txn_index + 1:])
+                    else:
+                        kwargs[txn_var_name] = new_txn
+                    return f(*args, **kwargs)
+            else:
+                return f(*args, **kwargs)
+        return wrapped
+    return decorator
 
 
 def ovn_name(id):

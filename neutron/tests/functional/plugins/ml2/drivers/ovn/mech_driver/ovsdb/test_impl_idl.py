@@ -590,6 +590,24 @@ class TestNbApi(BaseOvnIdlTest):
                 "BFD",
                 bfd_uuid)
 
+    def test_set_lsp_ha_chassis_group(self):
+        with self.nbapi.transaction(check_error=True) as txn:
+            ls_name = uuidutils.generate_uuid()
+            lsp_name = uuidutils.generate_uuid()
+            hcg_name = uuidutils.generate_uuid()
+            txn.add(self.nbapi.ls_add(ls_name))
+            txn.add(self.nbapi.lsp_add(ls_name, lsp_name))
+
+        with self.nbapi.transaction(check_error=True) as txn:
+            hcg = self.nbapi.ha_chassis_group_add(hcg_name)
+            txn.add(hcg)
+            lsp = self.nbapi.lookup('Logical_Switch_Port', lsp_name)
+            txn.add(self.nbapi.set_lswitch_port(lsp_name,
+                                                ha_chassis_group=hcg))
+
+        lsp = self.nbapi.lookup('Logical_Switch_Port', lsp_name)
+        self.assertEqual(hcg.result.uuid, lsp.ha_chassis_group[0].uuid)
+
 
 class TestIgnoreConnectionTimeout(BaseOvnIdlTest):
     @classmethod
