@@ -649,12 +649,12 @@ class MetadataAgent(object):
             ip1, ip2 = ip_lib.IPWrapper().add_veth(
                 veth_name[0], veth_name[1], namespace)
 
+        # Configure the MAC address.
+        ip2.link.set_address(metadata_port_info.mac)
+
         # Make sure both ends of the VETH are up
         ip1.link.set_up()
         ip2.link.set_up()
-
-        # Configure the MAC address.
-        ip2.link.set_address(metadata_port_info.mac)
 
         cidrs_to_add, cidrs_to_delete = self._process_cidrs(
             {dev['cidr'] for dev in ip2.addr.list()},
