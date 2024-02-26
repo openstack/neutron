@@ -78,20 +78,6 @@ class API(api.API, metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def create_lrouter(self, name, may_exist=True, **columns):
-        """Create a command to add an OVN lrouter
-
-        :param name:         The id of the lrouter
-        :type name:          string
-        :param may_exist:    Do not fail if lrouter already exists
-        :type may_exist:     bool
-        :param columns:      Dictionary of lrouter columns
-                             Supported columns: external_ids, default_gw, ip
-        :type columns:       dictionary
-        :returns:            :class:`Command` with no result
-        """
-
-    @abc.abstractmethod
     def update_lrouter(self, name, if_exists=True, **columns):
         """Update a command to add an OVN lrouter
 
@@ -102,17 +88,6 @@ class API(api.API, metaclass=abc.ABCMeta):
         :param columns:      Dictionary of lrouter columns
                              Supported columns: external_ids, default_gw, ip
         :type columns:       dictionary
-        :returns:            :class:`Command` with no result
-        """
-
-    @abc.abstractmethod
-    def delete_lrouter(self, name, if_exists=True):
-        """Create a command to delete an OVN lrouter
-
-        :param name:         The id of the lrouter
-        :type name:          string
-        :param if_exists:    Do not fail if the lrouter does not exist
-        :type if_exists:     bool
         :returns:            :class:`Command` with no result
         """
 

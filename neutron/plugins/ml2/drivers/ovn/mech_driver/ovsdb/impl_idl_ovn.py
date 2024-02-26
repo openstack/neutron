@@ -423,16 +423,9 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
                 acl_list.append(acl_string)
         return acl_values_dict, acl_obj_dict, lswitch_ovsdb_dict
 
-    def create_lrouter(self, name, may_exist=True, **columns):
-        return cmd.AddLRouterCommand(self, name,
-                                     may_exist, **columns)
-
     def update_lrouter(self, name, if_exists=True, **columns):
         return cmd.UpdateLRouterCommand(self, name,
                                         if_exists, **columns)
-
-    def delete_lrouter(self, name, if_exists=True):
-        return cmd.DelLRouterCommand(self, name, if_exists)
 
     def add_lrouter_port(self, name, lrouter, may_exist=False, **columns):
         return cmd.AddLRouterPortCommand(self, name, lrouter,

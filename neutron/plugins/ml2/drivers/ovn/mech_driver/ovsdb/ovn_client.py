@@ -1410,10 +1410,9 @@ class OVNClient(object):
                    ovn_const.LR_OPTIONS_MAC_AGE_LIMIT:
                    ovn_conf.get_ovn_mac_binding_age_threshold()}
         with self._nb_idl.transaction(check_error=True) as txn:
-            txn.add(self._nb_idl.create_lrouter(lrouter_name,
-                                                external_ids=external_ids,
-                                                enabled=enabled,
-                                                options=options))
+            txn.add(self._nb_idl.lr_add(router=lrouter_name, may_exist=True,
+                                        external_ids=external_ids,
+                                        enabled=enabled, options=options))
             # TODO(lucasagomes): add_external_gateway is being only used
             # by the ovn_db_sync.py script, remove it after the database
             # synchronization work
@@ -1522,7 +1521,7 @@ class OVNClient(object):
         """Delete a logical router."""
         lrouter_name = utils.ovn_name(router_id)
         with self._nb_idl.transaction(check_error=True) as txn:
-            txn.add(self._nb_idl.delete_lrouter(lrouter_name))
+            txn.add(self._nb_idl.lr_del(lrouter_name, if_exists=True))
         db_rev.delete_revision(context, router_id, ovn_const.TYPE_ROUTERS)
 
     def get_candidates_for_scheduling(self, physnet, cms=None,
