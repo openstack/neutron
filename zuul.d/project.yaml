@@ -20,8 +20,11 @@
         - neutron-functional-with-uwsgi
         - neutron-fullstack-with-uwsgi
         - neutron-ovs-rally-task
-        - neutron-ovs-grenade-multinode
-        - neutron-ovs-grenade-dvr-multinode
+          # TODO: re enable once jobs fixed
+          #- neutron-ovs-grenade-multinode:
+          #  voting: false
+          #- neutron-ovs-grenade-dvr-multinode:
+          #  voting: false
         - neutron-ovs-tempest-multinode-full
         - neutron-ovs-tempest-dvr-ha-multinode-full
         - neutron-ovn-tempest-ipv6-only
@@ -32,6 +35,8 @@
         - neutron-functional-with-uwsgi
         - neutron-fullstack-with-uwsgi
         - neutron-ovs-tempest-multinode-full
-        - neutron-ovs-grenade-multinode
-        - neutron-ovs-grenade-dvr-multinode
+          #- neutron-ovs-grenade-multinode:
+          #  voting: false
+          #- neutron-ovs-grenade-dvr-multinode:
+          #  voting: false
         - neutron-ovn-tempest-ipv6-only
