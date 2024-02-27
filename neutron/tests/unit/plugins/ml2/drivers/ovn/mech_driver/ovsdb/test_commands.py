@@ -1149,6 +1149,48 @@ class TestDeleteLRouterExtGwCommand(TestBaseCommand):
                 fake_lrouter.delvalue.assert_called_once_with(
                     'static_routes', fake_route_1)
 
+    def test_delete_lrouter_multiple_extgw_routes(self):
+        fake_route_1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'ip_prefix': '0.0.0.0/0', 'nexthop': '10.0.0.1',
+                   'external_ids': {ovn_const.OVN_ROUTER_IS_EXT_GW: True},
+                   'output_port': '1'})
+        fake_route_2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'ip_prefix': '0.0.0.0/0', 'nexthop': '10.0.0.1',
+                   'external_ids': {ovn_const.OVN_ROUTER_IS_EXT_GW: True},
+                   'output_port': '2'})
+        fake_route_3 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'ip_prefix': '50.0.0.0/24', 'nexthop': '40.0.0.101'})
+        fake_lrouter = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'static_routes': [fake_route_1, fake_route_2, fake_route_3],
+                   'nat': []})
+        # Where the real IDL keeps track of removals without changing the
+        # in-memory table data structure, the FakeOvsdbRow by default does
+        # change the in-memory List of fake rows.
+        #
+        # The DeleteLRouterExtGwCommand iterates over this list, and iterating
+        # over a data structure you are removing items from leads to undefined
+        # behavior.
+        #
+        # For the purpose of this test we do not need to remove the items, only
+        # check whether the expected calls were made or not.
+        fake_lrouter.delvalue.side_effect = None
+
+        self.ovn_api.get_lrouter_gw_ports.return_value = []
+        with mock.patch.object(self.ovn_api, "is_col_present",
+                               return_value=True):
+            with mock.patch.object(idlutils, 'row_by_value',
+                                   return_value=fake_lrouter):
+                cmd = commands.DeleteLRouterExtGwCommand(
+                    self.ovn_api, fake_lrouter.name, False)
+                cmd.run_idl(self.transaction)
+                fake_lrouter.delvalue.assert_has_calls([
+                    mock.call('static_routes', fake_route_1),
+                    mock.call('static_routes', fake_route_2),
+                ])
+                self.assertEqual(
+                    2,
+                    fake_lrouter.delvalue.call_count)
+
     def test_delete_lrouter_extgw_nat(self):
         fake_nat_1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'external_ip': '192.168.1.10',

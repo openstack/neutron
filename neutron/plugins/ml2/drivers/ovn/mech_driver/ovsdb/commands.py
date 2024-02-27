@@ -935,7 +935,6 @@ class DeleteLRouterExtGwCommand(command.BaseCommand):
             if ovn_const.OVN_ROUTER_IS_EXT_GW in external_ids:
                 lrouter.delvalue('static_routes', route)
                 route.delete()
-                break
 
         for nat in lrouter.nat:
             if nat.type != 'snat':
