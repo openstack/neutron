@@ -180,7 +180,12 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                     'IpAddrCommand.wait_until_address_ready') as mock_wait,\
                 mock.patch(
                     'neutron.agent.linux.ip_lib.'
-                    'delete_ip_address') as mock_del:
+                    'delete_ip_address') as mock_del,\
+                mock.patch(
+                    'neutron.agent.linux.external_process.'
+                    'ProcessManager.active',
+                    new_callable=mock.PropertyMock,
+                    side_effect=[False, True]):
             agent = l3_agent.L3NATAgent('localhost')
             agent.process_monitor = mock.Mock()
             cfg_file = os.path.join(
