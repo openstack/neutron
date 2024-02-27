@@ -99,9 +99,37 @@ list will belong to another AZ.
 This improvement was implemented in [3]_.
 
 
+Soft Anti-Affinity for ``Logical_Router`` with multiple ``Logical_Router_Port``
+-------------------------------------------------------------------------------
+
+Support for multiple gateway ports [4]_ was implemented to support
+configurations that provide resiliency and load sharing across multiple router
+ports at the layer 3 level.
+
+In addition to external dependencies such as BFD for liveness detection and
+ECMP for load sharing accross default routes, the feature required changes to
+the scheduler, the goal being that each ``Logical_Router_Port`` record for a
+``Logical_Router`` would have a different set of ``Chassis`` for each priority.
+
+The Anti-Affinity is accomplished by having the OVN driver provide the router
+object subject to scheduling to the scheduler. The scheduler then checks
+whether there already exists ``Logical_Router_Port`` records for the target
+router, and makes any ``Chassis`` involed in the already existing ports
+appear as having higher load, making it less likely that the already used
+``Chassis`` gets picked for a new ``Logical_Router_Port``.
+
+Since the algorithm is based on load and priority, Anti-Affinity is only
+supported for the ``OVNGatewayLeastLoadedScheduler``.
+
+
+This improvement was implemented in [5]_.
+
+
 References
 ----------
 
 .. [1] https://review.opendev.org/c/openstack/neutron/+/893653
 .. [2] https://review.opendev.org/c/openstack/neutron/+/893654
 .. [3] https://review.opendev.org/c/openstack/neutron/+/892604
+.. [4] https://review.opendev.org/c/openstack/neutron-specs/+/870030
+.. [5] https://review.opendev.org/c/openstack/neutron/+/873699
