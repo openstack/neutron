@@ -26,6 +26,8 @@ from neutron.db import models_v2
 class Trunk(standard_attr.HasStandardAttributes, model_base.BASEV2,
             model_base.HasId, model_base.HasProject):
 
+    __tablename__ = 'trunks'
+
     admin_state_up = sa.Column(
         sa.Boolean(), nullable=False, server_default=sql.true())
     name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
