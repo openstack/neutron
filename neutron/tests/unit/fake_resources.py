@@ -800,6 +800,42 @@ FakeStaticRoute = collections.namedtuple(
     'Static_Routes', ['ip_prefix', 'nexthop', 'external_ids'])
 
 
+class FakeOVNRouterPort(object):
+    """Fake one or more Logical Router Ports."""
+
+    @staticmethod
+    def create_one_port(attrs=None):
+        """Create a fake ovn Logical Router Port.
+
+        :param Dictionary attrs:
+            A dictionary with all attributes
+        :return:
+            A FakeResource object faking the port
+        """
+        attrs = attrs or {}
+
+        # Set default attributes.
+        fake_uuid = uuidutils.generate_uuid()
+        port_attrs = {
+            'enabled': True,
+            'external_ids': {},
+            'gateway_chassis': [],
+            'ha_chassis_group': [],
+            'ipv6_prefix': [],
+            'ipv6_ra_configs': {},
+            'mac': '',
+            'name': fake_uuid,
+            'networks': [],
+            'options': {},
+            'peer': '',
+            'status': '',
+        }
+
+        # Overwrite default attributes.
+        port_attrs.update(attrs)
+        return type('Logical_Router_Port', (object, ), port_attrs)()
+
+
 class FakeOVNRouter(object):
 
     @staticmethod
@@ -835,6 +871,7 @@ class FakeOVNRouter(object):
                 router.get('name', 'no_router_name')}
 
         # Get the routes
+        ports = []
         routes = []
         for r in router.get('routes', []):
             routes.append(FakeStaticRoute(ip_prefix=r['destination'],
@@ -849,11 +886,16 @@ class FakeOVNRouter(object):
             routes.append(FakeStaticRoute(
                 ip_prefix='0.0.0.0/0', nexthop='',
                 external_ids=external_ids))
+            ports.append(FakeOVNRouterPort.create_one_port(
+                attrs={
+                    'external_ids': {ovn_const.OVN_ROUTER_IS_EXT_GW: 'True'},
+                }))
 
         return FakeOVNRouter.create_one_router(
             {'external_ids': external_ids,
              'enabled': router.get('admin_state_up') or False,
              'name': ovn_utils.ovn_name(router['id']),
+             'ports': ports,
              'static_routes': routes})
 
 

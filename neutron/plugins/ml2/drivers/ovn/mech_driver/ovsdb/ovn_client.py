@@ -38,6 +38,7 @@ from neutron_lib.utils import net as n_net
 from oslo_config import cfg
 from oslo_log import log
 from oslo_utils import excutils
+from oslo_utils import strutils
 from oslo_utils import timeutils
 from oslo_utils import versionutils
 from ovsdbapp.backend.ovs_idl import idlutils
@@ -1467,8 +1468,16 @@ class OVNClient(object):
                 elif gateway_new and gateway_old:
                     # Check if external gateway has changed, if yes, delete
                     # the old gateway and add the new gateway
-                    if self._check_external_ips_changed(
-                            ovn_snats, gateway_old, new_router):
+                    ovn_router_ext_gw_lrps = [
+                        port
+                        for port in getattr(ovn_router, 'ports', [])
+                        if strutils.bool_from_string(
+                            getattr(port, 'external_ids', {}).get(
+                                ovn_const.OVN_ROUTER_IS_EXT_GW, False))
+                    ]
+                    if (len(gateway_new) != len(ovn_router_ext_gw_lrps) or
+                        self._check_external_ips_changed(
+                            ovn_snats, gateway_old, new_router)):
                         txn.add(self._nb_idl.delete_lrouter_ext_gw(
                             router_name))
                         if router_object:

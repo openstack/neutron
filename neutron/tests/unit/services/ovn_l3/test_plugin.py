@@ -844,6 +844,9 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             [self.fake_ext_gw_port],
             [self.fake_ext_gw_port],
         ]
+        self.l3_inst._nb_ovn.get_lrouter.return_value = (
+            fake_resources.FakeOVNRouter.from_neutron_router(
+                self.fake_router_with_ext_gw))
 
         payload = self._create_payload_for_router_update(
             self.get_router.return_value, self.fake_router_with_ext_gw)
@@ -1023,6 +1026,9 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             'ext-subnet-id': self.fake_ext_subnet}.get(sid, self.fake_subnet)
         self.get_port.return_value = self.fake_ext_gw_port
         grps.return_value = self.fake_router_ports
+        self.l3_inst._nb_ovn.get_lrouter.return_value = (
+            fake_resources.FakeOVNRouter.from_neutron_router(
+                self.fake_router_with_ext_gw))
 
         payload = self._create_payload_for_router_update(
             self.fake_router_with_ext_gw, ur.return_value)
