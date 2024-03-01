@@ -348,6 +348,10 @@ def set_link_flags(device, namespace, flags):
     _run_iproute_link("set", device, namespace, flags=new_flags)
 
 
+@tenacity.retry(
+    retry=tenacity.retry_if_exception_type(NetworkInterfaceNotFound),
+    wait=tenacity.wait_exponential(multiplier=0.02, max=1),
+    stop=tenacity.stop_after_delay(3), reraise=True)
 @privileged.link_cmd.entrypoint
 def set_link_attribute(device, namespace, **attributes):
     _run_iproute_link("set", device, namespace, **attributes)
@@ -378,7 +382,8 @@ def set_link_bridge_master(device, bridge, namespace=None):
 
 @tenacity.retry(
     retry=tenacity.retry_if_exception_type(
-        netlink_exceptions.NetlinkDumpInterrupted),
+        (netlink_exceptions.NetlinkDumpInterrupted,
+         NetworkInterfaceNotFound)),
     wait=tenacity.wait_exponential(multiplier=0.02, max=1),
     stop=tenacity.stop_after_delay(8),
     reraise=True)
