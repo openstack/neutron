@@ -126,7 +126,6 @@
         - neutron-ovn-tempest-ovs-release-ipv6-only
         - neutron-ovs-tempest-fips
         - neutron-ovn-tempest-ovs-release-fips
-        - neutron-ovs-grenade-multinode-tick-tick
         - devstack-tobiko-neutron:
             voting: true
         - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa
