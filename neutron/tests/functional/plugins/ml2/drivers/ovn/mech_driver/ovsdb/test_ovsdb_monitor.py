@@ -20,6 +20,7 @@ import fixtures as og_fixtures
 from neutron_lib.api.definitions import allowedaddresspairs
 from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import portbindings
+from neutron_lib.api.definitions import provider_net
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_concurrency import processutils
@@ -517,8 +518,10 @@ class TestSBDbMonitor(base.TestOVNFunctionalBase, test_l3.L3NatTestCaseMixin):
 
     def setUp(self, **kwargs):
         super().setUp(**kwargs)
-        self.chassis = self.add_fake_chassis('ovs-host1',
-                                             enable_chassis_as_gw=True)
+        self.physnet = 'public'
+        self.chassis = self.add_fake_chassis(
+            'ovs-host1', physical_nets=[self.physnet],
+            enable_chassis_as_gw=True)
         self.l3_plugin = directory.get_plugin(plugin_constants.L3)
         ext_mgr = test_l3.L3TestExtensionManager()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
@@ -545,10 +548,12 @@ class TestSBDbMonitor(base.TestOVNFunctionalBase, test_l3.L3NatTestCaseMixin):
                 return True
             return lrp.external_ids == pb.external_ids
 
-        kwargs = {'arg_list': (external_net.EXTERNAL,),
-                  external_net.EXTERNAL: True}
+        arg_dict = {external_net.EXTERNAL: True,
+                    provider_net.NETWORK_TYPE: 'flat',
+                    provider_net.PHYSICAL_NETWORK: self.physnet}
         ext_net = self._make_network(self.fmt, 'ext_net', True, as_admin=True,
-                                     **kwargs)
+                                     arg_list=tuple(arg_dict.keys()),
+                                     **arg_dict)
         self._make_subnet(self.fmt, ext_net, '10.251.0.1', '10.251.0.0/24',
                           enable_dhcp=True)
         router = self._make_router(self.fmt, self._tenant_id)

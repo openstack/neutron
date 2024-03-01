@@ -551,8 +551,16 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
 
     def get_unhosted_gateways(self, port_physnet_dict, chassis_with_physnets,
                               all_gw_chassis, chassis_with_azs):
+        """Return the GW LRPs with no chassis assigned
+
+        If the LRP belongs to a tunnelled network (physnet=None), it won't be
+        hosted to any chassis.
+        """
         unhosted_gateways = set()
         for port, physnet in port_physnet_dict.items():
+            if not physnet:
+                continue
+
             lrp_name = '%s%s' % (ovn_const.LRP_PREFIX, port)
             original_state = self.get_gateway_chassis_binding(lrp_name)
             az_hints = self.get_gateway_chassis_az_hints(lrp_name)

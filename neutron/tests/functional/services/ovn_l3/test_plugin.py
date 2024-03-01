@@ -41,6 +41,7 @@ class TestRouter(base.TestOVNFunctionalBase):
         self.chassis2 = self.add_fake_chassis(
             'ovs-host2', physical_nets=['physnet2', 'physnet3'],
             enable_chassis_as_gw=True, azs=[])
+        self.physnet_used = ['physnet1', 'physnet2', 'physnet3']
         self.cr_lrp_pb_event = events.WaitForCrLrpPortBindingEvent()
         self.sb_api.idl.notify_handler.watch_event(self.cr_lrp_pb_event)
 
@@ -86,13 +87,11 @@ class TestRouter(base.TestOVNFunctionalBase):
                               ip_version=n_consts.IP_VERSION_4)
         return network
 
-    def _set_redirect_chassis_to_invalid_chassis(self, ovn_client):
+    def _unset_lrp_gw_chassis(self, ovn_client):
         with ovn_client._nb_idl.transaction(check_error=True) as txn:
-            for lrp in self.nb_api.tables[
-                    'Logical_Router_Port'].rows.values():
+            for lrp in self.nb_api.tables['Logical_Router_Port'].rows.values():
                 txn.add(ovn_client._nb_idl.update_lrouter_port(
-                    lrp.name,
-                    gateway_chassis=[ovn_const.OVN_GATEWAY_INVALID_CHASSIS]))
+                    lrp.name, gateway_chassis=[]))
 
     def _get_gwc_dict(self):
         sched_info = {}
@@ -117,11 +116,11 @@ class TestRouter(base.TestOVNFunctionalBase):
                 # exception occasionally.
                 continue
 
-            gw_port_id = router.get('gw_port_id')
-            logical_port = 'cr-lrp-%s' % gw_port_id
-            self.assertTrue(self.cr_lrp_pb_event.wait(logical_port),
-                            msg='lrp %s failed to bind' % logical_port)
             if bind_chassis:
+                gw_port_id = router.get('gw_port_id')
+                logical_port = 'cr-lrp-%s' % gw_port_id
+                self.assertTrue(self.cr_lrp_pb_event.wait(logical_port),
+                                msg='lrp %s failed to bind' % logical_port)
                 self.sb_api.lsp_bind(logical_port, bind_chassis,
                                      may_exist=True).execute(check_error=True)
         return routers
@@ -165,22 +164,24 @@ class TestRouter(base.TestOVNFunctionalBase):
         def fake_select(*args, **kwargs):
             self.assertCountEqual(candidates, kwargs['candidates'])
             # We are not interested in further processing, let us return
-            # INVALID_CHASSIS to avoid errors
-            return [ovn_const.OVN_GATEWAY_INVALID_CHASSIS]
+            # a random chassis name to avoid errors. If there are no
+            # candidates, this method returns None.
+            return ['a-random-chassis'] if candidates else None
 
         with mock.patch.object(self.l3_plugin.scheduler, 'select',
-                              side_effect=fake_select) as plugin_select:
+                               side_effect=fake_select) as plugin_select:
             gw_info = {'network_id': ext1['network']['id']}
             self._create_router('router1', gw_info=gw_info,
                                 az_hints=router_az_hints)
             self.assertTrue(plugin_select.called)
             plugin_select.reset_mock()
 
-            # set redirect-chassis to neutron-ovn-invalid-chassis, so
-            # that schedule_unhosted_gateways will try to schedule it
-            self._set_redirect_chassis_to_invalid_chassis(ovn_client)
+            # Unset the redirect-chassis so that schedule_unhosted_gateways
+            # will try to schedule it.
+            self._unset_lrp_gw_chassis(ovn_client)
             self.l3_plugin.schedule_unhosted_gateways()
-            self.assertTrue(plugin_select.called)
+            check = self.assertTrue if candidates else self.assertFalse
+            check(plugin_select.called)
 
     def test_gateway_chassis_with_cms_and_bridge_mappings(self):
         # Both chassis1 and chassis3 are having proper bridge mappings,
@@ -201,7 +202,7 @@ class TestRouter(base.TestOVNFunctionalBase):
             'ext1', 'vlan', 'physnet1', 1, "10.0.0.1", "10.0.0.0/24")
         # As we have 'gateways' in the system, but without required
         # chassis we should not schedule gw in that case at all.
-        self._set_redirect_chassis_to_invalid_chassis(ovn_client)
+        self._unset_lrp_gw_chassis(ovn_client)
         with mock.patch.object(self.l3_plugin.scheduler, 'select',
                                side_effect=[self.chassis1]):
             gw_info = {'network_id': ext1['network']['id']}
@@ -242,7 +243,7 @@ class TestRouter(base.TestOVNFunctionalBase):
             'ext1', 'vlan', 'physnet1', 1, "10.0.0.1", "10.0.0.0/24")
         # As we have 'gateways' in the system, but without required
         # chassis we should not schedule gw in that case at all.
-        self._set_redirect_chassis_to_invalid_chassis(ovn_client)
+        self._unset_lrp_gw_chassis(ovn_client)
         with mock.patch.object(self.l3_plugin.scheduler, 'select',
                                side_effect=[self.chassis1]):
             gw_info = {'network_id': ext1['network']['id']}
@@ -264,7 +265,7 @@ class TestRouter(base.TestOVNFunctionalBase):
     def test_gateway_chassis_no_physnet_tunnelled_network(self):
         # The GW network is tunnelled, no physnet defined --> no possible
         # candidates.
-        self._check_gateway_chassis_candidates([], physnet=None)
+        self._check_gateway_chassis_candidates(None, physnet=None)
 
     def test_gateway_chassis_least_loaded_scheduler(self):
         # This test will create 4 routers each with its own gateway.
@@ -372,11 +373,8 @@ class TestRouter(base.TestOVNFunctionalBase):
         Test cases when subnets are added to an external network after router
         has been configured to use that network via "set --external-gateway"
         """
-
         with mock.patch.object(self.l3_plugin.scheduler, 'select',
-                               return_value=[
-                                   ovn_const.OVN_GATEWAY_INVALID_CHASSIS
-                               ]) as plugin_select:
+                               return_value=self.chassis1) as plugin_select:
             router1 = self._create_router('router1', gw_info=None)
             router_id = router1['id']
             self.assertIsNone(self._get_gw_port(router_id),
@@ -490,8 +488,8 @@ class TestRouter(base.TestOVNFunctionalBase):
         def fake_select(*args, **kwargs):
             self.assertCountEqual(self.candidates, kwargs['candidates'])
             # We are not interested in further processing, let us return
-            # INVALID_CHASSIS to avoid errors
-            return [ovn_const.OVN_GATEWAY_INVALID_CHASSIS]
+            # a random chassis name to avoid errors.
+            return ['a-random-chassis']
 
         with mock.patch.object(self.l3_plugin.scheduler, 'select',
                                side_effect=fake_select) as plugin_select:
@@ -499,9 +497,9 @@ class TestRouter(base.TestOVNFunctionalBase):
             gw_info = {'network_id': ext1['network']['id']}
             router1 = self._create_router('router1', gw_info=gw_info)
 
-            # set redirect-chassis to neutron-ovn-invalid-chassis, so
-            # that schedule_unhosted_gateways will try to schedule it
-            self._set_redirect_chassis_to_invalid_chassis(ovn_client)
+            # Unset the redirect-chassis so that schedule_unhosted_gateways
+            # will try to schedule it.
+            self._unset_lrp_gw_chassis(ovn_client)
             self.l3_plugin.schedule_unhosted_gateways()
 
             self.candidates = [self.chassis1, self.chassis2]
@@ -509,7 +507,7 @@ class TestRouter(base.TestOVNFunctionalBase):
             self.l3_plugin.update_router(
                 self.context, router1['id'],
                 {'router': {l3_apidef.EXTERNAL_GW_INFO: gw_info}})
-            self._set_redirect_chassis_to_invalid_chassis(ovn_client)
+            self._unset_lrp_gw_chassis(ovn_client)
             self.l3_plugin.schedule_unhosted_gateways()
 
             self.candidates = []
@@ -517,17 +515,17 @@ class TestRouter(base.TestOVNFunctionalBase):
             self.l3_plugin.update_router(
                 self.context, router1['id'],
                 {'router': {l3_apidef.EXTERNAL_GW_INFO: gw_info}})
-            self._set_redirect_chassis_to_invalid_chassis(ovn_client)
+            self._unset_lrp_gw_chassis(ovn_client)
             self.l3_plugin.schedule_unhosted_gateways()
 
             # We can't test call_count for these mocks, as we have disabled
             # maintenance_worker which will trigger chassis events
             # and eventually calling schedule_unhosted_gateways.
-            # However, we know for sure that these mocks must have been
-            # called at least 3 times because that is the number of times
-            # this test invokes them: 1x create_router + 2x update_router;
-            # and 3x schedule_unhosted_gateways for plugin_select mock.
-            self.assertGreaterEqual(plugin_select.call_count, 3)
+            # The router is created with a gateway port and updated twice.
+            # However, the "plugin_select" is called only twice because the
+            # third gateway network used is type "geneve" and the LRP are not
+            # hosted in any chassis.
+            self.assertGreaterEqual(plugin_select.call_count, 2)
 
     def test_router_gateway_port_binding_host_id(self):
         # Test setting chassis on chassisredirect port in Port_Binding table,
@@ -613,7 +611,8 @@ class TestRouter(base.TestOVNFunctionalBase):
 
     def test_create_delete_router_multiple_gw_ports(self):
         ext4 = self._create_ext_network(
-            'ext4', 'flat', 'physnet4', None, "40.0.0.1", "40.0.0.0/24")
+            'ext4', 'flat', self.physnet_used[0], None, '40.0.0.1',
+            '40.0.0.0/24')
         router = self._create_router('router4')
         gws = self._add_external_gateways(
             router['id'],
@@ -638,7 +637,8 @@ class TestRouter(base.TestOVNFunctionalBase):
 
     def test_create_router_multiple_gw_ports_ecmp(self):
         ext5 = self._create_ext_network(
-            'ext5', 'flat', 'physnet5', None, "10.0.50.1", "10.0.50.0/24")
+            'ext5', 'flat', self.physnet_used[1], None, '10.0.50.1',
+            '10.0.50.0/24')
         router = self._create_router('router5', enable_ecmp=True)
         gws = self._add_external_gateways(
             router['id'],
@@ -740,12 +740,10 @@ class TestRouter(base.TestOVNFunctionalBase):
             'ext1', 'flat', 'physnet6', None, "10.0.60.1", "10.0.60.0/24")
         gw_info = {'network_id': ext1['network']['id']}
 
-        # Attempt to add 4 routers, since there are no chassis all will be
-        # scheduled on the ovn_const.OVN_GATEWAY_INVALID_CHASSIS.
-        num_routers = len(self._create_routers_wait_pb(1, 4, gw_info))
-        self.assertEqual(
-            {ovn_const.OVN_GATEWAY_INVALID_CHASSIS: {1: num_routers}},
-            self._get_gwc_dict())
+        # Attempt to add 4 routers, since there are no chassis, none of them
+        # will be scheduled on any chassis.
+        num_routers = len(self._create_routers_wait_pb(1, 4, gw_info=gw_info))
+        self.assertEqual({}, self._get_gwc_dict())
 
         # Add 2 chassis and rebalance gateways.
         #
@@ -758,9 +756,7 @@ class TestRouter(base.TestOVNFunctionalBase):
         with mock.patch.object(
                 self.l3_plugin, 'schedule_unhosted_gateways'):
             chassis_list.extend(self._add_chassis(1, 2, ['physnet6']))
-        self.assertEqual(
-            {ovn_const.OVN_GATEWAY_INVALID_CHASSIS: {1: num_routers}},
-            self._get_gwc_dict())
+        self.assertEqual({}, self._get_gwc_dict())
 
         # Wrap `self.l3_plugin._nb_ovn.transaction` so that we can assert on
         # number of calls.

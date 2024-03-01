@@ -266,7 +266,7 @@ class TestGateWayChassisValidity(base.BaseTestCase):
 
     def test_gateway_chassis_due_to_invalid_chassis_name(self):
         # Return True since chassis is invalid
-        self.chassis_name = constants.OVN_GATEWAY_INVALID_CHASSIS
+        self.chassis_name = None
         self.assertTrue(utils.is_gateway_chassis_invalid(
             self.chassis_name, self.gw_chassis, self.physnet,
             self.chassis_physnets, self.az_hints, self.chassis_azs))

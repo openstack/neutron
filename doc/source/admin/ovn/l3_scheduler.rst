@@ -26,10 +26,9 @@ The maximum number of ``Gateway_Chassis`` that can be assigned to a
 the highest priority a ``Gateway_Chassis`` will have is 5.
 
 If no gateway chassis are available during the ``Logical_Router_Port``
-scheduling, no ``Gateway_Chassis`` will be assigned and the value
-"neutron-ovn-invalid-chassis" will be set in the "options" column of the
-``Logical_Router`` register; that value will be used to detect an unhosted
-router gateway port.
+scheduling, no ``Gateway_Chassis`` will be assigned and no value will be set
+in the "options" column of the ``Logical_Router`` register; that will be used
+to detect an unhosted router gateway port.
 
 
 Types of schedulers
@@ -88,7 +87,7 @@ Both the ``OVNGatewayChanceScheduler`` and the
 ``OVNGatewayLeastLoadedScheduler`` schedulers have the Availability Zones (AZ)
 in consideration. If a router has any AZ defined, the schedulers will select
 only those chassis located in the AZs. If no chassis meets this condition, the
-``Logical_Router_Port`` will be assigned to the "neutron-ovn-invalid-chassis".
+``Logical_Router_Port`` won't be assigned to any chassis and won't be bound.
 
 Once the list of candidate ``Chassis`` (depending on the scheduler selected)
 is created, this list is reordered to prioritize these ``Chassis`` from

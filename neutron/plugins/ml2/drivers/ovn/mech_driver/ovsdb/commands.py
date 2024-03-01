@@ -412,10 +412,9 @@ class ScheduleNewGatewayCommand(command.BaseCommand):
         chassis = self.scheduler.select(
             self.api, self.sb_api, self.g_name, candidates=candidates,
             target_lrouter=lrouter)
-
-        setattr(
-            lrouter_port,
-            *_add_gateway_chassis(self.api, txn, self.g_name, chassis))
+        if chassis:
+            setattr(lrouter_port,
+                    *_add_gateway_chassis(self.api, txn, self.g_name, chassis))
 
 
 class AddLRouterPortCommand(command.BaseCommand):

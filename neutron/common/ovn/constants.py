@@ -109,12 +109,6 @@ ACL_ACTION_ALLOW_RELATED = 'allow-related'
 ACL_ACTION_ALLOW_STATELESS = 'allow-stateless'
 ACL_ACTION_ALLOW = 'allow'
 
-# When a OVN L3 gateway is created, it needs to be bound to a chassis. In
-# case a chassis is not found OVN_GATEWAY_INVALID_CHASSIS will be set in
-# the options column of the Logical Router. This value is used to detect
-# unhosted router gateways to schedule.
-OVN_GATEWAY_INVALID_CHASSIS = 'neutron-ovn-invalid-chassis'
-
 # NOTE(lucasagomes): These options were last synced from
 # https://github.com/ovn-org/ovn/blob/feb5d6e81d5a0290aa3618a229c860d01200422e/lib/ovn-l7.h
 #
