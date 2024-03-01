@@ -79,9 +79,10 @@ class AutoScheduler(object):
                     if is_routed_network:
                         if len(segments_on_network & segments_on_host) == 0:
                             continue
-                    else:
-                        if len(agents) >= agents_per_network:
-                            continue
+                    # The following two checks apply to both routed and
+                    # non-routed networks
+                    if len(agents) >= agents_per_network:
+                        continue
                     if any(dhcp_agent.id == agent.id for agent in agents):
                         continue
                     net = plugin.get_network(context, net_id)

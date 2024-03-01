@@ -381,6 +381,7 @@ class TestAutoScheduleSegments(test_plugin.Ml2PluginV2TestCase,
             self.ctx, [net_id])
         self.assertEqual(1, len(agents))
 
+        cfg.CONF.set_override('dhcp_agents_per_network', 2)
         seg2_id = self._create_segment(net_id, 'physnet2')
         self._create_subnet(seg2_id, net_id, '192.168.11.0/24')
         helpers.register_dhcp_agent(HOST_C)
