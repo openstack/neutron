@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    The config option ``agent_down_time`` is now limited to a maximum value of
+    `2147483`, as neutron-server will fail to start if it is configured higher.
+    See bug `2028724 <https://bugs.launchpad.net/neutron/+bug/2028724>`_ for more information.
