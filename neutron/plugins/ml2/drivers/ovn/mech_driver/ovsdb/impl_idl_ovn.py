@@ -19,6 +19,7 @@ from neutron_lib import constants
 from neutron_lib import exceptions as n_exc
 from neutron_lib.utils import helpers
 from oslo_log import log
+from oslo_utils import strutils
 from oslo_utils import uuidutils
 from ovs import socket_util
 from ovs import stream
@@ -775,19 +776,18 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         return result[0] if result else None
 
     def get_lrouter_gw_ports(self, lrouter_name):
+        r_name = ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY
+        is_gw = ovn_const.OVN_ROUTER_IS_EXT_GW
         lr = self.get_lrouter(lrouter_name)
         gw_ports = []
         for lrp in getattr(lr, 'ports', []):
             lrp_ext_ids = getattr(lrp, 'external_ids', {})
-            if (ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY not in lrp_ext_ids or
-                    utils.ovn_name(lrp_ext_ids[
-                        ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY]) != lr.name):
+            if (r_name not in lrp_ext_ids or
+                    utils.ovn_name(lrp_ext_ids[r_name]) != lr.name or
+                    not strutils.bool_from_string(lrp_ext_ids.get(is_gw))):
                 continue
-            lrp_ha_cfg = (getattr(lrp, 'gateway_chassis', None) or
-                          getattr(lrp, 'options', {}).get(
-                              ovn_const.OVN_GATEWAY_CHASSIS_KEY))
-            if lrp_ha_cfg:
-                gw_ports.append(lrp)
+
+            gw_ports.append(lrp)
         return gw_ports
 
     def get_lrouter_by_lrouter_port(self, lrp_name):
