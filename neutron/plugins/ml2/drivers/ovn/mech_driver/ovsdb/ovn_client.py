@@ -1264,6 +1264,8 @@ class OVNClient(object):
         lrouter_name = utils.ovn_name(router['id'])
         router_default_route_ecmp_enabled = router.get(
             'enable_default_route_ecmp', False)
+        router_default_route_bfd_enabled = router.get(
+            'enable_default_route_bfd', False)
 
         # 1. Add the external gateway router port.
         admin_context = context.elevated()
@@ -1285,9 +1287,16 @@ class OVNClient(object):
                 columns = {'external_ids': {
                     ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
                     ovn_const.OVN_SUBNET_EXT_ID_KEY: gw_info.subnet_id}}
+                if router_default_route_bfd_enabled:
+                    columns.update({
+                        'output_port': utils.ovn_lrouter_port_name(
+                            gw_port['id']),
+                    })
                 txn.add(self._nb_idl.add_static_route(
                     lrouter_name, ip_prefix=gw_info.ip_prefix,
-                    nexthop=gw_info.gateway_ip, **columns))
+                    nexthop=gw_info.gateway_ip,
+                    maintain_bfd=router_default_route_bfd_enabled,
+                    **columns))
 
         # 3. Add snat rules for tenant networks in lrouter if snat is enabled
         if utils.is_snat_enabled(router) and networks:
@@ -1327,6 +1336,22 @@ class OVNClient(object):
                 for snat in ovn_snats:
                     if snat.external_ip != gw_info.router_ip:
                         return True
+
+        router_default_route_bfd = router.get(
+            'enable_default_route_bfd',
+            False
+        )
+
+        for route in ovn_static_routes:
+            # If gateway in OVN DB has static routes, the ovn_static_route
+            # parameter contains data from
+            # `utils.get_lrouter_ext_gw_static_route`, otherwise it will
+            # contain a Dict ref `update_router` method.
+            route_bfd = getattr(route, 'bfd', [])
+            if router_default_route_bfd and not route_bfd:
+                return True
+            elif route_bfd and not router_default_route_bfd:
+                return True
 
         return False
 
@@ -1528,6 +1553,9 @@ class OVNClient(object):
         """Delete a logical router."""
         lrouter_name = utils.ovn_name(router_id)
         with self._nb_idl.transaction(check_error=True) as txn:
+            # This will ensure any BFD records are removed
+            txn.add(self._nb_idl.delete_lrouter_ext_gw(lrouter_name,
+                                                       if_exists=True))
             txn.add(self._nb_idl.lr_del(lrouter_name, if_exists=True))
         db_rev.delete_revision(context, router_id, ovn_const.TYPE_ROUTERS)
 

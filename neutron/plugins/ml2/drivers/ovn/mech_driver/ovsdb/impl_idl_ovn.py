@@ -465,8 +465,9 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
     def delete_acl(self, lswitch, lport, if_exists=True):
         return cmd.DelACLCommand(self, lswitch, lport, if_exists)
 
-    def add_static_route(self, lrouter, **columns):
-        return cmd.AddStaticRouteCommand(self, lrouter, **columns)
+    def add_static_route(self, lrouter, maintain_bfd=False, **columns):
+        return cmd.AddStaticRouteCommand(self, lrouter, maintain_bfd,
+                                         **columns)
 
     def delete_static_route(self, lrouter, ip_prefix, nexthop, if_exists=True):
         return cmd.DelStaticRouteCommand(self, lrouter, ip_prefix, nexthop,
@@ -823,8 +824,10 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
                 return lr
         return None
 
-    def delete_lrouter_ext_gw(self, lrouter_name, if_exists=True):
-        return cmd.DeleteLRouterExtGwCommand(self, lrouter_name, if_exists)
+    def delete_lrouter_ext_gw(self, lrouter_name, if_exists=True,
+                              maintain_bfd=True):
+        return cmd.DeleteLRouterExtGwCommand(self, lrouter_name, if_exists,
+                                             maintain_bfd)
 
     def get_port_group(self, pg_name):
         if uuidutils.is_uuid_like(pg_name):

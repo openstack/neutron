@@ -261,11 +261,13 @@ class API(api.API, metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def add_static_route(self, lrouter, **columns):
+    def add_static_route(self, lrouter, maintain_bfd=False, **columns):
         """Add static route to logical router.
 
         :param lrouter:      The unique name of the lrouter
         :type lrouter:       string
+        :param maintain_bfd: Ensure a BFD record exists for the static route.
+        :type maintain_bfd:  bool
         :param columns:      Dictionary of static columns
                              Supported columns: prefix, nexthop, valid
         :type columns:       dictionary
@@ -533,11 +535,13 @@ class API(api.API, metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def delete_lrouter_ext_gw(self, lrouter_name):
+    def delete_lrouter_ext_gw(self, lrouter_name, maintain_bfd=True):
         """Delete Logical Router external gateway.
 
         :param lrouter_name: The name of the logical router
         :type lrouter_name: string
+        :param maintain_bfd: Ensure any existing BFD record is removed.
+        :type maintain_bfd:  bool
         :returns: :class:`Command` with no result
         """
 
