@@ -30,6 +30,7 @@ from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.agent.linux import utils as linux_utils
 from neutron.agent.metadata import driver as metadata_driver
+from neutron.agent.metadata import driver_base
 from neutron.common import metadata as comm_meta
 from neutron.conf.agent import common as agent_config
 from neutron.conf.agent.l3 import config as l3_config
@@ -54,14 +55,14 @@ class TestMetadataDriverRules(base.BaseTestCase):
                  '-p tcp -m tcp --dport 80 -j REDIRECT --to-ports 9697')
         self.assertEqual(
             [rules],
-            metadata_driver.MetadataDriver.metadata_nat_rules(9697))
+            metadata_driver.metadata_nat_rules(9697))
 
     def test_metadata_nat_rules_ipv6(self):
         rules = ('PREROUTING', '-d fe80::a9fe:a9fe/128 -i qr-+ '
                  '-p tcp -m tcp --dport 80 -j REDIRECT --to-ports 9697')
         self.assertEqual(
             [rules],
-            metadata_driver.MetadataDriver.metadata_nat_rules(
+            metadata_driver.metadata_nat_rules(
                 9697, metadata_address='fe80::a9fe:a9fe/128'))
 
     def test_metadata_filter_rules(self):
@@ -70,7 +71,7 @@ class TestMetadataDriverRules(base.BaseTestCase):
                  ('INPUT', '-p tcp -m tcp --dport 9697 -j DROP')]
         self.assertEqual(
             rules,
-            metadata_driver.MetadataDriver.metadata_filter_rules(9697, '0x1'))
+            metadata_driver.metadata_filter_rules(9697, '0x1'))
 
 
 class TestMetadataDriverProcess(base.BaseTestCase):
@@ -216,7 +217,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 service_name,
                 '-f', cfg_file]
 
-            log_tag = ("haproxy-" + metadata_driver.METADATA_SERVICE_NAME +
+            log_tag = ("haproxy-" + driver_base.METADATA_SERVICE_NAME +
                        "-" + router_id)
 
             expected_params = {
@@ -251,7 +252,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
             else:
                 expected_config_template = (
                     comm_meta.METADATA_HAPROXY_GLOBAL +
-                    metadata_driver._UNLIMITED_CONFIG_TEMPLATE +
+                    driver_base._UNLIMITED_CONFIG_TEMPLATE +
                     metadata_driver._HEADER_CONFIG_TEMPLATE)
 
             mock_open.assert_has_calls([
@@ -267,7 +268,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
             ])
 
             agent.process_monitor.register.assert_called_once_with(
-                router_id, metadata_driver.METADATA_SERVICE_NAME,
+                router_id, driver_base.METADATA_SERVICE_NAME,
                 mock.ANY)
 
             self.delete_if_exists.assert_called_once_with(
@@ -293,7 +294,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
     def test_spawn_metadata_proxy_dad_failed(self):
         self._test_spawn_metadata_proxy(dad_failed=True)
 
-    @mock.patch.object(metadata_driver.LOG, 'error')
+    @mock.patch.object(driver_base.LOG, 'error')
     def test_spawn_metadata_proxy_handles_process_exception(self, error_log):
         process_instance = mock.Mock(active=False)
         process_instance.enable.side_effect = (
@@ -311,7 +312,6 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 network_id=network_id)
         error_log.assert_called_once()
         process_monitor.register.assert_not_called()
-        self.assertNotIn(network_id, metadata_driver.MetadataDriver.monitors)
 
     def test_create_config_file_wrong_user(self):
         with mock.patch('pwd.getpwnam', side_effect=KeyError):
@@ -356,7 +356,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
         mock_get_process = self.mock_get_process.start()
         mock_get_process.return_value = mproxy_process
         driver = metadata_driver.MetadataDriver(FakeL3NATAgent())
-        with mock.patch.object(metadata_driver, 'SIGTERM_TIMEOUT', 0):
+        with mock.patch.object(driver_base, 'SIGTERM_TIMEOUT', 0):
             driver.destroy_monitored_metadata_proxy(mock.Mock(), 'uuid',
                                                     'conf', 'ns_name')
         mproxy_process.disable.assert_has_calls([

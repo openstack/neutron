@@ -34,7 +34,7 @@ from neutron.agent import l3_agent as l3_agent_main
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import keepalived
-from neutron.agent.metadata import driver as metadata_driver
+from neutron.agent.metadata import driver_base
 from neutron.common import utils as common_utils
 from neutron.conf.agent import common as agent_config
 from neutron.conf.agent.l3 import config as l3_config
@@ -443,7 +443,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
             conf,
             router.router_id,
             router.ns_name,
-            service=metadata_driver.HAPROXY_SERVICE)
+            service=driver_base.HAPROXY_SERVICE)
 
     def _metadata_proxy_exists(self, conf, router):
         pm = self._metadata_proxy(conf, router)

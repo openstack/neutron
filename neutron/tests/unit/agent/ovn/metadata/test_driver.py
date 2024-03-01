@@ -23,6 +23,7 @@ from oslo_utils import uuidutils
 
 from neutron.agent.linux import external_process as ep
 from neutron.agent.linux import utils as linux_utils
+from neutron.agent.metadata import driver_base
 from neutron.agent.ovn.metadata import agent as metadata_agent
 from neutron.agent.ovn.metadata import driver as metadata_driver
 from neutron.common import metadata as comm_meta
@@ -40,6 +41,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
     EUNAME = 'neutron'
     EGNAME = 'neutron'
     METADATA_DEFAULT_IP = '169.254.169.254'
+    METADATA_DEFAULT_IPV6 = 'fe80::a9fe:a9fe'
     METADATA_PORT = 8080
     METADATA_SOCKET = '/socket/path'
     PIDFILE = 'pidfile'
@@ -99,27 +101,36 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                     'neutron.agent.linux.external_process.'
                     'ProcessManager.active',
                     new_callable=mock.PropertyMock,
-                    side_effect=[False, True]):
+                    side_effect=[False, True]),\
+                mock.patch(
+                    'neutron.agent.linux.ip_lib.'
+                    'IpAddrCommand.wait_until_address_ready',
+                    return_value=True):
             cfg_file = os.path.join(
                 metadata_driver.HaproxyConfigurator.get_config_path(
-                    cfg.CONF.state_path),
+                    agent.conf.state_path),
                 "%s.conf" % datapath_id)
             mock_open = self.useFixture(
                 lib_fixtures.OpenFixture(cfg_file)).mock_open
-            metadata_driver.MetadataDriver.spawn_monitored_metadata_proxy(
+            bind_v6_line = 'bind %s:%s interface %s' % (
+                self.METADATA_DEFAULT_IPV6, self.METADATA_PORT, 'fake-if')
+            proxy = metadata_driver.MetadataDriver()
+            proxy.spawn_monitored_metadata_proxy(
                 agent._process_monitor,
                 metadata_ns,
                 self.METADATA_PORT,
-                cfg.CONF,
+                agent.conf,
                 bind_address=self.METADATA_DEFAULT_IP,
-                network_id=datapath_id)
+                network_id=datapath_id,
+                bind_address_v6=self.METADATA_DEFAULT_IPV6,
+                bind_interface='fake-if')
 
             netns_execute_args = [
                 service_name,
                 '-f', cfg_file]
 
             log_tag = '{}-{}-{}'.format(
-                service_name, metadata_driver.METADATA_SERVICE_NAME,
+                service_name, driver_base.METADATA_SERVICE_NAME,
                 datapath_id)
 
             expected_params = {
@@ -133,7 +144,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 'pidfile': self.PIDFILE,
                 'log_level': 'debug',
                 'log_tag': log_tag,
-                'bind_v6_line': ''}
+                'bind_v6_line': bind_v6_line}
 
             if rate_limited:
                 expected_params.update(self.RATE_LIMIT_CONFIG,
@@ -146,7 +157,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
             else:
                 expected_config_template = (
                     comm_meta.METADATA_HAPROXY_GLOBAL +
-                    metadata_driver._UNLIMITED_CONFIG_TEMPLATE +
+                    driver_base._UNLIMITED_CONFIG_TEMPLATE +
                     metadata_driver._HEADER_CONFIG_TEMPLATE)
 
             cfg_contents = expected_config_template % expected_params
@@ -165,7 +176,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
             self.delete_if_exists.assert_called_once_with(
                 mock.ANY, run_as_root=True)
 
-    @mock.patch.object(metadata_driver.LOG, 'error')
+    @mock.patch.object(driver_base.LOG, 'error')
     def test_spawn_metadata_proxy_handles_process_exception(self, error_log):
         process_instance = mock.Mock(active=False)
         process_instance.enable.side_effect = (
@@ -186,7 +197,6 @@ class TestMetadataDriverProcess(base.BaseTestCase):
 
         error_log.assert_called_once()
         process_monitor.register.assert_not_called()
-        self.assertNotIn(network_id, metadata_driver.MetadataDriver.monitors)
 
     def test_create_config_file_wrong_user(self):
         with mock.patch('pwd.getpwnam', side_effect=KeyError):
