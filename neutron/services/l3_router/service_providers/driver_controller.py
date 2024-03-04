@@ -139,7 +139,7 @@ class DriverController(object):
         # attributes via the API.
         try:
             _ensure_driver_supports_request(drv, payload.request_body)
-        except lib_exc.InvalidInput:
+        except lib_exc.InvalidInput as exc:
             # the current driver does not support this request, we need to
             # migrate to a new provider. populate the distributed and ha
             # flags from the previous state if not in the update so we can
@@ -162,7 +162,7 @@ class DriverController(object):
                       {'ha_flag': payload.request_body['ha'],
                        'distributed_flag':
                        payload.request_body['distributed']})
-            new_drv = self._attrs_to_driver(payload.request_body)
+            new_drv = self._attrs_to_driver(payload.request_body, exc=exc)
         if new_drv:
             LOG.debug("Router %(id)s migrating from %(old)s provider to "
                       "%(new)s provider.", {'id': payload.resource_id,
@@ -224,7 +224,7 @@ class DriverController(object):
         driver = self.drivers[provider['provider']]
         return driver
 
-    def _attrs_to_driver(self, router):
+    def _attrs_to_driver(self, router, exc=None):
         """Get a provider driver handle based on the ha/distributed flags."""
         distributed = _is_distributed(
             router.get('distributed', lib_const.ATTR_NOT_SPECIFIED))
@@ -236,6 +236,9 @@ class DriverController(object):
         for driver in drivers:
             if _is_driver_compatible(distributed, ha, driver):
                 return driver
+
+        if exc:
+            raise exc
         raise NotImplementedError(
             _("Could not find a service provider that supports "
               "distributed=%(d)s and ha=%(h)s") % {'d': distributed, 'h': ha}
