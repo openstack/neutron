@@ -101,7 +101,10 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
                 ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY:
                 utils.ovn_name(self.fake_network['id']),
-                ovn_const.OVN_ROUTER_IS_EXT_GW: 'False'}}
+                ovn_const.OVN_ROUTER_IS_EXT_GW: 'False',
+                ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'router-id',
+            }
+        }
         self.fake_router_ports = [self.fake_router_port]
         self.fake_subnet = {'id': 'subnet-id',
                             'ip_version': 4,
@@ -162,7 +165,9 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
                 ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY:
                 utils.ovn_name('ext-network-id'),
-                ovn_const.OVN_ROUTER_IS_EXT_GW: 'True'},
+                ovn_const.OVN_ROUTER_IS_EXT_GW: 'True',
+                ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'router-id',
+            },
             'options': {}}
         self.fake_floating_ip_attrs = {'floating_ip_address': '192.168.0.10',
                                        'fixed_ip_address': '10.0.0.10'}
@@ -405,6 +410,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             'network_id': 'network-id1'}
         fake_rtr_intf_networks = ['2001:db8::1/24', '2001:dba::1/24']
         payload = self._create_payload_for_router_interface(router_id)
+        self.l3_inst._nb_ovn.db_get.return_value.execute.return_value = {
+            ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: router_id}
         self.ovn_drv._process_add_router_interface(resources.ROUTER_INTERFACE,
                                                    events.AFTER_CREATE,
                                                    self, payload)
@@ -422,6 +429,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
 
     def test_remove_router_interface(self):
         router_id = 'router-id'
+        self.l3_inst._nb_ovn.lookup.return_value = mock.Mock(
+            external_ids={ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: router_id})
         self.get_port.side_effect = n_exc.PortNotFound(
                                         port_id='router-port-id')
 
@@ -437,6 +446,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
 
     def test_remove_router_interface_update_lrouter_port(self):
         router_id = 'router-id'
+        self.l3_inst._nb_ovn.db_get.return_value.execute.return_value = {
+            ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: router_id}
         payload = self._create_payload_for_router_interface(router_id,
                                                             pass_subnet=False)
         self.ovn_drv._process_remove_router_interface(
@@ -452,10 +463,14 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 ovn_const.OVN_REV_NUM_EXT_ID_KEY: '1',
                 ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY:
                 utils.ovn_name(self.fake_network['id']),
-                ovn_const.OVN_ROUTER_IS_EXT_GW: 'False'})
+                ovn_const.OVN_ROUTER_IS_EXT_GW: 'False',
+                ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: router_id,
+            })
 
     def test_remove_router_interface_router_not_found(self):
         router_id = 'router-id'
+        self.l3_inst._nb_ovn.lookup.return_value = mock.Mock(
+            external_ids={ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: router_id})
         self.get_port.side_effect = n_exc.PortNotFound(
                                         port_id='router-port-id')
         self.get_router.side_effect = l3_exc.RouterNotFound(
@@ -757,6 +772,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
 
     def test_remove_router_interface_with_gateway_set(self):
         router_id = 'router-id'
+        self.l3_inst._nb_ovn.lookup.return_value = mock.Mock(
+            external_ids={ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: router_id})
         self.get_router.return_value = self.fake_router_with_ext_gw
         self.get_port.side_effect = n_exc.PortNotFound(
                                         port_id='router-port-id')
@@ -2098,6 +2115,10 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
             'OVNClient.delete_mac_binding_entries_by_mac',
             return_value=1)
         self.setup_notification_driver()
+        ext_ids = {ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY: 'router-id'}
+        self.l3_inst._nb_ovn.db_get.return_value.execute.return_value = ext_ids
+        self.l3_inst._nb_ovn.lookup.return_value = mock.Mock(
+            external_ids=ext_ids)
 
     # Note(dongj): According to bug #1657693, status of an unassociated
     # floating IP is set to DOWN. Revise expected_status to DOWN for related
@@ -2141,3 +2162,7 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
                 maintain_bfd=False, external_ids=expected_ext_ids)]
         self.l3_inst._nb_ovn.add_static_route.assert_has_calls(
             add_static_route_calls, any_order=True)
+
+    def test_create_floatingip_with_assoc(self, **kwargs):
+        self.l3_inst._nb_ovn.lookup.return_value = mock.Mock(load_balancer=[])
+        super().test_create_floatingip_with_assoc(**kwargs)
