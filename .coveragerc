@@ -1,7 +1,20 @@
 [run]
 branch = True
 source = neutron
-omit = neutron/tests/*
+omit =
+  neutron/tests/*
+  neutron/cmd/eventlet/agents/dhcp.py
+  neutron/cmd/eventlet/agents/l3.py
+  neutron/cmd/eventlet/agents/metadata.py
+  neutron/cmd/eventlet/agents/ovn_metadata.py
+  neutron/cmd/eventlet/agents/ovn_neutron_agent.py
+  neutron/cmd/eventlet/plugins/linuxbridge_neutron_agent.py
+  neutron/cmd/eventlet/plugins/macvtap_neutron_agent.py
+  neutron/cmd/eventlet/plugins/ovs_neutron_agent.py
+  neutron/cmd/eventlet/plugins/sriov_nic_neutron_agent.py
+  neutron/cmd/pd_notify.py
+  neutron/plugins/ml2/drivers/ovn/mech_driver/ovsdb/api.py
+  neutron/services/loki/loki_plugin.py
 
 [report]
 ignore_errors = True
