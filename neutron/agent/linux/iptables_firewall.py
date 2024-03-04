@@ -792,6 +792,10 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         if not self._iptables_protocol_name_map:
             tmp_map = constants.IPTABLES_PROTOCOL_NAME_MAP.copy()
             tmp_map.update(self._local_protocol_name_map())
+            # TODO(haleyb): remove once neutron-lib with fix is available
+            # - 'ipip' uses 'ipencap' to match IPPROTO_IPIP from in.h,
+            #   which is IP-ENCAP/'4' in /etc/protocols (see bug #2054324)
+            tmp_map[constants.PROTO_NAME_IPIP] = 'ipencap'
             self._iptables_protocol_name_map = tmp_map
         return self._iptables_protocol_name_map
 
