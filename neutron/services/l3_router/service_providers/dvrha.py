@@ -19,4 +19,4 @@ from neutron.services.l3_router.service_providers import ha
 
 class DvrHaDriver(dvr.DvrDriver, ha.HaDriver):
     ha_support = base.MANDATORY
-    dvr_support = base.MANDATORY
+    distributed_support = base.MANDATORY

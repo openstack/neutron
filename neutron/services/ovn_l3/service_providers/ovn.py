@@ -39,7 +39,7 @@ LOG = logging.getLogger(__name__)
 @registry.has_registry_receivers
 class OvnDriver(base.L3ServiceProvider):
     ha_support = base.MANDATORY
-    dvr_support = base.MANDATORY
+    distributed_support = base.MANDATORY
 
     @registry.receives(resources.ROUTER, [events.PRECOMMIT_CREATE])
     def _process_router_create_precommit(self, resource, event, trigger,
