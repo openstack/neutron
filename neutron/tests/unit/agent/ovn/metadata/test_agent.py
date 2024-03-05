@@ -103,14 +103,8 @@ class TestMetadataAgent(base.BaseTestCase):
 
             self.agent.sync()
 
-            pdp.assert_has_calls(
-                [
-                    mock.call(p.datapath)
-                    for p in self.ports
-                ],
-                any_order=True
-            )
-
+            pdp.assert_has_calls([mock.call(p) for p in self.ports],
+                                 any_order=True)
             lnn.assert_called_once_with()
             tdp.assert_not_called()
 
@@ -129,13 +123,8 @@ class TestMetadataAgent(base.BaseTestCase):
 
             self.agent.sync()
 
-            pdp.assert_has_calls(
-                [
-                    mock.call(p.datapath)
-                    for p in self.ports
-                ],
-                any_order=True
-            )
+            pdp.assert_has_calls([mock.call(p) for p in self.ports],
+                                 any_order=True)
             lnn.assert_called_once_with()
             tdp.assert_called_once_with('3')
 
@@ -154,27 +143,23 @@ class TestMetadataAgent(base.BaseTestCase):
                     side_effect=Exception()) as tdp:
             self.agent.sync()
 
-            pdp.assert_has_calls(
-                [
-                    mock.call(p.datapath)
-                    for p in self.ports
-                ],
-                any_order=True
-            )
+            pdp.assert_has_calls([mock.call(p) for p in self.ports],
+                                 any_order=True)
             lnn.assert_called_once_with()
             tdp.assert_called_once_with('3')
 
-    def test_get_networks_datapaths(self):
-        """Test get_networks_datapaths returns only datapath objects for the
-        networks containing vif ports of type ''(blank) and 'external'.
+    def test_get_networks_port_bindings(self):
+        """Test get_networks_port_bindings returns only the port binding
+        objects for ports with VIF type empty ('') or 'external'.
         This test simulates that this chassis has the following ports:
-            * datapath '1': 1 port type '' , 1 port 'external' and
-                            1 port 'unknown'
-            * datapath '2': 1 port type ''
-            * datapath '3': 1 port with type 'external'
-            * datapath '4': 1 port with type 'unknown'
+            * port0: datapath 1, type ''
+            * port1: datapath 1, type 'external'
+            * port2: datapath 1, type 'unknown'
+            * port3: datapath 2, type ''
+            * port4: datapath 3, type 'external'
+            * port5: datapath 4, type 'unknown'
 
-        It is expected that only datapaths '1', '2' and '3' are returned
+        Only port bindings from ports 0, 1, 3, and 4 are expected.
         """
 
         datapath_1 = DatapathInfo(uuid='uuid1',
@@ -197,11 +182,8 @@ class TestMetadataAgent(base.BaseTestCase):
 
         with mock.patch.object(self.agent.sb_idl, 'get_ports_on_chassis',
                               return_value=ports):
-            expected_datapaths = set([datapath_1, datapath_2, datapath_3])
-            self.assertSetEqual(
-                expected_datapaths,
-                self.agent.get_networks_datapaths()
-            )
+            self.assertEqual([ports[0], ports[1], ports[3], ports[4]],
+                             self.agent.get_networks_port_bindings())
 
     def test_teardown_datapath(self):
         """Test teardown datapath.
@@ -444,7 +426,8 @@ class TestMetadataAgent(base.BaseTestCase):
                 mock.patch.object(agent.MetadataAgent, '_get_namespace_name',
                                   return_value=nemaspace_name),\
                 mock.patch.object(ip_link, 'set_up') as link_set_up,\
-                mock.patch.object(ip_link, 'set_address') as link_set_addr,\
+                mock.patch.object(ip_link, 'set_address') as link_set_addr, \
+                mock.patch.object(ip_link, 'set_mtu') as link_set_mtu, \
                 mock.patch.object(ip_addr, 'list', return_value=[]),\
                 mock.patch.object(
                     ip_addr, 'add_multiple') as ip_addr_add_multiple,\
@@ -464,7 +447,11 @@ class TestMetadataAgent(base.BaseTestCase):
             # We need to assert that it was deleted first.
             self.agent.ovs_idl.list_br.return_value.execute.return_value = (
                 ['br-int', 'br-fake'])
-            self.agent.provision_datapath('fake_datapath')
+            mtu = 1500
+            port_binding = mock.Mock(
+                datapath='fake_datapath',
+                external_ids={ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY: str(mtu)})
+            self.agent.provision_datapath(port_binding)
 
             # Check that the port was deleted from br-fake
             self.agent.ovs_idl.del_port.assert_called_once_with(
@@ -474,6 +461,7 @@ class TestMetadataAgent(base.BaseTestCase):
                 nemaspace_name)
             # Make sure that the two ends of the VETH pair have been set as up.
             self.assertEqual(2, link_set_up.call_count)
+            link_set_mtu.assert_has_calls([mock.call(mtu), mock.call(mtu)])
             link_set_addr.assert_called_once_with('aa:bb:cc:dd:ee:ff')
             # Make sure that the port has been added to OVS.
             self.agent.ovs_idl.add_port.assert_called_once_with(
