@@ -301,7 +301,7 @@ class DietTestCase(base.BaseTestCase, metaclass=_CatchTimeoutMetaclass):
         if isinstance(exc_info[1], SystemExit):
             if os.getpid() != self.orig_pid:
                 # Subprocess - let it just exit
-                raise
+                raise exc_info[1]
             # This makes sys.exit(0) still a failure
             self.force_failure = True
 
