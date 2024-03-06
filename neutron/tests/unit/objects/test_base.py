@@ -855,9 +855,9 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
         return mock_calls
 
     def test_get_objects(self, context=None):
+        '''Test that get_objects fetches data from database.'''
         if context is None:
             context = self.context
-        '''Test that get_objects fetches data from database.'''
         with mock.patch.object(
                 obj_db_api, 'get_objects',
                 side_effect=self.fake_get_objects) as get_objects_mock:
