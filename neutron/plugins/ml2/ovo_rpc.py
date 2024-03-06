@@ -13,7 +13,6 @@
 
 import atexit
 import queue
-import signal
 import threading
 import traceback
 import weakref
@@ -24,6 +23,7 @@ from neutron_lib.callbacks import resources
 from neutron_lib import context as n_ctx
 from neutron_lib.db import api as db_api
 from oslo_log import log as logging
+from oslo_service import service
 
 from neutron.api.rpc.callbacks import events as rpc_events
 from neutron.api.rpc.handlers import resources_rpc
@@ -38,8 +38,9 @@ LOG = logging.getLogger(__name__)
 
 def _setup_change_handlers_cleanup():
     atexit.register(_ObjectChangeHandler.clean_up)
-    signal.signal(signal.SIGINT, _ObjectChangeHandler.clean_up)
-    signal.signal(signal.SIGTERM, _ObjectChangeHandler.clean_up)
+    sh = service.SignalHandler()
+    sh.add_handler("SIGINT", _ObjectChangeHandler.clean_up)
+    sh.add_handler("SIGTERM", _ObjectChangeHandler.clean_up)
 
 
 class _ObjectChangeHandler(object):
