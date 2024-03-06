@@ -1765,8 +1765,7 @@ class DeviceManager(object):
                      # to us (e.g. auto ipv6 addresses)
                      if fixed_ip.subnet_id in dhcp_subnets]
 
-        ips = [DictModel(item) if isinstance(item, dict) else item
-               for item in fixed_ips]
+        ips = [DictModel(item) for item in fixed_ips]
         dhcp_port.fixed_ips = ips
 
         return dhcp_port
