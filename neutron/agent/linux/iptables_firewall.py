@@ -792,10 +792,14 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         if not self._iptables_protocol_name_map:
             tmp_map = constants.IPTABLES_PROTOCOL_NAME_MAP.copy()
             tmp_map.update(self._local_protocol_name_map())
-            # TODO(haleyb): remove once neutron-lib with fix is available
-            # - 'ipip' uses 'ipencap' to match IPPROTO_IPIP from in.h,
-            #   which is IP-ENCAP/'4' in /etc/protocols (see bug #2054324)
-            tmp_map[constants.PROTO_NAME_IPIP] = 'ipencap'
+            # iptables-save uses different strings for 'ipip' (protocol 4)
+            # depending on the distro, which corresponds to the entry for
+            # '4' in /etc/protocols. For example:
+            # - 'ipencap' in Ubuntu
+            # - 'ipv4' in CentOS/Fedora
+            # For this reason, we need to map the string for 'ipip' to the
+            # system-dependent string for '4', see bug #2054324.
+            tmp_map[constants.PROTO_NAME_IPIP] = tmp_map['4']
             self._iptables_protocol_name_map = tmp_map
         return self._iptables_protocol_name_map
 

@@ -500,37 +500,43 @@ class IptablesFirewallTestCase(BaseIptablesFirewallTestCase):
         self._test_prepare_port_filter(rule, ingress, egress)
 
     def test_filter_ipv4_ingress_protocol_ipip(self):
-        # 'ipip' via the API uses 'ipencap' to match what iptables-save
-        # uses, which is IP-ENCAP/'4' from /etc/protocols (see bug #2054324)
+        # We want to use what the system-dependent string here is for 'ipip',
+        # as it could be 'ipencap' or 'ipv4' depending on the distro.
+        # See bug #2054324.
         rule = {'ethertype': 'IPv4',
                 'direction': 'ingress',
                 'protocol': 'ipip'}
+        expected_proto_name = self.firewall._iptables_protocol_name('ipip')
         ingress = mock.call.add_rule('ifake_dev',
-                                     '-p ipencap -j RETURN',
+                                     '-p %s -j RETURN' % expected_proto_name,
                                      top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
-    def test_filter_ipv4_ingress_protocol_ipip_by_num(self):
-        # '4' via the API uses 'ipencap' to match what iptables-save
-        # uses, which is IP-ENCAP/'4' from /etc/protocols (see bug #2054324)
+    def test_filter_ipv4_ingress_protocol_4(self):
+        # We want to use what the system-dependent string here is for '4',
+        # as it could be 'ipencap' or 'ipv4' depending on the distro.
+        # See bug #2054324.
         rule = {'ethertype': 'IPv4',
                 'direction': 'ingress',
                 'protocol': '4'}
+        expected_proto_name = self.firewall._iptables_protocol_name('4')
         ingress = mock.call.add_rule('ifake_dev',
-                                     '-p ipencap -j RETURN',
+                                     '-p %s -j RETURN' % expected_proto_name,
                                      top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
 
-    def test_filter_ipv4_ingress_protocol_ipencap_by_num(self):
-        # '94' via the API uses 'ipip' to match what iptables-save
-        # uses, which is IPIP/'94' from /etc/protocols (see bug #2054324)
+    def test_filter_ipv4_ingress_protocol_94(self):
+        # We want to use what the system-dependent string here is for '94',
+        # as it could be 'ipip' or something else depending on the distro.
+        # See bug #2054324.
         rule = {'ethertype': 'IPv4',
                 'direction': 'ingress',
                 'protocol': '94'}
+        expected_proto_name = self.firewall._iptables_protocol_name('94')
         ingress = mock.call.add_rule('ifake_dev',
-                                     '-p ipip -j RETURN',
+                                     '-p %s -j RETURN' % expected_proto_name,
                                      top=False, comment=None)
         egress = None
         self._test_prepare_port_filter(rule, ingress, egress)
