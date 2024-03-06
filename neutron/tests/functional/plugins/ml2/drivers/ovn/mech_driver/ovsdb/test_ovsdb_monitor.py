@@ -334,6 +334,8 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
     def _check_port_binding_type(self, port_id, port_type):
         def is_port_binding_type(port_id, port_type):
             bp = self._find_port_binding(port_id)
+            if not bp:
+                return False
             return port_type == bp.type
 
         check = functools.partial(is_port_binding_type, port_id, port_type)
