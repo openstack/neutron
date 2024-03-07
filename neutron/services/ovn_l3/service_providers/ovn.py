@@ -26,6 +26,7 @@ from oslo_utils import excutils
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
+from neutron.db import ovn_l3_hamode_db as ovn_l3_ha
 from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.extensions import revisions
 from neutron.objects import router as l3_obj
@@ -37,7 +38,8 @@ LOG = logging.getLogger(__name__)
 
 
 @registry.has_registry_receivers
-class OvnDriver(base.L3ServiceProvider):
+class OvnDriver(base.L3ServiceProvider,
+                ovn_l3_ha.OVN_L3_HA_db_mixin):
     ha_support = base.MANDATORY
     distributed_support = base.MANDATORY
 

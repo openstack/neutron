@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Enabled the ``ha`` API extension for OVN routers. Now the high
+    availability flag ``ha`` can be set and read for OVN routers. NOTE:
+    currently OVN routers are always HA; the flag is mandatory
+    and cannot be unset (but now can be read).

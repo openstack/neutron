@@ -44,6 +44,7 @@ from neutron_lib.api.definitions import l3_enable_default_route_bfd
 from neutron_lib.api.definitions import l3_enable_default_route_ecmp
 from neutron_lib.api.definitions import l3_ext_gw_mode
 from neutron_lib.api.definitions import l3_ext_gw_multihoming
+from neutron_lib.api.definitions import l3_ext_ha_mode
 from neutron_lib.api.definitions import l3_flavors
 from neutron_lib.api.definitions import logging
 from neutron_lib.api.definitions import multiprovidernet
@@ -125,6 +126,7 @@ ML2_SUPPORTED_API_EXTENSIONS_OVN_L3 = [
     l3_ext_gw_multihoming.ALIAS,
     l3_enable_default_route_bfd.ALIAS,
     l3_enable_default_route_ecmp.ALIAS,
+    l3_ext_ha_mode.ALIAS,
 ]
 ML2_SUPPORTED_API_EXTENSIONS = [
     address_group.ALIAS,
