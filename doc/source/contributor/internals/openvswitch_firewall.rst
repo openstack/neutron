@@ -587,6 +587,14 @@ use the OVS firewall, and instances from other nodes can be live-migrated to
 it. Once the first node is evacuated, its firewall driver can be then be
 switched to the OVS driver.
 
+4) Once migration is complete, stale iptables rules should be cleaned-up on
+all nodes where the firewall driver was changed. They can be found by
+searching for the string 'neutron', for example:
+
+.. code-block:: bash
+
+    sudo iptables -S | grep neutron
+
 .. note::
 
   During upgrading to openvswitch firewall, the security rules
