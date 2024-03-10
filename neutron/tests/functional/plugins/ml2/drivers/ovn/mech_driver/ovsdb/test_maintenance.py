@@ -1220,6 +1220,21 @@ class TestMaintenance(_TestMaintenanceHelper):
         lr = self.nb_api.lookup('Logical_Router', utils.ovn_name(router['id']))
         self.assertEqual([], lr.ports[0].gateway_chassis)
 
+    def test_set_network_type(self):
+        net1 = self._create_network(uuidutils.generate_uuid())
+        ls_name = utils.ovn_name(net1['id'])
+        self.nb_api.db_remove(
+            'Logical_Switch', ls_name, 'external_ids',
+            ovn_const.OVN_NETTYPE_EXT_ID_KEY).execute(check_error=True)
+        ls = self.nb_api.lookup('Logical_Switch', ls_name)
+        self.assertIsNone(ls.external_ids.get(
+            ovn_const.OVN_NETTYPE_EXT_ID_KEY))
+
+        self.assertRaises(periodics.NeverAgain, self.maint.set_network_type)
+        ls = self.nb_api.lookup('Logical_Switch', ls_name)
+        self.assertEqual(net1[provnet_apidef.NETWORK_TYPE],
+                         ls.external_ids.get(ovn_const.OVN_NETTYPE_EXT_ID_KEY))
+
 
 class TestLogMaintenance(_TestMaintenanceHelper,
                          test_log_driver.LogApiTestCaseBase):

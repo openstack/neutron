@@ -40,6 +40,7 @@ from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import l3_attrs_db
 from neutron.db import ovn_hash_ring_db as hash_ring_db
 from neutron.db import ovn_revision_numbers_db as revision_numbers_db
+from neutron.objects import network as network_obj
 from neutron.objects import ports as ports_obj
 from neutron.objects import router as router_obj
 from neutron.objects import servicetype as servicetype_obj
@@ -1225,6 +1226,30 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
             for lrp in lrp_list:
                 txn.add(self._nb_idl.lrp_del_gateway_chassis(
                     lrp.uuid, 'neutron-ovn-invalid-chassis'))
+
+        raise periodics.NeverAgain()
+
+    # TODO(ralonsoh): Remove this method in the E cycle (SLURP release)
+    @has_lock_periodic(spacing=600, run_immediately=True)
+    def set_network_type(self):
+        """Add the network type to the Logical_Switch registers"""
+        context = n_context.get_admin_context()
+        net_segments = network_obj.NetworkSegment.get_objects(context)
+        net_segments = {seg.network_id: seg.network_type
+                        for seg in net_segments}
+        cmds = []
+        for ls in self._nb_idl.ls_list().execute(check_error=True):
+            if ovn_const.OVN_NETTYPE_EXT_ID_KEY not in ls.external_ids:
+                net_id = ls.name.replace('neutron-', '')
+                external_ids = {
+                    ovn_const.OVN_NETTYPE_EXT_ID_KEY: net_segments[net_id]}
+                cmds.append(self._nb_idl.db_set(
+                    'Logical_Switch', ls.uuid, ('external_ids', external_ids)))
+
+        if cmds:
+            with self._nb_idl.transaction(check_error=True) as txn:
+                for cmd in cmds:
+                    txn.add(cmd)
 
         raise periodics.NeverAgain()
 

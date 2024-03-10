@@ -2565,6 +2565,12 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                 network['network']['mtu'] = new_mtu
                 fake_ctx = mock.MagicMock(current=network['network'])
                 fake_ctx.plugin_context.session.is_active = False
+                external_ids = {
+                    ovn_const.OVN_NETTYPE_EXT_ID_KEY: const.TYPE_GENEVE,
+                    ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY: str(new_mtu),
+                }
+                self.nb_ovn.ls_get.return_value.execute.return_value = (
+                    mock.Mock(external_ids=external_ids))
 
                 self.mech_driver.update_network_postcommit(fake_ctx)
 
