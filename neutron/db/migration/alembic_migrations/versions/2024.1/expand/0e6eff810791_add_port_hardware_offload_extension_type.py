@@ -16,6 +16,8 @@
 from alembic import op
 import sqlalchemy as sa
 
+from neutron.db import migration
+
 
 """Add port hardware offload extension type
 
@@ -28,6 +30,9 @@ Create Date: 2023-05-09 23:52:40.677006
 # revision identifiers, used by Alembic.
 revision = '0e6eff810791'
 down_revision = '054e34dbe6b4'
+
+# milestone identifier, used by neutron-db-manage
+neutron_milestone = [migration.RELEASE_2024_1]
 
 
 def upgrade():
