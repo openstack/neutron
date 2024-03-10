@@ -552,8 +552,13 @@ def sort_ips_by_version(addresses):
     return ip_map
 
 
-def is_lsp_router_port(port):
-    return port.get('device_owner') in const.ROUTER_PORT_OWNERS
+def is_lsp_router_port(neutron_port=None, lsp=None):
+    if neutron_port:
+        return neutron_port.get('device_owner') in const.ROUTER_PORT_OWNERS
+    elif lsp:
+        return (lsp.external_ids.get(constants.OVN_DEVICE_OWNER_EXT_ID_KEY) in
+                const.ROUTER_PORT_OWNERS)
+    return False
 
 
 def get_lrouter_ext_gw_static_route(ovn_router):

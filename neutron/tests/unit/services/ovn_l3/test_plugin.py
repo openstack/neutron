@@ -1720,30 +1720,6 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.assertEqual(len(delete_nat_calls), status_upd_mock.call_count)
 
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.get_router')
-    @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
-                'ovn_client.OVNClient.update_router_port')
-    def test_port_update_postcommit(self, update_rp_mock, gr):
-        context = 'fake_context'
-        port = {'device_owner': 'foo', 'device_id': 'id'}
-        gr.return_value = {'flavor_id': None}
-        self.l3_inst._port_update(resources.PORT, events.AFTER_UPDATE, None,
-                                  payload=events.DBEventPayload(
-                                      context,
-                                      states=(port,)))
-        update_rp_mock.assert_not_called()
-
-        port = {'device_owner': constants.DEVICE_OWNER_ROUTER_INTF,
-                'device_id': 'router_id'}
-        self.l3_inst._port_update(resources.PORT, events.AFTER_UPDATE, None,
-                                  payload=events.DBEventPayload(
-                                      context,
-                                      states=(port,)))
-
-        update_rp_mock.assert_called_once_with(context,
-                                               port,
-                                               if_exists=True)
-
-    @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.get_router')
     def test_port_update_before_update_router_port_without_ip(self, gr):
         context = 'fake_context'
         port = {'device_owner': constants.DEVICE_OWNER_ROUTER_INTF,

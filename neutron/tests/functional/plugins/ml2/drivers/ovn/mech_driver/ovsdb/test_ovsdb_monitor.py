@@ -14,6 +14,7 @@
 import datetime
 import functools
 import subprocess
+import time
 from unittest import mock
 
 import fixtures as og_fixtures
@@ -79,6 +80,24 @@ class DistributedLockTestEvent(event.WaitEvent):
     def run(self, event, row, old):
         self.COUNTER += 1
         self.event.set()
+
+
+class WaitForLogicalSwitchPortUpdateEvent(event.WaitEvent):
+    event_name = 'WaitForDataPathBindingCreateEvent'
+
+    def __init__(self):
+        table = 'Logical_Switch_Port'
+        events = (self.ROW_UPDATE,)
+        super().__init__(events, table, None, timeout=15)
+
+
+class WaitForLogicalRouterPortCreateEvent(event.WaitEvent):
+    event_name = 'WaitForLogicalRouterPortCreateEvent'
+
+    def __init__(self):
+        table = 'Logical_Router_Port'
+        events = (self.ROW_CREATE,)
+        super().__init__(events, table, None, timeout=15)
 
 
 class GlobalTestEvent(DistributedLockTestEvent):
@@ -812,3 +831,47 @@ class TestPortBindingChassisEvent(base.TestOVNFunctionalBase,
         self.sb_api.lsp_bind(self.port['id'], self.chassis,
                              may_exist=True).execute(check_error=True)
         self._check_pb_type('')
+
+
+class TestLogicalSwitchPortUpdateLogicalRouterPortEvent(
+        base.TestOVNFunctionalBase,
+        test_l3.L3NatTestCaseMixin):
+
+    def setUp(self, **kwargs):
+        super().setUp(**kwargs)
+        self.chassis = self.add_fake_chassis('ovs-host1')
+        self.l3_plugin = directory.get_plugin(plugin_constants.L3)
+        self.net = self._make_network(
+            self.fmt, 'ext_net', True, as_admin=True, **kwargs)
+        self.subnet = self._make_subnet(self.fmt, self.net, '20.0.10.1',
+                                        '20.0.10.0/24')
+        self.ext_api = test_extensions.setup_extensions_middleware(
+            test_l3.L3TestExtensionManager())
+
+    def test_create_router_port(self):
+        router = self._make_router(self.fmt, self._tenant_id)
+        with mock.patch.object(self.l3_plugin._ovn_client,
+                               'update_router_port') as mock_update_rp:
+            lsp_event = WaitForLogicalSwitchPortUpdateEvent()
+            lrp_event = WaitForLogicalRouterPortCreateEvent()
+            self.mech_driver.nb_ovn.idl.notify_handler.watch_events(
+                (lsp_event, lrp_event))
+            self._router_interface_action('add', router['router']['id'],
+                                          self.subnet['subnet']['id'], None)
+            self.assertTrue(lsp_event.wait())
+            self.assertTrue(lrp_event.wait())
+            # Wait for the
+            # ``LogicalSwitchPortUpdateLogicalRouterPortEvent.run`` call.
+            time.sleep(1)
+            mock_update_rp.assert_called()
+
+    def test_create_non_router_port(self):
+        with mock.patch.object(self.l3_plugin._ovn_client,
+                               'update_router_port') as mock_update_rp:
+            row_event = WaitForLogicalSwitchPortUpdateEvent()
+            self.mech_driver.nb_ovn.idl.notify_handler.watch_event(row_event)
+            self._create_port(self.fmt, self.net['network']['id'])
+            # The LogicalSwitchPort event is called but not the router port
+            # update method because this is not a router port.
+            self.assertTrue(row_event.wait())
+            mock_update_rp.assert_not_called()
