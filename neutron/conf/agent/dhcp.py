@@ -112,7 +112,11 @@ DNSMASQ_OPTS = [
                 help=_("Use broadcast in DHCP replies.")),
     cfg.BoolOpt('dnsmasq_enable_addr6_list', default=False,
                 help=_("Enable dhcp-host entry with list of addresses when "
-                       "port has multiple IPv6 addresses in the same subnet."))
+                       "port has multiple IPv6 addresses in the same "
+                       "subnet.")),
+    cfg.BoolOpt('edns_client_fingerprint', default=False,
+                help=_("Add the network id and client IP as an eDNS payload "
+                       "to each client DNS query sent to the DNS resolvers")),
 ]
 
 
