@@ -27,6 +27,7 @@ from oslo_utils import fileutils
 
 from neutron._i18n import _
 from neutron.agent.linux import external_process
+from neutron.agent.linux import utils as linux_utils
 from neutron.cmd import runtime_checks as checks
 from neutron.common import utils
 
@@ -504,8 +505,12 @@ class KeepalivedManager(object):
             # will be orphan and prevent keepalived process to be spawned.
             # A check here will let the l3-agent to kill the orphan process
             # and spawn keepalived successfully.
+            # Also removes stale pid file
             if vrrp_pm.active:
-                vrrp_pm.disable()
+                vrrp_pm.disable(delete_pid_file=False)
+
+            linux_utils.delete_if_exists(self.get_vrrp_pid_file_name(pid_file),
+                                         run_as_root=vrrp_pm.run_as_root)
 
             cmd = ['keepalived', '-P',
                    '-f', config_path,
