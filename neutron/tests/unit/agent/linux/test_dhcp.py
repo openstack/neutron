@@ -33,6 +33,7 @@ import testtools
 from neutron.agent.linux import dhcp
 from neutron.agent.linux import ip_lib
 from neutron.cmd import runtime_checks as checks
+from neutron.cmd.sanity import checks as sanity_checks
 from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils as common_utils
 from neutron.conf.agent import common as config
@@ -1644,6 +1645,46 @@ class TestDnsmasq(TestBase):
                           '--server=8.8.8.8',
                           '--server=9.9.9.9',
                           '--domain=openstacklocal'])
+
+    def test_dnsmasq_umbrella_support_check(self):
+        with mock.patch('neutron.agent.linux.utils.execute') \
+                        as dnsmasq_version_mock:
+
+            # no umbrella support in 2.85 and below
+            dnsmasq_version_mock.return_value = "version 2.85"
+            self.assertFalse(sanity_checks.dnsmasq_umbrella_supported())
+
+            # umbrella support introduced in 2.86
+            dnsmasq_version_mock.return_value = "version 2.86"
+            self.assertTrue(sanity_checks.dnsmasq_umbrella_supported())
+
+    def test_spawn_cfg_edns_client_fingerprint_disabled(self):
+        self.conf.set_override('edns_client_fingerprint', False)
+        self._test_spawn(['--conf-file=',
+                          '--domain=openstacklocal'])
+
+    @mock.patch.object(sanity_checks,
+                       'dnsmasq_umbrella_supported', return_value=True)
+    def test_spawn_cfg_edns_client_fingerprint_with_umbrella(self,
+            mock_umbrella_supported):
+        self.conf.set_override('edns_client_fingerprint', True)
+        network = FakeDualNetwork()
+        self._test_spawn(['--conf-file=',
+                          '--domain=openstacklocal',
+                          '--add-cpe-id=%s' % network.id,
+                          '--umbrella'],
+                         network=network)
+
+    @mock.patch.object(sanity_checks,
+                       'dnsmasq_umbrella_supported', return_value=False)
+    def test_spawn_cfg_edns_client_fingerprint_without_umbrella(self,
+            mock_umbrella_supported):
+        self.conf.set_override('edns_client_fingerprint', True)
+        network = FakeDualNetwork()
+        self._test_spawn(['--conf-file=',
+                          '--domain=openstacklocal',
+                          '--add-cpe-id=%s' % network.id],
+                         network=network)
 
     def test_spawn_cfg_enable_dnsmasq_log(self):
         self.conf.set_override('dnsmasq_base_log_dir', '/tmp')

@@ -56,6 +56,7 @@ MINIMUM_DNSMASQ_VERSION = '2.67'
 DNSMASQ_VERSION_DHCP_RELEASE6 = '2.76'
 DNSMASQ_VERSION_HOST_ADDR6_LIST = '2.81'
 DNSMASQ_VERSION_SEGFAULT_ISSUE = '2.86'
+DNSMASQ_VERSION_UMBRELLA = '2.86'
 DIRECT_PORT_QOS_MIN_OVS_VERSION = '2.11'
 MINIMUM_DIBBLER_VERSION = '1.0.1'
 CONNTRACK_GRE_MODULE = 'nf_conntrack_proto_gre'
@@ -244,6 +245,10 @@ def get_dnsmasq_version_with_host_addr6_list():
     return DNSMASQ_VERSION_HOST_ADDR6_LIST
 
 
+def get_dnsmasq_version_with_umbrella():
+    return DNSMASQ_VERSION_UMBRELLA
+
+
 def get_ovs_version_for_qos_direct_port_support():
     return DIRECT_PORT_QOS_MIN_OVS_VERSION
 
@@ -320,6 +325,32 @@ def ovs_qos_direct_port_supported():
 
 def dhcp_release6_supported():
     return priv_dhcp.dhcp_release6_supported()
+
+
+def dnsmasq_umbrella_supported():
+    try:
+        cmd = ['dnsmasq', '--version']
+        env = {'LC_ALL': 'C'}
+        out = agent_utils.execute(cmd, addl_env=env)
+        m = re.search(r"version (\d+\.\d+)", out)
+        ver = versionutils.convert_version_to_tuple(m.group(1) if m else '0.0')
+        if ver >= versionutils.convert_version_to_tuple(
+                DNSMASQ_VERSION_UMBRELLA):
+            return True
+
+        LOG.warning('Support for the `--umbrella` dnsmasq option '
+                    'was introduced in dnsmasq version '
+                    '%(required)s. Found dnsmasq version %(current)s. '
+                    'DNS client fingerprinting will not include client IPs.',
+                    {'required': DNSMASQ_VERSION_UMBRELLA,
+                     'current': ver})
+    except (OSError, RuntimeError, IndexError, ValueError) as e:
+        LOG.debug("Exception while checking dnsmasq for `--umbrella` option "
+                  " support. "
+                  "Exception: %s", e)
+
+    # unsupported unless explicitly stated otherwise
+    return False
 
 
 def bridge_firewalling_enabled():

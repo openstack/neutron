@@ -41,6 +41,7 @@ from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
 from neutron.cmd import runtime_checks as checks
+from neutron.cmd.sanity import checks as sanity_checks
 from neutron.common.ovn import constants as ovn_constants
 from neutron.common.ovn import utils as ovn_utils
 from neutron.common import utils as common_utils
@@ -450,6 +451,7 @@ class Dnsmasq(DhcpLocalProcess):
 
     _IS_DHCP_RELEASE6_SUPPORTED = None
     _IS_HOST_TAG_SUPPORTED = None
+    _IS_UMBRELLA_SUPPORTED = None
 
     @classmethod
     def check_version(cls):
@@ -579,6 +581,12 @@ class Dnsmasq(DhcpLocalProcess):
                 cmd.append('--log-dhcp')
                 cmd.append('--log-facility=%s' % log_filename)
 
+        # fingerprint the client (network id + client IP)
+        if self.conf.edns_client_fingerprint:
+            cmd.append('--add-cpe-id=%s' % self.network.id)
+            if self._is_dnsmasq_umbrella_supported():
+                cmd.append('--umbrella')
+
         return cmd
 
     def spawn_process(self):
@@ -620,6 +628,13 @@ class Dnsmasq(DhcpLocalProcess):
             self._IS_HOST_TAG_SUPPORTED = checks.dnsmasq_host_tag_support()
 
         return self._IS_HOST_TAG_SUPPORTED
+
+    def _is_dnsmasq_umbrella_supported(self):
+        if self._IS_UMBRELLA_SUPPORTED is None:
+            self._IS_UMBRELLA_SUPPORTED = (
+                sanity_checks.dnsmasq_umbrella_supported())
+
+        return self._IS_UMBRELLA_SUPPORTED
 
     def _release_lease(self, mac_address, ip, ip_version, client_id=None,
                        server_id=None, iaid=None):

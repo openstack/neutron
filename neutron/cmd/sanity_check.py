@@ -288,6 +288,17 @@ def check_dhcp_release6():
     return result
 
 
+def check_dnsmasq_umbrella_supported():
+    result = checks.dnsmasq_umbrella_supported()
+    if not result:
+        LOG.warning('The installed version of dnsmasq does not support '
+                    'the `--umbrella` option. '
+                    'Please update to at least version %s if you need '
+                    'full DNS client fingerprinting.',
+                  checks.get_dnsmasq_version_with_umbrella())
+    return result
+
+
 def check_bridge_firewalling_enabled():
     result = checks.bridge_firewalling_enabled()
     if not result:
@@ -420,6 +431,9 @@ OPTS = [
                     help=_('Check conntrack installation')),
     BoolOptCallback('dhcp_release6', check_dhcp_release6,
                     help=_('Check dhcp_release6 installation')),
+    BoolOptCallback('dnsmasq_umbrella_supported',
+                    check_dnsmasq_umbrella_supported,
+                    help=_('Check dnsmasq support for `--umbrella` option')),
     BoolOptCallback('bridge_firewalling', check_bridge_firewalling_enabled,
                     help=_('Check bridge firewalling'),
                     default=False),
@@ -483,6 +497,7 @@ def enable_tests_from_config():
     if cfg.CONF.dhcp_driver == 'neutron.agent.linux.dhcp.Dnsmasq':
         cfg.CONF.set_default('dnsmasq_local_service_supported', True)
         cfg.CONF.set_default('dnsmasq_version', True)
+        cfg.CONF.set_default('dnsmasq_umbrella_supported', True)
     if cfg.CONF.l3_ha:
         cfg.CONF.set_default('keepalived_ipv6_support', True)
         cfg.CONF.set_default('ip_nonlocal_bind', True)
