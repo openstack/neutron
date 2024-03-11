@@ -1616,9 +1616,10 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         self.mech_driver.nb_ovn.set_lswitch_port.assert_has_calls(
             set_lsp_calls, any_order=True)
 
+    @mock.patch.object(ovn_utils, 'get_system_dns_resolvers')
     @mock.patch.object(db_base_plugin_v2.NeutronDbPluginV2, 'get_ports')
     @mock.patch.object(n_net, 'get_random_mac')
-    def test_enable_subnet_dhcp_options_in_ovn_ipv6(self, grm, gps):
+    def test_enable_subnet_dhcp_options_in_ovn_ipv6(self, grm, gps, gsd):
         grm.return_value = '01:02:03:04:05:06'
         gps.return_value = [
             {'id': 'port-id-1', 'device_owner': 'nova:compute'},
@@ -1631,6 +1632,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                  {'opt_value': '10::34', 'ip_version': 6,
                    'opt_name': 'dns-server'}]},
             {'id': 'port-id-10', 'device_owner': 'network:foo'}]
+        gsd.return_value = []
         subnet = {'id': 'subnet-id', 'ip_version': 6, 'cidr': '10::0/64',
                   'gateway_ip': '10::1', 'enable_dhcp': True,
                   'ipv6_address_mode': 'dhcpv6-stateless',
@@ -1797,7 +1799,9 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         self.mech_driver.nb_ovn.add_dhcp_options.assert_called_once_with(
             subnet['id'], **new_options)
 
-    def test_update_subnet_dhcp_options_in_ovn_ipv6_not_change(self):
+    @mock.patch.object(ovn_utils, 'get_system_dns_resolvers')
+    def test_update_subnet_dhcp_options_in_ovn_ipv6_not_change(self, gsd):
+        gsd.return_value = []
         subnet = {'id': 'subnet-id', 'ip_version': 6, 'cidr': '10::0/64',
                   'gateway_ip': '10::1', 'enable_dhcp': True,
                   'ipv6_address_mode': 'dhcpv6-stateless',
