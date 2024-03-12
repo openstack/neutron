@@ -36,7 +36,8 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
     l3_plugin = 'ovn-router'
 
     def setUp(self):
-        super().setUp()
+        # We want metadata enabled to increase coverage
+        super().setUp(enable_metadata=True)
 
         self.subnet = {'cidr': '10.0.0.0/24',
                        'id': 'subnet1',
@@ -401,6 +402,20 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                     segs.append(segment)
             return segs
 
+        def get_ports():
+            def wrapper(*args, **kwargs):
+                # We need to do this since blindly returning self.ports
+                # if caller specified a filter could lead to failed tests,
+                # for example, it will not filter out non-metadata ports.
+                filters = kwargs.get('filters')
+                if not filters:
+                    return self.ports
+                ports = [port for port in self.ports if
+                         all(port[k] in v for k, v in filters.items())]
+                return ports
+
+            return wrapper
+
         segments_plugin.get_segments = mock.Mock()
         segments_plugin.get_segments.side_effect = (
             lambda x, filters: get_segments(self, filters))
@@ -413,7 +428,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         # two of which will match with neutron.
         # So, in this example 17 will be added, 2 removed
         core_plugin.get_ports = mock.Mock()
-        core_plugin.get_ports.return_value = self.ports
+        core_plugin.get_ports.side_effect = get_ports()
         mock.patch.object(acl, '_get_subnet_from_cache',
                           return_value=self.subnet).start()
         mock.patch.object(acl, 'acl_remote_group_id',
@@ -470,10 +485,10 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         ovn_api.transaction = mock.MagicMock()
 
         ovn_nb_synchronizer._ovn_client.create_network = mock.Mock()
-        ovn_nb_synchronizer._ovn_client.create_port = mock.Mock()
         ovn_driver.validate_and_get_data_from_binding_profile = mock.Mock()
         ovn_nb_synchronizer._ovn_client.create_port = mock.Mock()
         ovn_nb_synchronizer._ovn_client.create_port.return_value = mock.ANY
+        ovn_nb_synchronizer._ovn_client.create_metadata_port = mock.Mock()
         ovn_nb_synchronizer._ovn_client.create_provnet_port = mock.Mock()
         ovn_api.ls_del = mock.Mock()
         ovn_api.delete_lswitch_port = mock.Mock()
@@ -562,7 +577,8 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                                  add_subnet_dhcp_options_list,
                                  delete_dhcp_options_list,
                                  add_port_groups_list,
-                                 del_port_groups_list):
+                                 del_port_groups_list,
+                                 create_metadata_list):
         self._test_mocks_helper(ovn_nb_synchronizer)
 
         ovn_api = ovn_nb_synchronizer.ovn_api
@@ -593,6 +609,14 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                                 for net in create_network_list]
         ovn_nb_synchronizer._ovn_client.create_network.assert_has_calls(
             create_network_calls, any_order=True)
+
+        create_metadata_calls = [mock.call(mock.ANY, net)
+                                 for net in create_metadata_list]
+        self.assertEqual(
+            len(create_metadata_list),
+            ovn_nb_synchronizer._ovn_client.create_metadata_port.call_count)
+        ovn_nb_synchronizer._ovn_client.create_metadata_port.assert_has_calls(
+            create_metadata_calls, any_order=True)
 
         self.assertEqual(
             len(create_port_list),
@@ -838,6 +862,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         add_subnet_dhcp_options_list = [(self.subnets[2], self.networks[1]),
                                         (self.subnets[1], self.networks[0])]
         delete_dhcp_options_list = ['UUID2', 'UUID4', 'UUID5']
+        create_metadata_list = self.networks
 
         ovn_nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
             self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
@@ -863,7 +888,8 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                                       add_subnet_dhcp_options_list,
                                       delete_dhcp_options_list,
                                       add_port_groups_list,
-                                      del_port_groups_list)
+                                      del_port_groups_list,
+                                      create_metadata_list)
 
     def test_ovn_nb_sync_mode_log(self):
         create_network_list = []
@@ -886,6 +912,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         delete_dhcp_options_list = []
         add_port_groups_list = []
         del_port_groups_list = []
+        create_metadata_list = []
 
         ovn_nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
             self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
@@ -911,7 +938,8 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                                       add_subnet_dhcp_options_list,
                                       delete_dhcp_options_list,
                                       add_port_groups_list,
-                                      del_port_groups_list)
+                                      del_port_groups_list,
+                                      create_metadata_list)
 
     def _test_ovn_nb_sync_calculate_routes_helper(self,
                                                   ovn_routes,
