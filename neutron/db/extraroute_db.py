@@ -133,11 +133,11 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
 
         LOG.debug('Removed routes are %s', removed)
         for route in removed:
-            l3_obj.RouterRoute.get_object(
+            l3_obj.RouterRoute.delete_objects(
                 context,
                 router_id=router['id'],
                 destination=route['destination'],
-                nexthop=route['nexthop']).delete()
+                nexthop=route['nexthop'])
         return added, removed
 
     @staticmethod
