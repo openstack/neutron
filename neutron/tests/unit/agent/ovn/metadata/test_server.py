@@ -28,7 +28,7 @@ from neutron.conf.agent.metadata import config as meta_conf
 from neutron.tests import base
 
 OvnPortInfo = collections.namedtuple(
-        'OvnPortInfo', ['external_ids', 'chassis', 'mac'])
+        'OvnPortInfo', ['external_ids', 'chassis', 'mac', 'uuid'])
 
 
 class ConfFixture(config_fixture.Config):
@@ -44,6 +44,8 @@ class TestMetadataProxyHandler(base.BaseTestCase):
         self.useFixture(self.fake_conf_fixture)
         self.log_p = mock.patch.object(proxy_base, 'LOG')
         self.log = self.log_p.start()
+        self.agent_log_p = mock.patch.object(agent, 'LOG')
+        self.agent_log = self.agent_log_p.start()
         self.handler = agent.MetadataProxyHandler(self.fake_conf, 'chassis1',
                                                   mock.Mock())
         self.handler._post_fork_event.set()
@@ -77,7 +79,7 @@ class TestMetadataProxyHandler(base.BaseTestCase):
             self.assertEqual(len(self.log.mock_calls), 2)
 
     def _get_instance_and_project_id_helper(self, forwarded_for, ports,
-                                            mac=None):
+                                            mac=None, all_ports=False):
         network_id = 'the_id'
         headers = {
             'X-Forwarded-For': forwarded_for,
@@ -87,6 +89,8 @@ class TestMetadataProxyHandler(base.BaseTestCase):
         req = mock.Mock(headers=headers)
 
         def mock_get_network_port_bindings_by_ip(*args, **kwargs):
+            if all_ports:
+                return ports
             return ports.pop(0)
 
         self.handler.sb_idl.get_network_port_bindings_by_ip.side_effect = (
@@ -107,7 +111,8 @@ class TestMetadataProxyHandler(base.BaseTestCase):
             external_ids={'neutron:device_id': 'device_id',
                           'neutron:project_id': 'project_id'},
             chassis=['chassis1'],
-            mac=mac)
+            mac=mac,
+            uuid=1)
         ports = [[ovn_port]]
 
         self.assertEqual(
@@ -122,7 +127,8 @@ class TestMetadataProxyHandler(base.BaseTestCase):
             external_ids={'neutron:device_id': 'device_id',
                           'neutron:project_id': 'project_id'},
             chassis=['chassis1'],
-            mac=mac)
+            mac=mac,
+            uuid=1)
         ports = [[ovn_port]]
 
         self.assertEqual(
@@ -138,7 +144,8 @@ class TestMetadataProxyHandler(base.BaseTestCase):
             external_ids={'neutron:device_id': 'device_id',
                           'neutron:project_id': 'project_id'},
             chassis=['chassis1'],
-            mac=forwarded_mac)
+            mac=forwarded_mac,
+            uuid=1)
         ports = [[ovn_port]]
 
         # IPv6 and link-local, the MAC will be passed
@@ -156,6 +163,31 @@ class TestMetadataProxyHandler(base.BaseTestCase):
         observed = self._get_instance_and_project_id_helper(forwarded_for,
                                                             ports)
         self.assertEqual(expected, observed)
+        self.assertEqual(len(self.agent_log.mock_calls), 1)
+
+    def test_get_instance_id_network_id_too_many(self):
+        forwarded_for = '192.168.1.1'
+        mac = 'fa:16:3e:12:34:56'
+        ovn_port_1 = OvnPortInfo(
+            external_ids={'neutron:device_id': 'device_id',
+                          'neutron:project_id': 'project_id'},
+            chassis=['chassis1'],
+            mac=mac,
+            uuid=1)
+        ovn_port_2 = OvnPortInfo(
+            external_ids={'neutron:device_id': 'device_id',
+                          'neutron:project_id': 'project_id'},
+            chassis=['chassis2'],
+            mac=mac,
+            uuid=2)
+        ports = [ovn_port_1, ovn_port_2]
+
+        expected = (None, None)
+        observed = self._get_instance_and_project_id_helper(forwarded_for,
+                                                            ports,
+                                                            all_ports=True)
+        self.assertEqual(expected, observed)
+        self.assertEqual(len(self.agent_log.mock_calls), 1)
 
 
 class TestUnixDomainMetadataProxy(base.BaseTestCase):
