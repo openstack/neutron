@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import abc
 import collections
 import functools
 from random import randint
@@ -31,6 +32,7 @@ from ovsdbapp.backend.ovs_idl import vlog
 from neutron.agent.linux import external_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import iptables_manager
+from neutron.agent.ovn.agent import ovn_neutron_agent
 from neutron.agent.ovn.metadata import driver as metadata_driver
 from neutron.agent.ovn.metadata import ovsdb
 from neutron.agent.ovn.metadata import server as metadata_server
@@ -84,11 +86,40 @@ class ConfigException(Exception):
     """
 
 
-class PortBindingEvent(row_event.RowEvent):
-    def __init__(self, metadata_agent):
-        self.agent = metadata_agent
+class _OVNExtensionEvent(metaclass=abc.ABCMeta):
+    """Implements a method to retrieve the correct caller agent
+
+    The events inheriting from this class could be called from the OVN metadata
+    agent or as part of an extension of the OVN agent ("metadata" extension,
+    for example). In future releases, the OVN metadata agent will be superseded
+    by the OVN agent (with the "metadata" extension) and this class removed,
+    keeping only the compatibility with the OVN agent (to be removed in C+2).
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._agent_or_extension = None
+        self._agent = None
+
+    @property
+    def agent(self):
+        """This method provide support for the OVN agent
+
+        This event can be used in the OVN metadata agent and in the OVN
+        agent metadata extension.
+        """
+        if not self._agent_or_extension:
+            if isinstance(self._agent, ovn_neutron_agent.OVNNeutronAgent):
+                self._agent_or_extension = self._agent['metadata']
+            else:
+                self._agent_or_extension = self._agent
+        return self._agent_or_extension
+
+
+class PortBindingEvent(_OVNExtensionEvent, row_event.RowEvent):
+    def __init__(self, agent):
         table = 'Port_Binding'
         super().__init__((self.__class__.EVENT,), table, None)
+        self._agent = agent
         self.event_name = self.__class__.__name__
         self._log_msg = (
             "PortBindingEvent matched for logical port %s and network %s")
@@ -269,7 +300,7 @@ class PortBindingDeletedEvent(PortBindingEvent):
         return True
 
 
-class ChassisPrivateCreateEvent(row_event.RowEvent):
+class ChassisPrivateCreateEvent(_OVNExtensionEvent, row_event.RowEvent):
     """Row create event - Chassis name == our_chassis.
 
     On connection, we get a dump of all chassis so if we catch a creation
@@ -277,12 +308,15 @@ class ChassisPrivateCreateEvent(row_event.RowEvent):
     to do a full sync to make sure that we capture all changes while the
     connection to OVSDB was down.
     """
-    def __init__(self, metadata_agent):
-        self.agent = metadata_agent
+    def __init__(self, agent):
+        self._extension = None
         self.first_time = True
         events = (self.ROW_CREATE,)
-        super(ChassisPrivateCreateEvent, self).__init__(
-            events, 'Chassis_Private', (('name', '=', self.agent.chassis),))
+        super().__init__(events, 'Chassis_Private', None)
+        # NOTE(ralonsoh): ``self._agent`` needs to be assigned before being
+        # used in the property ``self.agent``.
+        self._agent = agent
+        self.conditions = (('name', '=', self.agent.chassis),)
         self.event_name = self.__class__.__name__
 
     def run(self, event, row, old):
@@ -297,14 +331,14 @@ class ChassisPrivateCreateEvent(row_event.RowEvent):
             self.agent.sync()
 
 
-class SbGlobalUpdateEvent(row_event.RowEvent):
+class SbGlobalUpdateEvent(_OVNExtensionEvent, row_event.RowEvent):
     """Row update event on SB_Global table."""
 
-    def __init__(self, metadata_agent):
-        self.agent = metadata_agent
+    def __init__(self, agent):
         table = 'SB_Global'
         events = (self.ROW_UPDATE,)
         super(SbGlobalUpdateEvent, self).__init__(events, table, None)
+        self._agent = agent
         self.event_name = self.__class__.__name__
         self.first_run = True
 
@@ -337,16 +371,21 @@ class SbGlobalUpdateEvent(row_event.RowEvent):
 class MetadataAgent(object):
 
     def __init__(self, conf):
-        self.conf = conf
+        self._conf = conf
         vlog.use_python_logger(max_level=config.get_ovn_ovsdb_log_level())
         self._process_monitor = external_process.ProcessMonitor(
-            config=self.conf,
+            config=self._conf,
             resource_type='metadata')
         self._sb_idl = None
         self._post_fork_event = threading.Event()
         # We'll restart all haproxy instances upon start so that they honor
         # any potential changes in their configuration.
         self.restarted_metadata_proxy_set = set()
+        self._chassis = None
+
+    @property
+    def conf(self):
+        return self._conf
 
     @property
     def sb_idl(self):
@@ -358,15 +397,27 @@ class MetadataAgent(object):
     def sb_idl(self, val):
         self._sb_idl = val
 
+    @property
+    def chassis(self):
+        return self._chassis
+
+    @property
+    def chassis_id(self):
+        return self._chassis_id
+
+    @property
+    def ovn_bridge(self):
+        return self._ovn_bridge
+
     def _load_config(self):
-        self.chassis = self._get_own_chassis_name()
+        self._chassis = self._get_own_chassis_name()
         try:
-            self.chassis_id = uuid.UUID(self.chassis)
+            self._chassis_id = uuid.UUID(self._chassis)
         except ValueError:
             # OVS system-id could be a non UUID formatted string.
-            self.chassis_id = uuid.uuid5(OVN_METADATA_UUID_NAMESPACE,
-                                         self.chassis)
-        self.ovn_bridge = self._get_ovn_bridge()
+            self._chassis_id = uuid.uuid5(OVN_METADATA_UUID_NAMESPACE,
+                                          self._chassis)
+        self._ovn_bridge = self._get_ovn_bridge()
         LOG.debug("Loaded chassis name %s (UUID: %s) and ovn bridge %s.",
                   self.chassis, self.chassis_id, self.ovn_bridge)
 
@@ -408,14 +459,14 @@ class MetadataAgent(object):
 
         self._post_fork_event.clear()
         self.sb_idl = ovsdb.MetadataAgentOvnSbIdl(
-            chassis=self.chassis, tables=tables, events=events).start()
+            chassis=self._chassis, tables=tables, events=events).start()
 
         # Now IDL connections can be safely used.
         self._post_fork_event.set()
 
         # Launch the server that will act as a proxy between the VM's and Nova.
         self._proxy = metadata_server.UnixDomainMetadataProxy(
-            self.conf, self.chassis, sb_idl=self.sb_idl)
+            self.conf, self._chassis, sb_idl=self.sb_idl)
         self._proxy.run()
 
         # Do the initial sync.
@@ -661,7 +712,7 @@ class MetadataAgent(object):
                                               metadata_port.logical_port)
 
         chassis_ports = self.sb_idl.get_ports_on_chassis(
-            self.chassis, include_additional_chassis=True)
+            self._chassis, include_additional_chassis=True)
         datapath_ports_ips = []
         for chassis_port in self._vif_ports(chassis_ports):
             if str(chassis_port.datapath.uuid) == datapath_uuid:

@@ -80,8 +80,8 @@ class TestMetadataAgent(base.BaseTestCase):
         self.agent.sb_idl = mock.Mock()
         self.agent.ovs_idl = mock.Mock()
         self.agent.ovs_idl.transaction = mock.MagicMock()
-        self.agent.chassis = 'chassis'
-        self.agent.ovn_bridge = 'br-int'
+        self.agent._chassis = 'chassis'
+        self.agent._ovn_bridge = 'br-int'
 
         self.ports = []
         for i in range(0, 3):

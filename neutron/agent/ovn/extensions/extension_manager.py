@@ -18,11 +18,13 @@ import threading
 
 from neutron_lib.agent import extension
 from neutron_lib import exceptions
+from oslo_log import log as logging
 
 from neutron._i18n import _
 from neutron.agent import agent_extensions_manager as agent_ext_mgr
 
 
+LOG = logging.getLogger(__name__)
 OVN_AGENT_EXT_MANAGER_NAMESPACE = 'neutron.agent.ovn.extensions'
 
 
@@ -45,13 +47,15 @@ class OVNAgentExtensionManager(agent_ext_mgr.AgentExtensionsManager):
         """Start the extensions, once the OVN agent has been initialized."""
         for ext in self:
             ext.obj.start()
+            LOG.info('Extension manager: %s started', ext.obj.name)
 
 
 class OVNAgentExtension(extension.AgentExtension, metaclass=abc.ABCMeta):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.agent_api = None
+        self._is_started = False
 
     @property
     @abc.abstractmethod
@@ -77,6 +81,11 @@ class OVNAgentExtension(extension.AgentExtension, metaclass=abc.ABCMeta):
         OVN agent and the extension manager API. It is executed at the end of
         the OVN agent ``start`` method.
         """
+        self._is_started = True
+
+    @property
+    def is_started(self):
+        return self._is_started
 
     @property
     @abc.abstractmethod

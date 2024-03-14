@@ -54,9 +54,9 @@ class OVNNeutronAgent(service.Service):
     def __init__(self, conf):
         super().__init__()
         self._conf = conf
-        self.chassis = None
-        self.chassis_id = None
-        self.ovn_bridge = None
+        self._chassis = None
+        self._chassis_id = None
+        self._ovn_bridge = None
         self.ext_manager_api = ext_mgr.OVNAgentExtensionAPI()
         self.ext_manager = ext_mgr.OVNAgentExtensionManager(self._conf)
         self.ext_manager.initialize(None, 'ovn', self)
@@ -64,6 +64,10 @@ class OVNNeutronAgent(service.Service):
     def __getitem__(self, name):
         """Return the named extension objet from ``self.ext_manager``"""
         return self.ext_manager[name].obj
+
+    @property
+    def conf(self):
+        return self._conf
 
     @property
     def ovs_idl(self):
@@ -87,15 +91,27 @@ class OVNNeutronAgent(service.Service):
     def sb_post_fork_event(self):
         return self.ext_manager_api.sb_post_fork_event
 
+    @property
+    def chassis(self):
+        return self._chassis
+
+    @property
+    def chassis_id(self):
+        return self._chassis_id
+
+    @property
+    def ovn_bridge(self):
+        return self._ovn_bridge
+
     def load_config(self):
-        self.chassis = ovsdb.get_own_chassis_name(self.ovs_idl)
+        self._chassis = ovsdb.get_own_chassis_name(self.ovs_idl)
         try:
-            self.chassis_id = uuid.UUID(self.chassis)
+            self._chassis_id = uuid.UUID(self.chassis)
         except ValueError:
             # OVS system-id could be a non UUID formatted string.
-            self.chassis_id = uuid.uuid5(OVN_MONITOR_UUID_NAMESPACE,
-                                         self.chassis)
-        self.ovn_bridge = ovsdb.get_ovn_bridge(self.ovs_idl)
+            self._chassis_id = uuid.uuid5(OVN_MONITOR_UUID_NAMESPACE,
+                                          self._chassis)
+        self._ovn_bridge = ovsdb.get_ovn_bridge(self.ovs_idl)
         LOG.info("Loaded chassis name %s (UUID: %s) and ovn bridge %s.",
                  self.chassis, self.chassis_id, self.ovn_bridge)
 
