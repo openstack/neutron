@@ -15,6 +15,7 @@
 import abc
 import datetime
 
+from neutron_lib import constants as n_const
 from neutron_lib import context as neutron_context
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
@@ -34,6 +35,7 @@ from neutron.common.ovn import hash_ring_manager
 from neutron.common.ovn import utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_hash_ring_db
+from neutron.objects import router as router_obj
 from neutron.plugins.ml2.drivers.ovn.agent import neutron_agent as n_agent
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions import \
     placement
@@ -539,6 +541,47 @@ class LogicalSwitchPortUpdateDownEvent(row_event.RowEvent):
         self.driver.set_port_status_down(row.name)
 
 
+class LogicalSwitchPortUpdateLogicalRouterPortEvent(row_event.RowEvent):
+    """Row update event - Logical_Switch_Port, that updates the sibling LRP"""
+    def __init__(self, driver):
+        self.driver = driver
+        table = 'Logical_Switch_Port'
+        events = (self.ROW_UPDATE,)
+        super().__init__(events, table, None)
+        self.event_name = 'LogicalSwitchPortUpdateLogicalRouterPortEvent'
+        self.l3_plugin = directory.get_plugin(constants.L3)
+        self.admin_context = neutron_context.get_admin_context()
+
+    def match_fn(self, event, row, old):
+        device_id = row.external_ids.get(ovn_const.OVN_DEVID_EXT_ID_KEY)
+        device_owner = row.external_ids.get(
+            ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY)
+        if (not device_id or
+                device_owner not in n_const.ROUTER_INTERFACE_OWNERS):
+            # This LSP does not belong to a router.
+            return False
+
+        lrp_name = utils.ovn_lrouter_port_name(row.name)
+        if not self.driver.nb_ovn.lookup('Logical_Router_Port', lrp_name,
+                                         default=None):
+            # The LRP has not been created yet.
+            return False
+
+        # TODO(ralonsoh): store the router "flavor_id" in the LSP.external_ids
+        # or the LRP.external_ids (better the second).
+        router = router_obj.Router.get_object(self.admin_context, id=device_id,
+                                              fields=('flavor_id', ))
+        if (utils.is_lsp_router_port(lsp=row) and
+                router and
+                utils.is_ovn_provider_router(router)):
+            return True
+        return False
+
+    def run(self, event, row, old):
+        port = self.driver._plugin.get_port(self.admin_context, row.name)
+        self.l3_plugin._ovn_client.update_router_port(self.admin_context, port)
+
+
 class PortBindingUpdateVirtualPortsEvent(row_event.RowEvent):
     """Row update event - Port_Binding for virtual ports
 
@@ -769,12 +812,16 @@ class OvnNbIdl(OvnIdlDistributedLock):
         self._lsp_update_up_event = LogicalSwitchPortUpdateUpEvent(driver)
         self._lsp_update_down_event = LogicalSwitchPortUpdateDownEvent(driver)
         self._lsp_create_event = LogicalSwitchPortCreateEvent(driver)
+        self._lsp_lrp_event = (
+            LogicalSwitchPortUpdateLogicalRouterPortEvent(driver))
         self._fip_create_delete_event = FIPAddDeleteEvent(driver)
 
         self.notify_handler.watch_events([self._lsp_create_event,
                                           self._lsp_update_up_event,
                                           self._lsp_update_down_event,
-                                          self._fip_create_delete_event])
+                                          self._fip_create_delete_event,
+                                          self._lsp_lrp_event,
+                                          ])
 
     @classmethod
     def from_server(cls, connection_string, helper, driver):

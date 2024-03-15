@@ -369,17 +369,6 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
             reason = _("Router port must have at least one IP.")
             raise n_exc.ServicePortInUse(port_id=original['id'], reason=reason)
 
-        if (event == events.AFTER_UPDATE and
-                utils.is_lsp_router_port(current) and
-                utils.is_ovn_provider_router(
-                    l3plugin.get_router(context, current['device_id']))):
-            # We call the update_router port with if_exists, because neutron,
-            # internally creates the port, and then calls update, which will
-            # trigger this callback even before we had the chance to create
-            # the OVN NB DB side
-            l3plugin._ovn_client.update_router_port(context,
-                                                    current, if_exists=True)
-
     def get_router_availability_zones(self, router):
         lr = self._nb_ovn.get_lrouter(router['id'])
         if not lr:
