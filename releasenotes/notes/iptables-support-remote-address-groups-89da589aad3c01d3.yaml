@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    Remote address group support was added to the iptables-based firewall
+    drivers (IptablesFirewallDriver and OVSHybridIptablesFirewallDriver),
+    Previously it was only available in the OVSFirewallDriver.
+    For more information, see bug
+    `2058138 <https://bugs.launchpad.net/neutron/+bug/2058138>`_.
