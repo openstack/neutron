@@ -2457,6 +2457,22 @@ class IptablesFirewallEnhancedIpsetTestCase(BaseIptablesFirewallTestCase):
 
         self.firewall.ipset.assert_has_calls(calls, True)
 
+    def test__get_any_remote_group_id_in_rule_with_remote_group(self):
+        sg_rule = {'direction': 'ingress',
+                   'remote_group_id': FAKE_SGID,
+                   'ethertype': _IPv4}
+
+        self.assertEqual(FAKE_SGID,
+            self.firewall._get_any_remote_group_id_in_rule(sg_rule))
+
+    def test__get_any_remote_group_id_in_rule_with_remote_address_group(self):
+        sg_rule = {'direction': 'ingress',
+                   'remote_address_group_id': FAKE_SGID,
+                   'ethertype': _IPv6}
+
+        self.assertEqual(FAKE_SGID,
+            self.firewall._get_any_remote_group_id_in_rule(sg_rule))
+
     def test_sg_rule_expansion_with_remote_ips(self):
         other_ips = [('10.0.0.2', 'fa:16:3e:aa:bb:c1'),
                      ('10.0.0.3', 'fa:16:3e:aa:bb:c2'),
