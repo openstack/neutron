@@ -288,7 +288,7 @@ def create_icmp_flows(flow_template, rule):
 
 
 def _flow_priority_offset_from_conj_id(conj_id):
-    "Return a flow priority offset encoded in a conj_id."
+    """Return a flow priority offset encoded in a conj_id."""
     # A base conj_id, which is returned by ConjIdMap.get_conj_id, is a
     # multiple of 8, and we use 2 conj_ids per offset.
     return conj_id % 8 // 2

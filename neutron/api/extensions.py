@@ -45,7 +45,7 @@ _NOVA_CONNECTION = None
 
 
 def register_custom_supported_check(alias, f, plugin_agnostic=False):
-    '''Register a custom function to determine if extension is supported.
+    """Register a custom function to determine if extension is supported.
 
     Consequent calls for the same alias replace the registered function.
 
@@ -54,7 +54,7 @@ def register_custom_supported_check(alias, f, plugin_agnostic=False):
     :param plugin_agnostic: if False, don't require a plugin to claim support
     with supported_extension_aliases. If True, a plugin must claim the
     extension is supported.
-    '''
+    """
 
     EXTENSION_SUPPORTED_CHECK_MAP[alias] = f
     if plugin_agnostic:

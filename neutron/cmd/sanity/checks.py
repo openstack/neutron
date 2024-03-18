@@ -161,7 +161,7 @@ def ofctl_arg_supported(cmd, **kwargs):
     """Verify if ovs-ofctl binary supports cmd with **kwargs.
 
     :param cmd: ovs-ofctl command to use for test.
-    :param **kwargs: arguments to test with the command.
+    :param kwargs: arguments to test with the command.
     :returns: a boolean if the supplied arguments are supported.
     """
     br_name = common_utils.get_rand_device_name(prefix='br-test-')

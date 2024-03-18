@@ -136,7 +136,6 @@ def _calc_min_rate(burst):
     rate (bytes/sec) accepted by Pyroute2. This method is based on
     pyroute2.netlink.rtnl.tcmsg.common.calc_xmittime
 
-    :param rate: (int) rate in bytes per second.
     :param burst: (int) burst in bytes.
     :return: (int) minimum accepted rate in bytes per second.
     """
