@@ -13,3 +13,4 @@ OVN Driver
    dhcp_opts.rst
    ml2ovn_trace.rst
    faq/index.rst
+   ovn_agent.rst
