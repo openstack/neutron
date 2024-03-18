@@ -16,6 +16,7 @@
 import itertools
 import shlex
 
+from neutron.conf.agent.metadata import config as meta_conf
 from neutron.conf.agent import ovsdb_api
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from oslo_config import cfg
@@ -34,11 +35,16 @@ OVS_OPTS = [
 
 def list_ovn_neutron_agent_opts():
     return [
+        ('DEFAULT', itertools.chain(meta_conf.SHARED_OPTS,
+                                    meta_conf.UNIX_DOMAIN_METADATA_PROXY_OPTS,
+                                    meta_conf.METADATA_PROXY_HANDLER_OPTS
+                                    )),
         ('ovn', ovn_conf.ovn_opts),
         ('ovs', itertools.chain(OVS_OPTS,
                                 ovsdb_api.API_OPTS,
                                 )
          ),
+        (meta_conf.RATE_LIMITING_GROUP, meta_conf.METADATA_RATE_LIMITING_OPTS)
     ]
 
 
