@@ -48,3 +48,10 @@ class OVN_L3_HA_db_mixinTestCase(test_plugin.NeutronDbPluginV2TestCase):
         router_db = self._create_router(router_dict)
         router = router_obj.Router.get_object(self.ctx, id=router_db.id)
         self.assertTrue(router.extra_attributes.ha)
+
+    def test_create_no_ovn_router(self):
+        router_dict = {'name': 'foo_router', 'admin_state_up': True,
+                       'distributed': False, 'flavor_id': 'uuid'}
+        router_db = self._create_router(router_dict)
+        router = router_obj.Router.get_object(self.ctx, id=router_db.id)
+        self.assertFalse(router.extra_attributes.ha)

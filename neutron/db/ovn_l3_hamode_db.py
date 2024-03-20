@@ -17,6 +17,7 @@ from neutron_lib.callbacks import priority_group
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 
+from neutron.common.ovn import utils
 from neutron.db import l3_attrs_db
 
 
@@ -31,5 +32,8 @@ class OVN_L3_HA_db_mixin(l3_attrs_db.ExtraAttributesMixin):
         # NOTE(ralonsoh): OVN L3 router HA flag is mandatory and True always,
         # enforced by ``OvnDriver.ha_support`` set to ``MANDATORY``. This flag
         # cannot be updated.
+        router = payload.latest_state
+        if not utils.is_ovn_provider_router(router):
+            return
         router_db = payload.metadata['router_db']
         self.set_extra_attr_value(router_db, 'ha', True)
