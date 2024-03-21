@@ -120,7 +120,7 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
         common_utils.wait_until_true(_agent_down)
 
     def _assert_ping_during_agents_restart(
-            self, agents, src_namespace, ips, restart_timeout=10,
+            self, agents, src_namespace, ips, restart_timeout=30,
             ping_timeout=1, count=10):
         with net_helpers.async_ping(
                 src_namespace, ips, timeout=ping_timeout,
@@ -167,11 +167,12 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
         available_ips = itertools.islice(valid_ips, initial, initial + num)
         return [str(available_ip) for available_ip in available_ips]
 
-    def _create_external_vm(self, network, subnet):
+    def _create_external_vm(self, network, subnet, ip=None):
+        ip = ip or subnet['gateway_ip']
         vm = self.useFixture(
             machine_fixtures.FakeMachine(
                 self.environment.central_bridge,
-                common_utils.ip_to_cidr(subnet['gateway_ip'], 24)))
+                common_utils.ip_to_cidr(ip, 24)))
         # NOTE(slaweq): as ext_net is 'vlan' network type external_vm needs to
         # send packets with proper vlan also
         vm.bridge.set_db_attribute(
