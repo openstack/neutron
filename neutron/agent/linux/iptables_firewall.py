@@ -622,9 +622,15 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                                 rule, port, direction))
         return port_rules
 
+    def _get_any_remote_group_id_in_rule(self, rule):
+        remote_group_id = rule.get('remote_group_id')
+        if not remote_group_id:
+            remote_group_id = rule.get('remote_address_group_id')
+        return remote_group_id
+
     def _expand_sg_rule_with_remote_ips(self, rule, port, direction):
         """Expand a remote group rule to rule per remote group IP."""
-        remote_group_id = rule.get('remote_group_id')
+        remote_group_id = self._get_any_remote_group_id_in_rule(rule)
         if remote_group_id:
             ethertype = rule['ethertype']
             port_ips = port.get('fixed_ips', [])
@@ -646,7 +652,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         for sg_id in sg_ids:
             for rule in self.sg_rules.get(sg_id, []):
                 if not direction or rule['direction'] == direction:
-                    remote_sg_id = rule.get('remote_group_id')
+                    remote_sg_id = self._get_any_remote_group_id_in_rule(rule)
                     ether_type = rule.get('ethertype')
                     if remote_sg_id and ether_type:
                         remote_sg_ids[ether_type].add(remote_sg_id)
@@ -726,7 +732,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         return args
 
     def _convert_sg_rule_to_iptables_args(self, sg_rule):
-        remote_gid = sg_rule.get('remote_group_id')
+        remote_gid = self._get_any_remote_group_id_in_rule(sg_rule)
         if self.enable_ipset and remote_gid:
             return self._generate_ipset_rule_args(sg_rule, remote_gid)
         else:
