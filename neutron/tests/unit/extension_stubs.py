@@ -70,7 +70,7 @@ class ExtensionExpectingPluginInterface(StubExtension):
 class StubPluginInterface(base.ServicePluginBase):
 
     @abc.abstractmethod
-    def get_foo(self, bar=None):
+    def get_foo(self, ext=None):
         pass
 
     def get_plugin_type(self):

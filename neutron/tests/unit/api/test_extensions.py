@@ -784,7 +784,7 @@ class PluginAwareExtensionManagerTest(base.BaseTestCase):
             """Implements get_foo method as expected by extension."""
             supported_extension_aliases = ["supported_extension"]
 
-            def get_foo(self, bar=None):
+            def get_foo(self, ext=None):
                 pass
 
             def get_plugin_type(self):

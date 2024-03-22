@@ -22,13 +22,13 @@ from neutron.tests import base
 @mock.patch.object(lockutils, 'lock')
 class CoordinationTestCase(base.BaseTestCase):
     def test_synchronized(self, get_lock):
-        @coordination.synchronized('lock-{f_name}-{foo.val}-{bar[val]}')
-        def func(foo, bar):
+        @coordination.synchronized('lock-{f_name}-{arg1.val}-{arg2[val]}')
+        def func(arg1, arg2):
             pass
 
-        foo = mock.Mock()
-        foo.val = 7
-        bar = mock.MagicMock()
-        bar.__getitem__.return_value = 8
-        func(foo, bar)
+        arg1 = mock.Mock()
+        arg1.val = 7
+        arg2 = mock.MagicMock()
+        arg2.__getitem__.return_value = 8
+        func(arg1, arg2)
         get_lock.assert_called_with('lock-func-7-8')
