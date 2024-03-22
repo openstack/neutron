@@ -1583,27 +1583,22 @@ class OvsDhcpAgentNotifierTestCase(test_agent.AgentDBTestMixIn,
         hosts = [DHCP_HOSTA, DHCP_HOSTC, DHCP_HOSTD]
         net, subnet, port = self._network_port_create(hosts)
         for host_call in self.dhcp_notifier_cast.call_args_list:
+            host_call = str(host_call)
             if ("'priority': " + str(
                     dhcp_rpc_agent_api.PRIORITY_PORT_CREATE_HIGH)
-                    in str(host_call)):
-                if DHCP_HOSTA in str(host_call):
-                    expected_high_calls = self._notification_mocks(
-                        [DHCP_HOSTA], net, subnet, port,
-                        dhcp_rpc_agent_api.PRIORITY_PORT_CREATE_HIGH)
+                    in host_call):
+                if DHCP_HOSTA in host_call:
                     high_host = DHCP_HOSTA
                     hosts.pop(0)
-                elif DHCP_HOSTC in str(host_call):
-                    expected_high_calls = self._notification_mocks(
-                        [DHCP_HOSTC], net, subnet, port,
-                        dhcp_rpc_agent_api.PRIORITY_PORT_CREATE_HIGH)
+                elif DHCP_HOSTC in host_call:
                     high_host = DHCP_HOSTC
                     hosts.pop(1)
-                elif DHCP_HOSTD in str(host_call):
-                    expected_high_calls = self._notification_mocks(
-                        [DHCP_HOSTD], net, subnet, port,
-                        dhcp_rpc_agent_api.PRIORITY_PORT_CREATE_HIGH)
+                elif DHCP_HOSTD in host_call:
                     high_host = DHCP_HOSTD
                     hosts.pop(2)
+        expected_high_calls = self._notification_mocks(
+            [high_host], net, subnet, port,
+            dhcp_rpc_agent_api.PRIORITY_PORT_CREATE_HIGH)
         expected_low_calls = self._notification_mocks(
             hosts, net, subnet, port,
             dhcp_rpc_agent_api.PRIORITY_PORT_CREATE_LOW)

@@ -23,6 +23,7 @@ from neutron.tests import post_mortem_debug
 class TestTesttoolsExceptionHandler(base.BaseTestCase):
 
     def test_exception_handler(self):
+        exc_info = None
         try:
             self.fail()
         except Exception:
