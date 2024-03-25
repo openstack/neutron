@@ -18,6 +18,7 @@ from unittest import mock
 from oslo_config import cfg
 from oslo_config import fixture as config_fixture
 from oslo_utils import fileutils
+import requests
 import testtools
 import webob
 
@@ -232,9 +233,29 @@ class TestMetadataProxyHandler(base.BaseTestCase):
         self.assertIsInstance(self._proxy_request_test_helper(500),
                               webob.exc.HTTPInternalServerError)
 
+    def test_proxy_request_502(self):
+        self.assertIsInstance(self._proxy_request_test_helper(502),
+                              webob.exc.HTTPBadGateway)
+
+    def test_proxy_request_503(self):
+        self.assertIsInstance(self._proxy_request_test_helper(503),
+                              webob.exc.HTTPServiceUnavailable)
+
+    def test_proxy_request_504(self):
+        self.assertIsInstance(self._proxy_request_test_helper(504),
+                              webob.exc.HTTPGatewayTimeout)
+
     def test_proxy_request_other_code(self):
         with testtools.ExpectedException(Exception):
             self._proxy_request_test_helper(302)
+
+    def test_proxy_request_conenction_error(self):
+        req = mock.Mock(path_info='/the_path', query_string='', headers={},
+                        method='GET', body='')
+        with mock.patch('requests.request') as mock_request:
+            mock_request.side_effect = requests.ConnectionError()
+            retval = self.handler._proxy_request('the_id', 'tenant_id', req)
+            self.assertIsInstance(retval, webob.exc.HTTPServiceUnavailable)
 
 
 class TestUnixDomainMetadataProxy(base.BaseTestCase):
