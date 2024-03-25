@@ -168,12 +168,18 @@ class MetadataProxyHandler(object):
             client_cert = (self.conf.nova_client_cert,
                            self.conf.nova_client_priv_key)
 
-        resp = requests.request(method=req.method, url=url,
-                                headers=headers,
-                                data=req.body,
-                                cert=client_cert,
-                                verify=verify_cert,
-                                timeout=60)
+        try:
+            resp = requests.request(method=req.method, url=url,
+                                    headers=headers,
+                                    data=req.body,
+                                    cert=client_cert,
+                                    verify=verify_cert,
+                                    timeout=60)
+        except requests.ConnectionError:
+            msg = _('The remote metadata server is temporarily unavailable. '
+                    'Please try again later.')
+            explanation = str(msg)
+            return webob.exc.HTTPServiceUnavailable(explanation=explanation)
 
         if resp.status_code == 200:
             req.response.content_type = resp.headers['content-type']
@@ -186,12 +192,6 @@ class MetadataProxyHandler(object):
                 'response usually occurs when shared secrets do not match.'
             )
             return webob.exc.HTTPForbidden()
-        elif resp.status_code == 400:
-            return webob.exc.HTTPBadRequest()
-        elif resp.status_code == 404:
-            return webob.exc.HTTPNotFound()
-        elif resp.status_code == 409:
-            return webob.exc.HTTPConflict()
         elif resp.status_code == 500:
             msg = _(
                 'Remote metadata server experienced an internal server error.'
@@ -199,6 +199,9 @@ class MetadataProxyHandler(object):
             LOG.warning(msg)
             explanation = str(msg)
             return webob.exc.HTTPInternalServerError(explanation=explanation)
+        elif resp.status_code in (400, 404, 409, 502, 503, 504):
+            webob_exc_cls = webob.exc.status_map.get(resp.status_code)
+            return webob_exc_cls()
         else:
             raise Exception(_('Unexpected response code: %s') %
                             resp.status_code)
