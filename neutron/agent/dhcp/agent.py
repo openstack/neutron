@@ -14,7 +14,6 @@
 #    under the License.
 
 import collections
-import copy
 import functools
 import os
 import threading
@@ -233,10 +232,9 @@ class DhcpAgent(manager.Manager):
                     'disable', network, segment=None, block=True)
 
             for seg_id, subnets in sid_subnets.items():
-                net_seg = copy.deepcopy(network)
-                net_seg.subnets = subnets
+                network.subnets = subnets
                 ret.append(self._call_driver(
-                    action, net_seg, segment=sid_segment.get(seg_id),
+                    action, network, segment=sid_segment.get(seg_id),
                     **action_kwargs))
             return all(ret)
         else:

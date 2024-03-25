@@ -396,10 +396,8 @@ class TestDhcpAgent(base.BaseTestCase):
             # _call_driver().
             _call_driver.assert_has_calls([
                 mock.call("disable", network, segment=None, block=True),
-                # It is not possible to assert on 'network' as there is a copy
-                # happening. The copy will be removed, see bug #2051729.
-                mock.call("enable", mock.ANY, segment=seg0),
-                mock.call("enable", mock.ANY, segment=seg1)])
+                mock.call("enable", network, segment=seg0),
+                mock.call("enable", network, segment=seg1)])
 
     def test_call_driver_no_network(self):
         network = None
