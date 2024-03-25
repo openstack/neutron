@@ -16,6 +16,7 @@
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
+from neutron_lib import constants as const
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_log import log as logging
@@ -44,7 +45,7 @@ class UserDefined(base.L3ServiceProvider):
 
     def _is_user_defined_provider(self, context, router):
         flavor_id = router.get('flavor_id')
-        if flavor_id is None:
+        if flavor_id is None or flavor_id is const.ATTR_NOT_SPECIFIED:
             return False
         flavor = self._flavor_plugin.get_flavor(context, flavor_id)
         provider = self._flavor_plugin.get_flavor_next_provider(

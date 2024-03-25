@@ -14,6 +14,7 @@
 from unittest import mock
 
 from neutron_lib.callbacks import events
+from neutron_lib import constants as const
 
 
 from neutron.db.models import l3
@@ -53,6 +54,14 @@ class TestUserDefined(testlib_api.SqlTestCase):
         # test the negative case
         self.provider._flavor_plugin_ref.get_flavor_next_provider = (
             mock.MagicMock(return_value=[{'driver': None}]))
+        self.assertFalse(self.provider._is_user_defined_provider(
+            self.context, self.router))
+
+        # test flavor_id request not specified
+        self.router.flavor_id = None
+        self.assertFalse(self.provider._is_user_defined_provider(
+            self.context, self.router))
+        self.router.flavor_id = const.ATTR_NOT_SPECIFIED
         self.assertFalse(self.provider._is_user_defined_provider(
             self.context, self.router))
 
