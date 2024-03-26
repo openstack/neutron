@@ -7,12 +7,13 @@ Configuration
 .. toctree::
    :maxdepth: 2
 
+   config-active-active-l3gw
    config-address-scopes
-   config-services-agent
    config-auto-allocation
    config-az
    config-bgp-dynamic-routing
    config-bgp-floating-ip-over-l2-segmented-network
+   config-services-agent
    config-dhcp-ha
    config-dns-int
    config-dns-int-ext-serv
