@@ -1,0 +1,6 @@
+---
+other:
+  - |
+    Enhance error handling in the Neutron metadata service for cases when the
+    Nova metadata service is unavailable, ensuring correct HTTP status codes
+    are returned.
