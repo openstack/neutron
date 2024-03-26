@@ -19,7 +19,6 @@
       - ^plugin.spec$
       - ^tools/ovn_migration/.*$
       - ^neutron/agent/ovn/.*$
-      - ^neutron/agent/windows/.*$
       - ^neutron/plugins/ml2/drivers/linuxbridge/.*$
       - ^neutron/plugins/ml2/drivers/macvtap/.*$
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
@@ -234,7 +233,6 @@
       - ^neutron/agent/l2/.*$
       - ^neutron/agent/l3/.*$
       - ^neutron/agent/metadata/.*$
-      - ^neutron/agent/windows/.*$
       - ^neutron/agent/dhcp_agent.py
       - ^neutron/agent/l3_agent.py
       - ^neutron/agent/metadata_agent.py

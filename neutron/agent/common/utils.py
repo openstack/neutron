@@ -13,7 +13,6 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
 import socket
 
 from eventlet import patcher
@@ -23,14 +22,9 @@ from oslo_log import log as logging
 from oslo_utils import eventletutils
 from oslo_utils import timeutils
 
+from neutron.agent.linux import utils
 from neutron.conf.agent import common as config
 from neutron.conf.agent.database import agents_db
-
-
-if os.name == 'nt':
-    from neutron.agent.windows import utils
-else:
-    from neutron.agent.linux import utils
 
 
 LOG = logging.getLogger(__name__)

@@ -13,27 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import os
-
-from oslo_log import log as logging
-
-
-if os.name == 'nt':
-    from neutron.agent.windows import ip_lib
-    from neutron.conf.agent import windows
-    OPTS = windows.IP_LIB_OPTS_WINDOWS
-else:
-    from neutron.agent.linux import ip_lib
-    from neutron.conf.agent import linux
-    OPTS = linux.IP_LIB_OPTS_LINUX
+from neutron.agent.linux import ip_lib
+from neutron.conf.agent import linux
 
 
-if os.name == 'nt':
-    LOG = logging.getLogger(__name__)
-    LOG.warning("Support for Neutron on Windows operating systems "
-                "is deprecated since 2023.2 release and will be removed in "
-                "2024.2 OpenStack release.")
-
+OPTS = linux.IP_LIB_OPTS_LINUX
 IPWrapper = ip_lib.IPWrapper
 IPDevice = ip_lib.IPDevice
 

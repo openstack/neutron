@@ -84,7 +84,6 @@
       - ^neutron/tests/unit/.*$
       - ^neutron/tests/functional/.*$
       - ^neutron/agent/ovn/.*$
-      - ^neutron/agent/windows/.*$
       - ^neutron/plugins/ml2/drivers/macvtap/.*$
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
       - ^neutron/plugins/ml2/drivers/ovn/.*$
