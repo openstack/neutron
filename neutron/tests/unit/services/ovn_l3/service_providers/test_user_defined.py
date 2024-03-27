@@ -16,8 +16,8 @@ from unittest import mock
 from neutron_lib.callbacks import events
 from neutron_lib import constants as const
 
-
 from neutron.db.models import l3
+from neutron.db.models import l3_attrs
 from neutron.services.ovn_l3.service_providers import user_defined
 from neutron.tests.unit import testlib_api
 
@@ -37,6 +37,7 @@ class TestUserDefined(testlib_api.SqlTestCase):
         self.context = 'fake-context'
         self.router = l3.Router(id='fake-uuid',
                                 flavor_id='fake-uuid')
+        self.router['extra_attributes'] = l3_attrs.RouterExtraAttributes()
         self.fake_l3.get_router = mock.MagicMock(return_value=self.router)
         self.fip = {'router_id': 'fake-uuid'}
         mock_flavor_plugin = mock.MagicMock()
@@ -131,3 +132,30 @@ class TestUserDefined(testlib_api.SqlTestCase):
                 fl_plg.get_flavor.reset_mock()
                 fl_plg.get_flavor_next_provider.reset_mock()
                 log.reset_mock()
+
+    def test__is_ha(self):
+        # test the positive case
+        router_req = {'id': 'fake-uuid',
+                      'flavor_id': 'fake-uuid',
+                      'ha': True}
+        self.assertTrue(self.provider._is_ha(router_req))
+
+        # test the negative case
+        router_req['ha'] = False
+        self.assertFalse(self.provider._is_ha(router_req))
+
+    @mock.patch('neutron.db.l3_attrs_db.get_attr_info')
+    def test__process_precommit_router_create(self, gai):
+        gai.return_value = {'ha': {'default': False}}
+        router_req = {'id': 'fake-uuid',
+                      'flavor_id': 'fake-uuid',
+                      'ha': True}
+        payload = events.DBEventPayload(
+            self.context,
+            resource_id=self.router['id'],
+            states=(router_req,),
+            metadata={'router_db': self.router})
+        self.assertFalse(self.router['extra_attributes'].ha)
+        self.provider._process_precommit_router_create('resource', 'event',
+                                                       self, payload)
+        self.assertTrue(self.router['extra_attributes'].ha)

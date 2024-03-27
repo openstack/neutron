@@ -13,14 +13,18 @@
 #    under the License.
 
 
+from neutron_lib.api import validators
 from neutron_lib.callbacks import events
+from neutron_lib.callbacks import priority_group
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as const
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
+from oslo_config import cfg
 from oslo_log import log as logging
 
+from neutron.db import l3_attrs_db
 from neutron.services.l3_router.service_providers import base
 
 
@@ -29,6 +33,7 @@ LOG = logging.getLogger(__name__)
 
 @registry.has_registry_receivers
 class UserDefined(base.L3ServiceProvider):
+    ha_support = base.OPTIONAL
 
     def __init__(self, l3_plugin):
         super(UserDefined, self).__init__(l3_plugin)
@@ -62,6 +67,26 @@ class UserDefined(base.L3ServiceProvider):
             return
         LOG.debug('Got request to associate user defined flavor to router %s',
                   router)
+
+    def _is_ha(self, router):
+        ha = router.get('ha')
+        if not validators.is_attr_set(ha):
+            ha = cfg.CONF.l3_ha
+        return ha
+
+    @registry.receives(resources.ROUTER, [events.PRECOMMIT_CREATE],
+                       priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
+    def _process_precommit_router_create(self, resource, event, trigger,
+                                         payload):
+        router = payload.latest_state
+        context = payload.context
+        if not self._is_user_defined_provider(context, router):
+            return
+        router_db = payload.metadata['router_db']
+        is_ha = self._is_ha(router)
+        router['ha'] = is_ha
+        l3_attrs_db.ExtraAttributesMixin.set_extra_attr_value(router_db,
+                                                              'ha', is_ha)
 
     @registry.receives(resources.ROUTER, [events.AFTER_CREATE])
     def _process_router_create(self, resource, event, trigger, payload=None):
