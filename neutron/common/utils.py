@@ -24,8 +24,8 @@ import hmac
 import importlib
 import os
 import os.path
-import random
 import re
+import secrets
 import signal
 import socket
 import sys
@@ -667,7 +667,7 @@ def create_object_with_dependency(creator, dep_getter, dep_creator,
                     # sleep for a random time between 0 and 1 second to
                     # make sure a concurrent worker doesn't retry again
                     # at exactly the same time
-                    time.sleep(random.uniform(0, 1))
+                    time.sleep(secrets.SystemRandom().uniform(0, 1))
                     ctx.reraise = False
                     continue
         try:

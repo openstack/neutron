@@ -15,8 +15,8 @@
 import abc
 import collections
 import functools
-from random import randint
 import re
+import secrets
 import threading
 import uuid
 
@@ -361,7 +361,7 @@ class SbGlobalUpdateEvent(_OVNExtensionEvent, row_event.RowEvent):
             # need to spread out the load by introducing a random delay.
             # clamp the max delay between 3 and 10 seconds.
             max_delay = max(min(cfg.CONF.agent_down_time // 3, 10), 3)
-            delay = randint(0, max_delay)
+            delay = secrets.SystemRandom().randint(0, max_delay)
 
         LOG.debug("Delaying updating chassis table for %s seconds", delay)
         timer = threading.Timer(delay, _update_chassis, [self, row])

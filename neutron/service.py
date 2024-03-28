@@ -15,7 +15,7 @@
 
 import inspect
 import os
-import random
+import secrets
 
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
@@ -373,7 +373,8 @@ class Service(n_rpc.Service):
 
         if self.periodic_interval:
             if self.periodic_fuzzy_delay:
-                initial_delay = random.randint(0, self.periodic_fuzzy_delay)
+                initial_delay = secrets.SystemRandom().randint(
+                    0, self.periodic_fuzzy_delay)
             else:
                 initial_delay = None
 

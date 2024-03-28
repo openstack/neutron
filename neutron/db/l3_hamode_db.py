@@ -14,7 +14,7 @@
 #
 
 import functools
-import random
+import secrets
 
 import netaddr
 from neutron_lib.api.definitions import l3 as l3_apidef
@@ -122,7 +122,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         if not available_vr_ids:
             return None
 
-        return random.choice(list(available_vr_ids))
+        return secrets.SystemRandom().choice(list(available_vr_ids))
 
     @db_api.retry_if_session_inactive()
     def _ensure_vr_id(self, context, router_db, ha_network):

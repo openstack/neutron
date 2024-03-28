@@ -14,7 +14,7 @@
 
 import abc
 import copy
-import random
+import secrets
 
 from oslo_log import log
 
@@ -148,7 +148,7 @@ class OVNGatewayChanceScheduler(OVNGatewayScheduler):
     def _select_gateway_chassis(self, nb_idl, sb_idl, candidates,
                                 priority_min, priority_max, target_lrouter):
         candidates = copy.deepcopy(candidates)
-        random.shuffle(candidates)
+        secrets.SystemRandom().shuffle(candidates)
         return self._reorder_by_az(nb_idl, sb_idl, candidates)
 
 
@@ -215,7 +215,7 @@ class OVNGatewayLeastLoadedScheduler(OVNGatewayScheduler):
             if len(chassis_load) == 0:
                 break
             leastload = min(chassis_load.values())
-            chassis = random.choice(
+            chassis = secrets.SystemRandom().choice(
                 [chassis for chassis, load in chassis_load.items()
                  if load == leastload])
             selected_chassis.append(chassis)

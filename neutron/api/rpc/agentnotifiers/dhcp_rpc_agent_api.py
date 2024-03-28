@@ -14,7 +14,7 @@
 # limitations under the License.
 
 import copy
-import random
+import secrets
 
 from neutron_lib.agent import topics
 from neutron_lib.api import extensions
@@ -233,7 +233,7 @@ class DhcpAgentNotifyAPI(object):
 
             if method == 'port_create_end' and enabled_agents:
                 high_agent = enabled_agents.pop(
-                    random.randint(0, len(enabled_agents) - 1))
+                    secrets.SystemRandom().randint(0, len(enabled_agents) - 1))
                 self._notify_high_priority_agent(
                     context, copy.deepcopy(payload), high_agent)
             for agent in enabled_agents:

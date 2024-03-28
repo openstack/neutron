@@ -15,7 +15,7 @@
 #    under the License.
 
 import functools
-import random
+import secrets
 
 import debtcollector
 import eventlet
@@ -289,7 +289,8 @@ class BundledOpenFlowBridge(object):
         if self.active_bundle is not None:
             raise ActiveBundleRunning(bundle_id=self.active_bundle)
         while True:
-            self.active_bundle = random.randrange(BUNDLE_ID_WIDTH)
+            self.active_bundle = secrets.SystemRandom().randrange(
+                BUNDLE_ID_WIDTH)
             if self.active_bundle not in self.br.active_bundles:
                 self.br.active_bundles.add(self.active_bundle)
                 break
