@@ -1,0 +1,6 @@
+---
+upgrade:
+  - |
+    In ML2/OVN, any new router gateway port (OVN logical router port) will be
+    scheduled only on those chassis configured as gateway. Any existing router
+    gateway port will preserve the current chassis assignation.

@@ -35,7 +35,7 @@ class OVNGatewayScheduler(object, metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def select(self, nb_idl, sb_idl, gateway_name, candidates=None):
+    def select(self, nb_idl, gateway_name, candidates=None):
         """Schedule the gateway port of a router to an OVN chassis.
 
         Schedule the gateway router port only if it is not already
@@ -57,10 +57,10 @@ class OVNGatewayScheduler(object, metaclass=abc.ABCMeta):
                 chassis_list.remove(chassis_name)
         return chassis_list
 
-    def _schedule_gateway(self, nb_idl, sb_idl, gateway_name, candidates,
+    def _schedule_gateway(self, nb_idl, gateway_name, candidates,
                           existing_chassis):
         existing_chassis = existing_chassis or []
-        candidates = candidates or self._get_chassis_candidates(sb_idl)
+        candidates = candidates or []
         candidates = list(set(candidates) - set(existing_chassis))
         # If no candidates, or gateway scheduled on MAX_GATEWAY_CHASSIS nodes
         # or all candidates in existing_chassis, return existing_chassis.
@@ -70,6 +70,8 @@ class OVNGatewayScheduler(object, metaclass=abc.ABCMeta):
                     len(existing_chassis) == ovn_const.MAX_GW_CHASSIS):
                 return existing_chassis
         if not candidates:
+            LOG.warning('Gateway %s was not scheduled on any chassis, no '
+                        'candidates are available', gateway_name)
             return [ovn_const.OVN_GATEWAY_INVALID_CHASSIS]
         chassis_count = ovn_const.MAX_GW_CHASSIS - len(existing_chassis)
         # The actual binding of the gateway to a chassis via the options
@@ -88,20 +90,13 @@ class OVNGatewayScheduler(object, metaclass=abc.ABCMeta):
     def _select_gateway_chassis(self, nb_idl, candidates):
         """Choose a chassis from candidates based on a specific policy."""
 
-    def _get_chassis_candidates(self, sb_idl):
-        # TODO(azbiswas): Allow selection of a specific type of chassis when
-        # the upstream code merges.
-        # return (sb_idl.get_all_chassis('gateway_router') or
-        #    sb_idl.get_all_chassis())
-        return sb_idl.get_all_chassis()
-
 
 class OVNGatewayChanceScheduler(OVNGatewayScheduler):
     """Randomly select an chassis for a gateway port of a router"""
 
-    def select(self, nb_idl, sb_idl, gateway_name, candidates=None,
+    def select(self, nb_idl, gateway_name, candidates=None,
                existing_chassis=None):
-        return self._schedule_gateway(nb_idl, sb_idl, gateway_name,
+        return self._schedule_gateway(nb_idl, gateway_name,
                                       candidates, existing_chassis)
 
     def _select_gateway_chassis(self, nb_idl, candidates):
@@ -113,9 +108,9 @@ class OVNGatewayChanceScheduler(OVNGatewayScheduler):
 class OVNGatewayLeastLoadedScheduler(OVNGatewayScheduler):
     """Select the least loaded chassis for a gateway port of a router"""
 
-    def select(self, nb_idl, sb_idl, gateway_name, candidates=None,
+    def select(self, nb_idl, gateway_name, candidates=None,
                existing_chassis=None):
-        return self._schedule_gateway(nb_idl, sb_idl, gateway_name,
+        return self._schedule_gateway(nb_idl, gateway_name,
                                       candidates, existing_chassis)
 
     @staticmethod
