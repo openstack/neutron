@@ -106,7 +106,7 @@ class PluginReportStateAPI(object):
 
 
 class PluginApi(object):
-    '''Agent side of the rpc API.
+    """Agent side of the rpc API.
 
     API version history:
         1.0 - Initial version.
@@ -127,7 +127,7 @@ class PluginApi(object):
               - update_device_up
               - update_device_list (indirectly, called from update_device_down
                 and update_device_up)
-    '''
+    """
 
     def __init__(self, topic):
         target = oslo_messaging.Target(topic=topic, version='1.9')
