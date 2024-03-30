@@ -978,8 +978,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         cmds = []
         context = n_context.get_admin_context()
         for router in self._ovn_client._l3_plugin.get_routers(context):
-            ext_gw_networks = [
-                ext_gw['network_id'] for ext_gw in router['external_gateways']]
+            ext_gw_net_id = (router.get('external_gateway_info') or
+                             {}).get('network_id')
+            if not ext_gw_net_id:
+                continue
             rtr_name = 'neutron-{}'.format(router['id'])
             ovn_lr = self._nb_idl.get_lrouter(rtr_name)
             for lrp in ovn_lr.ports:
@@ -992,7 +994,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                 network_id = ovn_network_name.replace('neutron-', '')
                 if not network_id:
                     continue
-                is_ext_gw = str(network_id in ext_gw_networks)
+                is_ext_gw = str(network_id == ext_gw_net_id)
                 external_ids = lrp.external_ids
                 external_ids[ovn_const.OVN_ROUTER_IS_EXT_GW] = is_ext_gw
                 cmds.append(
