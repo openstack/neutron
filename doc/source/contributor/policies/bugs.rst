@@ -379,7 +379,7 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+--------------------------+
 | Tag                           | Description                             | Contact                  |
 +===============================+=========================================+==========================+
-| access-control_               | A bug affecting RBAC and policy.yaml    | Miguel Lavalle           |
+| access-control_               | A bug affecting RBAC and policy.yaml    | Slawek Kaplonski         |
 +-------------------------------+-----------------------------------------+--------------------------+
 | api_                          | A bug affecting the API layer           | Akihiro Motoki           |
 +-------------------------------+-----------------------------------------+--------------------------+
@@ -442,8 +442,11 @@ more will be added over time if needed.
 | ovn_                          | A bug affecting ML2/OVN                 | Jakub Libosvar/          |
 |                               |                                         | Lucas Alvares Gomes      |
 +-------------------------------+-----------------------------------------+--------------------------+
-| ovn-octavia-provider_         | A bug affecting OVN Octavia provider    | Brian Haley/             |
-|                               | driver                                  | Flavio Fernandes         |
+| ovn-bgp-agent_                | A bug affecting OVN BGP agent           | Luis Tomas Bolivar/      |
+|                               |                                         | Lucas Alvares Gomes      |
++-------------------------------+-----------------------------------------+--------------------------+
+| ovn-octavia-provider_         | A bug affecting OVN Octavia provider    | Fernando Royo            |
+|                               | driver                                  |                          |
 +-------------------------------+-----------------------------------------+--------------------------+
 | ovs_                          | A bug affecting ML2/OVS                 | Miguel Lavalle           |
 +-------------------------------+-----------------------------------------+--------------------------+
@@ -721,6 +724,14 @@ OVN
 
 * `OVN - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=ovn>`_
 * `OVN - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=ovn>`_
+
+.. _ovn-bgp-agent:
+
+OVN BGP Agent
++++++++++++++
+
+* `OVN BGP Agent - All bugs <https://bugs.launchpad.net/ovn-bgp-agent/>`_
+* `OVN BGP Agent - In progress <https://bugs.launchpad.net/ovn-bgp-agent/+bugs?field.status%3Alist=INPROGRESS>`_
 
 .. _ovn-octavia-provider:
 
