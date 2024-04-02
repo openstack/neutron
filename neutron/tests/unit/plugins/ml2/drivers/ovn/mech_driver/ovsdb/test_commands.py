@@ -730,14 +730,14 @@ class TestAddStaticRouteCommand(TestBaseCommand):
                 'static_routes', fake_static_route.uuid)
 
 
-class TestDelStaticRouteCommand(TestBaseCommand):
+class TestDelStaticRoutesCommand(TestBaseCommand):
 
     def _test_lrouter_no_exist(self, if_exists=True):
         with mock.patch.object(idlutils, 'row_by_value',
                                side_effect=idlutils.RowNotFound):
-            cmd = commands.DelStaticRouteCommand(
+            cmd = commands.DelStaticRoutesCommand(
                 self.ovn_api, 'fake-lrouter',
-                '30.0.0.0/24', '40.0.0.100',
+                [('30.0.0.0/24', '40.0.0.100')],
                 if_exists=if_exists)
             if if_exists:
                 cmd.run_idl(self.transaction)
@@ -751,18 +751,21 @@ class TestDelStaticRouteCommand(TestBaseCommand):
         self._test_lrouter_no_exist(if_exists=False)
 
     def test_static_route_del(self):
-        fake_static_route = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+        fake_static_route1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'ip_prefix': '50.0.0.0/24', 'nexthop': '40.0.0.101'})
+        fake_static_route2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
+            attrs={'ip_prefix': '60.0.0.0/24', 'nexthop': '40.0.0.101'})
         fake_lrouter = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={'static_routes': [fake_static_route]})
+            attrs={'static_routes': [fake_static_route1, fake_static_route2]})
         with mock.patch.object(idlutils, 'row_by_value',
                                return_value=fake_lrouter):
-            cmd = commands.DelStaticRouteCommand(
+            cmd = commands.DelStaticRoutesCommand(
                 self.ovn_api, fake_lrouter.name,
-                fake_static_route.ip_prefix, fake_static_route.nexthop,
+                [(fake_static_route1.ip_prefix, fake_static_route1.nexthop),
+                 (fake_static_route2.ip_prefix, fake_static_route2.nexthop)],
                 if_exists=True)
             cmd.run_idl(self.transaction)
-            fake_lrouter.delvalue.assert_called_once_with(
+            fake_lrouter.delvalue.assert_called_with(
                 'static_routes', mock.ANY)
 
     def test_static_route_del_not_found(self):
@@ -774,9 +777,9 @@ class TestDelStaticRouteCommand(TestBaseCommand):
             attrs={'static_routes': [fake_static_route2]})
         with mock.patch.object(idlutils, 'row_by_value',
                                return_value=fake_lrouter):
-            cmd = commands.DelStaticRouteCommand(
+            cmd = commands.DelStaticRoutesCommand(
                 self.ovn_api, fake_lrouter.name,
-                fake_static_route1.ip_prefix, fake_static_route1.nexthop,
+                [(fake_static_route1.ip_prefix, fake_static_route1.nexthop)],
                 if_exists=True)
             cmd.run_idl(self.transaction)
             fake_lrouter.delvalue.assert_not_called()

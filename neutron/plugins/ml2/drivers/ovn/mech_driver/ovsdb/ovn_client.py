@@ -1210,15 +1210,17 @@ class OVNClient(object):
         gw_lrouter_name = utils.ovn_name(router_id)
         deleted_ports = []
         for gw_port in self._get_router_gw_ports(context, router_id):
+            routes_to_delete = []
             for gw_info in self._get_gw_info(context, gw_port):
                 if gw_info.ip_version == const.IP_VERSION_4:
                     for network in networks:
                         txn.add(self._nb_idl.delete_nat_rule_in_lrouter(
                             gw_lrouter_name, type='snat', logical_ip=network,
                             external_ip=gw_info.router_ip))
-                txn.add(self._nb_idl.delete_static_route(
-                    gw_lrouter_name, ip_prefix=gw_info.ip_prefix,
-                    nexthop=gw_info.gateway_ip))
+                routes_to_delete.append((gw_info.ip_prefix,
+                                         gw_info.gateway_ip))
+            txn.add(self._nb_idl.delete_static_routes(
+                    gw_lrouter_name, routes_to_delete))
             txn.add(self._nb_idl.delete_lrouter_port(
                 utils.ovn_lrouter_port_name(gw_port['id']),
                 gw_lrouter_name))
@@ -1370,11 +1372,14 @@ class OVNClient(object):
                 self._nb_idl.add_static_route(
                     lrouter_name, ip_prefix=route['destination'],
                     nexthop=route['nexthop']))
-        for route in remove:
-            commands.append(
-                self._nb_idl.delete_static_route(
-                    lrouter_name, ip_prefix=route['destination'],
-                    nexthop=route['nexthop']))
+        routes_to_delete = [
+            (r['destination'], r['nexthop'])
+            for r in remove
+        ]
+        commands.append(
+            self._nb_idl.delete_static_routes(lrouter_name,
+                                              routes_to_delete)
+        )
         self._transaction(commands, txn=txn)
 
     def _get_router_gw_ports(self, context, router_id):

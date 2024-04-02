@@ -1034,13 +1034,13 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         self.assertRaises(
             periodics.NeverAgain,
             self.periodic.check_router_default_route_empty_dst_ip)
-        nb_idl.delete_static_route.assert_has_calls([
-            mock.call(router1.name, route1.ip_prefix, route1.nexthop),
-            mock.call(router1.name, route3.ip_prefix, route3.nexthop),
+        nb_idl.delete_static_routes.assert_has_calls([
+            mock.call(router1.name, [(route1.ip_prefix, route1.nexthop),
+                                     (route3.ip_prefix, route3.nexthop)]),
         ])
         self.assertEqual(
-            2,
-            nb_idl.delete_static_route.call_count)
+            1,
+            nb_idl.delete_static_routes.call_count)
 
     @mock.patch.object(ports_obj.PortBinding, 'get_port_binding_by_vnic_type')
     def test_add_vnic_type_and_pb_capabilities_to_lsp(self, mock_get_pb):

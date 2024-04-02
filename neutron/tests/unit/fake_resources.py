@@ -76,7 +76,7 @@ class FakeOvsdbNbOvnIdl(object):
         self.update_acls = mock.Mock()
         self.idl = mock.Mock()
         self.add_static_route = mock.Mock()
-        self.delete_static_route = mock.Mock()
+        self.delete_static_routes = mock.Mock()
         self.get_all_chassis_gateway_bindings = mock.Mock()
         self.get_chassis_gateways = mock.Mock()
         self.get_gateway_chassis_binding = mock.Mock()

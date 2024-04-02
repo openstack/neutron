@@ -474,9 +474,8 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         return cmd.AddStaticRouteCommand(self, lrouter, maintain_bfd,
                                          **columns)
 
-    def delete_static_route(self, lrouter, ip_prefix, nexthop, if_exists=True):
-        return cmd.DelStaticRouteCommand(self, lrouter, ip_prefix, nexthop,
-                                         if_exists)
+    def delete_static_routes(self, lrouter, routes, if_exists=True):
+        return cmd.DelStaticRoutesCommand(self, lrouter, routes, if_exists)
 
     def _get_logical_router_port_gateway_chassis(self, lrp, priorities=None):
         """Get the list of chassis hosting this gateway port.

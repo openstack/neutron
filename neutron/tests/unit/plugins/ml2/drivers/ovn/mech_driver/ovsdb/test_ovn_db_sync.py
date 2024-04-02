@@ -483,7 +483,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         ovn_api.delete_lrouter = mock.Mock()
         ovn_api.delete_lrouter_port = mock.Mock()
         ovn_api.add_static_route = mock.Mock()
-        ovn_api.delete_static_route = mock.Mock()
+        ovn_api.delete_static_routes = mock.Mock()
         ovn_api.get_all_dhcp_options.return_value = {
             'subnets': {'n1-s1': {'cidr': '10.0.0.0/24',
                                   'options':
@@ -641,13 +641,14 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                                                   any_order=True)
         self.assertEqual(len(add_static_route_list),
                          ovn_api.add_static_route.call_count)
-        del_route_calls = [mock.call(mock.ANY, ip_prefix=route['destination'],
-                                     nexthop=route['nexthop'])
+        routes_to_delete = [(route['destination'], route['nexthop'])
                            for route in del_static_route_list]
-        ovn_api.delete_static_route.assert_has_calls(del_route_calls,
-                                                     any_order=True)
-        self.assertEqual(len(del_static_route_list),
-                         ovn_api.delete_static_route.call_count)
+        del_route_call = [mock.call(mock.ANY, routes_to_delete)] \
+            if routes_to_delete else []
+
+        ovn_api.delete_static_routes.assert_has_calls(del_route_call)
+        self.assertEqual(1 if len(del_static_route_list) else 0,
+                         ovn_api.delete_static_routes.call_count)
 
         add_nat_calls = [mock.call(mock.ANY, **nat) for nat in add_snat_list]
         ovn_api.add_nat_rule_in_lrouter.assert_has_calls(add_nat_calls,

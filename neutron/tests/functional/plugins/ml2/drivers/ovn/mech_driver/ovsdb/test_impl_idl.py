@@ -626,6 +626,46 @@ class TestNbApi(BaseOvnIdlTest):
         self.assertIsNone(
             self.nbapi.lookup('HA_Chassis_Group', router_name, default=None))
 
+    def _assert_routes_exist(self, lr_name, expected_count):
+        with self.nbapi.transaction(check_error=True) as txn:
+            lr = txn.add(self.nbapi.lr_get(lr_name))
+        actual_count = len(lr.result.static_routes)
+        self.assertEqual(actual_count, expected_count,
+                         f"Expected {expected_count} routes, "
+                         f"found {actual_count}.")
+
+    def test_del_static_routes(self):
+        lr_name = 'router_with_static_routes_del'
+        routes = [('0.0.0.0/0', '192.0.2.1'), ('10.0.0.0/24', '192.0.3.1')]
+
+        with self.nbapi.transaction(check_error=True) as txn:
+            txn.add(self.nbapi.lr_add(lr_name))
+            for ip_prefix, nexthop in routes:
+                txn.add(self.nbapi.add_static_route(lr_name,
+                                                    ip_prefix=ip_prefix,
+                                                    nexthop=nexthop))
+
+        self._assert_routes_exist(lr_name, 2)
+
+        with self.nbapi.transaction(check_error=True) as txn:
+            txn.add(self.nbapi.delete_static_routes(lr_name, routes))
+
+        self._assert_routes_exist(lr_name, 0)
+
+    def test_del_no_static_routes(self):
+        lr_name = 'router_with_static_routes_del'
+        routes = []
+
+        with self.nbapi.transaction(check_error=True) as txn:
+            txn.add(self.nbapi.lr_add(lr_name))
+
+        self._assert_routes_exist(lr_name, 0)
+
+        with self.nbapi.transaction(check_error=True) as txn:
+            txn.add(self.nbapi.delete_static_routes(lr_name, routes))
+
+        self._assert_routes_exist(lr_name, 0)
+
 
 class TestIgnoreConnectionTimeout(BaseOvnIdlTest):
     @classmethod

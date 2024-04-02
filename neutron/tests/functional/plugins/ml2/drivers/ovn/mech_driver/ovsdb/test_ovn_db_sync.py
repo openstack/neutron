@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from collections import defaultdict
 from collections import namedtuple
 
 import netaddr
@@ -797,10 +798,13 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                 txn.add(self.nb_api.add_static_route(lrouter_name,
                                                      ip_prefix=ip_prefix,
                                                      nexthop=nexthop))
-
+            routers = defaultdict(list)
             for lrouter_name, ip_prefix, nexthop in self.delete_lrouter_routes:
-                txn.add(self.nb_api.delete_static_route(lrouter_name,
-                                                        ip_prefix, nexthop,
+                routers[lrouter_name].append((ip_prefix, nexthop))
+
+            for lrouter_name, routes_to_delete in routers.items():
+                txn.add(self.nb_api.delete_static_routes(lrouter_name,
+                                                        routes_to_delete,
                                                         True))
 
             for lrouter_name, nat_dict in self.create_lrouter_nats:
