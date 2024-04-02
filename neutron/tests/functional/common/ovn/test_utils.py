@@ -12,7 +12,9 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import ddt
 from neutron_lib.api.definitions import portbindings
+from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron.common.ovn import constants as ovn_const
@@ -192,3 +194,114 @@ class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
             idlutils.RowNotFound,
             self.nb_api.ha_chassis_group_get(hcg_name).execute,
             check_error=True)
+
+
+@utils.ovn_context()
+def method_with_idl_and_default_txn(ls_name, idl, txn=None):
+    txn.add(idl.ls_add(ls_name))
+
+
+@utils.ovn_context()
+def method_with_txn_and_default_idl(ls_name, txn, idl=None):
+    # NOTE(ralonsoh): the test with the default "idl" cannot be executed. A
+    # default value should be provided in a non-testing implementation.
+    txn.add(idl.ls_add(ls_name))
+
+
+@utils.ovn_context()
+def method_with_idl_and_txn(ls_name, idl, txn):
+    txn.add(idl.ls_add(ls_name))
+
+
+@utils.ovn_context(txn_var_name='custom_txn', idl_var_name='custom_idl')
+def method_with_custom_idl_and_custom_txn(ls_name, custom_idl, custom_txn):
+    custom_txn.add(custom_idl.ls_add(ls_name))
+
+
+@utils.ovn_context()
+def update_ls(ls_name, idl, txn):
+    txn.add(idl.db_set('Logical_Switch', ls_name,
+                       ('external_ids', {'random_key': 'random_value'})
+                       )
+            )
+
+
+@ddt.ddt()
+class TestOvnContext(base.TestOVNFunctionalBase):
+
+    scenarios = (
+        {'name': 'idl_and_default_txn',
+         'method': method_with_idl_and_default_txn,
+         '_args': ['ls_name', 'idl'], '_kwargs': ['txn']},
+        {'name': 'idl_and_default_txn__positional_txn',
+         'method': method_with_idl_and_default_txn,
+         '_args': ['ls_name', 'idl', 'txn'], '_kwargs': []},
+        {'name': 'idl_and_default_txn__default_txn',
+         'method': method_with_idl_and_default_txn,
+         '_args': ['ls_name', 'idl'], '_kwargs': []},
+
+        {'name': 'txn_and_default_idl',
+         'method': method_with_txn_and_default_idl,
+         '_args': ['ls_name', 'txn'], '_kwargs': ['idl']},
+        {'name': 'txn_and_default_idl__positional_idl',
+         'method': method_with_txn_and_default_idl,
+         '_args': ['ls_name', 'txn', 'idl'], '_kwargs': []},
+
+        {'name': 'txn_and_idl',
+         'method': method_with_idl_and_txn,
+         '_args': ['ls_name', 'idl', 'txn'], '_kwargs': []},
+
+        {'name': 'custom_idl_and_custom_txn',
+         'method': method_with_custom_idl_and_custom_txn,
+         '_args': ['ls_name', 'custom_idl', 'custom_txn'], '_kwargs': []},
+    )
+
+    scenarios2 = (
+        {'name': method_with_idl_and_default_txn.__name__,
+         'method': method_with_idl_and_default_txn},
+        {'name': method_with_txn_and_default_idl.__name__,
+         'method': method_with_txn_and_default_idl},
+        {'name': method_with_idl_and_txn.__name__,
+         'method': method_with_idl_and_txn},
+        {'name': method_with_custom_idl_and_custom_txn.__name__,
+         'method': method_with_custom_idl_and_custom_txn},
+    )
+
+    @ddt.unpack
+    @ddt.named_data(*scenarios)
+    def test_with_transaction(self, method, _args, _kwargs):
+        ls_name = uuidutils.generate_uuid()
+        custom_idl = idl = self.nb_api
+        with self.nb_api.transaction(check_error=True) as txn:
+            custom_txn = txn
+            _locals = locals()
+            args = [_locals[_arg] for _arg in _args]
+            kwargs = {_kwarg: _locals[_kwarg] for _kwarg in _kwargs}
+            # Create a LS and update it.
+            method(*args, **kwargs)
+            update_ls(ls_name, self.nb_api, txn)
+
+        ls = self.nb_api.lookup('Logical_Switch', ls_name)
+        self.assertEqual('random_value', ls.external_ids['random_key'])
+
+    @ddt.unpack
+    @ddt.named_data(*scenarios)
+    def test_without_transaction(self, method, _args, _kwargs):
+        ls_name = uuidutils.generate_uuid()
+        custom_idl = idl = self.nb_api
+        custom_txn = txn = None
+        _locals = locals()
+        args = [_locals[_arg] for _arg in _args]
+        kwargs = {_kwarg: _locals[_kwarg] for _kwarg in _kwargs}
+        # Create a LS and update it.
+        method(*args, **kwargs)
+        update_ls(ls_name, self.nb_api, txn)
+
+        ls = self.nb_api.lookup('Logical_Switch', ls_name)
+        self.assertEqual('random_value', ls.external_ids['random_key'])
+
+    @ddt.unpack
+    @ddt.named_data(*scenarios2)
+    def test_needed_parameters(self, method):
+        self.assertRaises(RuntimeError, method, uuidutils.generate_uuid(),
+                          None, None)
