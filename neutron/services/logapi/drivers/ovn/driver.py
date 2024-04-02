@@ -11,7 +11,7 @@
 #    under the License.
 
 from collections import namedtuple
-import random
+import secrets
 
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.callbacks import resources
@@ -183,7 +183,8 @@ class OVNDriver(base.DriverBase):
                 # once minimum version for OVN is >= 22.03
                 if hasattr(acl, "label"):
                     # Label needs to be an unsigned 32 bit number and not 0.
-                    columns["label"] = random.randrange(1, MAX_INT_LABEL)
+                    columns["label"] = secrets.SystemRandom().randrange(
+                        1, MAX_INT_LABEL)
                     columns["options"] = {'log-related': "true"}
                 ovn_txn.add(self.ovn_nb.db_set(
                     "ACL", acl_uuid, *columns.items()))

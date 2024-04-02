@@ -14,7 +14,7 @@
 #    under the License.
 
 import datetime
-import random
+import secrets
 import time
 
 from neutron_lib.callbacks import events
@@ -99,7 +99,7 @@ class AgentSchedulerDbMixin(agents_db.AgentDbMixin):
         interval = max(cfg.CONF.agent_down_time // 2, 1)
         # add random initial delay to allow agents to check in after the
         # neutron server first starts. random to offset multiple servers
-        initial_delay = random.randint(interval, interval * 2)
+        initial_delay = secrets.SystemRandom().randint(interval, interval * 2)
 
         check_worker = neutron_worker.PeriodicWorker(function, interval,
                                                      initial_delay)

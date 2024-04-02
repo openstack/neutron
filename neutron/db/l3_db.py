@@ -14,7 +14,7 @@
 
 import functools
 import itertools
-import random
+import secrets
 
 import netaddr
 from neutron_lib.api.definitions import l3 as l3_apidef
@@ -165,7 +165,8 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
         associated floating IP and delete them 5 minutes after detection.
         """
         interval = 60 * 5  # only every 5 minutes. cleanups should be rare
-        initial_delay = random.randint(0, interval)  # splay multiple servers
+        initial_delay = secrets.SystemRandom().randint(
+            0, interval)  # splay multiple servers
         janitor = neutron_worker.PeriodicWorker(self._clean_garbage, interval,
                                                 initial_delay)
         self.add_worker(janitor)

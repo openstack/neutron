@@ -17,7 +17,7 @@ import abc
 import collections
 import functools
 import itertools
-import random
+import secrets
 
 from neutron_lib import constants as lib_const
 from neutron_lib.db import api as lib_db_api
@@ -333,11 +333,11 @@ class ChanceScheduler(L3Scheduler):
     """Randomly allocate an L3 agent for a router."""
 
     def _choose_router_agent(self, plugin, context, candidates):
-        return random.choice(candidates)
+        return secrets.SystemRandom().choice(candidates)
 
     def _choose_router_agents_for_ha(self, plugin, context, candidates):
         num_agents = self._get_num_of_agents_for_ha(len(candidates))
-        return random.sample(candidates, num_agents)
+        return secrets.SystemRandom().sample(candidates, num_agents)
 
 
 class LeastRoutersScheduler(L3Scheduler):

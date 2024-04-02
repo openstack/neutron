@@ -14,7 +14,7 @@
 #    under the License.
 
 import collections
-import random
+import secrets
 
 from neutron_lib import constants
 from neutron_lib.services.qos import constants as qos_consts
@@ -55,7 +55,7 @@ class MeterIDGenerator(object):
         cid = None
         times = 0
         while not cid or cid in used_meter_ids:
-            cid = random.randint(1, self.max_meter)
+            cid = secrets.SystemRandom().randint(1, self.max_meter)
             times += 1
             if times >= MAX_RETIES:
                 return

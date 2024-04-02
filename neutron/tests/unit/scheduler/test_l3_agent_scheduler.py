@@ -16,6 +16,7 @@
 import collections
 import contextlib
 import datetime
+import secrets
 from unittest import mock
 
 from neutron_lib.api import attributes
@@ -661,7 +662,7 @@ class L3AgentChanceSchedulerTestCase(L3SchedulerTestCaseMixin,
         self.patch_notifier.start()
 
     def test_random_scheduling(self):
-        random_patch = mock.patch('random.choice')
+        random_patch = mock.patch.object(secrets.SystemRandom, 'choice')
         random_mock = random_patch.start()
 
         def side_effect(seq):
