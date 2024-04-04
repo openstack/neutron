@@ -30,6 +30,7 @@
 
 DRY_RUN=0
 CLEAN_PROJECT=""
+UNMAINTAINED=0
 
 function print_help {
     echo "Script to abandon patches without activity for more than 4 weeks."
@@ -40,6 +41,7 @@ function print_help {
     echo " --project <project_name>     Only check patches from <project_name> if passed."
     echo "                              It must be one of the projects which are a part of the Neutron stadium."
     echo "                              If project is not provided, all projects from the Neutron stadium will be checked"
+    echo " --unmaintained               Clean all unmaintained branches only. By default unmaintained branches are skipped"
     echo " --help                       Print help message"
 }
 
@@ -56,6 +58,10 @@ while [ $# -gt 0 ]; do
             CLEAN_PROJECT="project:openstack/${2}"
             shift # past argument
             shift # past value
+        ;;
+        --unmaintained)
+            UNMAINTAINED=1
+            shift # past argument
         ;;
         --help)
             print_help
@@ -119,7 +125,14 @@ if [ "$PROJECTS" = "()" ]; then
     exit 1
 fi
 
-blocked_reviews=$(ssh review.opendev.org "gerrit query --current-patch-set --format json $PROJECTS status:open age:4w label:Code-Review<=-2" | jq .currentPatchSet.revision | grep -v null | sed 's/"//g')
+gerrit_query="status:open age:4w label:Code-Review<=-2 "
+if [ $UNMAINTAINED -eq 1 ]; then
+    gerrit_query="${gerrit_query} branch:^unmaintained/.*"
+else
+    gerrit_query="${gerrit_query} NOT branch:^unmaintained/.*"
+fi
+
+blocked_reviews=$(ssh review.opendev.org "gerrit query --current-patch-set --format json $PROJECTS $gerrit_query" | jq .currentPatchSet.revision | grep -v null | sed 's/"//g')
 
 blocked_msg=$(cat <<EOF
 
@@ -144,7 +157,13 @@ done
 
 # then purge all the reviews that are > 4w with no changes and Zuul has -1ed
 
-failing_reviews=$(ssh review.opendev.org "gerrit query  --current-patch-set --format json $PROJECTS status:open age:4w NOT label:Verified>=1,Zuul" | jq .currentPatchSet.revision | grep -v null | sed 's/"//g')
+gerrit_query="status:open age:4w NOT label:Verified>=1,Zuul "
+if [ $UNMAINTAINED -eq 1 ]; then
+    gerrit_query="${gerrit_query} branch:^unmaintained/.*"
+else
+    gerrit_query="${gerrit_query} NOT branch:^unmaintained/.*"
+fi
+failing_reviews=$(ssh review.opendev.org "gerrit query  --current-patch-set --format json $PROJECTS $gerrit_query" | jq .currentPatchSet.revision | grep -v null | sed 's/"//g')
 
 failing_msg=$(cat <<EOF
 
