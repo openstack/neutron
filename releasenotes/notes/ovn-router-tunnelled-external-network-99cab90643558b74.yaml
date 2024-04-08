@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    OVN routers can be attached to tunnelled external gateway networks. The
+    Logical Router is pinned to a gateway chassis, instead of the gateway
+    Logical Router Port. The mechanism driver monitors the status of the
+    gateway chassis to re-schedule the Logical Router in case of failure,
+    providing high availability.
