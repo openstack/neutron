@@ -72,6 +72,20 @@ Controller node
      [DEFAULT]
      service_plugins = trunk
 
+Compute node
+------------
+
+* If you are using the ``Open vSwitch`` mechanism driver, then you can
+  verify the value of ``trunk_enabled`` flag in
+  ``/etc/neutron/plugins/ml2/openvswitch_agent.ini`` config file.
+  Note that ``True`` is the default value, but you can overwrite this
+  option like this:
+
+  .. code-block:: ini
+
+     [OVS]
+     trunk_enabled = True
+
 Verify service operation
 ------------------------
 

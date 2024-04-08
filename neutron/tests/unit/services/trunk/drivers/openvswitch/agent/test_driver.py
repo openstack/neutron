@@ -13,6 +13,7 @@
 
 from unittest import mock
 
+from oslo_config import cfg
 import oslo_messaging
 from oslo_utils import uuidutils
 
@@ -137,3 +138,25 @@ class OvsTrunkSkeletonTest(base.BaseTestCase):
                 self.skeleton.ovsdb_handler, 'unwire_subports_for_trunk'):
             self._test_handle_subports_trunk_on_trunk_update(
                 events.DELETED)
+
+
+class InitHandlerTest(base.BaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        # Unset the driver to avoid race condition between tests
+        driver.TRUNK_SKELETON = None
+
+    def test_init_handler_plugin_default(self):
+        driver.init_handler(mock.Mock(), mock.Mock(), mock.Mock(), None)
+        self.assertIsInstance(driver.TRUNK_SKELETON, driver.OVSTrunkSkeleton)
+
+    def test_init_handler_plugin_disabled(self):
+        cfg.CONF.set_override('trunk_enabled', False, group='OVS')
+        driver.init_handler(mock.Mock(), mock.Mock(), mock.Mock(), None)
+        self.assertFalse(driver.TRUNK_SKELETON)
+
+    def test_init_handler_plugin_enabled(self):
+        cfg.CONF.set_override('trunk_enabled', True, group='OVS')
+        driver.init_handler(mock.Mock(), mock.Mock(), mock.Mock(), None)
+        self.assertIsInstance(driver.TRUNK_SKELETON, driver.OVSTrunkSkeleton)

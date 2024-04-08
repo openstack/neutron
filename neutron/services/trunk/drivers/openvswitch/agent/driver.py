@@ -93,13 +93,13 @@ class OVSTrunkSkeleton(agent.TrunkSkeleton):
 
 def init_handler(resource, event, trigger, payload=None):
     """Handler for agent init event."""
-    # Set up agent-side RPC for receiving trunk events; we may want to
-    # make this setup conditional based on server-side capabilities.
     global TRUNK_SKELETON
 
-    manager = trunk_manager.TrunkManager(trigger.int_br)
-    handler = ovsdb_handler.OVSDBHandler(manager)
-    TRUNK_SKELETON = OVSTrunkSkeleton(handler)
+    if cfg.CONF.OVS.trunk_enabled:
+        LOG.info("Registering Trunk extension")
+        manager = trunk_manager.TrunkManager(trigger.int_br)
+        handler = ovsdb_handler.OVSDBHandler(manager)
+        TRUNK_SKELETON = OVSTrunkSkeleton(handler)
 
 
 def unregister():
