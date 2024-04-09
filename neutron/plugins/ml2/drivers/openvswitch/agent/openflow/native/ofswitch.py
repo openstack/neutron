@@ -183,7 +183,8 @@ class OpenFlowSwitchMixin(object):
         for c in cookies:
             LOG.warning("Deleting flow with cookie 0x%(cookie)x",
                         {'cookie': c})
-            self.uninstall_flows(cookie=c, cookie_mask=ovs_lib.UINT64_BITMASK)
+            self.uninstall_flows(table_id=table_id,
+                                 cookie=c, cookie_mask=ovs_lib.UINT64_BITMASK)
 
     def cleanup_flows(self):
         LOG.info("Reserved cookies for %s: %s", self.br_name,
