@@ -158,8 +158,7 @@ def _get_worker_count():
     # a steady-state bloat of around 2GB.
     mem = psutil.virtual_memory()
     mem_workers = int(mem.total / (2 * 1024 * 1024 * 1024))
-    if mem_workers < num_workers:
-        num_workers = mem_workers
+    num_workers = min(num_workers, mem_workers)
 
     # And just in case, always at least one.
     if num_workers <= 0:
