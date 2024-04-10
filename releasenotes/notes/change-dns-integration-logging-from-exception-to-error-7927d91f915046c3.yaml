@@ -1,0 +1,6 @@
+---
+fixes:
+  - |
+    Cleaned non-harmful stack trace errors from DNS integration plugin. This
+    prevents the logs from filling with stack traces where error log messages
+    would have been sufficient.
