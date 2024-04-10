@@ -2464,8 +2464,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                 return '%08x' % addr
             else:
                 # Create 32-bit Base32 encoded hash
-                sha1 = hashlib.sha1(ip_address.encode())
-                iphash = base64.b32encode(sha1.digest())
+                blake2b = hashlib.blake2b(ip_address.encode(), digest_size=20)
+                iphash = base64.b32encode(blake2b.digest())
                 return iphash[:hashlen].decode().lower()
         except Exception:
             LOG.warning("Invalid remote IP: %s", ip_address)
