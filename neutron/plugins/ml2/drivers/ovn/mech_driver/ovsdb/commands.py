@@ -418,6 +418,17 @@ class ScheduleNewGatewayCommand(command.BaseCommand):
                     *_add_gateway_chassis(self.api, txn, self.g_name, chassis))
 
 
+class LrDelCommand(ovn_nb_commands.LrDelCommand):
+
+    def run_idl(self, txn):
+        super().run_idl(txn)
+        try:
+            hcg = self.api.lookup('HA_Chassis_Group', self.router)
+            hcg.delete()
+        except idlutils.RowNotFound:
+            pass
+
+
 class AddLRouterPortCommand(command.BaseCommand):
     def __init__(self, api, name, lrouter, may_exist, **columns):
         super(AddLRouterPortCommand, self).__init__(api)
@@ -974,6 +985,15 @@ class DeleteLRouterExtGwCommand(command.BaseCommand):
                 continue
             lrouter.delvalue('nat', nat)
             nat.delete()
+
+        # Remove the router pinning to a chassis (if any).
+        lrouter.delkey('options', 'chassis')
+
+        # Remove the HA_Chassis_Group of the router (if any).
+        hcg = self.api.lookup('HA_Chassis_Group',
+                              lrouter.name, default=None)
+        if hcg:
+            hcg.delete()
 
         for gw_port in self.api.get_lrouter_gw_ports(lrouter.name):
             lrouter.delvalue('ports', gw_port)

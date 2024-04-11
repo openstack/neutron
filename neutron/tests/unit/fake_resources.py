@@ -184,7 +184,7 @@ class FakeOvsdbSbOvnIdl(object):
         self._get_chassis_physnets = mock.Mock()
         self._get_chassis_physnets.return_value = ['fake-physnet']
         self.get_chassis_and_physnets = mock.Mock()
-        self.get_gateway_chassis_from_cms_options = mock.Mock()
+        self.get_gateway_chassis_from_cms_options = mock.Mock(return_value=[])
         self.get_extport_chassis_from_cms_options = mock.Mock(return_value=[])
         self.is_col_present = mock.Mock()
         self.is_col_present.return_value = False
@@ -420,6 +420,7 @@ class FakeOvsdbRow(FakeResource):
             'delvalue': None,
             'verify': None,
             'setkey': None,
+            'delkey': None,
         }
 
         # Overwrite default attributes and methods.
@@ -739,6 +740,43 @@ class FakeFloatingIp(object):
 
         return FakeResource(info=copy.deepcopy(fip_attrs),
                             loaded=True)
+
+
+class FakeRouter(object):
+    """Fake one or more Neutron routers."""
+
+    @staticmethod
+    def create_one_router(attrs=None):
+        """Create a fake router.
+
+        :param Dictionary attrs:
+            A dictionary with all attributes
+        :return:
+            A FakeResource object faking the router
+        """
+        attrs = attrs or {}
+
+        # Set default attributes.
+        router_id = uuidutils.generate_uuid()
+        router_attrs = {
+            'id': 'router-' + router_id,
+            'name': 'router-' + router_id,
+            'tenant_id': '',
+            'project_id': '',
+            'admin_state_up': True,
+            'status': 'ACTIVE',
+            'gw_port_id': {},
+            'enable_snat': True,
+            'flavor_id': None,
+            'extra_attributes': {},
+            'qos_policy_id': None,
+            'availability_zones': [],
+            'availability_zone_hints': [],
+        }
+
+        # Overwrite default attributes.
+        router_attrs.update(attrs)
+        return FakeResource(info=copy.deepcopy(router_attrs), loaded=True)
 
 
 class FakeOVNPort(object):

@@ -428,6 +428,11 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         return cmd.UpdateLRouterCommand(self, name,
                                         if_exists, **columns)
 
+    # This method overrides the parent class ``nb_impl_idl.OvnNbApiIdlImpl``
+    # implementation.
+    def lr_del(self, router, if_exists=False):
+        return cmd.LrDelCommand(self, router, if_exists=if_exists)
+
     def add_lrouter_port(self, name, lrouter, may_exist=False, **columns):
         return cmd.AddLRouterPortCommand(self, name, lrouter,
                                          may_exist, **columns)

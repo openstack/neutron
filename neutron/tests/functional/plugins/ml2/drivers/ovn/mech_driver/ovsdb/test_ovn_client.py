@@ -12,13 +12,26 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import external_net
+from neutron_lib.api.definitions import provider_net
 from neutron_lib import constants
+from oslo_utils import strutils
 
+from neutron.common.ovn import constants as ovn_const
+from neutron.common.ovn import utils as ovn_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as ovn_config
 from neutron.tests.functional import base
+from neutron.tests.unit.api import test_extensions
+from neutron.tests.unit.extensions import test_l3
 
 
-class TestOVNClient(base.TestOVNFunctionalBase):
+class TestOVNClient(base.TestOVNFunctionalBase,
+                    test_l3.L3NatTestCaseMixin):
+
+    def setUp(self, **kwargs):
+        super().setUp(**kwargs)
+        ext_mgr = test_l3.L3TestExtensionManager()
+        self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
 
     def test_create_metadata_port(self):
         def check_metadata_port(enable_dhcp):
@@ -84,3 +97,37 @@ class TestOVNClient(base.TestOVNFunctionalBase):
                     # command automatically checks for existing logical
                     # switch ports
                     ovn_client.create_port(self.context, port_data)
+
+    def test_create_router(self):
+        ch = self.add_fake_chassis('host1', enable_chassis_as_gw=True,
+                                   azs=[])
+        net_arg = {provider_net.NETWORK_TYPE: 'geneve',
+                   external_net.EXTERNAL: True}
+        with self.network('test-ovn-client', as_admin=True,
+                          arg_list=tuple(net_arg.keys()), **net_arg) as net:
+            with self.subnet(net):
+                ext_gw = {'network_id': net['network']['id']}
+                with self.router(external_gateway_info=ext_gw) as router:
+                    router_id = router['router']['id']
+                    lr = self.nb_api.lookup('Logical_Router',
+                                            ovn_utils.ovn_name(router_id))
+                    self.assertEqual(ch, lr.options['chassis'])
+                    lrp = lr.ports[0]
+                    self.assertTrue(strutils.bool_from_string(
+                        lrp.external_ids[ovn_const.OVN_ROUTER_IS_EXT_GW]))
+                    hcg = self.nb_api.lookup('HA_Chassis_Group',
+                                            ovn_utils.ovn_name(router_id))
+                    self.assertIsNotNone(hcg)
+
+                    # Remove the external GW port.
+                    self._update('routers', router_id,
+                                 {'router': {'external_gateway_info': {}}},
+                                 as_admin=True)
+                    lr = self.nb_api.lookup('Logical_Router',
+                                            ovn_utils.ovn_name(router_id))
+                    self.assertEqual([], lr.ports)
+                    self.assertNotIn('chassis', lr.options)
+                    hcg = self.nb_api.lookup('HA_Chassis_Group',
+                                             ovn_utils.ovn_name(router_id),
+                                             default=None)
+                    self.assertIsNone(hcg)

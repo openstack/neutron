@@ -67,7 +67,7 @@ class TestCreateNeutronPgDrop(base.TestOVNFunctionalBase):
 
 class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
 
-    def test_sync_ha_chassis_group(self):
+    def test_sync_ha_chassis_group_network(self):
         net = self._make_network(self.fmt, 'n1', True)['network']
         port_id = 'fake-port-id'
         hcg_name = utils.ovn_name(net['id'])
@@ -78,9 +78,9 @@ class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
         self.add_fake_chassis('host3')
 
         with self.nb_api.transaction(check_error=True) as txn:
-            utils.sync_ha_chassis_group(
-                self.context, port_id, net['id'], self.nb_api,
-                self.sb_api, txn)
+            utils.sync_ha_chassis_group_network(
+                self.context, self.nb_api, self.sb_api,
+                port_id, net['id'], txn)
 
         ha_chassis = self.nb_api.db_find('HA_Chassis').execute(
             check_error=True)
@@ -101,9 +101,9 @@ class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
         # HA Chassis Group register but will update the "ha_chassis" list.
         self.del_fake_chassis(chassis2)
         with self.nb_api.transaction(check_error=True) as txn:
-            utils.sync_ha_chassis_group(
-                self.context, port_id, net['id'], self.nb_api,
-                self.sb_api, txn)
+            utils.sync_ha_chassis_group_network(
+                self.context, self.nb_api, self.sb_api, port_id,
+                net['id'], txn)
 
         ha_chassis = self.nb_api.db_find('HA_Chassis').execute(
             check_error=True)
@@ -118,7 +118,7 @@ class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
         ha_chassis_ret = str(hcg.ha_chassis[0].uuid)
         self.assertEqual(ha_chassis_exp, ha_chassis_ret)
 
-    def test_sync_ha_chassis_group_extport(self):
+    def test_sync_ha_chassis_group_network_extport(self):
         # Create a network and an external port
         net = self._make_network(self.fmt, 'n1', True)['network']
         port_data = {
@@ -138,9 +138,9 @@ class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
 
         # Invoke the sync method
         with self.nb_api.transaction(check_error=True) as txn:
-            utils.sync_ha_chassis_group(
-                self.context, port['id'], net['id'], self.nb_api,
-                self.sb_api, txn)
+            utils.sync_ha_chassis_group_network(
+                self.context, self.nb_api, self.sb_api, port['id'],
+                net['id'], txn)
 
         # Assert only the eligible chassis are present in HA Chassis
         ha_chassis = self.nb_api.db_find('HA_Chassis').execute(
@@ -165,9 +165,9 @@ class TestSyncHaChassisGroup(base.TestOVNFunctionalBase):
         # the existing HA Chassis Group but only update the "ha_chassis" list
         self.del_fake_chassis(chassis2)
         with self.nb_api.transaction(check_error=True) as txn:
-            utils.sync_ha_chassis_group(
-                self.context, port['id'], net['id'], self.nb_api,
-                self.sb_api, txn)
+            utils.sync_ha_chassis_group_network(
+                self.context, self.nb_api, self.sb_api, port['id'],
+                net['id'], txn)
 
         # Assert the chassis deletion reflects in the HA Chassis and
         # HA Chassis Group

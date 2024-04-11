@@ -339,18 +339,19 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         self.assertFalse(
             self.fake_ovn_client._nb_idl.ha_chassis_group_add.called)
 
-    @mock.patch.object(utils, 'sync_ha_chassis_group')
+    @mock.patch.object(utils, 'sync_ha_chassis_group_network')
     def test_check_for_ha_chassis_group_no_external_ports(
-            self, mock_sync_ha_chassis_group):
+            self, mock_sync_ha_chassis_group_network):
         self.fake_ovn_client.is_external_ports_supported.return_value = True
         nb_idl = self.fake_ovn_client._nb_idl
         nb_idl.db_find_rows.return_value.execute.return_value = []
         self.assertRaises(periodics.NeverAgain,
                           self.periodic.check_for_ha_chassis_group)
-        self.assertFalse(mock_sync_ha_chassis_group.called)
+        self.assertFalse(mock_sync_ha_chassis_group_network.called)
 
-    @mock.patch.object(utils, 'sync_ha_chassis_group')
-    def test_check_for_ha_chassis_group(self, mock_sync_ha_chassis_group):
+    @mock.patch.object(utils, 'sync_ha_chassis_group_network')
+    def test_check_for_ha_chassis_group(self,
+                                        mock_sync_ha_chassis_group_network):
         self.fake_ovn_client.is_external_ports_supported.return_value = True
         nb_idl = self.fake_ovn_client._nb_idl
 
@@ -374,24 +375,22 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
                        constants.OVN_NETWORK_NAME_EXT_ID_KEY: 'neutron-net1'}})
 
         nb_idl.db_find_rows.return_value.execute.return_value = [p0, p1]
-        mock_sync_ha_chassis_group.return_value = hcg0.uuid
+        mock_sync_ha_chassis_group_network.return_value = hcg0.uuid, mock.ANY
 
         # Invoke the periodic method, it meant to run only once at startup
         # so NeverAgain will be raised at the end
         self.assertRaises(periodics.NeverAgain,
                           self.periodic.check_for_ha_chassis_group)
 
-        # Assert sync_ha_chassis_group() is called for both networks
+        # Assert sync_ha_chassis_group_network() is called for both networks
         expected_calls = [
-            mock.call(mock.ANY, 'p0', 'net0',
-                      self.fake_ovn_client._nb_idl,
-                      self.fake_ovn_client._sb_idl, mock.ANY),
-            mock.call(mock.ANY, 'p1', 'net1',
-                      self.fake_ovn_client._nb_idl,
-                      self.fake_ovn_client._sb_idl, mock.ANY),
+            mock.call(mock.ANY, self.fake_ovn_client._nb_idl,
+                      self.fake_ovn_client._sb_idl, 'p0', 'net0', mock.ANY),
+            mock.call(mock.ANY, self.fake_ovn_client._nb_idl,
+                      self.fake_ovn_client._sb_idl, 'p1', 'net1', mock.ANY),
         ]
-        mock_sync_ha_chassis_group.assert_has_calls(expected_calls,
-                                                    any_order=True)
+        mock_sync_ha_chassis_group_network.assert_has_calls(expected_calls,
+                                                            any_order=True)
 
         expected_calls = [
             mock.call('p0', ha_chassis_group=hcg0.uuid),

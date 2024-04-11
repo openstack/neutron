@@ -175,7 +175,9 @@ class TestRouter(base.TestOVNFunctionalBase):
             gw_info = {'network_id': ext1['network']['id']}
             self._create_router('router1', gw_info=gw_info,
                                 az_hints=router_az_hints)
-            self.assertTrue(plugin_select.called)
+            # If the network is tunnelled, the scheduler is not called.
+            check = self.assertTrue if physnet else self.assertFalse
+            check(plugin_select.called)
             plugin_select.reset_mock()
 
             # Unset the redirect-chassis so that schedule_unhosted_gateways
