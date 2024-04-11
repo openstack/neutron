@@ -32,6 +32,7 @@ from ovsdbapp.backend.ovs_idl import idlutils
 import tenacity
 
 from neutron.common.ovn import constants as ovn_const
+from neutron.common.ovn import utils as ovn_utils
 from neutron.common import utils as n_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
 from neutron.db import ovn_hash_ring_db as db_hash_ring
@@ -523,6 +524,56 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
             n_utils.wait_until_true(
                 lambda: self._check_port_host_set(vip['id'], hosts[idx]),
                 timeout=10)
+
+    def _create_router(self):
+        net_args = {external_net.EXTERNAL: True,
+                    provider_net.NETWORK_TYPE: 'geneve'}
+        net = self._make_network(self.fmt, 'e1', True, as_admin=True,
+                                 arg_list=tuple(net_args.keys()), **net_args)
+        res = self._create_subnet(self.fmt, net['network']['id'],
+                                  '120.0.0.0/24')
+        subnet = self.deserialize(self.fmt, res)
+        external_gateway_info = {
+            'enable_snat': True, 'network_id': net['network']['id'],
+            'external_fixed_ips': [{'ip_address': '120.0.0.2',
+                                    'subnet_id': subnet['subnet']['id']}]}
+        router = self.l3_plugin.create_router(
+            self.context,
+            {'router': {'name': uuidutils.generate_uuid(),
+                        'admin_state_up': True, 'tenant_id': self._tenant_id,
+                        'external_gateway_info': external_gateway_info}})
+        return router
+
+    def test_ha_chassis_group_router_event(self):
+        def _check_high_prio_chassis(num_chassis):
+            lr = self.nb_api.lookup('Logical_Router', ovn_r_name)
+            hp_chassis_lr = lr.options['chassis']
+            hcg = self.nb_api.lookup('HA_Chassis_Group', ovn_r_name)
+            self.assertEqual(num_chassis, len(hcg.ha_chassis))
+            hp_chassis_hcg = None
+            for hc in hcg.ha_chassis:
+                if not hp_chassis_hcg or hc.priority > hp_chassis_hcg.priority:
+                    hp_chassis_hcg = hc
+
+            self.assertEqual(hp_chassis_lr, hp_chassis_hcg.chassis_name)
+
+        chassis_list = []
+        num_chassis = 5
+        for idx in range(num_chassis):
+            chassis_list.append(
+                self.add_fake_chassis('host-%s' % str(idx), azs=[],
+                                      enable_chassis_as_gw=True))
+
+        router = self._create_router()
+        ovn_r_name = ovn_utils.ovn_name(router['id'])
+        _check_high_prio_chassis(len(chassis_list))
+
+        lr = self.nb_api.lookup('Logical_Router', ovn_r_name)
+        row_event = test_events.WaitForLogicalRouterUpdate()
+        self.mech_driver.nb_ovn.idl.notify_handler.watch_event(row_event)
+        self.del_fake_chassis(lr.options['chassis'])
+        self.assertTrue(row_event.wait())
+        _check_high_prio_chassis(num_chassis - 1)
 
 
 class TestNBDbMonitorOverTcp(TestNBDbMonitor):

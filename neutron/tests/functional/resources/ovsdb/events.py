@@ -74,3 +74,11 @@ class WaitForCreatePortBindingEventPerType(event.WaitEvent):
                  timeout=5):
         super().__init__((self.ROW_CREATE,), 'Port_Binding',
                          (('type', '=', port_type),), timeout=timeout)
+
+
+class WaitForLogicalRouterUpdate(event.WaitEvent):
+    event_name = 'WaitForLogicalRouterUpdate'
+
+    def __init__(self):
+        super().__init__((self.ROW_UPDATE,), 'Logical_Router', None,
+                         timeout=30)
