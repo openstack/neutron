@@ -37,6 +37,8 @@ from neutron.objects import base as objects_base
 from neutron.objects import trunk as trunk_objects
 from neutron.services.trunk import drivers
 from neutron.services.trunk import exceptions as trunk_exc
+from neutron.services.trunk.rpc import backend
+from neutron.services.trunk.rpc import server
 from neutron.services.trunk import rules
 from neutron.services.trunk.seg_types import validators
 
@@ -55,7 +57,8 @@ class TrunkPlugin(service_base.ServicePluginBase):
     __filter_validation_support = True
 
     def __init__(self):
-        self._rpc_backend = None
+        self._rpc_server = None
+        self._rpc_notifier = None
         self._drivers = []
         self._segmentation_types = {}
         self._interfaces = set()
@@ -64,6 +67,10 @@ class TrunkPlugin(service_base.ServicePluginBase):
         registry.subscribe(rules.enforce_port_deletion_rules,
                            resources.PORT, events.BEFORE_DELETE)
         registry.publish(resources.TRUNK_PLUGIN, events.AFTER_INIT, self)
+        if any(drv.rpc_required for drv in self._drivers):
+            # create notifier backend
+            self._rpc_notifier = backend.ServerSideRpcBackend()
+
         for driver in self._drivers:
             LOG.debug('Trunk plugin loaded with driver %s', driver.name)
         self.check_compatibility()
@@ -90,6 +97,13 @@ class TrunkPlugin(service_base.ServicePluginBase):
             port_res['trunk_details'] = trunk_details
 
         return port_res
+
+    def start_rpc_listeners(self):
+        if not any(drv.rpc_required for drv in self._drivers):
+            return []
+
+        self._rpc_server = server.TrunkSkeleton()
+        return self._rpc_server.rpc_servers
 
     @staticmethod
     @resource_extend.extends([port_def.COLLECTION_NAME_BULK])
@@ -154,12 +168,6 @@ class TrunkPlugin(service_base.ServicePluginBase):
         except KeyError:
             raise trunk_exc.SegmentationTypeValidatorNotFound(
                 seg_type=seg_type)
-
-    def set_rpc_backend(self, backend):
-        self._rpc_backend = backend
-
-    def is_rpc_enabled(self):
-        return self._rpc_backend is not None
 
     def register_driver(self, driver):
         """Register driver with trunk plugin."""

@@ -71,7 +71,12 @@ class TrunkSkeleton(object):
         self._connection = n_rpc.Connection()
         self._connection.create_consumer(
             constants.TRUNK_BASE_TOPIC, [self], fanout=False)
-        self._connection.consume_in_threads()
+        self._rpc_servers = self._connection.consume_in_threads()
+        LOG.debug("RPC backend initialized for trunk plugin")
+
+    @property
+    def rpc_servers(self):
+        return self._rpc_servers
 
     @property
     def core_plugin(self):

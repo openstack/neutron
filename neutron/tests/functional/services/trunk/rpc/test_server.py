@@ -26,13 +26,13 @@ class TrunkSkeletonTestCase(ml2_test_base.ML2TestFramework):
     def setUp(self):
         super(TrunkSkeletonTestCase, self).setUp()
         self.trunk_plugin = trunk_plugin.TrunkPlugin()
+        self.trunk_plugin.start_rpc_listeners()
 
     def test__handle_port_binding_set_device_owner(self):
         helpers.register_ovs_agent(host=helpers.HOST)
         with self.port() as subport:
             port = (
-                self.trunk_plugin.
-                _rpc_backend._skeleton._handle_port_binding(
+                self.trunk_plugin._rpc_server._handle_port_binding(
                     self.context, subport['port']['id'],
                     mock.ANY, helpers.HOST))
             self.assertEqual(
