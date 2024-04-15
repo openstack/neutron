@@ -70,7 +70,6 @@ class LoggingServiceDriverManager(object):
         registry.publish(log_const.LOGGING_PLUGIN, events.AFTER_INIT, self)
 
         if self.rpc_required:
-            self._start_rpc_listeners()
             self.logging_rpc = server_rpc.LoggingApiNotification()
 
     @property
@@ -92,6 +91,9 @@ class LoggingServiceDriverManager(object):
         self._setup_resources_cb_handle()
 
     def _start_rpc_listeners(self):
+        if not self.rpc_required:
+            return []
+
         self._skeleton = server_rpc.LoggingApiSkeleton()
         return self._skeleton.conn.consume_in_threads()
 
