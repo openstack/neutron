@@ -3045,9 +3045,11 @@ class TestOvsNeutronAgentOSKen(TestOvsNeutronAgent,
                 mock.call(tid) for tid in ovs_constants.INT_BR_ALL_TABLES]
             dump_flows.assert_has_calls(dump_flows_expected)
 
-            expected = [mock.call(cookie=17185,
+            expected = [mock.call(table_id=2,
+                                  cookie=17185,
                                   cookie_mask=uint64_max),
-                        mock.call(cookie=9029,
+                        mock.call(table_id=2,
+                                  cookie=9029,
                                   cookie_mask=uint64_max)]
             uninstall_flows.assert_has_calls(expected, any_order=True)
             self.assertEqual(
