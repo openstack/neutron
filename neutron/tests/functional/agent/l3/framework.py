@@ -405,6 +405,7 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
                 timeout=15)
         return return_copy
 
+    @test_base.unstable_test("bug 1961740")
     def manage_router(self, agent, router):
         self.addCleanup(agent._safe_router_removed, router['id'])
         with mock.patch.object(dvr_local_router.DvrLocalRouter,
