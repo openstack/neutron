@@ -98,5 +98,4 @@
         - neutron-fullstack
         - neutron-tempest-postgres-full
         - neutron-tempest-mariadb-full
-        - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa
         - openstacksdk-functional-devstack-networking
