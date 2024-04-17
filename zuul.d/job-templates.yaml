@@ -101,7 +101,6 @@
         - neutron-ovn-tempest-mariadb-full
         - neutron-ovn-tempest-ovs-release
         - neutron-ovn-tempest-ovs-release-ipv6-only
-        - ironic-tempest-ipa-wholedisk-bios-agent_ipmitool-tinyipa
         - openstacksdk-functional-devstack-networking
         - neutron-linuxbridge-tempest-plugin-scenario-nftables
         - neutron-ovs-tempest-plugin-scenario-iptables_hybrid-nftables
