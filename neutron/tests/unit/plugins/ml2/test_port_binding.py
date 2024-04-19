@@ -667,6 +667,17 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         response = self._delete_port_binding(port['id'], 'other-host')
         self.assertEqual(webob.exc.HTTPNotFound.code, response.status_int)
 
+    def test_delete_active_port_binding(self):
+        port, new_binding = self._create_port_and_binding()
+        with mock.patch.object(mechanism_test.TestMechanismDriver,
+                               '_check_port_context'):
+            self._activate_port_binding(
+                port['id'], self.host, raw_response=False)
+        response = self._delete_port_binding(port['id'], self.host)
+        self.assertEqual(webob.exc.HTTPConflict.code, response.status_int)
+        self.assertEqual(exceptions.PortBindingInStatusActive.__name__,
+                         response.json["NeutronError"]['type'])
+
     def test_binding_fail_for_unknown_allocation(self):
         # The UUID is a random one - which of course is unknown to neutron
         # as a resource provider UUID.
@@ -811,6 +822,16 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         )
 
         # delete the remaining binding
+        # a custom patch prevents active port binding deletion
+        # make the remaining binding inactive first
+
+        ctx = context.get_admin_context()
+        with db_api.CONTEXT_WRITER.using(ctx):
+            port_binding = ctx.session.query(
+                ml2_models.PortBinding).filter(
+                ml2_models.PortBinding.port_id == port['id']).one()
+            port_binding.status = const.INACTIVE
+
         response = self._delete_port_binding(port['id'], host1)
         self.assertEqual(webob.exc.HTTPNoContent.code, response.status_int)
         # the MAC should not change as it is already the generated MAC
