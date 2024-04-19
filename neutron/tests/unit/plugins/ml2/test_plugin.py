@@ -2275,21 +2275,37 @@ class TestMl2PluginOnly(Ml2PluginV2TestCase):
             self.context, port_id))
 
     @mock.patch.object(ml2_db, 'clear_binding_levels')
-    @mock.patch.object(port_obj.PortBinding, 'delete_objects')
     def test_delete_port_binding_delete_binding_and_levels(
             self,
-            clear_bl_mock,
-            delete_port_binding_mock):
-        port_id = uuidutils.generate_uuid()
+            clear_bl_mock):
         host = 'fake-host'
         plugin = directory.get_plugin()
-        plugin.delete_port_binding(self.context, host, port_id)
-        clear_bl_mock.assert_called_once_with(self.context,
-                                              port_id=port_id,
-                                              host=host)
-        delete_port_binding_mock.assert_called_once_with(self.context,
-                                                         host=host,
-                                                         port_id=port_id)
+        # mock port and binding to skip conditions introduced
+        # for the deletion of port bindings
+        host_arg = {portbindings.HOST_ID: host}
+        with self.port(device_owner='compute:xyz',
+                       arg_list=(portbindings.HOST_ID,),
+                       **host_arg) as port:
+            port_id = port['port']['id']
+            # make binding in active so it can be deleted
+            with db_api.CONTEXT_WRITER.using(self.context):
+                port_binding = self.context.session.query(
+                    models.PortBinding).filter(
+                    models.PortBinding.port_id == port_id).one()
+                port_binding.status = constants.INACTIVE
+            # reset clear_binding_level made during creation
+            clear_bl_mock.reset_mock()
+
+            with mock.patch.object(port_obj.PortBinding,
+                            'delete_objects') as delete_port_binding_mock:
+                plugin.delete_port_binding(self.context, host, port_id)
+                clear_bl_mock.assert_called_once_with(self.context,
+                                                  port_id=port_id,
+                                                  host=host)
+                delete_port_binding_mock.assert_called_with(
+                                                        self.context,
+                                                        host=host,
+                                                        port_id=port_id)
 
     def test__validate_port_supports_multiple_bindings(self):
         plugin = directory.get_plugin()
