@@ -30,10 +30,10 @@ from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.api.v2 import resource
+from neutron.api import wsgi
 from neutron import policy
 from neutron import quota
 from neutron.quota import resource_registry
-from neutron import wsgi
 
 
 DEFAULT_QUOTAS_ACTION = 'default'

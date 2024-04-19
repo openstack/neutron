@@ -20,7 +20,7 @@ from neutron_lib.services import base
 from oslo_serialization import jsonutils
 
 from neutron.api import extensions
-from neutron import wsgi
+from neutron.api import wsgi
 
 
 class FoxInSocksController(wsgi.Controller):

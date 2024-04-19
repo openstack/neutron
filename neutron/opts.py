@@ -19,6 +19,7 @@ from oslo_config import cfg
 
 import neutron.agent.agent_extensions_manager
 import neutron.agent.securitygroups_rpc
+import neutron.api.wsgi
 import neutron.conf.agent.agent_extensions_manager
 import neutron.conf.agent.common
 import neutron.conf.agent.database.agents_db
@@ -60,7 +61,6 @@ import neutron.db.migration.cli
 import neutron.extensions.l3
 import neutron.extensions.securitygroup
 import neutron.plugins.ml2.drivers.mech_sriov.agent.common.config
-import neutron.wsgi
 
 
 AUTH_GROUPS_OPTS = {

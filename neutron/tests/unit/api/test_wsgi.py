@@ -27,8 +27,8 @@ import testtools
 import webob
 import webob.exc
 
+from neutron.api import wsgi
 from neutron.tests import base
-from neutron import wsgi
 
 CONF = cfg.CONF
 
@@ -52,19 +52,7 @@ def open_no_proxy(*args, **kwargs):
     return opener.open(*args, **kwargs)
 
 
-class TestServiceBase(base.BaseTestCase):
-    """Service tests base."""
-
-    @mock.patch("neutron.policy.refresh")
-    @mock.patch("neutron.common.config.setup_logging")
-    def _test_reset(self, worker_service, setup_logging_mock, refresh_mock):
-        worker_service.reset()
-
-        setup_logging_mock.assert_called_once_with()
-        refresh_mock.assert_called_once_with()
-
-
-class TestWorkerService(TestServiceBase):
+class TestWorkerService(base.BaseTestCase):
     """WorkerService tests."""
 
     @mock.patch.object(db_api, 'get_context_manager')
@@ -76,6 +64,14 @@ class TestWorkerService(TestServiceBase):
         workerservice = wsgi.WorkerService(_service, _app, "on")
         workerservice.start()
         self.assertFalse(apimock.called)
+
+    @mock.patch("neutron.policy.refresh")
+    @mock.patch("neutron.common.config.setup_logging")
+    def _test_reset(self, worker_service, setup_logging_mock, refresh_mock):
+        worker_service.reset()
+
+        setup_logging_mock.assert_called_once_with()
+        refresh_mock.assert_called_once_with()
 
     def test_reset(self):
         _service = mock.Mock()

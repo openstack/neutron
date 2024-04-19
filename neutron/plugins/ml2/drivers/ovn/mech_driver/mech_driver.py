@@ -47,6 +47,7 @@ from oslo_utils import timeutils
 from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron._i18n import _
+from neutron.api import wsgi
 from neutron.common.ovn import acl as ovn_acl
 from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import exceptions as ovn_exceptions
@@ -72,7 +73,6 @@ from neutron.services.logapi.drivers.ovn import driver as log_driver
 from neutron.services.qos.drivers.ovn import driver as qos_driver
 from neutron.services.segments import db as segment_service_db
 from neutron.services.trunk.drivers.ovn import trunk_driver
-import neutron.wsgi
 
 
 LOG = log.getLogger(__name__)
@@ -299,7 +299,7 @@ class OVNMechanismDriver(api.MechanismDriver):
 
     @staticmethod
     def should_post_fork_initialize(worker_class):
-        return worker_class in (neutron.wsgi.WorkerService,
+        return worker_class in (wsgi.WorkerService,
                                 worker.MaintenanceWorker,
                                 service.RpcWorker)
 
@@ -344,7 +344,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         self._post_fork_event.clear()
         self._ovn_client_inst = None
 
-        if worker_class == neutron.wsgi.WorkerService:
+        if worker_class == wsgi.WorkerService:
             self._setup_hash_ring()
 
         n_agent.AgentCache(self)  # Initialize singleton agent cache

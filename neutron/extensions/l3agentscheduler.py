@@ -29,12 +29,10 @@ import webob.exc
 from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import resource
+from neutron.api import wsgi
 from neutron import policy
-from neutron import wsgi
-
 
 LOG = logging.getLogger(__name__)
-
 
 L3_ROUTER = 'l3-router'
 L3_ROUTERS = L3_ROUTER + 's'
