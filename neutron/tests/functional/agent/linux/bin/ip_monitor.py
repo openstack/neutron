@@ -32,12 +32,12 @@ READ_QUEUE = None
 
 
 def sigterm_handler(_signo, _stack_frame):
-    global EVENT_STOP
-    global IP_MONITOR
-    global READ_QUEUE
     EVENT_STOP.set()
-    IP_MONITOR.join()
-    READ_QUEUE.join()
+    # These might not be initialized if SIGTERM before assignment below
+    if IP_MONITOR:
+        IP_MONITOR.join()
+    if READ_QUEUE:
+        READ_QUEUE.join()
     sys.exit(0)
 
 
