@@ -36,7 +36,6 @@ disable=
  expression-not-assigned,
  fixme,
  global-statement,
- keyword-arg-before-vararg,
  non-parent-init-called,
  not-callable,
  protected-access,
