@@ -677,14 +677,12 @@ class HAChassisGroupRouterEvent(row_event.RowEvent):
         self.event_name = 'HAChassisGroupRouterEvent'
 
     def match_fn(self, event, row, old):
-        if ovn_const.OVN_ROUTER_ID_EXT_ID_KEY not in row.external_ids:
-            # "HA_Chassis_Group" not assigned to a router.
-            return False
-        elif getattr(old, 'ha_chassis', None) is None:
-            # No changes in the "ha_chassis" list has been done.
-            return False
-
-        return True
+        if (ovn_const.OVN_ROUTER_ID_EXT_ID_KEY in row.external_ids or
+                hasattr(old, 'ha_chassis')):
+            # "HA_Chassis_Group" has been assigned to a router or there are
+            # changes in the "ha_chassis" list.
+            return True
+        return False
 
     def run(self, event, row, old):
         router_id = row.external_ids[ovn_const.OVN_ROUTER_ID_EXT_ID_KEY]
@@ -698,15 +696,16 @@ class HAChassisGroupRouterEvent(row_event.RowEvent):
                      router_id)
             return
 
-        highest_prio_hc = None
-        for hc in row.ha_chassis:
-            if not highest_prio_hc or hc.priority > highest_prio_hc.priority:
-                highest_prio_hc = hc
+        try:
+            highest_prio_hc = max(row.ha_chassis, key=lambda hc: hc.priority)
+        except ValueError:
+            highest_prio_hc = None
 
-        options = {'chassis': highest_prio_hc.chassis_name}
-        self.driver.nb_ovn.db_set(
-            'Logical_Router', router_name, ('options', options)).execute(
-            check_error=True)
+        if highest_prio_hc:
+            options = {'chassis': highest_prio_hc.chassis_name}
+            self.driver.nb_ovn.db_set(
+                'Logical_Router', router_name, ('options', options)).execute(
+                check_error=True)
 
 
 class OvnDbNotifyHandler(row_event.RowEventHandler):

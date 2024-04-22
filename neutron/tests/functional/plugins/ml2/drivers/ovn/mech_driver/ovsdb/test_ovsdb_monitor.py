@@ -550,11 +550,7 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
             hp_chassis_lr = lr.options['chassis']
             hcg = self.nb_api.lookup('HA_Chassis_Group', ovn_r_name)
             self.assertEqual(num_chassis, len(hcg.ha_chassis))
-            hp_chassis_hcg = None
-            for hc in hcg.ha_chassis:
-                if not hp_chassis_hcg or hc.priority > hp_chassis_hcg.priority:
-                    hp_chassis_hcg = hc
-
+            hp_chassis_hcg = max(hcg.ha_chassis, key=lambda hc: hc.priority)
             self.assertEqual(hp_chassis_lr, hp_chassis_hcg.chassis_name)
 
         chassis_list = []
