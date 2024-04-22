@@ -13,6 +13,9 @@
       devstack_localrc:
         Q_ML2_TENANT_NETWORK_TYPE: vxlan
         MYSQL_REDUCE_MEMORY: true
+        CIRROS_VERSION: 0.6.2
+        DEFAULT_IMAGE_NAME: cirros-0.6.2-x86_64-uec
+        DEFAULT_IMAGE_FILE_NAME: cirros-0.6.2-x86_64-uec.tar.gz
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
@@ -216,6 +219,10 @@
     vars:
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
+      devstack_localrc:
+        CIRROS_VERSION: 0.6.2
+        DEFAULT_IMAGE_NAME: cirros-0.6.2-x86_64-uec
+        DEFAULT_IMAGE_FILE_NAME: cirros-0.6.2-x86_64-uec.tar.gz
       devstack_services:
         postgresql: true
         mysql: false
@@ -268,6 +275,9 @@
       devstack_localrc:
         MYSQL_SERVICE_NAME: mariadb
         MYSQL_REDUCE_MEMORY: true
+        CIRROS_VERSION: 0.6.2
+        DEFAULT_IMAGE_NAME: cirros-0.6.2-x86_64-uec
+        DEFAULT_IMAGE_FILE_NAME: cirros-0.6.2-x86_64-uec.tar.gz
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
@@ -352,6 +362,10 @@
       - openstack/tempest
       - openstack/neutron-lib
     vars:
+      devstack_localrc:
+        CIRROS_VERSION: 0.6.2
+        DEFAULT_IMAGE_NAME: cirros-0.6.2-x86_64-uec
+        DEFAULT_IMAGE_FILE_NAME: cirros-0.6.2-x86_64-uec.tar.gz
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
@@ -428,6 +442,9 @@
         # https://bugs.launchpad.net/neutron/+bug/1912359 fixed
         NEUTRON_DEPLOY_MOD_WSGI: false
         MYSQL_REDUCE_MEMORY: true
+        CIRROS_VERSION: 0.6.2
+        DEFAULT_IMAGE_NAME: cirros-0.6.2-x86_64-uec
+        DEFAULT_IMAGE_FILE_NAME: cirros-0.6.2-x86_64-uec.tar.gz
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
@@ -796,6 +813,10 @@
       - name: github.com/sqlalchemy/alembic
         override-checkout: main
     vars:
+      devstack_localrc:
+        CIRROS_VERSION: 0.6.2
+        DEFAULT_IMAGE_NAME: cirros-0.6.2-x86_64-uec
+        DEFAULT_IMAGE_FILE_NAME: cirros-0.6.2-x86_64-uec.tar.gz
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
