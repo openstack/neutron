@@ -20,7 +20,6 @@ import uuid
 from wsgiref import simple_server as wsgi_simple_server
 
 from oslo_config import cfg
-from oslo_config import types
 from oslo_log import log as logging
 from oslo_serialization import jsonutils
 
@@ -29,9 +28,8 @@ from neutron.common import config as common_config
 LOG = logging.getLogger(__name__)
 
 
-PortType = types.Integer(1, 65535)
 placement_opts = [
-    cfg.Opt('placement_port', type=PortType)
+    cfg.PortOpt('placement_port', min=1)
 ]
 cfg.CONF.register_opts(placement_opts)
 
