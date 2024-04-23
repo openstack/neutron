@@ -4512,12 +4512,12 @@ class TestOvsAgentTunnelName(base.BaseTestCase):
 
     def test_get_tunnel_name_vxlan_ipv6(self):
         self.assertEqual(
-            'vxlan-pehtjzksi',
+            'vxlan-qtfsbtdew',
             ovs_agent.OVSNeutronAgent.get_tunnel_name(
                 'vxlan', '2001:db8::1', '2001:db8::2'))
 
     def test_get_tunnel_name_gre_ipv6(self):
         self.assertEqual(
-            'gre-pehtjzksiqr',
+            'gre-qtfsbtdewtq',
             ovs_agent.OVSNeutronAgent.get_tunnel_name(
                 'gre', '2001:db8::1', '2001:db8::2'))
