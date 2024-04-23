@@ -50,6 +50,9 @@ class LoggingPlugin(log_ext.LoggingPluginBase):
         # supported_logging_types are be dynamically loaded from log_drivers
         return self.driver_manager.supported_logging_types
 
+    def start_rpc_listeners(self):
+        return self.driver_manager._start_rpc_listeners()
+
     def _clean_logs(self, context, sg_id=None, port_id=None):
         with db_api.CONTEXT_WRITER.using(context):
             sg_logs = log_db_api.get_logs_bound_sg(
