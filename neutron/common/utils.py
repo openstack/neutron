@@ -129,12 +129,12 @@ def _subprocess_setup():
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 
-def subprocess_popen(args, stdin=None, stdout=None, stderr=None, shell=False,
-                     env=None, preexec_fn=_subprocess_setup, close_fds=True):
+def subprocess_popen(args, stdin=None, stdout=None, stderr=None, env=None,
+                     preexec_fn=_subprocess_setup, close_fds=True):
 
-    return subprocess.Popen(args, shell=shell, stdin=stdin, stdout=stdout,
-                            stderr=stderr, preexec_fn=preexec_fn,
-                            close_fds=close_fds, env=env)
+    return subprocess.Popen(args, stdin=stdin, stdout=stdout, stderr=stderr,
+                            preexec_fn=preexec_fn, close_fds=close_fds,
+                            env=env)
 
 
 def get_first_host_ip(net, ip_version):
