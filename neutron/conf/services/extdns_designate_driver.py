@@ -45,7 +45,8 @@ class ZonePrefixIPv6(types.Integer):
 
 
 designate_opts = [
-    cfg.StrOpt('url',
+    cfg.URIOpt('url',
+               schemes=['http', 'https'],
                help=_('URL for connecting to designate')),
     cfg.BoolOpt('allow_reverse_dns_lookup', default=True,
                 help=_('Allow the creation of PTR records')),
