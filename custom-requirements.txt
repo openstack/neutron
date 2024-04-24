@@ -33,7 +33,6 @@ git+https://github.com/sapcc/openstack-rate-limit-middleware.git#egg=rate-limit-
 -e git+https://github.com/sapcc/networking-aci.git@stable/yoga-m3#egg=networking_aci[acicobra]
 -e git+https://github.com/sapcc/networking-manila.git@stable/yoga-m3#egg=networking_manila
 -e git+https://github.com/sapcc/networking-f5.git@stable/yoga-m3#egg=networking_f5
--e git+https://github.com/sapcc/networking-ucsm-bm.git@stable/yoga-m3#egg=networking-ucsm-bm
 -e git+https://github.com/sapcc/networking-arista.git@stable/yoga-m3#egg=networking_arista
 -e git+https://github.com/sapcc/networking-nsx-t.git@stable/yoga-m3#egg=networking_nsxv3
 -e git+https://github.com/sapcc/networking-bgpvpn@stable/yoga-m3#egg=networking-bgpvpn
