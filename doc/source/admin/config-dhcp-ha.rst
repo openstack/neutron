@@ -93,10 +93,12 @@ Configuration
 
       [DEFAULT]
       core_plugin = linuxbridge
-      rabbit_host = controlnode
       host = controlnode
       agent_down_time = 5
       dhcp_agents_per_network = 1
+
+      [database]
+      connection = mysql+pymysql://root:root@127.0.0.1:3306/neutron
 
    .. note::
 
@@ -127,10 +129,11 @@ Configuration
    .. code-block:: ini
 
       [DEFAULT]
-      rabbit_host = controlnode
-      rabbit_password = openstack
       # host = HostB on hostb
       host = HostA
+
+      [database]
+      connection = mysql+pymysql://root:root@127.0.0.1:3306/neutron
 
 #. Update the plug-in configuration file
    ``/etc/neutron/plugins/linuxbridge/linuxbridge_conf.ini``:
@@ -150,16 +153,12 @@ Configuration
 
    .. code-block:: ini
 
-      [DEFAULT]
-      use_neutron=True
-      firewall_driver=nova.virt.firewall.NoopFirewallDriver
-
       [neutron]
-      admin_username=neutron
-      admin_password=servicepassword
-      admin_auth_url=http://controlnode:35357/v2.0/
+      username=neutron
+      password=servicepassword
+      auth_url=http://controlnode:35357/v2.0/
       auth_strategy=keystone
-      admin_tenant_name=servicetenant
+      project_name=servicetenant
       url=http://203.0.113.10:9696/
 
 **HostA and HostB: DHCP agent**
