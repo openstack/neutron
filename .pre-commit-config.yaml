@@ -1,0 +1,69 @@
+---
+default_language_version:
+  # force all unspecified python hooks to run python3
+  python: python3
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: mixed-line-ending
+        args: ['--fix', 'lf']
+        exclude: '.*\.(svg)$'
+      - id: check-byte-order-marker
+      - id: check-executables-have-shebangs
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: check-yaml
+        files: .*\.(yaml|yml)$
+        exclude: 'rally-jobs/task-neutron.yaml'
+  - repo: https://opendev.org/openstack/bashate.git
+    rev: 2.1.1
+    hooks:
+      - id: bashate
+        # E005 file does not begin with #! or have a .sh prefix
+        # E006 check for lines longer than 79 columns
+        # E042 local declaration hides errors
+        # E043 Arithmetic compound has inconsistent return semantics
+        args: ['-v', '-iE006', '-iE005,E042,E043']
+        files: .*\.sh
+        exclude: '.tox/.*'
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        # B104: Possible binding to all interfaces
+        args: ['-n5', '-sB104']
+        files: 'neutron/'
+        exclude: 'neutron/tests'
+  - repo: https://github.com/lucas-c/pre-commit-hooks
+    rev: v1.5.4
+    hooks:
+      - id: remove-tabs
+        exclude: '.*\.(svg)$'
+  - repo: https://opendev.org/openstack/hacking
+    rev: 6.1.0
+    hooks:
+      - id: hacking
+        additional_dependencies: ['neutron', 'neutron-lib']
+        exclude: '^(doc|releasenotes|tools)/.*$'
+  - repo: local
+    hooks:
+      - id: flake8
+        name: flake8
+        additional_dependencies:
+          - hacking>=6.1.0,<6.2.0
+          - neutron
+        language: python
+        entry: flake8
+        files: '^.*\.py$'
+        exclude: '^(doc|releasenotes|tools)/.*$'
+# todo(slaweq): enable pylint check once all issues in the current code will
+# be solved
+#     - id: pylint
+#       name: pylint
+#       entry: .tox/pep8/bin/pylint
+#       files: ^neutron/
+#       language: system
+#       types: [python]
+#       args: ['--rcfile=.pylintrc', '--output-format=colorized']
