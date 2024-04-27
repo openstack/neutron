@@ -485,7 +485,7 @@ class TestConjIPFlowManager(base.BaseTestCase):
                              constants.INGRESS_DIRECTION, constants.IPv4, 0)
             self.manager.flow_state[self.vlan_tag][(
                 constants.INGRESS_DIRECTION, constants.IPv4)] = {
-                    '10.22.3.4': [self.conj_id]}
+                    ('10.22.3.4', 'ff:ee:dd:cc:bb:aa'): [self.conj_id]}
 
             self.manager.sg_removed(sg_name)
 
@@ -493,7 +493,7 @@ class TestConjIPFlowManager(base.BaseTestCase):
         self._sg_removed('sg')
         self.driver._add_flow.assert_not_called()
         self.driver.delete_flows_for_flow_state.assert_called_once_with(
-            {'10.22.3.4': [self.conj_id]}, {},
+            {('10.22.3.4', 'ff:ee:dd:cc:bb:aa'): [self.conj_id]}, {},
             constants.INGRESS_DIRECTION, constants.IPv4, self.vlan_tag)
         self.driver.delete_flow_for_ip.assert_not_called()
 
@@ -501,12 +501,13 @@ class TestConjIPFlowManager(base.BaseTestCase):
         self._sg_removed('remote_id')
         self.driver._add_flow.assert_not_called()
         self.driver.delete_flows_for_flow_state.assert_called_once_with(
-            {'10.22.3.4': [self.conj_id]}, {},
+            {('10.22.3.4', 'ff:ee:dd:cc:bb:aa'): [self.conj_id]}, {},
             constants.INGRESS_DIRECTION, constants.IPv4, self.vlan_tag)
         # "conj_id_to_remove" is populated with the remote_sg conj_id assigned,
         # "_update_flows_for_vlan_subr" will call "delete_flow_for_ip".
         self.driver.delete_flow_for_ip.assert_called_once_with(
-            '10.22.3.4', 'ingress', 'IPv4', 100, {self.conj_id})
+            ('10.22.3.4', 'ff:ee:dd:cc:bb:aa'), 'ingress', 'IPv4', 100,
+            {self.conj_id})
 
 
 class FakeOVSPort(object):
