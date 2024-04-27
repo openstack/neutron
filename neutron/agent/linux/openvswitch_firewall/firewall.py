@@ -423,16 +423,18 @@ class ConjIPFlowManager(object):
 
         # NOTE(hangyang): Handle add/delete overlapped IPs among
         # remote security groups and remote address groups
-        removed_ips = set([str(netaddr.IPNetwork(addr[0]).cidr) for addr in (
-            set(flow_state.keys()) - set(addr_to_conj.keys()))])
+        removed_ips = {
+            str(netaddr.IPNetwork(addr).cidr)
+            for addr, _ in set(flow_state) - set(addr_to_conj)
+        }
         ip_to_conj = collections.defaultdict(set)
-        for addr, conj_ids in addr_to_conj.items():
+        for (addr, mac), conj_ids in addr_to_conj.items():
             # Addresses from remote security groups have mac addresses,
             # others from remote address groups have not.
-            ip_to_conj[str(netaddr.IPNetwork(addr[0]).cidr)].update(conj_ids)
+            ip_to_conj[str(netaddr.IPNetwork(addr).cidr)].update(conj_ids)
 
-        for addr in addr_to_conj.keys():
-            ip_cidr = str(netaddr.IPNetwork(addr[0]).cidr)
+        for addr, mac in addr_to_conj:
+            ip_cidr = str(netaddr.IPNetwork(addr).cidr)
             # When the overlapped IP in remote security group and remote
             # address group have different conjunction ids but with the
             # same priority offset, we need to combine the conj_ids together
@@ -440,7 +442,8 @@ class ConjIPFlowManager(object):
             # creation sequence.
             conj_ids = list(ip_to_conj[ip_cidr])
             conj_ids.sort()
-            if flow_state.get(addr) == conj_ids and ip_cidr not in removed_ips:
+            if (flow_state.get((addr, mac)) == conj_ids and
+                    ip_cidr not in removed_ips):
                 # When there are IP overlaps among remote security groups
                 # and remote address groups, removal of the overlapped ips
                 # from one remote group will also delete the flows for the
@@ -449,7 +452,7 @@ class ConjIPFlowManager(object):
                 # ids, therefore we need to recreate the affected flows.
                 continue
             for flow in rules.create_flows_for_ip_address(
-                    addr, direction, ethertype, vlan_tag, conj_ids):
+                    (addr, mac), direction, ethertype, vlan_tag, conj_ids):
                 self.driver._add_flow(flow_group_id=ofport, **flow)
 
     def update_flows_for_vlan(self, vlan_tag, ofport, conj_id_to_remove=None):
