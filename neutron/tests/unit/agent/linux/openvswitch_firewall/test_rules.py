@@ -348,8 +348,8 @@ class TestCreateFlowsForIpAddress(base.BaseTestCase):
         }
 
         conj_ids = [12, 20]
-        flows = rules.create_flows_for_ip_address(
-            ('192.168.0.1', 'fa:16:3e:aa:bb:cc'),
+        flows = rules.create_flows_for_ip_address_and_mac(
+            '192.168.0.1', 'fa:16:3e:aa:bb:cc',
             constants.EGRESS_DIRECTION, constants.IPv4,
             0x123, conj_ids)
 

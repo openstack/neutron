@@ -415,11 +415,11 @@ class ConjIPFlowManager(object):
             flow_state, addr_to_conj, direction, ethertype, vlan_tag)
         for conj_id_set in conj_id_to_remove:
             # Remove any remaining flow with remote SG/AG ID conj_id_to_remove
-            for current_ip, conj_ids in flow_state.items():
+            for (current_ip, current_mac), conj_ids in flow_state.items():
                 conj_ids_to_remove = conj_id_set & set(conj_ids)
                 self.driver.delete_flow_for_ip(
-                    current_ip, direction, ethertype, vlan_tag,
-                    conj_ids_to_remove)
+                    current_ip, current_mac, direction, ethertype,
+                    vlan_tag, conj_ids_to_remove)
 
         # NOTE(hangyang): Handle add/delete overlapped IPs among
         # remote security groups and remote address groups
@@ -451,8 +451,8 @@ class ConjIPFlowManager(object):
                 # match flow priority or actions for different conjunction
                 # ids, therefore we need to recreate the affected flows.
                 continue
-            for flow in rules.create_flows_for_ip_address(
-                    (addr, mac), direction, ethertype, vlan_tag, conj_ids):
+            for flow in rules.create_flows_for_ip_address_and_mac(
+                    addr, mac, direction, ethertype, vlan_tag, conj_ids):
                 self.driver._add_flow(flow_group_id=ofport, **flow)
 
     def update_flows_for_vlan(self, vlan_tag, ofport, conj_id_to_remove=None):
@@ -1621,23 +1621,24 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             self, flow_state, addr_to_conj, direction, ethertype, vlan_tag):
         # Remove rules for deleted IPs and action=conjunction(conj_id, 1/2)
         removed_ips = set(flow_state.keys()) - set(addr_to_conj.keys())
-        for removed_ip in removed_ips:
-            conj_ids = flow_state[removed_ip]
-            self.delete_flow_for_ip(removed_ip, direction, ethertype, vlan_tag,
-                                    conj_ids)
+        for removed_ip, removed_mac in removed_ips:
+            conj_ids = flow_state[(removed_ip, removed_mac)]
+            self.delete_flow_for_ip(
+                removed_ip, removed_mac, direction,
+                ethertype, vlan_tag, conj_ids)
 
         if not cfg.CONF.AGENT.explicitly_egress_direct:
             return
 
-        for ip_addr in removed_ips:
+        for ip, mac in removed_ips:
             # Generate deletion template with bogus conj_id.
-            self.delete_flow_for_ip(ip_addr, direction, ethertype, vlan_tag,
-                                    [0])
+            self.delete_flow_for_ip(
+                ip, mac, direction, ethertype, vlan_tag, [0])
 
-    def delete_flow_for_ip(self, ip_address, direction, ethertype,
+    def delete_flow_for_ip(self, ip, mac, direction, ethertype,
                            vlan_tag, conj_ids):
-        for flow in rules.create_flows_for_ip_address(
-                ip_address, direction, ethertype, vlan_tag, conj_ids):
+        for flow in rules.create_flows_for_ip_address_and_mac(
+                ip, mac, direction, ethertype, vlan_tag, conj_ids):
             # The following del statements are partly for
             # complying the OpenFlow spec. It forbids the use of
             # these field in non-strict delete flow messages, and
