@@ -19,12 +19,15 @@ from neutron_lib.callbacks import priority_group
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 from neutron_lib import constants as const
+from neutron_lib.db import api as db_api
+from neutron_lib.exceptions import l3 as l3_exc
 from neutron_lib.plugins import constants as plugin_constants
 from neutron_lib.plugins import directory
 from oslo_config import cfg
 from oslo_log import log as logging
 
 from neutron.db import l3_attrs_db
+from neutron.objects import router
 from neutron.services.l3_router.service_providers import base
 
 
@@ -194,3 +197,63 @@ class UserDefined(base.L3ServiceProvider):
             return
         LOG.debug('Got request to update the status of a floating ip '
                   'associated to a router of user defined flavor %s', fip)
+
+
+@registry.has_registry_receivers
+class UserDefinedNoLsp(UserDefined):
+
+    @registry.receives(resources.ROUTER_INTERFACE, [events.AFTER_CREATE])
+    def _process_add_router_interface(self, resource, event, trigger, payload):
+        router = payload.states[0]
+        context = payload.context
+        if not self._is_user_defined_provider(context, router):
+            return
+        port = payload.metadata['port']
+        subnets = payload.metadata['subnets']
+        router_interface_info = self.l3plugin._make_router_interface_info(
+            router.id, port['tenant_id'], port['id'], port['network_id'],
+            subnets[-1]['id'], [subnet['id'] for subnet in subnets])
+        self.l3plugin._ovn_client.delete_port(context, port['id'],
+                                              port_object=port)
+        LOG.debug('Got request to add interface %s to a user defined flavor '
+                  'router with id %s. The OVN LSP was deleted.',
+                  router_interface_info, router.id)
+
+    def _get_port_to_recreate(self, context, router_id, subnet_id):
+        with db_api.CONTEXT_READER.using(context):
+            objs = router.RouterPort.get_objects(
+                context, router_id=router_id,
+                port_type=const.DEVICE_OWNER_ROUTER_INTF)
+            router_ports = [
+                self.l3plugin._plugin._make_port_dict(rp.db_obj.port)
+                for rp in objs]
+        for rp in router_ports:
+            for ip in rp['fixed_ips']:
+                if ip['subnet_id'] == subnet_id:
+                    return rp
+        raise l3_exc.RouterInterfaceNotFoundForSubnet(router_ports=router_id,
+                                                      subnet_id=subnet_id)
+
+    @registry.receives(resources.ROUTER_INTERFACE, [events.BEFORE_DELETE])
+    def _process_before_remove_router_interface(self, resource, event, trigger,
+                                                payload):
+        context = payload.context
+        router_id = payload.resource_id
+        router_obj = router.Router.get_object(context, id=router_id)
+        if not self._is_user_defined_provider(context, router_obj):
+            return
+        subnet_id = payload.metadata['subnet_id']
+        port = self._get_port_to_recreate(context, router_id, subnet_id)
+
+        # If the LSP exists, the interface is being removed by port and the
+        # port has fixed ips in more than one subnet, then the port has been
+        # recreated in a previous notification of this event. Do nothing
+        nbdb_idl = self.l3plugin._ovn_client._nb_idl
+        if nbdb_idl.lookup('Logical_Switch_Port', port['id'], default=None):
+            return
+
+        # The ovn client creates the revision row when creating the LSP
+        self.l3plugin._ovn_client.create_port(context, port)
+        LOG.debug('Recreated OVN LSP for port with id %s before removing '
+                  'interface for user defined flavor router with id %s',
+                  port['id'], router_id)
