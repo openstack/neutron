@@ -417,7 +417,7 @@ class ConjIPFlowManager(object):
             # Remove any remaining flow with remote SG/AG ID conj_id_to_remove
             for (current_ip, current_mac), conj_ids in flow_state.items():
                 conj_ids_to_remove = conj_id_set & set(conj_ids)
-                self.driver.delete_flow_for_ip(
+                self.driver.delete_flow_for_ip_and_mac(
                     current_ip, current_mac, direction, ethertype,
                     vlan_tag, conj_ids_to_remove)
 
@@ -1623,7 +1623,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         removed_ips = set(flow_state.keys()) - set(addr_to_conj.keys())
         for removed_ip, removed_mac in removed_ips:
             conj_ids = flow_state[(removed_ip, removed_mac)]
-            self.delete_flow_for_ip(
+            self.delete_flow_for_ip_and_mac(
                 removed_ip, removed_mac, direction,
                 ethertype, vlan_tag, conj_ids)
 
@@ -1632,11 +1632,11 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
         for ip, mac in removed_ips:
             # Generate deletion template with bogus conj_id.
-            self.delete_flow_for_ip(
+            self.delete_flow_for_ip_and_mac(
                 ip, mac, direction, ethertype, vlan_tag, [0])
 
-    def delete_flow_for_ip(self, ip, mac, direction, ethertype,
-                           vlan_tag, conj_ids):
+    def delete_flow_for_ip_and_mac(self, ip, mac, direction, ethertype,
+                                   vlan_tag, conj_ids):
         for flow in rules.create_flows_for_ip_address_and_mac(
                 ip, mac, direction, ethertype, vlan_tag, conj_ids):
             # The following del statements are partly for
