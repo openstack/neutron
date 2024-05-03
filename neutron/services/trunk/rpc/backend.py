@@ -28,10 +28,9 @@ class ServerSideRpcBackend(object):
 
     def __init__(self):
         """Initialize an RPC backend for the Neutron Server."""
-        self._skeleton = server.TrunkSkeleton()
         self._stub = server.TrunkStub()
 
-        LOG.debug("RPC backend initialized for trunk plugin")
+        LOG.debug("RPC notifier initialized for trunk plugin")
 
         for event_type in (events.AFTER_CREATE, events.AFTER_DELETE):
             registry.subscribe(self.process_event,

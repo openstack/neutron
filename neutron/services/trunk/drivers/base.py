@@ -19,8 +19,6 @@ from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
 
-from neutron.services.trunk.rpc import backend
-
 
 @registry.has_registry_receivers
 class DriverBase(object):
@@ -82,7 +80,8 @@ class DriverBase(object):
         """
 
         trigger.register_driver(self)
-        # Set up the server-side RPC backend if the driver is loaded,
-        # it is agent based, and the RPC backend is not already initialized.
-        if self.is_loaded and self.agent_type and not trigger.is_rpc_enabled():
-            trigger.set_rpc_backend(backend.ServerSideRpcBackend())
+
+    @property
+    def rpc_required(self):
+        """True if this driver requires the RPC backend to be started"""
+        return self.is_loaded and self.agent_type
