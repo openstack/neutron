@@ -44,20 +44,6 @@ Communication
   - time: http://eavesdrop.openstack.org/#Neutron_CI_team
   - agenda: https://etherpad.openstack.org/p/neutron-ci-meetings
 
-- Neutron QoS team meeting:
-
-  This is the meeting of the Neutron Quality of Service subteam.
-
-  - time: http://eavesdrop.openstack.org/#Neutron_QoS_Meeting
-
-- Neutron L3 team meeting:
-
-  This is the meeting of the Neutron L3 subteam where all issues related to
-  IPAM, L3 agents, etc. are discussed.
-
-  - time: http://eavesdrop.openstack.org/#Neutron_L3_Sub-team_Meeting
-  - agenda: https://etherpad.openstack.org/p/neutron-l3-subteam
-
 
 Contacting the Core Team
 ~~~~~~~~~~~~~~~~~~~~~~~~~
