@@ -78,14 +78,14 @@ class RevisionPlugin(service_base.ServicePluginBase):
     def bump_revisions(self, session, context, instances):
         self._enforce_if_match_constraints(session)
         # bump revision number for updated objects in the session
+        modified_objs = {o for o in session.dirty if session.is_modified(o)}
         self._bump_obj_revisions(
-            session,
-            self._get_objects_to_bump_revision(session.dirty))
+            session, self._get_objects_to_bump_revision(modified_objs))
 
         # see if any created/updated/deleted objects bump the revision
         # of another object
         objects_with_related_revisions = [
-            o for o in session.deleted | session.dirty | session.new
+            o for o in modified_objs | set(session.deleted) | set(session.new)
             if getattr(o, 'revises_on_change', ())
         ]
         collected = session.info.setdefault('_related_bumped', set())
