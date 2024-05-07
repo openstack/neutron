@@ -143,13 +143,13 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
         # update
         with self.port() as port:
             rev = port['port']['revision_number']
-            new = {'port': {'name': 'nigiri'}}
 
             def concurrent_increment(s):
                 db_api.sqla_remove(se.Session, 'before_commit',
                                    concurrent_increment)
                 # slip in a concurrent update that will bump the revision
                 plugin = directory.get_plugin()
+                new = {'port': {'name': 'nigiri'}}
                 plugin.update_port(nctx.get_admin_context(),
                                    port['port']['id'], new)
                 raise db_exc.DBDeadlock()
@@ -160,13 +160,16 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
             # transaction, the revision number is tested only once the first
             # time the revision number service is executed for this session and
             # object.
+            new = {'port': {'name': 'sushi'}}
             self._update('ports', port['port']['id'], new,
                          headers={'If-Match': 'revision_number=%s' % rev},
                          expected_code=exc.HTTPOk.code)
+            new = {'port': {'name': 'salmon'}}
             self._update('ports', port['port']['id'], new,
                          headers={'If-Match': 'revision_number=%s' %
                                               str(int(rev) + 2)},
                          expected_code=exc.HTTPOk.code)
+            new = {'port': {'name': 'tea'}}
             self._update('ports', port['port']['id'], new,
                          headers={'If-Match': 'revision_number=1'},
                          expected_code=exc.HTTPPreconditionFailed.code)
