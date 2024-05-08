@@ -24,7 +24,6 @@ from sqlalchemy.orm import session as se
 from webob import exc
 
 from neutron.db import models_v2
-from neutron.objects import ports as port_obj
 from neutron.tests.unit.plugins.ml2 import test_plugin
 
 
@@ -67,10 +66,7 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
         rp = directory.get_plugin('revision_plugin')
         with self.port():
             with db_api.CONTEXT_WRITER.using(self.ctx):
-                ipal_objs = port_obj.IPAllocation.get_objects(self.ctx)
-                if not ipal_objs:
-                    raise Exception("No IP allocations available.")
-                ipal_obj = ipal_objs[0]
+                ipal = self.ctx.session.query(models_v2.IPAllocation).first()
                 # load port into our session
                 port = self.ctx.session.query(models_v2.Port).one()
                 # simulate concurrent delete in another session
@@ -86,7 +82,7 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
                 self.ctx.session.expire(port)
 
                 collected = rp._collect_related_tobump(
-                    self.ctx.session, [ipal_obj], set())
+                    self.ctx.session, [ipal], set())
                 rp._bump_obj_revisions(
                     self.ctx.session, collected, version_check=False)
 
