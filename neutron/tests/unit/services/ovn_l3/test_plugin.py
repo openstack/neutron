@@ -562,7 +562,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                                               'nexthop': '10.0.0.2'}]}}
         self.l3_inst.update_router(self.context, router_id, update_data)
         self.assertFalse(self.l3_inst._nb_ovn.add_static_route.called)
-        self.assertFalse(self.l3_inst._nb_ovn.delete_static_route.called)
+        self.assertFalse(self.l3_inst._nb_ovn.delete_static_routes.called)
 
     @mock.patch.object(utils, 'get_lrouter_non_gw_routes')
     @mock.patch('neutron.db.extraroute_db.ExtraRoute_dbonly_mixin.'
@@ -592,9 +592,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.l3_inst._nb_ovn.add_static_route.assert_called_once_with(
             'neutron-router-id',
             ip_prefix='2.2.2.0/24', nexthop='10.0.0.3')
-        self.l3_inst._nb_ovn.delete_static_route.assert_called_once_with(
-            'neutron-router-id',
-            ip_prefix='1.1.1.0/24', nexthop='10.0.0.2')
+        self.l3_inst._nb_ovn.delete_static_routes.assert_called_once_with(
+            'neutron-router-id', [('1.1.1.0/24', '10.0.0.2')])
 
     @mock.patch.object(utils, 'get_lrouter_non_gw_routes')
     @mock.patch('neutron.db.extraroute_db.ExtraRoute_dbonly_mixin.'
@@ -621,9 +620,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                                             events.AFTER_UPDATE,
                                             self, payload)
         self.l3_inst._nb_ovn.add_static_route.assert_not_called()
-        self.l3_inst._nb_ovn.delete_static_route.assert_called_once_with(
-            'neutron-router-id',
-            ip_prefix='1.1.1.0/24', nexthop='10.0.0.2')
+        self.l3_inst._nb_ovn.delete_static_routes.assert_called_once_with(
+            'neutron-router-id', [('1.1.1.0/24', '10.0.0.2')])
 
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
                 'ovn_client.OVNClient._get_v4_network_of_all_router_ports')
@@ -984,7 +982,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.l3_inst.update_router(self.context, 'router-id', router)
 
         nb_ovn.lrp_del.assert_not_called()
-        nb_ovn.delete_static_route.assert_not_called()
+        nb_ovn.delete_static_routes.assert_not_called()
         nb_ovn.delete_nat_rule_in_lrouter.assert_not_called()
         nb_ovn.add_lrouter_port.assert_not_called()
         nb_ovn.set_lrouter_port_in_lswitch_port.assert_not_called()
@@ -1046,7 +1044,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                                             events.AFTER_UPDATE,
                                             self, payload)
 
-        self.l3_inst._nb_ovn.delete_static_route.assert_not_called()
+        self.l3_inst._nb_ovn.delete_static_routes.assert_not_called()
         self.l3_inst._nb_ovn.delete_nat_rule_in_lrouter.assert_not_called()
         self.l3_inst._nb_ovn.add_static_route.assert_not_called()
         self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
@@ -1084,7 +1082,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                                             self, payload)
 
         nb_ovn = self.l3_inst._nb_ovn
-        nb_ovn.delete_static_route.assert_not_called()
+        nb_ovn.delete_static_routes.assert_not_called()
         nb_ovn.delete_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-router-id', type='snat', logical_ip='10.0.0.0/24',
             external_ip='192.168.1.1')
@@ -2165,8 +2163,8 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
             test_update_subnet_gateway_for_external_net()
         self.l3_inst._nb_ovn.add_static_route.assert_called_once_with(
             'neutron-fake_device', ip_prefix='0.0.0.0/0', nexthop='120.0.0.2')
-        self.l3_inst._nb_ovn.delete_static_route.assert_called_once_with(
-            'neutron-fake_device', ip_prefix='0.0.0.0/0', nexthop='120.0.0.1')
+        self.l3_inst._nb_ovn.delete_static_routes.assert_called_once_with(
+            'neutron-fake_device', [('0.0.0.0/0', '120.0.0.1')])
 
     def test_router_update_gateway_upon_subnet_create_max_ips_ipv6(self):
         super(OVNL3ExtrarouteTests, self). \

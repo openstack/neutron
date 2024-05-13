@@ -972,14 +972,16 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         for router in self._nb_idl.lr_list().execute(check_error=True):
             if not router.external_ids.get(ovn_const.OVN_REV_NUM_EXT_ID_KEY):
                 continue
-            for route in self._nb_idl.lr_route_list(router.uuid).execute(
-                    check_error=True):
-                if (route.nexthop == '' and
-                        route.ip_prefix in (n_const.IPv4_ANY,
-                                            n_const.IPv6_ANY)):
-                    cmds.append(
-                        self._nb_idl.delete_static_route(
-                            router.name, route.ip_prefix, ''))
+            routes_to_delete = [
+                (r.ip_prefix, '')
+                for r in self._nb_idl.lr_route_list(router.uuid).execute(
+                    check_error=True)
+                if r.nexthop == '' and r.ip_prefix in (n_const.IPv4_ANY,
+                                                       n_const.IPv6_ANY)
+            ]
+            cmds.append(
+                self._nb_idl.delete_static_routes(router.name,
+                                                  routes_to_delete))
 
         if cmds:
             with self._nb_idl.transaction(check_error=True) as txn:

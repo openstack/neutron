@@ -749,11 +749,12 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                     if self.mode == SYNC_MODE_REPAIR:
                         LOG.warning("Delete static routes %s from OVN NB DB",
                                     sroute['del'])
-                        for route in sroute['del']:
-                            txn.add(self.ovn_api.delete_static_route(
-                                utils.ovn_name(sroute['id']),
-                                ip_prefix=route['destination'],
-                                nexthop=route['nexthop']))
+                        routes_to_delete = [
+                            (r['destination'], r['nexthop'])
+                            for r in sroute['del']
+                        ]
+                        txn.add(self.ovn_api.delete_static_routes(
+                            utils.ovn_name(sroute['id']), routes_to_delete))
             for fip in update_fips_list:
                 if fip['del']:
                     LOG.warning("Router %(id)s floating IPs %(fip)s "

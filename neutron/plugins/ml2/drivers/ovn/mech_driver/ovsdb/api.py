@@ -275,21 +275,6 @@ class API(api.API, metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def delete_static_route(self, lrouter, ip_prefix, nexthop, if_exists=True):
-        """Delete static route from logical router.
-
-        :param lrouter:      The unique name of the lrouter
-        :type lrouter:       string
-        :param ip_prefix:    The prefix of the static route
-        :type ip_prefix:     string
-        :param nexthop:      The nexthop of the static route
-        :type nexthop:       string
-        :param if_exists:    Do not fail if router does not exist
-        :type if_exists:     bool
-        :returns:            :class:`Command` with no result
-        """
-
-    @abc.abstractmethod
     def get_all_chassis_gateway_bindings(self,
                                          chassis_candidate_list=None):
         """Return a dictionary of chassis name:list of gateways

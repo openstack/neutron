@@ -675,12 +675,11 @@ class AddStaticRouteCommand(command.BaseCommand):
         _addvalue_to_list(lrouter, 'static_routes', row.uuid)
 
 
-class DelStaticRouteCommand(command.BaseCommand):
-    def __init__(self, api, lrouter, ip_prefix, nexthop, if_exists):
-        super(DelStaticRouteCommand, self).__init__(api)
+class DelStaticRoutesCommand(command.BaseCommand):
+    def __init__(self, api, lrouter, routes, if_exists):
+        super(DelStaticRoutesCommand, self).__init__(api)
         self.lrouter = lrouter
-        self.ip_prefix = ip_prefix
-        self.nexthop = nexthop
+        self.routes = routes
         self.if_exists = if_exists
 
     def run_idl(self, txn):
@@ -693,14 +692,16 @@ class DelStaticRouteCommand(command.BaseCommand):
             msg = _("Logical Router %s does not exist") % self.lrouter
             raise RuntimeError(msg)
 
-        static_routes = getattr(lrouter, 'static_routes', [])
-        for route in static_routes:
-            ip_prefix = getattr(route, 'ip_prefix', '')
-            nexthop = getattr(route, 'nexthop', '')
-            if self.ip_prefix == ip_prefix and self.nexthop == nexthop:
-                _delvalue_from_list(lrouter, 'static_routes', route)
-                route.delete()
-                break
+        routes_to_be_deleted = []
+        for route in getattr(lrouter, 'static_routes', []):
+            route_tuple = (getattr(route, 'ip_prefix', ''),
+                           getattr(route, 'nexthop', ''))
+            if route_tuple in self.routes:
+                routes_to_be_deleted.append(route)
+
+        for route in routes_to_be_deleted:
+            _delvalue_from_list(lrouter, 'static_routes', route)
+            route.delete()
 
 
 class UpdateObjectExtIdsCommand(command.BaseCommand):
