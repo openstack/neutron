@@ -4059,3 +4059,11 @@ class TestML2Segments(Ml2PluginV2TestCase):
             # Where new segment is part of segments
             self.assertIn(expected_segment,
                 observed_network[mpnet_apidef.SEGMENTS])
+
+
+class TestMl2PluginCallRPCMechanismDrivers(Ml2PluginV2TestCase):
+    def test_mech_driver_start_rpc_listeners_called(self):
+        with mock.patch.object(mech_test.TestMechanismDriver,
+                        'start_rpc_listeners') as mock_srl:
+            self.plugin.start_rpc_listeners()
+            mock_srl.assert_called_once()

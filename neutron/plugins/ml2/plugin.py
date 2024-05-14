@@ -445,7 +445,10 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.conn.create_consumer(topics.REPORTS,
                                   [agents_db.AgentExtRpcCallback()],
                                   fanout=False)
-        return self.conn.consume_in_threads()
+
+        mech_driver_rpc = self.mechanism_manager.start_driver_rpc_listeners()
+
+        return self.conn.consume_in_threads() + mech_driver_rpc
 
     def start_rpc_state_reports_listener(self):
         self.conn_reports = n_rpc.Connection()
