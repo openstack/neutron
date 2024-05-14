@@ -16,7 +16,6 @@ import datetime
 import os
 import re
 import shutil
-import signal
 
 import fixtures
 from neutron_lib import constants
@@ -25,7 +24,6 @@ from neutronclient.v2_0 import client
 from oslo_log import log as logging
 from oslo_utils import fileutils
 
-from neutron.agent.common import async_process
 from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.common import utils as common_utils
@@ -39,15 +37,24 @@ CMD_FOLDER = 'agents'
 
 class ProcessFixture(fixtures.Fixture):
     def __init__(self, test_name, process_name, exec_name, config_filenames,
-                 namespace=None, kill_signal=signal.SIGKILL):
+                 namespace=None, slice_name=None):
         super(ProcessFixture, self).__init__()
         self.test_name = test_name
         self.process_name = process_name
         self.exec_name = exec_name
         self.config_filenames = config_filenames
         self.process = None
-        self.kill_signal = kill_signal
         self.namespace = namespace
+
+        self.slice_name = slice_name
+        self.unit_name = f'{self.test_name}-{self.process_name}'
+        if self.namespace:
+            self.unit_name += f'-{self.namespace}'
+
+        # Escape special characters in unit names, see man systemd.unit
+        self.unit_name = utils.execute(
+            ['systemd-escape', self.unit_name],
+        ).strip()
 
     def _setUp(self):
         self.start()
@@ -66,25 +73,58 @@ class ProcessFixture(fixtures.Fixture):
                      if run_as_root
                      else shutil.which(self.exec_name))
         cmd = [exec_name, '--log-dir', log_dir, '--log-file', log_file]
+        if self.namespace:
+            cmd = ip_lib.add_namespace_to_cmd(cmd, self.namespace)
         for filename in self.config_filenames:
             cmd += ['--config-file', filename]
-        self.process = async_process.AsyncProcess(
-            cmd, run_as_root=run_as_root, namespace=self.namespace,
-            process_name=self.process_name
+
+        systemd_run = [
+            'systemd-run',
+            '--service-type', 'exec',
+            '--property', 'TimeoutStopSec=30s',
+            '--unit', self.unit_name,
+            '--setenv', f'PATH={os.environ["PATH"]}',
+            '--same-dir',
+            '--collect',
+        ]
+
+        if not run_as_root:
+            systemd_run += [
+                '--uid', os.getuid(),
+                '--gid', os.getgid(),
+            ]
+
+        if self.slice_name:
+            systemd_run += ['--slice', self.slice_name]
+
+        utils.execute(
+            systemd_run + cmd,
+            # Always create the systemd unit as root, the process itself will
+            # run unprivileged if run_as_root is False.
+            run_as_root=True,
         )
-        self.process.start(block=True)
         LOG.debug("Process started: %s", self.process_name)
 
     def stop(self, kill_signal=None):
-        kill_signal = kill_signal or self.kill_signal
-        try:
-            self.process.stop(
-                block=True, kill_signal=kill_signal,
-                kill_timeout=15)
-        except async_process.AsyncProcessException as e:
-            if "Process is not running" not in str(e):
-                raise
-        LOG.debug("Process stopped: %s", self.process_name)
+        if self.process_is_not_running():
+            return
+
+        if kill_signal:
+            stop_cmd = [
+                'systemctl',
+                'kill',
+                '--signal', kill_signal.value,
+                '--kill-who', 'all',
+                self.unit_name,
+            ]
+            msg = (f'Process killed with signal {kill_signal}: '
+                   f'{self.process_name}')
+        else:
+            stop_cmd = ['systemctl', 'stop', self.unit_name]
+            msg = f'Process stopped: {self.process_name}'
+
+        utils.execute(stop_cmd, run_as_root=True)
+        LOG.debug(msg)
 
     def restart(self, executor=None):
         def _restart():
@@ -99,7 +139,13 @@ class ProcessFixture(fixtures.Fixture):
             return executor.submit(_restart)
 
     def process_is_running(self):
-        return self.process.is_running
+        cmd = ['systemctl', 'is-active', self.unit_name]
+        return utils.execute(
+            cmd,
+            run_as_root=True,
+            log_fail_as_error=False,
+            check_exit_code=False,
+        ) == 'active\n'
 
     def process_is_not_running(self):
         return not self.process_is_running()
@@ -156,6 +202,7 @@ class NeutronServerFixture(ServiceFixture):
         self.neutron_cfg_fixture = neutron_cfg_fixture
         self.plugin_cfg_fixture = plugin_cfg_fixture
         self.service_cfg_fixtures = service_cfg_fixtures
+        self.hostname = self.neutron_cfg_fixture.config['DEFAULT']['host']
 
     def _setUp(self):
         config_filenames = [self.neutron_cfg_fixture.filename,
@@ -167,10 +214,9 @@ class NeutronServerFixture(ServiceFixture):
 
         self.process_fixture = self.useFixture(ProcessFixture(
             test_name=self.test_name,
-            process_name=self.NEUTRON_SERVER,
+            process_name=f'{self.NEUTRON_SERVER}-{self.hostname}',
             exec_name=self.NEUTRON_SERVER,
-            config_filenames=config_filenames,
-            kill_signal=signal.SIGTERM))
+            config_filenames=config_filenames))
 
         common_utils.wait_until_true(self.server_is_live)
 
@@ -200,6 +246,7 @@ class OVSAgentFixture(ServiceFixture):
         self.neutron_config = self.neutron_cfg_fixture.config
         self.agent_cfg_fixture = agent_cfg_fixture
         self.agent_config = agent_cfg_fixture.config
+        self.hostname = self.neutron_config['DEFAULT']['host']
 
     def _setUp(self):
         self.br_int = self.useFixture(
@@ -211,15 +258,16 @@ class OVSAgentFixture(ServiceFixture):
 
         self.process_fixture = self.useFixture(ProcessFixture(
             test_name=self.test_name,
-            process_name=constants.AGENT_PROCESS_OVS,
+            process_name=f'{constants.AGENT_PROCESS_OVS}-{self.hostname}',
+            slice_name=self.hostname,
             exec_name=shutil.which(
                 'ovs_agent.py',
                 path=os.path.join(fullstack_base.ROOTDIR, CMD_FOLDER)),
             config_filenames=config_filenames,
-            kill_signal=signal.SIGTERM))
+        ))
 
 
-class PlacementFixture(fixtures.Fixture):
+class PlacementFixture(ServiceFixture):
 
     def __init__(self, env_desc, host_desc, test_name, placement_cfg_fixture):
         super(PlacementFixture, self).__init__()
@@ -237,8 +285,7 @@ class PlacementFixture(fixtures.Fixture):
                 'placement.py', path=os.path.join(fullstack_base.ROOTDIR,
                                                   'servers')
             ),
-            config_filenames=[self.placement_cfg_fixture.filename],
-            kill_signal=signal.SIGTERM))
+            config_filenames=[self.placement_cfg_fixture.filename]))
 
 
 class SRIOVAgentFixture(ServiceFixture):
@@ -253,16 +300,18 @@ class SRIOVAgentFixture(ServiceFixture):
         self.neutron_config = self.neutron_cfg_fixture.config
         self.agent_cfg_fixture = agent_cfg_fixture
         self.agent_config = agent_cfg_fixture.config
+        self.hostname = self.neutron_config['DEFAULT']['host']
 
     def _setUp(self):
         config_filenames = [self.neutron_cfg_fixture.filename,
                             self.agent_cfg_fixture.filename]
+        process_name = f'{constants.AGENT_PROCESS_NIC_SWITCH}-{self.hostname}'
         self.process_fixture = self.useFixture(ProcessFixture(
             test_name=self.test_name,
-            process_name=constants.AGENT_PROCESS_NIC_SWITCH,
+            process_name=process_name,
+            slice_name=self.hostname,
             exec_name=constants.AGENT_PROCESS_NIC_SWITCH,
-            config_filenames=config_filenames,
-            kill_signal=signal.SIGTERM))
+            config_filenames=config_filenames))
 
 
 class LinuxBridgeAgentFixture(ServiceFixture):
@@ -279,15 +328,18 @@ class LinuxBridgeAgentFixture(ServiceFixture):
         self.agent_cfg_fixture = agent_cfg_fixture
         self.agent_config = agent_cfg_fixture.config
         self.namespace = namespace
+        self.hostname = self.neutron_config['DEFAULT']['host']
 
     def _setUp(self):
         config_filenames = [self.neutron_cfg_fixture.filename,
                             self.agent_cfg_fixture.filename]
+        process_name = f'{constants.AGENT_PROCESS_LINUXBRIDGE}-{self.hostname}'
 
         self.process_fixture = self.useFixture(
             ProcessFixture(
                 test_name=self.test_name,
-                process_name=constants.AGENT_PROCESS_LINUXBRIDGE,
+                process_name=process_name,
+                slice_name=self.hostname,
                 exec_name=constants.AGENT_PROCESS_LINUXBRIDGE,
                 config_filenames=config_filenames,
                 namespace=self.namespace
@@ -307,6 +359,7 @@ class L3AgentFixture(ServiceFixture):
         self.neutron_cfg_fixture = neutron_cfg_fixture
         self.l3_agent_cfg_fixture = l3_agent_cfg_fixture
         self.namespace = namespace
+        self.hostname = self.neutron_cfg_fixture.config['DEFAULT']['host']
 
     def _setUp(self):
         self.plugin_config = self.l3_agent_cfg_fixture.config
@@ -326,7 +379,8 @@ class L3AgentFixture(ServiceFixture):
         self.process_fixture = self.useFixture(
             ProcessFixture(
                 test_name=self.test_name,
-                process_name=constants.AGENT_PROCESS_L3,
+                process_name=f'{constants.AGENT_PROCESS_L3}-{self.hostname}',
+                slice_name=self.hostname,
                 exec_name=exec_name,
                 config_filenames=config_filenames,
                 namespace=self.namespace
@@ -337,7 +391,7 @@ class L3AgentFixture(ServiceFixture):
         return self.plugin_config.DEFAULT.test_namespace_suffix
 
 
-class DhcpAgentFixture(fixtures.Fixture):
+class DhcpAgentFixture(ServiceFixture):
 
     def __init__(self, env_desc, host_desc, test_name,
                  neutron_cfg_fixture, agent_cfg_fixture, namespace=None):
@@ -363,11 +417,13 @@ class DhcpAgentFixture(fixtures.Fixture):
             exec_name = shutil.which(
                 'dhcp_agent.py',
                 path=os.path.join(fullstack_base.ROOTDIR, CMD_FOLDER))
+        hostname = self.get_agent_hostname()
 
         self.process_fixture = self.useFixture(
             ProcessFixture(
                 test_name=self.test_name,
-                process_name=constants.AGENT_PROCESS_DHCP,
+                process_name=f'{constants.AGENT_PROCESS_DHCP}-{hostname}',
+                slice_name=hostname,
                 exec_name=exec_name,
                 config_filenames=config_filenames,
                 namespace=self.namespace

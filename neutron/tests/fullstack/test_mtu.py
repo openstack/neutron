@@ -34,12 +34,13 @@ class MTUNetworkTestSetup(base.BaseFullStackTestCase):
         self.tenant_id = uuidutils.generate_uuid()
 
     def _restart_neutron_server(self, global_mtu):
-        env = environment.Environment(
-            environment.EnvironmentDescription(global_mtu=global_mtu),
-            self.host_desc)
-        env.test_name = self.get_name()
-        self.useFixture(env)
-        env.neutron_server.restart()
+        neutron_server = self.environment.neutron_server
+        neutron_server.neutron_cfg_fixture.config['DEFAULT'].update(
+            {'global_physnet_mtu': str(global_mtu)}
+        )
+        neutron_server.neutron_cfg_fixture.write_config_to_configfile()
+        neutron_server.restart()
+        self.environment.wait_until_env_is_up()
 
 
 class TestMTUScenarios(MTUNetworkTestSetup):
