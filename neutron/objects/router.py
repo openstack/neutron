@@ -127,6 +127,7 @@ class RouterExtraAttributes(base.NeutronDbObject):
                           l3_attrs.RouterExtraAttributes.router_id).
                      join(l3.Router).
                      group_by(binding_model.router_id).subquery())
+        # pylint: disable=assignment-from-no-return
         count = func.coalesce(sub_query.c.count, 0)
         query = (context.session.query(l3.Router, count).
                  outerjoin(sub_query).join(l3_attrs.RouterExtraAttributes).

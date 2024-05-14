@@ -85,12 +85,10 @@ class LocalVlanManager(object):
         return key in self.mapping
 
     def __iter__(self):
-        for value in list(self.mapping.values()):
-            yield value
+        yield from list(self.mapping.values())
 
     def items(self):
-        for item in self.mapping.items():
-            yield item
+        yield from self.mapping.items()
 
     def add(self, net_id, vlan, network_type, physical_network,
             segmentation_id, vif_ports=None):

@@ -66,7 +66,9 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
         # neutron server against this database.
         _orig_db_url = cfg.CONF.database.connection
         cfg.CONF.set_override(
-            'connection', str(self.engine.url), group='database')
+            'connection',
+            self.engine.url.render_as_string(hide_password=False),
+            group='database')
         self.addCleanup(
             cfg.CONF.set_override,
             "connection", _orig_db_url, group="database"

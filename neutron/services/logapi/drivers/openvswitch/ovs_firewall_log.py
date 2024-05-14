@@ -378,8 +378,7 @@ class OVSFirewallLoggingDriver(log_ext.LoggingDriver):
         )
 
     def create_rules_generator_for_port(self, port):
-        for rule in port.secgroup_rules:
-            yield rule
+        yield from port.secgroup_rules
 
     def _create_conj_flows_log(self, remote_rule, port):
         ethertype = remote_rule['ethertype']

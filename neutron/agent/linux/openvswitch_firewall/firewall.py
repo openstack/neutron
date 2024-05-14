@@ -1594,8 +1594,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
 
     def _create_rules_generator_for_port(self, port):
         for sec_group in port.sec_groups:
-            for rule in sec_group.raw_rules:
-                yield rule
+            yield from sec_group.raw_rules
 
     def _create_remote_rules_generator_for_port(self, port):
         for sec_group in port.sec_groups:

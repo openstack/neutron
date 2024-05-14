@@ -173,7 +173,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
                 experimental.validate_experimental_enabled(
                     c_exp.EXPERIMENTAL_IPV6_PD)
         except cfg.NoSuchOptError:
-            return
+            pass
 
     def __init__(self):
         self._validate_ipv6_pd()
