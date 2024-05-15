@@ -311,7 +311,7 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
     @mock.patch.object(ovn_revision_numbers_db, 'delete_revision')
     def test__delete_security_group(self, mock_del_rev):
         self.mech_driver._delete_security_group(
-            resources.SECURITY_GROUP, events.AFTER_CREATE, {},
+            resources.SECURITY_GROUP, events.AFTER_DELETE, {},
             payload=events.DBEventPayload(
                 self.context, states=(self.fake_sg,),
                 resource_id=self.fake_sg['id']))
@@ -323,6 +323,66 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
 
         mock_del_rev.assert_called_once_with(
             mock.ANY, self.fake_sg['id'], ovn_const.TYPE_SECURITY_GROUPS)
+
+    @mock.patch.object(ovn_revision_numbers_db, 'bump_revision')
+    @mock.patch.object(ovn_revision_numbers_db, 'delete_revision')
+    def _test__update_security_group(
+            self, stateful, stateless_supported, mock_del, mock_bump):
+        self.fake_sg['stateful'] = stateful
+        fake_sg_update = copy.deepcopy(self.fake_sg)
+        fake_sg_update['stateful'] = not stateful
+        rule = fake_sg_update['security_group_rules'][0]
+        with mock.patch.object(self.mech_driver._ovn_client,
+                               'is_allow_stateless_supported',
+                               return_value=stateless_supported), \
+                mock.patch.object(securitygroups_db.SecurityGroupDbMixin,
+                               'get_security_group_rules',
+                               return_value=[rule]), \
+                mock.patch.object(
+                    ovn_acl, 'update_acls_for_security_group') as ovn_acl_up:
+            self.mech_driver._update_security_group(
+                resources.SECURITY_GROUP, events.AFTER_UPDATE, {},
+                payload=events.DBEventPayload(
+                    self.context, request_body=self.fake_sg,
+                    states=(self.fake_sg, fake_sg_update),
+                    resource_id=self.fake_sg['id']))
+
+            # When stateless is supported we will update the SG rules,
+            # otherwise will just bump the revision on the SG.
+            bump_calls = []
+            if stateless_supported:
+                acl_calls = [
+                    mock.call(mock.ANY, mock.ANY, mock.ANY,
+                        rule['security_group_id'], rule, is_add_acl=False,
+                        stateless_supported=stateless_supported),
+                    mock.call(mock.ANY, mock.ANY, mock.ANY,
+                        rule['security_group_id'], rule, is_add_acl=True,
+                        stateless_supported=stateless_supported)]
+                ovn_acl_up.assert_has_calls(acl_calls)
+
+                mock_del.assert_called_once_with(
+                    mock.ANY, rule['id'], ovn_const.TYPE_SECURITY_GROUP_RULES)
+
+                bump_calls.extend([
+                    mock.call(mock.ANY, rule,
+                        ovn_const.TYPE_SECURITY_GROUP_RULES)])
+
+            bump_calls.extend([
+                 mock.call(mock.ANY, fake_sg_update,
+                          ovn_const.TYPE_SECURITY_GROUPS)])
+            mock_bump.assert_has_calls(bump_calls)
+
+    def test__update_security_group_stateful_supported(self):
+        self._test__update_security_group(True, True)
+
+    def test__update_security_group_stateful_not_supported(self):
+        self._test__update_security_group(True, False)
+
+    def test__update_security_group_stateless_supported(self):
+        self._test__update_security_group(False, True)
+
+    def test__update_security_group_stateless_not_supported(self):
+        self._test__update_security_group(False, False)
 
     @mock.patch.object(ovn_revision_numbers_db, 'bump_revision')
     def test__process_sg_rule_notifications_sgr_create(self, mock_bump):
