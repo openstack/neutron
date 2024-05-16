@@ -39,6 +39,12 @@ run_pylint () {
 
     echo "Running pylint..."
     echo "You can speed this up by running it on 'HEAD~[0-9]' (e.g. HEAD~1, this change only)..."
+    echo ""
+    echo "Consider using the 'pre-commit' tool instead."
+    echo ""
+    echo "    pip install --user pre-commit"
+    echo "    pre-commit install --allow-missing-config"
+    echo ""
     if [ -n "${files}" ]; then
         pylint --rcfile=.pylintrc --output-format=colorized ${files}
     else
