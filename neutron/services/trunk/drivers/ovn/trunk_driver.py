@@ -22,12 +22,10 @@ from oslo_config import cfg
 from oslo_log import log
 
 from neutron.common.ovn import constants as ovn_const
-from neutron.common import utils as n_utils
 from neutron.db import db_base_plugin_common
 from neutron.db import ovn_revision_numbers_db as db_rev
 from neutron.objects import ports as port_obj
 from neutron.services.trunk.drivers import base as trunk_base
-from neutron.services.trunk import exceptions as trunk_exc
 
 
 SUPPORTED_INTERFACES = (
@@ -157,10 +155,6 @@ class OVNTrunkHandler(object):
         LOG.debug("Done unsetting parent for subport %s", subport.port_id)
         return db_port
 
-    @staticmethod
-    def _is_port_bound(port):
-        return n_utils.is_port_bound(port, log_message=False)
-
     def trunk_created(self, resource, event, trunk_plugin, payload):
         trunk = payload.states[0]
         # Check if parent port is handled by OVN.
@@ -175,18 +169,6 @@ class OVNTrunkHandler(object):
         trunk = payload.states[0]
         if trunk.sub_ports:
             self._unset_sub_ports(trunk.sub_ports)
-
-    def trunk_created_precommit(self, resource, event, trunk_plugin, payload):
-        # payload.desired_state below is the trunk object
-        parent_port = payload.desired_state.db_obj.port
-        if self._is_port_bound(parent_port):
-            raise trunk_exc.ParentPortInUse(port_id=parent_port.id)
-
-    def trunk_deleted_precommit(self, resource, event, trunk_plugin, payload):
-        trunk = payload.states[0]
-        parent_port = payload.states[1]
-        if self._is_port_bound(parent_port):
-            raise trunk_exc.TrunkInUse(trunk_id=trunk.id)
 
     def subports_added(self, resource, event, trunk_plugin, payload):
         trunk = payload.states[0]
@@ -226,14 +208,6 @@ class OVNTrunkDriver(trunk_base.DriverBase):
             resource, event, trigger, payload=payload)
         self._handler = OVNTrunkHandler(self.plugin_driver)
 
-        registry.subscribe(
-            self._handler.trunk_created_precommit,
-            resources.TRUNK,
-            events.PRECOMMIT_CREATE)
-        registry.subscribe(
-            self._handler.trunk_deleted_precommit,
-            resources.TRUNK,
-            events.PRECOMMIT_DELETE)
         registry.subscribe(
             self._handler.trunk_created, resources.TRUNK, events.AFTER_CREATE)
         registry.subscribe(
