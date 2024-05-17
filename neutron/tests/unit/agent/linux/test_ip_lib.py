@@ -775,6 +775,18 @@ class TestIpAddrCommand(TestIPCmdBase):
             'global',
             None)
 
+    @mock.patch.object(priv_lib, 'add_ip_address')
+    def test_add_address_broadcast(self, add):
+        self.addr_cmd.add('192.168.45.100/32')
+        add.assert_called_once_with(
+            4,
+            '192.168.45.100',
+            32,
+            self.parent.name,
+            self.addr_cmd._parent.namespace,
+            'global',
+            '192.168.45.100')
+
     @mock.patch.object(priv_lib, 'delete_ip_address')
     def test_del_address(self, delete):
         self.addr_cmd.delete('192.168.45.100/24')
