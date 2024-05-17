@@ -117,6 +117,11 @@ DNSMASQ_OPTS = [
     cfg.BoolOpt('edns_client_fingerprint', default=False,
                 help=_("Add the network id and client IP as an eDNS payload "
                        "to each client DNS query sent to the DNS resolvers")),
+    cfg.BoolOpt('enable_router_advertisements', default=False,
+                help=_("Enable IPv6 router advertisements from dnsmasq. "
+                       "This only supplements DHCPv6 by announcing the "
+                       "network's prefix length and does not announce "
+                       "a default gateway.")),
 ]
 
 
