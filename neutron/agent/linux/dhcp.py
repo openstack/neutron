@@ -495,6 +495,7 @@ class Dnsmasq(DhcpLocalProcess):
             ]
 
         possible_leases = 0
+        enable_ra = False
         for subnet in self._get_all_subnets(self.network):
             mode = None
             # if a subnet is specified to have dhcp disabled
@@ -511,6 +512,9 @@ class Dnsmasq(DhcpLocalProcess):
                                   constants.DHCPV6_STATELESS] or
                         not addr_mode and not ra_mode):
                     mode = 'static'
+                if addr_mode == constants.DHCPV6_STATEFUL and \
+                        ra_mode in (constants.DHCPV6_STATEFUL, None):
+                    enable_ra = True
 
             cidr = netaddr.IPNetwork(subnet.cidr)
 
@@ -546,6 +550,12 @@ class Dnsmasq(DhcpLocalProcess):
         # this possible lease cap.
         cmd.append('--dhcp-lease-max=%d' %
                    min(possible_leases, self.conf.dnsmasq_lease_max))
+
+        if self.conf.enable_router_advertisements and enable_ra:
+            LOG.debug("Enabling ra in dnsmasq for network %s", self.network.id)
+            cmd.append('--enable-ra')
+            iface_name = self.interface_name or '*'
+            cmd.append(f'--ra-param={iface_name},0,0')
 
         if self.conf.dhcp_renewal_time > 0:
             cmd.append('--dhcp-option-force=option:T1,%ds' %

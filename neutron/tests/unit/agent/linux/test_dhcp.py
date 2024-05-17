@@ -1742,6 +1742,16 @@ class TestDnsmasq(TestBase):
         self._test_spawn(['--conf-file=', '--domain=openstacklocal'],
                          dhcp_t1=30, dhcp_t2=100)
 
+    def test_spawn_cfg_with_stateful_dhcpv6_and_ra_enabled(self):
+        self.conf.set_override('enable_router_advertisements', True)
+        network = FakeV6NetworkStatefulDHCPSameSubnetFixedIps()
+
+        self._test_spawn(['--enable-ra',
+                          '--ra-param=tap0,0,0',
+                          '--conf-file=',
+                          '--domain=openstacklocal',
+                          ], network)
+
     def _test_output_init_lease_file(self, timestamp):
         expected = [
             '00:00:80:aa:bb:cc 192.168.0.2 * *',
