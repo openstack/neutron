@@ -370,21 +370,23 @@ class TestBasicRouterOperations(BasicRouterTestCaseFramework):
         ri.get_floating_ips = mock.Mock(return_value=fips)
         ri._get_external_address_scope = mock.Mock(return_value='scope2')
         ipv4_mangle = ri.iptables_manager.ipv4['mangle'] = mock.MagicMock()
-        ri.floating_mangle_rules = mock.Mock(
-            return_value=[(mock.sentinel.chain1, mock.sentinel.rule1)])
         ri.get_external_device_name = mock.Mock()
 
         ri.process_floating_ip_address_scope_rules()
 
-        # Be sure that the rules are cleared first
-        self.assertEqual(mock.call.clear_rules_by_tag('floating_ip'),
-                         ipv4_mangle.mock_calls[0])
-        # Be sure that add_rule is called somewhere in the middle
-        self.assertEqual(1, ipv4_mangle.add_rule.call_count)
-        self.assertEqual(mock.call.add_rule(mock.sentinel.chain1,
-                                            mock.sentinel.rule1,
-                                            tag='floating_ip'),
-                         ipv4_mangle.mock_calls[1])
+        internal_mark = ri.get_address_scope_mark_mask('scope1')
+        self.assertEqual(2, ipv4_mangle.add_rule.call_count)
+        expected_calls = [
+            mock.call.clear_rules_by_tag('floating_ip'),
+            mock.call.add_rule('floatingip',
+                               '-d %s/32 -j MARK --set-xmark %s' %
+                               (mock.sentinel.fip, internal_mark),
+                               tag='floating_ip'),
+            mock.call.add_rule('FORWARD',
+                               '-s %s/32 -j $float-snat' % mock.sentinel.ip,
+                               tag='floating_ip')
+        ]
+        ipv4_mangle.assert_has_calls(expected_calls)
 
     def test_process_floating_ip_address_scope_rules_same_scopes(self):
         ri = self._create_router()
