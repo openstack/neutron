@@ -2420,6 +2420,19 @@ class Test_GetNetworkMtu(Ml2PluginV2TestCase):
         }
         self.assertEqual(1300, plugin._get_network_mtu(net))
 
+    def test_get_mtu_toobig(self):
+        plugin = directory.get_plugin()
+        self._register_type_driver_with_mtu('driver1', 1400)
+
+        net = {
+            'name': 'net1',
+            'network_type': 'driver1',
+            'physical_network': 'physnet1',
+            'mtu': 1500,
+        }
+        self.assertRaises(
+            exc.InvalidInput, plugin._get_network_mtu, net)
+
 
 class TestMl2DvrPortsV2(TestMl2PortsV2):
     def setUp(self):
