@@ -294,12 +294,11 @@ def _flow_priority_offset_from_conj_id(conj_id):
     return conj_id % 8 // 2
 
 
-def create_flows_for_ip_address(ip_address, direction, ethertype,
-                                vlan_tag, conj_ids):
-    """Create flows from a rule and an ip_address derived from
-    remote_group_id or remote_address_group_id
+def create_flows_for_ip_address_and_mac(ip_address, mac_address, direction,
+                                        ethertype, vlan_tag, conj_ids):
+    """Create flows from a rule, ip, and mac addresses derived from
+    remote_group_id or remote_address_group_id.
     """
-    ip_address, mac_address = ip_address
     net = netaddr.IPNetwork(str(ip_address))
     any_src_ip = net.prefixlen == 0
 

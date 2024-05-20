@@ -506,7 +506,7 @@ class TestConjIPFlowManager(base.BaseTestCase):
         # "conj_id_to_remove" is populated with the remote_sg conj_id assigned,
         # "_update_flows_for_vlan_subr" will call "delete_flow_for_ip".
         self.driver.delete_flow_for_ip.assert_called_once_with(
-            ('10.22.3.4', 'ff:ee:dd:cc:bb:aa'), 'ingress', 'IPv4', 100,
+            '10.22.3.4', 'ff:ee:dd:cc:bb:aa', 'ingress', 'IPv4', 100,
             {self.conj_id})
 
 
@@ -1206,40 +1206,54 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         vlan_tag = 'taaag'
         with mock.patch.object(self.firewall, 'delete_flow_for_ip') as \
                 mock_delete_flow_for_ip:
-            flow_state = {'addr1': {8, 16, 24}, 'addr2': {32, 40}}
+            flow_state = {
+                ('addr1', 'mac1'): {8, 16, 24},
+                ('addr2', 'mac2'): {32, 40},
+            }
             cfg.CONF.set_override('explicitly_egress_direct',
                                   explicitly_egress_direct, 'AGENT')
             self.firewall.delete_flows_for_flow_state(
                 flow_state, addr_to_conj, direction, ethertype, vlan_tag)
         calls = []
-        for removed_ip in flow_state.keys() - addr_to_conj.keys():
-            calls.append(mock.call(removed_ip, direction, ethertype, vlan_tag,
-                                   flow_state[removed_ip]))
+        for removed_ip, removed_mac in flow_state.keys() - addr_to_conj.keys():
+            calls.append(mock.call(removed_ip, removed_mac, direction,
+                                   ethertype, vlan_tag,
+                                   flow_state[(removed_ip, removed_mac)]))
             if explicitly_egress_direct:
-                calls.append(mock.call(removed_ip, direction, ethertype,
-                                       vlan_tag, [0]))
-        mock_delete_flow_for_ip.assert_has_calls(calls)
+                calls.append(mock.call(removed_ip, removed_mac, direction,
+                                       ethertype, vlan_tag, [0]))
+        mock_delete_flow_for_ip.assert_has_calls(calls, any_order=True)
 
     def test_delete_flows_for_flow_state_no_removed_ips_exp_egress(self):
-        addr_to_conj = {'addr1': {8, 16, 24}, 'addr2': {32, 40}}
+        addr_to_conj = {
+            ('addr1', 'mac1'): {8, 16, 24},
+            ('addr2', 'mac2'): {32, 40},
+        }
         self._test_delete_flows_for_flow_state(addr_to_conj)
 
     def test_delete_flows_for_flow_state_no_removed_ips_no_exp_egress(self):
-        addr_to_conj = {'addr1': {8, 16, 24}, 'addr2': {32, 40}}
+        addr_to_conj = {
+            ('addr1', 'mac1'): {8, 16, 24},
+            ('addr2', 'mac2'): {32, 40},
+        }
         self._test_delete_flows_for_flow_state(addr_to_conj, False)
 
     def test_delete_flows_for_flow_state_removed_ips_exp_egress(self):
-        addr_to_conj = {'addr2': {32, 40}}
+        addr_to_conj = {
+            ('mac2', 'addr2'): {32, 40},
+        }
         self._test_delete_flows_for_flow_state(addr_to_conj)
 
     def test_delete_flows_for_flow_state_removed_ips_no_exp_egress(self):
-        addr_to_conj = {'addr1': {8, 16, 24}}
+        addr_to_conj = {
+            ('mac1', 'addr1'): {8, 16, 24},
+        }
         self._test_delete_flows_for_flow_state(addr_to_conj, False)
 
     def test_delete_flow_for_ip_using_cookie_any(self):
         with mock.patch.object(self.firewall, '_delete_flows') as \
                 mock_delete_flows:
-            self.firewall.delete_flow_for_ip(('10.1.2.3', None),
+            self.firewall.delete_flow_for_ip('10.1.2.3', None,
                                              constants.INGRESS_DIRECTION,
                                              constants.IPv4, 100, [0])
             _, kwargs = mock_delete_flows.call_args
