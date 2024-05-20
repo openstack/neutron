@@ -18,15 +18,13 @@ from unittest import mock
 from oslo_config import cfg
 from oslo_config import fixture as config_fixture
 from oslo_utils import fileutils
-import requests
 import testtools
 import webob
 
 from neutron.agent.linux import utils as agent_utils
+from neutron.agent.metadata import proxy_base
 from neutron.agent.ovn.metadata import server as agent
-from neutron.common import utils as common_utils
 from neutron.conf.agent.metadata import config as meta_conf
-from neutron.conf.agent.ovn.metadata import config as ovn_meta_conf
 from neutron.tests import base
 
 OvnPortInfo = collections.namedtuple(
@@ -34,18 +32,7 @@ OvnPortInfo = collections.namedtuple(
 
 
 class ConfFixture(config_fixture.Config):
-    def setUp(self):
-        super(ConfFixture, self).setUp()
-        ovn_meta_conf.register_meta_conf_opts(
-            meta_conf.METADATA_PROXY_HANDLER_OPTS, self.conf)
-        self.config(auth_ca_cert=None,
-                    nova_metadata_host='9.9.9.9',
-                    nova_metadata_port=8775,
-                    metadata_proxy_shared_secret='secret',
-                    nova_metadata_protocol='http',
-                    nova_metadata_insecure=True,
-                    nova_client_cert='nova_cert',
-                    nova_client_priv_key='nova_priv_key')
+    pass
 
 
 class TestMetadataProxyHandler(base.BaseTestCase):
@@ -55,7 +42,7 @@ class TestMetadataProxyHandler(base.BaseTestCase):
     def setUp(self):
         super(TestMetadataProxyHandler, self).setUp()
         self.useFixture(self.fake_conf_fixture)
-        self.log_p = mock.patch.object(agent, 'LOG')
+        self.log_p = mock.patch.object(proxy_base, 'LOG')
         self.log = self.log_p.start()
         self.handler = agent.MetadataProxyHandler(self.fake_conf, 'chassis1',
                                                   mock.Mock())
@@ -169,93 +156,6 @@ class TestMetadataProxyHandler(base.BaseTestCase):
         observed = self._get_instance_and_project_id_helper(forwarded_for,
                                                             ports)
         self.assertEqual(expected, observed)
-
-    def _proxy_request_test_helper(self, response_code=200, method='GET'):
-        hdrs = {'X-Forwarded-For': '8.8.8.8'}
-        body = 'body'
-
-        req = mock.Mock(path_info='/the_path', query_string='', headers=hdrs,
-                        method=method, body=body)
-        resp = mock.MagicMock(status_code=response_code)
-        resp.status.__str__.side_effect = AttributeError
-        resp.content = 'content'
-        req.response = resp
-        with mock.patch.object(common_utils, 'sign_instance_id') as sign:
-            sign.return_value = 'signed'
-            with mock.patch('requests.request') as mock_request:
-                resp.headers = {'content-type': 'text/plain'}
-                mock_request.return_value = resp
-                retval = self.handler._proxy_request('the_id', 'tenant_id',
-                                                     req)
-                mock_request.assert_called_once_with(
-                    method=method, url='http://9.9.9.9:8775/the_path',
-                    headers={
-                        'X-Forwarded-For': '8.8.8.8',
-                        'X-Instance-ID-Signature': 'signed',
-                        'X-Instance-ID': 'the_id',
-                        'X-Tenant-ID': 'tenant_id'
-                    },
-                    data=body,
-                    cert=(self.fake_conf.nova_client_cert,
-                          self.fake_conf.nova_client_priv_key),
-                    verify=False,
-                    timeout=60)
-
-                return retval
-
-    def test_proxy_request_post(self):
-        response = self._proxy_request_test_helper(method='POST')
-        self.assertEqual(response.content_type, "text/plain")
-        self.assertEqual(response.body, 'content')
-
-    def test_proxy_request_200(self):
-        response = self._proxy_request_test_helper(200)
-        self.assertEqual(response.content_type, "text/plain")
-        self.assertEqual(response.body, 'content')
-
-    def test_proxy_request_400(self):
-        self.assertIsInstance(self._proxy_request_test_helper(400),
-                              webob.exc.HTTPBadRequest)
-
-    def test_proxy_request_403(self):
-        self.assertIsInstance(self._proxy_request_test_helper(403),
-                              webob.exc.HTTPForbidden)
-
-    def test_proxy_request_404(self):
-        self.assertIsInstance(self._proxy_request_test_helper(404),
-                              webob.exc.HTTPNotFound)
-
-    def test_proxy_request_409(self):
-        self.assertIsInstance(self._proxy_request_test_helper(409),
-                              webob.exc.HTTPConflict)
-
-    def test_proxy_request_500(self):
-        self.assertIsInstance(self._proxy_request_test_helper(500),
-                              webob.exc.HTTPInternalServerError)
-
-    def test_proxy_request_502(self):
-        self.assertIsInstance(self._proxy_request_test_helper(502),
-                              webob.exc.HTTPBadGateway)
-
-    def test_proxy_request_503(self):
-        self.assertIsInstance(self._proxy_request_test_helper(503),
-                              webob.exc.HTTPServiceUnavailable)
-
-    def test_proxy_request_504(self):
-        self.assertIsInstance(self._proxy_request_test_helper(504),
-                              webob.exc.HTTPGatewayTimeout)
-
-    def test_proxy_request_other_code(self):
-        with testtools.ExpectedException(Exception):
-            self._proxy_request_test_helper(302)
-
-    def test_proxy_request_conenction_error(self):
-        req = mock.Mock(path_info='/the_path', query_string='', headers={},
-                        method='GET', body='')
-        with mock.patch('requests.request') as mock_request:
-            mock_request.side_effect = requests.ConnectionError()
-            retval = self.handler._proxy_request('the_id', 'tenant_id', req)
-            self.assertIsInstance(retval, webob.exc.HTTPServiceUnavailable)
 
 
 class TestUnixDomainMetadataProxy(base.BaseTestCase):

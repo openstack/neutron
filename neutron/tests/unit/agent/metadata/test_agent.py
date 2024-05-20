@@ -17,7 +17,6 @@ from unittest import mock
 import ddt
 import netaddr
 from neutron_lib import constants as n_const
-import requests
 import testtools
 import webob
 
@@ -28,6 +27,7 @@ from oslo_utils import netutils
 
 from neutron.agent.linux import utils as agent_utils
 from neutron.agent.metadata import agent
+from neutron.agent.metadata import proxy_base
 from neutron.agent import metadata_agent
 from neutron.common import cache_utils as cache
 from neutron.common import utils
@@ -38,16 +38,6 @@ from neutron.tests import base
 class ConfFixture(config_fixture.Config):
     def setUp(self):
         super(ConfFixture, self).setUp()
-        meta_conf.register_meta_conf_opts(
-            meta_conf.METADATA_PROXY_HANDLER_OPTS, self.conf)
-        self.config(auth_ca_cert=None,
-                    nova_metadata_host='9.9.9.9',
-                    nova_metadata_port=8775,
-                    metadata_proxy_shared_secret='secret',
-                    nova_metadata_protocol='http',
-                    nova_metadata_insecure=True,
-                    nova_client_cert='nova_cert',
-                    nova_client_priv_key='nova_priv_key')
         cache.register_oslo_configs(self.conf)
 
 
@@ -68,7 +58,7 @@ class TestMetadataProxyHandlerBase(base.BaseTestCase):
     def setUp(self):
         super(TestMetadataProxyHandlerBase, self).setUp()
         self.useFixture(self.fake_conf_fixture)
-        self.log_p = mock.patch.object(agent, 'LOG')
+        self.log_p = mock.patch.object(proxy_base, 'LOG')
         self.log = self.log_p.start()
         self.handler = agent.MetadataProxyHandler(self.fake_conf)
         self.handler.plugin_rpc = mock.Mock()
@@ -124,7 +114,7 @@ class _TestMetadataProxyHandlerCacheMixin(object):
     def test_call(self):
         req = mock.Mock()
         with mock.patch.object(self.handler,
-                               '_get_instance_and_tenant_id') as get_ids:
+                               '_get_instance_and_project_id') as get_ids:
             get_ids.return_value = ('instance_id', 'tenant_id')
             with mock.patch.object(self.handler, '_proxy_request') as proxy:
                 proxy.return_value = 'value'
@@ -135,7 +125,7 @@ class _TestMetadataProxyHandlerCacheMixin(object):
     def test_call_skip_cache(self):
         req = mock.Mock()
         with mock.patch.object(self.handler,
-                               '_get_instance_and_tenant_id') as get_ids:
+                               '_get_instance_and_project_id') as get_ids:
             get_ids.return_value = ('instance_id', 'tenant_id')
             with mock.patch.object(self.handler, '_proxy_request') as proxy:
                 proxy.return_value = webob.exc.HTTPNotFound()
@@ -145,7 +135,7 @@ class _TestMetadataProxyHandlerCacheMixin(object):
     def test_call_no_instance_match(self):
         req = mock.Mock()
         with mock.patch.object(self.handler,
-                               '_get_instance_and_tenant_id') as get_ids:
+                               '_get_instance_and_project_id') as get_ids:
             get_ids.return_value = None, None
             retval = self.handler(req)
             self.assertIsInstance(retval, webob.exc.HTTPNotFound)
@@ -153,7 +143,7 @@ class _TestMetadataProxyHandlerCacheMixin(object):
     def test_call_internal_server_error(self):
         req = mock.Mock()
         with mock.patch.object(self.handler,
-                               '_get_instance_and_tenant_id') as get_ids:
+                               '_get_instance_and_project_id') as get_ids:
             get_ids.side_effect = Exception
             retval = self.handler(req)
             self.assertIsInstance(retval, webob.exc.HTTPInternalServerError)
@@ -213,51 +203,58 @@ class _TestMetadataProxyHandlerCacheMixin(object):
         self.assertEqual(
             1, self.handler.plugin_rpc.get_ports.call_count)
 
-    def test_get_ports_network_id(self):
+    def test_get_port_network_id(self):
         network_id = 'network-id'
         router_id = 'router-id'
         remote_address = 'remote-address'
-        expected = ['port1']
+        expected = ('device1', 'tenant1')
+        ports = [
+            {'device_id': 'device1', 'tenant_id': 'tenant1',
+             'network_id': 'network1'}
+        ]
         networks = (network_id,)
         with mock.patch.object(self.handler,
-                               '_get_ports_for_remote_address'
+                               '_get_ports_for_remote_address',
+                               return_value=ports
                                ) as mock_get_ip_addr,\
                 mock.patch.object(self.handler,
                                   '_get_router_networks'
                                   ) as mock_get_router_networks:
-            mock_get_ip_addr.return_value = expected
-            ports = self.handler._get_ports(remote_address, network_id,
-                                            router_id)
+            port = self.handler.get_port(remote_address, network_id,
+                                         router_id=router_id)
             mock_get_ip_addr.assert_called_once_with(remote_address,
                                                      networks,
                                                      remote_mac=None,
                                                      skip_cache=False)
             self.assertFalse(mock_get_router_networks.called)
-        self.assertEqual(expected, ports)
+        self.assertEqual(expected, port)
 
-    def test_get_ports_router_id(self):
+    def test_get_port_router_id(self):
         router_id = 'router-id'
         remote_address = 'remote-address'
-        expected = ['port1']
+        expected = ('device1', 'tenant1')
+        ports = [
+            {'device_id': 'device1', 'tenant_id': 'tenant1',
+             'network_id': 'network1'}
+        ]
         networks = ('network1', 'network2')
         with mock.patch.object(self.handler,
                                '_get_ports_for_remote_address',
-                               return_value=expected
+                               return_value=ports
                                ) as mock_get_ip_addr,\
                 mock.patch.object(self.handler,
                                   '_get_router_networks',
                                   return_value=networks
                                   ) as mock_get_router_networks:
-            ports = self.handler._get_ports(remote_address,
-                                            router_id=router_id)
+            port = self.handler.get_port(remote_address, router_id=router_id)
             mock_get_router_networks.assert_called_once_with(
                 router_id, skip_cache=False)
             mock_get_ip_addr.assert_called_once_with(
                 remote_address, networks, remote_mac=None, skip_cache=False)
-            self.assertEqual(expected, ports)
+            self.assertEqual(expected, port)
 
-    def test_get_ports_no_id(self):
-        self.assertRaises(TypeError, self.handler._get_ports, 'remote_address')
+    def test_get_port_no_id(self):
+        self.assertRaises(TypeError, self.handler.get_port, 'remote_address')
 
     def _get_instance_and_tenant_id_helper(self, headers, list_ports_retval,
                                            networks=None, router_id=None,
@@ -269,7 +266,7 @@ class _TestMetadataProxyHandlerCacheMixin(object):
             return list_ports_retval.pop(0)
 
         self.handler.plugin_rpc.get_ports.side_effect = mock_get_ports
-        instance_id, tenant_id = self.handler._get_instance_and_tenant_id(req)
+        instance_id, tenant_id = self.handler._get_instance_and_project_id(req)
 
         expected = []
 
@@ -406,93 +403,6 @@ class _TestMetadataProxyHandlerCacheMixin(object):
                 headers, ports, networks=(network_id,), router_id=router_id,
                 remote_address=remote_address)
         )
-
-    def _proxy_request_test_helper(self, response_code=200, method='GET'):
-        hdrs = {'X-Forwarded-For': '8.8.8.8'}
-        body = 'body'
-
-        req = mock.Mock(path_info='/the_path', query_string='', headers=hdrs,
-                        method=method, body=body)
-        resp = mock.MagicMock(status_code=response_code)
-        resp.status.__str__.side_effect = AttributeError
-        resp.content = 'content'
-        req.response = resp
-        with mock.patch.object(utils, 'sign_instance_id') as sign:
-            sign.return_value = 'signed'
-            with mock.patch('requests.request') as mock_request:
-                resp.headers = {'content-type': 'text/plain'}
-                mock_request.return_value = resp
-                retval = self.handler._proxy_request('the_id', 'tenant_id',
-                                                     req)
-                mock_request.assert_called_once_with(
-                    method=method, url='http://9.9.9.9:8775/the_path',
-                    headers={
-                        'X-Forwarded-For': '8.8.8.8',
-                        'X-Instance-ID-Signature': 'signed',
-                        'X-Instance-ID': 'the_id',
-                        'X-Tenant-ID': 'tenant_id'
-                    },
-                    data=body,
-                    cert=(self.fake_conf.nova_client_cert,
-                          self.fake_conf.nova_client_priv_key),
-                    verify=False,
-                    timeout=60)
-
-                return retval
-
-    def test_proxy_request_post(self):
-        response = self._proxy_request_test_helper(method='POST')
-        self.assertEqual('text/plain', response.content_type)
-        self.assertEqual('content', response.body)
-
-    def test_proxy_request_200(self):
-        response = self._proxy_request_test_helper(200)
-        self.assertEqual('text/plain', response.content_type)
-        self.assertEqual('content', response.body)
-
-    def test_proxy_request_400(self):
-        self.assertIsInstance(self._proxy_request_test_helper(400),
-                              webob.exc.HTTPBadRequest)
-
-    def test_proxy_request_403(self):
-        self.assertIsInstance(self._proxy_request_test_helper(403),
-                              webob.exc.HTTPForbidden)
-
-    def test_proxy_request_404(self):
-        self.assertIsInstance(self._proxy_request_test_helper(404),
-                              webob.exc.HTTPNotFound)
-
-    def test_proxy_request_409(self):
-        self.assertIsInstance(self._proxy_request_test_helper(409),
-                              webob.exc.HTTPConflict)
-
-    def test_proxy_request_500(self):
-        self.assertIsInstance(self._proxy_request_test_helper(500),
-                              webob.exc.HTTPInternalServerError)
-
-    def test_proxy_request_502(self):
-        self.assertIsInstance(self._proxy_request_test_helper(502),
-                              webob.exc.HTTPBadGateway)
-
-    def test_proxy_request_503(self):
-        self.assertIsInstance(self._proxy_request_test_helper(503),
-                              webob.exc.HTTPServiceUnavailable)
-
-    def test_proxy_request_504(self):
-        self.assertIsInstance(self._proxy_request_test_helper(504),
-                              webob.exc.HTTPGatewayTimeout)
-
-    def test_proxy_request_other_code(self):
-        with testtools.ExpectedException(Exception):
-            self._proxy_request_test_helper(302)
-
-    def test_proxy_request_conenction_error(self):
-        req = mock.Mock(path_info='/the_path', query_string='', headers={},
-                        method='GET', body='')
-        with mock.patch('requests.request') as mock_request:
-            mock_request.side_effect = requests.ConnectionError()
-            retval = self.handler._proxy_request('the_id', 'tenant_id', req)
-            self.assertIsInstance(retval, webob.exc.HTTPServiceUnavailable)
 
 
 class TestMetadataProxyHandlerNewCache(TestMetadataProxyHandlerBase,
