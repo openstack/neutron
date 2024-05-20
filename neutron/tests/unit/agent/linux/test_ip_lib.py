@@ -1189,6 +1189,24 @@ class TestSysctl(base.BaseTestCase):
             self.assertFalse(self.execute.called)
 
 
+class TestGetSysctl(base.BaseTestCase):
+    @mock.patch.object(ip_lib, 'IPWrapper')
+    def test_get_ip_nonlocal_bind(self, mIPWrapper):
+        cmd = ['sysctl', '-bn', ip_lib.IP_NONLOCAL_BIND]
+        ip_lib.get_ip_nonlocal_bind()
+        mIPWrapper.assert_has_calls([
+            mock.call().netns.execute(cmd, run_as_root=True, privsep_exec=True)
+        ])
+
+    @mock.patch.object(ip_lib, 'IPWrapper')
+    def test_get_ipv6_forwarding(self, mIPWrapper):
+        cmd = ['sysctl', '-b', 'net.ipv6.conf.tap0.forwarding']
+        ip_lib.get_ipv6_forwarding('tap0')
+        mIPWrapper.assert_has_calls([
+            mock.call().netns.execute(cmd, run_as_root=True, privsep_exec=True)
+        ])
+
+
 class TestConntrack(base.BaseTestCase):
     def setUp(self):
         super(TestConntrack, self).setUp()
