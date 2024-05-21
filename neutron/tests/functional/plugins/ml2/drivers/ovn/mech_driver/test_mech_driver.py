@@ -1215,7 +1215,8 @@ class TestAgentApi(base.TestOVNFunctionalBase):
         # then Chassis_Private.chassis = []; both metadata and controller
         # agents will still be present in the agent list.
         agent_event = AgentWaitEvent(self.mech_driver, [self.chassis],
-                                     events=(event.RowEvent.ROW_UPDATE,))
+                                     events=(event.RowEvent.ROW_UPDATE,
+                                             event.RowEvent.ROW_DELETE,))
         self.sb_api.idl.notify_handler.watch_event(agent_event)
         self.sb_api.chassis_del(self.chassis).execute(check_error=True)
         self.assertTrue(agent_event.wait())
