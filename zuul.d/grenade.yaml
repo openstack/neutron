@@ -378,11 +378,11 @@
       specific releases as prescribed by our process.
     vars:
       # Move this forward when master changes to a new skip-level-allowed
-      # target release. Right now, this is Antelope (2023.1) because master is
+      # target release. Right now, this is Bobcat (2023.2) because master is
       # Dalmation (2024.2).
       # When master is E (2025.1), this should become Caracal (2024.1),
       # and so forth.
-      grenade_from_branch: stable/2023.1
+      grenade_from_branch: stable/2023.2
       grenade_localrc:
         NOVA_ENABLE_UPGRADE_WORKAROUND: True
 
@@ -394,10 +394,10 @@
       specific releases as prescribed by our process.
     vars:
       # Move this forward when master changes to a new skip-level-allowed
-      # target release. Right now, this is Antelope (2023.1) because master is
+      # target release. Right now, this is Bobcat (2023.2) because master is
       # Dalmation (2024.2).
       # When master is E (2025.1), this should become Caracal (2024.1),
       # and so forth.
-      grenade_from_branch: stable/2023.1
+      grenade_from_branch: stable/2023.2
       grenade_localrc:
         NOVA_ENABLE_UPGRADE_WORKAROUND: True
