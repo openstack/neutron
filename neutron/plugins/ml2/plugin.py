@@ -795,6 +795,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     # Expire the "binding_levels" and fetch them into the port.
                     plugin_context.session.flush()
                     getattr(port_db, 'binding_levels')
+                    port_db.bump_revision()
                 # refresh context with a snapshot of updated state
                 cur_context._binding = driver_context.InstanceSnapshot(
                     cur_context_binding)
