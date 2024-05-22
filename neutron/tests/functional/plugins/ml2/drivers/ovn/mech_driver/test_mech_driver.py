@@ -1234,10 +1234,9 @@ class TestAgentApi(base.TestOVNFunctionalBase):
         # then Chassis_Private.chassis = []; both metadata and controller
         # agents will still be present in the agent list.
         agent_event = AgentWaitEvent(self.mech_driver, [self.chassis],
-                                     events=(event.RowEvent.ROW_UPDATE,
-                                             event.RowEvent.ROW_DELETE,))
+                                     events=(event.RowEvent.ROW_DELETE,))
         self.sb_api.idl.notify_handler.watch_event(agent_event)
-        self.sb_api.chassis_del(self.chassis).execute(check_error=True)
+        self.del_fake_chassis(self.chassis)
         self.assertTrue(agent_event.wait())
         agent_ids = [a['id'] for a in self.plugin.get_agents(
             self.context, filters={'host': self.host})]
