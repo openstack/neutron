@@ -194,7 +194,9 @@ class AutoAllocatedTopologyMixin(object):
         except n_exc.NotFound:
             raise exceptions.AutoAllocationFailure(
                 reason=_("No default subnetpools defined"))
-        return {'id': 'dry-run=pass', 'tenant_id': tenant_id}
+        return {'id': 'dry-run=pass',
+                'tenant_id': tenant_id,
+                'project_id': tenant_id}
 
     def _validate(self, context, tenant_id):
         """Validate and return the tenant to be associated to the topology."""
