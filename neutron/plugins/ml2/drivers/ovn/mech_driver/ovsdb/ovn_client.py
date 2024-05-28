@@ -2093,7 +2093,8 @@ class OVNClient(object):
         for port in ports:
             lrp_name = utils.ovn_lrouter_port_name(port['id'])
             options = self._gen_router_port_options(port, prov_net)
-            commands.append(self._nb_idl.lrp_set_options(lrp_name, **options))
+            commands.append(self._nb_idl.update_lrouter_port(
+                lrp_name, if_exists=True, **options))
         self._transaction(commands, txn=txn)
 
     def update_network(self, context, network, original_network=None):
