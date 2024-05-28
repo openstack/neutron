@@ -32,6 +32,9 @@
             irrelevant-files:  *irrelevant-files
         - openstack-tox-cover:  # from openstack-cover-jobs template
             timeout: 4800
+            pre-run: playbooks/configure_swap.yaml
+            vars:
+              configure_swap_size: 4096
             irrelevant-files:  *irrelevant-files
         - openstack-tox-py311-with-sqlalchemy-master:
             timeout: 3600
