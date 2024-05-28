@@ -1689,7 +1689,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.l3_inst._nb_ovn.add_lrouter_port.assert_called_once_with(
             **fake_router_port_assert)
         # Since if_exists = True it will safely return
-        self.l3_inst._nb_ovn.lrp_set_options(
+        self.l3_inst._nb_ovn.update_lrouter_port(
             name='lrp-router-port-id', if_exists=True,
             options=fake_router_port_assert)
         # If no if_exists is provided, it is defaulted to true, so this
