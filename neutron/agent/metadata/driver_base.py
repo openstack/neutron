@@ -159,6 +159,8 @@ class HaproxyConfiguratorBase(object):
 
 
 class MetadataDriverBase(object, metaclass=abc.ABCMeta):
+    monitors = {}
+
     @staticmethod
     @abc.abstractmethod
     def haproxy_configurator():
@@ -253,6 +255,8 @@ class MetadataDriverBase(object, metaclass=abc.ABCMeta):
             return
         monitor.register(uuid, METADATA_SERVICE_NAME, pm)
 
+        cls.monitors[uuid] = pm
+
     @classmethod
     def destroy_monitored_metadata_proxy(cls, monitor, uuid, conf, ns_name):
         monitor.unregister(uuid, METADATA_SERVICE_NAME)
@@ -271,6 +275,8 @@ class MetadataDriverBase(object, metaclass=abc.ABCMeta):
         # Delete metadata proxy config.
         configurator = cls.haproxy_configurator()
         configurator.cleanup_config_file(uuid, cfg.CONF.state_path)
+
+        cls.monitors.pop(uuid, None)
 
     @classmethod
     def _get_metadata_proxy_process_manager(cls, router_id, conf, ns_name=None,

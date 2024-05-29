@@ -197,6 +197,7 @@ class TestMetadataDriverProcess(base.BaseTestCase):
 
         error_log.assert_called_once()
         process_monitor.register.assert_not_called()
+        self.assertNotIn(network_id, metadata_driver.MetadataDriver.monitors)
 
     def test_create_config_file_wrong_user(self):
         with mock.patch('pwd.getpwnam', side_effect=KeyError):
