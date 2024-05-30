@@ -31,6 +31,7 @@ from oslo_db.sqlalchemy import provision
 from oslo_log import log
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
+from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron.agent.linux import utils
 from neutron.api import extensions as exts
@@ -473,6 +474,13 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
     def del_fake_chassis(self, chassis, if_exists=True):
         self.sb_api.chassis_del(
             chassis, if_exists=if_exists).execute(check_error=True)
-        if self.sb_api.is_table_present('Chassis_Private'):
-            self.sb_api.db_destroy(
-                'Chassis_Private', chassis).execute(check_error=True)
+        try:
+            if self.sb_api.is_table_present('Chassis_Private'):
+                self.sb_api.db_destroy(
+                    'Chassis_Private', chassis).execute(check_error=True)
+        except idlutils.RowNotFound:
+            # NOTE(ykarel ): ovsdbapp >= 2.2.2 handles Chassis_Private
+            # record delete with chassis
+            # try/except can be dropped when neutron requirements.txt
+            # include ovsdbapp>=2.2.2
+            pass
