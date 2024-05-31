@@ -79,7 +79,7 @@ def _get_active_network_ports(context, network_id):
         agent_model.Agent,
         agent_model.Agent.host == ml2_models.PortBinding.host)
     query = query.join(models_v2.Port)
-    query = query.options(orm.subqueryload(ml2_models.PortBinding.port))
+    query = query.options(orm.selectinload(ml2_models.PortBinding.port))
     query = query.filter(models_v2.Port.network_id == network_id,
                          models_v2.Port.status == const.PORT_STATUS_ACTIVE)
     return query
@@ -126,7 +126,7 @@ def _get_dvr_active_network_ports(context, network_id):
                        ml2_models.DistributedPortBinding.host)
     query = query.join(models_v2.Port)
     query = query.options(
-        orm.subqueryload(ml2_models.DistributedPortBinding.port))
+        orm.selectinload(ml2_models.DistributedPortBinding.port))
     query = query.filter(models_v2.Port.network_id == network_id,
                          models_v2.Port.status == const.PORT_STATUS_ACTIVE,
                          models_v2.Port.device_owner ==

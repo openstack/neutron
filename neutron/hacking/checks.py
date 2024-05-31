@@ -44,6 +44,9 @@ import_packaging = re.compile(r"\bimport[\s]+packaging\b")
 import_version_from_packaging = (
     re.compile(r"\bfrom[\s]+packaging[\s]+import[\s]version\b"))
 
+filter_lazy_subquery = re.compile(r".*lazy=.+subquery")
+filter_subquery_load = re.compile(r".*subqueryload\(")
+
 
 @core.flake8ext
 def check_assert_called_once_with(logical_line, filename):
@@ -263,3 +266,17 @@ def check_no_import_packaging(logical_line, filename, noqa):
     for regex in import_packaging, import_version_from_packaging:
         if re.match(regex, logical_line):
             yield (0, msg)
+
+
+@core.flake8ext
+def check_no_sqlalchemy_lazy_subquery(logical_line):
+    """N350 - Use selectin DB load strategy instead of subquery."""
+
+    msg = ("N350: Use selectin DB load strategy instead of "
+           "subquery with sqlalchemy.")
+
+    if filter_lazy_subquery.match(logical_line):
+        yield (0, msg)
+
+    if filter_subquery_load.match(logical_line):
+        yield (0, msg)

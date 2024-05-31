@@ -58,9 +58,9 @@ class Router(standard_attr.HasStandardAttributes, model_base.BASEV2,
     attached_ports = orm.relationship(
         RouterPort,
         backref=orm.backref('router', load_on_pending=True),
-        lazy='subquery')
+        lazy='selectin')
     l3_agents = orm.relationship(
-        'Agent', lazy='subquery', viewonly=True,
+        'Agent', lazy='selectin', viewonly=True,
         secondary=rb_model.RouterL3AgentBinding.__table__)
     api_collections = [l3_apidef.ROUTERS]
     collection_resource_map = {l3_apidef.ROUTERS: l3_apidef.ROUTER}
@@ -120,6 +120,6 @@ class RouterRoute(model_base.BASEV2, models_v2.Route):
 
     router = orm.relationship(Router, load_on_pending=True,
                               backref=orm.backref("route_list",
-                                                  lazy='subquery',
+                                                  lazy='selectin',
                                                   cascade='delete'))
     revises_on_change = ('router', )

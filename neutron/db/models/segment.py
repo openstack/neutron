@@ -49,7 +49,7 @@ class NetworkSegment(standard_attr.HasStandardAttributes,
                      nullable=True)
     network = orm.relationship(models_v2.Network,
                                backref=orm.backref("segments",
-                                                   lazy='subquery',
+                                                   lazy='selectin',
                                                    cascade='delete'))
     api_collections = [segment.COLLECTION_NAME]
 
@@ -81,6 +81,6 @@ class SegmentHostMapping(model_base.BASEV2):
     network_segment = orm.relationship(
         NetworkSegment, load_on_pending=True,
         backref=orm.backref("segment_host_mapping",
-                            lazy='subquery',
+                            lazy='selectin',
                             cascade='delete'))
     revises_on_change = ('network_segment', )

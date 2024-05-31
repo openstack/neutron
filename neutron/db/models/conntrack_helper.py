@@ -39,7 +39,7 @@ class ConntrackHelper(model_base.BASEV2, model_base.HasId):
 
     router = orm.relationship(l3.Router, load_on_pending=True,
                               backref=orm.backref("conntrack_helpers",
-                                                  lazy='subquery',
+                                                  lazy='selectin',
                                                   uselist=True,
                                                   cascade='delete'))
     revises_on_change = ('router', )

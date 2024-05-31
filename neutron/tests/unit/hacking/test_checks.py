@@ -279,3 +279,14 @@ class HackingTestCase(base.BaseTestCase):
         _pass(["_('foo')"], "neutron/_i18n.py")
         _pass(["_('foo')"], "neutron/i18n.py")
         _pass(["_('foo')"], "neutron/foo.py", noqa=True)
+
+    def test_check_no_sqlalchemy_lazy_subquery(self):
+        f = checks.check_no_sqlalchemy_lazy_subquery
+        self.assertLineFails('N350', f,
+            "backref=orm.backref('tags', lazy='subquery', viewonly=True),")
+        self.assertLineFails('N350', f,
+            "query.options(orm.subqueryload(ml2_models.PortBinding.port))")
+        self.assertLinePasses(f,
+            "backref=orm.backref('tags', lazy='selectin', viewonly=True),")
+        self.assertLinePasses(f,
+            "query.options(orm.selectinload(ml2_models.PortBinding.port))")
