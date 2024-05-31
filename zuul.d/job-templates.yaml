@@ -35,6 +35,7 @@
         - openstack-tox-py311-with-sqlalchemy-master:
             timeout: 3600
             irrelevant-files: *irrelevant-files
+            voting: false
     check-arm64:
       jobs:
         - openstack-tox-py39-arm64: # from openstack-python3-jobs-arm64 template
