@@ -455,10 +455,6 @@ class TestTrunkDriver(base.BaseTestCase):
             driver.register(mock.ANY, mock.ANY, mock.Mock())
             calls = [
                 mock.call.mock_subscribe(
-                    mock.ANY, resources.TRUNK, events.PRECOMMIT_CREATE),
-                mock.call.mock_subscribe(
-                    mock.ANY, resources.TRUNK, events.PRECOMMIT_DELETE),
-                mock.call.mock_subscribe(
                     mock.ANY, resources.TRUNK, events.AFTER_CREATE),
                 mock.call.mock_subscribe(
                     mock.ANY, resources.TRUNK, events.AFTER_DELETE),
