@@ -1,0 +1,7 @@
+---
+other:
+  - |
+    In some of previous versions of Neutron, it was not possible to create or
+    delete a trunk port if it was bound to a parent port when using ML2/OVN
+    driver. This restriction has been removed in this release. ML2/OVS driver
+    still has this restriction due to backend limitations.
