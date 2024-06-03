@@ -81,7 +81,8 @@
       - ^neutron/common/ovn/.*$
       - ^roles/.*functional.*$
       - ^playbooks/.*functional.*$
-      - ^zuul.d/(?!(project)).*\.yaml
+      - regex: ^zuul.d/project.*\.yaml
+        negate: true
 
 - job:
     name: neutron-ovn-rally-task
@@ -125,7 +126,8 @@
       - ^neutron/scheduler/.*$
       - ^roles/.*functional.*$
       - ^playbooks/.*functional.*$
-      - ^zuul.d/(?!(project)).*\.yaml
+      - regex: ^zuul.d/project.*\.yaml
+        negate: true
     vars:
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron

@@ -22,7 +22,8 @@
               - ^playbooks/.*$
               - ^roles/.*$
               - ^rally-jobs/.*$
-              - ^zuul.d/(?!(job-templates)).*\.yaml
+              - regex: ^zuul.d/job-templates.yaml
+                negate: true
         - openstack-tox-py311: # from openstack-python3-jobs template
             timeout: 3600
             irrelevant-files:  *irrelevant-files

@@ -88,7 +88,8 @@
       - ^neutron/common/ovn/.*$
       - ^roles/.*functional.*$
       - ^playbooks/.*functional.*$
-      - ^zuul.d/(?!(project)).*\.yaml
+      - regex: ^zuul.d/project.*\.yaml
+        negate: true
 
 - job:
     name: neutron-ovs-tempest-dvr
@@ -151,7 +152,8 @@
       - ^neutron/common/ovn/.*$
       - ^roles/.*functional.*$
       - ^playbooks/.*functional.*$
-      - ^zuul.d/(?!(project)).*\.yaml
+      - regex: ^zuul.d/project.*\.yaml
+        negate: true
 
 - job:
     name: neutron-ovs-tempest-iptables_hybrid
@@ -260,7 +262,8 @@
       - ^neutron/plugins/ml2/drivers/.*$
       - ^roles/.*functional.*$
       - ^playbooks/.*functional.*$
-      - ^zuul.d/(?!(project)).*\.yaml
+      - regex: ^zuul.d/project.*\.yaml
+        negate: true
 
 - job:
     name: neutron-ovn-tempest-mariadb-full
@@ -347,7 +350,8 @@
       - ^neutron/plugins/ml2/drivers/mech_sriov/.*$
       - ^roles/.*functional.*$
       - ^playbooks/.*functional.*$
-      - ^zuul.d/(?!(project)).*\.yaml
+      - regex: ^zuul.d/project.*\.yaml
+        negate: true
 
 - job:
     name: neutron-ovn-tempest-with-neutron-lib-master
@@ -484,7 +488,8 @@
       - ^vagrant/.*$
       - ^roles/.*functional.*$
       - ^playbooks/.*functional.*$
-      - ^zuul.d/(?!(project)).*\.yaml
+      - regex: ^zuul.d/project.*\.yaml
+        negate: true
 
 - job:
     name: neutron-ovn-tempest-with-uwsgi-loki
@@ -626,7 +631,8 @@
       - ^neutron/scheduler/.*$
       - ^roles/.*functional.*$
       - ^playbooks/.*functional.*$
-      - ^zuul.d/(?!(project)).*\.yaml
+      - regex: ^zuul.d/project.*\.yaml
+        negate: true
 
 - job:
     name: neutron-ovn-tempest-ovs-release

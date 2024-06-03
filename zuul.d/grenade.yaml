@@ -35,7 +35,8 @@
       - ^roles/.*functional.*$
       - ^playbooks/.*functional.*$
       - ^vagrant/.*$
-      - ^zuul.d/(?!(project)).*\.yaml
+      - regex: ^zuul.d/project.*\.yaml
+        negate: true
     vars:
       grenade_devstack_localrc:
         shared:
@@ -251,7 +252,8 @@
       - ^roles/.*functional.*$
       - ^playbooks/.*functional.*$
       - ^vagrant/.*$
-      - ^zuul.d/(?!(project)).*\.yaml
+      - regex: ^zuul.d/project.*\.yaml
+        negate: true
     roles:
       - zuul: openstack/neutron-tempest-plugin
     required-projects:

@@ -35,7 +35,8 @@
       - ^roles/add_mariadb_repo/.*$
       - ^roles/nftables/.*$
       - ^rally-jobs/.*$
-      - ^zuul.d/(?!(project)).*\.yaml
+      - regex: ^zuul.d/project.*\.yaml
+        negate: true
     vars:
       configure_swap_size: 8192
       Q_BUILD_OVS_FROM_GIT: True
@@ -99,7 +100,8 @@
       - ^roles/add_mariadb_repo/.*$
       - ^roles/nftables/.*$
       - ^rally-jobs/.*$
-      - ^zuul.d/(?!(project)).*\.yaml
+      - regex: ^zuul.d/project.*\.yaml
+        negate: true
 
 - job:
     name: neutron-fullstack-with-uwsgi

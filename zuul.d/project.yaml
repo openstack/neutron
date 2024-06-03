@@ -61,7 +61,8 @@
               - ^neutron/scheduler/.*$
               - ^roles/.*functional.*$
               - ^playbooks/.*functional.*$
-              - ^zuul.d/(?!(project)).*\.yaml
+              - regex: ^zuul.d/project.*\.yaml
+                negate: true
 
     gate:
       jobs:
