@@ -65,7 +65,13 @@
               - ^neutron/scheduler/.*$
               - ^roles/.*functional.*$
               - ^playbooks/.*functional.*$
-              - ^zuul.d/(?!(project)).*\.yaml
+              # Ignore everything except for zuul.d/project.yaml
+              - ^zuul.d/base.yaml
+              - ^zuul.d/grenade.yaml
+              - ^zuul.d/job-templates.yaml
+              - ^zuul.d/rally.yaml
+              - ^zuul.d/tempest-multinode.yaml
+              - ^zuul.d/tempest-singlenode.yaml
         - neutron-ovn-tempest-ovs-release-ubuntu-old:
             irrelevant-files: *ovn-irrelevant-files
 
