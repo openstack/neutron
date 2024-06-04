@@ -31,7 +31,13 @@
       - ^playbooks/prepare-ovn-multinode.yaml
       - ^roles/add_mariadb_repo/.*$
       - ^roles/nftables/.*$
-      - ^zuul.d/(?!(project)).*\.yaml
+      # Ignore everything except for zuul.d/project.yaml
+      - ^zuul.d/base.yaml
+      - ^zuul.d/grenade.yaml
+      - ^zuul.d/job-templates.yaml
+      - ^zuul.d/rally.yaml
+      - ^zuul.d/tempest-multinode.yaml
+      - ^zuul.d/tempest-singlenode.yaml
     vars:
       configure_swap_size: 8192
       Q_BUILD_OVS_FROM_GIT: True
@@ -93,7 +99,13 @@
       - ^playbooks/prepare-ovn-multinode.yaml
       - ^roles/add_mariadb_repo/.*$
       - ^roles/nftables/.*$
-      - ^zuul.d/(?!(project)).*\.yaml
+      # Ignore everything except for zuul.d/project.yaml
+      - ^zuul.d/base.yaml
+      - ^zuul.d/grenade.yaml
+      - ^zuul.d/job-templates.yaml
+      - ^zuul.d/rally.yaml
+      - ^zuul.d/tempest-multinode.yaml
+      - ^zuul.d/tempest-singlenode.yaml
 
 - job:
     name: neutron-fullstack-with-uwsgi
