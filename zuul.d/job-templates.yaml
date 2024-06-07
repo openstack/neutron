@@ -47,7 +47,6 @@
     name: neutron-experimental-jobs
     experimental:
       jobs:
-        - neutron-functional-with-uwsgi-fips
         - neutron-ovn-grenade-multinode
         - neutron-ovn-tempest-with-uwsgi-loki
         - tempest-integrated-networking:
@@ -92,9 +91,7 @@
     periodic:
       jobs:
         - neutron-functional
-        - neutron-functional-with-uwsgi-fips
         - neutron-fullstack
-        - neutron-fullstack-with-uwsgi-fips
         - neutron-ovs-tempest-slow
         - neutron-ovn-tempest-slow
         - neutron-ovn-tempest-postgres-full
