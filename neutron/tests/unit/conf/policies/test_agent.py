@@ -32,6 +32,12 @@ class SystemAdminTests(AgentAPITestCase):
         super(SystemAdminTests, self).setUp()
         self.context = self.system_admin_ctx
 
+    def test_create_agent(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, "create_agent", self.target)
+
     def test_get_agent(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -119,6 +125,10 @@ class AdminTests(AgentAPITestCase):
         super(AdminTests, self).setUp()
         self.context = self.project_admin_ctx
 
+    def test_create_agent(self):
+        self.assertTrue(
+            policy.enforce(self.context, "create_agent", self.target))
+
     def test_get_agent(self):
         self.assertTrue(
             policy.enforce(self.context, "get_agent", self.target))
@@ -181,6 +191,12 @@ class ProjectMemberTests(AdminTests):
     def setUp(self):
         super(ProjectMemberTests, self).setUp()
         self.context = self.project_member_ctx
+
+    def test_create_agent(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "create_agent", self.target)
 
     def test_get_agent(self):
         self.assertRaises(
@@ -261,6 +277,12 @@ class ServiceRoleTests(AgentAPITestCase):
     def setUp(self):
         super(ServiceRoleTests, self).setUp()
         self.context = self.service_ctx
+
+    def test_create_agent(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "create_agent", self.target)
 
     def test_get_agent(self):
         self.assertRaises(

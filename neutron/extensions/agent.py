@@ -56,7 +56,9 @@ class AgentPluginBase(object, metaclass=abc.ABCMeta):
         This operation is not allow in REST API.
         @raise exceptions.BadRequest:
         """
-        raise exceptions.BadRequest()
+        raise exceptions.BadRequest(
+            resource='agents',
+            msg='Agent creation using API is not supported.')
 
     @abc.abstractmethod
     def delete_agent(self, context, id):

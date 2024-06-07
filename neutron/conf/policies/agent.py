@@ -25,6 +25,18 @@ DEPRECATION_REASON = (
 
 rules = [
     policy.DocumentedRuleDefault(
+        name='create_agent',
+        check_str=base.ADMIN,
+        description='Create an agent',
+        operations=[
+            {
+                'method': 'POST',
+                'path': RESOURCE_PATH,
+            },
+        ],
+        scope_types=['project'],
+    ),
+    policy.DocumentedRuleDefault(
         name='get_agent',
         check_str=base.ADMIN,
         description='Get an agent',

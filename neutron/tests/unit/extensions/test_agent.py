@@ -105,7 +105,7 @@ class AgentDBTestCase(AgentDBTestMixIn,
 
     def test_create_agent(self):
         data = {'agent': {}}
-        _req = self.new_create_request('agents', data, self.fmt)
+        _req = self.new_create_request('agents', data, self.fmt, as_admin=True)
         res = _req.get_response(self.ext_api)
         self.assertEqual(exc.HTTPBadRequest.code, res.status_int)
 
