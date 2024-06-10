@@ -329,6 +329,65 @@ class TestPortBindingChassisUpdateEvent(base.BaseTestCase):
                              'type': '_fake_'}))
 
 
+class TestPortBindingUpdateVirtualPortsEvent(base.BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.event = ovsdb_monitor.PortBindingUpdateVirtualPortsEvent(None)
+
+        self.pbtable = fakes.FakeOvsdbTable.create_one_ovsdb_table(
+            attrs={'name': 'Port_Binding'})
+        self.ovsdb_row = fakes.FakeOvsdbRow.create_one_ovsdb_row
+
+        self.row = self.ovsdb_row(
+            attrs={'_table': self.pbtable,
+                   'chassis': 'newchassis',
+                   'options': {
+                       'virtual-parents': 'uuid1,uuid2'}})
+
+    def test_delete_event_matches(self):
+        # Delete event (only type virtual).
+        self.assertFalse(self.event.match_fn(
+            self.event.ROW_DELETE,
+            self.ovsdb_row(attrs={'_table': self.pbtable, 'type': '_fake_'}),
+            None))
+        self.assertTrue(self.event.match_fn(
+            self.event.ROW_DELETE,
+            self.ovsdb_row(attrs={'_table': self.pbtable, 'type': 'virtual'}),
+            None))
+
+    def test_event_no_match_no_options(self):
+        # Unrelated portbind change (no options in old, so no virtual parents)
+        self.assertFalse(self.event.match_fn(
+            self.event.ROW_UPDATE, self.row,
+            self.ovsdb_row(attrs={'_table': self.pbtable,
+                                  'name': 'somename'})))
+
+    def test_event_no_match_other_options_change(self):
+        # Non-virtual parent change, no chassis has changed
+        old = self.ovsdb_row(attrs={'_table': self.pbtable,
+                            'options': {
+                                'virtual-parents': 'uuid1,uuid2',
+                                'other-opt': '_fake_'}})
+
+        self.assertFalse(self.event.match_fn(self.event.ROW_UPDATE,
+                                             self.row, old))
+
+    def test_event_match_chassis_change(self):
+        # Port binding change (chassis changed, and marked in old)
+        self.assertTrue(self.event.match_fn(
+            self.event.ROW_UPDATE, self.row,
+            self.ovsdb_row(attrs={'_table': self.pbtable,
+                                  'chassis': 'fakechassis'})))
+
+    def test_event_match_virtual_parent_change(self):
+        # Virtual parent change
+        old = self.ovsdb_row(attrs={'_table': self.pbtable,
+                                    'options': {
+                                        'virtual-parents': 'uuid1,uuid3'}})
+        self.assertTrue(self.event.match_fn(self.event.ROW_UPDATE,
+                                            self.row, old))
+
+
 class TestOvnNbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
 
     def setUp(self):
