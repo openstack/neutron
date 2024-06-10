@@ -1,0 +1,5 @@
+---
+fixes:
+  - |
+    Fixes an issue when associating floating IPs to OVN load balancers. See `LP#2068644
+    <https://bugs.launchpad.net/neutron/+bug/2068644>`__ for more details.

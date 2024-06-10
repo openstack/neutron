@@ -1063,7 +1063,7 @@ class OVNClient(object):
                 if lb in item.load_balancer]
 
             if not ls_linked:
-                return
+                continue
 
             # Find out IP addresses and subnets of configured members.
             members_to_verify = []
