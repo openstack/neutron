@@ -51,19 +51,19 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
 
     def setUp(self):
         super(FlavorExtensionTestCase, self).setUp()
+        ctx = context.get_admin_context()
+        ctx.project_id = 'test-project'
+        self.env = {'neutron.context': ctx}
         self.setup_extension(
             'neutron.services.flavors.flavors_plugin.FlavorsPlugin',
             constants.FLAVORS, flavors.Flavors, '',
             supported_extension_aliases=['flavors'])
 
     def test_create_flavor(self):
-        tenant_id = uuidutils.generate_uuid()
         # Use service_type FLAVORS since plugin must be loaded to validate
         data = {'flavor': {'name': 'GOLD',
                            'service_type': constants.FLAVORS,
                            'description': 'the best flavor',
-                           'tenant_id': tenant_id,
-                           'project_id': tenant_id,
                            'enabled': True}}
 
         expected = copy.deepcopy(data)
@@ -73,20 +73,26 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
         instance.create_flavor.return_value = expected['flavor']
         res = self.api.post(_get_path('flavors', fmt=self.fmt),
                             self.serialize(data),
-                            content_type='application/%s' % self.fmt)
+                            content_type='application/%s' % self.fmt,
+                            extra_environ=self.env)
 
-        instance.create_flavor.assert_called_with(mock.ANY,
-                                                  flavor=expected)
+        # NOTE(slaweq): we need to do such complicated assertion as in the
+        # arguments of the tested method may or may not be 'tenant_id' and
+        # 'project_id' included. It is not really needed but in the neutron-lib
+        # versions <= 3.13 is is included and should be gone once bug
+        # https://bugs.launchpad.net/neutron/+bug/2022043/ will be fixed
+        actual_flavor_arg = instance.create_flavor.call_args.kwargs['flavor']
+        actual_flavor_arg['flavor'].pop('project_id', None)
+        actual_flavor_arg['flavor'].pop('tenant_id', None)
+        self.assertDictEqual(expected, actual_flavor_arg)
         res = self.deserialize(res)
         self.assertIn('flavor', res)
         self.assertEqual(expected, res)
 
     def test_create_flavor_invalid_service_type(self):
-        tenant_id = uuidutils.generate_uuid()
         data = {'flavor': {'name': 'GOLD',
                            'service_type': 'BROKEN',
                            'description': 'the best flavor',
-                           'tenant_id': tenant_id,
                            'enabled': True}}
         self.api.post(_get_path('flavors', fmt=self.fmt),
                       self.serialize(data),
@@ -94,11 +100,9 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
                       status=exc.HTTPBadRequest.code)
 
     def test_create_flavor_too_long_name(self):
-        tenant_id = uuidutils.generate_uuid()
         data = {'flavor': {'name': _long_name,
                            'service_type': constants.FLAVORS,
                            'description': 'the best flavor',
-                           'tenant_id': tenant_id,
                            'enabled': True}}
         self.api.post(_get_path('flavors', fmt=self.fmt),
                       self.serialize(data),
@@ -106,11 +110,9 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
                       status=exc.HTTPBadRequest.code)
 
     def test_create_flavor_too_long_description(self):
-        tenant_id = uuidutils.generate_uuid()
         data = {'flavor': {'name': _long_name,
                            'service_type': constants.FLAVORS,
                            'description': _long_description,
-                           'tenant_id': tenant_id,
                            'enabled': True}}
         self.api.post(_get_path('flavors', fmt=self.fmt),
                       self.serialize(data),
@@ -118,11 +120,9 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
                       status=exc.HTTPBadRequest.code)
 
     def test_create_flavor_invalid_enabled(self):
-        tenant_id = uuidutils.generate_uuid()
         data = {'flavor': {'name': _long_name,
                            'service_type': constants.FLAVORS,
                            'description': 'the best flavor',
-                           'tenant_id': tenant_id,
                            'enabled': 'BROKEN'}}
         self.api.post(_get_path('flavors', fmt=self.fmt),
                       self.serialize(data),
@@ -230,11 +230,8 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
         self.assertEqual(data, res)
 
     def test_create_service_profile(self):
-        tenant_id = uuidutils.generate_uuid()
         expected = {'service_profile': {'description': 'the best sp',
                                         'driver': '',
-                                        'tenant_id': tenant_id,
-                                        'project_id': tenant_id,
                                         'enabled': True,
                                         'metainfo': '{"data": "value"}'}}
 
@@ -243,19 +240,27 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
             expected['service_profile'])
         res = self.api.post(_get_path('service_profiles', fmt=self.fmt),
                             self.serialize(expected),
-                            content_type='application/%s' % self.fmt)
-        instance.create_service_profile.assert_called_with(
-            mock.ANY,
-            service_profile=expected)
+                            content_type='application/%s' % self.fmt,
+                            extra_environ=self.env)
+        # NOTE(slaweq): we need to do such complicated assertion as in the
+        # arguments of the tested method may or may not be 'tenant_id' and
+        # 'project_id' included. It is not really needed but in the neutron-lib
+        # versions <= 3.13 is is included and should be gone once bug
+        # https://bugs.launchpad.net/neutron/+bug/2022043/ will be fixed
+        actual_service_profile_arg = (
+            instance.create_service_profile.call_args.kwargs[
+                'service_profile'])
+        actual_service_profile_arg['service_profile'].pop('project_id', None)
+        actual_service_profile_arg['service_profile'].pop('tenant_id', None)
+        self.assertDictEqual(expected,
+                             actual_service_profile_arg)
         res = self.deserialize(res)
         self.assertIn('service_profile', res)
         self.assertEqual(expected, res)
 
     def test_create_service_profile_too_long_description(self):
-        tenant_id = uuidutils.generate_uuid()
         expected = {'service_profile': {'description': _long_description,
                                         'driver': '',
-                                        'tenant_id': tenant_id,
                                         'enabled': True,
                                         'metainfo': '{"data": "value"}'}}
         self.api.post(_get_path('service_profiles', fmt=self.fmt),
@@ -264,10 +269,8 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
                       status=exc.HTTPBadRequest.code)
 
     def test_create_service_profile_too_long_driver(self):
-        tenant_id = uuidutils.generate_uuid()
         expected = {'service_profile': {'description': 'the best sp',
                                         'driver': _long_description,
-                                        'tenant_id': tenant_id,
                                         'enabled': True,
                                         'metainfo': '{"data": "value"}'}}
         self.api.post(_get_path('service_profiles', fmt=self.fmt),
@@ -276,10 +279,8 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
                       status=exc.HTTPBadRequest.code)
 
     def test_create_service_profile_invalid_enabled(self):
-        tenant_id = uuidutils.generate_uuid()
         expected = {'service_profile': {'description': 'the best sp',
                                         'driver': '',
-                                        'tenant_id': tenant_id,
                                         'enabled': 'BROKEN',
                                         'metainfo': '{"data": "value"}'}}
         self.api.post(_get_path('service_profiles', fmt=self.fmt),
@@ -379,18 +380,30 @@ class FlavorExtensionTestCase(extension.ExtensionTestCase):
         self.assertEqual(expected, res)
 
     def test_associate_service_profile_with_flavor(self):
-        tenant_id = uuidutils.generate_uuid()
-        expected = {'service_profile': {'id': _uuid(),
-                                        'tenant_id': tenant_id,
-                                        'project_id': tenant_id}}
+        expected = {'service_profile': {'id': _uuid()}}
         instance = self.plugin.return_value
         instance.create_flavor_service_profile.return_value = (
             expected['service_profile'])
         res = self.api.post('/flavors/fl_id/service_profiles',
                             self.serialize(expected),
-                            content_type='application/%s' % self.fmt)
-        instance.create_flavor_service_profile.assert_called_with(
-            mock.ANY, service_profile=expected, flavor_id='fl_id')
+                            content_type='application/%s' % self.fmt,
+                            extra_environ=self.env)
+        # NOTE(slaweq): we need to do such complicated assertion as in the
+        # arguments of the tested method may or may not be 'tenant_id' and
+        # 'project_id' included. It is not really needed but in the neutron-lib
+        # versions <= 3.13 is is included and should be gone once bug
+        # https://bugs.launchpad.net/neutron/+bug/2022043/ will be fixed
+        actual_flavor_id_arg = (
+            instance.create_flavor_service_profile.call_args.kwargs[
+                'flavor_id'])
+        self.assertEqual('fl_id', actual_flavor_id_arg)
+        actual_service_profile_arg = (
+            instance.create_flavor_service_profile.call_args.kwargs[
+                'service_profile'])
+        actual_service_profile_arg['service_profile'].pop('project_id', None)
+        actual_service_profile_arg['service_profile'].pop('tenant_id', None)
+        self.assertDictEqual(expected,
+                             actual_service_profile_arg)
         res = self.deserialize(res)
         self.assertEqual(expected, res)
 
