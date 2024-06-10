@@ -572,7 +572,7 @@ class PortBindingUpdateVirtualPortsEvent(row_event.RowEvent):
             # which means we need to update the host_id information
             return True
 
-        if getattr(old, 'options', None) is not None:
+        if getattr(old, 'options', None) is None:
             # The "old.options" dictionary is not being modified,
             # thus the virtual parents didn't change.
             return False
