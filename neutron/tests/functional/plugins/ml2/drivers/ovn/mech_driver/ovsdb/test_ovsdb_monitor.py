@@ -28,7 +28,6 @@ from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import event
 from ovsdbapp.backend.ovs_idl import idlutils
 import tenacity
-import testtools
 
 from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils as n_utils
@@ -360,7 +359,6 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
 
     @mock.patch.object(mech_driver.OVNMechanismDriver,
                        'update_virtual_port_host')
-    @testtools.skip('will be recovery by following patch in chain 2038413')
     def test_virtual_port_host_update(self, mock_update_vip_host):
         # NOTE: because we can't simulate traffic from a port, this check is
         # not done in this test. This test checks the VIP host is unset when
