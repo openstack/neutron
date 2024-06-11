@@ -450,6 +450,30 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         # Check that both neutron and ovn are the same as given host_id
         return port[portbindings.HOST_ID] == host_id == ovn_host_id
 
+    def _check_port_and_port_binding_revision_number(self, port_id):
+
+        def is_port_and_port_binding_same_revision_number(port_id):
+            # This function checks if given port matches the revision_number
+            # in the neutron DB as well as in the OVN DB for the port_binding
+            core_plugin = directory.get_plugin()
+
+            # Get port from neutron DB
+            port = core_plugin.get_ports(
+                self.context, filters={'id': [port_id]})[0]
+
+            # Get port binding from OVN DB
+            bp = self._find_port_binding(port_id)
+            ovn_port_binding_revision_number = bp.external_ids.get(
+                ovn_const.OVN_REV_NUM_EXT_ID_KEY, ovn_const.INITIAL_REV_NUM)
+
+            # Check that both neutron and ovn are the same as given host_id
+            return port['revision_number'] == int(
+                ovn_port_binding_revision_number)
+
+        check = functools.partial(
+            is_port_and_port_binding_same_revision_number,port_id)
+        n_utils.wait_until_true(check, timeout=10)
+
     def test_virtual_port_host_update_upon_failover(self):
         # NOTE: we can't simulate traffic, but we can simulate the event that
         # would've been triggered by OVN, which is what we do.
@@ -469,6 +493,7 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         vip_address = vip['fixed_ips'][0]['ip_address']
         allowed_address_pairs = [{'ip_address': vip_address}]
         self._check_port_binding_type(vip['id'], '')
+        self._check_port_and_port_binding_revision_number(vip['id'])
 
         # 3) Create two ports with the allowed address pairs set.
         hosts = ('ovs-host1', second_chassis_name)
@@ -485,6 +510,7 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         # have been assigned to the port binding
         self._check_port_binding_type(vip['id'], ovn_const.LSP_TYPE_VIRTUAL)
         self._check_port_virtual_parents(vip['id'], ','.join(port_ids))
+        self._check_port_and_port_binding_revision_number(vip['id'])
 
         # 5) Bind the ports to a host, so a chassis is bound, which is
         # required for the update_virtual_port_host method. Without this
@@ -492,11 +518,13 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
         self._test_port_binding_and_status(ports[0]['id'], 'bind', 'ACTIVE')
         self.chassis = second_chassis
         self._test_port_binding_and_status(ports[1]['id'], 'bind', 'ACTIVE')
+        self._check_port_and_port_binding_revision_number(vip['id'])
 
         # 6) For both ports, bind vip on parent and check hostname in DBs
         for idx in range(len(ports)):
             # Set port binding to the first port, and update the chassis
             self._set_port_binding_virtual_parent(vip['id'], ports[idx]['id'])
+            self._check_port_and_port_binding_revision_number(vip['id'])
 
             # Check if the host_id has been updated in OVN and DB
             # by the event that eventually calls for method
@@ -504,6 +532,7 @@ class TestNBDbMonitor(base.TestOVNFunctionalBase):
             n_utils.wait_until_true(
                 lambda: self._check_port_host_set(vip['id'], hosts[idx]),
                 timeout=10)
+            self._check_port_and_port_binding_revision_number(vip['id'])
 
 
 class TestNBDbMonitorOverTcp(TestNBDbMonitor):
