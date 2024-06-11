@@ -68,6 +68,8 @@ HAChassisGroupInfo = collections.namedtuple(
     'HAChassisGroupInfo', ['group_name', 'chassis_list', 'az_hints',
                            'ignore_chassis', 'external_ids'])
 
+_OVS_PERSIST_UUID = _SENTINEL = object()
+
 
 class OvsdbClientCommand:
     _CONNECTION = 0

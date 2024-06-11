@@ -275,10 +275,17 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
             if revision_mismatch_raise:
                 raise e
 
+    def ls_add(self, switch=None, may_exist=False, network_id=None, **columns):
+        if network_id is None:
+            return super().ls_add(switch, may_exist, **columns)
+        return cmd.AddNetworkCommand(self, network_id, may_exist=may_exist,
+                                     **columns)
+
     def create_lswitch_port(self, lport_name, lswitch_name, may_exist=True,
-                            **columns):
+                            network_id=None, **columns):
         return cmd.AddLSwitchPortCommand(self, lport_name, lswitch_name,
-                                         may_exist, **columns)
+                                         may_exist, network_id=network_id,
+                                         **columns)
 
     def set_lswitch_port(self, lport_name, external_ids_update=None,
                          if_exists=True, **columns):
