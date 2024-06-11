@@ -69,6 +69,7 @@ from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import impl_idl_ovn
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import maintenance
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_client
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovn_db_sync
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import ovs_fixes
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import worker
 from neutron import service
 from neutron.services.logapi.drivers.ovn import driver as log_driver
@@ -411,6 +412,9 @@ class OVNMechanismDriver(api.MechanismDriver):
 
         self._post_fork_event.clear()
         self._ovn_client_inst = None
+
+        # Patch python-ovs for fixes not yet released
+        ovs_fixes.apply_ovs_fixes()
 
         if worker_class == wsgi.WorkerService:
             self._setup_hash_ring()

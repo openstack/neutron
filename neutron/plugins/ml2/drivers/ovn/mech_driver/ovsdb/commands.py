@@ -13,10 +13,13 @@
 #    under the License.
 
 import abc
+import uuid
 
 from oslo_utils import timeutils
+from ovs.db import idl as ovs_idl
 from ovsdbapp.backend.ovs_idl import command
 from ovsdbapp.backend.ovs_idl import idlutils
+from ovsdbapp.backend.ovs_idl import rowview
 from ovsdbapp.schema.ovn_northbound import commands as ovn_nb_commands
 from ovsdbapp import utils as ovsdbapp_utils
 
@@ -110,21 +113,64 @@ class CheckLivenessCommand(command.BaseCommand):
         self.result = self.api.nb_global.nb_cfg
 
 
-class AddLSwitchPortCommand(command.BaseCommand):
-    def __init__(self, api, lport, lswitch, may_exist, **columns):
+class AddNetworkCommand(command.AddCommand):
+    table_name = 'Logical_Switch'
+
+    def __init__(self, api, network_id, may_exist=False, **columns):
         super().__init__(api)
-        self.lport = lport
-        self.lswitch = lswitch
+        self.network_uuid = uuid.UUID(str(network_id))
         self.may_exist = may_exist
         self.columns = columns
 
     def run_idl(self, txn):
+        table = self.api.tables[self.table_name]
         try:
+            ls = table.rows[self.network_uuid]
+            if self.may_exist:
+                self.result = rowview.RowView(ls)
+                return
+            msg = _("Switch %s already exists") % self.network_uuid
+            raise RuntimeError(msg)
+        except KeyError:
+            # Adding a new LS
+            if utils.ovs_persist_uuid_supported(txn.idl):
+                ls = txn.insert(table, new_uuid=self.network_uuid,
+                                persist_uuid=True)
+            else:
+                ls = txn.insert(table)
+        self.set_columns(ls, **self.columns)
+        ls.name = utils.ovn_name(self.network_uuid)
+        self.result = ls.uuid
+
+
+class AddLSwitchPortCommand(command.BaseCommand):
+    def __init__(self, api, lport, lswitch, may_exist, network_id=None,
+                 **columns):
+        super().__init__(api)
+        self.lport = lport
+        self.lswitch = lswitch
+        self.may_exist = may_exist
+        self.network_uuid = uuid.UUID(str(network_id)) if network_id else None
+        self.columns = columns
+
+    def run_idl(self, txn):
+        try:
+            # We must look in the local cache first, because the LS may have
+            # been created as part of the current transaction. or in the case
+            # of adding an LSP to a LS that was created before persist_uuid
             lswitch = idlutils.row_by_value(self.api.idl, 'Logical_Switch',
                                             'name', self.lswitch)
         except idlutils.RowNotFound:
-            msg = _("Logical Switch %s does not exist") % self.lswitch
-            raise RuntimeError(msg)
+            if self.network_uuid and utils.ovs_persist_uuid_supported(txn.idl):
+                # Create a "fake" row with the right UUID so python-ovs creates
+                # a transaction referencing the Row, even though we might not
+                # have received the update for the row ourselves.
+                lswitch = ovs_idl.Row(self.api.idl,
+                                      self.api.tables['Logical_Switch'],
+                                      uuid=self.network_uuid, data={})
+            else:
+                msg = _("Logical Switch %s does not exist") % self.lswitch
+                raise RuntimeError(msg)
         if self.may_exist:
             port = idlutils.row_by_value(self.api.idl,
                                          'Logical_Switch_Port', 'name',
@@ -210,8 +256,8 @@ class SetLSwitchPortCommand(command.BaseCommand):
         else:
             new_port_dhcp_opts.add(dhcpv6_options.result)
             port.dhcpv6_options = [dhcpv6_options.result]
-        for uuid in cur_port_dhcp_opts - new_port_dhcp_opts:
-            self.api._tables['DHCP_Options'].rows[uuid].delete()
+        for uuid_ in cur_port_dhcp_opts - new_port_dhcp_opts:
+            self.api._tables['DHCP_Options'].rows[uuid_].delete()
 
         external_ids_update = self.external_ids_update or {}
         external_ids = getattr(port, 'external_ids', {})
@@ -293,8 +339,8 @@ class DelLSwitchPortCommand(command.BaseCommand):
         # Delete DHCP_Options records no longer referred by this port.
         cur_port_dhcp_opts = get_lsp_dhcp_options_uuids(
             lport, self.lport)
-        for uuid in cur_port_dhcp_opts:
-            self.api._tables['DHCP_Options'].rows[uuid].delete()
+        for uuid_ in cur_port_dhcp_opts:
+            self.api._tables['DHCP_Options'].rows[uuid_].delete()
 
         _delvalue_from_list(lswitch, 'ports', lport)
         self.api._tables['Logical_Switch_Port'].rows[lport.uuid].delete()
