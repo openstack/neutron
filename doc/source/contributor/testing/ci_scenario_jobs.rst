@@ -101,8 +101,7 @@ Below is summary of those jobs.
     +====================================+=======+==================+=============+=============+==========+=======+========+============+=============+
     | neutron-ovs-grenade-multinode      |   2   | Ubuntu Jammy     | openvswitch | openvswitch | legacy   | False | False  | True       | Yes         |
     +------------------------------------+-------+------------------+-------------+-------------+----------+-------+--------+------------+-------------+
-    | neutron-ovs-grenade-dvr-multinode  |   2   | Ubuntu Jammy     | openvswitch | openvswitch | dvr      | False | False  | True       | Yes         |
-    |                                    |       |                  |             |             | dvr_snat |       |        |            |             |
+    | neutron-ovn-grenade-multinode      |   2   | Ubuntu Jammy     | OVN         | ---         | ---      | ---   | ---    | False      | Yes         |
     +------------------------------------+-------+------------------+-------------+-------------+----------+-------+--------+------------+-------------+
 
 Tempest jobs running in Neutron experimental CI
@@ -144,13 +143,13 @@ Currently we have in that queue jobs like listed below.
 And we also have Grenade jobs in the experimental queue.
 ::
 
-    +--------------------------------+-------+------------------+-------------+-------------+----------+--------+------------+------------+-------------+
-    | Job name                       | nodes | Operating system | L2 agent    | firewall    | L3 agent | L3 HA  | L3 DVR     | enable_dvr | Run in gate |
-    |                                |       |                  |             | driver      | mode     |        |            |            | queue       |
-    +================================+=======+=============+==================+=============+==========+========+============+============+=============+
-    | neutron-ovn-grenade-multinode  |   2   | Ubuntu Jammy     | OVN         | ---         | ---      | ---    | ---        | False      | no          |
-    | (non-voting)                   |       |                  |             |             |          |        |            |            |             |
-    +--------------------------------+-------+------------------+-------------+-------------+----------+--------+------------+------------+-------------+
+    +------------------------------------+-------+------------------+-------------+-------------+----------+--------+------------+------------+-------------+
+    | Job name                           | nodes | Operating system | L2 agent    | firewall    | L3 agent | L3 HA  | L3 DVR     | enable_dvr | Run in gate |
+    |                                    |       |                  |             | driver      | mode     |        |            |            | queue       |
+    +====================================+=======+=============+==================+=============+==========+========+============+============+=============+
+    | neutron-ovs-grenade-dvr-multinode  |   2   | Ubuntu Jammy     | openvswitch | openvswitch | dvr      | False  | False      | True       | No          |
+    |                                    |       |                  |             |             | dvr_snat |        |            |            |             |
+    +------------------------------------+-------+------------------+-------------+-------------+----------+--------+------------+------------+-------------+
 
 Columns description
 

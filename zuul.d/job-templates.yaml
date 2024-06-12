@@ -77,7 +77,6 @@
         - neutron-functional-with-uwsgi-with-neutron-lib-master
         - neutron-fullstack-with-uwsgi-with-neutron-lib-master
         - neutron-ovn-tempest-full-multinode-ovs-master
-        - neutron-ovn-grenade-multinode
         - neutron-ovn-tempest-ovs-master
         - neutron-ovn-tempest-ovs-release
         - neutron-ovs-tempest-with-neutron-lib-master
@@ -105,6 +104,7 @@
         - neutron-fullstack
         - neutron-fullstack-with-uwsgi-fips
         - neutron-fullstack-with-pyroute2-master
+        - neutron-ovs-grenade-dvr-multinode
         - neutron-ovs-tempest-slow
         - neutron-ovn-tempest-slow
         - neutron-ovs-tempest-with-os-ken-master
