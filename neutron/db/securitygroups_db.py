@@ -109,8 +109,12 @@ class SecurityGroupDbMixin(
                 return self.get_security_group(context, existing_def_sg_id)
 
         with db_api.CONTEXT_WRITER.using(context):
-            delta = len(ext_sg.sg_supported_ethertypes)
-            delta = delta * 2 if default_sg else delta
+            if default_sg:
+                delta = sg_default_rules_obj.SecurityGroupDefaultRule.count(
+                    context, used_in_default_sg=True)
+            else:
+                delta = sg_default_rules_obj.SecurityGroupDefaultRule.count(
+                    context, used_in_non_default_sg=True)
             quota.QUOTAS.quota_limit_check(context, tenant_id,
                                            security_group_rule=delta)
 
