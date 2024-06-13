@@ -31,7 +31,7 @@ class NetworkDhcpAgentBinding(model_base.BASEV2):
     network_id = sa.Column(sa.String(36),
                            sa.ForeignKey("networks.id", ondelete='CASCADE'),
                            primary_key=True)
-    dhcp_agent = orm.relationship(agent_model.Agent, lazy='subquery')
+    dhcp_agent = orm.relationship(agent_model.Agent, lazy='selectin')
     dhcp_agent_id = sa.Column(sa.String(36),
                               sa.ForeignKey("agents.id",
                                             ondelete='CASCADE'),

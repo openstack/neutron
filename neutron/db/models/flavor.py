@@ -41,7 +41,7 @@ class FlavorServiceProfileBinding(model_base.BASEV2):
     flavor = orm.relationship(Flavor,
                               backref=orm.backref(
                                   "service_profiles",
-                                  lazy='subquery',
+                                  lazy='selectin',
                                   cascade="all, delete-orphan"))
     service_profile_id = sa.Column(sa.String(36),
                                    sa.ForeignKey("serviceprofiles.id",

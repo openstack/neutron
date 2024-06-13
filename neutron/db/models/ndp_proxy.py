@@ -63,6 +63,6 @@ class RouterNDPProxyState(model_base.BASEV2):
     router = orm.relationship(
         l3.Router, load_on_pending=True,
         backref=orm.backref("ndp_proxy_state",
-                            lazy='subquery', uselist=False,
+                            lazy='selectin', uselist=False,
                             cascade='delete')
     )

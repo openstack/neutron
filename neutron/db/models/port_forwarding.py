@@ -58,13 +58,13 @@ class PortForwarding(standard_attr.HasStandardAttributes,
         models_v2.Port, load_on_pending=True,
         foreign_keys=internal_neutron_port_id,
         backref=orm.backref("port_forwardings",
-                            lazy='subquery', uselist=True,
+                            lazy='selectin', uselist=True,
                             cascade='delete')
     )
     floating_ip = orm.relationship(
         l3.FloatingIP, load_on_pending=True,
         backref=orm.backref("port_forwardings",
-                            lazy='subquery', uselist=True,
+                            lazy='selectin', uselist=True,
                             cascade='delete')
     )
     revises_on_change = ('floating_ip', 'port',)

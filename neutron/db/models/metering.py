@@ -38,11 +38,11 @@ class MeteringLabel(model_base.BASEV2,
     name = sa.Column(sa.String(db_const.NAME_FIELD_SIZE))
     description = sa.Column(sa.String(db_const.LONG_DESCRIPTION_FIELD_SIZE))
     rules = orm.relationship(MeteringLabelRule, backref="label",
-                             cascade="delete", lazy="subquery")
+                             cascade="delete", lazy="selectin")
     routers = orm.relationship(
         l3_models.Router,
         primaryjoin="MeteringLabel.project_id==Router.project_id",
         foreign_keys='MeteringLabel.project_id',
-        lazy='subquery',
+        lazy='selectin',
         uselist=True)
     shared = sa.Column(sa.Boolean, default=False, server_default=sql.false())
