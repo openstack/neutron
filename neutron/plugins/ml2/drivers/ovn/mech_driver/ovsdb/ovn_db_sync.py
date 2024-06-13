@@ -239,11 +239,14 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         acl_columns = (self.ovn_api._tables['ACL'].columns.keys() &
                        set(ovn_const.ACL_EXPECTED_COLUMNS_NBDB))
         acl_columns.discard('external_ids')
+        id_key = ovn_const.OVN_SG_RULE_EXT_ID_KEY
         for pg in self.ovn_api.db_list_rows('Port_Group').execute():
             acls = getattr(pg, 'acls', [])
             for acl in acls:
                 acl_string = {k: getattr(acl, k) for k in acl_columns}
                 acl_string['port_group'] = pg.name
+                if id_key in acl.external_ids:
+                    acl_string[id_key] = acl.external_ids[id_key]
                 ovn_acls.append(acl_string)
         return ovn_acls
 
@@ -275,10 +278,60 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                 pg_name = utils.ovn_port_group_name(sgr['security_group_id'])
                 neutron_acls.append(acl_utils._add_sg_rule_acl_for_port_group(
                     pg_name, True, sgr))
-        neutron_acls += acl_utils.add_acls_for_drop_port_group(
+        # Sort the acls in the Neutron database according to the security
+        # group rule ID for easy comparison in the future.
+        neutron_acls.sort(key=lambda x: x[ovn_const.OVN_SG_RULE_EXT_ID_KEY])
+        neutron_default_acls = acl_utils.add_acls_for_drop_port_group(
             ovn_const.OVN_DROP_PORT_GROUP_NAME)
 
         ovn_acls = self._get_acls_from_port_groups()
+        # Sort the acls in the ovn database according to the security
+        # group rule id for easy comparison in the future.
+        ovn_acls.sort(key=lambda x: x.get(
+            ovn_const.OVN_SG_RULE_EXT_ID_KEY, ""))
+        neutron_num, ovn_num = len(neutron_acls), len(ovn_acls)
+        add_acls, remove_acls, ovn_default_acls = [], [], []
+        n_index = o_index = 0
+        # neutron_acls and ovn_acls have been sorted, and we need to traverse
+        # both arrays from scratch until we reach the end of one of them.
+        # If it is found that the elements of two arrays are consistent,
+        # it is considered that the data is consistent. If it is found during
+        # comparison that the security group rule id in neutron_acls is
+        # smaller than the security group rule id in ovn_acls, as the arrays
+        # have been sorted, this security group rule will no longer appear in
+        # the future. This indicates that this security group rule only
+        # exists in neutron_acls. If it is a related situation, this security
+        # group rule only appears in ovn_acls.
+        while n_index < neutron_num and o_index < ovn_num:
+            na, oa = neutron_acls[n_index], ovn_acls[o_index]
+            n_id = na[ovn_const.OVN_SG_RULE_EXT_ID_KEY]
+            o_id = oa.get(ovn_const.OVN_SG_RULE_EXT_ID_KEY)
+            if not o_id:
+                # There may be some ACLs in the OVN database that do not have
+                # security group rule id. These are the default rules, which
+                # will be specially compared and processed later.
+                ovn_default_acls.append(oa)
+                o_index += 1
+            elif n_id == o_id:
+                if any(item not in na.items() for item in oa.items()):
+                    add_acls.append(na)
+                    remove_acls.append(oa)
+                n_index += 1
+                o_index += 1
+            elif n_id > o_id:
+                remove_acls.append(oa)
+                o_index += 1
+            else:
+                add_acls.append(na)
+                n_index += 1
+
+        if n_index < neutron_num:
+            # We didn't find the OVN ACLs matching the Neutron ACLs
+            # in "ovn_acls" and we are just adding the pending Neutron ACLs.
+            add_acls.extend(neutron_acls[n_index:])
+        if o_index < ovn_num:
+            # Any OVN ACLs not matching the Neutron ACLs is removed.
+            remove_acls.extend(ovn_acls[o_index:])
 
         # We need to remove also all the ACLs applied to Logical Switches
         def get_num_acls(ovn_acls):
@@ -289,13 +342,14 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         num_acls_to_remove_from_ls = get_num_acls(ovn_acls_from_ls)
 
         # Remove the common ones
-        for na in list(neutron_acls):
-            for ovn_a in ovn_acls.copy():
+        for na in list(neutron_default_acls):
+            for ovn_a in ovn_default_acls.copy():
                 if all(item in na.items() for item in ovn_a.items()):
-                    neutron_acls.remove(na)
-                    ovn_acls.remove(ovn_a)
+                    neutron_default_acls.remove(na)
+                    ovn_default_acls.remove(ovn_a)
                     break
-
+        neutron_acls = add_acls + neutron_default_acls
+        ovn_acls = remove_acls + ovn_default_acls
         num_acls_to_add = len(neutron_acls)
         num_acls_to_remove = len(ovn_acls) + num_acls_to_remove_from_ls
         if num_acls_to_add or num_acls_to_remove:

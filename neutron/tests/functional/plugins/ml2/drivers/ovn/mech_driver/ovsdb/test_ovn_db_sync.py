@@ -23,7 +23,9 @@ from neutron_lib.api.definitions import floating_ip_port_forwarding as pf_def
 from neutron_lib.api.definitions import port_security as ps
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib.db import api as db_api
 from neutron_lib.services.qos import constants as qos_const
+from oslo_config import cfg
 from oslo_utils import uuidutils
 from ovsdbapp.backend.ovs_idl import idlutils
 from ovsdbapp import constants as ovsdbapp_const
@@ -52,6 +54,7 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
     def setUp(self, *args):
         super(TestOvnNbSync, self).setUp(maintenance_worker=True)
         ovn_config.cfg.CONF.set_override('dns_domain', 'ovn.test')
+        cfg.CONF.set_override('quota_security_group_rule', -1, group='QUOTAS')
         ext_mgr = test_extraroute.ExtraRouteTestExtensionManager()
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
         sg_mgr = test_securitygroup.SecurityGroupTestExtensionManager()
@@ -1753,6 +1756,56 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
         ctx = context.get_admin_context()
         nb_synchronizer.sync_fip_qos_policies(ctx)
         self._validate_qos_records()
+
+    def _create_security_group_rule(self, sg_id, direction, tcp_port):
+        data = {'security_group_rule': {'security_group_id': sg_id,
+                                        'direction': direction,
+                                        'protocol': constants.PROTO_NAME_TCP,
+                                        'ethertype': constants.IPv4,
+                                        'port_range_min': tcp_port,
+                                        'port_range_max': tcp_port}}
+        req = self.new_create_request('security-group-rules', data, self.fmt)
+        res = req.get_response(self.api)
+        sgr = self.deserialize(self.fmt, res)
+        self.assertIn('security_group_rule', sgr)
+        return sgr['security_group_rule']['id']
+
+    def test_sync_acls(self):
+        data = {'security_group': {'name': 'sg1'}}
+        sg_req = self.new_create_request('security-groups', data)
+        res = sg_req.get_response(self.api)
+        sg = self.deserialize(self.fmt, res)['security_group']
+
+        sgr_ids = []
+        for tcp_port in range(8050, 8055):
+            sgr_ids.append(self._create_security_group_rule(
+                sg['id'], 'ingress', tcp_port))
+        for tcp_port in range(10000, 10005):
+            sgr_ids.append(self._create_security_group_rule(
+                sg['id'], 'egress', tcp_port))
+        self._validate_acls()
+
+        # Delete ACLs from the OVN DB.
+        with self.nb_api.transaction(check_error=True) as txn:
+            pg_name = utils.ovn_port_group_name(sg['id'])
+            txn.add(self.nb_api.pg_acl_del(pg_name, direction='to-lport'))
+        self._validate_acls(should_match=False)
+
+        nb_synchronizer = ovn_db_sync.OvnNbSynchronizer(
+            self.plugin, self.mech_driver.nb_ovn, self.mech_driver.sb_ovn,
+            'repair', self.mech_driver)
+        ctx = context.get_admin_context()
+        nb_synchronizer.sync_acls(ctx)
+        self._validate_acls()
+        # Delete Security Group Rules from Neutron DB.
+        for i in range(5):
+            with db_api.CONTEXT_WRITER.using(context):
+                sgr = self.plugin._get_security_group_rule(
+                    self.ctx, sgr_ids[i])
+                sgr.delete()
+        self._validate_acls(should_match=False)
+        nb_synchronizer.sync_acls(ctx)
+        self._validate_acls()
 
 
 class TestOvnSbSync(base.TestOVNFunctionalBase):
