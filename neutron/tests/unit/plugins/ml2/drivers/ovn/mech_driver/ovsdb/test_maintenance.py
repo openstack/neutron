@@ -1018,7 +1018,7 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         internal_net_id = uuidutils.generate_uuid()
         routers_db = [{
             'id': uuidutils.generate_uuid(),
-            'external_gateways': [{'network_id': ext_net_id}]}]
+            'external_gateway_info': {'network_id': ext_net_id}}]
         ext_gw_lrp = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'external_ids': {
                 constants.OVN_NETWORK_NAME_EXT_ID_KEY:
@@ -1054,7 +1054,7 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         internal_net_id = uuidutils.generate_uuid()
         routers_db = [{
             'id': uuidutils.generate_uuid(),
-            'external_gateways': [{'network_id': ext_net_id}]}]
+            'external_gateway_info': {'network_id': ext_net_id}}]
         ext_gw_lrp = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'external_ids': {
                 constants.OVN_NETWORK_NAME_EXT_ID_KEY:
