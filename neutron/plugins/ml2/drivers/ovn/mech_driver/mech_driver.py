@@ -1055,9 +1055,11 @@ class OVNMechanismDriver(api.MechanismDriver):
             hostname = ''
 
         # Updates neutron database with hostname for virtual port
-        self._plugin.update_virtual_port_host(n_context.get_admin_context(),
-                                              port_id, hostname)
-
+        context = n_context.get_admin_context()
+        self._plugin.update_virtual_port_host(context, port_id, hostname)
+        db_port = self._plugin.get_port(context, port_id)
+        check_rev_cmd = self.nb_ovn.check_revision_number(
+            port_id, db_port, ovn_const.TYPE_PORTS)
         # Updates OVN NB database with hostname for lsp virtual port
         with self.nb_ovn.transaction(check_error=True) as txn:
             ext_ids = ('external_ids',
@@ -1065,6 +1067,10 @@ class OVNMechanismDriver(api.MechanismDriver):
             txn.add(
                 self.nb_ovn.db_set(
                     'Logical_Switch_Port', port_id, ext_ids))
+            txn.add(check_rev_cmd)
+        if check_rev_cmd.result == ovn_const.TXN_COMMITTED:
+            ovn_revision_numbers_db.bump_revision(context, db_port,
+                                                  ovn_const.TYPE_PORTS)
 
     def get_workers(self):
         """Get any worker instances that should have their own process
