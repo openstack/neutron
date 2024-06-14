@@ -206,7 +206,7 @@ class NetworkRBACTestCase(testlib_api.SqlTestCase):
         self._check_rbac(self.network_id, is_none=False, external=False)
         self._create_subnet(self.tenant_1, self.subnet_1_id, True)
         self._create_subnet(self.tenant_2, self.subnet_2_id, True,
-                            cidr='10.10.20/24')
+                            cidr='10.10.20.0/24')
 
         network_data = {'shared': False}
         self.assertRaises(n_exc.InvalidSharedSetting, self._update_network,
