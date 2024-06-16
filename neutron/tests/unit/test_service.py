@@ -23,7 +23,6 @@ from oslo_config import cfg
 
 from neutron import service
 from neutron.tests import base
-from neutron.tests.unit import test_wsgi
 
 
 class TestServiceHelpers(base.BaseTestCase):
@@ -34,10 +33,19 @@ class TestServiceHelpers(base.BaseTestCase):
         self.assertLessEqual(num_workers, processutils.get_worker_count())
 
 
-class TestRpcWorker(test_wsgi.TestServiceBase):
+class TestRpcWorker(base.BaseTestCase):
+
+    @mock.patch("neutron.policy.refresh")
+    @mock.patch("neutron.common.config.setup_logging")
+    def _test_reset(self, worker_service, setup_logging_mock, refresh_mock):
+        worker_service.reset()
+
+        setup_logging_mock.assert_called_once_with()
+        refresh_mock.assert_called_once_with()
 
     def test_reset(self):
         _plugin = mock.Mock()
+
         rpc_worker = service.RpcWorker(_plugin)
         self._test_reset(rpc_worker)
 
@@ -84,7 +92,7 @@ class TestRunWsgiApp(base.BaseTestCase):
     def _test_api_workers(self, config_value, expected_passed_value):
         if config_value is not None:
             cfg.CONF.set_override('api_workers', config_value)
-        with mock.patch('neutron.wsgi.Server') as mock_server:
+        with mock.patch('neutron.api.wsgi.Server') as mock_server:
             service.run_wsgi_app(mock.sentinel.app)
         start_call = mock_server.return_value.start.call_args
         expected_call = mock.call(

@@ -30,11 +30,10 @@ import webob.dec
 import webob.exc
 
 from neutron._i18n import _
+from neutron.api import wsgi
 from neutron import extensions as core_extensions
 from neutron.plugins.common import constants as const
 from neutron.services import provider_configuration
-from neutron import wsgi
-
 
 LOG = logging.getLogger(__name__)
 

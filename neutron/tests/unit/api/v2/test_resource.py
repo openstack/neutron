@@ -23,9 +23,9 @@ import webtest
 
 from neutron._i18n import _
 from neutron.api.v2 import resource as wsgi_resource
+from neutron.api import wsgi
 from neutron.common import utils
 from neutron.tests import base
-from neutron import wsgi
 
 
 class RequestTestCase(base.BaseTestCase):

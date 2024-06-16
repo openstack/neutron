@@ -40,6 +40,7 @@ from neutron.api.rpc.agentnotifiers import dhcp_rpc_agent_api
 from neutron.api.rpc.agentnotifiers import l3_rpc_agent_api
 from neutron.api.rpc.handlers import dhcp_rpc
 from neutron.api.rpc.handlers import l3_rpc
+from neutron.api import wsgi
 from neutron.db import agents_db
 from neutron.db import agentschedulers_db
 from neutron.db.models import agent as agent_model
@@ -53,7 +54,6 @@ from neutron.tests.unit.db import test_db_base_plugin_v2 as test_plugin
 from neutron.tests.unit.extensions import test_agent
 from neutron.tests.unit.extensions import test_l3
 from neutron.tests.unit import testlib_api
-from neutron import wsgi
 
 
 L3_HOSTA = 'hosta'

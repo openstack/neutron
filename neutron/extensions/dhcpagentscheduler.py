@@ -27,8 +27,8 @@ from oslo_log import log as logging
 
 from neutron.api import extensions
 from neutron.api.v2 import resource
+from neutron.api import wsgi
 from neutron import policy
-from neutron import wsgi
 
 LOG = logging.getLogger(__name__)
 

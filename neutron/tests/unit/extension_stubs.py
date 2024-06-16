@@ -18,7 +18,7 @@ import abc
 from neutron_lib.api import extensions as api_extensions
 from neutron_lib.services import base
 
-from neutron import wsgi
+from neutron.api import wsgi
 
 
 class StubExtension(api_extensions.ExtensionDescriptor):

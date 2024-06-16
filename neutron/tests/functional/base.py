@@ -32,6 +32,7 @@ from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron.agent.linux import utils
 from neutron.api import extensions as exts
+from neutron.api import wsgi
 from neutron.common import utils as n_utils
 from neutron.conf.agent import common as config
 from neutron.conf.agent import ovs_conf
@@ -53,7 +54,6 @@ from neutron.tests.common import helpers
 from neutron.tests.functional.resources import process
 from neutron.tests.unit.extensions import test_securitygroup
 from neutron.tests.unit.plugins.ml2 import test_plugin
-import neutron.wsgi
 
 LOG = log.getLogger(__name__)
 
@@ -329,7 +329,7 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
             trigger_cls.trigger.__self__.__class__ = worker.MaintenanceWorker
             cfg.CONF.set_override('neutron_sync_mode', 'off', 'ovn')
         else:
-            trigger_cls.trigger.__self__.__class__ = neutron.wsgi.WorkerService
+            trigger_cls.trigger.__self__.__class__ = wsgi.WorkerService
 
         self.addCleanup(self.stop)
         # NOTE(ralonsoh): do not access to the DB at exit when the SQL

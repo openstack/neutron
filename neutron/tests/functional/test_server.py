@@ -28,16 +28,14 @@ from oslo_config import cfg
 from oslo_log import log
 import psutil
 
+from neutron.api import wsgi
 from neutron.common import utils
 from neutron import manager
 from neutron import service
 from neutron.tests import base as tests_base
 from neutron.tests.functional import base
-from neutron import wsgi
-
 
 LOG = log.getLogger(__name__)
-
 CONF = cfg.CONF
 
 # Those messages will be written to temporary file each time
@@ -191,7 +189,7 @@ class TestNeutronServer(base.BaseLoggingTestCase):
 
 
 class TestWsgiServer(TestNeutronServer):
-    """Tests for neutron.wsgi.Server."""
+    """Tests for neutron.api.wsgi.Server."""
 
     def setUp(self):
         super(TestWsgiServer, self).setUp()
@@ -225,8 +223,11 @@ class TestWsgiServer(TestNeutronServer):
 
         # Mock start method to check that children are started again on
         # receiving SIGHUP.
-        with mock.patch("neutron.wsgi.WorkerService.start") as start_method,\
-                mock.patch("neutron.wsgi.WorkerService.reset") as reset_method:
+        with mock.patch(
+            "neutron.api.wsgi.WorkerService.start"
+        ) as start_method, mock.patch(
+            "neutron.api.wsgi.WorkerService.reset"
+        ) as reset_method:
             start_method.side_effect = self._fake_start
             reset_method.side_effect = self._fake_reset
 

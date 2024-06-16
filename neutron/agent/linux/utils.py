@@ -35,10 +35,9 @@ from oslo_utils import excutils
 from oslo_utils import fileutils
 import psutil
 
+from neutron.api import wsgi
 from neutron.conf.agent import common as config
 from neutron.privileged.agent.linux import utils as priv_utils
-from neutron import wsgi
-
 
 LOG = logging.getLogger(__name__)
 

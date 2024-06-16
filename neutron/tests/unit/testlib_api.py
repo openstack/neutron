@@ -23,11 +23,11 @@ from oslo_config import cfg
 from oslo_db import exception as oslodb_exception
 from oslo_db.sqlalchemy import provision
 
+from neutron.api import wsgi
 from neutron.db.migration import cli as migration
 # Import all data models
 from neutron.db.migration.models import head  # noqa
 from neutron.tests import base
-from neutron import wsgi
 
 
 class ExpectedException(testtools.ExpectedException):

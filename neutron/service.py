@@ -34,11 +34,11 @@ from oslo_utils import excutils
 from oslo_utils import importutils
 import psutil
 
+from neutron.api import wsgi
 from neutron.common import config
 from neutron.common import profiler
 from neutron.conf import service
 from neutron import worker as neutron_worker
-from neutron import wsgi
 
 
 service.register_service_opts(service.SERVICE_OPTS)

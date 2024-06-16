@@ -22,9 +22,8 @@ import webob.dec
 import webob.exc
 
 from neutron.api import api_common
+from neutron.api import wsgi
 from neutron.common import utils
-from neutron import wsgi
-
 
 LOG = logging.getLogger(__name__)
 

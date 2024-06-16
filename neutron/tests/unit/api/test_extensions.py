@@ -34,6 +34,7 @@ import webtest
 
 import neutron
 from neutron.api import extensions
+from neutron.api import wsgi
 from neutron.common import config
 from neutron.plugins.common import constants
 from neutron import quota
@@ -44,8 +45,6 @@ from neutron.tests.unit import extension_stubs as ext_stubs
 import neutron.tests.unit.extensions
 from neutron.tests.unit.extensions import extendedattribute as extattr
 from neutron.tests.unit import testlib_api
-from neutron import wsgi
-
 
 LOG = logging.getLogger(__name__)
 _uuid = test_base._uuid
