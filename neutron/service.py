@@ -24,6 +24,7 @@ from neutron_lib import context
 from neutron_lib.db import api as session
 from neutron_lib.plugins import directory
 from neutron_lib import rpc as n_rpc
+from neutron_lib import worker as base_worker
 from oslo_concurrency import processutils
 from oslo_config import cfg
 from oslo_log import log as logging
@@ -34,6 +35,7 @@ from oslo_utils import excutils
 from oslo_utils import importutils
 import psutil
 
+from neutron._i18n import _
 from neutron.api import wsgi
 from neutron.common import config
 from neutron.common import profiler
@@ -238,11 +240,16 @@ class AllServicesNeutronWorker(neutron_worker.NeutronBaseWorker):
     def __init__(self, services, worker_process_count=1):
         super(AllServicesNeutronWorker, self).__init__(worker_process_count)
         self._services = services
+        for srv in self._services:
+            self._check_base_worker_service(srv)
         self._launcher = common_service.Launcher(cfg.CONF,
                                                  restart_method='mutate')
 
     def start(self):
         for srv in self._services:
+            # Unset the 'set_proctitle' flag to prevent each service to
+            # re-write the process title already defined and set by this class.
+            srv.set_proctitle = 'off'
             self._launcher.launch_service(srv)
         super(AllServicesNeutronWorker, self).start(desc="services worker")
 
@@ -254,6 +261,13 @@ class AllServicesNeutronWorker(neutron_worker.NeutronBaseWorker):
 
     def reset(self):
         self._launcher.restart()
+
+    @staticmethod
+    def _check_base_worker_service(srv):
+        if not isinstance(srv, base_worker.BaseWorker):
+            raise TypeError(
+                _('Service %(srv)s must an instance of %(base)s!)') %
+                {'srv': srv, 'base': base_worker.BaseWorker})
 
 
 def _start_workers(workers, neutron_api=None):
