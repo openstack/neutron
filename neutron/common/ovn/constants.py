@@ -213,6 +213,10 @@ OVN_STR_TYPE_DHCP_OPTS = [
     'wpad',
     'tftp_server']
 
+OVN_MAP_TYPE_DHCP_OPTS = [
+    'classless_static_route',
+]
+
 # Special option for disabling DHCP via extra DHCP options
 DHCP_DISABLED_OPT = 'dhcp_disabled'
 

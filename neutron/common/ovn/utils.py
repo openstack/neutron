@@ -249,6 +249,10 @@ def is_dhcp_option_quoted(opt_value):
     return opt_value.startswith('"') and opt_value.endswith('"')
 
 
+def is_dhcp_option_a_map(opt_value):
+    return opt_value.startswith('{') and opt_value.endswith('}')
+
+
 def get_lsp_dhcp_opts(port, ip_version):
     # Get dhcp options from Neutron port, for setting DHCP_Options row
     # in OVN.
@@ -287,6 +291,9 @@ def get_lsp_dhcp_opts(port, ip_version):
             if (opt in constants.OVN_STR_TYPE_DHCP_OPTS and
                     not is_dhcp_option_quoted(edo['opt_value'])):
                 edo['opt_value'] = '"%s"' % edo['opt_value']
+            elif (opt in constants.OVN_MAP_TYPE_DHCP_OPTS and
+                  not is_dhcp_option_a_map(edo['opt_value'])):
+                edo['opt_value'] = '{%s}' % edo['opt_value']
             lsp_dhcp_opts[opt] = edo['opt_value']
 
     return (lsp_dhcp_disabled, lsp_dhcp_opts)
