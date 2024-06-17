@@ -17,11 +17,13 @@ from oslo_service import loopingcall
 
 class NeutronBaseWorker(worker.BaseWorker):
 
-    def __init__(self, worker_process_count=1, set_proctitle=None):
+    def __init__(self, worker_process_count=1, set_proctitle=None,
+                 desc=None):
         set_proctitle = set_proctitle or cfg.CONF.setproctitle
         super(NeutronBaseWorker, self).__init__(
             worker_process_count=worker_process_count,
-            set_proctitle=set_proctitle
+            set_proctitle=set_proctitle,
+            desc=desc,
         )
 
     def start(self, name="neutron-server", desc=None):
