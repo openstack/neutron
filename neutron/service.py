@@ -310,6 +310,13 @@ def start_rpc_workers():
     return launcher
 
 
+def start_periodic_workers():
+    periodic_workers = _get_plugins_workers()
+    launcher = _start_workers(periodic_workers)
+    registry.publish(resources.PROCESS, events.AFTER_SPAWN, None)
+    return launcher
+
+
 def start_plugins_workers():
     plugins_workers = _get_plugins_workers()
     return _start_workers(plugins_workers)
