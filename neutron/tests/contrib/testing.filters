@@ -54,3 +54,7 @@ l3_agent: CommandFilter, l3_agent.py, root
 
 #needed to capture and analyze traffic in fullstack tests (f.e. in DSCP scenarios)
 tcpdump: CommandFilter, tcpdump, root
+
+#needed to create transient systemd services for fullstack tests
+systemd_run: CommandFilter, systemd-run, root
+systemctl: CommandFilter, systemctl, root

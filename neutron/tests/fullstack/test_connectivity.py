@@ -147,7 +147,7 @@ class _TestUninterruptedConnectivityOnL2AgentRestart(
                    'l2_pop': False}),
     ]
 
-    def _test_l2_agent_restart(self, agent_restart_timeout=20):
+    def _test_l2_agent_restart(self, agent_restart_timeout=30):
         # Environment preparation is effectively the same as connectivity test
         vms = self._prepare_vms_in_single_network()
         vms.ping_all()
@@ -175,5 +175,5 @@ class TestUninterruptedConnectivityOnL2AgentRestartOvs(
             scenario,
             _TestUninterruptedConnectivityOnL2AgentRestart.network_scenarios))
 
-    def test_l2_agent_restart(self, agent_restart_timeout=20):
+    def test_l2_agent_restart(self, agent_restart_timeout=30):
         self._test_l2_agent_restart(agent_restart_timeout)
