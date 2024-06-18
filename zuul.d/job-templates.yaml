@@ -18,7 +18,6 @@
               - ^devstack/.*$
               - ^playbooks/.*$
               - ^roles/.*$
-              - ^rally-jobs/.*$
               - ^zuul.d/(?!(job-templates)).*\.yaml
         - openstack-tox-py39: # from openstack-python3-yoga-jobs template
             timeout: 3600
