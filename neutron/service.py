@@ -100,7 +100,8 @@ class RpcWorker(neutron_worker.NeutronBaseWorker):
 
     def __init__(self, plugins, worker_process_count=1):
         super(RpcWorker, self).__init__(
-            worker_process_count=worker_process_count
+            worker_process_count=worker_process_count,
+            desc=self.desc,
         )
 
         self._plugins = plugins
