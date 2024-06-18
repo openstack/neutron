@@ -15,7 +15,6 @@
       jobs:
         - neutron-functional-with-uwsgi
         - neutron-fullstack-with-uwsgi
-        - neutron-rally-task
         - neutron-grenade-multinode
         - neutron-grenade-dvr-multinode
         - neutron-grenade-ovn:
@@ -37,8 +36,6 @@
         #- networking-midonet-tempest-aio-ml2-centos-7:
         #    voting: false
         - openstacksdk-functional-devstack-networking:
-            voting: false
-        - neutron-ovn-rally-task:
             voting: false
         - neutron-ovn-tempest-slow:
             voting: false
@@ -63,7 +60,6 @@
         - neutron-ovn-tempest-ovs-release
         - openstack-tox-py36:  # from openstack-python3-victoria-jobs template
             timeout: 3600
-        #- neutron-ovn-rally-task
 
     periodic:
       jobs:
