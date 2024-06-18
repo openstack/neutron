@@ -31,7 +31,6 @@
       - ^playbooks/prepare-ovn-multinode.yaml
       - ^roles/add_mariadb_repo/.*$
       - ^roles/nftables/.*$
-      - ^rally-jobs/.*$
       - ^zuul.d/(?!(project)).*\.yaml
     vars:
       configure_swap_size: 8192
@@ -92,7 +91,6 @@
       - ^playbooks/prepare-ovn-multinode.yaml
       - ^roles/add_mariadb_repo/.*$
       - ^roles/nftables/.*$
-      - ^rally-jobs/.*$
       - ^zuul.d/(?!(project)).*\.yaml
 
 - job:

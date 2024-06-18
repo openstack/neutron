@@ -19,7 +19,6 @@
       jobs:
         - neutron-functional-with-uwsgi
         - neutron-fullstack-with-uwsgi
-        - neutron-ovs-rally-task
         - neutron-ovs-grenade-multinode
         - neutron-ovs-grenade-dvr-multinode:
             # TODO(slaweq): make that job voting when bug
@@ -33,8 +32,6 @@
         # working fine on python 3
         #- networking-midonet-tempest-aio-ml2-centos-7:
         #    voting: false
-        - neutron-ovn-rally-task:
-            voting: false
     gate:
       jobs:
         - neutron-functional-with-uwsgi
@@ -46,4 +43,3 @@
         # will be fixed
         # - neutron-ovs-grenade-dvr-multinode
         - neutron-ovn-tempest-ipv6-only
-        #- neutron-ovn-rally-task
