@@ -30,6 +30,7 @@ from neutron.agent.linux import utils as linux_utils
 from neutron.agent.ovn.metadata import agent
 from neutron.agent.ovn.metadata import driver
 from neutron.common.ovn import constants as ovn_const
+from neutron.common import utils
 from neutron.conf.agent.metadata import config as meta_conf
 from neutron.conf.agent.ovn.metadata import config as ovn_meta_conf
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
@@ -357,12 +358,12 @@ class TestMetadataAgent(base.BaseTestCase):
             self.assertIsNone(self.agent._get_provision_params(datapath))
             tdp.assert_called_once_with(network_id)
 
-    def test__get_provision_params_returns_provision_parameters(self):
+    def _test__get_provision_params_returns_provision_parameters(self,
+                                                                 port_ip):
         """The happy path when datapath has ports with "external" or ""(blank)
         types and metadata port contains MAC and subnet CIDRs.
         """
         network_id = '1'
-        port_ip = '1.2.3.4'
         metada_port_mac = "fa:16:3e:22:65:18"
         metada_port_subnet_cidr = "10.204.0.10/29"
         metada_port_logical_port = "3b66c176-199b-48ec-8331-c1fd3f6e2b44"
@@ -388,12 +389,22 @@ class TestMetadataAgent(base.BaseTestCase):
         net_name, datapath_port_ips, metadata_port_info = actual_params
 
         self.assertEqual(network_id, net_name)
-        self.assertListEqual([port_ip], datapath_port_ips)
+
+        if utils.get_ip_version(port_ip) == n_const.IP_VERSION_4:
+            self.assertListEqual([port_ip], datapath_port_ips)
         self.assertEqual(metada_port_mac, metadata_port_info.mac)
         self.assertSetEqual(set([metada_port_subnet_cidr]),
                             metadata_port_info.ip_addresses)
         self.assertEqual(metada_port_logical_port,
                          metadata_port_info.logical_port)
+
+    def test__get_provision_params_returns_provision_parameters(self):
+        self._test__get_provision_params_returns_provision_parameters(
+            '1.2.3.4')
+
+    def test__get_provision_params_returns_provision_parameters_ipv6(self):
+        self._test__get_provision_params_returns_provision_parameters(
+            'fe80::f816:3eff:feb6:c0c0')
 
     def test_provision_datapath(self):
         """Test datapath provisioning.
