@@ -191,6 +191,18 @@ class OVNClient(object):
                         return opts
             return get_opts[0]
 
+    def _merge_map_dhcp_option(self, opt, port_opts, subnet_opts):
+        """Merge a port and subnet map DHCP option.
+
+        If a DHCP option exists in both port and subnet, the port
+        should inherit the values from the subnet.
+        """
+        port_opt = port_opts[opt]
+        subnet_opt = subnet_opts.get(opt)
+        if not subnet_opt:
+            return port_opt
+        return '{%s, %s}' % (subnet_opt[1:-1], port_opt[1:-1])
+
     def _get_port_dhcp_options(self, port, ip_version):
         """Return dhcp options for port.
 
@@ -222,6 +234,12 @@ class OVNClient(object):
 
         if not lsp_dhcp_opts:
             return subnet_dhcp_options
+
+        # Check for map DHCP options
+        for opt in ovn_const.OVN_MAP_TYPE_DHCP_OPTS:
+            if opt in lsp_dhcp_opts:
+                lsp_dhcp_opts[opt] = self._merge_map_dhcp_option(
+                    opt, lsp_dhcp_opts, subnet_dhcp_options['options'])
 
         # This port has extra DHCP options defined, so we will create a new
         # row in DHCP_Options table for it.

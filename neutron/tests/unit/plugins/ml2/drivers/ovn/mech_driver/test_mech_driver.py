@@ -4028,6 +4028,44 @@ class TestOVNMechanismDriverDHCPOptions(OVNMechanismDriverTestCase):
         self._test__get_subnet_dhcp_options_for_port(ip_version=6,
                                                      enable_dhcp=False)
 
+    def test_get_port_dhcp_options_classless_static_route(self):
+        port = {
+            'id': 'foo-port',
+            'device_owner': 'compute:None',
+            'fixed_ips': [{'subnet_id': 'foo-subnet',
+                           'ip_address': '10.0.0.11'}],
+            'extra_dhcp_opts': [
+                {'ip_version': 4, 'opt_name': 'classless-static-route',
+                 'opt_value': '128.128.128.128/32,22.2.0.2'}]}
+
+        self.mech_driver._ovn_client._get_subnet_dhcp_options_for_port = (
+            mock.Mock(
+                return_value=({
+                    'cidr': '10.0.0.0/24',
+                    'external_ids': {'subnet_id': 'foo-subnet'},
+                    'options': {
+                        'classless_static_route':
+                            '{169.254.169.254/32,10.0.0.2}'},
+                    'uuid': 'foo-uuid'})))
+
+        # Expect both the subnet and port classless_static_route
+        # to be merged
+        expected_routes = ('{169.254.169.254/32,10.0.0.2, '
+                           '128.128.128.128/32,22.2.0.2}')
+        expected_dhcp_options = {
+            'cidr': '10.0.0.0/24',
+            'external_ids': {'subnet_id': 'foo-subnet',
+                             'port_id': 'foo-port'},
+            'options': {'classless_static_route': expected_routes}
+        }
+
+        self.mech_driver.nb_ovn.add_dhcp_options.return_value = 'foo-val'
+        dhcp_options = self.mech_driver._ovn_client._get_port_dhcp_options(
+            port, 4)
+        self.assertEqual({'cmd': 'foo-val'}, dhcp_options)
+        self.mech_driver.nb_ovn.add_dhcp_options.assert_called_once_with(
+            'foo-subnet', port_id='foo-port', **expected_dhcp_options)
+
 
 class TestOVNMechanismDriverSecurityGroup(MechDriverSetupBase,
         test_security_group.Ml2SecurityGroupsTestCase):
