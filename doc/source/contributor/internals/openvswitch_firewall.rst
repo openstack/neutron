@@ -523,6 +523,19 @@ will be:
   table=94, priority=10,reg6=0x284,dl_src=fa:16:3e:24:57:c7,dl_dst=00:00:00:00:00:00/01:00:00:00:00:00 actions=push_vlan:0x8100,set_field:0x1->vlan_vid,output:3
   table=94, priority=1 actions=NORMAL
 
+The OVS firewall will initialize a default goto table 94 flow
+on TRANSIENT_TABLE |table_60|, if ``explicitly_egress_direct``
+is set to True, which is mainly for ports without security groups
+and disabled port_security. For instance:
+
+::
+  table=60, priority=2 actions=resubmit(,94)
+
+Then for packets from the outside to VM without security functionalities
+(--disable-port-security --no-security-group)
+will go to table 94 and do the same direct actions.
+
+
 OVS firewall integration points
 -------------------------------
 
