@@ -706,10 +706,12 @@ def get_port_subnet_ids(port):
     return [f['subnet_id'] for f in fixed_ips]
 
 
-def get_method_class(method):
-    if not inspect.ismethod(method):
+def get_method_class(method_or_class):
+    if not inspect.ismethod(method_or_class):
+        if inspect.isclass(method_or_class):
+            return method_or_class
         return
-    return method.__self__.__class__
+    return method_or_class.__self__.__class__
 
 
 def ovn_metadata_name(id_):

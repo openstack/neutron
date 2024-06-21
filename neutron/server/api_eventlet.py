@@ -14,12 +14,21 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from oslo_config import cfg
 
+from neutron.api import wsgi
 from neutron.common import config
 from neutron.common import profiler
 
 
 def eventlet_api_server():
     profiler.setup('neutron-server', cfg.CONF.host)
-    return config.load_paste_app('neutron')
+    app = config.load_paste_app('neutron')
+    registry.publish(resources.PROCESS, events.BEFORE_SPAWN,
+                     wsgi.WorkerService)
+    registry.publish(resources.PROCESS, events.AFTER_INIT,
+                     wsgi.WorkerService)
+    return app
