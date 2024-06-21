@@ -875,8 +875,13 @@ class TestOVSFirewallDriver(base.BaseTestCase):
                       "reg6": port.vlan_tag}
         flow7 = mock.call(**call_args7)
 
+        call_args8 = {"table": ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE,
+                      "dl_dst": port.mac,
+                      "dl_vlan": port.vlan_tag}
+        flow8 = mock.call(**call_args8)
+
         self.mock_bridge.br.delete_flows.assert_has_calls(
-            [flow1, flow2, flow3, flow6, flow7, flow4, flow5])
+            [flow1, flow2, flow3, flow6, flow7, flow8, flow4, flow5])
 
     def test_prepare_port_filter_initialized_port(self):
         port_dict = {'device': 'port-id',
