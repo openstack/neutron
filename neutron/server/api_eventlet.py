@@ -16,12 +16,16 @@
 import os
 import signal
 
+from neutron_lib.callbacks import events
+from neutron_lib.callbacks import registry
+from neutron_lib.callbacks import resources
 from oslo_config import cfg
 from oslo_reports import guru_meditation_report as gmr
 
 from neutron.common import config
 from neutron.common import profiler
 from neutron import version
+from neutron import wsgi
 
 
 def eventlet_api_server():
@@ -34,4 +38,9 @@ def eventlet_api_server():
                                          signum=signal.SIGWINCH)
 
     profiler.setup('neutron-server', cfg.CONF.host)
-    return config.load_paste_app('neutron')
+    app = config.load_paste_app('neutron')
+    registry.publish(resources.PROCESS, events.BEFORE_SPAWN,
+                     wsgi.WorkerService)
+    registry.publish(resources.PROCESS, events.AFTER_INIT,
+                     wsgi.WorkerService)
+    return app
