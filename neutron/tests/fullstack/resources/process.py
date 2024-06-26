@@ -81,7 +81,10 @@ class ProcessFixture(fixtures.Fixture):
         systemd_run = [
             'systemd-run',
             '--service-type', 'exec',
-            '--property', 'TimeoutStopSec=30s',
+            # Timeout and KILL processes 5s before the timeout the restart
+            # tests use.
+            '--property', 'TimeoutStopSec=25s',
+            '--property', 'KillMode=mixed',
             '--unit', self.unit_name,
             '--setenv', f'PATH={os.environ["PATH"]}',
             '--same-dir',
@@ -103,6 +106,7 @@ class ProcessFixture(fixtures.Fixture):
             # run unprivileged if run_as_root is False.
             run_as_root=True,
         )
+        common_utils.wait_until_true(self.service_is_active)
         LOG.debug("Process started: %s", self.process_name)
 
     def stop(self, kill_signal=None):
@@ -120,16 +124,26 @@ class ProcessFixture(fixtures.Fixture):
             msg = (f'Process killed with signal {kill_signal}: '
                    f'{self.process_name}')
         else:
-            stop_cmd = ['systemctl', 'stop', self.unit_name]
+            stop_cmd = ['systemctl', 'stop', '--no-block', self.unit_name]
             msg = f'Process stopped: {self.process_name}'
 
         utils.execute(stop_cmd, run_as_root=True)
+        common_utils.wait_until_true(self.process_is_not_running)
         LOG.debug(msg)
 
     def restart(self, executor=None):
         def _restart():
-            self.stop()
-            self.start()
+            if self.process_is_running():
+                restart_cmd = [
+                    'systemctl',
+                    'restart',
+                    '--no-block',
+                    self.unit_name,
+                ]
+                utils.execute(restart_cmd, run_as_root=True)
+                common_utils.wait_until_true(self.service_is_active)
+            else:
+                self.start()
 
         LOG.debug("Restarting process: %s", self.process_name)
 
@@ -138,14 +152,21 @@ class ProcessFixture(fixtures.Fixture):
         else:
             return executor.submit(_restart)
 
-    def process_is_running(self):
+    @property
+    def service_state(self):
         cmd = ['systemctl', 'is-active', self.unit_name]
         return utils.execute(
             cmd,
             run_as_root=True,
             log_fail_as_error=False,
             check_exit_code=False,
-        ) == 'active\n'
+        ).strip()
+
+    def service_is_active(self):
+        return self.service_state == 'active'
+
+    def process_is_running(self):
+        return self.service_state in ('active', 'activating', 'deactivating')
 
     def process_is_not_running(self):
         return not self.process_is_running()
