@@ -675,7 +675,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                   qos_const.RULE_TYPE_MINIMUM_BANDWIDTH])
         project_id = project_id or self._tenant_id
         type_req = rule_type + '_rule'
-        data = {type_req: {'project_id': project_id}}
+        data = {type_req: {}}
         if rule_type == qos_const.RULE_TYPE_BANDWIDTH_LIMIT:
             data[type_req][qos_const.MAX_KBPS] = max_kbps
             data[type_req][qos_const.MAX_BURST] = max_burst_kbps
