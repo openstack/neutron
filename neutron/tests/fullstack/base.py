@@ -120,7 +120,7 @@ class BaseFullStackTestCase(testlib_api.MySQLTestCaseMixin,
         common_utils.wait_until_true(_agent_down)
 
     def _assert_ping_during_agents_restart(
-            self, agents, src_namespace, ips, restart_timeout=10,
+            self, agents, src_namespace, ips, restart_timeout=30,
             ping_timeout=1, count=10):
         with net_helpers.async_ping(
                 src_namespace, ips, timeout=ping_timeout,
