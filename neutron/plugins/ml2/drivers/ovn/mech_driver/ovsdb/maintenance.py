@@ -874,40 +874,6 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
         raise periodics.NeverAgain()
 
-    # TODO(ralonsoh): Remove this in the Z+4 cycle
-    @has_lock_periodic(spacing=600, run_immediately=True)
-    def update_port_virtual_type(self):
-        """Set type=virtual to those ports with parents
-        Before LP#1973276, any virtual port with "device_owner" defined, lost
-        its type=virtual. This task restores the type for those ports updated
-        before the fix https://review.opendev.org/c/openstack/neutron/+/841711.
-        """
-        context = n_context.get_admin_context()
-        cmds = []
-        for lsp in self._nb_idl.lsp_list().execute(check_error=True):
-            if lsp.type != '':
-                continue
-
-            try:
-                port = self._ovn_client._plugin.get_port(context, lsp.name)
-            except n_exc.PortNotFound:
-                continue
-
-            for ip in port.get('fixed_ips', []):
-                if utils.get_virtual_port_parents(
-                        self._nb_idl, ip['ip_address'], port['network_id'],
-                        port['id']):
-                    cmds.append(self._nb_idl.db_set(
-                        'Logical_Switch_Port', lsp.uuid,
-                        ('type', ovn_const.LSP_TYPE_VIRTUAL)))
-                    break
-
-        if cmds:
-            with self._nb_idl.transaction(check_error=True) as txn:
-                for cmd in cmds:
-                    txn.add(cmd)
-        raise periodics.NeverAgain()
-
     # TODO(ralonsoh): Remove this in the Antelope+4 cycle
     @has_lock_periodic(spacing=600, run_immediately=True)
     def create_router_extra_attributes_registers(self):

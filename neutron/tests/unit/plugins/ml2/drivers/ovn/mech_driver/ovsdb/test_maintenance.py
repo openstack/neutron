@@ -923,28 +923,6 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         self.fake_ovn_client._nb_idl.set_lswitch_port.assert_has_calls(
             expected_calls)
 
-    @mock.patch.object(utils, 'get_virtual_port_parents',
-                       return_value=[mock.ANY])
-    def test_update_port_virtual_type(self, *args):
-        nb_idl = self.fake_ovn_client._nb_idl
-        lsp0 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={'name': 'lsp0', 'type': ''})
-        lsp1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={'name': 'lsp1', 'type': constants.LSP_TYPE_VIRTUAL})
-        lsp2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={'name': 'lsp2_not_present_in_neutron_db', 'type': ''})
-        port0 = {'fixed_ips': [{'ip_address': mock.ANY}],
-                 'network_id': mock.ANY, 'id': mock.ANY}
-        nb_idl.lsp_list.return_value.execute.return_value = (lsp0, lsp1, lsp2)
-        self.fake_ovn_client._plugin.get_port.side_effect = [
-            port0, n_exc.PortNotFound(port_id=mock.ANY)]
-
-        self.assertRaises(
-            periodics.NeverAgain, self.periodic.update_port_virtual_type)
-        expected_calls = [mock.call('Logical_Switch_Port', lsp0.uuid,
-                                    ('type', constants.LSP_TYPE_VIRTUAL))]
-        nb_idl.db_set.assert_has_calls(expected_calls)
-
     def test_add_gw_port_info_to_logical_router_port(self):
         nb_idl = self.fake_ovn_client._nb_idl
         ext_net_id = uuidutils.generate_uuid()
