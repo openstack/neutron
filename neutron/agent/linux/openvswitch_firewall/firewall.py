@@ -703,6 +703,22 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         port_id = port['device']
         return self.sg_port_map.ports.get(port_id)
 
+    def _create_of_port(self, port, ovs_port):
+        # Should always try to get the local vlan tag from
+        # the OVSDB Port other_config, since the ovs-agent's
+        # LocalVlanManager always allocated/updated it and then
+        # set_db_attribute to Port other_config before this.
+        port_vlan_id = self._get_port_vlan_tag(ovs_port.port_name)
+        segment_id = self._get_port_segmentation_id(
+            ovs_port.port_name)
+        network_type = self._get_port_network_type(
+            ovs_port.port_name)
+        physical_network = self._get_port_physical_network(
+            ovs_port.port_name)
+        return OFPort(port, ovs_port, port_vlan_id,
+                      segment_id,
+                      network_type, physical_network)
+
     def get_or_create_ofport(self, port):
         """Get ofport specified by port['device'], checking and reflecting
         ofport changes.
@@ -713,22 +729,12 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         try:
             of_port = self.sg_port_map.ports[port_id]
         except KeyError:
-            port_vlan_id = self._get_port_vlan_tag(ovs_port.port_name)
-            segment_id = self._get_port_segmentation_id(
-                ovs_port.port_name)
-            network_type = self._get_port_network_type(
-                ovs_port.port_name)
-            physical_network = self._get_port_physical_network(
-                ovs_port.port_name)
-            of_port = OFPort(port, ovs_port, port_vlan_id,
-                             segment_id,
-                             network_type, physical_network)
+            of_port = self._create_of_port(port, ovs_port)
             self.sg_port_map.create_port(of_port, port)
         else:
             if of_port.ofport != ovs_port.ofport:
                 self.sg_port_map.remove_port(of_port)
-                of_port = OFPort(port, ovs_port, of_port.vlan_tag,
-                                 of_port.segment_id)
+                of_port = self._create_of_port(port, ovs_port)
                 self.sg_port_map.create_port(of_port, port)
             else:
                 self.sg_port_map.update_port(of_port, port)
