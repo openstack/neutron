@@ -251,6 +251,7 @@ class TestDhcpAgentNotifyAPI(base.BaseTestCase):
         payload = events.DBEventPayload(
             mock.Mock(), metadata={
                 'port': {'id': 'foo_port_id',
+                         'fixed_ips': mock.ANY,
                          'network_id': 'foo_network_id'}})
         self._test__notify_agents_with_function(
             lambda: self.notifier._after_router_interface_deleted(
