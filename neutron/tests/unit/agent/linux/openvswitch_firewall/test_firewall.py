@@ -659,6 +659,21 @@ class TestOVSFirewallDriver(base.BaseTestCase):
         self.assertIn(of_port.id, self.firewall.sg_port_map.ports.keys())
         self.assertEqual(port.ofport, 2)
 
+    def test_get_or_create_ofport_changed_and_local_vlan_changed(self):
+        port_dict = {
+            'device': 'port-id',
+            'security_groups': [123, 456]}
+        of_port = create_ofport(port_dict)
+        self.firewall.sg_port_map.ports[of_port.id] = of_port
+        fake_ovs_port = FakeOVSPort('port', 2, '00:00:00:00:00:00')
+        self.mock_bridge.br.get_vif_port_by_id.return_value = \
+            fake_ovs_port
+        self.mock_bridge.br.db_get_val.return_value = {"tag": 10}
+        port = self.firewall.get_or_create_ofport(port_dict)
+        self.assertIn(of_port.id, self.firewall.sg_port_map.ports.keys())
+        self.assertEqual(port.ofport, 2)
+        self.assertEqual(port.vlan_tag, 10)
+
     def test_get_or_create_ofport_missing(self):
         port_dict = {
             'device': 'port-id',
