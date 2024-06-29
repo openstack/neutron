@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    Added a new process called ``neutron-periodic-workers``. This process is
+    spawned when using the Neutron API WSGI module with any mechanism driver.
+    It executes the ML2 plugin periodic workers that are collected by an
+    instance of the class ``AllServicesNeutronWorker`` and executed as threads
+    on a single worker.
