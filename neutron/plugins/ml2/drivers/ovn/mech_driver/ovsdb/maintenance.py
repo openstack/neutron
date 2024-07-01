@@ -665,6 +665,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         gw_ports = self._ovn_client._plugin.get_ports(
             context, {'device_owner': [n_const.DEVICE_OWNER_ROUTER_GW]})
         for gw_port in gw_ports:
+            router = self._ovn_client._l3_plugin.get_router(
+                context, gw_port['device_id'])
+            if not utils.is_ovn_provider_router(router):
+                continue
             enable_redirect = False
             if ovn_conf.is_ovn_distributed_floating_ip():
                 try:
@@ -901,7 +905,9 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         """Add info if LRP is connecting internal subnet or ext gateway."""
         cmds = []
         context = n_context.get_admin_context()
-        for router in self._ovn_client._l3_plugin.get_routers(context):
+        filters = {'flavor_id': [None]}
+        for router in self._ovn_client._l3_plugin.get_routers(context,
+                                                              filters=filters):
             ext_gw_networks = [
                 ext_gw['network_id'] for ext_gw in router['external_gateways']]
             rtr_name = 'neutron-{}'.format(router['id'])
