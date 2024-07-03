@@ -422,6 +422,8 @@ BRIDGE_REDIRECT_TYPE = "bridged"
 # FDB AGE Settings
 LS_OPTIONS_FDB_AGE_THRESHOLD = 'fdb_age_threshold'
 
+LS_OPTIONS_BROADCAST_ARPS_ROUTERS = 'broadcast-arps-to-all-routers'
+
 # Port Binding types
 PB_TYPE_VIRTUAL = 'virtual'
 

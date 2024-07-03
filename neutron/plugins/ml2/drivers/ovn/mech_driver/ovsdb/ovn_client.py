@@ -2060,6 +2060,11 @@ class OVNClient(object):
         if utils.is_provider_network(network):
             params['other_config'][ovn_const.LS_OPTIONS_FDB_AGE_THRESHOLD] = (
                 ovn_conf.get_fdb_age_threshold())
+        if utils.is_external_network(network):
+            params['other_config'][
+                ovn_const.LS_OPTIONS_BROADCAST_ARPS_ROUTERS] = ('true'
+                if ovn_conf.is_broadcast_arps_to_all_routers_enabled() else
+                'false')
         return params
 
     def create_network(self, context, network):

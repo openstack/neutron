@@ -1235,6 +1235,30 @@ class TestMaintenance(_TestMaintenanceHelper):
         self.assertEqual(net1[provnet_apidef.NETWORK_TYPE],
                          ls.external_ids.get(ovn_const.OVN_NETTYPE_EXT_ID_KEY))
 
+    def test_check_network_broadcast_arps_to_all_routers(self):
+        net = self._create_network('net', external=True)
+        ls = self.nb_api.get_lswitch(utils.ovn_name(net['id']))
+
+        self.assertEqual(
+            'true',
+            ls.other_config.get(ovn_const.LS_OPTIONS_BROADCAST_ARPS_ROUTERS))
+
+        # Change the value of the configuration
+        cfg.CONF.set_override(
+            'broadcast_arps_to_all_routers', False, group='ovn')
+
+        # Call the maintenance task and check that the value has been
+        # updated in the Logical Switch
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.maint.check_network_broadcast_arps_to_all_routers)
+
+        ls = self.nb_api.get_lswitch(utils.ovn_name(net['id']))
+
+        self.assertEqual(
+            'false',
+            ls.other_config.get(ovn_const.LS_OPTIONS_BROADCAST_ARPS_ROUTERS))
+
 
 class TestLogMaintenance(_TestMaintenanceHelper,
                          test_log_driver.LogApiTestCaseBase):
