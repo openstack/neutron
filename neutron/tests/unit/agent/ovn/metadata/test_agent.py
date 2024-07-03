@@ -308,7 +308,7 @@ class TestMetadataAgent(base.BaseTestCase):
             external_ids={'name': 'neutron-{}'.format(network_id)})
 
         with mock.patch.object(
-                self.agent.sb_idl, 'get_metadata_port_network',
+                self.agent.sb_idl, 'get_metadata_port',
                 return_value=None),\
             mock.patch.object(
                 self.agent, 'teardown_datapath') as tdp:
@@ -329,7 +329,7 @@ class TestMetadataAgent(base.BaseTestCase):
                                                  '10.204.0.10/29'})
 
         with mock.patch.object(
-                self.agent.sb_idl, 'get_metadata_port_network',
+                self.agent.sb_idl, 'get_metadata_port',
                 return_value=metadadata_port),\
             mock.patch.object(
                 self.agent, 'teardown_datapath') as tdp:
@@ -349,7 +349,7 @@ class TestMetadataAgent(base.BaseTestCase):
                                    external_ids={'neutron:cidrs':
                                                  '10.204.0.10/29'})
 
-        with mock.patch.object(self.agent.sb_idl, 'get_metadata_port_network',
+        with mock.patch.object(self.agent.sb_idl, 'get_metadata_port',
                     return_value=metadadata_port),\
                 mock.patch.object(self.agent.sb_idl, 'get_ports_on_chassis',
                     return_value=datapath_ports),\
@@ -379,7 +379,7 @@ class TestMetadataAgent(base.BaseTestCase):
                                                  metada_port_subnet_cidr},
                                    logical_port=metada_port_logical_port)
 
-        with mock.patch.object(self.agent.sb_idl, 'get_metadata_port_network',
+        with mock.patch.object(self.agent.sb_idl, 'get_metadata_port',
                 return_value=metadadata_port),\
             mock.patch.object(self.agent.sb_idl, 'get_ports_on_chassis',
                 return_value=datapath_ports):
