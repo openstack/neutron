@@ -38,6 +38,8 @@ from neutron.api import wsgi
 from neutron.common import config
 from neutron.common import profiler
 from neutron.conf import service
+from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import worker as \
+    ovn_worker
 from neutron import worker as neutron_worker
 
 
@@ -226,6 +228,12 @@ def _get_plugins_workers():
     ]
 
 
+def _get_ovn_maintenance_worker():
+    for worker in _get_plugins_workers():
+        if isinstance(worker, ovn_worker.MaintenanceWorker):
+            return worker
+
+
 class AllServicesNeutronWorker(neutron_worker.NeutronBaseWorker):
     def __init__(self, services, worker_process_count=1):
         super(AllServicesNeutronWorker, self).__init__(worker_process_count)
@@ -320,6 +328,14 @@ def start_periodic_workers():
 def start_plugins_workers():
     plugins_workers = _get_plugins_workers()
     return _start_workers(plugins_workers)
+
+
+def start_ovn_maintenance_worker():
+    ovn_maintenance_worker = _get_ovn_maintenance_worker()
+    if not ovn_maintenance_worker:
+        return
+
+    return _start_workers([ovn_maintenance_worker])
 
 
 def _get_api_workers():
