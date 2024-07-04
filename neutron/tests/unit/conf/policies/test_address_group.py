@@ -71,6 +71,21 @@ class AdminTests(AddressGroupAPITestCase):
             policy.enforce(self.context, "get_address_group", self.alt_target))
 
 
+class ProjectManagerTests(AdminTests):
+
+    def setUp(self):
+        super(ProjectManagerTests, self).setUp()
+        self.context = self.project_manager_ctx
+
+    def test_get_address_group(self):
+        self.assertTrue(
+            policy.enforce(self.context, "get_address_group", self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "get_address_group", self.alt_target)
+
+
 class ProjectMemberTests(AdminTests):
 
     def setUp(self):

@@ -99,7 +99,34 @@ class AdminTests(LoggingAPITestCase):
             policy.enforce(self.context, 'delete_log', self.target))
 
 
-class ProjectMemberTests(AdminTests):
+class ProjectManagerTests(AdminTests):
+
+    def setUp(self):
+        super(ProjectManagerTests, self).setUp()
+        self.context = self.project_manager_ctx
+
+    def test_get_loggable_resource(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'get_loggable_resource', self.target))
+
+    def test_create_log(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'create_log', self.target))
+
+    def test_get_log(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'get_log', self.target))
+
+    def test_update_log(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'update_log', self.target))
+
+    def test_delete_log(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_log', self.target))
+
+
+class ProjectMemberTests(ProjectManagerTests):
 
     def setUp(self):
         super(ProjectMemberTests, self).setUp()

@@ -28,7 +28,7 @@ RESOURCE_PATH = '/quota/{id}'
 rules = [
     policy.DocumentedRuleDefault(
         name='get_quota',
-        check_str=base.ADMIN,
+        check_str=base.ADMIN_OR_PROJECT_MANAGER,
         scope_types=['project'],
         description='Get a resource quota',
         operations=[

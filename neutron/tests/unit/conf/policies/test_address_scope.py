@@ -158,6 +158,65 @@ class AdminTests(AddressScopeAPITestCase):
                 self.context, 'delete_address_scope', self.alt_target))
 
 
+class ProjectManagerTests(AdminTests):
+
+    def setUp(self):
+        super(ProjectManagerTests, self).setUp()
+        self.context = self.project_manager_ctx
+
+    def test_create_address_scope(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'create_address_scope', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_address_scope', self.alt_target)
+
+    def test_create_address_scope_shared(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_address_scope:shared', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_address_scope:shared', self.alt_target)
+
+    def test_get_address_scope(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'get_address_scope', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'get_address_scope', self.alt_target)
+
+    def test_update_address_scope(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'update_address_scope', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_address_scope', self.alt_target)
+
+    def test_update_address_scope_shared(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_address_scope:shared', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_address_scope:shared', self.alt_target)
+
+    def test_delete_address_scope(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_address_scope', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'delete_address_scope', self.alt_target)
+
+
 class ProjectMemberTests(AdminTests):
 
     def setUp(self):

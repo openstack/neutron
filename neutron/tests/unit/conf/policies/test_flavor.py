@@ -152,11 +152,11 @@ class AdminTests(FlavorAPITestCase):
                            'delete_flavor_service_profile', self.target))
 
 
-class ProjectMemberTests(AdminTests):
+class ProjectManagerTests(AdminTests):
 
     def setUp(self):
-        super(ProjectMemberTests, self).setUp()
-        self.context = self.project_member_ctx
+        super(ProjectManagerTests, self).setUp()
+        self.context = self.project_manager_ctx
 
     def test_create_flavor(self):
         self.assertRaises(
@@ -213,6 +213,13 @@ class ProjectMemberTests(AdminTests):
             policy.enforce,
             self.context, 'delete_flavor_service_profile',
             self.target)
+
+
+class ProjectMemberTests(ProjectManagerTests):
+
+    def setUp(self):
+        super(ProjectMemberTests, self).setUp()
+        self.context = self.project_member_ctx
 
 
 class ProjectReaderTests(ProjectMemberTests):

@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Neutron API RBAC policies now support by default the project MANAGER role.
+    Please refer to the `community goal
+    <https://governance.openstack.org/tc/goals/selected/consistent-and-secure-rbac.html#phase-3>`_
+    for more information.

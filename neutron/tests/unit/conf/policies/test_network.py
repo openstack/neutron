@@ -555,11 +555,11 @@ class AdminTests(NetworkAPITestCase):
                            self.alt_target))
 
 
-class ProjectMemberTests(AdminTests):
+class ProjectManagerTests(AdminTests):
 
     def setUp(self):
-        super(ProjectMemberTests, self).setUp()
-        self.context = self.project_member_ctx
+        super(ProjectManagerTests, self).setUp()
+        self.context = self.project_manager_ctx
 
     def test_create_network(self):
         self.assertTrue(
@@ -832,6 +832,13 @@ class ProjectMemberTests(AdminTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'delete_networks_tags', self.alt_target)
+
+
+class ProjectMemberTests(ProjectManagerTests):
+
+    def setUp(self):
+        super(ProjectMemberTests, self).setUp()
+        self.context = self.project_member_ctx
 
 
 class ProjectReaderTests(ProjectMemberTests):

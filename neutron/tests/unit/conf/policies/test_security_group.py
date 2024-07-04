@@ -180,11 +180,11 @@ class AdminSecurityGroupTests(SecurityGroupAPITestCase):
                            self.alt_target))
 
 
-class ProjectMemberSecurityGroupTests(AdminSecurityGroupTests):
+class ProjectManagerSecurityGroupTests(AdminSecurityGroupTests):
 
     def setUp(self):
-        super(ProjectMemberSecurityGroupTests, self).setUp()
-        self.context = self.project_member_ctx
+        super(ProjectManagerSecurityGroupTests, self).setUp()
+        self.context = self.project_manager_ctx
 
     def test_create_security_group(self):
         self.assertTrue(
@@ -242,6 +242,13 @@ class ProjectMemberSecurityGroupTests(AdminSecurityGroupTests):
         self.assertRaises(
             base_policy.PolicyNotAuthorized, policy.enforce,
             self.context, 'delete_security_groups_tags', self.alt_target)
+
+
+class ProjectMemberSecurityGroupTests(ProjectManagerSecurityGroupTests):
+
+    def setUp(self):
+        super(ProjectMemberSecurityGroupTests, self).setUp()
+        self.context = self.project_member_ctx
 
 
 class ProjectReaderSecurityGroupTests(ProjectMemberSecurityGroupTests):
@@ -474,11 +481,11 @@ class AdminSecurityGroupRuleTests(SecurityGroupRuleAPITestCase):
                            'delete_security_group_rule', self.alt_target))
 
 
-class ProjectMemberSecurityGroupRuleTests(AdminSecurityGroupRuleTests):
+class ProjectManagerSecurityGroupRuleTests(AdminSecurityGroupRuleTests):
 
     def setUp(self):
-        super(ProjectMemberSecurityGroupRuleTests, self).setUp()
-        self.context = self.project_member_ctx
+        super(ProjectManagerSecurityGroupRuleTests, self).setUp()
+        self.context = self.project_manager_ctx
 
     def test_create_security_group_rule(self):
         self.assertTrue(
@@ -528,6 +535,14 @@ class ProjectMemberSecurityGroupRuleTests(AdminSecurityGroupRuleTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'delete_security_group_rule', self.alt_target)
+
+
+class ProjectMemberSecurityGroupRuleTests(
+        ProjectManagerSecurityGroupRuleTests):
+
+    def setUp(self):
+        super(ProjectMemberSecurityGroupRuleTests, self).setUp()
+        self.context = self.project_member_ctx
 
 
 class ProjectReaderSecurityGroupRuleTests(ProjectMemberSecurityGroupRuleTests):

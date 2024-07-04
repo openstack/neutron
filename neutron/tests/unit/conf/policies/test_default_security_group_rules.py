@@ -88,12 +88,12 @@ class AdminDefaultSecurityGroupRuleTests(DefaultSecurityGroupRuleAPITestCase):
                            'delete_default_security_group_rule', self.target))
 
 
-class ProjectMemberDefaultSecurityGroupRuleTests(
+class ProjectManagerDefaultSecurityGroupRuleTests(
         AdminDefaultSecurityGroupRuleTests):
 
     def setUp(self):
-        super(ProjectMemberDefaultSecurityGroupRuleTests, self).setUp()
-        self.context = self.project_member_ctx
+        super(ProjectManagerDefaultSecurityGroupRuleTests, self).setUp()
+        self.context = self.project_manager_ctx
 
     def test_create_default_security_group_rule(self):
         self.assertRaises(
@@ -111,6 +111,14 @@ class ProjectMemberDefaultSecurityGroupRuleTests(
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'delete_default_security_group_rule', self.target)
+
+
+class ProjectMemberDefaultSecurityGroupRuleTests(
+        ProjectManagerDefaultSecurityGroupRuleTests):
+
+    def setUp(self):
+        super(ProjectMemberDefaultSecurityGroupRuleTests, self).setUp()
+        self.context = self.project_member_ctx
 
 
 class ProjectReaderDefaultSecurityGroupRuleTests(
