@@ -320,7 +320,9 @@ def start_rpc_workers():
 
 def start_periodic_workers():
     periodic_workers = _get_plugins_workers()
-    launcher = _start_workers(periodic_workers)
+    thread_workers = [worker for worker in periodic_workers
+                      if worker.worker_process_count < 1]
+    launcher = _start_workers(thread_workers)
     registry.publish(resources.PROCESS, events.AFTER_SPAWN, None)
     return launcher
 
