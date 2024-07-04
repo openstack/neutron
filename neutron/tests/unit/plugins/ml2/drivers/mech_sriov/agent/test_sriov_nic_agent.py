@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import collections
 import copy
 from unittest import mock
 
@@ -460,6 +461,7 @@ class FakeAgent(object):
         self.activated_bindings = set()
         self.conf = mock.Mock()
         self.conf.host = 'host1'
+        self.network_ports = collections.defaultdict(list)
 
 
 class TestSriovNicSwitchRpcCallbacks(base.BaseTestCase):
@@ -528,6 +530,12 @@ class TestSriovNicSwitchRpcCallbacks(base.BaseTestCase):
         }
         kwargs = self._create_fake_bindings(fake_port, self.agent.conf.host)
         kwargs['context'] = self.context
+
+        self.agent.network_ports['network_id'].append({
+            'port_id': fake_port['id'],
+            'device': 'fake_device'
+        })
+
         self.sriov_rpc_callback.binding_activate(**kwargs)
         # Assert agent.activated_binding set contains the new binding
         self.assertIn((fake_port['mac_address'],
@@ -538,9 +546,31 @@ class TestSriovNicSwitchRpcCallbacks(base.BaseTestCase):
         fake_port = self._create_fake_port()
         kwargs = self._create_fake_bindings(fake_port, 'other-host')
         kwargs['context'] = self.context
+
+        self.agent.network_ports[self.agent.conf.host].append({
+            'port_id': fake_port['id'],
+            'device': 'fake_device'
+        })
+
         self.sriov_rpc_callback.binding_activate(**kwargs)
         # Assert no bindings were added
         self.assertEqual(set(), self.agent.activated_bindings)
+
+    def test_binding_activate_port_not_in_network(self):
+        fake_port = self._create_fake_port()
+        kwargs = self._create_fake_bindings(fake_port, self.agent.conf.host)
+        kwargs['context'] = self.context
+
+        self.agent.network_ports['network_id'] = []
+
+        with mock.patch.object(sriov_nic_agent.LOG,
+                               'warning') as mock_warning:
+            self.sriov_rpc_callback.binding_activate(**kwargs)
+            # Check that the warning message was logged
+            expected_msg = (
+                "This port is not SRIOV, skip binding for port %s."
+            )
+            mock_warning.assert_called_once_with(expected_msg, fake_port['id'])
 
     def test_binding_deactivate(self):
         # binding_deactivate() basically does nothing
