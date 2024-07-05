@@ -433,7 +433,7 @@ def validate_and_get_data_from_binding_profile(port):
     if (constants.OVN_PORT_BINDING_PROFILE not in port or
             not validators.is_attr_set(
                 port[constants.OVN_PORT_BINDING_PROFILE])):
-        BPInfo({}, None, [])
+        return BPInfo({}, None, [])
     param_set = {}
     param_dict = {}
     vnic_type = port.get(portbindings.VNIC_TYPE, portbindings.VNIC_NORMAL)
