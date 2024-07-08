@@ -37,6 +37,7 @@ from neutron.agent.linux import dhcp
 from neutron.agent.linux import interface
 from neutron.agent.linux import utils as linux_utils
 from neutron.agent.metadata import driver as metadata_driver
+from neutron.agent.metadata import driver_base as metadata_driver_base
 from neutron.common import config as common_config
 from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils
@@ -868,6 +869,8 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         self.mock_wait_until_address_ready_p.start()
         mock.patch.object(linux_utils, 'delete_if_exists').start()
         self.addCleanup(self.mock_wait_until_address_ready_p.stop)
+        mock.patch.object(metadata_driver_base, 'SIGTERM_TIMEOUT',
+                          new=0).start()
 
     def _process_manager_constructor_call(self, ns=FAKE_NETWORK_DHCP_NS):
         return mock.call(conf=cfg.CONF,
