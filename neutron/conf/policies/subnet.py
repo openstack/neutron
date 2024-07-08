@@ -81,7 +81,8 @@ rules = [
     policy.DocumentedRuleDefault(
         name='get_subnet',
         check_str=neutron_policy.policy_or(
-            base.ADMIN_OR_PROJECT_READER,
+            base.ADMIN_OR_NET_OWNER_MEMBER,
+            base.PROJECT_READER,
             'rule:shared'),
         scope_types=['project'],
         description='Get a subnet',
@@ -108,7 +109,9 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='update_subnet',
-        check_str=base.ADMIN_OR_NET_OWNER_MEMBER,
+        check_str=neutron_policy.policy_or(
+            base.ADMIN_OR_NET_OWNER_MEMBER,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description='Update a subnet',
         operations=ACTION_PUT,
@@ -144,7 +147,9 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='delete_subnet',
-        check_str=base.ADMIN_OR_NET_OWNER_MEMBER,
+        check_str=neutron_policy.policy_or(
+            base.ADMIN_OR_NET_OWNER_MEMBER,
+            base.PROJECT_MEMBER),
         scope_types=['project'],
         description='Delete a subnet',
         operations=ACTION_DELETE,
