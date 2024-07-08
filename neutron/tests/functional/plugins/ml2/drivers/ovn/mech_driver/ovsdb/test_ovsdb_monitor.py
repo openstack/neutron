@@ -636,6 +636,11 @@ class TestSBDbMonitor(base.TestOVNFunctionalBase, test_l3.L3NatTestCaseMixin):
             pb = self._find_port_binding(ovn_const.OVN_CHASSIS_REDIRECT)
             _, lrp = list(
                 self.nb_api.tables['Logical_Router_Port'].rows.data.items())[0]
+            # Check LP#2072545. Since [1] (ovs==3.3.1), the result stored in
+            # the data dictionary will be a one single item list, instead of
+            # the item itself.
+            # [1] https://is.gd/yElVoV
+            lrp = lrp if not isinstance(lrp, list) else lrp[0]
             if pb.external_ids == {}:
                 # The current version of OVN installed in FT CI could not have
                 # [1]. In this case, the Port_Binding.external_ids value is an
