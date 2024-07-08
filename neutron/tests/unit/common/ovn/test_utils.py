@@ -711,6 +711,11 @@ class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
                 {portbindings.VNIC_TYPE: portbindings.VNIC_DIRECT,
                  constants.OVN_PORT_BINDING_PROFILE: binding_profile}))
 
+    def test_valid_input_no_binding_profile(self):
+        # Confirm that we treat a port without binding:profile as valid
+        self.assertEqual(utils.BPInfo({}, None, []),
+                         utils.validate_and_get_data_from_binding_profile({}))
+
     def test_unknown_profile_items_pruned(self):
         # Confirm that unknown profile items are pruned
         self.assertEqual(
