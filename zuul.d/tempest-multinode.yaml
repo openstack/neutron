@@ -91,6 +91,7 @@
         Q_ML2_TENANT_NETWORK_TYPE: vxlan
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch,linuxbridge
         Q_AGENT: openvswitch
+        NEUTRON_DEPLOY_MOD_WSGI: true
       devstack_services:
         br-ex-tcpdump: true
         br-int-flows: true
