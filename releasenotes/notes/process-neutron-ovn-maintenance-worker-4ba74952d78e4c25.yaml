@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Added a new process called ``neutron-ovn-maintenance-worker``. This process
+    is spawned when using the ML2/OVN mechanism driver and Neutron API WSGI
+    module. It executes the maintenance task needed by the ML2/OVN mechanism
+    driver to sync the Neutron and OVN databases.
