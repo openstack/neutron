@@ -284,6 +284,7 @@ class DhcpAgentNotifyAPI(object):
         port = payload.metadata.get('port')
         self._notify_agents(payload.context, 'port_delete_end',
                             {'port_id': port['id'],
+                             'fixed_ips': port['fixed_ips'],
                              'network_id': port['network_id']},
                             port['network_id'])
 
