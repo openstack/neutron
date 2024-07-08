@@ -112,17 +112,39 @@ class SriovNicSwitchRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
     def binding_activate(self, context, **kwargs):
         if kwargs.get('host') != self.agent.conf.host:
             return
-        LOG.debug("binding activate for port %s", kwargs.get('port_id'))
-        device_details = self.agent.get_device_details_from_port_id(
-            kwargs.get('port_id'))
-        mac = device_details.get('mac_address')
-        binding_profile = device_details.get('profile')
-        if binding_profile:
-            pci_slot = binding_profile.get('pci_slot')
-            self.agent.activated_bindings.add((mac, pci_slot))
+
+        port_id = kwargs.get('port_id')
+
+        def _is_port_id_in_network(network_port, port_id):
+            for network_id, ports in network_port.items():
+                for port in ports:
+                    if port['port_id'] == port_id:
+                        return True
+            return False
+
+        is_port_id_sriov = _is_port_id_in_network(
+            self.agent.network_ports, port_id
+        )
+
+        if is_port_id_sriov:
+            LOG.debug("binding activate for port %s", port_id)
+            device_details = self.agent.get_device_details_from_port_id(
+                port_id)
+            mac = device_details.get('mac_address')
+            binding_profile = device_details.get('profile')
+            if binding_profile:
+                pci_slot = binding_profile.get('pci_slot')
+                self.agent.activated_bindings.add((mac, pci_slot))
+            else:
+                LOG.warning(
+                    "binding_profile not found for port %s.",
+                    port_id
+                )
         else:
-            LOG.warning("binding_profile not found for port %s.",
-                        kwargs.get('port_id'))
+            LOG.warning(
+                "This port is not SRIOV, skip binding for port %s.",
+                port_id
+            )
 
     def binding_deactivate(self, context, **kwargs):
         if kwargs.get('host') != self.agent.conf.host:
