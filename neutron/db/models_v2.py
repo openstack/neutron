@@ -308,7 +308,7 @@ class SubnetPool(standard_attr.HasStandardAttributes, model_base.BASEV2,
                                 lazy='subquery')
     rbac_entries = sa.orm.relationship(rbac_db_models.SubnetPoolRBAC,
                                        backref='subnetpools',
-                                       lazy='joined',
+                                       lazy='selectin',
                                        cascade='all, delete, delete-orphan')
     api_collections = [subnetpool_def.COLLECTION_NAME]
     collection_resource_map = {subnetpool_def.COLLECTION_NAME:
