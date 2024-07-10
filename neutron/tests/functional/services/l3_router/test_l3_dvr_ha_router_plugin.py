@@ -332,7 +332,7 @@ class L3DvrHATestCase(test_l3_dvr_router_plugin.L3DvrTestCase):
 
     def _check_snat_external_gateway_presence(self, ext_net, router, gw_count):
         ext_net_id = ext_net['network']['id']
-        gw_port = (self.l3_plugin._core_plugin.
+        gw_port = (self.l3_plugin.
                    _get_router_gw_ports_by_network(self.context, ext_net_id))
         self.assertEqual(gw_count, len(gw_port))
         if gw_count > 1:

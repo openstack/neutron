@@ -395,3 +395,6 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
     @resource_extend.extends([l3_apidef.ROUTERS])
     def add_flavor_id(router_res, router_db):
         router_res['flavor_id'] = router_db['flavor_id']
+
+    def update_router_gw_ports(self, context, network, subnet):
+        self._update_router_gateway_ports(context, network, subnet)
