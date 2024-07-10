@@ -132,10 +132,10 @@ class TestSbApi(BaseOvnIdlTest):
         self.assertTrue(row_event.wait())
         return port.result, row_event.row
 
-    def test_get_metadata_port_network(self):
+    def test_get_metadata_port(self):
         chassis, switch = self._add_switch(self.data['chassis'][0]['name'])
         port, binding = self._add_port_to_switch(switch)
-        result = self.api.get_metadata_port_network(str(binding.datapath.uuid))
+        result = self.api.get_metadata_port(str(binding.datapath.uuid))
         self.assertEqual(binding, result)
         self.assertEqual(binding.datapath.external_ids['logical-switch'],
                          str(switch.uuid))
@@ -143,12 +143,12 @@ class TestSbApi(BaseOvnIdlTest):
             port.external_ids[ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY],
             constants.DEVICE_OWNER_DISTRIBUTED)
 
-    def test_get_metadata_port_network_other_non_metadata_port(self):
+    def test_get_metadata_port_other_non_metadata_port(self):
         chassis, switch = self._add_switch(self.data['chassis'][0]['name'])
         port, binding = self._add_port_to_switch(switch)
         port_lbhm, binding_port_lbhm = self._add_port_to_switch(
             switch, device_owner=ovn_const.OVN_LB_HM_PORT_DISTRIBUTED)
-        result = self.api.get_metadata_port_network(str(binding.datapath.uuid))
+        result = self.api.get_metadata_port(str(binding.datapath.uuid))
         self.assertEqual(binding, result)
         self.assertEqual(binding.datapath.external_ids['logical-switch'],
                          str(switch.uuid))
@@ -159,9 +159,9 @@ class TestSbApi(BaseOvnIdlTest):
             port_lbhm.external_ids[ovn_const.OVN_DEVICE_OWNER_EXT_ID_KEY],
             ovn_const.OVN_LB_HM_PORT_DISTRIBUTED)
 
-    def test_get_metadata_port_network_missing(self):
+    def test_get_metadata_port_missing(self):
         val = str(uuid.uuid4())
-        self.assertIsNone(self.api.get_metadata_port_network(val))
+        self.assertIsNone(self.api.get_metadata_port(val))
 
     def _create_bound_port_with_ip(self, mac, ipaddr):
         chassis, switch = self._add_switch(

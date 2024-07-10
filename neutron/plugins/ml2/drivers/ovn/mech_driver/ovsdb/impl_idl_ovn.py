@@ -958,10 +958,10 @@ class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
                      card_serial_number)
         raise RuntimeError(msg)
 
-    def get_metadata_port_network(self, network):
+    def get_metadata_port(self, datapath_uuid):
         # TODO(twilson) This function should really just take a Row/RowView
         try:
-            dp = self.lookup('Datapath_Binding', uuid.UUID(network))
+            dp = self.lookup('Datapath_Binding', uuid.UUID(datapath_uuid))
         except idlutils.RowNotFound:
             return None
         cmd = self.db_find_rows('Port_Binding', ('datapath', '=', dp),
