@@ -22,14 +22,14 @@ from neutron.tests.unit.conf.policies import test_base as base
 class AgentAPITestCase(base.PolicyBaseTestCase):
 
     def setUp(self):
-        super(AgentAPITestCase, self).setUp()
+        super().setUp()
         self.target = {}
 
 
 class SystemAdminTests(AgentAPITestCase):
 
     def setUp(self):
-        super(SystemAdminTests, self).setUp()
+        super().setUp()
         self.context = self.system_admin_ctx
 
     def test_create_agent(self):
@@ -108,21 +108,21 @@ class SystemAdminTests(AgentAPITestCase):
 class SystemMemberTests(SystemAdminTests):
 
     def setUp(self):
-        super(SystemMemberTests, self).setUp()
+        super().setUp()
         self.context = self.system_member_ctx
 
 
 class SystemReaderTests(SystemMemberTests):
 
     def setUp(self):
-        super(SystemReaderTests, self).setUp()
+        super().setUp()
         self.context = self.system_reader_ctx
 
 
 class AdminTests(AgentAPITestCase):
 
     def setUp(self):
-        super(AdminTests, self).setUp()
+        super().setUp()
         self.context = self.project_admin_ctx
 
     def test_create_agent(self):
@@ -189,7 +189,7 @@ class AdminTests(AgentAPITestCase):
 class ProjectManagerTests(AdminTests):
 
     def setUp(self):
-        super(ProjectManagerTests, self).setUp()
+        super().setUp()
         self.context = self.project_manager_ctx
 
     def test_create_agent(self):
@@ -267,21 +267,21 @@ class ProjectManagerTests(AdminTests):
 
 class ProjectMemberTests(ProjectManagerTests):
     def setUp(self):
-        super(ProjectManagerTests, self).setUp()
+        super().setUp()
         self.context = self.project_member_ctx
 
 
 class ProjectReaderTests(ProjectMemberTests):
 
     def setUp(self):
-        super(ProjectReaderTests, self).setUp()
+        super().setUp()
         self.context = self.project_reader_ctx
 
 
 class ServiceRoleTests(AgentAPITestCase):
 
     def setUp(self):
-        super(ServiceRoleTests, self).setUp()
+        super().setUp()
         self.context = self.service_ctx
 
     def test_create_agent(self):

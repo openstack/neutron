@@ -23,7 +23,7 @@ from neutron.tests.unit.conf.policies import test_base as base
 class RouterAPITestCase(base.PolicyBaseTestCase):
 
     def setUp(self):
-        super(RouterAPITestCase, self).setUp()
+        super().setUp()
         self.target = {'project_id': self.project_id}
         self.alt_target = {'project_id': self.alt_project_id}
 
@@ -31,7 +31,7 @@ class RouterAPITestCase(base.PolicyBaseTestCase):
 class SystemAdminTests(RouterAPITestCase):
 
     def setUp(self):
-        super(SystemAdminTests, self).setUp()
+        super().setUp()
         self.context = self.system_admin_ctx
 
     def test_create_router(self):
@@ -336,21 +336,21 @@ class SystemAdminTests(RouterAPITestCase):
 class SystemMemberTests(SystemAdminTests):
 
     def setUp(self):
-        super(SystemMemberTests, self).setUp()
+        super().setUp()
         self.context = self.system_member_ctx
 
 
 class SystemReaderTests(SystemMemberTests):
 
     def setUp(self):
-        super(SystemReaderTests, self).setUp()
+        super().setUp()
         self.context = self.system_reader_ctx
 
 
 class AdminTests(RouterAPITestCase):
 
     def setUp(self):
-        super(AdminTests, self).setUp()
+        super().setUp()
         self.context = self.project_admin_ctx
 
     def test_create_router(self):
@@ -567,7 +567,7 @@ class AdminTests(RouterAPITestCase):
 class ProjectManagerTests(AdminTests):
 
     def setUp(self):
-        super(ProjectManagerTests, self).setUp()
+        super().setUp()
         self.context = self.project_manager_ctx
 
     def test_create_router(self):
@@ -832,14 +832,14 @@ class ProjectManagerTests(AdminTests):
 class ProjectMemberTests(ProjectManagerTests):
 
     def setUp(self):
-        super(ProjectMemberTests, self).setUp()
+        super().setUp()
         self.context = self.project_member_ctx
 
 
 class ProjectReaderTests(ProjectMemberTests):
 
     def setUp(self):
-        super(ProjectMemberTests, self).setUp()
+        super().setUp()
         self.context = self.project_reader_ctx
 
     def test_create_router(self):
@@ -964,7 +964,7 @@ class ProjectReaderTests(ProjectMemberTests):
 class ExtrarouteAPITestCase(base.PolicyBaseTestCase):
 
     def setUp(self):
-        super(ExtrarouteAPITestCase, self).setUp()
+        super().setUp()
         self.router = {
             'id': uuidutils.generate_uuid(),
             'project_id': self.project_id}
@@ -982,7 +982,7 @@ class ExtrarouteAPITestCase(base.PolicyBaseTestCase):
 class SystemAdminExtrarouteTests(ExtrarouteAPITestCase):
 
     def setUp(self):
-        super(SystemAdminExtrarouteTests, self).setUp()
+        super().setUp()
         self.context = self.system_admin_ctx
 
     def test_add_extraroute(self):
@@ -1009,21 +1009,21 @@ class SystemAdminExtrarouteTests(ExtrarouteAPITestCase):
 class SystemMemberExtrarouteTests(SystemAdminExtrarouteTests):
 
     def setUp(self):
-        super(SystemMemberExtrarouteTests, self).setUp()
+        super().setUp()
         self.context = self.system_member_ctx
 
 
 class SystemReaderExtrarouteTests(SystemMemberExtrarouteTests):
 
     def setUp(self):
-        super(SystemReaderExtrarouteTests, self).setUp()
+        super().setUp()
         self.context = self.system_reader_ctx
 
 
 class AdminExtrarouteTests(ExtrarouteAPITestCase):
 
     def setUp(self):
-        super(AdminExtrarouteTests, self).setUp()
+        super().setUp()
         self.context = self.project_admin_ctx
 
     def test_add_extraroute(self):
@@ -1043,7 +1043,7 @@ class AdminExtrarouteTests(ExtrarouteAPITestCase):
 class ProjectMemberExtrarouteTests(AdminExtrarouteTests):
 
     def setUp(self):
-        super(ProjectMemberExtrarouteTests, self).setUp()
+        super().setUp()
         self.context = self.project_member_ctx
 
     def test_add_extraroute(self):
@@ -1066,7 +1066,7 @@ class ProjectMemberExtrarouteTests(AdminExtrarouteTests):
 class ProjectReaderExtrarouteTests(ProjectMemberExtrarouteTests):
 
     def setUp(self):
-        super(ProjectReaderExtrarouteTests, self).setUp()
+        super().setUp()
         self.context = self.project_reader_ctx
 
     def test_add_extraroute(self):
@@ -1093,7 +1093,7 @@ class ProjectReaderExtrarouteTests(ProjectMemberExtrarouteTests):
 class ServiceRoleTests(RouterAPITestCase):
 
     def setUp(self):
-        super(ServiceRoleTests, self).setUp()
+        super().setUp()
         self.context = self.service_ctx
 
     def test_create_router(self):

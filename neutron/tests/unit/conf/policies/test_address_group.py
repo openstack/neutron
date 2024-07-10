@@ -22,7 +22,7 @@ from neutron.tests.unit.conf.policies import test_base as base
 class AddressGroupAPITestCase(base.PolicyBaseTestCase):
 
     def setUp(self):
-        super(AddressGroupAPITestCase, self).setUp()
+        super().setUp()
         self.target = {'project_id': self.project_id}
         self.alt_target = {'project_id': self.alt_project_id}
 
@@ -30,7 +30,7 @@ class AddressGroupAPITestCase(base.PolicyBaseTestCase):
 class SystemAdminTests(AddressGroupAPITestCase):
 
     def setUp(self):
-        super(SystemAdminTests, self).setUp()
+        super().setUp()
         self.context = self.system_admin_ctx
 
     def test_get_address_group(self):
@@ -47,21 +47,21 @@ class SystemAdminTests(AddressGroupAPITestCase):
 class SystemMemberTests(SystemAdminTests):
 
     def setUp(self):
-        super(SystemMemberTests, self).setUp()
+        super().setUp()
         self.context = self.system_member_ctx
 
 
 class SystemReaderTests(SystemMemberTests):
 
     def setUp(self):
-        super(SystemReaderTests, self).setUp()
+        super().setUp()
         self.context = self.system_reader_ctx
 
 
 class AdminTests(AddressGroupAPITestCase):
 
     def setUp(self):
-        super(AdminTests, self).setUp()
+        super().setUp()
         self.context = self.project_admin_ctx
 
     def test_get_address_group(self):
@@ -74,7 +74,7 @@ class AdminTests(AddressGroupAPITestCase):
 class ProjectManagerTests(AdminTests):
 
     def setUp(self):
-        super(ProjectManagerTests, self).setUp()
+        super().setUp()
         self.context = self.project_manager_ctx
 
     def test_get_address_group(self):
@@ -89,7 +89,7 @@ class ProjectManagerTests(AdminTests):
 class ProjectMemberTests(AdminTests):
 
     def setUp(self):
-        super(ProjectMemberTests, self).setUp()
+        super().setUp()
         self.context = self.project_member_ctx
 
     def test_get_address_group(self):
@@ -104,14 +104,14 @@ class ProjectMemberTests(AdminTests):
 class ProjectReaderTests(ProjectMemberTests):
 
     def setUp(self):
-        super(ProjectReaderTests, self).setUp()
+        super().setUp()
         self.context = self.project_reader_ctx
 
 
 class ServiceRoleTests(AddressGroupAPITestCase):
 
     def setUp(self):
-        super(ServiceRoleTests, self).setUp()
+        super().setUp()
         self.context = self.service_ctx
 
     def test_get_address_group(self):
