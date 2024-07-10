@@ -2066,7 +2066,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
 
 
 class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
-                           test_l3.L3NatDBIntTestCase,
+                           test_l3.L3BaseForIntTests,
+                           test_l3.L3NatTestCaseBase,
                            test_extraroute.ExtraRouteDBTestCaseBase):
 
     # TODO(lucasagomes): Ideally, this method should be moved to a base

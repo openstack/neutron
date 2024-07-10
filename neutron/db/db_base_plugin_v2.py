@@ -73,6 +73,7 @@ from neutron.objects import network as network_obj
 from neutron.objects import ports as port_obj
 from neutron.objects import subnet as subnet_obj
 from neutron.objects import subnetpool as subnetpool_obj
+from neutron.services.ovn_l3 import plugin as l3_ovn
 
 
 LOG = logging.getLogger(__name__)
@@ -807,6 +808,13 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
     def _update_router_gw_ports(self, context, network, subnet):
         l3plugin = directory.get_plugin(plugin_constants.L3)
         if l3plugin:
+            s = subnet_obj.Subnet.get_object(context, id=subnet['id'])
+            service_types = s.service_types
+            update_types = ['', constants.DEVICE_OWNER_ROUTER_GW]
+            if (not isinstance(l3plugin, l3_ovn.OVNL3RouterPlugin) and
+                    subnet['ip_version'] == constants.IP_VERSION_4 and
+                    all(s not in update_types for s in service_types)):
+                return
             gw_ports = self._get_router_gw_ports_by_network(context,
                                                             network['id'])
             router_ids = [p.device_id for p in gw_ports]
