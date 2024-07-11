@@ -230,10 +230,10 @@ class DbBasePluginCommon(object):
                         bulk=False):
         if isinstance(port, port_obj.Port):
             port_data = port.db_obj
-            standard_attr_id = port.db_obj.standard_attr.id
+            standard_attr_id = port.db_obj.standard_attr_id
         else:
             port_data = port
-            standard_attr_id = port.standard_attr.id
+            standard_attr_id = port.standard_attr_id
 
         mac = port["mac_address"]
         if isinstance(mac, netaddr.EUI):
