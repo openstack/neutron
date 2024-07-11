@@ -860,9 +860,6 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
             'neutron.agent.linux.external_process.ProcessManager'
         )
         self.external_process = self.external_process_p.start()
-        self.mock_resize_p = mock.patch('neutron.agent.dhcp.agent.'
-                                        'DhcpAgent._resize_process_pool')
-        self.mock_resize = self.mock_resize_p.start()
         self.mock_wait_until_address_ready_p = mock.patch(
             'neutron.agent.linux.ip_lib.'
             'IpAddrCommand.wait_until_address_ready')
