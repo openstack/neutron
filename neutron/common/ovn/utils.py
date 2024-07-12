@@ -40,6 +40,7 @@ from ovsdbapp import constants as ovsdbapp_const
 import tenacity
 
 from neutron._i18n import _
+from neutron.common import _constants as n_const
 from neutron.common.ovn import constants
 from neutron.common.ovn import exceptions as ovn_exc
 from neutron.common import utils as common_utils
@@ -716,6 +717,32 @@ def get_ovn_cms_options(chassis):
     """Return the list of CMS options in a Chassis."""
     return [opt.strip() for opt in get_ovn_chassis_other_config(chassis).get(
         constants.OVN_CMS_OPTIONS, '').split(',')]
+
+
+def get_ovn_bridge_from_chassis(chassis):
+    """Return the OVN bridge used by the local OVN controller
+
+    This information is stored in the Chassis or Chassis_Private register by
+    the OVN Metadata agent. The default value returned, if not present, is
+    "br-int".
+    NOTE: the default value is not reading the local ``OVS.integration_bridge``
+    configuration knob, that could be different.
+    """
+    return (chassis.external_ids.get(constants.OVN_AGENT_OVN_BRIDGE) or
+            n_const.DEFAULT_BR_INT)
+
+
+def get_datapath_type(hostname, sb_idl):
+    """Return the local OVS integration bridge datapath type
+
+    If the datapath type is not stored in the ``Chassis`` register or
+    the register is still not created, the default value returned is "".
+    """
+    chassis = sb_idl.db_find(
+        'Chassis', ('hostname', '=', hostname)).execute(check_error=True)
+    return (
+        chassis[0].get('other_config', {}).get(constants.OVN_DATAPATH_TYPE, '')
+        if chassis else '')
 
 
 def is_gateway_chassis(chassis):

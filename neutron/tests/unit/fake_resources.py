@@ -184,6 +184,7 @@ class FakeOvsdbSbOvnIdl(object):
         self.get_extport_chassis_from_cms_options = mock.Mock(return_value=[])
         self.is_col_present = mock.Mock()
         self.is_col_present.return_value = False
+        self.db_find = mock.MagicMock()
         self.db_set = mock.Mock()
         self.lookup = mock.MagicMock()
         self.chassis_list = mock.MagicMock()
@@ -858,7 +859,8 @@ class FakeChassis(object):
     def create(attrs=None, az_list=None, chassis_as_gw=False,
                bridge_mappings=None, rp_bandwidths=None,
                rp_inventory_defaults=None, rp_hypervisors=None,
-               card_serial_number=None, chassis_as_extport=False):
+               card_serial_number=None, chassis_as_extport=False,
+               datapath_type=None):
         cms_opts = []
         if az_list:
             cms_opts.append("%s=%s" % (ovn_const.CMS_OPT_AVAILABILITY_ZONES,
@@ -902,6 +904,9 @@ class FakeChassis(object):
 
         if bridge_mappings:
             other_config['ovn-bridge-mappings'] = ','.join(bridge_mappings)
+
+        if datapath_type:
+            other_config[ovn_const.OVN_DATAPATH_TYPE] = datapath_type
 
         chassis_attrs = {
             'encaps': [],

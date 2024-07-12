@@ -190,7 +190,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         vif_types = set()
         for ch in self.sb_ovn.chassis_list().execute(check_error=True):
             other_config = ovn_utils.get_ovn_chassis_other_config(ch)
-            dp_type = other_config.get('datapath-type', '')
+            dp_type = other_config.get(ovn_const.OVN_DATAPATH_TYPE, '')
             if dp_type == ovn_const.CHASSIS_DATAPATH_NETDEV:
                 vif_types.add(portbindings.VIF_TYPE_VHOST_USER)
             else:
@@ -989,7 +989,7 @@ class OVNMechanismDriver(api.MechanismDriver):
             return
         chassis = agent.chassis
         other_config = ovn_utils.get_ovn_chassis_other_config(chassis)
-        datapath_type = other_config.get('datapath-type', '')
+        datapath_type = other_config.get(ovn_const.OVN_DATAPATH_TYPE, '')
         iface_types = other_config.get('iface-types', '')
         iface_types = iface_types.split(',') if iface_types else []
         chassis_physnets = self.sb_ovn._get_chassis_physnets(chassis)
@@ -1036,13 +1036,25 @@ class OVNMechanismDriver(api.MechanismDriver):
                     vif_type = portbindings.VIF_TYPE_VHOST_USER
                     port[portbindings.VIF_DETAILS].update({
                         portbindings.VHOST_USER_SOCKET: vhost_user_socket})
-                    vif_details = dict(self.vif_details[vif_type])
+                    vif_details = copy.deepcopy(self.vif_details[vif_type])
                     vif_details[portbindings.VHOST_USER_SOCKET] = (
                         vhost_user_socket)
                 else:
                     vif_type = portbindings.VIF_TYPE_OVS
-                    vif_details = self.vif_details[vif_type]
+                    vif_details = copy.deepcopy(self.vif_details[vif_type])
 
+                if self.agent_chassis_table == 'Chassis_Private':
+                    chassis_to_retrieve = agent.chassis_private
+                else:
+                    chassis_to_retrieve = agent.chassis
+                ovn_bridge = ovn_utils.get_ovn_bridge_from_chassis(
+                    chassis_to_retrieve)
+
+                dp_type = ovn_utils.get_datapath_type(bind_host, self.sb_ovn)
+                vif_details.update({
+                    portbindings.VIF_DETAILS_BRIDGE_NAME: ovn_bridge,
+                    portbindings.OVS_DATAPATH_TYPE: dp_type,
+                })
                 context.set_binding(segment_to_bind[api.ID], vif_type,
                                     vif_details)
                 break

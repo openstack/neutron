@@ -89,3 +89,6 @@ LOWEST_AGENT_BINDING_INDEX = 1
 
 # Neutron-lib defines this with a /64 but it should be /128
 METADATA_V6_CIDR = constants.METADATA_V6_IP + '/128'
+
+# TODO(ralonsoh): move this constant to neutron_lib.plugins.ml2.ovs_constants
+DEFAULT_BR_INT = 'br-int'
