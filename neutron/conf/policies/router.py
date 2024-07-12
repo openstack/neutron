@@ -21,6 +21,8 @@ DEPRECATED_REASON = (
 
 COLLECTION_PATH = '/routers'
 RESOURCE_PATH = '/routers/{id}'
+TAGS_PATH = RESOURCE_PATH + '/tags'
+TAG_PATH = RESOURCE_PATH + '/tags/{tag_id}'
 
 ACTION_POST = [
     {'method': 'POST', 'path': COLLECTION_PATH},
@@ -34,6 +36,18 @@ ACTION_DELETE = [
 ACTION_GET = [
     {'method': 'GET', 'path': COLLECTION_PATH},
     {'method': 'GET', 'path': RESOURCE_PATH},
+]
+ACTION_GET_TAGS = [
+    {'method': 'GET', 'path': TAGS_PATH},
+    {'method': 'GET', 'path': TAG_PATH},
+]
+ACTION_PUT_TAGS = [
+    {'method': 'PUT', 'path': TAGS_PATH},
+    {'method': 'PUT', 'path': TAG_PATH},
+]
+ACTION_DELETE_TAGS = [
+    {'method': 'DELETE', 'path': TAGS_PATH},
+    {'method': 'DELETE', 'path': TAG_PATH},
 ]
 
 
@@ -180,6 +194,13 @@ rules = [
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
+    policy.DocumentedRuleDefault(
+        name='get_routers_tags',
+        check_str=base.ADMIN_OR_PROJECT_READER,
+        scope_types=['project'],
+        description='Get the router tags',
+        operations=ACTION_GET_TAGS,
+    ),
 
     policy.DocumentedRuleDefault(
         name='update_router',
@@ -284,6 +305,13 @@ rules = [
                      'updating a router'),
         operations=ACTION_POST,
     ),
+    policy.DocumentedRuleDefault(
+        name='update_routers_tags',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Update the router tags',
+        operations=ACTION_PUT_TAGS,
+    ),
 
     policy.DocumentedRuleDefault(
         name='delete_router',
@@ -296,6 +324,13 @@ rules = [
             check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
+    ),
+    policy.DocumentedRuleDefault(
+        name='delete_routers_tags',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Delete the router tags',
+        operations=ACTION_DELETE_TAGS,
     ),
 
     policy.DocumentedRuleDefault(

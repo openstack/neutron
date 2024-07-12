@@ -19,6 +19,21 @@ from neutron.conf.policies import base
 
 COLLECTION_PATH = '/trunks'
 RESOURCE_PATH = '/trunks/{id}'
+TAGS_PATH = RESOURCE_PATH + '/tags'
+TAG_PATH = RESOURCE_PATH + '/tags/{tag_id}'
+
+ACTION_GET_TAGS = [
+    {'method': 'GET', 'path': TAGS_PATH},
+    {'method': 'GET', 'path': TAG_PATH},
+]
+ACTION_PUT_TAGS = [
+    {'method': 'PUT', 'path': TAGS_PATH},
+    {'method': 'PUT', 'path': TAG_PATH},
+]
+ACTION_DELETE_TAGS = [
+    {'method': 'DELETE', 'path': TAGS_PATH},
+    {'method': 'DELETE', 'path': TAG_PATH},
+]
 
 DEPRECATED_REASON = (
     "The trunks API now supports system scope and default roles.")
@@ -64,6 +79,13 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
+        name='get_trunks_tags',
+        check_str=base.ADMIN_OR_PROJECT_READER,
+        scope_types=['project'],
+        description='Get the trunk tags',
+        operations=ACTION_GET_TAGS
+    ),
+    policy.DocumentedRuleDefault(
         name='update_trunk',
         check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
@@ -81,6 +103,13 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
+        name='update_trunks_tags',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Update the trunk tags',
+        operations=ACTION_PUT_TAGS
+    ),
+    policy.DocumentedRuleDefault(
         name='delete_trunk',
         check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
@@ -96,6 +125,13 @@ rules = [
             check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
+    ),
+    policy.DocumentedRuleDefault(
+        name='delete_trunks_tags',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Delete a trunk',
+        operations=ACTION_DELETE_TAGS
     ),
     policy.DocumentedRuleDefault(
         name='get_subports',

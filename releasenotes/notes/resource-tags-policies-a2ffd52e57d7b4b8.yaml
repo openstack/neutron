@@ -1,0 +1,7 @@
+---
+features:
+  - |
+    Added the tags policies for the following resources: network, subnet, port,
+    router, floating IP, network segment, network segment range, security
+    group and security group rule. The policies control the creation, the
+    update and the deletion of the resource tags.

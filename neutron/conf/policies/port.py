@@ -22,6 +22,8 @@ DEPRECATED_REASON = (
 
 COLLECTION_PATH = '/ports'
 RESOURCE_PATH = '/ports/{id}'
+TAGS_PATH = RESOURCE_PATH + '/tags'
+TAG_PATH = RESOURCE_PATH + '/tags/{tag_id}'
 
 ACTION_POST = [
     {'method': 'POST', 'path': COLLECTION_PATH},
@@ -35,6 +37,18 @@ ACTION_DELETE = [
 ACTION_GET = [
     {'method': 'GET', 'path': COLLECTION_PATH},
     {'method': 'GET', 'path': RESOURCE_PATH},
+]
+ACTION_GET_TAGS = [
+    {'method': 'GET', 'path': TAGS_PATH},
+    {'method': 'GET', 'path': TAG_PATH},
+]
+ACTION_PUT_TAGS = [
+    {'method': 'PUT', 'path': TAGS_PATH},
+    {'method': 'PUT', 'path': TAG_PATH},
+]
+ACTION_DELETE_TAGS = [
+    {'method': 'DELETE', 'path': TAGS_PATH},
+    {'method': 'DELETE', 'path': TAG_PATH},
 ]
 
 
@@ -353,6 +367,17 @@ rules = [
         description='Get ``hints`` attribute of a port',
         operations=ACTION_GET,
     ),
+    policy.DocumentedRuleDefault(
+        name='get_ports_tags',
+        check_str=neutron_policy.policy_or(
+            neutron_policy.RULE_ADVSVC,
+            base.ADMIN_OR_NET_OWNER_READER,
+            base.PROJECT_READER
+        ),
+        scope_types=['project'],
+        description='Get the port tags',
+        operations=ACTION_GET_TAGS,
+    ),
     # TODO(amotoki): Add get_port:binding:vnic_type
     # TODO(amotoki): Add get_port:binding:data_plane_status
 
@@ -591,6 +616,16 @@ rules = [
         description='Update ``hints`` attribute of a port',
         operations=ACTION_PUT,
     ),
+    policy.DocumentedRuleDefault(
+        name='update_ports_tags',
+        check_str=neutron_policy.policy_or(
+            base.ADMIN_OR_PROJECT_MEMBER,
+            neutron_policy.RULE_ADVSVC
+        ),
+        scope_types=['project'],
+        description='Update the port tags',
+        operations=ACTION_PUT_TAGS,
+    ),
 
     policy.DocumentedRuleDefault(
         name='delete_port',
@@ -610,6 +645,17 @@ rules = [
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
+    policy.DocumentedRuleDefault(
+        name='delete_ports_tags',
+        check_str=neutron_policy.policy_or(
+            neutron_policy.RULE_ADVSVC,
+            base.PROJECT_MEMBER,
+            base.ADMIN_OR_NET_OWNER_MEMBER
+        ),
+        scope_types=['project'],
+        description='Delete the port tags',
+        operations=ACTION_DELETE_TAGS,
+    )
 ]
 
 

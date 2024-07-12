@@ -24,6 +24,21 @@ RESOURCE_PATH = '/subnetpools/{id}'
 ONBOARD_PATH = '/subnetpools/{id}/onboard_network_subnets'
 ADD_PREFIXES_PATH = '/subnetpools/{id}/add_prefixes'
 REMOVE_PREFIXES_PATH = '/subnetpools/{id}/remove_prefixes'
+TAGS_PATH = RESOURCE_PATH + '/tags'
+TAG_PATH = RESOURCE_PATH + '/tags/{tag_id}'
+
+ACTION_GET_TAGS = [
+    {'method': 'GET', 'path': TAGS_PATH},
+    {'method': 'GET', 'path': TAG_PATH},
+]
+ACTION_PUT_TAGS = [
+    {'method': 'PUT', 'path': TAGS_PATH},
+    {'method': 'PUT', 'path': TAG_PATH},
+]
+ACTION_DELETE_TAGS = [
+    {'method': 'DELETE', 'path': TAGS_PATH},
+    {'method': 'DELETE', 'path': TAG_PATH},
+]
 
 
 rules = [
@@ -112,6 +127,16 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
+        name='get_subnetpools_tags',
+        check_str=neutron_policy.policy_or(
+            base.ADMIN_OR_PROJECT_READER,
+            'rule:shared_subnetpools'
+        ),
+        scope_types=['project'],
+        description='Get the subnetpool tags',
+        operations=ACTION_GET_TAGS
+    ),
+    policy.DocumentedRuleDefault(
         name='update_subnetpool',
         check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
@@ -146,6 +171,13 @@ rules = [
             deprecated_since=versionutils.deprecated.WALLABY)
     ),
     policy.DocumentedRuleDefault(
+        name='update_subnetpools_tags',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Update the subnetpool tags',
+        operations=ACTION_PUT_TAGS
+    ),
+    policy.DocumentedRuleDefault(
         name='delete_subnetpool',
         check_str=base.ADMIN_OR_PROJECT_MEMBER,
         scope_types=['project'],
@@ -161,6 +193,13 @@ rules = [
             check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
+    ),
+    policy.DocumentedRuleDefault(
+        name='delete_subnetpools_tags',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Delete the subnetpool tags',
+        operations=ACTION_DELETE_TAGS
     ),
     policy.DocumentedRuleDefault(
         name='onboard_network_subnets',
