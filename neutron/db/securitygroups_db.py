@@ -889,9 +889,9 @@ class SecurityGroupDbMixin(
 
     @staticmethod
     def _validate_sgs_for_port(security_groups):
-        if not security_groups:
-            return
-        if not len({sg.stateful for sg in security_groups}) == 1:
+        if (security_groups and
+                any(sg.stateful for sg in security_groups) and
+                any(not sg.stateful for sg in security_groups)):
             msg = ("Cannot apply both stateful and stateless security "
                    "groups on the same port at the same time")
             raise ext_sg.SecurityGroupConflict(reason=msg)
