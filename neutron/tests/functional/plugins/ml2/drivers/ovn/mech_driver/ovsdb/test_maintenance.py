@@ -775,8 +775,12 @@ class TestMaintenance(_TestMaintenanceHelper):
         self.assertEqual(
             '0', ls.other_config.get(ovn_const.LS_OPTIONS_FDB_AGE_THRESHOLD))
 
+        self.assertEqual(
+            '0', self.nb_api.nb_global.options.get("fdb_removal_limit", '0'))
+
         # Change the value of the configuration
         cfg.CONF.set_override('fdb_age_threshold', 5, group='ovn')
+        cfg.CONF.set_override('fdb_removal_limit', 100, group='ovn_nb_global')
 
         # Call the maintenance task and check that the value has been
         # updated in the Logical Switch
@@ -787,6 +791,51 @@ class TestMaintenance(_TestMaintenanceHelper):
 
         self.assertEqual(
             '5', ls.other_config.get(ovn_const.LS_OPTIONS_FDB_AGE_THRESHOLD))
+        self.assertEqual(
+            '100', self.nb_api.nb_global.options.get("fdb_removal_limit"))
+
+    def test_update_mac_aging_settings(self):
+        ext_net = self._create_network('ext_networktest', external=True)
+        ext_subnet = self._create_subnet(
+            'ext_subnettest',
+            ext_net['id'],
+            **{'cidr': '100.0.0.0/24',
+               'gateway_ip': '100.0.0.254',
+               'allocation_pools': [
+                   {'start': '100.0.0.2', 'end': '100.0.0.253'}],
+               'enable_dhcp': False})
+        self._create_network('network1test', external=False)
+        external_gateway_info = {
+            'enable_snat': True,
+            'network_id': ext_net['id'],
+            'external_fixed_ips': [
+                {'ip_address': '100.0.0.2', 'subnet_id': ext_subnet['id']}]}
+        router = self._create_router(
+            'routertest', external_gateway_info=external_gateway_info)
+
+        options = self.nb_api.nb_global.options
+        lr = self.nb_api.get_lrouter(router["id"])
+
+        self.assertEqual(
+            '0', lr.options.get(ovn_const.LR_OPTIONS_MAC_AGE_LIMIT))
+
+        self.assertEqual('0', options.get('mac_binding_removal_limit', '0'))
+
+        cfg.CONF.set_override("mac_binding_age_threshold", 5, group="ovn")
+        cfg.CONF.set_override("mac_binding_removal_limit", 100,
+                              group="ovn_nb_global")
+
+        # Call the maintenance task and check that the value has been
+        # updated in the Logical Switch
+        self.assertRaises(periodics.NeverAgain,
+                          self.maint.update_mac_aging_settings)
+
+        lr = self.nb_api.get_lrouter(router['id'])
+        options = self.nb_api.nb_global.options
+
+        self.assertEqual(
+            '5', lr.options.get(ovn_const.LR_OPTIONS_MAC_AGE_LIMIT))
+        self.assertEqual('100', options['mac_binding_removal_limit'])
 
     def test_floating_ip(self):
         ext_net = self._create_network('ext_networktest', external=True)

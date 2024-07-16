@@ -376,3 +376,7 @@ def get_fdb_removal_limit():
 def get_ovn_mac_binding_age_threshold():
     # This value is always stored as a string in the OVN DB
     return str(cfg.CONF.ovn.mac_binding_age_threshold)
+
+
+def get_ovn_mac_binding_removal_limit():
+    return str(cfg.CONF.ovn_nb_global.mac_binding_removal_limit)
