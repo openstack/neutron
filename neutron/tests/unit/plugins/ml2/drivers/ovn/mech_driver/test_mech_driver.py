@@ -2454,8 +2454,11 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
                        '_is_port_provisioning_required', lambda *_: True)
     @mock.patch.object(mech_driver.OVNMechanismDriver, '_notify_dhcp_updated')
     @mock.patch.object(ovn_client.OVNClient, 'update_port')
-    def test_update_port_postcommit_revision_mismatch_not_after_live_migration(
-            self, mock_update_port, mock_notify_dhcp):
+    def _test_update_port_postcommit_with_exception(
+            self, mock_update_port, mock_notify_dhcp,
+            raised_exc,
+            resource_id_name,
+            **exc_extra_params):
         self.plugin.update_port_status = mock.Mock()
         self.plugin.get_port = mock.Mock(return_value=mock.MagicMock())
 
@@ -2473,10 +2476,12 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
 
         fake_ctx = mock.Mock(current=fake_port, original=original_fake_port,
                              plugin_context=fake_context)
+
+        exc_params = exc_extra_params.copy()
+        exc_params[resource_id_name] = fake_port['id']
+
         mock_update_port.side_effect = [
-            ovn_exceptions.RevisionConflict(
-                resource_id=fake_port['id'],
-                resource_type=ovn_const.TYPE_PORTS),
+            raised_exc(**exc_params),
             None]
 
         self.mech_driver.update_port_postcommit(fake_ctx)
@@ -2485,6 +2490,20 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         self.plugin.get_port.assert_not_called()
         self.assertEqual(1, mock_update_port.call_count)
         mock_notify_dhcp.assert_called_with(fake_port['id'])
+
+    def test_update_port_postcommit_revision_mismatch_not_after_live_migration(
+            self):
+        self._test_update_port_postcommit_with_exception(
+            raised_exc=ovn_exceptions.RevisionConflict,
+            resource_id_name='resource_id',
+            resource_type=ovn_const.TYPE_PORTS,
+        )
+
+    def test__ovn_update_port_missing_stdattribute(self):
+        """Make sure exception is handled."""
+        self._test_update_port_postcommit_with_exception(
+            raised_exc=ovn_revision_numbers_db.StandardAttributeIDNotFound,
+            resource_id_name='resource_uuid')
 
     def test_agent_alive_true(self):
         chassis_private = self._add_chassis_private(5)

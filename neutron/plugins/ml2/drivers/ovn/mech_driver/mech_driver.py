@@ -794,6 +794,9 @@ class OVNMechanismDriver(api.MechanismDriver):
                     port['revision_number'] = db_port['revision_number']
                     self._ovn_update_port(plugin_context, port, original_port,
                                           retry_on_revision_mismatch=False)
+        except ovn_revision_numbers_db.StandardAttributeIDNotFound:
+            LOG.debug("Standard attribute was not found for port %s. It was "
+                      "possibly deleted concurrently.", port['id'])
 
     def create_port_postcommit(self, context):
         """Create a port.
