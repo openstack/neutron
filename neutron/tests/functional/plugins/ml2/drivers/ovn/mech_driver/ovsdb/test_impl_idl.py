@@ -627,15 +627,14 @@ class TestNbApi(BaseOvnIdlTest):
             self.nbapi.lookup('HA_Chassis_Group', router_name, default=None))
 
     def _assert_routes_exist(self, lr_name, expected_count):
-        with self.nbapi.transaction(check_error=True) as txn:
-            lr = txn.add(self.nbapi.lr_get(lr_name))
-        actual_count = len(lr.result.static_routes)
+        lr = self.nbapi.lookup('Logical_Router', lr_name)
+        actual_count = len(lr.static_routes)
         self.assertEqual(actual_count, expected_count,
                          f"Expected {expected_count} routes, "
                          f"found {actual_count}.")
 
     def test_del_static_routes(self):
-        lr_name = 'router_with_static_routes_del'
+        lr_name = ovn_utils.ovn_name(uuidutils.generate_uuid())
         routes = [('0.0.0.0/0', '192.0.2.1'), ('10.0.0.0/24', '192.0.3.1')]
 
         with self.nbapi.transaction(check_error=True) as txn:
@@ -653,7 +652,7 @@ class TestNbApi(BaseOvnIdlTest):
         self._assert_routes_exist(lr_name, 0)
 
     def test_del_no_static_routes(self):
-        lr_name = 'router_with_static_routes_del'
+        lr_name = ovn_utils.ovn_name(uuidutils.generate_uuid())
         routes = []
 
         with self.nbapi.transaction(check_error=True) as txn:
