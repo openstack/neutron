@@ -50,8 +50,8 @@ from oslo_utils import encodeutils
 from oslo_utils import excutils
 from oslo_utils import timeutils
 from oslo_utils import uuidutils
+from oslo_utils import versionutils
 from osprofiler import profiler
-import pkg_resources
 from sqlalchemy.dialects.mysql import dialect as mysql_dialect
 from sqlalchemy.dialects.postgresql import dialect as postgresql_dialect
 from sqlalchemy.dialects.sqlite import dialect as sqlite_dialect
@@ -356,8 +356,8 @@ def get_socket_address_family(ip_version):
 
 def is_version_greater_equal(version1, version2):
     """Returns True if version1 is greater or equal than version2 else False"""
-    return (pkg_resources.parse_version(version1) >=
-            pkg_resources.parse_version(version2))
+    return (versionutils.convert_version_to_tuple(version1) >=
+            versionutils.convert_version_to_tuple(version2))
 
 
 class DelayedStringRenderer(object):
