@@ -487,7 +487,8 @@ class IptablesManager(object):
                                    privsep_exec=True).split('\n')
 
     def _get_version(self):
-        # Output example is "iptables v1.6.2"
+        # Output example is "iptables v1.8.7 (nf_tables)",
+        # this will return "1.8.7"
         args = ['iptables', '--version']
         version = str(linux_utils.execute(
             args, run_as_root=True, privsep_exec=True).split()[1][1:])
