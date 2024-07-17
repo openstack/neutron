@@ -57,6 +57,7 @@
       devstack_localrc:
         Q_AGENT: openvswitch
         Q_ML2_PLUGIN_MECHANISM_DRIVERS: openvswitch
+        NEUTRON_DEPLOY_MOD_WSGI: true
     irrelevant-files: &openvswitch-irrelevant-files
       - ^\.pylintrc$
       - ^test-requirements.txt$
