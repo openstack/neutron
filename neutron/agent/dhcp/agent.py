@@ -347,9 +347,9 @@ class DhcpAgent(manager.Manager):
 
     def _dhcp_ready_ports_loop(self):
         """Notifies the server of any ports that had reservations setup."""
-        @_sync_lock
-        def dhcp_ready_ports_loop():
+        while True:
             # this is just watching sets so we can do it really frequently
+            eventlet.sleep(0.1)
             prio_ports_to_send = set()
             ports_to_send = set()
             for port_count in range(min(len(self.dhcp_prio_ready_ports) +
@@ -365,7 +365,7 @@ class DhcpAgent(manager.Manager):
                                                         ports_to_send)
                     LOG.info("DHCP configuration for ports %s is completed",
                              prio_ports_to_send | ports_to_send)
-                    return
+                    continue
                 except oslo_messaging.MessagingTimeout:
                     LOG.error("Timeout notifying server of ports ready. "
                               "Retrying...")
@@ -375,10 +375,6 @@ class DhcpAgent(manager.Manager):
                                   "iteration.")
                 self.dhcp_prio_ready_ports |= prio_ports_to_send
                 self.dhcp_ready_ports |= ports_to_send
-
-        while True:
-            eventlet.sleep(0.2)
-            dhcp_ready_ports_loop()
 
     def start_ready_ports_loop(self):
         """Spawn a thread to push changed ports to server."""
