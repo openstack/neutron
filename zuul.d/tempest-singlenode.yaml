@@ -234,6 +234,7 @@
         CIRROS_VERSION: 0.6.2
         DEFAULT_IMAGE_NAME: cirros-0.6.2-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.6.2-x86_64-uec.tar.gz
+        NEUTRON_DEPLOY_MOD_WSGI: true
       devstack_services:
         postgresql: true
         mysql: false
@@ -295,6 +296,7 @@
         CIRROS_VERSION: 0.6.2
         DEFAULT_IMAGE_NAME: cirros-0.6.2-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.6.2-x86_64-uec.tar.gz
+        NEUTRON_DEPLOY_MOD_WSGI: true
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
@@ -388,6 +390,7 @@
         CIRROS_VERSION: 0.6.2
         DEFAULT_IMAGE_NAME: cirros-0.6.2-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.6.2-x86_64-uec.tar.gz
+        NEUTRON_DEPLOY_MOD_WSGI: true
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
@@ -460,13 +463,11 @@
     timeout: 10800
     vars:
       devstack_localrc:
-        # TODO(ykarel) can be enabled once
-        # https://bugs.launchpad.net/neutron/+bug/1912359 fixed
-        NEUTRON_DEPLOY_MOD_WSGI: false
         MYSQL_REDUCE_MEMORY: true
         CIRROS_VERSION: 0.6.2
         DEFAULT_IMAGE_NAME: cirros-0.6.2-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.6.2-x86_64-uec.tar.gz
+        NEUTRON_DEPLOY_MOD_WSGI: true
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
@@ -571,6 +572,7 @@
         # sources, new job, inheriting from this one, should be created and
         # that option should be overwritten there.
         OVN_BUILD_FROM_SOURCE: False
+        NEUTRON_DEPLOY_MOD_WSGI: true
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron
       zuul_copy_output:
@@ -781,6 +783,7 @@
         CIRROS_VERSION: 0.6.2
         DEFAULT_IMAGE_NAME: cirros-0.6.2-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.6.2-x86_64-uec.tar.gz
+        NEUTRON_DEPLOY_MOD_WSGI: true
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
@@ -850,6 +853,7 @@
         CIRROS_VERSION: 0.6.2
         DEFAULT_IMAGE_NAME: cirros-0.6.2-x86_64-uec
         DEFAULT_IMAGE_FILE_NAME: cirros-0.6.2-x86_64-uec.tar.gz
+        NEUTRON_DEPLOY_MOD_WSGI: true
       devstack_plugins:
         neutron: https://opendev.org/openstack/neutron.git
       devstack_services:
