@@ -197,11 +197,11 @@ class AdminTests(FloatingipPortForwardingAPITestCase):
                                self.alt_target))
 
 
-class ProjectMemberTests(AdminTests):
+class ProjectManagerTests(AdminTests):
 
     def setUp(self):
-        super(ProjectMemberTests, self).setUp()
-        self.context = self.project_member_ctx
+        super(ProjectManagerTests, self).setUp()
+        self.context = self.project_manager_ctx
 
     def test_create_fip_pf(self):
         with mock.patch.object(self.plugin_mock, 'get_floatingip',
@@ -262,6 +262,13 @@ class ProjectMemberTests(AdminTests):
                 policy.enforce,
                 self.context, 'delete_floatingip_port_forwarding',
                 self.alt_target)
+
+
+class ProjectMemberTests(ProjectManagerTests):
+
+    def setUp(self):
+        super(ProjectMemberTests, self).setUp()
+        self.context = self.project_member_ctx
 
 
 class ProjectReaderTests(ProjectMemberTests):

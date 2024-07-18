@@ -89,7 +89,11 @@ class PolicyBaseTestCase(tests_base.BaseTestCase):
     def _prepare_project_scope_personas(self):
         self.project_admin_ctx = context.Context(
             user_id=self.user_id,
-            roles=['admin', 'member', 'reader'],
+            roles=['admin', 'manager', 'member', 'reader'],
+            project_id=self.project_id)
+        self.project_manager_ctx = context.Context(
+            user_id=self.user_id,
+            roles=['manager', 'member', 'reader'],
             project_id=self.project_id)
         self.project_member_ctx = context.Context(
             user_id=self.user_id,

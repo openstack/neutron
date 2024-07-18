@@ -114,7 +114,42 @@ class AdminQosPolicyTests(QosPolicyAPITestCase):
             policy.enforce(self.context, 'delete_policy', self.alt_target))
 
 
-class ProjectMemberQosPolicyTests(AdminQosPolicyTests):
+class ProjectManagerQosPolicyTests(AdminQosPolicyTests):
+
+    def setUp(self):
+        super(ProjectManagerQosPolicyTests, self).setUp()
+        self.context = self.project_manager_ctx
+
+    def test_get_policy(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'get_policy', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'get_policy', self.alt_target)
+
+    def test_create_policy(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'create_policy', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'create_policy', self.alt_target)
+
+    def test_update_policy(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'update_policy', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'update_policy', self.alt_target)
+
+    def test_delete_policy(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'delete_policy', self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'delete_policy', self.alt_target)
+
+
+class ProjectMemberQosPolicyTests(ProjectManagerQosPolicyTests):
 
     def setUp(self):
         super(ProjectMemberQosPolicyTests, self).setUp()
@@ -231,7 +266,14 @@ class AdminQosRuleTypeTests(QosRuleTypeAPITestCase):
             policy.enforce(self.context, 'get_rule_type', self.target))
 
 
-class ProjectMemberQosRuleTypeTests(AdminQosRuleTypeTests):
+class ProjectManagerQosRuleTypeTests(AdminQosRuleTypeTests):
+
+    def setUp(self):
+        super(ProjectManagerQosRuleTypeTests, self).setUp()
+        self.context = self.project_manager_ctx
+
+
+class ProjectMemberQosRuleTypeTests(ProjectManagerQosRuleTypeTests):
 
     def setUp(self):
         super(ProjectMemberQosRuleTypeTests, self).setUp()
@@ -477,12 +519,11 @@ class AdminQosBandwidthLimitRuleTests(QosRulesAPITestCase):
                            self.alt_target))
 
 
-class ProjectMemberQosBandwidthLimitRuleTests(
-        AdminQosBandwidthLimitRuleTests):
+class ProjectManagerQosBandwidthLimitRuleTests(QosRulesAPITestCase):
 
     def setUp(self):
-        super(ProjectMemberQosBandwidthLimitRuleTests, self).setUp()
-        self.context = self.project_member_ctx
+        super(ProjectManagerQosBandwidthLimitRuleTests, self).setUp()
+        self.context = self.project_manager_ctx
 
     def test_get_policy_bandwidth_limit_rule(self):
         with mock.patch.object(self.plugin_mock, "get_policy",
@@ -511,6 +552,85 @@ class ProjectMemberQosBandwidthLimitRuleTests(
                 policy.enforce,
                 self.context, 'get_alias_bandwidth_limit_rule',
                 self.alt_target)
+
+    def test_create_policy_bandwidth_limit_rule(self):
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.qos_policy):
+            self.assertTrue(
+                policy.enforce(self.context,
+                               'create_policy_bandwidth_limit_rule',
+                               self.target))
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.alt_qos_policy):
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'create_policy_bandwidth_limit_rule',
+                self.alt_target)
+
+    def test_update_policy_bandwidth_limit_rule(self):
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.qos_policy):
+            self.assertTrue(
+                policy.enforce(self.context,
+                               'update_policy_bandwidth_limit_rule',
+                               self.target))
+            # And the same for aliases
+            self.assertTrue(
+                policy.enforce(self.context,
+                               'update_alias_bandwidth_limit_rule',
+                               self.target))
+
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.alt_qos_policy):
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'update_policy_bandwidth_limit_rule',
+                self.alt_target)
+
+            # And the same for aliases
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'update_alias_bandwidth_limit_rule',
+                self.alt_target)
+
+    def test_delete_policy_bandwidth_limit_rule(self):
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.qos_policy):
+            self.assertTrue(
+                policy.enforce(self.context,
+                               'delete_policy_bandwidth_limit_rule',
+                               self.target))
+            # And the same for aliases
+            self.assertTrue(
+                policy.enforce(self.context,
+                               'delete_alias_bandwidth_limit_rule',
+                               self.target))
+
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.alt_qos_policy):
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'delete_policy_bandwidth_limit_rule',
+                self.alt_target)
+
+            # And the same for aliases
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'delete_alias_bandwidth_limit_rule',
+                self.alt_target)
+
+
+class ProjectMemberQosBandwidthLimitRuleTests(
+        ProjectManagerQosBandwidthLimitRuleTests):
+
+    def setUp(self):
+        super(ProjectMemberQosBandwidthLimitRuleTests, self).setUp()
+        self.context = self.project_member_ctx
 
     def test_create_policy_bandwidth_limit_rule(self):
         self.assertRaises(
@@ -745,12 +865,11 @@ class AdminQosPacketRateLimitRuleTests(QosRulesAPITestCase):
                            self.alt_target))
 
 
-class ProjectMemberQosPacketRateLimitRuleTests(
-        AdminQosPacketRateLimitRuleTests):
+class ProjectManagerQosPacketRateLimitRuleTests(QosRulesAPITestCase):
 
     def setUp(self):
-        super(ProjectMemberQosPacketRateLimitRuleTests, self).setUp()
-        self.context = self.project_member_ctx
+        super(ProjectManagerQosPacketRateLimitRuleTests, self).setUp()
+        self.context = self.project_manager_ctx
 
     def test_get_policy_packet_rate_limit_rule(self):
         with mock.patch.object(self.plugin_mock, "get_policy",
@@ -767,6 +886,60 @@ class ProjectMemberQosPacketRateLimitRuleTests(
                 policy.enforce,
                 self.context, 'get_policy_packet_rate_limit_rule',
                 self.alt_target)
+
+    def test_create_policy_packet_rate_limit_rule(self):
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.qos_policy):
+            self.assertTrue(
+                policy.enforce(self.context,
+                               'create_policy_packet_rate_limit_rule',
+                               self.target))
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.alt_qos_policy):
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'create_policy_packet_rate_limit_rule',
+                self.alt_target)
+
+    def test_update_policy_packet_rate_limit_rule(self):
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.qos_policy):
+            self.assertTrue(
+                policy.enforce(self.context,
+                               'update_policy_packet_rate_limit_rule',
+                               self.target))
+
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.alt_qos_policy):
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'update_policy_packet_rate_limit_rule',
+                self.alt_target)
+
+    def test_delete_policy_packet_rate_limit_rule(self):
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.qos_policy):
+            self.assertTrue(
+                policy.enforce(self.context,
+                               'delete_policy_packet_rate_limit_rule',
+                               self.target))
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.alt_qos_policy):
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'delete_policy_packet_rate_limit_rule',
+                self.alt_target)
+
+
+class ProjectMemberQosPacketRateLimitRuleTests(
+        ProjectManagerQosPacketRateLimitRuleTests):
+
+    def setUp(self):
+        super(ProjectMemberQosPacketRateLimitRuleTests, self).setUp()
+        self.context = self.project_member_ctx
 
     def test_create_policy_packet_rate_limit_rule(self):
         self.assertRaises(
@@ -1042,12 +1215,11 @@ class AdminQosDSCPMarkingRuleTests(QosRulesAPITestCase):
                            self.alt_target))
 
 
-class ProjectMemberQosDSCPMarkingRuleTests(
-        AdminQosDSCPMarkingRuleTests):
+class ProjectManagerQosDSCPMarkingRuleTests(QosRulesAPITestCase):
 
     def setUp(self):
-        super(ProjectMemberQosDSCPMarkingRuleTests, self).setUp()
-        self.context = self.project_member_ctx
+        super(ProjectManagerQosDSCPMarkingRuleTests, self).setUp()
+        self.context = self.project_manager_ctx
 
     def test_get_policy_dscp_marking_rule(self):
         with mock.patch.object(self.plugin_mock, "get_policy",
@@ -1075,6 +1247,81 @@ class ProjectMemberQosDSCPMarkingRuleTests(
                 policy.enforce,
                 self.context, 'get_alias_dscp_marking_rule',
                 self.alt_target)
+
+    def test_create_policy_dscp_marking_rule(self):
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.qos_policy):
+            self.assertTrue(
+                policy.enforce(self.context,
+                               'create_policy_dscp_marking_rule',
+                               self.target))
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.alt_qos_policy):
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'create_policy_dscp_marking_rule',
+                self.alt_target)
+
+    def test_update_policy_dscp_marking_rule(self):
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.qos_policy):
+            self.assertTrue(
+                policy.enforce(self.context,
+                               'update_policy_dscp_marking_rule',
+                               self.target))
+            # And the same for aliases
+            self.assertTrue(
+                policy.enforce(self.context,
+                               'update_alias_dscp_marking_rule',
+                               self.target))
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.alt_qos_policy):
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'update_policy_dscp_marking_rule',
+                self.alt_target)
+            # And the same for aliases
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'update_alias_dscp_marking_rule',
+                self.alt_target)
+
+    def test_delete_policy_dscp_marking_rule(self):
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.qos_policy):
+            self.assertTrue(
+                policy.enforce(self.context,
+                               'delete_policy_dscp_marking_rule',
+                               self.target))
+            # And the same for aliases
+            self.assertTrue(
+                policy.enforce(self.context,
+                               'delete_alias_dscp_marking_rule',
+                               self.target))
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.alt_qos_policy):
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'delete_policy_dscp_marking_rule',
+                self.alt_target)
+            # And the same for aliases
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'delete_alias_dscp_marking_rule',
+                self.alt_target)
+
+
+class ProjectMemberQosDSCPMarkingRuleTests(
+        ProjectManagerQosDSCPMarkingRuleTests):
+
+    def setUp(self):
+        super(ProjectMemberQosDSCPMarkingRuleTests, self).setUp()
+        self.context = self.project_member_ctx
 
     def test_create_policy_dscp_marking_rule(self):
         self.assertRaises(
@@ -1397,12 +1644,11 @@ class AdminQosMinimumBandwidthRuleTests(QosRulesAPITestCase):
                 self.alt_target))
 
 
-class ProjectMemberQosMinimumBandwidthRuleTests(
-        AdminQosMinimumBandwidthRuleTests):
+class ProjectManagerQosMinimumBandwidthRuleTests(QosRulesAPITestCase):
 
     def setUp(self):
-        super(ProjectMemberQosMinimumBandwidthRuleTests, self).setUp()
-        self.context = self.project_member_ctx
+        super(ProjectManagerQosMinimumBandwidthRuleTests, self).setUp()
+        self.context = self.project_manager_ctx
 
     def test_get_policy_minimum_bandwidth_rule(self):
         with mock.patch.object(self.plugin_mock, "get_policy",
@@ -1430,6 +1676,83 @@ class ProjectMemberQosMinimumBandwidthRuleTests(
                 policy.enforce,
                 self.context, 'get_alias_minimum_bandwidth_rule',
                 self.alt_target)
+
+    def test_create_policy_minimum_bandwidth_rule(self):
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.qos_policy):
+            self.assertTrue(
+                policy.enforce(
+                    self.context, 'create_policy_minimum_bandwidth_rule',
+                    self.target))
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.alt_qos_policy):
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'create_policy_minimum_bandwidth_rule',
+                self.alt_target)
+
+    def test_update_policy_minimum_bandwidth_rule(self):
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.qos_policy):
+            self.assertTrue(
+                policy.enforce(
+                    self.context, 'update_policy_minimum_bandwidth_rule',
+                    self.target))
+            # And the same for aliases
+            self.assertTrue(
+                policy.enforce(
+                    self.context, 'update_alias_minimum_bandwidth_rule',
+                    self.target))
+
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.alt_qos_policy):
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'update_policy_minimum_bandwidth_rule',
+                self.alt_target)
+            # And the same for aliases
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'update_alias_minimum_bandwidth_rule',
+                self.alt_target)
+
+    def test_delete_policy_minimum_bandwidth_rule(self):
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.qos_policy):
+            self.assertTrue(
+                policy.enforce(
+                    self.context, 'delete_policy_minimum_bandwidth_rule',
+                    self.target))
+            # And the same for aliases
+            self.assertTrue(
+                policy.enforce(
+                    self.context, 'delete_alias_minimum_bandwidth_rule',
+                    self.target))
+
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.alt_qos_policy):
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'delete_policy_minimum_bandwidth_rule',
+                self.alt_target)
+            # And the same for aliases
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'delete_alias_minimum_bandwidth_rule',
+                self.alt_target)
+
+
+class ProjectMemberQosMinimumBandwidthRuleTests(
+        ProjectManagerQosMinimumBandwidthRuleTests):
+
+    def setUp(self):
+        super(ProjectMemberQosMinimumBandwidthRuleTests, self).setUp()
+        self.context = self.project_member_ctx
 
     def test_create_policy_minimum_bandwidth_rule(self):
         self.assertRaises(
@@ -1741,12 +2064,11 @@ class AdminQosMinimumPacketRateRuleTests(QosRulesAPITestCase):
                            self.alt_target))
 
 
-class ProjectMemberQosMinimumPacketRateRuleTests(
-        AdminQosMinimumPacketRateRuleTests):
+class ProjectManagerQosMinimumPacketRateRuleTests(QosRulesAPITestCase):
 
     def setUp(self):
-        super(ProjectMemberQosMinimumPacketRateRuleTests, self).setUp()
-        self.context = self.project_member_ctx
+        super(ProjectManagerQosMinimumPacketRateRuleTests, self).setUp()
+        self.context = self.project_manager_ctx
 
     def test_get_policy_minimum_packet_rate_rule(self):
         with mock.patch.object(self.plugin_mock, "get_policy",
@@ -1774,6 +2096,83 @@ class ProjectMemberQosMinimumPacketRateRuleTests(
                 policy.enforce,
                 self.context, 'get_alias_minimum_packet_rate_rule',
                 self.alt_target)
+
+    def test_create_policy_minimum_packet_rate_rule(self):
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.qos_policy):
+            self.assertTrue(
+                policy.enforce(self.context,
+                               'create_policy_minimum_packet_rate_rule',
+                               self.target))
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.alt_qos_policy):
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'create_policy_minimum_packet_rate_rule',
+                self.alt_target)
+
+    def test_update_policy_minimum_packet_rate_rule(self):
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.qos_policy):
+            self.assertTrue(
+                policy.enforce(self.context,
+                               'update_policy_minimum_packet_rate_rule',
+                               self.target))
+            # And the same for aliases
+            self.assertTrue(
+                policy.enforce(self.context,
+                               'update_alias_minimum_packet_rate_rule',
+                               self.target))
+
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.alt_qos_policy):
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'update_policy_minimum_packet_rate_rule',
+                self.alt_target)
+            # And the same for aliases
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'update_alias_minimum_packet_rate_rule',
+                self.alt_target)
+
+    def test_delete_policy_minimum_packet_rate_rule(self):
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.qos_policy):
+            self.assertTrue(
+                policy.enforce(self.context,
+                               'delete_policy_minimum_packet_rate_rule',
+                               self.target))
+            # And the same for aliases
+            self.assertTrue(
+                policy.enforce(self.context,
+                               'delete_alias_minimum_packet_rate_rule',
+                               self.target))
+
+        with mock.patch.object(self.plugin_mock, "get_policy",
+                               return_value=self.alt_qos_policy):
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'delete_policy_minimum_packet_rate_rule',
+                self.alt_target)
+            # And the same for aliases
+            self.assertRaises(
+                base_policy.PolicyNotAuthorized,
+                policy.enforce,
+                self.context, 'delete_alias_minimum_packet_rate_rule',
+                self.alt_target)
+
+
+class ProjectMemberQosMinimumPacketRateRuleTests(
+        ProjectManagerQosMinimumPacketRateRuleTests):
+
+    def setUp(self):
+        super(ProjectMemberQosMinimumPacketRateRuleTests, self).setUp()
+        self.context = self.project_member_ctx
 
     def test_create_policy_minimum_packet_rate_rule(self):
         self.assertRaises(

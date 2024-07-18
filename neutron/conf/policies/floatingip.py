@@ -58,7 +58,7 @@ rules = [
     ),
     policy.DocumentedRuleDefault(
         name='create_floatingip:floating_ip_address',
-        check_str=base.ADMIN,
+        check_str=base.ADMIN_OR_PROJECT_MANAGER,
         description='Create a floating IP with a specific IP address',
         operations=[
             {

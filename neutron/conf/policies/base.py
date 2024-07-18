@@ -22,6 +22,10 @@ SERVICE = 'rule:service_api'
 # there is now ADMIN role
 ADMIN = "rule:admin_only"
 
+# This check string is the primary use case for the project's manager who is
+# more privileged user then typical MEMBER of the project.
+PROJECT_MANAGER = 'role:manager and project_id:%(project_id)s'
+
 # This check string is the primary use case for typical end-users, who are
 # working with resources that belong to a project (e.g., creating ports and
 # routers).
@@ -38,6 +42,8 @@ PROJECT_READER = 'role:reader and project_id:%(project_id)s'
 # project member should only be able to delete routers in their project).
 ADMIN_OR_SERVICE = (
     '(' + ADMIN + ') or (' + SERVICE + ')')
+ADMIN_OR_PROJECT_MANAGER = (
+    '(' + ADMIN + ') or (' + PROJECT_MANAGER + ')')
 ADMIN_OR_PROJECT_MEMBER = (
     '(' + ADMIN + ') or (' + PROJECT_MEMBER + ')')
 ADMIN_OR_PROJECT_READER = (
@@ -54,8 +60,11 @@ RULE_SG_OWNER = 'rule:sg_owner'
 # that becasue those resources (QOS rules, FIP PFs) don't have project_id
 # attribute at all and they belongs to the same project as parent resource (QoS
 # policy, FIP).
+PARENT_OWNER_MANAGER = 'role:manager and ' + RULE_PARENT_OWNER
 PARENT_OWNER_MEMBER = 'role:member and ' + RULE_PARENT_OWNER
 PARENT_OWNER_READER = 'role:reader and ' + RULE_PARENT_OWNER
+ADMIN_OR_PARENT_OWNER_MANAGER = (
+    '(' + ADMIN + ') or (' + PARENT_OWNER_MANAGER + ')')
 ADMIN_OR_PARENT_OWNER_MEMBER = (
     '(' + ADMIN + ') or (' + PARENT_OWNER_MEMBER + ')')
 ADMIN_OR_PARENT_OWNER_READER = (

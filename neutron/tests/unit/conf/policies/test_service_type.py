@@ -64,7 +64,14 @@ class AdminTests(ServiceTypeAPITestCase):
             policy.enforce(self.context, 'get_service_provider', self.target))
 
 
-class ProjectMemberTests(AdminTests):
+class ProjectManagerTests(AdminTests):
+
+    def setUp(self):
+        super(ProjectManagerTests, self).setUp()
+        self.context = self.project_manager_ctx
+
+
+class ProjectMemberTests(ProjectManagerTests):
 
     def setUp(self):
         super(ProjectMemberTests, self).setUp()

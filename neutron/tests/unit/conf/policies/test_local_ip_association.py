@@ -140,11 +140,11 @@ class AdminTests(LocalIPAssociationAPITestCase):
                            self.alt_target))
 
 
-class ProjectMemberTests(AdminTests):
+class ProjectManagerTests(AdminTests):
 
     def setUp(self):
-        super(ProjectMemberTests, self).setUp()
-        self.context = self.project_member_ctx
+        super(ProjectManagerTests, self).setUp()
+        self.context = self.project_manager_ctx
 
     def test_create_local_ip_port_association(self):
         self.assertTrue(
@@ -178,6 +178,13 @@ class ProjectMemberTests(AdminTests):
             policy.enforce,
             self.context, 'delete_local_ip_port_association',
             self.alt_target)
+
+
+class ProjectMemberTests(ProjectManagerTests):
+
+    def setUp(self):
+        super(ProjectMemberTests, self).setUp()
+        self.context = self.project_member_ctx
 
 
 class ProjectReaderTests(ProjectMemberTests):
