@@ -98,6 +98,17 @@ class Designate(driver.ExternalDNSService):
                 designate_admin.recordsets.create(in_addr_zone_name,
                                                   in_addr_name, 'PTR',
                                                   [recordset_name])
+            except d_exc.Conflict:
+                # It can happen that we have left-over or manually created PTR
+                # from before (e.g. by a project that was using same FIP).
+                # If PTR exists, update it even if it is 'managed'.
+                c_designate, c_designate_admin = get_clients(context,
+                                                             edit_managed=True)
+                recordset_dict = {'records': [recordset_name]}
+                # Use own instance of admin client as a precaution
+                c_designate_admin.recordsets.update(in_addr_zone_name,
+                                                    in_addr_name,
+                                                    recordset_dict)
             except d_exc.NotFound:
                 # Note(jh): If multiple PTRs get created at the same time,
                 # the creation of the zone may fail with a conflict because
