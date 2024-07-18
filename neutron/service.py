@@ -312,7 +312,8 @@ def start_all_workers(neutron_api=None):
 
 def start_rpc_workers():
     rpc_workers = _get_rpc_workers()
-    LOG.debug('using launcher for rpc, workers=%s', cfg.CONF.rpc_workers)
+    LOG.debug('Using launcher for rpc, workers=%s (configured rpc_workers=%s)',
+              len(rpc_workers), cfg.CONF.rpc_workers)
     launcher = _start_workers(rpc_workers)
     registry.publish(resources.PROCESS, events.AFTER_SPAWN, None)
     return launcher
