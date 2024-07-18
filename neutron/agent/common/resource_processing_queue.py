@@ -164,6 +164,11 @@ class ResourceProcessingQueue(object):
     def __init__(self):
         self._queue = queue.PriorityQueue()
 
+    @property
+    def qsize(self):
+        """Returns the number of elements stored in the PriorityQueue"""
+        return self._queue.qsize()
+
     def add(self, update):
         update.tries -= 1
         self._queue.put(update)

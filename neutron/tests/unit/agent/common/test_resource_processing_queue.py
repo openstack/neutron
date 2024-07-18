@@ -111,3 +111,12 @@ class TestExclusiveResourceProcessor(base.BaseTestCase):
         self.assertFalse(update.hit_retry_limit())
         rpqueue.add(update)
         self.assertTrue(update.hit_retry_limit())
+
+    def test_qsize(self):
+        rpqueue = queue.ResourceProcessingQueue()
+        for idx in range(5):
+            rpqueue.add(queue.ResourceUpdate(FAKE_ID, PRIORITY_RPC))
+            self.assertEqual(idx + 1, rpqueue.qsize)
+        for idx in reversed(range(5)):
+            rpqueue._queue.get()
+            self.assertEqual(idx, rpqueue.qsize)

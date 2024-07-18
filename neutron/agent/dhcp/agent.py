@@ -584,6 +584,7 @@ class DhcpAgent(manager.Manager):
         for tmp, update in self._queue.each_update_to_next_resource():
             method = getattr(self, update.action)
             method(update.resource)
+            LOG.debug('Pending events to be processed: %s', self._queue.qsize)
 
     def port_update_end(self, context, payload):
         """Handle the port.update.end notification event."""
