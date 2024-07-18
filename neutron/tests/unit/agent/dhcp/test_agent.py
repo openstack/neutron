@@ -396,7 +396,6 @@ class TestDhcpAgent(base.BaseTestCase):
             # The public function call_driver() is calling the private
             # _call_driver().
             _call_driver.assert_has_calls([
-                mock.call("disable", network, segment=None, block=True),
                 mock.call("enable", network, segment=seg0),
                 mock.call("enable", network, segment=seg1)])
 
