@@ -22,7 +22,7 @@ from neutron.tests.unit.conf.policies import test_base as base
 class AddressScopeAPITestCase(base.PolicyBaseTestCase):
 
     def setUp(self):
-        super(AddressScopeAPITestCase, self).setUp()
+        super().setUp()
         self.target = {'project_id': self.project_id}
         self.alt_target = {'project_id': self.alt_project_id}
 
@@ -30,7 +30,7 @@ class AddressScopeAPITestCase(base.PolicyBaseTestCase):
 class SystemAdminTests(AddressScopeAPITestCase):
 
     def setUp(self):
-        super(SystemAdminTests, self).setUp()
+        super().setUp()
         self.context = self.system_admin_ctx
 
     def test_create_address_scope(self):
@@ -97,21 +97,21 @@ class SystemAdminTests(AddressScopeAPITestCase):
 class SystemMemberTests(SystemAdminTests):
 
     def setUp(self):
-        super(SystemMemberTests, self).setUp()
+        super().setUp()
         self.context = self.system_member_ctx
 
 
 class SystemReaderTests(SystemMemberTests):
 
     def setUp(self):
-        super(SystemReaderTests, self).setUp()
+        super().setUp()
         self.context = self.system_reader_ctx
 
 
 class AdminTests(AddressScopeAPITestCase):
 
     def setUp(self):
-        super(AdminTests, self).setUp()
+        super().setUp()
         self.context = self.project_admin_ctx
 
     def test_create_address_scope(self):
@@ -161,7 +161,7 @@ class AdminTests(AddressScopeAPITestCase):
 class ProjectManagerTests(AdminTests):
 
     def setUp(self):
-        super(ProjectManagerTests, self).setUp()
+        super().setUp()
         self.context = self.project_manager_ctx
 
     def test_create_address_scope(self):
@@ -220,7 +220,7 @@ class ProjectManagerTests(AdminTests):
 class ProjectMemberTests(AdminTests):
 
     def setUp(self):
-        super(ProjectMemberTests, self).setUp()
+        super().setUp()
         self.context = self.project_member_ctx
 
     def test_create_address_scope(self):
@@ -279,7 +279,7 @@ class ProjectMemberTests(AdminTests):
 class ProjectReaderTests(ProjectMemberTests):
 
     def setUp(self):
-        super(ProjectReaderTests, self).setUp()
+        super().setUp()
         self.context = self.project_reader_ctx
 
     def test_create_address_scope(self):
@@ -316,7 +316,7 @@ class ProjectReaderTests(ProjectMemberTests):
 class ServiceRoleTests(AddressScopeAPITestCase):
 
     def setUp(self):
-        super(ServiceRoleTests, self).setUp()
+        super().setUp()
         self.context = self.service_ctx
 
     def test_create_address_scope(self):

@@ -22,7 +22,7 @@ from neutron.tests.unit.conf.policies import test_base as base
 class QuoatsAPITestCase(base.PolicyBaseTestCase):
 
     def setUp(self):
-        super(QuoatsAPITestCase, self).setUp()
+        super().setUp()
         self.target = {'project_id': self.project_id}
         self.alt_target = {'project_id': self.alt_project_id}
 
@@ -30,7 +30,7 @@ class QuoatsAPITestCase(base.PolicyBaseTestCase):
 class SystemAdminTests(QuoatsAPITestCase):
 
     def setUp(self):
-        super(SystemAdminTests, self).setUp()
+        super().setUp()
         self.context = self.system_admin_ctx
 
     def test_get_quota(self):
@@ -67,21 +67,21 @@ class SystemAdminTests(QuoatsAPITestCase):
 class SystemMemberTests(SystemAdminTests):
 
     def setUp(self):
-        super(SystemMemberTests, self).setUp()
+        super().setUp()
         self.context = self.system_member_ctx
 
 
 class SystemReaderTests(SystemMemberTests):
 
     def setUp(self):
-        super(SystemReaderTests, self).setUp()
+        super().setUp()
         self.context = self.system_reader_ctx
 
 
 class AdminTests(QuoatsAPITestCase):
 
     def setUp(self):
-        super(AdminTests, self).setUp()
+        super().setUp()
         self.context = self.project_admin_ctx
 
     def test_get_quota(self):
@@ -106,7 +106,7 @@ class AdminTests(QuoatsAPITestCase):
 class ProjectManagerTests(AdminTests):
 
     def setUp(self):
-        super(ProjectManagerTests, self).setUp()
+        super().setUp()
         self.context = self.project_manager_ctx
 
     def test_get_quota(self):
@@ -141,7 +141,7 @@ class ProjectManagerTests(AdminTests):
 class ProjectMemberTests(ProjectManagerTests):
 
     def setUp(self):
-        super(ProjectMemberTests, self).setUp()
+        super().setUp()
         self.context = self.project_member_ctx
 
     def test_get_quota(self):
@@ -158,14 +158,14 @@ class ProjectMemberTests(ProjectManagerTests):
 class ProjectReaderTests(ProjectMemberTests):
 
     def setUp(self):
-        super(ProjectReaderTests, self).setUp()
+        super().setUp()
         self.context = self.project_reader_ctx
 
 
 class ServiceRoleTests(QuoatsAPITestCase):
 
     def setUp(self):
-        super(ServiceRoleTests, self).setUp()
+        super().setUp()
         self.context = self.service_ctx
 
     def test_get_quota(self):

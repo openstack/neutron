@@ -22,14 +22,14 @@ from neutron.tests.unit.conf.policies import test_base as base
 class NetworkSegmentRangeAPITestCase(base.PolicyBaseTestCase):
 
     def setUp(self):
-        super(NetworkSegmentRangeAPITestCase, self).setUp()
+        super().setUp()
         self.target = {}
 
 
 class SystemAdminTests(NetworkSegmentRangeAPITestCase):
 
     def setUp(self):
-        super(SystemAdminTests, self).setUp()
+        super().setUp()
         self.context = self.system_admin_ctx
 
     def test_create_network_segment_range(self):
@@ -78,21 +78,21 @@ class SystemAdminTests(NetworkSegmentRangeAPITestCase):
 class SystemMemberTests(SystemAdminTests):
 
     def setUp(self):
-        super(SystemMemberTests, self).setUp()
+        super().setUp()
         self.context = self.system_member_ctx
 
 
 class SystemReaderTests(SystemMemberTests):
 
     def setUp(self):
-        super(SystemReaderTests, self).setUp()
+        super().setUp()
         self.context = self.system_reader_ctx
 
 
 class AdminTests(NetworkSegmentRangeAPITestCase):
 
     def setUp(self):
-        super(AdminTests, self).setUp()
+        super().setUp()
         self.context = self.project_admin_ctx
 
     def test_create_network_segment_range(self):
@@ -134,7 +134,7 @@ class AdminTests(NetworkSegmentRangeAPITestCase):
 class ProjectManagerTests(AdminTests):
 
     def setUp(self):
-        super(ProjectManagerTests, self).setUp()
+        super().setUp()
         self.context = self.project_manager_ctx
 
     def test_create_network_segment_range(self):
@@ -183,21 +183,21 @@ class ProjectManagerTests(AdminTests):
 class ProjectMemberTests(ProjectManagerTests):
 
     def setUp(self):
-        super(ProjectMemberTests, self).setUp()
+        super().setUp()
         self.context = self.project_member_ctx
 
 
 class ProjectReaderTests(ProjectMemberTests):
 
     def setUp(self):
-        super(ProjectReaderTests, self).setUp()
+        super().setUp()
         self.context = self.project_reader_ctx
 
 
 class ServiceRoleTests(NetworkSegmentRangeAPITestCase):
 
     def setUp(self):
-        super(ServiceRoleTests, self).setUp()
+        super().setUp()
         self.context = self.service_ctx
 
     def test_create_network_segment_range(self):

@@ -20,7 +20,7 @@ from neutron.tests.unit.conf.policies import test_base as base
 class DefaultSecurityGroupRuleAPITestCase(base.PolicyBaseTestCase):
 
     def setUp(self):
-        super(DefaultSecurityGroupRuleAPITestCase, self).setUp()
+        super().setUp()
         self.target = {}
 
 
@@ -28,7 +28,7 @@ class SystemAdminDefaultSecurityGroupRuleTests(
         DefaultSecurityGroupRuleAPITestCase):
 
     def setUp(self):
-        super(SystemAdminDefaultSecurityGroupRuleTests, self).setUp()
+        super().setUp()
         self.context = self.system_admin_ctx
 
     def test_create_default_security_group_rule(self):
@@ -54,7 +54,7 @@ class SystemMemberDefaultSecurityGroupRuleTests(
         SystemAdminDefaultSecurityGroupRuleTests):
 
     def setUp(self):
-        super(SystemMemberDefaultSecurityGroupRuleTests, self).setUp()
+        super().setUp()
         self.context = self.system_member_ctx
 
 
@@ -62,14 +62,14 @@ class SystemReaderDefaultSecurityGroupRuleTests(
         SystemMemberDefaultSecurityGroupRuleTests):
 
     def setUp(self):
-        super(SystemReaderDefaultSecurityGroupRuleTests, self).setUp()
+        super().setUp()
         self.context = self.system_reader_ctx
 
 
 class AdminDefaultSecurityGroupRuleTests(DefaultSecurityGroupRuleAPITestCase):
 
     def setUp(self):
-        super(AdminDefaultSecurityGroupRuleTests, self).setUp()
+        super().setUp()
         self.context = self.project_admin_ctx
 
     def test_create_default_security_group_rule(self):
@@ -92,7 +92,7 @@ class ProjectManagerDefaultSecurityGroupRuleTests(
         AdminDefaultSecurityGroupRuleTests):
 
     def setUp(self):
-        super(ProjectManagerDefaultSecurityGroupRuleTests, self).setUp()
+        super().setUp()
         self.context = self.project_manager_ctx
 
     def test_create_default_security_group_rule(self):
@@ -117,7 +117,7 @@ class ProjectMemberDefaultSecurityGroupRuleTests(
         ProjectManagerDefaultSecurityGroupRuleTests):
 
     def setUp(self):
-        super(ProjectMemberDefaultSecurityGroupRuleTests, self).setUp()
+        super().setUp()
         self.context = self.project_member_ctx
 
 
@@ -125,7 +125,7 @@ class ProjectReaderDefaultSecurityGroupRuleTests(
         ProjectMemberDefaultSecurityGroupRuleTests):
 
     def setUp(self):
-        super(ProjectReaderDefaultSecurityGroupRuleTests, self).setUp()
+        super().setUp()
         self.context = self.project_reader_ctx
 
     def test_create_default_security_group_rule(self):
