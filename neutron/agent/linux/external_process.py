@@ -272,7 +272,6 @@ class ProcessMonitor(object):
                            'resource_type': self._resource_type,
                            'uuid': service_id.uuid})
                 self._execute_action(service_id)
-            eventlet.sleep(0)
 
     def _periodic_checking_thread(self):
         while self._monitor_processes:
