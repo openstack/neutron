@@ -19,6 +19,7 @@ import inspect
 import threading
 
 from futurist import periodics
+from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net as pnet
 from neutron_lib import constants as n_const
@@ -1225,6 +1226,39 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                 for cmd in cmds:
                     txn.add(cmd)
 
+        raise periodics.NeverAgain()
+
+    @has_lock_periodic(spacing=600, run_immediately=True)
+    def check_network_broadcast_arps_to_all_routers(self):
+        """Check the broadcast-arps-to-all-routers config
+
+        Ensure that the broadcast-arps-to-all-routers is set accordingly
+        to the ML2/OVN configuration option.
+        """
+        context = n_context.get_admin_context()
+        networks = self._ovn_client._plugin.get_networks(
+            context, filters={external_net.EXTERNAL: [True]})
+        cmds = []
+        for net in networks:
+            ls_name = utils.ovn_name(net['id'])
+            ls = self._nb_idl.get_lswitch(ls_name)
+            broadcast_value = ls.other_config.get(
+                ovn_const.LS_OPTIONS_BROADCAST_ARPS_ROUTERS)
+            expected_broadcast_value = ('true'
+                if ovn_conf.is_broadcast_arps_to_all_routers_enabled() else
+                'false')
+            # Assert the config value is the right one
+            if broadcast_value == expected_broadcast_value:
+                continue
+            # If not, set the right value
+            other_config = {ovn_const.LS_OPTIONS_BROADCAST_ARPS_ROUTERS:
+                            expected_broadcast_value}
+            cmds.append(self._nb_idl.db_set('Logical_Switch', ls_name,
+                                            ('other_config', other_config)))
+        if cmds:
+            with self._nb_idl.transaction(check_error=True) as txn:
+                for cmd in cmds:
+                    txn.add(cmd)
         raise periodics.NeverAgain()
 
 

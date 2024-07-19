@@ -221,6 +221,14 @@ ovn_opts = [
                default=0,
                help=_('The number of seconds to keep MAC_Binding entries in '
                       'the OVN DB. 0 to disable aging.')),
+    cfg.BoolOpt('broadcast_arps_to_all_routers',
+                default=True,
+                help=_('If enabled (default) OVN will flood ARP requests to '
+                       'all attached ports on a network. If set to False, '
+                       'ARP requests are only sent to routers on that network '
+                       'if the target MAC address matches. ARP requests that '
+                       'do not match a router will only be forwarded to '
+                       'non-router ports. Supported by OVN >= 23.06.')),
 ]
 
 nb_global_opts = [
@@ -376,3 +384,7 @@ def get_fdb_removal_limit():
 def get_ovn_mac_binding_age_threshold():
     # This value is always stored as a string in the OVN DB
     return str(cfg.CONF.ovn.mac_binding_age_threshold)
+
+
+def is_broadcast_arps_to_all_routers_enabled():
+    return cfg.CONF.ovn.broadcast_arps_to_all_routers

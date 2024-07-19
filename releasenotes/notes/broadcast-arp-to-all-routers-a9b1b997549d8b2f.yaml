@@ -1,0 +1,12 @@
+---
+features:
+  - |
+    Added a new configuration option called
+    ``broadcast_arps_to_all_routers`` to the ``[ovn]`` config section.
+    This option is responsible for configuring the external networks with
+    the ``broadcast-arps-to-all-routers`` config option available in
+    OVN 23.06 and newer. By enabling this option (default) OVN will flood
+    ARP requests to all attached ports on a network. If disabled, ARP
+    requests are only sent to routers on that network if the target MAC
+    address matches. ARP requests that do not match a router will only
+    be forwarded to non-router ports.

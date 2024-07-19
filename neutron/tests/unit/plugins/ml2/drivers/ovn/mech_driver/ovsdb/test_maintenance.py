@@ -16,6 +16,7 @@
 from unittest import mock
 
 from futurist import periodics
+from neutron_lib.api.definitions import external_net
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as n_const
 from neutron_lib import context
@@ -1129,3 +1130,35 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
             utils.ovn_name('lr-id-b'),
             lrb_nat['uuid'],
             gateway_port=lrp.uuid)
+
+    def test_check_network_broadcast_arps_to_all_routers(self):
+        cfg.CONF.set_override('broadcast_arps_to_all_routers', 'true',
+                              group='ovn')
+        networks = [{'id': 'foo', external_net.EXTERNAL: True}]
+        self.fake_ovn_client._plugin.get_networks.return_value = networks
+        fake_ls = mock.Mock(other_config={})
+        self.fake_ovn_client._nb_idl.get_lswitch.return_value = fake_ls
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.periodic.check_network_broadcast_arps_to_all_routers)
+
+        self.fake_ovn_client._nb_idl.db_set.assert_called_once_with(
+            'Logical_Switch', 'neutron-foo', ('other_config',
+            {constants.LS_OPTIONS_BROADCAST_ARPS_ROUTERS: 'true'}))
+
+    def test_check_network_broadcast_arps_to_all_routers_already_set(self):
+        cfg.CONF.set_override('broadcast_arps_to_all_routers', 'false',
+                              group='ovn')
+        networks = [{'id': 'foo', external_net.EXTERNAL: True}]
+        self.fake_ovn_client._plugin.get_networks.return_value = networks
+        fake_ls = mock.Mock(other_config={
+            constants.LS_OPTIONS_BROADCAST_ARPS_ROUTERS: 'false'})
+        self.fake_ovn_client._nb_idl.get_lswitch.return_value = fake_ls
+
+        self.assertRaises(
+            periodics.NeverAgain,
+            self.periodic.check_network_broadcast_arps_to_all_routers)
+
+        # Assert there was no transactions because the value was already set
+        self.fake_ovn_client._nb_idl.db_set.assert_not_called()
