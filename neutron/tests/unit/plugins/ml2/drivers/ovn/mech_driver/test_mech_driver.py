@@ -2412,28 +2412,113 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
             mock.ANY, passed_fake_port, port_object=passed_fake_port_orig)
         mock_notify_dhcp.assert_called_once_with(mock.ANY, fake_port['id'])
 
-    @mock.patch.object(mech_driver.OVNMechanismDriver,
-                       '_is_port_provisioning_required', lambda *_: True)
-    @mock.patch.object(mech_driver.OVNMechanismDriver, '_notify_dhcp_updated')
-    @mock.patch.object(ovn_client.OVNClient, 'update_port')
-    def test_update_port_postcommit_live_migration(
-            self, mock_update_port, mock_notify_dhcp):
-        self.plugin.update_port_status = mock.Mock()
-        fake_context = 'fake_context'
-        fake_port = fakes.FakePort.create_one_port(
-            attrs={
-                'status': const.PORT_STATUS_DOWN,
-                portbindings.PROFILE: {ovn_const.MIGRATING_ATTR: 'foo'},
-                portbindings.VIF_TYPE: portbindings.VIF_TYPE_OVS}).info()
-        fake_ctx = mock.Mock(current=fake_port, original=fake_port,
-                             plugin_context=fake_context)
+    def _test_update_port_postcommit_live_migration(self, ovs_create_tap,
+                                                    vif_type,
+                                                    expected_behavior):
+        """Helper function to test update_port_postcommit during live migration
 
-        self.mech_driver.update_port_postcommit(fake_ctx)
+        :param ovs_create_tap: Boolean value for ovs_create_tap config
+        :param vif_type: VIF type constant (e.g., portbindings.VIF_TYPE_OVS)
+        :param expected_behavior: 'return_early', 'fake_event', or
+                                  'normal_processing'
+        """
+        with mock.patch.object(
+                mech_driver.OVNMechanismDriver,
+                '_is_port_provisioning_required', lambda *_: True), \
+             mock.patch.object(
+                 mech_driver.OVNMechanismDriver,
+                 '_notify_dhcp_updated') as mock_notify_dhcp, \
+             mock.patch.object(
+                 ovn_client.OVNClient, 'update_port') as mock_update_port:
 
-        mock_update_port.assert_not_called()
-        mock_notify_dhcp.assert_not_called()
-        self.plugin.update_port_status.assert_called_once_with(
-            fake_context, fake_port['id'], const.PORT_STATUS_ACTIVE)
+            ovn_conf.cfg.CONF.set_override(
+                'ovs_create_tap', ovs_create_tap, group='ovn')
+            self.plugin.update_port_status = mock.Mock()
+            fake_context = 'fake_context'
+            fake_port = fakes.FakePort.create_one_port(
+                attrs={
+                    'status': const.PORT_STATUS_DOWN,
+                    portbindings.PROFILE: {ovn_const.MIGRATING_ATTR: 'foo'},
+                    portbindings.VIF_TYPE: vif_type}).info()
+            fake_ctx = mock.Mock(current=fake_port, original=fake_port,
+                                 plugin_context=fake_context)
+
+            self.mech_driver.update_port_postcommit(fake_ctx)
+
+            if expected_behavior == 'return_early':
+                # Should return early without calling any methods
+                mock_update_port.assert_not_called()
+                mock_notify_dhcp.assert_not_called()
+                self.plugin.update_port_status.assert_not_called()
+            elif expected_behavior == 'fake_event':
+                # Should create fake event
+                mock_update_port.assert_not_called()
+                mock_notify_dhcp.assert_not_called()
+                self.plugin.update_port_status.assert_called_once_with(
+                    fake_context, fake_port['id'], const.PORT_STATUS_ACTIVE)
+            elif expected_behavior == 'normal_processing':
+                # Should fall through to normal processing
+                passed_fake_port = copy.deepcopy(fake_port)
+                passed_fake_port['network'] = fake_ctx.network.current
+                passed_fake_port_orig = copy.deepcopy(fake_ctx.original)
+                passed_fake_port_orig['network'] = fake_ctx.network.current
+
+                mock_update_port.assert_called_once_with(
+                    mock.ANY, passed_fake_port,
+                    port_object=passed_fake_port_orig)
+                mock_notify_dhcp.assert_called_once_with(
+                    mock.ANY, fake_port['id'])
+                self.plugin.update_port_status.assert_not_called()
+            else:
+                self.fail(f"Unknown expected_behavior: {expected_behavior}")
+
+    def test_update_port_postcommit_migration_no_create_tap_ovs(self):
+        """Test migration: ovs_create_tap=False + OVS returns fake event."""
+        self._test_update_port_postcommit_live_migration(
+            ovs_create_tap=False,
+            vif_type=portbindings.VIF_TYPE_OVS,
+            expected_behavior='fake_event'
+        )
+
+    def test_update_port_postcommit_migration_create_tap_ovs(self):
+        """Test migration: ovs_create_tap=True + OVS returns early."""
+        self._test_update_port_postcommit_live_migration(
+            ovs_create_tap=True,
+            vif_type=portbindings.VIF_TYPE_OVS,
+            expected_behavior='return_early'
+        )
+
+    def test_update_port_postcommit_migration_no_create_tap_vhost_user(self):
+        """test migration: ovs_create_tap=False + vhost returns fake event."""
+        self._test_update_port_postcommit_live_migration(
+            ovs_create_tap=False,
+            vif_type=portbindings.VIF_TYPE_VHOST_USER,
+            expected_behavior='fake_event'
+        )
+
+    def test_update_port_postcommit_migration_create_tap_vhost_user(self):
+        """test migration: ovs_create_tap=True + vhost returns fake event."""
+        self._test_update_port_postcommit_live_migration(
+            ovs_create_tap=True,
+            vif_type=portbindings.VIF_TYPE_VHOST_USER,
+            expected_behavior='fake_event'
+        )
+
+    def test_update_port_postcommit_migration_no_create_tap_unbound(self):
+        """Test migration: ovs_create_tap=False + UNBOUND not returns."""
+        self._test_update_port_postcommit_live_migration(
+            ovs_create_tap=False,
+            vif_type=portbindings.VIF_TYPE_UNBOUND,
+            expected_behavior='normal_processing'
+        )
+
+    def test_update_port_postcommit_migration_create_tap_unbound(self):
+        """Test migration: ovs_create_tap=True + UNBOUND not returns."""
+        self._test_update_port_postcommit_live_migration(
+            ovs_create_tap=True,
+            vif_type=portbindings.VIF_TYPE_UNBOUND,
+            expected_behavior='normal_processing'
+        )
 
     @mock.patch.object(mech_driver.OVNMechanismDriver,
                        '_is_port_provisioning_required', lambda *_: True)

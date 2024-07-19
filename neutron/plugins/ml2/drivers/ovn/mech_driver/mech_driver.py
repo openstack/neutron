@@ -1034,26 +1034,40 @@ class OVNMechanismDriver(api.MechanismDriver):
         original_port = copy.deepcopy(context.original)
         original_port['network'] = context.network.current
 
-        # NOTE(mjozefcz): Check if port is in migration state. If so update
-        # the port status from DOWN to UP in order to generate 'fake'
-        # vif-interface-plugged event. This workaround is needed to
-        # perform live-migration with live_migration_wait_for_vif_plug=True.
+        # NOTE(mjozefcz,shoffmann): Check if port is in migration state.
+        # This is needed to perform live-migration with the Nova configuration
+        # flag ``live_migration_wait_for_vif_plug=True``.
         if (port['status'] == const.PORT_STATUS_DOWN and
-            ovn_const.MIGRATING_ATTR in port[portbindings.PROFILE].keys() and
-            port[portbindings.VIF_TYPE] in (
-                 portbindings.VIF_TYPE_OVS,
-                 portbindings.VIF_TYPE_VHOST_USER)):
-            LOG.info("Setting port %s status from DOWN to UP in order "
-                     "to emit vif-interface-plugged event.",
-                     port['id'])
-            self._plugin.update_port_status(context.plugin_context,
-                                            port['id'],
-                                            const.PORT_STATUS_ACTIVE)
-            # The revision has been changed. In the meantime
-            # port-update event already updated the OVN configuration,
-            # So there is no need to update it again here. Anyway it
-            # will fail that OVN has port with bigger revision.
-            return
+                ovn_const.MIGRATING_ATTR in port[portbindings.PROFILE].keys()):
+            # NOTE(ykarel): For vif_type=unbound, during migration it means
+            # the port will be rebind so we just continue here
+            if port[portbindings.VIF_TYPE] == portbindings.VIF_TYPE_UNBOUND:
+                pass
+            # NOTE(ykarel): For ovs_create_tap=True and vif_type=ovs,
+            # just return as we don't need to send any fake event and instead
+            # Wait for PortBindingChassisUpdateEvent Southbound event which is
+            # triggered when ``Port_Binding.additional_chassis`` is populated.
+            elif (ovn_conf.is_ovs_create_tap() and
+                    port[portbindings.VIF_TYPE] == portbindings.VIF_TYPE_OVS):
+                return
+            # NOTE(ykarel): For ovs_create_tap=False or vif_type=vhostuser
+            # we create fake event instead of waiting for the Southbound event
+            elif (not ovn_conf.is_ovs_create_tap() or
+                    port[portbindings.VIF_TYPE] ==
+                    portbindings.VIF_TYPE_VHOST_USER):
+                # Update the port status from DOWN to UP in order to generate
+                # a "fake" ``vif-interface-plugged`` event.
+                LOG.info("Setting port %s status from DOWN to UP in order "
+                         "to emit vif-interface-plugged event.",
+                         port['id'])
+                self._plugin.update_port_status(context.plugin_context,
+                                                port['id'],
+                                                const.PORT_STATUS_ACTIVE)
+                # The revision has been changed. In the meantime
+                # port-update event already updated the OVN configuration,
+                # So there is no need to update it again here. Anyway it
+                # will fail that OVN has port with bigger revision.
+                return
 
         self._ovn_update_port(context.plugin_context, port, original_port,
                               retry_on_revision_mismatch=True)
