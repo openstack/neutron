@@ -13,6 +13,7 @@
 
 import abc
 import copy
+import functools
 
 from neutron_lib.api.definitions import port
 from neutron_lib.api import extensions as api_extensions
@@ -58,6 +59,14 @@ TAG_ATTRIBUTE_MAP_PORTS[TAGS] = {
         'default': [], 'is_visible': True, 'is_filter': True
 }
 RESOURCES_AND_PARENTS = {'subnets': ('network', subnet.Subnet.get_network_id)}
+
+
+def _policy_init(f):
+    @functools.wraps(f)
+    def func(self, *args, **kwargs):
+        policy.init()
+        return f(self, *args, **kwargs)
+    return func
 
 
 class TagResourceNotFound(exceptions.NotFound):
@@ -127,6 +136,7 @@ class TaggingController(object):
                     return resource, kwargs[key], parent, parent_id
         return None, None, None, None
 
+    @_policy_init
     def index(self, request, **kwargs):
         # GET /v2.0/{parent_resource}/{parent_resource_id}/tags
         ctx = request.context
@@ -136,6 +146,7 @@ class TaggingController(object):
         policy.enforce(ctx, 'get_%s_%s' % (res, TAGS), target)
         return self.plugin.get_tags(ctx, res, res_id)
 
+    @_policy_init
     def show(self, request, id, **kwargs):
         # GET /v2.0/{parent_resource}/{parent_resource_id}/tags/{tag}
         # id == tag
@@ -152,6 +163,7 @@ class TaggingController(object):
         # POST /v2.0/{parent_resource}/{parent_resource_id}/tags
         raise webob.exc.HTTPNotFound("not supported")
 
+    @_policy_init
     def update(self, request, id, **kwargs):
         # PUT /v2.0/{parent_resource}/{parent_resource_id}/tags/{tag}
         # id == tag
@@ -166,6 +178,7 @@ class TaggingController(object):
         notify_tag_action(ctx, 'create.end', res, res_id, [id])
         return result
 
+    @_policy_init
     def update_all(self, request, body, **kwargs):
         # PUT /v2.0/{parent_resource}/{parent_resource_id}/tags
         # body: {"tags": ["aaa", "bbb"]}
@@ -181,6 +194,7 @@ class TaggingController(object):
                           body['tags'])
         return result
 
+    @_policy_init
     def delete(self, request, id, **kwargs):
         # DELETE /v2.0/{parent_resource}/{parent_resource_id}/tags/{tag}
         # id == tag
@@ -195,6 +209,7 @@ class TaggingController(object):
         notify_tag_action(ctx, 'delete.end', res, res_id, [id])
         return result
 
+    @_policy_init
     def delete_all(self, request, **kwargs):
         # DELETE /v2.0/{parent_resource}/{parent_resource_id}/tags
         ctx = request.context
