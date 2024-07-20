@@ -46,6 +46,16 @@ class SystemAdminSecurityGroupTests(SecurityGroupAPITestCase):
             policy.enforce,
             self.context, 'create_security_group', self.alt_target)
 
+    def test_create_security_groups_tags(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_security_groups_tags', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_security_groups_tags', self.alt_target)
+
     def test_get_security_group(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -134,6 +144,14 @@ class AdminSecurityGroupTests(SecurityGroupAPITestCase):
             policy.enforce(
                 self.context, 'create_security_group', self.alt_target))
 
+    def test_create_security_groups_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'create_security_groups_tags',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'create_security_groups_tags',
+                           self.alt_target))
+
     def test_get_security_group(self):
         self.assertTrue(
             policy.enforce(self.context, 'get_security_group', self.target))
@@ -193,6 +211,15 @@ class ProjectManagerSecurityGroupTests(AdminSecurityGroupTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'create_security_group', self.alt_target)
+
+    def test_create_security_groups_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'create_security_groups_tags',
+                           self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_security_groups_tags', self.alt_target)
 
     def test_get_security_group(self):
         self.assertTrue(
@@ -267,6 +294,16 @@ class ProjectReaderSecurityGroupTests(ProjectMemberSecurityGroupTests):
             policy.enforce,
             self.context, 'create_security_group', self.alt_target)
 
+    def test_create_security_groups_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_security_groups_tags', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_security_groups_tags', self.alt_target)
+
     def test_update_security_group(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
@@ -319,6 +356,12 @@ class ServiceRoleSecurityGroupTests(SecurityGroupAPITestCase):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'create_security_group', self.target)
+
+    def test_create_security_groups_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_security_groups_tags', self.target)
 
     def test_get_security_group(self):
         self.assertRaises(

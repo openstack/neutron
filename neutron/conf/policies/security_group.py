@@ -41,6 +41,9 @@ SG_ACTION_PUT_TAGS = [
     {'method': 'PUT', 'path': SG_TAGS_PATH},
     {'method': 'PUT', 'path': SG_TAG_PATH},
 ]
+SG_ACTION_POST_TAGS = [
+    {'method': 'POST', 'path': SG_TAGS_PATH},
+]
 SG_ACTION_DELETE_TAGS = [
     {'method': 'DELETE', 'path': SG_TAGS_PATH},
     {'method': 'DELETE', 'path': SG_TAG_PATH},
@@ -91,6 +94,13 @@ rules = [
             check_str=neutron_policy.RULE_ADMIN_OR_OWNER,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
+    ),
+    policy.DocumentedRuleDefault(
+        name='create_security_groups_tags',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Create the security group tags',
+        operations=SG_ACTION_POST_TAGS,
     ),
     policy.DocumentedRuleDefault(
         name='get_security_group',

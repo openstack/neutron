@@ -38,6 +38,12 @@ class SystemAdminTests(SegmentAPITestCase):
             policy.enforce,
             self.context, 'create_segment', self.target)
 
+    def test_create_segments_tags(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_segments_tags', self.target)
+
     def test_get_segment(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -99,6 +105,10 @@ class AdminTests(SegmentAPITestCase):
         self.assertTrue(
             policy.enforce(self.context, 'create_segment', self.target))
 
+    def test_create_segments_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'create_segments_tags', self.target))
+
     def test_get_segment(self):
         self.assertTrue(
             policy.enforce(self.context, 'get_segment', self.target))
@@ -135,6 +145,12 @@ class ProjectManagerTests(AdminTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'create_segment', self.target)
+
+    def test_create_segments_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_segments_tags', self.target)
 
     def test_get_segment(self):
         self.assertRaises(
@@ -198,6 +214,12 @@ class ServiceRoleTests(SegmentAPITestCase):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'create_segment', self.target)
+
+    def test_create_segments_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_segments_tags', self.target)
 
     def test_get_segment(self):
         self.assertRaises(

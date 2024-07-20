@@ -59,6 +59,18 @@ class SystemAdminTests(FloatingIPAPITestCase):
             self.context, "create_floatingip:floating_ip_address",
             self.alt_target)
 
+    def test_create_floatingips_tags(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, "create_floatingips_tags",
+            self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, "create_floatingips_tags",
+            self.alt_target)
+
     def test_get_floatingip(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -146,6 +158,14 @@ class AdminTests(FloatingIPAPITestCase):
                 self.context,
                 "create_floatingip:floating_ip_address", self.alt_target))
 
+    def test_create_floatingips_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, "create_floatingips_tags",
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context, "create_floatingips_tags",
+                           self.alt_target))
+
     def test_get_floatingip(self):
         self.assertTrue(
             policy.enforce(self.context, "get_floatingip", self.target))
@@ -202,6 +222,15 @@ class ProjectManagerTests(AdminTests):
             policy.enforce,
             self.context, "create_floatingip:floating_ip_address",
             self.alt_target)
+
+    def test_create_floatingips_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, "create_floatingips_tags",
+                           self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "create_floatingips_tags", self.alt_target)
 
     def test_get_floatingip(self):
         self.assertTrue(
@@ -277,6 +306,16 @@ class ProjectReaderTests(ProjectMemberTests):
             policy.enforce,
             self.context, "create_floatingip", self.alt_target)
 
+    def test_create_floatingips_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "create_floatingips_tags", self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "create_floatingips_tags", self.alt_target)
+
     def test_update_floatingip(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
@@ -326,6 +365,12 @@ class ServiceRoleTests(FloatingIPAPITestCase):
             policy.enforce,
             self.context, "create_floatingip:floating_ip_address",
             self.target)
+
+    def test_create_floatingips_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, "create_floatingips_tags", self.target)
 
     def test_get_floatingip(self):
         self.assertRaises(

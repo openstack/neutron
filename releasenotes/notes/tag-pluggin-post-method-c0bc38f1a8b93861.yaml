@@ -1,0 +1,8 @@
+---
+features:
+  - |
+    Added a new shim extension ``tag-creation``. This extension informs about
+    a new API definition in the tag plugin that allows to send ``POST``
+    requests. Now it is possible to create new tags, passing the value of the
+    tags as an argument of the call. That resolves formatting issues when
+    using URI reserved characters.

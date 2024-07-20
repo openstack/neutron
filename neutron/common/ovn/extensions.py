@@ -88,6 +88,7 @@ from neutron_lib.api.definitions import subnet_dns_publish_fixed_ip
 from neutron_lib.api.definitions import subnet_external_network
 from neutron_lib.api.definitions import subnet_service_types
 from neutron_lib.api.definitions import subnetpool_prefix_ops
+from neutron_lib.api.definitions import tag_creation
 from neutron_lib.api.definitions import tap_mirror
 from neutron_lib.api.definitions import trunk
 from neutron_lib.api.definitions import uplink_status_propagation
@@ -189,6 +190,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     subnetpool_prefix_ops.ALIAS,
     subnet_external_network.ALIAS,
     subnet_service_types.ALIAS,
+    tag_creation.ALIAS,
     trunk.ALIAS,
     seg_def.ALIAS,
     expose_port_forwarding_in_fip.ALIAS,
