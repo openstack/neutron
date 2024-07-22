@@ -1,0 +1,7 @@
+---
+deprecations:
+  - |
+    Removed the maintenance method ``remove_duplicated_chassis_registers``.
+    This method is no longer needed since OVN 21.03.0. For more information,
+    see the bug
+    `2073613 <https://bugs.launchpad.net/neutron/+bug/2073613>`_.
