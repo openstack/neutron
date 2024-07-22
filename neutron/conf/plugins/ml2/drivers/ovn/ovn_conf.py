@@ -386,5 +386,9 @@ def get_ovn_mac_binding_age_threshold():
     return str(cfg.CONF.ovn.mac_binding_age_threshold)
 
 
+def get_ovn_mac_binding_removal_limit():
+    return str(cfg.CONF.ovn_nb_global.mac_binding_removal_limit)
+
+
 def is_broadcast_arps_to_all_routers_enabled():
     return cfg.CONF.ovn.broadcast_arps_to_all_routers
