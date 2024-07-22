@@ -135,6 +135,9 @@ class DictModel(collections.abc.MutableMapping):
                  self._dictmodel_internal_storage.items()]
         return ', '.join(sorted(pairs))
 
+    def __repr__(self):
+        return self.__str__()
+
     def __getitem__(self, name):
         return self._dictmodel_internal_storage[name]
 
