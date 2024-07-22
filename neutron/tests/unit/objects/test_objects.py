@@ -120,7 +120,7 @@ object_data = {
     'SegmentHostMapping': '1.0-521597cf82ead26217c3bd10738f00f0',
     'ServiceProfile': '1.0-9beafc9e7d081b8258f3c5cb66ac5eed',
     'StandardAttribute': '1.0-617d4f46524c4ce734a6fc1cc0ac6a0b',
-    'Subnet': '1.1-5b7e1789a1732259d1e28b4bd87eb1c2',
+    'Subnet': '1.2-476759b72624961bb4aade8203289227',
     'SubnetDNSPublishFixedIP': '1.0-db22af6fa20b143986f0cbe06cbfe0ea',
     'SubnetPool': '1.1-a0e03895d1a6e7b9d4ab7b0ca13c3867',
     'SubnetPoolPrefix': '1.0-13c15144135eb869faa4a76dc3ee3b6c',

@@ -1551,12 +1551,16 @@ class BaseDbObjectTestCase(_BaseObjectTestCase,
                     ]
 
     def _create_test_network(self, name='test-network1', network_id=None,
-                             qos_policy_id=None):
+                             qos_policy_id=None, external=False):
         network_id = (uuidutils.generate_uuid() if network_id is None
                       else network_id)
         _network = net_obj.Network(self.context, name=name, id=network_id,
                                    qos_policy_id=qos_policy_id)
         _network.create()
+        if external:
+            ext_net = net_obj.ExternalNetwork(self.context,
+                                              network_id=network_id)
+            ext_net.create()
         return _network
 
     def _create_test_network_id(self, qos_policy_id=None):

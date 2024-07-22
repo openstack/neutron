@@ -288,6 +288,23 @@ class SubnetDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
         self.assertNotEqual(
             candidate_subnet[0]['id'], candidate_subnet[1]['id'])
 
+    def test_get_external_network(self):
+        for idx, external in ((0, False), (1, True)):
+            net = self._create_test_network(external=external)
+            self.obj_fields[idx]['network_id'] = net.id
+            snet = self._make_object(self.obj_fields[idx])
+            snet.create()
+            snet_obj = subnet.Subnet.get_object(self.context, id=snet.id)
+            self.assertEqual(external, snet_obj.external)
+
+    def test_object_version_degradation_1_2_to_1_1_no_external(self):
+        self.objs[0].create()
+        subnet_obj = self.objs[0]
+        subnet_dict = subnet_obj.obj_to_primitive('1.2')
+        self.assertIn('external', subnet_dict['versioned_object.data'])
+        subnet_dict = subnet_obj.obj_to_primitive('1.1')
+        self.assertNotIn('external', subnet_dict['versioned_object.data'])
+
 
 class NetworkSubnetLockTestCase(obj_test_base.BaseObjectIfaceTestCase):
 
