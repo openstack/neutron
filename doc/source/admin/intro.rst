@@ -70,4 +70,5 @@ components:
    intro-network-namespaces
    intro-nat
    intro-os-networking
+   intro-api-srbac-policies
    fwaas
