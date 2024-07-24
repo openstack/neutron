@@ -129,7 +129,7 @@ class _TestBwLimitQoS(BaseQoSRuleTestCase):
     def _add_bw_limit_rule(self, limit, burst, direction, qos_policy):
         qos_policy_id = qos_policy['id']
         rule = self.safe_client.create_bandwidth_limit_rule(
-            self.tenant_id, qos_policy_id, limit, burst, direction)
+            qos_policy_id, limit, burst, direction)
         # Make it consistent with GET reply
         rule['type'] = qos_consts.RULE_TYPE_BANDWIDTH_LIMIT
         rule['qos_policy_id'] = qos_policy_id
@@ -175,8 +175,8 @@ class _TestBwLimitQoS(BaseQoSRuleTestCase):
 
         for rule in add_rules:
             self.safe_client.create_bandwidth_limit_rule(
-                self.tenant_id, policy_id,
-                rule.get('limit'), rule.get('burst'), rule['direction'])
+                policy_id, rule.get('limit'), rule.get('burst'),
+                rule['direction'])
 
         for rule in update_rules:
             self.client.update_bandwidth_limit_rule(
@@ -366,7 +366,7 @@ class _TestDscpMarkingQoS(BaseQoSRuleTestCase):
     def _add_dscp_rule(self, dscp_mark, qos_policy):
         qos_policy_id = qos_policy['id']
         rule = self.safe_client.create_dscp_marking_rule(
-            self.tenant_id, qos_policy_id, dscp_mark)
+            qos_policy_id, dscp_mark)
         # Make it consistent with GET reply
         rule['type'] = qos_consts.RULE_TYPE_DSCP_MARKING
         rule['qos_policy_id'] = qos_policy_id
@@ -388,7 +388,7 @@ class _TestDscpMarkingQoS(BaseQoSRuleTestCase):
 
         # Create new rule
         new_rule = self.safe_client.create_dscp_marking_rule(
-            self.tenant_id, qos_policy_id, new_dscp_mark)
+            qos_policy_id, new_dscp_mark)
         self._wait_for_dscp_marking_rule_applied(vm, new_dscp_mark)
 
         # Update qos policy rule id
@@ -468,7 +468,7 @@ class _TestPacketRateLimitQoS(BaseQoSRuleTestCase):
     def _add_packet_rate_limit_rule(self, limit, burst, direction, qos_policy):
         qos_policy_id = qos_policy['id']
         rule = self.safe_client.create_packet_rate_limit_rule(
-            self.tenant_id, qos_policy_id, limit, burst, direction)
+            qos_policy_id, limit, burst, direction)
         rule['type'] = qos_consts.RULE_TYPE_PACKET_RATE_LIMIT
         rule['qos_policy_id'] = qos_policy_id
         qos_policy['rules'].append(rule)
@@ -513,7 +513,7 @@ class _TestPacketRateLimitQoS(BaseQoSRuleTestCase):
         self._wait_for_packet_rate_limit_rule_removed(vm, self.direction)
 
         new_rule = self.safe_client.create_packet_rate_limit_rule(
-            self.tenant_id, qos_policy_id, new_limit, direction=self.direction)
+            qos_policy_id, new_limit, direction=self.direction)
         self._wait_for_packet_rate_limit_rule_applied(
             vm, self.direction)
 
@@ -605,7 +605,7 @@ class _TestMinBwQoS(BaseQoSRuleTestCase):
     def _add_min_bw_rule(self, min_bw, direction, qos_policy):
         qos_policy_id = qos_policy['id']
         rule = self.safe_client.create_minimum_bandwidth_rule(
-            self.tenant_id, qos_policy_id, min_bw, direction)
+            qos_policy_id, min_bw, direction)
         # Make it consistent with GET reply
         rule['type'] = qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH
         rule['qos_policy_id'] = qos_policy_id
@@ -627,7 +627,7 @@ class _TestMinBwQoS(BaseQoSRuleTestCase):
         self._wait_for_min_bw_rule_removed(vm, self.direction)
 
         new_rule = self.safe_client.create_minimum_bandwidth_rule(
-            self.tenant_id, qos_policy_id, new_limit, direction=self.direction)
+            qos_policy_id, new_limit, direction=self.direction)
         self._wait_for_min_bw_rule_applied(vm, new_limit, self.direction)
 
         # Update qos policy rule id
@@ -702,7 +702,7 @@ class TestMinBwQoSOvs(_TestMinBwQoS, base.BaseFullStackTestCase):
         qos_policy = self._create_qos_policy()
         qos_policy_id = qos_policy['id']
         self.safe_client.create_minimum_bandwidth_rule(
-            self.tenant_id, qos_policy_id, MIN_BANDWIDTH, self.direction)
+            qos_policy_id, MIN_BANDWIDTH, self.direction)
         network_args = {'network_type': 'vxlan',
                         'qos_policy_id': qos_policy_id}
         net = self.safe_client.create_network(
@@ -713,7 +713,7 @@ class TestMinBwQoSOvs(_TestMinBwQoS, base.BaseFullStackTestCase):
         qos_policy = self._create_qos_policy()
         qos_policy_id = qos_policy['id']
         self.safe_client.create_minimum_bandwidth_rule(
-            self.tenant_id, qos_policy_id, MIN_BANDWIDTH, self.direction)
+            qos_policy_id, MIN_BANDWIDTH, self.direction)
         network_args = {'network_type': 'vxlan',
                         'qos_policy_id': qos_policy_id}
         network = self.safe_client.create_network(
