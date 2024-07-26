@@ -1,3 +1,5 @@
+.. _Policy Reference:
+
 ================
 Policy Reference
 ================
