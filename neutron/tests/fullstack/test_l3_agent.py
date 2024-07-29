@@ -212,11 +212,9 @@ class TestL3Agent(base.BaseFullStackTestCase):
             tenant_id, 'fs_policy', 'Fullstack testing policy',
             shared='False', is_default='False')
         self.safe_client.create_bandwidth_limit_rule(
-            tenant_id, qos_policy['id'], 1111, 2222,
-            constants.INGRESS_DIRECTION)
+            qos_policy['id'], 1111, 2222, constants.INGRESS_DIRECTION)
         self.safe_client.create_bandwidth_limit_rule(
-            tenant_id, qos_policy['id'], 3333, 4444,
-            constants.EGRESS_DIRECTION)
+            qos_policy['id'], 3333, 4444, constants.EGRESS_DIRECTION)
 
         fip = self.safe_client.create_floatingip(
             tenant_id, ext_net['id'], vm.ip, vm.neutron_port['id'],
