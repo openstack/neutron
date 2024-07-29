@@ -77,9 +77,6 @@ CTRL_RATE_LIMIT_MIN = 100
 CTRL_BURST_LIMIT_MIN = 25
 OVS_MAX_RATE = 2 ** 35 - 1
 
-# TODO(slaweq): move this to neutron_lib.constants
-TYPE_GRE_IP6 = 'ip6gre'
-
 ActionFlowTuple = collections.namedtuple('ActionFlowTuple',
                                          ['action', 'flow', 'flow_group_id'])
 
@@ -117,7 +114,7 @@ def _ovsdb_retry(fn):
 def get_gre_tunnel_port_type(remote_ip, local_ip):
     if (common_utils.get_ip_version(remote_ip) == p_const.IP_VERSION_6 or
             common_utils.get_ip_version(local_ip) == p_const.IP_VERSION_6):
-        return TYPE_GRE_IP6
+        return p_const.TYPE_GRE_IP6
     return p_const.TYPE_GRE
 
 
@@ -653,7 +650,7 @@ class OVSBridge(BaseOVS):
             options['csum'] = str(tunnel_csum).lower()
         if tos:
             options['tos'] = str(tos)
-        if tunnel_type == TYPE_GRE_IP6:
+        if tunnel_type == p_const.TYPE_GRE_IP6:
             # NOTE(slaweq) According to the OVS documentation L3 GRE tunnels
             # over IPv6 are not supported.
             options['packet_type'] = 'legacy_l2'

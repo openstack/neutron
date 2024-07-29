@@ -972,10 +972,10 @@ class FakeChassis(object):
             cms_opts.append('%s=' % n_const.RP_INVENTORY_DEFAULTS)
 
         if rp_hypervisors:
-            cms_opts.append('%s=%s' % (ovn_const.RP_HYPERVISORS,
+            cms_opts.append('%s=%s' % (n_const.RP_HYPERVISORS,
                                        ';'.join(rp_hypervisors)))
         elif rp_hypervisors == '':  # Test wrongly defined parameter
-            cms_opts.append('%s=' % ovn_const.RP_HYPERVISORS)
+            cms_opts.append('%s=' % n_const.RP_HYPERVISORS)
 
         if card_serial_number:
             cms_opts.append('%s=%s' % (ovn_const.CMS_OPT_CARD_SERIAL_NUMBER,

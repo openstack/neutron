@@ -16,7 +16,6 @@ from unittest import mock
 
 from neutron_lib import constants as n_const
 
-from neutron.common.ovn import constants as ovn_const
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions \
     import placement as p_extension
 from neutron.tests.unit import fake_resources as fakes
@@ -70,7 +69,7 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
                 'br-ext2': {'egress': 3000, 'ingress': 4000}},
             n_const.RP_INVENTORY_DEFAULTS: {
                 'allocation_ratio': 1.0, 'min_unit': 5},
-            ovn_const.RP_HYPERVISORS: {
+            n_const.RP_HYPERVISORS: {
                 'br-ext1': {'name': 'compute1', 'uuid': 'uuid1'},
                 'br-ext2': {'name': 'compute2', 'uuid': 'uuid2'}}
         }}
@@ -93,7 +92,7 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
                 'br-ext2': {'egress': 3000, 'ingress': 4000}},
             n_const.RP_INVENTORY_DEFAULTS: {
                 'allocation_ratio': 1.0, 'min_unit': 5},
-            ovn_const.RP_HYPERVISORS: {
+            n_const.RP_HYPERVISORS: {
                 'br-ext1': {'name': 'compute1', 'uuid': 'uuid1'},
                 'br-ext2': {'name': 'compute2', 'uuid': 'uuid2'}}
         }}
@@ -114,7 +113,7 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
                 'br-ext1': {'egress': 1000, 'ingress': 2000}},
             n_const.RP_INVENTORY_DEFAULTS: {
                 'allocation_ratio': 1.0, 'min_unit': 5},
-            ovn_const.RP_HYPERVISORS: {
+            n_const.RP_HYPERVISORS: {
                 'br-ext1': {'name': 'compute1', 'uuid': 'uuid1'},
                 'br-ext2': {'name': 'compute2', 'uuid': 'uuid2'}}
         }}
@@ -137,7 +136,7 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
                 'br-ext1': {'egress': 1000, 'ingress': 2000}},
             n_const.RP_INVENTORY_DEFAULTS: {
                 'allocation_ratio': 1.0, 'min_unit': 5},
-            ovn_const.RP_HYPERVISORS: {
+            n_const.RP_HYPERVISORS: {
                 'br-ext1': {'name': 'compute1', 'uuid': 'uuid1'}}
         }}
         _check_expected_config(init_conf, expected)
@@ -157,7 +156,7 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
                 'br-ext1': {'egress': 1000, 'ingress': 2000}},
             n_const.RP_INVENTORY_DEFAULTS: {
                 'allocation_ratio': 1.0, 'min_unit': 5},
-            ovn_const.RP_HYPERVISORS: {
+            n_const.RP_HYPERVISORS: {
                 'br-ext1': {'name': 'compute1', 'uuid': 'uuid1'},
                 'br-ext2': {'name': 'compute2', 'uuid': 'uuid2'}}
         }}
@@ -176,7 +175,7 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
             n_const.RP_BANDWIDTHS: {},
             n_const.RP_INVENTORY_DEFAULTS: {
                 'allocation_ratio': 1.0, 'min_unit': 5},
-            ovn_const.RP_HYPERVISORS: {
+            n_const.RP_HYPERVISORS: {
                 'br-ext1': {'name': 'compute1', 'uuid': 'uuid1'},
                 'br-ext2': {'name': 'compute2', 'uuid': 'uuid2'}}
         }}
@@ -195,7 +194,7 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
             n_const.RP_BANDWIDTHS: {},
             n_const.RP_INVENTORY_DEFAULTS: {
                 'allocation_ratio': 1.0, 'min_unit': 5},
-            ovn_const.RP_HYPERVISORS: {}
+            n_const.RP_HYPERVISORS: {}
         }}
         _check_expected_config(init_conf, expected)
 
@@ -212,7 +211,7 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
         expected = {chassis.name: {
             n_const.RP_BANDWIDTHS: {},
             n_const.RP_INVENTORY_DEFAULTS: {},
-            ovn_const.RP_HYPERVISORS: {}
+            n_const.RP_HYPERVISORS: {}
         }}
         _check_expected_config(init_conf, expected)
 
@@ -229,6 +228,6 @@ class TestOVNClientPlacementExtension(test_plugin.Ml2PluginV2TestCase):
         expected = {chassis.name: {
             n_const.RP_BANDWIDTHS: {},
             n_const.RP_INVENTORY_DEFAULTS: {},
-            ovn_const.RP_HYPERVISORS: {}
+            n_const.RP_HYPERVISORS: {}
         }}
         _check_expected_config(init_conf, expected)

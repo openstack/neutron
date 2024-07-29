@@ -632,7 +632,7 @@ class BaseOVSTestCase(base.BaseSudoTestCase):
                 ipv6_port_type = interface['type']
                 ipv6_port_options = interface['options']
         self.assertEqual(p_const.TYPE_GRE, ipv4_port_type)
-        self.assertEqual(ovs_lib.TYPE_GRE_IP6, ipv6_port_type)
+        self.assertEqual(p_const.TYPE_GRE_IP6, ipv6_port_type)
         self.assertEqual('legacy_l2', ipv6_port_options.get('packet_type'))
 
     def test_set_igmp_snooping_flood(self):
