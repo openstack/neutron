@@ -32,27 +32,27 @@ Roles supported by the default Neutron API policies
 
 Roles supported by the default Neutron API policies are:
 
-* PROJECT_READER - this role is intented to have read only access to the
+* PROJECT_READER - this role is intended to have read-only access to the
   project owned resources.
 * PROJECT_MEMBER - this role inherits all of the privileges from the
   PROJECT_READER role and also has access to ``create``, ``update`` and
-  ``delete`` project owned resources.
+  ``delete`` project-owned resources.
 * PROJECT_MANAGER - this role inherits all of the privileges from the
   PROJECT_MEMBER role and additionally is allowed to do more operations on the
-  project owned resources.
+  project-owned resources.
 * ADMIN - this role is the same as it was in the "old" default policies. A user
-  with granted ADMIN role is allowed to do almost every possible modifications
+  with granted ADMIN role is allowed to do almost every possible modification
   on all resources, even those which belong to different projects.
-* SERVICE - this is a special role designed to be used for the service to
-  service communication only (like e.g. between nova and neutron), it doesn't
-  inherit any privileges from any other roles mentioned above.
+* SERVICE - this is a special role designed to be used for service-to-service
+  communication only, for example, between Nova and Neutron. It does
+  not inherit any privileges from any other roles mentioned above.
 
 Default API policies defined in Neutron
 ---------------------------------------
 
-By default all of the existing API policies can be used with the ``project``
+By default, all of the existing API policies can be used with ``project``
 scoped tokens only. Tokens with ``service`` scope are not supported by any of
-the policies defined in Neutron code.
+the policies defined in the Neutron code.
 
 Default API policies
 --------------------
