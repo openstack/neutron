@@ -320,7 +320,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
     # to perform the migration every 10 seconds until completed.
     # TODO(jlibosva): Remove the migration to port groups at some point. It's
     # been around since Queens release so it is good to drop this soon.
-    @periodics.periodic(spacing=10, run_immediately=True)
+    @has_lock_periodic(spacing=10, run_immediately=True)
     @rerun_on_schema_updates
     def migrate_to_port_groups(self):
         """Perform the migration from Address Sets to Port Groups. """
@@ -331,11 +331,6 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         # need to attempt to migrate again.
         if not self._nb_idl.get_address_sets():
             raise periodics.NeverAgain()
-
-        # Only the worker holding a valid lock within OVSDB will perform the
-        # migration.
-        if not self.has_lock:
-            return
 
         admin_context = n_context.get_admin_context()
         nb_sync = ovn_db_sync.OvnNbSynchronizer(
@@ -579,15 +574,12 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
-    @periodics.periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(spacing=600, run_immediately=True)
     def check_for_ha_chassis_group(self):
         # If external ports is not supported stop running
         # this periodic task
         if not self._ovn_client.is_external_ports_supported():
             raise periodics.NeverAgain()
-
-        if not self.has_lock:
-            return
 
         external_ports = self._nb_idl.db_find_rows(
             'Logical_Switch_Port', ('type', '=', ovn_const.LSP_TYPE_EXTERNAL)
@@ -680,16 +672,13 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
     # TODO(ralonsoh): Remove this in the Z+2 cycle
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
-    @periodics.periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(spacing=600, run_immediately=True)
     def update_port_qos_with_external_ids_reference(self):
         """Update all OVN QoS registers with the port ID
 
         This method will only update the OVN QoS registers related to port QoS,
         not FIP QoS. FIP QoS have the corresponding "external_ids" reference.
         """
-        if not self.has_lock:
-            return
-
         regex = re.compile(
             r'(inport|outport) == \"(?P<port_id>[a-z0-9\-]{36})\"')
         cmds = []
@@ -840,7 +829,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
-    @periodics.periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(spacing=600, run_immediately=True)
     def check_baremetal_ports_dhcp_options(self):
         """Update baremetal ports DHCP options
 
@@ -851,9 +840,6 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         # this periodic task
         if not self._ovn_client.is_external_ports_supported():
             raise periodics.NeverAgain()
-
-        if not self.has_lock:
-            return
 
         context = n_context.get_admin_context()
         ports = ports_obj.Port.get_ports_by_vnic_type_and_host(
@@ -1056,7 +1042,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                                                    from_reload=True)
         raise periodics.NeverAgain()
 
-    @periodics.periodic(spacing=300, run_immediately=True)
+    @has_lock_periodic(spacing=300, run_immediately=True)
     def remove_duplicated_chassis_registers(self):
         """Remove the "Chassis" and "Chassis_Private" duplicated registers.
 
@@ -1074,9 +1060,6 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         """
         if not self._sb_idl.is_table_present('Chassis_Private'):
             raise periodics.NeverAgain()
-
-        if not self.has_lock:
-            return
 
         # dup_chassis_port_host = {host_name: [(ch1, ch_private1),
         #                                      (ch2, ch_private2), ... ]}
