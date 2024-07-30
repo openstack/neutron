@@ -32,10 +32,67 @@ from neutron.db.models import ovn as ovn_models
 from neutron.db import ovn_revision_numbers_db
 from neutron.objects import ports as ports_obj
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb import maintenance
+from neutron.tests import base
 from neutron.tests.unit import fake_resources as fakes
 from neutron.tests.unit.plugins.ml2 import test_security_group as test_sg
 from neutron.tests.unit import testlib_api
 from neutron_lib import exceptions as n_exc
+
+
+class TestHasLockPeriodicDecorator(base.BaseTestCase):
+
+    def test_decorator_no_limit_have_lock(self):
+        run_counter = 0
+
+        @maintenance.has_lock_periodic(
+            periodic_run_limit=0, spacing=30)
+        def test_maintenance_task(worker):
+            nonlocal run_counter
+            run_counter += 1
+
+        worker_mock = mock.MagicMock()
+        worker_mock.has_lock = True
+
+        for _ in range(3):
+            test_maintenance_task(worker_mock)
+        self.assertEqual(3, run_counter)
+
+    def test_decorator_no_lock_no_limit(self):
+        run_counter = 0
+
+        @maintenance.has_lock_periodic(
+            periodic_run_limit=0, spacing=30)
+        def test_maintenance_task(worker):
+            nonlocal run_counter
+            run_counter += 1
+
+        worker_mock = mock.MagicMock()
+        has_lock_values = [False, False, True]
+
+        for has_lock in has_lock_values:
+            worker_mock.has_lock = has_lock
+            test_maintenance_task(worker_mock)
+        self.assertEqual(1, run_counter)
+
+    def test_decorator_no_lock_with_limit(self):
+        run_counter = 0
+
+        @maintenance.has_lock_periodic(
+            periodic_run_limit=1, spacing=30)
+        def test_maintenance_task(worker):
+            nonlocal run_counter
+            run_counter += 1
+
+        worker_mock = mock.MagicMock()
+
+        worker_mock.has_lock = False
+        test_maintenance_task(worker_mock)
+        self.assertEqual(0, run_counter)
+
+        worker_mock.has_lock = False
+        self.assertRaises(periodics.NeverAgain,
+                          test_maintenance_task, worker_mock)
+        self.assertEqual(0, run_counter)
 
 
 class TestSchemaAwarePeriodicsBase(testlib_api.SqlTestCaseLight):

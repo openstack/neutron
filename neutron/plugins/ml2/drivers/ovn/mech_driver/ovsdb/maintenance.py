@@ -56,14 +56,28 @@ INCONSISTENCY_TYPE_CREATE_UPDATE = 'create/update'
 INCONSISTENCY_TYPE_DELETE = 'delete'
 
 
-def has_lock_periodic(*args, **kwargs):
+def has_lock_periodic(*args, periodic_run_limit=0, **kwargs):
     def wrapper(f):
+        _retries = 0
+
         @functools.wraps(f)
         @periodics.periodic(*args, **kwargs)
         def decorator(self, *args, **kwargs):
             # This periodic task is included in DBInconsistenciesPeriodics
             # since it uses the lock to ensure only one worker is executing
+            # additonally, if periodic_run_limit parameter with value > 0 is
+            # provided and lock is not acquired for periodic_run_limit
+            # times, task will not be run anymore by this maintenance worker
+            nonlocal _retries
             if not self.has_lock:
+                if periodic_run_limit > 0:
+                    if _retries >= periodic_run_limit:
+                        LOG.debug("Have not been able to acquire lock to run "
+                                  "task '%s' after %s tries, limit reached. "
+                                  "No more attempts will be made.",
+                                  f, _retries)
+                        raise periodics.NeverAgain()
+                    _retries += 1
                 return
             return f(self, *args, **kwargs)
         return decorator
@@ -444,7 +458,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
-    @has_lock_periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
     def check_global_dhcp_opts(self):
         if (not ovn_conf.get_global_dhcpv4_opts() and
                 not ovn_conf.get_global_dhcpv6_opts()):
@@ -474,7 +491,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
-    @has_lock_periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
     def check_for_igmp_snoop_support(self):
         snooping_conf = ovs_conf.get_igmp_snooping_enabled()
         flood_conf = ovs_conf.get_igmp_flood_unregistered()
@@ -504,7 +524,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
     # TODO(czesla): Remove this in the A+4 cycle
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
-    @has_lock_periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
     def check_port_has_address_scope(self):
         ports = self._nb_idl.db_find_rows(
             "Logical_Switch_Port", ("type", "!=", ovn_const.LSP_TYPE_LOCALNET)
@@ -539,7 +562,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
-    @has_lock_periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
     def check_for_ha_chassis_group(self):
         # If external ports is not supported stop running
         # this periodic task
@@ -567,7 +593,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
     # TODO(lucasagomes): Remove this in the B+3 cycle
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
-    @has_lock_periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
     def check_for_mcast_flood_reports(self):
         mcast_flood_conf = ovs_conf.get_igmp_flood()
         mcast_flood_reports_conf = ovs_conf.get_igmp_flood_reports()
@@ -625,7 +654,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
-    @has_lock_periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
     def check_localnet_port_has_learn_fdb(self):
         ports = self._nb_idl.db_find_rows(
             "Logical_Switch_Port", ("type", "=", ovn_const.LSP_TYPE_LOCALNET)
@@ -652,7 +684,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
-    @has_lock_periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
     def check_redirect_type_router_gateway_ports(self):
         """Check OVN router gateway ports
         Check for the option "redirect-type=bridged" value for
@@ -714,7 +749,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
-    @has_lock_periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
     def check_vlan_distributed_ports(self):
         """Check VLAN distributed ports
         Check for the option "reside-on-redirect-chassis" value for
@@ -752,7 +790,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
-    @has_lock_periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
     def check_fdb_aging_settings(self):
         """Check FDB aging settings
         Ensure FDB aging settings are enforced.
@@ -788,7 +829,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
-    @has_lock_periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
     def update_mac_aging_settings(self):
         """Ensure that MAC_Binding aging options are set"""
         with self._nb_idl.transaction(check_error=True) as txn:
@@ -804,7 +848,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
     # "external_ids:OVN_GW_PORT_EXT_ID_KEY" from to each router.
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
-    @has_lock_periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
     def remove_gw_ext_ids_from_logical_router(self):
         """Remove `gw_port_id` and `gw_network_id` external_ids from LRs"""
         cmds = []
@@ -832,7 +879,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
-    @has_lock_periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
     def check_baremetal_ports_dhcp_options(self):
         """Update baremetal ports DHCP options
 
@@ -881,7 +931,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         raise periodics.NeverAgain()
 
     # TODO(ralonsoh): Remove this in the Antelope+4 cycle
-    @has_lock_periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
     def create_router_extra_attributes_registers(self):
         """Create missing ``RouterExtraAttributes`` registers.
 
@@ -902,7 +955,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         raise periodics.NeverAgain()
 
     # TODO(slaweq): Remove this in the E cycle (C+2 as it will be next SLURP)
-    @has_lock_periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
     def add_gw_port_info_to_logical_router_port(self):
         """Add info if LRP is connecting internal subnet or ext gateway."""
         cmds = []
@@ -938,7 +994,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                     txn.add(cmd)
         raise periodics.NeverAgain()
 
-    @has_lock_periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
     def check_router_default_route_empty_dst_ip(self):
         """Check routers with default route with empty dst-ip (LP: #2002993).
         """
@@ -965,7 +1024,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         raise periodics.NeverAgain()
 
     # TODO(ralonsoh): Remove this in the Antelope+4 cycle
-    @has_lock_periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
     def add_vnic_type_and_pb_capabilities_to_lsp(self):
         """Add the port VNIC type and port binding capabilities to the LSP.
 
@@ -997,7 +1059,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
         raise periodics.NeverAgain()
 
-    @has_lock_periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
     def check_fair_meter_consistency(self):
         """Update the logging meter after neutron-server reload
 
@@ -1060,7 +1125,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
         raise periodics.NeverAgain()
 
-    @has_lock_periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
     def update_nat_floating_ip_with_gateway_port_reference(self):
         """Set NAT rule gateway_port column to any floating IP without
         router gateway port uuid reference - LP#2035281.
@@ -1107,7 +1175,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         raise periodics.NeverAgain()
 
     # TODO(ralonsoh): Remove this method in the C+2 cycle (next SLURP release)
-    @has_lock_periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
     def add_provider_resource_association_to_routers(self):
         """Add the ``ProviderResourceAssociation`` register to all routers"""
         provider_name = 'ovn'
@@ -1126,7 +1197,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         raise periodics.NeverAgain()
 
     # TODO(ralonsoh): Remove this method in the C+2 cycle (next SLURP release)
-    @has_lock_periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
     def remove_invalid_gateway_chassis_from_unbound_lrp(self):
         """Removes all invalid 'Gateway_Chassis' from unbound LRPs"""
         is_gw = ovn_const.OVN_ROUTER_IS_EXT_GW
@@ -1149,7 +1223,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         raise periodics.NeverAgain()
 
     # TODO(ralonsoh): Remove this method in the E cycle (SLURP release)
-    @has_lock_periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
     def set_network_type(self):
         """Add the network type to the Logical_Switch registers"""
         context = n_context.get_admin_context()
@@ -1172,7 +1249,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
         raise periodics.NeverAgain()
 
-    @has_lock_periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
     def check_network_broadcast_arps_to_all_routers(self):
         """Check the broadcast-arps-to-all-routers config
 
