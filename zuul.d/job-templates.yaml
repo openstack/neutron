@@ -29,9 +29,6 @@
         - openstack-tox-cover:  # from openstack-cover-jobs template
             timeout: 4800
             irrelevant-files:  *irrelevant-files
-        - openstack-tox-py311-with-sqlalchemy-master:
-            timeout: 3600
-            irrelevant-files: *irrelevant-files
     check-arm64:
       jobs:
         - openstack-tox-py38-arm64: # from openstack-python3-jobs-arm64 template
@@ -64,13 +61,8 @@
     name: neutron-experimental-jobs
     experimental:
       jobs:
-        - neutron-functional-with-uwsgi-with-neutron-lib-master
-        - neutron-fullstack-with-uwsgi-with-neutron-lib-master
-        - neutron-ovn-tempest-full-multinode-ovs-master
         - neutron-ovn-grenade-multinode
-        - neutron-ovn-tempest-ovs-master
         - neutron-ovn-tempest-ovs-release
-        - neutron-ovs-tempest-with-neutron-lib-master
         - neutron-ovn-tempest-with-uwsgi-loki
         # Jobs added to the periodic queue by templates defined in
         # https://opendev.org/openstack/openstack-zuul-jobs/src/branch/master/zuul.d/project-templates.yaml
@@ -90,21 +82,12 @@
       jobs: &neutron-periodic-jobs
         - neutron-functional
         - neutron-functional-with-uwsgi-fips
-        - neutron-functional-with-pyroute2-master
-        - neutron-functional-with-sqlalchemy-master
         - neutron-fullstack
         - neutron-fullstack-with-uwsgi-fips
-        - neutron-fullstack-with-pyroute2-master
         - neutron-ovs-tempest-slow
         - neutron-ovn-tempest-slow
-        - neutron-ovs-tempest-with-os-ken-master
         - neutron-ovn-tempest-postgres-full
         - neutron-ovn-tempest-mariadb-full
-        - neutron-ovn-tempest-ipv6-only-ovs-master
-        - neutron-ovn-tempest-ovs-master-centos-9-stream
-        - neutron-ovn-tempest-with-neutron-lib-master
-        - neutron-ovn-tempest-with-sqlalchemy-master
-        - neutron-ovs-tempest-with-sqlalchemy-master
         - neutron-ovs-tempest-fips
         - neutron-ovn-tempest-ovs-release-fips
         - devstack-tobiko-neutron:
@@ -117,9 +100,6 @@
         - openstack-tox-py39-with-oslo-master:
             timeout: 3600
             irrelevant-files:  *irrelevant-files
-        - neutron-functional-with-oslo-master
-        - neutron-ovs-tempest-with-oslo-master
-        - neutron-ovn-tempest-ovs-release-with-oslo-master
         - neutron-tempest-plugin-linuxbridge
     experimental:
       jobs: *neutron-periodic-jobs
