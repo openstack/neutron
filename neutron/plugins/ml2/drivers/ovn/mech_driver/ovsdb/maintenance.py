@@ -537,15 +537,12 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
-    @periodics.periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(spacing=600, run_immediately=True)
     def check_for_ha_chassis_group(self):
         # If external ports is not supported stop running
         # this periodic task
         if not self._ovn_client.is_external_ports_supported():
             raise periodics.NeverAgain()
-
-        if not self.has_lock:
-            return
 
         external_ports = self._nb_idl.db_find_rows(
             'Logical_Switch_Port', ('type', '=', ovn_const.LSP_TYPE_EXTERNAL)
@@ -822,7 +819,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
-    @periodics.periodic(spacing=600, run_immediately=True)
+    @has_lock_periodic(spacing=600, run_immediately=True)
     def check_baremetal_ports_dhcp_options(self):
         """Update baremetal ports DHCP options
 
@@ -833,9 +830,6 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         # this periodic task
         if not self._ovn_client.is_external_ports_supported():
             raise periodics.NeverAgain()
-
-        if not self.has_lock:
-            return
 
         context = n_context.get_admin_context()
         ports = ports_obj.Port.get_ports_by_vnic_type_and_host(
