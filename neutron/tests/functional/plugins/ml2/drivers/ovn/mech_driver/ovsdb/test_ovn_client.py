@@ -12,13 +12,26 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import provider_net
 from neutron_lib import constants
+from oslo_config import cfg
+from oslo_utils import strutils
 
+from neutron.common.ovn import constants as ovn_const
+from neutron.common.ovn import utils as ovn_utils
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf as ovn_config
 from neutron.tests.functional import base
+from neutron.tests.unit.api import test_extensions
+from neutron.tests.unit.extensions import test_l3
 
 
-class TestOVNClient(base.TestOVNFunctionalBase):
+class TestOVNClient(base.TestOVNFunctionalBase,
+                    test_l3.L3NatTestCaseMixin):
+
+    def setUp(self, **kwargs):
+        super().setUp(**kwargs)
+        ext_mgr = test_l3.L3TestExtensionManager()
+        self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
 
     def test_create_metadata_port(self):
         def check_metadata_port(enable_dhcp):
@@ -84,3 +97,51 @@ class TestOVNClient(base.TestOVNFunctionalBase):
                     # command automatically checks for existing logical
                     # switch ports
                     ovn_client.create_port(self.context, port_data)
+
+    def _test_router_reside_chassis_redirect(
+            self, is_distributed_fip, net_type, expected_value=None):
+        cfg.CONF.set_override(
+            'enable_distributed_floating_ip', is_distributed_fip, group='ovn')
+        net_arg = {
+            provider_net.NETWORK_TYPE: net_type}
+        if net_type == constants.TYPE_FLAT:
+            net_arg[provider_net.PHYSICAL_NETWORK] = 'datacentre'
+        with self.network('test-ovn-client', as_admin=True,
+                          arg_list=tuple(net_arg.keys()), **net_arg) as net:
+            with self.subnet(net) as subnet:
+                subnet_id = subnet['subnet']['id']
+                with self.router() as router:
+                    router_id = router['router']['id']
+                    self._router_interface_action(
+                        'add', router_id, subnet_id, None)
+                    lr = self.nb_api.lookup('Logical_Router',
+                                            ovn_utils.ovn_name(router_id))
+                    lrp = lr.ports[0]
+                    if net_type in [constants.TYPE_VLAN, constants.TYPE_FLAT]:
+                        self.assertEqual(
+                            expected_value,
+                            strutils.bool_from_string(
+                                lrp.options[
+                                    ovn_const.LRP_OPTIONS_RESIDE_REDIR_CH]))
+                    else:
+                        self.assertNotIn(
+                            ovn_const.LRP_OPTIONS_RESIDE_REDIR_CH,
+                            lrp.options)
+
+    def test_router_reside_chassis_redirect_dvr_vlan_net(self):
+        self._test_router_reside_chassis_redirect(True, 'vlan', False)
+
+    def test_router_reside_chassis_redirect_non_dvr_vlan_net(self):
+        self._test_router_reside_chassis_redirect(False, 'vlan', True)
+
+    def test_router_reside_chassis_redirect_dvr_flat_net(self):
+        self._test_router_reside_chassis_redirect(True, 'flat', False)
+
+    def test_router_reside_chassis_redirect_non_dvr_flat_net(self):
+        self._test_router_reside_chassis_redirect(False, 'flat', True)
+
+    def test_router_reside_chassis_redirect_dvr_geneve_net(self):
+        self._test_router_reside_chassis_redirect(True, 'geneve', False)
+
+    def test_router_reside_chassis_redirect_non_dvr_geneve_net(self):
+        self._test_router_reside_chassis_redirect(False, 'geneve')
