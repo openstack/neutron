@@ -578,8 +578,24 @@ class LogicalSwitchPortUpdateLogicalRouterPortEvent(row_event.RowEvent):
         return False
 
     def run(self, event, row, old):
-        port = self.driver._plugin.get_port(self.admin_context, row.name)
-        self.l3_plugin._ovn_client.update_router_port(self.admin_context, port)
+        # In some cases, it is possible for the logical switch port to be
+        # already removed from db by some other concurrent event when this
+        # method is called. Therefore, use get_ports to just query for this
+        # port instead of directly trying to get it from db causing not
+        # found exception.
+        ports = self.driver._plugin.get_ports(
+            self.admin_context,
+            filters={'id': [row.name]})
+        if ports:
+            self.l3_plugin._ovn_client.update_router_port(
+                self.admin_context,
+                ports[0])
+        else:
+            LOG.debug('Port %(port_id)s not found when '
+                      'run of %(event_name)s was called. '
+                      'Router port was not updated.',
+                      {'port_id': row.name,
+                       'event_name': self.event_name})
 
 
 class PortBindingUpdateVirtualPortsEvent(row_event.RowEvent):

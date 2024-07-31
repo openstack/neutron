@@ -924,22 +924,32 @@ class TestLogicalSwitchPortUpdateLogicalRouterPortEvent(
         self.ext_api = test_extensions.setup_extensions_middleware(
             test_l3.L3TestExtensionManager())
 
-    def test_create_router_port(self):
+    def _set_logical_port_events_add_subnet_to_router(self):
+        lsp_event = WaitForLogicalSwitchPortUpdateEvent()
+        lrp_event = WaitForLogicalRouterPortCreateEvent()
+        self.mech_driver.nb_ovn.idl.notify_handler.watch_events(
+            (lsp_event, lrp_event))
         router = self._make_router(self.fmt, self._tenant_id)
+        self._router_interface_action('add', router['router']['id'],
+                                      self.subnet['subnet']['id'], None)
+        self.assertTrue(lsp_event.wait())
+        self.assertTrue(lrp_event.wait())
+        # Wait for the
+        # ``LogicalSwitchPortUpdateLogicalRouterPortEvent.run`` call.
+        time.sleep(1)
+
+    def test_create_router_port(self):
         with mock.patch.object(self.l3_plugin._ovn_client,
                                'update_router_port') as mock_update_rp:
-            lsp_event = WaitForLogicalSwitchPortUpdateEvent()
-            lrp_event = WaitForLogicalRouterPortCreateEvent()
-            self.mech_driver.nb_ovn.idl.notify_handler.watch_events(
-                (lsp_event, lrp_event))
-            self._router_interface_action('add', router['router']['id'],
-                                          self.subnet['subnet']['id'], None)
-            self.assertTrue(lsp_event.wait())
-            self.assertTrue(lrp_event.wait())
-            # Wait for the
-            # ``LogicalSwitchPortUpdateLogicalRouterPortEvent.run`` call.
-            time.sleep(1)
+            self._set_logical_port_events_add_subnet_to_router()
             mock_update_rp.assert_called()
+
+    def test_create_router_port_port_deleted_concurrently(self):
+        with mock.patch.object(self.l3_plugin._ovn_client,
+                               'update_router_port') as mock_update_rp, \
+                mock.patch.object(self.plugin, 'get_ports', return_value=[]):
+            self._set_logical_port_events_add_subnet_to_router()
+            mock_update_rp.assert_not_called()
 
     def test_create_non_router_port(self):
         with mock.patch.object(self.l3_plugin._ovn_client,
