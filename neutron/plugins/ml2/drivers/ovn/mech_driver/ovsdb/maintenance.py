@@ -753,16 +753,17 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
         spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
         run_immediately=True)
-    def check_vlan_distributed_ports(self):
-        """Check VLAN distributed ports
+    def check_provider_distributed_ports(self):
+        """Check provider (VLAN and FLAT) distributed ports
         Check for the option "reside-on-redirect-chassis" value for
-        distributed VLAN ports.
+        distributed ports which belongs to the FLAT or VLAN networks.
         """
         context = n_context.get_admin_context()
         cmds = []
-        # Get router ports belonging to VLAN networks
+        # Get router ports belonging to VLAN or FLAT networks
         vlan_nets = self._ovn_client._plugin.get_networks(
-            context, {pnet.NETWORK_TYPE: [n_const.TYPE_VLAN]})
+            context, {pnet.NETWORK_TYPE: [n_const.TYPE_VLAN,
+                                          n_const.TYPE_FLAT]})
         vlan_net_ids = [vn['id'] for vn in vlan_nets]
         router_ports = self._ovn_client._plugin.get_ports(
             context, {'network_id': vlan_net_ids,
