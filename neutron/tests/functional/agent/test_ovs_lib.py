@@ -242,7 +242,7 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
             'packet_type': 'legacy_l2',
         }
         self._test_add_tunnel_port(
-            attrs, expected_tunnel_type=ovs_lib.TYPE_GRE_IP6)
+            attrs, expected_tunnel_type=const.TYPE_GRE_IP6)
 
     def test_add_tunnel_port_custom_port(self):
         port_name = utils.get_rand_device_name(net_helpers.PORT_PREFIX)

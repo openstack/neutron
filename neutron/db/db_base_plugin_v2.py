@@ -513,9 +513,9 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             return
 
         # at least one subnet present, if below IPv4 minimum we fail early
-        if mtu < _constants.IPV4_MIN_MTU:
+        if mtu < constants.IPV4_MIN_MTU:
             raise mtu_exc.NetworkMTUSubnetConflict(
-                net_id=id, mtu=_constants.IPV4_MIN_MTU)
+                net_id=id, mtu=constants.IPV4_MIN_MTU)
 
         # We do not need to check IPv4 subnets as they will have been
         # caught by above IPV4_MIN_MTU check
@@ -794,7 +794,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             return
 
         # if below IPv4 minimum we fail early
-        if mtu < _constants.IPV4_MIN_MTU:
+        if mtu < constants.IPV4_MIN_MTU:
             raise mtu_exc.NetworkMTUSubnetConflict(net_id=network.id, mtu=mtu)
 
         # We do not need to check IPv4 subnets as they will have been

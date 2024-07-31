@@ -15,6 +15,7 @@
 import collections
 from unittest import mock
 
+from neutron_lib import constants as lib_const
 from neutron_lib import exceptions
 from neutron_lib.plugins.ml2 import ovs_constants as p_const
 from oslo_serialization import jsonutils
@@ -68,6 +69,23 @@ class StringSetMatcher(object):
     def __repr__(self):
         sep = '' if self.separator == ',' else " on %s" % self.separator
         return '<comma-separated string for %s%s>' % (self.set, sep)
+
+
+class OVS_Lib_Test_Common(base.BaseTestCase):
+    """A test suite to exercise the OVS libraries common functions"""
+
+    def test_get_gre_tunnel_port_type(self):
+        ptype = ovs_lib.get_gre_tunnel_port_type('192.168.1.2', '192.168.1.1')
+        self.assertEqual(lib_const.TYPE_GRE, ptype)
+
+    def test_get_gre_tunnel_port_type_ipv6(self):
+        ptype = ovs_lib.get_gre_tunnel_port_type('2001:db8::1:2',
+                                                 '2001:db8::1:1')
+        self.assertEqual(lib_const.TYPE_GRE_IP6, ptype)
+
+    def test_version_from_protocol(self):
+        ofproto = ovs_lib.version_from_protocol(p_const.OPENFLOW10)
+        self.assertEqual(1, ofproto)
 
 
 class OVS_Lib_Test(base.BaseTestCase):

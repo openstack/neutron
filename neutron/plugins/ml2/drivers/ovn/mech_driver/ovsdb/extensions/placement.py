@@ -39,7 +39,7 @@ def _parse_ovn_cms_options(chassis):
     return {n_const.RP_BANDWIDTHS: _parse_bandwidths(cms_options),
             n_const.RP_INVENTORY_DEFAULTS: _parse_inventory_defaults(
                 cms_options),
-            ovn_const.RP_HYPERVISORS: _parse_hypervisors(cms_options)}
+            n_const.RP_HYPERVISORS: _parse_hypervisors(cms_options)}
 
 
 def _parse_bridge_mappings(chassis):
@@ -81,7 +81,7 @@ def _parse_inventory_defaults(cms_options):
 
 
 def _parse_hypervisors(cms_options):
-    hyperv = _parse_placement_option(ovn_const.RP_HYPERVISORS, cms_options)
+    hyperv = _parse_placement_option(n_const.RP_HYPERVISORS, cms_options)
     if not hyperv:
         return {}
 
@@ -105,7 +105,7 @@ def dict_chassis_config(state):
     if state:
         return {n_const.RP_BANDWIDTHS: state._rp_bandwidths,
                 n_const.RP_INVENTORY_DEFAULTS: state._rp_inventory_defaults,
-                ovn_const.RP_HYPERVISORS: state._hypervisor_rps}
+                n_const.RP_HYPERVISORS: state._hypervisor_rps}
 
 
 class ChassisBandwidthConfigEvent(row_event.RowEvent):
@@ -256,7 +256,7 @@ class OVNClientPlacementExtension(object):
         #   ovn-cms-options =
         #     resource_provider_bandwidths=br-ex:100:200;rp_tunnelled:300:400
         #     resource_provider_hypervisors=br-ex:host1,rp_tunnelled:host1
-        for device, hyperv in cms_options[ovn_const.RP_HYPERVISORS].items():
+        for device, hyperv in cms_options[n_const.RP_HYPERVISORS].items():
             try:
                 hypervisor_rps[device] = {'name': hyperv,
                                           'uuid': name2uuid[hyperv]}

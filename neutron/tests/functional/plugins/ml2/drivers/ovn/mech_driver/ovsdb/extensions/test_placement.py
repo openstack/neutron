@@ -18,7 +18,6 @@ from neutron_lib import constants as n_const
 from neutron_lib.plugins import constants as plugins_constants
 from oslo_utils import uuidutils
 
-from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils as common_utils
 from neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.extensions \
     import placement as placement_extension
@@ -31,7 +30,7 @@ class TestOVNClientPlacementExtension(base.TestOVNFunctionalBase):
 
     EMPTY_CHASSIS = {n_const.RP_BANDWIDTHS: {},
                      n_const.RP_INVENTORY_DEFAULTS: {},
-                     ovn_const.RP_HYPERVISORS: {}}
+                     n_const.RP_HYPERVISORS: {}}
 
     RP_BANDWIDTHS_1 = {'br-provider0': {'egress': 1000, 'ingress': 2000}}
     RP_INVENTORY_DEFAULTS_1 = {'allocation_ratio': 1.0, 'min_unit': 2}
@@ -40,7 +39,7 @@ class TestOVNClientPlacementExtension(base.TestOVNFunctionalBase):
         'chassis1': {
             n_const.RP_BANDWIDTHS: RP_BANDWIDTHS_1,
             n_const.RP_INVENTORY_DEFAULTS: RP_INVENTORY_DEFAULTS_1,
-            ovn_const.RP_HYPERVISORS: RP_HYPERVISORS_1
+            n_const.RP_HYPERVISORS: RP_HYPERVISORS_1
         }
     }
     RP_BANDWIDTHS_2 = {'br-provider0': {'egress': 3000, 'ingress': 4000}}
@@ -50,7 +49,7 @@ class TestOVNClientPlacementExtension(base.TestOVNFunctionalBase):
         'chassis2': {
             n_const.RP_BANDWIDTHS: RP_BANDWIDTHS_2,
             n_const.RP_INVENTORY_DEFAULTS: RP_INVENTORY_DEFAULTS_2,
-            ovn_const.RP_HYPERVISORS: RP_HYPERVISORS_2
+            n_const.RP_HYPERVISORS: RP_HYPERVISORS_2
         }
     }
 
@@ -60,7 +59,7 @@ class TestOVNClientPlacementExtension(base.TestOVNFunctionalBase):
         'chassis2': {
             n_const.RP_BANDWIDTHS: RP_BANDWIDTHS_3,
             n_const.RP_INVENTORY_DEFAULTS: RP_INVENTORY_DEFAULTS_3,
-            ovn_const.RP_HYPERVISORS: RP_HYPERVISORS_2
+            n_const.RP_HYPERVISORS: RP_HYPERVISORS_2
         }
     }
 
@@ -83,7 +82,7 @@ class TestOVNClientPlacementExtension(base.TestOVNFunctionalBase):
             options.append(n_const.RP_INVENTORY_DEFAULTS + '=' +
                            inventory_defaults)
         if hypervisors:
-            options.append(ovn_const.RP_HYPERVISORS + '=' + hypervisors)
+            options.append(n_const.RP_HYPERVISORS + '=' + hypervisors)
         return {'ovn-cms-options': ','.join(options)}
 
     def _create_chassis(self, host, name, physical_nets=None, bandwidths=None,

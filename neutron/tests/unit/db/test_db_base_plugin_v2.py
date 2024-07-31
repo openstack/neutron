@@ -49,7 +49,6 @@ import neutron
 from neutron.api import api_common
 from neutron.api import extensions
 from neutron.api.v2 import router
-from neutron.common import _constants as common_constants
 from neutron.common import ipv6_utils
 from neutron.common.ovn import utils as ovn_utils
 from neutron.common import test_lib
@@ -7247,7 +7246,7 @@ class NeutronDbPluginV2AsMixinTestCase(NeutronDbPluginV2TestCase,
                           None)
 
     def test_create_subnet_invalid_network_mtu_ipv4_returns_409(self):
-        self.net_data['network']['mtu'] = common_constants.IPV4_MIN_MTU - 1
+        self.net_data['network']['mtu'] = constants.IPV4_MIN_MTU - 1
         net = self.plugin.create_network(self.context, self.net_data)
         self._create_subnet(self.fmt,
                             net['id'],
@@ -7268,7 +7267,7 @@ class NeutronDbPluginV2AsMixinTestCase(NeutronDbPluginV2TestCase,
         net = self.plugin.create_network(self.context, self.net_data)
 
         # This should succeed with no subnets
-        self.net_data['network']['mtu'] = common_constants.IPV4_MIN_MTU - 1
+        self.net_data['network']['mtu'] = constants.IPV4_MIN_MTU - 1
         self.plugin.update_network(self.context, net['id'], self.net_data)
 
         # reset mtu
@@ -7285,11 +7284,11 @@ class NeutronDbPluginV2AsMixinTestCase(NeutronDbPluginV2TestCase,
         self.plugin.update_network(self.context, net['id'], self.net_data)
         self.net_data['network']['mtu'] = constants.IPV6_MIN_MTU - 1
         self.plugin.update_network(self.context, net['id'], self.net_data)
-        self.net_data['network']['mtu'] = common_constants.IPV4_MIN_MTU
+        self.net_data['network']['mtu'] = constants.IPV4_MIN_MTU
         self.plugin.update_network(self.context, net['id'], self.net_data)
 
         # This should fail with any subnets present
-        self.net_data['network']['mtu'] = common_constants.IPV4_MIN_MTU - 1
+        self.net_data['network']['mtu'] = constants.IPV4_MIN_MTU - 1
         with testlib_api.ExpectedException(mtu_exc.NetworkMTUSubnetConflict):
             self.plugin.update_network(self.context, net['id'], self.net_data)
 
@@ -7315,10 +7314,10 @@ class NeutronDbPluginV2AsMixinTestCase(NeutronDbPluginV2TestCase,
             self.net_data['network']['mtu'] = constants.IPV6_MIN_MTU - 1
             self.plugin.update_network(self.context, net['id'], self.net_data)
         with testlib_api.ExpectedException(mtu_exc.NetworkMTUSubnetConflict):
-            self.net_data['network']['mtu'] = common_constants.IPV4_MIN_MTU
+            self.net_data['network']['mtu'] = constants.IPV4_MIN_MTU
             self.plugin.update_network(self.context, net['id'], self.net_data)
         with testlib_api.ExpectedException(mtu_exc.NetworkMTUSubnetConflict):
-            self.net_data['network']['mtu'] = common_constants.IPV4_MIN_MTU - 1
+            self.net_data['network']['mtu'] = constants.IPV4_MIN_MTU - 1
             self.plugin.update_network(self.context, net['id'], self.net_data)
 
 
