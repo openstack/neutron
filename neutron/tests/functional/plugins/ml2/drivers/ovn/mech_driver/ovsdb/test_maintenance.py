@@ -16,6 +16,7 @@
 from unittest import mock
 
 from oslo_config import cfg
+from oslo_utils import strutils
 from oslo_utils import uuidutils
 
 from futurist import periodics
@@ -64,8 +65,17 @@ class _TestMaintenanceHelper(base.TestOVNFunctionalBase):
                     ovn_const.OVN_NETWORK_NAME_EXT_ID_KEY) == name):
                 return row
 
-    def _create_network(self, name, external=False):
-        data = {'network': {'name': name, extnet_apidef.EXTERNAL: external}}
+    def _create_network(self, name, external=False, provider=None,
+                        net_type=None):
+        data = {'network': {'name': name,
+                            extnet_apidef.EXTERNAL: external}}
+        if net_type:
+            data['network'][provnet_apidef.NETWORK_TYPE] = net_type
+        if provider:
+            net_type = net_type or 'flat'
+            data['network'][provnet_apidef.NETWORK_TYPE] = net_type
+            data['network'][provnet_apidef.PHYSICAL_NETWORK] = provider
+
         req = self.new_create_request('networks', data, self.fmt,
                                       as_admin=True)
         res = req.get_response(self.api)
@@ -1040,6 +1050,63 @@ class TestMaintenance(_TestMaintenanceHelper):
         # Both "Chassis" registers are still in the DB because one
         # "Chassis_Private" register was missing.
         self.assertEqual(2, len(chassis_result))
+
+    def _test_check_provider_distributed_ports(
+            self, is_distributed_fip, net_type, expected_value=None):
+        cfg.CONF.set_override(
+            'enable_distributed_floating_ip', is_distributed_fip, group='ovn')
+        net_args = {'net_type': net_type}
+        if net_type == n_const.TYPE_FLAT:
+            net_args['provider'] = 'datacentre'
+        net = self._create_network(
+            'net_distributed_ports_test', **net_args)
+        subnet = self._create_subnet('subnet_distributed_ports_test',
+                                     net['id'])
+        router = self._create_router('router_distributed_ports_test')
+        self._add_router_interface(router['id'], subnet['id'])
+
+        # Lets make sure that reside-on-chassis-redirect is not set for the LRP
+        lr = self.nb_api.lookup('Logical_Router',
+                                utils.ovn_name(router['id']))
+        lrp = lr.ports[0]
+        self.nb_api.db_remove(
+            'Logical_Router_Port',
+            lrp.name,
+            'options',
+            ovn_const.LRP_OPTIONS_RESIDE_REDIR_CH
+        ).execute()
+
+        self.assertRaises(periodics.NeverAgain,
+                          self.maint.check_provider_distributed_ports)
+
+        lrp = self.nb_api.lookup('Logical_Router_Port', lrp.name)
+        if net_type in [n_const.TYPE_VLAN, n_const.TYPE_FLAT]:
+            self.assertEqual(
+                expected_value,
+                strutils.bool_from_string(
+                    lrp.options[ovn_const.LRP_OPTIONS_RESIDE_REDIR_CH]))
+        else:
+            self.assertNotIn(
+                ovn_const.LRP_OPTIONS_RESIDE_REDIR_CH,
+                lrp.options)
+
+    def test_check_provider_distributed_ports_dvr_vlan_net(self):
+        self._test_check_provider_distributed_ports(True, 'vlan', False)
+
+    def test_check_provider_distributed_ports_non_dvr_vlan_net(self):
+        self._test_check_provider_distributed_ports(False, 'vlan', True)
+
+    def test_check_provider_distributed_ports_dvr_flat_net(self):
+        self._test_check_provider_distributed_ports(True, 'flat', False)
+
+    def test_check_provider_distributed_ports_non_dvr_flat_net(self):
+        self._test_check_provider_distributed_ports(False, 'flat', True)
+
+    def test_check_provider_distributed_ports_dvr_geneve_net(self):
+        self._test_check_provider_distributed_ports(True, 'geneve')
+
+    def test_check_provider_distributed_ports_non_dvr_geneve_net(self):
+        self._test_check_provider_distributed_ports(False, 'geneve')
 
     def test_floating_ip_with_gateway_port(self):
         ext_net = self._create_network('ext_networktest', external=True)
