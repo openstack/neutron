@@ -75,6 +75,23 @@ DHCP_AGENT_OPTS = [
                       'This will only be invoked if the value is not 0. '
                       'If a network has N updates in X seconds then '
                       'it will reload once and not N times.')),
+    cfg.BoolOpt('netns_resolvconf', default=False,
+                help=_("Create a resolv.conf in each network namespace to use "
+                       "the local dnsmasq for DNS."
+                       )),
+    cfg.ListOpt('netns_resolvconf_nameservers',
+                help=_("List of DNS servers to be configured inside network "
+                       "namespaces. "
+                       "If not set uses ::1 (if IPv6 is enabled) and "
+                       "127.0.0.1 (always) by default.")),
+    cfg.StrOpt('netns_resolvconf_options',
+               default="timeout:2 no-tld-query edns0 attempts:5",
+               help=_("resolv.conf options inside network namespaces")),
+    cfg.StrOpt('netns_resolvconf_search',
+               default=None,
+               help=_("resolv.conf search domains inside network namespaces. "
+                      "If not set uses the dns_domain. Set to empty string "
+                      "to disable search parameter")),
 ]
 
 DHCP_OPTS = [

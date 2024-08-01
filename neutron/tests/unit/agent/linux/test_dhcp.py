@@ -24,6 +24,7 @@ from neutron_lib import constants
 from neutron_lib import exceptions
 from neutron_lib import fixture as lib_fixtures
 from oslo_config import cfg
+from oslo_config import fixture as fixture_config
 import oslo_messaging
 from oslo_utils import fileutils
 from oslo_utils import netutils
@@ -1132,13 +1133,15 @@ class LocalChild(dhcp.DhcpLocalProcess):
 class TestConfBase(base.BaseTestCase):
     def setUp(self):
         super(TestConfBase, self).setUp()
-        self.conf = config.setup_conf()
-        self.conf.register_opts(base_config.core_opts)
-        self.conf.register_opts(dhcp_config.DHCP_OPTS)
-        self.conf.register_opts(dhcp_config.DNSMASQ_OPTS)
-        self.conf.register_opts(config.DHCP_PROTOCOL_OPTS)
-        config.register_external_process_opts(self.conf)
-        config.register_interface_driver_opts_helper(self.conf)
+        conf = config.setup_conf()
+        conf.register_opts(base_config.core_opts)
+        conf.register_opts(dhcp_config.DHCP_OPTS)
+        conf.register_opts(dhcp_config.DHCP_AGENT_OPTS)
+        conf.register_opts(dhcp_config.DNSMASQ_OPTS)
+        conf.register_opts(config.DHCP_PROTOCOL_OPTS)
+        config.register_external_process_opts(conf)
+        config.register_interface_driver_opts_helper(conf)
+        self.conf = self.useFixture(fixture_config.Config(conf)).conf
 
 
 class TestBase(TestConfBase):
@@ -1146,12 +1149,8 @@ class TestBase(TestConfBase):
         super(TestBase, self).setUp()
         instance = mock.patch("neutron.agent.linux.dhcp.DeviceManager")
         self.mock_mgr = instance.start()
-        self.conf.register_opt(cfg.BoolOpt('enable_isolated_metadata',
-                                           default=True))
-        self.conf.register_opt(cfg.BoolOpt("force_metadata",
-                                           default=False))
-        self.conf.register_opt(cfg.BoolOpt('enable_metadata_network',
-                                           default=False))
+        # default is False, tests expect it to be True:
+        self.conf.set_override('enable_isolated_metadata', True)
         self.config_parse(self.conf)
         self.conf.set_override('state_path', '')
 
@@ -3360,10 +3359,6 @@ class TestDeviceManager(TestConfBase):
     def _test_setup(self, load_interface_driver, ip_lib, use_gateway_ips):
         with mock.patch.object(dhcp.ip_lib, 'IPDevice') as mock_IPDevice:
             # Create DeviceManager.
-            self.conf.register_opt(cfg.BoolOpt('enable_isolated_metadata',
-                                               default=False))
-            self.conf.register_opt(cfg.BoolOpt('force_metadata',
-                                               default=False))
             plugin = mock.Mock()
             device = mock.Mock()
             mock_IPDevice.return_value = device
@@ -3442,12 +3437,10 @@ class TestDeviceManager(TestConfBase):
                              force_metadata=False):
         with mock.patch.object(dhcp.ip_lib, 'IPDevice') as mock_IPDevice:
             # Create DeviceManager.
-            self.conf.register_opt(
-                cfg.BoolOpt('enable_isolated_metadata',
-                            default=enable_isolated_metadata))
-            self.conf.register_opt(
-                cfg.BoolOpt('force_metadata',
-                            default=force_metadata))
+            self.conf.set_override('enable_isolated_metadata',
+                                   enable_isolated_metadata)
+            self.conf.set_override('force_metadata',
+                                   force_metadata)
             plugin = mock.Mock()
             device = mock.Mock()
             mock_IPDevice.return_value = device
@@ -3515,10 +3508,6 @@ class TestDeviceManager(TestConfBase):
         """
         with mock.patch.object(dhcp.ip_lib, 'IPDevice') as mock_IPDevice:
             # Create DeviceManager.
-            self.conf.register_opt(
-                cfg.BoolOpt('enable_isolated_metadata', default=False))
-            self.conf.register_opt(
-                cfg.BoolOpt('force_metadata', default=False))
             plugin = mock.Mock()
             device = mock.Mock()
             mock_IPDevice.return_value = device
