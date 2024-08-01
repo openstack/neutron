@@ -16,8 +16,10 @@
 import collections
 import copy
 import datetime
+import os
 import signal
 import sys
+from tempfile import TemporaryDirectory
 from unittest import mock
 import uuid
 
@@ -2495,6 +2497,325 @@ class TestDeviceManager(base.BaseTestCase):
         self.assertEqual(2, device.route.get_gateway.call_count)
         self.assertFalse(device.route.delete_gateway.called)
         device.route.add_gateway.assert_has_calls(expected)
+
+    def test_resolvconf_in_netns_created(self):
+        # check if we write a resolv.conf
+
+        netns = 'netns'
+
+        with TemporaryDirectory() as tmpdir:
+            dh = dhcp.DeviceManager(cfg.CONF, mock.Mock())
+            dh.NNS_RESOLVCONF_PATH = tmpdir
+            dh._write_resolvconf(netns)
+            resolvconf = f"{tmpdir}/{netns}/resolv.conf"
+            self.assertTrue(os.path.isfile(resolvconf))
+
+    def test_resolvconf_in_netns_idempotent(self):
+        # check if the call is idempotent
+        # and raises no exception if the file already exists
+
+        netns = 'netns'
+
+        with TemporaryDirectory() as tmpdir:
+            resolvconf = f"{tmpdir}/{netns}/resolv.conf"
+            dh = dhcp.DeviceManager(cfg.CONF, mock.Mock())
+            dh.NNS_RESOLVCONF_PATH = tmpdir
+            dh._write_resolvconf(netns)
+            self.assertTrue(os.path.isfile(resolvconf))
+
+            # now (try to) write it again without exceptions
+            dh = dhcp.DeviceManager(cfg.CONF, mock.Mock())
+            dh.NNS_RESOLVCONF_PATH = tmpdir
+            dh._write_resolvconf(netns)
+            self.assertTrue(os.path.isfile(resolvconf))
+
+    def test_resolvconf_in_netns_permissions_dir(self):
+        # Check that missing permissions do not
+        # raise an unhandled exception breaking the agent setup
+        # but ensure an error gets logged.
+
+        netns = 'netns'
+
+        with self.assertLogs('neutron.agent.linux.dhcp',
+                             level='ERROR') as log:
+            with TemporaryDirectory() as tmpdir:
+                resolvconf = f"{tmpdir}/{netns}/resolv.conf"
+
+                # need to mock, because when tests are running
+                # as root in a container, permissions will be ignored!
+                with mock.patch("builtins.open") as mock_open:
+                    with mock.patch("os.makedirs",
+                                    side_effect=IOError('mocked error')
+                                    ) as mock_mkdirs:
+                        dh = dhcp.DeviceManager(cfg.CONF, mock.Mock())
+                        dh.NNS_RESOLVCONF_PATH = tmpdir
+                        dh._write_resolvconf(netns)
+
+                self.assertFalse(os.path.isfile(resolvconf))
+
+            # we fail early when the directory does not exist and
+            # can not be created, so open should never be called.
+
+            mock_mkdirs.assert_called()
+            mock_open.assert_not_called()
+
+            expecting = ('ERROR:neutron.agent.linux.dhcp:'
+                         'Failed to create directory')
+
+            # log.output is a list of strings, so a simple "in"
+            # will not work for a partial match, str() helps
+            self.assertIn(expecting, str(log.output))
+
+    def test_resolvconf_in_netns_permissions_file(self):
+        # Check that missing permissions do not
+        # raise an unhandled exception breaking the agent setup
+        # but ensure an error gets logged.
+
+        netns = 'netns'
+
+        with self.assertLogs('neutron.agent.linux.dhcp',
+                level='ERROR') as log:
+            with TemporaryDirectory() as tmpdir:
+                resolvconf = f"{tmpdir}/{netns}/resolv.conf"
+
+                # need to mock, because when tests are running
+                # as root in a container, permissions will be ignored!
+                with mock.patch("builtins.open",
+                                side_effect=PermissionError('mocked error')
+                                ) as mock_open:
+                    with mock.patch("os.makedirs") as mock_mkdirs:
+                        dh = dhcp.DeviceManager(cfg.CONF, mock.Mock())
+                        dh.NNS_RESOLVCONF_PATH = tmpdir
+                        dh._write_resolvconf(netns)
+
+                self.assertFalse(os.path.isfile(resolvconf))
+
+            mock_mkdirs.assert_called()
+            mock_open.assert_called()
+
+            expecting = ('ERROR:neutron.agent.linux.dhcp:'
+                         'Failed to create resolv.conf')
+
+            # log.output is a list of strings, so a simple "in"
+            # will not work for a partial match, str() helps
+            self.assertIn(expecting, str(log.output))
+
+    @staticmethod
+    def _read_resolvconf(resolvconf, filter_keywords=False):
+        settings = set()
+        valid_keywords = set(('options', 'search', 'nameserver'))
+
+        with open(resolvconf, 'r') as f:
+            for line in f.readlines():
+                keyword, *values = line.strip().split(' ', 1)
+                # ignore empty lines and comments
+                if keyword and not keyword.startswith('#'):
+                    if filter_keywords and keyword not in valid_keywords:
+                        # some tests only check valid settings
+                        continue
+                    value = values[0] if values else None
+                    settings.add((keyword, value))
+        return settings
+
+    def test_resolvconf_in_netns_test_parser(self):
+        # with most resolvconf tests depending on the helper function,
+        # _read_resolvconf, lets test that one as well here
+
+        with TemporaryDirectory() as tmpdir:
+            resolvconf = f"{tmpdir}/resolv.conf"
+            with open(resolvconf, 'w') as f:
+                f.write("# comment\n")
+                f.write("\n")
+                f.write("  \n")
+                f.write("#commented out\n")
+                f.write("invalid setting\n")
+                f.write("orphaned \n")
+                f.write("nameserver 1.2.3\n")
+                f.write("nameserver 4.5.6\n")
+                f.write("search domain a b c\n")
+                f.write("options go here\n")
+
+            settings = self._read_resolvconf(resolvconf)
+            filtered = self._read_resolvconf(resolvconf, filter_keywords=True)
+
+        expected_filtered = set((
+                                ('nameserver', '1.2.3'),
+                                ('nameserver', '4.5.6'),
+                                ('search', 'domain a b c'),
+                                ('options', 'go here'),
+                                ))
+
+        invalid_settings = set((('invalid', 'setting'), ('orphaned', None)))
+        expected_settings = expected_filtered | invalid_settings
+
+        self.assertEqual(settings, expected_settings)
+        self.assertEqual(filtered, expected_filtered)
+
+    def test_resolvconf_in_netns_is_complete(self):
+        # check if the resolv.conf has all default settings
+
+        netns = 'netns'
+
+        cfg.CONF.set_override('dns_domain', 'some.dns.domain.')
+
+        with TemporaryDirectory() as tmpdir:
+            dh = dhcp.DeviceManager(cfg.CONF, mock.Mock())
+            dh.NNS_RESOLVCONF_PATH = tmpdir
+            dh._write_resolvconf(netns)
+            resolvconf = f"{tmpdir}/{netns}/resolv.conf"
+
+            required_keywords = set(('nameserver', 'search', 'options'))
+            # we must not set filter_keywords to True here in any case,
+            # this test is supposed to check for invalid keywords/settings
+            settings = self._read_resolvconf(resolvconf)
+            found_keywords = set([x[0] for x in settings])
+
+        self.assertEqual(required_keywords, found_keywords)
+
+    def test_resolvconf_in_netns_settings(self):
+        # check if the resolv.conf gets all configured settings
+
+        netns = 'netns'
+
+        cfg.CONF.set_override('netns_resolvconf_nameservers',
+                              ['foo-ns-1', 'foo-ns-2'])
+
+        cfg.CONF.set_override('netns_resolvconf_search',
+                              'some search domains')
+
+        cfg.CONF.set_override('netns_resolvconf_options',
+                              'some dns opts')
+
+        expected_settings = set((
+            ("options", "some dns opts"),
+            ("search", "some search domains"),
+            ("nameserver", "foo-ns-1"),
+            ("nameserver", "foo-ns-2"),
+        ))
+
+        with TemporaryDirectory() as tmpdir:
+            resolvconf = f"{tmpdir}/{netns}/resolv.conf"
+
+            dh = dhcp.DeviceManager(cfg.CONF, mock.Mock())
+            dh.NNS_RESOLVCONF_PATH = tmpdir
+            dh._write_resolvconf(netns)
+
+            # only check our settings, completeness/correctness is
+            # already checked in test_resolvconf_in_netns_is_complete
+            found_settings = self._read_resolvconf(resolvconf,
+                            filter_keywords=True)
+
+        self.assertEqual(expected_settings, found_settings)
+
+    def test_resolvconf_in_netns_defaults(self):
+        # check if the resolv.conf gets all default settings
+
+        netns = 'netns'
+
+        cfg.CONF.set_override('dns_domain', 'some.dns.domain.')
+
+        for ipv6_enabled in True, False:
+
+            with mock.patch.object(netutils, 'is_ipv6_enabled') as mock_v6:
+                mock_v6.return_value = ipv6_enabled
+
+                expected_settings = set((
+                    ("options", cfg.CONF.netns_resolvconf_options),
+                    ("search", cfg.CONF.dns_domain),
+                    ("nameserver", "127.0.0.1"),
+                ))
+
+                if ipv6_enabled:
+                    expected_settings.add(("nameserver", "::1"))
+
+                with TemporaryDirectory() as tmpdir:
+                    resolvconf = f"{tmpdir}/{netns}/resolv.conf"
+
+                    dh = dhcp.DeviceManager(cfg.CONF, mock.Mock())
+                    dh.NNS_RESOLVCONF_PATH = tmpdir
+                    dh._write_resolvconf(netns)
+
+                    # only check our settings, completeness/correctness is
+                    # already checked in test_resolvconf_in_netns_is_complete
+                    found_settings = self._read_resolvconf(resolvconf,
+                                    filter_keywords=True)
+
+                self.assertEqual(expected_settings, found_settings)
+
+    def test_resolvconf_in_netns_settings_allow_skip(self):
+        # check if settings in the resolv.conf can be skipped
+        # by setting the config options to an empty value
+
+        netns = 'netns'
+
+        # The defaults of the settings have to be None, so we can distinguish
+        # between the option not being present in the config file, so we use
+        # our dynamic defaults, e.g. the search domain, and the case where the
+        # operator intentionally sets the config setting to an empty value to
+        # prevent us from using any defaults and skip the keyword in the
+        # resolv.conf file entirely.
+        #
+        # As this is not necessarily obvious, these assertions
+        # should prevent a change in the defaults that would break
+        # this functionality:
+
+        self.assertIsNone(
+            cfg.CONF._get_opt_info(
+                'netns_resolvconf_nameservers'
+            )['opt'].default
+        )
+
+        self.assertIsNone(
+            cfg.CONF._get_opt_info(
+                'netns_resolvconf_search'
+            )['opt'].default
+        )
+
+        cfg.CONF.set_override('netns_resolvconf_nameservers',
+                              [])
+
+        cfg.CONF.set_override('netns_resolvconf_search',
+                              '')
+
+        cfg.CONF.set_override('netns_resolvconf_options',
+                              '')
+
+        with TemporaryDirectory() as tmpdir:
+            resolvconf = f"{tmpdir}/{netns}/resolv.conf"
+
+            dh = dhcp.DeviceManager(cfg.CONF, mock.Mock())
+            dh.NNS_RESOLVCONF_PATH = tmpdir
+            dh._write_resolvconf(netns)
+
+            found_settings = self._read_resolvconf(resolvconf)
+
+        # there should be no settings found in the resolv.conf,
+        # i.e. it should be empty except for a comment
+        self.assertEqual(set(), found_settings)
+
+    def test_resolvconf_in_netns_setup(self):
+        # check if we create the resolv.conf (but only when enabled)
+
+        # setting is present and default is False?
+        self.assertFalse(getattr(cfg, 'netns_resolvconf', None))
+
+        for write_file in (True, False):
+            cfg.CONF.set_override('netns_resolvconf', write_file)
+            with TemporaryDirectory() as tmpdir:
+                with mock.patch.object(dhcp.ip_lib, 'IPDevice') \
+                        as mock_IPDevice:
+                    plugin = mock.Mock()
+                    device = mock.Mock()
+                    mock_IPDevice.return_value = device
+                    device.route.get_gateway.return_value = None
+                    net = copy.deepcopy(fake_network)
+                    plugin.create_dhcp_port.return_value = fake_dhcp_port
+                    dh = dhcp.DeviceManager(cfg.CONF, plugin)
+                    dh.NNS_RESOLVCONF_PATH = tmpdir
+                    dh.setup(net)
+
+                resolvconf = f"{tmpdir}/{net.namespace}/resolv.conf"
+                self.assertEqual(write_file, os.path.isfile(resolvconf))
 
 
 class TestDHCPResourceUpdate(base.BaseTestCase):
