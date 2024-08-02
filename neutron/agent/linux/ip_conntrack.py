@@ -27,8 +27,6 @@ CONTRACK_MGRS = {}
 MAX_CONNTRACK_ZONES = 65535
 ZONE_START = 4097
 
-WORKERS = 8
-
 
 class IpConntrackUpdate(object):
     """Encapsulates a conntrack update
@@ -74,13 +72,8 @@ class IpConntrackManager(object):
         self.zone_per_port = zone_per_port  # zone per port vs per network
         self._populate_initial_zone_map()
         self._queue = eventlet.queue.LightQueue()
-        self._start_process_queue()
-
-    def _start_process_queue(self):
-        LOG.debug("Starting ip_conntrack _process_queue_worker() threads")
-        pool = eventlet.GreenPool(size=WORKERS)
-        for i in range(WORKERS):
-            pool.spawn_n(self._process_queue_worker)
+        LOG.debug('Starting the ip_conntrack _process_queue_worker() thread')
+        eventlet.spawn_n(self._process_queue_worker)
 
     def _process_queue_worker(self):
         # While it's technically not necessary to have this method, the
