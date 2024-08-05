@@ -22,7 +22,13 @@
               - ^playbooks/.*$
               - ^roles/.*$
               - ^rally-jobs/.*$
-              - ^zuul.d/(?!(job-templates)).*\.yaml
+              # Ignore everything except for zuul.d/job-templates.yaml
+              - ^zuul.d/base.yaml
+              - ^zuul.d/grenade.yaml
+              - ^zuul.d/project.yaml
+              - ^zuul.d/rally.yaml
+              - ^zuul.d/tempest-multinode.yaml
+              - ^zuul.d/tempest-singlenode.yaml
         - openstack-tox-py39: # from openstack-python3-jobs template
             timeout: 3600
             irrelevant-files:  *irrelevant-files
