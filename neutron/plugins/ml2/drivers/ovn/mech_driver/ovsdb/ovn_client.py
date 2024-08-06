@@ -1676,8 +1676,6 @@ class OVNClient(object):
         # logical router port is centralized in the chassis hosting the
         # distributed gateway port.
         # https://github.com/openvswitch/ovs/commit/85706c34d53d4810f54bec1de662392a3c06a996
-        # FIXME(ltomasbo): Once Bugzilla 2162756 is fixed the
-        # is_provider_network check should be removed
         if network.get(pnet.NETWORK_TYPE) == const.TYPE_VLAN:
             reside_redir_ch = self._get_reside_redir_for_gateway_port(
                 port['device_id'])
