@@ -407,8 +407,12 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         if self.maintenance_worker:
             self.mech_driver.nb_synchronizer.stop()
             self.mech_driver.sb_synchronizer.stop()
-        self.mech_driver.nb_ovn.ovsdb_connection.stop()
-        self.mech_driver.sb_ovn.ovsdb_connection.stop()
+        for ovn_conn in (self.mech_driver.nb_ovn.ovsdb_connection,
+                         self.mech_driver.sb_ovn.ovsdb_connection):
+            try:
+                ovn_conn.stop(timeout=10)
+            except Exception:  # pylint:disable=bare-except
+                pass
 
     def restart(self):
         self.stop()
