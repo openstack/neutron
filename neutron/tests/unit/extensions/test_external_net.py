@@ -15,7 +15,11 @@
 
 from unittest import mock
 
+from neutron_lib.api import attributes
 from neutron_lib.api.definitions import external_net as extnet_apidef
+from neutron_lib.api.definitions import subnet as subnet_apidef
+from neutron_lib.api.definitions import subnet_external_network as \
+    extsnet_apidef
 from neutron_lib import constants
 from neutron_lib import context
 from neutron_lib.plugins import constants as plugin_constants
@@ -24,10 +28,17 @@ from oslo_utils import uuidutils
 import testtools
 from webob import exc
 
-from neutron.db import external_net_db
-from neutron.db import models_v2
 from neutron.tests.unit.api.v2 import test_base
-from neutron.tests.unit.db import test_db_base_plugin_v2
+
+
+# Add subnet 'router:external' extension, without loading the extensions.
+# This change must be done before the policies are parsed in order to load the
+# 'convert_to' method before the ``FieldCheck`` instance for this field is
+# created.
+rname = subnet_apidef.COLLECTION_NAME
+attributes.RESOURCES[rname].update(
+    extsnet_apidef.RESOURCE_ATTRIBUTE_MAP[rname])
+from neutron.tests.unit.db import test_db_base_plugin_v2  # noqa: E402
 
 
 _uuid = uuidutils.generate_uuid
@@ -136,30 +147,6 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             result = plugin.get_networks(ctx)
             self.assertFalse(result[0]['shared'])
 
-    def test_network_filter_hook_admin_context(self):
-        ctx = context.Context(None, None, is_admin=True)
-        model = models_v2.Network
-        conditions = external_net_db._network_filter_hook(ctx, model, [])
-        self.assertEqual([], conditions)
-
-    def test_network_filter_hook_nonadmin_context(self):
-        ctx = context.Context('edinson', 'cavani')
-        model = models_v2.Network
-        txt = ("networks.project_id = :project_id_1 OR "
-               "networkrbacs.action = :action_1 AND "
-               "networkrbacs.target_project = :target_project_1 OR "
-               "networkrbacs.target_project = :target_project_2")
-        conditions = external_net_db._network_filter_hook(ctx, model, [])
-        self.assertEqual(conditions.__str__(), txt)
-        # Try to concatenate conditions
-        txt2 = (txt.replace('project_1', 'project_3').
-                replace('project_2', 'project_4').
-                replace('action_1', 'action_2').
-                replace('project_id_1', 'project_id_2'))
-        conditions = external_net_db._network_filter_hook(ctx, model,
-                                                          conditions)
-        self.assertEqual(conditions.__str__(), "%s OR %s" % (txt, txt2))
-
     def test_create_port_external_network_non_admin_fails(self):
         with self.network(as_admin=True, router__external=True) as ext_net:
             with self.subnet(network=ext_net) as ext_subnet:
@@ -199,3 +186,27 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             self.assertEqual(exc.HTTPNoContent.code, res.status_int)
             (l3_mock.delete_disassociated_floatingips
              .assert_called_once_with(mock.ANY, net['network']['id']))
+
+    def test_create_shared_networks_and_subnets(self):
+        with (self.network(as_admin=True, router__external=True) as net_ext,
+                self.network(as_admin=True, shared=True) as net_shared,
+                self.network(as_admin=True) as net_admin):
+            with (self.subnet(as_admin=True, network=net_ext)
+                  as snet_ext, self.subnet(as_admin=True, network=net_shared)
+                  as snet_shared, self.subnet(as_admin=True, network=net_admin)
+                  as snet_admin):
+                req = self.new_list_request('networks', as_admin=False,
+                                            tenant_id='noadmin')
+                res = self.deserialize(self.fmt, req.get_response(self.api))
+                net_ids = {net['id'] for net in res['networks']}
+                self.assertIn(net_ext['network']['id'], net_ids)
+                self.assertIn(net_shared['network']['id'], net_ids)
+                self.assertNotIn(net_admin['network']['id'], net_ids)
+
+                req = self.new_list_request('subnets', as_admin=False,
+                                            tenant_id='noadmin')
+                res = self.deserialize(self.fmt, req.get_response(self.api))
+                snet_ids = {snet['id'] for snet in res['subnets']}
+                self.assertIn(snet_ext['subnet']['id'], snet_ids)
+                self.assertIn(snet_shared['subnet']['id'], snet_ids)
+                self.assertNotIn(snet_admin['subnet']['id'], snet_ids)
