@@ -98,6 +98,7 @@ from neutron_lib.api.definitions import vpn_endpoint_groups
 from neutron_lib import constants
 
 from neutron.extensions import port_trusted_vif
+from neutron.extensions import quota_check_limit_default
 from neutron.extensions import quotasv2_detail
 from neutron.extensions import security_groups_default_rules
 
@@ -171,6 +172,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     qos_rules_alias.ALIAS,
     'quotas',
     quota_check_limit.ALIAS,
+    quota_check_limit_default.ALIAS,
     quotasv2_detail.ALIAS,
     rbac_address_scope.ALIAS,
     'rbac-policies',
