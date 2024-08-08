@@ -878,6 +878,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                  resource_id=port['id'],
                                  metadata={'mac_address_updated': False},
                                  states=(oport, port,)))
+            # Ensure latest revision number
+            cur_context._port = port
             self.mechanism_manager.update_port_postcommit(cur_context)
             need_notify = True
             try_again = False
