@@ -98,3 +98,16 @@ class TestValidIpv6URL(base.BaseTestCase):
         port = 443
         self.assertEqual("controller:443",
                          ipv6_utils.valid_ipv6_url(host, port))
+
+
+class TestNoscopeIpv6(base.BaseTestCase):
+    def test_get_noscope_ipv6(self):
+        self.assertEqual('2001:db8::f0:42:8329',
+                         ipv6_utils.get_noscope_ipv6('2001:db8::f0:42:8329%1'))
+        self.assertEqual('ff02::5678',
+                         ipv6_utils.get_noscope_ipv6('ff02::5678%eth0'))
+        self.assertEqual('fe80::1',
+                         ipv6_utils.get_noscope_ipv6('fe80::1%eth0'))
+        self.assertEqual('::1', ipv6_utils.get_noscope_ipv6('::1%eth0'))
+        self.assertEqual('::1', ipv6_utils.get_noscope_ipv6('::1'))
+        self.assertRaises(ValueError, ipv6_utils.get_noscope_ipv6, '::132:::')
