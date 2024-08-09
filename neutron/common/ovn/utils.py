@@ -41,6 +41,7 @@ import tenacity
 
 from neutron._i18n import _
 from neutron.common import _constants as n_const
+from neutron.common import ipv6_utils
 from neutron.common.ovn import constants
 from neutron.common.ovn import exceptions as ovn_exc
 from neutron.common import utils as common_utils
@@ -605,6 +606,8 @@ def get_system_dns_resolvers(resolver_file=DNS_RESOLVER_FILE):
             valid_ip = (netutils.is_valid_ipv4(line, strict=True) or
                         netutils.is_valid_ipv6(line))
             if valid_ip:
+                if netutils.is_valid_ipv6(line):
+                    line = ipv6_utils.get_noscope_ipv6(line)
                 resolvers.append(line)
 
     return resolvers
