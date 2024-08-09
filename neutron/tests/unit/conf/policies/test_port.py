@@ -552,6 +552,16 @@ class AdminTests(PortAPITestCase):
                            'create_port:hints',
                            self.alt_target))
 
+    def test_create_port_with_trusted_field(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_port:trusted',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_port:trusted',
+                           self.alt_target))
+
     def test_get_port(self):
         self.assertTrue(
             policy.enforce(self.context, 'get_port', self.target))
@@ -605,6 +615,14 @@ class AdminTests(PortAPITestCase):
         self.assertTrue(
             policy.enforce(
                 self.context, 'get_port:hints', self.alt_target))
+
+    def test_get_port_trusted_field(self):
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'get_port:trusted', self.target))
+        self.assertTrue(
+            policy.enforce(
+                self.context, 'get_port:trusted', self.alt_target))
 
     def test_get_ports_tags(self):
         self.assertTrue(
@@ -745,6 +763,16 @@ class AdminTests(PortAPITestCase):
         self.assertTrue(
             policy.enforce(self.context,
                            'update_port:hints',
+                           self.alt_target))
+
+    def test_update_port_trusted_field(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_port:trusted',
+                           self.target))
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'update_port:trusted',
                            self.alt_target))
 
     def test_delete_port(self):
@@ -899,6 +927,18 @@ class ProjectManagerTests(AdminTests):
             self.context, 'create_port:hints',
             self.alt_target)
 
+    def test_create_port_with_trusted_field(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_port:trusted',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_port:trusted',
+            self.alt_target)
+
     def test_get_port(self):
         self.assertTrue(
             policy.enforce(self.context, 'get_port', self.target))
@@ -964,6 +1004,16 @@ class ProjectManagerTests(AdminTests):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
             policy.enforce, self.context, 'get_port:hints',
+            self.alt_target)
+
+    def test_get_port_trusted_field(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'get_port:trusted',
+            self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce, self.context, 'get_port:trusted',
             self.alt_target)
 
     def test_get_ports_tags(self):
@@ -1119,6 +1169,16 @@ class ProjectManagerTests(AdminTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'update_port:hints', self.alt_target)
+
+    def test_update_port_trusted_field(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_port:trusted', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'update_port:trusted', self.alt_target)
 
     def test_update_ports_tags(self):
         self.assertTrue(

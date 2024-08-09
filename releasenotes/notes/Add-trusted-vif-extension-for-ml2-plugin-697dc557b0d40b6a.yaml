@@ -1,0 +1,17 @@
+---
+features:
+  - |
+    New ML2 plugin extension ``port_trusted`` is now available. This extension
+    implements the ``port_trusted_vif`` API extension which adds to the port resource
+    a new boolean field called ``trusted``. This field should be used by admin users
+    to set the port as trusted what was previously possible only through the port's
+    ``binding:profile`` dictionary. Value of the ``trusted`` field is still visible
+    in the port's ``binding:profile`` dictionary so that for example Nova still has
+    it where it is expected to be.
+
+deprecations:
+  - |
+    Setting ``trusted`` key directly in the port's ``binding:profile`` is
+    deprecated and will be forbidden in future releases. Dedicated port's
+    attribute ``trusted``, added by the API extension ``port_trusted_vif``
+    should be used instead.

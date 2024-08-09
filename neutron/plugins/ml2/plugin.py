@@ -563,7 +563,17 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
         if profile not in (None, const.ATTR_NOT_SPECIFIED,
                            self._get_profile(binding)):
-            binding.profile = jsonutils.dumps(profile)
+            profile_json = jsonutils.dumps(profile)
+            # TODO(slaweq): Remove warning and raise InvalidInput exception
+            # instead in the 2026.1 release
+            if 'trusted' in profile_json:
+                LOG.warning("Marking VIF as 'trusted' directly through the "
+                            "'binding:profile' field of the port is "
+                            "deprecated and will be forbidden in future. "
+                            "Please enable 'port_trusted' ML2 plugin's "
+                            "extension and use 'trusted' field of the port "
+                            "instead")
+            binding.profile = profile_json
             if len(binding.profile) > models.BINDING_PROFILE_LEN:
                 msg = _("binding:profile value too large")
                 raise exc.InvalidInput(error_message=msg)
@@ -897,6 +907,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             port[portbindings.HOST_ID] = binding.host
             port[portbindings.VIF_TYPE] = binding.vif_type
             port[portbindings.VIF_DETAILS] = self._get_vif_details(binding)
+        port_trusted = port.get('trusted')
+        if port_trusted is not None:
+            port[portbindings.PROFILE]['trusted'] = port_trusted
 
     def _update_port_dict_bound_drivers(self, port, binding_levels):
         levels = {str(bl.level): bl.driver for bl in binding_levels}
@@ -2680,7 +2693,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                     'and shared filesystem ports') % port['id']
             raise exc.BadRequest(resource='port', msg=msg)
 
-    def _make_port_binding_dict(self, binding, fields=None):
+    def _make_port_binding_dict(self, binding, fields=None, port=None):
         res = {key: binding[key] for key in (
             pbe_ext.HOST, pbe_ext.VIF_TYPE, pbe_ext.VNIC_TYPE, pbe_ext.STATUS)}
         if isinstance(binding, ports_obj.PortBinding):
@@ -2689,7 +2702,18 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         else:
             res[pbe_ext.PROFILE] = self._get_profile(binding)
             res[pbe_ext.VIF_DETAILS] = self._get_vif_details(binding)
+        # If port object was passed, get e.g. trusted field from it and add it
+        # to the binding:profile
+        if port:
+            self._extend_port_binding_dict_with_synthetic_fields(res, port)
         return db_utils.resource_fields(res, fields)
+
+    def _extend_port_binding_dict_with_synthetic_fields(self, binding, port):
+        if binding[pbe_ext.VIF_TYPE] == portbindings.VIF_TYPE_UNBOUND:
+            # For unbound port there is no need to extend binding dict
+            return
+        if port.trusted is not None:
+            binding[pbe_ext.PROFILE]['trusted'] = port.trusted
 
     def _get_port_binding_attrs(self, binding, host=None):
         return {portbindings.VNIC_TYPE: binding.get(pbe_ext.VNIC_TYPE),
@@ -2716,7 +2740,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def create_port_binding(self, context, port_id, binding):
         attrs = binding[pbe_ext.RESOURCE_NAME]
         with db_api.CONTEXT_WRITER.using(context):
-            port_db = self._get_port(context, port_id)
+            port = ports_obj.Port.get_object(context, id=port_id)
+            port_db = port.db_obj
             self._validate_port_supports_multiple_bindings(port_db)
             if self._get_binding_for_host(port_db.port_bindings,
                                           attrs[pbe_ext.HOST]):
@@ -2755,7 +2780,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             with db_api.CONTEXT_WRITER.using(context):
                 bind_context._binding.persist_state_to_session(context.session)
                 db.set_binding_levels(context, bind_context._binding_levels)
-        return self._make_port_binding_dict(bind_context._binding)
+        return self._make_port_binding_dict(bind_context._binding, port=port)
 
     @utils.transaction_guard
     @db_api.retry_if_session_inactive()
@@ -2771,7 +2796,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         bindings = ports_obj.PortBinding.get_objects(
             context, _pager=pager, port_id=port_id, **filters)
 
-        return [self._make_port_binding_dict(binding, fields)
+        return [self._make_port_binding_dict(binding, fields, port)
                 for binding in bindings]
 
     @utils.transaction_guard
@@ -2785,7 +2810,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                    port_id=port_id)
         if not binding:
             raise exc.PortBindingNotFound(port_id=port_id, host=host)
-        return self._make_port_binding_dict(binding, fields)
+        return self._make_port_binding_dict(binding, fields, port)
 
     def _get_binding_for_host(self, bindings, host):
         for binding in bindings:
@@ -2797,7 +2822,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def update_port_binding(self, context, host, port_id, binding):
         attrs = binding[pbe_ext.RESOURCE_NAME]
         with db_api.CONTEXT_WRITER.using(context):
-            port_db = self._get_port(context, port_id)
+            port = ports_obj.Port.get_object(context, id=port_id)
+            port_db = port.db_obj
             self._validate_port_supports_multiple_bindings(port_db)
             original_binding = self._get_binding_for_host(
                 port_db.port_bindings, host)
@@ -2824,7 +2850,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             with db_api.CONTEXT_WRITER.using(context):
                 bind_context._binding.persist_state_to_session(context.session)
                 db.set_binding_levels(context, bind_context._binding_levels)
-        return self._make_port_binding_dict(bind_context._binding)
+        return self._make_port_binding_dict(bind_context._binding, port=port)
 
     @utils.transaction_guard
     @db_api.retry_if_session_inactive()
@@ -2834,7 +2860,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # fixed
             if isinstance(port_id, dict):
                 port_id = port_id['port_id']
-            port_db = self._get_port(context, port_id)
+            port = ports_obj.Port.get_object(context, id=port_id)
+            port_db = port.db_obj
             self._validate_port_supports_multiple_bindings(port_db)
             active_binding = p_utils.get_port_binding_by_status_and_host(
                 port_db.port_bindings, const.ACTIVE)
@@ -2874,7 +2901,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                                  network['id'])
                 self.notifier.binding_activate(context, port_id,
                                                inactive_binding.host)
-                return self._make_port_binding_dict(cur_context._binding)
+                return self._make_port_binding_dict(cur_context._binding,
+                                                    port=port)
         raise exc.PortBindingError(port_id=port_id, host=host)
 
     @utils.transaction_guard

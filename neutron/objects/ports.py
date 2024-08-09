@@ -338,7 +338,8 @@ class Port(base.NeutronDbObject):
     # Version 1.7: Added port_device field
     # Version 1.8: Added hints field
     # Version 1.9: Added hardware_offload_type field
-    VERSION = '1.9'
+    # Version 1.10: Added trusted field
+    VERSION = '1.10'
 
     db_model = models_v2.Port
 
@@ -394,6 +395,7 @@ class Port(base.NeutronDbObject):
         'numa_affinity_policy': obj_fields.StringField(nullable=True),
         'device_profile': obj_fields.StringField(nullable=True),
         'hardware_offload_type': obj_fields.StringField(nullable=True),
+        'trusted': obj_fields.BooleanField(nullable=True),
 
         # TODO(ihrachys): consider adding a 'dns_assignment' fully synthetic
         # field in later object iterations
@@ -420,6 +422,7 @@ class Port(base.NeutronDbObject):
         'qos_network_policy_id',
         'security',
         'security_group_ids',
+        'trusted',
     ]
 
     fields_need_translation = {
@@ -591,6 +594,10 @@ class Port(base.NeutronDbObject):
                 db_obj.hardware_offload_type.hardware_offload_type)
             fields_to_change.append('hardware_offload_type')
 
+        if db_obj.get('trusted') is not None:
+            self.trusted = db_obj.trusted.trusted
+            fields_to_change.append('trusted')
+
         self.obj_reset_changes(fields_to_change)
 
     def obj_make_compatible(self, primitive, target_version):
@@ -627,6 +634,8 @@ class Port(base.NeutronDbObject):
             primitive.pop('hints', None)
         if _target_version < (1, 9):
             primitive.pop('hardware_offload_type', None)
+        if _target_version < (1, 10):
+            primitive.pop('trusted', None)
 
     @classmethod
     @db_api.CONTEXT_READER

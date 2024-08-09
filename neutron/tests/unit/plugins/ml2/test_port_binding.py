@@ -354,6 +354,7 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         cfg.CONF.set_override('mechanism_drivers',
                               ['logger', 'test'],
                               'ml2')
+        cfg.CONF.set_override('extension_drivers', ['port_trusted'], 'ml2')
 
         driver_type.register_ml2_drivers_vlan_opts()
         cfg.CONF.set_override('network_vlan_ranges',
@@ -431,9 +432,15 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
             subresource='bindings', sub_id=host).get_response(self.api)
         return response
 
-    def _create_port_and_binding(self, **kwargs):
-        device_owner = '%s%s' % (const.DEVICE_OWNER_COMPUTE_PREFIX, 'nova')
-        with self.port(device_owner=device_owner) as port:
+    # todo(slaweq): here I can add trusted to be checked too
+    def _create_port_and_binding(self, trusted=None, **kwargs):
+        port_kwargs = {
+            'device_owner': '%s%s' % (
+                const.DEVICE_OWNER_COMPUTE_PREFIX, 'nova')}
+        if trusted is not None:
+            port_kwargs['trusted'] = trusted
+            port_kwargs['is_admin'] = True
+        with self.port(**port_kwargs) as port:
             port_id = port['port']['id']
             binding = self._make_port_binding(self.fmt, port_id, self.host,
                                               **kwargs)['binding']
@@ -447,12 +454,13 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.assertEqual({'port_filter': False},
                          binding[pbe_ext.VIF_DETAILS])
 
-    def _assert_unbound_port_binding(self, binding):
+    def _assert_unbound_port_binding(self, binding, expected_profile=None):
         self.assertFalse(binding[pbe_ext.HOST])
         self.assertEqual(portbindings.VIF_TYPE_UNBOUND,
                          binding[pbe_ext.VIF_TYPE])
         self.assertEqual({}, binding[pbe_ext.VIF_DETAILS])
-        self.assertEqual({}, binding[pbe_ext.PROFILE])
+        expected_profile = expected_profile or {}
+        self.assertEqual(expected_profile, binding[pbe_ext.PROFILE])
 
     def test_create_port_binding(self):
         profile = {'key1': 'value1'}
@@ -641,11 +649,31 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         self.assertEqual(1, len(retrieved_bindings))
         self._assert_bound_port_binding(retrieved_bindings[0])
 
+    def test_list_port_bindings_with_trusted_field_set(self):
+        port, new_binding = self._create_port_and_binding(trusted=True)
+        retrieved_bindings = self._list_port_bindings(
+            port['id'], raw_response=False)['bindings']
+        self.assertEqual(2, len(retrieved_bindings))
+        self._assert_unbound_port_binding(
+            utils.get_port_binding_by_status_and_host(
+                retrieved_bindings, const.ACTIVE))
+        bound_port_binding = utils.get_port_binding_by_status_and_host(
+            retrieved_bindings, const.INACTIVE, host=self.host)
+        self._assert_bound_port_binding(bound_port_binding)
+        self.assertTrue(bound_port_binding['profile']['trusted'])
+
     def test_show_port_binding(self):
         port, new_binding = self._create_port_and_binding()
         retrieved_binding = self._show_port_binding(
             port['id'], self.host, raw_response=False)['binding']
         self._assert_bound_port_binding(retrieved_binding)
+
+    def test_show_port_binding_with_trusted_field_set(self):
+        port, new_binding = self._create_port_and_binding(trusted=True)
+        retrieved_binding = self._show_port_binding(
+            port['id'], self.host, raw_response=False)['binding']
+        self._assert_bound_port_binding(retrieved_binding)
+        self.assertTrue(retrieved_binding['profile']['trusted'])
 
     def test_show_port_binding_with_fields(self):
         port, new_binding = self._create_port_and_binding()
