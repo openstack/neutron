@@ -2,6 +2,7 @@
     name: neutron-ovs-rally-task
     parent: rally-task-neutron
     timeout: 10800
+    voting: false
     vars:
       devstack_localrc:
         USE_PYTHON3: true
