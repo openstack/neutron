@@ -540,12 +540,12 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                     if gw_info.ip_version == constants.IP_VERSION_6:
                         continue
                     if gw_info.router_ip and utils.is_snat_enabled(router):
-                        networks = self._ovn_client.\
-                            _get_v4_network_of_all_router_ports(
-                                ctx, router['id'])
-                        for network in networks:
+                        cidrs = self._ovn_client.\
+                            _get_snat_cidrs_for_external_router(ctx,
+                                                                router['id'])
+                        for cidr in cidrs:
                             db_extends[router['id']]['snats'].append({
-                                'logical_ip': network,
+                                'logical_ip': cidr,
                                 'external_ip': gw_info.router_ip,
                                 'type': 'snat'})
 

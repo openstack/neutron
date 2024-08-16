@@ -15,6 +15,9 @@
 
 from unittest import mock
 
+from neutron_lib import context as ncontext
+from oslo_config import cfg
+
 from neutron.common.ovn import constants
 from neutron.conf.plugins.ml2 import config as ml2_conf
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
@@ -29,6 +32,53 @@ from neutron_lib import constants as const
 from neutron_lib.services.logapi import constants as log_const
 
 from tenacity import wait_none
+
+
+class Test_has_separate_snat_per_subnet(base.BaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        ovn_conf.register_opts()
+
+    def test_snat_on_nested_off(self):
+        fake_router = {
+            'id': 'fake-id',
+            l3.EXTERNAL_GW_INFO: {
+                'enable_snat': True,
+            },
+        }
+        # ovn_router_indirect_snat default is False
+        self.assertTrue(ovn_client._has_separate_snat_per_subnet(fake_router))
+
+    def test_snat_off_nested_off(self):
+        fake_router = {
+            'id': 'fake-id',
+            l3.EXTERNAL_GW_INFO: {
+                'enable_snat': False,
+            },
+        }
+        # ovn_router_indirect_snat default is False
+        self.assertFalse(ovn_client._has_separate_snat_per_subnet(fake_router))
+
+    def test_snat_on_nested_on(self):
+        fake_router = {
+            'id': 'fake-id',
+            l3.EXTERNAL_GW_INFO: {
+                'enable_snat': True,
+            },
+        }
+        cfg.CONF.set_override('ovn_router_indirect_snat', True, 'ovn')
+        self.assertFalse(ovn_client._has_separate_snat_per_subnet(fake_router))
+
+    def test_snat_off_nested_on(self):
+        fake_router = {
+            'id': 'fake-id',
+            l3.EXTERNAL_GW_INFO: {
+                'enable_snat': False,
+            },
+        }
+        cfg.CONF.set_override('ovn_router_indirect_snat', True, 'ovn')
+        self.assertFalse(ovn_client._has_separate_snat_per_subnet(fake_router))
 
 
 class TestOVNClientBase(base.BaseTestCase):
@@ -66,7 +116,6 @@ class TestOVNClient(TestOVNClientBase):
             'id': 'fake-router-id',
             'gw_port_id': 'fake-port-id',
         }
-        networks = mock.MagicMock()
         txn = mock.MagicMock()
         self.ovn_client._get_router_gw_ports = mock.MagicMock()
         gw_port = fakes.FakePort().create_one_port(
@@ -79,8 +128,7 @@ class TestOVNClient(TestOVNClientBase):
         self.ovn_client._get_router_gw_ports.return_value = [gw_port]
         self.assertEqual(
             [self.get_plugin().get_port()],
-            self.ovn_client._add_router_ext_gw(mock.Mock(), router, networks,
-                                               txn))
+            self.ovn_client._add_router_ext_gw(mock.Mock(), router, txn))
         self.nb_idl.add_static_route.assert_called_once_with(
             'neutron-' + router['id'],
             ip_prefix='0.0.0.0/0',
@@ -110,7 +158,6 @@ class TestOVNClient(TestOVNClientBase):
             'gw_port_id': 'fake-port-id',
             'enable_default_route_ecmp': True,
         }
-        networks = mock.MagicMock()
         txn = mock.MagicMock()
         self.ovn_client._get_router_gw_ports = mock.MagicMock()
         gw_port1 = fakes.FakePort().create_one_port(
@@ -131,8 +178,7 @@ class TestOVNClient(TestOVNClientBase):
             gw_port1, gw_port2]
         self.assertEqual(
             [self.get_plugin().get_port(), self.get_plugin().get_port()],
-            self.ovn_client._add_router_ext_gw(mock.Mock(), router,
-                                               networks, txn))
+            self.ovn_client._add_router_ext_gw(mock.Mock(), router, txn))
         self.nb_idl.add_static_route.assert_has_calls([
             mock.call('neutron-' + router['id'],
                       ip_prefix='0.0.0.0/0',
@@ -171,7 +217,6 @@ class TestOVNClient(TestOVNClientBase):
             },
             'gw_port_id': 'fake-port-id',
         }
-        networks = mock.MagicMock()
         txn = mock.MagicMock()
         self.ovn_client._get_router_gw_ports = mock.MagicMock()
         gw_port = fakes.FakePort().create_one_port(
@@ -184,8 +229,7 @@ class TestOVNClient(TestOVNClientBase):
         self.ovn_client._get_router_gw_ports.return_value = [gw_port]
         self.assertEqual(
             [self.get_plugin().get_port()],
-            self.ovn_client._add_router_ext_gw(mock.Mock(), router, networks,
-                                               txn))
+            self.ovn_client._add_router_ext_gw(mock.Mock(), router, txn))
         self.nb_idl.add_static_route.assert_not_called()
 
     def test_update_lsp_host_info_up(self):
@@ -291,6 +335,27 @@ class TestOVNClient(TestOVNClientBase):
                           mock.call(context, port_id),
                           mock.call(context, port_id)]
         mock_get_port.assert_has_calls(expected_calls)
+
+    def test__get_snat_cidrs_for_external_router_nested_snat_off(self):
+        ctx = ncontext.Context()
+        per_subnet_cidrs = ['10.0.0.0/24', '20.0.0.0/24']
+        with mock.patch.object(
+                self.ovn_client, '_get_v4_network_of_all_router_ports',
+                return_value=per_subnet_cidrs):
+            cidrs = self.ovn_client._get_snat_cidrs_for_external_router(
+                ctx, 'fake-id')
+        self.assertEqual(per_subnet_cidrs, cidrs)
+
+    def test__get_snat_cidrs_for_external_router_nested_snat_on(self):
+        ctx = ncontext.Context()
+        cfg.CONF.set_override('ovn_router_indirect_snat', True, 'ovn')
+        per_subnet_cidrs = ['10.0.0.0/24', '20.0.0.0/24']
+        with mock.patch.object(
+                self.ovn_client, '_get_v4_network_of_all_router_ports',
+                return_value=per_subnet_cidrs):
+            cidrs = self.ovn_client._get_snat_cidrs_for_external_router(
+                ctx, 'fake-id')
+        self.assertEqual([constants.OVN_DEFAULT_SNAT_CIDR], cidrs)
 
 
 class TestOVNClientFairMeter(TestOVNClientBase,
