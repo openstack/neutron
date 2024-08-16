@@ -378,7 +378,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                                         ip_prefix=const.IPv4_ANY)]
         }.get(port['id'], [])
 
-    def _fake_get_v4_network_of_all_router_ports(self, ctx, router_id):
+    def _fake_get_snat_cidrs_for_external_router(self, ctx, router_id):
         return {'r1': ['172.16.0.0/24', '172.16.2.0/24'],
                 'r2': ['192.168.2.0/24']}.get(router_id, [])
 
@@ -448,15 +448,14 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
         l3_plugin._get_sync_interfaces = mock.Mock()
         l3_plugin._get_sync_interfaces.return_value = (
             self.get_sync_router_ports)
-        ovn_nb_synchronizer._ovn_client = mock.Mock()
-        ovn_nb_synchronizer._ovn_client.\
-            _get_nets_and_ipv6_ra_confs_for_router_port.return_value = (
+        ovn_client = mock.Mock()
+        ovn_nb_synchronizer._ovn_client = ovn_client
+        ovn_client._get_nets_and_ipv6_ra_confs_for_router_port.return_value = (
                 self.lrport_networks, {'fixed_ips': {}})
-        ovn_nb_synchronizer._ovn_client._get_v4_network_of_all_router_ports. \
-            side_effect = self._fake_get_v4_network_of_all_router_ports
-        ovn_nb_synchronizer._ovn_client._get_gw_info = mock.Mock()
-        ovn_nb_synchronizer._ovn_client._get_gw_info.side_effect = (
-            self._fake_get_gw_info)
+        ovn_client._get_snat_cidrs_for_external_router.side_effect = (
+            self._fake_get_snat_cidrs_for_external_router)
+        ovn_client._get_gw_info = mock.Mock()
+        ovn_client._get_gw_info.side_effect = self._fake_get_gw_info
         # end of router-sync block
         l3_plugin.get_floatingips = mock.Mock()
         l3_plugin.get_floatingips.return_value = self.floating_ips
