@@ -45,6 +45,13 @@ IPTABLES_MULTIPORT_ONLY_PROTOCOLS = [
 IPV6_ICMP_LEGACY_PROTO_LIST = [constants.PROTO_NAME_ICMP,
                                constants.PROTO_NAME_IPV6_ICMP_LEGACY]
 
+# Protocol 'any', which is treated the same way as 'no protocol' in the API.
+# The openstack client changes 'any' to None for the API call, but we want
+# to accept both as being the same, for example, if it was passed directly
+# via the curl command.
+PROTO_NAME_ANY = 'any'
+SG_RULE_PROTO_ANY = (None, PROTO_NAME_ANY)
+
 # Number of resources for neutron agent side functions to deal
 # with large sets.
 # Setting this value does not count on special conditions, it is just a human
