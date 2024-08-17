@@ -2049,13 +2049,15 @@ class TestDeviceManager(base.BaseTestCase):
                           [{'subnet_id': port.fixed_ips[0].subnet_id}],
                           'device_id': mock.ANY}})])
 
+        ipv6_subnet = False
         if port == fake_ipv6_port:
             expected_ips = ['2001:db8::a8bb:ccff:fedd:ee99/64',
                             const.METADATA_CIDR]
+            ipv6_subnet = True
         else:
             expected_ips = ['172.9.9.9/24', const.METADATA_CIDR]
 
-        if ipv6_enabled:
+        if ipv6_enabled and ipv6_subnet:
             expected_ips.append(const.METADATA_V6_CIDR)
 
         expected = [mock.call.get_device_name(port)]
