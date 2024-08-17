@@ -666,8 +666,14 @@ class MetadataAgent(object):
 
         cidrs_to_add = active_subnets_cidrs - current_namespace_cidrs
 
-        # Make sure that all addresses, including the LLA, are present
-        for addr in (n_const.METADATA_CIDR, n_const.METADATA_V6_CIDR, lla):
+        # If we were given an IPv6 link-local to configure, add it and the
+        # IPv6 metadata address.
+        metadata_cidrs = [n_const.METADATA_CIDR]
+        if lla and netutils.is_ipv6_enabled():
+            metadata_cidrs.extend([n_const.METADATA_V6_CIDR, lla])
+
+        # Make sure that all required addresses are present
+        for addr in metadata_cidrs:
             if addr not in current_namespace_cidrs:
                 cidrs_to_add.add(addr)
             else:
@@ -736,7 +742,7 @@ class MetadataAgent(object):
             self.teardown_datapath(net_name)
             return
 
-        return net_name, datapath_ports_ip4_ips, metadata_port_info
+        return net_name, datapath_ports_ip4_ips, any_ip6, metadata_port_info
 
     def provision_datapath(self, port_binding):
         """Provision the datapath so that it can serve metadata.
@@ -756,7 +762,8 @@ class MetadataAgent(object):
         provision_params = self._get_provision_params(datapath)
         if not provision_params:
             return
-        net_name, datapath_ports_ip4_ips, metadata_port_info = provision_params
+        net_name, datapath_ports_ip4_ips, any_ip6, metadata_port_info = (
+            provision_params)
 
         LOG.info("Provisioning metadata for network %s", net_name)
         # Create the VETH pair if it's not created. Also the add_veth function
@@ -790,11 +797,16 @@ class MetadataAgent(object):
         ip1.link.set_up()
         ip2.link.set_up()
 
+        # If there is an IPv6 address configured on the port, pass the LLA
+        # to be configured to _process_cidrs()
+        lla = None
+        if any_ip6:
+            lla = ip_lib.get_ipv6_lladdr(metadata_port_info.mac)
         cidrs_to_add, cidrs_to_delete = self._process_cidrs(
             {dev['cidr'] for dev in ip2.addr.list()},
             datapath_ports_ip4_ips,
             metadata_port_info.ip_addresses,
-            ip_lib.get_ipv6_lladdr(metadata_port_info.mac)
+            lla
         )
 
         # Delete any non active addresses from the network namespace
@@ -833,9 +845,15 @@ class MetadataAgent(object):
         # Ensure the correct checksum in the metadata traffic.
         self._ensure_datapath_checksum(namespace)
 
+        # Only if IPv6 is enabled should we listen on the IPv6 metadata
+        # address, same as the dhcp-agent does
+        bind_address_v6 = None
+        if lla and netutils.is_ipv6_enabled():
+            bind_address_v6 = n_const.METADATA_V6_IP
+
         # Spawn metadata proxy if it's not already running.
         metadata_driver.MetadataDriver.spawn_monitored_metadata_proxy(
             self._process_monitor, namespace, n_const.METADATA_PORT,
             self.conf, bind_address=n_const.METADATA_V4_IP,
-            network_id=net_name, bind_address_v6=n_const.METADATA_V6_IP,
+            network_id=net_name, bind_address_v6=bind_address_v6,
             bind_interface=veth_name[1])

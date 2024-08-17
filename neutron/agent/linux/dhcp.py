@@ -1868,12 +1868,16 @@ class DeviceManager(object):
             ip_cidr = '%s/%s' % (fixed_ip.ip_address, net.prefixlen)
             ip_cidrs.append(ip_cidr)
 
-        if self.driver.use_gateway_ips:
+        need_ipv6_metadata = False
+        for subnet in network.subnets:
+            if subnet.ip_version == constants.IP_VERSION_6:
+                need_ipv6_metadata = True
+
+            if not self.driver.use_gateway_ips:
+                continue
             # For each DHCP-enabled subnet, add that subnet's gateway
             # IP address to the Linux device for the DHCP port.
-            for subnet in network.subnets:
-                if not subnet.enable_dhcp:
-                    continue
+            if subnet.enable_dhcp:
                 gateway = subnet.gateway_ip
                 if gateway:
                     net = netaddr.IPNetwork(subnet.cidr)
@@ -1881,7 +1885,7 @@ class DeviceManager(object):
 
         if self.conf.force_metadata or self.conf.enable_isolated_metadata:
             ip_cidrs.append(constants.METADATA_CIDR)
-            if netutils.is_ipv6_enabled():
+            if need_ipv6_metadata and netutils.is_ipv6_enabled():
                 ip_cidrs.append(constants.METADATA_V6_CIDR)
 
         self.driver.init_l3(interface_name, ip_cidrs,
