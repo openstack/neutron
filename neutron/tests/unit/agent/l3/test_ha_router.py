@@ -127,6 +127,34 @@ class TestBasicRouterOperations(base.BaseTestCase):
         ri.remove_floating_ip(device, fip_cidr)
         self.assertTrue(super_remove_floating_ip.called)
 
+    @mock.patch.object(ha_router.LOG, 'debug')
+    def test_spawn_state_change_monitor(self, mock_log):
+        ri = self._create_router(mock.MagicMock())
+        with mock.patch.object(ri,
+                               '_get_state_change_monitor_process_manager')\
+                as m_get_state:
+            mock_pm = m_get_state.return_value
+            mock_pm.active = True
+            mock_pm.pid = 1234
+            ri.spawn_state_change_monitor(mock_pm)
+
+        mock_pm.enable.assert_called_once()
+        mock_log.assert_called_once()
+
+    @mock.patch.object(ha_router.LOG, 'warning')
+    def test_spawn_state_change_monitor_no_pid(self, mock_log):
+        ri = self._create_router(mock.MagicMock())
+        with mock.patch.object(ri,
+                               '_get_state_change_monitor_process_manager')\
+                as m_get_state:
+            mock_pm = m_get_state.return_value
+            mock_pm.active = True
+            mock_pm.pid = None
+            ri.spawn_state_change_monitor(mock_pm)
+
+        mock_pm.enable.assert_called_once()
+        mock_log.assert_called_once()
+
     def test_destroy_state_change_monitor_ok(self):
         ri = self._create_router(mock.MagicMock())
         # need a port for destroy_state_change_monitor() to call PM code
