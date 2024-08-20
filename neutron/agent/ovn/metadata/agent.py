@@ -106,14 +106,14 @@ class PortBindingChassisCreatedEvent(PortBindingChassisEvent):
     LOG_MSG = "Port %s in datapath %s bound to our chassis"
 
     def __init__(self, metadata_agent):
-        events = (self.ROW_UPDATE,)
+        events = (self.ROW_CREATE, self.ROW_UPDATE,)
         super(PortBindingChassisCreatedEvent, self).__init__(
             metadata_agent, events)
 
     def match_fn(self, event, row, old):
         try:
             return (row.chassis[0].name == self.agent.chassis and
-                    not old.chassis)
+                    (event == self.ROW_CREATE or not old.chassis))
         except (IndexError, AttributeError):
             return False
 
@@ -297,8 +297,9 @@ class MetadataAgent(object):
             self.conf, self.chassis, sb_idl=self.sb_idl)
         self._proxy.run()
 
-        # Do the initial sync.
-        self.sync()
+        # Do the initial sync. Provisioning handled by
+        # PortBindingChassisCreatedEvent on initial db dump
+        self.sync(provision=False)
 
         # Register the agent with its corresponding Chassis
         self.register_metadata_agent()
@@ -349,7 +350,7 @@ class MetadataAgent(object):
         return list(self._vif_ports(ports))
 
     @_sync_lock
-    def sync(self):
+    def sync(self, provision=True):
         """Agent sync.
 
         This function will make sure that all networks with ports in our
@@ -379,8 +380,9 @@ class MetadataAgent(object):
         # resync all network namespaces based on the associated datapaths,
         # even those that are already running. This is to make sure
         # everything within each namespace is up to date.
-        for port_binding in net_port_bindings:
-            self.provision_datapath(port_binding)
+        if provision:
+            for port_binding in net_port_bindings:
+                self.provision_datapath(port_binding)
 
     @staticmethod
     def _get_veth_name(datapath):
