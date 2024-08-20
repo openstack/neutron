@@ -615,9 +615,10 @@ class MetadataAgent(object):
         iptables_mgr.ipv4['mangle'].add_rule('POSTROUTING', rule, wrap=False)
         iptables_mgr.apply()
 
-    def _get_port_ip4_ips(self, port):
+    def _get_port_ip4_ips_and_ip6_flag(self, port):
         # Retrieve IPv4 addresses from the port mac column which is in form
-        # ["<port_mac> <ip1> <ip2> ... <ipN>"]
+        # ["<port_mac> <ip1> <ip2> ... <ipN>"]. Also return True if the port
+        # has at least one IPv6 address
         if not port.mac:
             LOG.warning("Port %s MAC column is empty, cannot retrieve IP "
                         "addresses", port.uuid)
@@ -627,10 +628,17 @@ class MetadataAgent(object):
         if not ips:
             LOG.debug("Port %s IP addresses were not retrieved from the "
                       "Port_Binding MAC column %s", port.uuid, mac_field_attrs)
-        return [ip for ip in ips if (
-            utils.get_ip_version(ip) == n_const.IP_VERSION_4)]
+        ip4_ips = []
+        any_ip6 = False
+        for ip in ips:
+            if utils.get_ip_version(ip) == n_const.IP_VERSION_4:
+                ip4_ips.append(ip)
+            else:
+                any_ip6 = True
+        return ip4_ips, any_ip6
 
-    def _active_subnets_cidrs(self, datapath_ports_ips, metadata_port_cidrs):
+    def _active_subnets_cidrs(self, datapath_ports_ip4_ips,
+                              metadata_port_cidrs):
         active_subnets_cidrs = set()
         # Prepopulate a dictionary where each metadata_port_cidr(string) maps
         # to its netaddr.IPNetwork object. This is so we dont have to
@@ -640,7 +648,7 @@ class MetadataAgent(object):
             for metadata_port_cidr in metadata_port_cidrs if metadata_port_cidr
         }
 
-        for datapath_port_ip in datapath_ports_ips:
+        for datapath_port_ip in datapath_ports_ip4_ips:
             ip_obj = netaddr.IPAddress(datapath_port_ip)
             for metadata_cidr, metadata_cidr_obj in \
                     metadata_cidrs_to_network_objects.items():
@@ -650,9 +658,10 @@ class MetadataAgent(object):
         return active_subnets_cidrs
 
     def _process_cidrs(self, current_namespace_cidrs,
-                       datapath_ports_ips, metadata_port_subnet_cidrs, lla):
+                       datapath_ports_ip4_ips,
+                       metadata_port_subnet_cidrs, lla):
         active_subnets_cidrs = self._active_subnets_cidrs(
-            datapath_ports_ips, metadata_port_subnet_cidrs)
+            datapath_ports_ip4_ips, metadata_port_subnet_cidrs)
 
         cidrs_to_add = active_subnets_cidrs - current_namespace_cidrs
 
@@ -711,18 +720,22 @@ class MetadataAgent(object):
 
         chassis_ports = self.sb_idl.get_ports_on_chassis(
             self._chassis, include_additional_chassis=True)
-        datapath_ports_ips = []
+        datapath_ports_ip4_ips = []
+        any_ip6 = False
         for chassis_port in self._vif_ports(chassis_ports):
             if str(chassis_port.datapath.uuid) == datapath_uuid:
-                datapath_ports_ips.extend(self._get_port_ip4_ips(chassis_port))
+                ip4_ips, ip6_flag = self._get_port_ip4_ips_and_ip6_flag(
+                    chassis_port)
+                datapath_ports_ip4_ips.extend(ip4_ips)
+                any_ip6 = any_ip6 or ip6_flag
 
-        if not datapath_ports_ips:
+        if not (datapath_ports_ip4_ips or any_ip6):
             LOG.debug("No valid VIF ports were found for network %s, "
                       "tearing the namespace down if needed", net_name)
             self.teardown_datapath(net_name)
             return
 
-        return net_name, datapath_ports_ips, metadata_port_info
+        return net_name, datapath_ports_ip4_ips, metadata_port_info
 
     def provision_datapath(self, port_binding):
         """Provision the datapath so that it can serve metadata.
@@ -742,7 +755,7 @@ class MetadataAgent(object):
         provision_params = self._get_provision_params(datapath)
         if not provision_params:
             return
-        net_name, datapath_ports_ips, metadata_port_info = provision_params
+        net_name, datapath_ports_ip4_ips, metadata_port_info = provision_params
 
         LOG.info("Provisioning metadata for network %s", net_name)
         # Create the VETH pair if it's not created. Also the add_veth function
@@ -778,7 +791,7 @@ class MetadataAgent(object):
 
         cidrs_to_add, cidrs_to_delete = self._process_cidrs(
             {dev['cidr'] for dev in ip2.addr.list()},
-            datapath_ports_ips,
+            datapath_ports_ip4_ips,
             metadata_port_info.ip_addresses,
             ip_lib.get_ipv6_lladdr(metadata_port_info.mac)
         )
