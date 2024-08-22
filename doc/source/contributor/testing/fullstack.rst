@@ -108,7 +108,15 @@ How to run fullstack tests locally?
 
 Fullstack tests can be run locally. That makes it much easier to understand
 exactly how it works, debug issues in the existing tests or write new ones.
-To run fullstack tests locally, you should clone the following repositories:
+
+Before proceeding, please make sure that the machine runs the latest kernel
+from your distibution repositories (reboot the machine, if needed). Otherwise,
+you may experience issues with the `openvswitch` built from source during the
+environment preparation.
+
+To run fullstack tests locally, you should clone the following repositories
+under `/opt/stack/` directory (you may have to create it first with
+`mkdir -p /opt/stack`):
 
 * `Devstack <https://opendev.org/openstack/devstack/>`
 * `Neutron <https://opendev.org/openstack/neutron>`
