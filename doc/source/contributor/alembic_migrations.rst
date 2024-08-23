@@ -319,7 +319,9 @@ Expand and Contract Scripts
 The obsolete "branchless" design of a migration script included that it
 indicates a specific "version" of the schema, and includes directives that
 apply all necessary changes to the database at once.  If we look for example at
-the script ``2d2a8a565438_hierarchical_binding.py``, we will see::
+the script ``2d2a8a565438_hierarchical_binding.py``, we will see:
+
+.. code-block:: python
 
     # .../alembic_migrations/versions/2d2a8a565438_hierarchical_binding.py
 
@@ -351,20 +353,23 @@ the script ``2d2a8a565438_hierarchical_binding.py``, we will see::
         # ... more DROP instructions ...
 
 The above script contains directives that are both under the "expand"
-and "contract" categories, as well as some data migrations.  the ``op.create_table``
-directive is an "expand"; it may be run safely while the old version of the
-application still runs, as the old code simply doesn't look for this table.
+and "contract" categories, as well as some data migrations.
+The ``op.create_table`` directive is an "expand"; it may be run safely while
+the old version of the application still runs, as the old code simply doesn't
+look for this table.
 The ``op.drop_constraint`` and ``op.drop_column`` directives are
-"contract" directives (the drop column more so than the drop constraint); running
-at least the ``op.drop_column`` directives means that the old version of the
-application will fail, as it will attempt to access these columns which no longer
-exist.
+"contract" directives (the drop column more so than the drop constraint);
+running at least the ``op.drop_column`` directives means that the old version
+of the application will fail, as it will attempt to access these columns which
+no longer exist.
 
 The data migrations in this script are adding new
 rows to the newly added ``ml2_port_binding_levels`` table.
 
 Under the new migration script directory structure, the above script would be
-stated as two scripts; an "expand" and a "contract" script::
+stated as two scripts; an "expand" and a "contract" script:
+
+.. code-block:: python
 
     # expansion operations
     # .../alembic_migrations/versions/liberty/expand/2bde560fc638_hierarchical_binding.py
@@ -427,7 +432,9 @@ For such cases, we use the ``contract_creation_exceptions`` that should be
 implemented as part of such migrations. This is needed to get functional tests
 pass.
 
-Usage::
+Usage:
+
+.. code-block:: python
 
     def contract_creation_exceptions():
         """Docstring should explain why we allow such exception for contract
@@ -445,7 +452,8 @@ HEAD files for conflict management
 In directory ``neutron/db/migration/alembic_migrations/versions`` there are two
 files, ``CONTRACT_HEAD`` and ``EXPAND_HEAD``. These files contain the ID of the
 head revision in each branch. The purpose of these files is to validate the
-revision timelines and prevent non-linear changes from entering the merge queue.
+revision timelines and prevent non-linear changes from entering the merge
+queue.
 
 When you create a new migration script by neutron-db-manage these files will be
 updated automatically. But if another migration script is merged while your

@@ -35,7 +35,8 @@ Upgrade strategy
 
 There are two general upgrade scenarios supported by Neutron:
 
-#. All services are shut down, code upgraded, then all services are started again.
+#. All services are shut down, code upgraded, then all services are started
+   again.
 #. Services are upgraded gradually, based on operator service windows.
 
 The latter is the preferred way to upgrade an OpenStack cloud, since it allows

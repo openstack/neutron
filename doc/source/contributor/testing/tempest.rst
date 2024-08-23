@@ -35,7 +35,8 @@ this is `neutron-tempest-plugin <https://opendev.org/openstack/neutron-tempest-p
 
 neutron-tempest-plugin covers API and scenario tests not just for core Neutron
 functionality, but for stadium projects as well.
-For reference please read `Testing Neutron\'s related sections <testing.html#api-tests>`_
+For reference please read
+`Testing Neutron\'s related sections <testing.html#api-tests>`_
 
 API Tests
 ~~~~~~~~~
@@ -56,9 +57,10 @@ should be validated, and all interaction with the daemon should be via
 a REST client.
 
 The neutron-tempest-plugin/neutron_tempest_plugin directory was copied from the
-Tempest project around the Kilo timeframe. At the time, there was an overlap of tests
-between the Tempest and Neutron repositories. This overlap was then eliminated by carving
-out a subset of resources that belong to Tempest, with the rest in Neutron.
+Tempest project around the Kilo timeframe. At the time, there was an overlap
+of tests between the Tempest and Neutron repositories. This overlap was then
+eliminated by carving out a subset of resources that belong to Tempest, with
+the rest in Neutron.
 
 API tests that belong to Tempest deal with a subset of Neutron's resources:
 
@@ -91,9 +93,10 @@ define a list of required extensions for a particular test class.
 Scenario Tests
 ~~~~~~~~~~~~~~
 
-Scenario tests (neutron-tempest-plugin/neutron_tempest_plugin/scenario), like API tests,
-use the Tempest test infrastructure and have the same requirements. Guidelines for
-writing a good scenario test may be found at the Tempest developer guide:
+Scenario tests (neutron-tempest-plugin/neutron_tempest_plugin/scenario),
+like API tests, use the Tempest test infrastructure and have the same
+requirements. Guidelines for writing a good scenario test may be found in
+the Tempest developer guide:
 https://docs.openstack.org/tempest/latest/field_guide/scenario.html
 
 Scenario tests, like API tests, are split between the Tempest and Neutron

@@ -34,5 +34,5 @@ neutron-server neutron.conf file.
 The plugin will inject a Deadlock exception on database flushes with a 1/50
 probability and a delay of 1 second with a 1/200 probability when SQLAlchemy
 objects are loaded into the persistent state from the DB. The goal is to ensure
-the code is tolerant of these transient delays/failures that will be experienced
-in busy production (and Galera) systems.
+the code is tolerant of these transient delays/failures that will be
+experienced in busy production (and Galera) systems.

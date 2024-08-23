@@ -82,9 +82,10 @@ QoS plugin implementation guide
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The neutron.extensions.qos.QoSPluginBase class uses method proxies for methods
-relating to QoS policy rules. Each of these such methods is generic in the sense
-that it is intended to handle any rule type. For example, QoSPluginBase has a
-create_policy_rule method instead of both create_policy_dscp_marking_rule and
+relating to QoS policy rules. Each of these such methods is generic in the
+sense that it is intended to handle any rule type. For example, QoSPluginBase
+has a create_policy_rule method instead of both
+create_policy_dscp_marking_rule and
 create_policy_bandwidth_limit_rule methods. The logic behind the proxies allows
 a call to a plugin's create_policy_dscp_marking_rule to be handled by the
 create_policy_rule method, which will receive a QosDscpMarkingRule object as an
@@ -168,11 +169,13 @@ For QoS, the following neutron objects are implemented:
 * QosPolicyDefault: defines a default QoS policy per project.
 * QosBandwidthLimitRule: defines the instance bandwidth limit rule type,
   characterized by a max kbps and a max burst kbits. This rule has also a
-  direction parameter to set the traffic direction, from the instance's point of view.
-* QosDscpMarkingRule: defines the DSCP rule type, characterized by an even integer
-  between 0 and 56.  These integers are the result of the bits in the DiffServ section
-  of the IP header, and only certain configurations are valid.  As a result, the list
-  of valid DSCP rule types is: 0, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32,
+  direction parameter to set the traffic direction, from the instance's point
+  of view.
+* QosDscpMarkingRule: defines the DSCP rule type, characterized by an even
+  integer between 0 and 56. These integers are the result of the bits in the
+  DiffServ section of the IP header, and only certain configurations are valid.
+  As a result, the list of valid DSCP rule types is:
+  0, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32,
   34, 36, 38, 40, 46, 48, and 56.
 * QosMinimumBandwidthRule: defines the minimum assured bandwidth rule type,
   characterized by a min_kbps parameter. This rule has also a direction
@@ -223,8 +226,8 @@ instantiated (and to suggest just that, the base rule class is marked as ABC).
 
 QoS objects rely on some primitive database API functions that are added in:
 
-* neutron_lib.db.api: those can be reused to fetch other models that do not have
-  corresponding versioned objects yet, if needed.
+* neutron_lib.db.api: those can be reused to fetch other models that do not
+  have corresponding versioned objects yet, if needed.
 * neutron.db.qos.api: contains database functions that are specific to QoS
   models.
 
@@ -342,9 +345,9 @@ The DSCP markings are in fact configured on the port by means of
 openflow rules.
 
 .. note::
- As of Ussuri release, the QoS rules can be applied for direct ports with hardware
- offload capability (switchdev), this requires Open vSwitch version 2.11.0 or newer
- and Linux kernel based on kernel 5.4.0 or newer.
+    As of Ussuri release, the QoS rules can be applied for direct ports with
+    hardware offload capability (switchdev), this requires Open vSwitch
+    version 2.11.0 or newer and Linux kernel based on kernel 5.4.0 or newer.
 
 SR-IOV
 ++++++
@@ -380,10 +383,10 @@ For egress bandwidth limit rule:
 The egress bandwidth limit is configured on the tap port by setting traffic
 policing on tc ingress queueing discipline (qdisc). Details about ingress
 qdisc can be found on `lartc how-to <http://lartc.org/howto/lartc.adv-qdisc.ingress.html>`__.
-The reason why ingress qdisc is used to configure egress bandwidth limit is that
-tc is working on traffic which is visible from "inside bridge" perspective. So
-traffic incoming to bridge via tap interface is in fact outgoing from Neutron's
-port.
+The reason why ingress qdisc is used to configure egress bandwidth limit is
+that tc is working on traffic which is visible from "inside bridge"
+perspective. So traffic incoming to bridge via tap interface is in fact
+outgoing from Neutron's port.
 This implementation is the same as what Open vSwitch is doing when
 ingress_policing_rate and ingress_policing_burst are set for port.
 
@@ -394,12 +397,12 @@ For ingress bandwidth limit rule:
 * delete_tbf_bw_limit
 
 The ingress bandwidth limit is configured on the tap port by setting a simple
-`tc-tbf <http://linux.die.net/man/8/tc-tbf>`_ queueing discipline (qdisc) on the
-port. It requires a value of HZ parameter configured in kernel on the host.
+`tc-tbf <http://linux.die.net/man/8/tc-tbf>`_ queueing discipline (qdisc) on
+the port. It requires a value of HZ parameter configured in kernel on the host.
 This value is necessary to calculate the minimal burst value which is set in
 tc. Details about how it is calculated can be found in
-`here <http://unix.stackexchange.com/a/100797>`_. This solution is similar to Open
-vSwitch implementation.
+`here <http://unix.stackexchange.com/a/100797>`_.
+This solution is similar to Open vSwitch implementation.
 
 The Linux bridge DSCP marking implementation relies on the
 linuxbridge_extension_api to request access to the IptablesManager class
@@ -408,21 +411,22 @@ and to manage chains in the ``mangle`` table in iptables.
 QoS driver design
 -----------------
 
-QoS framework is flexible enough to support any third-party vendor. To integrate a
-third party driver (that just wants to be aware of the QoS create/update/delete API
-calls), one needs to implement 'neutron.services.qos.drivers.base', and register
+QoS framework is flexible enough to support any third-party vendor. To
+integrate a third party driver (that just wants to be aware of the QoS
+create/update/delete API calls), one needs to implement
+'neutron.services.qos.drivers.base', and register
 the driver during the core plugin or mechanism driver load, see
 
 neutron.services.qos.drivers.openvswitch.driver register method for an example.
 
 .. note::
- All the functionality MUST be implemented by the vendor, neutron's QoS framework
- will just act as an interface to bypass the received QoS API request and help with
- database persistence for the API operations.
+    All the functionality MUST be implemented by the vendor, neutron's QoS
+    framework will just act as an interface to bypass the received QoS API
+    request and help with database persistence for the API operations.
 
 .. note::
- L3 agent ``fip_qos`` extension does not have a driver implementation,
- it directly uses the ``l3_tc_lib`` for all types of routers.
+    L3 agent ``fip_qos`` extension does not have a driver implementation,
+    it directly uses the ``l3_tc_lib`` for all types of routers.
 
 Configuration
 -------------
@@ -441,7 +445,8 @@ On agent side (OVS):
 
 On L3 agent side:
 
-* For for floating IPs QoS support, add 'fip_qos' to extensions in [agent] section.
+* For for floating IPs QoS support, add 'fip_qos' to extensions in [agent]
+  section.
 
 
 Testing strategy
@@ -498,6 +503,7 @@ New functional tests for L3 agent floating IP rate limit:
 API tests
 ~~~~~~~~~
 
-API tests for basic CRUD operations for ports, networks, policies, and rules were added in:
+API tests for basic CRUD operations for ports, networks, policies, and rules
+were added in:
 
 * neutron-tempest-plugin.api.test_qos

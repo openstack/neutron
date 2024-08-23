@@ -130,7 +130,8 @@ can be set per router at router creation time by passing the
 ``--enable-default-route-bfd`` argument or by updating an existing router using
 the ``openstack router set`` command.
 
-The default behavior for new routers can be controlled using the `enable_default_route_bfd`_ configuration option.
+The default behavior for new routers can be controlled using the
+`enable_default_route_bfd`_ configuration option.
 
 It is recommended to enable this when `adding multiple default routes to a
 router`_ as failure to do so will lead to degraded performance in the event of

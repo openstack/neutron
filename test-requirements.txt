@@ -10,3 +10,4 @@ stestr>=1.0.0 # Apache-2.0
 ddt>=1.0.1 # MIT
 # Needed to run DB commands in virtualenvs
 PyMySQL>=0.7.6 # MIT License
+doc8>=0.6.0 # Apache-2.0

@@ -10,7 +10,8 @@
    | remote_ip_prefix | 0.0.0.0/0 |
    +------------------+-----------+
 
-   $ openstack security group rule create --ethertype IPv6 --proto ipv6-icmp default
+   $ openstack security group rule create --ethertype IPv6 \
+     --proto ipv6-icmp default
    +-----------+-----------+
    | Field     | Value     |
    +-----------+-----------+
@@ -31,13 +32,14 @@
    | remote_ip_prefix | 0.0.0.0/0 |
    +------------------+-----------+
 
-   $ openstack security group rule create --ethertype IPv6 --proto tcp --dst-port 22 default
-   +------------------+-----------+
-   | Field            | Value     |
-   +------------------+-----------+
-   | direction        | ingress   |
-   | ethertype        | IPv6      |
-   | port_range_max   | 22        |
-   | port_range_min   | 22        |
-   | protocol         | tcp       |
-   +------------------+-----------+
+   $ openstack security group rule create --ethertype IPv6 --proto tcp \
+     --dst-port 22 default
+   +----------------+---------+
+   | Field          | Value   |
+   +----------------+---------+
+   | direction      | ingress |
+   | ethertype      | IPv6    |
+   | port_range_max | 22      |
+   | port_range_min | 22      |
+   | protocol       | tcp     |
+   +----------------+---------+

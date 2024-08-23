@@ -493,17 +493,17 @@ Once configuration is complete, you can launch instances with SR-IOV ports.
 SR-IOV with ConnectX-3/ConnectX-3 Pro Dual Port Ethernet
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In contrast to Mellanox newer generation NICs, ConnectX-3 family network adapters expose a single
-PCI device (PF) in the system regardless of the number of physical ports.
-When the device is **dual port** and SR-IOV is enabled and configured we can observe some inconsistencies
-in linux networking subsystem.
+In contrast to Mellanox newer generation NICs, ConnectX-3 family network
+adapters expose a single PCI device (PF) in the system regardless of the number
+of physical ports. When the device is **dual port** and SR-IOV is enabled and
+configured we can observe some inconsistencies in linux networking subsystem.
 
 .. note::
     In the example below ``enp4s0`` represents PF net device associated with physical port 1 and
     ``enp4s0d1`` represents PF net device associated with physical port 2.
 
-**Example:** A system with ConnectX-3 dual port device and a total of four VFs configured,
-two VFs assigned to port one and two VFs assigned to port two.
+**Example:** A system with ConnectX-3 dual port device and a total of four VFs
+configured, two VFs assigned to port one and two VFs assigned to port two.
 
 .. code-block:: console
 
@@ -532,18 +532,20 @@ Four VFs are available in the system, however,
         vf 2 MAC 00:00:00:00:00:00, vlan 4095, spoof checking off, link-state auto
         vf 3 MAC 00:00:00:00:00:00, vlan 4095, spoof checking off, link-state auto
 
-**ip** command identifies each PF associated net device as having four VFs *each*.
+**ip** command identifies each PF associated net device as having four VFs
+*each*.
 
 .. note::
 
      Mellanox ``mlx4`` driver allows *ip* commands to perform configuration of *all*
      VFs from either PF associated network devices.
 
-To allow neutron SR-IOV agent to properly identify the VFs that belong to the correct PF network device
-(thus to the correct network port) Admin is required to provide the ``exclude_devices`` configuration option
-in ``sriov_agent.ini``
+To allow neutron SR-IOV agent to properly identify the VFs that belong to the
+correct PF network device (thus to the correct network port) Admin is required
+to provide the ``exclude_devices`` configuration option in ``sriov_agent.ini``
 
-**Step 1**: derive the VF to Port mapping from mlx4 driver configuration file: ``/etc/modprobe.d/mlnx.conf``  or ``/etc/modprobe.d/mlx4.conf``
+**Step 1**: derive the VF to Port mapping from mlx4 driver configuration file:
+``/etc/modprobe.d/mlnx.conf``  or ``/etc/modprobe.d/mlx4.conf``
 
 .. code-block:: console
 
@@ -554,12 +556,15 @@ Where:
 
 ``num_vfs=n1,n2,n3`` - The driver will enable ``n1`` VFs on physical port 1,
 ``n2`` VFs on physical port 2 and
-``n3`` dual port VFs (applies only to dual port HCA when all ports are Ethernet ports).
+``n3`` dual port VFs (applies only to dual port HCA when all ports are
+Ethernet ports).
 
 
-``probe_vfs=m1,m2,m3`` - the driver probes ``m1`` single port VFs on physical port 1,
+``probe_vfs=m1,m2,m3`` - the driver probes ``m1`` single port VFs on
+physical port 1,
 ``m2`` single port VFs on physical port 2 (applies only if such a port exist)
-``m3`` dual port VFs. Those VFs are attached to the hypervisor. (applies only if all ports are configured as Ethernet).
+``m3`` dual port VFs. Those VFs are attached to the hypervisor. (applies only
+if all ports are configured as Ethernet).
 
 The VFs will be enumerated in the following order:
 
@@ -575,7 +580,8 @@ In our example:
 | 04:00.3 : VF associated to port **2**
 | 04:00.4 : VF associated to port **2**
 
-**Step 2:** Update ``exclude_devices`` configuration option in ``sriov_agent.ini`` with the correct mapping
+**Step 2:** Update ``exclude_devices`` configuration option in
+``sriov_agent.ini`` with the correct mapping
 
 Each PF associated net device shall exclude the **other** port's VFs
 
@@ -637,18 +643,20 @@ Known limitations
 
 * SR-IOV is not integrated into the OpenStack Dashboard (horizon). Users must
   use the CLI or API to configure SR-IOV interfaces.
-* Live migration support has been added to the Libvirt Nova virt-driver in the Train
-  release for instances with neutron SR-IOV ports. Indirect mode SR-IOV interfaces
-  (vnic-type: macvtap or virtio-forwarder) can now be migrated transparently to
-  the guest. Direct mode SR-IOV interfaces (vnic-type: direct or direct-physical)
-  are detached before the migration and reattached after the migration so this is not
-  transparent to the guest. To avoid loss of network connectivy when live migrating
-  with direct mode sriov the user should create a failover bond in the guest with a
-  transparently live migration port type e.g. vnic-type normal or indirect mode SR-IOV.
+* Live migration support has been added to the Libvirt Nova virt-driver in the
+  Train release for instances with neutron SR-IOV ports. Indirect mode SR-IOV
+  interfaces (vnic-type: macvtap or virtio-forwarder) can now be migrated
+  transparently to the guest. Direct mode SR-IOV interfaces (vnic-type: direct
+  or direct-physical) are detached before the migration and reattached after
+  the migration so this is not transparent to the guest. To avoid loss of
+  network connectivy when live migrating with direct mode sriov the user should
+  create a failover bond in the guest with a transparently live migration port
+  type e.g. vnic-type normal or indirect mode SR-IOV.
 
   .. note::
 
      SR-IOV features may require a specific NIC driver version, depending on the vendor.
      Intel NICs, for example, require ixgbe version 4.4.6 or greater, and ixgbevf version
      3.2.2 or greater.
-* Attaching SR-IOV ports to existing servers is supported starting with the Victoria release.
+* Attaching SR-IOV ports to existing servers is supported starting with the
+  Victoria release.

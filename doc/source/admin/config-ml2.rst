@@ -316,7 +316,9 @@ The ML2 plug-in also supports extension drivers that allows other pluggable
 drivers to extend the core resources implemented in the ML2 plug-in
 (``networks``, ``ports``, etc.). Examples of extension drivers include support
 for QoS, port security, etc. For more details see the ``extension_drivers``
-configuration option in the `Configuration Reference <../configuration/ml2-conf.html#ml2.extension_drivers>`__.
+configuration option in the
+`Configuration Reference
+<../configuration/ml2-conf.html#ml2.extension_drivers>`__.
 
 
 Agents

@@ -25,7 +25,8 @@ they provide their version of manuals.
       set suitable plugin for your own deployment.
 
 #. Configure the VPNaaS service provider by creating the
-   ``/etc/neutron/neutron_vpnaas.conf`` file as follows, ``strongswan`` used in Ubuntu distribution:
+   ``/etc/neutron/neutron_vpnaas.conf`` file as follows, ``strongswan`` used
+   in Ubuntu distribution:
 
    .. code-block:: ini
 
@@ -41,7 +42,8 @@ they provide their version of manuals.
       Consider to use the appropriate one for your deployment.
 
 #. Configure the VPNaaS plugin for the L3 agent by adding to
-   ``/etc/neutron/l3_agent.ini`` the following section, ``StrongSwanDriver`` used in Ubuntu distribution:
+   ``/etc/neutron/l3_agent.ini`` the following section, ``StrongSwanDriver``
+   used in Ubuntu distribution:
 
    .. code-block:: ini
 
@@ -78,13 +80,13 @@ Using VPNaaS with endpoint group (recommended)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 IPsec site-to-site connections will support multiple local subnets,
-in addition to the current multiple peer CIDRs. The multiple local subnet feature
-is triggered by not specifying a local subnet, when creating a VPN service.
-Backwards compatibility is maintained with single local subnets, by providing
-the subnet in the VPN service creation.
+in addition to the current multiple peer CIDRs. The multiple local subnet
+feature is triggered by not specifying a local subnet, when creating a VPN
+service. Backwards compatibility is maintained with single local subnets, by
+providing the subnet in the VPN service creation.
 
-To support multiple local subnets, a new capability called "End Point Groups" has
-been added. Each endpoint group will define one or more endpoints of
+To support multiple local subnets, a new capability called "End Point Groups"
+has been added. Each endpoint group will define one or more endpoints of
 a specific type, and can be used to specify both local and peer endpoints for
 IPsec connections. The endpoint groups separate the "what gets connected" from
 the "how to connect" for a VPN service, and can be used for different flavors

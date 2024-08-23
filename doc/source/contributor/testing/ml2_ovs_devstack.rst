@@ -4,8 +4,8 @@
 ML2 OVS with DevStack
 =====================
 
-This document describes how to test OpenStack Neutron with ML2 OpenvSwitch using
-DevStack. We will start by describing how to test on a single host.
+This document describes how to test OpenStack Neutron with ML2 OpenvSwitch
+using DevStack. We will start by describing how to test on a single host.
 
 Single Node Test Environment
 ----------------------------
@@ -22,7 +22,8 @@ to use either CentOS 8 or the latest Ubuntu LTS.
      $ git clone https://opendev.org/openstack/devstack.git
      $ sudo ./devstack/tools/create-stack-user.sh
 
-3. Switch to the ``stack`` user, copy Devstack to stack folder and clone Neutron.
+3. Switch to the ``stack`` user, copy Devstack to stack folder and clone
+   Neutron.
 
 ::
 

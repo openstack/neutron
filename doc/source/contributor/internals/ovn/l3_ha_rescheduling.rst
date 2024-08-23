@@ -109,7 +109,8 @@ Similar approach has been implemeneted for DHCP rescheduling `[4]`_.
 The primary chassis gateway could be moved only to other, previously scheduled
 gateway. Rebalancing of chassis occurs only if number of scheduled primary
 chassis ports per each provider network hosted by given chassis is higher than
-average number of hosted primary gateway ports per chassis per provider network.
+average number of hosted primary gateway ports per chassis per provider
+network.
 
 This dependency is determined by formula:
 

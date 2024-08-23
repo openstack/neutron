@@ -31,7 +31,7 @@ experimetal:
 
 This is an example of how to enable the use of an experimental feature:
 
-.. code-block:: none
+.. code-block:: ini
 
    [experimental]
    linuxbridge = true

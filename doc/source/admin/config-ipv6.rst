@@ -350,8 +350,8 @@ follows:
 Setting DHCPv6-stateless for ``ipv6_ra_mode`` configures the neutron
 router with an radvd agent to send Router Advertisements. The list below
 captures the values set for the address configuration flags in the Router
-Advertisement messages in this scenario. Similarly, setting DHCPv6-stateless for
-``ipv6_address_mode`` configures neutron DHCP implementation to provide
+Advertisement messages in this scenario. Similarly, setting DHCPv6-stateless
+for ``ipv6_address_mode`` configures neutron DHCP implementation to provide
 the additional network information.
 
 * Autonomous Address Configuration Flag = 1
@@ -361,8 +361,8 @@ the additional network information.
 Setting DHCPv6-stateful for ``ipv6_ra_mode`` configures the neutron
 router with an radvd agent to send Router Advertisements. The list below
 captures the values set for the address configuration flags in the Router
-Advertisements messages in this scenario. Similarly, setting DHCPv6-stateful for
-``ipv6_address_mode`` configures neutron DHCP implementation to provide
+Advertisements messages in this scenario. Similarly, setting DHCPv6-stateful
+for ``ipv6_address_mode`` configures neutron DHCP implementation to provide
 addresses and additional network information through DHCPv6.
 
 * Autonomous Address Configuration Flag = 0
@@ -609,7 +609,7 @@ Configuring the Dibbler server
 
 After installing Dibbler, edit the ``/etc/dibbler/server.conf`` file:
 
-.. code-block:: none
+.. code-block::
 
     script "/var/lib/dibbler/pd-server.sh"
 

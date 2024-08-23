@@ -172,7 +172,8 @@ In release Stein the following agent-based ML2 mechanism drivers are
 supported:
 
 * Open vSwitch (``openvswitch``) vnic_types: ``normal``, ``direct``
-* SR-IOV (``sriovnicswitch``) vnic_types: ``direct``, ``macvtap``, ``direct-physical``
+* SR-IOV (``sriovnicswitch``) vnic_types: ``direct``, ``macvtap``,
+  ``direct-physical``
 * OVN (``ovn``) vnic_types: ``normal``
 
 .. note::

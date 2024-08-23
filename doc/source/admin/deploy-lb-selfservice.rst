@@ -211,7 +211,7 @@ Create initial networks
 Verify network operation
 ------------------------
 
-.. include:: shared/deploy-selfservice-verifynetworkoperation.txt
+.. include:: deploy-selfservice-verifynetworkoperation.txt
 
 .. _deploy-lb-selfservice-networktrafficflow:
 

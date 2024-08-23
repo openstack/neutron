@@ -96,12 +96,12 @@ Neutron offers a Quality of Service API, initially offering bandwidth
 capping at the port level. In the reference implementation, it does this by
 utilizing an OVS feature.
 neutron.tests.fullstack.test_qos.TestBwLimitQoSOvs.test_bw_limit_qos_policy_rule_lifecycle
-is a positive example of how the fullstack testing infrastructure should be used.
-It creates a network, subnet, QoS policy & rule and a port utilizing that policy.
-It then asserts that the expected bandwidth limitation is present on the OVS
-bridge connected to that port. The test is a true integration test, in the
-sense that it invokes the API and then asserts that Neutron interacted with
-the hypervisor appropriately.
+is a positive example of how the fullstack testing infrastructure should be
+used. It creates a network, subnet, QoS policy & rule and a port utilizing
+that policy. It then asserts that the expected bandwidth limitation is present
+on the OVS bridge connected to that port. The test is a true integration test,
+in the sense that it invokes the API and then asserts that Neutron interacted
+with the hypervisor appropriately.
 
 How to run fullstack tests locally?
 +++++++++++++++++++++++++++++++++++
@@ -141,9 +141,9 @@ done you should see a message like:
 That means that all went well and you should be ready to run fullstack tests
 locally.
 
-Fullstack tests execute a custom dhclient-script. From kernel version 4.14 onward,
-apparmor on certain distros could deny the execution of this script. To be sure,
-check journalctl ::
+Fullstack tests execute a custom dhclient-script. From kernel version 4.14
+onward, apparmor on certain distros could deny the execution of this script.
+To be sure, check journalctl ::
 
     sudo journalctl | grep DENIED | grep fullstack-dhclient-script
 
@@ -260,7 +260,8 @@ Each fullstack test is spawning its own, isolated environment with needed
 services. So, for example, it can be ``neutron-server``, ``neutron-ovs-agent``
 or ``neutron-dhcp-agent``. And often there is a need to check logs of some of
 those processes. That is of course possible when running fullstack tests
-locally. By default, logs are stored in ``/opt/stack/logs/dsvm-fullstack-logs``.
+locally. By default, logs are stored in
+``/opt/stack/logs/dsvm-fullstack-logs``.
 The logs directory can be defined by the environment variable ``OS_LOG_PATH``.
 In that directory there are directories with names matching names of the
 tests, for example:
@@ -299,8 +300,8 @@ Debugging fullstack failures in the gate
 
 Sometimes there is a need to investigate reason that a test failed in the gate.
 After every ``neutron-fullstack`` job run, on the Zuul job page there are logs
-available. In the directory ``controller/logs/dsvm-fullstack-logs`` you can find
-exactly the same files with logs from each test case as mentioned above.
+available. In the directory ``controller/logs/dsvm-fullstack-logs`` you can
+find exactly the same files with logs from each test case as mentioned above.
 
 You can also check, for example, the journal log from the node where the tests
 were run. All those logs are available in the file

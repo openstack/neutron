@@ -141,7 +141,8 @@ Neutron Routers are realized in OpenVSwitch
 .. image:: images/under-the-hood-scenario-1-ovs-network.png
 
 
-"router1" in the Neutron logical network is realized through a port ("qr-0ba8700e-da") in OpenVSwitch - attached to "br-int"::
+"router1" in the Neutron logical network is realized through a port
+("qr-0ba8700e-da") in OpenVSwitch - attached to "br-int"::
 
         vagrant@bionic64:~/devstack$ sudo ovs-vsctl show
         b9b27fc3-5057-47e7-ba64-0b6afe70a398
@@ -202,13 +203,16 @@ Neutron Routers are realized in OpenVSwitch
 Finding the router in ip/ipconfig
 ---------------------------------
 
-The neutron-l3-agent uses the Linux IP stack and iptables to perform L3 forwarding and NAT.
-In order to support multiple routers with potentially overlapping IP addresses, neutron-l3-agent
-defaults to using Linux network namespaces to provide isolated forwarding contexts. As a result,
-the IP addresses of routers will not be visible simply by running "ip addr list" or "ifconfig" on
+The neutron-l3-agent uses the Linux IP stack and iptables to perform L3
+forwarding and NAT. In order to support multiple routers with potentially
+overlapping IP addresses, neutron-l3-agent defaults to using Linux network
+namespaces to provide isolated forwarding contexts. As a result,
+the IP addresses of routers will not be visible simply by running
+"ip addr list" or "ifconfig" on
 the node. Similarly, you will not be able to directly ping fixed IPs.
 
-To do either of these things, you must run the command within a particular router's network
+To do either of these things, you must run the command within a particular
+router's network
 namespace. The namespace will have the name "qrouter-<UUID of the router>.
 
 .. image:: images/under-the-hood-scenario-1-ovs-netns.png

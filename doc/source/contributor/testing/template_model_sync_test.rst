@@ -37,9 +37,10 @@ This test compares models with the result of existing migrations. It is based on
 <https://docs.openstack.org/oslo.db/latest/reference/api/oslo_db.sqlalchemy.test_migrations.html>`_
 which is provided by oslo.db and was adapted for Neutron. It compares core
 Neutron models and vendor specific models with migrations from Neutron core and
-migrations from the driver/plugin repo. This test is functional - it runs against
-MySQL and PostgreSQL dialects. The detailed description of this test can be
-found in Neutron Database Layer section - :ref:`testing-database-migrations`.
+migrations from the driver/plugin repo. This test is functional - it runs
+against MySQL and PostgreSQL dialects. The detailed description of this test
+can be found in Neutron Database Layer
+section - :ref:`testing-database-migrations`.
 
 Steps for implementing the test
 -------------------------------
@@ -84,9 +85,9 @@ names, which were moved out of Neutron: ::
 
 
 Also the test uses **VERSION_TABLE**, it is the name of table in database which
-contains revision id of head migration. It is preferred to keep this variable in
-``networking_foo/db/migration/alembic_migrations/__init__.py`` so it will be easy
-to use in test.
+contains revision id of head migration. It is preferred to keep this variable
+in ``networking_foo/db/migration/alembic_migrations/__init__.py`` so it will
+be easy to use in test.
 
 Create a module ``networking_foo/tests/functional/db/test_migrations.py``
 with the following content: ::

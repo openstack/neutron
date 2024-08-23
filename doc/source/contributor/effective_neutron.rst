@@ -34,8 +34,8 @@ By reading and collaboratively contributing to such a knowledge base, your
 development and review cycle becomes shorter, because you will learn (and teach
 to others after you) what to watch out for, and how to be proactive in order
 to prevent negative feedback, minimize programming errors, writing better
-tests, and so on and so forth...in a nutshell, how to become an effective Neutron
-developer.
+tests, and so on and so forth...in a nutshell, how to become an effective
+Neutron developer.
 
 The notes below are meant to be free-form and brief by design. They are not meant
 to replace or duplicate `OpenStack documentation <http://docs.openstack.org>`_,
@@ -57,7 +57,8 @@ Developing better software
 Plugin development
 ~~~~~~~~~~~~~~~~~~
 
-Document common pitfalls as well as good practices done during plugin development.
+Document common pitfalls as well as good practices done during plugin
+development.
 
 * Use mixin classes as last resort. They can be a powerful tool to add behavior
   but their strength is also a weakness, as they can introduce `unpredictable <https://review.opendev.org/#/c/121290/>`_
@@ -75,23 +76,26 @@ Document common pitfalls as well as good practices done during plugin developmen
   there is an agent on the other side of the message broker that interacts
   with the server. Plugins may not rely on `agents <https://review.opendev.org/#/c/174020/>`_ at all.
 * Be mindful of required capabilities when you develop plugin extensions. The
-  `Extension description <https://github.com/openstack/neutron/blob/b14c06b5/neutron/api/extensions.py#L122>`_ provides the ability to specify the list of required capabilities
+  `Extension description <https://github.com/openstack/neutron/blob/b14c06b5/neutron/api/extensions.py#L122>`_
+  provides the ability to specify the list of required capabilities
   for the extension you are developing. By declaring this list, the server will
-  not start up if the requirements are not met, thus avoiding leading the system
-  to experience undetermined behavior at runtime.
+  not start up if the requirements are not met, thus avoiding leading the
+  system to experience undetermined behavior at runtime.
 
 Database interaction
 ~~~~~~~~~~~~~~~~~~~~
 
-Document common pitfalls as well as good practices done during database development.
+Document common pitfalls as well as good practices done during database
+development.
 
 * `first() <http://docs.sqlalchemy.org/en/rel_1_0/orm/query.html#sqlalchemy.orm.query.Query.first>`_
   does not raise an exception.
 * Do not use `delete() <http://docs.sqlalchemy.org/en/rel_1_0/orm/query.html#sqlalchemy.orm.query.Query.delete>`_
-  to remove objects. A delete query does not load the object so no sqlalchemy events
-  can be triggered that would do things like recalculate quotas or update revision
-  numbers of parent objects. For more details on all of the things that can go wrong
-  using bulk delete operations, see the "Warning" sections in the link above.
+  to remove objects. A delete query does not load the object so no sqlalchemy
+  events can be triggered that would do things like recalculate quotas or
+  update revision numbers of parent objects. For more details on all of the
+  things that can go wrong using bulk delete operations, see the "Warning"
+  sections in the link above.
 * For PostgreSQL if you're using GROUP BY everything in the SELECT list must be
   an aggregate SUM(...), COUNT(...), etc or used in the GROUP BY.
 
@@ -170,8 +174,8 @@ Document common pitfalls as well as good practices done during database developm
 System development
 ~~~~~~~~~~~~~~~~~~
 
-Document common pitfalls as well as good practices done when invoking system commands
-and interacting with linux utils.
+Document common pitfalls as well as good practices done when invoking system
+commands and interacting with linux utils.
 
 * When a patch requires a new platform tool or a new feature in an existing
   tool, check if common platforms ship packages with the aforementioned
@@ -179,37 +183,39 @@ and interacting with linux utils.
   visibility (as these patches are brought up to the attention of the core team
   during team meetings).
   More details in :ref:`review guidelines <spec-review-practices>`.
-* When a patch or the code depends on a new feature in the kernel or in any platform tools
-  (dnsmasq, ip, Open vSwitch etc.), consider introducing a new sanity check to
-  validate deployments for the expected features. Note that sanity checks *must
-  not* check for version numbers of underlying platform tools because
-  distributions may decide to backport needed features into older versions.
-  Instead, sanity checks should validate actual features by attempting to use them.
+* When a patch or the code depends on a new feature in the kernel or in any
+  platform tools (dnsmasq, ip, Open vSwitch etc.), consider introducing a new
+  sanity check to validate deployments for the expected features. Note that
+  sanity checks *must not* check for version numbers of underlying platform
+  tools because distributions may decide to backport needed features into older
+  versions. Instead, sanity checks should validate actual features by
+  attempting to use them.
 
 Eventlet concurrent model
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Document common pitfalls as well as good practices done when using eventlet and monkey
-patching.
+Document common pitfalls as well as good practices done when using eventlet
+and monkey patching.
 
-* Do not use with_lockmode('update') on SQL queries without protecting the operation
-  with a lockutils semaphore. For some SQLAlchemy database drivers that operators may
-  choose (e.g. MySQLdb) it may result in a temporary deadlock by yielding to another
-  coroutine while holding the DB lock. The following wiki provides more details:
+* Do not use with_lockmode('update') on SQL queries without protecting the
+  operation with a lockutils semaphore. For some SQLAlchemy database drivers
+  that operators may choose (e.g. MySQLdb) it may result in a temporary
+  deadlock by yielding to another coroutine while holding the DB lock.
+  The following wiki provides more details:
   https://wiki.openstack.org/wiki/OpenStack_and_SQLAlchemy#MySQLdb_.2B_eventlet_.3D_sad
 
 Mocking and testing
 ~~~~~~~~~~~~~~~~~~~
 
-Document common pitfalls as well as good practices done when writing tests, any test.
-For anything more elaborate, please visit the testing section.
+Document common pitfalls as well as good practices done when writing tests,
+any test. For anything more elaborate, please visit the testing section.
 
-* Preferring low level testing versus full path testing (e.g. not testing database
-  via client calls). The former is to be favored in unit testing, whereas the latter
-  is to be favored in functional testing.
-* Prefer specific assertions (assert(Not)In, assert(Not)IsInstance, assert(Not)IsNone,
-  etc) over generic ones (assertTrue/False, assertEqual) because they raise more
-  meaningful errors:
+* Preferring low level testing versus full path testing (e.g. not testing
+  database via client calls). The former is to be favored in unit testing,
+  whereas the latter is to be favored in functional testing.
+* Prefer specific assertions (assert(Not)In, assert(Not)IsInstance,
+  assert(Not)IsNone, etc) over generic ones (assertTrue/False, assertEqual)
+  because they raise more meaningful errors:
 
   .. code:: python
 
@@ -221,28 +227,30 @@ For anything more elaborate, please visit the testing section.
          self.assertTrue(3 in [1, 2])
          # raise meaningless error: "AssertionError: False is not true"
 
-* Use the pattern "self.assertEqual(expected, observed)" not the opposite, it helps
-  reviewers to understand which one is the expected/observed value in non-trivial
-  assertions. The expected and observed values are also labeled in the output when
-  the assertion fails.
-* Prefer specific assertions (assertTrue, assertFalse) over assertEqual(True/False, observed).
-* Don't write tests that don't test the intended code. This might seem silly but
-  it's easy to do with a lot of mocks in place. Ensure that your tests break as
-  expected before your code change.
-* Avoid heavy use of the mock library to test your code. If your code requires more
-  than one mock to ensure that it does the correct thing, it needs to be refactored
-  into smaller, testable units. Otherwise we depend on fullstack/tempest/api tests
-  to test all of the real behavior and we end up with code containing way too many
-  hidden dependencies and side effects.
+* Use the pattern "self.assertEqual(expected, observed)" not the opposite, it
+  helps reviewers to understand which one is the expected/observed value in
+  non-trivial assertions. The expected and observed values are also labeled
+  in the output when the assertion fails.
+* Prefer specific assertions (assertTrue, assertFalse) over
+  assertEqual(True/False, observed).
+* Don't write tests that don't test the intended code. This might seem silly
+  but it is easy to do with a lot of mocks in place. Ensure that your tests
+  break as expected before your code change.
+* Avoid heavy use of the mock library to test your code. If your code requires
+  more than one mock to ensure that it does the correct thing, it needs to be
+  refactored into smaller, testable units. Otherwise we depend on
+  fullstack/tempest/api tests to test all of the real behavior and we end up
+  with code containing way too many hidden dependencies and side effects.
 * All behavior changes to fix bugs should include a test that prevents a
   regression. If you made a change and it didn't break a test, it means the
-  code was not adequately tested in the first place, it's not an excuse to leave
-  it untested.
+  code was not adequately tested in the first place, it's not an excuse to
+  leave it untested.
 * Test the failure cases. Use a mock side effect to throw the necessary
   exceptions to test your 'except' clauses.
-* Don't mimic existing tests that violate these guidelines. We are attempting to
-  replace all of these so more tests like them create more work. If you need help
-  writing a test, reach out to the testing lieutenants and the team on IRC.
+* Don't mimic existing tests that violate these guidelines. We are attempting
+  to replace all of these so more tests like them create more work. If you
+  need help writing a test, reach out to the testing lieutenants and the team
+  on IRC.
 * Mocking open() is a dangerous practice because it can lead to unexpected
   bugs like `bug 1503847 <https://bugs.launchpad.net/neutron/+bug/1503847>`_.
   In fact, when the built-in open method is mocked during tests, some
@@ -269,14 +277,17 @@ down into the following directories based on content:
 
 Additional documentation resides in the neutron-lib repository:
 
-* api-ref - API reference documentation for Neutron resource and API extensions.
+* api-ref - API reference documentation for Neutron resource and API
+  extensions.
 
 Backward compatibility
 ~~~~~~~~~~~~~~~~~~~~~~
 
-Document common pitfalls as well as good practices done when extending the RPC Interfaces.
+Document common pitfalls as well as good practices done when extending the
+RPC Interfaces.
 
-* Make yourself familiar with :ref:`Upgrade review guidelines <upgrade_review_guidelines>`.
+* Make yourself familiar with
+  :ref:`Upgrade review guidelines <upgrade_review_guidelines>`.
 
 Deprecation
 +++++++++++
@@ -304,13 +315,14 @@ In terms of neutron development, this means:
 Scalability issues
 ~~~~~~~~~~~~~~~~~~
 
-Document common pitfalls as well as good practices done when writing code that needs to process
-a lot of data.
+Document common pitfalls as well as good practices done when writing code
+that needs to process a lot of data.
 
 Translation and logging
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Document common pitfalls as well as good practices done when instrumenting your code.
+Document common pitfalls as well as good practices done when instrumenting
+your code.
 
 * Make yourself familiar with `OpenStack logging guidelines <http://specs.openstack.org/openstack/openstack-specs/specs/log-guidelines.html#definition-of-log-levels>`_
   to avoid littering the logs with traces logged at inappropriate levels.
@@ -326,13 +338,14 @@ Document common pitfalls as well as good practices done when instrumenting your 
 Project interfaces
 ~~~~~~~~~~~~~~~~~~
 
-Document common pitfalls as well as good practices done when writing code that is used
-to interface with other projects, like Keystone or Nova.
+Document common pitfalls as well as good practices done when writing code
+that is used to interface with other projects, like Keystone or Nova.
 
 Documenting your code
 ~~~~~~~~~~~~~~~~~~~~~
 
-Document common pitfalls as well as good practices done when writing docstrings.
+Document common pitfalls as well as good practices done when writing
+docstrings.
 
 Landing patches more rapidly
 ----------------------------
@@ -363,17 +376,19 @@ Nits and pedantic comments
 
 Document common nits and pedantic comments to watch out for.
 
-* Make sure you spell correctly, the best you can, no-one wants rebase generators at
-  the end of the release cycle!
+* Make sure you spell correctly, the best you can, no-one wants rebase
+  generators at the end of the release cycle!
 * The odd pep8 error may cause an entire CI run to be wasted. Consider running
-  validation (pep8 and/or tests) before submitting your patch. If you keep forgetting
-  consider installing a git `hook <https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks>`_
+  validation (pep8 and/or tests) before submitting your patch. If you keep
+  forgetting consider installing a git
+  `hook <https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks>`_
   so that Git will do it for you.
-* Sometimes, new contributors want to dip their toes with trivial patches, but we
-  at OpenStack *love* bike shedding and their patches may sometime stall. In
-  some extreme cases, the more trivial the patch, the higher the chances it fails
-  to merge. To ensure we as a team provide/have a frustration-free experience
-  new contributors should be redirected to fixing `low-hanging-fruit bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=low-hanging-fruit>`_
+* Sometimes, new contributors want to dip their toes with trivial patches,
+  but we at OpenStack *love* bike shedding and their patches may sometime
+  stall. In some extreme cases, the more trivial the patch, the higher the
+  chances it fails to merge. To ensure we as a team provide/have a
+  frustration-free experience new contributors should be redirected to fixing
+  `low-hanging-fruit bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=low-hanging-fruit>`_
   that have a tangible positive impact to the codebase. Spelling mistakes, and
   docstring are fine, but there is a lot more that is relatively easy to fix
   and has a direct impact to Neutron users.
@@ -381,36 +396,39 @@ Document common nits and pedantic comments to watch out for.
 Reviewer comments
 ~~~~~~~~~~~~~~~~~
 
-* Acknowledge them one by one by either clicking 'Done' or by replying extensively.
-  If you do not, the reviewer won't know whether you thought it was not important,
-  or you simply forgot. If the reply satisfies the reviewer, consider capturing the
-  input in the code/document itself so that it's for reviewers of newer patchsets to
-  see (and other developers when the patch merges).
+* Acknowledge them one by one by either clicking 'Done' or by replying
+  extensively. If you do not, the reviewer won't know whether you thought it
+  was not important, or you simply forgot. If the reply satisfies the reviewer,
+  consider capturing the input in the code/document itself so that it's for
+  reviewers of newer patchsets to see (and other developers when the
+  patch merges).
 * Watch for the feedback on your patches. Acknowledge it promptly and act on it
-  quickly, so that the reviewer remains engaged. If you disappear for a week after
-  you posted a patchset, it is very likely that the patch will end up being
-  neglected.
-* Do not take negative feedback personally. Neutron is a large project with lots
-  of contributors with different opinions on how things should be done. Many come
-  from widely varying cultures and languages so the English, text-only feedback
-  can unintentionally come across as harsh. Getting a -1 means reviewers are
-  trying to help get the patch into a state that can be merged, it doesn't just
-  mean they are trying to block it. It's very rare to get a patch merged on the
-  first iteration that makes everyone happy.
+  quickly, so that the reviewer remains engaged. If you disappear for a week
+  after you posted a patchset, it is very likely that the patch will end up
+  being neglected.
+* Do not take negative feedback personally. Neutron is a large project with
+  lots of contributors with different opinions on how things should be done.
+  Many come from widely varying cultures and languages so the English,
+  text-only feedback can unintentionally come across as harsh. Getting a -1
+  means reviewers are trying to help get the patch into a state that can be
+  merged, it doesn't just mean they are trying to block it. It's very rare to
+  get a patch merged on the first iteration that makes everyone happy.
 
 Code Review
 ~~~~~~~~~~~
 
 * You should visit `OpenStack How To Review wiki <https://wiki.openstack.org/wiki/How_To_Contribute#Reviewing>`_
-* Stay focussed and review what matters for the release. Please check out the Neutron
-  section for the `Gerrit dashboard <http://status.openstack.org/reviews/>`_. The output
-  is generated by this `tool <https://github.com/openstack-infra/reviewday/blob/master/bin/neutron>`_.
+* Stay focussed and review what matters for the release. Please check out the
+  Neutron section for the
+  `Gerrit dashboard <http://status.openstack.org/reviews/>`_. The output
+  is generated by this
+  `tool <https://github.com/openstack-infra/reviewday/blob/master/bin/neutron>`_.
 
 IRC
 ~~~~
 
-* IRC is a place where you can speak with many of the Neutron developers and core
-  reviewers. For more information you should visit
+* IRC is a place where you can speak with many of the Neutron developers
+  and core reviewers. For more information you should visit
   `OpenStack IRC wiki <http://wiki.openstack.org/wiki/IRC>`_
   Neutron IRC channel is #openstack-neutron
 * There are weekly IRC meetings related to many different projects/teams
@@ -428,8 +446,9 @@ IRC
   up the feedback loop.
 * Each area of Neutron or sub-project of Neutron has a specific lieutenant
   in charge of it.
-  You can most likely find these lieutenants on IRC, it is advised however to try
-  and send public questions to the channel rather then to a specific person if possible.
+  You can most likely find these lieutenants on IRC, it is advised however to
+  try and send public questions to the channel rather then to a specific person
+  if possible.
   (This increase the chances of getting faster answers to your questions).
   A list of the areas and lieutenants nicknames can be found at
   :doc:`Core Reviewers <policies/neutron-teams>`.
@@ -437,7 +456,8 @@ IRC
 Commit messages
 ~~~~~~~~~~~~~~~
 
-Document common pitfalls as well as good practices done when writing commit messages.
+Document common pitfalls as well as good practices done when writing commit
+messages.
 For more details see `Git commit message best practices <https://wiki.openstack.org/wiki/GitCommitMessages>`_.
 This is the TL;DR version with the important points for committing to Neutron.
 
@@ -456,13 +476,13 @@ This is the TL;DR version with the important points for committing to Neutron.
   code will fix the problem. If it's part of a feature implementation, explain
   what component of the feature the patch implements. Do not just describe the
   bug, that's what launchpad is for.
-* Use the "Closes-Bug: #BUG-NUMBER" tag if the patch addresses a bug. Submitting
-  a bugfix without a launchpad bug reference is unacceptable, even if it's
-  trivial. Launchpad is how bugs are tracked so fixes without a launchpad bug are
-  a nightmare when users report the bug from an older version and the Neutron team
-  can't tell if/why/how it's been fixed. Launchpad is also how backports are
-  identified and tracked so patches without a bug report cannot be picked to stable
-  branches.
+* Use the "Closes-Bug: #BUG-NUMBER" tag if the patch addresses a bug.
+  Submitting a bugfix without a launchpad bug reference is unacceptable, even
+  if it's trivial. Launchpad is how bugs are tracked so fixes without a
+  launchpad bug are a nightmare when users report the bug from an older
+  version and the Neutron team can't tell if/why/how it's been fixed.
+  Launchpad is also how backports are identified and tracked so patches
+  without a bug report cannot be picked to stable branches.
 * Use the "Implements: blueprint NAME-OF-BLUEPRINT" or "Partially-Implements:
   blueprint NAME-OF-BLUEPRINT" for features so reviewers can determine if the
   code matches the spec that was agreed upon. This also updates the blueprint
@@ -482,12 +502,14 @@ This is the TL;DR version with the important points for committing to Neutron.
 Dealing with Zuul
 ~~~~~~~~~~~~~~~~~
 
-Document common pitfalls as well as good practices done when dealing with OpenStack CI.
+Document common pitfalls as well as good practices done when dealing with
+OpenStack CI.
 
 * When you submit a patch, consider checking its `status <http://status.openstack.org/zuul/>`_
-  in the queue. If you see a job failures, you might as well save time and try to figure out
-  in advance why it is failing.
-* Excessive use of 'recheck' to get test to pass is discouraged. Please examine the logs for
-  the failing test(s) and make sure your change has not tickled anything that might be causing
-  a new failure or race condition. Getting your change in could make it even harder to debug
-  what is actually broken later on.
+  in the queue. If you see a job failures, you might as well save time and try
+  to figure out in advance why it is failing.
+* Excessive use of 'recheck' to get test to pass is discouraged. Please examine
+  the logs for the failing test(s) and make sure your change has not tickled
+  anything that might be causing a new failure or race condition. Getting your
+  change in could make it even harder to debug what is actually broken
+  later on.

@@ -90,7 +90,7 @@ This extract is from the default ``policy.yaml`` file:
    administrator or the owner of the resource specified in the request
    (project identifier is equal).
 
-   .. code-block:: none
+   .. code-block:: yaml
 
       "admin_or_owner": "role:admin or tenant_id:%(tenant_id)s"
       "admin_or_network_owner": "role:admin or tenant_id:%(network_tenant_id)s"
@@ -101,7 +101,7 @@ This extract is from the default ``policy.yaml`` file:
 -  The default policy that is always evaluated if an API operation does
    not match any of the policies in ``policy.yaml``.
 
-   .. code-block:: none
+   .. code-block:: yaml
 
       "default": "rule:admin_or_owner"
       "create_subnet": "rule:admin_or_network_owner"
@@ -113,7 +113,7 @@ This extract is from the default ``policy.yaml`` file:
 -  This policy evaluates successfully if either *admin_or_owner*, or
    *shared* evaluates successfully.
 
-   .. code-block:: none
+   .. code-block:: yaml
 
        "get_network": "rule:admin_or_owner or rule:shared"
        "create_network:shared": "rule:admin_only"
@@ -121,7 +121,7 @@ This extract is from the default ``policy.yaml`` file:
 -  This policy restricts the ability to manipulate the *shared*
    attribute for a network to administrators only.
 
-   .. code-block:: none
+   .. code-block:: yaml
 
        "update_network": "rule:admin_or_owner"
        "delete_network": "rule:admin_or_owner"
@@ -133,7 +133,7 @@ This extract is from the default ``policy.yaml`` file:
    attribute for a port only to administrators and the owner of the
    network where the port is attached.
 
-   .. code-block:: none
+   .. code-block:: yaml
 
        "get_port": "rule:admin_or_owner"
        "update_port": "rule:admin_or_owner"
@@ -144,7 +144,7 @@ This example shows you how to modify a policy file to permit project to
 define networks, see their resources, and permit administrative users to
 perform all other operations:
 
-.. code-block:: none
+.. code-block:: yaml
 
             "admin_or_owner": "role:admin or tenant_id:%(tenant_id)s"
             "admin_only": "role:admin"

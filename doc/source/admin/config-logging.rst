@@ -40,7 +40,7 @@ Service Configuration
 To enable the logging service, add ``log`` to the ``service_plugins`` setting
 in ``/etc/neutron/neutron.conf``:
 
-.. code-block:: none
+.. code-block:: ini
 
      service_plugins = router,metering,log
 
@@ -181,13 +181,14 @@ To enable the logging service, follow the below steps.
 #. On Neutron controller node, add ``log`` to ``service_plugins`` setting in
    ``/etc/neutron/neutron.conf`` file. For example:
 
-   .. code-block:: none
+   .. code-block:: ini
 
      service_plugins = router,metering,log
 
 #. To enable logging service for ``security_group`` in Layer 2, add ``log`` to
-   option ``extensions`` in section ``[agent]`` in ``/etc/neutron/plugins/ml2/ml2_conf.ini``
-   for controller node and in ``/etc/neutron/plugins/ml2/openvswitch_agent.ini``
+   option ``extensions`` in section ``[agent]`` in
+   ``/etc/neutron/plugins/ml2/ml2_conf.ini`` for controller node and in
+   ``/etc/neutron/plugins/ml2/openvswitch_agent.ini``
    for compute/network nodes. For example:
 
    .. code-block:: ini
@@ -210,8 +211,8 @@ To enable the logging service, follow the below steps.
      extensions = fwaas_v2,fwaas_v2_log
 
 #. On compute/network nodes, add configuration for logging service to
-   ``[network_log]`` in ``/etc/neutron/plugins/ml2/openvswitch_agent.ini`` and in
-   ``/etc/neutron/l3_agent.ini`` as shown below:
+   ``[network_log]`` in ``/etc/neutron/plugins/ml2/openvswitch_agent.ini``
+   and in ``/etc/neutron/l3_agent.ini`` as shown below:
 
    .. code-block:: ini
 
@@ -245,14 +246,14 @@ cloud, neutron's policy file ``policy.yaml`` can be modified to allow this.
 
 Modify ``/etc/neutron/policy.yaml`` entries as follows:
 
-.. code-block:: none
+.. code-block:: yaml
 
-   "get_loggable_resources": "rule:regular_user",
-   "create_log": "rule:regular_user",
-   "get_log": "rule:regular_user",
-   "get_logs": "rule:regular_user",
-   "update_log": "rule:regular_user",
-   "delete_log": "rule:regular_user",
+   "get_loggable_resources": "rule:regular_user"
+   "create_log": "rule:regular_user"
+   "get_log": "rule:regular_user"
+   "get_logs": "rule:regular_user"
+   "update_log": "rule:regular_user"
+   "delete_log": "rule:regular_user"
 
 Service workflow for Operator
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -406,8 +407,8 @@ The  general characteristics of each event will be shown as the following:
 
    * A timestamp of the flow.
    * A status of the flow ``ACCEPT``/``DROP``.
-   * An indication of the originator of the flow, e.g which project or log resource
-     generated the events.
+   * An indication of the originator of the flow, e.g which project or log
+     resource generated the events.
    * An identifier of the associated instance interface (neutron port id).
    * A layer 2, 3 and 4 information (mac, address, port, protocol, etc).
 

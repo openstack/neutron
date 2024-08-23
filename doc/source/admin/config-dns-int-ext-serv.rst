@@ -47,10 +47,11 @@ Once this is done, the user has to take the following steps and restart
      Networking service to create and update reverse lookup (PTR) zones.
    * ``project_name``: the name of the project to be used by the
      Networking service to create and update reverse lookup (PTR) zones.
-   * ``project_domain_name``: the name of the domain for the project to be used by the
-     Networking service to create and update reverse lookup (PTR) zones.
-   * ``user_domain_name``: the name of the domain for the user to be used by the
-     Networking service to create and update reverse lookup (PTR) zones.
+   * ``project_domain_name``: the name of the domain for the project to be
+     used by the Networking service to create and update reverse lookup (PTR)
+     zones.
+   * ``user_domain_name``: the name of the domain for the user to be used by
+     the Networking service to create and update reverse lookup (PTR) zones.
    * ``region_name``: the name of the region to be used by the
      Networking service to create and update reverse lookup (PTR) zones.
    * ``allow_reverse_dns_lookup``: a boolean value specifying whether to enable
@@ -60,10 +61,11 @@ Once this is done, the user has to take the following steps and restart
    * ``ipv6_ptr_zone_prefix_size``: the size in bits of the prefix for the IPv6
      reverse lookup (PTR) zones.
    * ``ptr_zone_email``: the email address to use when creating new reverse
-     lookup (PTR) zones. The default is ``admin@<dns_domain>`` where ``<dns_domain>``
-     is the domain for the first record being created in that zone.
-   * ``insecure``: whether to disable SSL certificate validation. By default, certificates
-     are validated.
+     lookup (PTR) zones. The default is ``admin@<dns_domain>`` where
+     ``<dns_domain>`` is the domain for the first record being created in that
+     zone.
+   * ``insecure``: whether to disable SSL certificate validation. By default,
+     certificates are validated.
    * ``cafile``: Path to a valid Certificate Authority (CA) certificate.
      Optional, the system CAs are used as default.
 
@@ -908,8 +910,8 @@ Only for :ref:`config-dns-use-case-3`, if the port binding extension is
 enabled in the Networking service, the Compute service will execute one
 additional port update operation when allocating the port for the instance
 during the boot process. This may have a noticeable adverse effect in the
-performance of the boot process that should be evaluated before adoption of this
-use case.
+performance of the boot process that should be evaluated before adoption of
+this use case.
 
 .. _config-dns-int-ext-serv-net:
 

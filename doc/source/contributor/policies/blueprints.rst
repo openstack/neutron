@@ -99,13 +99,13 @@ The workflow for the life an RFE in Launchpad is as follows:
     * Risky implementations that may require complex and/or pervasive
       changes to API and the logical model;
 
-    Low priority is to be chosen for everything else. RFEs without an associated
-    blueprint are effectively equivalent to low priority items. Bear in mind that,
-    even though staffing should take priorities into account (i.e. by giving more
-    resources to high priority items over low priority ones), the open source
-    reality is that they can both proceed at their own pace and low priority items
-    can indeed complete faster than high priority ones, even though they are
-    given fewer resources.
+    Low priority is to be chosen for everything else. RFEs without an
+    associated blueprint are effectively equivalent to low priority items.
+    Bear in mind that, even though staffing should take priorities into
+    account (i.e. by giving more resources to high priority items over low
+    priority ones), the open source reality is that they can both proceed at
+    their own pace and low priority items can indeed complete faster than high
+    priority ones, even though they are given fewer resources.
 
   * Drafter: who is going to submit and iterate on the spec proposal; he/she
     may be the RFE submitter.
@@ -155,22 +155,23 @@ The workflow for the life an RFE in Launchpad is as follows:
   will have to be deferred.
 
 * In either case (a spec being required or not), once the discussion has
-  happened and there is positive consensus on the RFE, the report is 'approved',
-  and its tag will move from `rfe-triaged` to `rfe-approved`.
+  happened and there is positive consensus on the RFE, the report is
+  'approved', and its tag will move from `rfe-triaged` to `rfe-approved`.
 * An RFE can be occasionally marked as 'rfe-postponed' if the team identifies
   a dependency between the proposed RFE and other pending tasks that prevent
   the RFE from being worked on immediately.
-* Once an RFE is approved, it needs volunteers. Approved RFEs that do not have an
-  assignee but sound relatively simple or limited in scope (e.g. the addition of
-  a new API with no ramification in the plugin backends), should be promoted
-  during team meetings or the ML so that volunteers can pick them up and get
-  started with neutron development. The team will regularly scan `rfe-approved`
-  or `rfe-postponed` RFEs to see what their latest status is and mark them
-  incomplete if no assignees can be found, or they are no longer relevant.
+* Once an RFE is approved, it needs volunteers. Approved RFEs that do not have
+  an assignee but sound relatively simple or limited in scope (e.g. the
+  addition of a new API with no ramification in the plugin backends), should be
+  promoted during team meetings or the ML so that volunteers can pick them up
+  and get started with neutron development. The team will regularly scan
+  `rfe-approved` or `rfe-postponed` RFEs to see what their latest status is and
+  mark them incomplete if no assignees can be found, or they are no longer
+  relevant.
 * As for setting the milestone (both for RFE bugs or blueprints), the current
-  milestone is always chosen, assuming that work will start as soon as the feature
-  is approved. Work that fails to complete by the defined milestone will roll
-  over automatically until it gets completed or abandoned.
+  milestone is always chosen, assuming that work will start as soon as the
+  feature is approved. Work that fails to complete by the defined milestone
+  will roll over automatically until it gets completed or abandoned.
 * If the code fails to merge, the bug report may be marked as incomplete,
   unassigned and untargeted, and it will be garbage collected by
   the Launchpad Janitor if no-one takes over in time. Renewed interest in the
@@ -178,27 +179,32 @@ The workflow for the life an RFE in Launchpad is as follows:
 
 In summary:
 
-+------------+-----------------------------------------------------------------------------+
-|State       | Meaning                                                                     |
-+============+=============================================================================+
-|New         | This is where all RFE's start, as filed by the community.                   |
-+------------+-----------------------------------------------------------------------------+
-|Incomplete  | Drivers/LTs - Move to this state to mean, "more needed before proceeding"   |
-+------------+-----------------------------------------------------------------------------+
-|Confirmed   | Drivers/LTs - Move to this state to mean, "yeah, I see that you filed it"   |
-+------------+-----------------------------------------------------------------------------+
-|Triaged     | Drivers/LTs - Move to this state to mean, "discussion is ongoing"           |
-+------------+-----------------------------------------------------------------------------+
-|Won't Fix   | Drivers/LTs - Move to this state to reject an RFE.                          |
-+------------+-----------------------------------------------------------------------------+
++------------+-----------------------------------------------------------+
+| State      | Meaning                                                   |
++============+===========================================================+
+| New        | This is where all RFE's start, as filed by the community  |
++------------+-----------------------------------------------------------+
+| Incomplete | Drivers/LTs - Move to this state to mean,                 |
+|            |               "more information needed before proceeding" |
++------------+-----------------------------------------------------------+
+| Confirmed  | Drivers/LTs - Move to this state to mean,                 |
+|            |               "yes, I see that you filed it"              |
++------------+-----------------------------------------------------------+
+| Triaged    | Drivers/LTs - Move to this state to mean,                 |
+|            |               "discussion is ongoing"                     |
++------------+-----------------------------------------------------------+
+| Won't Fix  | Drivers/LTs - Move to this state to reject an RFE         |
++------------+-----------------------------------------------------------+
 
-Once the triaging (discussion is complete) and the RFE is approved, the tag goes from 'rfe'
-to 'rfe-approved', and at this point the bug report goes through the usual state transition.
-Note, that the importance will be set to 'wishlist', to reflect the fact that the bug report
-is indeed not a bug, but a new feature or enhancement. This will also help have RFEs that are
-not followed up by a blueprint standout in the Launchpad `milestone dashboards <https://launchpad.net/neutron/+milestones>`_.
+Once the triaging (discussion is complete) and the RFE is approved, the tag
+goes from 'rfe' to 'rfe-approved', and at this point the bug report goes
+through the usual state transition. Note, that the importance will be set to
+'wishlist', to reflect the fact that the bug report is indeed not a bug, but
+a new feature or enhancement. This will also help have RFEs that are not
+followed up by a blueprint standout in the Launchpad `milestone dashboards <https://launchpad.net/neutron/+milestones>`_.
 
-The drivers team will be discussing the following bug reports during their IRC meeting:
+The drivers team will be discussing the following bug reports during their
+IRC meeting:
 
 * `New RFE's <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=NEW&field.tag=rfe>`_
 * `Incomplete RFE's <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INCOMPLETE&field.tag=rfe>`_
@@ -209,17 +215,18 @@ The drivers team will be discussing the following bug reports during their IRC m
 RFE Submission Guidelines
 -------------------------
 
-Before we dive into the guidelines for writing a good RFE, it is worth mentioning
-that depending on your level of engagement with the Neutron project and your role
-(user, developer, deployer, operator, etc.), you are more than welcome to have
-a preliminary discussion of a potential RFE by reaching out to other people involved
-in the project. This usually happens by posting mails on the relevant mailing
-lists (e.g. `openstack-discuss <http://lists.openstack.org>`_ - include [neutron] in
+Before we dive into the guidelines for writing a good RFE, it is worth
+mentioning that depending on your level of engagement with the Neutron project
+and your role (user, developer, deployer, operator, etc.), you are more than
+welcome to have a preliminary discussion of a potential RFE by reaching out to
+other people involved in the project. This usually happens by posting mails on
+the relevant mailing lists
+(e.g. `openstack-discuss <http://lists.openstack.org>`_ - include [neutron] in
 the subject) or on #openstack-neutron IRC channel on OFTC. If current ongoing
 code reviews are related to your feature, posting comments/questions on gerrit
 may also be a way to engage. Some amount of interaction with Neutron developers
-will give you an idea of the plausibility and form of your RFE before you submit
-it. That said, this is not mandatory.
+will give you an idea of the plausibility and form of your RFE before you
+submit it. That said, this is not mandatory.
 
 When you submit a bug report on https://bugs.launchpad.net/neutron/+filebug,
 there are two fields that must be filled: 'summary' and 'further information'.
@@ -229,14 +236,14 @@ RFE at once, or that you are having a hard time defining what you are trying to
 solve at all.
 
 The 'further information' section must be a description of what you would like
-to see implemented in Neutron. The description should provide enough details for
-a knowledgeable developer to understand what is the existing problem in the
+to see implemented in Neutron. The description should provide enough details
+for a knowledgeable developer to understand what is the existing problem in the
 current platform that needs to be addressed, or what is the enhancement that
-would make the platform more capable, both for a functional and a non-functional
-standpoint. To this aim it is important to describe 'why' you believe the RFE
-should be accepted, and motivate the reason why without it Neutron is a poorer
-platform. The description should be self contained, and no external references
-should be necessary to further explain the RFE.
+would make the platform more capable, both for a functional and a
+non-functional standpoint. To this aim it is important to describe 'why' you
+believe the RFE should be accepted, and motivate the reason why without it
+Neutron is a poorer platform. The description should be self contained, and no
+external references should be necessary to further explain the RFE.
 
 In other words, when you write an RFE you should ask yourself the following
 questions:

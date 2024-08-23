@@ -74,10 +74,10 @@ be converted to/from the
 `legacy networking-ovn <https://review.opendev.org/#/q/project:openstack/networking-ovn>`__ and
 `Neutron <https://review.opendev.org/#/q/project:openstack/neutron>`__ repositories.
 
-The mapping of how the files are renamed is based on ``migrate_names.txt``, which is located
-in the same directory where ``migrate_names.py`` is installed. That behavior can be modified
-via the ``--mapfile`` option. More information on how the map is parsed is provided in the header
-section of that file.
+The mapping of how the files are renamed is based on ``migrate_names.txt``,
+which is located in the same directory where ``migrate_names.py`` is installed.
+That behavior can be modified via the ``--mapfile`` option. More information on
+how the map is parsed is provided in the header section of that file.
 
 .. code-block:: console
 

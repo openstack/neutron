@@ -95,8 +95,8 @@ Create ``/etc/apache2/neutron.conf`` with content below:
 
 .. end
 
-For deb-based systems copy or symlink the file to ``/etc/apache2/sites-available``.
-Then enable the neutron site:
+For deb-based systems copy or symlink the file to
+``/etc/apache2/sites-available``. Then enable the neutron site:
 
 .. code-block:: console
 

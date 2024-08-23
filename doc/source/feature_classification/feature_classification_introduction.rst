@@ -3,7 +3,8 @@ Introduction
 ============
 
 This document describes how features are listed in
-:doc:`general_feature_support_matrix` and :doc:`provider_network_support_matrix`.
+:doc:`general_feature_support_matrix` and
+:doc:`provider_network_support_matrix`.
 
 Goals
 ~~~~~

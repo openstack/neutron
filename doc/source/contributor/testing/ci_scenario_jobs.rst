@@ -28,9 +28,9 @@ Neutron Jobs Running in Zuul CI
 Tempest jobs running in Neutron CI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In upstream Neutron CI there are various tempest and neutron-tempest-plugin jobs
-running.
-Each of those jobs runs on slightly different configuration of Neutron services.
+In upstream Neutron CI there are various tempest and neutron-tempest-plugin
+jobs running. Each of those jobs runs on slightly different configuration of
+Neutron services.
 Below is a summary of those jobs.
 ::
 
@@ -91,7 +91,8 @@ Grenade jobs running in Neutron CI
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In upstream Neutron CI there are various Grenade jobs running.
-Each of those jobs runs on slightly different configuration of Neutron services.
+Each of those jobs runs on slightly different configuration of Neutron
+services.
 Below is summary of those jobs.
 ::
 
@@ -109,8 +110,8 @@ Tempest jobs running in Neutron experimental CI
 In upstream Neutron CI there is also queue called ``experimental``. It includes
 jobs which are not needed to be run on every patch and/or jobs which isn't
 stable enough to be run always.
-Those jobs can be run by making comment ``check experimental`` in the comment to
-the patch in Gerrit.
+Those jobs can be run by making comment ``check experimental`` in the comment
+to the patch in Gerrit.
 
 Currently we have in that queue jobs like listed below.
 ::

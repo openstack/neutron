@@ -107,7 +107,8 @@ Set these options to configure SSL:
 Firewall-as-a-Service (FWaaS) overview
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For information on Firewall-as-a-Service (FWaaS), please consult the :doc:`Networking Guide <../fwaas>`.
+For information on Firewall-as-a-Service (FWaaS), please consult the
+:doc:`Networking Guide <../fwaas>`.
 
 Allowed-address-pairs
 ~~~~~~~~~~~~~~~~~~~~~

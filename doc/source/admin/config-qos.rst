@@ -40,7 +40,8 @@ QoS supported rule types are now available as ``VALID_RULE_TYPES`` in `QoS rule 
 
 * minimum_bandwidth: Minimum bandwidth constraints on certain types of traffic.
 
-* minimum_packet_rate: Minimum packet rate constraints on certain types of traffic.
+* minimum_packet_rate: Minimum packet rate constraints on certain types of
+  traffic.
 
 
 Any QoS driver can claim support for some QoS rule types
@@ -182,7 +183,7 @@ On the controller nodes:
 #. Add the QoS service to the ``service_plugins`` setting in
    ``/etc/neutron/neutron.conf``. For example:
 
-   .. code-block:: none
+   .. code-block:: ini
 
       service_plugins = router,metering,qos
 
@@ -194,7 +195,7 @@ On the controller nodes:
    set the ``service_plugins`` option in ``/etc/neutron/neutron.conf`` to
    include both ``router`` and ``qos``. For example:
 
-   .. code-block:: none
+   .. code-block:: ini
 
       service_plugins = router,qos
 
@@ -321,7 +322,7 @@ your cloud, neutron's file ``policy.yaml`` can be modified to allow this.
 
 Modify ``/etc/neutron/policy.yaml`` policy entries as follows:
 
-.. code-block:: none
+.. code-block:: yaml
 
    "get_policy": "rule:regular_user"
    "create_policy": "rule:regular_user"
@@ -331,7 +332,7 @@ Modify ``/etc/neutron/policy.yaml`` policy entries as follows:
 
 To enable bandwidth limit rule:
 
-.. code-block:: none
+.. code-block:: yaml
 
    "get_policy_bandwidth_limit_rule": "rule:regular_user"
    "create_policy_bandwidth_limit_rule": "rule:regular_user"
@@ -340,7 +341,7 @@ To enable bandwidth limit rule:
 
 To enable DSCP marking rule:
 
-.. code-block:: none
+.. code-block:: yaml
 
    "get_policy_dscp_marking_rule": "rule:regular_user"
    "create_policy_dscp_marking_rule": "rule:regular_user"
@@ -349,7 +350,7 @@ To enable DSCP marking rule:
 
 To enable minimum bandwidth rule:
 
-.. code-block:: none
+.. code-block:: yaml
 
     "get_policy_minimum_bandwidth_rule": "rule:regular_user"
     "create_policy_minimum_bandwidth_rule": "rule:regular_user"
@@ -358,7 +359,7 @@ To enable minimum bandwidth rule:
 
 To enable minimum packet rate rule:
 
-.. code-block:: none
+.. code-block:: yaml
 
     "get_policy_minimum_packet_rate_rule": "rule:regular_user"
     "create_policy_minimum_packet_rate_rule": "rule:regular_user"
