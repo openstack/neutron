@@ -41,7 +41,6 @@ class OVOServerRpcInterfaceTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def _assert_object_received(self, ovotype, oid=None, event=None,
                                 count=1):
-        self.plugin.ovo_notifier.wait()
         match = 0
         for obj, evt in self.received:
             if isinstance(obj, ovotype):
