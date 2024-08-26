@@ -15,7 +15,6 @@ requests>=2.18.0 # Apache-2.0
 Jinja2>=2.10 # BSD License (3 clause)
 keystonemiddleware>=5.1.0 # Apache-2.0
 netaddr>=0.7.18 # BSD
-netifaces>=0.10.4 # MIT
 neutron-lib>=3.14.0 # Apache-2.0
 python-neutronclient>=7.8.0 # Apache-2.0
 tenacity>=6.0.0 # Apache-2.0
@@ -57,4 +56,3 @@ python-designateclient>=2.7.0 # Apache-2.0
 os-vif>=3.1.0 # Apache-2.0
 futurist>=1.2.0 # Apache-2.0
 tooz>=1.58.0 # Apache-2.0
-wmi>=1.4.9;sys_platform=='win32'  # MIT
