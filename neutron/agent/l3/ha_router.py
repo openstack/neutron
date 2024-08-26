@@ -450,10 +450,18 @@ class HaRouter(router.RouterInfo):
         pm.enable()
         process_monitor.register(
             self.router_id, IP_MONITOR_PROCESS_SERVICE, pm)
-        LOG.debug("Router %(router_id)s %(process)s pid %(pid)d",
-                  {"router_id": self.router_id,
-                   "process": KEEPALIVED_STATE_CHANGE_MONITOR_SERVICE_NAME,
-                   "pid": pm.pid})
+        pid = pm.pid
+        process = KEEPALIVED_STATE_CHANGE_MONITOR_SERVICE_NAME
+        if pid:
+            LOG.debug("Router %(router_id)s %(process)s pid %(pid)d",
+                      {"router_id": self.router_id,
+                       "process": process,
+                       "pid": pid})
+        else:
+            LOG.warning("Could not determine pid for router %(router_id)s "
+                        "%(process)s, might still be spawning",
+                        {"router_id": self.router_id,
+                         "process": process})
 
     def destroy_state_change_monitor(self, process_monitor):
         if not self.ha_port:
