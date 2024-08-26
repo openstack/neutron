@@ -11,8 +11,7 @@ Consider the following attributes of this mechanism driver to determine
 practicality in your environment:
 
 * Supports only instance ports. Ports for DHCP and layer-3 (routing)
-  services must use another mechanism driver such as Linux bridge or
-  Open vSwitch (OVS).
+  services must use another mechanism driver such as Open vSwitch (OVS).
 
 * Supports only untagged (flat) and tagged (VLAN) networks.
 
@@ -25,7 +24,7 @@ practicality in your environment:
 
 * Only compute resources can be attached via macvtap. Attaching other
   resources like DHCP, Routers and others is not supported. Therefore run
-  either OVS or linux bridge in VLAN or flat mode on the controller node.
+  either OVS in VLAN or flat mode on the controller node.
 
 * Instance migration requires the same values for the
   ``physical_interface_mapping`` configuration option on each compute node.
@@ -35,13 +34,13 @@ practicality in your environment:
 Prerequisites
 ~~~~~~~~~~~~~
 
-You can add this mechanism driver to an existing environment using either
-the Linux bridge or OVS mechanism drivers with only provider networks or
+You can add this mechanism driver to an existing environment using the
+OVS mechanism driver with only provider networks or
 provider and self-service networks. You can change the configuration of
 existing compute nodes or add compute nodes with the Macvtap mechanism
 driver. The example configuration assumes addition of compute nodes with
-the Macvtap mechanism driver to the :ref:`deploy-lb-selfservice` or
-:ref:`deploy-ovs-selfservice` deployment examples.
+the Macvtap mechanism driver to the :ref:`deploy-ovs-selfservice` deployment
+example.
 
 Add one or more compute nodes with the following components:
 
@@ -176,6 +175,6 @@ content for the prerequisite deployment example.
 Network traffic flow
 ~~~~~~~~~~~~~~~~~~~~
 
-This mechanism driver simply removes the Linux bridge handling security
-groups on the compute nodes. Thus, you can reference the network traffic
-flow scenarios for the prerequisite deployment example.
+This mechanism driver simply removes handling security groups on the compute
+nodes. Thus, you can reference the network traffic flow scenario for the
+prerequisite deployment example.

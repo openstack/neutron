@@ -178,21 +178,6 @@ def register_ovs_agent(host=HOST, agent_type=constants.AGENT_TYPE_OVS,
     return _register_agent(agent, plugin)
 
 
-def register_linuxbridge_agent(host=HOST,
-                               agent_type=constants.AGENT_TYPE_LINUXBRIDGE,
-                               binary=constants.AGENT_PROCESS_LINUXBRIDGE,
-                               tunnel_types=None, tunneling_ip='20.0.0.1',
-                               interface_mappings=None, bridge_mappings=None,
-                               plugin=None):
-    if tunnel_types is None:
-        tunnel_types = ['vxlan']
-    agent = _get_l2_agent_dict(host, agent_type, binary, tunnel_types,
-                               tunneling_ip=tunneling_ip,
-                               interface_mappings=interface_mappings,
-                               bridge_mappings=bridge_mappings)
-    return _register_agent(agent, plugin)
-
-
 def register_macvtap_agent(host=HOST,
                            agent_type=constants.AGENT_TYPE_MACVTAP,
                            binary=constants.AGENT_PROCESS_MACVTAP,

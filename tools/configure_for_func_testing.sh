@@ -293,15 +293,6 @@ function _install_post_devstack {
 }
 
 
-function _configure_iptables_rules {
-    # For linuxbridge agent fullstack tests we need to add special rules to
-    # iptables for connection of agents to rabbitmq:
-    CHAIN_NAME="openstack-INPUT"
-    sudo iptables -n --list $CHAIN_NAME 1> /dev/null 2>&1 || CHAIN_NAME="INPUT"
-    sudo iptables -I $CHAIN_NAME -s 240.0.0.0/8 -p tcp -m tcp -d 240.0.0.0/8 --dport 5672 -j ACCEPT
-}
-
-
 function _enable_ipv6 {
     sudo sysctl -w net.ipv6.conf.all.disable_ipv6=0
 }
@@ -335,7 +326,6 @@ fi
 
 if [[ "$VENV" =~ "dsvm-fullstack" ]]; then
     _enable_ipv6
-    _configure_iptables_rules
     # This module only exists on older kernels, built-in otherwise
     modinfo ip_conntrack_proto_sctp 1> /dev/null 2>&1 && sudo modprobe ip_conntrack_proto_sctp
     if is_fedora; then

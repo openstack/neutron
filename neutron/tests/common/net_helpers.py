@@ -43,8 +43,6 @@ from neutron.agent.linux import utils
 from neutron.common import utils as common_utils
 from neutron.conf.agent import common as config
 from neutron.db import db_base_plugin_common as db_base
-from neutron.plugins.ml2.drivers.linuxbridge.agent import \
-    linuxbridge_neutron_agent as linuxbridge_agent
 from neutron.services.trunk.drivers.openvswitch.agent import trunk_manager
 from neutron.tests.common import base as common_base
 from neutron.tests.common import helpers
@@ -61,13 +59,6 @@ VETH0_PREFIX = 'test-veth0'
 VETH1_PREFIX = 'test-veth1'
 PATCH_PREFIX = 'patch'
 MACVTAP_PREFIX = 'macvtap'
-
-# port name should be shorter than DEVICE_NAME_MAX_LEN because if this
-# port is used to provide vlan connection between two linuxbridge
-# agents then place for vlan ID is also required, Vlan ID can take max 4 digits
-# and there is also additional "." in device name so it will in overall gives
-# DEVICE_NAME_MAX_LEN = 15 chars
-LB_DEVICE_NAME_MAX_LEN = 10
 
 SS_SOURCE_PORT_PATTERN = re.compile(
     r'^.*\s+\d+\s+.*:(?P<port>\d+)\s+[^\s]+:.*')
@@ -868,13 +859,7 @@ class OVSPortFixture(PortFixture):
     def _setUp(self):
         super()._setUp()
 
-        # because in some tests this port can be used to providing connection
-        # between linuxbridge agents and vlan_id can be also added to this
-        # device name it has to be max LB_DEVICE_NAME_MAX_LEN long
-        port_name = common_utils.get_rand_name(
-            LB_DEVICE_NAME_MAX_LEN,
-            PORT_PREFIX
-        )
+        port_name = common_utils.get_rand_name(prefix=PORT_PREFIX)
 
         if self.hybrid_plug:
             self.hybrid_plug_port(port_name)
@@ -1018,7 +1003,7 @@ class LinuxBridgePortFixture(PortFixture):
 
     def _setUp(self):
         super()._setUp()
-        br_port_name = self._get_port_name()
+        br_port_name = self.port_id
         if br_port_name:
             self.veth_fixture = self.useFixture(
                 NamedVethFixture(veth0_prefix=br_port_name))
@@ -1038,12 +1023,6 @@ class LinuxBridgePortFixture(PortFixture):
         ns_ip_wrapper = ip_lib.IPWrapper(self.namespace)
         ns_ip_wrapper.add_device_to_namespace(self.port)
         self.port.link.set_up()
-
-    def _get_port_name(self):
-        if self.port_id:
-            return linuxbridge_agent.LinuxBridgeManager.get_tap_device_name(
-                self.port_id)
-        return None
 
 
 class VethBridge:

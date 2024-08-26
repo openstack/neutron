@@ -24,8 +24,6 @@ from pyroute2.netlink import exceptions as netlink_exceptions
 from neutron.agent.l2.extensions.fdb_population import (
         FdbPopulationAgentExtension)
 from neutron.agent.linux import bridge_lib
-from neutron.plugins.ml2.drivers.linuxbridge.agent.common import (
-     constants as linux_bridge_constants)
 from neutron.tests import base
 
 
@@ -67,8 +65,6 @@ class FdbPopulationExtensionTestCase(base.BaseTestCase):
     def test_initialize(self):
         fdb_extension = FdbPopulationAgentExtension()
         fdb_extension.initialize(None, ovs_constants.EXTENSION_DRIVER_TYPE)
-        fdb_extension.initialize(None,
-                                 linux_bridge_constants.EXTENSION_DRIVER_TYPE)
 
     @mock.patch('neutron.agent.common.utils.execute')
     def test_initialize_invalid_agent(self, mock_execute):

@@ -23,8 +23,8 @@ fdb_population_opt = [
                 help=_("Comma-separated list of "
                        "<physical_network>:<network_device> tuples mapping "
                        "physical network names to the agent's node-specific "
-                       "shared physical network device between "
-                       "SR-IOV and OVS or SR-IOV and linux bridge"))
+                       "shared physical network device between SR-IOV and "
+                       "OVS"))
 ]
 
 

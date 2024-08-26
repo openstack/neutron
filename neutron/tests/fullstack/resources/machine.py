@@ -109,7 +109,7 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
 
     def _get_bridge(self):
         if self.bridge_name is None:
-            return self.host.get_bridge(self.network_id)
+            return self.host.get_bridge()
         agent_type = self.host.host_desc.l2_agent_type
         if agent_type != constants.AGENT_TYPE_OVS:
             raise NotImplementedError(
@@ -230,12 +230,7 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
             self.safe_client.client.update_port(self.neutron_port['id'],
                                                 {'port': {pbs.HOST_ID: ''}})
         # All associated vlan interfaces are deleted too
-        # If VM is connected to Linuxbridge it hasn't got "delete_port" method
-        # and it is not necessary to delete tap port connected to this bridge.
-        # It is veth pair and will be removed together with VM namespace
-        if hasattr(self.bridge, "delete_port"):
-            self.bridge.delete_port(self.port.name)
-
+        self.bridge.delete_port(self.port.name)
         ip_lib.delete_network_namespace(self.namespace)
 
 

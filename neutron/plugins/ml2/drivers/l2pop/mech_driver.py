@@ -90,7 +90,7 @@ class L2populationMechanismDriver(api.MechanismDriver):
 
     def filter_hosts_with_segment_access(
             self, context, segments, candidate_hosts, agent_getter):
-        # NOTE(cbrandily): let other mechanisms (openvswitch, linuxbridge, ...)
+        # NOTE(cbrandily): let other mechanisms (openvswitch, ...)
         # perform the filtering
         return set()
 

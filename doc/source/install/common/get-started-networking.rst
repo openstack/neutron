@@ -17,8 +17,8 @@ OpenStack Networking plug-ins and agents
   Plug and unplug ports, create networks or subnets, and provide
   IP addressing. These plug-ins and agents differ depending on the
   vendor and technologies used in the particular cloud. OpenStack
-  Networking ships with plug-ins and agents for Open vSwitch, Linux
-  bridging, Open Virtual Network (OVN), SR-IOV and Macvtap.
+  Networking ships with plug-ins and agents for Open vSwitch and
+  Open Virtual Network (OVN), as well as for SR-IOV and Macvtap.
 
   The common agents are L3 (layer 3), DHCP (dynamic host IP
   addressing), and a plug-in agent.

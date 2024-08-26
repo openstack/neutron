@@ -27,7 +27,7 @@ class Agent(model_base.BASEV2, model_base.HasId):
         model_base.BASEV2.__table_args__
     )
 
-    # L3 agent, DHCP agent, OVS agent, LinuxBridge
+    # L3 agent, DHCP agent, OVS agent
     agent_type = sa.Column(sa.String(255), nullable=False)
     binary = sa.Column(sa.String(255), nullable=False)
     # TOPIC is a fanout exchange topic

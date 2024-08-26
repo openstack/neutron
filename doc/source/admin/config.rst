@@ -14,7 +14,6 @@ Configuration
    config-bgp-dynamic-routing
    config-bgp-floating-ip-over-l2-segmented-network
    config-services-agent
-   config-dhcp-ha
    config-dns-int
    config-dns-int-ext-serv
    config-dns-res

@@ -25,7 +25,6 @@ from oslo_utils import uuidutils
 from neutron.api.rpc.callbacks.producer import registry as rpc_registry
 from neutron.objects import ports as ports_object
 from neutron.objects.qos import rule as rule_object
-from neutron.services.qos.drivers.linuxbridge import driver as lb_driver
 from neutron.services.qos.drivers import manager as driver_mgr
 from neutron.services.qos.drivers.openvswitch import driver as ovs_driver
 from neutron.services.qos.drivers.ovn import driver as ovn_driver
@@ -185,8 +184,7 @@ class TestQosDriversManagerRules(TestQosDriversManagerBase):
 
     @mock.patch.object(rpc_registry, 'provide')
     def test_available_rules(self, *args):
-        available_drivers = {'linuxbridge': lb_driver.SUPPORTED_RULES,
-                             'ovs': ovs_driver.SUPPORTED_RULES,
+        available_drivers = {'ovs': ovs_driver.SUPPORTED_RULES,
                              'ovn': ovn_driver.SUPPORTED_RULES,
                              'sriov': sriov_driver.SUPPORTED_RULES}
         for drivers in itertools.combinations(available_drivers, 2):

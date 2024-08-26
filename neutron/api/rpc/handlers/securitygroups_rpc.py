@@ -379,8 +379,7 @@ class SecurityGroupServerAPIShim(sg_rpc_base.SecurityGroupInfoAPIMixin):
             port['fixed_ips'] = [str(f['ip_address'])
                                  for f in port['fixed_ips']]
             # NOTE(kevinbenton): this id==device is only safe for OVS. a lookup
-            # will be required for linux bridge and others that don't have the
-            # full port UUID
+            # will be required for others that don't have the full port UUID
             port['device'] = port['id']
             port['port_security_enabled'] = getattr(
                 ovo.security, 'port_security_enabled', True)

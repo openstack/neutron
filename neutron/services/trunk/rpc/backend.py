@@ -41,7 +41,7 @@ class ServerSideRpcBackend:
     # Set up listeners to trunk events: they dispatch RPC messages
     # to agents as needed. These are designed to work with any
     # agent-based driver that may integrate with the trunk service
-    # plugin, e.g. linux bridge or ovs.
+    # plugin, e.g. ovs.
 
     def process_event(self, resource, event, trunk_plugin, payload):
         """Emit RPC notifications to registered subscribers."""

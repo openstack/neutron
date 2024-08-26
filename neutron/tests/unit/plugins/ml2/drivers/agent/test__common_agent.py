@@ -25,7 +25,6 @@ from oslo_config import cfg
 import testtools
 
 from neutron.agent.linux import bridge_lib
-from neutron.conf.plugins.ml2.drivers import linuxbridge as conf_lb
 from neutron.plugins.ml2.drivers.agent import _agent_manager_base as amb
 from neutron.plugins.ml2.drivers.agent import _common_agent as ca
 from neutron.tests import base
@@ -50,13 +49,11 @@ PORT_DATA = {
 class TestCommonAgentLoop(base.BaseTestCase):
     def setUp(self):
         super().setUp()
-        conf_lb.register_linuxbridge_opts(cfg=cfg.CONF)
         # disable setting up periodic state reporting
         cfg.CONF.set_override('report_interval', 0, 'AGENT')
         cfg.CONF.set_default('firewall_driver',
                              'neutron.agent.firewall.NoopFirewallDriver',
                              group='SECURITYGROUP')
-        cfg.CONF.set_override('local_ip', LOCAL_IP, 'VXLAN')
         self.get_bridge_names_p = mock.patch.object(bridge_lib,
                                                     'get_bridge_names')
         self.get_bridge_names = self.get_bridge_names_p.start()

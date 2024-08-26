@@ -45,7 +45,6 @@ import neutron.conf.extensions.conntrack_helper
 import neutron.conf.plugins.ml2.config
 import neutron.conf.plugins.ml2.drivers.agent
 import neutron.conf.plugins.ml2.drivers.driver_type
-import neutron.conf.plugins.ml2.drivers.linuxbridge
 import neutron.conf.plugins.ml2.drivers.macvtap
 import neutron.conf.plugins.ml2.drivers.mech_sriov.agent_common
 import neutron.conf.plugins.ml2.drivers.mech_sriov.mech_sriov_conf
@@ -239,27 +238,6 @@ def list_dhcp_agent_opts():
          ),
         (meta_conf.RATE_LIMITING_GROUP,
          meta_conf.METADATA_RATE_LIMITING_OPTS)
-    ]
-
-
-def list_linux_bridge_opts():
-    return [
-        ('DEFAULT',
-         neutron.conf.service.RPC_EXTRA_OPTS),
-        ('linux_bridge',
-         neutron.conf.plugins.ml2.drivers.linuxbridge.bridge_opts),
-        ('vxlan',
-         neutron.conf.plugins.ml2.drivers.linuxbridge.vxlan_opts),
-        ('agent',
-         itertools.chain(
-             neutron.conf.plugins.ml2.drivers.agent.agent_opts,
-             neutron.conf.agent.agent_extensions_manager.
-             AGENT_EXT_MANAGER_OPTS)
-         ),
-        ('securitygroup',
-         neutron.conf.agent.securitygroups_rpc.security_group_opts),
-        ('network_log',
-         neutron.conf.services.logging.log_driver_opts)
     ]
 
 

@@ -78,11 +78,11 @@ if [[ "$1" == "stack" ]]; then
             if is_service_enabled q-agt neutron-agent; then
                 configure_l2_agent
             fi
-            #Note: sriov agent should run with OVS or linux bridge agent
-            #because they are the mechanisms that bind the DHCP and router ports.
+            #Note: sriov agent should run with OVS agent
+            #because it is the mechanism that binds the DHCP and router ports.
             #Currently devstack lacks the option to run two agents on the same node.
             #Therefore we create new service, q-sriov-agt, and the
-            # q-agt/neutron-agent should be OVS or linux bridge.
+            # q-agt/neutron-agent should be OVS.
             if is_service_enabled q-sriov-agt neutron-sriov-agent; then
                 configure_l2_agent
                 configure_l2_agent_sriovnicswitch

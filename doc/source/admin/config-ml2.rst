@@ -58,12 +58,6 @@ ML2 driver support matrix
      - yes
      - yes
      - yes
-   * - Linux bridge
-     - yes
-     - yes
-     - yes
-     - no
-     - no
    * - OVN
      - yes
      - yes
@@ -93,10 +87,9 @@ ML2 driver support matrix
 
    L2 population is a special mechanism driver that optimizes BUM (Broadcast,
    unknown destination address, multicast) traffic in the overlay networks
-   VXLAN, GRE and Geneve. It needs to be used in conjunction with either the
-   Linux bridge or the Open vSwitch mechanism driver and cannot be used as
-   standalone mechanism driver. For more information, see the
-   *Mechanism drivers* section below.
+   VXLAN, GRE and Geneve. It needs to be used in conjunction with the
+   Open vSwitch mechanism driver and cannot be used as standalone mechanism
+   driver. For more information, see the *Mechanism drivers* section below.
 
 Configuration
 ~~~~~~~~~~~~~
@@ -167,10 +160,6 @@ More information about provider networks see
      VXLAN multicast group configuration is not applicable for the Open
      vSwitch agent.
 
-     As of today it is not used in the Linux bridge agent. The Linux bridge
-     agent has its own agent specific configuration option. For more details,
-     see the `Bug 1523614 <https://bugs.launchpad.net/neutron/+bug/1523614>`__.
-
 Project network types
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -227,12 +216,6 @@ To enable mechanism drivers in the ML2 plug-in, edit the
 For more details, see the
 `Configuration Reference <../configuration/ml2-conf.html#ml2>`__.
 
-* Linux bridge
-
-  No additional configurations required for the mechanism driver. Additional
-  agent configuration is required. For details, see the related *L2 agent*
-  section below.
-
 * Open vSwitch
 
   No additional configurations required for the mechanism driver. Additional
@@ -244,7 +227,7 @@ For more details, see the
   The administrator must configure some additional configuration options for
   the mechanism driver. When this driver is used, architecture of the Neutron
   application in the cluster is different from what it is with other drivers
-  like e.g. Open vSwitch or Linuxbridge.
+  like e.g. Open vSwitch.
   For details, see :ref:`OVN reference architecture<refarch-refarch>`.
 
 * SRIOV
@@ -292,9 +275,6 @@ mechanism driver's ``supported_vnic_types`` list.
    * - mech driver / supported_vnic_types
      - supported VNIC types
      - prohibiting available
-   * - Linux bridge
-     - normal
-     - no
    * - OVN
      - normal, direct, direct_macvtap, direct_physical
      - no
@@ -341,18 +321,6 @@ resources. It typically runs on each Network Node and on each Compute Node.
 
   For a detailed list of configuration options, see the related section in the
   `Configuration Reference <../configuration/openvswitch-agent.html>`__.
-
-* Linux bridge agent
-
-  The Linux bridge agent configures Linux bridges to realize L2 networks for
-  OpenStack resources.
-
-  Configuration for the Linux bridge agent is typically done in the
-  ``linuxbridge_agent.ini`` configuration file. Make sure that on agent start
-  you pass this configuration file as argument.
-
-  For a detailed list of configuration options, see the related section in the
-  `Configuration Reference <../configuration/linuxbridge-agent.html>`__.
 
 * SRIOV Nic Switch agent
 
@@ -465,8 +433,6 @@ implementations:
      - L2 agent
    * - Open vSwitch
      - Open vSwitch agent
-   * - Linux bridge
-     - Linux bridge agent
    * - OVN
      - No (there is ovn-controller running on nodes)
    * - SRIOV
@@ -474,7 +440,7 @@ implementations:
    * - MacVTap
      - MacVTap agent
    * - L2 population
-     - Open vSwitch agent, Linux bridge agent
+     - Open vSwitch agent
 
 The following tables shows which reference implementations support which
 non-L2 neutron agents:
@@ -488,11 +454,6 @@ non-L2 neutron agents:
      - Metadata agent
      - L3 Metering agent
    * - Open vSwitch & Open vSwitch agent
-     - yes
-     - yes
-     - yes
-     - yes
-   * - Linux bridge & Linux bridge agent
      - yes
      - yes
      - yes
@@ -532,11 +493,6 @@ This guide characterizes the L2 reference implementations that currently exist.
   Can be used for instance network attachments as well as for attachments of
   other network resources like routers, DHCP, and so on.
 
-* Linux bridge mechanism and Linux bridge agent
-
-  Can be used for instance network attachments as well as for attachments of
-  other network resources like routers, DHCP, and so on.
-
 * OVN mechanism driver
 
   Can be used for instance network attachments as well as for attachments of
@@ -546,8 +502,8 @@ This guide characterizes the L2 reference implementations that currently exist.
 
   Can only be used for instance network attachments (device_owner = compute).
 
-  Is deployed besides an other mechanism driver and L2 agent such as OVS or
-  Linux bridge. It offers instances direct access to the network adapter
+  Is deployed besides an other mechanism driver and L2 agent such as OVS. It
+  offers instances direct access to the network adapter
   through a PCI Virtual Function (VF). This gives an instance direct access to
   hardware capabilities and high performance networking.
 
@@ -564,8 +520,8 @@ This guide characterizes the L2 reference implementations that currently exist.
   Can only be used for instance network attachments (device_owner = compute)
   and not for attachment of other resources like routers, DHCP, and so on.
 
-  It is positioned as alternative to Open vSwitch or Linux bridge support on
-  the compute node for internal deployments.
+  It is positioned as alternative to Open vSwitch support on the compute node
+  for internal deployments.
 
   MacVTap offers a direct connection with very little overhead between
   instances and down to the adapter. You can use MacVTap agent on the

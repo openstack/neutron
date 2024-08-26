@@ -6,9 +6,9 @@ Deployment examples
 
 The following deployment examples provide building blocks of increasing
 architectural complexity using the Networking service reference architecture
-which implements the Modular Layer 2 (ML2) plug-in and either the Open
-vSwitch (OVS) or Linux bridge mechanism drivers. Both mechanism drivers support
-the same basic features such as provider networks, self-service networks,
+which implements the Modular Layer 2 (ML2) plug-in with the Open
+vSwitch (OVS) mechanism driver. The mechanism driver supports
+basic features such as provider networks, self-service networks,
 and routers. However, more complex features often require a particular
 mechanism driver. Thus, you should consider the requirements (or goals) of
 your cloud before choosing a mechanism driver.
@@ -136,5 +136,4 @@ Mechanism drivers
 .. toctree::
    :maxdepth: 1
 
-   deploy-lb
    deploy-ovs

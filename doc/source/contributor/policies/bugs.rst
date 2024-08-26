@@ -419,8 +419,6 @@ more will be added over time if needed.
 +-------------------------------+-----------------------------------------+--------------------------+
 | lib_                          | An issue affecting neutron-lib          | Neutron PTL              |
 +-------------------------------+-----------------------------------------+--------------------------+
-| linuxbridge_                  | A bug affecting ML2/linuxbridge         | N/A                      |
-+-------------------------------+-----------------------------------------+--------------------------+
 | loadimpact_                   | Performance penalty/improvements        | Miguel Lavalle/          |
 |                               |                                         | Oleg Bondarev            |
 +-------------------------------+-----------------------------------------+--------------------------+
@@ -647,14 +645,6 @@ Lib
 +++
 
 * `Lib - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=lib>`_
-
-.. _linuxbridge:
-
-LinuxBridge
-+++++++++++
-
-* `LinuxBridge - All bugs <https://bugs.launchpad.net/neutron/+bugs?field.tag=linuxbridge>`_
-* `LinuxBridge - In progress <https://bugs.launchpad.net/neutron/+bugs?field.status%3Alist=INPROGRESS&field.tag=linuxbridge>`_
 
 .. _loadimpact:
 

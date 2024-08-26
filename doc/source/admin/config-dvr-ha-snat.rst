@@ -13,8 +13,8 @@ the SNAT service to a backup DVR/SNAT router on an l3-agent running on a
 different node.
 
 SNAT high availability is implemented in a manner similar to the
-:ref:`deploy-lb-ha-vrrp` and :ref:`deploy-ovs-ha-vrrp` examples where
-``keepalived`` uses VRRP to provide quick failover of SNAT services.
+:ref:`deploy-ovs-ha-vrrp` example where ``keepalived`` uses VRRP to provide
+quick failover of SNAT services.
 
 During normal operation, the primary router periodically transmits *heartbeat*
 packets over a hidden project network that connects all HA routers for a

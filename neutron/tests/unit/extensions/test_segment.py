@@ -37,7 +37,6 @@ from oslo_utils import uuidutils
 import webob.exc
 
 from neutron.common import config
-from neutron.conf import experimental as c_experimental
 from neutron.conf.plugins.ml2 import config as ml2_config
 from neutron.conf.plugins.ml2.drivers import driver_type
 from neutron.db import agents_db
@@ -792,11 +791,9 @@ class TestMl2HostSegmentMappingNoAgent(HostSegmentMappingTestCase):
         self.assertEqual(set(), actual_hosts)
 
 
-class TestMl2HostSegmentMappingOVS(HostSegmentMappingTestCase):
+class _TestMl2HostSegmentMappingOVS(object):
     _mechanism_drivers = ['openvswitch', 'logger']
     mock_path = 'neutron.services.segments.db.update_segment_host_mapping'
-    agent_type_a = constants.AGENT_TYPE_OVS
-    agent_type_b = constants.AGENT_TYPE_LINUXBRIDGE
 
     def test_new_agent(self):
         host = 'host1'
@@ -1024,23 +1021,8 @@ class TestMl2HostSegmentMappingOVS(HostSegmentMappingTestCase):
         self.assertEqual(hosts, actual_hosts)
 
 
-class TestMl2HostSegmentMappingLinuxBridge(TestMl2HostSegmentMappingOVS):
-    _mechanism_drivers = ['linuxbridge', 'logger']
-    agent_type_a = constants.AGENT_TYPE_LINUXBRIDGE
-    agent_type_b = constants.AGENT_TYPE_OVS
-
-    def setUp(self, plugin=None):
-        cfg.CONF.set_override(c_experimental.EXPERIMENTAL_LINUXBRIDGE, True,
-                              group=c_experimental.EXPERIMENTAL_CFG_GROUP)
-        super().setUp(plugin=plugin)
-
-    def _register_agent(self, host, mappings=None, plugin=None):
-        helpers.register_linuxbridge_agent(host=host,
-                                           bridge_mappings=mappings,
-                                           plugin=self.plugin)
-
-
-class TestMl2HostSegmentMappingMacvtap(TestMl2HostSegmentMappingOVS):
+class TestMl2HostSegmentMappingMacvtap(_TestMl2HostSegmentMappingOVS,
+                                       HostSegmentMappingTestCase):
     _mechanism_drivers = ['macvtap', 'logger']
     agent_type_a = constants.AGENT_TYPE_MACVTAP
     agent_type_b = constants.AGENT_TYPE_OVS
@@ -1050,7 +1032,8 @@ class TestMl2HostSegmentMappingMacvtap(TestMl2HostSegmentMappingOVS):
                                        plugin=self.plugin)
 
 
-class TestMl2HostSegmentMappingSriovNicSwitch(TestMl2HostSegmentMappingOVS):
+class TestMl2HostSegmentMappingSriovNicSwitch(_TestMl2HostSegmentMappingOVS,
+                                              HostSegmentMappingTestCase):
     _mechanism_drivers = ['sriovnicswitch', 'logger']
     agent_type_a = constants.AGENT_TYPE_NIC_SWITCH
     agent_type_b = constants.AGENT_TYPE_OVS

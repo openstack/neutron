@@ -11,7 +11,7 @@ Among those of special interest are:
 
 #. The neutron-server that provides API endpoints and serves as a single point
    of access to the database. It usually runs on the controller nodes.
-#. Layer2 agent that can utilize Open vSwitch, Linux Bridge or other
+#. Layer2 agent that can utilize Open vSwitch or other
    vendor-specific technology to provide network segmentation and isolation
    for project networks.
    The L2 agent should run on every node where it is deemed
@@ -70,7 +70,7 @@ L2 agents
 
 The ``admin_state_up`` field of the agent in the Neutron database is set to
 ``False``, but the agent is still capable of binding ports.
-This is true for openvswitch-agent, linuxbridge-agent, and sriov-agent.
+This is true for openvswitch-agent and sriov-agent.
 
 .. note::
 

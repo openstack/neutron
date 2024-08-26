@@ -21,7 +21,6 @@ from neutron_lib.plugins.ml2 import ovs_constants
 from oslo_log import log as logging
 
 from neutron.agent.common import async_process
-from neutron.agent.linux import iptables_manager
 from neutron.common import utils as common_utils
 from neutron.plugins.ml2.common import constants as comm_consts
 
@@ -45,15 +44,6 @@ def extract_mod_nw_tos_action(flows):
                 after_mod = actions.partition('mod_nw_tos:')[2]
                 tos_mark = int(after_mod.partition(',')[0])
     return tos_mark
-
-
-def extract_dscp_value_from_iptables_rules(rules):
-    pattern = (r"^-A neutron-linuxbri-qos-.* -j DSCP "
-               "--set-dscp (?P<dscp_value>0x[A-Fa-f0-9]+)$")
-    for rule in rules:
-        m = re.match(pattern, rule)
-        if m:
-            return int(m.group("dscp_value"), 16)
 
 
 def wait_until_bandwidth_limit_rule_applied(check_function, port_vif, rule):
@@ -117,20 +107,6 @@ def wait_until_pkt_meter_rule_applied_ovs(bridge, port_vif, port_id,
         return not bool(flows) and not meter_id
 
     common_utils.wait_until_true(_pkt_rate_limit_rule_applied)
-
-
-def wait_until_dscp_marking_rule_applied_linuxbridge(namespace, port_vif,
-                                                     expected_rule):
-
-    iptables = iptables_manager.IptablesManager(
-        namespace=namespace)
-
-    def _dscp_marking_rule_applied():
-        mangle_rules = iptables.get_rules_for_table("mangle")
-        dscp_mark = extract_dscp_value_from_iptables_rules(mangle_rules)
-        return dscp_mark == expected_rule
-
-    common_utils.wait_until_true(_dscp_marking_rule_applied)
 
 
 def wait_for_dscp_marked_packet(sender_vm, receiver_vm, dscp_mark):

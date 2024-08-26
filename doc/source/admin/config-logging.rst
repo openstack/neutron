@@ -198,8 +198,7 @@ To enable the logging service, follow the below steps.
 
    .. note::
 
-       Fwaas v2 log is currently only supported by openvswitch, the firewall
-       logging driver of linuxbridge is not implemented.
+       Fwaas v2 log is currently only supported by openvswitch.
 
 #. To enable logging service for ``firewall_group`` in Layer 3, add
    ``fwaas_v2_log`` to option ``extensions`` in section ``[AGENT]`` in
@@ -273,8 +272,7 @@ Service workflow for Operator
    .. note::
 
       - In VM ports, logging for ``security_group`` in currently works with
-        ``openvswitch`` firewall driver only. ``linuxbridge`` is under
-        development.
+        ``openvswitch`` firewall driver.
       - Logging for ``firewall_group`` works on internal router ports only. VM
         ports would be supported in the future.
 
