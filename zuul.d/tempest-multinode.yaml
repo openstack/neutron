@@ -536,8 +536,7 @@
       tempest_test_regex: ""
 
 - job:
-    # TODO(slaweq): propose job with ovs-release and move -master one to
-    # experimental queue
+    # TODO(slaweq): move -master one to experimental queue
     name: neutron-ovn-tempest-full-multinode-ovs-master
     branches: ^master$
     parent: neutron-ovn-multinode-base
@@ -588,3 +587,19 @@
           OVN_BUILD_FROM_SOURCE: True
           OVN_BRANCH: main
           OVS_BRANCH: main
+
+- job:
+    name: neutron-ovn-tempest-full-multinode-ovs-lts
+    branches: ^master$
+    parent: neutron-ovn-tempest-full-multinode-ovs-master
+    vars:
+      devstack_localrc:
+        OVN_BUILD_FROM_SOURCE: True
+        OVN_BRANCH: branch-24.03
+        OVS_BRANCH: branch-3.3
+    group-vars:
+      subnode:
+        devstack_localrc:
+          OVN_BUILD_FROM_SOURCE: True
+          OVN_BRANCH: branch-24.03
+          OVS_BRANCH: branch-3.3
