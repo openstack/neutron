@@ -16,6 +16,8 @@
 """
 IPv6-related utilities and helper functions.
 """
+import ipaddress
+
 import netaddr
 from neutron_lib import constants as const
 from oslo_log import log
@@ -56,3 +58,19 @@ def valid_ipv6_url(host, port):
     else:
         uri = '%s:%s' % (host, port)
     return uri
+
+
+# TODO(egarciar): Remove and use oslo.utils version of this function whenever
+# it is available for Neutron.
+# https://review.opendev.org/c/openstack/oslo.utils/+/925469
+def get_noscope_ipv6(address):
+    try:
+        _ipv6 = ipaddress.IPv6Address(address)
+        if _ipv6.scope_id:
+            address = address.removesuffix('%' + _ipv6.scope_id)
+        return address
+    except (ipaddress.AddressValueError, AttributeError):
+        if netutils.is_valid_ipv6(address):
+            parts = address.rsplit("%", 1)
+            return parts[0]
+        raise
