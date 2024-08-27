@@ -119,8 +119,8 @@ an IP address between two instances to enable fast data plane failover.
 
 .. note::
 
-   Currently, only the ML2 and VMware NSX plug-ins
-   support the allowed-address-pairs extension.
+   Currently, only the ML2 plug-in supports the allowed-address-pairs
+   extension.
 
 **Basic allowed-address-pairs operations.**
 
