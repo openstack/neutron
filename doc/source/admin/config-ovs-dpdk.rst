@@ -67,8 +67,7 @@ are used:
 * DPDK 16.07
 * QEMU 2.7
 
-The support of this feature is not yet present in ML2 OVN and ODL
-mechanism drivers.
+The support of this feature is not yet present in the ML2 OVN mechanism driver.
 
 Using vhost-user interfaces
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~

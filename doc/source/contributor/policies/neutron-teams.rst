@@ -143,8 +143,6 @@ updating the core review team for the sub-project's repositories.
 |                         +-----------------------------+-------------------+
 |                         | Dongcan Ye                  | yedongcan         |
 +-------------------------+-----------------------------+-------------------+
-| networking-odl          | Lajos Katona                | lajoskatona       |
-+-------------------------+-----------------------------+-------------------+
 | networking-sfc          | Dharmendra Kushwaha         | dkushwaha         |
 +-------------------------+-----------------------------+-------------------+
 | ovn-octavia-provider    | Luis Tomas Bolivar          | ltomasbo          |
