@@ -787,7 +787,8 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                         LOG.warning("Add static routes %s to OVN NB DB",
                                     sroute['add'])
                         for route in sroute['add']:
-                            columns = {}
+                            columns = {'external_ids': {
+                                       ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'}}
                             if 'external_ids' in route:
                                 columns['external_ids'] = route['external_ids']
                             txn.add(self.ovn_api.add_static_route(

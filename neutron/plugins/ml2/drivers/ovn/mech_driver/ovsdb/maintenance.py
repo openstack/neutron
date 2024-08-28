@@ -1282,6 +1282,49 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                     txn.add(cmd)
         raise periodics.NeverAgain()
 
+    # TODO(racosta): Remove this method in the E+2 cycle (SLURP release)
+    @has_lock_periodic(spacing=600, run_immediately=True)
+    def update_router_static_routes(self):
+        """Set external_ids column to any Neutron's owned static route.
+        """
+
+        context = n_context.get_admin_context()
+        sroute_update = []
+        lrouters = self._nb_idl.get_all_logical_routers_static_routes()
+        for router in lrouters:
+            sroutes = router['static_routes']
+            for sroute in sroutes:
+                # Skip Static Routes that are already configured with an
+                # external_id key
+                if (ovn_const.OVN_LRSR_EXT_ID_KEY not in
+                        sroute.external_ids.keys()):
+                    sroute_update.append({'sroute': sroute,
+                                          'name': router['name']})
+
+        routes_cache = {}
+        cmds = []
+        columns = {'external_ids': {ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'}}
+        for sroute in sroute_update:
+            lrouter = utils.ovn_name(sroute['name'])
+            if lrouter not in routes_cache.keys():
+                router_db = self._ovn_client._l3_plugin.get_router(context,
+                    sroute['name'], fields=['routes'])
+                routes_cache[lrouter] = router_db.get('routes')
+
+            ovn_route = sroute['sroute']
+            for db_route in routes_cache[lrouter]:
+                if (ovn_route.ip_prefix == db_route['destination'] and
+                        ovn_route.nexthop == db_route['nexthop']):
+                    cmds.append(self._nb_idl.set_static_route(sroute['sroute'],
+                                                              **columns))
+                    break
+
+        if cmds:
+            with self._nb_idl.transaction(check_error=True) as txn:
+                for cmd in cmds:
+                    txn.add(cmd)
+        raise periodics.NeverAgain()
+
 
 class HashRingHealthCheckPeriodics(object):
 

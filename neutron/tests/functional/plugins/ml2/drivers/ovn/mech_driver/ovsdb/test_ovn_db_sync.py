@@ -797,10 +797,12 @@ class TestOvnNbSync(base.TestOVNFunctionalBase):
                 txn.add(self.nb_api.delete_lrouter_port(lrport,
                                                         lrouter_name, True))
 
+            columns = {'external_ids': {ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'}}
             for lrouter_name, ip_prefix, nexthop in self.create_lrouter_routes:
                 txn.add(self.nb_api.add_static_route(lrouter_name,
                                                      ip_prefix=ip_prefix,
-                                                     nexthop=nexthop))
+                                                     nexthop=nexthop,
+                                                     **columns))
             routers = defaultdict(list)
             for lrouter_name, ip_prefix, nexthop in self.delete_lrouter_routes:
                 routers[lrouter_name].append((ip_prefix, nexthop))

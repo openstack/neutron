@@ -1250,6 +1250,88 @@ class TestMaintenance(_TestMaintenanceHelper):
             'false',
             ls.other_config.get(ovn_const.LS_OPTIONS_BROADCAST_ARPS_ROUTERS))
 
+    def test_static_routes_with_external_ids(self):
+        ext_net = self._create_network('ext_networktest', external=True)
+        ext_subnet = self._create_subnet(
+            'ext_subnettest',
+            ext_net['id'],
+            **{'cidr': '100.0.0.0/24',
+               'gateway_ip': '100.0.0.254',
+               'allocation_pools': [
+                   {'start': '100.0.0.2', 'end': '100.0.0.253'}],
+               'enable_dhcp': False})
+        net1 = self._create_network('network1test', external=False)
+        subnet1 = self._create_subnet('subnet1test', net1['id'])
+        external_gateway_info = {
+            'enable_snat': True,
+            'network_id': ext_net['id'],
+            'external_fixed_ips': [
+                {'ip_address': '100.0.0.2', 'subnet_id': ext_subnet['id']}]}
+        router = self._create_router(
+            'routertest', external_gateway_info=external_gateway_info)
+        self._add_router_interface(router['id'], subnet1['id'])
+
+        # Create static routes via Neutron
+        with mock.patch.object(self.nb_api,
+                'add_static_route', columns=None):
+            self.l3_plugin.update_router(
+                self.context, router['id'],
+                {'router': {'routes': [{'destination': '10.10.0.0/24',
+                                        'nexthop': '100.0.0.3'},
+                                       {'destination': '20.0.0.0/24',
+                                        'nexthop': '100.0.0.6'}]}})
+
+        # Create a Neutron owned static route with external_ids key
+        columns = {'external_ids': {ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'}}
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.add_static_route('neutron-' + router['id'],
+                                                 ip_prefix='10.10.0.0/24',
+                                                 nexthop='100.0.0.3',
+                                                 **columns))
+
+        # Create a Neutron owned static route without external_ids key
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.add_static_route('neutron-' + router['id'],
+                                                 ip_prefix='20.0.0.0/24',
+                                                 nexthop='100.0.0.6'))
+
+        # Create an OVN externally managed static route without external_ids
+        with self.nb_api.transaction(check_error=True) as txn:
+            txn.add(self.nb_api.add_static_route('neutron-' + router['id'],
+                                                 ip_prefix='30.0.0.0/24',
+                                                 nexthop='100.0.0.9'))
+
+        sroutes = self.nb_api.get_all_logical_routers_static_routes()[0]
+        sroute_info = sroutes['static_routes']
+        for route in sroute_info:
+            if route.ip_prefix == '10.10.0.0/24':
+                self.assertEqual(route.external_ids,
+                    {ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'})
+            if route.ip_prefix == '20.0.0.0/24':
+                self.assertEqual({}, route.external_ids)
+            if route.ip_prefix == '30.0.0.0/24':
+                self.assertEqual({}, route.external_ids)
+
+        # Call the maintenance task and check that the value has been
+        # updated in the external_ids.
+        self.assertRaises(periodics.NeverAgain,
+            self.maint.update_router_static_routes)
+
+        sroutes = self.nb_api.get_all_logical_routers_static_routes()[0]
+        sroute_info = sroutes['static_routes']
+        for route in sroute_info:
+            if route.ip_prefix == '10.10.0.0/24':
+                self.assertEqual(route.external_ids,
+                    {ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'})
+            # Check if the OVN static route was updated with the Neutron key
+            if route.ip_prefix == '20.0.0.0/24':
+                self.assertEqual(route.external_ids,
+                    {ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'})
+            # Check if the externally managed OVN static route remains
+            # without the Neutron key.
+            if route.ip_prefix == '30.0.0.0/24':
+                self.assertEqual({}, route.external_ids)
+
 
 class TestLogMaintenance(_TestMaintenanceHelper,
                          test_log_driver.LogApiTestCaseBase):

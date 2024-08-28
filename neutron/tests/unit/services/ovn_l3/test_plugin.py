@@ -119,7 +119,9 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                             'admin_state_up': False,
                             'flavor_id': None,
                             'routes': [{'destination': '1.1.1.0/24',
-                                        'nexthop': '10.0.0.2'}]}
+                                        'nexthop': '10.0.0.2',
+                                        'external_ids':
+                                        {'neutron:is_static_route': 'true'}}]}
         self.fake_router_interface_info = {
             'port_id': 'router-port-id',
             'device_id': '',
@@ -581,7 +583,9 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         mock_routes.return_value = self.fake_router['routes']
         new_router = self.fake_router.copy()
         updated_data = {'routes': [{'destination': '2.2.2.0/24',
-                                    'nexthop': '10.0.0.3'}]}
+                                    'nexthop': '10.0.0.3',
+                                    'external_ids':
+                                        {'neutron:is_static_route': 'true'}}]}
         new_router.update(updated_data)
         func.return_value = new_router
         payload = self._create_payload_for_router_update(self.fake_router,
@@ -591,7 +595,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                                             self, payload)
         self.l3_inst._nb_ovn.add_static_route.assert_called_once_with(
             'neutron-router-id',
-            ip_prefix='2.2.2.0/24', nexthop='10.0.0.3')
+            ip_prefix='2.2.2.0/24', nexthop='10.0.0.3',
+            external_ids={'neutron:is_static_route': 'true'})
         self.l3_inst._nb_ovn.delete_static_routes.assert_called_once_with(
             'neutron-router-id', [('1.1.1.0/24', '10.0.0.2')])
 
@@ -655,7 +660,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                       maintain_bfd=False,
                       external_ids={
                           ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
-                          ovn_const.OVN_SUBNET_EXT_ID_KEY: 'ext-subnet-id'})]
+                          ovn_const.OVN_SUBNET_EXT_ID_KEY: 'ext-subnet-id',
+                          ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'})]
         self.l3_inst._nb_ovn.set_lrouter_port_in_lswitch_port.\
             assert_called_once_with(
                 'gw-port-id', 'lrp-gw-port-id', is_gw_port=True,
@@ -835,7 +841,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             'neutron-router-id', ip_prefix='0.0.0.0/0',
             maintain_bfd=False,
             external_ids={ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
-                          ovn_const.OVN_SUBNET_EXT_ID_KEY: 'ext-subnet-id'},
+                          ovn_const.OVN_SUBNET_EXT_ID_KEY: 'ext-subnet-id',
+                          ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'},
             nexthop='192.168.1.254')
         self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-router-id', type='snat',
@@ -907,7 +914,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             nexthop='192.168.1.254',
             maintain_bfd=False,
             external_ids={ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
-                          ovn_const.OVN_SUBNET_EXT_ID_KEY: 'ext-subnet-id'})
+                          ovn_const.OVN_SUBNET_EXT_ID_KEY: 'ext-subnet-id',
+                          ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'})
         self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-router-id', type='snat', logical_ip='10.0.0.0/24',
             external_ip='192.168.1.1')
@@ -961,7 +969,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             nexthop='192.168.1.254',
             maintain_bfd=False,
             external_ids={ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
-                          ovn_const.OVN_SUBNET_EXT_ID_KEY: 'ext-subnet-id'})
+                          ovn_const.OVN_SUBNET_EXT_ID_KEY: 'ext-subnet-id',
+                          ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'})
         self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
             'neutron-router-id', type='snat', logical_ip='10.0.0.0/24',
             external_ip='192.168.1.1')
@@ -1017,7 +1026,8 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
             'neutron-router-id', ip_prefix='0.0.0.0/0',
             maintain_bfd=False,
             external_ids={ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
-                          ovn_const.OVN_SUBNET_EXT_ID_KEY: 'ext-subnet-id'},
+                          ovn_const.OVN_SUBNET_EXT_ID_KEY: 'ext-subnet-id',
+                          ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'},
             nexthop='192.168.1.254')
         self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_not_called()
 
@@ -2163,7 +2173,8 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
         super(OVNL3ExtrarouteTests, self). \
             test_update_subnet_gateway_for_external_net()
         self.l3_inst._nb_ovn.add_static_route.assert_called_once_with(
-            'neutron-fake_device', ip_prefix='0.0.0.0/0', nexthop='120.0.0.2')
+            'neutron-fake_device', ip_prefix='0.0.0.0/0', nexthop='120.0.0.2',
+            external_ids={'neutron:is_static_route': 'true'})
         self.l3_inst._nb_ovn.delete_static_routes.assert_called_once_with(
             'neutron-fake_device', [('0.0.0.0/0', '120.0.0.1')])
 
@@ -2172,7 +2183,8 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
             test_router_update_gateway_upon_subnet_create_max_ips_ipv6()
         expected_ext_ids = {
                 ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
-                ovn_const.OVN_SUBNET_EXT_ID_KEY: mock.ANY}
+                ovn_const.OVN_SUBNET_EXT_ID_KEY: mock.ANY,
+                ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'}
         add_static_route_calls = [
             mock.call(mock.ANY, ip_prefix='0.0.0.0/0', nexthop='10.0.0.1',
                 maintain_bfd=False, external_ids=expected_ext_ids),

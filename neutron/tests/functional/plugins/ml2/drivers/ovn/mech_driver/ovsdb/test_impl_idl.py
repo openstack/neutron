@@ -665,6 +665,36 @@ class TestNbApi(BaseOvnIdlTest):
 
         self._assert_routes_exist(lr_name, 0)
 
+    def test_modify_static_route_external_ids(self):
+        lr_name = 'router_with_static_routes_and_external_ids'
+        columns = {
+            'bfd': [],
+            'external_ids': {'fake_eid_key': 'fake_eid_value'},
+            'ip_prefix': '0.0.0.0/0',
+            'nexthop': '192.0.2.1',
+            'options': {'fake_option_key': 'fake_option_value'},
+            'output_port': [],
+            'policy': ['dst-ip'],
+            'route_table': '',
+        }
+        with self.nbapi.transaction(check_error=True) as txn:
+            r = self._add_static_route(txn, lr_name, '', **columns)
+
+        # modify the external_ids
+        new_ids = {'external_ids': {'fake_eid_key': 'fake_eid_value',
+                                    ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'}}
+
+        with self.nbapi.transaction(check_error=True) as txn:
+            txn.add(self.nbapi.set_static_route(r.result.static_routes[0],
+                                                **new_ids))
+
+        lr = self.nbapi.lookup('Logical_Router', lr_name)
+
+        external_ids = {'fake_eid_key': 'fake_eid_value',
+                        ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'}
+
+        self.assertEqual(external_ids, lr.static_routes[0].external_ids)
+
 
 class TestIgnoreConnectionTimeout(BaseOvnIdlTest):
     @classmethod
