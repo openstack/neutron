@@ -165,7 +165,7 @@ the default set of quotas are enforced for all projects, so no
    .. note::
 
       Only some plug-ins support per-project quotas.
-      Specifically, OVN, Open vSwitch, Linux Bridge, and VMware NSX
+      Specifically, OVN, Open vSwitch, and Linux Bridge
       support them, but new versions of other plug-ins might
       bring additional functionality. See the documentation for
       each plug-in.
