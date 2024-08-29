@@ -174,7 +174,7 @@ To release a sub-project, follow the following steps:
 * The Neutron release liaison votes with +1 for the openstack/releases patch.
 * The releases will now be on PyPI. A sub-project owner should verify this by
   going to an URL similar to
-  `this <https://pypi.org/simple/networking-odl>`_.
+  `this <https://pypi.org/simple/networking-sfc>`_.
 * A sub-project owner should next go to Launchpad and release this version
   using the "Release Now" button for the release itself.
 * If a sub-project uses the "delay-release" option, a sub-project owner should
