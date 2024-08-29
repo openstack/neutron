@@ -229,6 +229,12 @@ ovn_opts = [
                        'if the target MAC address matches. ARP requests that '
                        'do not match a router will only be forwarded to '
                        'non-router ports. Supported by OVN >= 23.06.')),
+    cfg.BoolOpt('ovn_router_indirect_snat',
+                default=False,
+                help=_('Whether to configure SNAT for all nested subnets '
+                       'connected to the router through any other routers, '
+                       'similar to the default ML2/OVS behavior. Defaults to '
+                       '"False".')),
 ]
 
 nb_global_opts = [
@@ -392,3 +398,7 @@ def get_ovn_mac_binding_removal_limit():
 
 def is_broadcast_arps_to_all_routers_enabled():
     return cfg.CONF.ovn.broadcast_arps_to_all_routers
+
+
+def is_ovn_router_indirect_snat_enabled():
+    return cfg.CONF.ovn.ovn_router_indirect_snat
