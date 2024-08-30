@@ -12,10 +12,17 @@
 
 """WSGI application entry-point for Neutron API."""
 
-import threading
+# NOTE: the WSGI module needs to monkey patch the libraries before any other
+# module loads them. That will prevent the recursion error in the SSL library
+# reported in LP#2075147
+# pylint: disable=wrong-import-position
+from neutron.common import eventlet_utils
+eventlet_utils.monkey_patch()
 
-from neutron import server
-from neutron.server import api_eventlet
+import threading  # noqa:E402
+
+from neutron import server  # noqa:E402
+from neutron.server import api_eventlet  # noqa:E402
 
 application = None
 lock = threading.Lock()
