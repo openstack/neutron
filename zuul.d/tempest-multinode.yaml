@@ -581,12 +581,10 @@
       devstack_localrc:
         OVN_BUILD_FROM_SOURCE: True
         OVN_BRANCH: main
-        # NOTE(ykarel): OVN main branch following OVS stable branch
-        OVS_BRANCH: branch-3.4
+        OVS_BRANCH: main
     group-vars:
       subnode:
         devstack_localrc:
           OVN_BUILD_FROM_SOURCE: True
           OVN_BRANCH: main
-          # NOTE(ykarel): OVN main branch following OVS stable branch
-          OVS_BRANCH: branch-3.4
+          OVS_BRANCH: main
