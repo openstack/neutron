@@ -1190,6 +1190,11 @@ class TestAgentApi(base.TestOVNFunctionalBase):
         agent = {'agent_type': self.TEST_AGENT, 'binary': '/bin/test',
                  'host': self.host, 'topic': 'test_topic'}
         _, status = self.plugin.create_or_update_agent(self.context, agent)
+        # Ensure the non OVN agent has been correctly created.
+        self.assertEqual(
+            status['id'],
+            self.plugin.get_agent(self.context, status['id'])['id']
+        )
         return status['id']
 
     def _check_chassis_registers(self, present=True):
