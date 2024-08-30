@@ -146,10 +146,9 @@ Currently we have in that queue jobs like listed below.
     |                                              |test using latest OVS and OVN LTS |       |                  |             |                 |          |       |        |            |             |
     |                                              |branches                          |       |                  |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
-    |neutron-ovn-tempest-with-neutron-lib-master   |tempest.api (without slow tests)  |   1   | Ubuntu Jammy     | openvswitch | openvswitch     | legacy   | False | False  | True       | No          |
-    |                                              |tempest.scenario                  |       |                  |             |                 |          |       |        |            |             |
-    |                                              |(only tests related to            |       |                  |             |                 |          |       |        |            |             |
-    |                                              |Neutron and Nova)                 |       |                  |             |                 |          |       |        |            |             |
+    |neutron-ovn-tempest-with-neutron-lib-master   |Various tempest api and scenario  |   1   | Ubuntu Jammy     | ovn         | ovn             | ---      | ---   | ---    | ---        | No          |
+    |                                              |tests using main neutron-lib      |       |                  |             |                 |          |       |        |            |             |
+    |                                              |branch                            |       |                  |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-ovn-tempest-ipv6-only-ovs-master      |tempest.api (without slow tests)  |   1   | Ubuntu Jammy     | ovn         | ovn             | ---      | False | False  | True       | Yes         |
     |                                              |(only tests related to            |       |                  |             |                 |          |       |        |            |             |
