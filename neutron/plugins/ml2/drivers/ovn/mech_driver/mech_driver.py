@@ -26,7 +26,6 @@ import uuid
 from neutron_lib.api.definitions import portbindings
 from neutron_lib.api.definitions import provider_net
 from neutron_lib.api.definitions import segment as segment_def
-from neutron_lib.api.definitions import stateful_security_group
 from neutron_lib.callbacks import events
 from neutron_lib.callbacks import registry
 from neutron_lib.callbacks import resources
@@ -230,10 +229,7 @@ class OVNMechanismDriver(api.MechanismDriver):
         return portbindings.CONNECTIVITY_L2
 
     def supported_extensions(self, extensions):
-        supported_extensions = set(ovn_extensions.ML2_SUPPORTED_API_EXTENSIONS)
-        if not cfg.CONF.ovn.allow_stateless_action_supported:
-            supported_extensions.discard(stateful_security_group.ALIAS)
-        return set(supported_extensions) & extensions
+        return set(ovn_extensions.ML2_SUPPORTED_API_EXTENSIONS) & extensions
 
     @staticmethod
     def provider_network_attribute_updates_supported():
@@ -430,13 +426,8 @@ class OVNMechanismDriver(api.MechanismDriver):
         security_group = payload.latest_state
 
         old_state, new_state = payload.states
-        is_allow_stateless_supported = (
-            self._ovn_client.is_allow_stateless_supported()
-        )
-        old_stateful = ovn_acl.is_sg_stateful(
-            old_state, is_allow_stateless_supported)
-        new_stateful = ovn_acl.is_sg_stateful(
-            new_state, is_allow_stateless_supported)
+        old_stateful = ovn_acl.is_sg_stateful(old_state)
+        new_stateful = ovn_acl.is_sg_stateful(new_state)
         if old_stateful != new_stateful:
             for rule in self._plugin.get_security_group_rules(
                     context, {'security_group_id': [security_group['id']]}):

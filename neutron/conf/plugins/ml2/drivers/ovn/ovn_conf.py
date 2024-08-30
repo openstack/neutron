@@ -194,15 +194,6 @@ ovn_opts = [
                        'provisioning over IPv6 this option should be set '
                        'to "True" and neutron-dhcp-agent should be used '
                        'instead. Defaults to "False".')),
-    cfg.BoolOpt('allow_stateless_action_supported',
-                default=True,
-                deprecated_for_removal=True,
-                deprecated_since="2023.1",
-                help=_('If OVN older than 21.06 is used together with '
-                       'Neutron, this option should be set to ``False`` in '
-                       'order to disable the ``stateful-security-group`` API '
-                       'extension as ``allow-stateless`` keyword is only '
-                       'supported by OVN >= 21.06.')),
     cfg.BoolOpt('localnet_learn_fdb',
                 default=False,
                 help=_('If enabled it will allow localnet ports to learn MAC '

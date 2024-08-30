@@ -142,11 +142,6 @@ class OVNClient(object):
         return self._nb_idl.is_col_present(
             'Logical_Switch_Port', 'ha_chassis_group')
 
-    # TODO(ihrachys) remove when min OVN version >= 21.06
-    def is_allow_stateless_supported(self):
-        return self._nb_idl.is_col_supports_value('ACL', 'action',
-                                                  'allow-stateless')
-
     def _get_allowed_addresses_from_port(self, port):
         if not port.get(psec.PORTSECURITY):
             return [], []
@@ -2539,8 +2534,7 @@ class OVNClient(object):
             # When a SG is created, it comes with some default rules,
             # so we'll apply them to the Port Group.
             ovn_acl.add_acls_for_sg_port_group(
-                self._nb_idl, security_group, txn,
-                self.is_allow_stateless_supported())
+                self._nb_idl, security_group, txn)
         db_rev.bump_revision(
             context, security_group, ovn_const.TYPE_SECURITY_GROUPS)
 
@@ -2565,8 +2559,7 @@ class OVNClient(object):
         ovn_acl.update_acls_for_security_group(
             self._plugin, admin_context, self._nb_idl,
             rule['security_group_id'], rule,
-            is_add_acl=is_add_acl,
-            stateless_supported=self.is_allow_stateless_supported())
+            is_add_acl=is_add_acl)
 
     def create_security_group_rule(self, context, rule):
         self._process_security_group_rule(rule)

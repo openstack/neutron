@@ -260,24 +260,17 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         LOG.debug('OVN-NB Sync ACLs started @ %s', str(datetime.now()))
 
         neutron_acls = []
-        # if allow-stateless supported, we have to fetch groups to determine if
-        # stateful is set
-        if self._ovn_client.is_allow_stateless_supported():
-            for sg in self.core_plugin.get_security_groups(ctx):
-                stateful = sg.get("stateful", True)
-                pg_name = utils.ovn_port_group_name(sg['id'])
-                for sgr in self.core_plugin.get_security_group_rules(
-                        ctx, {'security_group_id': sg['id']}):
-                    neutron_acls.append(
-                        acl_utils._add_sg_rule_acl_for_port_group(
-                            pg_name, stateful, sgr)
-                    )
-        else:
-            # TODO(ihrachys) remove when min OVN version >= 21.06
-            for sgr in self.core_plugin.get_security_group_rules(ctx):
-                pg_name = utils.ovn_port_group_name(sgr['security_group_id'])
-                neutron_acls.append(acl_utils._add_sg_rule_acl_for_port_group(
-                    pg_name, True, sgr))
+        # we have to fetch groups to determine if stateful is set
+        for sg in self.core_plugin.get_security_groups(ctx):
+            stateful = sg.get("stateful", True)
+            pg_name = utils.ovn_port_group_name(sg['id'])
+            for sgr in self.core_plugin.get_security_group_rules(
+                    ctx, {'security_group_id': sg['id']}):
+                neutron_acls.append(
+                    acl_utils._add_sg_rule_acl_for_port_group(
+                        pg_name, stateful, sgr)
+                )
+
         # Sort the acls in the Neutron database according to the security
         # group rule ID for easy comparison in the future.
         neutron_acls.sort(key=lambda x: x[ovn_const.OVN_SG_RULE_EXT_ID_KEY])

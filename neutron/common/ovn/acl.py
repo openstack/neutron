@@ -261,15 +261,12 @@ def _acl_columns_name_severity_supported(nb_idl):
     return ('name' in columns) and ('severity' in columns)
 
 
-def is_sg_stateful(sg, stateless_supported):
-    if stateless_supported:
-        return sg.get("stateful", True)
-    return True
+def is_sg_stateful(sg):
+    return sg.get("stateful", True)
 
 
-def add_acls_for_sg_port_group(ovn, security_group, txn,
-                               stateless_supported=True):
-    stateful = is_sg_stateful(security_group, stateless_supported)
+def add_acls_for_sg_port_group(ovn, security_group, txn):
+    stateful = is_sg_stateful(security_group)
     for r in security_group['security_group_rules']:
         acl = _add_sg_rule_acl_for_port_group(
             utils.ovn_port_group_name(security_group['id']), stateful, r)
@@ -281,8 +278,7 @@ def update_acls_for_security_group(plugin,
                                    ovn,
                                    security_group_id,
                                    security_group_rule,
-                                   is_add_acl=True,
-                                   stateless_supported=True):
+                                   is_add_acl=True):
 
     # Skip ACLs if security groups aren't enabled
     if not is_sg_enabled():
@@ -292,7 +288,7 @@ def update_acls_for_security_group(plugin,
     keep_name_severity = _acl_columns_name_severity_supported(ovn)
 
     sg = plugin.get_security_group(admin_context, security_group_id)
-    stateful = is_sg_stateful(sg, stateless_supported)
+    stateful = is_sg_stateful(sg)
 
     acl = _add_sg_rule_acl_for_port_group(
         utils.ovn_port_group_name(security_group_id),
