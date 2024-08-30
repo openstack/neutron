@@ -41,7 +41,7 @@ class PortHardwareOffloadTypeDbMixin(object):
             if hw_type not in capabilities:
                 capabilities.append(hw_type)
             data[portbindings.PROFILE]['capabilities'] = capabilities
-        except KeyError:
+        except (AttributeError, KeyError):
             data[portbindings.PROFILE] = {'capabilities': [hw_type]}
 
     def _extend_port_dict(self, port_db, result):
