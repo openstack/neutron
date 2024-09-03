@@ -47,7 +47,17 @@ class TagPlugin(tagging.TagPluginBase):
     def _extend_tags_dict(response_data, db_data):
         if not directory.get_plugin(tagging.TAG_PLUGIN_TYPE):
             return
-        tags = [tag_db.tag for tag_db in db_data.standard_attr.tags]
+        try:
+            tags = [tag_db.tag for tag_db in db_data.standard_attr.tags]
+        except AttributeError:
+            # NOTE(ralonsoh): this method can be called from a "list"
+            # operation. If one resource and its "standardattr" register is
+            # deleted concurrently, the "standard_attr" field retrieval will
+            # fail.
+            # The "list" operation is protected with a READER transaction
+            # context; however this is failing with the DB PostgreSQL backend.
+            # https://bugs.launchpad.net/neutron/+bug/2078787
+            tags = []
         response_data['tags'] = tags
 
     @db_api.CONTEXT_READER
