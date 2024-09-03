@@ -76,12 +76,6 @@
       jobs:
         - neutron-functional-with-uwsgi-with-neutron-lib-master
         - neutron-fullstack-with-uwsgi-with-neutron-lib-master
-        - neutron-ovn-tempest-full-multinode-ovs-master
-        - neutron-ovn-tempest-full-multinode-ovs-lts
-        - neutron-ovn-tempest-ovs-master
-        - neutron-ovn-tempest-ovs-lts
-        - neutron-ovn-tempest-plugin-ovs-master
-        - neutron-ovn-tempest-plugin-ovs-lts
         - neutron-ovn-tempest-ovs-release
         - neutron-ovs-tempest-with-neutron-lib-master
         - neutron-ovn-tempest-with-uwsgi-loki
@@ -118,6 +112,12 @@
         - neutron-ovn-tempest-mariadb-full
         - neutron-ovn-tempest-ipv6-only-ovs-master
         - neutron-ovn-tempest-ovs-master-centos-9-stream
+        - neutron-ovn-tempest-full-multinode-ovs-master
+        - neutron-ovn-tempest-full-multinode-ovs-lts
+        - neutron-ovn-tempest-ovs-master
+        - neutron-ovn-tempest-ovs-lts
+        - neutron-ovn-tempest-plugin-ovs-master
+        - neutron-ovn-tempest-plugin-ovs-lts
         - neutron-ovn-tempest-with-neutron-lib-master
         - neutron-ovn-tempest-with-sqlalchemy-master
         - neutron-ovs-tempest-with-sqlalchemy-master
