@@ -127,11 +127,24 @@ Currently we have in that queue jobs like listed below.
     |neutron-ovn-tempest-full-multinode-ovs-master |Various tempest api and scenario  |   2   | Ubuntu Jammy     | ovn         | ovn             | ---      | ---   | ---    | ---        | No          |
     |                                              |tests                             |       |                  |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-ovn-tempest-full-multinode-ovs-lts    |Various tempest api and scenario  |   2   | Ubuntu Jammy     | ovn         | ovn             | ---      | ---   | ---    | ---        | No          |
+    |                                              |tests using latest OVS and OVN    |       |                  |             |                 |          |       |        |            |             |
+    |                                              |LTS branches                          |       |                  |             |                 |          |       |        |            |             |
+    +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-ovn-tempest-ovs-master                |Various tempest api and scenario  |   1   | Ubuntu Jammy     | ovn         | ovn             | ---      | ---   | ---    | ---        | No          |
-    |                                              |tests                     |       |                  |             |                 |          |       |        |            |             |
+    |                                              |tests                             |       |                  |             |                 |          |       |        |            |             |
+    +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-ovn-tempest-ovs-lts                   |Various tempest api and scenario  |   1   | Ubuntu Jammy     | ovn         | ovn             | ---      | ---   | ---    | ---        | No          |
+    |                                              |tests using latest OVS and OVN    |       |                  |             |                 |          |       |        |            |             |
+    |                                              |LTS branches                          |       |                  |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-ovn-tempest-plugin-ovs-master         |Various tempest api, scenario     |   1   | Ubuntu Jammy     | ovn         | ovn             | ---      | ---   | ---    | ---        | No          |
     |                                              |and neutron_tempest_plugin tests  |       |                  |             |                 |          |       |        |            |             |
+    +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
+    |neutron-ovn-tempest-plugin-ovs-lts            |Various tempest api, scenario     |   1   | Ubuntu Jammy     | ovn         | ovn             | ---      | ---   | ---    | ---        | No          |
+    |                                              |and neutron_tempest_plugin        |       |                  |             |                 |          |       |        |            |             |
+    |                                              |test using latest OVS and OVN LTS |       |                  |             |                 |          |       |        |            |             |
+    |                                              |branches                          |       |                  |             |                 |          |       |        |            |             |
     +----------------------------------------------+----------------------------------+-------+------------------+-------------+-----------------+----------+-------+--------+------------+-------------+
     |neutron-ovn-tempest-with-neutron-lib-master   |tempest.api (without slow tests)  |   1   | Ubuntu Jammy     | openvswitch | openvswitch     | legacy   | False | False  | True       | No          |
     |                                              |tempest.scenario                  |       |                  |             |                 |          |       |        |            |             |

@@ -682,6 +682,17 @@
         OVS_BRANCH: main
 
 - job:
+    name: neutron-ovn-tempest-ovs-lts
+    branches: ^master$
+    description: Job testing for devstack/tempest testing Neutron with ovn driver and the latest OVN LTS branch
+    parent: neutron-ovn-base
+    vars:
+      devstack_localrc:
+        OVN_BUILD_FROM_SOURCE: True
+        OVN_BRANCH: branch-24.03
+        OVS_BRANCH: branch-3.3
+
+- job:
     name: neutron-ovn-tempest-plugin-ovs-master
     branches: ^master$
     description: Job testing Neutron tempest plugin with ovn driver and OVN master branch
@@ -691,6 +702,17 @@
         OVN_BUILD_FROM_SOURCE: True
         OVN_BRANCH: main
         OVS_BRANCH: main
+
+- job:
+    name: neutron-ovn-tempest-plugin-ovs-lts
+    branches: ^master$
+    description: Job testing Neutron tempest plugin with ovn driver and the latest OVN LTS branch
+    parent: neutron-tempest-plugin-ovn
+    vars:
+      devstack_localrc:
+        OVN_BUILD_FROM_SOURCE: True
+        OVN_BRANCH: branch-24.03
+        OVS_BRANCH: branch-3.3
 
 - job:
     name: neutron-ovn-tempest-ovs-release-with-oslo-master
