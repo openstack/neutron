@@ -15,9 +15,11 @@ from unittest import mock
 
 from neutron_lib.callbacks import events
 from neutron_lib import constants as const
+from oslo_utils import uuidutils
 
 from neutron.db.models import l3
 from neutron.db.models import l3_attrs
+from neutron.objects import router as l3_obj
 from neutron.services.ovn_l3.service_providers import user_defined
 from neutron.tests.unit import testlib_api
 
@@ -159,3 +161,112 @@ class TestUserDefined(testlib_api.SqlTestCase):
         self.provider._process_precommit_router_create('resource', 'event',
                                                        self, payload)
         self.assertTrue(self.router['extra_attributes'].ha)
+
+
+class TestUserDefinedNoLsp(testlib_api.SqlTestCase):
+
+    def setUp(self):
+        super(TestUserDefinedNoLsp, self).setUp()
+        self.setup_coreplugin(DB_PLUGIN_KLASS)
+        self.fake_l3 = mock.MagicMock()
+        self.fake_l3._make_router_interface_info = mock.MagicMock(
+            return_value='router_interface_info')
+        self.provider = user_defined.UserDefinedNoLsp(self.fake_l3)
+        self.context = mock.MagicMock()
+        self.router = l3.Router(id='fake-uuid',
+                                flavor_id='fake-uuid')
+        mock_flavor_plugin = mock.MagicMock()
+        mock_flavor_plugin.get_flavor = mock.MagicMock(
+            return_value={'id': 'fake-uuid'})
+        mock_flavor_plugin.get_flavor_next_provider = mock.MagicMock(
+            return_value=[{'driver': self.provider._user_defined_provider}])
+        self.provider._flavor_plugin_ref = mock_flavor_plugin
+
+    @mock.patch.object(user_defined.LOG, 'debug')
+    def test__add_router_interface(self, log_mock):
+        payload = events.DBEventPayload(
+            self.context,
+            states=(self.router, self.router),
+            resource_id=self.router['id'],
+            metadata={'subnet_ids': ['subnet-id'],
+                      'port': {'tenant_id': 'tenant-id',
+                               'id': 'id',
+                               'network_id': 'network-id'},
+                      'subnets': [{'id': 'id'}]})
+        fl_plg = self.provider._flavor_plugin_ref
+        l3_plg = self.fake_l3
+        self.provider._process_add_router_interface('resource',
+                                                    'event',
+                                                    self,
+                                                    payload)
+        l3_plg._make_router_interface_info.assert_called_once()
+        fl_plg.get_flavor.assert_called_once()
+        fl_plg.get_flavor_next_provider.assert_called_once()
+        l3_plg._ovn_client.delete_port.assert_called_once()
+        log_mock.assert_called_once()
+
+    @mock.patch.object(l3_obj.RouterPort, 'get_objects')
+    @mock.patch.object(l3_obj.Router, 'get_object')
+    @mock.patch.object(user_defined.LOG, 'debug')
+    def _test__process_before_remove_router_interface(self, port_exists,
+                                                      log_mock, grouter_mock,
+                                                      get_objects_mock):
+        payload = events.DBEventPayload(
+            self.context,
+            resource_id=self.router['id'],
+            metadata={'subnet_id': 'subnet-id'})
+        grouter_mock.return_value = {'id': 'fake-uuid',
+                                     'flavor_id': 'fake-uuid'}
+        nbdb_idl_mock = mock.MagicMock()
+        nbdb_idl_mock.lookup = mock.MagicMock()
+        if port_exists:
+            nbdb_idl_mock.lookup.return_value = 'a-port'
+        else:
+            nbdb_idl_mock.lookup.return_value = None
+        self.fake_l3._ovn_client = mock.MagicMock()
+        self.fake_l3._ovn_client._nb_idl = nbdb_idl_mock
+
+        port_id = uuidutils.generate_uuid()
+        other_port_id = uuidutils.generate_uuid()
+        rp = l3_obj.RouterPort(
+                self.context,
+                port_id=port_id,
+                router_id=uuidutils.generate_uuid(),
+                port_type=const.DEVICE_OWNER_ROUTER_INTF)
+        rp.create()
+        other_rp = l3_obj.RouterPort(
+                self.context,
+                port_id=other_port_id,
+                router_id=uuidutils.generate_uuid(),
+                port_type=const.DEVICE_OWNER_ROUTER_INTF)
+        other_rp.create()
+        get_objects_mock.return_value = [rp, other_rp]
+
+        gen_ports = (port for port in
+                     [{'id': other_port_id,
+                       'fixed_ips': [{'subnet_id': 'other-subnet-id'}],
+                       'standard_attr_id': 'standard_attr_id'},
+                      {'id': port_id,
+                       'fixed_ips': [{'subnet_id': 'subnet-id'}],
+                       'standard_attr_id': 'standard_attr_id'}])
+        self.fake_l3._plugin = mock.MagicMock()
+        self.fake_l3._plugin._make_port_dict = mock.MagicMock(
+            side_effect=lambda p: next(gen_ports))
+
+        self.provider._process_before_remove_router_interface('resource',
+                                                              'event',
+                                                              self,
+                                                              payload)
+
+        if port_exists:
+            self.fake_l3._ovn_client.create_port.assert_not_called()
+            log_mock.assert_not_called()
+        else:
+            self.fake_l3._ovn_client.create_port.assert_called_once()
+            log_mock.assert_called_once()
+
+    def test__process_before_remove_router_interface_port_exists(self):
+        self._test__process_before_remove_router_interface(True)
+
+    def test__process_before_remove_router_interface_port_doesnt_exist(self):
+        self._test__process_before_remove_router_interface(False)

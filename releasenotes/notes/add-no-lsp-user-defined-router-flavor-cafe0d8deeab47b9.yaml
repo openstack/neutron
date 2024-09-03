@@ -1,0 +1,8 @@
+---
+features:
+    - A new sample OVN user defined router flavor driver has been added that
+      enables the creation of router interfaces with no associated underlying
+      Logical Switch Ports. In this scenario, Neutron only acts as the
+      IP address manager for the router interfaces. This enables user defined
+      router flavors to have total control of the traffic traversing the
+      router interfaces while bypassing the OVN processing.
