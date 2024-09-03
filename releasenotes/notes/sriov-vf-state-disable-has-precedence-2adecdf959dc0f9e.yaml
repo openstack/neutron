@@ -1,0 +1,7 @@
+---
+security:
+  - |
+    A ML2/SR-IOV port with status=DOWN will always set the VF link state to
+    "disable", regardless of the ``propagate_uplink_status`` port field value.
+    The port disabling, to stop any transmission, has precedence over the
+    link state "auto" value.
