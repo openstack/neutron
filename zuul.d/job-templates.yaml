@@ -41,10 +41,6 @@
             vars:
               configure_swap_size: 4096
             irrelevant-files:  *irrelevant-files
-        - openstack-tox-py311-with-sqlalchemy-master:
-            timeout: 3600
-            irrelevant-files: *irrelevant-files
-            voting: false
     check-arm64:
       jobs:
         - openstack-tox-py39-arm64: # from openstack-python3-jobs-arm64 template
@@ -130,6 +126,9 @@
         - openstack-tox-py39-with-oslo-master:
             timeout: 3600
             irrelevant-files:  *irrelevant-files
+        - openstack-tox-py311-with-sqlalchemy-master:
+            timeout: 3600
+            irrelevant-files: *irrelevant-files
         - neutron-functional-with-oslo-master
         - neutron-ovs-tempest-with-oslo-master
         - neutron-ovn-tempest-ovs-release-with-oslo-master
