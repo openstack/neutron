@@ -63,7 +63,7 @@ class OVNGatewayScheduler(object, metaclass=abc.ABCMeta):
         existing_chassis = existing_chassis or []
         candidates = candidates or []
         candidates = list(set(candidates) - set(existing_chassis))
-        # If no candidates, or gateway scheduled on MAX_GATEWAY_CHASSIS nodes
+        # If no candidates, or gateway scheduled on MAX_GW_CHASSIS nodes
         # or all candidates in existing_chassis, return existing_chassis.
         # Otherwise, if more candidates present, then schedule them.
         if existing_chassis:
