@@ -43,7 +43,6 @@ from neutron_lib.api.definitions import network_mtu as mtu_apidef
 from neutron_lib.api.definitions import network_mtu_writable as mtuw_apidef
 from neutron_lib.api.definitions import port as port_def
 from neutron_lib.api.definitions import port_device_profile as pdp_def
-from neutron_lib.api.definitions import port_hardware_offload_type as phot_def
 from neutron_lib.api.definitions import port_mac_address_override
 from neutron_lib.api.definitions import port_mac_address_regenerate
 from neutron_lib.api.definitions import port_numa_affinity_policy as pnap_def
@@ -246,7 +245,6 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                     port_mac_address_override.ALIAS,
                                     sg_default_rules_ext.ALIAS,
                                     sg_rules_default_sg.ALIAS,
-                                    phot_def.ALIAS,
                                     ]
 
     # List of agent types for which all binding_failed ports should try to be
