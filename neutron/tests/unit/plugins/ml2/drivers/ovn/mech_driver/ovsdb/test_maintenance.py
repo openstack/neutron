@@ -834,7 +834,7 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         self._test_check_redirect_type_router_gateway_ports(
             networks, False, flavored_router=True)
 
-    def _test_check_vlan_distributed_ports(self, opt_value=None):
+    def _test_check_provider_distributed_ports(self, opt_value=None):
         fake_net0 = {'id': 'net0'}
         fake_net1 = {'id': 'net1'}
         fake_port0 = {'id': 'port0', 'device_id': 'device0'}
@@ -856,18 +856,18 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         # Invoke the periodic method, it meant to run only once at startup
         # so NeverAgain will be raised at the end
         self.assertRaises(periodics.NeverAgain,
-                          self.periodic.check_vlan_distributed_ports)
+                          self.periodic.check_provider_distributed_ports)
 
-    def test_check_vlan_distributed_ports_expected_value(self):
-        self._test_check_vlan_distributed_ports(opt_value='true')
+    def test_check_provider_distributed_ports_expected_value(self):
+        self._test_check_provider_distributed_ports(opt_value='true')
 
         # If the "reside-on-redirect-chassis" option value do match
         # the expected value, assert we do not update the database
         self.assertFalse(
             self.fake_ovn_client._nb_idl.db_set.called)
 
-    def test_check_vlan_distributed_ports_non_expected_value(self):
-        self._test_check_vlan_distributed_ports(opt_value='false')
+    def test_check_provider_distributed_ports_non_expected_value(self):
+        self._test_check_provider_distributed_ports(opt_value='false')
 
         # If the "reside-on-redirect-chassis" option value does not match
         # the expected value, assert we update the database

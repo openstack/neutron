@@ -1684,12 +1684,12 @@ class OVNClient(object):
         network_type = ls.external_ids[ovn_const.OVN_NETTYPE_EXT_ID_KEY]
         network_mtu = int(
             ls.external_ids[ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY])
-        # For VLAN type networks we need to set the
+        # For provider networks (VLAN, FLAT types) we need to set the
         # "reside-on-redirect-chassis" option so the routing for this
         # logical router port is centralized in the chassis hosting the
         # distributed gateway port.
         # https://github.com/openvswitch/ovs/commit/85706c34d53d4810f54bec1de662392a3c06a996
-        if network_type == const.TYPE_VLAN:
+        if network_type in [const.TYPE_VLAN, const.TYPE_FLAT]:
             reside_redir_ch = self._get_reside_redir_for_gateway_port(
                 port['device_id'])
             options[ovn_const.LRP_OPTIONS_RESIDE_REDIR_CH] = reside_redir_ch
