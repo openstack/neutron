@@ -140,6 +140,20 @@ class SystemAdminTests(SubnetAPITestCase):
             policy.enforce,
             self.context, 'create_subnet:service_types', self.alt_target)
 
+    def test_create_subnets_tags(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_subnets_tags', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_subnets_tags', self.target_net_alt_target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_subnets_tags', self.alt_target)
+
     def test_get_subnet(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -330,6 +344,16 @@ class AdminTests(SubnetAPITestCase):
             policy.enforce(
                 self.context, 'create_subnet:service_types', self.alt_target))
 
+    def test_create_subnets_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'create_subnets_tags', self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'create_subnets_tags',
+                           self.target_net_alt_target))
+        self.assertTrue(
+            policy.enforce(self.context, 'create_subnets_tags',
+                           self.alt_target))
+
     def test_get_subnet(self):
         self.assertTrue(
             policy.enforce(self.context, 'get_subnet', self.target))
@@ -475,6 +499,17 @@ class ProjectManagerTests(AdminTests):
             policy.enforce,
             self.context, 'create_subnet:service_types', self.alt_target)
 
+    def test_create_subnets_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'create_subnets_tags', self.target))
+        self.assertTrue(
+            policy.enforce(self.context, 'create_subnets_tags',
+                           self.target_net_alt_target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_subnets_tags', self.alt_target)
+
     def test_get_subnet(self):
         self.assertTrue(
             policy.enforce(self.context, 'get_subnet', self.target))
@@ -619,6 +654,20 @@ class ProjectReaderTests(ProjectMemberTests):
             policy.enforce,
             self.context, 'create_subnet', self.alt_target)
 
+    def test_create_subnets_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_subnets_tags', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_subnets_tags', self.target_net_alt_target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_subnets_tags', self.alt_target)
+
     def test_update_subnet(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
@@ -699,6 +748,12 @@ class ServiceRoleTests(SubnetAPITestCase):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'create_subnet:service_types', self.target)
+
+    def test_create_subnets_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_subnets_tags', self.target)
 
     def test_get_subnet(self):
         self.assertRaises(

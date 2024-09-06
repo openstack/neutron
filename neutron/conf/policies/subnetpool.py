@@ -35,6 +35,9 @@ ACTION_PUT_TAGS = [
     {'method': 'PUT', 'path': TAGS_PATH},
     {'method': 'PUT', 'path': TAG_PATH},
 ]
+ACTION_POST_TAGS = [
+    {'method': 'POST', 'path': TAGS_PATH},
+]
 ACTION_DELETE_TAGS = [
     {'method': 'DELETE', 'path': TAGS_PATH},
     {'method': 'DELETE', 'path': TAG_PATH},
@@ -99,6 +102,13 @@ rules = [
             check_str=neutron_policy.RULE_ADMIN_ONLY,
             deprecated_reason=DEPRECATED_REASON,
             deprecated_since=versionutils.deprecated.WALLABY)
+    ),
+    policy.DocumentedRuleDefault(
+        name='create_subnetpools_tags',
+        check_str=base.ADMIN_OR_PROJECT_MEMBER,
+        scope_types=['project'],
+        description='Create the subnetpool tags',
+        operations=ACTION_POST_TAGS
     ),
     policy.DocumentedRuleDefault(
         name='get_subnetpool',

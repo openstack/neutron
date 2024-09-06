@@ -38,6 +38,12 @@ class SystemAdminTests(NetworkSegmentRangeAPITestCase):
             policy.enforce,
             self.context, 'create_network_segment_range', self.target)
 
+    def test_create_network_segment_ranges_tags(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_network_segment_ranges_tags', self.target)
+
     def test_get_network_segment_range(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -100,6 +106,11 @@ class AdminTests(NetworkSegmentRangeAPITestCase):
             policy.enforce(self.context,
                            'create_network_segment_range', self.target))
 
+    def test_create_network_segment_ranges_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context,
+                           'create_network_segment_ranges_tags', self.target))
+
     def test_get_network_segment_range(self):
         self.assertTrue(
             policy.enforce(self.context,
@@ -142,6 +153,12 @@ class ProjectManagerTests(AdminTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'create_network_segment_range', self.target)
+
+    def test_create_network_segment_ranges_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_network_segment_ranges_tags', self.target)
 
     def test_get_network_segment_range(self):
         self.assertRaises(
@@ -205,6 +222,12 @@ class ServiceRoleTests(NetworkSegmentRangeAPITestCase):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'create_network_segment_range', self.target)
+
+    def test_create_network_segment_ranges_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_network_segment_ranges_tags', self.target)
 
     def test_get_network_segment_range(self):
         self.assertRaises(

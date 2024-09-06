@@ -24,7 +24,6 @@ from neutron_lib import exceptions
 from neutron_lib.plugins import directory
 from neutron_lib import rpc as n_rpc
 from neutron_lib.services import base as service_base
-import webob.exc
 
 from neutron._i18n import _
 from neutron.api import extensions
@@ -158,10 +157,20 @@ class TaggingController(object):
         policy.enforce(ctx, 'get_%s_%s' % (res, TAGS), target)
         return self.plugin.get_tag(ctx, res, res_id, id)
 
-    def create(self, request, **kwargs):
-        # not supported
+    @_policy_init
+    def create(self, request, body, **kwargs):
         # POST /v2.0/{parent_resource}/{parent_resource_id}/tags
-        raise webob.exc.HTTPNotFound("not supported")
+        # body: {"tags": ["aaa", "bbb"]}
+        validate_tags(body)
+        ctx = request.context
+        res, res_id, p_res, p_res_id = self._get_parent_resource_and_id(
+            ctx, kwargs)
+        target = self._get_target(ctx, res_id, p_res, p_res_id)
+        policy.enforce(ctx, 'create_%s_%s' % (res, TAGS), target)
+        notify_tag_action(ctx, 'create.start', res, res_id, body['tags'])
+        result = self.plugin.create_tags(ctx, res, res_id, body)
+        notify_tag_action(ctx, 'create.end', res, res_id, body['tags'])
+        return result
 
     @_policy_init
     def update(self, request, id, **kwargs):

@@ -63,6 +63,16 @@ class SystemAdminTests(SubnetpoolAPITestCase):
             policy.enforce,
             self.context, 'create_subnetpool:is_default', self.alt_target)
 
+    def test_create_subnetpools_tags(self):
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_subnetpools_tags', self.target)
+        self.assertRaises(
+            base_policy.InvalidScope,
+            policy.enforce,
+            self.context, 'create_subnetpools_tags', self.alt_target)
+
     def test_get_subnetpool(self):
         self.assertRaises(
             base_policy.InvalidScope,
@@ -206,6 +216,13 @@ class AdminTests(SubnetpoolAPITestCase):
             policy.enforce(
                 self.context, 'create_subnetpool:default', self.alt_target))
 
+    def test_create_subnetpools_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'create_subnetpools_tags',
+                           self.target))
+        self.assertTrue(policy.enforce(self.context, 'create_subnetpools_tags',
+                                       self.alt_target))
+
     def test_get_subnetpool(self):
         self.assertTrue(
             policy.enforce(self.context, 'get_subnetpool', self.target))
@@ -309,6 +326,15 @@ class ProjectManagerTests(AdminTests):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'create_subnetpool:is_default', self.alt_target)
+
+    def test_create_subnetpools_tags(self):
+        self.assertTrue(
+            policy.enforce(self.context, 'create_subnetpools_tags',
+                           self.target))
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_subnetpools_tags', self.alt_target)
 
     def test_get_subnetpool(self):
         self.assertTrue(
@@ -419,6 +445,16 @@ class ProjectReaderTests(ProjectMemberTests):
             policy.enforce,
             self.context, 'create_subnetpool', self.alt_target)
 
+    def test_create_subnetpools_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_subnetpools_tags', self.target)
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_subnetpools_tags', self.alt_target)
+
     def test_update_subnetpool(self):
         self.assertRaises(
             base_policy.PolicyNotAuthorized,
@@ -501,6 +537,12 @@ class ServiceRoleTests(SubnetpoolAPITestCase):
             base_policy.PolicyNotAuthorized,
             policy.enforce,
             self.context, 'create_subnetpool', self.target)
+
+    def test_create_subnetpools_tags(self):
+        self.assertRaises(
+            base_policy.PolicyNotAuthorized,
+            policy.enforce,
+            self.context, 'create_subnetpools_tags', self.target)
 
     def test_create_subnetpool_shared(self):
         self.assertRaises(

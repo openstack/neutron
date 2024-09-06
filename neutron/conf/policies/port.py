@@ -46,6 +46,9 @@ ACTION_PUT_TAGS = [
     {'method': 'PUT', 'path': TAGS_PATH},
     {'method': 'PUT', 'path': TAG_PATH},
 ]
+ACTION_POST_TAGS = [
+    {'method': 'POST', 'path': TAGS_PATH},
+]
 ACTION_DELETE_TAGS = [
     {'method': 'DELETE', 'path': TAGS_PATH},
     {'method': 'DELETE', 'path': TAG_PATH},
@@ -305,6 +308,16 @@ rules = [
             'Specify ``trusted`` attribute when creating a port'
         ),
         operations=ACTION_POST,
+    ),
+    policy.DocumentedRuleDefault(
+        name='create_ports_tags',
+        check_str=neutron_policy.policy_or(
+            base.ADMIN_OR_PROJECT_MEMBER,
+            neutron_policy.RULE_ADVSVC
+        ),
+        scope_types=['project'],
+        description='Create the port tags',
+        operations=ACTION_POST_TAGS,
     ),
 
     policy.DocumentedRuleDefault(

@@ -12,6 +12,7 @@
 #    under the License.
 #
 
+from neutron_lib.api.definitions import tag_creation
 from neutron_lib.db import api as db_api
 from neutron_lib.db import model_query
 from neutron_lib.db import resource_extend
@@ -33,7 +34,9 @@ resource_model_map = standard_attr.get_standard_attr_resource_model_map()
 class TagPlugin(tagging.TagPluginBase):
     """Implementation of the Neutron Tag Service Plugin."""
 
-    supported_extension_aliases = ['standard-attr-tag']
+    supported_extension_aliases = ['standard-attr-tag',
+                                   tag_creation.ALIAS,
+                                   ]
 
     __filter_validation_support = True
 
@@ -80,6 +83,22 @@ class TagPlugin(tagging.TagPluginBase):
         res = self._get_resource(context, resource, resource_id)
         if not any(tag == tag_db.tag for tag_db in res.standard_attr.tags):
             raise tagging.TagNotFound(tag=tag)
+
+    @log_helpers.log_method_call
+    @db_api.retry_if_session_inactive()
+    @db_api.CONTEXT_WRITER
+    def create_tags(self, context, resource, resource_id, body):
+        """Create new tags for a resource
+
+        This method will create the non-existent tags of a resource. If
+        present, the tags will be omitted. This method is idempotent.
+        """
+        res = self._get_resource(context, resource, resource_id)
+        new_tags = set(body['tags'])
+        old_tags = {tag_db.tag for tag_db in res.standard_attr.tags}
+        tags_added = new_tags - old_tags
+        self.add_tags(context, res.standard_attr_id, tags_added)
+        return body
 
     @log_helpers.log_method_call
     @db_api.retry_if_session_inactive()
