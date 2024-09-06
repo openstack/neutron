@@ -96,6 +96,7 @@ from neutron_lib.api.definitions import vpn
 from neutron_lib.api.definitions import vpn_endpoint_groups
 from neutron_lib import constants
 
+from neutron.extensions import port_trusted_vif
 from neutron.extensions import quotasv2_detail
 from neutron.extensions import security_groups_default_rules
 
@@ -158,6 +159,7 @@ ML2_SUPPORTED_API_EXTENSIONS = [
     port_numa_affinity_policy.ALIAS,
     port_numa_affinity_policy_socket.ALIAS,
     port_security.ALIAS,
+    port_trusted_vif.ALIAS,
     provider_net.ALIAS,
     port_resource_request.ALIAS,
     qos.ALIAS,

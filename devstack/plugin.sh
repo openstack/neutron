@@ -18,6 +18,7 @@ source $LIBDIR/tag_ports_during_bulk_creation
 source $LIBDIR/octavia
 source $LIBDIR/loki
 source $LIBDIR/local_ip
+source $LIBDIR/port_trusted_vif
 
 # source the OVS/OVN compilation helper methods
 source $TOP_DIR/lib/neutron_plugins/ovs_source
@@ -97,6 +98,9 @@ if [[ "$1" == "stack" ]]; then
                     configure_l3_ndp_proxy
                 fi
                 configure_l3_agent
+            fi
+            if is_service_enabled q-port-trusted-vif neutron-port-trusted-vif; then
+                configure_port_trusted_ml2_extension
             fi
             if [ $NEUTRON_CORE_PLUGIN = ml2 ]; then
                 configure_ml2_extension_drivers

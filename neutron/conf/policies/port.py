@@ -297,6 +297,15 @@ rules = [
         ),
         operations=ACTION_POST,
     ),
+    policy.DocumentedRuleDefault(
+        name='create_port:trusted',
+        check_str=base.ADMIN,
+        scope_types=['project'],
+        description=(
+            'Specify ``trusted`` attribute when creating a port'
+        ),
+        operations=ACTION_POST,
+    ),
 
     policy.DocumentedRuleDefault(
         name='get_port',
@@ -381,6 +390,13 @@ rules = [
         check_str=base.ADMIN,
         scope_types=['project'],
         description='Get ``hints`` attribute of a port',
+        operations=ACTION_GET,
+    ),
+    policy.DocumentedRuleDefault(
+        name='get_port:trusted',
+        check_str=base.ADMIN,
+        scope_types=['project'],
+        description='Get ``trusted`` attribute of a port',
         operations=ACTION_GET,
     ),
     policy.DocumentedRuleDefault(
@@ -639,6 +655,13 @@ rules = [
         check_str=base.ADMIN,
         scope_types=['project'],
         description='Update ``hints`` attribute of a port',
+        operations=ACTION_PUT,
+    ),
+    policy.DocumentedRuleDefault(
+        name='update_port:trusted',
+        check_str=base.ADMIN,
+        scope_types=['project'],
+        description='Update ``trusted`` attribute of a port',
         operations=ACTION_PUT,
     ),
     policy.DocumentedRuleDefault(
