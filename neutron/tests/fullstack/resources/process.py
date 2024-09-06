@@ -368,7 +368,32 @@ class LinuxBridgeAgentFixture(ServiceFixture):
         )
 
 
-class L3AgentFixture(ServiceFixture):
+class NamespaceCleanupFixture(ServiceFixture):
+
+    def _setUp(self):
+        super(NamespaceCleanupFixture, self)._setUp()
+        self.addCleanup(self.clean_namespaces)
+
+    def clean_namespaces(self):
+        """Delete all DHCP namespaces created by DHCP agent.
+
+        In some tests for DHCP agent HA agents are killed when handling DHCP
+        service for network(s). In such case DHCP namespace is not deleted by
+        DHCP agent and such namespaces are found and deleted using agent's
+        namespace suffix.
+        """
+
+        for namespace in ip_lib.list_network_namespaces():
+            if (getattr(self, 'namespace_pattern') and
+                    self.namespace_pattern.match(namespace)):
+                try:
+                    ip_lib.delete_network_namespace(namespace)
+                except RuntimeError:
+                    # Continue cleaning even if namespace deletions fails
+                    pass
+
+
+class L3AgentFixture(NamespaceCleanupFixture):
 
     def __init__(self, env_desc, host_desc, test_name,
                  neutron_cfg_fixture, l3_agent_cfg_fixture,
@@ -383,6 +408,8 @@ class L3AgentFixture(ServiceFixture):
         self.hostname = self.neutron_cfg_fixture.config['DEFAULT']['host']
 
     def _setUp(self):
+        super(L3AgentFixture, self)._setUp()
+
         self.plugin_config = self.l3_agent_cfg_fixture.config
 
         config_filenames = [self.neutron_cfg_fixture.filename,
@@ -407,12 +434,15 @@ class L3AgentFixture(ServiceFixture):
                 namespace=self.namespace
             )
         )
+        self.namespace_pattern = re.compile(
+            r"qrouter-[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}@%s" %
+            self.get_namespace_suffix())
 
     def get_namespace_suffix(self):
         return self.plugin_config.DEFAULT.test_namespace_suffix
 
 
-class DhcpAgentFixture(ServiceFixture):
+class DhcpAgentFixture(NamespaceCleanupFixture):
 
     def __init__(self, env_desc, host_desc, test_name,
                  neutron_cfg_fixture, agent_cfg_fixture, namespace=None):
@@ -425,6 +455,8 @@ class DhcpAgentFixture(ServiceFixture):
         self.namespace = namespace
 
     def _setUp(self):
+        super(DhcpAgentFixture, self)._setUp()
+
         self.plugin_config = self.agent_cfg_fixture.config
 
         config_filenames = [self.neutron_cfg_fixture.filename,
@@ -450,10 +482,9 @@ class DhcpAgentFixture(ServiceFixture):
                 namespace=self.namespace
             )
         )
-        self.dhcp_namespace_pattern = re.compile(
+        self.namespace_pattern = re.compile(
             r"qdhcp-[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}%s" %
             self.get_namespace_suffix())
-        self.addCleanup(self.clean_dhcp_namespaces)
 
     def get_agent_hostname(self):
         return self.neutron_cfg_fixture.config['DEFAULT']['host']
@@ -463,21 +494,4 @@ class DhcpAgentFixture(ServiceFixture):
 
     def kill(self):
         self.process_fixture.stop()
-        self.clean_dhcp_namespaces()
-
-    def clean_dhcp_namespaces(self):
-        """Delete all DHCP namespaces created by DHCP agent.
-
-        In some tests for DHCP agent HA agents are killed when handling DHCP
-        service for network(s). In such case DHCP namespace is not deleted by
-        DHCP agent and such namespaces are found and deleted using agent's
-        namespace suffix.
-        """
-
-        for namespace in ip_lib.list_network_namespaces():
-            if self.dhcp_namespace_pattern.match(namespace):
-                try:
-                    ip_lib.delete_network_namespace(namespace)
-                except RuntimeError:
-                    # Continue cleaning even if namespace deletions fails
-                    pass
+        self.clean_namespaces()

@@ -275,6 +275,8 @@ def create_patch_ports(source, destination):
     source.add_patch_port(source_name, destination_name)
     destination.add_patch_port(destination_name, source_name)
 
+    return source_name, destination_name
+
 
 def create_vlan_interface(
         namespace, port_name, mac_address, ip_address, vlan_tag):
@@ -406,7 +408,7 @@ class Pinger(object):
     """
 
     stats_pattern = re.compile(
-        r'^(?P<trans>\d+) packets transmitted,.*(?P<recv>\d+) received.*$')
+        r'^(?P<trans>\d+) packets transmitted, +(?P<recv>\d+) received.*$')
     unreachable_pattern = re.compile(
         r'.* Destination .* Unreachable')
     TIMEOUT = 15
@@ -430,7 +432,9 @@ class Pinger(object):
                 "Ping command hasn't ended after %d seconds." % self.TIMEOUT))
 
     def _parse_stats(self):
+        output = ''
         for line in self.proc.stdout:
+            output += line
             if (not self.destination_unreachable and
                     self.unreachable_pattern.match(line)):
                 self.destination_unreachable = True
@@ -441,7 +445,9 @@ class Pinger(object):
                 self.received = int(result.group('recv'))
                 break
         else:
+            LOG.error(f"Didn't find ping statistics:\n{output}")
             raise RuntimeError("Didn't find ping statistics.")
+        LOG.debug(f"ping command output:\n{output}")
 
     def start(self):
         if self.proc and self.proc.is_running:

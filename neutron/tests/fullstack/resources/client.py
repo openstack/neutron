@@ -442,3 +442,10 @@ class ClientFixture(fixtures.Fixture):
 
     def update_quota(self, project_id, tracked_resource, quota):
         self._update_resource('quota', project_id, {tracked_resource: quota})
+
+    def add_gateway_router(self, router_id, network_id):
+        self.client.add_gateway_router(
+            router_id,
+            {'network_id': network_id})
+        self.addCleanup(
+            self.client.remove_gateway_router, router_id)
