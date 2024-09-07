@@ -109,16 +109,19 @@ def set_namespace_gateway(port_dev, gateway_ip):
     port_dev.route.add_gateway(gateway_ip)
 
 
-def assert_ping(src_namespace, dst_ip, timeout=1, count=3, retry_count=1):
+def assert_ping(src_namespace, dst_ip, timeout=1, count=3, retry_count=1,
+                device=None):
     ipversion = netaddr.IPAddress(dst_ip).version
     ping_command = 'ping' if ipversion == 4 else 'ping6'
     ns_ip_wrapper = ip_lib.IPWrapper(src_namespace)
+    cmd = [ping_command, '-W', timeout, '-c', count]
+    if device:
+        cmd += ['-I', device]
+    cmd.append(dst_ip)
     while retry_count:
         retry_count -= 1
         try:
-            ns_ip_wrapper.netns.execute(
-                [ping_command, '-W', timeout, '-c', count, dst_ip],
-                privsep_exec=True)
+            ns_ip_wrapper.netns.execute(cmd, privsep_exec=True)
             return
         except n_exc.ProcessExecutionError as exc:
             if not retry_count:
@@ -156,9 +159,9 @@ def async_ping(namespace, ips, timeout=1, count=10):
             f.result()
 
 
-def assert_no_ping(src_namespace, dst_ip, timeout=1, count=1):
+def assert_no_ping(src_namespace, dst_ip, timeout=1, count=1, device=None):
     try:
-        assert_ping(src_namespace, dst_ip, timeout, count)
+        assert_ping(src_namespace, dst_ip, timeout, count, device=device)
     except RuntimeError:
         pass
     else:
