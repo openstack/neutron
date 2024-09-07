@@ -99,11 +99,8 @@ def remove_provisioning_component(context, object_id, object_type, entity,
         context, object_id, object_type)
     if not standard_attr_id:
         return False
-    if pb_obj.ProvisioningBlock.delete_objects(
-            context, standard_attr_id=standard_attr_id, entity=entity):
-        return True
-    else:
-        return False
+    return bool(pb_obj.ProvisioningBlock.delete_objects(
+        context, standard_attr_id=standard_attr_id, entity=entity))
 
 
 @db_api.retry_if_session_inactive()
