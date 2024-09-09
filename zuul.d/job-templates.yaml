@@ -106,7 +106,7 @@
         - openstack-tox-py39-with-oslo-master:
             timeout: 3600
             irrelevant-files:  *irrelevant-files
-        - neutron-tempest-plugin-linuxbridge
+        - neutron-tempest-plugin-linuxbridge-2024-1
     experimental:
       jobs: *neutron-periodic-jobs
 
