@@ -97,7 +97,7 @@
         - neutron-linuxbridge-tempest-plugin-nftables
         - neutron-ovs-tempest-plugin-iptables_hybrid-nftables
         - devstack-enforce-scope
-        - neutron-tempest-plugin-linuxbridge
+        - neutron-tempest-plugin-linuxbridge-2023-2
     experimental:
       jobs: *neutron-periodic-jobs
 
