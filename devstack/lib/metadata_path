@@ -1,0 +1,7 @@
+function configure_ovs_metadata_path {
+    sudo ovs-vsctl -- --may-exist add-br br-meta
+    plugin_agent_add_l2_agent_extension "metadata_path"
+    iniset /$NEUTRON_CORE_PLUGIN_CONF metadata metadata_proxy_shared_secret $SERVICE_PASSWORD
+    iniset /$NEUTRON_CORE_PLUGIN_CONF metadata nova_metadata_host $SERVICE_HOST
+    iniset /$NEUTRON_CORE_PLUGIN_CONF metadata nova_metadata_port $METADATA_SERVICE_PORT
+}
