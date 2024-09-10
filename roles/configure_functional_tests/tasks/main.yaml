@@ -47,6 +47,10 @@
         fi
 
         configure_host_for_func_testing
+        echo "$USER soft nofile 4096" | sudo tee /etc/security/limits.d/99-user.conf
 
     executable: /bin/bash
   environment: "{{ override_env | default({})}}"
+
+- name: Reset ssh connection to pick up limits
+  meta: reset_connection
