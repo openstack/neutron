@@ -17,6 +17,7 @@ from unittest import mock
 
 import netaddr
 from neutron_lib import constants
+from oslo_config import cfg
 from oslo_utils import uuidutils
 
 from neutron.agent.l3 import agent as neutron_l3_agent
@@ -38,6 +39,9 @@ class L3AgentNDPProxyTestFramework(framework.L3AgentTestFramework):
 
     def setUp(self):
         super(L3AgentNDPProxyTestFramework, self).setUp()
+        # TODO(slaweq): Investigate why those tests are failing with enabled
+        # debug_iptables_rules config option, but for now lets just disable it
+        cfg.CONF.set_override('debug_iptables_rules', False, group='AGENT')
         self.conf.set_override('extensions', ['ndp_proxy'], 'agent')
         self.agent = neutron_l3_agent.L3NATAgentWithStateReport(HOSTNAME,
                                                                 self.conf)

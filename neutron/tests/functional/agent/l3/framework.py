@@ -137,6 +137,11 @@ class L3AgentTestFramework(base.BaseSudoTestCase):
         conf.set_override('host', host)
         conf.set_override('agent_mode', agent_mode)
 
+        # NOTE(slaweq): iptables_manager module checks this option directly in
+        # the cfg.CONF, not in agent.conf parameter so it has to be override
+        # directly in the cfg.CONF module too
+        cfg.CONF.set_override('debug_iptables_rules', True, group='AGENT')
+
         return conf
 
     def _get_agent_ovs_integration_bridge(self, agent):
