@@ -20,6 +20,9 @@ from oslo_serialization import jsonutils
 from oslo_utils import strutils
 import sqlalchemy as sa
 
+from neutron.db import migration
+
+
 # Add port trusted attribute
 #
 # Revision ID: 5bcb7b31ec7d
@@ -29,6 +32,9 @@ import sqlalchemy as sa
 # revision identifiers, used by Alembic.
 revision = '5bcb7b31ec7d'
 down_revision = '175fa80908e1'
+
+# milestone identifier, used by neutron-db-manage
+neutron_milestone = [migration.RELEASE_2024_2]
 
 
 def upgrade():
