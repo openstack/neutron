@@ -2814,7 +2814,12 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
             network_id = n['network']['id']
         with self.subnet(network=network) as sn:
             subnet = sn
-        with self.port(subnet=subnet) as p:
+
+        host = 'fake_host'
+        host_arg = {portbindings.HOST_ID: host}
+        with self.port(subnet=subnet, is_admin=True,
+                       arg_list=(portbindings.HOST_ID,),
+                       **host_arg) as p:
             port = p
 
         level_1_segment_1 = {driver_api.NETWORK_TYPE: 'vlan',
@@ -2834,10 +2839,6 @@ class TestMl2PortBinding(Ml2PluginV2TestCase,
 
         plugin = directory.get_plugin()
         port_db = plugin._get_port(self.context, port['port']['id'])
-        port_db.port_bindings[0].host = 'fake_host'
-        # we need to be able to fetch the correct host from DB in the code
-        # itself
-        port_db.save(self.context.session)
         binding = p_utils.get_port_binding_by_status_and_host(
                         port_db.port_bindings,
                         constants.ACTIVE)
