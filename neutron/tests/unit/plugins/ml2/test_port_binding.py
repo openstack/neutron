@@ -822,6 +822,16 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
         )
 
         # delete the remaining binding
+        # a custom patch prevents active port binding deletion
+        # make the remaining binding inactive first
+
+        ctx = context.get_admin_context()
+        with db_api.CONTEXT_WRITER.using(ctx):
+            port_binding = ctx.session.query(
+                ml2_models.PortBinding).filter(
+                ml2_models.PortBinding.port_id == port['id']).one()
+            port_binding.status = const.INACTIVE
+
         response = self._delete_port_binding(port['id'], host1)
         self.assertEqual(webob.exc.HTTPNoContent.code, response.status_int)
         # the MAC should not change as it is already the generated MAC
