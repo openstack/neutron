@@ -2283,7 +2283,7 @@ class TestMl2PluginOnly(Ml2PluginV2TestCase):
         # mock port and binding to skip conditions introduced
         # for the deletion of port bindings
         host_arg = {portbindings.HOST_ID: host}
-        with self.port(device_owner='compute:xyz',
+        with self.port(device_owner='compute:xyz', is_admin=True,
                        arg_list=(portbindings.HOST_ID,),
                        **host_arg) as port:
             port_id = port['port']['id']
