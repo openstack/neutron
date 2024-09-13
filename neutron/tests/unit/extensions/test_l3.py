@@ -3543,7 +3543,8 @@ class L3NatTestCaseBase(L3NatTestCaseMixin):
             self._set_net_external(network_id)
             req = self._make_floatingip(self.fmt, network_id,
                                         floating_ip='10.0.0.1',
-                                        http_status=exc.HTTPBadRequest.code)
+                                        http_status=exc.HTTPBadRequest.code,
+                                        as_admin=True)
             self.assertRegex(req['NeutronError']['message'],
                              "ip 10.0.0.1 cannot be allocated, as it is also "
                              f"the gateway ip of subnet {s['subnet']['id']}")
