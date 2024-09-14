@@ -105,7 +105,10 @@ class TestMetadataDriverProcess(base.BaseTestCase):
                 mock.patch(
                     'neutron.agent.linux.ip_lib.'
                     'IpAddrCommand.wait_until_address_ready',
-                    return_value=True):
+                    return_value=True),\
+                mock.patch.object(driver_base.HaproxyConfiguratorBase,
+                                  'is_config_file_obsolete',
+                                  return_value=False):
             cfg_file = os.path.join(
                 metadata_driver.HaproxyConfigurator.get_config_path(
                     agent.conf.state_path),
@@ -184,7 +187,9 @@ class TestMetadataDriverProcess(base.BaseTestCase):
 
         with mock.patch.object(metadata_driver.MetadataDriver,
                                '_get_metadata_proxy_process_manager',
-                               return_value=process_instance):
+                               return_value=process_instance),\
+                mock.patch.object(driver_base.MetadataDriverBase,
+                                  '_get_haproxy_configurator'):
             process_monitor = mock.Mock()
             network_id = 123456
 
@@ -201,22 +206,18 @@ class TestMetadataDriverProcess(base.BaseTestCase):
 
     def test_create_config_file_wrong_user(self):
         with mock.patch('pwd.getpwnam', side_effect=KeyError):
-            config = metadata_driver.HaproxyConfigurator(mock.ANY, mock.ANY,
-                                                         mock.ANY, mock.ANY,
-                                                         mock.ANY, self.EUNAME,
-                                                         self.EGNAME, mock.ANY,
-                                                         mock.ANY, mock.ANY)
             self.assertRaises(comm_meta.InvalidUserOrGroupException,
-                              config.create_config_file)
+                              metadata_driver.HaproxyConfigurator, mock.ANY,
+                              mock.ANY, mock.ANY, mock.ANY, mock.ANY,
+                              self.EUNAME, self.EGNAME, mock.ANY, mock.ANY,
+                              mock.ANY)
 
     def test_create_config_file_wrong_group(self):
         with mock.patch('grp.getgrnam', side_effect=KeyError),\
                 mock.patch('pwd.getpwnam',
                            return_value=test_utils.FakeUser(self.EUNAME)):
-            config = metadata_driver.HaproxyConfigurator(mock.ANY, mock.ANY,
-                                                         mock.ANY, mock.ANY,
-                                                         mock.ANY, self.EUNAME,
-                                                         self.EGNAME, mock.ANY,
-                                                         mock.ANY, mock.ANY)
             self.assertRaises(comm_meta.InvalidUserOrGroupException,
-                              config.create_config_file)
+                              metadata_driver.HaproxyConfigurator, mock.ANY,
+                              mock.ANY, mock.ANY, mock.ANY, mock.ANY,
+                              self.EUNAME, self.EGNAME, mock.ANY, mock.ANY,
+                              mock.ANY)

@@ -36,6 +36,7 @@ from oslo_utils import fileutils
 import psutil
 
 from neutron.api import wsgi
+from neutron.common import utils
 from neutron.conf.agent import common as config
 from neutron.privileged.agent.linux import utils as priv_utils
 
@@ -397,6 +398,19 @@ def delete_if_exists(path, run_as_root=False):
         priv_utils.delete_if_exists(path)
     else:
         fileutils.delete_if_exists(path)
+
+
+def read_if_exists(path: str, run_as_root=False) -> str:
+    """Return the content of a text file as a string
+
+    The output includes the empty lines too. If the file does not exist,
+    returns an empty string.
+    It could be called with elevated permissions (root).
+    """
+    if run_as_root:
+        return priv_utils.read_file(path)
+    else:
+        return utils.read_file(path)
 
 
 class UnixDomainHTTPConnection(httplib.HTTPConnection):
