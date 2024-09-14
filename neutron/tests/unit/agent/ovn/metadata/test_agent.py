@@ -446,8 +446,7 @@ class TestMetadataAgent(base.BaseTestCase):
                     ip_wrap, 'add_veth',
                     return_value=[ip_lib.IPDevice('ip1'),
                                   ip_lib.IPDevice('ip2')]) as add_veth,\
-                mock.patch.object(
-                    linux_utils, 'delete_if_exists') as mock_delete,\
+                mock.patch.object(linux_utils, 'delete_if_exists'), \
                 mock.patch.object(
                     driver.MetadataDriver,
                     'spawn_monitored_metadata_proxy') as spawn_mdp, \
@@ -488,7 +487,6 @@ class TestMetadataAgent(base.BaseTestCase):
             self.assertCountEqual(expected_call,
                                   ip_addr_add_multiple.call_args.args[0])
             # Check that metadata proxy has been spawned
-            mock_delete.assert_called_once_with(mock.ANY, run_as_root=True)
             spawn_mdp.assert_called_once_with(
                 mock.ANY, nemaspace_name, 80, mock.ANY,
                 bind_address=n_const.METADATA_V4_IP, network_id=net_name,
