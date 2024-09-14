@@ -37,6 +37,7 @@ from neutron.agent.linux import dhcp
 from neutron.agent.linux import interface
 from neutron.agent.linux import utils as linux_utils
 from neutron.agent.metadata import driver as metadata_driver
+from neutron.agent.metadata import driver_base as metadata_driver_base
 from neutron.common import config as common_config
 from neutron.common.ovn import constants as ovn_const
 from neutron.common import utils
@@ -841,6 +842,9 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
                     mock.call(FAKE_NETWORK_UUID, cfg.CONF,
                               ns_name=FAKE_NETWORK_DHCP_NS,
                               callback=mock.ANY))
+            mock.patch.object(metadata_driver_base.HaproxyConfiguratorBase,
+                              'is_config_file_obsolete',
+                              return_value=False).start()
         self.plugin.get_network_info.return_value = network
         process_instance = mock.Mock(active=False)
         with mock.patch.object(metadata_driver.MetadataDriver,
@@ -1036,7 +1040,9 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         process_instance = mock.Mock(active=False)
         with mock.patch.object(metadata_driver.MetadataDriver,
                                '_get_metadata_proxy_process_manager',
-                               return_value=process_instance) as gmppm:
+                               return_value=process_instance) as gmppm,\
+                mock.patch.object(metadata_driver_base.MetadataDriverBase,
+                                  '_get_haproxy_configurator'):
             self.dhcp.enable_isolated_metadata_proxy(fake_network)
             gmppm.assert_called_with(FAKE_NETWORK_UUID,
                                      cfg.CONF,
@@ -1135,7 +1141,9 @@ class TestDhcpAgentEventHandler(base.BaseTestCase):
         network.ports = [dhcp_port_this_host, dhcp_port_other_host]
         self._test_enable_isolated_metadata_proxy_ipv6(network)
 
-    def _test_disable_isolated_metadata_proxy(self, network):
+    @mock.patch.object(metadata_driver_base.HaproxyConfiguratorBase,
+                       'is_config_file_obsolete', return_value=False)
+    def _test_disable_isolated_metadata_proxy(self, network, *args):
         cfg.CONF.set_override('enable_metadata_network', True)
         method_path = ('neutron.agent.metadata.driver.MetadataDriver'
                        '.destroy_monitored_metadata_proxy')
