@@ -353,10 +353,10 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
             mock.patch.object(
                 self.mixin, '_get_supported_subnetpools'):
             result = self.mixin._check_requirements(self.ctx, 'foo_tenant')
+            # custom patched - do not expect project_id as return value
             expected = {
                 'id': 'dry-run=pass',
-                'tenant_id': 'foo_tenant',
-                'project_id': 'foo_tenant'}
+                'tenant_id': 'foo_tenant'}
             self.assertEqual(expected, result)
 
     def test__cleanup_handles_failures(self):
