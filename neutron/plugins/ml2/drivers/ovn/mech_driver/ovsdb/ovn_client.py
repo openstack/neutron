@@ -963,15 +963,11 @@ class OVNClient(object):
             ('external_ids', '=', {
                 ovn_const.LB_EXT_IDS_VIP_PORT_ID_KEY: lb_lsp.name})
         ).execute(check_error=True)
+        all_lswitches = self._nb_idl.db_find_rows(
+            'Logical_Switch').execute(check_error=True)
         for lb in lbs:
-            # GET all LS where given LB is linked.
-            ls_linked = [
-                item
-                for item in self._nb_idl.db_find_rows(
-                    'Logical_Switch').execute(check_error=True)
-                if lb in item.load_balancer]
-
-            if not ls_linked:
+            if not any(lb in item.load_balancer for item in all_lswitches):
+                # LB is not linked anywhere.
                 continue
 
             # Find out IP addresses and subnets of configured members.
