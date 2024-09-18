@@ -964,10 +964,12 @@ class OVNClient(object):
         ).execute(check_error=True)
         all_lswitches = self._nb_idl.db_find_rows(
             'Logical_Switch').execute(check_error=True)
+        attached_lbs = set(
+            lb for item in all_lswitches for lb in item.load_balancer)
 
         commands = []
         for lb in lbs:
-            if not any(lb in item.load_balancer for item in all_lswitches):
+            if lb not in attached_lbs:
                 # LB is not linked anywhere.
                 continue
 
