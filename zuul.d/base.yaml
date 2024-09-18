@@ -234,9 +234,9 @@
         override-checkout: main
 
 - job:
-    name: openstack-tox-py311-with-sqlalchemy-master
+    name: openstack-tox-py312-with-sqlalchemy-master
     branches: ^master$
-    parent: openstack-tox-py311
+    parent: openstack-tox-py312
     required-projects:
       - name: github.com/sqlalchemy/sqlalchemy
         override-checkout: main
