@@ -987,10 +987,11 @@ class OVNClient(object):
                     member_info = member.split('_')
                     if len(member_info) < 4:
                         continue
-                    m = {}
-                    m['id'] = member_info[1]
-                    m['ip'] = member_info[2].split(':')[0]
-                    m['subnet_id'] = member_info[3]
+                    m = {
+                        'id': member_info[1],
+                        'ip': member_info[2].split(':')[0],
+                        'subnet_id': member_info[3],
+                    }
                     try:
                         subnet = self._plugin.get_subnet(context,
                                                          m['subnet_id'])
