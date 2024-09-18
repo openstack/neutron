@@ -145,15 +145,15 @@
     name: neutron-skip-level-jobs
     # During a SLURP release, these jobs are executed in the check queue,
     # otherwise periodic/experimental. SLURP releases are 2024.1, 2025.1, etc.
-    #check:
+    check:
+      jobs:
+        - neutron-ovs-grenade-multinode-skip-level
+        - neutron-ovn-grenade-multinode-skip-level
+    #periodic:
     #  jobs:
     #    - neutron-ovs-grenade-multinode-skip-level
     #    - neutron-ovn-grenade-multinode-skip-level
-    periodic:
-      jobs:
-        - neutron-ovs-grenade-multinode-skip-level
-        - neutron-ovn-grenade-multinode-skip-level
-    experimental:
-      jobs:
-        - neutron-ovs-grenade-multinode-skip-level
-        - neutron-ovn-grenade-multinode-skip-level
+    #experimental:
+    #  jobs:
+    #    - neutron-ovs-grenade-multinode-skip-level
+    #    - neutron-ovn-grenade-multinode-skip-level
