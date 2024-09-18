@@ -945,15 +945,14 @@ class OVNClient(object):
 
     def _handle_lb_fip_cmds(self, context, lb_lsp,
                             action=ovn_const.FIP_ACTION_ASSOCIATE):
-        commands = []
         if not ovn_conf.is_ovn_distributed_floating_ip():
-            return commands
+            return []
 
         lb_lsp_fip_port = lb_lsp.external_ids.get(
             ovn_const.OVN_PORT_NAME_EXT_ID_KEY, '')
 
         if not lb_lsp_fip_port.startswith(ovn_const.LB_VIP_PORT_PREFIX):
-            return commands
+            return []
 
         # This is a FIP on LB VIP.
         # Loop over members and delete FIP external_mac/logical_port enteries.
@@ -965,6 +964,8 @@ class OVNClient(object):
         ).execute(check_error=True)
         all_lswitches = self._nb_idl.db_find_rows(
             'Logical_Switch').execute(check_error=True)
+
+        commands = []
         for lb in lbs:
             if not any(lb in item.load_balancer for item in all_lswitches):
                 # LB is not linked anywhere.
