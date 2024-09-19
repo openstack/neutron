@@ -28,7 +28,7 @@ LOG = logging.getLogger(__name__)
 
 DRIVER = None
 
-SUPPORTED_LOGGING_TYPES = ['security_group']
+SUPPORTED_LOGGING_TYPES = ('security_group',)
 
 
 class OVSDriver(base.DriverBase):

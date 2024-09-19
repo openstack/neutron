@@ -131,7 +131,7 @@ class OFPortLog(object):
 
 class OVSFirewallLoggingDriver(log_ext.LoggingDriver):
 
-    SUPPORTED_LOGGING_TYPES = ['security_group']
+    SUPPORTED_LOGGING_TYPES = ('security_group',)
     REQUIRED_PROTOCOLS = [
         ovs_consts.OPENFLOW13,
         ovs_consts.OPENFLOW14,

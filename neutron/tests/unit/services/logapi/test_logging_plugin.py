@@ -30,7 +30,7 @@ from neutron.services.logapi.common import sg_validate
 from neutron.tests.unit.services.logapi import base
 
 DB_PLUGIN_KLASS = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
-SUPPORTED_LOGGING_TYPES = ['security_group']
+SUPPORTED_LOGGING_TYPES = ('security_group',)
 
 
 class TestLoggingPlugin(base.BaseLogTestCase):
