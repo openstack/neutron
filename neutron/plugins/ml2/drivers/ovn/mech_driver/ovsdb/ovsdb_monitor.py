@@ -45,8 +45,8 @@ CONF = cfg.CONF
 LOG = log.getLogger(__name__)
 
 
-class BaseEvent(row_event.RowEvent):
-    table = None
+class BaseEvent(row_event.RowEvent, metaclass=abc.ABCMeta):
+    table: str
     events = tuple()
 
     def __init__(self):

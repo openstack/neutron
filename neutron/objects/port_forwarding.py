@@ -65,9 +65,7 @@ class PortForwarding(base.NeutronDbObject):
                                   'created_at']
 
     synthetic_fields = ['floating_ip_address', 'router_id']
-    fields_no_update = {
-        'id', 'floatingip_id'
-    }
+    fields_no_update = ['id', 'floatingip_id']
 
     def __eq__(self, other):
         for attr in self.fields:

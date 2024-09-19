@@ -126,9 +126,17 @@ class MetadataExtension(extension_manager.OVNAgentExtension,
     def nb_idl(self):
         return self.agent_api.nb_idl
 
+    @nb_idl.setter
+    def nb_idl(self, val):
+        self.agent_api.nb_idl = val
+
     @property
     def sb_idl(self):
         return self.agent_api.sb_idl
+
+    @sb_idl.setter
+    def sb_idl(self, val):
+        self.agent_api.sb_idl = val
 
     @property
     def ovs_idl(self):

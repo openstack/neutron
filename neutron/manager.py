@@ -35,7 +35,8 @@ LOG = logging.getLogger(__name__)
 CORE_PLUGINS_NAMESPACE = 'neutron.core_plugins'
 
 
-class ManagerMeta(profiler.TracedMeta, type(periodic_task.PeriodicTasks)):
+class ManagerMeta(profiler.TracedMeta,
+                  type(periodic_task.PeriodicTasks)):  # type:ignore[misc]
     pass
 
 

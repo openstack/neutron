@@ -17,6 +17,7 @@ import abc
 
 from neutron_lib.db import api as db_api
 from neutron_lib.objects import common_types
+import sqlalchemy as sa
 from sqlalchemy import and_
 from sqlalchemy import exists
 
@@ -28,7 +29,8 @@ from neutron.objects import base
 
 class _QosPolicyBindingMixin(metaclass=abc.ABCMeta):
 
-    _bound_model_id = None
+    # must be set by the subclass
+    _bound_model_id: sa.Column
 
     @classmethod
     def get_bound_ids(cls, context, policy_id):

@@ -66,6 +66,40 @@ def disable_security_group_extension_by_config(aliases):
         _disable_extension(sg_rules_default_sg_def.ALIAS, aliases)
 
 
+def skip_if_noopfirewall_or_firewall_disabled(func):
+    @functools.wraps(func)
+    def decorated_function(self, *args, **kwargs):
+        if self.noopfirewall_or_firewall_disabled:
+            LOG.info("Skipping method %s as firewall is disabled or "
+                     "configured as NoopFirewallDriver.", func.__name__)
+            return
+        return func(self, *args, **kwargs)
+    return decorated_function
+
+
+def _port_filter_wait(func):
+    """Decorator to wait for the latest port filter lock to be released"""
+    @functools.wraps(func)
+    def decorated_function(self, *args, **kwargs):
+        with self._latest_port_filter_lock.read_lock():
+            return func(self, *args, **kwargs)
+    return decorated_function
+
+
+def _port_filter_lock(func):
+    """Decorator to acquire a new lock while applying port filters"""
+    @functools.wraps(func)
+    def decorated_function(self, *args, **kwargs):
+        lock = lockutils.ReaderWriterLock()
+        # Tracking the most recent lock at the instance level allows
+        # waiters to only wait for the most recent lock to be released
+        # instead of waiting until all locks have been released.
+        self._latest_port_filter_lock = lock
+        with lock.write_lock():
+            return func(self, *args, **kwargs)
+    return decorated_function
+
+
 class SecurityGroupAgentRpc:
     """Enables SecurityGroup agent support in agent implementations."""
 
@@ -97,27 +131,6 @@ class SecurityGroupAgentRpc:
                 trusted_devices.append(device_id)
         return trusted_devices
 
-    def _port_filter_lock(func):
-        """Decorator to acquire a new lock while applying port filters"""
-        @functools.wraps(func)
-        def decorated_function(self, *args, **kwargs):
-            lock = lockutils.ReaderWriterLock()
-            # Tracking the most recent lock at the instance level allows
-            # waiters to only wait for the most recent lock to be released
-            # instead of waiting until all locks have been released.
-            self._latest_port_filter_lock = lock
-            with lock.write_lock():
-                return func(self, *args, **kwargs)
-        return decorated_function
-
-    def _port_filter_wait(func):
-        """Decorator to wait for the latest port filter lock to be released"""
-        @functools.wraps(func)
-        def decorated_function(self, *args, **kwargs):
-            with self._latest_port_filter_lock.read_lock():
-                return func(self, *args, **kwargs)
-        return decorated_function
-
     def init_firewall(self, defer_refresh_firewall=False,
                       integration_bridge=None):
         firewall_driver = cfg.CONF.SECURITYGROUP.firewall_driver or 'noop'
@@ -134,18 +147,6 @@ class SecurityGroupAgentRpc:
         # Stores devices for which firewall should be refreshed when
         # deferred refresh is enabled.
         self.devices_to_refilter = set()
-
-    def skip_if_noopfirewall_or_firewall_disabled(func):
-        @functools.wraps(func)
-        def decorated_function(self, *args, **kwargs):
-            if self.noopfirewall_or_firewall_disabled:
-                LOG.info("Skipping method %s as firewall is disabled "
-                         "or configured as NoopFirewallDriver.",
-                         func.__name__)
-            else:
-                return func(self,  # pylint: disable=not-callable
-                            *args, **kwargs)
-        return decorated_function
 
     @skip_if_noopfirewall_or_firewall_disabled
     def init_ovs_dvr_firewall(self, dvr_agent):

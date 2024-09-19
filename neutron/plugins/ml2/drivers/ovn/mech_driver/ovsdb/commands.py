@@ -12,6 +12,8 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import abc
+
 from oslo_utils import timeutils
 from ovsdbapp.backend.ovs_idl import command
 from ovsdbapp.backend.ovs_idl import idlutils
@@ -719,8 +721,8 @@ class SetStaticRouteCommand(command.BaseCommand):
             raise RuntimeError(msg)
 
 
-class UpdateObjectExtIdsCommand(command.BaseCommand):
-    table = None
+class UpdateObjectExtIdsCommand(command.BaseCommand, metaclass=abc.ABCMeta):
+    table: str
     field = 'name'
 
     def __init__(self, api, record, external_ids, if_exists):

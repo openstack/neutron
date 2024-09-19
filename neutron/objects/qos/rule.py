@@ -65,10 +65,9 @@ class QosRule(base.NeutronDbObject, metaclass=abc.ABCMeta):
 
     fields_no_update = ['id', 'qos_policy_id']
 
-    # should be redefined in subclasses
-    rule_type = None
-
-    duplicates_compare_fields = ()
+    # must be redefined in subclasses
+    rule_type: str
+    duplicates_compare_fields: tuple[str, ...] = ()
 
     def duplicates(self, other_rule):
         """Returns True if rules have got same values in fields defined in
@@ -139,7 +138,7 @@ class QosBandwidthLimitRule(QosRule):
             default=constants.EGRESS_DIRECTION)
     }
 
-    duplicates_compare_fields = ['direction']
+    duplicates_compare_fields = ('direction',)
 
     rule_type = qos_consts.RULE_TYPE_BANDWIDTH_LIMIT
 
@@ -166,7 +165,7 @@ class QosMinimumBandwidthRule(QosRule):
         'direction': common_types.FlowDirectionEnumField(),
     }
 
-    duplicates_compare_fields = ['direction']
+    duplicates_compare_fields = ('direction',)
 
     rule_type = qos_consts.RULE_TYPE_MINIMUM_BANDWIDTH
 
@@ -183,7 +182,7 @@ class QosPacketRateLimitRule(QosRule):
             default=constants.EGRESS_DIRECTION)
     }
 
-    duplicates_compare_fields = ['direction']
+    duplicates_compare_fields = ('direction',)
 
     rule_type = qos_consts.RULE_TYPE_PACKET_RATE_LIMIT
 
@@ -198,6 +197,6 @@ class QosMinimumPacketRateRule(QosRule):
         'direction': common_types.FlowDirectionAndAnyEnumField(),
     }
 
-    duplicates_compare_fields = ['direction']
+    duplicates_compare_fields = ('direction',)
 
     rule_type = qos_consts.RULE_TYPE_MINIMUM_PACKET_RATE
