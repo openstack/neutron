@@ -281,6 +281,9 @@ class Notifier(object):
         try:
             response = novaclient.server_external_events.create(
                 batched_events)
+        except ks_exceptions.EndpointNotFound:
+            LOG.exception("Nova endpoint not found, invalidating the session")
+            self.session.invalidate()
         except nova_exceptions.NotFound:
             LOG.debug("Nova returned NotFound for event: %s",
                       batched_events)
