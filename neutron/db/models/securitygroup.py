@@ -115,7 +115,7 @@ class DefaultSecurityGroup(model_base.BASEV2, model_base.HasProjectPrimaryKey):
         primaryjoin="SecurityGroup.id==DefaultSecurityGroup.security_group_id",
     )
     security_group_rule = orm.relationship(
-        SecurityGroupRule, lazy='joined',
+        SecurityGroupRule, lazy='selectin',
         backref=orm.backref('default_security_group'),
         primaryjoin="foreign(SecurityGroupRule.security_group_id) == "
                     "DefaultSecurityGroup.security_group_id",
