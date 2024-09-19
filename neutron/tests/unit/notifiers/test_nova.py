@@ -238,6 +238,16 @@ class TestNovaNotify(base.BaseTestCase):
             self.assertFalse(send_events.called)
 
     @mock.patch('novaclient.client.Client')
+    def test_nova_send_events_noendpoint_invalidate_session(self, mock_client):
+        create = mock_client().server_external_events.create
+        create.side_effect = ks_exc.EndpointNotFound
+        with mock.patch.object(self.nova_notifier.session,
+                               'invalidate', return_value=True) as mock_sess:
+            self.nova_notifier.send_events([])
+            create.assert_called()
+            mock_sess.assert_called()
+
+    @mock.patch('novaclient.client.Client')
     def test_nova_send_events_returns_bad_list(self, mock_client):
         create = mock_client().server_external_events.create
         create.return_value = 'i am a string!'
