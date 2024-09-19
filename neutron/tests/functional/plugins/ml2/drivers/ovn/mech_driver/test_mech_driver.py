@@ -1433,7 +1433,7 @@ class TestRouterGWPort(_TestRouter):
         nats = lr.nat
         self.assertEqual(1, len(nats))
         expected_logical_ip = (
-            ovn_const.OVN_DEFAULT_SNAT_CIDR if nested_snat else subnet_cidr
+            constants.IPv4_ANY if nested_snat else subnet_cidr
         )
         self.assertEqual(expected_logical_ip, nats[0].logical_ip)
 

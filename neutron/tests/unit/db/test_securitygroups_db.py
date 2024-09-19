@@ -172,7 +172,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                                         'security_group_id': 'fake',
                                         'ethertype': 'IPv4',
                                         'direction': 'ingress',
-                                        'remote_ip_prefix': '0.0.0.0/0'}
+                                        'remote_ip_prefix': constants.IPv4_ANY}
             }
             self.assertRaises(securitygroup.SecurityGroupRuleExists,
                 self.mixin._check_for_duplicate_rules,
@@ -768,7 +768,7 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
                     'id': 'fake2',
                     'ethertype': 'IPv4',
                     'direction': 'ingress',
-                    'remote_ip_prefix': '0.0.0.0/0'}
+                    'remote_ip_prefix': constants.IPv4_ANY}
             }
             self.assertRaises(
                 ext_sg_default_rules.DefaultSecurityGroupRuleExists,

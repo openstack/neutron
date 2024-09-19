@@ -1259,7 +1259,7 @@ class ParseIpRuleTestCase(base.BaseTestCase):
 
     def test_parse_from_any_ipv4(self):
         parsed_rule = ip_lib._parse_ip_rule(self.rule, 4)
-        self.assertEqual('0.0.0.0/0', parsed_rule['from'])
+        self.assertEqual(constants.IPv4_ANY, parsed_rule['from'])
 
     def test_parse_from_any_ipv6(self):
         parsed_rule = ip_lib._parse_ip_rule(self.rule, 6)
@@ -1338,7 +1338,7 @@ class ListIpRulesTestCase(base.BaseTestCase):
         reference = [
             {'type': 'unicast', 'from': '10.0.0.1/24', 'priority': '0',
              'table': '100'},
-            {'type': 'blackhole', 'from': '0.0.0.0/0', 'priority': '0',
+            {'type': 'blackhole', 'from': constants.IPv4_ANY, 'priority': '0',
              'table': 'local'}]
         self.assertEqual(reference, retval)
 

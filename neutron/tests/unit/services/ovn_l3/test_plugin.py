@@ -655,7 +655,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self.l3_inst._nb_ovn.add_lrouter_port.assert_called_once_with(
             **self.fake_ext_gw_port_assert)
         expected_calls = [
-            mock.call('neutron-router-id', ip_prefix='0.0.0.0/0',
+            mock.call('neutron-router-id', ip_prefix=constants.IPv4_ANY,
                       nexthop='192.168.1.254',
                       maintain_bfd=False,
                       external_ids={
@@ -838,7 +838,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 'gw-port-id', 'lrp-gw-port-id', is_gw_port=True,
                 lsp_address=ovn_const.DEFAULT_ADDR_FOR_LSP_WITH_PEER)
         self.l3_inst._nb_ovn.add_static_route.assert_called_once_with(
-            'neutron-router-id', ip_prefix='0.0.0.0/0',
+            'neutron-router-id', ip_prefix=constants.IPv4_ANY,
             maintain_bfd=False,
             external_ids={ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
                           ovn_const.OVN_SUBNET_EXT_ID_KEY: 'ext-subnet-id',
@@ -910,7 +910,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 'gw-port-id', 'lrp-gw-port-id', is_gw_port=True,
                 lsp_address=ovn_const.DEFAULT_ADDR_FOR_LSP_WITH_PEER)
         self.l3_inst._nb_ovn.add_static_route.assert_called_once_with(
-            'neutron-router-id', ip_prefix='0.0.0.0/0',
+            'neutron-router-id', ip_prefix=constants.IPv4_ANY,
             nexthop='192.168.1.254',
             maintain_bfd=False,
             external_ids={ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
@@ -965,7 +965,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 'gw-port-id', 'lrp-gw-port-id', is_gw_port=True,
                 lsp_address=ovn_const.DEFAULT_ADDR_FOR_LSP_WITH_PEER)
         self.l3_inst._nb_ovn.add_static_route.assert_called_once_with(
-            'neutron-router-id', ip_prefix='0.0.0.0/0',
+            'neutron-router-id', ip_prefix=constants.IPv4_ANY,
             nexthop='192.168.1.254',
             maintain_bfd=False,
             external_ids={ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
@@ -1023,7 +1023,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
 
         # Need not check lsp and lrp here, it has been tested in other cases
         self.l3_inst._nb_ovn.add_static_route.assert_called_once_with(
-            'neutron-router-id', ip_prefix='0.0.0.0/0',
+            'neutron-router-id', ip_prefix=constants.IPv4_ANY,
             maintain_bfd=False,
             external_ids={ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
                           ovn_const.OVN_SUBNET_EXT_ID_KEY: 'ext-subnet-id',
@@ -2173,10 +2173,11 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
         super(OVNL3ExtrarouteTests, self). \
             test_update_subnet_gateway_for_external_net()
         self.l3_inst._nb_ovn.add_static_route.assert_called_once_with(
-            'neutron-fake_device', ip_prefix='0.0.0.0/0', nexthop='120.0.0.2',
+            'neutron-fake_device', ip_prefix=constants.IPv4_ANY,
+            nexthop='120.0.0.2',
             external_ids={'neutron:is_static_route': 'true'})
         self.l3_inst._nb_ovn.delete_static_routes.assert_called_once_with(
-            'neutron-fake_device', [('0.0.0.0/0', '120.0.0.1')])
+            'neutron-fake_device', [(constants.IPv4_ANY, '120.0.0.1')])
 
     def test_router_update_gateway_upon_subnet_create_max_ips_ipv6(self):
         super(OVNL3ExtrarouteTests, self). \
@@ -2186,8 +2187,9 @@ class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
                 ovn_const.OVN_SUBNET_EXT_ID_KEY: mock.ANY,
                 ovn_const.OVN_LRSR_EXT_ID_KEY: 'true'}
         add_static_route_calls = [
-            mock.call(mock.ANY, ip_prefix='0.0.0.0/0', nexthop='10.0.0.1',
-                maintain_bfd=False, external_ids=expected_ext_ids),
+            mock.call(mock.ANY, ip_prefix=constants.IPv4_ANY,
+                      nexthop='10.0.0.1', maintain_bfd=False,
+                      external_ids=expected_ext_ids),
             mock.call(mock.ANY, ip_prefix='::/0', nexthop='2001:db8::',
                 maintain_bfd=False, external_ids=expected_ext_ids)]
         self.l3_inst._nb_ovn.add_static_route.assert_has_calls(

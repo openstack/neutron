@@ -608,8 +608,8 @@ class FakeSecurityGroupRule(object):
             'port_range_min': 22,
             'protocol': 'tcp',
             'remote_group_id': None,
-            'remote_ip_prefix': '0.0.0.0/0',
-            'normalized_cidr': '0.0.0.0/0',
+            'remote_ip_prefix': n_const.IPv4_ANY,
+            'normalized_cidr': n_const.IPv4_ANY,
             'security_group_id': 'security-group-id-' + fake_uuid,
             'tenant_id': 'project-id-' + fake_uuid,
         }
@@ -924,7 +924,7 @@ class FakeOVNRouter(object):
                 ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
                 ovn_const.OVN_SUBNET_EXT_ID_KEY: _get_subnet_id(gw_info)}
             routes.append(FakeStaticRoute(
-                ip_prefix='0.0.0.0/0', nexthop='',
+                ip_prefix=n_const.IPv4_ANY, nexthop='',
                 external_ids=external_ids))
             ports.append(FakeOVNRouterPort.create_one_port(
                 attrs={

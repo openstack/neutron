@@ -27,7 +27,6 @@ from neutron.tests.unit import fake_resources as fakes
 from neutron.tests.unit.plugins.ml2.drivers.ovn.mech_driver import \
     test_mech_driver
 
-
 OvnPortInfo = collections.namedtuple('OvnPortInfo', ['name'])
 
 
@@ -121,7 +120,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
             {'id': 'sg1', 'tenant_id': 'tenant1',
              'security_group_rules': [{'remote_group_id': None,
                                        'direction': 'ingress',
-                                       'remote_ip_prefix': '0.0.0.0/0',
+                                       'remote_ip_prefix': const.IPv4_ANY,
                                        'protocol': 'tcp',
                                        'ethertype': 'IPv4',
                                        'tenant_id': 'tenant1',
@@ -133,7 +132,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
             {'id': 'sg2', 'tenant_id': 'tenant1',
              'security_group_rules': [{'remote_group_id': 'sg2',
                                        'direction': 'egress',
-                                       'remote_ip_prefix': '0.0.0.0/0',
+                                       'remote_ip_prefix': const.IPv4_ANY,
                                        'protocol': 'tcp',
                                        'ethertype': 'IPv4',
                                        'tenant_id': 'tenant1',
@@ -776,7 +775,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                                   'destination': '12.0.0.0/24',
                                   'external_ids': {}},
                                  {'nexthop': '90.0.0.1',
-                                  'destination': '0.0.0.0/0',
+                                  'destination': const.IPv4_ANY,
                                   'external_ids': {
                                       ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
                                       ovn_const.OVN_SUBNET_EXT_ID_KEY:
@@ -785,7 +784,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                                   'destination': '30.0.0.0/24',
                                   'external_ids': {}},
                                  {'nexthop': '100.0.0.1',
-                                  'destination': '0.0.0.0/0',
+                                  'destination': const.IPv4_ANY,
                                   'external_ids': {
                                       ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
                                       ovn_const.OVN_SUBNET_EXT_ID_KEY:
@@ -935,7 +934,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                     'destination': '11.0.0.0/24',
                     'external_ids': {}},
                     {'nexthop': '90.0.0.1',
-                    'destination': '0.0.0.0/0',
+                    'destination': const.IPv4_ANY,
                     'external_ids': {
                         ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
                         ovn_const.OVN_SUBNET_EXT_ID_KEY:
@@ -954,7 +953,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                     'destination': '11.0.0.0/24',
                     'external_ids': {}},
                     {'nexthop': '90.0.0.1',
-                    'destination': '0.0.0.0/0',
+                    'destination': const.IPv4_ANY,
                     'external_ids': {
                         ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
                         ovn_const.OVN_SUBNET_EXT_ID_KEY:
@@ -971,7 +970,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
 
         # remove 2 routes from ovn, add 2 routes to ovn
         ovn_routes = [{'nexthop': '90.0.0.1',
-                    'destination': '0.0.0.0/0',
+                    'destination': const.IPv4_ANY,
                     'external_ids': {
                         ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
                         ovn_const.OVN_SUBNET_EXT_ID_KEY:
@@ -1002,7 +1001,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                     'destination': '12.0.0.0/24',
                     'external_ids': {}},
                     {'nexthop': '90.0.0.1',
-                    'destination': '0.0.0.0/0',
+                    'destination': const.IPv4_ANY,
                     'external_ids': {
                         ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
                         ovn_const.OVN_SUBNET_EXT_ID_KEY:
@@ -1018,7 +1017,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                     'external_ids': {}}]
         expected_added = []
         expected_deleted = [{'nexthop': '90.0.0.1',
-                    'destination': '0.0.0.0/0',
+                    'destination': const.IPv4_ANY,
                     'external_ids': {
                         ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
                         ovn_const.OVN_SUBNET_EXT_ID_KEY:
@@ -1047,7 +1046,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                     'destination': '12.0.0.0/24',
                     'external_ids': {}},
                     {'nexthop': '90.0.0.1',
-                    'destination': '0.0.0.0/0',
+                    'destination': const.IPv4_ANY,
                     'external_ids': {
                         ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
                         ovn_const.OVN_SUBNET_EXT_ID_KEY:
@@ -1056,7 +1055,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                     'destination': '13.0.0.0/24',
                     'external_ids': {}}]
         expected_added = [{'nexthop': '90.0.0.1',
-                    'destination': '0.0.0.0/0',
+                    'destination': const.IPv4_ANY,
                     'external_ids': {
                         ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
                         ovn_const.OVN_SUBNET_EXT_ID_KEY:
@@ -1077,7 +1076,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                     'destination': '13.0.0.0/24',
                     'external_ids': {}},
                     {'nexthop': '90.0.0.1',
-                    'destination': '0.0.0.0/0',
+                    'destination': const.IPv4_ANY,
                     'external_ids': {
                         ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
                         ovn_const.OVN_SUBNET_EXT_ID_KEY:
@@ -1098,7 +1097,7 @@ class TestOvnNbSyncML2(test_mech_driver.OVNMechanismDriverTestCase):
                     'destination': '13.0.0.0/24',
                     'external_ids': {}},
                     {'nexthop': '90.0.0.1',
-                    'destination': '0.0.0.0/0',
+                    'destination': const.IPv4_ANY,
                     'external_ids': {
                         ovn_const.OVN_ROUTER_IS_EXT_GW: 'true',
                         ovn_const.OVN_SUBNET_EXT_ID_KEY:

@@ -13,6 +13,8 @@
 
 from unittest import mock
 
+from neutron_lib import constants as n_const
+
 from neutron.agent.linux import ipset_manager
 from neutron.tests import base
 
@@ -146,9 +148,9 @@ class IpsetManagerTestCase(BaseIpsetManagerTest):
         self.verify_mock_calls()
 
     def test_set_members_adding_all_zero_ipv4(self):
-        self.expect_set([('0.0.0.0/0', 'fa:16:3e:aa:bb:c1'), ])
+        self.expect_set([(n_const.IPv4_ANY, 'fa:16:3e:aa:bb:c1'), ])
         self.ipset.set_members(TEST_SET_ID, ETHERTYPE,
-                               [('0.0.0.0/0', 'fa:16:3e:aa:bb:c1'), ])
+                               [(n_const.IPv4_ANY, 'fa:16:3e:aa:bb:c1'), ])
         self.verify_mock_calls()
 
     def test_set_members_adding_all_zero_ipv6(self):

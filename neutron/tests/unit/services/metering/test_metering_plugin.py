@@ -16,6 +16,7 @@ from unittest import mock
 
 from neutron_lib.agent import topics
 from neutron_lib.api.definitions import metering as metering_apidef
+from neutron_lib import constants as n_const
 from neutron_lib import context
 from neutron_lib.plugins import constants
 from neutron_lib.plugins import directory
@@ -417,7 +418,8 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                          '_metering_labels': [
                              {'rule': {
                                  'destination_ip_prefix':
-                                     net_utils.AuthenticIPNetwork('0.0.0.0/0'),
+                                     net_utils.AuthenticIPNetwork(
+                                         n_const.IPv4_ANY),
                                  'source_ip_prefix':
                                      net_utils.AuthenticIPNetwork(
                                          '10.0.0.0/24'),
@@ -438,7 +440,8 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                          '_metering_labels': [
                              {'rule': {
                                  'destination_ip_prefix':
-                                     net_utils.AuthenticIPNetwork('0.0.0.0/0'),
+                                     net_utils.AuthenticIPNetwork(
+                                         n_const.IPv4_ANY),
                                  'source_ip_prefix':
                                      net_utils.AuthenticIPNetwork(
                                          '10.0.0.0/24'),
@@ -451,7 +454,7 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
                          'id': self.uuid}]
 
         ip_prefixes = {'source_ip_prefix': '10.0.0.0/24',
-                       'destination_ip_prefix': '0.0.0.0/0'}
+                       'destination_ip_prefix': n_const.IPv4_ANY}
         with self.router():
             with self.metering_label() as label:
                 la = label['metering_label']
@@ -472,7 +475,7 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
 
                 res = self._create_metering_label_rule(
                     self.fmt, la['id'], 'ingress', False,
-                    remote_ip_prefix='0.0.0.0/0',
+                    remote_ip_prefix=n_const.IPv4_ANY,
                     source_ip_prefix='10.0.0.0/24')
 
                 expected_error_code = 500
@@ -494,7 +497,7 @@ class TestMeteringPlugin(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
 
                 res = self._create_metering_label_rule(
                     self.fmt, la['id'], 'ingress', False,
-                    remote_ip_prefix='0.0.0.0/0',
+                    remote_ip_prefix=n_const.IPv4_ANY,
                     destination_ip_prefix='8.8.8.8/32')
 
                 expected_error_code = 500

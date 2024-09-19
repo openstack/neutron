@@ -54,7 +54,6 @@ from neutron.services.ovn_l3.service_providers import driver_controller
 from neutron.services.portforwarding.drivers.ovn import driver \
     as port_forwarding
 
-
 LOG = log.getLogger(__name__)
 
 
@@ -330,9 +329,9 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         router_ids = {port['device_id'] for port in gw_ports
                       if utils.is_ovn_provider_router(
                           l3plugin.get_router(context, port['device_id']))}
-        remove = [{'destination': '0.0.0.0/0', 'nexthop': orig_gw_ip}
+        remove = [{'destination': n_const.IPv4_ANY, 'nexthop': orig_gw_ip}
                   ] if orig_gw_ip else []
-        add = [{'destination': '0.0.0.0/0', 'nexthop': current_gw_ip}
+        add = [{'destination': n_const.IPv4_ANY, 'nexthop': current_gw_ip}
                ] if current_gw_ip else []
         with l3plugin._nb_ovn.transaction(check_error=True) as txn:
             for router_id in router_ids:

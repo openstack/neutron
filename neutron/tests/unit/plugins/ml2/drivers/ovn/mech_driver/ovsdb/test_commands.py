@@ -14,6 +14,7 @@
 
 from unittest import mock
 
+from neutron_lib import constants as n_const
 from ovsdbapp.backend.ovs_idl import idlutils
 
 from neutron.common.ovn import constants as ovn_const
@@ -1165,7 +1166,7 @@ class TestDeleteLRouterExtGwCommand(TestBaseCommand):
 
     def test_delete_lrouter_extgw_routes(self):
         fake_route_1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={'ip_prefix': '0.0.0.0/0', 'nexthop': '10.0.0.1',
+            attrs={'ip_prefix': n_const.IPv4_ANY, 'nexthop': '10.0.0.1',
                    'external_ids': {ovn_const.OVN_ROUTER_IS_EXT_GW: True}})
         fake_route_2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
             attrs={'ip_prefix': '50.0.0.0/24', 'nexthop': '40.0.0.101'})
@@ -1185,11 +1186,11 @@ class TestDeleteLRouterExtGwCommand(TestBaseCommand):
 
     def test_delete_lrouter_multiple_extgw_routes(self):
         fake_route_1 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={'ip_prefix': '0.0.0.0/0', 'nexthop': '10.0.0.1',
+            attrs={'ip_prefix': n_const.IPv4_ANY, 'nexthop': '10.0.0.1',
                    'external_ids': {ovn_const.OVN_ROUTER_IS_EXT_GW: True},
                    'output_port': '1'})
         fake_route_2 = fakes.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={'ip_prefix': '0.0.0.0/0', 'nexthop': '10.0.0.1',
+            attrs={'ip_prefix': n_const.IPv4_ANY, 'nexthop': '10.0.0.1',
                    'external_ids': {ovn_const.OVN_ROUTER_IS_EXT_GW: True},
                    'output_port': '2'})
         fake_route_3 = fakes.FakeOvsdbRow.create_one_ovsdb_row(

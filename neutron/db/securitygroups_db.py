@@ -927,7 +927,7 @@ class SecurityGroupDbMixin(
             none_char = '+'
 
             if key == 'remote_ip_prefix':
-                all_address = ['0.0.0.0/0', '::/0', None]
+                all_address = [constants.IPv4_ANY, constants.IPv6_ANY, None]
                 if value in all_address:
                     return none_char
             elif value is None:

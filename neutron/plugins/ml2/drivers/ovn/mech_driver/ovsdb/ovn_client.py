@@ -1442,7 +1442,7 @@ class OVNClient(object):
 
     def _get_snat_cidrs_for_external_router(self, context, router_id):
         if is_nested_snat():
-            return [ovn_const.OVN_DEFAULT_SNAT_CIDR]
+            return [const.IPv4_ANY]
         # nat rule per attached subnet per external ip
         return self._get_v4_network_of_all_router_ports(context, router_id)
 

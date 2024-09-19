@@ -183,9 +183,11 @@ class FirewallTestCase(BaseFirewallTestCase):
         sg_rules = [{'ethertype': 'IPv4', 'direction': 'egress'},
                     {'ethertype': 'IPv6', 'direction': 'egress'},
                     {'ethertype': 'IPv4', 'direction': 'ingress',
-                     'source_ip_prefix': '0.0.0.0/0', 'protocol': 'icmp'},
+                     'source_ip_prefix': constants.IPv4_ANY,
+                     'protocol': 'icmp'},
                     {'ethertype': 'IPv6', 'direction': 'ingress',
-                     'source_ip_prefix': '0::0/0', 'protocol': 'ipv6-icmp'}]
+                     'source_ip_prefix': constants.IPv6_ANY,
+                     'protocol': 'ipv6-icmp'}]
         # make sure port ranges converge on all protocols with and without
         # port ranges (prevents regression of bug 1502924)
         for proto in ('tcp', 'udp', 'icmp'):

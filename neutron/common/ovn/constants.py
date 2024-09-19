@@ -464,6 +464,3 @@ OVN_SUPPORTED_VNIC_TYPES = [portbindings.VNIC_NORMAL,
                             portbindings.VNIC_BAREMETAL,
                             portbindings.VNIC_VIRTIO_FORWARDER,
                             ]
-
-# OVN default SNAT CIDR
-OVN_DEFAULT_SNAT_CIDR = '0.0.0.0/0'

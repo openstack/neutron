@@ -312,7 +312,7 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         updated_route = fg_device.route.list_routes(
                 ip_version=lib_constants.IP_VERSION_4,
                 table=tbl_index)
-        expected_route = [{'cidr': '0.0.0.0/0',
+        expected_route = [{'cidr': lib_constants.IPv4_ANY,
                            'device': fg_port_name,
                            'table': tbl_index,
                            'via': '19.4.4.2'}]
@@ -360,7 +360,7 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         updated_route = fg_device.route.list_routes(
                 ip_version=lib_constants.IP_VERSION_4,
                 table=tbl_index)
-        expected_route = [{'cidr': '0.0.0.0/0',
+        expected_route = [{'cidr': lib_constants.IPv4_ANY,
                            'device': fg_port_name,
                            'table': tbl_index,
                            'via': '19.4.4.2'}]
@@ -930,7 +930,7 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
         v6_gateway = utils.cidr_to_ip(
                 ip_lib.get_ipv6_lladdr(fpr_device.link.address))
         expected_gateway = [{'device': device_name,
-                             'cidr': '0.0.0.0/0',
+                             'cidr': lib_constants.IPv4_ANY,
                              'via': str(fip_2_rtr.ip),
                              'table': dvr_fip_ns.FIP_RT_TBL},
                             {'device': device_name,
@@ -1815,7 +1815,7 @@ class TestDvrRouter(DvrRouterTestFramework, framework.L3AgentTestFramework):
             # When floatingip are associated, make sure that the
             # corresponding rules and routes in route table are created
             # for the router.
-            expected_rule = {u'from': '0.0.0.0/0',
+            expected_rule = {u'from': lib_constants.IPv4_ANY,
                              u'iif': fip_ns_int_name,
                              'priority': str(router_fip_table_idx),
                              'table': str(router_fip_table_idx),

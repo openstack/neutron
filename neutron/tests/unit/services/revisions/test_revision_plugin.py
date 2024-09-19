@@ -13,6 +13,7 @@
 #    under the License.
 #
 
+from neutron_lib import constants as n_const
 from neutron_lib import context as nctx
 from neutron_lib.db import api as db_api
 from neutron_lib.plugins import constants
@@ -216,7 +217,7 @@ class TestRevisionPlugin(test_plugin.Ml2PluginV2TestCase):
         r = {'security_group_rule': {'tenant_id': 'some_tenant',
                                      'port_range_min': 80, 'protocol': 6,
                                      'port_range_max': 90,
-                                     'remote_ip_prefix': '0.0.0.0/0',
+                                     'remote_ip_prefix': n_const.IPv4_ANY,
                                      'ethertype': 'IPv4',
                                      'remote_group_id': None,
                                      'remote_address_group_id': None,

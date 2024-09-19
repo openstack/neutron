@@ -31,7 +31,7 @@ class TestIsValidPrefix(base.BaseTestCase):
         self.assertTrue(is_valid)
 
     def test_invalid_prefix_ipv4(self):
-        is_valid = rules.is_valid_prefix('0.0.0.0/0')
+        is_valid = rules.is_valid_prefix(constants.IPv4_ANY)
         self.assertFalse(is_valid)
 
     def test_valid_prefix_ipv6(self):
@@ -104,7 +104,7 @@ class TestCreateFlowsFromRuleAndPort(base.BaseTestCase):
             'ethertype': constants.IPv4,
             'direction': constants.INGRESS_DIRECTION,
             'source_ip_prefix': '192.168.0.0/24',
-            'dest_ip_prefix': '0.0.0.0/0',
+            'dest_ip_prefix': constants.IPv4_ANY,
         }
         expected_template = {
             'priority': 74,

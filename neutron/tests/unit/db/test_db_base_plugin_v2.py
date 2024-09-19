@@ -6825,7 +6825,7 @@ class DbModelMixin(object):
                 security_group=sg, port_range_min=1,
                 port_range_max=2, protocol='TCP',
                 ethertype='v4', direction='ingress',
-                remote_ip_prefix='0.0.0.0/0')
+                remote_ip_prefix=constants.IPv4_ANY)
             ctx.session.add(sg)
             ctx.session.add(rule)
         return sg, rule
