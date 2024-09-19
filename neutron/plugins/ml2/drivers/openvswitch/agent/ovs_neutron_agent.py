@@ -480,6 +480,9 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             except KeyError:
                 continue
             if not local_vlan:
+                LOG.warning("While restoring the local VLAN map from OVS, "
+                            "port %s was listed without a tag.",
+                            port.port_name)
                 continue
             net_uuid = local_vlan_map.get('net_uuid')
             segmentation_id = local_vlan_map.get('segmentation_id')
@@ -490,6 +493,10 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                         local_vlan != ovs_const.DEAD_VLAN_TAG):
                     self.available_local_vlans.remove(local_vlan)
                     self._local_vlan_hints[key] = local_vlan
+            else:
+                LOG.warning("While restoring the local VLAN map from OVS, "
+                            "port %s was listed without a network "
+                            "associated.", port.port_name)
 
     def _reset_tunnel_ofports(self):
         self.tun_br_ofports = {n_const.TYPE_GENEVE: {},
