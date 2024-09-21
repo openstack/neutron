@@ -1032,7 +1032,7 @@ class SetLSwitchPortToVirtualTypeCommand(command.BaseCommand):
         except idlutils.RowNotFound:
             if self.if_exists:
                 return
-            msg = "Logical Switch Port %s does not exist" % self.lport
+            msg = _("Logical Switch Port %s does not exist") % self.lport
             raise RuntimeError(msg)
 
         options = lsp.options
@@ -1063,7 +1063,7 @@ class UnsetLSwitchPortToVirtualTypeCommand(command.BaseCommand):
         except idlutils.RowNotFound:
             if self.if_exists:
                 return
-            msg = "Logical Switch Port %s does not exist" % self.lport
+            msg = _("Logical Switch Port %s does not exist") % self.lport
             raise RuntimeError(msg)
 
         options = lsp.options
