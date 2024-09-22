@@ -4,9 +4,6 @@ Migration from ML2/OVS to ML2/OVN
 Proof-of-concept ansible script for migrating an OpenStack deployment
 that uses ML2/OVS to OVN.
 
-If you have a tripleo ML2/OVS deployment then please see the folder
-``tripleo_environment``
-
 Prerequisites:
 
 1. Ansible 2.2 or greater.

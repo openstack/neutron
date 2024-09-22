@@ -1,3 +1,0 @@
----
-# defaults file for stop-agents
-systemd_service_file_dir: /etc/systemd/system

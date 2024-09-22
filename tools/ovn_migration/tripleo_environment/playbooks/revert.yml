@@ -1,4 +1,0 @@
-- name: Clean computes
-  hosts: ovn-controllers
-  roles:
-    - revert

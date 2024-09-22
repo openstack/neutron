@@ -1,8 +1,0 @@
-#!/bin/bash
-set -x
-
-cat > $HOME/ovn-extras.yaml << EOF
-parameter_defaults:
-  OVNIntegrationBridge: "br-migration"
-  ForceNeutronDriverUpdate: true
-EOF
