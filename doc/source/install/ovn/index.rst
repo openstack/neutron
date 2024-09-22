@@ -8,4 +8,3 @@ OVN Install Documentation
    :maxdepth: 1
 
    manual_install.rst
-   tripleo_install.rst
