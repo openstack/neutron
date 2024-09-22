@@ -25,8 +25,8 @@ class TestOVSCleanup(base.BaseTestCase):
         conf = mock.Mock()
         conf.ovs_all_ports = True
         conf.ovs_integration_bridge = 'br-int'
-        conf.external_network_bridge = 'br-ex'
-        bridges = [conf.ovs_integration_bridge, conf.external_network_bridge]
+        external_network_bridge = 'br-ex'
+        bridges = [conf.ovs_integration_bridge, external_network_bridge]
         with mock.patch('neutron.agent.common.ovs_lib.BaseOVS') as ovs_cls:
             ovs_base = mock.Mock()
             ovs_base.get_bridges.return_value = bridges
@@ -35,5 +35,5 @@ class TestOVSCleanup(base.BaseTestCase):
             util.do_main(conf)
             ovs_base.ovsdb.ovs_cleanup.assert_has_calls(
                 [mock.call(conf.ovs_integration_bridge, True),
-                 mock.call(conf.external_network_bridge, True)],
+                 mock.call(external_network_bridge, True)],
                 any_order=True)
