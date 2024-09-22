@@ -56,60 +56,6 @@ class TestChecks(base.BaseTestCase):
         result = checks.CoreChecks.worker_count_check(mock.Mock())
         self.assertEqual(Code.WARNING, result.code)
 
-    def test_external_network_bridge_check_good(self):
-        agents = [
-            {'host': 'Host A', 'configurations': '{}'},
-            {'host': 'Host B',
-             'configurations': '{"external_network_bridge": ""}'}
-        ]
-        with mock.patch.object(checks, "get_l3_agents", return_value=agents):
-            result = checks.CoreChecks.external_network_bridge_check(
-                mock.Mock())
-            self.assertEqual(Code.SUCCESS, result.code)
-
-    def test_external_network_bridge_check_bad(self):
-        agents = [
-            {'host': 'Host A', 'configurations': '{}'},
-            {'host': 'Host B',
-             'configurations': '{"external_network_bridge": "br-ex"}'},
-            {'host': 'Host C',
-             'configurations': '{"external_network_bridge": ""}'}
-        ]
-        with mock.patch.object(checks, "get_l3_agents", return_value=agents):
-            result = checks.CoreChecks.external_network_bridge_check(
-                mock.Mock())
-            self.assertEqual(Code.WARNING, result.code)
-            self.assertIn('Host B', result.details)
-            self.assertNotIn('Host A', result.details)
-            self.assertNotIn('Host C', result.details)
-
-    def test_gateway_external_network_check_good(self):
-        agents = [
-            {'host': 'Host A', 'configurations': '{}'},
-            {'host': 'Host B',
-             'configurations': '{"gateway_external_network_id": ""}'}
-        ]
-        with mock.patch.object(checks, "get_l3_agents", return_value=agents):
-            result = checks.CoreChecks.gateway_external_network_check(
-                mock.Mock())
-            self.assertEqual(Code.SUCCESS, result.code)
-
-    def test_gateway_external_network_check_bad(self):
-        agents = [
-            {'host': 'Host A', 'configurations': '{}'},
-            {'host': 'Host B',
-             'configurations': '{"gateway_external_network_id": "net-uuid"}'},
-            {'host': 'Host C',
-             'configurations': '{"gateway_external_network_id": ""}'}
-        ]
-        with mock.patch.object(checks, "get_l3_agents", return_value=agents):
-            result = checks.CoreChecks.gateway_external_network_check(
-                mock.Mock())
-            self.assertEqual(Code.WARNING, result.code)
-            self.assertIn('Host B', result.details)
-            self.assertNotIn('Host A', result.details)
-            self.assertNotIn('Host C', result.details)
-
     def test_network_mtu_check_good(self):
         networks = [
             {'id': 'net-uuid-a', 'mtu': 1500},

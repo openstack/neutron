@@ -18,7 +18,6 @@ from neutron_lib import context
 from neutron_lib.db import api as db_api
 from neutron_lib.db import model_query
 from oslo_config import cfg
-from oslo_serialization import jsonutils
 from oslo_upgradecheck import common_checks
 from oslo_upgradecheck import upgradecheck
 from sqlalchemy import and_
@@ -80,10 +79,6 @@ def get_extra_dhcp_opts():
         query = model_query.get_collection_query(
             ctx, extra_dhcp_opt_models.ExtraDhcpOpt)
         return query.all()
-
-
-def get_l3_agents():
-    return get_agents(constants.AGENT_TYPE_L3)
 
 
 def get_nic_switch_agents():
@@ -203,10 +198,6 @@ class CoreChecks(base.BaseChecks):
 
     def get_checks(self):
         return [
-            (_("Gateway external network"),
-             self.gateway_external_network_check),
-            (_("External network bridge"),
-             self.external_network_bridge_check),
             (_("Worker counts configured"), self.worker_count_check),
             (_("Networking-ovn database revision"),
              self.ovn_db_revision_check),
@@ -251,71 +242,6 @@ class CoreChecks(base.BaseChecks):
                   "has changed. Please see release notes for the new values, "
                   "but it is strongly encouraged for deployers to manually "
                   "set the values for api_workers and rpc_workers."))
-
-    @staticmethod
-    def external_network_bridge_check(checker):
-        if not cfg.CONF.database.connection:
-            return upgradecheck.Result(
-                upgradecheck.Code.WARNING,
-                _("Database connection string is not set. Check of usage of "
-                  "'external_network_bridge' config option in L3 agents "
-                  "can't be done"))
-
-        agents_with_external_bridge = []
-        for agent in get_l3_agents():
-            config_string = agent.get('configurations')
-            if not config_string:
-                continue
-            config = jsonutils.loads(config_string)
-            if config.get("external_network_bridge"):
-                agents_with_external_bridge.append(agent.get("host"))
-
-        if agents_with_external_bridge:
-            return upgradecheck.Result(
-                upgradecheck.Code.WARNING,
-                _("L3 agents on hosts %s are still using "
-                  "'external_network_bridge' config option to provide "
-                  "gateway connectivity. This option is now removed. "
-                  "Migration of routers from those L3 agents will be "
-                  "required to connect them to external network through "
-                  "integration bridge.") % agents_with_external_bridge)
-        else:
-            return upgradecheck.Result(
-                upgradecheck.Code.SUCCESS,
-                _("L3 agents are using integration bridge to connect external "
-                  "gateways"))
-
-    @staticmethod
-    def gateway_external_network_check(checker):
-        if not cfg.CONF.database.connection:
-            return upgradecheck.Result(
-                upgradecheck.Code.WARNING,
-                _("Database connection string is not set. Check of usage of "
-                  "'gateway_external_network_id' config option in L3 agents "
-                  "can't be done"))
-
-        agents_with_gateway_external_net = []
-        for agent in get_l3_agents():
-            config_string = agent.get('configurations')
-            if not config_string:
-                continue
-            config = jsonutils.loads(config_string)
-            if config.get("gateway_external_network_id"):
-                agents_with_gateway_external_net.append(agent.get("host"))
-
-        if agents_with_gateway_external_net:
-            agents_list = ", ".join(agents_with_gateway_external_net)
-            return upgradecheck.Result(
-                upgradecheck.Code.WARNING,
-                _("L3 agents on hosts %s are still using "
-                  "'gateway_external_network_id' config option to configure "
-                  "external network used as gateway for routers. "
-                  "This option is now removed and routers on those hosts can "
-                  "use multiple external networks as gateways.") % agents_list)
-        else:
-            return upgradecheck.Result(
-                upgradecheck.Code.SUCCESS,
-                _("L3 agents can use multiple networks as external gateways."))
 
     @staticmethod
     def network_mtu_check(checker):
