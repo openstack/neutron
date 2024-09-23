@@ -104,7 +104,7 @@
 
 - project-template:
     name: neutron-periodic-jobs
-    periodic:
+    periodic-weekly:
       jobs:
         - neutron-functional
         - neutron-fullstack
