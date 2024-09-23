@@ -124,7 +124,7 @@
 
 - project-template:
     name: neutron-periodic-jobs
-    periodic:
+    periodic-weekly:
       jobs:
         - neutron-functional
         - neutron-functional-with-uwsgi-fips
