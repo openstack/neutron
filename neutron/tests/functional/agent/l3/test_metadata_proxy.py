@@ -17,15 +17,19 @@ import time
 
 import netaddr
 from neutron_lib import constants
+from oslo_log import log as logging
 import webob
 import webob.dec
 import webob.exc
 
+from neutron.agent.linux import ip_lib
 from neutron.agent.linux import utils
 from neutron.tests.common import machine_fixtures
 from neutron.tests.common import net_helpers
 from neutron.tests.functional.agent.l3 import framework
 from neutron.tests.functional.agent.linux import helpers
+
+LOG = logging.getLogger(__name__)
 
 METADATA_REQUEST_TIMEOUT = 60
 METADATA_REQUEST_SLEEP = 5
@@ -100,7 +104,14 @@ class MetadataL3AgentTestCase(framework.L3AgentTestFramework):
                          interface,))
         return interface
 
-    def _query_metadata_proxy(self, machine, ipv6=False, interface=None):
+    def _log_router_interfaces_configuration(self, router):
+        router_ip_wrapper = ip_lib.IPWrapper(router.ns_name)
+        ip_a_output = router_ip_wrapper.netns.execute(["ip", "addr"])
+        LOG.debug("Interfaces in the router namespace (%s): %s",
+                  router.ns_name, ip_a_output)
+
+    def _query_metadata_proxy(self, machine, ipv6=False, interface=None,
+                              router=None):
         cmd = self._get_command(machine, ipv6, interface)
         i = 0
         CONNECTION_REFUSED_TIMEOUT = METADATA_REQUEST_TIMEOUT // 2
@@ -113,6 +124,9 @@ class MetadataL3AgentTestCase(framework.L3AgentTestFramework):
                     time.sleep(METADATA_REQUEST_SLEEP)
                     i += METADATA_REQUEST_SLEEP
                 else:
+                    if router:
+                        self._log_router_interfaces_configuration(router)
+
                     self.fail('metadata proxy unreachable '
                               'on %s before timeout' % cmd[-1])
 
@@ -139,15 +153,16 @@ class MetadataL3AgentTestCase(framework.L3AgentTestFramework):
         router_ifs = router_info[constants.INTERFACE_KEY]
         qr_lla = str(
             netaddr.EUI(router_ifs[0]['mac_address']).ipv6_link_local())
-        return machine, qr_lla
+        return machine, qr_lla, router
 
     def _test_access_to_metadata_proxy(self, ipv6=False):
-        machine, qr_lla = self._create_resources()
+        machine, qr_lla, router = self._create_resources()
         interface = self._setup_for_ipv6(machine, qr_lla) if ipv6 else None
 
         # Query metadata proxy
         firstline = self._query_metadata_proxy(machine, ipv6=ipv6,
-                                               interface=interface)
+                                               interface=interface,
+                                               router=router)
 
         # Check status code
         self.assertIn(str(webob.exc.HTTPOk.code), firstline.split())
@@ -158,21 +173,23 @@ class MetadataL3AgentTestCase(framework.L3AgentTestFramework):
         if ipv6:
             self.conf.set_override('ip_versions', ['6'],
                                    'metadata_rate_limiting')
-        machine, qr_lla = self._create_resources()
+        machine, qr_lla, router = self._create_resources()
         interface = self._setup_for_ipv6(machine, qr_lla) if ipv6 else None
-        return machine, interface
+        return machine, interface, router
 
     def _test_rate_limiting(self, limit, machine, ipv6=False, interface=None,
-                            exceed=True):
+                            exceed=True, router=None):
         # The first "limit" requests should succeed
         for _ in range(limit):
             firstline = self._query_metadata_proxy(machine, ipv6=ipv6,
-                                                   interface=interface)
+                                                   interface=interface,
+                                                   router=router)
             self.assertIn(str(webob.exc.HTTPOk.code), firstline.split())
 
         if exceed:
             firstline = self._query_metadata_proxy(machine, ipv6=ipv6,
-                                                   interface=interface)
+                                                   interface=interface,
+                                                   router=router)
             self.assertIn(TOO_MANY_REQUESTS_CODE, firstline.split())
 
     def test_access_to_metadata_proxy(self):
@@ -184,14 +201,16 @@ class MetadataL3AgentTestCase(framework.L3AgentTestFramework):
     def test_metadata_proxy_rate_limiting(self):
         self.conf.set_override('base_query_rate_limit', 2,
                                'metadata_rate_limiting')
-        machine, _ = self._set_up_for_rate_limiting_test()
+        machine, _, _ = self._set_up_for_rate_limiting_test()
         self._test_rate_limiting(2, machine)
 
     def test_metadata_proxy_rate_limiting_ipv6(self):
         self.conf.set_override('base_query_rate_limit', 2,
                                'metadata_rate_limiting')
-        machine, interface = self._set_up_for_rate_limiting_test(ipv6=True)
-        self._test_rate_limiting(2, machine, ipv6=True, interface=interface)
+        machine, interface, router = self._set_up_for_rate_limiting_test(
+            ipv6=True)
+        self._test_rate_limiting(2, machine, ipv6=True, interface=interface,
+                                 router=router)
 
     def test_metadata_proxy_burst_rate_limiting(self):
         self.conf.set_override('base_query_rate_limit', 10,
@@ -202,7 +221,7 @@ class MetadataL3AgentTestCase(framework.L3AgentTestFramework):
                                'metadata_rate_limiting')
         self.conf.set_override('burst_window_duration', 5,
                                'metadata_rate_limiting')
-        machine, _ = self._set_up_for_rate_limiting_test()
+        machine, _, _ = self._set_up_for_rate_limiting_test()
 
         # Since the number of metadata requests don't exceed the base or the
         # burst query rate limit, all of them should get "OK" response
@@ -222,7 +241,7 @@ class MetadataL3AgentTestCase(framework.L3AgentTestFramework):
                                'metadata_rate_limiting')
         self.conf.set_override('burst_window_duration', 5,
                                'metadata_rate_limiting')
-        machine, _ = self._set_up_for_rate_limiting_test()
+        machine, _, _ = self._set_up_for_rate_limiting_test()
 
         # Since the number of metadata requests don't exceed the base or the
         # burst query rate limit, all of them should get "OK" response
@@ -238,7 +257,7 @@ class MetadataL3AgentTestCase(framework.L3AgentTestFramework):
                                'metadata_rate_limiting')
         self.conf.set_override('ip_versions', ['4', '6'],
                                'metadata_rate_limiting')
-        machine, _ = self._set_up_for_rate_limiting_test()
+        machine, _, _ = self._set_up_for_rate_limiting_test()
         # Since we are passing an invalid ip_versions configuration, rate
         # limiting will not be configuerd and more than 2 requests should
         # succeed
