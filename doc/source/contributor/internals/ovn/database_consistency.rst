@@ -410,9 +410,7 @@ Some things to keep in mind about this approach:
   also difficult. In my tests, I've noticed that 3 journal threads
   per controller worked better but that number was pure based on
   ``trial & error``. In production this number should probably be
-  calculated based in the environment, perhaps something like `TripleO
-  <http://tripleo.org>`_ (or any upper layer) would be in a better
-  position to make that decision.
+  calculated based in the environment.
 
 * At least temporarily, the data in the Neutron database is duplicated
   between the normal tables and the journal one.
