@@ -51,13 +51,13 @@ ml2_opts = [
                       'This option allows specifying a physical network MTU '
                       'value that differs from the default global_physnet_mtu '
                       'value.')),
-    cfg.ListOpt('physical_network_mtus',
-                default=[],
-                help=_("A list of mappings of physical networks to MTU "
-                       "values. The format of the mapping is "
-                       "<physnet>:<mtu val>. This mapping allows "
-                       "specifying a physical network MTU value that "
-                       "differs from the default global_physnet_mtu value.")),
+    cfg.DictOpt('physical_network_mtus',
+                default={},
+                help=_("Mappings of physical networks to MTU values. "
+                       "The format of the mapping is <physnet>:<mtu val>. "
+                       "This mapping allows specifying a physical network MTU "
+                       "value that differs from "
+                       "the default global_physnet_mtu value.")),
     cfg.StrOpt('external_network_type',
                help=_("Default network type for external networks when no "
                       "provider attributes are specified. By default it is "
