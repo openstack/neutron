@@ -1,0 +1,5 @@
+---
+upgrade:
+  - |
+    The migration tool for TripleO deployments has been removed, because
+    TripleO project has been retired.
