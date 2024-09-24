@@ -999,30 +999,31 @@ class OVNClient(object):
             # Find out IP addresses and subnets of configured members.
             members_to_verify = []
             for ext_id in lb.external_ids.keys():
-                if ext_id.startswith(ovn_const.LB_EXT_IDS_POOL_PREFIX):
-                    members = lb.external_ids[ext_id]
-                    if not members:
+                if not ext_id.startswith(ovn_const.LB_EXT_IDS_POOL_PREFIX):
+                    continue
+                members = lb.external_ids[ext_id]
+                if not members:
+                    continue
+                for member in members.split(','):
+                    # NOTE(mjozefcz): Remove this workaround in W release.
+                    # Last argument of member info is a subnet_id from from
+                    # which member comes from.
+                    # member_`id`_`ip`:`port`_`subnet_ip`
+                    member_info = member.split('_')
+                    if len(member_info) < 4:
                         continue
-                    for member in members.split(','):
-                        # NOTE(mjozefcz): Remove this workaround in W release.
-                        # Last argument of member info is a subnet_id from
-                        # from which member comes from.
-                        # member_`id`_`ip`:`port`_`subnet_ip`
-                        member_info = member.split('_')
-                        if len(member_info) >= 4:
-                            m = {}
-                            m['id'] = member_info[1]
-                            m['ip'] = member_info[2].split(':')[0]
-                            m['subnet_id'] = member_info[3]
-                            try:
-                                subnet = self._plugin.get_subnet(
-                                    context, m['subnet_id'])
-                                m['network_id'] = subnet['network_id']
-                                members_to_verify.append(m)
-                            except n_exc.SubnetNotFound:
-                                LOG.debug("Cannot find subnet details "
-                                          "for OVN LB member "
-                                          "%s.", m['id'])
+                    m = {}
+                    m['id'] = member_info[1]
+                    m['ip'] = member_info[2].split(':')[0]
+                    m['subnet_id'] = member_info[3]
+                    try:
+                        subnet = self._plugin.get_subnet(context,
+                                                         m['subnet_id'])
+                        m['network_id'] = subnet['network_id']
+                        members_to_verify.append(m)
+                    except n_exc.SubnetNotFound:
+                        LOG.debug("Cannot find subnet details for "
+                                  "OVN LB member %s.", m['id'])
 
             # Find a member LSPs from all linked LS to this LB.
             for member in members_to_verify:
@@ -1031,55 +1032,53 @@ class OVNClient(object):
                 for lsp in ls.ports:
                     if not lsp.addresses:
                         continue
-                    if member['ip'] in utils.remove_macs_from_lsp_addresses(
-                            lsp.addresses):
-                        member['lsp'] = lsp
-                        nats = self._nb_idl.db_find_rows(
-                            'NAT',
-                            ('external_ids', '=', {
-                                ovn_const.OVN_FIP_PORT_EXT_ID_KEY: lsp.name})
-                        ).execute(check_error=True)
+                    ips = utils.remove_macs_from_lsp_addresses(lsp.addresses)
+                    if member['ip'] not in ips:
+                        continue
+                    member['lsp'] = lsp
+                    nats = self._nb_idl.db_find_rows(
+                        'NAT',
+                        ('external_ids', '=', {
+                            ovn_const.OVN_FIP_PORT_EXT_ID_KEY: lsp.name})
+                    ).execute(check_error=True)
 
-                        for nat in nats:
-                            if action == ovn_const.FIP_ACTION_ASSOCIATE:
-                                # NOTE(mjozefcz): We should delete logical_port
-                                # and external_mac entries from member NAT in
-                                # order to make traffic work.
-                                LOG.warning(
-                                    "Port %s is configured as a member "
-                                    "of one of OVN Load_Balancers and "
-                                    "Load_Balancer has FIP assigned. "
-                                    "In order to make traffic work member "
-                                    "FIP needs to be centralized, even if "
-                                    "this environment is configured as "
-                                    "DVR. Removing logical_port and "
-                                    "external_mac from NAT entry.",
-                                    lsp.name)
-                                commands.extend([
-                                    self._nb_idl.db_clear(
-                                        'NAT', nat.uuid, 'external_mac'),
-                                    self._nb_idl.db_clear(
-                                        'NAT', nat.uuid, 'logical_port')])
-                            else:
-                                # NOTE(mjozefcz): The FIP from LB VIP is
-                                # disassociated now. We can decentralize
-                                # member FIPs now.
-                                LOG.warning(
-                                    "Port %s is configured as a member "
-                                    "of one of OVN Load_Balancers and "
-                                    "Load_Balancer has FIP disassociated. "
-                                    "DVR for this port can be enabled back.",
-                                    lsp.name)
-                                commands.append(self._nb_idl.db_set(
-                                    'NAT', nat.uuid,
-                                    ('logical_port', lsp.name)))
-                                port = self._plugin.get_port(context, lsp.name)
-                                if port['status'] == const.PORT_STATUS_ACTIVE:
-                                    commands.append(
-                                        self._nb_idl.db_set(
-                                            'NAT', nat.uuid,
-                                            ('external_mac',
-                                             port['mac_address'])))
+                    for nat in nats:
+                        if action == ovn_const.FIP_ACTION_ASSOCIATE:
+                            # NOTE(mjozefcz): We should delete logical_port and
+                            # external_mac entries from member NAT in order to
+                            # make traffic work.
+                            LOG.warning(
+                                "Port %s is configured as a member of one of "
+                                "OVN Load_Balancers and Load_Balancer has FIP "
+                                "assigned. In order to make traffic work "
+                                "member FIP needs to be centralized, even if "
+                                "this environment is configured as DVR. "
+                                "Removing logical_port and external_mac from "
+                                "NAT entry.", lsp.name)
+                            commands.extend([
+                                self._nb_idl.db_clear(
+                                    'NAT', nat.uuid, 'external_mac'),
+                                self._nb_idl.db_clear(
+                                    'NAT', nat.uuid, 'logical_port')])
+                        else:
+                            # NOTE(mjozefcz): The FIP from LB VIP is
+                            # disassociated now. We can decentralize member
+                            # FIPs now.
+                            LOG.warning(
+                                "Port %s is configured as a member of one of "
+                                "OVN Load_Balancers and Load_Balancer has FIP "
+                                "disassociated. DVR for this port can be "
+                                "enabled back.", lsp.name)
+                            commands.append(self._nb_idl.db_set(
+                                'NAT', nat.uuid,
+                                ('logical_port', lsp.name)))
+                            port = self._plugin.get_port(context, lsp.name)
+                            if port['status'] == const.PORT_STATUS_ACTIVE:
+                                commands.append(
+                                    self._nb_idl.db_set(
+                                        'NAT', nat.uuid,
+                                        ('external_mac',
+                                         port['mac_address'])))
 
         return commands
 
