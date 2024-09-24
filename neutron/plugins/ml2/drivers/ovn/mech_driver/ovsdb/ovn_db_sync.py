@@ -967,7 +967,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         LOG.debug('OVN-NB Sync DHCP options for Neutron subnets completed @ '
                   '%s', str(datetime.now()))
 
-    def _sync_port_dhcp_options(self, ctx, ports_need_sync_dhcp_opts,
+    def _sync_port_dhcp_options(self, ports_need_sync_dhcp_opts,
                                 ovn_port_dhcpv4_opts, ovn_port_dhcpv6_opts):
         LOG.debug('OVN-NB Sync DHCP options for Neutron ports with extra '
                   'dhcp options assigned started')
@@ -1155,7 +1155,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
             else:
                 del_lswitchs_list.append(lswitch)
 
-        for net_id, network in db_networks.items():
+        for network in db_networks.values():
             LOG.warning("Network found in Neutron but not in "
                         "OVN NB DB, network_id=%s", network['id'])
             if self.mode == SYNC_MODE_REPAIR:
@@ -1185,12 +1185,12 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                                 port['id'])
                     self._create_port_in_ovn(ctx, port)
                     if port_id in ovn_all_dhcp_options['ports_v4']:
-                        dhcp_disable, lsp_opts = utils.get_lsp_dhcp_opts(
+                        __, lsp_opts = utils.get_lsp_dhcp_opts(
                             port, constants.IP_VERSION_4)
                         if lsp_opts:
                             ovn_all_dhcp_options['ports_v4'].pop(port_id)
                     if port_id in ovn_all_dhcp_options['ports_v6']:
-                        dhcp_disable, lsp_opts = utils.get_lsp_dhcp_opts(
+                        __, lsp_opts = utils.get_lsp_dhcp_opts(
                             port, constants.IP_VERSION_6)
                         if lsp_opts:
                             ovn_all_dhcp_options['ports_v6'].pop(port_id)
@@ -1260,7 +1260,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
                             ovn_all_dhcp_options['ports_v6'].pop(
                                 lport_info['port'])['uuid']))
 
-        self._sync_port_dhcp_options(ctx, ports_need_sync_dhcp_opts,
+        self._sync_port_dhcp_options(ports_need_sync_dhcp_opts,
                                      ovn_all_dhcp_options['ports_v4'],
                                      ovn_all_dhcp_options['ports_v6'])
         LOG.debug('OVN-NB Sync networks, ports and DHCP options completed @ '
