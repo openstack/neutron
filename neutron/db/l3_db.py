@@ -1246,7 +1246,7 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                'port_id': floatingip.fixed_port_id,
                'fixed_ip_address': fixed_ip_address,
                'status': floatingip.status,
-               'standard_attr_id': floatingip.db_obj.standard_attr.id,
+               'standard_attr_id': floatingip.db_obj.standard_attr_id,
                }
         # NOTE(mlavalle): The following assumes this mixin is used in a
         # class inheriting from CommonDbMixin, which is true for all existing

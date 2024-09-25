@@ -326,7 +326,7 @@ class SecurityGroupDbMixin(
                'stateful': security_group['stateful'],
                'tenant_id': security_group['tenant_id'],
                'description': security_group['description'],
-               'standard_attr_id': security_group.db_obj.standard_attr.id,
+               'standard_attr_id': security_group.db_obj.standard_attr_id,
                'shared': security_group['shared'],
                }
         if security_group.rules:
@@ -498,7 +498,7 @@ class SecurityGroupDbMixin(
             'remote_address_group_id': rule_obj[
                 'remote_address_group_id'],
             'remote_group_id': rule_obj['remote_group_id'],
-            'standard_attr_id': rule_obj.db_obj.standard_attr.id,
+            'standard_attr_id': rule_obj.db_obj.standard_attr_id,
             'description': rule_obj['description'],
             'used_in_default_sg': rule_obj['used_in_default_sg'],
             'used_in_non_default_sg': rule_obj['used_in_non_default_sg']
@@ -905,7 +905,7 @@ class SecurityGroupDbMixin(
                'normalized_cidr': self._get_normalized_cidr_from_rule(
                    sg_rule_db),
                'remote_group_id': sg_rule_db.remote_group_id,
-               'standard_attr_id': sg_rule_db.standard_attr.id,
+               'standard_attr_id': sg_rule_db.standard_attr_id,
                'belongs_to_default_sg': belongs_to_default_sg,
                }
 
