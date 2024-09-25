@@ -710,6 +710,7 @@ class FakeFloatingIp(object):
 
         # Set default attributes.
         fake_uuid = uuidutils.generate_uuid()
+        standard_attr = FakeStandardAttribute()
         fip_attrs = {
             'id': 'fip-id-' + fake_uuid,
             'tenant_id': '',
@@ -726,7 +727,8 @@ class FakeFloatingIp(object):
             'dns_domain': '',
             'dns_name': '',
             'project_id': '',
-            'standard_attr': FakeStandardAttribute(),
+            'standard_attr': standard_attr,
+            'standard_attr_id': standard_attr.id,
             'qos_policy_binding': FakeQosFIPPolicyBinding(),
             'qos_network_policy_binding': FakeQosNetworkPolicyBinding(),
         }
