@@ -866,12 +866,19 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                                'cidr': '192.168.2.0/24',
                                'gateway_ip': '192.168.2.254'}
         # Old gateway info with same network and different subnet
-        self.get_router.return_value = copy.copy(self.fake_router_with_ext_gw)
-        self.get_router.return_value['external_gateway_info'] = {
-            'network_id': 'ext-network-id',
-            'external_fixed_ips': [{'ip_address': '192.168.2.1',
-                                    'subnet_id': 'old-ext-subnet-id'}]}
-        self.get_router.return_value['gw_port_id'] = 'old-gw-port-id'
+        self.get_router.return_value = (
+            self.fake_router_with_ext_gw |
+            {
+                'external_gateway_info': {
+                    'network_id': 'ext-network-id',
+                    'external_fixed_ips': [
+                        {'ip_address': '192.168.2.1',
+                         'subnet_id': 'old-ext-subnet-id'}
+                    ]
+                },
+                'gw_port_id': 'old-gw-port-id'
+            }
+        )
         ur.return_value = self.fake_router_with_ext_gw
         self.get_subnet.side_effect = lambda ctx, sid: {
             'ext-subnet-id': self.fake_ext_subnet,

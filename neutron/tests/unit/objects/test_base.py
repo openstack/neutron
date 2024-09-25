@@ -887,9 +887,7 @@ class BaseObjectIfaceTestCase(_BaseObjectTestCase, test_base.BaseTestCase):
                           'found in test class %r' %
                           self._test_class)
 
-        filters = copy.copy(self.valid_field_filter)
-        filters[synthetic_fields.pop()] = 'xxx'
-
+        filters = self.valid_field_filter | {synthetic_fields.pop(): 'xxx'}
         with mock.patch.object(obj_db_api, 'get_objects',
                                return_value=self.db_objs):
             self.assertRaises(n_exc.InvalidInput,

@@ -2272,9 +2272,8 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         fip1 = {'id': _uuid(), 'floating_ip_address': '8.8.8.8',
                 'fixed_ip_address': '7.7.7.7', 'status': 'ACTIVE',
                 'port_id': router[lib_constants.INTERFACE_KEY][0]['id']}
-        fip2 = copy.copy(fip1)
-        fip2.update({'id': _uuid(), 'status': 'DOWN',
-                     'floating_ip_address': '9.9.9.9'})
+        fip2 = fip1 | {'id': _uuid(), 'status': 'DOWN',
+                       'floating_ip_address': '9.9.9.9'}
         router[lib_constants.FLOATINGIP_KEY] = [fip1, fip2]
 
         ri = legacy_router.LegacyRouter(agent, router['id'], router,
@@ -2350,8 +2349,7 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         fip1 = {'id': _uuid(), 'floating_ip_address': '8.8.8.8',
                 'fixed_ip_address': '7.7.7.7', 'status': 'ACTIVE',
                 'port_id': router[lib_constants.INTERFACE_KEY][0]['id']}
-        fip2 = copy.copy(fip1)
-        fip2.update({'id': _uuid(), 'status': 'DOWN', })
+        fip2 = fip1 | {'id': _uuid(), 'status': 'DOWN', }
         router[lib_constants.FLOATINGIP_KEY] = [fip1, fip2]
 
         ri = legacy_router.LegacyRouter(agent, router['id'], router,
