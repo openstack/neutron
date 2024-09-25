@@ -61,7 +61,7 @@ class OvnDriver(base.L3ServiceProvider,
 
         db_rev.create_initial_revision(
             context, router_id, ovn_const.TYPE_ROUTERS,
-            std_attr_id=router_db.standard_attr.id)
+            std_attr_id=router_db.standard_attr_id)
 
     @registry.receives(resources.ROUTER, [events.AFTER_CREATE])
     def _process_router_create(self, resource, event, trigger, payload):
@@ -167,7 +167,7 @@ class OvnDriver(base.L3ServiceProvider,
             return
         db_rev.create_initial_revision(
             context, floatingip_db.id, ovn_const.TYPE_FLOATINGIPS,
-            may_exist=True, std_attr_id=floatingip_db.standard_attr.id)
+            may_exist=True, std_attr_id=floatingip_db.standard_attr_id)
 
     @registry.receives(resources.FLOATING_IP,
                        [events.PRECOMMIT_CREATE, events.PRECOMMIT_UPDATE])
