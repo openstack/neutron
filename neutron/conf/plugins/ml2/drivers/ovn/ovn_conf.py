@@ -175,12 +175,12 @@ ovn_opts = [
                        "option to be unset globally.\n"
                        "See the ovn-nb(5) man page for available options.")),
     cfg.BoolOpt('ovn_emit_need_to_frag',
-                default=False,
+                default=True,
                 help=_('Configure OVN to emit "need to frag" packets in '
                        'case of MTU mismatches.\n'
-                       'Before enabling this option make sure that '
-                       'it is supported by the host kernel (version >= 5.2) '
-                       'or by checking the output of the following command:\n'
+                       'You may have to disable this option if you are '
+                       'running an old host kernel (version < 5.2). You may '
+                       'check the output of the following command:\n'
                        'ovs-appctl -t ovs-vswitchd dpif/show-dp-features '
                        'br-int | grep "Check pkt length action".')),
     cfg.BoolOpt('disable_ovn_dhcp_for_baremetal_ports',
