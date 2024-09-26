@@ -503,9 +503,7 @@ class BaseTestOVNL3RouterPluginMixin():
 
     @mock.patch('neutron.db.extraroute_db.ExtraRoute_dbonly_mixin.'
                 'update_router')
-    @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb'
-                '.ovn_client.OVNClient._get_v4_network_of_all_router_ports')
-    def test_update_router_admin_state_change(self, get_rps, func):
+    def test_update_router_admin_state_change(self, func):
         new_router = self.fake_router.copy()
         updated_data = {'admin_state_up': True}
         new_router.update(updated_data)
@@ -528,9 +526,7 @@ class BaseTestOVNL3RouterPluginMixin():
 
     @mock.patch('neutron.db.extraroute_db.ExtraRoute_dbonly_mixin.'
                 'update_router')
-    @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
-                'ovn_client.OVNClient._get_v4_network_of_all_router_ports')
-    def test_update_router_name_change(self, get_rps, func):
+    def test_update_router_name_change(self, func):
         new_router = self.fake_router.copy()
         updated_data = {'name': 'test'}
         new_router.update(updated_data)
@@ -551,15 +547,19 @@ class BaseTestOVNL3RouterPluginMixin():
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin._get_router')
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb'
                 '.ovn_client.OVNClient._get_v4_network_of_all_router_ports')
-    def test_update_router_static_route_no_change(self, get_rps, get_r, func,
+    def test_update_router_static_route_no_change(self, getv4nets, get_r, func,
                                                   mock_routes):
         router_id = 'router-id'
-        get_rps.return_value = [{'device_id': '',
-                                'device_owner': 'network:router_interface',
-                                 'mac_address': 'aa:aa:aa:aa:aa:aa',
-                                 'fixed_ips': [{'ip_address': '10.0.0.100',
-                                                'subnet_id': 'subnet-id'}],
-                                 'id': 'router-port-id'}]
+        getv4nets.return_value = [
+            {'device_id': '',
+             'device_owner': 'network:router_interface',
+             'mac_address': 'aa:aa:aa:aa:aa:aa',
+             'fixed_ips': [
+                 {'ip_address': '10.0.0.100',
+                  'subnet_id': 'subnet-id'}
+             ],
+             'id': 'router-port-id'}
+        ]
         mock_routes.return_value = self.fake_router['routes']
         update_data = {'router': {'routes': [{'destination': '1.1.1.0/24',
                                               'nexthop': '10.0.0.2'}]}}
@@ -572,14 +572,18 @@ class BaseTestOVNL3RouterPluginMixin():
                 'update_router')
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
                 'ovn_client.OVNClient._get_v4_network_of_all_router_ports')
-    def test_update_router_static_route_change(self, get_rps, func,
+    def test_update_router_static_route_change(self, getv4nets, func,
                                                mock_routes):
-        get_rps.return_value = [{'device_id': '',
-                                'device_owner': 'network:router_interface',
-                                 'mac_address': 'aa:aa:aa:aa:aa:aa',
-                                 'fixed_ips': [{'ip_address': '10.0.0.100',
-                                                'subnet_id': 'subnet-id'}],
-                                 'id': 'router-port-id'}]
+        getv4nets.return_value = [
+            {'device_id': '',
+             'device_owner': 'network:router_interface',
+             'mac_address': 'aa:aa:aa:aa:aa:aa',
+             'fixed_ips': [
+                 {'ip_address': '10.0.0.100',
+                  'subnet_id': 'subnet-id'}
+             ],
+             'id': 'router-port-id'}
+        ]
 
         mock_routes.return_value = self.fake_router['routes']
         new_router = self.fake_router.copy()
@@ -606,14 +610,16 @@ class BaseTestOVNL3RouterPluginMixin():
                 'update_router')
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
                 'ovn_client.OVNClient._get_v4_network_of_all_router_ports')
-    def test_update_router_static_route_clear(self, get_rps, func,
+    def test_update_router_static_route_clear(self, getv4nets, func,
                                               mock_routes):
-        get_rps.return_value = [{'device_id': '',
-                                 'device_owner': 'network:router_interface',
-                                 'mac_address': 'aa:aa:aa:aa:aa:aa',
-                                 'fixed_ips': [{'ip_address': '10.0.0.100',
-                                                'subnet_id': 'subnet-id'}],
-                                 'id': 'router-port-id'}]
+        getv4nets.return_value = [
+            {'device_id': '',
+             'device_owner': 'network:router_interface',
+             'mac_address': 'aa:aa:aa:aa:aa:aa',
+             'fixed_ips': [{'ip_address': '10.0.0.100',
+                            'subnet_id': 'subnet-id'}],
+             'id': 'router-port-id'}
+        ]
 
         mock_routes.return_value = self.fake_router['routes']
         new_router = self.fake_router.copy()
