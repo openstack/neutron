@@ -61,7 +61,7 @@
         - openstack-tox-py36:  # from openstack-python3-victoria-jobs template
             timeout: 3600
 
-    periodic:
+    periodic-weekly:
       jobs:
         - neutron-functional
         - neutron-fullstack
