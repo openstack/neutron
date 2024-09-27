@@ -51,9 +51,7 @@ from neutron.tests.unit import fake_resources
 from neutron.tests.unit.plugins.ml2 import test_plugin as test_mech_driver
 
 
-# TODO(mjozefcz): Find out a way to not inherit from
-# Ml2PluginV2TestCase.
-class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
+class BaseTestOVNL3RouterPluginMixin():
 
     _mechanism_drivers = ['ovn']
     l3_plugin = 'neutron.services.ovn_l3.plugin.OVNL3RouterPlugin'
@@ -72,7 +70,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                    'impl_idl_ovn.Backend.schema_helper').start()
         driver_type_conf.register_ml2_drivers_geneve_opts(cfg=cfg.CONF)
         cfg.CONF.set_override('max_header_size', 38, group='ml2_type_geneve')
-        super(TestOVNL3RouterPlugin, self).setUp()
+        super(BaseTestOVNL3RouterPluginMixin, self).setUp()
         revision_plugin.RevisionPlugin()
         # MTU needs to be 1442 instead of 1500 because GENEVE headers size
         # must be at least 38 when using OVN
@@ -261,6 +259,9 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         self._get_network = self._start_mock(
             'neutron.plugins.ml2.plugin.Ml2Plugin.get_network',
             return_value=self.fake_network)
+        self._get_networks = self._start_mock(
+            'neutron.plugins.ml2.plugin.Ml2Plugin.get_networks',
+            return_value=[self.fake_network])
         self.get_port = self._start_mock(
             'neutron.db.db_base_plugin_v2.NeutronDbPluginV2.get_port',
             return_value=self.fake_router_port)
@@ -630,7 +631,10 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
 
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
                 'ovn_client.OVNClient._get_v4_network_of_all_router_ports')
-    def test_create_router_with_ext_gw(self, get_rps):
+    @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.ovn_client'
+                '.OVNClient._get_router_ports')
+    def test_create_router_with_ext_gw(self, getv4nets, get_rps):
+        getv4nets.return_value = self.fake_router_ports
         self._get_network.return_value = self.fake_ext_network
         self.l3_inst._nb_ovn.is_col_present.return_value = True
         self.get_subnet.return_value = self.fake_ext_subnet
@@ -1002,14 +1006,18 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
                 '.OVNClient._get_v4_network_of_all_router_ports')
     @mock.patch('neutron.db.extraroute_db.ExtraRoute_dbonly_mixin.'
                 'update_router')
-    def test_update_router_with_ext_gw_and_disabled_snat(self, ur, grps):
+    @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.ovn_client'
+                '.OVNClient._get_router_ports')
+    def test_update_router_with_ext_gw_and_disabled_snat(self, grps, ur,
+                                                         getv4nets):
         self.l3_inst._nb_ovn.is_col_present.return_value = True
+        grps.return_value = self.fake_router_ports
         ur.return_value = self.fake_router_with_ext_gw
         ur.return_value['external_gateway_info']['enable_snat'] = False
         self.get_subnet.side_effect = lambda ctx, sid: {
             'ext-subnet-id': self.fake_ext_subnet}.get(sid, self.fake_subnet)
         self.get_port.return_value = self.fake_ext_gw_port
-        grps.return_value = self.fake_router_ports
+        getv4nets.return_value = self.fake_router_ports
         chassis = mock.Mock(name='chassis1', other_config={})
         self.sb_idl().get_gateway_chassis_from_cms_options.return_value = (
             [chassis])
@@ -1914,70 +1922,7 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
     @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
                 'ovn_client.OVNClient._get_router_ports')
     @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.add_router_interface')
-    def test_add_router_interface_need_to_frag_enabled(
-            self, ari, grps, gns, gn):
-        config.cfg.CONF.set_override(
-            'ovn_emit_need_to_frag', True, group='ovn')
-        router_id = 'router-id'
-        interface_info = {'port_id': 'router-port-id',
-                'network_id': 'priv-net'}
-        ari.return_value = self.fake_router_interface_info
-        grps.return_value = [interface_info]
-        self.get_router.return_value = self.fake_router_with_ext_gw
-        mtu = 1200
-        network_attrs = {'id': 'prov-net', 'mtu': 1200,
-                         'provider:network_type': 'vlan',
-                         'provider:physical_network': 'physnet1'}
-        prov_net = fake_resources.FakeNetwork.create_one_network(
-                attrs=network_attrs).info()
-        self.fake_router_port['device_owner'] = (
-            constants.DEVICE_OWNER_ROUTER_GW)
-        gn.return_value = prov_net
-        gns.return_value = [self.fake_network]
-        ext_ids = {
-            ovn_const.OVN_NETTYPE_EXT_ID_KEY: constants.TYPE_GENEVE,
-            ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY: mtu,
-        }
-        self.l3_inst._nb_ovn.ls_get.return_value.execute.return_value = (
-            mock.Mock(external_ids=ext_ids))
-
-        payload = self._create_payload_for_router_interface(router_id)
-        self.ovn_drv._process_add_router_interface(resources.ROUTER_INTERFACE,
-                                                   events.AFTER_CREATE,
-                                                   self, payload)
-
-        # Make sure that the "gateway_mtu" option was set to the router port
-        fake_router_port_assert = self.fake_router_port_assert
-        fake_router_port_assert['options'] = {
-            ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION:
-            str(prov_net['mtu']),
-        }
-        fake_router_port_assert['external_ids'][
-            ovn_const.OVN_ROUTER_IS_EXT_GW] = 'True'
-
-        self.l3_inst._nb_ovn.add_lrouter_port.assert_called_once_with(
-            **fake_router_port_assert)
-        self.l3_inst._nb_ovn.set_lrouter_port_in_lswitch_port.\
-            assert_called_once_with(
-                'router-port-id', 'lrp-router-port-id', is_gw_port=True,
-                lsp_address=ovn_const.DEFAULT_ADDR_FOR_LSP_WITH_PEER)
-        self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
-            'neutron-router-id', logical_ip='10.0.0.0/24',
-            external_ip='192.168.1.1', type='snat')
-
-        self.bump_rev_p.assert_called_with(
-            mock.ANY, self.fake_router_port,
-            ovn_const.TYPE_ROUTER_PORTS)
-
-    @mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.get_network')
-    @mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.get_networks')
-    @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
-                'ovn_client.OVNClient._get_router_ports')
-    @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.add_router_interface')
-    def test_add_router_interface_need_to_frag_enabled_then_remove(
-            self, ari, grps, gns, gn):
-        config.cfg.CONF.set_override(
-            'ovn_emit_need_to_frag', True, group='ovn')
+    def test_add_router_interface_then_remove(self, ari, grps, gns, gn):
         router_id = 'router-id'
         ari.return_value = self.fake_router_interface_info
         # If we remove the router halfway the return value of
@@ -2073,6 +2018,84 @@ class TestOVNL3RouterPlugin(test_mech_driver.Ml2PluginV2TestCase):
         with mock.patch.object(managers.TypeManager, 'initialize'):
             self.assertRaises(ovn_l3_exc.MechanismDriverNotFound,
                               api_router.APIRouter)
+
+
+# TODO(mjozefcz): Find out a way to not inherit from Ml2PluginV2TestCase.
+class TestOVNL3RouterPlugin(BaseTestOVNL3RouterPluginMixin,
+                            test_mech_driver.Ml2PluginV2TestCase):
+
+    def setUp(self):
+        super().setUp()
+        config.cfg.CONF.set_override(
+            'ovn_emit_need_to_frag', True, group='ovn')
+
+    @mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.get_network')
+    @mock.patch('neutron.plugins.ml2.plugin.Ml2Plugin.get_networks')
+    @mock.patch('neutron.plugins.ml2.drivers.ovn.mech_driver.ovsdb.'
+                'ovn_client.OVNClient._get_router_ports')
+    @mock.patch('neutron.db.l3_db.L3_NAT_dbonly_mixin.add_router_interface')
+    def test_add_router_interface_need_to_frag(self, ari, grps, gns, gn):
+        router_id = 'router-id'
+        interface_info = {'port_id': 'router-port-id',
+                'network_id': 'priv-net'}
+        ari.return_value = self.fake_router_interface_info
+        grps.return_value = [interface_info]
+        self.get_router.return_value = self.fake_router_with_ext_gw
+        mtu = 1200
+        network_attrs = {'id': 'prov-net', 'mtu': 1200,
+                         'provider:network_type': 'vlan',
+                         'provider:physical_network': 'physnet1'}
+        prov_net = fake_resources.FakeNetwork.create_one_network(
+                attrs=network_attrs).info()
+        self.fake_router_port['device_owner'] = (
+            constants.DEVICE_OWNER_ROUTER_GW)
+        gn.return_value = prov_net
+        gns.return_value = [self.fake_network]
+        ext_ids = {
+            ovn_const.OVN_NETTYPE_EXT_ID_KEY: constants.TYPE_GENEVE,
+            ovn_const.OVN_NETWORK_MTU_EXT_ID_KEY: mtu,
+        }
+        self.l3_inst._nb_ovn.ls_get.return_value.execute.return_value = (
+            mock.Mock(external_ids=ext_ids))
+
+        payload = self._create_payload_for_router_interface(router_id)
+        self.ovn_drv._process_add_router_interface(resources.ROUTER_INTERFACE,
+                                                   events.AFTER_CREATE,
+                                                   self, payload)
+
+        # Make sure that the "gateway_mtu" option was set to the router port
+        fake_router_port_assert = self.fake_router_port_assert
+        fake_router_port_assert['options'] = {
+            ovn_const.OVN_ROUTER_PORT_GW_MTU_OPTION:
+            str(prov_net['mtu']),
+        }
+        fake_router_port_assert['external_ids'][
+            ovn_const.OVN_ROUTER_IS_EXT_GW] = 'True'
+
+        self.l3_inst._nb_ovn.add_lrouter_port.assert_called_once_with(
+            **fake_router_port_assert)
+        self.l3_inst._nb_ovn.set_lrouter_port_in_lswitch_port.\
+            assert_called_once_with(
+                'router-port-id', 'lrp-router-port-id', is_gw_port=True,
+                lsp_address=ovn_const.DEFAULT_ADDR_FOR_LSP_WITH_PEER)
+        self.l3_inst._nb_ovn.add_nat_rule_in_lrouter.assert_called_once_with(
+            'neutron-router-id', logical_ip='10.0.0.0/24',
+            external_ip='192.168.1.1', type='snat')
+
+        self.bump_rev_p.assert_called_with(
+            mock.ANY, self.fake_router_port,
+            ovn_const.TYPE_ROUTER_PORTS)
+
+
+# Run the same tests for ovn_emit_need_to_frag = False
+# TODO(mjozefcz): Find out a way to not inherit from Ml2PluginV2TestCase.
+class TestOVNL3RouterPluginEmitNeedToFrag(
+        BaseTestOVNL3RouterPluginMixin, test_mech_driver.Ml2PluginV2TestCase):
+
+    def setUp(self):
+        super().setUp()
+        config.cfg.CONF.set_override(
+            'ovn_emit_need_to_frag', False, group='ovn')
 
 
 class OVNL3ExtrarouteTests(test_l3_gw.ExtGwModeIntTestCase,
