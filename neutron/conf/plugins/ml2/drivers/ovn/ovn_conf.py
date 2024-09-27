@@ -176,6 +176,10 @@ ovn_opts = [
                        "See the ovn-nb(5) man page for available options.")),
     cfg.BoolOpt('ovn_emit_need_to_frag',
                 default=True,
+                deprecated_for_removal=True,
+                deprecated_since='2025.1',
+                deprecated_reason=("The option is useful only on very old "
+                                   "Linux kernels (version < 5.2)."),
                 help=_('Configure OVN to emit "need to frag" packets in '
                        'case of MTU mismatches.\n'
                        'You may have to disable this option if you are '

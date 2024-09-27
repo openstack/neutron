@@ -1,0 +1,5 @@
+---
+deprecations:
+  - |
+    The ``ovn_emit_need_to_frag`` option is now deprecated for removal. The
+    config option will removed in the ``2026.1`` release.
