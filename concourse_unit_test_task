@@ -1,9 +1,9 @@
 export DEBIAN_FRONTEND=noninteractive && \
-export TOX_CONSTRAINTS_FILE=https://raw.githubusercontent.com/sapcc/requirements/stable/yoga-m3/upper-constraints.txt && \
+export TOX_CONSTRAINTS_FILE=https://raw.githubusercontent.com/sapcc/requirements/stable/2024.1-m3/upper-constraints.txt && \
 apt-get update && \
 apt-get install -y build-essential python3-pip python3-dev git libpcre++-dev gettext sudo iproute2 && \
 pip install -U pip && \
 pip install tox "six>=1.14.0" && \
-git clone -b stable/yoga-m3 --single-branch https://github.com/sapcc/neutron.git --depth=1 && \
+git clone -b stable/2024.1-m3 --single-branch https://github.com/sapcc/neutron.git --depth=1 && \
 cd neutron && \
-tox -e pep8,py38
+tox -e pep8,py310
