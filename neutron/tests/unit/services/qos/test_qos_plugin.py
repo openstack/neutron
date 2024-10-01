@@ -1930,8 +1930,7 @@ class TestQoSRuleAlias(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         request = self.new_update_request(resource, data, rule_id, self.fmt,
                                           as_admin=True)
         res = request.get_response(self.ext_api)
-        if res.status_int >= webob.exc.HTTPClientError.code:
-            raise webob.exc.HTTPClientError(code=res.status_int)
+        self._check_http_response(res)
         return self.deserialize(self.fmt, res)
 
     def _show_rule(self, rule_type, rule_id):
@@ -1940,8 +1939,7 @@ class TestQoSRuleAlias(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         request = self.new_show_request(resource, rule_id, self.fmt,
                                         as_admin=True)
         res = request.get_response(self.ext_api)
-        if res.status_int >= webob.exc.HTTPClientError.code:
-            raise webob.exc.HTTPClientError(code=res.status_int)
+        self._check_http_response(res)
         return self.deserialize(self.fmt, res)
 
     def _delete_rule(self, rule_type, rule_id):
@@ -1950,8 +1948,7 @@ class TestQoSRuleAlias(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         request = self.new_delete_request(resource, rule_id, self.fmt,
                                           as_admin=True)
         res = request.get_response(self.ext_api)
-        if res.status_int >= webob.exc.HTTPClientError.code:
-            raise webob.exc.HTTPClientError(code=res.status_int)
+        self._check_http_response(res)
 
     @mock.patch.object(qos_plugin.QoSPlugin, "update_policy_rule")
     def test_update_rule(self, update_policy_rule_mock):
