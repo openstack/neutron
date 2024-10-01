@@ -1,0 +1,6 @@
+---
+upgrade:
+  - |
+    The ``allow_stateless_action_supported`` configuration option for OVN is
+    removed. The ``stateful-security-group`` API is now unconditionally
+    enabled. Please upgrade OVN to 21.06.0 or a later version.
