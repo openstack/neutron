@@ -1326,6 +1326,21 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                     txn.add(cmd)
         raise periodics.NeverAgain()
 
+    @has_lock_periodic(
+        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
+        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
+        run_immediately=True)
+    def set_fip_distributed_flag(self):
+        """Set the NB_Global.external_ids:fip-distributed flag."""
+        distributed = ovn_conf.is_ovn_distributed_floating_ip()
+        LOG.debug(
+            "Setting fip-distributed flag in NB_Global to %s", distributed)
+        self._nb_idl.db_set(
+            'NB_Global', '.', external_ids={
+                ovn_const.OVN_FIP_DISTRIBUTED_KEY: str(distributed)}).execute(
+                    check_error=True)
+        raise periodics.NeverAgain()
+
 
 class HashRingHealthCheckPeriodics(object):
 

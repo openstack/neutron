@@ -57,6 +57,7 @@ METADATA_LIVENESS_CHECK_EXT_ID_KEY = 'neutron:metadata_liveness_check_at'
 OVN_PORT_BINDING_PROFILE = portbindings.PROFILE
 OVN_HOST_ID_EXT_ID_KEY = 'neutron:host_id'
 OVN_LRSR_EXT_ID_KEY = 'neutron:is_static_route'
+OVN_FIP_DISTRIBUTED_KEY = 'neutron:fip-distributed'
 
 MIGRATING_ATTR = 'migrating_to'
 OVN_ROUTER_PORT_OPTION_KEYS = ['router-port', 'nat-addresses',
