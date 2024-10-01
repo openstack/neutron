@@ -927,7 +927,7 @@ class L3TestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         interface_info = {'subnet_id': self.subnets[1]['subnet']['id']}
         self.mixin.remove_router_interface(self.ctx, self.router['id'],
                                            interface_info)
-        mock_log.warning.not_called_once()
+        mock_log.warning.assert_not_called()
         self._check_routerports((True, False))
 
     @mock.patch.object(l3_db.L3_NAT_dbonly_mixin,
