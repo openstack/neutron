@@ -359,7 +359,13 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
                     'suffix': file_suffix,
                     'timestamp': timestamp,
                 }
-                self._copy_log_file(src_filename, dst_filename)
+                try:
+                    self._copy_log_file(src_filename, dst_filename)
+                except FileNotFoundError:
+                    # Some testcases add the method ``_collect_processes_logs``
+                    # twice in the cleanup methods. The second time this method
+                    # is called, the logs and DBs have been already deleted.
+                    pass
 
         # Copy northd logs
         northd_log = "ovn_northd"
