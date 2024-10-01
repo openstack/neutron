@@ -15,12 +15,20 @@
 
 import os
 import shutil
+import signal
 
 import fixtures
 import psutil
 import tenacity
 
 from neutron.agent.linux import utils
+from neutron.tests.common import helpers
+
+
+def _kill_process_if_exists(command: str) -> None:
+    _pid = helpers.pgrep(command)
+    if _pid:
+        utils.kill_process(_pid, signal.SIGKILL)
 
 
 class DaemonProcessFixture(fixtures.Fixture):
@@ -86,7 +94,7 @@ class OvnNorthd(DaemonProcessFixture):
                 stop_cmd = ['ovs-appctl', '-t', self.unixctl_path, 'exit']
                 utils.execute(stop_cmd)
         except Exception:
-            pass
+            _kill_process_if_exists(self.unixctl_path)
 
 
 class OvsdbServer(DaemonProcessFixture):
@@ -228,7 +236,7 @@ class OvsdbServer(DaemonProcessFixture):
                             'exit']
                 utils.execute(stop_cmd)
             except Exception:
-                pass
+                _kill_process_if_exists(ovsdb_process['unixctl_path'])
 
     def get_ovsdb_connection_path(self, db_type='nb'):
         for ovsdb_process in self.ovsdb_server_processes:
