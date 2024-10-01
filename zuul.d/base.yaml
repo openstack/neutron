@@ -118,7 +118,6 @@
     parent: openstack-tox
     vars:
       tox_envlist: mypy
-    voting: false
     irrelevant-files:
       - ^\.pylintrc$
       - ^releasenotes/.*$
