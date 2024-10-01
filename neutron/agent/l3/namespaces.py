@@ -89,23 +89,26 @@ class Namespace(object):
         self.use_ipv6 = use_ipv6
 
     def create(self, ipv6_forwarding=True):
+        self.ip_wrapper_root.ensure_namespace(self.name)
         # See networking (netdev) tree, file
         # Documentation/networking/ip-sysctl.txt for an explanation of
         # these sysctl values.
-        ip_wrapper = self.ip_wrapper_root.ensure_namespace(self.name)
-        cmd = ['sysctl', '-w', 'net.ipv4.ip_forward=1']
-        ip_wrapper.netns.execute(cmd, privsep_exec=True)
-        # 1. Reply only if the target IP address is local address configured
-        #    on the incoming interface; and
-        # 2. Always use the best local address
-        cmd = ['sysctl', '-w', 'net.ipv4.conf.all.arp_ignore=1']
-        ip_wrapper.netns.execute(cmd, privsep_exec=True)
-        cmd = ['sysctl', '-w', 'net.ipv4.conf.all.arp_announce=2']
-        ip_wrapper.netns.execute(cmd, privsep_exec=True)
+        # Here's what we are setting:
+        # 1) nf_conntrack_tcp_be_liberal=1 - Be liberal in the state tracking
+        #    to avoid issues with TCP window scaling
+        # 2) ip_forward=1 - Turn on IP forwarding
+        # 3) arp_ignore=1 - Reply only if the target IP address is local
+        #    address configured on the incoming interface
+        # 4) arp_announce=2 - Always use the best local address
+        # 5) forwarding=0/1 - Turn on/off IPv6 forwarding
+        cmd = ['net.netfilter.nf_conntrack_tcp_be_liberal=1',
+               'net.ipv4.ip_forward=1',
+               'net.ipv4.conf.all.arp_ignore=1',
+               'net.ipv4.conf.all.arp_announce=2']
         if self.use_ipv6:
-            cmd = ['sysctl', '-w',
-                   'net.ipv6.conf.all.forwarding=%d' % int(ipv6_forwarding)]
-            ip_wrapper.netns.execute(cmd, privsep_exec=True)
+            cmd.append(
+                'net.ipv6.conf.all.forwarding=%d' % int(ipv6_forwarding))
+        ip_lib.sysctl(cmd, namespace=self.name)
 
     def delete(self):
         try:
