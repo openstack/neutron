@@ -724,10 +724,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         Ensure FDB aging settings are enforced.
         """
         context = n_context.get_admin_context()
-        cmds = [self._nb_idl.db_set(
-                    "NB_Global", '.',
-                    options={"fdb_removal_limit":
-                             ovn_conf.get_fdb_removal_limit()})]
+        cmds = [self._nb_idl.set_nb_global_options(
+            fdb_removal_limit=ovn_conf.get_fdb_removal_limit())]
 
         config_fdb_age_threshold = ovn_conf.get_fdb_age_threshold()
         # Get provider networks
@@ -760,11 +758,10 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         run_immediately=True)
     def update_mac_aging_settings(self):
         """Ensure that MAC_Binding aging options are set"""
+        removal_limit = ovn_conf.get_ovn_mac_binding_removal_limit()
         with self._nb_idl.transaction(check_error=True) as txn:
-            txn.add(self._nb_idl.db_set(
-                "NB_Global", ".",
-                options={"mac_binding_removal_limit":
-                         ovn_conf.get_ovn_mac_binding_removal_limit()}))
+            txn.add(self._nb_idl.set_nb_global_options(
+                mac_binding_removal_limit=removal_limit))
             txn.add(self._nb_idl.set_router_mac_age_limit())
         raise periodics.NeverAgain()
 

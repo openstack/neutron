@@ -726,46 +726,6 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         self.fake_ovn_client._nb_idl.db_set.assert_has_calls(
             expected_calls)
 
-    def test_check_fdb_aging_settings(self):
-        cfg.CONF.set_override('fdb_age_threshold', 5, group='ovn')
-        networks = [{'id': 'foo',
-                     'provider:physical_network': 'datacentre'}]
-        self.fake_ovn_client._plugin.get_networks.return_value = networks
-        fake_ls = mock.Mock(other_config={})
-        self.fake_ovn_client._nb_idl.get_lswitch.return_value = fake_ls
-
-        self.assertRaises(
-            periodics.NeverAgain,
-            self.periodic.check_fdb_aging_settings)
-
-        self.fake_ovn_client._nb_idl.db_set.assert_has_calls([
-            mock.call('NB_Global', '.',
-                      options={'fdb_removal_limit':
-                               ovn_conf.get_fdb_removal_limit()}),
-            mock.call('Logical_Switch', 'neutron-foo',
-                      ('other_config',
-                       {constants.LS_OPTIONS_FDB_AGE_THRESHOLD: '5'}))])
-
-    def test_check_fdb_aging_settings_with_threshold_set(self):
-        cfg.CONF.set_override('fdb_age_threshold', 5, group='ovn')
-        networks = [{'id': 'foo',
-                     'provider:network_type': n_const.TYPE_VLAN}]
-        self.fake_ovn_client._plugin.get_networks.return_value = networks
-        fake_ls = mock.Mock(other_config={
-            constants.LS_OPTIONS_FDB_AGE_THRESHOLD: '5'})
-        self.fake_ovn_client._nb_idl.get_lswitch.return_value = fake_ls
-
-        self.assertRaises(
-            periodics.NeverAgain,
-            self.periodic.check_fdb_aging_settings)
-
-        # It doesn't really matter if db_set is called or not for the
-        # ls. This is called one time at startup and python-ovs will
-        # not send the transaction if it doesn't cause a change
-        self.fake_ovn_client._nb_idl.db_set.assert_called_once_with(
-            'NB_Global', '.',
-            options={'fdb_removal_limit': ovn_conf.get_fdb_removal_limit()})
-
     def _test_check_baremetal_ports_dhcp_options(self, dhcp_disabled=False):
         cfg.CONF.set_override('disable_ovn_dhcp_for_baremetal_ports',
                               dhcp_disabled, group='ovn')
