@@ -48,16 +48,14 @@ class LocalIPTestBase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         req = self.new_create_request('local-ips', local_ip,
                                       tenant_id=self._tenant_id, as_admin=True)
         res = req.get_response(self.ext_api)
-        if res.status_int >= webob.exc.HTTPClientError.code:
-            raise webob.exc.HTTPClientError(code=res.status_int)
+        self._check_http_response(res)
         return self.deserialize(self.fmt, res)
 
     def _update_local_ip(self, lip_id, data):
         update_req = self.new_update_request(
             'local-ips', data, lip_id, tenant_id=self._tenant_id)
         res = update_req.get_response(self.ext_api)
-        if res.status_int >= webob.exc.HTTPClientError.code:
-            raise webob.exc.HTTPClientError(code=res.status_int)
+        self._check_http_response(res)
         return self.deserialize(self.fmt, res)
 
     def _create_local_ip_association(self, local_ip_id, fixed_port_id,
@@ -71,8 +69,7 @@ class LocalIPTestBase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                                       subresource='port_associations',
                                       tenant_id=self._tenant_id)
         res = req.get_response(self.ext_api)
-        if res.status_int >= webob.exc.HTTPClientError.code:
-            raise webob.exc.HTTPClientError(code=res.status_int)
+        self._check_http_response(res)
         return self.deserialize(self.fmt, res)
 
     @contextlib.contextmanager
