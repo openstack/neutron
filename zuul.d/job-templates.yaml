@@ -78,8 +78,10 @@
         - neutron-ovn-tempest-ovs-release
         - neutron-ovs-tempest-with-neutron-lib-master
         - neutron-ovn-tempest-with-uwsgi-loki
-        - neutron-tempest-plugin-api-ovs-wsgi
-        - neutron-tempest-plugin-api-ovn-wsgi
+        # NOTE(ralonsoh): once https://review.opendev.org/c/openstack/neutron-tempest-plugin/+/930743
+        # is merged, these jobs will be converted to -eventlet and enabled again.
+        #- neutron-tempest-plugin-api-ovs-wsgi
+        #- neutron-tempest-plugin-api-ovn-wsgi
         # Jobs added to the periodic queue by templates defined in
         # https://opendev.org/openstack/openstack-zuul-jobs/src/branch/master/zuul.d/project-templates.yaml
         - openstack-tox-py312-with-neutron-lib-master:
