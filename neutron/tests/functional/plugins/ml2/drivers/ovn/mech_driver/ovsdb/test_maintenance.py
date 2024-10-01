@@ -1098,6 +1098,54 @@ class TestMaintenance(_TestMaintenanceHelper):
         else:
             self.assertNotIn('gateway_port', fip_rule)
 
+    def _get_nb_global_external_ids(self):
+        return self.nb_api.db_get(
+            'NB_Global', '.', 'external_ids').execute(check_error=True)
+
+    def test_set_fip_distributed_flag(self):
+        ovn_config.cfg.CONF.set_override(
+            'enable_distributed_floating_ip', True, 'ovn')
+        nb_global_ext_id = self._get_nb_global_external_ids()
+        self.assertNotIn(ovn_const.OVN_FIP_DISTRIBUTED_KEY, nb_global_ext_id)
+
+        self.assertRaises(
+            periodics.NeverAgain, self.maint.set_fip_distributed_flag)
+
+        nb_global_ext_id = self._get_nb_global_external_ids()
+        self.assertEqual(
+            "True", nb_global_ext_id[ovn_const.OVN_FIP_DISTRIBUTED_KEY])
+
+    def _test_set_fip_distributed_flag_change(
+            self, original_value, config_value):
+        ovn_config.cfg.CONF.set_override(
+            'enable_distributed_floating_ip', config_value, 'ovn')
+        self.nb_api.db_set(
+            'NB_Global', '.', external_ids={
+                ovn_const.OVN_FIP_DISTRIBUTED_KEY: str(original_value)}
+        ).execute(check_error=True)
+        nb_global_ext_id = self._get_nb_global_external_ids()
+        self.assertEqual(
+            str(original_value),
+            nb_global_ext_id[ovn_const.OVN_FIP_DISTRIBUTED_KEY])
+
+        self.assertRaises(
+            periodics.NeverAgain, self.maint.set_fip_distributed_flag)
+
+        nb_global_ext_id = self._get_nb_global_external_ids()
+        self.assertEqual(
+            str(config_value),
+            nb_global_ext_id[ovn_const.OVN_FIP_DISTRIBUTED_KEY])
+
+    def test_set_fip_distributed_flag_changed(self):
+        self._test_set_fip_distributed_flag_change(
+            original_value=False,
+            config_value=True)
+
+    def test_set_fip_distributed_flag_unchanged(self):
+        self._test_set_fip_distributed_flag_change(
+            original_value=True,
+            config_value=True)
+
 
 class TestLogMaintenance(_TestMaintenanceHelper,
                          test_log_driver.LogApiTestCaseBase):
