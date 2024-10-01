@@ -246,6 +246,14 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                           query_string=params, context=context,
                                           headers=headers)
 
+    def _check_http_response(self, res):
+        # Things can go wrong - raise HTTP exc with res code only
+        # so it can be caught by unit tests
+        if res.status_int >= webob.exc.HTTPClientError.code:
+            res.charset = 'utf8'
+            raise webob.exc.HTTPClientError(explanation=str(res),
+                                            code=res.status_int)
+
     def new_create_request(self, resource, data, fmt=None, id=None,
                            subresource=None, context=None):
         return self._req('POST', resource, data, fmt, id=id,
@@ -523,10 +531,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
         res = self._create_network(fmt, name, admin_state_up, **kwargs)
         # TODO(salvatore-orlando): do exception handling in this test module
         # in a uniform way (we do it differently for ports, subnets, and nets
-        # Things can go wrong - raise HTTP exc with res code only
-        # so it can be caught by unit tests
-        if res.status_int >= webob.exc.HTTPClientError.code:
-            raise webob.exc.HTTPClientError(code=res.status_int)
+        self._check_http_response(res)
         return self.deserialize(fmt, res)
 
     def _make_subnet(self, fmt, network, gateway, cidr, subnetpool_id=None,
@@ -551,10 +556,7 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                   ipv6_ra_mode=ipv6_ra_mode,
                                   ipv6_address_mode=ipv6_address_mode,
                                   set_context=set_context)
-        # Things can go wrong - raise HTTP exc with res code only
-        # so it can be caught by unit tests
-        if res.status_int >= webob.exc.HTTPClientError.code:
-            raise webob.exc.HTTPClientError(code=res.status_int)
+        self._check_http_response(res)
         return self.deserialize(fmt, res)
 
     def _make_v6_subnet(self, network, ra_addr_mode, ipv6_pd=False):
@@ -580,16 +582,14 @@ class NeutronDbPluginV2TestCase(testlib_api.WebTestCase):
                                       **kwargs)
         # Things can go wrong - raise HTTP exc with res code only
         # so it can be caught by unit tests
-        if res.status_int >= webob.exc.HTTPClientError.code:
-            raise webob.exc.HTTPClientError(code=res.status_int)
+        self._check_http_response(res)
         return self.deserialize(fmt, res)
 
     def _make_port(self, fmt, net_id, expected_res_status=None, **kwargs):
         res = self._create_port(fmt, net_id, expected_res_status, **kwargs)
         # Things can go wrong - raise HTTP exc with res code only
         # so it can be caught by unit tests
-        if res.status_int >= webob.exc.HTTPClientError.code:
-            raise webob.exc.HTTPClientError(code=res.status_int)
+        self._check_http_response(res)
         return self.deserialize(fmt, res)
 
     def _create_qos_rule(self, fmt, qos_policy_id, rule_type, max_kbps=None,

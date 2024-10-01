@@ -51,8 +51,7 @@ class LocalIPTestBase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             '', kwargs.get('project_id', self._tenant_id), is_admin=True)
         req.environ['neutron.context'] = neutron_context
         res = req.get_response(self.ext_api)
-        if res.status_int >= webob.exc.HTTPClientError.code:
-            raise webob.exc.HTTPClientError(code=res.status_int)
+        self._check_http_response(res)
         return self.deserialize(self.fmt, res)
 
     def _update_local_ip(self, lip_id, data):
@@ -61,8 +60,7 @@ class LocalIPTestBase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         update_req.environ['neutron.context'] = context.Context(
             '', self._tenant_id)
         res = update_req.get_response(self.ext_api)
-        if res.status_int >= webob.exc.HTTPClientError.code:
-            raise webob.exc.HTTPClientError(code=res.status_int)
+        self._check_http_response(res)
         return self.deserialize(self.fmt, res)
 
     def _create_local_ip_association(self, local_ip_id, fixed_port_id,
@@ -77,8 +75,7 @@ class LocalIPTestBase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         neutron_context = context.Context('', self._tenant_id)
         req.environ['neutron.context'] = neutron_context
         res = req.get_response(self.ext_api)
-        if res.status_int >= webob.exc.HTTPClientError.code:
-            raise webob.exc.HTTPClientError(code=res.status_int)
+        self._check_http_response(res)
         return self.deserialize(self.fmt, res)
 
     @contextlib.contextmanager

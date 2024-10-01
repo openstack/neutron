@@ -67,8 +67,7 @@ class NetworkSegmentRangeTestBase(test_db_base_plugin_v2.
 
     def network_segment_range(self, **kwargs):
         res = self._create_network_segment_range(self.fmt, **kwargs)
-        if res.status_int >= webob.exc.HTTPClientError.code:
-            raise webob.exc.HTTPClientError(code=res.status_int)
+        self._check_http_response(res)
         return self.deserialize(self.fmt, res)
 
     def _test_create_network_segment_range(self, expected=None, **kwargs):
@@ -162,7 +161,7 @@ class TestNetworkSegmentRange(NetworkSegmentRangeTestBase):
                                 self._test_create_network_segment_range,
                                 network_type='foo-network-type')
         self.assertEqual(webob.exc.HTTPClientError.code, exc.code)
-        self.assertIn('The server could not comply with the request',
+        self.assertIn('foo-network-type is not in valid_values',
                       exc.explanation)
 
     def test_create_network_segment_range_no_physical_network(self):
@@ -212,16 +211,14 @@ class TestNetworkSegmentRange(NetworkSegmentRangeTestBase):
                                 self._test_create_network_segment_range,
                                 minimum=0)
         self.assertEqual(webob.exc.HTTPClientError.code, exc.code)
-        self.assertIn('The server could not comply with the request',
-                      exc.explanation)
+        self.assertIn('Invalid input for minimum', exc.explanation)
 
     def test_create_network_segment_range_failed_with_vlan_maximum_id(self):
         exc = self.assertRaises(webob.exc.HTTPClientError,
                                 self._test_create_network_segment_range,
                                 minimum=4095)
         self.assertEqual(webob.exc.HTTPServerError.code, exc.code)
-        self.assertIn('The server could not comply with the request',
-                      exc.explanation)
+        self.assertIn('Invalid network VLAN range', exc.explanation)
 
     def test_create_network_segment_range_failed_with_tunnel_minimum_id(self):
         tunnel_type = [constants.TYPE_VXLAN,
@@ -234,8 +231,7 @@ class TestNetworkSegmentRange(NetworkSegmentRangeTestBase):
                                     physical_network=None,
                                     minimum=0)
             self.assertEqual(webob.exc.HTTPClientError.code, exc.code)
-            self.assertIn('The server could not comply with the request',
-                          exc.explanation)
+            self.assertIn('Invalid input for minimum', exc.explanation)
 
     def test_create_network_segment_range_failed_with_tunnel_maximum_id(self):
         expected_res = [(constants.TYPE_VXLAN, 2 ** 24),
@@ -249,10 +245,10 @@ class TestNetworkSegmentRange(NetworkSegmentRangeTestBase):
                                     maximum=max_id)
             if network_type == constants.TYPE_GRE:
                 self.assertEqual(webob.exc.HTTPClientError.code, exc.code)
+                self.assertIn('Invalid input for maximum', exc.explanation)
             else:
                 self.assertEqual(webob.exc.HTTPServerError.code, exc.code)
-            self.assertIn('The server could not comply with the request',
-                          exc.explanation)
+                self.assertIn('Invalid network tunnel range', exc.explanation)
 
     def test_update_network_segment_range_set_name(self):
         network_segment_range = self._test_create_network_segment_range()
