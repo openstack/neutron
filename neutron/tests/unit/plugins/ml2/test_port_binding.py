@@ -380,8 +380,7 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
 
     def _make_port_binding(self, fmt, port_id, host, **kwargs):
         res = self._create_port_binding(fmt, port_id, host, **kwargs)
-        if res.status_int >= webob.exc.HTTPClientError.code:
-            raise webob.exc.HTTPClientError(code=res.status_int)
+        self._check_http_response(res)
         return self.deserialize(fmt, res)
 
     def _update_port_binding(self, fmt, port_id, host, **kwargs):
@@ -394,8 +393,7 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
 
     def _do_update_port_binding(self, fmt, port_id, host, **kwargs):
         res = self._update_port_binding(fmt, port_id, host, **kwargs)
-        if res.status_int >= webob.exc.HTTPClientError.code:
-            raise webob.exc.HTTPClientError(code=res.status_int)
+        self._check_http_response(res)
         return self.deserialize(fmt, res)
 
     def _activate_port_binding(self, port_id, host, raw_response=True):
@@ -409,8 +407,7 @@ class ExtendedPortBindingTestCase(test_plugin.NeutronDbPluginV2TestCase):
     def _check_code_and_serialize(self, response, raw_response):
         if raw_response:
             return response
-        if response.status_int >= webob.exc.HTTPClientError.code:
-            raise webob.exc.HTTPClientError(code=response.status_int)
+        self._check_http_response(response)
         return self.deserialize(self.fmt, response)
 
     def _list_port_bindings(self, port_id, params=None, raw_response=True):
