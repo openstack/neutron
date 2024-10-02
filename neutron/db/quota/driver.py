@@ -213,8 +213,9 @@ class DbQuotaDriver(nlib_quota_api.QuotaDriverAPI):
             # retrieved
             current_limits = self.get_project_quotas(
                 context, resources, project_id)
-            unlimited_resources = set([resource for (resource, limit) in
-                                       current_limits.items() if limit < 0])
+            unlimited_resources = set(
+                [resource for (resource, limit) in current_limits.items()
+                 if limit <= quota_api.UNLIMITED_QUOTA])
             # Do not even bother counting resources and calculating headroom
             # for resources with unlimited quota
             LOG.debug("Resources %s have unlimited quota limit. It is not "

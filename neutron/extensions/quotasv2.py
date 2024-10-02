@@ -31,6 +31,7 @@ from neutron.api import extensions
 from neutron.api.v2 import base
 from neutron.api.v2 import resource
 from neutron.api import wsgi
+from neutron.db.quota import api as quota_api
 from neutron import policy
 from neutron import quota
 from neutron.quota import resource_registry
@@ -152,7 +153,7 @@ class QuotaSetsController(wsgi.Controller):
         if force is not True:
             resources = resource_registry.get_all_resources()
             for resource_name, limit in body[self._resource_name].items():
-                if limit == -1:
+                if limit == quota_api.UNLIMITED_QUOTA:
                     # limit=-1 is disabling the quota thus it is not needed to
                     # check the resource usage.
                     continue

@@ -29,6 +29,7 @@ from neutron.api import extensions
 from neutron.api.v2 import router
 from neutron.common import config
 from neutron.conf import quota as qconf
+from neutron.db.quota import api as quota_api
 from neutron.db.quota import driver
 from neutron.db.quota import driver_nolock
 from neutron.db.quota import driver_null
@@ -249,7 +250,7 @@ class QuotaExtensionDbTestCase(QuotaExtensionTestCase):
     def test_update_quotas_to_unlimited(self):
         project_id = 'project_id1'
         env = test_base._get_neutron_env(project_id, as_admin=True)
-        quotas = {'quota': {'network': -1}}
+        quotas = {'quota': {'network': quota_api.UNLIMITED_QUOTA}}
         res = self.api.put(_get_path('quotas', id=project_id, fmt=self.fmt),
                            self.serialize(quotas), extra_environ=env,
                            expect_errors=False)
