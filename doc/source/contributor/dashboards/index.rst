@@ -18,7 +18,8 @@ Useful dashboard definitions are found in ``dashboards`` directory.
 Grafana Dashboards
 ------------------
 
-Look for neutron and networking-* dashboard by names by going to the following link:
+Look for neutron and networking-* dashboard by names by going to the following
+link:
 
 `Grafana <https://grafana.opendev.org/>`_
 

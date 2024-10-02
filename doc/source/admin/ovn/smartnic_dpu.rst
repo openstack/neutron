@@ -16,12 +16,12 @@ familiar with the following specifications
 Overview
 --------
 
-A class of devices collectively referred to as off-path SmartNIC DPUs introduces
-an important change to earlier architectures where compute and networking agents
-used to coexist at the hypervisor host: networking control plane components
-are now moved to the SmartNIC DPU's CPU side which includes ``ovs-vswitchd``
-and ``ovn-controller``. The following diagram provides an overview of the
-components involved::
+A class of devices collectively referred to as off-path SmartNIC DPUs
+introduces an important change to earlier architectures where compute and
+networking agents used to coexist at the hypervisor host: networking control
+plane components are now moved to the SmartNIC DPU's CPU side which includes
+``ovs-vswitchd`` and ``ovn-controller``. The following diagram provides an
+overview of the components involved::
 
                            ┌────────────────────────────────────┐
                            │  Hypervisor                        │    LoM Ports

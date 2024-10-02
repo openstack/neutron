@@ -374,8 +374,8 @@ types that can be used to implement them.
     # implemented in some object-specific way.
     synthetic_fields = ['dhcp_agents', 'shared', 'subnets']
 
-:code:`ObjectField` and :code:`ListOfObjectsField`  take the name of object class
-as an argument.
+:code:`ObjectField` and :code:`ListOfObjectsField`  take the name of object
+class as an argument.
 
 
 Implementing custom synthetic fields

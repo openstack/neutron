@@ -591,8 +591,8 @@ On the compute nodes, enable it as follows:
 Troubleshooting
 ---------------
 
-If you run into any problems, take a look at our :doc:`/admin/ovn/troubleshooting`
-page.
+If you run into any problems, take a look at our
+:doc:`/admin/ovn/troubleshooting` page.
 
 Additional Resources
 --------------------

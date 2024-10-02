@@ -60,11 +60,13 @@ Only a single instance of the ``ovsdb-server`` and ``ovn-northd`` services
 can operate in a deployment. However, deployment tools can implement
 active/passive high-availability using a management tool that monitors
 service health and automatically starts these services on another node after
-failure of the primary node. See the :doc:`/ovn/faq/index` for more information.
+failure of the primary node. See the :doc:`/ovn/faq/index` for more
+information.
 
 #. Install the ``ovn-central`` and ``openvswitch`` packages (RHEL/Fedora).
 
-#. Install the ``ovn-central`` and ``openvswitch-common`` packages (Ubuntu/Debian).
+#. Install the ``ovn-central`` and ``openvswitch-common`` packages
+   (Ubuntu/Debian).
 
 #. Start the OVS service. The central OVS service starts the ``ovsdb-server``
    service that manages OVN databases.

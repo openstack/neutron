@@ -24,8 +24,8 @@
 Client command extension support
 ================================
 
-The client command extension adds support for extending the neutron client while
-considering ease of creation.
+The client command extension adds support for extending the neutron client
+while considering ease of creation.
 
 The full document can be found in the python-neutronclient repository:
 https://docs.openstack.org/python-neutronclient/latest/contributor/client_command_extensions.html

@@ -142,9 +142,9 @@ a patch which introduces for example:
 #. requirement change,
 #. API visible change,
 
-The above list doesn't cover all possible cases. Those are only examples of fixes
-which require bump of minor version number but there can be also other types of
-changes requiring the same.
+The above list doesn't cover all possible cases. Those are only examples of
+fixes which require bump of minor version number but there can be also other
+types of changes requiring the same.
 
 Changes that require the minor version number to be bumped should always have a
 release note added.

@@ -75,7 +75,8 @@ Prerequisites
 Using Open vSwitch hardware offloading
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In order to enable Open vSwitch hardware offloading, the following steps are required:
+In order to enable Open vSwitch hardware offloading, the following steps are
+required:
 
 #. Enable SR-IOV
 #. Configure NIC to switchdev mode (relevant Nodes)
@@ -425,7 +426,8 @@ Validate Open vSwitch hardware offloading
 
    .. end
 
-#. Check traffic on the representor port. Verify that only the first ICMP packet appears.
+#. Check traffic on the representor port. Verify that only the first ICMP
+   packet appears.
 
    .. code-block:: console
 

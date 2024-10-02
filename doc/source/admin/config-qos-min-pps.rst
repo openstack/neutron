@@ -230,7 +230,9 @@ with:
 * :oslo.config:option:`ovs.resource_provider_packet_processing_without_direction`
   Format for this option is ``<hypervisor>:<packet_rate>``. This option should
   be used for non-hardware-offloaded OVS deployments.
+
 * :oslo.config:option:`ovs.resource_provider_packet_processing_with_direction`
+
   Format for this option is
   ``<hypervisor>:<egress_packet_rate>:<ingress_packet_rate>``. You may set only
   one direction and omit the other. This option should be used for

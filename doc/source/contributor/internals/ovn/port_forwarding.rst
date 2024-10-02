@@ -14,7 +14,7 @@ load_balancer table for all mappings for a given FIP+protocol. All PFs
 for the same FIP+protocol are kept as Virtual IP (VIP) mappings inside a
 LB entry. See the diagram below for an example of how that looks like:
 
-.. code-block:: none
+.. code-block::
 
    VIP:PORT = MEMBER1:MPORT1, MEMBER2:MPORT2
 

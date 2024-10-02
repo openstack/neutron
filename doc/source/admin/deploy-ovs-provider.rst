@@ -261,7 +261,7 @@ Create initial networks
 Verify network operation
 ------------------------
 
-.. include:: shared/deploy-provider-verifynetworkoperation.txt
+.. include:: deploy-provider-verifynetworkoperation.txt
 
 Network traffic flow
 ~~~~~~~~~~~~~~~~~~~~

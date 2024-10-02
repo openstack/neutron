@@ -22,17 +22,17 @@ at [1]_.
 * DHCP service for instances
 
   ML2/OVS adds packet filtering rules to every instance that allow DHCP queries
-  from instances to reach the DHCP agent. For OVN this traffic has to be explicitly
-  allowed by security group rules attached to the instance. Note that the default
-  security group does allow all outgoing traffic, so this only becomes relevant
-  when using custom security groups [6]_. Proposed patch is [7]_ but it
-  needs to be revived and updated.
+  from instances to reach the DHCP agent. For OVN this traffic has to be
+  explicitly allowed by security group rules attached to the instance. Note
+  that the default security group does allow all outgoing traffic, so this only
+  becomes relevant when using custom security groups [6]_. Proposed patch is
+  [7]_ but it needs to be revived and updated.
 
 * DNS resolution for instances
 
-  OVN cannot use the host's networking for DNS resolution, so Case 2b in [8]_ can
-  only be used when additional DHCP agents are deployed. For Case 2a a different
-  configuration option has to be used in ``ml2_conf.ini``::
+  OVN cannot use the host's networking for DNS resolution, so Case 2b in [8]_
+  can only be used when additional DHCP agents are deployed. For Case 2a a
+  different configuration option has to be used in ``ml2_conf.ini``::
 
     [ovn]
     dns_servers = 203.0.113.8, 198.51.100.53
@@ -41,8 +41,8 @@ at [1]_.
   responses from the configured DNS servers. This may lead to confusion in
   debugging.
 
-  OVN can only answer queries that are sent via UDP, queries that use TCP will be
-  ignored by OVN and forwarded to the configured resolvers.
+  OVN can only answer queries that are sent via UDP, queries that use TCP will
+  be ignored by OVN and forwarded to the configured resolvers.
 
   OVN can only answer queries with no additional options being set (EDNS). Such
   queries depending on the OVN version will either get broken responses or will

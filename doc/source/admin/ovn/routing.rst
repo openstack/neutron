@@ -7,7 +7,8 @@ Routing
 North/South
 -----------
 
-The different configurations are detailed in the :doc:`/admin/ovn/refarch/refarch`
+The different configurations are detailed in the
+:doc:`/admin/ovn/refarch/refarch`
 
 Non distributed FIP
 ~~~~~~~~~~~~~~~~~~~

@@ -111,11 +111,11 @@ To address this problem, operators should use the ``AGENT`` config group option
 ``kill_scripts_path`` to configure a path to where ``kill scripts`` for such
 processes live. By default, it is set to ``/etc/neutron/kill_scripts/``.
 If option ``kill_scripts_path`` is changed in the config to the different
-location, ``exec_dirs`` in ``/etc/rootwrap.conf`` should be changed accordingly.
-If ``kill_scripts_path`` is set, every time neutron has to kill a process,
-for example ``dnsmasq``, it will look in this directory for a file with the name
-``<process_name>-kill``. So for ``dnsmasq`` process it will look for a
-``dnsmasq-kill`` script. If such a file exists there, it will be called
+location, ``exec_dirs`` in ``/etc/rootwrap.conf`` should be changed
+accordingly. If ``kill_scripts_path`` is set, every time neutron has to kill a
+process, for example ``dnsmasq``, it will look in this directory for a file
+with the name ``<process_name>-kill``. So for ``dnsmasq`` process it will look
+for a ``dnsmasq-kill`` script. If such a file exists there, it will be called
 instead of using the ``kill`` command.
 
 Kill scripts are called with two parameters:

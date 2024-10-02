@@ -239,9 +239,9 @@ SLAAC, NDP) for egress traffic, and allows ARP replies. Also identifies not
 tracked connections which are processed later with information obtained from
 conntrack. Notice the ``zone=NXM_NX_REG6[0..15]`` in ``actions`` when obtaining
 information from conntrack. It says every port has its own conntrack zone
-defined by the value in ``register 6`` (OVSDB port tag identifying the network).
-It's there to avoid accepting established traffic that belongs to a different
-port with the same conntrack parameters.
+defined by the value in ``register 6`` (OVSDB port tag identifying the
+network). It's there to avoid accepting established traffic that belongs to a
+different port with the same conntrack parameters.
 
 The very first rule in |table_71| is a rule removing conntrack information for
 a use-case where a Neutron logical port is placed directly to the hypervisor.

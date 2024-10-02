@@ -42,7 +42,8 @@ NAT for IPv4 network traffic and directly routes IPv6 network traffic.
 
       If you are using an MTU value on your network below 1280, please
       read the warning listed in the
-      `IPv6 configuration guide <../config-ipv6.html#project-network-considerations>`__
+      `IPv6 configuration guide
+      <../config-ipv6.html#project-network-considerations>`__
       before creating any subnets.
 
 #. Create a IPv4 subnet on the self-service network.
@@ -67,22 +68,23 @@ NAT for IPv4 network traffic and directly routes IPv6 network traffic.
 
    .. code-block:: console
 
-      $ openstack subnet create --subnet-range fd00:192:0:2::/64 --ip-version 6 \
-        --ipv6-ra-mode slaac --ipv6-address-mode slaac --network selfservice1 \
-        --dns-nameserver 2001:4860:4860::8844 selfservice1-v6
-      +-------------------+------------------------------------------------------+
-      | Field             | Value                                                |
-      +-------------------+------------------------------------------------------+
-      | allocation_pools  | fd00:192:0:2::2-fd00:192:0:2:ffff:ffff:ffff:ffff     |
-      | cidr              | fd00:192:0:2::/64                                    |
-      | dns_nameservers   | 2001:4860:4860::8844                                 |
-      | enable_dhcp       | True                                                 |
-      | gateway_ip        | fd00:192:0:2::1                                      |
-      | ip_version        | 6                                                    |
-      | ipv6_address_mode | slaac                                                |
-      | ipv6_ra_mode      | slaac                                                |
-      | name              | selfservice1-v6                                      |
-      +-------------------+------------------------------------------------------+
+      $ openstack subnet create --subnet-range fd00:192:0:2::/64 \
+        --ip-version 6 --ipv6-ra-mode slaac --ipv6-address-mode slaac \
+        --network selfservice1 --dns-nameserver 2001:4860:4860::8844 \
+        selfservice1-v6
+      +-------------------+--------------------------------------------------+
+      | Field             | Value                                            |
+      +-------------------+--------------------------------------------------+
+      | allocation_pools  | fd00:192:0:2::2-fd00:192:0:2:ffff:ffff:ffff:ffff |
+      | cidr              | fd00:192:0:2::/64                                |
+      | dns_nameservers   | 2001:4860:4860::8844                             |
+      | enable_dhcp       | True                                             |
+      | gateway_ip        | fd00:192:0:2::1                                  |
+      | ip_version        | 6                                                |
+      | ipv6_address_mode | slaac                                            |
+      | ipv6_ra_mode      | slaac                                            |
+      | name              | selfservice1-v6                                  |
+      +-------------------+--------------------------------------------------+
 
 #. Create a router.
 

@@ -236,11 +236,11 @@ filtering technology such as ``iptables``.
 
 Each project contains a ``default`` security group that by default allows all
 egress traffic and denies all ingress traffic. You can change the rules in the
-``default`` security group. Admin user can also define own set of security group
-rules which will be added by default to each new ``default`` and each new non
-default (custom) security group created for every project in the cloud. There is
-``security-group-default-rules`` API extension which allows to define such own
-set of the default security group rules.
+``default`` security group. Admin user can also define own set of security
+group rules which will be added by default to each new ``default`` and each new
+non-default (custom) security group created for every project in the cloud.
+There is ``security-group-default-rules`` API extension which allows to define
+such own set of the default security group rules.
 If you launch an instance without specifying a security group, the ``default``
 security group automatically applies to it.  Similarly, if you create a port
 without specifying a security group, the ``default`` security group

@@ -97,10 +97,10 @@ At the end of each test run:
 * The in-memory database is cleared of content, but its schema is maintained.
 * The global Oslo configuration object is reset.
 
-The unit testing framework can be used to effectively test database interaction,
-for example, distributed routers allocate a MAC address for every host running
-an OVS agent. One of DVR's DB mixins implements a method that lists all host
-MAC addresses. Its test looks like this:
+The unit testing framework can be used to effectively test database
+interaction, for example, distributed routers allocate a MAC address for
+every host running an OVS agent. One of DVR's DB mixins implements a method
+that lists all host MAC addresses. Its test looks like this:
 
 .. code-block:: python
 
@@ -159,9 +159,9 @@ One of its methods is called 'device_exists' which accepts a device name
 and a namespace and returns True if the device exists in the given namespace.
 It's easy building a test that targets the method directly, and such a test
 would be considered a 'unit' test. However, what framework should such a test
-use? A test using the unit tests framework could not mutate state on the system,
-and so could not actually create a device and assert that it now exists. Such
-a test would look roughly like this:
+use? A test using the unit tests framework could not mutate state on the
+system, and so could not actually create a device and assert that it now
+exists. Such a test would look roughly like this:
 
 * It would mock 'execute', a method that executes shell commands against the
   system to return an IP device named 'foo'.
@@ -261,9 +261,10 @@ should be validated, and all interaction with the daemon should be via
 a REST client.
 
 The neutron-tempest-plugin/neutron_tempest_plugin directory was copied from the
-Tempest project around the Kilo timeframe. At the time, there was an overlap of tests
-between the Tempest and Neutron repositories. This overlap was then eliminated by carving
-out a subset of resources that belong to Tempest, with the rest in Neutron.
+Tempest project around the Kilo timeframe. At the time, there was an overlap of
+tests between the Tempest and Neutron repositories. This overlap was then
+eliminated by carving out a subset of resources that belong to Tempest, with
+the rest in Neutron.
 
 API tests that belong to Tempest deal with a subset of Neutron's resources:
 
@@ -296,9 +297,10 @@ define a list of required extensions for particular test class.
 Scenario Tests
 ~~~~~~~~~~~~~~
 
-Scenario tests (neutron-tempest-plugin/neutron_tempest_plugin/scenario), like API tests,
-use the Tempest test infrastructure and have the same requirements. Guidelines for
-writing a good scenario test may be found at the Tempest developer guide:
+Scenario tests (neutron-tempest-plugin/neutron_tempest_plugin/scenario), like
+API tests, use the Tempest test infrastructure and have the same requirements.
+Guidelines for writing a good scenario test may be found at the Tempest
+developer guide:
 https://docs.openstack.org/tempest/latest/field_guide/scenario.html
 
 Scenario tests, like API tests, are split between the Tempest and Neutron
@@ -322,15 +324,18 @@ Specific test requirements for advanced images are:
 Rally Tests
 ~~~~~~~~~~~
 
-Rally tests (rally-jobs/plugins) use the `rally <http://rally.readthedocs.io/>`_
-infrastructure to exercise a neutron deployment. Guidelines for writing a
-good rally test can be found in the `rally plugin documentation <http://rally.readthedocs.io/en/latest/plugins/>`_.
+Rally tests (rally-jobs/plugins) use the
+`rally <http://rally.readthedocs.io/>`_ infrastructure to exercise a neutron
+deployment. Guidelines for writing a good rally test can be found in the
+`rally plugin documentation <http://rally.readthedocs.io/en/latest/plugins/>`_.
 There are also some examples in tree; the process for adding rally plugins to
-neutron requires three steps: 1) write a plugin and place it under rally-jobs/plugins/.
-This is your rally scenario; 2) (optional) add a setup file under rally-jobs/extra/.
-This is any devstack configuration required to make sure your environment can
-successfully process your scenario requests; 3) edit neutron-neutron.yaml. This
-is your scenario 'contract' or SLA.
+neutron requires three steps:
+1) write a plugin and place it under rally-jobs/plugins/. This is your rally
+scenario;
+2) (optional) add a setup file under rally-jobs/extra/. This is any devstack
+configuration required to make sure your environment can successfully process
+your scenario requests;
+3) edit neutron-neutron.yaml. This is your scenario 'contract' or SLA.
 
 Grenade Tests
 ~~~~~~~~~~~~~
@@ -346,8 +351,8 @@ similar to deploying OpenStack using Devstack. All is described in the
 `Project's wiki <https://wiki.openstack.org/wiki/Grenade>`_ and `documentation
 <https://opendev.org/openstack/grenade/src/branch/master/README.rst>`_.
 
-More info about how to troubleshoot Grenade failures in the CI jobs can be found
-in the :ref:`Troubleshooting Grenade jobs <troubleshooting-grenade-jobs>`
+More info about how to troubleshoot Grenade failures in the CI jobs can be
+found in the :ref:`Troubleshooting Grenade jobs <troubleshooting-grenade-jobs>`
 document.
 
 Development Process
@@ -438,8 +443,11 @@ To run only pep8::
 
     tox -e pep8
 
-Since pep8 includes running pylint on all files, it can take quite some time to run.
-To restrict the pylint check to only the files altered by the latest patch changes::
+Since pep8 includes running pylint on all files, it can take quite some time
+to run.
+
+To restrict the pylint check to only the files altered by the latest patch
+changes::
 
     tox -e pep8 HEAD~1
 

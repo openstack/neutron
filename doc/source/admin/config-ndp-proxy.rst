@@ -83,10 +83,10 @@ To configure NDP proxy, take the following steps:
   a single, integrated subnetpool. In order to make NDP proxy work correctly,
   the admin operator needs to set direct routes for these subnetpools.
 
-  Such as, we have a IPv6 subnetpool, it's CIDR is 2001:db8::/96. The direct route
-  like below should be set:
+  Such as, we have a IPv6 subnetpool, it's CIDR is 2001:db8::/96. The direct
+  route like below should be set:
 
-  .. code-block:: none
+  .. code-block:: console
 
       2001:db8::/96 dev <ext-gw>
 
@@ -275,7 +275,8 @@ network (such as: public network) are the following:
       :ref:`prefix-delegation` etc.) to publish the internal IPv6 address, the
       command will break dataplane traffic.
 
-#. Create an internal network and IPv6 subnet and add the subnet to the above router:
+#. Create an internal network and IPv6 subnet and add the subnet to the above
+   router:
 
    .. code-block:: console
 

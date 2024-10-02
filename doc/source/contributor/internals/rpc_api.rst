@@ -113,8 +113,8 @@ Example Change
 
 As an example minor API change, let's assume we want to add a new parameter to
 my_remote_method_2.  First, we add the argument on the server side.  To be
-backwards compatible, the new argument must have a default value set so that the
-interface will still work even if the argument is not supplied.  Also, the
+backwards compatible, the new argument must have a default value set so that
+the interface will still work even if the argument is not supplied.  Also, the
 interface's minor version number must be incremented.  So, the new server side
 code would look like this:
 

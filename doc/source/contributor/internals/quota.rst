@@ -43,8 +43,8 @@ limits are currently not enforced on RPC interfaces listening on the AMQP
 bus.
 
 Plugin and ML2 drivers are not supposed to enforce quotas for resources they
-manage. However, the ``subnet_allocation`` [1]_ extension is an exception and will
-be discussed below.
+manage. However, the ``subnet_allocation`` [1]_ extension is an exception and
+will be discussed below.
 
 The quota management and enforcement mechanisms discussed here apply to every
 resource which has been registered with the Quota engine, regardless of
@@ -69,12 +69,12 @@ configuration option ``quota_driver``.
 
 The Quota API extension handles quota management, whereas the Quota Engine
 component handles quota enforcement. This API extension is loaded like any
-other extension. For this reason plugins must explicitly support it by including
-"quotas" in the supported_extension_aliases attribute.
+other extension. For this reason plugins must explicitly support it by
+including "quotas" in the supported_extension_aliases attribute.
 
 In the Quota API simple CRUD operations are used for managing project quotas.
-Please note that the current behaviour when deleting a project quota is to reset
-quota limits for that project to configuration defaults. The API
+Please note that the current behaviour when deleting a project quota is to
+reset quota limits for that project to configuration defaults. The API
 extension does not validate the project identifier with the identity service.
 
 In addition, the Quota Detail API extension complements the Quota API extension
@@ -107,7 +107,8 @@ delete operations are implemented by the usual index, show, update and
 delete methods. These method simply call into the quota driver for either
 fetching project quotas or updating them.
 
-The ``_update_attributes`` method is called only once in the controller lifetime.
+The ``_update_attributes`` method is called only once in the controller
+lifetime.
 This method dynamically updates Neutron's resource attribute map [4]_ so that
 an attribute is added for every resource managed by the quota engine.
 Request authorisation is performed in this controller, and only 'admin' users
@@ -119,11 +120,11 @@ The driver operations dealing with quota management are:
 
 * ``delete_tenant_quota``, which simply removes all entries from the 'quotas'
   table for a given project identifier;
-* ``update_quota_limit``, which adds or updates an entry in the 'quotas' project
-  for a given project identifier and a given resource name;
-* ``_get_quotas``, which fetches limits for a set of resource and a given project
-  identifier
-* ``_get_all_quotas``, which behaves like ``_get_quotas``, but for all projects.
+* ``update_quota_limit``, which adds or updates an entry in the 'quotas'
+  project for a given project identifier and a given resource name;
+* ``_get_quotas``, which fetches limits for a set of resource and a given
+  project identifier;
+* ``_get_all_quotas``, which behaves like ``_get_quotas``, but for all projects
 
 
 Resource Usage Info
@@ -145,15 +146,16 @@ Neutron has two ways of tracking resource usage info:
     ``TrackedResource`` depends on one single database model (table) and the
     resource count is done directly on this table only.
 
-Another difference between ``CountableResource`` and ``TrackedResource`` is that the
-former invokes a plugin method to count resources. ``CountableResource`` should be
+Another difference between ``CountableResource`` and ``TrackedResource`` is
+that the former invokes a plugin method to count resources.
+``CountableResource`` should be
 therefore employed for plugins which do not leverage the Neutron database.
 The actual class that the Neutron quota engine will use is determined by the
 ``track_quota_usage`` variable in the quota configuration section. If ``True``,
 ``TrackedResource`` instances will be created, otherwise the quota engine will
 use ``CountableResource`` instances.
-Resource creation is performed by the ``create_resource_instance`` factory method
-in the ``neutron.quota.resource`` module.
+Resource creation is performed by the ``create_resource_instance`` factory
+method in the ``neutron.quota.resource`` module.
 
 DbQuotaDriver description
 -------------------------
@@ -164,9 +166,9 @@ executing queries to explicitly count objects will increase with the number of
 records in the table. On the other hand, using ``TrackedResource`` will fetch a
 single record, but has the drawback of having to execute an UPDATE statement
 once the operation is completed.
-Nevertheless, ``CountableResource`` instances do not simply perform a SELECT query
-on the relevant table for a resource, but invoke a plugin method, which might
-execute several statements and sometimes even interacts with the backend
+Nevertheless, ``CountableResource`` instances do not simply perform a SELECT
+query on the relevant table for a resource, but invoke a plugin method, which
+might execute several statements and sometimes even interacts with the backend
 before returning.
 Resource usage tracking also becomes important for operational correctness
 when coupled with the concept of resource reservation, discussed in another
@@ -227,10 +229,10 @@ the chances of overcommiting resources over the quota limits are low. Neutron
 does not enforce quota in such way that a quota limit violation could never
 occur [5]_.
 
-Regardless of whether ``CountableResource`` or ``TrackedResource`` is used, the quota
-engine always invokes its ``count()`` method to retrieve resource usage.
-Therefore, from the perspective of the Quota engine there is absolutely no
-difference between ``CountableResource`` and ``TrackedResource``.
+Regardless of whether ``CountableResource`` or ``TrackedResource`` is used,
+the quota engine always invokes its ``count()`` method to retrieve resource
+usage. Therefore, from the perspective of the Quota engine there is absolutely
+no difference between ``CountableResource`` and ``TrackedResource``.
 
 Quota Enforcement in DbQuotaDriver
 ----------------------------------
@@ -266,13 +268,13 @@ In order to ensure correct operations, a row-level lock is acquired in
 the transaction which creates the reservation. The lock is acquired when
 reading usage data. In case of write-set certification failures,
 which can occur in active/active clusters such as MySQL galera, the decorator
-``neutron_lib.db.api.retry_db_errors`` will retry the transaction if a DBDeadLock
-exception is raised.
+``neutron_lib.db.api.retry_db_errors`` will retry the transaction if a
+DBDeadLock exception is raised.
 While non-locking approaches are possible, it has been found out that, since
 a non-locking algorithms increases the chances of collision, the cost of
-handling a ``DBDeadlock`` is still lower than the cost of retrying the operation
-when a collision is detected. A study in this direction was conducted for
-IP allocation operations, but the same principles apply here as well [7]_.
+handling a ``DBDeadlock`` is still lower than the cost of retrying the
+operation when a collision is detected. A study in this direction was conducted
+for IP allocation operations, but the same principles apply here as well [7]_.
 Nevertheless, moving away for DB-level locks is something that must happen
 for quota enforcement in the future.
 
@@ -366,9 +368,9 @@ Please be aware of the following limitations of the quota enforcement engine:
   in resource usage. Since the event mechanism monitors the data model class,
   it is paramount for a correct quota enforcement, that resources are always
   created and deleted using object relational mappings. For instance, deleting
-  a resource with a ``query.delete`` call will not trigger the event. SQLAlchemy
-  events should be considered as a temporary measure adopted as Neutron lacks
-  persistent API objects.
+  a resource with a ``query.delete`` call will not trigger the event.
+  SQLAlchemy events should be considered as a temporary measure adopted as
+  Neutron lacks persistent API objects.
 * As ``CountableResource`` instance do not track usage data, when making a
   reservation no write-intent lock is acquired. Therefore the quota engine
   with ``CountableResource`` is not concurrency-safe.

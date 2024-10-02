@@ -46,7 +46,8 @@ Usage
 
 Examples
 --------
-If vm1 and vm2 only have one network interface and you want to trace between them:
+If vm1 and vm2 only have one network interface and you want to trace between
+them:
 
 .. code-block:: console
 
@@ -70,7 +71,8 @@ To add to the generated microflow, use -m. For example, for SSH:
 
   $ sudo ml2ovn-trace --net net1 --from server=vm1 --to server=vm2 -m "tcp.dst==22"
 
-To pass arbitrary (non microflow) arguments to ovn-trace, place them after '--':
+To pass arbitrary (non microflow) arguments to ovn-trace, place them after
+'--':
 
 .. code-block:: console
 

@@ -826,7 +826,8 @@ database following the next steps:
 * Insert the indexes for the "target_tenant" and "action" columns:
 
     $ for table in $tables do; mysql -e \
-        "alter table $table add key (action); alter table $table add key (target_tenant);"; done
+        "alter table $table add key (action); \
+         alter table $table add key (target_tenant);"; done
 
 
 In order to prevent errors during a system upgrade, [3]_ was

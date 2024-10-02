@@ -87,10 +87,10 @@ mature OpenStack projects:
   using OpenStack CI (upstream) resources so that `Grafana <https://grafana.opendev.org/d/f913631585/neutron-failure-rate>`_
   support is available. Access to CI resources and historical data by the
   team is key to ensuring stability and robustness of a project.
-  In particular, it is of paramount importance to ensure that DB models/migrations
-  are tested functionally to prevent data inconsistency issues or unexpected
-  DB logic errors due to schema/models mismatch. For more details, please
-  look at the following resources:
+  In particular, it is of paramount importance to ensure that DB
+  models/migrations are tested functionally to prevent data inconsistency
+  issues or unexpected DB logic errors due to schema/models mismatch.
+  For more details, please look at the following resources:
 
   * https://review.opendev.org/#/c/346091/
   * https://review.opendev.org/#/c/346272/
@@ -152,9 +152,9 @@ the PTL and Neutron team do release planning, and have the most time available
 to discuss governance issues.
 
 Projects part of the Neutron Stadium have typically the first milestone to get
-their house in order, during which time reassessment happens; if removed, because
-of substantial lack of meeting the criteria, a project cannot reapply within
-the same release cycle it has been evicted.
+their house in order, during which time reassessment happens; if removed,
+because of substantial lack of meeting the criteria, a project cannot reapply
+within the same release cycle it has been evicted.
 
 The process for proposing a repo into openstack/ and under the Neutron
 governance is to propose a patch to the openstack/governance repository.

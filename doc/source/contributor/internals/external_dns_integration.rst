@@ -49,8 +49,8 @@ Pre-configured domains for projects and users
 ML2 plugin extension ``dns_domain_keywords`` provides same dns integration as
 ``dns_domain_ports`` and ``subnet_dns_publish_fixed_ip`` and it also allows to
 configure network's dns_domain with some specific keywords: ``<project_id>``,
-``<project_name>``, ``<user_id>``, ``<user_name>``. Please see example below for
-more details.
+``<project_name>``, ``<user_id>``, ``<user_name>``. Please see example below
+for more details.
 
 * Create DNS zone. ``0511951bd56e4a0aac27ac65e00bddd0`` is ID of the project
   used in the example

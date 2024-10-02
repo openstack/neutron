@@ -101,7 +101,8 @@ Resource push notifications
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Agents will subscribe to the neutron-vo-<resource_type>-<version> fanout queue
 which carries updated objects for the version they know about. The versions
-they know about depend on the runtime Neutron versioned objects they started with.
+they know about depend on the runtime Neutron versioned objects they started
+with.
 
 When the server upgrades, it should be able to instantly calculate a census of
 agent versions per object (we will define a mechanism for this in a later
@@ -257,26 +258,27 @@ Unsubscribing from resources
 
 To unsubscribe registered callbacks:
 
-* unsubscribe(callback, resource_type): unsubscribe from specific resource type.
+* unsubscribe(callback, resource_type): unsubscribe from specific
+  resource type.
 * unsubscribe_all(): unsubscribe from all resources.
 
 
 Sending resource events
 -----------------------
 
-On the server side, resource updates could come from anywhere, a service plugin,
-an extension, anything that updates, creates, or destroys the resources and that
-is of any interest to subscribed agents.
+On the server side, resource updates could come from anywhere, a service
+plugin, an extension, anything that updates, creates, or destroys the
+resources and that is of any interest to subscribed agents.
 
-A callback is expected to receive a list of resources. When resources in the list
-belong to the same resource type, a single push RPC message is sent; if the list
-contains objects of different resource types, resources of each type are grouped
-and sent separately, one push RPC message per type. On the receiver side,
-resources in a list always belong to the same type. In other words, a server-side
-push of a list of heterogeneous objects will result into N messages on bus and
-N client-side callback invocations, where N is the number of unique resource
-types in the given list, e.g. L(A, A, B, C, C, C) would be fragmented into
-L1(A, A), L2(B), L3(C, C, C), and each list pushed separately.
+A callback is expected to receive a list of resources. When resources in the
+list belong to the same resource type, a single push RPC message is sent;
+if the list contains objects of different resource types, resources of each
+type are grouped and sent separately, one push RPC message per type. On the
+receiver side, resources in a list always belong to the same type. In other
+words, a server-side push of a list of heterogeneous objects will result into
+N messages on bus and N client-side callback invocations, where N is the number
+of unique resource types in the given list, e.g. L(A, A, B, C, C, C) would be
+fragmented into L1(A, A), L2(B), L3(C, C, C), and each list pushed separately.
 
 Note: there is no guarantee in terms of order in which separate resource lists
 will be delivered to consumers.

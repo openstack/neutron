@@ -82,18 +82,19 @@ Both OVS and iptables firewall drivers should always behave in the same way if
 the same rules are configured for the security group. But in some cases that is
 not true and there may be slight differences between those drivers.
 
-+----------------------------------------+-----------------------+-----------------------+
-| Case                                   | OVS                   | iptables              |
-+========================================+=======================+=======================+
-| Traffic marked as INVALID by conntrack | Blocked               | Allowed because it    |
-| but matching some of the SG rules      |                       | first matches SG rule,|
-| (please check [1]_  and [2]_           |                       | never reaches rule to |
-| for details)                           |                       | drop invalid packets  |
-+----------------------------------------+-----------------------+-----------------------+
-| Multicast traffic sent in the group    | Allowed always        | Blocked,              |
-| 224.0.0.X                              |                       | Can be enabled by SG  |
-| (please check [3]_ for details)        |                       | rule.                 |
-+----------------------------------------+-----------------------+-----------------------+
++-------------------------------------+----------------+----------------------+
+| Case                                | OVS            | iptables             |
++=====================================+================+======================+
+| Traffic marked as INVALID by        | Blocked        | Allowed because it   |
+| conntrack but matching some of the  |                | first matches SG     |
+| SG rules (please check [1]_ and     |                | rule, never reaches  |
+| [2]_ for details)                   |                | rule to drop invalid |
+|                                     |                | packets              |
++-------------------------------------+----------------+----------------------+
+| Multicast traffic sent in the group | Allowed always | Blocked,             |
+| 224.0.0.X                           |                | Can be enabled by SG |
+| (please check [3]_ for details)     |                | rule.                |
++-------------------------------------+----------------+----------------------+
 
 Open Flow rules processing considerations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
