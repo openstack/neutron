@@ -1,0 +1,12 @@
+---
+features:
+  - |
+    Since Epoxy (2025.1) release, the Neutron quota engine always checks
+    the current resource usage before updating the quota limits. Only when the
+    CLI "--force" parameter is passed, this check is skipped. That aligns the
+    Neutron quota engine behaviour with other projects.
+deprecations:
+  - |
+    The Neutron quota commands now always check the resource limits. The CLI
+    parameter "--check-limits" is no longer needed, as this is the default
+    behaviour.

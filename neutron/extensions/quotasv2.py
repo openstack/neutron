@@ -131,20 +131,11 @@ class QuotaSetsController(wsgi.Controller):
     def update(self, request, id, body=None):
         validate_policy(request.context, "update_quota")
         force = body[self._resource_name].pop('force', None)
-        check_limit = body[self._resource_name].pop('check_limit', None)
-        # NOTE(ralonsoh): these warning messages will be removed once
-        # LP#1953170 is completed and Neutron quota engine accepts "--force" or
-        # nothing (by default, Neutron quota engine will check the resource
-        # usage before setting the quota limit).
-        if force is None and check_limit is None:
-            warnings.warn('Neutron quota engine will require "--force" '
-                          'parameter to set a quota limit without checking '
-                          'the resource usage.')
-        elif check_limit:
-            warnings.warn('"--check-limit" parameter will not be needed in '
-                          'Z+. By default, Neutron quota engine will check '
-                          'the resource usage before setting a new quota '
-                          'limit. Use "--force" to skip this check.')
+        if body[self._resource_name].pop('check_limit', None):
+            warnings.warn('"--check-limit" parameter is no longer needed '
+                          'since Epoxy (2025.1) release. By default, '
+                          'Neutron quota engine checks the resource usage '
+                          'before updating the limits')
 
         if self._update_extended_attributes:
             self._update_attributes()
@@ -158,9 +149,13 @@ class QuotaSetsController(wsgi.Controller):
                 "body. The exception message is [%s].", e)
             raise e
 
-        if check_limit:
+        if force is not True:
             resources = resource_registry.get_all_resources()
             for resource_name, limit in body[self._resource_name].items():
+                if limit == -1:
+                    # limit=-1 is disabling the quota thus it is not needed to
+                    # check the resource usage.
+                    continue
                 resource_usage = self._driver.get_resource_usage(
                     request.context, id, resources, resource_name)
                 if resource_usage > limit:
