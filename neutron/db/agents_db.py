@@ -16,7 +16,6 @@
 import copy
 import datetime
 
-from eventlet import greenthread
 from neutron_lib.agent import constants as agent_consts
 from neutron_lib.api import converters
 from neutron_lib.api.definitions import agent as agent_apidef
@@ -401,7 +400,6 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
                 res['heartbeat_timestamp'] = current_time
                 if agent_state.get('start_flag'):
                     res['started_at'] = current_time
-                greenthread.sleep(0)
                 self._log_heartbeat(agent_state, agent, configurations_dict,
                                     agent_timestamp)
                 agent.update_fields(res)
@@ -410,19 +408,16 @@ class AgentDbMixin(ext_agent.AgentPluginBase, AgentAvailabilityZoneMixin):
             except agent_exc.AgentNotFoundByTypeHost:
                 agent_state_orig = None
                 agent_state_previous = None
-                greenthread.sleep(0)
                 res['created_at'] = current_time
                 res['started_at'] = current_time
                 res['heartbeat_timestamp'] = current_time
                 res['admin_state_up'] = cfg.CONF.enable_new_agents
                 agent = agent_obj.Agent(context=context, **res)
-                greenthread.sleep(0)
                 agent.create()
                 event_type = events.AFTER_CREATE
                 self._log_heartbeat(agent_state, agent, configurations_dict,
                                     agent_timestamp)
                 status = agent_consts.AGENT_NEW
-            greenthread.sleep(0)
 
         agent_state['agent_status'] = status
         agent_state['admin_state_up'] = agent.admin_state_up
