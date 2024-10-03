@@ -566,13 +566,13 @@ def _get_installed_entrypoint(subproject):
 def _get_subproject_script_location(subproject):
     '''Get the script location for the installed subproject.'''
     entrypoint = _get_installed_entrypoint(subproject)
-    return ':'.join([entrypoint.module_name, entrypoint.attrs[0]])
+    return ':'.join([entrypoint.module, entrypoint.attr])
 
 
 def _get_subproject_base(subproject):
     '''Get the import base name for the installed subproject.'''
     entrypoint = _get_installed_entrypoint(subproject)
-    return entrypoint.module_name.split('.')[0]
+    return entrypoint.module.split('.')[0]
 
 
 def get_alembic_version_table(config):
