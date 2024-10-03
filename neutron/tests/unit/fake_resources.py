@@ -906,7 +906,6 @@ class FakeOVNRouter(object):
             return subnet_id
 
         external_ids = {
-            ovn_const.OVN_GW_PORT_EXT_ID_KEY: router.get('gw_port_id') or '',
             ovn_const.OVN_ROUTER_NAME_EXT_ID_KEY:
                 router.get('name', 'no_router_name')}
 
