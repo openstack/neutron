@@ -1,0 +1,7 @@
+---
+upgrade:
+  - |
+    The ``ovn_emit_need_to_frag`` option for OVN is now enabled by default.
+    This may result in performance issues on older kernels (older than 5.2). If
+    you are still using an old kernel, you may consider setting it to
+    ``False``.
