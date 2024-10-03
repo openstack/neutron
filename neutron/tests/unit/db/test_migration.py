@@ -14,6 +14,7 @@
 #    under the License.
 
 import copy
+import importlib.metadata
 import os
 import re
 import sys
@@ -28,7 +29,6 @@ import fixtures
 from neutron_lib import fixture as lib_fixtures
 from neutron_lib.utils import helpers
 from oslo_utils import fileutils
-import pkg_resources
 import sqlalchemy as sa
 from testtools import matchers
 
@@ -143,13 +143,13 @@ class TestCli(base.BaseTestCase):
             config = alembic_config.Config(ini)
             config.set_main_option('neutron_project', project)
             module_name = project.replace('-', '_') + '.db.migration'
-            attrs = ('alembic_migrations',)
-            script_location = ':'.join([module_name, attrs[0]])
+            script_location = ':'.join([module_name, 'alembic_migrations'])
             config.set_main_option('script_location', script_location)
             self.configs.append(config)
-            entrypoint = pkg_resources.EntryPoint(project,
-                                                  module_name,
-                                                  attrs=attrs)
+            entrypoint = importlib.metadata.EntryPoint(
+                name=project,
+                group='neutron.db.alembic_migrations',
+                value=script_location)
             migration_cli.migration_entrypoints[project] = entrypoint
 
     def _main_test_helper(self, argv, func_name, exp_kwargs=[{}]):
