@@ -10,22 +10,26 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
-import sys
+from importlib.metadata import entry_points
 
 from oslo_config import cfg
 
 from neutron._i18n import _
 
-if sys.version_info < (3, 10, 0):
-    from importlib_metadata import entry_points
-else:
-    from importlib.metadata import entry_points
 
 MIGRATION_ENTRYPOINTS = 'neutron.db.alembic_migrations'
-migration_entrypoints = {
-    entrypoint.name: entrypoint
-    for entrypoint in entry_points(group=MIGRATION_ENTRYPOINTS)
-}
+
+try:
+    migration_entrypoints = {
+        entrypoint.name: entrypoint
+        for entrypoint in entry_points(group=MIGRATION_ENTRYPOINTS)
+    }
+except TypeError:
+    # For python < 3.10
+    migration_entrypoints = {
+        entrypoint.name: entrypoint
+        for entrypoint in entry_points()[MIGRATION_ENTRYPOINTS]
+    }
 
 INSTALLED_SUBPROJECTS = list(migration_entrypoints)
 
