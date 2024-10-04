@@ -112,7 +112,7 @@ class TestOVSFirewallLoggingDriver(base.BaseTestCase):
             agent_rpc, 'LoggingApiStub', autospec=True).start()
         self.log_driver.start_logapp = mock.Mock()
         self.log_driver.initialize(resource_rpc_mock)
-        self.log_driver.SUPPORTED_LOGGING_TYPES = ['security_group']
+        self.log_driver.SUPPORTED_LOGGING_TYPES = ('security_group',)
         self.mock_bridge = self.log_driver.int_br
         self.mock_bridge.reset_mock()
         self.fake_ovs_port = FakeOVSPort('port', 1, '00:00:00:00:00:00')

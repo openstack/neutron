@@ -37,7 +37,7 @@ class LoggingDriver(object, metaclass=abc.ABCMeta):
     """Defines abstract interface for logging driver"""
 
     # specific logging types are supported
-    SUPPORTED_LOGGING_TYPES = None
+    SUPPORTED_LOGGING_TYPES = tuple()
 
     @abc.abstractmethod
     def initialize(self, resource_rpc, **kwargs):

@@ -41,7 +41,7 @@ DRIVER = None
 log_cfg.register_log_driver_opts()
 
 MAX_INT_LABEL = 2**32
-SUPPORTED_LOGGING_TYPES = [log_const.SECURITY_GROUP]
+SUPPORTED_LOGGING_TYPES = (log_const.SECURITY_GROUP,)
 
 
 class LoggingNotSupported(n_exceptions.NeutronException):

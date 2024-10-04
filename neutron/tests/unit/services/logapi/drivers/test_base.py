@@ -18,7 +18,7 @@ from neutron_lib.api.definitions import portbindings
 from neutron.services.logapi.drivers import base as log_base_driver
 from neutron.tests import base
 
-SUPPORTED_LOGGING_TYPES = ['security_group']
+SUPPORTED_LOGGING_TYPES = ('security_group',)
 
 
 class FakeDriver(log_base_driver.DriverBase):

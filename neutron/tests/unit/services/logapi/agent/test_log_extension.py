@@ -33,7 +33,7 @@ from neutron.tests import base
 
 class FakeLogDriver(log_ext.LoggingDriver):
 
-    SUPPORTED_LOGGING_TYPES = ['security_group']
+    SUPPORTED_LOGGING_TYPES = ('security_group',)
 
     def initialize(self, resource_rpc, **kwargs):
         pass

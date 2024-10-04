@@ -32,7 +32,7 @@ _uuid = uuidutils.generate_uuid
 
 class FakeLogDriver(log_ext.LoggingDriver):
 
-    SUPPORTED_LOGGING_TYPES = ['fake_resource']
+    SUPPORTED_LOGGING_TYPES = ('fake_resource',)
 
     def initialize(self, resource_rpc, **kwargs):
         pass
