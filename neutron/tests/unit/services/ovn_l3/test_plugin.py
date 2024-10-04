@@ -1389,9 +1389,11 @@ class BaseTestOVNL3RouterPluginMixin():
             {'external_ip': '192.168.0.10', 'logical_ip': '10.0.0.0/24',
              'type': 'snat', 'uuid': 'uuid1'}]
         utils.is_nat_gateway_port_supported.return_value = is_gw_port
-
+        lrp_options = {}
+        if is_gw_port:
+            lrp_options[ovn_const.LRP_OPTIONS_RESIDE_REDIR_CH] = 'true'
         lrp = fake_resources.FakeOvsdbRow.create_one_ovsdb_row(
-            attrs={'options': {}})
+            attrs={'options': lrp_options})
         _nb_ovn.get_lrouter_port.return_value = lrp
         self.l3_inst.get_router.return_value = self.fake_router_with_ext_gw
 

@@ -20,6 +20,21 @@ traffic, and also for FIPs.
    :alt: L3 North South non-distributed FIP
    :align: center
 
+When an external network connected to the router is represented by FLAT or
+VLAN network type, active chassis is identified by the external Logical Router
+Port. In practice this means, that LRP will have ``hosting-chassis`` property
+set in a ``status`` row for the external LRP. You can also check Chassis
+priorities for the LRP with ``lrp-get-gateway-chassis`` command. Changing the
+priority will result in traffic failover to another Chassis.
+
+In case of connecting another Geneve network to the router as external network
+(by creating ``access_as_external`` RBAC rule for such network), router itself
+will be pinned to Chassis rather than it's LRP. In this scenario Logical Router
+does have ``chassis`` property defined inside the ``options`` row.
+With that ``GATEWAY_PORT`` will not be defined for dnat_and_snat rules which
+are created for FIPs as this will make traffic to pass through the LRP that
+is not bound to any Chassis.
+
 
 Distributed Floating IP
 ~~~~~~~~~~~~~~~~~~~~~~~
