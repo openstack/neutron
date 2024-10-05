@@ -13,14 +13,16 @@
 #    under the License.
 
 from oslo_concurrency import processutils
+from oslo_utils import netutils
 
 from neutron import privileged
 
 
 def _connection_to_manager_uri(conn_uri):
     proto, addr = conn_uri.split(':', 1)
-    if ':' in addr:
-        ip, port = addr.split(':', 1)
+    ip, port = netutils.parse_host_port(addr)
+    if port is not None:
+        ip = netutils.escape_ipv6(ip)
         return 'p%s:%s:%s' % (proto, port, ip)
     return 'p%s:%s' % (proto, addr)
 

@@ -20,6 +20,7 @@ from oslo_config import cfg
 API_OPTS = [
     cfg.StrOpt('ovsdb_connection',
                default='tcp:127.0.0.1:6640',
+               regex=r'^(tcp|tls|ssl):.+',
                help=_('The connection string for the OVSDB backend. '
                       'Will be used for all OVSDB commands and '
                       'by ovsdb-client when monitoring'
