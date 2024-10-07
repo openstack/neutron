@@ -249,7 +249,18 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                 port = self._plugin.update_port(
                     context, port['id'],
                     {'port': {portbindings.HOST_ID: host}})
-
+                # Updates OVN NB database with hostname for lsp router
+                # gateway port
+                with self._nb_ovn.transaction(check_error=True) as txn:
+                    ext_ids = (
+                        "external_ids",
+                        {ovn_const.OVN_HOST_ID_EXT_ID_KEY: host},
+                    )
+                    txn.add(
+                        self._nb_ovn.db_set(
+                            "Logical_Switch_Port", port["id"], ext_ids
+                        )
+                    )
             if port['status'] != status:
                 self._plugin.update_port_status(context, port['id'], status)
 
