@@ -529,6 +529,12 @@ class TestRouter(base.TestOVNFunctionalBase):
             # hosted in any chassis.
             self.assertGreaterEqual(plugin_select.call_count, 2)
 
+    def _find_port_binding(self, port_id):
+        cmd = self.sb_api.db_find_rows('Port_Binding',
+                                       ('logical_port', '=', port_id))
+        rows = cmd.execute(check_error=True)
+        return rows[0] if rows else None
+
     def test_router_gateway_port_binding_host_id(self):
         # Test setting chassis on chassisredirect port in Port_Binding table,
         # will update host_id of corresponding router gateway port
@@ -551,13 +557,29 @@ class TestRouter(base.TestOVNFunctionalBase):
                              may_exist=True).execute(check_error=True)
 
         def check_port_binding_host_id(port_id):
+            # Get port from Neutron DB
             port = core_plugin.get_ports(
                 self.context, filters={'id': [port_id]})[0]
-            return port[portbindings.HOST_ID] == host_id
+            # Get port from OVN DB
+            bp = self._find_port_binding(port_id)
+            ovn_host_id = bp.external_ids.get(ovn_const.OVN_HOST_ID_EXT_ID_KEY)
+            return port[portbindings.HOST_ID] == host_id == ovn_host_id
 
         # Test if router gateway port updated with this chassis
         n_utils.wait_until_true(lambda: check_port_binding_host_id(
             gw_port_id))
+
+        # Simulate failover to another chassis and check host_id in Neutron DB
+        # and external_ids:neutron:host_id in OVN DB are updated
+        chassis = idlutils.row_by_value(
+            self.sb_api.idl, "Chassis", "name", self.chassis2
+        )
+        host_id = chassis.hostname
+        self.sb_api.lsp_unbind(logical_port).execute(check_error=True)
+        self.sb_api.lsp_bind(logical_port, self.chassis2).execute(
+            check_error=True
+        )
+        n_utils.wait_until_true(lambda: check_port_binding_host_id(gw_port_id))
 
     def _validate_router_ipv6_ra_configs(self, lrp_name, expected_ra_confs):
         lrp = idlutils.row_by_value(self.nb_api.idl,
