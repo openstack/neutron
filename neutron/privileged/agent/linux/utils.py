@@ -15,12 +15,14 @@
 import os
 from os import path
 import re
+import typing
 
 from eventlet.green import subprocess
 from neutron_lib.utils import helpers
 from oslo_concurrency import processutils
 from oslo_utils import fileutils
 
+from neutron.common import utils
 from neutron import privileged
 
 
@@ -50,6 +52,20 @@ def _find_listen_pids_namespace(namespace):
 @privileged.default.entrypoint
 def delete_if_exists(_path, remove=os.unlink):
     fileutils.delete_if_exists(_path, remove=remove)
+
+
+@privileged.default.entrypoint
+def read_file(_path: str) -> str:
+    return utils.read_file(_path)
+
+
+@privileged.default.entrypoint
+def write_to_tempfile(content: bytes,
+                      _path: typing.Optional[str] = None,
+                      suffix: str = '',
+                      prefix: str = 'tmp'):
+    return fileutils.write_to_tempfile(content, path=_path, suffix=suffix,
+                                       prefix=prefix)
 
 
 @privileged.default.entrypoint

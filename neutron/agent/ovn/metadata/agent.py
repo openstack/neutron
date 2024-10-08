@@ -376,9 +376,6 @@ class MetadataAgent(object):
             resource_type='metadata')
         self._sb_idl = None
         self._post_fork_event = threading.Event()
-        # We'll restart all haproxy instances upon start so that they honor
-        # any potential changes in their configuration.
-        self.restarted_metadata_proxy_set = set()
         self._chassis = None
 
     @property
@@ -831,11 +828,6 @@ class MetadataAgent(object):
 
         # Ensure the correct checksum in the metadata traffic.
         self._ensure_datapath_checksum(namespace)
-
-        if net_name not in self.restarted_metadata_proxy_set:
-            metadata_driver.MetadataDriver.destroy_monitored_metadata_proxy(
-                self._process_monitor, net_name, self.conf, namespace)
-            self.restarted_metadata_proxy_set.add(net_name)
 
         # Spawn metadata proxy if it's not already running.
         metadata_driver.MetadataDriver.spawn_monitored_metadata_proxy(

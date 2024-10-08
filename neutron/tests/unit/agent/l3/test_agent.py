@@ -58,6 +58,7 @@ from neutron.agent.linux import pd
 from neutron.agent.linux import ra
 from neutron.agent.linux import utils as linux_utils
 from neutron.agent.metadata import driver as metadata_driver
+from neutron.agent.metadata import driver_base as metadata_driver_base
 from neutron.agent import rpc as agent_rpc
 from neutron.conf.agent import common as agent_config
 from neutron.conf.agent.l3 import config as l3_config
@@ -298,7 +299,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         eventlet.sleep(self.conf.ha_vrrp_advert_int + 2)
         self.assertFalse(agent._update_metadata_proxy.call_count)
 
-    def test_enqueue_state_change_l3_extension(self):
+    @mock.patch.object(metadata_driver_base.MetadataDriverBase,
+                       '_get_haproxy_configurator')
+    def test_enqueue_state_change_l3_extension(self, mock_haproxy_conf):
         self.conf.set_override('ha_vrrp_advert_int', 1)
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         router_dict = {'id': 'router_id', 'enable_ndp_proxy': True}
@@ -307,6 +310,9 @@ class TestBasicRouterOperations(BasicRouterOperationsFramework):
         router_info.router = router_dict
         agent.router_info['router_id'] = router_info
         agent.l3_ext_manager.ha_state_change = mock.Mock()
+        haproxy_cfg = mock.Mock()
+        haproxy_cfg.is_config_file_obsolete.return_value = False
+        mock_haproxy_conf.return_value = haproxy_cfg
         with mock.patch('neutron.agent.linux.ip_lib.'
                         'IpAddrCommand.wait_until_address_ready') as mock_wait:
             mock_wait.return_value = True
