@@ -486,12 +486,21 @@ class TestHAL3Agent(TestL3Agent):
             'active',
         )
 
+        def is_one_host_active_for_router():
+            active_hosts = get_active_hosts()
+            return len(active_hosts) == 1
+
+        try:
+            common_utils.wait_until_true(
+                is_one_host_active_for_router, timeout=15)
+        except common_utils.WaitTimeout:
+            pass
+
+        # Test one last time:
         active_hosts = get_active_hosts()
-
-        # Only one host should be active
-        self.assertEqual(len(active_hosts), 1,
-                         'More than one active HA routers')
-
+        if len(active_hosts) != 1:
+            self.fail('Number of active hosts for router: %s',
+                      len(active_hosts))
         active_host = active_hosts[0]
         backup_host = next(
             h for h in self.environment.hosts if h != active_host)
