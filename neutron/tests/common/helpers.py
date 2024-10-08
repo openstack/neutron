@@ -18,15 +18,18 @@ import math
 import os
 import random
 import signal
+import typing
 
 from neutron_lib.agent import topics
 from neutron_lib import constants
 from neutron_lib import context
+from neutron_lib import exceptions
 from oslo_utils import timeutils
 from oslo_utils import versionutils
 
 import neutron
 from neutron.agent.common import ovs_lib
+from neutron.agent.linux import utils as linux_utils
 from neutron.db import agents_db
 
 HOST = 'localhost'
@@ -278,3 +281,19 @@ class TestTimer(object):
 
         if self._alarm_fn:
             self._alarm_fn(timeout)
+
+
+def pgrep(
+        command: str,
+        entire_command_line: bool = True
+) -> typing.Optional[str]:
+    cmd = ['pgrep']
+    if entire_command_line:
+        cmd += ['-f']
+    cmd += [command]
+    try:
+        result = linux_utils.execute(cmd)
+    except exceptions.ProcessExecutionError:
+        return
+
+    return result[0] if result else None
