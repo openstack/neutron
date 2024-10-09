@@ -1103,3 +1103,16 @@ def parse_permitted_ethertypes(permitted_ethertypes):
             continue
 
     return ret
+
+
+def read_file(path: str) -> str:
+    """Return the content of a text file as a string
+
+    The output includes the empty lines too. If the file does not exist,
+    returns an empty string.
+    """
+    try:
+        with open(path) as file:
+            return file.read()
+    except FileNotFoundError:
+        return ''

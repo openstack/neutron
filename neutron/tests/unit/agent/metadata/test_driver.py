@@ -112,6 +112,9 @@ class TestMetadataDriverProcess(base.BaseTestCase):
         meta_conf.register_meta_conf_opts(
             meta_conf.METADATA_RATE_LIMITING_OPTS, cfg.CONF,
             group=meta_conf.RATE_LIMITING_GROUP)
+        self.mock_conf_obsolete = mock.patch.object(
+            driver_base.HaproxyConfiguratorBase,
+            'is_config_file_obsolete').start()
 
     def test_after_router_updated_called_on_agent_process_update(self):
         with mock.patch.object(metadata_driver, 'after_router_updated') as f,\
@@ -153,7 +156,8 @@ class TestMetadataDriverProcess(base.BaseTestCase):
             agent._process_updated_router(router)
             f.assert_not_called()
 
-    def _test_spawn_metadata_proxy(self, dad_failed=False, rate_limited=False):
+    def _test_spawn_metadata_proxy(self, dad_failed=False, rate_limited=False,
+                                   is_config_file_obsolete=False):
         router_id = _uuid()
         router_ns = 'qrouter-%s' % router_id
         service_name = 'haproxy'
@@ -163,6 +167,11 @@ class TestMetadataDriverProcess(base.BaseTestCase):
         cfg.CONF.set_override('metadata_proxy_group', self.EGNAME)
         cfg.CONF.set_override('metadata_proxy_socket', self.METADATA_SOCKET)
         cfg.CONF.set_override('debug', True)
+        self.mock_conf_obsolete.return_value = is_config_file_obsolete
+        if is_config_file_obsolete:
+            self.mock_destroy_haproxy = mock.patch.object(
+                driver_base.MetadataDriverBase,
+                'destroy_monitored_metadata_proxy').start()
 
         with mock.patch(ip_class_path) as ip_mock,\
                 mock.patch(
@@ -274,6 +283,10 @@ class TestMetadataDriverProcess(base.BaseTestCase):
             self.delete_if_exists.assert_called_once_with(
                 mock.ANY, run_as_root=True)
 
+            if is_config_file_obsolete:
+                self.mock_destroy_haproxy.assert_called_once_with(
+                    agent.process_monitor, router_id, agent.conf, router_ns)
+
     def test_spawn_metadata_proxy(self):
         self._test_spawn_metadata_proxy()
 
@@ -293,6 +306,9 @@ class TestMetadataDriverProcess(base.BaseTestCase):
 
     def test_spawn_metadata_proxy_dad_failed(self):
         self._test_spawn_metadata_proxy(dad_failed=True)
+
+    def test_spawn_metadata_proxy_no_matching_configurations(self):
+        self._test_spawn_metadata_proxy(is_config_file_obsolete=True)
 
     @mock.patch.object(driver_base.LOG, 'error')
     def test_spawn_metadata_proxy_handles_process_exception(self, error_log):
@@ -316,29 +332,21 @@ class TestMetadataDriverProcess(base.BaseTestCase):
 
     def test_create_config_file_wrong_user(self):
         with mock.patch('pwd.getpwnam', side_effect=KeyError):
-            config = metadata_driver.HaproxyConfigurator(_uuid(),
-                                                         mock.ANY, mock.ANY,
-                                                         mock.ANY, mock.ANY,
-                                                         self.EUNAME,
-                                                         self.EGNAME,
-                                                         mock.ANY, mock.ANY,
-                                                         mock.ANY)
             self.assertRaises(comm_meta.InvalidUserOrGroupException,
-                              config.create_config_file)
+                              metadata_driver.HaproxyConfigurator, _uuid(),
+                              mock.ANY, mock.ANY, mock.ANY, mock.ANY,
+                              self.EUNAME, self.EGNAME, mock.ANY, mock.ANY,
+                              mock.ANY)
 
     def test_create_config_file_wrong_group(self):
         with mock.patch('grp.getgrnam', side_effect=KeyError),\
                 mock.patch('pwd.getpwnam',
                            return_value=test_utils.FakeUser(self.EUNAME)):
-            config = metadata_driver.HaproxyConfigurator(_uuid(),
-                                                         mock.ANY, mock.ANY,
-                                                         mock.ANY, mock.ANY,
-                                                         self.EUNAME,
-                                                         self.EGNAME,
-                                                         mock.ANY, mock.ANY,
-                                                         mock.ANY)
             self.assertRaises(comm_meta.InvalidUserOrGroupException,
-                              config.create_config_file)
+                              metadata_driver.HaproxyConfigurator, _uuid(),
+                              mock.ANY, mock.ANY, mock.ANY, mock.ANY,
+                              self.EUNAME, self.EGNAME, mock.ANY, mock.ANY,
+                              mock.ANY)
 
     def test_destroy_monitored_metadata_proxy(self):
         mproxy_process = mock.Mock(active=False)

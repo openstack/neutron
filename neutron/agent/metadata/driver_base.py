@@ -46,7 +46,7 @@ listen listener
 """
 
 
-class HaproxyConfiguratorBase(object):
+class HaproxyConfiguratorBase(object, metaclass=abc.ABCMeta):
     PROXY_CONFIG_DIR = None
     HEADER_CONFIG_TEMPLATE = None
 
@@ -76,9 +76,27 @@ class HaproxyConfiguratorBase(object):
         # /var/log/haproxy.log on Debian distros, instead of to syslog.
         uuid = network_id or router_id
         self.log_tag = "haproxy-{}-{}".format(METADATA_SERVICE_NAME, uuid)
+        self._haproxy_cfg = ''
+        self._resource_id = None
+        self._create_config()
 
-    def create_config_file(self):
-        """Create the config file for haproxy."""
+    @property
+    def haproxy_cfg(self) -> str:
+        return self._haproxy_cfg
+
+    @property
+    def resource_id(self) -> str:
+        return self._resource_id
+
+    def _create_config(self) -> None:
+        """Create the configuration for haproxy, stored locally
+
+        This method creates a string with the HAProxy configuration, stored in
+        ``self._haproxy_cfg``. It also stores the resource ID (network, router)
+        in ``self._resource_id``.
+
+        This method must be called once in the init method.
+        """
         # Need to convert uid/gid into username/group
         try:
             username = pwd.getpwuid(int(self.user)).pw_name
@@ -127,26 +145,48 @@ class HaproxyConfiguratorBase(object):
             cfg_info['res_type'] = 'Router'
             cfg_info['res_id'] = self.router_id
             cfg_info['res_type_del'] = 'Network'
+        self._resource_id = cfg_info['res_id']
+        self._haproxy_cfg = comm_meta.get_haproxy_config(
+            cfg_info, self.rate_limiting_config,
+            self.HEADER_CONFIG_TEMPLATE, _UNLIMITED_CONFIG_TEMPLATE)
 
-        haproxy_cfg = comm_meta.get_haproxy_config(cfg_info,
-                                                   self.rate_limiting_config,
-                                                   self.HEADER_CONFIG_TEMPLATE,
-                                                   _UNLIMITED_CONFIG_TEMPLATE)
-
-        LOG.debug("haproxy_cfg = %s", haproxy_cfg)
+    def create_config_file(self):
+        """Read the configuration stored and write the configuration file"""
+        LOG.debug("haproxy_cfg = %s", self.haproxy_cfg)
         cfg_dir = self.get_config_path(self.state_path)
         # uuid has to be included somewhere in the command line so that it can
         # be tracked by process_monitor.
-        self.cfg_path = os.path.join(cfg_dir, "%s.conf" % cfg_info['res_id'])
+        self.cfg_path = os.path.join(cfg_dir, "%s.conf" % self.resource_id)
         if not os.path.exists(cfg_dir):
             os.makedirs(cfg_dir)
         with open(self.cfg_path, "w") as cfg_file:
-            cfg_file.write(haproxy_cfg)
+            cfg_file.write(self.haproxy_cfg)
 
     @classmethod
     def get_config_path(cls, state_path):
         return os.path.join(state_path or cfg.CONF.state_path,
                             cls.PROXY_CONFIG_DIR)
+
+    def read_config_file(self) -> str:
+        """Return a string with the content of the configuration file"""
+        cfg_path = os.path.join(self.get_config_path(self.state_path),
+                                '%s.conf' % self.resource_id)
+        return linux_utils.read_if_exists(str(cfg_path), run_as_root=True)
+
+    def is_config_file_obsolete(self) -> bool:
+        """Compare the instance config and the config file content
+
+        Returns False if both configurations match. This check skips the
+        "pidfile" line because that is provided just before the process is
+        started.
+        """
+        def trim_config(haproxy_cfg: str) -> list[str]:
+            return [line for line in haproxy_cfg.split('\n')
+                    if not line.lstrip().startswith('pidfile')]
+
+        file_config = trim_config(self.read_config_file())
+        current_config = trim_config(self.haproxy_cfg)
+        return file_config != current_config
 
     @classmethod
     def cleanup_config_file(cls, uuid, state_path):
@@ -175,30 +215,38 @@ class MetadataDriverBase(object, metaclass=abc.ABCMeta):
         return user, group
 
     @classmethod
+    def _get_haproxy_configurator(cls, bind_address, port, conf,
+                                  network_id=None, router_id=None,
+                                  bind_address_v6=None,
+                                  bind_interface=None,
+                                  pid_file=''):
+        metadata_proxy_socket = conf.metadata_proxy_socket
+        user, group = cls._get_metadata_proxy_user_group(conf)
+        configurator = cls.haproxy_configurator()
+        return configurator(network_id,
+                            router_id,
+                            metadata_proxy_socket,
+                            bind_address,
+                            port,
+                            user,
+                            group,
+                            conf.state_path,
+                            pid_file,
+                            conf.metadata_rate_limiting,
+                            bind_address_v6,
+                            bind_interface)
+
+    @classmethod
     def _get_metadata_proxy_callback(cls, bind_address, port, conf,
                                      network_id=None, router_id=None,
                                      bind_address_v6=None,
                                      bind_interface=None):
         def callback(pid_file):
-            metadata_proxy_socket = conf.metadata_proxy_socket
-            user, group = cls._get_metadata_proxy_user_group(conf)
-            configurator = cls.haproxy_configurator()
-            haproxy = configurator(network_id,
-                                   router_id,
-                                   metadata_proxy_socket,
-                                   bind_address,
-                                   port,
-                                   user,
-                                   group,
-                                   conf.state_path,
-                                   pid_file,
-                                   conf.metadata_rate_limiting,
-                                   bind_address_v6,
-                                   bind_interface)
+            haproxy = cls._get_haproxy_configurator(
+                bind_address, port, conf, network_id, router_id,
+                bind_address_v6, bind_interface, pid_file)
             haproxy.create_config_file()
-            proxy_cmd = [HAPROXY_SERVICE, '-f', haproxy.cfg_path]
-
-            return proxy_cmd
+            return [HAPROXY_SERVICE, '-f', haproxy.cfg_path]
 
         return callback
 
@@ -237,6 +285,18 @@ class MetadataDriverBase(object, metaclass=abc.ABCMeta):
 
                 # Do not use the address or interface when DAD fails
                 bind_address_v6 = bind_interface = None
+
+        # If the HAProxy running instance configuration is different from
+        # the one passed in this call, the HAProxy is stopped. The new
+        # configuration will be written to the disk and a new instance
+        # started.
+        haproxy_cfg = cls._get_haproxy_configurator(
+            bind_address, port, conf, network_id=network_id,
+            router_id=router_id, bind_address_v6=bind_address_v6,
+            bind_interface=bind_interface)
+        if haproxy_cfg.is_config_file_obsolete():
+            cls.destroy_monitored_metadata_proxy(
+                monitor, haproxy_cfg.resource_id, conf, ns_name)
 
         uuid = network_id or router_id
         callback = cls._get_metadata_proxy_callback(
