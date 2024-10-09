@@ -1101,8 +1101,6 @@ class FakeSegment(object):
 
 
 class LocalChild(dhcp.DhcpLocalProcess):
-    PORTS = {4: [4], 6: [6]}
-
     def __init__(self, *args, **kwargs):
         self.process_monitor = mock.Mock()
         kwargs['process_monitor'] = self.process_monitor
