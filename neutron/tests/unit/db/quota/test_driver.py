@@ -336,10 +336,12 @@ class TestDbQuotaDriver(testlib_api.SqlTestCase,
 
     def test_quota_limit_check_unlimited(self):
         resources = self._create_resources()
-        self.plugin.update_quota_limit(self.context, self.project_1,
-                                       self.resource_1, -1)
-        self.plugin.update_quota_limit(self.context, self.project_1,
-                                       self.resource_2, -1)
+        self.plugin.update_quota_limit(
+            self.context, self.project_1, self.resource_1,
+            quota_api.UNLIMITED_QUOTA)
+        self.plugin.update_quota_limit(
+            self.context, self.project_1, self.resource_2,
+            quota_api.UNLIMITED_QUOTA)
         reservations = {self.resource_1: 8}
         self.quota_driver.make_reservation(
             self.context, self.project_1, resources, reservations, self.plugin)
