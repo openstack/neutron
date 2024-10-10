@@ -1778,28 +1778,6 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
                     # "IpamAllocation" registers
                     self.assertEqual([], allocations)
 
-    def test_delete_port_no_notify_in_disassociate_floatingips(self):
-        ctx = context.get_admin_context()
-        plugin = directory.get_plugin()
-        l3plugin = directory.get_plugin(plugin_constants.L3)
-        with self.port() as port,\
-                mock.patch.object(
-                    l3plugin,
-                    'disassociate_floatingips') as disassociate_floatingips,\
-                mock.patch.object(registry, 'publish') as publish:
-
-            port_id = port['port']['id']
-            plugin.delete_port(ctx, port_id)
-
-            # check that no notification was requested while under
-            # transaction
-            disassociate_floatingips.assert_has_calls([
-                mock.call(ctx, port_id, do_notify=False)
-            ])
-
-            # check that notifier was still triggered
-            self.assertTrue(publish.call_counts)
-
     def test_registry_publish_before_after_port_binding(self):
         plugin = directory.get_plugin()
         ctx = context.get_admin_context()
@@ -1851,16 +1829,6 @@ class TestMl2PortsV2(test_plugin.TestPortsV2, Ml2PluginV2TestCase):
     def test_check_if_port_not_serviced_by_dvr(self):
         self.assertFalse(utils.is_dvr_serviced(
             constants.DEVICE_OWNER_ROUTER_INTF))
-
-    def test_disassociate_floatingips_do_notify_returns_nothing(self):
-        ctx = context.get_admin_context()
-        l3plugin = directory.get_plugin(plugin_constants.L3)
-        with self.port() as port:
-
-            port_id = port['port']['id']
-            # check that nothing is returned when notifications are handled
-            # by the called method
-            self.assertIsNone(l3plugin.disassociate_floatingips(ctx, port_id))
 
     def test_create_port_tolerates_db_deadlock(self):
         plugin = directory.get_plugin()

@@ -1798,12 +1798,10 @@ class L3_NAT_dbonly_mixin(l3.RouterPluginBase,
                                      reason=reason)
 
     @db_api.retry_if_session_inactive()
-    def disassociate_floatingips(self, context, port_id, do_notify=True):
+    def disassociate_floatingips(self, context, port_id):
         """Disassociate all floating IPs linked to specific port.
 
         @param port_id: ID of the port to disassociate floating IPs.
-        @param do_notify: whether we should notify routers right away.
-                          This parameter is ignored.
         @return: set of router-ids that require notification updates
         """
         with db_api.CONTEXT_WRITER.using(context):
@@ -2293,24 +2291,6 @@ class L3_NAT_db_mixin(L3_NAT_dbonly_mixin, L3RpcNotifierMixin):
         floating_ip = self._delete_floatingip(context, id)
         self.notify_router_updated(context, floating_ip['router_id'],
                                    'delete_floatingip')
-
-    def disassociate_floatingips(self, context, port_id, do_notify=True):
-        """Disassociate all floating IPs linked to specific port.
-
-        @param port_id: ID of the port to disassociate floating IPs.
-        @param do_notify: whether we should notify routers right away.
-        @return: set of router-ids that require notification updates
-                 if do_notify is False, otherwise None.
-        """
-        router_ids = super(L3_NAT_db_mixin, self).disassociate_floatingips(
-            context, port_id, do_notify)
-        if do_notify:
-            self.notify_routers_updated(context, router_ids)
-            # since caller assumes that we handled notifications on its
-            # behalf, return nothing
-            return
-
-        return router_ids
 
     def notify_routers_updated(self, context, router_ids):
         super(L3_NAT_db_mixin, self).notify_routers_updated(
