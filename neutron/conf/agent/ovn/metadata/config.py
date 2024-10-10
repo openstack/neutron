@@ -24,6 +24,7 @@ from neutron._i18n import _
 OVS_OPTS = [
     cfg.StrOpt('ovsdb_connection',
                default='unix:/usr/local/var/run/openvswitch/db.sock',
+               regex=r'^(tcp|ssl|unix):.+',
                help=_('The connection string for the native OVSDB backend. '
                       'Use tcp:IP:PORT for TCP connections. '
                       'Use unix:FILE for unix domain socket connections.')),
