@@ -24,6 +24,7 @@ from neutron_lib.objects import exceptions as obj_exc
 import sqlalchemy
 import testtools
 
+from neutron.common import _constants as const
 from neutron.db import securitygroups_db
 from neutron.extensions import security_groups_default_rules as \
     ext_sg_default_rules
@@ -499,10 +500,13 @@ class SecurityGroupDbMixinTestCase(testlib_api.SqlTestCase):
 
     def test_get_ip_proto_name_and_num(self):
         protocols = [constants.PROTO_NAME_UDP, str(constants.PROTO_NUM_TCP),
+                     constants.PROTO_NAME_IP, None, const.PROTO_NAME_ANY,
                      'blah', '111']
         protocol_names_nums = (
             [[constants.PROTO_NAME_UDP, str(constants.PROTO_NUM_UDP)],
              [constants.PROTO_NAME_TCP, str(constants.PROTO_NUM_TCP)],
+             [constants.PROTO_NAME_IP, str(constants.PROTO_NUM_IP)],
+             None, None,
              ['blah', 'blah'], ['111', '111']])
 
         for i, protocol in enumerate(protocols):

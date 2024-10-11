@@ -1,0 +1,8 @@
+---
+fixes:
+  - |
+    Add special treatment for the keyword ``any`` in the security group rule
+    API protocol field to match what is documented in the api-ref itself.
+    It is already supported in the client, where ``any`` is simply changed
+    to ``None``, so do the same in the API itself. For more information,
+    see bug `2074056 <https://bugs.launchpad.net/neutron/+bug/2074056>`_.

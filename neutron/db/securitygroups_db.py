@@ -686,7 +686,7 @@ class SecurityGroupDbMixin(
             rule_obj, fields=fields)
 
     def _get_ip_proto_number(self, protocol):
-        if protocol is None:
+        if protocol in const.SG_RULE_PROTO_ANY:
             return
         # According to bug 1381379, protocol is always set to string to avoid
         # problems with comparing int and string in PostgreSQL. Here this
@@ -697,7 +697,7 @@ class SecurityGroupDbMixin(
         return int(constants.IP_PROTOCOL_MAP.get(protocol, protocol))
 
     def _get_ip_proto_name_and_num(self, protocol, ethertype=None):
-        if protocol is None:
+        if protocol in const.SG_RULE_PROTO_ANY:
             return
         protocol = str(protocol)
         # Force all legacy IPv6 ICMP protocol names to be 'ipv6-icmp', and

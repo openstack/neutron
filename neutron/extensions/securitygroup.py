@@ -28,6 +28,7 @@ from oslo_utils import netutils
 from neutron._i18n import _
 from neutron.api import extensions
 from neutron.api.v2 import base
+from neutron.common import _constants
 from neutron.conf import quota
 from neutron.extensions import standardattrdescription as stdattr_ext
 from neutron.quota import resource_registry
@@ -148,7 +149,7 @@ class SecurityGroupRuleInvalidEtherType(exceptions.InvalidInput):
 
 
 def convert_protocol(value):
-    if value is None:
+    if value in _constants.SG_RULE_PROTO_ANY:
         return
     try:
         val = int(value)
@@ -208,7 +209,8 @@ def _validate_name_not_default(data, max_len=db_const.NAME_FIELD_SIZE):
 
 validators.add_validator('name_not_default', _validate_name_not_default)
 
-sg_supported_protocols = ([None] + list(const.IP_PROTOCOL_MAP.keys()))
+sg_supported_protocols = (_constants.SG_RULE_PROTO_ANY +
+                          tuple(const.IP_PROTOCOL_MAP.keys()))
 sg_supported_ethertypes = ['IPv4', 'IPv6']
 SECURITYGROUPS = 'security_groups'
 SECURITYGROUPRULES = 'security_group_rules'
