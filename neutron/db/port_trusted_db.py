@@ -12,10 +12,10 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import port_trusted_vif
 from neutron_lib.api.definitions import portbindings
 from neutron_lib import constants as n_const
 
-from neutron.extensions import port_trusted_vif
 from neutron.objects.port.extensions import port_trusted as trusted_obj
 
 

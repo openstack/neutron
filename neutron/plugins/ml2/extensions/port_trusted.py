@@ -13,11 +13,11 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from neutron_lib.api.definitions import port_trusted_vif
 from neutron_lib.plugins.ml2 import api
 from oslo_log import log as logging
 
 from neutron.db import port_trusted_db
-from neutron.extensions import port_trusted_vif
 
 
 LOG = logging.getLogger(__name__)
