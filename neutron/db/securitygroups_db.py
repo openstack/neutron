@@ -199,12 +199,6 @@ class SecurityGroupDbMixin(
             with db_api.CONTEXT_READER.using(context):
                 sg = self._get_security_group(context, id, fields=fields)
                 ret = self._make_security_group_dict(context, sg, fields)
-                if (fields is None or len(fields) == 0 or
-                        'security_group_rules' in fields):
-                    rules = self.get_security_group_rules(
-                        context_lib.get_admin_context(),
-                        {'security_group_id': [id]})
-                    ret['security_group_rules'] = rules
 
         finally:
             if tenant_id:
