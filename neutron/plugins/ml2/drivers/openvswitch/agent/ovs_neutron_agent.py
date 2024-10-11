@@ -491,10 +491,6 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                     self.available_local_vlans.remove(local_vlan)
                     self._local_vlan_hints[key] = local_vlan
 
-    def _dispose_local_vlan_hints(self):
-        self.available_local_vlans.update(self._local_vlan_hints.values())
-        self._local_vlan_hints = {}
-
     def _reset_tunnel_ofports(self):
         self.tun_br_ofports = {n_const.TYPE_GENEVE: {},
                                n_const.TYPE_GRE: {},
@@ -2888,7 +2884,19 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
                         self.update_retries_map_and_remove_devs_not_to_retry(
                             failed_devices, failed_ancillary_devices,
                             failed_devices_retries_map))
-                    self._dispose_local_vlan_hints()
+
+                    if len(self._local_vlan_hints):
+                        LOG.warning(
+                            "Agent rpc_loop - iteration:%(iter_num)d - "
+                            "the process was not able to clean local vlans "
+                            "(%(nb_hints)s failed). Please ensure that you "
+                            "do not have dead ports in the integration "
+                            "bridge.",
+                            {'iter_num': self.iter_num,
+                             'nb_hints': len(self._local_vlan_hints)})
+                        LOG.debug(
+                            "local_vlan_hints: %s", self._local_vlan_hints
+                        )
                 except Exception:
                     LOG.exception("Error while processing VIF ports")
                     # Put the ports back in self.updated_port
