@@ -26,6 +26,8 @@ from oslo_config import cfg
 from oslo_log import log as logging
 import oslo_messaging
 from oslo_middleware import cors
+from oslo_reports import guru_meditation_report as gmr
+from oslo_reports import opts as gmr_opts
 from oslo_service import wsgi
 
 from neutron._i18n import _
@@ -120,6 +122,14 @@ def setup_logging():
              {'prog': sys.argv[0],
               'version': version.version_info.release_string()})
     LOG.debug("command line: %s", " ".join(sys.argv))
+
+
+def setup_gmr():
+    """Sets up Guru Meditation Report(GMR) generation."""
+    gmr_opts.set_defaults(cfg.CONF)
+    _version_string = version.version_info.release_string()
+    gmr.TextGuruMeditation.setup_autorun(version=_version_string,
+                                         conf=cfg.CONF)
 
 
 def reset_service():

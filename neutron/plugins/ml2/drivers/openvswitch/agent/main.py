@@ -34,5 +34,6 @@ def main():
     common_config.init(sys.argv[1:])
     of_main.init_config()
     common_config.setup_logging()
+    common_config.setup_gmr()
     profiler.setup("neutron-ovs-agent", cfg.CONF.host)
     of_main.main()

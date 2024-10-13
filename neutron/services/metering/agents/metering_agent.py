@@ -400,6 +400,7 @@ def main():
     config.register_agent_state_opts_helper(conf)
     common_config.init(sys.argv[1:])
     config.setup_logging()
+    common_config.setup_gmr()
     config.setup_privsep()
     server = neutron_service.Service.create(
         binary=constants.AGENT_PROCESS_METERING,

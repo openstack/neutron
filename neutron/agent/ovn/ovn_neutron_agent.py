@@ -37,6 +37,7 @@ def main():
     config_ovn_agent.register_opts()
     config.init(sys.argv[1:])
     config.setup_logging()
+    config.setup_gmr()
     utils.log_opt_values(LOG)
     config_ovn_agent.setup_privsep()
 

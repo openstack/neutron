@@ -52,6 +52,7 @@ def main(manager='neutron.agent.l3.agent.L3NATAgentWithStateReport'):
     register_opts(cfg.CONF)
     common_config.init(sys.argv[1:])
     config.setup_logging()
+    common_config.setup_gmr()
     config.setup_privsep()
     server = neutron_service.Service.create(
         binary=constants.AGENT_PROCESS_L3,
