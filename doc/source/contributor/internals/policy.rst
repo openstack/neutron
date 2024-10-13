@@ -159,12 +159,6 @@ The neutron.policy API exposes the following routines:
 * ``enforce``
   Operates like the check routine but raises if the check in oslo_policy
   fails.
-* ``check_is_admin``
-  Enforce the predefined context_is_admin rule; used to determine the is_admin
-  property for a neutron context.
-* ``check_is_advsvc``
-  Enforce the predefined context_is_advsvc rule; used to determine the
-  is_advsvc property for a neutron context.
 
 Neutron specific policy rules
 -----------------------------

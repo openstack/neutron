@@ -127,7 +127,7 @@ class TestAuxiliaryFunctions(base.DietTestCase):
 
     def test_set_resources_dirty_no_dirty_resource(self):
         ctx = context.Context('user_id', 'project_id',
-                              is_admin=False, is_advsvc=False)
+                              is_admin=False)
         with mock.patch('neutron.quota.resource.'
                         'TrackedResource.mark_dirty') as mock_mark_dirty:
             self.registry.set_tracked_resource('meh', test_quota.MehModel)
@@ -140,7 +140,7 @@ class TestAuxiliaryFunctions(base.DietTestCase):
 
     def test_set_resources_dirty_no_tracked_resource(self):
         ctx = context.Context('user_id', 'project_id',
-                              is_admin=False, is_advsvc=False)
+                              is_admin=False)
         with mock.patch('neutron.quota.resource.'
                         'TrackedResource.mark_dirty') as mock_mark_dirty:
             self.registry.register_resource_by_name('meh')
@@ -149,7 +149,7 @@ class TestAuxiliaryFunctions(base.DietTestCase):
 
     def test_set_resources_dirty(self):
         ctx = context.Context('user_id', 'project_id',
-                              is_admin=False, is_advsvc=False)
+                              is_admin=False)
         with mock.patch('neutron.quota.resource.'
                         'TrackedResource.mark_dirty') as mock_mark_dirty:
             self.registry.set_tracked_resource('meh', test_quota.MehModel)

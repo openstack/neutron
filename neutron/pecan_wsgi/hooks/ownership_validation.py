@@ -35,7 +35,7 @@ class OwnershipValidationHook(hooks.PecanHook):
         # in the policy engine
         neutron_context = state.request.context.get('neutron_context')
         resource = state.request.context.get('resource')
-        if (neutron_context.is_admin or neutron_context.is_advsvc or
+        if (neutron_context.is_admin or neutron_context.is_service_role or
                 resource not in ('port', 'subnet')):
             return
         plugin = directory.get_plugin()

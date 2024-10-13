@@ -784,7 +784,7 @@ class Controller(object):
     def _validate_network_tenant_ownership(self, request, resource_item):
         # TODO(salvatore-orlando): consider whether this check can be folded
         # in the policy engine
-        if (request.context.is_admin or request.context.is_advsvc or
+        if (request.context.is_admin or request.context.is_service_role or
                 self._resource not in ('port', 'subnet')):
             return
         network = self._plugin.get_network(
@@ -809,7 +809,7 @@ class Controller(object):
 
         # This will pass most create/update/delete cases
         if not is_get and (request.context.is_admin or
-                           request.context.is_advsvc or
+                           request.context.is_service_role or
                            self.parent['member_name'] not in
                            service_const.EXT_PARENT_RESOURCE_MAPPING or
                            resource_item.get(self._parent_id_name)):
@@ -820,7 +820,7 @@ class Controller(object):
         # _parent_id_name. We need to re-add the ex_parent prefix to policy.
         if is_get:
             if (not request.context.is_admin or
-                    not request.context.is_advsvc and
+                    not request.context.is_service_role and
                     self.parent['member_name'] in
                     service_const.EXT_PARENT_RESOURCE_MAPPING):
                 resource_item.setdefault(
