@@ -14,8 +14,8 @@
 #    under the License.
 
 import copy
+import time
 
-from eventlet import greenthread
 import netaddr
 from netaddr.strategy import eui48
 from neutron_lib.agent import constants as agent_consts
@@ -381,7 +381,8 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
                 # Wait 0.5 seconds before checking again if the port is bound.
                 # We could hit this during a live-migration.
-                greenthread.sleep(0.5)
+                # TODO(ralonsoh): to remove once the eventlet removal finishes.
+                time.sleep(0.5)
                 continue
 
             break
@@ -616,7 +617,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             if count > 1:
                 # yield for binding retries so that we give other threads a
                 # chance to do their work
-                greenthread.sleep(0)
+                time.sleep(0)
 
                 # multiple attempts shouldn't happen very often so we log each
                 # attempt after the 1st.
