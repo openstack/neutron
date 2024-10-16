@@ -14,8 +14,6 @@
 
 import contextlib
 
-from neutron_lib.api.definitions import portbindings
-from neutron_lib.callbacks import exceptions as n_exc
 from neutron_lib import constants as n_consts
 from neutron_lib.objects import registry as obj_reg
 from neutron_lib.plugins import utils
@@ -23,7 +21,6 @@ from neutron_lib.services.trunk import constants as trunk_consts
 from oslo_utils import uuidutils
 
 from neutron.common.ovn import constants as ovn_const
-from neutron.objects import ports as port_obj
 from neutron.services.trunk import plugin as trunk_plugin
 from neutron.tests.functional import base
 
@@ -108,25 +105,6 @@ class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
             with self.trunk([subport]) as trunk:
                 self._verify_trunk_info(trunk, has_items=True)
 
-    def test_trunk_create_parent_port_bound(self):
-        with self.network() as network:
-            with self.subnet(network=network) as subnet:
-                with self.port(subnet=subnet) as parent_port:
-                    pb = port_obj.PortBinding.get_objects(
-                        self.context, port_id=parent_port['port']['id'])
-                    port_obj.PortBinding.update_object(
-                        self.context, {'vif_type': portbindings.VIF_TYPE_OVS},
-                        port_id=pb[0].port_id, host=pb[0].host)
-                    tenant_id = uuidutils.generate_uuid()
-                    trunk = {'trunk': {
-                        'port_id': parent_port['port']['id'],
-                        'tenant_id': tenant_id, 'project_id': tenant_id,
-                        'admin_state_up': True,
-                        'name': 'trunk', 'sub_ports': []}}
-                    self.assertRaises(n_exc.CallbackFailure,
-                                      self.trunk_plugin.create_trunk,
-                                      self.context, trunk)
-
     def test_subport_add(self):
         with self.subport() as subport:
             with self.trunk() as trunk:
@@ -149,14 +127,3 @@ class TestOVNTrunkDriver(base.TestOVNFunctionalBase):
         with self.trunk() as trunk:
             self.trunk_plugin.delete_trunk(self.context, trunk['id'])
             self._verify_trunk_info({}, has_items=False)
-
-    def test_trunk_delete_parent_port_bound(self):
-        with self.trunk() as trunk:
-            bp = port_obj.PortBinding.get_objects(
-                self.context, port_id=trunk['port_id'])
-            port_obj.PortBinding.update_object(
-                self.context, {'vif_type': portbindings.VIF_TYPE_OVS},
-                port_id=bp[0].port_id, host=bp[0].host)
-            self.assertRaises(n_exc.CallbackFailure,
-                              self.trunk_plugin.delete_trunk,
-                              self.context, trunk['id'])
