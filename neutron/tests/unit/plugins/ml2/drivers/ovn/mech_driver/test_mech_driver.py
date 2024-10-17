@@ -4500,14 +4500,6 @@ class TestOVNMechanismDriverMetadataPort(MechDriverSetupBase,
         p.start()
         self.addCleanup(p.stop)
 
-    def _create_fake_dhcp_port(self, device_id, neutron_port=False):
-        port = {'network_id': 'fake',
-                'device_owner': const.DEVICE_OWNER_DISTRIBUTED,
-                'device_id': device_id}
-        if neutron_port:
-            port['device_owner'] = const.DEVICE_OWNER_DHCP
-        return port
-
     def test_metadata_port_on_network_create(self):
         """Check metadata port create.
 
