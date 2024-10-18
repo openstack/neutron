@@ -551,68 +551,6 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
 
         raise periodics.NeverAgain()
 
-    # TODO(lucasagomes): Remove this in the B+3 cycle
-    # A static spacing value is used here, but this method will only run
-    # once per lock due to the use of periodics.NeverAgain().
-    @has_lock_periodic(
-        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
-        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
-        run_immediately=True)
-    def check_for_mcast_flood_reports(self):
-        mcast_flood_conf = ovs_conf.get_igmp_flood()
-        mcast_flood_reports_conf = ovs_conf.get_igmp_flood_reports()
-        cmds = []
-        for port in self._nb_idl.lsp_list().execute(check_error=True):
-            port_type = port.type.strip()
-            options = port.options
-            mcast_flood_reports_value = options.get(
-                    ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS)
-            mcast_flood_value = options.get(
-                    ovn_const.LSP_OPTIONS_MCAST_FLOOD)
-
-            if self._ovn_client.is_mcast_flood_broken:
-                if port_type in ("vtep", ovn_const.LSP_TYPE_LOCALPORT,
-                                 "router"):
-                    continue
-
-                if port_type == ovn_const.LSP_TYPE_LOCALNET:
-                    mcast_flood_value = options.pop(
-                        ovn_const.LSP_OPTIONS_MCAST_FLOOD, None)
-                    if mcast_flood_value:
-                        cmds.append(self._nb_idl.db_remove(
-                            'Logical_Switch_Port', port.name, 'options',
-                            ovn_const.LSP_OPTIONS_MCAST_FLOOD,
-                            if_exists=True))
-
-                if mcast_flood_reports_value == 'true':
-                    continue
-
-                options.update(
-                    {ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS: 'true'})
-                cmds.append(self._nb_idl.lsp_set_options(port.name, **options))
-
-            elif (mcast_flood_reports_value and port_type !=
-                    ovn_const.LSP_TYPE_LOCALNET):
-                cmds.append(self._nb_idl.db_remove(
-                    'Logical_Switch_Port', port.name, 'options',
-                    ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS, if_exists=True))
-
-            elif (port_type == ovn_const.LSP_TYPE_LOCALNET and (
-                    mcast_flood_conf != mcast_flood_value or
-                    mcast_flood_reports_conf != mcast_flood_reports_value)):
-                options.update({
-                    ovn_const.LSP_OPTIONS_MCAST_FLOOD: mcast_flood_conf,
-                    ovn_const.LSP_OPTIONS_MCAST_FLOOD_REPORTS:
-                        mcast_flood_reports_conf})
-                cmds.append(self._nb_idl.lsp_set_options(port.name, **options))
-
-        if cmds:
-            with self._nb_idl.transaction(check_error=True) as txn:
-                for cmd in cmds:
-                    txn.add(cmd)
-
-        raise periodics.NeverAgain()
-
     # A static spacing value is used here, but this method will only run
     # once per lock due to the use of periodics.NeverAgain().
     @has_lock_periodic(
