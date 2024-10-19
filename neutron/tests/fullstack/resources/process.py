@@ -114,6 +114,9 @@ class ProcessFixture(fixtures.Fixture):
             return
 
         if kill_signal:
+            # systemd in ubuntu noble returns invalid-argument for some child
+            # processes
+            check_exit_code = False
             stop_cmd = [
                 'systemctl',
                 'kill',
@@ -124,10 +127,12 @@ class ProcessFixture(fixtures.Fixture):
             msg = (f'Process killed with signal {kill_signal}: '
                    f'{self.process_name}')
         else:
+            check_exit_code = True
             stop_cmd = ['systemctl', 'stop', '--no-block', self.unit_name]
             msg = f'Process stopped: {self.process_name}'
 
-        utils.execute(stop_cmd, run_as_root=True)
+        utils.execute(stop_cmd, run_as_root=True,
+                      check_exit_code=check_exit_code)
         common_utils.wait_until_true(self.process_is_not_running)
         LOG.debug(msg)
 

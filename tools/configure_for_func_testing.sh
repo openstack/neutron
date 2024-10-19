@@ -100,6 +100,10 @@ function _init {
     # Allow the gate to override values set by stackrc.
     DEST=${GATE_DEST:-$DEST}
     STACK_USER=${GATE_STACK_USER:-$STACK_USER}
+    sudo mkdir -p /opt/stack/data
+    sudo chown -R $STACK_USER /opt/stack/data
+    source $DEVSTACK_PATH/inc/python
+    setup_devstack_virtualenv
 
     GetDistro
     source $DEVSTACK_PATH/tools/fixup_stuff.sh
