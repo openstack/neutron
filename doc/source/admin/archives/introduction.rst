@@ -132,6 +132,12 @@ an IP address between two instances to enable fast data plane failover.
      $ openstack port create port1 --allowed-address \
      ip-address=<IP_CIDR>[,mac_address=<MAC_ADDRESS]
 
+.. note:
+  The IP address IP_CIDR should belong to a Neutron port. In ML2/OVN, the
+  port with fixed IP IP_CIDR will be marked as "virtual" in the Northbound
+  "Logical_Switch_Port.type" register field. This virtual port cannot be
+  bound to a virtual machine:
+
 - Update a port by adding allowed address pairs:
 
   .. code-block:: console
