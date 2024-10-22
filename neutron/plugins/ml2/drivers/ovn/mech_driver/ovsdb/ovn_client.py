@@ -32,6 +32,7 @@ from neutron_lib.plugins import directory
 from neutron_lib.plugins import utils as p_utils
 from neutron_lib.services.logapi import constants as log_const
 from neutron_lib.services.qos import constants as qos_consts
+from neutron_lib.services.trunk import constants as trunk_const
 from neutron_lib.utils import helpers
 from neutron_lib.utils import net as n_net
 from oslo_config import cfg
@@ -289,6 +290,10 @@ class OVNClient(object):
                    Defaults to True.
         """
         cmd = []
+        if db_port.device_owner == trunk_const.TRUNK_SUBPORT_OWNER:
+            # NOTE(ralonsoh): OVN subports don't have host ID information.
+            return
+
         if up:
             if not db_port.port_bindings:
                 return

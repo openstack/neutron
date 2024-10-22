@@ -26,6 +26,7 @@ from neutron.tests.unit.services.logapi.drivers.ovn \
 from neutron_lib.api.definitions import l3
 from neutron_lib import constants as const
 from neutron_lib.services.logapi import constants as log_const
+from neutron_lib.services.trunk import constants as trunk_const
 
 from tenacity import wait_none
 
@@ -171,6 +172,15 @@ class TestOVNClient(TestOVNClientBase):
         self.nb_idl.db_remove.assert_called_once_with(
             'Logical_Switch_Port', port_id, 'external_ids',
             constants.OVN_HOST_ID_EXT_ID_KEY, if_exists=True)
+
+    def test_update_lsp_host_info_trunk_subport(self):
+        context = mock.MagicMock()
+        db_port = mock.Mock(id='fake-port-id',
+                            device_owner=trunk_const.TRUNK_SUBPORT_OWNER)
+
+        self.ovn_client.update_lsp_host_info(context, db_port)
+        self.nb_idl.db_remove.assert_not_called()
+        self.nb_idl.db_set.assert_not_called()
 
     @mock.patch.object(ml2_db, 'get_port')
     def test__wait_for_port_bindings_host(self, mock_get_port):
