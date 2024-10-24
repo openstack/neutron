@@ -13,6 +13,7 @@
     run: playbooks/run_functional_job.yaml
     post-run: playbooks/post_functional_job.yaml
     irrelevant-files: &irrelevant-files
+      - ^\.pre-commit-config\.yaml$
       - ^\.pylintrc$
       - ^.*\.conf\.sample$
       - ^.*\.rst$
@@ -78,6 +79,7 @@
         # tox.ini file
         '/opt/stack/logs/dsvm-fullstack-logs.tar.gz': logs
     irrelevant-files:
+      - ^\.pre-commit-config\.yaml$
       - ^\.pylintrc$
       - ^releasenotes/.*$
       - ^doc/.*$
@@ -120,6 +122,7 @@
       tox_envlist: mypy
     voting: false
     irrelevant-files:
+      - ^\.pre-commit-config\.yaml$
       - ^\.pylintrc$
       - ^releasenotes/.*$
       - ^doc/.*$

@@ -5,6 +5,7 @@
         - openstack-tox-py39:  # from openstack-python3-jobs template
             timeout: 3600
             irrelevant-files:  &irrelevant-files
+              - ^\.pre-commit-config\.yaml$
               - ^\.pylintrc$
               - ^.*\.conf\.sample$
               - ^.*\.rst$
