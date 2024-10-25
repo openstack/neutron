@@ -133,8 +133,8 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
     connect local VLANs on the integration bridge to inter-hypervisor
     tunnels on the tunnel bridge.
 
-    For each virtual network realized as a VLAN or flat network, a
-    veth or a pair of patch ports is used to connect the local VLAN on
+    For each virtual network realized as a VLAN or flat network,
+    a pair of patch ports is used to connect the local VLAN on
     the integration bridge with the physical network bridge, with flow
     rules adding, modifying, or stripping VLAN tags as necessary.
     '''
@@ -1623,7 +1623,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         '''Setup the physical network bridges.
 
         Creates physical network bridges and links them to the
-        integration bridge using veths or patch ports.
+        integration bridge using patch ports.
 
         :param bridge_mappings: map physical network names to bridge names.
         '''
@@ -1656,26 +1656,11 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             br.setup_default_table()
             self.phys_brs[physical_network] = br
 
-            # interconnect physical and integration bridges using veth/patches
+            # interconnect physical and integration bridges using patches
             int_if_name = plugin_utils.get_interface_name(
                 bridge, prefix=ovs_const.PEER_INTEGRATION_PREFIX)
             phys_if_name = plugin_utils.get_interface_name(
                 bridge, prefix=ovs_const.PEER_PHYSICAL_PREFIX)
-            # Interface type of port for physical and integration bridges must
-            # be same, so check only one of them.
-            # Not logging error here, as the interface may not exist yet.
-            # Type check is done to cleanup wrong interface if any.
-
-            # TODO(slaweq) In X release we can remove code which is here just
-            # to move from old "veth" interconnection between bridges to the
-            # patch ports (L1527 - L1547)
-            int_type = self.int_br.db_get_val("Interface", int_if_name, "type",
-                                              log_errors=False)
-            # Drop ports if the interface type doesn't match the
-            # configuration value
-            if int_type == 'veth':
-                self.int_br.delete_port(int_if_name)
-                br.delete_port(phys_if_name)
 
             # Setup int_br to physical bridge patches.  If they already
             # exist we leave them alone, otherwise we create them but don't

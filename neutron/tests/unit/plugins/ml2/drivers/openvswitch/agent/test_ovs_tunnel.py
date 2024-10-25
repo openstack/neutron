@@ -166,8 +166,6 @@ class TunnelTest(object):
         self.ipdevice = mock.patch.object(ip_lib, 'IPDevice').start()
 
         self.ipwrapper = mock.patch.object(ip_lib, 'IPWrapper').start()
-        add_veth = self.ipwrapper.return_value.add_veth
-        add_veth.return_value = [self.inta, self.intb]
 
         self.get_bridges = mock.patch.object(ovs_lib.BaseOVS,
                                              'get_bridges').start()
@@ -223,8 +221,6 @@ class TunnelTest(object):
                                      ovs_constants.NONEXISTENT_PEER),
         ]
         self.mock_int_bridge_expected += [
-            mock.call.db_get_val('Interface', 'int-%s' % self.MAP_TUN_BRIDGE,
-                                 'type', log_errors=False),
             mock.call.port_exists('int-%s' % self.MAP_TUN_BRIDGE),
             mock.call.add_patch_port('int-%s' % self.MAP_TUN_BRIDGE,
                                      ovs_constants.NONEXISTENT_PEER),

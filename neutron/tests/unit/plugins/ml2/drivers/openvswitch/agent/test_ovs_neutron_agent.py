@@ -1668,11 +1668,6 @@ class TestOvsNeutronAgent(object):
                 mock.call.phys_br.set_secure_mode(),
                 mock.call.phys_br.setup_controllers(mock.ANY),
                 mock.call.phys_br.setup_default_table(),
-                mock.call.int_br.db_get_val('Interface', 'int-br-eth',
-                                            'type', log_errors=False),
-                # Have to use __getattr__ here to avoid mock._Call.__eq__
-                # method being called
-                mock.call.int_br.db_get_val().__getattr__('__eq__')('veth'),
                 mock.call.int_br.port_exists('int-br-eth'),
             ]
             if port_exists:
@@ -1734,85 +1729,6 @@ class TestOvsNeutronAgent(object):
 
     def test_setup_physical_bridges_recreate(self):
         self._test_setup_physical_bridges(recreate=True)
-
-    def _test_setup_physical_bridges_change_from_veth_to_patch_conf(
-            self, port_exists=False):
-        with mock.patch.object(sys, "exit"),\
-                mock.patch.object(self.agent, 'br_phys_cls') as phys_br_cls,\
-                mock.patch.object(self.agent, 'int_br') as int_br,\
-                mock.patch.object(self.agent.int_br, 'db_get_val',
-                                  return_value='veth'), \
-                mock.patch.object(self.agent, '_check_bridge_datapath_id'), \
-                mock.patch.object(ovs_lib.BaseOVS, 'get_bridges'):
-            phys_br = phys_br_cls()
-            parent = mock.MagicMock()
-            parent.attach_mock(phys_br_cls, 'phys_br_cls')
-            parent.attach_mock(phys_br, 'phys_br')
-            parent.attach_mock(int_br, 'int_br')
-            if port_exists:
-                phys_br.get_port_ofport.return_value = "phy_ofport"
-                int_br.get_port_ofport.return_value = "int_ofport"
-            else:
-                phys_br.add_patch_port.return_value = "phy_ofport"
-                int_br.add_patch_port.return_value = "int_ofport"
-            phys_br.port_exists.return_value = port_exists
-            int_br.port_exists.return_value = port_exists
-            self.agent.setup_physical_bridges({"physnet1": "br-eth"})
-            expected_calls = [
-                mock.call.phys_br_cls('br-eth'),
-                mock.call.phys_br.create(),
-                mock.call.phys_br.set_secure_mode(),
-                mock.call.phys_br.setup_controllers(mock.ANY),
-                mock.call.phys_br.setup_default_table(),
-                mock.call.int_br.delete_port('int-br-eth'),
-                mock.call.phys_br.delete_port('phy-br-eth'),
-                mock.call.int_br.port_exists('int-br-eth'),
-            ]
-            if port_exists:
-                expected_calls += [
-                    mock.call.int_br.get_port_ofport('int-br-eth'),
-                ]
-            else:
-                expected_calls += [
-                    mock.call.int_br.add_patch_port(
-                        'int-br-eth', ovs_constants.NONEXISTENT_PEER),
-                ]
-            expected_calls += [
-                mock.call.int_br.set_igmp_snooping_flood('int-br-eth'),
-                mock.call.phys_br.port_exists('phy-br-eth'),
-            ]
-            if port_exists:
-                expected_calls += [
-                    mock.call.phys_br.get_port_ofport('phy-br-eth'),
-                ]
-            else:
-                expected_calls += [
-                    mock.call.phys_br.add_patch_port(
-                        'phy-br-eth', ovs_constants.NONEXISTENT_PEER),
-                ]
-            expected_calls += [
-                mock.call.int_br.drop_port(in_port='int_ofport'),
-                mock.call.phys_br.drop_port(in_port='phy_ofport'),
-                mock.call.int_br.set_db_attribute('Interface', 'int-br-eth',
-                                                  'options',
-                                                  {'peer': 'phy-br-eth'}),
-                mock.call.phys_br.set_db_attribute('Interface', 'phy-br-eth',
-                                                   'options',
-                                                   {'peer': 'int-br-eth'}),
-            ]
-            parent.assert_has_calls(expected_calls)
-            self.assertEqual("int_ofport",
-                             self.agent.int_ofports["physnet1"])
-            self.assertEqual("phy_ofport",
-                             self.agent.phys_ofports["physnet1"])
-
-    def test_setup_physical_bridges_change_from_veth_to_patch_conf(self):
-        self._test_setup_physical_bridges_change_from_veth_to_patch_conf()
-
-    def test_setup_physical_bridges_change_from_veth_to_patch_conf_port_exists(
-            self):
-        self._test_setup_physical_bridges_change_from_veth_to_patch_conf(
-            port_exists=True)
 
     def test_setup_tunnel_br(self):
         self.tun_br = mock.Mock()
