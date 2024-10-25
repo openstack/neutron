@@ -38,7 +38,6 @@ from neutron.common.ovn import constants as ovn_const
 from neutron.common.ovn import utils
 from neutron.conf.agent import ovs_conf
 from neutron.conf.plugins.ml2.drivers.ovn import ovn_conf
-from neutron.db import l3_attrs_db
 from neutron.db import ovn_hash_ring_db as hash_ring_db
 from neutron.db import ovn_revision_numbers_db as revision_numbers_db
 from neutron.objects import network as network_obj
@@ -790,30 +789,6 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                         dhcpv4_options=dhcpv4_options,
                         dhcpv6_options=dhcpv6_options,
                         if_exists=False))
-
-        raise periodics.NeverAgain()
-
-    # TODO(ralonsoh): Remove this in the Antelope+4 cycle
-    @has_lock_periodic(
-        periodic_run_limit=ovn_const.MAINTENANCE_TASK_RETRY_LIMIT,
-        spacing=ovn_const.MAINTENANCE_ONE_RUN_TASK_SPACING,
-        run_immediately=True)
-    def create_router_extra_attributes_registers(self):
-        """Create missing ``RouterExtraAttributes`` registers.
-
-        ML2/OVN L3 plugin does not inherit the ``ExtraAttributesMixin`` class.
-        Before LP#1995974, the L3 plugin was not creating a
-        ``RouterExtraAttributes`` register per ``Routers`` register. This one
-        only execution method finds those ``Routers`` registers without the
-        child one and creates one with the default values.
-        """
-        context = n_context.get_admin_context()
-        for router_id in router_obj.Router.\
-                get_router_ids_without_router_std_attrs(context):
-            with db_api.CONTEXT_WRITER.using(context):
-                router_db = {'id': router_id}
-                l3_attrs_db.ExtraAttributesMixin.add_extra_attr(context,
-                                                                router_db)
 
         raise periodics.NeverAgain()
 
