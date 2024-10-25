@@ -60,9 +60,9 @@ def is_bridged_interface(interface):
 
 def get_interface_ifindex(interface):
     try:
-        with open(os.path.join(BRIDGE_FS, interface, 'ifindex'), 'r') as fh:
+        with open(os.path.join(BRIDGE_FS, interface, 'ifindex')) as fh:
             return int(fh.read().strip())
-    except (IOError, ValueError):
+    except (OSError, ValueError):
         pass
 
 
@@ -129,7 +129,7 @@ class BridgeDevice(ip_lib.IPDevice):
             return []
 
 
-class FdbInterface(object):
+class FdbInterface:
     """Provide basic functionality to edit the FDB table"""
 
     @staticmethod

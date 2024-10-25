@@ -17,11 +17,11 @@ import weakref
 from neutron.agent.l3 import dvr_fip_ns
 
 
-class AgentMixin(object):
+class AgentMixin:
     def __init__(self, host):
         # dvr data
         self._fip_namespaces = weakref.WeakValueDictionary()
-        super(AgentMixin, self).__init__(host)
+        super().__init__(host)
 
     def get_fip_ns(self, ext_net_id):
         # TODO(Carl) is this necessary?  Code that this replaced was careful to

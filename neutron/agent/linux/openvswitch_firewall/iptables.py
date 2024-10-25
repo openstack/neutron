@@ -40,7 +40,7 @@ def is_bridge_cleaned(bridge):
     return other_config.get(Helper.CLEANED_METADATA, '').lower() == 'true'
 
 
-class Helper(object):
+class Helper:
     """Helper to avoid loading firewall driver.
 
     The main purpose is to avoid loading iptables driver for cases where no

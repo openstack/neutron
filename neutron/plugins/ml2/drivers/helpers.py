@@ -57,7 +57,7 @@ class SegmentTypeDriver(BaseTypeDriver):
     """
 
     def __init__(self, model):
-        super(SegmentTypeDriver, self).__init__()
+        super().__init__()
         self.model = model.db_model
         self.segmentation_obj = model
         primary_keys_columns = self.model.__table__.primary_key.columns
@@ -147,7 +147,7 @@ class SegmentTypeDriver(BaseTypeDriver):
             if not isinstance(allocations, list):
                 allocations = [allocations] if allocations else []
             for alloc in allocations:
-                segment = dict((k, alloc[k]) for k in self.primary_keys)
+                segment = {k: alloc[k] for k in self.primary_keys}
                 try_to_allocate = True
                 if self.segmentation_obj.allocate(context, **segment):
                     LOG.debug('%(type)s segment allocate from pool success '

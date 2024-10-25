@@ -274,7 +274,7 @@ class TestGetCmdlineFromPid(base.BaseTestCase):
             lib_fixtures.OpenFixture('/proc/%s/cmdline' % self.pid, process)
         ).mock_open
         cmdline = utils.get_cmdline_from_pid(self.pid)
-        mock_open.assert_called_once_with('/proc/%s/cmdline' % self.pid, 'r')
+        mock_open.assert_called_once_with('/proc/%s/cmdline' % self.pid)
         self.assertEqual(expected_cmd, cmdline)
 
     def test_cmdline_separated_with_null_char(self):
@@ -308,7 +308,7 @@ class TestGetCmdlineFromPid(base.BaseTestCase):
         ).mock_open
         mock_open.side_effect = IOError()
         cmdline = utils.get_cmdline_from_pid(self.pid)
-        mock_open.assert_called_once_with('/proc/%s/cmdline' % self.pid, 'r')
+        mock_open.assert_called_once_with('/proc/%s/cmdline' % self.pid)
         self.assertEqual([], cmdline)
 
 

@@ -28,7 +28,7 @@ from neutron_lib import context
 LOG = log.getLogger(__name__)
 
 
-class HashRingManager(object):
+class HashRingManager:
 
     def __init__(self, group_name):
         self._hash_ring = None

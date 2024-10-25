@@ -24,7 +24,7 @@ class RuleTypeField(obj_fields.BaseEnumField):
     def __init__(self, **kwargs):
         self.AUTO_TYPE = obj_fields.Enum(
             valid_values=qos_constants.VALID_RULE_TYPES)
-        super(RuleTypeField, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
 @base.NeutronObjectRegistry.register

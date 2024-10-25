@@ -117,7 +117,7 @@ def drop_privileges(user=None, group=None):
              {'uid': os.getuid(), 'gid': os.getgid()})
 
 
-class Pidfile(object):
+class Pidfile:
     def __init__(self, pidfile, procname, uuid=None):
         self.pidfile = pidfile
         self.procname = procname
@@ -125,7 +125,7 @@ class Pidfile(object):
         try:
             self.fd = os.open(pidfile, os.O_CREAT | os.O_RDWR)
             fcntl.flock(self.fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except IOError:
+        except OSError:
             LOG.exception("Error while handling pidfile: %s", pidfile)
             sys.exit(1)
 
@@ -155,15 +155,15 @@ class Pidfile(object):
 
         cmdline = '/proc/%s/cmdline' % pid
         try:
-            with open(cmdline, "r") as f:
+            with open(cmdline) as f:
                 exec_out = f.readline()
             return self.procname in exec_out and (not self.uuid or
                                                   self.uuid in exec_out)
-        except IOError:
+        except OSError:
             return False
 
 
-class Daemon(object):
+class Daemon:
     """A generic daemon class.
 
     Usage: subclass the Daemon class and override the run() method
@@ -250,7 +250,7 @@ class Daemon(object):
         self.run()
 
     def _set_process_title(self):
-        proctitle = "%s (%s)" % (self.procname, self._parent_proctitle)
+        proctitle = "{} ({})".format(self.procname, self._parent_proctitle)
         setproctitle.setproctitle(proctitle)
 
     def run(self):

@@ -27,8 +27,7 @@ class L3_DVR_HA_scheduler_db_mixin(l3agent_dvr_sch_db.L3_DVRsch_db_mixin,
         In case dvr serviceable port was deleted we need to check
         if any dvr routers should be removed from l3 agent on port's host
         """
-        remove_router_info = super(
-            L3_DVR_HA_scheduler_db_mixin, self).get_dvr_routers_to_remove(
+        remove_router_info = super().get_dvr_routers_to_remove(
                 context, port_id, get_related_hosts_info)
         # Process the router information which was returned to make
         # sure we don't delete routers which have dvrhs snat bindings.

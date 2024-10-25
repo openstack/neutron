@@ -83,8 +83,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
 
     @classmethod
     def is_accessible(cls, context, db_obj):
-        return (super(
-            RbacNeutronDbObjectMixin, cls).is_accessible(context, db_obj) or
+        return (super().is_accessible(context, db_obj) or
                 cls.is_shared_with_project(context, db_obj.id,
                                            context.project_id))
 
@@ -116,7 +115,7 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
         def raise_policy_in_use():
             raise ext_rbac.RbacPolicyInUse(
                 object_id=obj_id,
-                details='project_id={}'.format(target_project))
+                details=f'project_id={target_project}')
 
         if target_project != '*':
             # if there is a wildcard rule, we can return early because it
@@ -250,12 +249,12 @@ class RbacNeutronDbObjectMixin(rbac_db_mixin.RbacPluginMixin,
 
     def from_db_object(self, db_obj):
         self._load_shared(db_obj)
-        super(RbacNeutronDbObjectMixin, self).from_db_object(db_obj)
+        super().from_db_object(db_obj)
 
     def obj_load_attr(self, attrname):
         if attrname == 'shared':
             return self._load_shared()
-        super(RbacNeutronDbObjectMixin, self).obj_load_attr(attrname)
+        super().obj_load_attr(attrname)
 
     def _load_shared(self, db_obj=None):
         # Do not override 'shared' attribute on create() or update()

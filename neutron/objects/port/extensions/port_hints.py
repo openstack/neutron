@@ -36,7 +36,7 @@ class PortHints(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_to_db(cls, fields):
-        result = super(PortHints, cls).modify_fields_to_db(fields)
+        result = super().modify_fields_to_db(fields)
         if 'hints' in result:
             # dump field into string, set '' if empty '{}' or None
             result['hints'] = (
@@ -45,7 +45,7 @@ class PortHints(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
-        fields = super(PortHints, cls).modify_fields_from_db(db_obj)
+        fields = super().modify_fields_from_db(db_obj)
         if 'hints' in fields:
             # load string from DB into dict, set None if hints is ''
             fields['hints'] = (

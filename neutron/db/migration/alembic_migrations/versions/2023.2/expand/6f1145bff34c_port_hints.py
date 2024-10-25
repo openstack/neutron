@@ -40,6 +40,6 @@ def upgrade():
             sa.ForeignKey('ports.id', ondelete='CASCADE'),
             primary_key=True),
         sa.Column('hints',
-            sa.String(4095),
-            nullable=False),
+                  sa.String(4095),
+                  nullable=False),
     )

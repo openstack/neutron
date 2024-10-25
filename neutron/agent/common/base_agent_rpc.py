@@ -17,7 +17,7 @@ from neutron_lib import rpc as n_rpc
 from oslo_messaging import Target
 
 
-class BasePluginApi(object):
+class BasePluginApi:
     """Base agent side of the rpc API"""
     def __init__(self, topic, namespace, version):
         target = Target(

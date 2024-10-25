@@ -21,7 +21,7 @@ from neutron.agent.linux import ip_lib
 LOG = logging.getLogger(__name__)
 
 
-class NamespaceManager(object):
+class NamespaceManager:
 
     """Keeps track of namespaces that need to be cleaned up.
 
@@ -115,7 +115,7 @@ class NamespaceManager(object):
         """Get a set of all namespaces on host managed by this manager."""
         try:
             namespaces = ip_lib.list_network_namespaces()
-            return set(ns for ns in namespaces if self.is_managed(ns))
+            return {ns for ns in namespaces if self.is_managed(ns)}
         except RuntimeError:
             LOG.exception('RuntimeError in obtaining namespace list for '
                           'namespace cleanup.')

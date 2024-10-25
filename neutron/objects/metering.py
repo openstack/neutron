@@ -44,7 +44,7 @@ class MeteringLabelRule(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
-        result = super(MeteringLabelRule, cls).modify_fields_from_db(db_obj)
+        result = super().modify_fields_from_db(db_obj)
 
         cls.ip_field_from_db(result, "remote_ip_prefix")
         cls.ip_field_from_db(result, "source_ip_prefix")
@@ -60,7 +60,7 @@ class MeteringLabelRule(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_to_db(cls, fields):
-        result = super(MeteringLabelRule, cls).modify_fields_to_db(fields)
+        result = super().modify_fields_to_db(fields)
 
         cls.ip_field_to_db(result, "remote_ip_prefix")
         cls.ip_field_to_db(result, "source_ip_prefix")

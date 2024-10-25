@@ -86,14 +86,14 @@ class AddressAssociation(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_to_db(cls, fields):
-        result = super(AddressAssociation, cls).modify_fields_to_db(fields)
+        result = super().modify_fields_to_db(fields)
         if 'address' in result:
             result['address'] = cls.filter_to_str(result['address'])
         return result
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
-        fields = super(AddressAssociation, cls).modify_fields_from_db(db_obj)
+        fields = super().modify_fields_from_db(db_obj)
         if 'address' in fields:
             fields['address'] = netaddr.IPNetwork(fields['address'])
         return fields

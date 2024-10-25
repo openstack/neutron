@@ -20,7 +20,7 @@ AGENT_PROCESS_OVN_NEUTRON_AGENT = 'neutron-ovn-agent'
 
 
 def main():
-    proctitle = "%s (%s)" % (AGENT_PROCESS_OVN_NEUTRON_AGENT,
-                             setproctitle.getproctitle())
+    proctitle = "{} ({})".format(AGENT_PROCESS_OVN_NEUTRON_AGENT,
+                                 setproctitle.getproctitle())
     setproctitle.setproctitle(proctitle)
     ovn_neutron_agent.main()

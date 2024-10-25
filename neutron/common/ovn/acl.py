@@ -63,8 +63,8 @@ def acl_direction(r, port=None, port_group=None):
         portdir = 'inport'
 
     if port:
-        return '%s == "%s"' % (portdir, port['id'])
-    return '%s == @%s' % (portdir, port_group)
+        return '{} == "{}"'.format(portdir, port['id'])
+    return '{} == @{}'.format(portdir, port_group)
 
 
 def acl_ethertype(r):
@@ -86,7 +86,7 @@ def acl_remote_ip_prefix(r, ip_version):
     if not r['normalized_cidr']:
         return ''
     src_or_dst = 'src' if r['direction'] == const.INGRESS_DIRECTION else 'dst'
-    return ' && %s.%s == %s' % (
+    return ' && {}.{} == {}'.format(
         ip_version, src_or_dst, r['normalized_cidr'])
 
 
@@ -148,7 +148,7 @@ def add_acls_for_drop_port_group(pg_name):
                "name": [],
                "severity": [],
                "direction": direction,
-               "match": '%s == @%s && ip' % (p, pg_name)}
+               "match": '{} == @{} && ip'.format(p, pg_name)}
         acl_list.append(acl)
     return acl_list
 
@@ -166,7 +166,7 @@ def drop_all_ip_traffic_for_port(port):
                "name": [],
                "severity": [],
                "direction": direction,
-               "match": '%s == "%s" && ip' % (p, port['id']),
+               "match": '{} == "{}" && ip'.format(p, port['id']),
                "external_ids": {'neutron:lport': port['id']}}
         acl_list.append(acl)
     return acl_list
@@ -230,7 +230,7 @@ def acl_remote_group_id(r, ip_version):
     src_or_dst = 'src' if r['direction'] == const.INGRESS_DIRECTION else 'dst'
     addrset_name = utils.ovn_pg_addrset_name(r['remote_group_id'],
                                              ip_version)
-    return ' && %s.%s == $%s' % (ip_version, src_or_dst, addrset_name)
+    return ' && {}.{} == ${}'.format(ip_version, src_or_dst, addrset_name)
 
 
 def _add_sg_rule_acl_for_port_group(port_group, stateful, r):

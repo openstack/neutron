@@ -112,7 +112,7 @@ def bridge_has_service_port(bridge):
 
 
 @registry.has_registry_receivers
-class OVSDBHandler(object):
+class OVSDBHandler:
     """It listens to OVSDB events to create the physical resources associated
     to a logical trunk in response to OVSDB events (such as VM boot and/or
     delete).

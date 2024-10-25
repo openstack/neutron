@@ -33,8 +33,8 @@ driver_type.register_ml2_drivers_geneve_opts()
 class GeneveTypeDriver(type_tunnel.EndpointTunnelTypeDriver):
 
     def __init__(self):
-        super(GeneveTypeDriver, self).__init__(geneve_obj.GeneveAllocation,
-                                               geneve_obj.GeneveEndpoint)
+        super().__init__(geneve_obj.GeneveAllocation,
+                         geneve_obj.GeneveEndpoint)
         self.max_encap_size = cfg.CONF.ml2_type_geneve.max_header_size
         self.model_segmentation_id = (
             geneve_alloc_model.GeneveAllocation.geneve_vni)
@@ -60,5 +60,5 @@ class GeneveTypeDriver(type_tunnel.EndpointTunnelTypeDriver):
         return self._add_endpoint(ip, host)
 
     def get_mtu(self, physical_network=None):
-        mtu = super(GeneveTypeDriver, self).get_mtu()
+        mtu = super().get_mtu()
         return mtu - self.max_encap_size if mtu else 0

@@ -41,7 +41,7 @@ class IpamAllocationPool(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
-        result = super(IpamAllocationPool, cls).modify_fields_from_db(db_obj)
+        result = super().modify_fields_from_db(db_obj)
         if 'first_ip' in result:
             result['first_ip'] = netaddr.IPAddress(result['first_ip'])
         if 'last_ip' in result:
@@ -50,7 +50,7 @@ class IpamAllocationPool(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_to_db(cls, fields):
-        result = super(IpamAllocationPool, cls).modify_fields_to_db(fields)
+        result = super().modify_fields_to_db(fields)
         if 'first_ip' in result:
             result['first_ip'] = cls.filter_to_str(result['first_ip'])
         if 'last_ip' in result:
@@ -75,14 +75,14 @@ class IpamAllocation(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
-        result = super(IpamAllocation, cls).modify_fields_from_db(db_obj)
+        result = super().modify_fields_from_db(db_obj)
         if 'ip_address' in result:
             result['ip_address'] = netaddr.IPAddress(result['ip_address'])
         return result
 
     @classmethod
     def modify_fields_to_db(cls, fields):
-        result = super(IpamAllocation, cls).modify_fields_to_db(fields)
+        result = super().modify_fields_to_db(fields)
         if 'ip_address' in result:
             result['ip_address'] = cls.filter_to_str(result['ip_address'])
         return result

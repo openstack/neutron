@@ -34,8 +34,7 @@ class L3AgentExtensionsManager(agent_ext_manager.AgentExtensionsManager):
     """Manage l3 agent extensions."""
 
     def __init__(self, conf):
-        super(L3AgentExtensionsManager,
-              self).__init__(conf, L3_AGENT_EXT_MANAGER_NAMESPACE)
+        super().__init__(conf, L3_AGENT_EXT_MANAGER_NAMESPACE)
         extensions = []
         for extension in self:
             if not isinstance(extension.obj, (l3_extension.L3AgentExtension,)):

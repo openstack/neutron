@@ -178,8 +178,8 @@ def get_sg_ids_grouped_by_port(context, port_ids):
     with db_api.CONTEXT_READER.using(context):
         # partial UUIDs must be individually matched with startswith.
         # full UUIDs may be matched directly in an IN statement
-        partial_uuids = set(port_id for port_id in port_ids
-                            if not uuidutils.is_uuid_like(port_id))
+        partial_uuids = {port_id for port_id in port_ids
+                         if not uuidutils.is_uuid_like(port_id)}
         full_uuids = set(port_ids) - partial_uuids
         or_criteria = [models_v2.Port.id.startswith(port_id)
                        for port_id in partial_uuids]

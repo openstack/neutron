@@ -54,7 +54,7 @@ class ServiceProfile(base.NeutronDbObject):
     }
 
     def from_db_object(self, db_obj):
-        super(ServiceProfile, self).from_db_object(db_obj)
+        super().from_db_object(db_obj)
         if db_obj.get('flavors', []):
             self.flavor_ids = {
                 fl.flavor_id
@@ -85,7 +85,7 @@ class Flavor(base.NeutronDbObject):
     }
 
     def from_db_object(self, db_obj):
-        super(Flavor, self).from_db_object(db_obj)
+        super().from_db_object(db_obj)
         if db_obj.get('service_profiles', []):
             self.service_profile_ids = {
                 sp.service_profile_id

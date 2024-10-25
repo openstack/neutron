@@ -47,7 +47,7 @@ class Address_group(api_extensions.APIExtensionDescriptor):
         return [ex]
 
 
-class AddressGroupPluginBase(object, metaclass=abc.ABCMeta):
+class AddressGroupPluginBase(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def create_address_group(self, context, address_group):

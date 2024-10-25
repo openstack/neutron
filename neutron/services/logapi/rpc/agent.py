@@ -19,7 +19,7 @@ from oslo_log import helpers as log_helpers
 import oslo_messaging
 
 
-class LoggingApiStub(object):
+class LoggingApiStub:
     """Stub proxy code for agent->server communication."""
 
     def __init__(self):

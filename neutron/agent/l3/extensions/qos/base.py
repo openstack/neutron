@@ -50,7 +50,7 @@ IP_DEFAULT_RATE = 0
 IP_DEFAULT_BURST = 0
 
 
-class RateLimitMaps(object):
+class RateLimitMaps:
 
     def __init__(self, lock_name):
         # qos_policy_2_resources = {qos_id_1: {res_1, res_2, res_3, ...} }
@@ -138,7 +138,7 @@ class RateLimitMaps(object):
         del self.known_policies[qos_policy_id]
 
 
-class L3QosAgentExtensionBase(object):
+class L3QosAgentExtensionBase:
     SUPPORTED_RESOURCE_TYPES = [resources.QOS_POLICY]
 
     def consume_api(self, agent_api):

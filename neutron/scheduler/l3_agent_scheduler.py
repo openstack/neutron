@@ -38,7 +38,7 @@ LOG = logging.getLogger(__name__)
 cfg.CONF.register_opts(l3_hamode_db.L3_HA_OPTS)
 
 
-class L3Scheduler(object, metaclass=abc.ABCMeta):
+class L3Scheduler(metaclass=abc.ABCMeta):
 
     def __init__(self):
         self.max_ha_agents = cfg.CONF.max_l3_agents_per_router
@@ -376,13 +376,13 @@ class AZLeastRoutersScheduler(LeastRoutersScheduler):
         if not target_routers:
             return []
 
-        return super(AZLeastRoutersScheduler, self)._get_routers_can_schedule(
+        return super()._get_routers_can_schedule(
             plugin, context, target_routers, l3_agent)
 
     def _get_candidates(self, plugin, context, sync_router):
         """Overwrite L3Scheduler's method to filter by availability zone."""
         all_candidates = (
-            super(AZLeastRoutersScheduler, self)._get_candidates(
+            super()._get_candidates(
                 plugin, context, sync_router))
 
         candidates = []

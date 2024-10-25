@@ -15,7 +15,7 @@
 from neutron.agent.l3.item_allocator import ItemAllocator
 
 
-class FipPriority(object):
+class FipPriority:
     def __init__(self, index):
         self.index = index
 
@@ -48,9 +48,9 @@ class FipRulePriorityAllocator(ItemAllocator):
             using ',' as the delimiter and FipRulePriorityAllocator as the
             class type
         """
-        pool = set(FipPriority(str(s)) for s in range(priority_rule_start,
-                                                      priority_rule_end))
+        pool = {FipPriority(str(s)) for s in range(priority_rule_start,
+                                                   priority_rule_end)}
 
-        super(FipRulePriorityAllocator, self).__init__(data_store_path,
-                                                       FipPriority,
-                                                       pool)
+        super().__init__(data_store_path,
+                         FipPriority,
+                         pool)

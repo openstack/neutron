@@ -13,7 +13,7 @@
 import abc
 
 
-class LoggingApiBase(object, metaclass=abc.ABCMeta):
+class LoggingApiBase(metaclass=abc.ABCMeta):
     """Logging API methods"""
 
     @abc.abstractmethod

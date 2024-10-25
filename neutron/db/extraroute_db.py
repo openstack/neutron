@@ -68,7 +68,7 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
                                      context, request_body=router_data,
                                      states=(old_router,), resource_id=id,
                                      desired_state=router_db))
-        return super(ExtraRoute_dbonly_mixin, self).update_router(
+        return super().update_router(
             context, id, router)
 
     def _validate_routes_nexthop(self, cidrs, ips, routes, nexthop):
@@ -153,8 +153,7 @@ class ExtraRoute_dbonly_mixin(l3_db.L3_NAT_dbonly_mixin):
 
     def _confirm_router_interface_not_in_use(self, context, router_id,
                                              subnet):
-        super(ExtraRoute_dbonly_mixin,
-              self)._confirm_router_interface_not_in_use(
+        super()._confirm_router_interface_not_in_use(
                   context, router_id, subnet)
         subnet_cidr = netaddr.IPNetwork(subnet['cidr'])
         extra_routes = self._get_extra_routes_by_router_id(context, router_id)

@@ -46,7 +46,7 @@ class LinuxBridgeTrunkDriver(trunk_rpc.TrunkSkeleton):
     def __init__(self, plumber=None, trunk_api=None):
         self._plumber = plumber or trunk_plumber.Plumber()
         self._tapi = trunk_api or _TrunkAPI(trunk_rpc.TrunkStub())
-        super(LinuxBridgeTrunkDriver, self).__init__()
+        super().__init__()
 
     def handle_trunks(self, context, resource_type, trunks, event_type):
         """Trunk data model change from the server."""
@@ -118,7 +118,7 @@ class LinuxBridgeTrunkDriver(trunk_rpc.TrunkSkeleton):
                                         t_const.TRUNK_DEGRADED_STATUS)
 
 
-class _TrunkAPI(object):
+class _TrunkAPI:
     """Our secret stash of trunks stored by port ID. Tell no one."""
 
     def __init__(self, trunk_stub):

@@ -43,7 +43,7 @@ class Segment(api_extensions.APIExtensionDescriptor):
                                              attr_map=attr_map)]
 
 
-class SegmentPluginBase(object, metaclass=abc.ABCMeta):
+class SegmentPluginBase(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def create_segment(self, context, segment):

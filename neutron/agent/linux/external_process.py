@@ -38,7 +38,7 @@ agent_cfg.register_external_process_opts()
 agent_cfg.register_process_monitor_opts(cfg.CONF)
 
 
-class MonitoredProcess(object, metaclass=abc.ABCMeta):
+class MonitoredProcess(metaclass=abc.ABCMeta):
     @property
     @abc.abstractmethod
     def active(self):
@@ -76,7 +76,7 @@ class ProcessManager(MonitoredProcess):
             self.service_pid_fname = 'pid'
             self.service = DEFAULT_SERVICE_NAME
 
-        process_tag = '%s-%s' % (self.service, self.uuid)
+        process_tag = '{}-{}'.format(self.service, self.uuid)
         self.cmd_addl_env = cmd_addl_env or {}
         self.cmd_addl_env[PROCESS_TAG] = process_tag
 
@@ -186,7 +186,7 @@ class ProcessManager(MonitoredProcess):
 ServiceId = collections.namedtuple('ServiceId', ['uuid', 'service'])
 
 
-class ProcessMonitor(object):
+class ProcessMonitor:
 
     def __init__(self, config, resource_type):
         """Handle multiple process managers and watch over all of them.

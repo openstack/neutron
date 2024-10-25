@@ -38,7 +38,7 @@ serviceprovider_opts = prov_config.serviceprovider_opts
 prov_config.register_service_provider_opts()
 
 
-class NeutronModule(object):
+class NeutronModule:
     """A Neutron extension module."""
 
     def __init__(self, service_module):
@@ -146,8 +146,8 @@ def get_provider_driver_class(driver, namespace=SERVICE_PROVIDERS):
         return driver
     except RuntimeError:
         return driver
-    new_driver = "%s.%s" % (driver_manager.__module__,
-                            driver_manager.__name__)
+    new_driver = "{}.{}".format(driver_manager.__module__,
+                                driver_manager.__name__)
     LOG.warning(
         "The configured driver %(driver)s has been moved, automatically "
         "using %(new_driver)s instead. Please update your config files, "
@@ -215,7 +215,7 @@ class ServiceProviderAlreadyAssociated(n_exc.Conflict):
                 "provider '%(provider)s' for service type '%(service_type)s'")
 
 
-class ProviderConfiguration(object):
+class ProviderConfiguration:
 
     def __init__(self, svc_module='neutron', svc_type=None):
         self.providers = {}

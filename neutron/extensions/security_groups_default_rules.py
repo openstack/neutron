@@ -179,7 +179,7 @@ class Security_groups_default_rules(api_extensions.ExtensionDescriptor):
         return [ex]
 
 
-class SecurityGroupDefaultRulesPluginBase(object, metaclass=abc.ABCMeta):
+class SecurityGroupDefaultRulesPluginBase(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def create_default_security_group_rule(self, context, sg_rule_template):

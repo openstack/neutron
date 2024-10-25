@@ -48,7 +48,7 @@ class LocalIP(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_to_db(cls, fields):
-        result = super(LocalIP, cls).modify_fields_to_db(fields)
+        result = super().modify_fields_to_db(fields)
         if 'local_ip_address' in result:
             result['local_ip_address'] = cls.filter_to_str(
                 result['local_ip_address'])
@@ -56,7 +56,7 @@ class LocalIP(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
-        fields = super(LocalIP, cls).modify_fields_from_db(db_obj)
+        fields = super().modify_fields_from_db(db_obj)
         if 'local_ip_address' in fields:
             fields['local_ip_address'] = netaddr.IPAddress(
                 fields['local_ip_address'])
@@ -86,14 +86,14 @@ class LocalIPAssociation(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_to_db(cls, fields):
-        result = super(LocalIPAssociation, cls).modify_fields_to_db(fields)
+        result = super().modify_fields_to_db(fields)
         if 'fixed_ip' in result:
             result['fixed_ip'] = cls.filter_to_str(result['fixed_ip'])
         return result
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
-        fields = super(LocalIPAssociation, cls).modify_fields_from_db(db_obj)
+        fields = super().modify_fields_from_db(db_obj)
         if 'fixed_ip' in fields:
             fields['fixed_ip'] = netaddr.IPAddress(fields['fixed_ip'])
         return fields
@@ -101,10 +101,10 @@ class LocalIPAssociation(base.NeutronDbObject):
     def obj_load_attr(self, attrname):
         if attrname in ['id']:
             self._set_id()
-        super(LocalIPAssociation, self).obj_load_attr(attrname)
+        super().obj_load_attr(attrname)
 
     def from_db_object(self, db_obj):
-        super(LocalIPAssociation, self).from_db_object(db_obj)
+        super().from_db_object(db_obj)
         self._set_id()
 
     def _set_id(self):

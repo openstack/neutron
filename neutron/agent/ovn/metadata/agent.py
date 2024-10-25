@@ -335,7 +335,7 @@ class SbGlobalUpdateEvent(_OVNExtensionEvent, row_event.RowEvent):
     def __init__(self, agent):
         table = 'SB_Global'
         events = (self.ROW_UPDATE,)
-        super(SbGlobalUpdateEvent, self).__init__(events, table, None)
+        super().__init__(events, table, None)
         self._agent = agent
         self.event_name = self.__class__.__name__
         self.first_run = True
@@ -366,7 +366,7 @@ class SbGlobalUpdateEvent(_OVNExtensionEvent, row_event.RowEvent):
         timer.start()
 
 
-class MetadataAgent(object):
+class MetadataAgent:
 
     def __init__(self, conf):
         self._conf = conf
@@ -531,11 +531,11 @@ class MetadataAgent(object):
             ns.decode('utf-8') if isinstance(ns, bytes) else ns
             for ns in ip_lib.list_network_namespaces())
         net_port_bindings = self.get_networks_port_bindings()
-        metadata_namespaces = set(
+        metadata_namespaces = {
             self._get_namespace_name(
                 ovn_utils.get_network_name_from_datapath(datapath))
             for datapath in (pb.datapath for pb in net_port_bindings)
-        )
+        }
         unused_namespaces = [ns for ns in system_namespaces if
                              ns.startswith(NS_PREFIX) and
                              ns not in metadata_namespaces]

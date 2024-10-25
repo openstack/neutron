@@ -77,12 +77,12 @@ def comment_rule(rule, comment):
     comment = '-m comment --comment "%s"' % comment
     if rule.startswith('-j'):
         # this is a jump only rule so we just put the comment first
-        return '%s %s' % (comment, rule)
+        return '{} {}'.format(comment, rule)
     try:
         jpos = rule.index(' -j ')
         return ' '.join((rule[:jpos], comment, rule[jpos + 1:]))
     except ValueError:
-        return '%s %s' % (rule, comment)
+        return '{} {}'.format(rule, comment)
 
 
 def get_chain_name(chain_name, wrap=True):
@@ -92,7 +92,7 @@ def get_chain_name(chain_name, wrap=True):
         return chain_name[:constants.MAX_IPTABLES_CHAIN_LEN_NOWRAP]
 
 
-class IptablesRule(object):
+class IptablesRule:
     """An iptables rule.
 
     You shouldn't need to use this class directly, it's only used by
@@ -121,16 +121,16 @@ class IptablesRule(object):
 
     def __str__(self):
         if self.wrap:
-            chain = '%s-%s' % (self.wrap_name, self.chain)
+            chain = '{}-{}'.format(self.wrap_name, self.chain)
         else:
             chain = self.chain
-        rule = '-A %s %s' % (chain, self.rule)
+        rule = '-A {} {}'.format(chain, self.rule)
         # If self.rule is '' the above will cause a trailing space, which
         # could cause us to not match on save/restore, so strip it now.
         return comment_rule(rule.strip(), self.comment)
 
 
-class IptablesTable(object):
+class IptablesTable:
     """An iptables table."""
 
     def __init__(self, binary_name=binary_name):
@@ -195,7 +195,7 @@ class IptablesTable(object):
             self.remove_rules += [str(r) for r in self.rules
                                   if r.chain == name or jump_snippet in r.rule]
         else:
-            jump_snippet = '-j %s-%s' % (self.wrap_name, name)
+            jump_snippet = '-j {}-{}'.format(self.wrap_name, name)
 
         # Remove rules from list that have a matching chain name or
         # a matching jump chain
@@ -227,7 +227,7 @@ class IptablesTable(object):
 
     def _wrap_target_chain(self, s, wrap):
         if s.startswith('$'):
-            s = ('%s-%s' % (self.wrap_name, get_chain_name(s[1:], wrap)))
+            s = ('{}-{}'.format(self.wrap_name, get_chain_name(s[1:], wrap)))
 
         return s
 
@@ -277,7 +277,7 @@ class IptablesTable(object):
             self.rules.remove(rule)
 
 
-class IptablesManager(object):
+class IptablesManager:
     """Wrapper for iptables.
 
     See IptablesTable for some usage docs
@@ -580,7 +580,7 @@ class IptablesManager(object):
             s += [('ip6tables', self.ipv6)]
         all_commands = []  # variable to keep track all commands for return val
         for cmd, tables in s:
-            args = ['%s-save' % (cmd,)]
+            args = ['{}-save'.format(cmd)]
             if self.namespace:
                 args = ['ip', 'netns', 'exec', self.namespace] + args
             try:
@@ -624,7 +624,7 @@ class IptablesManager(object):
             # always end with a new line
             commands.append('')
 
-            args = ['%s-restore' % (cmd,), '-n']
+            args = ['{}-restore'.format(cmd), '-n']
             if self.namespace:
                 args = ['ip', 'netns', 'exec', self.namespace] + args
 
@@ -684,7 +684,7 @@ class IptablesManager(object):
                       line.strip() not in rules]
 
         # generate our list of chain names
-        our_chains = [':%s-%s' % (self.wrap_name, name) for name in chains]
+        our_chains = [':{}-{}'.format(self.wrap_name, name) for name in chains]
 
         # the unwrapped chains (e.g. neutron-filter-top) may already exist in
         # the new_filter since they aren't marked by the wrap_name so we only

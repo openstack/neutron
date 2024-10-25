@@ -18,13 +18,13 @@ import copy
 from neutron.agent.common import ovs_lib
 
 
-class OVSBridgeCookieMixin(object):
+class OVSBridgeCookieMixin:
     '''Mixin to provide cookie retention functionality
     to the OVSAgentBridge
     '''
 
     def __init__(self, *args, **kwargs):
-        super(OVSBridgeCookieMixin, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._reserved_cookies = set()
 
     @property
@@ -51,7 +51,7 @@ class OVSBridgeCookieMixin(object):
         self._reserved_cookies.add(val)
         if self._default_cookie in self._reserved_cookies:
             self._reserved_cookies.remove(self._default_cookie)
-        super(OVSBridgeCookieMixin, self).set_agent_uuid_stamp(val)
+        super().set_agent_uuid_stamp(val)
 
     def clone(self):
         '''Used by OVSCookieBridge, can be overridden by subclasses if a

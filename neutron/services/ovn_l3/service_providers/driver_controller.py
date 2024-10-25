@@ -54,7 +54,7 @@ class _OvnPlusProviderConfiguration(
 
     def __init__(self):
         # loads up the OVN provider automatically and sets it as default.
-        super(_OvnPlusProviderConfiguration, self).__init__(
+        super().__init__(
             svc_type=plugin_constants.L3)
         path = 'neutron.services.ovn_l3.service_providers.ovn.OvnDriver'
         try:

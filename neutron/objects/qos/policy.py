@@ -99,7 +99,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
             return self._reload_rules()
         elif attrname == 'is_default':
             return self._reload_is_default()
-        return super(QosPolicy, self).obj_load_attr(attrname)
+        return super().obj_load_attr(attrname)
 
     def _reload_rules(self):
         rules = rule_obj_impl.get_rules(self, self.obj_context, self.id)
@@ -126,7 +126,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
                                       rule_id=rule_id)
 
     def to_dict(self):
-        _dict = super(QosPolicy, self).to_dict()
+        _dict = super().to_dict()
         resource_extend.apply_funcs(qos_def.POLICIES, _dict, self.db_obj)
         return _dict
 
@@ -150,7 +150,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
 
     @classmethod
     def get_object(cls, context, **kwargs):
-        policy_obj = super(QosPolicy, cls).get_object(context, **kwargs)
+        policy_obj = super().get_object(context, **kwargs)
         if not policy_obj:
             return
 
@@ -161,9 +161,9 @@ class QosPolicy(rbac_db.NeutronRbacObject):
     @classmethod
     def get_objects(cls, context, _pager=None, validate_filters=True,
                     **kwargs):
-        objs = super(QosPolicy, cls).get_objects(context, _pager,
-                                                 validate_filters,
-                                                 **kwargs)
+        objs = super().get_objects(context, _pager,
+                                   validate_filters,
+                                   **kwargs)
         result = []
         for obj in objs:
             obj.obj_load_attr('rules')
@@ -203,7 +203,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
     # TODO(QoS): Consider extending base to trigger registered methods for us
     def create(self):
         with self.db_context_writer(self.obj_context):
-            super(QosPolicy, self).create()
+            super().create()
             if self.is_default:
                 self.set_default()
             self.obj_load_attr('rules')
@@ -215,7 +215,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
                     self.set_default()
                 else:
                     self.unset_default()
-            super(QosPolicy, self).update()
+            super().update()
 
     def delete(self):
         with self.db_context_writer(self.obj_context):
@@ -230,7 +230,7 @@ class QosPolicy(rbac_db.NeutronRbacObject):
                         object_type=object_type,
                         object_id=binding_obj[0]['%s_id' % object_type])
 
-            super(QosPolicy, self).delete()
+            super().delete()
 
     def attach_network(self, network_id):
         network_binding = {'policy_id': self.id,

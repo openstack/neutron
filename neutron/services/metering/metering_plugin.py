@@ -42,7 +42,7 @@ class MeteringPlugin(metering_db.MeteringDbMixin):
     __filter_validation_support = True
 
     def __init__(self):
-        super(MeteringPlugin, self).__init__()
+        super().__init__()
 
         self.meter_rpc = metering_rpc_agent_api.MeteringAgentNotifyAPI()
         rpc_worker = service.RpcWorker([self], worker_process_count=0)
@@ -57,7 +57,7 @@ class MeteringPlugin(metering_db.MeteringDbMixin):
         return self.conn.consume_in_threads()
 
     def create_metering_label(self, context, metering_label):
-        label = super(MeteringPlugin, self).create_metering_label(
+        label = super().create_metering_label(
             context, metering_label)
 
         data = self.get_sync_data_metering(context)
@@ -67,7 +67,7 @@ class MeteringPlugin(metering_db.MeteringDbMixin):
 
     def delete_metering_label(self, context, label_id):
         data = self.get_sync_data_metering(context, label_id)
-        super(MeteringPlugin, self).delete_metering_label(
+        super().delete_metering_label(
             context, label_id)
 
         self.meter_rpc.remove_metering_label(context, data)
@@ -77,7 +77,7 @@ class MeteringPlugin(metering_db.MeteringDbMixin):
         MeteringPlugin.validate_metering_label_rule(metering_label_rule)
         self.check_for_rule_overlaps(context, metering_label_rule)
 
-        rule = super(MeteringPlugin, self).create_metering_label_rule(
+        rule = super().create_metering_label_rule(
             context, metering_label_rule)
 
         if rule.get("remote_ip_prefix"):
@@ -168,7 +168,7 @@ class MeteringPlugin(metering_db.MeteringDbMixin):
                     remote_ip_prefix=remote_ip_prefix)
 
     def delete_metering_label_rule(self, context, rule_id):
-        rule = super(MeteringPlugin, self).delete_metering_label_rule(
+        rule = super().delete_metering_label_rule(
             context, rule_id)
 
         data = self.get_sync_data_for_rule(context, rule)

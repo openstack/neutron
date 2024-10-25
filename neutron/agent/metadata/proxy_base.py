@@ -39,7 +39,7 @@ MODE_MAP = {
 }
 
 
-class MetadataProxyHandlerBase(object, metaclass=abc.ABCMeta):
+class MetadataProxyHandlerBase(metaclass=abc.ABCMeta):
     NETWORK_ID_HEADER = None
     ROUTER_ID_HEADER = None
 
@@ -196,7 +196,7 @@ class MetadataProxyHandlerBase(object, metaclass=abc.ABCMeta):
                             resp.status_code)
 
 
-class UnixDomainMetadataProxyBase(object, metaclass=abc.ABCMeta):
+class UnixDomainMetadataProxyBase(metaclass=abc.ABCMeta):
 
     def __init__(self, conf):
         self.conf = conf

@@ -64,7 +64,7 @@ def _setup_arp_spoofing_protection(vif, port_details):
 
 def chain_name(vif):
     # start each chain with a common identifier for cleanup to find
-    return '%s%s' % (SPOOF_CHAIN_PREFIX, vif)
+    return '{}{}'.format(SPOOF_CHAIN_PREFIX, vif)
 
 
 @lockutils.synchronized('ebtables')
@@ -194,7 +194,7 @@ def _mac_vif_jump_present(vif, current_rules):
 
 
 def _mac_chain_name(vif):
-    return '%s%s' % (MAC_CHAIN_PREFIX, vif)
+    return '{}{}'.format(MAC_CHAIN_PREFIX, vif)
 
 
 def _delete_vif_mac_rules(vif, current_rules):

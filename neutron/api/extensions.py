@@ -157,7 +157,7 @@ class ExtensionMiddleware(base.ConfigurableMiddleware):
                       resource.collection)
             for action, method in resource.collection_actions.items():
                 conditions = dict(method=[method])
-                path = "/%s/%s" % (resource.collection, action)
+                path = "/{}/{}".format(resource.collection, action)
                 with mapper.submapper(controller=resource.controller,
                                       action=action,
                                       path_prefix=path_prefix,
@@ -206,7 +206,7 @@ class ExtensionMiddleware(base.ConfigurableMiddleware):
         self._router = routes.middleware.RoutesMiddleware(self._dispatch,
                                                           mapper,
                                                           singleton=False)
-        super(ExtensionMiddleware, self).__init__(application)
+        super().__init__(application)
 
     @classmethod
     def factory(cls, global_config, **local_config):
@@ -282,7 +282,7 @@ def plugin_aware_extension_middleware_factory(global_config, **local_config):
     return _factory
 
 
-class ExtensionManager(object):
+class ExtensionManager:
     """Load extensions from the configured extension path.
 
     See tests/unit/extensions/foxinsocks.py for an
@@ -487,13 +487,12 @@ class PluginAwareExtensionManager(ExtensionManager):
 
     def __init__(self, path, plugins):
         self.plugins = plugins
-        super(PluginAwareExtensionManager, self).__init__(path)
+        super().__init__(path)
         self.check_if_plugin_extensions_loaded()
 
     def _check_extension(self, extension):
         """Check if an extension is supported by any plugin."""
-        extension_is_valid = super(PluginAwareExtensionManager,
-                                   self)._check_extension(extension)
+        extension_is_valid = super()._check_extension(extension)
         if not extension_is_valid:
             return False
 
@@ -572,7 +571,7 @@ class PluginAwareExtensionManager(ExtensionManager):
                 extensions=list(missing_aliases))
 
 
-class RequestExtension(object):
+class RequestExtension:
     """Extend requests and responses of core Neutron OpenStack API controllers.
 
     Provide a way to add data to responses and handle custom request data
@@ -583,10 +582,10 @@ class RequestExtension(object):
         self.url_route = url_route
         self.handler = handler
         self.conditions = dict(method=[method])
-        self.key = "%s-%s" % (method, url_route)
+        self.key = "{}-{}".format(method, url_route)
 
 
-class ActionExtension(object):
+class ActionExtension:
     """Add custom actions to core Neutron OpenStack API controllers."""
 
     def __init__(self, collection, action_name, handler):
@@ -595,7 +594,7 @@ class ActionExtension(object):
         self.handler = handler
 
 
-class ResourceExtension(object):
+class ResourceExtension:
     """Add top level resources to the OpenStack API in Neutron."""
 
     def __init__(self, collection, controller, parent=None, path_prefix="",

@@ -42,7 +42,7 @@ def get_attr_info():
 
 
 @resource_extend.has_resource_extenders
-class ExtraAttributesMixin(object):
+class ExtraAttributesMixin:
     """Mixin class to enable router's extra attributes."""
 
     @staticmethod

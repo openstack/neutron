@@ -27,7 +27,7 @@ def _make_port_details_dict(port):
 
 
 @resource_extend.has_resource_extenders
-class Fip_port_details_db_mixin(object):
+class Fip_port_details_db_mixin:
     """Mixin class to enable floating IP's port_details attributes."""
 
     @staticmethod

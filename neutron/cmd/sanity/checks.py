@@ -337,7 +337,7 @@ def bridge_firewalling_enabled():
     return True
 
 
-class KeepalivedIPv6Test(object):
+class KeepalivedIPv6Test:
     def __init__(self, ha_port, gw_port, gw_vip, default_gw):
         l3_config.register_l3_agent_config_opts(l3_config.OPTS, cfg.CONF)
         self.ha_port = ha_port

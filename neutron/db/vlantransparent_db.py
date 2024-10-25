@@ -18,7 +18,7 @@ from neutron_lib.db import resource_extend
 
 
 @resource_extend.has_resource_extenders
-class Vlantransparent_db_mixin(object):
+class Vlantransparent_db_mixin:
     """Mixin class to add vlan transparent methods to db_base_plugin_v2."""
 
     @staticmethod

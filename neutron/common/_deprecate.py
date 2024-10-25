@@ -25,7 +25,7 @@ import debtcollector
 from neutron._i18n import _
 
 
-class _MovedGlobals(object):
+class _MovedGlobals:
     """Override a module to deprecate moved globals.
 
     This class is used when globals (attributes of a module) need to be
@@ -109,12 +109,12 @@ class _MovedGlobals(object):
                 new_module, new_name = self._mg__default_new_mod, name
             if new_module and new_name in vars(new_module):
 
-                old_location = '%s.%s' % (old_module.__name__, name)
-                new_location = '%s.%s' % (new_module.__name__, new_name)
+                old_location = '{}.{}'.format(old_module.__name__, name)
+                new_location = '{}.{}'.format(new_module.__name__, new_name)
                 changed = 'renamed' if old_module == new_module else 'moved'
                 debtcollector.deprecate(
                     old_location,
-                    message='%s to %s' % (changed, new_location),
+                    message='{} to {}'.format(changed, new_location),
                     stacklevel=4)
 
                 return vars(new_module)[new_name]
@@ -127,7 +127,7 @@ class _MovedGlobals(object):
 
     def __setattr__(self, name, val):
         if name.startswith('_mg__'):
-            return super(_MovedGlobals, self).__setattr__(name, val)
+            return super().__setattr__(name, val)
         self._mg__my_globals[name] = val
 
     def __delattr__(self, name):

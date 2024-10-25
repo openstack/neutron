@@ -19,7 +19,7 @@ from neutron.objects import network
 from neutron.objects.port.extensions import port_security as p_ps
 
 
-class PortSecurityDbCommon(object):
+class PortSecurityDbCommon:
     """Mixin class to add port security."""
 
     @staticmethod

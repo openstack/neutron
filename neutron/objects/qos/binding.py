@@ -26,7 +26,7 @@ from neutron.db.qos import models as qos_db_model
 from neutron.objects import base
 
 
-class _QosPolicyBindingMixin(object, metaclass=abc.ABCMeta):
+class _QosPolicyBindingMixin(metaclass=abc.ABCMeta):
 
     _bound_model_id = None
 

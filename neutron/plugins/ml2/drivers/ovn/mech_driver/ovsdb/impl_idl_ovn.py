@@ -66,7 +66,7 @@ class OvnNbTransaction(idl_trans.Transaction):
         # NOTE(lucasagomes): The bump_nb_cfg parameter is only used by
         # the agents health status check
         self.bump_nb_cfg = kwargs.pop('bump_nb_cfg', False)
-        super(OvnNbTransaction, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def pre_commit(self, txn):
         if not self.bump_nb_cfg:
@@ -80,7 +80,7 @@ def add_keepalives(fn):
         error, sock = fn(*args, **kwargs)
         try:
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
-        except socket.error as e:
+        except OSError as e:
             sock.close()
             return socket_util.get_exception_errno(e), None
         return error, sock
@@ -121,7 +121,7 @@ class Backend(ovs_idl.Backend):
 
     def __init__(self, connection):
         self.ovsdb_connection = connection
-        super(Backend, self).__init__(connection)
+        super().__init__(connection)
 
     def start_connection(self, connection):
         try:
@@ -235,7 +235,7 @@ def get_ovn_idls(driver, trigger):
 
 class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
     def __init__(self, connection):
-        super(OvsdbNbOvnIdl, self).__init__(connection)
+        super().__init__(connection)
 
     @n_utils.classproperty
     def connection_string(cls):
@@ -271,7 +271,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
         """
         revision_mismatch_raise = kwargs.pop('revision_mismatch_raise', False)
         try:
-            with super(OvsdbNbOvnIdl, self).transaction(*args, **kwargs) as t:
+            with super().transaction(*args, **kwargs) as t:
                 yield t
         except ovn_exc.RevisionConflict as e:
             LOG.info('Transaction aborted. Reason: %s', e)
@@ -587,7 +587,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
             if not physnet:
                 continue
 
-            lrp_name = '%s%s' % (ovn_const.LRP_PREFIX, port)
+            lrp_name = '{}{}'.format(ovn_const.LRP_PREFIX, port)
             original_state = self.get_gateway_chassis_binding(lrp_name)
             az_hints = self.get_gateway_chassis_az_hints(lrp_name)
             # Filter out chassis that lost physnet, the cms option,
@@ -906,7 +906,7 @@ class OvsdbNbOvnIdl(nb_impl_idl.OvnNbApiIdlImpl, Backend):
 
 class OvsdbSbOvnIdl(sb_impl_idl.OvnSbApiIdlImpl, Backend):
     def __init__(self, connection):
-        super(OvsdbSbOvnIdl, self).__init__(connection)
+        super().__init__(connection)
 
     @n_utils.classproperty
     def connection_string(cls):

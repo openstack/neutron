@@ -58,9 +58,9 @@ DHCPV6_OPTION_FQDN = 39
 class DHCPIPv6Responder(dhcp_base.DHCPResponderBase):
 
     def __init__(self, agent_api, ext_api, *args, **kwargs):
-        super(DHCPIPv6Responder, self).__init__(agent_api, ext_api,
-                                                version=dhcp_base.IPV6_STR,
-                                                *args, **kwargs)
+        super().__init__(agent_api, ext_api,
+                         version=dhcp_base.IPV6_STR,
+                         *args, **kwargs)
 
     def _create_duid(self, mac):
         """Create a DUID based on the mac address and time.
@@ -221,7 +221,7 @@ class DHCPIPv6Responder(dhcp_base.DHCPResponderBase):
         # 39: Fully Qualified Domain Name
         fqdn = 'host-%s' % ip_addr.replace('.', '-').replace(':', '-')
         if req_type == 'REQUEST' and cfg.CONF.dns_domain:
-            fqdn = '%s.%s' % (fqdn, cfg.CONF.dns_domain)
+            fqdn = '{}.{}'.format(fqdn, cfg.CONF.dns_domain)
 
         # 0000 0... = Reserved: 0x00
         # .... .0.. = N bit: Server should perform DNS updates

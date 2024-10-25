@@ -103,7 +103,7 @@ class PortForwarding(base.NeutronDbObject):
             )]
 
         if ":" not in intrn_port_range:
-            intrn_port_range = "%s:%s" % (intrn_port_range, intrn_port_range)
+            intrn_port_range = "{ipr}:{ipr}".format(ipr=intrn_port_range)
 
         extrn_min, extrn_max = map(int, extrn_port_range.split(':'))
         intrn_min, intrn_max = map(int, intrn_port_range.split(':'))
@@ -126,7 +126,7 @@ class PortForwarding(base.NeutronDbObject):
     def obj_load_attr(self, attrname):
         if attrname in ['floating_ip_address', 'router_id']:
             return self._load_attr_from_fip(attrname)
-        super(PortForwarding, self).obj_load_attr(attrname)
+        super().obj_load_attr(attrname)
 
     def _load_attr_from_fip(self, attrname):
         value = getattr(self.db_obj.floating_ip, attrname)
@@ -134,7 +134,7 @@ class PortForwarding(base.NeutronDbObject):
         self.obj_reset_changes([attrname])
 
     def from_db_object(self, db_obj):
-        super(PortForwarding, self).from_db_object(db_obj)
+        super().from_db_object(db_obj)
         self._load_attr_from_fip(attrname='router_id')
         self._load_attr_from_fip(attrname='floating_ip_address')
 
@@ -206,10 +206,10 @@ class PortForwarding(base.NeutronDbObject):
         if not internal_port_start or not external_port_start:
             return
 
-        result['external_port_range'] = '%s:%s' % (external_port_start,
-                                                   external_port_end)
-        result['internal_port_range'] = '%s:%s' % (internal_port_start,
-                                                   internal_port_end)
+        result['external_port_range'] = '{}:{}'.format(external_port_start,
+                                                       external_port_end)
+        result['internal_port_range'] = '{}:{}'.format(internal_port_start,
+                                                       internal_port_end)
 
     @staticmethod
     def _modify_single_ports_from_db(result,
@@ -228,7 +228,7 @@ class PortForwarding(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
-        result = super(PortForwarding, cls).modify_fields_from_db(db_obj)
+        result = super().modify_fields_from_db(db_obj)
         if 'internal_ip_address' in result:
             result['internal_ip_address'] = netaddr.IPAddress(
                 result['internal_ip_address'], version=lib_const.IP_VERSION_4)
@@ -254,7 +254,7 @@ class PortForwarding(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_to_db(cls, fields):
-        result = super(PortForwarding, cls).modify_fields_to_db(fields)
+        result = super().modify_fields_to_db(fields)
         cls._modify_ports_range_to_db(result)
         cls._modify_single_ports_to_db(result)
         if 'internal_ip_address' in result:

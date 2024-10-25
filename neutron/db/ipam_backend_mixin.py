@@ -123,11 +123,11 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
 
         old_route_list = self._get_route_by_subnet(context, id)
 
-        new_route_set = set([_combine(route)
-                             for route in s['host_routes']])
+        new_route_set = {_combine(route)
+                         for route in s['host_routes']}
 
-        old_route_set = set([_combine(route)
-                             for route in old_route_list])
+        old_route_set = {_combine(route)
+                         for route in old_route_list}
 
         for route_str in old_route_set - new_route_set:
             for route in old_route_list:
@@ -481,8 +481,8 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
                                   new_ips, device_owner):
         """Calculate changes in IPs for the port."""
         # Collect auto addressed subnet ids that has to be removed on update
-        delete_subnet_ids = set(ip['subnet_id'] for ip in new_ips
-                                if ip.get('delete_subnet'))
+        delete_subnet_ids = {ip['subnet_id'] for ip in new_ips
+                             if ip.get('delete_subnet')}
         ips = [ip for ip in new_ips
                if ip.get('subnet_id') not in delete_subnet_ids]
 
@@ -701,7 +701,7 @@ class IpamBackendMixin(db_base_plugin_common.DbBasePluginCommon):
             network_id=network_id, service_type=service_type)
 
     def _make_subnet_args(self, detail, subnet, subnetpool_id):
-        args = super(IpamBackendMixin, self)._make_subnet_args(
+        args = super()._make_subnet_args(
             detail, subnet, subnetpool_id)
         if validators.is_attr_set(subnet.get(segment.SEGMENT_ID)):
             args['segment_id'] = subnet[segment.SEGMENT_ID]

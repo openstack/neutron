@@ -60,8 +60,8 @@ class MonitorDaemon(daemon.Daemon):
         self.event_started = threading.Event()
         self.queue = queue.Queue()
         self._initial_state = None
-        super(MonitorDaemon, self).__init__(pidfile, uuid=router_id,
-                                            user=user, group=group)
+        super().__init__(pidfile, uuid=router_id,
+                         user=user, group=group)
 
     @property
     def initial_state(self):
@@ -163,7 +163,7 @@ class MonitorDaemon(daemon.Daemon):
     def handle_sigterm(self, signum, frame):
         self.event_stop.set()
         self._thread_read_queue.join(timeout=5)
-        super(MonitorDaemon, self).handle_sigterm(signum, frame)
+        super().handle_sigterm(signum, frame)
 
 
 def configure(conf):

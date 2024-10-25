@@ -69,7 +69,7 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
                                 portbindings.VNIC_VHOST_VDPA,
                                 ]
         prohibit_list = cfg.CONF.OVS_DRIVER.vnic_type_prohibit_list
-        super(OpenvswitchMechanismDriver, self).__init__(
+        super().__init__(
             constants.AGENT_TYPE_OVS,
             portbindings.VIF_TYPE_OVS,
             vif_details,
@@ -130,7 +130,7 @@ class OpenvswitchMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
             LOG.debug("Refusing to bind due to unsupported vnic_type: %s with "
                       "no switchdev capability", portbindings.VNIC_DIRECT)
             return
-        super(OpenvswitchMechanismDriver, self).bind_port(context)
+        super().bind_port(context)
 
     def get_supported_vif_type(self, agent):
         caps = agent['configurations'].get('ovs_capabilities', {})

@@ -67,9 +67,9 @@ class DNSNameServer(base.NeutronDbObject):
         if not _pager.sorts:
             # (NOTE) True means ASC, False is DESC
             _pager.sorts = [('order', True)]
-        return super(DNSNameServer, cls).get_objects(context, _pager,
-                                                     validate_filters,
-                                                     **kwargs)
+        return super().get_objects(context, _pager,
+                                   validate_filters,
+                                   **kwargs)
 
 
 @base.NeutronObjectRegistry.register
@@ -92,7 +92,7 @@ class Route(base.NeutronDbObject):
     @classmethod
     def modify_fields_from_db(cls, db_obj):
         # TODO(korzen) remove this method when IP and CIDR decorator ready
-        result = super(Route, cls).modify_fields_from_db(db_obj)
+        result = super().modify_fields_from_db(db_obj)
         if 'destination' in result:
             result['destination'] = net_utils.AuthenticIPNetwork(
                 result['destination'])
@@ -103,7 +103,7 @@ class Route(base.NeutronDbObject):
     @classmethod
     def modify_fields_to_db(cls, fields):
         # TODO(korzen) remove this method when IP and CIDR decorator ready
-        result = super(Route, cls).modify_fields_to_db(fields)
+        result = super().modify_fields_to_db(fields)
         if 'destination' in result:
             result['destination'] = cls.filter_to_str(result['destination'])
         if 'nexthop' in fields:
@@ -137,7 +137,7 @@ class IPAllocationPool(base.NeutronDbObject):
     @classmethod
     def modify_fields_from_db(cls, db_obj):
         # TODO(korzen) remove this method when IP and CIDR decorator ready
-        result = super(IPAllocationPool, cls).modify_fields_from_db(db_obj)
+        result = super().modify_fields_from_db(db_obj)
         if 'start' in result:
             result['start'] = netaddr.IPAddress(result['start'])
         if 'end' in result:
@@ -147,7 +147,7 @@ class IPAllocationPool(base.NeutronDbObject):
     @classmethod
     def modify_fields_to_db(cls, fields):
         # TODO(korzen) remove this method when IP and CIDR decorator ready
-        result = super(IPAllocationPool, cls).modify_fields_to_db(fields)
+        result = super().modify_fields_to_db(fields)
         if 'first_ip' in result:
             result['first_ip'] = cls.filter_to_str(result['first_ip'])
         if 'last_ip' in result:
@@ -253,7 +253,7 @@ class Subnet(base.NeutronDbObject):
     }
 
     def __init__(self, context=None, **kwargs):
-        super(Subnet, self).__init__(context, **kwargs)
+        super().__init__(context, **kwargs)
         self.add_extra_filter_name('shared')
 
     def obj_load_attr(self, attrname):
@@ -265,7 +265,7 @@ class Subnet(base.NeutronDbObject):
             return self._load_service_types()
         if attrname == 'external':
             return self._load_external()
-        super(Subnet, self).obj_load_attr(attrname)
+        super().obj_load_attr(attrname)
 
     def _load_dns_publish_fixed_ip(self, db_obj=None):
         if db_obj:
@@ -337,7 +337,7 @@ class Subnet(base.NeutronDbObject):
         return subnets
 
     def from_db_object(self, db_obj):
-        super(Subnet, self).from_db_object(db_obj)
+        super().from_db_object(db_obj)
         self._load_dns_publish_fixed_ip(db_obj)
         self._load_shared(db_obj)
         self._load_service_types(db_obj)
@@ -346,7 +346,7 @@ class Subnet(base.NeutronDbObject):
     @classmethod
     def modify_fields_from_db(cls, db_obj):
         # TODO(korzen) remove this method when IP and CIDR decorator ready
-        result = super(Subnet, cls).modify_fields_from_db(db_obj)
+        result = super().modify_fields_from_db(db_obj)
         if 'cidr' in result:
             result['cidr'] = net_utils.AuthenticIPNetwork(result['cidr'])
         if 'gateway_ip' in result and result['gateway_ip'] is not None:
@@ -356,7 +356,7 @@ class Subnet(base.NeutronDbObject):
     @classmethod
     def modify_fields_to_db(cls, fields):
         # TODO(korzen) remove this method when IP and CIDR decorator ready
-        result = super(Subnet, cls).modify_fields_to_db(fields)
+        result = super().modify_fields_to_db(fields)
         if 'cidr' in result:
             result['cidr'] = cls.filter_to_str(result['cidr'])
         if 'gateway_ip' in result and result['gateway_ip'] is not None:
@@ -605,7 +605,7 @@ class NetworkSubnetLock(base.NeutronDbObject):
 
     @classmethod
     def lock_subnet(cls, context, network_id, subnet_id):
-        subnet_lock = super(NetworkSubnetLock, cls).get_object(
+        subnet_lock = super().get_object(
             context, network_id=network_id)
         if subnet_lock:
             subnet_lock.subnet_id = subnet_id

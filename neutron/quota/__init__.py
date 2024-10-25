@@ -27,7 +27,7 @@ LOG = logging.getLogger(__name__)
 quota.register_quota_opts(quota.core_quota_opts)
 
 
-class QuotaEngine(object):
+class QuotaEngine:
     """Represent the set of recognized quotas."""
 
     _instance = None
@@ -81,8 +81,8 @@ class QuotaEngine(object):
 
         requested_resources = set(deltas.keys())
         all_resources = resource_registry.get_all_resources()
-        managed_resources = set([res for res in all_resources.keys()
-                                 if res in requested_resources])
+        managed_resources = {res for res in all_resources.keys()
+                             if res in requested_resources}
         # Make sure we accounted for all of them...
         unknown_resources = requested_resources - managed_resources
 
@@ -130,9 +130,9 @@ class QuotaEngine(object):
         # TODO(salv-orlando): Deprecate calls to this API
         # Verify that resources are managed by the quota engine
         requested_resources = set(values.keys())
-        managed_resources = set([res for res in
-                                 resource_registry.get_all_resources()
-                                 if res in requested_resources])
+        managed_resources = {res for res in
+                             resource_registry.get_all_resources()
+                             if res in requested_resources}
 
         # Make sure we accounted for all of them...
         unknown_resources = requested_resources - managed_resources

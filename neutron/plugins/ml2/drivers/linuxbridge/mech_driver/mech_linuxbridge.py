@@ -40,7 +40,7 @@ class LinuxbridgeMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         vif_details = {portbindings.CAP_PORT_FILTER: sg_enabled,
                        portbindings.VIF_DETAILS_CONNECTIVITY:
                            self.connectivity}
-        super(LinuxbridgeMechanismDriver, self).__init__(
+        super().__init__(
             constants.AGENT_TYPE_LINUXBRIDGE,
             portbindings.VIF_TYPE_BRIDGE,
             vif_details)

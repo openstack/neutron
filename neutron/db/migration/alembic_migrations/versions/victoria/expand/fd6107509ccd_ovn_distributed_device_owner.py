@@ -47,5 +47,5 @@ def update_device_owner_ovn_distributed_ports():
     session.execute(ports.update().values(
         device_owner=constants.DEVICE_OWNER_DISTRIBUTED).where(
         ports.c.device_owner == constants.DEVICE_OWNER_DHCP).where(
-        ports.c.device_id.like('{}%'.format(OVN_METADATA_PREFIX))))
+        ports.c.device_id.like(f'{OVN_METADATA_PREFIX}%')))
     session.commit()

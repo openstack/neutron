@@ -79,7 +79,7 @@ def check_ns_existence(f):
     return wrapped
 
 
-class Namespace(object):
+class Namespace:
 
     def __init__(self, name, agent_conf, driver, use_ipv6):
         self.name = name
@@ -126,7 +126,7 @@ class RouterNamespace(Namespace):
     def __init__(self, router_id, agent_conf, driver, use_ipv6):
         self.router_id = router_id
         name = self._get_ns_name(router_id)
-        super(RouterNamespace, self).__init__(
+        super().__init__(
             name, agent_conf, driver, use_ipv6)
 
     @classmethod
@@ -149,4 +149,4 @@ class RouterNamespace(Namespace):
                     namespace=self.name,
                     prefix=EXTERNAL_DEV_PREFIX)
 
-        super(RouterNamespace, self).delete()
+        super().delete()

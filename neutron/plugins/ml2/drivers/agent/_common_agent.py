@@ -60,7 +60,7 @@ class CommonAgentLoop(service.Service):
         :param agent_type: Specifies the type of the agent
         :param agent_binary: The agent binary string
         """
-        super(CommonAgentLoop, self).__init__()
+        super().__init__()
         self.mgr = manager
         self._validate_manager_class()
         self.polling_interval = polling_interval
@@ -119,7 +119,7 @@ class CommonAgentLoop(service.Service):
             self.set_rpc_timeout(self.quitting_rpc_timeout)
         if self.connection:
             self.connection.close()
-        super(CommonAgentLoop, self).stop(graceful)
+        super().stop(graceful)
 
     def reset(self):
         common_config.setup_logging()

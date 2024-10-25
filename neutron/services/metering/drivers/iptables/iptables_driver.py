@@ -40,7 +40,7 @@ config.register_interface_driver_opts_helper(cfg.CONF)
 config.register_interface_opts()
 
 
-class IptablesManagerTransaction(object):
+class IptablesManagerTransaction:
     __transactions = {}
 
     def __init__(self, im):
@@ -63,7 +63,7 @@ class IptablesManagerTransaction(object):
             self.__transactions[self.im] = transaction
 
 
-class RouterWithMetering(object):
+class RouterWithMetering:
 
     def __init__(self, conf, router):
         self.conf = conf
@@ -122,7 +122,7 @@ class RouterWithMetering(object):
 class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
 
     def __init__(self, plugin, conf):
-        super(IptablesMeteringDriver, self).__init__(plugin, conf)
+        super().__init__(plugin, conf)
 
         self.routers = {}
         self.driver = common_utils.load_interface_driver(self.conf)
@@ -141,7 +141,7 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
     @log_helpers.log_method_call
     def update_routers(self, context, routers):
         # disassociate removed routers
-        router_ids = set(router['id'] for router in routers)
+        router_ids = {router['id'] for router in routers}
         for router_id, rm in self.routers.items():
             if router_id not in router_ids:
                 self._process_disassociate_metering_label(rm.router)
@@ -249,7 +249,7 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
         if rule['excluded']:
             ipt_rule = '%s -j RETURN' % ipt_rule
         else:
-            ipt_rule = '%s -j %s' % (ipt_rule, label_chain)
+            ipt_rule = '{} -j {}'.format(ipt_rule, label_chain)
         return ipt_rule
 
     @staticmethod
@@ -261,11 +261,12 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
 
         source_ip_prefix = rule.get('source_ip_prefix')
         if source_ip_prefix:
-            iptables_rule = "-s %s %s" % (source_ip_prefix, iptables_rule)
+            iptables_rule = "-s {} {}".format(source_ip_prefix, iptables_rule)
 
         destination_ip_prefix = rule.get('destination_ip_prefix')
         if destination_ip_prefix:
-            iptables_rule = "-d %s %s" % (destination_ip_prefix, iptables_rule)
+            iptables_rule = "-d {} {}".format(
+                destination_ip_prefix, iptables_rule)
 
         return iptables_rule
 
@@ -273,9 +274,9 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
     def prepare_source_and_destination_rule_legacy(ext_dev, rule):
         remote_ip = rule['remote_ip_prefix']
         if rule['direction'] == 'egress':
-            ipt_rule = '-s %s -o %s' % (remote_ip, ext_dev)
+            ipt_rule = '-s {} -o {}'.format(remote_ip, ext_dev)
         else:
-            ipt_rule = '-d %s -i %s' % (remote_ip, ext_dev)
+            ipt_rule = '-d {} -i {}'.format(remote_ip, ext_dev)
         return ipt_rule
 
     def _process_ns_specific_metering_label(self, router, ext_dev, im):
@@ -576,9 +577,9 @@ class IptablesMeteringDriver(abstract_driver.MeteringAbstractDriver):
             label_traffic_counter_key = self.get_label_traffic_counter_key(
                 label_id)
 
-            project_label_traffic_counter_key = "%s-%s" % (
+            project_label_traffic_counter_key = "{}-{}".format(
                 project_traffic_counter_key, label_traffic_counter_key)
-            router_label_traffic_counter_key = "%s-%s" % (
+            router_label_traffic_counter_key = "{}-{}".format(
                 router_traffic_counter_key, label_traffic_counter_key)
 
             chain_acc = self.retrieve_traffic_counters(label_id, rm, router,

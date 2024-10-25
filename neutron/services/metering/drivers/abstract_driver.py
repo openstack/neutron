@@ -21,7 +21,7 @@ BASE_PROJECT_TRAFFIC_COUNTER_KEY = "project-"
 BASE_LABEL_TRAFFIC_COUNTER_KEY = "label-"
 
 
-class MeteringAbstractDriver(object, metaclass=abc.ABCMeta):
+class MeteringAbstractDriver(metaclass=abc.ABCMeta):
     """Abstract Metering driver."""
 
     def __init__(self, plugin, conf):

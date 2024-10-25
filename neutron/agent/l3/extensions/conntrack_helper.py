@@ -33,7 +33,7 @@ CONNTRACK_HELPER_PREFIX = 'cthelper-'
 CONNTRACK_HELPER_CHAIN_PREFIX = DEFAULT_CONNTRACK_HELPER_CHAIN + '-'
 
 
-class ConntrackHelperMapping(object):
+class ConntrackHelperMapping:
 
     def __init__(self):
         self._managed_conntrack_helpers = {}
@@ -131,8 +131,8 @@ class ConntrackHelperAgentExtension(l3_extension.L3AgentExtension):
             :constants.MAX_IPTABLES_CHAIN_LEN_WRAP]
 
     def _install_default_rules(self, iptables_manager, version):
-        default_rule = '-j %s-%s' % (iptables_manager.wrap_name,
-                                     DEFAULT_CONNTRACK_HELPER_CHAIN)
+        default_rule = '-j {}-{}'.format(iptables_manager.wrap_name,
+                                         DEFAULT_CONNTRACK_HELPER_CHAIN)
         if version == constants.IPv4:
             iptables_manager.ipv4['raw'].add_chain(
                 DEFAULT_CONNTRACK_HELPER_CHAIN)
@@ -146,7 +146,7 @@ class ConntrackHelperAgentExtension(l3_extension.L3AgentExtension):
     def _get_chain_rules_list(self, conntrack_helper, wrap_name):
         chain_name = self._get_chain_name(conntrack_helper.id)
         chain_rule_list = [(DEFAULT_CONNTRACK_HELPER_CHAIN,
-                            '-j %s-%s' % (wrap_name, chain_name))]
+                            '-j {}-{}'.format(wrap_name, chain_name))]
         chain_rule_list.append((chain_name,
                                 '-p %(proto)s --dport %(dport)s -j CT '
                                 '--helper %(helper)s' %

@@ -52,7 +52,7 @@ class RouterRoute(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
-        result = super(RouterRoute, cls).modify_fields_from_db(db_obj)
+        result = super().modify_fields_from_db(db_obj)
         if 'destination' in result:
             result['destination'] = net_utils.AuthenticIPNetwork(
                 result['destination'])
@@ -62,7 +62,7 @@ class RouterRoute(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_to_db(cls, fields):
-        result = super(RouterRoute, cls).modify_fields_to_db(fields)
+        result = super().modify_fields_to_db(fields)
         if 'destination' in result:
             result['destination'] = cls.filter_to_str(result['destination'])
         if 'nexthop' in result:
@@ -96,7 +96,7 @@ class RouterExtraAttributes(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
-        result = super(RouterExtraAttributes, cls).modify_fields_from_db(
+        result = super().modify_fields_from_db(
             db_obj)
         if az_def.AZ_HINTS in result:
             result[az_def.AZ_HINTS] = (
@@ -106,7 +106,7 @@ class RouterExtraAttributes(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_to_db(cls, fields):
-        result = super(RouterExtraAttributes, cls).modify_fields_to_db(fields)
+        result = super().modify_fields_to_db(fields)
         if az_def.AZ_HINTS in result:
             result[az_def.AZ_HINTS] = (
                 az_validator.convert_az_list_to_string(
@@ -208,7 +208,7 @@ class DVRMacAddress(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
-        fields = super(DVRMacAddress, cls).modify_fields_from_db(db_obj)
+        fields = super().modify_fields_from_db(db_obj)
         if 'mac_address' in fields:
             # NOTE(tonytan4ever): Here uses AuthenticEUI to retain the format
             # passed from API.
@@ -218,7 +218,7 @@ class DVRMacAddress(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_to_db(cls, fields):
-        result = super(DVRMacAddress, cls).modify_fields_to_db(fields)
+        result = super().modify_fields_to_db(fields)
         if 'mac_address' in fields:
             result['mac_address'] = cls.filter_to_str(result['mac_address'])
         return result
@@ -353,7 +353,7 @@ class FloatingIP(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
-        result = super(FloatingIP, cls).modify_fields_from_db(db_obj)
+        result = super().modify_fields_from_db(db_obj)
         if 'fixed_ip_address' in result:
             result['fixed_ip_address'] = netaddr.IPAddress(
                 result['fixed_ip_address'])
@@ -364,7 +364,7 @@ class FloatingIP(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_to_db(cls, fields):
-        result = super(FloatingIP, cls).modify_fields_to_db(fields)
+        result = super().modify_fields_to_db(fields)
         if 'fixed_ip_address' in result:
             if result['fixed_ip_address'] is not None:
                 result['fixed_ip_address'] = cls.filter_to_str(
@@ -389,19 +389,19 @@ class FloatingIP(base.NeutronDbObject):
         fields = self.obj_get_changes()
         with self.db_context_writer(self.obj_context):
             qos_policy_id = self.qos_policy_id
-            super(FloatingIP, self).create()
+            super().create()
             if 'qos_policy_id' in fields:
                 self._attach_qos_policy(qos_policy_id)
 
     def update(self):
         fields = self.obj_get_changes()
         with self.db_context_writer(self.obj_context):
-            super(FloatingIP, self).update()
+            super().update()
             if 'qos_policy_id' in fields:
                 self._attach_qos_policy(fields['qos_policy_id'])
 
     def from_db_object(self, db_obj):
-        super(FloatingIP, self).from_db_object(db_obj)
+        super().from_db_object(db_obj)
         fields_to_change = []
         if db_obj.get('qos_policy_binding'):
             self.qos_policy_id = db_obj.qos_policy_binding.policy_id

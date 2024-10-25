@@ -64,7 +64,7 @@ class NetworkSegmentRangePlugin(ext_range.NetworkSegmentRangePluginBase):
     __filter_validation_support = True
 
     def __init__(self):
-        super(NetworkSegmentRangePlugin, self).__init__()
+        super().__init__()
         self.type_manager = directory.get_plugin().type_manager
         self.type_manager.initialize_network_segment_range_support()
 

@@ -28,7 +28,7 @@ MAX_CONNTRACK_ZONES = 65535
 ZONE_START = 4097
 
 
-class IpConntrackUpdate(object):
+class IpConntrackUpdate:
     """Encapsulates a conntrack update
 
     An instance of this object carries the information necessary to
@@ -58,7 +58,7 @@ def get_conntrack(get_rules_for_table_func, filtered_ports, unfiltered_ports,
         return CONTRACK_MGRS[namespace]
 
 
-class IpConntrackManager(object):
+class IpConntrackManager:
     """Smart wrapper for ip conntrack."""
 
     def __init__(self, get_rules_for_table_func, filtered_ports,
@@ -257,7 +257,7 @@ class IpConntrackManager(object):
 class OvsIpConntrackManager(IpConntrackManager):
 
     def __init__(self, execute=None):
-        super(OvsIpConntrackManager, self).__init__(
+        super().__init__(
             get_rules_for_table_func=None,
             filtered_ports={}, unfiltered_ports={},
             execute=execute, namespace=None, zone_per_port=False)

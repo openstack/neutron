@@ -15,7 +15,7 @@
 from neutron._i18n import _
 
 
-class _FeatureFlag(object):
+class _FeatureFlag:
 
     def is_compatible(self, value):
         if value == self.requires:
@@ -37,7 +37,7 @@ OPTIONAL = _FeatureFlag(supports=True, requires=False)
 MANDATORY = _FeatureFlag(supports=True, requires=True)
 
 
-class L3ServiceProvider(object):
+class L3ServiceProvider:
     """Base class for L3 service provider drivers.
 
     On __init__ this will be given a handle to the l3 plugin. It is then the

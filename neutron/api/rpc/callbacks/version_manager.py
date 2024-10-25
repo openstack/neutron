@@ -44,7 +44,7 @@ AgentConsumer = collections.namedtuple('AgentConsumer', ['agent_type',
 AgentConsumer.__repr__ = lambda self: '%s@%s' % self
 
 
-class ResourceConsumerTracker(object):
+class ResourceConsumerTracker:
     """Class passed down to collect consumer's resource versions.
 
     This class is responsible for fetching the local versions of
@@ -194,7 +194,7 @@ class ResourceConsumerTracker(object):
         self._versions = versions
 
 
-class CachedResourceConsumerTracker(object):
+class CachedResourceConsumerTracker:
     """This class takes care of the caching logic of versions."""
 
     def __init__(self):

@@ -21,7 +21,7 @@ from oslo_utils import timeutils
 from oslo_utils import uuidutils
 
 
-class ResourceUpdate(object):
+class ResourceUpdate:
     """Encapsulates a resource update
 
     An instance of this object carries the information necessary to prioritize
@@ -79,7 +79,7 @@ class ResourceUpdate(object):
         return self.tries < 0
 
 
-class ExclusiveResourceProcessor(object):
+class ExclusiveResourceProcessor:
     """Manager for access to a resource for processing
 
     This class controls access to a resource in a non-blocking way.  The first
@@ -159,7 +159,7 @@ class ExclusiveResourceProcessor(object):
                 yield update
 
 
-class ResourceProcessingQueue(object):
+class ResourceProcessingQueue:
     """Manager of the queue of resources to process."""
     def __init__(self):
         self._queue = queue.PriorityQueue()

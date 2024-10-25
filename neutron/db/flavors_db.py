@@ -26,7 +26,7 @@ from neutron.objects import flavor as obj_flavor
 LOG = logging.getLogger(__name__)
 
 
-class FlavorsDbMixin(object):
+class FlavorsDbMixin:
 
     """Class to support flavors and service profiles."""
 

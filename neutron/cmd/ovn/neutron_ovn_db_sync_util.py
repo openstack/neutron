@@ -94,7 +94,7 @@ class OVNMechanismDriver(mech_driver.OVNMechanismDriver):
         self.ovn_client.delete_port(context.plugin_context, port['id'])
 
 
-class AgentNotifierApi(object):
+class AgentNotifierApi:
     """Default Agent Notifier class for ovn-db-sync-util.
 
     This class implements empty methods so that when creating resources in

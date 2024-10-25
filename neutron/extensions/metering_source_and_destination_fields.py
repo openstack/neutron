@@ -23,8 +23,7 @@ class Metering_source_and_destination_fields(
 
     @classmethod
     def get_extended_resources(cls, version):
-        sub_resource_map = super(Metering_source_and_destination_fields, cls
-                                 ).get_extended_resources(version)
+        sub_resource_map = super().get_extended_resources(version)
 
         processed_sub_resource_map = {}
         for value in sub_resource_map.values():

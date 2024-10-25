@@ -14,7 +14,7 @@
 #    under the License.
 
 
-class LinuxbridgeAgentExtensionAPI(object):
+class LinuxbridgeAgentExtensionAPI:
     '''Implements the Agent API for L2 agent.
 
     Extensions can gain access to this API by overriding the consume_api
@@ -22,7 +22,7 @@ class LinuxbridgeAgentExtensionAPI(object):
     '''
 
     def __init__(self, iptables_manager):
-        super(LinuxbridgeAgentExtensionAPI, self).__init__()
+        super().__init__()
         self.iptables_manager = iptables_manager
 
     def get_iptables_manager(self):

@@ -27,7 +27,7 @@ class QosSRIOVAgentDriver(qos.QosLinuxAgentDriver):
     SUPPORTED_RULES = driver.SUPPORTED_RULES
 
     def __init__(self):
-        super(QosSRIOVAgentDriver, self).__init__()
+        super().__init__()
         self.eswitch_mgr = None
 
     def initialize(self):

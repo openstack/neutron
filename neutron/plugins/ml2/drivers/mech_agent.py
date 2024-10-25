@@ -49,7 +49,7 @@ class AgentMechanismDriverBase(api.MechanismDriver, metaclass=abc.ABCMeta):
         :param agent_type: Constant identifying agent type in agents_db
         :param supported_vnic_types: The binding:vnic_type values we can bind
         """
-        super(AgentMechanismDriverBase, self).__init__()
+        super().__init__()
         self.agent_type = agent_type
         self.supported_vnic_types = supported_vnic_types
 
@@ -316,7 +316,7 @@ class SimpleAgentMechanismDriverBase(AgentMechanismDriverBase,
         """
         supported_vnic_types = (supported_vnic_types or
                                 [portbindings.VNIC_NORMAL])
-        super(SimpleAgentMechanismDriverBase, self).__init__(
+        super().__init__(
             agent_type, supported_vnic_types)
         self.supported_vnic_types = self.prohibit_list_supported_vnic_types(
             self.supported_vnic_types, vnic_type_prohibit_list)

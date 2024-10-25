@@ -66,13 +66,13 @@ class NetworkSegmentRange(standard_attr.HasStandardAttributes,
     tag_support = True
 
     def __init__(self, *args, **kwargs):
-        super(NetworkSegmentRange, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.project_id = None if self.shared else kwargs['project_id']
         is_vlan = self.network_type == constants.TYPE_VLAN
         self.physical_network = kwargs['physical_network'] if is_vlan else None
 
     def __repr__(self):
-        return "<NetworkSegmentRange(%s,%s,%s,%s,%s,%s - %s,%s)>" % (
+        return "<NetworkSegmentRange({},{},{},{},{},{} - {},{})>".format(
             self.id, self.name, str(self.shared), self.project_id,
             self.network_type, self.physical_network, self.minimum,
             self.maximum)

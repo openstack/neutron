@@ -63,7 +63,7 @@ def create_consumers(endpoints, prefix, topic_details, start_listening=True):
         topic_name = topics.get_topic_name(prefix, topic, operation)
         connection.create_consumer(topic_name, endpoints, fanout=True)
         if node_name:
-            node_topic_name = '%s.%s' % (topic_name, node_name)
+            node_topic_name = '{}.{}'.format(topic_name, node_name)
             connection.create_consumer(node_topic_name,
                                        endpoints,
                                        fanout=False)
@@ -72,7 +72,7 @@ def create_consumers(endpoints, prefix, topic_details, start_listening=True):
     return connection
 
 
-class PluginReportStateAPI(object):
+class PluginReportStateAPI:
     """RPC client used to report state back to plugin.
 
     This class implements the client side of an rpc interface.  The server side
@@ -105,7 +105,7 @@ class PluginReportStateAPI(object):
         return method(context, 'report_state', **kwargs)
 
 
-class PluginApi(object):
+class PluginApi:
     """Agent side of the rpc API.
 
     API version history:
@@ -223,7 +223,7 @@ class CacheBackedPluginApi(PluginApi):
                       resources.ADDRESSGROUP]
 
     def __init__(self, *args, **kwargs):
-        super(CacheBackedPluginApi, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.remote_resource_cache = None
         self._create_cache_for_l2_agent()
 
@@ -280,7 +280,7 @@ class CacheBackedPluginApi(PluginApi):
         """
         is_delete = event == callback_events.AFTER_DELETE
         suffix = 'delete' if is_delete else 'update'
-        method = "%s_%s" % (rtype, suffix)
+        method = "{}_{}".format(rtype, suffix)
         host_with_activation = None
         host_with_deactivation = None
         if is_delete or rtype != callback_resources.PORT:

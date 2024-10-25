@@ -18,7 +18,7 @@ from neutron_lib.plugins import directory
 import oslo_messaging
 
 
-class MetadataRpcCallback(object):
+class MetadataRpcCallback:
     """Metadata agent RPC callback in plugin implementations.
 
     This class implements the server side of an rpc interface used by the

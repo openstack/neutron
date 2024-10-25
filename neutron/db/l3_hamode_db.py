@@ -97,7 +97,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             raise l3ha_exc.HAMaximumAgentsNumberNotValid(max_agents=max_agents)
 
     def __new__(cls, *args, **kwargs):
-        inst = super(L3_HA_NAT_db_mixin, cls).__new__(cls, *args, **kwargs)
+        inst = super().__new__(cls, *args, **kwargs)
         inst._verify_configuration()
         return inst
 
@@ -111,7 +111,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         vr_id_objs = l3_hamode.L3HARouterVRIdAllocation.get_objects(
             context, network_id=network_id)
 
-        allocated_vr_ids = set(a.vr_id for a in vr_id_objs) - set([0])
+        allocated_vr_ids = {a.vr_id for a in vr_id_objs} - {0}
         return allocated_vr_ids
 
     def _get_vr_id(self, context, network_id):
@@ -356,8 +356,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
         if (is_ha_router(router) and not
                 l3_dvr_db.is_distributed_router(router)):
             return constants.DEVICE_OWNER_HA_REPLICATED_INT
-        return super(L3_HA_NAT_db_mixin,
-                     self)._get_device_owner(context, router)
+        return super()._get_device_owner(context, router)
 
     @registry.receives(resources.ROUTER, [events.BEFORE_CREATE],
                        priority_group.PRIORITY_ROUTER_EXTENDED_ATTRIBUTE)
@@ -668,7 +667,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
     @log_helpers.log_method_call
     def _process_sync_ha_data(self, context, routers, host, is_any_dvr_agent):
-        routers_dict = dict((router['id'], router) for router in routers)
+        routers_dict = {router['id']: router for router in routers}
 
         bindings = self.get_ha_router_port_bindings(context,
                                                     routers_dict.keys(),
@@ -717,7 +716,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
             sync_data = self._get_dvr_sync_data(context, host, agent,
                                                 router_ids, active)
         else:
-            sync_data = super(L3_HA_NAT_db_mixin, self).get_sync_data(
+            sync_data = super().get_sync_data(
                 context, router_ids, active)
         return self._process_sync_ha_data(
             context, sync_data, host, dvr_agent_mode)
@@ -767,7 +766,7 @@ class L3_HA_NAT_db_mixin(l3_dvr_db.L3_NAT_with_dvr_db_mixin,
 
     def _get_gateway_port_host(self, context, router, gw_ports):
         if not router.get('ha'):
-            return super(L3_HA_NAT_db_mixin, self)._get_gateway_port_host(
+            return super()._get_gateway_port_host(
                 context, router, gw_ports)
 
         gw_port_id = router['gw_port_id']

@@ -32,7 +32,7 @@ LOG = logging.getLogger(__name__)
 class L2populationMechanismDriver(api.MechanismDriver):
 
     def __init__(self):
-        super(L2populationMechanismDriver, self).__init__()
+        super().__init__()
         self.L2populationAgentNotify = l2pop_rpc.L2populationAgentNotifyAPI()
 
     def initialize(self):
@@ -95,8 +95,8 @@ class L2populationMechanismDriver(api.MechanismDriver):
         return set()
 
     def _get_diff_ips(self, orig, port):
-        orig_ips = set([ip['ip_address'] for ip in orig['fixed_ips']])
-        port_ips = set([ip['ip_address'] for ip in port['fixed_ips']])
+        orig_ips = {ip['ip_address'] for ip in orig['fixed_ips']}
+        port_ips = {ip['ip_address'] for ip in port['fixed_ips']}
 
         # check if an ip has been added or removed
         orig_chg_ips = orig_ips.difference(port_ips)

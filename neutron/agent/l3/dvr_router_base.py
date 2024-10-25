@@ -20,13 +20,13 @@ LOG = logging.getLogger(__name__)
 
 class DvrRouterBase(router.RouterInfo):
     def __init__(self, host, *args, **kwargs):
-        super(DvrRouterBase, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.host = host
         self.snat_ports = None
 
     def process(self):
-        super(DvrRouterBase, self).process()
+        super().process()
         # NOTE:  Keep a copy of the interfaces around for when they are removed
         self.snat_ports = self.get_snat_interfaces()
 

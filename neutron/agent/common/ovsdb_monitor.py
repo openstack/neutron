@@ -50,10 +50,10 @@ class OvsdbMonitor(async_process.AsyncProcess):
             cmd.append(','.join(columns))
         if format:
             cmd.append('--format=%s' % format)
-        super(OvsdbMonitor, self).__init__(cmd, run_as_root=run_as_root,
-                                           respawn_interval=respawn_interval,
-                                           log_output=True,
-                                           die_on_error=False)
+        super().__init__(cmd, run_as_root=run_as_root,
+                         respawn_interval=respawn_interval,
+                         log_output=True,
+                         die_on_error=False)
         self.new_events = {'added': [], 'removed': [], 'modified': []}
 
     def get_events(self):
@@ -63,7 +63,7 @@ class OvsdbMonitor(async_process.AsyncProcess):
         return events
 
     def start(self, block=False, timeout=60):
-        super(OvsdbMonitor, self).start()
+        super().start()
         if block:
             utils.wait_until_true(self.is_active, timeout=timeout)
 
@@ -80,7 +80,7 @@ class SimpleInterfaceMonitor(OvsdbMonitor):
                  bridge_names=None, ovs=None):
         self._bridge_names = bridge_names or []
         self._ovs = ovs
-        super(SimpleInterfaceMonitor, self).__init__(
+        super().__init__(
             'Interface',
             columns=['name', 'ofport', 'external_ids'],
             format='json',

@@ -64,7 +64,7 @@ class HaRouterNamespace(namespaces.RouterNamespace):
     which cause lost connectivity to Floating IPs.
     """
     def create(self):
-        super(HaRouterNamespace, self).create(ipv6_forwarding=False)
+        super().create(ipv6_forwarding=False)
         # HA router namespaces should have ip_nonlocal_bind enabled
         ip_lib.set_ip_nonlocal_bind_for_namespace(self.name, 1)
         # Linux should not automatically assign link-local addr for HA routers
@@ -76,7 +76,7 @@ class HaRouterNamespace(namespaces.RouterNamespace):
 
 class HaRouter(router.RouterInfo):
     def __init__(self, *args, **kwargs):
-        super(HaRouter, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.ha_port = None
         self.keepalived_manager = None
@@ -119,14 +119,14 @@ class HaRouter(router.RouterInfo):
         if self._ha_state:
             return self._ha_state
         try:
-            with open(self.ha_state_path, 'r') as f:
+            with open(self.ha_state_path) as f:
                 # TODO(haleyb): put old code back after a couple releases,
                 # Y perhaps, just for backwards-compat
                 # self._ha_state = f.read()
                 ha_state = f.read()
                 ha_state = 'primary' if ha_state == 'master' else ha_state
                 self._ha_state = ha_state
-        except (OSError, IOError) as error:
+        except OSError as error:
             LOG.debug('Error while reading HA state for %s: %s',
                       self.router_id, error)
         return self._ha_state or 'unknown'
@@ -137,7 +137,7 @@ class HaRouter(router.RouterInfo):
         try:
             with open(self.ha_state_path, 'w') as f:
                 f.write(new_state)
-        except (OSError, IOError) as error:
+        except OSError as error:
             LOG.error('Error while writing HA state for %s: %s',
                       self.router_id, error)
 
@@ -161,7 +161,7 @@ class HaRouter(router.RouterInfo):
                    self.router_id)
             LOG.exception(msg)
             raise Exception(msg)
-        super(HaRouter, self).initialize(process_monitor)
+        super().initialize(process_monitor)
 
         self.set_ha_port()
         self._init_keepalived_manager(process_monitor)
@@ -288,7 +288,7 @@ class HaRouter(router.RouterInfo):
                 route['destination'], route['nexthop'])
             for route in new_routes]
         if self.router.get('distributed', False):
-            super(HaRouter, self).routes_updated(old_routes, new_routes)
+            super().routes_updated(old_routes, new_routes)
         self.keepalived_manager.get_process().reload_cfg()
 
     def _add_default_gw_virtual_route(self, ex_gw_port, interface_name):
@@ -315,7 +315,7 @@ class HaRouter(router.RouterInfo):
     def _add_extra_subnet_onlink_routes(self, ex_gw_port, interface_name):
         extra_subnets = ex_gw_port.get('extra_subnets', [])
         instance = self._get_keepalived_instance()
-        onlink_route_cidrs = set(s['cidr'] for s in extra_subnets)
+        onlink_route_cidrs = {s['cidr'] for s in extra_subnets}
         instance.virtual_routes.extra_subnets = [
             keepalived.KeepalivedVirtualRoute(
                 onlink_route_cidr, None, interface_name, scope='link') for
@@ -375,7 +375,7 @@ class HaRouter(router.RouterInfo):
         self._remove_vip(ip_cidr)
         to = common_utils.cidr_to_ip(ip_cidr)
         if device.addr.list(to=to):
-            super(HaRouter, self).remove_floating_ip(device, ip_cidr)
+            super().remove_floating_ip(device, ip_cidr)
 
     def internal_network_updated(self, port):
         interface_name = self.get_internal_device_name(port['id'])
@@ -407,7 +407,7 @@ class HaRouter(router.RouterInfo):
             port, self.get_internal_device_name, router.INTERNAL_DEV_PREFIX)
 
     def internal_network_removed(self, port):
-        super(HaRouter, self).internal_network_removed(port)
+        super().internal_network_removed(port)
 
         interface_name = self.get_internal_device_name(port['id'])
         self._clear_vips(interface_name)
@@ -483,8 +483,8 @@ class HaRouter(router.RouterInfo):
         def _get_filtered_dict(d, ignore):
             return {k: v for k, v in d.items() if k not in ignore}
 
-        keys_to_ignore = set([portbindings.HOST_ID, timestamp.UPDATED,
-                              revisions.REVISION])
+        keys_to_ignore = {portbindings.HOST_ID, timestamp.UPDATED,
+                          revisions.REVISION}
         port1_filtered = _get_filtered_dict(port1, keys_to_ignore)
         port2_filtered = _get_filtered_dict(port2, keys_to_ignore)
         return port1_filtered == port2_filtered
@@ -513,8 +513,8 @@ class HaRouter(router.RouterInfo):
         self._clear_vips(interface_name)
 
         if self.ha_state == 'primary':
-            super(HaRouter, self).external_gateway_removed(ex_gw_port,
-                                                           interface_name)
+            super().external_gateway_removed(ex_gw_port,
+                                             interface_name)
         else:
             # We are not the primary node, so no need to delete ip addresses.
             self.driver.unplug(interface_name,
@@ -526,7 +526,7 @@ class HaRouter(router.RouterInfo):
             self.destroy_state_change_monitor(self.process_monitor)
         self.disable_keepalived()
         self.ha_network_removed()
-        super(HaRouter, self).delete()
+        super().delete()
 
     def set_ha_port(self):
         ha_port = self.router.get(n_consts.HA_INTERFACE_KEY)
@@ -541,7 +541,7 @@ class HaRouter(router.RouterInfo):
             self.ha_port = ha_port
 
     def process(self):
-        super(HaRouter, self).process()
+        super().process()
 
         self.set_ha_port()
         LOG.debug("Processing HA router %(router_id)s with HA port: %(port)s",
@@ -555,4 +555,4 @@ class HaRouter(router.RouterInfo):
     def enable_radvd(self, internal_ports=None):
         if (self.keepalived_manager.get_process().active and
                 self.ha_state == 'primary'):
-            super(HaRouter, self).enable_radvd(internal_ports)
+            super().enable_radvd(internal_ports)

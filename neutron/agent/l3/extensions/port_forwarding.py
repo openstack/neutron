@@ -36,7 +36,7 @@ PORT_FORWARDING_PREFIX = 'fip_portforwarding-'
 PORT_FORWARDING_CHAIN_PREFIX = 'pf-'
 
 
-class RouterFipPortForwardingMapping(object):
+class RouterFipPortForwardingMapping:
     def __init__(self):
         self.managed_port_forwardings = {}
         """
@@ -386,9 +386,9 @@ class PortForwardingAgentExtension(l3_extension.L3AgentExtension):
 
         iptables_manager.apply()
 
-        fip_id_cidrs = set([(pf.floatingip_id,
-                             str(netaddr.IPNetwork(pf.floating_ip_address)))
-                            for pf in port_forwardings])
+        fip_id_cidrs = {(pf.floatingip_id,
+                         str(netaddr.IPNetwork(pf.floating_ip_address)))
+                        for pf in port_forwardings}
         self._sync_and_remove_fip(context, fip_id_cidrs, device, ri)
         self._store_local(port_forwardings, events.DELETED)
 
@@ -431,8 +431,8 @@ class PortForwardingAgentExtension(l3_extension.L3AgentExtension):
         return chain_name[:constants.MAX_IPTABLES_CHAIN_LEN_WRAP]
 
     def _install_default_rules(self, iptables_manager):
-        default_rule = '-j %s-%s' % (iptables_manager.wrap_name,
-                                     DEFAULT_PORT_FORWARDING_CHAIN)
+        default_rule = '-j {}-{}'.format(iptables_manager.wrap_name,
+                                         DEFAULT_PORT_FORWARDING_CHAIN)
         iptables_manager.ipv4['nat'].add_chain(DEFAULT_PORT_FORWARDING_CHAIN)
         iptables_manager.ipv4['nat'].add_rule('PREROUTING', default_rule)
         iptables_manager.apply()

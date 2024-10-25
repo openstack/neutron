@@ -20,7 +20,7 @@ from neutron.objects.port.extensions import port_hardware_offload_type as \
     phot_obj
 
 
-class PortHardwareOffloadTypeDbMixin(object):
+class PortHardwareOffloadTypeDbMixin:
     """Mixin class to add hardware offload type extension to a port"""
 
     def _process_create_port(self, context, data, result):

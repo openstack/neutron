@@ -50,7 +50,7 @@ class PidsInNamespaceException(Exception):
     pass
 
 
-class FakeDhcpPlugin(object):
+class FakeDhcpPlugin:
     """Fake RPC plugin to bypass any RPC calls."""
     def __getattribute__(self, name):
         def fake_method(*args):
@@ -105,8 +105,8 @@ def eligible_for_deletion(conf, namespace, force=False):
         prefixes = NS_PREFIXES.get(conf.agent_type)
     else:
         prefixes = itertools.chain(*NS_PREFIXES.values())
-    ns_mangling_pattern = '(%s%s)' % ('|'.join(prefixes),
-                                      constants.UUID_PATTERN)
+    ns_mangling_pattern = '({}{})'.format('|'.join(prefixes),
+                                          constants.UUID_PATTERN)
 
     # filter out namespaces without UUID as the name
     if not re.match(ns_mangling_pattern, namespace):

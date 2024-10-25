@@ -278,7 +278,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             query_hook=None,
             filter_hook=None,
             result_filters=_ml2_port_result_filter_hook)
-        return super(Ml2Plugin, cls).__new__(cls, *args, **kwargs)
+        return super().__new__(cls, *args, **kwargs)
 
     @resource_registry.tracked_resources(
         network=models_v2.Network,
@@ -292,7 +292,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
         self.type_manager = managers.TypeManager()
         self.extension_manager = managers.ExtensionManager()
         self.mechanism_manager = managers.MechanismManager()
-        super(Ml2Plugin, self).__init__()
+        super().__init__()
         self.type_manager.initialize()
         self.extension_manager.initialize()
         self.mechanism_manager.initialize()
@@ -596,7 +596,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self._clear_port_binding(mech_context, binding, port,
                                      original_host)
             port['status'] = const.PORT_STATUS_DOWN
-            super(Ml2Plugin, self).update_port(
+            super().update_port(
                 mech_context.plugin_context, port['id'],
                 {port_def.RESOURCE_NAME: {'status': const.PORT_STATUS_DOWN}})
 
@@ -1276,7 +1276,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self._update_provider_network_attributes(
                 context, original_network, net_data)
 
-            updated_network = super(Ml2Plugin, self).update_network(
+            updated_network = super().update_network(
                 context, id, network, db_network=db_network)
             self.extension_manager.process_update_network(context, net_data,
                                                           updated_network)
@@ -1337,7 +1337,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def get_networks(self, context, filters=None, fields=None,
                      sorts=None, limit=None, marker=None, page_reverse=False):
         with db_api.CONTEXT_READER.using(context):
-            nets_db = super(Ml2Plugin, self)._get_networks(
+            nets_db = super()._get_networks(
                 context, filters, None, sorts, limit, marker, page_reverse)
 
             net_data = []
@@ -1369,7 +1369,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def delete_network(self, context, id):
         # the only purpose of this override is to protect this from being
         # called inside of a transaction.
-        return super(Ml2Plugin, self).delete_network(context, id)
+        return super().delete_network(context, id)
 
     # NOTE(mgoddard): Use a priority of zero to ensure this handler runs before
     # other precommit handlers. This is necessary to ensure we avoid another
@@ -1493,7 +1493,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
     def delete_subnet(self, context, id):
         # the only purpose of this override is to protect this from being
         # called inside of a transaction.
-        return super(Ml2Plugin, self).delete_subnet(context, id)
+        return super().delete_subnet(context, id)
 
     # NOTE(mgoddard): Use a priority of zero to ensure this handler runs before
     # other precommit handlers. This is necessary to ensure we avoid another
@@ -1875,7 +1875,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             # that port does not have any security groups already on it.
             filters = {'port_id': [id]}
             security_groups = (
-                super(Ml2Plugin, self)._get_port_security_group_bindings(
+                super()._get_port_security_group_bindings(
                     context, filters))
             if security_groups:
                 raise psec_exc.PortSecurityPortHasSecurityGroup()
@@ -1929,9 +1929,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 port_db, attrs, binding)
             need_port_update_notify |= mac_address_updated
             original_port = self._make_port_dict(port_db)
-            updated_port = super(Ml2Plugin, self).update_port(context, id,
-                                                              port,
-                                                              db_port=port_db)
+            updated_port = super().update_port(context, id,
+                                               port,
+                                               db_port=port_db)
             self.extension_manager.process_update_port(context, attrs,
                                                        updated_port)
             self._portsec_ext_port_update_processing(updated_port, context,
@@ -2241,7 +2241,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
             LOG.debug("Calling delete_port for %(port_id)s owned by %(owner)s",
                       {"port_id": id, "owner": device_owner})
-            super(Ml2Plugin, self).delete_port(context, id, port)
+            super().delete_port(context, id, port)
 
         self._post_delete_port(
             context, port, router_ids, bound_mech_contexts)
@@ -2517,9 +2517,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     @db_api.retry_if_session_inactive()
     def get_ports_from_devices(self, context, devices):
-        port_ids_to_devices = dict(
-            (self._device_to_port_id(context, device), device)
-            for device in devices)
+        port_ids_to_devices = {
+            self._device_to_port_id(context, device): device
+            for device in devices}
         port_ids = list(port_ids_to_devices.keys())
         ports = db.get_ports_and_sgs(context, port_ids)
         for port in ports:
@@ -2563,9 +2563,9 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                 filters['id'] = [entry['port_id'] for entry in port_bindings]
         fixed_ips = filters.get('fixed_ips', {})
         ip_addresses_s = fixed_ips.get('ip_address_substr')
-        query = super(Ml2Plugin, self)._get_ports_query(context, *args,
-                                                        filters=filters,
-                                                        **kwargs)
+        query = super()._get_ports_query(context, *args,
+                                         filters=filters,
+                                         **kwargs)
         if ip_addresses_s:
             substr_filter = or_(*[models_v2.Port.fixed_ips.any(
                 models_v2.IPAllocation.ip_address.like('%%%s%%' % ip))
@@ -2732,7 +2732,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
                                      mech_context._binding, port_dict,
                                      original_host)
             port_dict['status'] = const.PORT_STATUS_DOWN
-            super(Ml2Plugin, self).update_port(
+            super().update_port(
                 mech_context.plugin_context, port_dict['id'],
                 {port_def.RESOURCE_NAME: {'status': const.PORT_STATUS_DOWN}})
         self._update_port_dict_binding(port_dict,
@@ -2888,7 +2888,7 @@ class Ml2Plugin(db_base_plugin_v2.NeutronDbPluginV2,
             self._clear_port_binding(original_context, active_binding,
                                      port_dict, active_binding.host)
             port_dict['status'] = const.PORT_STATUS_DOWN
-            super(Ml2Plugin, self).update_port(
+            super().update_port(
                 context, port_dict['id'],
                 {port_def.RESOURCE_NAME: {'status': const.PORT_STATUS_DOWN}})
             levels = db.get_binding_level_objs(context, port_id,

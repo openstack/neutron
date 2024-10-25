@@ -44,7 +44,7 @@ class Address_scope(api_extensions.APIExtensionDescriptor):
         return [ex]
 
 
-class AddressScopePluginBase(object, metaclass=abc.ABCMeta):
+class AddressScopePluginBase(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def create_address_scope(self, context, address_scope):

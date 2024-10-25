@@ -23,7 +23,7 @@ from neutron import manager
 LOG = log.getLogger(__name__)
 
 
-class ExternalDNSService(object, metaclass=abc.ABCMeta):
+class ExternalDNSService(metaclass=abc.ABCMeta):
     """Interface definition for an external dns service driver."""
 
     def __init__(self):

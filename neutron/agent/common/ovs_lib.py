@@ -118,7 +118,7 @@ def get_gre_tunnel_port_type(remote_ip, local_ip):
     return p_const.TYPE_GRE
 
 
-class VifPort(object):
+class VifPort:
     def __init__(self, port_name, ofport, vif_id, vif_mac, switch):
         self.port_name = port_name
         self.ofport = ofport
@@ -134,7 +134,7 @@ class VifPort(object):
                     self.switch.br_name)
 
 
-class BaseOVS(object):
+class BaseOVS:
 
     def __init__(self):
         self.ovsdb = impl_idl.api_factory()
@@ -247,7 +247,7 @@ def version_from_protocol(protocol):
 class OVSBridge(BaseOVS):
     def __init__(self, br_name,
                  datapath_type=ovs_constants.OVS_DATAPATH_SYSTEM):
-        super(OVSBridge, self).__init__()
+        super().__init__()
         self.br_name = br_name
         self.datapath_type = datapath_type
         self._default_cookie = generate_random_cookie()
@@ -336,7 +336,7 @@ class OVSBridge(BaseOVS):
         # IGMP Neutron configs are more value consistent using True to
         # enable a feature and False to disable it.
         flood_value = ('false' if
-            cfg.CONF.OVS.igmp_flood_unregistered else 'true')
+                       cfg.CONF.OVS.igmp_flood_unregistered else 'true')
         other_config = {
             'mcast-snooping-disable-flood-unregistered': flood_value}
         with self.ovsdb.transaction() as txn:
@@ -1317,7 +1317,7 @@ class OVSBridge(BaseOVS):
         self.destroy()
 
 
-class DeferredOVSBridge(object):
+class DeferredOVSBridge:
     '''Deferred OVSBridge.
 
     This class wraps add_flow, mod_flow and delete_flows calls to an OVSBridge
@@ -1346,7 +1346,7 @@ class DeferredOVSBridge(object):
         self.full_ordered = full_ordered
         self.order = order
         if not self.full_ordered:
-            self.weights = dict((y, x) for x, y in enumerate(self.order))
+            self.weights = {y: x for x, y in enumerate(self.order)}
         self.action_flow_tuples = []
         self.use_bundle = use_bundle
 
@@ -1422,7 +1422,7 @@ def _build_flow_expr_str(flow_dict, cmd, strict):
         if key == 'proto':
             flow_expr_arr.append(value)
         else:
-            flow_expr_arr.append("%s=%s" % (key, str(value)))
+            flow_expr_arr.append("{}={}".format(key, str(value)))
 
     if actions:
         flow_expr_arr.append(actions)

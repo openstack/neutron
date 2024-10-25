@@ -41,7 +41,7 @@ class LoggingPlugin(log_ext.LoggingPluginBase):
     __filter_validation_support = True
 
     def __init__(self):
-        super(LoggingPlugin, self).__init__()
+        super().__init__()
         self.driver_manager = driver_mgr.LoggingServiceDriverManager()
         self.validator_mgr = validators.ResourceValidateRequest.get_instance()
 

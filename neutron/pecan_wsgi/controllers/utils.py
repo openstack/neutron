@@ -33,7 +33,7 @@ from neutron_lib import exceptions
 LOG = logging.getLogger(__name__)
 
 
-class Fakecode(object):
+class Fakecode:
     co_varnames = ()
 
 
@@ -110,7 +110,7 @@ def _set_del_code(f):
     return wrapped
 
 
-class NeutronPecanController(object):
+class NeutronPecanController:
 
     LIST = 'list'
     SHOW = 'show'
@@ -132,9 +132,9 @@ class NeutronPecanController(object):
         # Controllers for some resources that are not mapped to anything in
         # RESOURCE_ATTRIBUTE_MAP will not have anything in _resource_info
         if self.resource_info:
-            self._mandatory_fields = set([field for (field, data) in
-                                          self.resource_info.items() if
-                                          data.get('required_by_policy')])
+            self._mandatory_fields = {field for (field, data) in
+                                      self.resource_info.items() if
+                                      data.get('required_by_policy')}
             if 'tenant_id' in self._mandatory_fields:
                 # ensure that project_id is queried in the database when
                 # tenant_id is required
@@ -165,11 +165,11 @@ class NeutronPecanController(object):
         self._parent_id_name = ('%s_id' % self.parent
                                 if self.parent else None)
         self._plugin_handlers = {
-            self.LIST: 'get%s_%s' % (parent_resource, self.collection),
-            self.SHOW: 'get%s_%s' % (parent_resource, self.resource)
+            self.LIST: 'get{}_{}'.format(parent_resource, self.collection),
+            self.SHOW: 'get{}_{}'.format(parent_resource, self.resource)
         }
         for action in [self.CREATE, self.UPDATE, self.DELETE]:
-            self._plugin_handlers[action] = '%s%s_%s' % (
+            self._plugin_handlers[action] = '{}{}_{}'.format(
                 action, parent_resource, self.resource)
         self.item = item
         self.action_status = action_status or {}
@@ -267,7 +267,7 @@ class NeutronPecanController(object):
         return getattr(self.plugin, self._plugin_handlers[self.UPDATE])
 
 
-class ShimRequest(object):
+class ShimRequest:
 
     def __init__(self, context):
         self.context = context
@@ -285,7 +285,7 @@ class ShimItemController(NeutronPecanController):
     def __init__(self, collection, resource, item, controller,
                  collection_actions=None, member_actions=None,
                  action_status=None):
-        super(ShimItemController, self).__init__(
+        super().__init__(
             collection, resource, collection_actions=collection_actions,
             member_actions=member_actions, item=item,
             action_status=action_status)
@@ -355,7 +355,7 @@ class ShimCollectionsController(NeutronPecanController):
                  collection_actions=None, member_actions=None,
                  collection_methods=None, action_status=None):
         collection_methods = collection_methods or {}
-        super(ShimCollectionsController, self).__init__(
+        super().__init__(
             collection, resource, member_actions=member_actions,
             collection_actions=collection_actions,
             action_status=action_status)
@@ -423,7 +423,7 @@ class ShimMemberActionController(NeutronPecanController):
 
     def __init__(self, collection, resource, item, controller,
                  member_actions):
-        super(ShimMemberActionController, self).__init__(
+        super().__init__(
             collection, resource, member_actions=member_actions, item=item)
         self.controller = controller
         self.inverted_member_actions = invert_dict(self._member_actions)
@@ -438,7 +438,7 @@ class ShimMemberActionController(NeutronPecanController):
         return method(shim_request, self.item, **uri_identifiers)
 
 
-class PecanResourceExtension(object):
+class PecanResourceExtension:
 
     def __init__(self, collection, controller, plugin):
         self.collection = collection

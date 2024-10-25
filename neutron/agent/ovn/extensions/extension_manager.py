@@ -113,7 +113,7 @@ class OVNAgentExtension(extension.AgentExtension, metaclass=abc.ABCMeta):
         pass
 
 
-class OVNAgentExtensionAPI(object):
+class OVNAgentExtensionAPI:
     """Implements the OVN Neutron Agent API"""
 
     def __init__(self):

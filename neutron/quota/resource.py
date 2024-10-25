@@ -58,7 +58,7 @@ def _count_resource(context, collection_name, project_id):
         _('No plugins that support counting %s found.') % collection_name)
 
 
-class BaseResource(object, metaclass=abc.ABCMeta):
+class BaseResource(metaclass=abc.ABCMeta):
     """Describe a single resource for quota checking."""
 
     def __init__(self, name, flag, plural_name=None):
@@ -147,7 +147,7 @@ class CountableResource(BaseResource):
                             Dashes are always converted to underscores.
         """
 
-        super(CountableResource, self).__init__(
+        super().__init__(
             name, flag=flag, plural_name=plural_name)
         self._count_func = count
 
@@ -188,7 +188,7 @@ class TrackedResource(BaseResource):
                             Dashes are always converted to underscores.
 
         """
-        super(TrackedResource, self).__init__(
+        super().__init__(
             name, flag=flag, plural_name=plural_name)
         # Register events for addition/removal of records in the model class
         # As project_id is immutable for all Neutron objects there is no need

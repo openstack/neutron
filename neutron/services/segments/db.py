@@ -62,7 +62,7 @@ def check_user_configured_segment_plugin():
     return _USER_CONFIGURED_SEGMENT_PLUGIN
 
 
-class SegmentDbMixin(object):
+class SegmentDbMixin:
     """Mixin class to add segment."""
 
     @staticmethod

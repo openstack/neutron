@@ -154,7 +154,7 @@ class ChassisBandwidthConfigEvent(row_event.RowEvent):
 
 
 @common_utils.SingletonDecorator
-class OVNClientPlacementExtension(object):
+class OVNClientPlacementExtension:
     """OVN client Placement API extension"""
 
     def __init__(self, driver):
@@ -225,8 +225,9 @@ class OVNClientPlacementExtension(object):
         chassis = self.get_chassis_config()
         for state in chassis.values():
             _send_deferred_batch(state)
-        msg = ', '.join(['Chassis %s: %s' % (name, dict_chassis_config(state))
-                         for (name, state) in chassis.items()]) or '(no info)'
+        msg = ', '.join(['Chassis {}: {}'.format(
+            name, dict_chassis_config(state))
+            for (name, state) in chassis.items()]) or '(no info)'
         LOG.debug('OVN chassis Placement initial configuration: %s', msg)
         return chassis
 

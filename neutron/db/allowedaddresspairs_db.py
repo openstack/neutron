@@ -29,7 +29,7 @@ from neutron.objects.port.extensions import (allowedaddresspairs
 
 
 @resource_extend.has_resource_extenders
-class AllowedAddressPairsMixin(object):
+class AllowedAddressPairsMixin:
     """Mixin class for allowed address pairs."""
 
     def _process_create_allowed_address_pairs(self, context, port,

@@ -36,7 +36,7 @@ LOG = logging.getLogger(__name__)
 # deprecated, it could be possible to revert to the previous architecture using
 # preemptive threads.
 # [1] https://review.opendev.org/c/openstack/neutron/+/926922
-class _ObjectChangeHandler(object):
+class _ObjectChangeHandler:
 
     def __init__(self, resource, object_class, resource_push_api):
         self._resource = resource
@@ -105,7 +105,7 @@ class _ObjectChangeHandler(object):
                 {'res': self._resource, 'e': e})
 
 
-class OVOServerRpcInterface(object):
+class OVOServerRpcInterface:
     """ML2 server-side RPC interface.
 
     Generates RPC callback notifications on ML2 object changes.

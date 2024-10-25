@@ -84,7 +84,7 @@ def is_port_bound(port):
 
 
 @registry.has_registry_receivers
-class DVRResourceOperationHandler(object):
+class DVRResourceOperationHandler:
     """Contains callbacks for DVR operations.
 
     This can be implemented as a mixin or can be instantiated as a stand-alone
@@ -859,7 +859,7 @@ class DVRResourceOperationHandler(object):
             self._core_plugin.delete_port(payload.context, gw_port['id'])
 
 
-class _DVRAgentInterfaceMixin(object):
+class _DVRAgentInterfaceMixin:
     """Contains calls made by the DVR scheduler and RPC interface.
 
     Must be instantiated as a mixin with the L3 plugin.
@@ -897,7 +897,7 @@ class _DVRAgentInterfaceMixin(object):
 
     def _build_routers_list(self, context, routers, gw_ports):
         # Perform a single query up front for all routers
-        routers = super(_DVRAgentInterfaceMixin, self)._build_routers_list(
+        routers = super()._build_routers_list(
             context, routers, gw_ports)
         for router in routers:
             gw_port_host = self._get_gateway_port_host(
@@ -1003,8 +1003,8 @@ class _DVRAgentInterfaceMixin(object):
             context, router_ids=router_ids, active=active,
             device_owners=const.ROUTER_INTERFACE_OWNERS,
             fip_host_filter=fip_host_filter)
-        dvr_router_ids = set(router['id'] for router in routers
-                             if is_distributed_router(router))
+        dvr_router_ids = {router['id'] for router in routers
+                          if is_distributed_router(router)}
         floating_ip_port_ids = [fip['port_id'] for fip in floating_ips
                                 if fip['router_id'] in dvr_router_ids]
         if floating_ip_port_ids:
@@ -1346,8 +1346,7 @@ class L3_NAT_with_dvr_db_mixin(_DVRAgentInterfaceMixin,
             router = self._get_router(context, router)
         if is_distributed_router(router):
             return const.DEVICE_OWNER_DVR_INTERFACE
-        return super(L3_NAT_with_dvr_db_mixin,
-                     self)._get_device_owner(context, router)
+        return super()._get_device_owner(context, router)
 
     @db_api.retry_if_session_inactive()
     def create_floatingip(self, context, floatingip,

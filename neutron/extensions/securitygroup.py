@@ -70,7 +70,7 @@ class SecurityGroupInUse(exceptions.InUse):
     def __init__(self, **kwargs):
         if 'reason' not in kwargs:
             kwargs['reason'] = _("in use")
-        super(SecurityGroupInUse, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
 class SecurityGroupCannotRemoveDefault(exceptions.InUse):
@@ -132,7 +132,7 @@ class SecurityGroupRuleInUse(exceptions.InUse):
     def __init__(self, **kwargs):
         if 'reason' not in kwargs:
             kwargs['reason'] = _("in use")
-        super(SecurityGroupRuleInUse, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
 
 class SecurityGroupRuleParameterConflict(exceptions.InvalidInput):
@@ -344,7 +344,7 @@ class Securitygroup(api_extensions.ExtensionDescriptor):
         return exts
 
     def update_attributes_map(self, attributes):
-        super(Securitygroup, self).update_attributes_map(
+        super().update_attributes_map(
             attributes, extension_attrs_map=RESOURCE_ATTRIBUTE_MAP)
 
     def get_extended_resources(self, version):
@@ -358,7 +358,7 @@ class Securitygroup(api_extensions.ExtensionDescriptor):
         return [stdattr_ext.Standardattrdescription.get_alias()]
 
 
-class SecurityGroupPluginBase(object, metaclass=abc.ABCMeta):
+class SecurityGroupPluginBase(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def create_security_group(self, context, security_group):

@@ -46,7 +46,7 @@ listen listener
 """
 
 
-class HaproxyConfiguratorBase(object, metaclass=abc.ABCMeta):
+class HaproxyConfiguratorBase(metaclass=abc.ABCMeta):
     PROXY_CONFIG_DIR = None
     HEADER_CONFIG_TEMPLATE = None
 
@@ -75,7 +75,7 @@ class HaproxyConfiguratorBase(object, metaclass=abc.ABCMeta):
         # starts with "haproxy" then things will get logged to
         # /var/log/haproxy.log on Debian distros, instead of to syslog.
         uuid = network_id or router_id
-        self.log_tag = "haproxy-{}-{}".format(METADATA_SERVICE_NAME, uuid)
+        self.log_tag = f"haproxy-{METADATA_SERVICE_NAME}-{uuid}"
         self._haproxy_cfg = ''
         self._resource_id = None
         self._create_config()
@@ -129,7 +129,7 @@ class HaproxyConfiguratorBase(object, metaclass=abc.ABCMeta):
         }
         if self.host_v6 and self.bind_interface:
             cfg_info['bind_v6_line'] = (
-                'bind %s:%s interface %s' % (
+                'bind {}:{} interface {}'.format(
                     self.host_v6, self.port, self.bind_interface)
             )
         # If using the network ID, delete any spurious router ID that might
@@ -198,7 +198,7 @@ class HaproxyConfiguratorBase(object, metaclass=abc.ABCMeta):
         linux_utils.delete_if_exists(cfg_path, run_as_root=True)
 
 
-class MetadataDriverBase(object, metaclass=abc.ABCMeta):
+class MetadataDriverBase(metaclass=abc.ABCMeta):
     monitors = {}
 
     @staticmethod

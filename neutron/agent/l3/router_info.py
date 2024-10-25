@@ -44,7 +44,7 @@ ADDRESS_SCOPE_MARK_ID_MAX = 2048
 DEFAULT_ADDRESS_SCOPE = "noscope"
 
 
-class BaseRouterInfo(object, metaclass=abc.ABCMeta):
+class BaseRouterInfo(metaclass=abc.ABCMeta):
 
     def __init__(self,
                  agent,
@@ -130,8 +130,8 @@ class RouterInfo(BaseRouterInfo):
                  agent_conf,
                  interface_driver,
                  use_ipv6=False):
-        super(RouterInfo, self).__init__(agent, router_id, router, agent_conf,
-                                         interface_driver, use_ipv6)
+        super().__init__(agent, router_id, router, agent_conf,
+                         interface_driver, use_ipv6)
 
         self.ex_gw_port = None
         self.fip_map = {}
@@ -158,7 +158,7 @@ class RouterInfo(BaseRouterInfo):
         self.qos_gateway_ips = set()
 
     def initialize(self, process_monitor):
-        super(RouterInfo, self).initialize(process_monitor)
+        super().initialize(process_monitor)
         self.radvd = ra.DaemonMonitor(self.router_id,
                                       self.ns_name,
                                       process_monitor,
@@ -266,7 +266,8 @@ class RouterInfo(BaseRouterInfo):
     def floating_forward_rules(self, fip):
         fixed_ip = fip['fixed_ip_address']
         floating_ip = fip['floating_ip_address']
-        to_source = '-s %s/32 -j SNAT --to-source %s' % (fixed_ip, floating_ip)
+        to_source = '-s {}/32 -j SNAT --to-source {}'.format(
+            fixed_ip, floating_ip)
         if self.iptables_manager.random_fully:
             to_source += ' --random-fully'
         return [('PREROUTING', '-d %s/32 -j DNAT --to-destination %s' %
@@ -277,7 +278,7 @@ class RouterInfo(BaseRouterInfo):
 
     def floating_mangle_rules(self, floating_ip, fixed_ip, internal_mark):
         mark_traffic_to_floating_ip = (
-            'floatingip', '-d %s/32 -j MARK --set-xmark %s' % (
+            'floatingip', '-d {}/32 -j MARK --set-xmark {}'.format(
                 floating_ip, internal_mark))
         mark_traffic_from_fixed_ip = (
             'FORWARD', '-s %s/32 -j $float-snat' % fixed_ip)
@@ -293,7 +294,7 @@ class RouterInfo(BaseRouterInfo):
 
         mark_id = self._address_scope_to_mark_id[address_scope]
         # NOTE: Address scopes use only the upper 16 bits of the 32 fwmark
-        return "%s/%s" % (hex(mark_id << 16), ADDRESS_SCOPE_MARK_MASK)
+        return "{}/{}".format(hex(mark_id << 16), ADDRESS_SCOPE_MARK_MASK)
 
     def get_port_address_scope_mark(self, port):
         """Get the IP version 4 and 6 address scope mark for the port
@@ -427,7 +428,7 @@ class RouterInfo(BaseRouterInfo):
         device.delete_addr_and_conntrack_state(ip_cidr)
 
     def get_router_cidrs(self, device):
-        return set([addr['cidr'] for addr in device.addr.list()])
+        return {addr['cidr'] for addr in device.addr.list()}
 
     def get_centralized_fip_cidr_set(self):
         return set()
@@ -655,18 +656,18 @@ class RouterInfo(BaseRouterInfo):
             namespace=self.ns_name)
 
     def address_scope_mangle_rule(self, device_name, mark_mask):
-        return '-i %s -j MARK --set-xmark %s' % (device_name, mark_mask)
+        return '-i {} -j MARK --set-xmark {}'.format(device_name, mark_mask)
 
     def address_scope_filter_rule(self, device_name, mark_mask):
-        return '-o %s -m mark ! --mark %s -j DROP' % (
+        return '-o {} -m mark ! --mark {} -j DROP'.format(
             device_name, mark_mask)
 
     def _process_internal_ports(self):
-        existing_port_ids = set(p['id'] for p in self.internal_ports)
+        existing_port_ids = {p['id'] for p in self.internal_ports}
 
         internal_ports = self.router.get(lib_constants.INTERFACE_KEY, [])
-        current_port_ids = set(p['id'] for p in internal_ports
-                               if p['admin_state_up'])
+        current_port_ids = {p['id'] for p in internal_ports
+                            if p['admin_state_up']}
 
         new_port_ids = current_port_ids - existing_port_ids
         new_ports = [p for p in internal_ports if p['id'] in new_port_ids]
@@ -731,10 +732,10 @@ class RouterInfo(BaseRouterInfo):
             self.enable_radvd(internal_ports)
 
         existing_devices = self._get_existing_devices()
-        current_internal_devs = set(n for n in existing_devices
-                                    if n.startswith(INTERNAL_DEV_PREFIX))
-        current_port_devs = set(self.get_internal_device_name(port_id)
-                                for port_id in current_port_ids)
+        current_internal_devs = {n for n in existing_devices
+                                 if n.startswith(INTERNAL_DEV_PREFIX)}
+        current_port_devs = {self.get_internal_device_name(port_id)
+                             for port_id in current_port_ids}
         stale_devs = current_internal_devs - current_port_devs
         for stale_dev in stale_devs:
             LOG.debug('Deleting stale internal router device: %s',
@@ -959,7 +960,8 @@ class RouterInfo(BaseRouterInfo):
                 snat_internal_traffic_to_floating_ip]
 
     def external_gateway_nat_snat_rules(self, ex_gw_ip, interface_name):
-        to_source = '-o %s -j SNAT --to-source %s' % (interface_name, ex_gw_ip)
+        to_source = '-o {} -j SNAT --to-source {}'.format(
+            interface_name, ex_gw_ip)
         if self.iptables_manager.random_fully:
             to_source += ' --random-fully'
         return [('snat', to_source)]
@@ -1135,7 +1137,7 @@ class RouterInfo(BaseRouterInfo):
              'value': self.agent_conf.metadata_access_mark,
              'mask': lib_constants.ROUTER_MARK_MASK})
         drop_non_local_metadata = (
-            '-m mark --mark %s/%s -j DROP' % (
+            '-m mark --mark {}/{} -j DROP'.format(
                 self.agent_conf.metadata_access_mark,
                 lib_constants.ROUTER_MARK_MASK))
         self.iptables_manager.ipv4['mangle'].add_rule(
@@ -1154,7 +1156,7 @@ class RouterInfo(BaseRouterInfo):
                  'value': self.agent_conf.metadata_access_mark,
                  'mask': lib_constants.ROUTER_MARK_MASK})
             drop_non_local_v6_metadata = (
-                '-m mark --mark %s/%s -j DROP' % (
+                '-m mark --mark {}/{} -j DROP'.format(
                     self.agent_conf.metadata_access_mark,
                     lib_constants.ROUTER_MARK_MASK))
             self.iptables_manager.ipv6['mangle'].add_rule(
@@ -1265,7 +1267,7 @@ class RouterInfo(BaseRouterInfo):
             return
 
         # Prevents snat within the same address scope
-        rule = '-o %s -m connmark --mark %s -j ACCEPT' % (
+        rule = '-o {} -m connmark --mark {} -j ACCEPT'.format(
             external_devicename,
             self.get_address_scope_mark_mask(address_scope))
         iptables_manager.ipv4['nat'].add_rule('snat', rule)
@@ -1311,8 +1313,8 @@ class RouterInfo(BaseRouterInfo):
 
         # Update ex_gw_port on the router info cache
         self.ex_gw_port = self.get_ex_gw_port()
-        self.fip_map = dict((fip['floating_ip_address'],
-                             fip['fixed_ip_address'])
-                            for fip in self.get_floating_ips())
+        self.fip_map = {fip['floating_ip_address']:
+                        fip['fixed_ip_address']
+                        for fip in self.get_floating_ips()}
         self.fip_managed_by_port_forwardings = self.router.get(
             'fip_managed_by_port_forwardings')

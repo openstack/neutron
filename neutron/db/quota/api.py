@@ -171,8 +171,8 @@ def create_reservation(context, project_id, deltas, expiration=None):
     return ReservationInfo(reserv_obj['id'],
                            reserv_obj['project_id'],
                            reserv_obj['expiration'],
-                           dict((delta.resource, delta.amount)
-                                for delta in reserv_obj.resource_deltas))
+                           {delta.resource: delta.amount
+                            for delta in reserv_obj.resource_deltas})
 
 
 @db_api.retry_if_session_inactive()
@@ -183,8 +183,8 @@ def get_reservation(context, reservation_id):
     return ReservationInfo(reserv_obj['id'],
                            reserv_obj['project_id'],
                            reserv_obj['expiration'],
-                           dict((delta.resource, delta.amount)
-                                for delta in reserv_obj.resource_deltas))
+                           {delta.resource: delta.amount
+                            for delta in reserv_obj.resource_deltas})
 
 
 @utils.transaction_guard

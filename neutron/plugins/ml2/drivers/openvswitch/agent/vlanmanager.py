@@ -39,7 +39,7 @@ class NotUniqMapping(exceptions.NeutronException):
     message = _('Mapping VLAN for network %(net_id)s should be unique.')
 
 
-class LocalVLANMapping(object):
+class LocalVLANMapping:
     def __init__(self, vlan, network_type, physical_network, segmentation_id,
                  vif_ports=None):
         self.vlan = vlan
@@ -67,14 +67,14 @@ class LocalVLANMapping(object):
         return id(self)
 
 
-class LocalVlanManager(object):
+class LocalVlanManager:
     """Singleton manager that maps internal VLAN mapping to external network
     segmentation ids.
     """
 
     def __new__(cls):
         if not hasattr(cls, '_instance'):
-            cls._instance = super(LocalVlanManager, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
         return cls._instance
 
     def __init__(self):

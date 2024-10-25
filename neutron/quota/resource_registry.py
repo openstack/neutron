@@ -99,7 +99,7 @@ def mark_resources_dirty(f):
     return wrapper
 
 
-class tracked_resources(object):
+class tracked_resources:
     """Decorator for specifying resources for which usage should be tracked.
 
     A plugin class can use this decorator to specify for which resources
@@ -126,7 +126,7 @@ class tracked_resources(object):
         return wrapper
 
 
-class ResourceRegistry(object):
+class ResourceRegistry:
     """Registry for resource subject to quota limits.
 
     This class keeps track of Neutron resources for which quota limits are

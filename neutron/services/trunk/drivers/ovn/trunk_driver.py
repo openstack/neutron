@@ -40,7 +40,7 @@ SUPPORTED_SEGMENTATION_TYPES = (
 LOG = log.getLogger(__name__)
 
 
-class OVNTrunkHandler(object):
+class OVNTrunkHandler:
     def __init__(self, plugin_driver):
         self.plugin_driver = plugin_driver
 
@@ -204,7 +204,7 @@ class OVNTrunkDriver(trunk_base.DriverBase):
 
     @registry.receives(resources.TRUNK_PLUGIN, [events.AFTER_INIT])
     def register(self, resource, event, trigger, payload=None):
-        super(OVNTrunkDriver, self).register(
+        super().register(
             resource, event, trigger, payload=payload)
         self._handler = OVNTrunkHandler(self.plugin_driver)
 

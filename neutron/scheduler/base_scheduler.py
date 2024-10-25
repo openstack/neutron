@@ -22,7 +22,7 @@ from oslo_log import log as logging
 LOG = logging.getLogger(__name__)
 
 
-class BaseScheduler(object, metaclass=abc.ABCMeta):
+class BaseScheduler(metaclass=abc.ABCMeta):
     """The base scheduler (agnostic to resource type).
        Child classes of BaseScheduler must define the
        self.resource_filter to filter agents of

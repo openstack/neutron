@@ -77,7 +77,7 @@ def find_deleted_sg_rules(old_port, new_ports):
     return del_rules
 
 
-class Cookie(object):
+class Cookie:
 
     def __init__(self, cookie_id, port, action, project):
         self.id = cookie_id
@@ -105,7 +105,7 @@ class Cookie(object):
         return not self.log_object_refs
 
 
-class OFPortLog(object):
+class OFPortLog:
 
     def __init__(self, port, ovs_port, log_event):
         self.id = port['port_id']
@@ -261,7 +261,7 @@ class OVSFirewallLoggingDriver(log_ext.LoggingDriver):
                 action, context, resource_type, log_resources=log_resources)
 
     def _handle_logging(self, action, context, resource_type, **kwargs):
-        handler_name = "%s_%s_log" % (action, resource_type)
+        handler_name = "{}_{}_log".format(action, resource_type)
         handler = getattr(self, handler_name)
         handler(context, **kwargs)
 
@@ -352,7 +352,7 @@ class OVSFirewallLoggingDriver(log_ext.LoggingDriver):
         dl_type = kwargs.get('dl_type')
         ovsfw.create_reg_numbers(kwargs)
         if isinstance(dl_type, int):
-            kwargs['dl_type'] = "0x{:04x}".format(dl_type)
+            kwargs['dl_type'] = f"0x{dl_type:04x}"
         LOG.debug("Add flow firewall log %s", str(kwargs))
         if self._deferred:
             self.int_br.add_flow(**kwargs)

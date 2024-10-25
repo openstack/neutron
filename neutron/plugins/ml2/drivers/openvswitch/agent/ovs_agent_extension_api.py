@@ -14,7 +14,7 @@
 #    under the License.
 
 
-class OVSCookieBridge(object):
+class OVSCookieBridge:
     '''Bridge restricting flow operations to its own distinct cookie
 
     This class creates a bridge derived from a bridge passed at init (which
@@ -33,7 +33,7 @@ class OVSCookieBridge(object):
         pass
 
 
-class OVSAgentExtensionAPI(object):
+class OVSAgentExtensionAPI:
     '''Implements the Agent API for Open vSwitch agent.
 
     Extensions can gain access to this API by overriding the consume_api
@@ -44,7 +44,7 @@ class OVSAgentExtensionAPI(object):
                  plugin_rpc=None,
                  phys_ofports=None,
                  bridge_mappings=None):
-        super(OVSAgentExtensionAPI, self).__init__()
+        super().__init__()
         self.br_int = int_br
         self.br_tun = tun_br
         self.br_phys = phys_brs or {}

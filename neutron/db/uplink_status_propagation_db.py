@@ -16,7 +16,7 @@ from neutron.objects.port.extensions import uplink_status_propagation as \
     usp_obj
 
 
-class UplinkStatusPropagationMixin(object):
+class UplinkStatusPropagationMixin:
     """Mixin class to add uplink propagation to a port"""
 
     def _process_create_port(self, context, data, res):

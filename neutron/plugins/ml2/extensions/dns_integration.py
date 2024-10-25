@@ -309,13 +309,13 @@ class DNSExtensionDriver(api.ExtensionDriver):
                 hostname = dns_name
                 fqdn = dns_name
                 if not dns_name.endswith('.'):
-                    fqdn = '%s.%s' % (dns_name, dns_domain)
+                    fqdn = '{}.{}'.format(dns_name, dns_domain)
             else:
                 hostname = 'host-%s' % ip['ip_address'].replace(
                     '.', '-').replace(':', '-')
                 fqdn = hostname
                 if dns_domain:
-                    fqdn = '%s.%s' % (hostname, dns_domain)
+                    fqdn = '{}.{}'.format(hostname, dns_domain)
             dns_assignment.append({'ip_address': ip['ip_address'],
                                    'hostname': hostname,
                                    'fqdn': fqdn})
@@ -417,7 +417,7 @@ class DNSDomainPortsExtensionDriver(DNSExtensionDriverML2):
 
     def extend_port_dict(self, session, db_data, response_data):
         response_data = (
-            super(DNSDomainPortsExtensionDriver, self).extend_port_dict(
+            super().extend_port_dict(
                 session, db_data, response_data))
         dns_data_db = db_data.dns
         response_data[dns_apidef.DNSDOMAIN] = ''

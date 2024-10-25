@@ -50,7 +50,7 @@ class Manager(periodic_task.PeriodicTasks, metaclass=ManagerMeta):
             host = cfg.CONF.host
         self.host = host
         conf = getattr(self, "conf", cfg.CONF)
-        super(Manager, self).__init__(conf)
+        super().__init__(conf)
 
     def periodic_tasks(self, context, raise_on_error=False):
         self.run_periodic_tasks(context, raise_on_error=raise_on_error)
@@ -89,7 +89,7 @@ def validate_pre_plugin_load():
         return msg
 
 
-class NeutronManager(object, metaclass=profiler.TracedMeta):
+class NeutronManager(metaclass=profiler.TracedMeta):
     """Neutron's Manager class.
 
     Neutron's Manager class is responsible for parsing a config file and

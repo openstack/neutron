@@ -23,7 +23,7 @@ import oslo_messaging
 LOG = logging.getLogger(__name__)
 
 
-class MeteringRpcCallbacks(object):
+class MeteringRpcCallbacks:
 
     target = oslo_messaging.Target(version='1.0')
 

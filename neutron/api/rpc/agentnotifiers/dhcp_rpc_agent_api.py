@@ -65,7 +65,7 @@ METHOD_PRIORITY_MAP = {
 LOG = logging.getLogger(__name__)
 
 
-class DhcpAgentNotifyAPI(object):
+class DhcpAgentNotifyAPI:
     """API for plugin to notify DHCP agent.
 
     This class implements the client side of an rpc interface.  The server side

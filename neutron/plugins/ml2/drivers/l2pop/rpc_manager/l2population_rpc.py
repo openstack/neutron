@@ -24,7 +24,7 @@ from neutron.plugins.ml2.drivers.l2pop import rpc as l2pop_rpc
 from neutron.plugins.ml2.drivers.openvswitch.agent import vlanmanager
 
 
-class L2populationRpcCallBackMixin(object, metaclass=abc.ABCMeta):
+class L2populationRpcCallBackMixin(metaclass=abc.ABCMeta):
     '''General mixin class of L2-population RPC call back.
 
     The following methods are called through RPC.
@@ -84,10 +84,10 @@ class L2populationRpcCallBackMixin(object, metaclass=abc.ABCMeta):
                                    for pi in agent[when]]
         for value in unmarshalled.values():
             if 'ports' in value:
-                value['ports'] = dict(
-                    (address, [l2pop_rpc.PortInfo(*pi) for pi in port_infos])
+                value['ports'] = {
+                    address: [l2pop_rpc.PortInfo(*pi) for pi in port_infos]
                     for address, port_infos in value['ports'].items()
-                )
+                }
         return unmarshalled
 
     @abc.abstractmethod

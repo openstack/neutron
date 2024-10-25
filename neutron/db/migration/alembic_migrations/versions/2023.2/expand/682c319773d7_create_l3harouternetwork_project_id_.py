@@ -35,6 +35,6 @@ COLUMN = 'project_id'
 
 def upgrade():
     op.create_unique_constraint(
-        constraint_name='uniq_%s0%s' % (TABLE, COLUMN),
+        constraint_name='uniq_{}0{}'.format(TABLE, COLUMN),
         table_name=TABLE,
         columns=[COLUMN])

@@ -27,7 +27,7 @@ LOG = logging.getLogger(__name__)
 PortInfo = collections.namedtuple("PortInfo", "mac_address ip_address")
 
 
-class L2populationAgentNotifyAPI(object):
+class L2populationAgentNotifyAPI:
 
     def __init__(self, topic=topics.AGENT):
         self.topic = topic

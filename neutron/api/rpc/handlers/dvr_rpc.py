@@ -25,7 +25,7 @@ import oslo_messaging
 LOG = logging.getLogger(__name__)
 
 
-class DVRServerRpcApi(object):
+class DVRServerRpcApi:
     """Agent-side RPC (stub) for agent-to-plugin interaction.
 
     This class implements the client side of an rpc interface.  The server side
@@ -66,7 +66,7 @@ class DVRServerRpcApi(object):
             context, 'get_subnet_for_dvr', subnet=subnet, fixed_ips=fixed_ips)
 
 
-class DVRServerRpcCallback(object):
+class DVRServerRpcCallback:
     """Plugin-side RPC (implementation) for agent-to-plugin interaction.
 
     This class implements the server side of an rpc interface.  The client side
@@ -111,7 +111,7 @@ class DVRServerRpcCallback(object):
             context, subnet, fixed_ips=fixed_ips)
 
 
-class DVRAgentRpcApiMixin(object):
+class DVRAgentRpcApiMixin:
     """Plugin-side RPC (stub) for plugin-to-agent interaction."""
 
     DVR_RPC_VERSION = "1.0"
@@ -130,7 +130,7 @@ class DVRAgentRpcApiMixin(object):
         cctxt.cast(context, 'dvr_mac_address_update', dvr_macs=dvr_macs)
 
 
-class DVRAgentRpcCallbackMixin(object):
+class DVRAgentRpcCallbackMixin:
     """Agent-side RPC (implementation) for plugin-to-agent interaction."""
 
     def dvr_mac_address_update(self, context, **kwargs):

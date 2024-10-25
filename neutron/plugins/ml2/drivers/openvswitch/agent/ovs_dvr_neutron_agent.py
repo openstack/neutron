@@ -34,7 +34,7 @@ LOG = logging.getLogger(__name__)
 
 # A class to represent a DVR-hosted subnet including vif_ports resident on
 # that subnet
-class LocalDVRSubnetMapping(object):
+class LocalDVRSubnetMapping:
     def __init__(self, subnet, csnat_ofport=ovs_constants.OFPORT_INVALID):
         # set of compute ports on this dvr subnet
         self.compute_ports = {}
@@ -87,7 +87,7 @@ class LocalDVRSubnetMapping(object):
         return self.dvr_ports
 
 
-class OVSPort(object):
+class OVSPort:
     def __init__(self, id, ofport, mac, device_owner):
         self.id = id
         self.mac = mac
@@ -136,7 +136,7 @@ class OVSPort(object):
 
 
 @profiler.trace_cls("ovs_dvr_agent")
-class OVSDVRNeutronAgent(object):
+class OVSDVRNeutronAgent:
     '''Implements OVS-based DVR (Distributed Virtual Router) agent'''
     # history
     #   1.0 Initial version

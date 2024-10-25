@@ -24,7 +24,7 @@ class Dvr(extensions.APIExtensionDescriptor):
     api_definition = apidef
 
 
-class DVRMacAddressPluginBase(object, metaclass=abc.ABCMeta):
+class DVRMacAddressPluginBase(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_dvr_mac_address_list(self, context):

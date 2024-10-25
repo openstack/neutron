@@ -66,7 +66,7 @@ def disable_security_group_extension_by_config(aliases):
         _disable_extension(sg_rules_default_sg_def.ALIAS, aliases)
 
 
-class SecurityGroupAgentRpc(object):
+class SecurityGroupAgentRpc:
     """Enables SecurityGroup agent support in agent implementations."""
 
     def __init__(self, context, plugin_rpc, local_vlan_map=None,

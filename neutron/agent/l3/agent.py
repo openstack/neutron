@@ -94,7 +94,7 @@ def log_verbose_exc(message, router_payload):
                                           router_payload, indent=5))
 
 
-class L3PluginApi(object):
+class L3PluginApi:
     """Agent side of the l3 agent RPC API.
 
     API version history:
@@ -213,7 +213,7 @@ class L3PluginApi(object):
             context, 'get_networks', filters=filters, fields=fields)
 
 
-class RouterFactory(object):
+class RouterFactory:
 
     def __init__(self):
         self._routers = {}
@@ -330,7 +330,7 @@ class L3NATAgent(ha.AgentMixin,
         self._pool_size = ROUTER_PROCESS_GREENLET_MIN
         self._pool = eventlet.GreenPool(size=self._pool_size)
         self._queue = queue.ResourceProcessingQueue()
-        super(L3NATAgent, self).__init__(host=self.conf.host)
+        super().__init__(host=self.conf.host)
 
         self.target_ex_net_id = None
         self.use_ipv6 = netutils.is_ipv6_enabled()
@@ -999,7 +999,7 @@ class L3NATAgent(ha.AgentMixin,
 class L3NATAgentWithStateReport(L3NATAgent):
 
     def __init__(self, host, conf=None):
-        super(L3NATAgentWithStateReport, self).__init__(host=host, conf=conf)
+        super().__init__(host=host, conf=conf)
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
         self.failed_report_state = False
         self.agent_state = {

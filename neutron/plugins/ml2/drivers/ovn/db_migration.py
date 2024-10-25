@@ -59,8 +59,8 @@ def migrate_neutron_database_to_ovn():
                 segment.segmentation_id).update({"allocated": False})
 
     # Update ``PortBinding`` objects.
-    pb_updated = set([])
-    pb_missed = set([])
+    pb_updated = set()
+    pb_missed = set()
     while True:
         pb_current = port_obj.PortBinding.get_port_id_and_host(
             ctx, vif_type='ovs', vnic_type='normal', status='ACTIVE')
@@ -104,7 +104,7 @@ def migrate_neutron_database_to_ovn():
                     'records: %s', ', '.join(pb_missed))
 
     # Update ``Trunk`` objects.
-    trunk_updated = set([])
+    trunk_updated = set()
     while True:
         trunk_current = trunk_obj.Trunk.get_trunk_ids(ctx)
         diff = set(trunk_current).difference(trunk_updated)

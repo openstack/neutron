@@ -421,8 +421,8 @@ class L3AgentSchedulerDbMixin(l3agentscheduler.L3AgentSchedulerPluginBase,
 
             agent_modes = filters.pop('agent_modes', [])
             if agent_modes:
-                config_filters = set('\"agent_mode\": \"%s\"' % agent_mode
-                                     for agent_mode in agent_modes)
+                config_filters = {'\"agent_mode\": \"%s\"' % agent_mode
+                                  for agent_mode in agent_modes}
             agent_filters.update(filters)
         agent_objs = []
         if config_filters:

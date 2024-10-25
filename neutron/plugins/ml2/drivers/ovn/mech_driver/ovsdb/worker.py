@@ -24,18 +24,18 @@ class MaintenanceWorker(worker.BaseWorker):
         super().__init__(desc=self.desc, **kwargs)
 
     def start(self, **kwargs):
-        super(MaintenanceWorker, self).start()
+        super().start()
         # NOTE(twilson) The super class will trigger the post_fork_initialize
         # in the driver, which starts the connection/IDL notify loop which
         # keeps the process from exiting
 
     def stop(self):
         """Stop service."""
-        super(MaintenanceWorker, self).stop()
+        super().stop()
 
     def wait(self):
         """Wait for service to complete."""
-        super(MaintenanceWorker, self).wait()
+        super().wait()
 
     @staticmethod
     def reset():

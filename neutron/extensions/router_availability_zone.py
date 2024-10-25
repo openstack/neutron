@@ -24,7 +24,7 @@ class Router_availability_zone(extensions.APIExtensionDescriptor):
     api_definition = apidef
 
 
-class RouterAvailabilityZonePluginBase(object, metaclass=abc.ABCMeta):
+class RouterAvailabilityZonePluginBase(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_router_availability_zones(self, router):

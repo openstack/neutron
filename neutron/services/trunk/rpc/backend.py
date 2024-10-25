@@ -23,7 +23,7 @@ LOG = logging.getLogger(__name__)
 
 
 @registry.has_registry_receivers
-class ServerSideRpcBackend(object):
+class ServerSideRpcBackend:
     """The Neutron Server RPC backend."""
 
     def __init__(self):

@@ -23,7 +23,7 @@ from neutron.services import provider_configuration as pconf
 LOG = logging.getLogger(__name__)
 
 
-class ServiceTypeManager(object):
+class ServiceTypeManager:
     """Manage service type objects in Neutron."""
 
     _instance = None

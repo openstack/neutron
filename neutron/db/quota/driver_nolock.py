@@ -63,9 +63,9 @@ class DbQuotaNoLockDriver(quota_driver.DbQuotaDriver):
         with db_api.CONTEXT_WRITER.using(context):
             # Filter out unlimited resources.
             limits = self.get_project_quotas(context, resources, project_id)
-            unlimited_resources = set(
-                [resource for (resource, limit) in limits.items()
-                 if limit <= quota_api.UNLIMITED_QUOTA])
+            unlimited_resources = {
+                resource for (resource, limit) in limits.items()
+                if limit <= quota_api.UNLIMITED_QUOTA}
             requested_resources = (set(deltas.keys()) - unlimited_resources)
 
             # Count the number of (1) used and (2) reserved resources for this

@@ -48,8 +48,8 @@ class DbQuotaDriver(nlib_quota_api.QuotaDriverAPI):
         # Currently the project_id parameter is unused, since all projects
         # share the same default values. This may change in the future so
         # we include project ID to remain backwards compatible.
-        return dict((key, resource.default)
-                    for key, resource in resources.items())
+        return {key: resource.default
+                for key, resource in resources.items()}
 
     @staticmethod
     @db_api.retry_if_session_inactive()
@@ -65,8 +65,8 @@ class DbQuotaDriver(nlib_quota_api.QuotaDriverAPI):
         """
 
         # init with defaults
-        project_quota = dict((key, resource.default)
-                             for key, resource in resources.items())
+        project_quota = {key: resource.default
+                         for key, resource in resources.items()}
 
         # update with project specific limits
         quota_objs = quota_obj.Quota.get_objects(context,
@@ -134,8 +134,8 @@ class DbQuotaDriver(nlib_quota_api.QuotaDriverAPI):
         :return: quotas list of dict of project_id:, resourcekey1:
         resourcekey2: ...
         """
-        project_default = dict((key, resource.default)
-                               for key, resource in resources.items())
+        project_default = {key: resource.default
+                           for key, resource in resources.items()}
 
         all_project_quotas = {}
 
@@ -184,7 +184,7 @@ class DbQuotaDriver(nlib_quota_api.QuotaDriverAPI):
         quotas = DbQuotaDriver.get_project_quotas(
             context, resources, project_id)
 
-        return dict((k, v) for k, v in quotas.items())
+        return dict(quotas.items())
 
     def _handle_expired_reservations(self, context, project_id):
         LOG.debug("Deleting expired reservations for project: %s", project_id)
@@ -213,9 +213,9 @@ class DbQuotaDriver(nlib_quota_api.QuotaDriverAPI):
             # retrieved
             current_limits = self.get_project_quotas(
                 context, resources, project_id)
-            unlimited_resources = set(
-                [resource for (resource, limit) in current_limits.items()
-                 if limit <= quota_api.UNLIMITED_QUOTA])
+            unlimited_resources = {
+                resource for (resource, limit) in current_limits.items()
+                if limit <= quota_api.UNLIMITED_QUOTA}
             # Do not even bother counting resources and calculating headroom
             # for resources with unlimited quota
             LOG.debug("Resources %s have unlimited quota limit. It is not "
@@ -228,10 +228,10 @@ class DbQuotaDriver(nlib_quota_api.QuotaDriverAPI):
             # resource triggers multiple queries on quota usage. This should be
             # improved, however this is not an urgent matter as the REST API
             # currently only allows allocation of a resource at a time
-            current_usages = dict(
-                (resource, self.get_resource_usage(context, project_id,
-                                                   resources, resource)) for
-                resource in requested_resources)
+            current_usages = {
+                resource: self.get_resource_usage(context, project_id,
+                                                  resources, resource) for
+                resource in requested_resources}
             # Adjust for expired reservations. Apparently it is cheaper than
             # querying every time for active reservations and counting overall
             # quantity of resources reserved

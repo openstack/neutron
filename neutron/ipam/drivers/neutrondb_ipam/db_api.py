@@ -21,7 +21,7 @@ from neutron.objects import ipam as ipam_objs
 # Database operations for Neutron's DB-backed IPAM driver
 
 
-class IpamSubnetManager(object):
+class IpamSubnetManager:
 
     @classmethod
     def load_by_neutron_subnet_id(cls, context, neutron_subnet_id):

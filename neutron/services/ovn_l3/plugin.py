@@ -86,7 +86,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                                          floatingip=l3_models.FloatingIP)
     def __init__(self):
         LOG.info("Starting OVNL3RouterPlugin")
-        super(OVNL3RouterPlugin, self).__init__()
+        super().__init__()
         self._plugin_property = None
         self._mech = None
         self._initialize_plugin_driver()
@@ -165,7 +165,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
                                       interface_info):
         try:
             router_interface_info = (
-                super(OVNL3RouterPlugin, self).add_router_interface(
+                super().add_router_interface(
                     context, router_id, interface_info))
         except n_exc.PortInUse:
             # NOTE(lucasagomes): If the port is already being used it means
@@ -191,7 +191,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
         # this method to create the floating IP in the DB with status down,
         # while the flavor drivers are responsible for calling the correct
         # backend to instatiate the floating IP in the data plane
-        return super(OVNL3RouterPlugin, self).create_floatingip(
+        return super().create_floatingip(
             context, floatingip, initial_status)
 
     def update_floatingip_status(self, context, floatingip_id, status):
@@ -207,7 +207,7 @@ class OVNL3RouterPlugin(service_base.ServicePluginBase,
     @db_api.retry_if_session_inactive()
     def update_floatingip_status_retry(self, context, floatingip_id, status):
         with db_api.CONTEXT_WRITER.using(context):
-            return super(OVNL3RouterPlugin, self).update_floatingip_status(
+            return super().update_floatingip_status(
                 context, floatingip_id, status)
 
     def _get_gateway_port_physnet_mapping(self):

@@ -103,8 +103,8 @@ class FloatingIPTcCommandBase(ip_lib.IPDevice):
         return filterids
 
     def _add_filter(self, qdisc_id, direction, ip, rate, burst):
-        rate_value = "%s%s" % (rate, tc_lib.BW_LIMIT_UNIT)
-        burst_value = "%s%s" % (
+        rate_value = "{}{}".format(rate, tc_lib.BW_LIMIT_UNIT)
+        burst_value = "{}{}".format(
             tc_lib.TcCommand.get_ingress_qdisc_burst_value(rate, burst),
             tc_lib.BURST_UNIT
         )

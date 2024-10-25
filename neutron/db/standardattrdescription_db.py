@@ -17,7 +17,7 @@ from neutron_lib.db import standard_attr
 
 
 @resource_extend.has_resource_extenders
-class StandardAttrDescriptionMixin(object):
+class StandardAttrDescriptionMixin:
     supported_extension_aliases = ['standard-attr-description']
 
     @staticmethod
