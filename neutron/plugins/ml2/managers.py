@@ -475,6 +475,12 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
                 if not driver.obj.check_vlan_transparency(context):
                     raise vlan_exc.VlanTransparencyDriverError()
 
+    def start_driver_rpc_listeners(self):
+        servers = []
+        for driver in self.ordered_mech_drivers:
+            servers.extend(driver.obj.start_rpc_listeners())
+        return servers
+
     def _call_on_drivers(self, method_name, context,
                          continue_on_failure=False, raise_db_retriable=False):
         """Helper method for calling a method across all mechanism drivers.
