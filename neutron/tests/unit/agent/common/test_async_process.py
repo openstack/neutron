@@ -30,7 +30,7 @@ from neutron.tests.unit.agent.linux import failing_process
 class TestAsyncProcess(base.BaseTestCase):
 
     def setUp(self):
-        super(TestAsyncProcess, self).setUp()
+        super().setUp()
         self.proc = async_process.AsyncProcess(['fake'])
 
     def test_construtor_raises_exception_for_negative_respawn_interval(self):
@@ -277,7 +277,7 @@ class TestAsyncProcess(base.BaseTestCase):
 class TestAsyncProcessLogging(base.BaseTestCase):
 
     def setUp(self):
-        super(TestAsyncProcessLogging, self).setUp()
+        super().setUp()
         self.log_mock = mock.patch.object(async_process, 'LOG').start()
 
     def _test__read_stdout_logging(self, enable):
@@ -318,7 +318,7 @@ class TestAsyncProcessDieOnError(base.BaseTestCase):
 
 class TestFailingAsyncProcess(base.BaseTestCase):
     def setUp(self):
-        super(TestFailingAsyncProcess, self).setUp()
+        super().setUp()
         path = self.get_temp_file_path('async.tmp', self.get_new_temp_dir())
         self.process = async_process.AsyncProcess([sys.executable,
                                                    failing_process.__file__,

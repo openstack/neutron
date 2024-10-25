@@ -54,7 +54,7 @@ class FakeL3LoggingExtension(l3_base.L3LoggingExtensionBase,
 class L3LoggingExtBaseTestCase(test_agent.BasicRouterOperationsFramework):
 
     def setUp(self):
-        super(L3LoggingExtBaseTestCase, self).setUp()
+        super().setUp()
         self.agent = l3_agent.L3NATAgent('test_host', self.conf)
         self.context = context.get_admin_context()
         self.connection = mock.Mock()
@@ -84,7 +84,7 @@ class L3LoggingExtBaseTestCase(test_agent.BasicRouterOperationsFramework):
 class TestL3LoggingExtBase(L3LoggingExtBaseTestCase):
 
     def setUp(self):
-        super(TestL3LoggingExtBase, self).setUp()
+        super().setUp()
         self.agent_ext = FakeL3LoggingExtension()
         self.agent_ext.consume_api(self.agent_api)
         self.log_driver = mock.Mock()

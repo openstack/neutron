@@ -41,7 +41,7 @@ PLUGIN_CLASS = (
 class TestRevisionNumber(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
 
     def setUp(self):
-        super(TestRevisionNumber, self).setUp()
+        super().setUp()
         self.ctx = context.get_admin_context()
         self.addCleanup(self._delete_objs)
         res = self._create_network(fmt=self.fmt, name='net',
@@ -139,7 +139,7 @@ class TestMaintenancePlugin(test_securitygroup.SecurityGroupTestPlugin,
 class TestExtensionManager(extensions.PluginAwareExtensionManager):
 
     def get_resources(self):
-        resources = super(TestExtensionManager, self).get_resources()
+        resources = super().get_resources()
         sg_ext_mgr = test_securitygroup.SecurityGroupTestExtensionManager
         sg_resources = sg_ext_mgr.get_resources(self)
         sg_resources_collection_names = [
@@ -156,7 +156,7 @@ class TestRevisionNumberMaintenance(test_securitygroup.SecurityGroupsTestCase,
         service_plugins = {
             'router':
             'neutron.tests.unit.extensions.test_l3.TestL3NatServicePlugin'}
-        super(TestRevisionNumberMaintenance, self).setUp(
+        super().setUp(
               plugin=PLUGIN_CLASS, service_plugins=service_plugins)
         l3_plugin = test_l3.TestL3NatServicePlugin()
         sec_plugin = test_securitygroup.SecurityGroupTestPlugin()

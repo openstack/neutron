@@ -126,21 +126,19 @@ class FakeFirewallDriver(firewall_base.FirewallDriver):
 class SecurityGroupRpcTestPlugin(test_sg.SecurityGroupTestPlugin,
                                  sg_db_rpc.SecurityGroupServerRpcMixin):
     def __init__(self):
-        super(SecurityGroupRpcTestPlugin, self).__init__()
+        super().__init__()
         self.notifier = mock.Mock()
         self.devices = {}
 
     def create_port(self, context, port):
-        result = super(SecurityGroupRpcTestPlugin,
-                       self).create_port(context, port)
+        result = super().create_port(context, port)
         self.devices[result['id']] = result
         self.notify_security_groups_member_updated(context, result)
         return result
 
     def update_port(self, context, id, port):
         original_port = self.get_port(context, id)
-        updated_port = super(SecurityGroupRpcTestPlugin,
-                             self).update_port(context, id, port)
+        updated_port = super().update_port(context, id, port)
         self.devices[id] = updated_port
         self._update_security_group_on_port(
             context, id, port, original_port, updated_port)
@@ -148,7 +146,7 @@ class SecurityGroupRpcTestPlugin(test_sg.SecurityGroupTestPlugin,
 
     def delete_port(self, context, id):
         port = self.get_port(context, id)
-        super(SecurityGroupRpcTestPlugin, self).delete_port(context, id)
+        super().delete_port(context, id)
         self.notify_security_groups_member_updated(context, port)
         del self.devices[id]
 
@@ -167,7 +165,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
     def setUp(self, plugin=None):
         plugin = plugin or TEST_PLUGIN_CLASS
         set_firewall_driver(FIREWALL_NOOP_DRIVER)
-        super(SGServerRpcCallBackTestCase, self).setUp(plugin)
+        super().setUp(plugin)
         self.notifier = directory.get_plugin().notifier
         self.rpc = securitygroups_rpc.SecurityGroupServerRpcCallback()
         default_sg_rules = [
@@ -594,11 +592,11 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                 ]},
                 'sg_member_ips': {
                     sg2_id: {
-                        'IPv4': set([(port_ip2, None), ]),
+                        'IPv4': {(port_ip2, None)},
                         'IPv6': set()
                     },
                     ag1_id: {
-                        'IPv4': set([(ag1_ip, None), ]),
+                        'IPv4': {(ag1_ip, None)},
                         'IPv6': set()
                     },
                 },
@@ -737,7 +735,7 @@ class SGServerRpcCallBackTestCase(test_sg.SecurityGroupDBTestCase):
                     sg1_id: {'IPv6': set()},
                     # This test uses RPC version 1.2 which gets compatible
                     # member ips without mac address
-                    ag1_id: {'IPv6': set([ag1_ip])}
+                    ag1_id: {'IPv6': {ag1_ip}}
                 },
             }
             self.assertEqual(expected['security_groups'],
@@ -892,7 +890,7 @@ class SecurityGroupAgentRpcTestCaseForNoneDriver(base.BaseTestCase):
 
 class BaseSecurityGroupAgentRpcTestCase(base.BaseTestCase):
     def setUp(self, defer_refresh_firewall=False):
-        super(BaseSecurityGroupAgentRpcTestCase, self).setUp()
+        super().setUp()
         set_firewall_driver(FIREWALL_NOOP_DRIVER)
         self.agent = sg_rpc.SecurityGroupAgentRpc(
                 context=None, plugin_rpc=mock.Mock(),
@@ -917,7 +915,7 @@ class BaseSecurityGroupAgentRpcTestCase(base.BaseTestCase):
 
 class SecurityGroupAgentRpcTestCase(BaseSecurityGroupAgentRpcTestCase):
     def setUp(self, defer_refresh_firewall=False):
-        super(SecurityGroupAgentRpcTestCase, self).setUp(
+        super().setUp(
             defer_refresh_firewall)
         rpc = self.agent.plugin_rpc
         rpc.security_group_info_for_devices.return_value = {
@@ -1098,7 +1096,7 @@ class SecurityGroupAgentRpcTestCase(BaseSecurityGroupAgentRpcTestCase):
 class SecurityGroupAgentEnhancedRpcTestCase(BaseSecurityGroupAgentRpcTestCase):
 
     def setUp(self, defer_refresh_firewall=False):
-        super(SecurityGroupAgentEnhancedRpcTestCase, self).setUp(
+        super().setUp(
             defer_refresh_firewall=defer_refresh_firewall)
         fake_sg_info = {
             'security_groups': collections.OrderedDict([
@@ -1240,7 +1238,7 @@ class SecurityGroupAgentRpcWithDeferredRefreshTestCase(
         SecurityGroupAgentRpcTestCase):
 
     def setUp(self):
-        super(SecurityGroupAgentRpcWithDeferredRefreshTestCase, self).setUp(
+        super().setUp(
             defer_refresh_firewall=True)
 
     @contextlib.contextmanager
@@ -1340,10 +1338,10 @@ class SecurityGroupAgentRpcWithDeferredRefreshTestCase(
         self.agent.prepare_devices_filter = mock.Mock()
         self.agent.refresh_firewall = mock.Mock()
         self.agent.devices_to_refilter = set()
-        self.agent.setup_port_filters(set(['fake_new_device']), set())
+        self.agent.setup_port_filters({'fake_new_device'}, set())
         self.assertFalse(self.agent.devices_to_refilter)
         self.agent.prepare_devices_filter.assert_called_once_with(
-            set(['fake_new_device']))
+            {'fake_new_device'})
         self.assertFalse(self.agent.refresh_firewall.called)
         self.assertFalse(self.firewall.security_group_updated.called)
 
@@ -1351,10 +1349,10 @@ class SecurityGroupAgentRpcWithDeferredRefreshTestCase(
         self.agent.prepare_devices_filter = mock.Mock()
         self.agent.refresh_firewall = mock.Mock()
         self.agent.devices_to_refilter = set()
-        self.agent.setup_port_filters(set(), set(['fake_updated_device']))
+        self.agent.setup_port_filters(set(), {'fake_updated_device'})
         self.assertFalse(self.agent.devices_to_refilter)
         self.agent.refresh_firewall.assert_called_once_with(
-            set(['fake_updated_device']))
+            {'fake_updated_device'})
         self.assertFalse(self.agent.prepare_devices_filter.called)
         self.assertTrue(self.firewall.security_group_updated.called)
 
@@ -1362,41 +1360,41 @@ class SecurityGroupAgentRpcWithDeferredRefreshTestCase(
         self.agent.prepare_devices_filter = mock.Mock()
         self.agent.refresh_firewall = mock.Mock()
         self.agent.devices_to_refilter = set()
-        self.agent.setup_port_filters(set(['fake_new_device']),
-                                      set(['fake_updated_device']))
+        self.agent.setup_port_filters({'fake_new_device'},
+                                      {'fake_updated_device'})
         self.assertFalse(self.agent.devices_to_refilter)
         self.agent.prepare_devices_filter.assert_called_once_with(
-            set(['fake_new_device']))
+            {'fake_new_device'})
         self.agent.refresh_firewall.assert_called_once_with(
-            set(['fake_updated_device']))
+            {'fake_updated_device'})
         self.assertTrue(self.firewall.security_group_updated.called)
 
     def test_setup_port_filters_sg_updates_only(self):
         self.agent.prepare_devices_filter = mock.Mock()
         self.agent.refresh_firewall = mock.Mock()
-        self.agent.devices_to_refilter = set(['fake_device'])
+        self.agent.devices_to_refilter = {'fake_device'}
         self.agent.setup_port_filters(set(), set())
         self.assertFalse(self.agent.devices_to_refilter)
         self.agent.refresh_firewall.assert_called_once_with(
-            set(['fake_device']))
+            {'fake_device'})
         self.assertFalse(self.agent.prepare_devices_filter.called)
         self.assertFalse(self.firewall.security_group_updated.called)
 
     def test_setup_port_filters_sg_updates_and_new_ports(self):
         self.agent.prepare_devices_filter = mock.Mock()
         self.agent.refresh_firewall = mock.Mock()
-        self.agent.devices_to_refilter = set(['fake_device'])
-        self.agent.setup_port_filters(set(['fake_new_device']), set())
+        self.agent.devices_to_refilter = {'fake_device'}
+        self.agent.setup_port_filters({'fake_new_device'}, set())
         self.assertFalse(self.agent.devices_to_refilter)
         self.agent.prepare_devices_filter.assert_called_once_with(
-            set(['fake_new_device']))
+            {'fake_new_device'})
         self.agent.refresh_firewall.assert_called_once_with(
-            set(['fake_device']))
+            {'fake_device'})
         self.assertFalse(self.firewall.security_group_updated.called)
 
     def _test_prepare_devices_filter(self, devices):
         # simulate an RPC arriving and calling _security_group_updated()
-        self.agent.devices_to_refilter |= set(['fake_new_device'])
+        self.agent.devices_to_refilter |= {'fake_new_device'}
 
     def test_setup_port_filters_new_port_and_rpc(self):
         # Make sure that if an RPC arrives and adds a device to
@@ -1404,38 +1402,38 @@ class SecurityGroupAgentRpcWithDeferredRefreshTestCase(
         # that it is not cleared, and will be processed later.
         self.agent.prepare_devices_filter = self._test_prepare_devices_filter
         self.agent.refresh_firewall = mock.Mock()
-        self.agent.devices_to_refilter = set(['new_device', 'fake_device'])
-        self.agent.setup_port_filters(set(['new_device']), set())
+        self.agent.devices_to_refilter = {'new_device', 'fake_device'}
+        self.agent.setup_port_filters({'new_device'}, set())
         self.assertEqual(self.agent.devices_to_refilter,
-                         set(['fake_new_device']))
+                         {'fake_new_device'})
         self.agent.refresh_firewall.assert_called_once_with(
-            set(['fake_device']))
+            {'fake_device'})
         self.assertFalse(self.firewall.security_group_updated.called)
 
     def test_setup_port_filters_sg_updates_and_updated_ports(self):
         self.agent.prepare_devices_filter = mock.Mock()
         self.agent.refresh_firewall = mock.Mock()
-        self.agent.devices_to_refilter = set(['fake_device', 'fake_device_2'])
+        self.agent.devices_to_refilter = {'fake_device', 'fake_device_2'}
         self.agent.setup_port_filters(
-            set(), set(['fake_device', 'fake_updated_device']))
+            set(), {'fake_device', 'fake_updated_device'})
         self.assertFalse(self.agent.devices_to_refilter)
         self.agent.refresh_firewall.assert_called_once_with(
-            set(['fake_device', 'fake_device_2', 'fake_updated_device']))
+            {'fake_device', 'fake_device_2', 'fake_updated_device'})
         self.assertFalse(self.agent.prepare_devices_filter.called)
         self.assertTrue(self.firewall.security_group_updated.called)
 
     def test_setup_port_filters_all_updates(self):
         self.agent.prepare_devices_filter = mock.Mock()
         self.agent.refresh_firewall = mock.Mock()
-        self.agent.devices_to_refilter = set(['fake_device', 'fake_device_2'])
+        self.agent.devices_to_refilter = {'fake_device', 'fake_device_2'}
         self.agent.setup_port_filters(
-            set(['fake_new_device']),
-            set(['fake_device', 'fake_updated_device']))
+            {'fake_new_device'},
+            {'fake_device', 'fake_updated_device'})
         self.assertFalse(self.agent.devices_to_refilter)
         self.agent.prepare_devices_filter.assert_called_once_with(
-            set(['fake_new_device']))
+            {'fake_new_device'})
         self.agent.refresh_firewall.assert_called_once_with(
-            set(['fake_device', 'fake_device_2', 'fake_updated_device']))
+            {'fake_device', 'fake_device_2', 'fake_updated_device'})
         self.assertTrue(self.firewall.security_group_updated.called)
 
     def test_setup_port_filters_no_update(self):
@@ -1458,12 +1456,13 @@ class FakeSGNotifierAPI(securitygroups_rpc.SecurityGroupAgentRpcApiMixin):
 
 class SecurityGroupAgentRpcApiTestCase(base.BaseTestCase):
     def setUp(self):
-        super(SecurityGroupAgentRpcApiTestCase, self).setUp()
+        super().setUp()
         self.notifier = FakeSGNotifierAPI()
-        self.mock_prepare = mock.patch.object(self.notifier.client, 'prepare',
-                return_value=self.notifier.client).start()
+        self.mock_prepare = mock.patch.object(
+            self.notifier.client, 'prepare',
+            return_value=self.notifier.client).start()
         self.mock_cast = mock.patch.object(self.notifier.client,
-                'cast').start()
+                                           'cast').start()
 
     def test_security_groups_rule_updated(self):
         self.notifier.security_groups_rule_updated(
@@ -2856,7 +2855,7 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
         clear_mgrs = lambda: ip_conntrack.CONTRACK_MGRS.clear()
         self.addCleanup(clear_mgrs)
         clear_mgrs()  # clear before start in case other tests didn't clean up
-        super(TestSecurityGroupAgentWithIptables, self).setUp()
+        super().setUp()
         set_firewall_driver(self.FIREWALL_DRIVER)
         cfg.CONF.set_override('enable_ipset', False, group='SECURITYGROUP')
         cfg.CONF.set_override('comment_iptables_rules', False, group='AGENT')
@@ -2897,19 +2896,19 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
         rule2 = rule1[:]
         rule2 += [{'direction': 'ingress',
                   'source_ip_prefix': '10.0.0.4/32',
-                  'ethertype': const.IPv4}]
+                   'ethertype': const.IPv4}]
         rule3 = rule2[:]
         rule3 += [{'direction': 'ingress',
                   'protocol': const.PROTO_NAME_ICMP,
-                  'ethertype': const.IPv4}]
+                   'ethertype': const.IPv4}]
         rule4 = rule1[:]
         rule4 += [{'direction': 'ingress',
                   'source_ip_prefix': '10.0.0.3/32',
-                  'ethertype': const.IPv4}]
+                   'ethertype': const.IPv4}]
         rule5 = rule4[:]
         rule5 += [{'direction': 'ingress',
                   'protocol': const.PROTO_NAME_ICMP,
-                  'ethertype': const.IPv4}]
+                   'ethertype': const.IPv4}]
 
         self.devices1 = {'tap_port1': self._device('tap_port1',
                                                    '10.0.0.3/32',
@@ -3091,7 +3090,7 @@ class TestSecurityGroupAgentWithIptables(base.BaseTestCase):
 class TestSecurityGroupAgentEnhancedRpcWithIptables(
         TestSecurityGroupAgentWithIptables):
     def setUp(self, defer_refresh_firewall=False):
-        super(TestSecurityGroupAgentEnhancedRpcWithIptables, self).setUp(
+        super().setUp(
             defer_refresh_firewall=defer_refresh_firewall)
         self.sg_info = self.rpc.security_group_info_for_devices
 
@@ -3116,19 +3115,19 @@ class TestSecurityGroupAgentEnhancedRpcWithIptables(
         rule2 = rule1[:]
         rule2 += [{'direction': 'ingress',
                   'protocol': const.PROTO_NAME_ICMP,
-                  'ethertype': const.IPv4}]
+                   'ethertype': const.IPv4}]
 
         devices_info1 = {'tap_port1': self._device('tap_port1',
                                                    '10.0.0.3/32',
                                                    '12:34:56:78:9a:bc',
                                                    [])}
         self.devices_info1 = {'security_groups': {'security_group1': rule1},
-                         'sg_member_ips': {
+                              'sg_member_ips': {
                              'security_group1': {
                                  'IPv4': [('10.0.0.3/32',
                                            'fa:16:3e:aa:bb:c1'), ],
                                  'IPv6': []}},
-                         'devices': devices_info1}
+                              'devices': devices_info1}
         devices_info2 = collections.OrderedDict([
             ('tap_port1', self._device('tap_port1',
                                        '10.0.0.3/32',
@@ -3140,23 +3139,23 @@ class TestSecurityGroupAgentEnhancedRpcWithIptables(
                                        []))
         ])
         self.devices_info2 = {'security_groups': {'security_group1': rule1},
-                         'sg_member_ips': {
+                              'sg_member_ips': {
                              'security_group1': {
                                  'IPv4': [('10.0.0.3/32',
                                            'fa:16:3e:aa:bb:c1'),
                                           ('10.0.0.4/32',
                                            'fa:16:3e:aa:bb:c2')],
                                  'IPv6': []}},
-                         'devices': devices_info2}
+                              'devices': devices_info2}
         self.devices_info3 = {'security_groups': {'security_group1': rule2},
-                         'sg_member_ips': {
+                              'sg_member_ips': {
                              'security_group1': {
                                  'IPv4': [('10.0.0.3/32',
                                            'fa:16:3e:aa:bb:c1'),
                                           ('10.0.0.4/32',
                                            'fa:16:3e:aa:bb:c2')],
                                  'IPv6': []}},
-                         'devices': devices_info2}
+                              'devices': devices_info2}
 
     def test_prepare_remove_port(self):
         self.ipconntrack._device_zone_map = {}
@@ -3214,13 +3213,13 @@ class TestSecurityGroupAgentEnhancedRpcWithIptables(
 
         self._verify_mock_calls(True)
         self.agent.firewall.security_group_updated.assert_called_with(
-            'sg_rule', set(['security_group1']))
+            'sg_rule', {'security_group1'})
 
 
 class TestSecurityGroupAgentEnhancedIpsetWithIptables(
         TestSecurityGroupAgentEnhancedRpcWithIptables):
     def setUp(self, defer_refresh_firewall=False):
-        super(TestSecurityGroupAgentEnhancedIpsetWithIptables, self).setUp(
+        super().setUp(
             defer_refresh_firewall)
         self.agent.firewall.enable_ipset = True
         self.ipset = self.agent.firewall.ipset
@@ -3287,10 +3286,10 @@ class TestSecurityGroupAgentEnhancedIpsetWithIptables(
 
         self._verify_mock_calls(True)
         self.agent.firewall.security_group_updated.assert_called_with(
-            'sg_rule', set(['security_group1']))
+            'sg_rule', {'security_group1'})
 
 
-class SGNotificationTestMixin(object):
+class SGNotificationTestMixin:
     def test_security_group_rule_updated(self):
         name = 'webservers'
         description = 'my webservers'
@@ -3344,7 +3343,7 @@ class TestSecurityGroupAgentWithOVSIptables(
     FIREWALL_DRIVER = FIREWALL_HYBRID_DRIVER
 
     def setUp(self, defer_refresh_firewall=False):
-        super(TestSecurityGroupAgentWithOVSIptables, self).setUp(
+        super().setUp(
             defer_refresh_firewall)
 
     def _init_agent(self, defer_refresh_firewall):
@@ -3448,9 +3447,7 @@ class TestSecurityGroupAgentWithOVSIptables(
         value = value.replace('o_port', 'otap_port')
         value = value.replace('i_port', 'itap_port')
         value = value.replace('s_port', 'stap_port')
-        return super(
-            TestSecurityGroupAgentWithOVSIptables,
-            self)._regex(value)
+        return super()._regex(value)
 
 
 class TestSecurityGroupExtensionControl(base.BaseTestCase):

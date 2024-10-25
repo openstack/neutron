@@ -55,7 +55,7 @@ class BaseDhcpAgentTest(base.BaseFullStackTestCase):
             ),
             host_descriptions)
 
-        super(BaseDhcpAgentTest, self).setUp(env)
+        super().setUp(env)
         self.project_id = uuidutils.generate_uuid()
         if self.boot_vm_for_test:
             self._create_network_subnet_and_vm()
@@ -200,7 +200,7 @@ class TestDhcpAgentHARaceCondition(BaseDhcpAgentTest):
                             'AlwaysTheOtherAgentScheduler')
 
     def setUp(self):
-        super(TestDhcpAgentHARaceCondition, self).setUp()
+        super().setUp()
         self._create_network_with_multiple_subnets()
 
     def _create_network_with_multiple_subnets(self):

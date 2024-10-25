@@ -27,7 +27,7 @@ from neutron.tests.unit import quota as test_quota
 class TestResourceRegistry(base.DietTestCase):
 
     def setUp(self):
-        super(TestResourceRegistry, self).setUp()
+        super().setUp()
         self.registry = resource_registry.ResourceRegistry.get_instance()
         # clean up the registry at every test
         self.registry.unregister_resources()
@@ -85,7 +85,7 @@ class TestResourceRegistry(base.DietTestCase):
 class TestAuxiliaryFunctions(base.DietTestCase):
 
     def setUp(self):
-        super(TestAuxiliaryFunctions, self).setUp()
+        super().setUp()
         self.registry = resource_registry.ResourceRegistry.get_instance()
         # clean up the registry at every test
         self.registry.unregister_resources()

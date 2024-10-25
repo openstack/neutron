@@ -24,7 +24,7 @@ from neutron.tests.unit import testlib_api
 class TestCommonHelpFunctions(testlib_api.SqlTestCase):
 
     def setUp(self):
-        super(TestCommonHelpFunctions, self).setUp()
+        super().setUp()
         self.admin_ctx = context.get_admin_context()
 
     def test__safe_creation_create_bindings_fails(self):

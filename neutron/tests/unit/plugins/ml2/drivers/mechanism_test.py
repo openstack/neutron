@@ -30,9 +30,9 @@ class TestMechanismDriver(api.MechanismDriver):
     """Test mechanism driver for testing mechanism driver api."""
 
     def __init__(self, *args, **kwargs):
-        super(TestMechanismDriver, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._supported_vnic_types = ('test_mechanism_driver_vnic_type', )
-        self._supported_extensions = set([])
+        self._supported_extensions = set()
 
     def initialize(self):
         self.bound_ports = set()
@@ -289,7 +289,7 @@ class TestMechanismDriverWithAgent(mech_agent.AgentMechanismDriverBase,
     """Test mechanism driver with agent for testing mechanism driver api."""
 
     def __init__(self):
-        super(TestMechanismDriverWithAgent, self).__init__(
+        super().__init__(
             'test_agent_type', [portbindings.VNIC_NORMAL])
         self.bound_ports = set()
         self._agent_type = 'test_mechanism_driver_agent'

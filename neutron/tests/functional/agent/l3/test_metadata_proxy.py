@@ -36,7 +36,7 @@ METADATA_REQUEST_SLEEP = 5
 TOO_MANY_REQUESTS_CODE = '429'
 
 
-class MetadataFakeProxyHandler(object):
+class MetadataFakeProxyHandler:
 
     def __init__(self, status):
         self.status = status
@@ -274,7 +274,7 @@ class UnprivilegedUserMetadataL3AgentTestCase(MetadataL3AgentTestCase):
     SOCKET_MODE = 0o664
 
     def setUp(self):
-        super(UnprivilegedUserMetadataL3AgentTestCase, self).setUp()
+        super().setUp()
         self.agent.conf.set_override('metadata_proxy_user', '65534')
 
 
@@ -290,6 +290,6 @@ class UnprivilegedUserGroupMetadataL3AgentTestCase(MetadataL3AgentTestCase):
     SOCKET_MODE = 0o666
 
     def setUp(self):
-        super(UnprivilegedUserGroupMetadataL3AgentTestCase, self).setUp()
+        super().setUp()
         self.agent.conf.set_override('metadata_proxy_user', '65534')
         self.agent.conf.set_override('metadata_proxy_group', '65534')

@@ -29,7 +29,7 @@ from neutron.tests.unit import testlib_api
 class TestLoadInterfaceDriver(base.BaseTestCase):
 
     def setUp(self):
-        super(TestLoadInterfaceDriver, self).setUp()
+        super().setUp()
         self.conf = config.setup_conf()
         config.register_interface_opts(self.conf)
         config.register_interface_driver_opts_helper(self.conf)

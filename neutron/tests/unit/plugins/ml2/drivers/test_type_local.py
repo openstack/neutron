@@ -24,7 +24,7 @@ from neutron.tests import base
 class LocalTypeTest(base.BaseTestCase):
 
     def setUp(self):
-        super(LocalTypeTest, self).setUp()
+        super().setUp()
         self.driver = type_local.LocalTypeDriver()
         self.context = None
 

@@ -29,7 +29,7 @@ from neutron.services.revisions import revision_plugin
 from neutron.tests.unit.extensions import test_l3
 
 
-class FloatingIPQoSTestExtensionManager(object):
+class FloatingIPQoSTestExtensionManager:
 
     def get_resources(self):
         return l3.L3.get_resources()
@@ -55,7 +55,7 @@ class TestFloatingIPQoSL3NatServicePlugin(
                                    qos_fip_apidef.ALIAS]
 
 
-class FloatingIPQoSDBTestCaseBase(object):
+class FloatingIPQoSDBTestCaseBase:
 
     def test_create_fip_with_qos_policy_id(self):
         ctx = context.get_admin_context()
@@ -393,7 +393,7 @@ class FloatingIPQoSDBWithRevisionIntTestCase(FloatingIPQoSDBIntTestCase):
     def setUp(self, plugin=None):
         service_plugins = {'qos': 'neutron.services.qos.qos_plugin.QoSPlugin',
                            'revision_plugin_name': 'revisions'}
-        super(FloatingIPQoSDBWithRevisionIntTestCase, self).setUp(
+        super().setUp(
             service_plugins=service_plugins)
         revision_plugin.RevisionPlugin()
 
@@ -406,6 +406,6 @@ class FloatingIPQoSDBWithRevisionSepTestCase(FloatingIPQoSDBSepTestCase):
         service_plugins = {'l3_plugin_name': l3_plugin,
                            'qos': 'neutron.services.qos.qos_plugin.QoSPlugin',
                            'revision_plugin_name': 'revisions'}
-        super(FloatingIPQoSDBWithRevisionSepTestCase, self).setUp(
+        super().setUp(
             service_plugins=service_plugins)
         revision_plugin.RevisionPlugin()

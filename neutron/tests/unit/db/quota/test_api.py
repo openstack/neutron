@@ -45,7 +45,7 @@ class TestQuotaDbApi(testlib_api.SqlTestCaseLight):
     def _create_quota_usage(self, resource, used, project_id=None):
         project_id = project_id or self.project_id
         return quota_api.set_quota_usage(context.get_admin_context(),
-            resource, project_id, in_use=used)
+                                         resource, project_id, in_use=used)
 
     def _verify_quota_usage(self, usage_info,
                             expected_resource=None,
@@ -60,7 +60,7 @@ class TestQuotaDbApi(testlib_api.SqlTestCaseLight):
             self.assertEqual(expected_used, usage_info.used)
 
     def setUp(self):
-        super(TestQuotaDbApi, self).setUp()
+        super().setUp()
         self._set_context()
         self.plugin = test_driver.FakePlugin()
         directory.add_plugin(const.CORE, self.plugin)

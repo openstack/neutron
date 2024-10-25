@@ -45,7 +45,7 @@ _uuid = uuidutils.generate_uuid
 _get_path = test_base._get_path
 
 
-class ExtNetTestExtensionManager(object):
+class ExtNetTestExtensionManager:
 
     def get_resources(self):
         return []
@@ -66,13 +66,13 @@ class ExtNetDBTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
         new_args = dict(zip(map(lambda x: x.replace('__', ':'), kwargs),
                             kwargs.values()))
         arg_list = new_args.pop('arg_list', ()) + (extnet_apidef.EXTERNAL,)
-        return super(ExtNetDBTestCase, self)._create_network(
+        return super()._create_network(
             fmt, name, admin_state_up, arg_list=arg_list, **new_args)
 
     def setUp(self):
         plugin = 'neutron.tests.unit.extensions.test_l3.TestNoL3NatPlugin'
         ext_mgr = ExtNetTestExtensionManager()
-        super(ExtNetDBTestCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr)
+        super().setUp(plugin=plugin, ext_mgr=ext_mgr)
 
     def _set_net_external(self, net_id):
         self._update('networks', net_id,

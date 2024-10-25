@@ -20,14 +20,14 @@ from neutron.plugins.ml2.drivers.openvswitch.agent.openflow.native \
 from neutron.tests import base
 
 
-class FakeReply(object):
+class FakeReply:
     def __init__(self, type):
         self.type = type
 
 
 class TestBundledOpenFlowBridge(base.BaseTestCase):
     def setUp(self):
-        super(TestBundledOpenFlowBridge, self).setUp()
+        super().setUp()
         br = mock.Mock(spec=['install_instructions', 'foo'])
         br._get_dp = lambda: (mock.Mock(), ofproto_v1_3, ofproto_v1_3_parser)
         br.active_bundles = set()

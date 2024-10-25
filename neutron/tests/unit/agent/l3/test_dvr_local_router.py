@@ -48,7 +48,7 @@ FIP_RULE_PRIO_LIST = [['fip_1', 'fixed_ip_1', 'prio_1'],
 class TestDvrRouterOperations(base.BaseTestCase):
 
     def setUp(self):
-        super(TestDvrRouterOperations, self).setUp()
+        super().setUp()
         mock.patch('eventlet.spawn').start()
         self.conf = agent_config.setup_conf()
         self.conf.register_opts(base_config.core_opts)
@@ -332,9 +332,10 @@ class TestDvrRouterOperations(base.BaseTestCase):
                                                return_value=rtr_2_fip_name)
         ri.fip_ns = instance
         dnat_from_floatingip_to_fixedip = (
-            'PREROUTING', '-d %s/32 -i %s -j DNAT --to-destination %s' % (
+            'PREROUTING', '-d {}/32 -i {} -j DNAT --to-destination {}'.format(
                 floating_ip, rtr_2_fip_name, fixed_ip))
-        to_source = '-s %s/32 -j SNAT --to-source %s' % (fixed_ip, floating_ip)
+        to_source = '-s {}/32 -j SNAT --to-source {}'.format(
+            fixed_ip, floating_ip)
 
         if ri.iptables_manager.random_fully:
             to_source += ' --random-fully'
@@ -369,7 +370,7 @@ class TestDvrRouterOperations(base.BaseTestCase):
                                                return_value=rtr_2_fip_name)
         ri.fip_ns = instance
         mark_traffic_to_floating_ip = (
-            'floatingip', '-d %s/32 -i %s -j MARK --set-xmark %s' % (
+            'floatingip', '-d {}/32 -i {} -j MARK --set-xmark {}'.format(
                 floating_ip, rtr_2_fip_name, internal_mark))
         mark_traffic_from_fixed_ip = (
             'FORWARD', '-s %s/32 -j $float-snat' % fixed_ip)
@@ -948,8 +949,8 @@ class TestDvrRouterOperations(base.BaseTestCase):
 
     @mock.patch.object(dvr_edge_rtr.DvrEdgeRouter,
                        'remove_centralized_floatingip')
-    def test_remove_centralized_floatingip(self,
-                                super_remove_centralized_floatingip):
+    def test_remove_centralized_floatingip(
+            self, super_remove_centralized_floatingip):
         agent = l3_agent.L3NATAgent(HOSTNAME, self.conf)
         agent.conf.agent_mode = lib_constants.L3_AGENT_MODE_DVR_SNAT
         router = l3_test_common.prepare_router_data(num_internal_ports=2)
@@ -1010,6 +1011,6 @@ class TestDvrRouterOperations(base.BaseTestCase):
                         "KeepalivedManager.check_processes",
                         return_value=False):
             ri.initialize(mock.Mock())
-            with open(ri._ha_state_path, "r") as f:
+            with open(ri._ha_state_path) as f:
                 state = f.readline()
                 self.assertEqual("backup", state)

@@ -15,7 +15,7 @@
 import functools
 
 from neutron_lib import constants
-from neutron_lib.plugins.ml2 import ovs_constants as ovs_constants
+from neutron_lib.plugins.ml2 import ovs_constants
 from neutron_lib.services.qos import constants as qos_consts
 from neutronclient.common import exceptions
 from oslo_utils import uuidutils
@@ -42,7 +42,7 @@ PACKET_RATE_LIMIT = 10000
 PACKET_RATE_BURST = 1000
 
 
-class BaseQoSRuleTestCase(object):
+class BaseQoSRuleTestCase:
     number_of_hosts = 1
     physical_network = None
 
@@ -63,7 +63,7 @@ class BaseQoSRuleTestCase(object):
             agent_down_time=10,
             qos=True)
         env = environment.Environment(env_desc, host_desc)
-        super(BaseQoSRuleTestCase, self).setUp(env)
+        super().setUp(env)
         self.l2_agent_process = self.environment.hosts[0].l2_agent
         self.l2_agent = self.safe_client.client.list_agents(
             agent_type=self.l2_agent_type)['agents'][0]
@@ -190,9 +190,9 @@ class _TestBwLimitQoS(BaseQoSRuleTestCase):
         self.l2_agent_process.start()
         self._wait_until_agent_up(self.l2_agent['id'])
 
-        all_directions = set([self.direction, self.reverse_direction])
+        all_directions = {self.direction, self.reverse_direction}
         for final_rule in final_rules:
-            all_directions -= set([final_rule['direction']])
+            all_directions -= {final_rule['direction']}
             self._wait_for_bw_rule_applied(
                 vm, final_rule.get('limit'),
                 final_rule.get('burst'), final_rule['direction'])
@@ -552,7 +552,7 @@ class TestQoSPolicyIsDefault(base.BaseFullStackTestCase):
         host_desc = []  # No need to register agents for this test case
         env_desc = environment.EnvironmentDescription(qos=True)
         env = environment.Environment(env_desc, host_desc)
-        super(TestQoSPolicyIsDefault, self).setUp(env)
+        super().setUp(env)
 
     def _create_qos_policy(self, project_id, is_default):
         return self.safe_client.create_qos_policy(

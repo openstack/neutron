@@ -99,7 +99,7 @@ def get_ignored_traceback(tb):
         return ignored_tracebacks[-1]
 
 
-class FilteredTraceback(object):
+class FilteredTraceback:
     """Wraps a traceback to filter unwanted frames."""
 
     def __init__(self, tb, filtered_traceback):

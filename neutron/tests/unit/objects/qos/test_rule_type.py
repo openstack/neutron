@@ -48,7 +48,7 @@ DRIVER_SUPPORTED_PARAMETERS = [
 class QosRuleTypeObjectTestCase(test_base.BaseTestCase):
 
     def setUp(self):
-        super(QosRuleTypeObjectTestCase, self).setUp()
+        super().setUp()
         self.config_parse()
 
         self.setup_coreplugin(load_plugins=False)

@@ -38,7 +38,7 @@ CMD_FOLDER = 'agents'
 class ProcessFixture(fixtures.Fixture):
     def __init__(self, test_name, process_name, exec_name, config_filenames,
                  namespace=None, slice_name=None):
-        super(ProcessFixture, self).__init__()
+        super().__init__()
         self.test_name = test_name
         self.process_name = process_name
         self.exec_name = exec_name
@@ -67,7 +67,7 @@ class ProcessFixture(fixtures.Fixture):
         fileutils.ensure_tree(log_dir, mode=0o755)
 
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d--%H-%M-%S-%f")
-        log_file = "%s--%s.log" % (self.process_name, timestamp)
+        log_file = "{}--{}.log".format(self.process_name, timestamp)
         run_as_root = bool(self.namespace)
         exec_name = (self.exec_name
                      if run_as_root
@@ -175,7 +175,7 @@ class ProcessFixture(fixtures.Fixture):
 class RabbitmqEnvironmentFixture(fixtures.Fixture):
 
     def __init__(self, host="127.0.0.1"):
-        super(RabbitmqEnvironmentFixture, self).__init__()
+        super().__init__()
         self.host = host
 
     def _setUp(self):
@@ -216,7 +216,7 @@ class NeutronServerFixture(ServiceFixture):
     def __init__(self, env_desc, host_desc,
                  test_name, neutron_cfg_fixture, plugin_cfg_fixture,
                  service_cfg_fixtures=None):
-        super(NeutronServerFixture, self).__init__()
+        super().__init__()
         self.env_desc = env_desc
         self.host_desc = host_desc
         self.test_name = test_name
@@ -259,7 +259,7 @@ class OVSAgentFixture(ServiceFixture):
 
     def __init__(self, env_desc, host_desc,
                  test_name, neutron_cfg_fixture, agent_cfg_fixture):
-        super(OVSAgentFixture, self).__init__()
+        super().__init__()
         self.env_desc = env_desc
         self.host_desc = host_desc
         self.test_name = test_name
@@ -291,7 +291,7 @@ class OVSAgentFixture(ServiceFixture):
 class PlacementFixture(ServiceFixture):
 
     def __init__(self, env_desc, host_desc, test_name, placement_cfg_fixture):
-        super(PlacementFixture, self).__init__()
+        super().__init__()
         self.env_desc = env_desc
         self.host_desc = host_desc
         self.test_name = test_name
@@ -313,7 +313,7 @@ class SRIOVAgentFixture(ServiceFixture):
 
     def __init__(self, env_desc, host_desc,
                  test_name, neutron_cfg_fixture, agent_cfg_fixture):
-        super(SRIOVAgentFixture, self).__init__()
+        super().__init__()
         self.env_desc = env_desc
         self.host_desc = host_desc
         self.test_name = test_name
@@ -340,7 +340,7 @@ class LinuxBridgeAgentFixture(ServiceFixture):
     def __init__(self, env_desc, host_desc, test_name,
                  neutron_cfg_fixture, agent_cfg_fixture,
                  namespace=None):
-        super(LinuxBridgeAgentFixture, self).__init__()
+        super().__init__()
         self.env_desc = env_desc
         self.host_desc = host_desc
         self.test_name = test_name
@@ -371,7 +371,7 @@ class LinuxBridgeAgentFixture(ServiceFixture):
 class NamespaceCleanupFixture(ServiceFixture):
 
     def _setUp(self):
-        super(NamespaceCleanupFixture, self)._setUp()
+        super()._setUp()
         self.addCleanup(self.clean_namespaces)
 
     def clean_namespaces(self):
@@ -398,7 +398,7 @@ class L3AgentFixture(NamespaceCleanupFixture):
     def __init__(self, env_desc, host_desc, test_name,
                  neutron_cfg_fixture, l3_agent_cfg_fixture,
                  namespace=None):
-        super(L3AgentFixture, self).__init__()
+        super().__init__()
         self.env_desc = env_desc
         self.host_desc = host_desc
         self.test_name = test_name
@@ -408,7 +408,7 @@ class L3AgentFixture(NamespaceCleanupFixture):
         self.hostname = self.neutron_cfg_fixture.config['DEFAULT']['host']
 
     def _setUp(self):
-        super(L3AgentFixture, self)._setUp()
+        super()._setUp()
 
         self.plugin_config = self.l3_agent_cfg_fixture.config
 
@@ -446,7 +446,7 @@ class DhcpAgentFixture(NamespaceCleanupFixture):
 
     def __init__(self, env_desc, host_desc, test_name,
                  neutron_cfg_fixture, agent_cfg_fixture, namespace=None):
-        super(DhcpAgentFixture, self).__init__()
+        super().__init__()
         self.env_desc = env_desc
         self.host_desc = host_desc
         self.test_name = test_name
@@ -455,7 +455,7 @@ class DhcpAgentFixture(NamespaceCleanupFixture):
         self.namespace = namespace
 
     def _setUp(self):
-        super(DhcpAgentFixture, self)._setUp()
+        super()._setUp()
 
         self.plugin_config = self.agent_cfg_fixture.config
 

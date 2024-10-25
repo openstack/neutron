@@ -46,7 +46,7 @@ class PortForwardingExtensionBaseTestCase(
         test_agent.BasicRouterOperationsFramework):
 
     def setUp(self):
-        super(PortForwardingExtensionBaseTestCase, self).setUp()
+        super().setUp()
 
         self.fip_pf_ext = pf.PortForwardingAgentExtension()
 
@@ -82,8 +82,8 @@ class PortForwardingExtensionBaseTestCase(
         self.router_info = l3router.RouterInfo(
             self.agent, self.floatingip2.router_id, self.router,
             **self.ri_kwargs)
-        self.centralized_port_forwarding_fip_set = set(
-            [str(self.floatingip2.floating_ip_address) + '/32'])
+        self.centralized_port_forwarding_fip_set = {
+            str(self.floatingip2.floating_ip_address) + '/32'}
         self.pf_managed_fips = [self.floatingip2.id]
         self.router_info.ex_gw_port = self.ex_gw_port
         self.router_info.fip_managed_by_port_forwardings = self.pf_managed_fips
@@ -126,7 +126,7 @@ class FipPortForwardingExtensionInitializeTestCase(
 class FipPortForwardingExtensionTestCase(PortForwardingExtensionBaseTestCase):
 
     def setUp(self):
-        super(FipPortForwardingExtensionTestCase, self).setUp()
+        super().setUp()
         self.fip_pf_ext.initialize(
             self.connection, lib_const.L3_AGENT_MODE)
         self._set_bulk_pull_mock()
@@ -403,7 +403,7 @@ class FipPortForwardingExtensionTestCase(PortForwardingExtensionBaseTestCase):
 class RouterFipPortForwardingMappingTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(RouterFipPortForwardingMappingTestCase, self).setUp()
+        super().setUp()
         self.mapping = pf.RouterFipPortForwardingMapping()
         self.router1 = _uuid()
         self.router2 = _uuid()
@@ -457,10 +457,10 @@ class RouterFipPortForwardingMappingTestCase(base.BaseTestCase):
             len(pf_ids), len(self.mapping.managed_port_forwardings.keys()))
 
         fip_pf_set = {
-            self.floatingip1: set(
-                [self.portforwarding1.id, self.portforwarding2.id]),
-            self.floatingip2: set([self.portforwarding3.id]),
-            self.floatingip3: set([self.portforwarding4.id])
+            self.floatingip1: {
+                self.portforwarding1.id, self.portforwarding2.id},
+            self.floatingip2: {self.portforwarding3.id},
+            self.floatingip3: {self.portforwarding4.id}
         }
         for fip_id, pf_set in self.mapping.fip_port_forwarding.items():
             self.assertIn(
@@ -471,8 +471,8 @@ class RouterFipPortForwardingMappingTestCase(base.BaseTestCase):
             len(self.mapping.fip_port_forwarding))
 
         router_fip = {
-            self.router1: set([self.floatingip1, self.floatingip2]),
-            self.router2: set([self.floatingip3])
+            self.router1: {self.floatingip1, self.floatingip2},
+            self.router2: {self.floatingip3}
         }
         for router_id, fip_set in self.mapping.router_fip_mapping.items():
             self.assertIn(router_id, [self.router1, self.router2])
@@ -506,24 +506,24 @@ class RouterFipPortForwardingMappingTestCase(base.BaseTestCase):
         self.assertEqual(
             [self.portforwarding1.id],
             list(self.mapping.managed_port_forwardings.keys()))
-        self.assertEqual({self.floatingip1: set([self.portforwarding1.id])},
+        self.assertEqual({self.floatingip1: {self.portforwarding1.id}},
                          self.mapping.fip_port_forwarding)
-        self.assertEqual({self.router1: set([self.floatingip1])},
+        self.assertEqual({self.router1: {self.floatingip1}},
                          self.mapping.router_fip_mapping)
 
     def test_clear_by_fip(self):
         self._set_pf()
         self.mapping.clear_by_fip(self.floatingip1, self.router1)
         router_fip = {
-            self.router1: set([self.floatingip2]),
-            self.router2: set([self.floatingip3])
+            self.router1: {self.floatingip2},
+            self.router2: {self.floatingip3}
         }
         for router_id, fip_set in self.mapping.router_fip_mapping.items():
             self.assertIn(router_id, [self.router1, self.router2])
             self.assertEqual(0, len(fip_set - router_fip[router_id]))
         fip_pf_set = {
-            self.floatingip2: set([self.portforwarding3.id]),
-            self.floatingip3: set([self.portforwarding4.id])
+            self.floatingip2: {self.portforwarding3.id},
+            self.floatingip3: {self.portforwarding4.id}
         }
         for fip_id, pf_set in self.mapping.fip_port_forwarding.items():
             self.assertIn(

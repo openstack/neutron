@@ -27,6 +27,6 @@ class UplinkStatusPropagationDbObjectTestCase(
     _test_class = uplink_status_propagation.PortUplinkStatusPropagation
 
     def setUp(self):
-        super(UplinkStatusPropagationDbObjectTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {'port_id': lambda: self._create_test_port_id()})

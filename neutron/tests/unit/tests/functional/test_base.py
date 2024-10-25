@@ -37,7 +37,7 @@ def register_some_options(cfg=cfg.CONF):
 class ConfigDecoratorTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(ConfigDecoratorTestCase, self).setUp()
+        super().setUp()
         cfg.CONF.register_group(NEW_CONFIG_GROUP)
 
     def test_no_config_decorator(self):

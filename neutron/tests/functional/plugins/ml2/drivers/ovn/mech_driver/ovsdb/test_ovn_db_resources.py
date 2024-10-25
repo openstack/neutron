@@ -40,7 +40,7 @@ class TestNBDbResources(base.TestOVNFunctionalBase):
         return True
 
     def setUp(self):
-        super(TestNBDbResources, self).setUp()
+        super().setUp()
         self.orig_get_random_mac = n_net.get_random_mac
         cfg.CONF.set_override('quota_subnet', -1, group='QUOTAS')
         ovn_config.cfg.CONF.set_override('ovn_metadata_enabled',
@@ -945,7 +945,7 @@ class TestDNSRecords(base.TestOVNFunctionalBase):
 
     def setUp(self):
         ovn_config.cfg.CONF.set_override('dns_domain', 'ovn.test')
-        super(TestDNSRecords, self).setUp()
+        super().setUp()
 
     def test_dns_records(self):
         expected_dns_records = []

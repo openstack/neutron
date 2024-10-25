@@ -21,14 +21,14 @@ from neutron.tests import base
 
 class CacheConfFixture(config_fixture.Config):
     def setUp(self):
-        super(CacheConfFixture, self).setUp()
+        super().setUp()
         cache.register_oslo_configs(self.conf)
         self.config(enabled=True, group='cache')
 
 
 class TestOsloCache(base.BaseTestCase):
     def setUp(self):
-        super(TestOsloCache, self).setUp()
+        super().setUp()
         self.memory_conf = cfg.ConfigOpts()
         memory_conf_fixture = CacheConfFixture(self.memory_conf)
         self.useFixture(memory_conf_fixture)
@@ -64,7 +64,7 @@ class TestOsloCache(base.BaseTestCase):
         )
 
 
-class _CachingDecorator(object):
+class _CachingDecorator:
     def __init__(self):
         self.func_retval = 'bar'
         self._cache = mock.Mock()
@@ -76,11 +76,11 @@ class _CachingDecorator(object):
 
 class TestCachingDecorator(base.BaseTestCase):
     def setUp(self):
-        super(TestCachingDecorator, self).setUp()
+        super().setUp()
         self.decor = _CachingDecorator()
-        self.func_name = '%(module)s._CachingDecorator.func' % {
-            'module': self.__module__
-        }
+        self.func_name = '{module}._CachingDecorator.func'.format(
+            module=self.__module__
+        )
         self.not_cached = self.decor.func.func.__self__._not_cached
 
     def test_cache_miss(self):

@@ -23,7 +23,7 @@ context = 'context'
 class TestOVNQosDriver(base.BaseTestCase):
 
     def setUp(self):
-        super(TestOVNQosDriver, self).setUp()
+        super().setUp()
         self.mech_driver = mock.Mock()
         self.mech_driver._ovn_client = mock.Mock()
         self.mech_driver._ovn_client._qos_driver = mock.Mock()

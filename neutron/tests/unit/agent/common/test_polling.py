@@ -23,7 +23,7 @@ from neutron.tests import base
 class TestBasePollingManager(base.BaseTestCase):
 
     def setUp(self):
-        super(TestBasePollingManager, self).setUp()
+        super().setUp()
         self.pm = base_polling.BasePollingManager()
 
     def test__is_polling_required_should_not_be_implemented(self):
@@ -74,7 +74,7 @@ class TestAlwaysPoll(base.BaseTestCase):
 class TestGetPollingManager(base.BaseTestCase):
 
     def setUp(self):
-        super(TestGetPollingManager, self).setUp()
+        super().setUp()
         mock.patch.object(helpers, 'enable_connection_uri').start()
 
     def test_return_always_poll_by_default(self):
@@ -95,7 +95,7 @@ class TestGetPollingManager(base.BaseTestCase):
 class TestInterfacePollingMinimizer(base.BaseTestCase):
 
     def setUp(self):
-        super(TestInterfacePollingMinimizer, self).setUp()
+        super().setUp()
         mock.patch.object(helpers, 'enable_connection_uri').start()
         self.pm = polling.InterfacePollingMinimizer()
 

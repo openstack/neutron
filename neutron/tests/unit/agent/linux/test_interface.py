@@ -40,21 +40,21 @@ class BaseChild(interface.LinuxInterfaceDriver):
         pass
 
 
-class FakeNetwork(object):
+class FakeNetwork:
     id = '12345678-1234-5678-90ab-ba0987654321'
 
 
-class FakeSubnet(object):
+class FakeSubnet:
     cidr = '192.168.1.1/24'
 
 
-class FakeAllocation(object):
+class FakeAllocation:
     subnet = FakeSubnet()
     ip_address = '192.168.1.2'
     ip_version = constants.IP_VERSION_4
 
 
-class FakePort(object):
+class FakePort:
     id = 'abcdef01-1234-5678-90ab-ba0987654321'
     fixed_ips = [FakeAllocation]
     device_id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
@@ -64,7 +64,7 @@ class FakePort(object):
 
 class TestBase(base.BaseTestCase):
     def setUp(self):
-        super(TestBase, self).setUp()
+        super().setUp()
         self.conf = config.setup_conf()
         ovs_conf.register_ovs_opts(self.conf)
         config.register_interface_opts(self.conf)
@@ -85,7 +85,7 @@ class TestBase(base.BaseTestCase):
 
 class TestABCDriver(TestBase):
     def setUp(self):
-        super(TestABCDriver, self).setUp()
+        super().setUp()
         mock_link_addr = mock.PropertyMock(return_value='aa:bb:cc:dd:ee:ff')
         type(self.ip_dev().link).address = mock_link_addr
 
@@ -204,7 +204,7 @@ class TestABCDriver(TestBase):
         ns = '12345678-1234-5678-90ab-ba0987654321'
         new_cidrs = ['192.168.1.2/24', '2001:db8:a::124/64']
         bc.init_router_port('tap0', new_cidrs, namespace=ns,
-            extra_subnets=[{'cidr': '172.20.0.0/24'}])
+                            extra_subnets=[{'cidr': '172.20.0.0/24'}])
         self.ip_dev.assert_has_calls(
             [mock.call('tap0', namespace=ns),
              mock.call().addr.list(),
@@ -544,7 +544,7 @@ class TestOVSInterfaceDriver(TestBase):
 class TestOVSInterfaceDriverWithVeth(TestOVSInterfaceDriver):
 
     def setUp(self):
-        super(TestOVSInterfaceDriverWithVeth, self).setUp()
+        super().setUp()
         ovs_conf.register_ovs_agent_opts(self.conf)
         self.conf.set_override('ovs_use_veth', True)
         self.conf.set_override(

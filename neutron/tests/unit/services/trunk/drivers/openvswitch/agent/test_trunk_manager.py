@@ -27,14 +27,14 @@ class TrunkManagerTestCase(base.BaseTestCase):
     the logging.
     """
     def setUp(self):
-        super(TrunkManagerTestCase, self).setUp()
+        super().setUp()
         self.trunk_manager = trunk_manager.TrunkManager(mock.sentinel.br_int)
         mock.patch.object(trunk_manager, 'TrunkBridge').start()
 
     @contextlib.contextmanager
     def _resource_fails(self, resource, method_name):
         with mock.patch.object(resource, method_name,
-                side_effect=RuntimeError):
+                               side_effect=RuntimeError):
             with testtools.ExpectedException(trunk_manager.TrunkManagerError):
                 yield
 

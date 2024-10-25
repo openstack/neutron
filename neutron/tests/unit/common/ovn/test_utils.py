@@ -250,7 +250,7 @@ class TestUtils(base.BaseTestCase):
 class TestGateWayChassisValidity(base.BaseTestCase):
 
     def setUp(self):
-        super(TestGateWayChassisValidity, self).setUp()
+        super().setUp()
         self.gw_chassis = ['host1', 'host2']
         self.chassis_name = self.gw_chassis[0]
         self.physnet = 'physical-nw-1'
@@ -328,7 +328,7 @@ class TestDHCPUtils(base.BaseTestCase):
 
     def setUp(self):
         ovn_conf.register_opts()
-        super(TestDHCPUtils, self).setUp()
+        super().setUp()
 
     def test_validate_port_extra_dhcp_opts_empty(self):
         port = {edo_ext.EXTRADHCPOPTS: []}
@@ -540,7 +540,7 @@ class TestGetDhcpDnsServers(base.BaseTestCase):
 
     def setUp(self):
         ovn_conf.register_opts()
-        super(TestGetDhcpDnsServers, self).setUp()
+        super().setUp()
 
     def test_ipv4(self):
         # DNS servers from subnet.
@@ -601,7 +601,7 @@ class TestGetDhcpDnsServers(base.BaseTestCase):
 class TestValidateAndGetDataFromBindingProfile(base.BaseTestCase):
 
     def setUp(self):
-        super(TestValidateAndGetDataFromBindingProfile, self).setUp()
+        super().setUp()
         self.get_plugin = mock.patch(
             'neutron_lib.plugins.directory.get_plugin').start()
         self.VNIC_FAKE_NORMAL = 'fake-vnic-normal'
@@ -918,7 +918,7 @@ class TestRetryDecorator(base.BaseTestCase):
             try:
                 method()
             except StopIteration:
-                return
+                pass
 
         decorated_method()
 

@@ -18,9 +18,9 @@ from neutron.agent.l3 import item_allocator as ia
 from neutron.tests import base
 
 
-class TestObject(object):
+class TestObject:
     def __init__(self, value):
-        super(TestObject, self).__init__()
+        super().__init__()
         self._value = value
 
     def __str__(self):
@@ -30,7 +30,7 @@ class TestObject(object):
 class TestItemAllocator(base.BaseTestCase):
 
     def test__init__(self):
-        test_pool = set(TestObject(s) for s in range(32768, 40000))
+        test_pool = {TestObject(s) for s in range(32768, 40000)}
         with mock.patch.object(ia.ItemAllocator, '_write') as write:
             a = ia.ItemAllocator('/file', TestObject, test_pool)
             test_object = a.allocate('test')
@@ -41,7 +41,7 @@ class TestItemAllocator(base.BaseTestCase):
         self.assertTrue(write.called)
 
     def test__init__readfile(self):
-        test_pool = set(TestObject(s) for s in range(32768, 40000))
+        test_pool = {TestObject(s) for s in range(32768, 40000)}
         with mock.patch.object(ia.ItemAllocator, '_read') as read:
             read.return_value = ["da873ca2,10\n"]
             a = ia.ItemAllocator('/file', TestObject, test_pool)
@@ -50,7 +50,7 @@ class TestItemAllocator(base.BaseTestCase):
         self.assertEqual({}, a.allocations)
 
     def test__init__readfile_error(self):
-        test_pool = set(TestObject(s) for s in range(32768, 40000))
+        test_pool = {TestObject(s) for s in range(32768, 40000)}
         with mock.patch.object(ia.ItemAllocator, '_read') as read,\
                 mock.patch.object(ia.ItemAllocator, '_write') as write:
             read.return_value = ["da873ca2,10\n",
@@ -65,7 +65,7 @@ class TestItemAllocator(base.BaseTestCase):
         self.assertTrue(write.called)
 
     def test_allocate_and_lookup(self):
-        test_pool = set([TestObject(33000), TestObject(33001)])
+        test_pool = {TestObject(33000), TestObject(33001)}
         a = ia.ItemAllocator('/file', TestObject, test_pool)
         with mock.patch.object(ia.ItemAllocator, '_write') as write:
             test_object = a.allocate('test')
@@ -80,9 +80,9 @@ class TestItemAllocator(base.BaseTestCase):
         self.assertEqual(test_object, lookup_object)
 
     def test_allocate_repeated_call_with_same_key(self):
-        test_pool = set([TestObject(33000), TestObject(33001),
-                         TestObject(33002), TestObject(33003),
-                         TestObject(33004), TestObject(33005)])
+        test_pool = {TestObject(33000), TestObject(33001),
+                     TestObject(33002), TestObject(33003),
+                     TestObject(33004), TestObject(33005)}
         a = ia.ItemAllocator('/file', TestObject, test_pool)
         with mock.patch.object(ia.ItemAllocator, '_write'):
             test_object = a.allocate('test')
@@ -97,7 +97,7 @@ class TestItemAllocator(base.BaseTestCase):
         self.assertNotEqual(test_object, test_object3)
 
     def test_allocate_from_file(self):
-        test_pool = set([TestObject(33000), TestObject(33001)])
+        test_pool = {TestObject(33000), TestObject(33001)}
         with mock.patch.object(ia.ItemAllocator, '_read') as read:
             read.return_value = ["deadbeef,33000\n"]
             a = ia.ItemAllocator('/file', TestObject, test_pool)
@@ -112,7 +112,7 @@ class TestItemAllocator(base.BaseTestCase):
         self.assertFalse(write.called)
 
     def test_allocate_exhausted_pool(self):
-        test_pool = set([TestObject(33000)])
+        test_pool = {TestObject(33000)}
         with mock.patch.object(ia.ItemAllocator, '_read') as read:
             read.return_value = ["deadbeef,33000\n"]
             a = ia.ItemAllocator('/file', TestObject, test_pool)
@@ -125,7 +125,7 @@ class TestItemAllocator(base.BaseTestCase):
         self.assertTrue(write.called)
 
     def test_release(self):
-        test_pool = set([TestObject(33000), TestObject(33001)])
+        test_pool = {TestObject(33000), TestObject(33001)}
         with mock.patch.object(ia.ItemAllocator, '_write') as write:
             a = ia.ItemAllocator('/file', TestObject, test_pool)
             allocation = a.allocate('deadbeef')

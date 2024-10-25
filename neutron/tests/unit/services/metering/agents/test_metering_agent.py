@@ -50,7 +50,7 @@ ROUTERS_WITH_RULE = [{'status': 'ACTIVE',
 class TestMeteringOperations(base.BaseTestCase):
 
     def setUp(self):
-        super(TestMeteringOperations, self).setUp()
+        super().setUp()
         metering_agent_config.register_metering_agent_opts()
 
         self.noop_driver = ('neutron.services.metering.drivers.noop.'
@@ -243,7 +243,7 @@ class TestMeteringOperations(base.BaseTestCase):
 
 class TestMeteringDriver(base.BaseTestCase):
     def setUp(self):
-        super(TestMeteringDriver, self).setUp()
+        super().setUp()
         metering_agent_config.register_metering_agent_opts()
 
         cfg.CONF.set_override('driver', 'noop')

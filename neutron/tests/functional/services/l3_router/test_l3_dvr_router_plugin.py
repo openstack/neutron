@@ -37,7 +37,7 @@ DEVICE_OWNER_COMPUTE = constants.DEVICE_OWNER_COMPUTE_PREFIX + 'fake'
 class L3DvrTestCaseBase(ml2_test_base.ML2TestFramework,
                         functional_base.BaseLoggingTestCase):
     def setUp(self):
-        super(L3DvrTestCaseBase, self).setUp()
+        super().setUp()
         self.l3_agent = helpers.register_l3_agent(
             host="host0",
             agent_mode=constants.L3_AGENT_MODE_DVR_SNAT)
@@ -47,7 +47,7 @@ class L3DvrTestCaseBase(ml2_test_base.ML2TestFramework,
         helpers.register_ovs_agent(host='host2')
 
     def _create_router(self, distributed=True, ha=False, admin_state_up=True):
-        return (super(L3DvrTestCaseBase, self).
+        return (super().
                 _create_router(distributed=distributed, ha=ha,
                                admin_state_up=admin_state_up))
 
@@ -55,8 +55,7 @@ class L3DvrTestCaseBase(ml2_test_base.ML2TestFramework,
 class MultipleL3PluginTestCase(L3DvrTestCaseBase):
 
     def get_additional_service_plugins(self):
-        p = super(MultipleL3PluginTestCase,
-                  self).get_additional_service_plugins()
+        p = super().get_additional_service_plugins()
         p.update({'l3_plugin_name_1': self.l3_plugin,
                   'l3_plugin_name_2': self.l3_plugin})
         return p
@@ -354,7 +353,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             # and create l3 agents on corresponding hosts
             if test_agent_mode is not None:
                 helpers.register_l3_agent(host='host1',
-                    agent_mode=test_agent_mode)
+                                          agent_mode=test_agent_mode)
 
             # make net external
             ext_net_id = ext_subnet['subnet']['network_id']
@@ -442,15 +441,15 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                 {'port': {portbindings.HOST_ID: 'host2'}})
             # and create l3 agents on corresponding hosts
             helpers.register_l3_agent(host='host1',
-                agent_mode=test_agent_mode)
+                                      agent_mode=test_agent_mode)
             helpers.register_l3_agent(host='host2',
-                agent_mode=test_agent_mode)
+                                      agent_mode=test_agent_mode)
 
             # make net external
             ext_net_id = ext_subnet['subnet']['network_id']
             self._update('networks', ext_net_id,
-                     {'network': {extnet_apidef.EXTERNAL: True}},
-                     as_admin=True)
+                         {'network': {extnet_apidef.EXTERNAL: True}},
+                         as_admin=True)
 
             router1 = self._create_router(distributed=dvr)
             router2 = self._create_router(distributed=dvr)
@@ -558,7 +557,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                 {'port': {portbindings.HOST_ID: 'host1'}})
             # and create l3 agents on corresponding hosts
             helpers.register_l3_agent(host='host1',
-                agent_mode=test_agent_mode)
+                                      agent_mode=test_agent_mode)
             # make net external
             ext_net_id = ext_subnet['subnet']['network_id']
             self._update('networks', ext_net_id,
@@ -659,12 +658,14 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             self.context, [router1['id']])
         self.assertEqual(0, len(snat_router_intfs[router1['id']]))
         private_net1 = self._make_network(self.fmt, 'net1', True)
-        private_ipv6_subnet1 = self._make_subnet(self.fmt,
+        private_ipv6_subnet1 = self._make_subnet(
+            self.fmt,
             private_net1, 'fd00::1',
             cidr='fd00::1/64', ip_version=constants.IP_VERSION_6,
             ipv6_ra_mode='slaac',
             ipv6_address_mode='slaac')
-        private_ipv6_subnet2 = self._make_subnet(self.fmt,
+        private_ipv6_subnet2 = self._make_subnet(
+            self.fmt,
             private_net1, 'fd01::1',
             cidr='fd01::1/64', ip_version=constants.IP_VERSION_6,
             ipv6_ra_mode='slaac',
@@ -1519,8 +1520,8 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             # make net external
             ext_net_id = ext_subnet['subnet']['network_id']
             self._update('networks', ext_net_id,
-                     {'network': {extnet_apidef.EXTERNAL: True}},
-                     as_admin=True)
+                         {'network': {extnet_apidef.EXTERNAL: True}},
+                         as_admin=True)
             # add external gateway to router
             self.l3_plugin.update_router(
                 self.context, router['id'],
@@ -1606,8 +1607,8 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             # make net external
             ext_net_id = ext_subnet['subnet']['network_id']
             self._update('networks', ext_net_id,
-                     {'network': {extnet_apidef.EXTERNAL: True}},
-                     as_admin=True)
+                         {'network': {extnet_apidef.EXTERNAL: True}},
+                         as_admin=True)
 
             with mock.patch.object(self.l3_plugin.l3_rpc_notifier.client,
                                    'prepare') as mock_prepare:
@@ -1771,7 +1772,7 @@ class L3DvrTestCase(L3DvrTestCaseBase):
                 as p4:
             host = 'host1'
 
-            self._verify_dvr_subnet_ids_on_host(host, set([]))
+            self._verify_dvr_subnet_ids_on_host(host, set())
 
             self.core_plugin.update_port(
                 self.context, p1['port']['id'],
@@ -1904,8 +1905,8 @@ class L3DvrTestCase(L3DvrTestCaseBase):
             # make net external
             ext_net_id = ext_subnet['subnet']['network_id']
             self._update('networks', ext_net_id,
-                     {'network': {extnet_apidef.EXTERNAL: True}},
-                     as_admin=True)
+                         {'network': {extnet_apidef.EXTERNAL: True}},
+                         as_admin=True)
             # add external gateway to router
             self.l3_plugin.update_router(
                 self.context, router3['id'],

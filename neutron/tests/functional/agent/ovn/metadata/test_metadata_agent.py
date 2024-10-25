@@ -50,14 +50,14 @@ class MetadataAgentHealthEvent(event.WaitEvent):
     def __init__(self, chassis, sb_cfg, timeout=5):
         self.chassis = chassis
         self.sb_cfg = sb_cfg
-        super(MetadataAgentHealthEvent, self).__init__(
+        super().__init__(
             (self.ROW_UPDATE,),
             AGENT_CHASSIS_TABLE,
             (('name', '=', self.chassis),),
             timeout=timeout)
 
     def matches(self, event, row, old=None):
-        if not super(MetadataAgentHealthEvent, self).matches(event, row, old):
+        if not super().matches(event, row, old):
             return False
         return int(row.external_ids.get(
             ovn_const.OVN_AGENT_METADATA_SB_CFG_KEY, 0)) >= self.sb_cfg
@@ -70,7 +70,7 @@ class MetadataPortCreateEvent(event.WaitEvent):
         table = 'Port_Binding'
         events = (self.ROW_CREATE,)
         conditions = (('logical_port', '=', metadata_port),)
-        super(MetadataPortCreateEvent, self).__init__(
+        super().__init__(
             events, table, conditions, timeout=timeout
         )
 
@@ -80,7 +80,7 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
     FAKE_CHASSIS_HOST = 'ovn-host-fake'
 
     def setUp(self):
-        super(TestMetadataAgent, self).setUp()
+        super().setUp()
         self.handler = self.sb_api.idl.notify_handler
         # We only have OVN NB and OVN SB running for functional tests
         self.mock_ovsdb_idl = mock.Mock()
@@ -478,7 +478,8 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
                 agent.MetadataAgent, 'provision_datapath') as m_provision:
 
             # Update the additional_chassis
-            self.sb_api.db_set('Port_Binding', pb.uuid,
+            self.sb_api.db_set(
+                'Port_Binding', pb.uuid,
                 additional_chassis=[agent_chassis.uuid]).execute(
                     check_error=True, log_errors=True)
 
@@ -513,7 +514,8 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
             # Update the additional_chassis, the agent should not see the
             # notification because it has only its own chassis row locally and
             # does not see other chassis
-            self.sb_api.db_set('Port_Binding', pb.uuid,
+            self.sb_api.db_set(
+                'Port_Binding', pb.uuid,
                 additional_chassis=[other_chassis.uuid]).execute(
                     check_error=True, log_errors=True)
 
@@ -544,7 +546,8 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
                 agent.MetadataAgent, 'provision_datapath') as m_provision:
 
             # Update the additional_chassis
-            self.sb_api.db_set('Port_Binding', pb.uuid,
+            self.sb_api.db_set(
+                'Port_Binding', pb.uuid,
                 additional_chassis=[agent_chassis.uuid]).execute(
                     check_error=True, log_errors=True)
 
@@ -559,7 +562,7 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
             # Remove the additional_chassis but keep the chassis. This is
             # simulates the live migration has failed
             self.sb_api.db_set('Port_Binding', pb.uuid,
-                additional_chassis=[]).execute(
+                               additional_chassis=[]).execute(
                     check_error=True, log_errors=True)
 
             n_utils.wait_until_true(
@@ -588,7 +591,8 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
                 agent.MetadataAgent, 'provision_datapath') as m_provision:
 
             # Update the additional_chassis
-            self.sb_api.db_set('Port_Binding', pb.uuid,
+            self.sb_api.db_set(
+                'Port_Binding', pb.uuid,
                 additional_chassis=[agent_chassis.uuid]).execute(
                     check_error=True, log_errors=True)
 
@@ -600,7 +604,8 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
 
             m_provision.reset_mock()
 
-            self.sb_api.db_set('Port_Binding', pb.uuid,
+            self.sb_api.db_set(
+                'Port_Binding', pb.uuid,
                 additional_chassis=[], chassis=agent_chassis.uuid).execute(
                     check_error=True, log_errors=True)
 
@@ -630,7 +635,8 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
                 agent.MetadataAgent, 'provision_datapath') as m_provision:
 
             # Update the additional_chassis
-            self.sb_api.db_set('Port_Binding', pb.uuid,
+            self.sb_api.db_set(
+                'Port_Binding', pb.uuid,
                 additional_chassis=[agent_chassis.uuid]).execute(
                     check_error=True, log_errors=True)
 
@@ -642,7 +648,8 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
 
             m_provision.reset_mock()
 
-            self.sb_api.db_set('Port_Binding', pb.uuid,
+            self.sb_api.db_set(
+                'Port_Binding', pb.uuid,
                 additional_chassis=[], chassis=new_chassis_uuid).execute(
                     check_error=True, log_errors=True)
 
@@ -681,7 +688,7 @@ class TestMetadataAgent(base.TestOVNFunctionalBase):
                 agent.MetadataAgent, 'provision_datapath') as m_provision:
 
             self.sb_api.db_add('Port_Binding', pb.uuid,
-                'external_ids', {'foo': 'bar'}).execute(
+                               'external_ids', {'foo': 'bar'}).execute(
                     check_error=True, log_errors=True)
 
             with testtools.ExpectedException(NoDatapathProvision):

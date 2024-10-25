@@ -41,7 +41,7 @@ SERVICE_PLUGIN_KLASS = ('neutron.services.network_segment_range.plugin.'
 class HelpersTest(testlib_api.SqlTestCase):
 
     def setUp(self):
-        super(HelpersTest, self).setUp()
+        super().setUp()
         self.driver = type_vlan.VlanTypeDriver()
         self.driver.network_vlan_ranges = NETWORK_VLAN_RANGES
         self.driver._sync_vlan_allocations()
@@ -52,7 +52,7 @@ class HelpersTest(testlib_api.SqlTestCase):
             self.assertEqual(value, observed[key])
 
     def test_primary_keys(self):
-        self.assertEqual(set(['physical_network', 'vlan_id']),
+        self.assertEqual({'physical_network', 'vlan_id'},
                          self.driver.primary_keys)
 
     def test_allocate_specific_unallocated_segment_in_pools(self):
@@ -143,7 +143,7 @@ class HelpersTest(testlib_api.SqlTestCase):
 class HelpersTestWithNetworkSegmentRange(HelpersTest):
 
     def setUp(self):
-        super(HelpersTestWithNetworkSegmentRange, self).setUp()
+        super().setUp()
         cfg.CONF.set_override('network_vlan_ranges',
                               NETWORK_VLAN_RANGES_CFG_ENTRIES,
                               group='ml2_type_vlan')

@@ -34,7 +34,7 @@ from neutron.tests.unit.plugins.ml2.drivers.openvswitch.agent import (
 class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
 
     def setUp(self):
-        super(QosOVSAgentDriverTestCase, self).setUp()
+        super().setUp()
         conn_patcher = mock.patch(
             'neutron.agent.ovsdb.impl_idl._connection')
         conn_patcher.start()
@@ -134,11 +134,11 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
 
     def _create_qos_policy_obj(self, rules):
         policy_dict = {'id': uuidutils.generate_uuid(),
-                'project_id': uuidutils.generate_uuid(),
-                'name': 'test',
-                'description': 'test',
-                'shared': False,
-                'rules': rules}
+                       'project_id': uuidutils.generate_uuid(),
+                       'name': 'test',
+                       'description': 'test',
+                       'shared': False,
+                       'rules': rules}
         policy_obj = policy.QosPolicy(self.context, **policy_dict)
         policy_obj.obj_reset_changes()
         for policy_rule in policy_obj.rules:
@@ -151,7 +151,7 @@ class QosOVSAgentDriverTestCase(ovs_test_base.OVSAgentConfigTestBase):
 
         port_id = uuidutils.generate_uuid()
 
-        class FakeVifPort(object):
+        class FakeVifPort:
             port_name = self.port_name
             ofport = 111
             vif_id = port_id

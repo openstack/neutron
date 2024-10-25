@@ -35,7 +35,7 @@ DB_PLUGIN_KLASS = ('neutron.tests.unit.db.test_allowedaddresspairs_db.'
 class AllowedAddressPairTestCase(
         test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
     def setUp(self, plugin=None, ext_mgr=None):
-        super(AllowedAddressPairTestCase, self).setUp(plugin)
+        super().setUp(plugin)
 
         # Check if a plugin supports security groups
         plugin_obj = directory.get_plugin()
@@ -56,7 +56,7 @@ class AllowedAddressPairTestPlugin(portsecurity_db.PortSecurityDbMixin,
     def create_port(self, context, port):
         p = port['port']
         with db_api.CONTEXT_WRITER.using(context):
-            neutron_db = super(AllowedAddressPairTestPlugin, self).create_port(
+            neutron_db = super().create_port(
                 context, port)
             p.update(neutron_db)
             if validators.is_attr_set(p.get(addr_apidef.ADDRESS_PAIRS)):
@@ -74,7 +74,7 @@ class AllowedAddressPairTestPlugin(portsecurity_db.PortSecurityDbMixin,
         has_addr_pairs = self._check_update_has_allowed_address_pairs(port)
 
         with db_api.CONTEXT_WRITER.using(context):
-            ret_port = super(AllowedAddressPairTestPlugin, self).update_port(
+            ret_port = super().update_port(
                 context, id, port)
             # copy values over - but not fixed_ips
             port['port'].pop('fixed_ips', None)
@@ -93,8 +93,7 @@ class AllowedAddressPairTestPlugin(portsecurity_db.PortSecurityDbMixin,
 class AllowedAddressPairDBTestCase(AllowedAddressPairTestCase):
     def setUp(self, plugin=None, ext_mgr=None):
         plugin = plugin or DB_PLUGIN_KLASS
-        super(AllowedAddressPairDBTestCase,
-              self).setUp(plugin=plugin, ext_mgr=ext_mgr)
+        super().setUp(plugin=plugin, ext_mgr=ext_mgr)
 
 
 class TestAllowedAddressPairs(AllowedAddressPairDBTestCase):

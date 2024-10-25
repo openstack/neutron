@@ -45,7 +45,7 @@ VRRP_INTERVAL = 5
 class KeepalivedBaseTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(KeepalivedBaseTestCase, self).setUp()
+        super().setUp()
         l3_config.register_l3_agent_config_opts(l3_config.OPTS, cfg.CONF)
         self._mock_no_track_supported = mock.patch.object(
             keepalived, '_is_keepalived_use_no_track_supported')
@@ -85,7 +85,7 @@ class KeepalivedGetFreeRangeTestCase(KeepalivedBaseTestCase):
                 size=huge_size)
 
 
-class KeepalivedConfBaseMixin(object):
+class KeepalivedConfBaseMixin:
 
     def _get_config(self, track=True):
         config = keepalived.KeepalivedConf()
@@ -328,49 +328,49 @@ class KeepalivedInstanceTestCase(KeepalivedBaseTestCase,
         no_track_value = ' no_track' if not track else ''
 
         expected = KEEPALIVED_GLOBAL_CONFIG + textwrap.dedent("""
-            vrrp_instance VR_1 {
+            vrrp_instance VR_1 {{
                 state MASTER
                 interface eth0
                 virtual_router_id 1
                 priority 50
                 garp_master_delay 60
                 advert_int 5
-                authentication {
+                authentication {{
                     auth_type AH
                     auth_pass pass123
-                }
-                track_interface {
+                }}
+                track_interface {{
                     eth0
-                }
-                virtual_ipaddress {
+                }}
+                virtual_ipaddress {{
                     169.254.0.1/24 dev eth0
-                }
-                virtual_ipaddress_excluded {
-                    192.168.1.0/24 dev eth1%(no_track)s
-                }
-                virtual_routes {
-                    0.0.0.0/0 via 192.168.1.1 dev eth1%(no_track)s protocol static
-                }
-            }
-            vrrp_instance VR_2 {
+                }}
+                virtual_ipaddress_excluded {{
+                    192.168.1.0/24 dev eth1{no_track}
+                }}
+                virtual_routes {{
+                    0.0.0.0/0 via 192.168.1.1 dev eth1{no_track} protocol static
+                }}
+            }}
+            vrrp_instance VR_2 {{
                 state MASTER
                 interface eth4
                 virtual_router_id 2
                 priority 50
                 garp_master_delay 60
                 mcast_src_ip 224.0.0.1
-                track_interface {
+                track_interface {{
                     eth4
-                }
-                virtual_ipaddress {
+                }}
+                virtual_ipaddress {{
                     169.254.0.2/24 dev eth4
-                }
-                virtual_ipaddress_excluded {
-                    192.168.2.0/24 dev eth2%(no_track)s
-                    192.168.3.0/24 dev eth6%(no_track)s
-                    192.168.55.0/24 dev eth10%(no_track)s
-                }
-            }""" % {'no_track': no_track_value})  # noqa: E501 # pylint: disable=line-too-long
+                }}
+                virtual_ipaddress_excluded {{
+                    192.168.2.0/24 dev eth2{no_track}
+                    192.168.3.0/24 dev eth6{no_track}
+                    192.168.55.0/24 dev eth10{no_track}
+                }}
+            }}""".format(no_track=no_track_value))  # noqa: E501 # pylint: disable=line-too-long
 
         self.assertEqual(expected, config.get_config_str())
 

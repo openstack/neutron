@@ -24,7 +24,7 @@ from neutron.tests import tools
 class CapabilitiesTest(base.BaseTestCase):
 
     def setUp(self):
-        super(CapabilitiesTest, self).setUp()
+        super().setUp()
         self._mgr = mock.Mock()
         self.useFixture(fixture.CallbackRegistryFixture(
             callback_manager=self._mgr))
@@ -34,9 +34,9 @@ class CapabilitiesTest(base.BaseTestCase):
         mock_agent = mock.Mock()
         capabilities.notify_init_event(mock_agent_type, mock_agent)
         self._mgr.publish.assert_called_with(mock_agent_type,
-                                            events.AFTER_INIT,
-                                            mock_agent,
-                                            payload=None)
+                                             events.AFTER_INIT,
+                                             mock_agent,
+                                             payload=None)
 
     def test_register(self):
         mock_callback = mock.Mock()

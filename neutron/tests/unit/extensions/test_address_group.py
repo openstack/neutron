@@ -26,7 +26,7 @@ DB_PLUGIN_KLASS = ('neutron.tests.unit.extensions.test_address_group.'
                    'AddressGroupTestPlugin')
 
 
-class AddressGroupTestExtensionManager(object):
+class AddressGroupTestExtensionManager:
 
     def get_resources(self):
         return ag_ext.Address_group.get_resources()
@@ -117,7 +117,7 @@ class TestAddressGroup(AddressGroupTestCase):
     def setUp(self):
         plugin = DB_PLUGIN_KLASS
         ext_mgr = AddressGroupTestExtensionManager()
-        super(TestAddressGroup, self).setUp(plugin=plugin, ext_mgr=ext_mgr)
+        super().setUp(plugin=plugin, ext_mgr=ext_mgr)
 
     def test_create_address_group_without_description_or_addresses(self):
         expected_ag = {'name': 'foo',

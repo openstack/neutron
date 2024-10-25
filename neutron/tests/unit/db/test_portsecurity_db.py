@@ -31,7 +31,7 @@ class FakePlugin(pd.PortSecurityDbMixin):
 class PortSecurityDbMixinTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(PortSecurityDbMixinTestCase, self).setUp()
+        super().setUp()
         self.plugin = FakePlugin()
         directory.add_plugin(constants.CORE, self.plugin)
 

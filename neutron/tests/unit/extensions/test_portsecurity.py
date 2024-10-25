@@ -45,7 +45,7 @@ class PortSecurityTestCase(test_securitygroup.SecurityGroupsTestCase,
         self.addCleanup(self._restore)
         ext_mgr = (
             test_securitygroup.SecurityGroupTestExtensionManager())
-        super(PortSecurityTestCase, self).setUp(plugin=plugin, ext_mgr=ext_mgr)
+        super().setUp(plugin=plugin, ext_mgr=ext_mgr)
 
         # Check if a plugin supports security groups
         plugin_obj = directory.get_plugin()
@@ -70,7 +70,7 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
         with db_api.CONTEXT_WRITER.using(context):
             tenant_id = network['network'].get('tenant_id')
             self._ensure_default_security_group(context, tenant_id)
-            neutron_db = super(PortSecurityTestPlugin, self).create_network(
+            neutron_db = super().create_network(
                 context, network)
             neutron_db.update(network['network'])
             self._process_network_port_security_create(
@@ -79,7 +79,7 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def update_network(self, context, id, network):
         with db_api.CONTEXT_WRITER.using(context):
-            neutron_db = super(PortSecurityTestPlugin, self).update_network(
+            neutron_db = super().update_network(
                 context, id, network)
             if psec.PORTSECURITY in network['network']:
                 self._process_network_port_security_update(
@@ -88,13 +88,13 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def get_network(self, context, id, fields=None):
         with db_api.CONTEXT_READER.using(context):
-            net = super(PortSecurityTestPlugin, self).get_network(
+            net = super().get_network(
                 context, id)
         return db_utils.resource_fields(net, fields)
 
     def create_port(self, context, port):
         p = port['port']
-        neutron_db = super(PortSecurityTestPlugin, self).create_port(
+        neutron_db = super().create_port(
             context, port)
         p.update(neutron_db)
 
@@ -125,7 +125,7 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
             port)
         has_security_groups = self._check_update_has_security_groups(port)
         with db_api.CONTEXT_WRITER.using(context):
-            ret_port = super(PortSecurityTestPlugin, self).update_port(
+            ret_port = super().update_port(
                 context, id, port)
             # copy values over - but not fixed_ips
             port['port'].pop('fixed_ips', None)
@@ -150,7 +150,7 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
                 # get security groups on port
                 filters = {'port_id': [id]}
-                security_groups = (super(PortSecurityTestPlugin, self).
+                security_groups = (super().
                                    _get_port_security_group_bindings(
                                        context, filters))
                 if security_groups and not delete_security_groups:
@@ -175,7 +175,7 @@ class PortSecurityTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 class PortSecurityDBTestCase(PortSecurityTestCase):
     def setUp(self, plugin=None, service_plugins=None):
         plugin = plugin or DB_PLUGIN_KLASS
-        super(PortSecurityDBTestCase, self).setUp(plugin)
+        super().setUp(plugin)
 
 
 class TestPortSecurity(PortSecurityDBTestCase):
@@ -297,7 +297,7 @@ class TestPortSecurity(PortSecurityDBTestCase):
         security_group_id = security_group['security_group']['id']
         res = self._create_port('json', net['network']['id'],
                                 arg_list=('security_groups',
-                                    'port_security_enabled'),
+                                          'port_security_enabled'),
                                 port_security_enabled=True,
                                 security_groups=[security_group_id])
         port = self.deserialize('json', res)
@@ -321,7 +321,7 @@ class TestPortSecurity(PortSecurityDBTestCase):
         security_group_id = security_group['security_group']['id']
         res = self._create_port('json', net['network']['id'],
                                 arg_list=('security_groups',
-                                    'port_security_enabled'),
+                                          'port_security_enabled'),
                                 is_admin=True,
                                 tenant_id='admin_tenant',
                                 port_security_enabled=True,
@@ -347,7 +347,7 @@ class TestPortSecurity(PortSecurityDBTestCase):
         security_group_id = security_group['security_group']['id']
         res = self._create_port('json', net['network']['id'],
                                 arg_list=('security_groups',
-                                    'port_security_enabled'),
+                                          'port_security_enabled'),
                                 tenant_id='demo_tenant',
                                 port_security_enabled=True,
                                 security_groups=[security_group_id])
@@ -397,9 +397,10 @@ class TestPortSecurity(PortSecurityDBTestCase):
                 port = self.deserialize('json', res)
                 self.assertTrue(port['port'][psec.PORTSECURITY])
 
-                security_group = self.deserialize('json',
+                security_group = self.deserialize(
+                    'json',
                     self._create_security_group(self.fmt, 'asdf', 'asdf',
-                                                tenant_id='other_tenant'))
+                    tenant_id='other_tenant'))
                 security_group_id = security_group['security_group']['id']
                 update_port = {'port':
                                {'security_groups': [security_group_id]}}
@@ -422,9 +423,10 @@ class TestPortSecurity(PortSecurityDBTestCase):
                 port = self.deserialize('json', res)
                 self.assertTrue(port['port'][psec.PORTSECURITY])
 
-                security_group = self.deserialize('json',
+                security_group = self.deserialize(
+                    'json',
                     self._create_security_group(self.fmt, 'asdf', 'asdf',
-                                                tenant_id='other_tenant'))
+                    tenant_id='other_tenant'))
                 security_group_id = security_group['security_group']['id']
                 update_port = {'port':
                                {'security_groups': [security_group_id]}}

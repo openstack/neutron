@@ -33,7 +33,7 @@ class DataPlaneStatusSML2ExtDriverTestCase(test_plugin.Ml2PluginV2TestCase):
         cfg.CONF.set_override('extension_drivers',
                               self._extension_drivers,
                               group='ml2')
-        super(DataPlaneStatusSML2ExtDriverTestCase, self).setUp()
+        super().setUp()
         self.plugin = directory.get_plugin()
 
     def test_extend_port_dict_no_data_plane_status(self):

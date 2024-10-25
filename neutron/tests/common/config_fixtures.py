@@ -23,7 +23,7 @@ from neutron.tests import base
 class ConfigDict(base.AttributeDict):
     def update(self, other):
         self.convert_to_attr_dict(other)
-        super(ConfigDict, self).update(other)
+        super().update(other)
 
     def convert_to_attr_dict(self, other):
         """Convert nested dicts to AttributeDict.
@@ -46,7 +46,7 @@ class ConfigFileFixture(fixtures.Fixture):
     """
 
     def __init__(self, base_filename, config, temp_dir):
-        super(ConfigFileFixture, self).__init__()
+        super().__init__()
         self.base_filename = base_filename
         self.config = config
         self.temp_dir = temp_dir

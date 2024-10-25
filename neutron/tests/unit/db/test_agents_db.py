@@ -59,7 +59,7 @@ class FakePlugin(base_plugin.NeutronDbPluginV2, agents_db.AgentDbMixin):
 
 class TestAgentsDbBase(testlib_api.SqlTestCase):
     def setUp(self):
-        super(TestAgentsDbBase, self).setUp()
+        super().setUp()
         self.context = context.get_admin_context()
         self.plugin = FakePlugin()
 
@@ -98,7 +98,7 @@ class TestAgentsDbBase(testlib_api.SqlTestCase):
 
 class TestAgentsDbMixin(TestAgentsDbBase):
     def setUp(self):
-        super(TestAgentsDbMixin, self).setUp()
+        super().setUp()
 
         self.agent_status = dict(AGENT_STATUS)
 
@@ -286,7 +286,7 @@ class TestAgentsDbGetAgents(TestAgentsDbBase):
         # ensure that the first scenario will execute with nosetests
         if not hasattr(self, 'agents'):
             self.__dict__.update(self.scenarios[0][1])
-        super(TestAgentsDbGetAgents, self).setUp()
+        super().setUp()
 
     def test_get_agents(self):
         hosts = ['host-%s' % i for i in range(self.agents)]
@@ -310,7 +310,7 @@ class TestAgentsDbGetAgents(TestAgentsDbBase):
 class TestAgentExtRpcCallback(TestAgentsDbBase):
 
     def setUp(self):
-        super(TestAgentExtRpcCallback, self).setUp()
+        super().setUp()
         self.callback = agents_db.AgentExtRpcCallback(self.plugin)
         self.callback.server_versions_rpc = mock.Mock()
         self.versions_rpc = self.callback.server_versions_rpc

@@ -41,7 +41,7 @@ class FakePlugin(base_plugin.NeutronDbPluginV2, driver.DbQuotaDriver):
     """A fake plugin class containing all DB methods."""
 
 
-class TestResource(object):
+class TestResource:
     """Describe a test resource for quota checking."""
 
     def __init__(self, name, default, fake_count=0):
@@ -61,7 +61,7 @@ class TestTrackedResource(resource.TrackedResource):
     """Describes a test tracked resource for detailed quota checking"""
     def __init__(self, name, model_class, flag=None,
                  plural_name=None):
-        super(TestTrackedResource, self).__init__(
+        super().__init__(
             name, model_class, flag=flag, plural_name=None)
 
     @property
@@ -72,7 +72,7 @@ class TestTrackedResource(resource.TrackedResource):
 class TestCountableResource(resource.CountableResource):
     """Describes a test countable resource for detailed quota checking"""
     def __init__(self, name, count, flag=-1, plural_name=None):
-        super(TestCountableResource, self).__init__(
+        super().__init__(
             name, count, flag=flag, plural_name=None)
 
     @property
@@ -88,7 +88,7 @@ ALT_RESOURCE = 'res_test_meh'
 class TestDbQuotaDriver(testlib_api.SqlTestCase,
                         base.BaseTestCase):
     def setUp(self):
-        super(TestDbQuotaDriver, self).setUp()
+        super().setUp()
         self.plugin = FakePlugin()
         self.context = context.get_admin_context()
         self.setup_coreplugin(core_plugin=DB_PLUGIN_KLASS)

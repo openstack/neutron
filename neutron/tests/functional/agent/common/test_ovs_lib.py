@@ -45,14 +45,14 @@ class WaitForPortCreateEvent(event.WaitEvent):
         table = 'Port'
         events = (self.ROW_CREATE, self.ROW_UPDATE)
         conditions = (('name', '=', port_name),)
-        super(WaitForPortCreateEvent, self).__init__(
+        super().__init__(
             events, table, conditions, timeout=15)
 
 
 class BaseOVSTestCase(base.BaseSudoTestCase):
 
     def setUp(self):
-        super(BaseOVSTestCase, self).setUp()
+        super().setUp()
         self.br_name = ('br-' + uuidutils.generate_uuid())[:10]
         self.port_id = ('port-' + uuidutils.generate_uuid())[:8]
         self.ovs = ovs_lib.OVSBridge(self.br_name)

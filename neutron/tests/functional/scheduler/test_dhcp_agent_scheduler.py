@@ -36,7 +36,7 @@ from neutron.tests.unit.scheduler import (test_dhcp_agent_scheduler as
 load_tests = testscenarios.load_tests_apply_scenarios
 
 
-class BaseTestScheduleNetwork(object):
+class BaseTestScheduleNetwork:
     """Base class which defines scenarios for schedulers.
 
         agent_count
@@ -352,7 +352,7 @@ class TestAutoSchedule(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
         subnets = []
         for net in self._networks:
             enable_dhcp = (net['name'] not in
-              self.networks_with_dhcp_disabled)
+                           self.networks_with_dhcp_disabled)
             subnets.append({'network_id': net.id,
                             'enable_dhcp': enable_dhcp,
                             'segment_id': None})
@@ -524,7 +524,7 @@ class TestAZAwareWeightScheduler(test_dhcp_sch.TestDhcpSchedulerBaseTestCase,
         # create dhcp agents
         for i in range(self.az_count):
             az = 'az%s' % i
-            hosts = ['%s-host-%s' % (az, j)
+            hosts = ['{}-host-{}'.format(az, j)
                      for j in range(self.agent_count[i])]
             dhcp_agents = self._create_and_set_agents_down(
                 hosts, down_agent_count=self.down_agent_count[i], az=az)

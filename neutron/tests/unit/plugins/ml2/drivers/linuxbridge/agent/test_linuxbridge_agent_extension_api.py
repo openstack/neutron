@@ -23,7 +23,7 @@ from neutron.tests import base
 class TestLinuxbridgeAgentExtensionAPI(base.BaseTestCase):
 
     def setUp(self):
-        super(TestLinuxbridgeAgentExtensionAPI, self).setUp()
+        super().setUp()
         self.iptables_manager = mock.Mock()
         self.extension_api = ext_api.LinuxbridgeAgentExtensionAPI(
             self.iptables_manager)

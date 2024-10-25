@@ -36,7 +36,7 @@ from neutron.tests.functional.agent.linux import base as linux_base
 class BaseMonitorTest(linux_base.BaseOVSLinuxTestCase):
 
     def setUp(self):
-        super(BaseMonitorTest, self).setUp()
+        super().setUp()
 
         rootwrap_not_configured = (cfg.CONF.AGENT.root_helper == base.SUDO_CMD)
         if rootwrap_not_configured:
@@ -60,7 +60,7 @@ class BaseMonitorTest(linux_base.BaseOVSLinuxTestCase):
 class TestOvsdbMonitor(BaseMonitorTest):
 
     def setUp(self):
-        super(TestOvsdbMonitor, self).setUp()
+        super().setUp()
 
         self.monitor = ovsdb_monitor.OvsdbMonitor('Bridge')
         self.addCleanup(self.monitor.stop)
@@ -81,7 +81,7 @@ class TestOvsdbMonitor(BaseMonitorTest):
 class TestSimpleInterfaceMonitor(BaseMonitorTest):
 
     def setUp(self):
-        super(TestSimpleInterfaceMonitor, self).setUp()
+        super().setUp()
 
         self.monitor = ovsdb_monitor.SimpleInterfaceMonitor()
         self.addCleanup(self.monitor.stop)

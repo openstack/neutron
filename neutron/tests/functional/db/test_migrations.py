@@ -155,7 +155,7 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
 
     def setUp(self):
         config.register_common_config_options()
-        super(_TestModelsMigrations, self).setUp()
+        super().setUp()
         self.cfg = self.useFixture(config_fixture.Config())
         self.cfg.config(core_plugin='ml2')
         self.alembic_config = migration.get_neutron_config()
@@ -178,7 +178,7 @@ class _TestModelsMigrations(test_migrations.ModelsMigrationsSync):
                                  name in external.TABLES):
             return False
 
-        return super(_TestModelsMigrations, self).include_object(
+        return super().include_object(
             object_, name, type_, reflected, compare_to)
 
     def filter_metadata_diff(self, diff):
@@ -379,7 +379,7 @@ class TestModelsMigrationsMySQL(testlib_api.MySQLTestCaseMixin,
             self.assertEqual(0, len(res), "%s non InnoDB tables created" % res)
 
     def test_models_sync(self):
-        super(TestModelsMigrationsMySQL, self).test_models_sync()
+        super().test_models_sync()
 
 
 class TestModelsMigrationsPostgreSQL(testlib_api.PostgreSQLTestCaseMixin,
@@ -392,7 +392,7 @@ class TestSanityCheck(testlib_api.SqlTestCaseLight):
     BUILD_SCHEMA = False
 
     def setUp(self):
-        super(TestSanityCheck, self).setUp()
+        super().setUp()
         self.alembic_config = migration.get_neutron_config()
         self.alembic_config.neutron_config = cfg.CONF
 
@@ -507,7 +507,7 @@ class TestSanityCheck(testlib_api.SqlTestCaseLight):
 class TestWalkDowngrade(oslotest_base.BaseTestCase):
 
     def setUp(self):
-        super(TestWalkDowngrade, self).setUp()
+        super().setUp()
         self.alembic_config = migration.get_neutron_config()
         self.alembic_config.neutron_config = cfg.CONF
 
@@ -525,7 +525,7 @@ class TestWalkDowngrade(oslotest_base.BaseTestCase):
             return True
 
 
-class _TestWalkMigrations(object):
+class _TestWalkMigrations:
     '''This will add framework for testing schema migration
        for different backends.
 
@@ -606,7 +606,7 @@ class TestWalkMigrationsMySQL(testlib_api.MySQLTestCaseMixin,
     # timeout is required only when for testing with 'mysql' backend.
     @test_base.set_timeout(600)
     def test_walk_versions(self):
-        super(TestWalkMigrationsMySQL, self).test_walk_versions()
+        super().test_walk_versions()
 
 
 class TestWalkMigrationsPostgreSQL(testlib_api.PostgreSQLTestCaseMixin,

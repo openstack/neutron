@@ -30,8 +30,8 @@ class DNSDomainKeywordsTestCase(
         test_dns_integration.DNSIntegrationTestCase):
 
     _extension_drivers = ['dns_domain_keywords']
-    _expected_dns_domain = "%s.%s" % (PROJECT_ID,
-                                      test_dns_integration.DNSDOMAIN)
+    _expected_dns_domain = "{}.{}".format(PROJECT_ID,
+                                          test_dns_integration.DNSDOMAIN)
 
     def _create_port_for_test(self, provider_net=True, dns_domain=True,
                               dns_name=True, ipv4=True, ipv6=True,
@@ -70,7 +70,7 @@ class DNSDomainKeywordsTestCase(
             port_kwargs[dns_apidef.DNSDOMAIN] = (
                 test_dns_integration.PORTDNSDOMAIN)
             port_kwargs['arg_list'] = (port_kwargs.get('arg_list', ()) +
-                (dns_apidef.DNSDOMAIN,))
+                                       (dns_apidef.DNSDOMAIN,))
         res = self._create_port('json', network['network']['id'],
                                 set_context=True, tenant_id=PROJECT_ID,
                                 **port_kwargs)
@@ -126,7 +126,7 @@ class DNSDomainKeywordsTestCase(
                          current_dns_domain=None, previous_dns_domain=None):
         current_dns_domain = current_dns_domain or self._expected_dns_domain
         previous_dns_domain = previous_dns_domain or self._expected_dns_domain
-        super(DNSDomainKeywordsTestCase, self)._verify_port_dns(
+        super()._verify_port_dns(
             port=port, dns_data_db=dns_data_db, dns_name=dns_name,
             dns_domain=dns_domain, ptr_zones=ptr_zones,
             delete_records=delete_records, provider_net=provider_net,
@@ -146,8 +146,8 @@ class DNSDomainKeywordsTestCase(
         )
         domains = [
             ("<project_id>.<project_name>.<user_id>.<user_name>.domain",
-             "%s.%s.%s.%s.domain" % (ctx.project_id, ctx.project_name,
-                                     ctx.user_id, ctx.user_name)),
+             "{}.{}.{}.{}.domain".format(ctx.project_id, ctx.project_name,
+                                         ctx.user_id, ctx.user_name)),
             ("<project_id>.domain",
              "%s.domain" % ctx.project_id),
             ("<project_name>.domain",
@@ -171,7 +171,7 @@ class DNSDomainKeywordsTestCase(
             user_id=uuidutils.generate_uuid(),
             user_name="user"
         )
-        expected_domain = "%s.<project_name>.%s.%s.domain" % (
+        expected_domain = "{}.<project_name>.{}.{}.domain".format(
             ctx.project_id, ctx.user_id, ctx.user_name)
 
         self.assertEqual(

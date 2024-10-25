@@ -55,7 +55,7 @@ FAKE_ROUTER_PORT_ID = _uuid()
 FAKE_ROUTER_PORT_MAC = 'bb:bb:bb:bb:bb:bb'
 
 
-class TestExtensionManager(object):
+class TestExtensionManager:
 
     def get_resources(self):
         return l3.L3.get_resources()
@@ -90,7 +90,7 @@ class TestGetEnableSnat(testscenarios.WithScenarios, base.BaseTestCase):
         ('disabled', {'enable_snat_by_default': False})]
 
     def setUp(self):
-        super(TestGetEnableSnat, self).setUp()
+        super().setUp()
         self.config(enable_snat_by_default=self.enable_snat_by_default)
 
     def _test_get_enable_snat(self, expected, info):
@@ -114,7 +114,7 @@ class TestGetEnableSnat(testscenarios.WithScenarios, base.BaseTestCase):
 class TestL3GwModeMixin(testlib_api.SqlTestCase):
 
     def setUp(self):
-        super(TestL3GwModeMixin, self).setUp()
+        super().setUp()
         plugin = __name__ + '.' + TestDbIntPlugin.__name__
         self.setup_coreplugin(plugin)
         self.target_object = TestDbIntPlugin()
@@ -183,12 +183,14 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
             admin_state_up=True,
             status=constants.NET_STATUS_ACTIVE)
         self.int_sub = subnet_obj.Subnet(self.context,
-            id=self.int_sub_id,
-            project_id=self.tenant_id,
-            ip_version=constants.IP_VERSION_4,
-            cidr=net_utils.AuthenticIPNetwork('3.3.3.0/24'),
-            gateway_ip=netaddr.IPAddress('3.3.3.1'),
-            network_id=self.int_net_id)
+                                         id=self.int_sub_id,
+                                         project_id=self.tenant_id,
+                                         ip_version=constants.IP_VERSION_4,
+                                         cidr=net_utils.AuthenticIPNetwork(
+                                             '3.3.3.0/24'),
+                                         gateway_ip=netaddr.IPAddress(
+                                             '3.3.3.1'),
+                                         network_id=self.int_net_id)
         self.router_port = port_obj.Port(
             self.context,
             id=FAKE_ROUTER_PORT_ID,
@@ -199,7 +201,8 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
             status=constants.PORT_STATUS_ACTIVE,
             mac_address=netaddr.EUI(FAKE_ROUTER_PORT_MAC),
             network_id=self.int_net_id)
-        self.router_port_ip_info = port_obj.IPAllocation(self.context,
+        self.router_port_ip_info = port_obj.IPAllocation(
+            self.context,
             port_id=self.router_port.id,
             network_id=self.int_net.id,
             subnet_id=self.int_sub_id,
@@ -219,7 +222,8 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
             status=constants.PORT_STATUS_ACTIVE,
             mac_address=netaddr.EUI(FAKE_FIP_INT_PORT_MAC),
             network_id=self.int_net_id)
-        self.fip_int_ip_info = port_obj.IPAllocation(self.context,
+        self.fip_int_ip_info = port_obj.IPAllocation(
+            self.context,
             port_id=self.fip_int_port.id,
             network_id=self.int_net.id,
             subnet_id=self.int_sub_id,
@@ -242,8 +246,8 @@ class TestL3GwModeMixin(testlib_api.SqlTestCase):
                             'tenant_id': self.tenant_id}
 
     def _get_gwports_dict(self, gw_ports):
-        return dict((gw_port['id'], gw_port)
-                    for gw_port in gw_ports)
+        return {gw_port['id']: gw_port
+                for gw_port in gw_ports}
 
     def _reset_ext_gw(self):
         # Reset external gateway
@@ -373,9 +377,9 @@ class ExtGwModeIntTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase,
             'neutron.tests.unit.extensions.test_l3_ext_gw_mode.'
             'TestDbIntPlugin')
         ext_mgr = ext_mgr or TestExtensionManager()
-        super(ExtGwModeIntTestCase, self).setUp(plugin=plugin,
-                                                ext_mgr=ext_mgr,
-                                                service_plugins=svc_plugins)
+        super().setUp(plugin=plugin,
+                      ext_mgr=ext_mgr,
+                      service_plugins=svc_plugins)
 
     def _set_router_external_gateway(self, router_id, network_id,
                                      snat_enabled=None,
@@ -538,5 +542,5 @@ class ExtGwModeSepTestCase(ExtGwModeIntTestCase):
         l3_plugin = ('neutron.tests.unit.extensions.test_l3_ext_gw_mode.'
                      'TestDbSepPlugin')
         svc_plugins = {'l3_plugin_name': l3_plugin}
-        super(ExtGwModeSepTestCase, self).setUp(plugin=plugin,
-                                                svc_plugins=svc_plugins)
+        super().setUp(plugin=plugin,
+                      svc_plugins=svc_plugins)

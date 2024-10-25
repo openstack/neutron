@@ -62,20 +62,25 @@ class HackingTestCase(base.BaseTestCase):
                mock.method.assert_has_calls()
                """
         self.assertEqual(
-            1, len(list(checks.check_assert_called_once_with(fail_code2,
-                                            "neutron/tests/test_assert.py"))))
+            1, len(list(
+                checks.check_assert_called_once_with(
+                    fail_code2, "neutron/tests/test_assert.py"))))
         self.assertEqual(
-            1, len(list(checks.check_assert_called_once_with(fail_code3,
-                                            "neutron/tests/test_assert.py"))))
+            1, len(list(
+                checks.check_assert_called_once_with(
+                    fail_code3, "neutron/tests/test_assert.py"))))
         self.assertEqual(
-            0, len(list(checks.check_assert_called_once_with(pass_code,
-                                            "neutron/tests/test_assert.py"))))
+            0, len(list(
+                checks.check_assert_called_once_with(
+                    pass_code, "neutron/tests/test_assert.py"))))
         self.assertEqual(
-            1, len(list(checks.check_assert_called_once_with(fail_code4,
-                                            "neutron/tests/test_assert.py"))))
+            1, len(list(
+                checks.check_assert_called_once_with(
+                    fail_code4, "neutron/tests/test_assert.py"))))
         self.assertEqual(
-            0, len(list(checks.check_assert_called_once_with(pass_code2,
-                                            "neutron/tests/test_assert.py"))))
+            0, len(list(
+                checks.check_assert_called_once_with(
+                    pass_code2, "neutron/tests/test_assert.py"))))
 
     def test_asserttruefalse(self):
         true_fail_code1 = """
@@ -125,7 +130,7 @@ class HackingTestCase(base.BaseTestCase):
         self.assertFalse(
             list(
                 checks.check_asserttruefalse(false_pass_code,
-                                            "neutron/tests/test_assert.py")))
+                                             "neutron/tests/test_assert.py")))
 
     def test_assertempty(self):
         fail_code = """
@@ -142,14 +147,20 @@ class HackingTestCase(base.BaseTestCase):
         empty_cases = ['{}', '[]', '""', "''", '()', 'set()']
         for ec in empty_cases:
             self.assertEqual(
-                1, len(list(checks.check_assertempty(fail_code % (ec, ec),
-                                            "neutron/tests/test_assert.py"))))
+                1, len(list(
+                    checks.check_assertempty(
+                        fail_code % (ec, ec),
+                        "neutron/tests/test_assert.py"))))
             self.assertEqual(
-                0, len(list(checks.check_asserttruefalse(pass_code1 % (ec, ec),
-                                            "neutron/tests/test_assert.py"))))
+                0, len(list(
+                    checks.check_asserttruefalse(
+                        pass_code1 % (ec, ec),
+                        "neutron/tests/test_assert.py"))))
             self.assertEqual(
-                0, len(list(checks.check_asserttruefalse(pass_code2 % ec,
-                                            "neutron/tests/test_assert.py"))))
+                0, len(list(
+                    checks.check_asserttruefalse(
+                        pass_code2 % ec,
+                        "neutron/tests/test_assert.py"))))
 
     def test_assertisinstance(self):
         fail_code = """
@@ -162,14 +173,17 @@ class HackingTestCase(base.BaseTestCase):
                self.assertIsInstance(observed, ANY_TYPE)
                """
         self.assertEqual(
-            1, len(list(checks.check_assertisinstance(fail_code,
-                                        "neutron/tests/test_assert.py"))))
+            1, len(list(
+                checks.check_assertisinstance(
+                    fail_code, "neutron/tests/test_assert.py"))))
         self.assertEqual(
-            0, len(list(checks.check_assertisinstance(pass_code1,
-                                            "neutron/tests/test_assert.py"))))
+            0, len(list(
+                checks.check_assertisinstance(
+                    pass_code1, "neutron/tests/test_assert.py"))))
         self.assertEqual(
-            0, len(list(checks.check_assertisinstance(pass_code2,
-                                            "neutron/tests/test_assert.py"))))
+            0, len(list(
+                checks.check_assertisinstance(
+                    pass_code2, "neutron/tests/test_assert.py"))))
 
     def test_assertequal_for_httpcode(self):
         fail_code = """
@@ -179,11 +193,13 @@ class HackingTestCase(base.BaseTestCase):
                 self.assertEqual(webob.exc.HTTPBadRequest.code, res.status_int)
                 """
         self.assertEqual(
-            1, len(list(checks.check_assertequal_for_httpcode(fail_code,
-                                        "neutron/tests/test_assert.py"))))
+            1, len(list(
+                checks.check_assertequal_for_httpcode(
+                    fail_code, "neutron/tests/test_assert.py"))))
         self.assertEqual(
-            0, len(list(checks.check_assertequal_for_httpcode(pass_code,
-                                        "neutron/tests/test_assert.py"))))
+            0, len(list(
+                checks.check_assertequal_for_httpcode(
+                    pass_code, "neutron/tests/test_assert.py"))))
 
     def test_check_no_imports_from_tests(self):
         fail_codes = ('from neutron import tests',
@@ -282,11 +298,13 @@ class HackingTestCase(base.BaseTestCase):
 
     def test_check_no_sqlalchemy_lazy_subquery(self):
         f = checks.check_no_sqlalchemy_lazy_subquery
-        self.assertLineFails('N350', f,
+        self.assertLineFails(
+            'N350', f,
             "backref=orm.backref('tags', lazy='subquery', viewonly=True),")
-        self.assertLineFails('N350', f,
+        self.assertLineFails(
+            'N350', f,
             "query.options(orm.subqueryload(ml2_models.PortBinding.port))")
-        self.assertLinePasses(f,
-            "backref=orm.backref('tags', lazy='selectin', viewonly=True),")
-        self.assertLinePasses(f,
-            "query.options(orm.selectinload(ml2_models.PortBinding.port))")
+        self.assertLinePasses(
+            f, "backref=orm.backref('tags', lazy='selectin', viewonly=True),")
+        self.assertLinePasses(
+            f, "query.options(orm.selectinload(ml2_models.PortBinding.port))")

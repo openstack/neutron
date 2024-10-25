@@ -42,7 +42,7 @@ class DVRDbMixinImpl(dvr_mac_db.DVRDbMixin):
 class DvrDbMixinTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def setUp(self):
-        super(DvrDbMixinTestCase, self).setUp()
+        super().setUp()
         self.ctx = context.get_admin_context()
         self.mixin = DVRDbMixinImpl(mock.Mock())
 

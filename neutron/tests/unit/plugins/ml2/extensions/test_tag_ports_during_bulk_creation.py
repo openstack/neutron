@@ -36,8 +36,7 @@ class TagPortsDuringBulkCreationTestCase(test_plugin.Ml2PluginV2TestCase):
     fmt = 'json'
 
     def get_additional_service_plugins(self):
-        p = super(TagPortsDuringBulkCreationTestCase,
-                self).get_additional_service_plugins()
+        p = super().get_additional_service_plugins()
         p.update({'tag_name': 'tag'})
         return p
 
@@ -45,7 +44,7 @@ class TagPortsDuringBulkCreationTestCase(test_plugin.Ml2PluginV2TestCase):
         cfg.CONF.set_override('extension_drivers',
                               self._extension_drivers,
                               group='ml2')
-        super(TagPortsDuringBulkCreationTestCase, self).setUp()
+        super().setUp()
         self.plugin = directory.get_plugin()
 
     def test_create_ports_bulk_with_tags(self):

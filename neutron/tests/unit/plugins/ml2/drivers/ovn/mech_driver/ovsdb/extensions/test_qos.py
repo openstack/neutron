@@ -52,7 +52,7 @@ QOS_RULE_MINBW_1 = {'min_kbps': 500}
 QOS_RULE_MINBW_2 = {'min_kbps': 700}
 
 
-class _Context(object):
+class _Context:
 
     def __enter__(self):
         return self
@@ -85,7 +85,7 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
                               group='ovn')
         extensions.register_custom_supported_check(qos_api.ALIAS, lambda: True,
                                                    plugin_agnostic=True)
-        super(TestOVNClientQosExtension, self).setUp()
+        super().setUp()
         self.setup_coreplugin(self.CORE_PLUGIN_CLASS, load_plugins=True)
         self._mock_qos_loaded = mock.patch.object(
             core_qos.QosCoreResourceExtension, 'plugin_loaded')
@@ -457,9 +457,9 @@ class TestOVNClientQosExtension(test_plugin.Ml2PluginV2TestCase):
             original_network = {'qos_policy_id': qos_policy_id}
             port_ids, fip_ids, router_ids = self.qos_driver.update_network(
                 mock.ANY, self.networks[0], original_network)
-            self.assertEqual(set([]), port_ids)
-            self.assertEqual(set([]), fip_ids)
-            self.assertEqual(set([]), router_ids)
+            self.assertEqual(set(), port_ids)
+            self.assertEqual(set(), fip_ids)
+            self.assertEqual(set(), router_ids)
             self.mock_rules.assert_not_called()
 
     def test_update_network_reset(self):

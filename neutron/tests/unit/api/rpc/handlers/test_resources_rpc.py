@@ -74,7 +74,7 @@ class FakeResource2(BaseFakeResource):
 class ResourcesRpcBaseTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(ResourcesRpcBaseTestCase, self).setUp()
+        super().setUp()
 
         self.obj_registry = self.useFixture(
             objects_test_base.NeutronObjectRegistryFixture())
@@ -99,7 +99,7 @@ class ResourcesRpcBaseTestCase(base.BaseTestCase):
 
 class _ValidateResourceTypeTestCase(base.BaseTestCase):
     def setUp(self):
-        super(_ValidateResourceTypeTestCase, self).setUp()
+        super().setUp()
         self.is_valid_mock = mock.patch.object(
             resources_rpc.resources, 'is_valid_resource_type').start()
 
@@ -122,7 +122,7 @@ class _ResourceTypeVersionedTopicTestCase(base.BaseTestCase):
         expected = topics.RESOURCE_TOPIC_PATTERN % {
             'resource_type': 'FakeResource', 'version': '1.0'}
         with mock.patch.object(resources_rpc.resources, 'get_resource_cls',
-                return_value=FakeResource):
+                               return_value=FakeResource):
             observed = resources_rpc.resource_type_versioned_topic(obj_name)
         self.assertEqual(expected, observed)
 
@@ -130,7 +130,7 @@ class _ResourceTypeVersionedTopicTestCase(base.BaseTestCase):
 class ResourcesPullRpcApiTestCase(ResourcesRpcBaseTestCase):
 
     def setUp(self):
-        super(ResourcesPullRpcApiTestCase, self).setUp()
+        super().setUp()
         self.rpc = resources_rpc.ResourcesPullRpcApi()
         mock.patch.object(self.rpc, 'client').start()
         self.cctxt_mock = self.rpc.client.prepare.return_value
@@ -186,9 +186,9 @@ class ResourcesPushToServerRpcCallbackTestCase(ResourcesRpcBaseTestCase):
                         '.update_versions') as update_versions:
             version_map = {'A': '1.0'}
             callbacks.report_agent_resource_versions(context=mock.ANY,
-                                      agent_type='DHCP Agent',
-                                      agent_host='fake-host',
-                                      version_map=version_map)
+                                                     agent_type='DHCP Agent',
+                                                     agent_host='fake-host',
+                                                     version_map=version_map)
             update_versions.assert_called_once_with(mock.ANY,
                                                     version_map)
 
@@ -196,7 +196,7 @@ class ResourcesPushToServerRpcCallbackTestCase(ResourcesRpcBaseTestCase):
 class ResourcesPullRpcCallbackTestCase(ResourcesRpcBaseTestCase):
 
     def setUp(self):
-        super(ResourcesPullRpcCallbackTestCase, self).setUp()
+        super().setUp()
         self.obj_registry.register(FakeResource)
         self.callbacks = resources_rpc.ResourcesPullRpcCallback()
         self.resource_obj = _create_test_resource(self.context)
@@ -254,12 +254,12 @@ class ResourcesPushRpcApiTestCase(ResourcesRpcBaseTestCase):
     """Tests the neutron server side of the RPC interface."""
 
     def setUp(self):
-        super(ResourcesPushRpcApiTestCase, self).setUp()
+        super().setUp()
         mock.patch.object(resources_rpc.n_rpc, 'get_client').start()
         self.rpc = resources_rpc.ResourcesPushRpcApi()
         self.cctxt_mock = self.rpc.client.prepare.return_value
         mock.patch.object(version_manager, 'get_resource_versions',
-                         return_value=set([TEST_VERSION])).start()
+                          return_value={TEST_VERSION}).start()
 
     def test__prepare_object_fanout_context(self):
         expected_topic = topics.RESOURCE_TOPIC_PATTERN % {
@@ -306,7 +306,7 @@ class ResourcesPushRpcCallbackTestCase(ResourcesRpcBaseTestCase):
     """Tests the agent-side of the RPC interface."""
 
     def setUp(self):
-        super(ResourcesPushRpcCallbackTestCase, self).setUp()
+        super().setUp()
         self.callbacks = resources_rpc.ResourcesPushRpcCallback()
 
     @mock.patch.object(resources_rpc.cons_registry, 'push')

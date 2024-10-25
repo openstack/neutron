@@ -20,7 +20,7 @@ class TestIPSetCLIConfig(base.BaseLoggingTestCase):
 
     def setup_config(self, args=None):
         self.conf = ipset_cleanup.setup_conf()
-        super(TestIPSetCLIConfig, self).setup_config(args=args)
+        super().setup_config(args=args)
 
     def test_ipset_opts_registration(self):
         self.assertFalse(self.conf.allsets)

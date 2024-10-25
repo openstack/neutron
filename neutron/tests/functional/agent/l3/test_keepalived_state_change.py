@@ -37,7 +37,7 @@ def has_expected_arp_entry(device_name, namespace, ip, mac):
 
 class TestMonitorDaemon(base.BaseLoggingTestCase):
     def setUp(self):
-        super(TestMonitorDaemon, self).setUp()
+        super().setUp()
         self.conf_dir = self.get_default_temp_dir().path
         self.pid_file = os.path.join(self.conf_dir, 'pid_file')
         self.log_file = os.path.join(self.conf_dir, 'log_file')
@@ -103,11 +103,13 @@ class TestMonitorDaemon(base.BaseLoggingTestCase):
                     namespace=self.router.namespace).get_devices():
                 devices[dev.name] = [addr['cidr'] for addr in dev.addr.list()]
             # NOTE: we need to read here the content of the file.
-            self.fail(
-                'Text not found in file %(file_name)s: "%(text)s".\nDevice '
-                'addresses: %(devices)s.\nFile content:\n%(file_content)s' %
-                {'file_name': file_name, 'text': text, 'devices': devices,
-                 'file_content': open(file_name).read()})
+            with open(file_name) as fn:
+                self.fail(
+                    'Text not found in file %(file_name)s: "%(text)s".\n '
+                    'Device addresses: %(devices)s.\nFile content:\n'
+                    '%(file_content)s' %
+                    {'file_name': file_name, 'text': text, 'devices': devices,
+                     'file_content': fn.read()})
 
     def test_read_queue_change_state(self):
         self._run_monitor()
@@ -121,13 +123,15 @@ class TestMonitorDaemon(base.BaseLoggingTestCase):
         # No tracked IP (self.cidr) is configured in the monitored interface
         # (self.router.port)
         self._run_monitor()
-        msg = 'Initial status of router %s is %s' % (self.router_id, 'backup')
+        msg = 'Initial status of router {} is {}'.format(
+            self.router_id, 'backup')
         self._search_in_file(self.log_file, msg)
 
     def test_handle_initial_state_primary(self):
         self.router.port.addr.add(self.cidr)
         self._run_monitor()
-        msg = 'Initial status of router %s is %s' % (self.router_id, 'primary')
+        msg = 'Initial status of router {} is {}'.format(
+            self.router_id, 'primary')
         self._search_in_file(self.log_file, msg)
 
     def test_handle_initial_state_backup_error_reading_initial_status(self):
@@ -146,5 +150,6 @@ class TestMonitorDaemon(base.BaseLoggingTestCase):
         msg = ('Timeout reading the initial status of router %s' %
                self.router_id)
         self._search_in_file(self.log_file, msg)
-        msg = 'Initial status of router %s is %s' % (self.router_id, 'backup')
+        msg = 'Initial status of router {} is {}'.format(
+            self.router_id, 'backup')
         self._search_in_file(self.log_file, msg)

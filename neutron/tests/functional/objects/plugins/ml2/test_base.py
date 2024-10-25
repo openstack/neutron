@@ -68,7 +68,7 @@ class _SegmentAllocation(testlib_api.SqlTestCase):
         self._create_segments(self.NUM_SEGIDS, self.PHYSNETS)
         for _ in range(len(self.segments)):
             unalloc = m_get(self.context)
-            segment = dict((k, unalloc[k]) for k in self.primary_keys)
+            segment = {k: unalloc[k] for k in self.primary_keys}
             m_alloc(self.context, **segment)
             if self.is_vlan:
                 self.segments.remove((unalloc['physical_network'],

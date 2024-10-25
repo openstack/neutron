@@ -31,7 +31,7 @@ class BridgeLibTest(base.BaseTestCase):
     _IF_NAME = 'test-if'
 
     def setUp(self):
-        super(BridgeLibTest, self).setUp()
+        super().setUp()
         mock.patch.object(netutils, 'is_ipv6_enabled',
                           return_value=True).start()
         ip_wrapper = mock.patch('neutron.agent.linux.ip_lib.IPWrapper').start()

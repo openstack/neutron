@@ -31,7 +31,7 @@ class TestIsAutoAddressSubnet(base.BaseTestCase):
             'ipv6_address_mode': None,
             'ipv6_ra_mode': None
         }
-        super(TestIsAutoAddressSubnet, self).setUp()
+        super().setUp()
 
     def test_combinations(self):
         Mode = collections.namedtuple('Mode', "addr_mode ra_mode "

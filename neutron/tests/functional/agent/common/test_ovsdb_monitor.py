@@ -29,8 +29,8 @@ class SimpleInterfaceMonitorTestCase(base.BaseSudoTestCase):
 
     def _check_port_events(self, monitor, ports_expected=None,
                            ports_not_expected=None):
-        ports_expected = ports_expected or set([])
-        ports_not_expected = ports_not_expected or set([])
+        ports_expected = ports_expected or set()
+        ports_not_expected = ports_not_expected or set()
         added_events = monitor.get_events().get('added', [])
         added_port_names = {port['name'] for port in added_events}
         intersection = ports_not_expected & added_port_names

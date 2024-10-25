@@ -45,7 +45,7 @@ PLUGIN_NAME = 'ml2'
 class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
 
     def setUp(self):
-        super(TestL2PopulationDBTestCase, self).setUp()
+        super().setUp()
         self.setup_coreplugin(PLUGIN_NAME)
         self.ctx = context.get_admin_context()
         self._create_network()
@@ -111,7 +111,8 @@ class TestL2PopulationDBTestCase(testlib_api.SqlTestCase):
             device_id = kwargs.get('device_id', uuidutils.generate_uuid())
             host = kwargs.get('host', helpers.HOST)
 
-            port_obj.Port(self.ctx,
+            port_obj.Port(
+                self.ctx,
                 id=port_id, network_id=network_id, mac_address=mac,
                 admin_state_up=True, status=constants.PORT_STATUS_ACTIVE,
                 device_id=device_id, device_owner=device_owner).create()

@@ -50,7 +50,7 @@ HOSTNAME = 'myhost'
 class QosExtensionBaseTestCase(test_agent.BasicRouterOperationsFramework):
 
     def setUp(self):
-        super(QosExtensionBaseTestCase, self).setUp()
+        super().setUp()
 
         self.fip_qos_ext = fip_qos.FipQosAgentExtension()
         self.context = context.get_admin_context()
@@ -143,8 +143,9 @@ class FipQosExtensionInitializeTestCase(QosExtensionBaseTestCase):
     @mock.patch.object(registry, 'register')
     @mock.patch.object(resources_rpc, 'ResourcesPushRpcCallback')
     def test_initialize_subscribed_to_rpc(self, rpc_mock, subscribe_mock):
-        with mock.patch.object(n_rpc, 'Connection',
-                        return_value=self.connection) as create_connection:
+        with mock.patch.object(
+                n_rpc, 'Connection',
+                return_value=self.connection) as create_connection:
             self.fip_qos_ext.initialize(
                 self.connection, lib_const.L3_AGENT_MODE)
             create_connection.assert_has_calls([mock.call()])
@@ -161,7 +162,7 @@ class FipQosExtensionInitializeTestCase(QosExtensionBaseTestCase):
 class FipQosExtensionTestCase(QosExtensionBaseTestCase):
 
     def setUp(self):
-        super(FipQosExtensionTestCase, self).setUp()
+        super().setUp()
         self.fip_qos_ext.initialize(
             self.connection, lib_const.L3_AGENT_MODE)
         self._set_pull_mock()
@@ -406,7 +407,7 @@ class FipQosExtensionTestCase(QosExtensionBaseTestCase):
 class RouterFipRateLimitMapsTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(RouterFipRateLimitMapsTestCase, self).setUp()
+        super().setUp()
         self.policy_map = fip_qos.RouterFipRateLimitMaps()
 
     def _check_policy_map_fip(self, router_id, fip_res):

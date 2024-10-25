@@ -27,7 +27,7 @@ class TestDBCreation(base.BaseLoggingTestCase):
     """
 
     def setUp(self):
-        super(TestDBCreation, self).setUp()
+        super().setUp()
         self.engine = sqlalchemy.create_engine('sqlite://')
 
     def _test_creation(self, module):

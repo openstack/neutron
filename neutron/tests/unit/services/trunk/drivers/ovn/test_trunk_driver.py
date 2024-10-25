@@ -38,7 +38,7 @@ class FakePayload:
 
 class TestTrunkHandler(base.BaseTestCase):
     def setUp(self):
-        super(TestTrunkHandler, self).setUp()
+        super().setUp()
         self.context = mock.Mock()
         self.plugin_driver = mock.Mock()
         self.plugin_driver._plugin = mock.Mock()
@@ -432,7 +432,7 @@ class TestTrunkHandler(base.BaseTestCase):
 
 class TestTrunkDriver(base.BaseTestCase):
     def setUp(self):
-        super(TestTrunkDriver, self).setUp()
+        super().setUp()
 
     def test_is_loaded(self):
         driver = trunk_driver.OVNTrunkDriver.create(mock.Mock())

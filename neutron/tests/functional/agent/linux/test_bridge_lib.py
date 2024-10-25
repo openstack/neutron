@@ -32,7 +32,7 @@ MAC_ALL_NODES_ADDRESS = '33:33:00:00:00:01'
 class BridgeLibTestCase(base.BaseSudoTestCase):
 
     def setUp(self):
-        super(BridgeLibTestCase, self).setUp()
+        super().setUp()
         self.bridge, self.port_fixture = self.create_bridge_port_fixture()
 
     def create_bridge_port_fixture(self):
@@ -96,12 +96,12 @@ class BridgeLibTestCase(base.BaseSudoTestCase):
                       self.bridge.name)
 
         # first, make sure it's enabled
-        with open(sysfs_path, 'r') as sysfs_disable_ipv6_file:
+        with open(sysfs_path) as sysfs_disable_ipv6_file:
             sysfs_disable_ipv6 = sysfs_disable_ipv6_file.read()
             self.assertEqual("0\n", sysfs_disable_ipv6)
 
         self.assertEqual(0, self.bridge.disable_ipv6())
-        with open(sysfs_path, 'r') as sysfs_disable_ipv6_file:
+        with open(sysfs_path) as sysfs_disable_ipv6_file:
             sysfs_disable_ipv6 = sysfs_disable_ipv6_file.read()
             self.assertEqual("1\n", sysfs_disable_ipv6)
 
@@ -140,7 +140,7 @@ class FdbInterfaceTestCase(testscenarios.WithScenarios, base.BaseSudoTestCase):
     ]
 
     def setUp(self):
-        super(FdbInterfaceTestCase, self).setUp()
+        super().setUp()
         _uuid = uuidutils.generate_uuid()
         self.device = ('int_' + _uuid)[:constants.DEVICE_NAME_MAX_LEN]
         self.device_vxlan = ('vxlan_' + _uuid)[:constants.DEVICE_NAME_MAX_LEN]
@@ -198,7 +198,7 @@ class FdbInterfaceTestCase(testscenarios.WithScenarios, base.BaseSudoTestCase):
                 dev=device, namespace=self.namespace).items():
             self.assertEqual(device, _device)
             for _ in (fdb for fdb in fdbs if fdb['mac'] == mac_address and
-                    fdb['dst_ip'] == ip_address):
+                      fdb['dst_ip'] == ip_address):
                 return
             self.fail(msg)
 

@@ -57,7 +57,7 @@ def makePort(datapath=None, type='', mac=None, external_ids=None,
 
 class ConfFixture(config_fixture.Config):
     def setUp(self):
-        super(ConfFixture, self).setUp()
+        super().setUp()
         ovn_meta_conf.register_meta_conf_opts(meta_conf.SHARED_OPTS, self.conf)
         ovn_meta_conf.register_meta_conf_opts(
             meta_conf.UNIX_DOMAIN_METADATA_PROXY_OPTS, self.conf)
@@ -73,7 +73,7 @@ class TestMetadataAgent(base.BaseTestCase):
     fake_conf_fixture = ConfFixture(fake_conf)
 
     def setUp(self):
-        super(TestMetadataAgent, self).setUp()
+        super().setUp()
         self.useFixture(self.fake_conf_fixture)
         self.log_p = mock.patch.object(agent, 'LOG')
         self.log = self.log_p.start()
@@ -87,8 +87,9 @@ class TestMetadataAgent(base.BaseTestCase):
         self.ports = []
         for i in range(0, 3):
             self.ports.append(makePort(
-                datapath=DatapathInfo(uuid=str(uuid.uuid4()),
-                external_ids={'name': 'neutron-%d' % i})))
+                datapath=DatapathInfo(
+                    uuid=str(uuid.uuid4()),
+                    external_ids={'name': 'neutron-%d' % i})))
         self.agent.sb_idl.get_ports_on_chassis.return_value = self.ports
 
     def test_sync(self):
@@ -164,13 +165,13 @@ class TestMetadataAgent(base.BaseTestCase):
         """
 
         datapath_1 = DatapathInfo(uuid='uuid1',
-            external_ids={'name': 'neutron-1'})
+                                  external_ids={'name': 'neutron-1'})
         datapath_2 = DatapathInfo(uuid='uuid2',
-            external_ids={'name': 'neutron-2'})
+                                  external_ids={'name': 'neutron-2'})
         datapath_3 = DatapathInfo(uuid='uuid3',
-            external_ids={'name': 'neutron-3'})
+                                  external_ids={'name': 'neutron-3'})
         datapath_4 = DatapathInfo(uuid='uuid4',
-            external_ids={'name': 'neutron-4'})
+                                  external_ids={'name': 'neutron-4'})
 
         ports = [
             makePort(datapath_1, type=''),
@@ -182,7 +183,7 @@ class TestMetadataAgent(base.BaseTestCase):
         ]
 
         with mock.patch.object(self.agent.sb_idl, 'get_ports_on_chassis',
-                              return_value=ports):
+                               return_value=ports):
             self.assertEqual([ports[0], ports[1], ports[3], ports[4]],
                              self.agent.get_networks_port_bindings())
 
@@ -219,10 +220,10 @@ class TestMetadataAgent(base.BaseTestCase):
         metadaport_subnet_cidrs = ['10.0.0.0/30', '10.0.1.0/28', '11.0.1.2/24']
         lla = 'fe80::f816:3eff:fe63:8dc5/64'
 
-        expected_cidrs_to_add = set(['10.0.0.0/30', '10.0.1.0/28',
-                                     n_const.METADATA_CIDR,
-                                     n_const.METADATA_V6_CIDR,
-                                     lla])
+        expected_cidrs_to_add = {'10.0.0.0/30', '10.0.1.0/28',
+                                 n_const.METADATA_CIDR,
+                                 n_const.METADATA_V6_CIDR,
+                                 lla}
         expected_cidrs_to_delete = set()
 
         actual_result = self.agent._process_cidrs(current_namespace_cidrs,
@@ -236,13 +237,13 @@ class TestMetadataAgent(base.BaseTestCase):
 
     def test__process_cidrs_when_current_namespace_only_contains_metadata_cidr(
             self):
-        current_namespace_cidrs = set([n_const.METADATA_CIDR])
+        current_namespace_cidrs = {n_const.METADATA_CIDR}
         datapath_port_ips = ['10.0.0.2', '10.0.0.3', '10.0.1.5']
         metadaport_subnet_cidrs = ['10.0.0.0/30', '10.0.1.0/28', '11.0.1.2/24']
         lla = 'fe80::f816:3eff:fe63:8dc5/64'
 
-        expected_cidrs_to_add = set(['10.0.0.0/30', '10.0.1.0/28',
-                                     n_const.METADATA_V6_CIDR, lla])
+        expected_cidrs_to_add = {'10.0.0.0/30', '10.0.1.0/28',
+                                 n_const.METADATA_V6_CIDR, lla}
         expected_cidrs_to_delete = set()
 
         actual_result = self.agent._process_cidrs(current_namespace_cidrs,
@@ -256,14 +257,14 @@ class TestMetadataAgent(base.BaseTestCase):
 
     def test__process_cidrs_when_current_namespace_contains_stale_cidr(self):
         lla = 'fe80::f816:3eff:fe63:8dc5/64'
-        current_namespace_cidrs = set([n_const.METADATA_CIDR, '10.0.1.0/31',
-                                       lla])
+        current_namespace_cidrs = {n_const.METADATA_CIDR, '10.0.1.0/31',
+                                   lla}
         datapath_port_ips = ['10.0.0.2', '10.0.0.3', '10.0.1.5']
         metadaport_subnet_cidrs = ['10.0.0.0/30', '10.0.1.0/28', '11.0.1.2/24']
 
-        expected_cidrs_to_add = set(['10.0.0.0/30', '10.0.1.0/28',
-                                     n_const.METADATA_V6_CIDR])
-        expected_cidrs_to_delete = set(['10.0.1.0/31'])
+        expected_cidrs_to_add = {'10.0.0.0/30', '10.0.1.0/28',
+                                 n_const.METADATA_V6_CIDR}
+        expected_cidrs_to_delete = {'10.0.1.0/31'}
 
         actual_result = self.agent._process_cidrs(current_namespace_cidrs,
                                                   datapath_port_ips,
@@ -279,16 +280,16 @@ class TestMetadataAgent(base.BaseTestCase):
         new required cidrs.
         """
         lla = 'fe80::f816:3eff:fe63:8dc5/64'
-        current_namespace_cidrs = set([n_const.METADATA_CIDR,
-                                      '10.0.1.0/31',
-                                      '10.0.1.0/28',
-                                      'fe77::/64',
-                                      lla])
+        current_namespace_cidrs = {n_const.METADATA_CIDR,
+                                   '10.0.1.0/31',
+                                   '10.0.1.0/28',
+                                   'fe77::/64',
+                                   lla}
         datapath_port_ips = ['10.0.0.2', '10.0.1.5']
         metadaport_subnet_cidrs = ['10.0.0.0/30', '10.0.1.0/28', '11.0.1.2/24']
 
-        expected_cidrs_to_add = set(['10.0.0.0/30', n_const.METADATA_V6_CIDR])
-        expected_cidrs_to_delete = set(['10.0.1.0/31', 'fe77::/64'])
+        expected_cidrs_to_add = {'10.0.0.0/30', n_const.METADATA_V6_CIDR}
+        expected_cidrs_to_delete = {'10.0.1.0/31', 'fe77::/64'}
 
         actual_result = self.agent._process_cidrs(current_namespace_cidrs,
                                                   datapath_port_ips,
@@ -306,7 +307,7 @@ class TestMetadataAgent(base.BaseTestCase):
         """
         network_id = '1'
         datapath = DatapathInfo(uuid='test123',
-            external_ids={'name': 'neutron-{}'.format(network_id)})
+                                external_ids={'name': f'neutron-{network_id}'})
 
         with mock.patch.object(
                 self.agent.sb_idl, 'get_metadata_port',
@@ -323,7 +324,7 @@ class TestMetadataAgent(base.BaseTestCase):
         """
         network_id = '1'
         datapath = DatapathInfo(uuid='test123',
-            external_ids={'name': 'neutron-{}'.format(network_id)})
+                                external_ids={'name': f'neutron-{network_id}'})
         metadadata_port = makePort(datapath,
                                    mac=['NO_MAC_HERE 1.2.3.4'],
                                    external_ids={'neutron:cidrs':
@@ -343,7 +344,7 @@ class TestMetadataAgent(base.BaseTestCase):
         """
         network_id = '1'
         datapath = DatapathInfo(uuid='test123',
-            external_ids={'name': 'neutron-{}'.format(network_id)})
+                                external_ids={'name': f'neutron-{network_id}'})
         datapath_ports = [makePort(datapath, type='not_vif_type')]
         metadadata_port = makePort(datapath,
                                    mac=['fa:16:3e:22:65:18 1.2.3.4'],
@@ -351,9 +352,9 @@ class TestMetadataAgent(base.BaseTestCase):
                                                  '10.204.0.10/29'})
 
         with mock.patch.object(self.agent.sb_idl, 'get_metadata_port',
-                    return_value=metadadata_port),\
+                               return_value=metadadata_port),\
                 mock.patch.object(self.agent.sb_idl, 'get_ports_on_chassis',
-                    return_value=datapath_ports),\
+                                  return_value=datapath_ports),\
                 mock.patch.object(self.agent, 'teardown_datapath') as tdp:
             self.assertIsNone(self.agent._get_provision_params(datapath))
             tdp.assert_called_once_with(network_id)
@@ -369,21 +370,21 @@ class TestMetadataAgent(base.BaseTestCase):
         metada_port_logical_port = "3b66c176-199b-48ec-8331-c1fd3f6e2b44"
 
         datapath = DatapathInfo(uuid='test123',
-            external_ids={'name': 'neutron-{}'.format(network_id)})
+                                external_ids={'name': f'neutron-{network_id}'})
         datapath_ports = [makePort(datapath,
-                                   mac=['fa:16:3e:e7:ac {}'.format(port_ip)])]
+                                   mac=[f'fa:16:3e:e7:ac {port_ip}'])]
         metadadata_port = makePort(datapath,
                                    mac=[
-                                       '{} 10.204.0.1'.format(metada_port_mac)
+                                       f'{metada_port_mac} 10.204.0.1'
                                    ],
                                    external_ids={'neutron:cidrs':
                                                  metada_port_subnet_cidr},
                                    logical_port=metada_port_logical_port)
 
         with mock.patch.object(self.agent.sb_idl, 'get_metadata_port',
-                return_value=metadadata_port),\
+                               return_value=metadadata_port),\
             mock.patch.object(self.agent.sb_idl, 'get_ports_on_chassis',
-                return_value=datapath_ports):
+                              return_value=datapath_ports):
             actual_params = self.agent._get_provision_params(datapath)
 
         net_name, datapath_port_ips, metadata_port_info = actual_params
@@ -393,7 +394,7 @@ class TestMetadataAgent(base.BaseTestCase):
         if utils.get_ip_version(port_ip) == n_const.IP_VERSION_4:
             self.assertListEqual([port_ip], datapath_port_ips)
         self.assertEqual(metada_port_mac, metadata_port_info.mac)
-        self.assertSetEqual(set([metada_port_subnet_cidr]),
+        self.assertSetEqual({metada_port_subnet_cidr},
                             metadata_port_info.ip_addresses)
         self.assertEqual(metada_port_logical_port,
                          metadata_port_info.logical_port)
@@ -468,7 +469,7 @@ class TestMetadataAgent(base.BaseTestCase):
                 'veth_0', bridge='br-fake', if_exists=True)
             # Check that the VETH pair is created
             add_veth.assert_called_once_with('veth_0', 'veth_1',
-                nemaspace_name)
+                                             nemaspace_name)
             # Make sure that the two ends of the VETH pair have been set as up.
             self.assertEqual(2, link_set_up.call_count)
             link_set_mtu.assert_has_calls([mock.call(mtu), mock.call(mtu)])

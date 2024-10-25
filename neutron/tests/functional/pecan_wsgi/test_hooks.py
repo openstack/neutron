@@ -68,7 +68,7 @@ class TestQueryParametersHookWithRevision(test_functional.PecanFunctionalTest):
 
     def setUp(self):
         cfg.CONF.set_override('service_plugins', ['revisions'])
-        super(TestQueryParametersHookWithRevision, self).setUp()
+        super().setUp()
 
     def test_if_match_on_update(self):
         net_response = jsonutils.loads(self.app.post_json(
@@ -169,7 +169,7 @@ class TestPolicyEnforcementHook(test_functional.PecanFunctionalTest):
         # independent from the evolution of the API (so if one changes the API
         # or the default policies there won't be any risk of breaking these
         # tests, or at least I hope so)
-        super(TestPolicyEnforcementHook, self).setUp()
+        super().setUp()
         self.mock_plugin = mock.Mock()
         attributes.RESOURCES.update(self.FAKE_RESOURCE)
         manager.NeutronManager.set_plugin_for_resource('mehs',
@@ -332,7 +332,7 @@ class TestMetricsNotifierHook(test_functional.PecanFunctionalTest):
         patcher = mock.patch('neutron.pecan_wsgi.hooks.notifier.NotifierHook.'
                              '_notifier')
         self.mock_notifier = patcher.start().info
-        super(TestMetricsNotifierHook, self).setUp()
+        super().setUp()
 
     def test_post_put_delete_triggers_notification(self):
         req_headers = {'X-Project-Id': 'tenid', 'X-Roles': 'admin'}
@@ -451,7 +451,7 @@ class TestMetricsNotifierHook(test_functional.PecanFunctionalTest):
 class TestCallbackRegistryNotifier(test_functional.PecanFunctionalTest):
 
     def setUp(self):
-        super(TestCallbackRegistryNotifier, self).setUp()
+        super().setUp()
         patcher = mock.patch('neutron.pecan_wsgi.hooks.notifier.registry')
         self.mock_notifier = patcher.start().publish
 

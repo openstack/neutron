@@ -22,7 +22,7 @@ from neutron.tests.common.exclusive_resources import resource_allocator
 
 def _get_random_network(low, high, netmask):
     ip = ip_address.get_random_ip(low, high)
-    return str(netaddr.IPNetwork("%s/%s" % (ip, netmask)).cidr)
+    return str(netaddr.IPNetwork("{}/{}".format(ip, netmask)).cidr)
 
 
 class ExclusiveIPNetwork(resource_allocator.ExclusiveResource):
@@ -33,13 +33,13 @@ class ExclusiveIPNetwork(resource_allocator.ExclusiveResource):
     """
 
     def __init__(self, low, high, netmask):
-        super(ExclusiveIPNetwork, self).__init__(
+        super().__init__(
             'ip_networks',
             functools.partial(_get_random_network, low, high, netmask),
             self.is_valid)
 
     def _setUp(self):
-        super(ExclusiveIPNetwork, self)._setUp()
+        super()._setUp()
         self.network = netaddr.IPNetwork(self.resource)
 
     def is_valid(self, new_resource, allocated_resources):

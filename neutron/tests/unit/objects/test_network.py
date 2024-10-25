@@ -37,7 +37,7 @@ class NetworkRBACDbObjectTestCase(test_rbac.TestRBACObjectMixin,
             return_value=(rbac_db_models.ACCESS_EXTERNAL,
                           rbac_db_models.ACCESS_SHARED))
         self.mock_get_valid_actions = self._mock_get_valid_actions.start()
-        super(NetworkRBACDbObjectTestCase, self).setUp()
+        super().setUp()
         for obj in self.db_objs:
             net_obj = network.Network(self.context, id=obj['object_id'])
             net_obj.create()
@@ -72,7 +72,7 @@ class NetworkRBACIfaceOjectTestCase(test_rbac.TestRBACObjectMixin,
             return_value=(rbac_db_models.ACCESS_EXTERNAL,
                           rbac_db_models.ACCESS_SHARED))
         self.mock_get_valid_actions = self._mock_get_valid_actions.start()
-        super(NetworkRBACIfaceOjectTestCase, self).setUp()
+        super().setUp()
 
 
 class NetworkDhcpAgentBindingObjectIfaceTestCase(
@@ -87,7 +87,7 @@ class NetworkDhcpAgentBindingDbObjectTestCase(
     _test_class = network.NetworkDhcpAgentBinding
 
     def setUp(self):
-        super(NetworkDhcpAgentBindingDbObjectTestCase, self).setUp()
+        super().setUp()
         self._network = self._create_test_network()
 
         index = iter(range(1, len(self.objs) + 2))
@@ -107,7 +107,7 @@ class NetworkPortSecurityDbObjTestCase(obj_test_base.BaseDbObjectTestCase,
     _test_class = network.NetworkPortSecurity
 
     def setUp(self):
-        super(NetworkPortSecurityDbObjTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields({'id': lambda: self._create_test_network_id()})
 
 
@@ -115,7 +115,7 @@ class NetworkSegmentIfaceObjTestCase(obj_test_base.BaseObjectIfaceTestCase):
     _test_class = network.NetworkSegment
 
     def setUp(self):
-        super(NetworkSegmentIfaceObjTestCase, self).setUp()
+        super().setUp()
         # TODO(ihrachys): we should not need to duplicate that in every single
         # place, instead we should move the default pager into the base class
         # attribute and pull it from there for testing matters. Leaving it for
@@ -130,7 +130,7 @@ class NetworkSegmentDbObjTestCase(obj_test_base.BaseDbObjectTestCase,
     _test_class = network.NetworkSegment
 
     def setUp(self):
-        super(NetworkSegmentDbObjTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {'network_id': lambda: self._create_test_network_id()})
 
@@ -160,7 +160,7 @@ class NetworkObjectIfaceTestCase(test_rbac.RBACBaseObjectIfaceTestCase):
     _test_class = network.Network
 
     def setUp(self):
-        super(NetworkObjectIfaceTestCase, self).setUp()
+        super().setUp()
         self.pager_map[network.NetworkSegment.obj_name()] = (
             obj_base.Pager(
                 sorts=[('network_id', True), ('segment_index', True)]))
@@ -273,7 +273,7 @@ class SegmentHostMappingDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     _test_class = network.SegmentHostMapping
 
     def setUp(self):
-        super(SegmentHostMappingDbObjectTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {'segment_id': lambda: self._create_test_segment_id()})
 
@@ -290,7 +290,7 @@ class NetworkDNSDomainDbObjectTestcase(obj_test_base.BaseDbObjectTestCase,
     _test_class = network.NetworkDNSDomain
 
     def setUp(self):
-        super(NetworkDNSDomainDbObjectTestcase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {'network_id': lambda: self._create_test_network_id()})
 
@@ -307,6 +307,6 @@ class ExternalNetworkDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     _test_class = network.ExternalNetwork
 
     def setUp(self):
-        super(ExternalNetworkDbObjectTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {'network_id': lambda: self._create_test_network_id()})

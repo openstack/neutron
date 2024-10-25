@@ -64,7 +64,7 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
     def __init__(self, host, network_id, tenant_id, safe_client,
                  neutron_port=None, bridge_name=None, use_dhcp=False,
                  use_dhcp6=False):
-        super(FakeFullstackMachine, self).__init__()
+        super().__init__()
         self.host = host
         self.tenant_id = tenant_id
         self.network_id = network_id
@@ -76,7 +76,7 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
         self.use_dhcp6 = use_dhcp6
 
     def _setUp(self):
-        super(FakeFullstackMachine, self)._setUp()
+        super()._setUp()
 
         self.bridge = self._get_bridge()
 
@@ -104,8 +104,8 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
                 self.neutron_port['id'],
                 {'port': {pbs.HOST_ID: self.host.hostname}})
             self.addCleanup(self.safe_client.client.update_port,
-                self.neutron_port['id'],
-                {'port': {pbs.HOST_ID: ''}})
+                            self.neutron_port['id'],
+                            {'port': {pbs.HOST_ID: ''}})
 
     def _get_bridge(self):
         if self.bridge_name is None:
@@ -135,7 +135,7 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
         else:
             self._ip = fixed_ip['ip_address']
             prefixlen = netaddr.IPNetwork(subnet['subnet']['cidr']).prefixlen
-            self._ip_cidr = '%s/%s' % (self._ip, prefixlen)
+            self._ip_cidr = '{}/{}'.format(self._ip, prefixlen)
             self.gateway_ip = subnet['subnet']['gateway_ip']
 
             if self.use_dhcp:
@@ -159,8 +159,8 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
     def _start_async_dhclient(self, port_id, version=constants.IP_VERSION_4):
         cmd = ["dhclient", '-%s' % version,
                '-lf',
-               '%s/%s.lease' % (self.host.neutron_config.temp_dir,
-                                port_id),
+               '{}/{}.lease'.format(self.host.neutron_config.temp_dir,
+                                    port_id),
                '-sf', self.NO_RESOLV_CONF_DHCLIENT_SCRIPT_PATH,
                '--no-pid', '-d', self.port.name]
         self.dhclient_async = async_process.AsyncProcess(
@@ -244,7 +244,7 @@ class FakeFullstackMachine(machine_fixtures.FakeMachineBase):
 
 class FakeFullstackTrunkMachine(FakeFullstackMachine):
     def __init__(self, trunk, *args, **kwargs):
-        super(FakeFullstackTrunkMachine, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.trunk = trunk
 
     def add_vlan_interface(self, mac_address, ip_address, segmentation_id):

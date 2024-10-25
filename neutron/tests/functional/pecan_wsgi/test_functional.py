@@ -76,7 +76,7 @@ class PecanFunctionalTest(testlib_api.SqlTestCase,
 
     def setUp(self, service_plugins=None, extensions=None):
         self.setup_coreplugin('ml2', load_plugins=False)
-        super(PecanFunctionalTest, self).setUp()
+        super().setUp()
         self.addCleanup(exts.PluginAwareExtensionManager.clear_instance)
         self.set_config_overrides()
         manager.init()

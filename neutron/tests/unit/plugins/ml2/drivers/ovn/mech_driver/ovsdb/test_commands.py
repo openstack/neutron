@@ -26,7 +26,7 @@ from neutron.tests.unit import fake_resources as fakes
 
 class TestBaseCommandHelpers(base.BaseTestCase):
     def setUp(self):
-        super(TestBaseCommandHelpers, self).setUp()
+        super().setUp()
         self.column = 'ovn'
         self.new_value = '1'
         self.old_value = '2'
@@ -80,7 +80,7 @@ class TestBaseCommandHelpers(base.BaseTestCase):
 
 class TestBaseCommand(base.BaseTestCase):
     def setUp(self):
-        super(TestBaseCommand, self).setUp()
+        super().setUp()
         self.ovn_api = fakes.FakeOvsdbNbOvnIdl()
         self.transaction = fakes.FakeOvsdbTransaction()
         self.ovn_api.transaction = self.transaction
@@ -789,7 +789,7 @@ class TestDelStaticRoutesCommand(TestBaseCommand):
 
 class TestUpdateChassisExtIdsCommand(TestBaseCommand):
     def setUp(self):
-        super(TestUpdateChassisExtIdsCommand, self).setUp()
+        super().setUp()
         self.ext_ids = {ovn_const.OVN_SG_EXT_ID_KEY: 'default'}
 
     def _test_chassis_extids_update_no_exist(self, if_exists=True):
@@ -824,7 +824,7 @@ class TestUpdateChassisExtIdsCommand(TestBaseCommand):
 
 class TestUpdatePortBindingExtIdsCommand(TestBaseCommand):
     def setUp(self):
-        super(TestUpdatePortBindingExtIdsCommand, self).setUp()
+        super().setUp()
         self.ext_ids = {ovn_const.OVN_SG_EXT_ID_KEY: 'default'}
 
     def _test_portbinding_extids_update_no_exist(self, if_exists=True):
@@ -1085,7 +1085,7 @@ class TestSetNATRuleInLRouterCommand(TestBaseCommand):
 
 class TestCheckRevisionNumberCommand(TestBaseCommand):
     def setUp(self):
-        super(TestCheckRevisionNumberCommand, self).setUp()
+        super().setUp()
         self.fip = {'name': 'floating-ip', 'revision_number': 3}
         self.fip_old_rev = {'name': 'floating-ip', 'revision_number': 1}
         self.nat_rule = fakes.FakeOvsdbRow.create_one_ovsdb_row(

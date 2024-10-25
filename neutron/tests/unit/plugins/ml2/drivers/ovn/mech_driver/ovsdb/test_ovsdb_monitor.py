@@ -102,7 +102,7 @@ ROW_UPDATE = ovsdb_monitor.BaseEvent.ROW_UPDATE
 class TestOvnDbNotifyHandler(base.BaseTestCase):
 
     def setUp(self):
-        super(TestOvnDbNotifyHandler, self).setUp()
+        super().setUp()
         self.handler = ovsdb_monitor.OvnDbNotifyHandler(mock.ANY)
 
     def test_watch_and_unwatch_events(self):
@@ -162,7 +162,7 @@ class TestOvnConnection(base.BaseTestCase):
 
     def setUp(self):
         ovn_conf.register_opts()
-        super(TestOvnConnection, self).setUp()
+        super().setUp()
 
     @mock.patch.object(idlutils, 'get_schema_helper')
     @mock.patch.object(idlutils, 'wait_for_change')
@@ -204,7 +204,7 @@ class TestOvnIdlDistributedLock(base.BaseTestCase):
 
     def setUp(self):
         ovn_conf.register_opts()
-        super(TestOvnIdlDistributedLock, self).setUp()
+        super().setUp()
         self.node_uuid = uuidutils.generate_uuid()
         self.fake_driver = mock.Mock()
         self.fake_driver.node_uuid = self.node_uuid
@@ -286,7 +286,7 @@ class TestOvnIdlDistributedLock(base.BaseTestCase):
 
 class TestPortBindingChassisUpdateEvent(base.BaseTestCase):
     def setUp(self):
-        super(TestPortBindingChassisUpdateEvent, self).setUp()
+        super().setUp()
         self.driver = mock.Mock()
         self.event = ovsdb_monitor.PortBindingChassisUpdateEvent(self.driver)
 
@@ -364,10 +364,11 @@ class TestPortBindingUpdateVirtualPortsEvent(base.BaseTestCase):
 
     def test_event_no_match_other_options_change(self):
         # Non-virtual parent change, no chassis has changed
-        old = self.ovsdb_row(attrs={'_table': self.pbtable,
-                            'options': {
-                                'virtual-parents': 'uuid1,uuid2',
-                                'other-opt': '_fake_'}})
+        old = self.ovsdb_row(
+            attrs={'_table': self.pbtable,
+                   'options': {
+                       'virtual-parents': 'uuid1,uuid2',
+                       'other-opt': '_fake_'}})
 
         self.assertFalse(self.event.match_fn(self.event.ROW_UPDATE,
                                              self.row, old))
@@ -391,7 +392,7 @@ class TestPortBindingUpdateVirtualPortsEvent(base.BaseTestCase):
 class TestOvnNbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
 
     def setUp(self):
-        super(TestOvnNbIdlNotifyHandler, self).setUp()
+        super().setUp()
         helper = ovs_idl.SchemaHelper(schema_json=OVN_NB_SCHEMA)
         helper.register_all()
         self.idl = ovsdb_monitor.OvnNbIdl(self.mech_driver, "remote", helper)
@@ -539,7 +540,7 @@ class TestOvnSbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
     l3_plugin = 'ovn-router'
 
     def setUp(self):
-        super(TestOvnSbIdlNotifyHandler, self).setUp()
+        super().setUp()
         sb_helper = ovs_idl.SchemaHelper(schema_json=OVN_SB_SCHEMA)
         sb_helper.register_table('Chassis')
         self.sb_idl = ovsdb_monitor.OvnSbIdl(self.mech_driver, "remote",
@@ -655,7 +656,7 @@ class TestOvnSbIdlNotifyHandler(test_mech_driver.OVNMechanismDriverTestCase):
 class TestChassisEvent(base.BaseTestCase):
 
     def setUp(self):
-        super(TestChassisEvent, self).setUp()
+        super().setUp()
         self.driver = mock.MagicMock()
         self.nb_ovn = self.driver.nb_ovn
         self.driver._ovn_client.is_external_ports_supported.return_value = True

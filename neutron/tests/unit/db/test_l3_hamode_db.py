@@ -69,7 +69,7 @@ class FakeL3PluginWithAgents(test_l3.TestL3PluginBaseAttributes,
 
 class L3HATestFramework(testlib_api.SqlTestCase):
     def setUp(self):
-        super(L3HATestFramework, self).setUp()
+        super().setUp()
 
         self.setup_coreplugin('ml2')
         self.core_plugin = directory.get_plugin()
@@ -994,15 +994,15 @@ class L3HAModeDbTestCase(L3HATestFramework):
                        name='subnet', tenant_id='tenant1'):
         subnet = {'subnet': {'name': name,
                   'ip_version': constants.IP_VERSION_4,
-                  'network_id': network_id,
-                  'cidr': cidr,
-                  'gateway_ip': constants.ATTR_NOT_SPECIFIED,
-                  'allocation_pools': constants.ATTR_NOT_SPECIFIED,
-                  'dns_nameservers': constants.ATTR_NOT_SPECIFIED,
-                  'host_routes': constants.ATTR_NOT_SPECIFIED,
-                  'tenant_id': tenant_id,
-                  'enable_dhcp': True,
-                  'ipv6_ra_mode': constants.ATTR_NOT_SPECIFIED}}
+                             'network_id': network_id,
+                             'cidr': cidr,
+                             'gateway_ip': constants.ATTR_NOT_SPECIFIED,
+                             'allocation_pools': constants.ATTR_NOT_SPECIFIED,
+                             'dns_nameservers': constants.ATTR_NOT_SPECIFIED,
+                             'host_routes': constants.ATTR_NOT_SPECIFIED,
+                             'tenant_id': tenant_id,
+                             'enable_dhcp': True,
+                             'ipv6_ra_mode': constants.ATTR_NOT_SPECIFIED}}
         created_subnet = plugin.create_subnet(ctx, subnet)
         return created_subnet
 
@@ -1079,7 +1079,7 @@ class L3HAModeDbTestCase(L3HATestFramework):
         try:
             self.plugin.delete_router(self.admin_ctx, router['id'])
         except l3_exc.RouterInUse as exc:
-            msg = 'Router %s has ports still attached: %s' % (
+            msg = 'Router {} has ports still attached: {}'.format(
                 router['id'], interface['port_id'])
             self.assertEqual(msg, exc.msg)
         else:
@@ -1454,7 +1454,7 @@ class L3HAModeDbTestCase(L3HATestFramework):
 class L3HAUserTestCase(L3HATestFramework):
 
     def setUp(self):
-        super(L3HAUserTestCase, self).setUp()
+        super().setUp()
         self.user_ctx = context.Context('', _uuid())
 
     def test_create_ha_router(self):

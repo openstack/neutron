@@ -39,7 +39,7 @@ class OvsDHCPExtensionTestCase(base.BaseFullStackTestCase):
             mech_drivers='openvswitch',
             enable_traditional_dhcp=False)
         env = environment.Environment(env_desc, host_desc)
-        super(OvsDHCPExtensionTestCase, self).setUp(env)
+        super().setUp(env)
         self.tenant_id = uuidutils.generate_uuid()
 
         network = self.safe_client.create_network(

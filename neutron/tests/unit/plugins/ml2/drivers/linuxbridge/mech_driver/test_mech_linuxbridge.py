@@ -60,7 +60,7 @@ class LinuxbridgeMechanismBaseTestCase(base.AgentMechanismBaseTestCase):
                    }]
 
     def setUp(self):
-        super(LinuxbridgeMechanismBaseTestCase, self).setUp()
+        super().setUp()
         self.driver = mech_linuxbridge.LinuxbridgeMechanismDriver()
         self.driver.initialize()
 
@@ -71,7 +71,7 @@ class LinuxbridgeMechanismGenericTestCase(LinuxbridgeMechanismBaseTestCase,
     def setUp(self):
         cfg.CONF.set_override(c_experimental.EXPERIMENTAL_LINUXBRIDGE, True,
                               group=c_experimental.EXPERIMENTAL_CFG_GROUP)
-        super(LinuxbridgeMechanismGenericTestCase, self).setUp()
+        super().setUp()
 
 
 class LinuxbridgeMechanismLocalTestCase(LinuxbridgeMechanismBaseTestCase,
@@ -80,7 +80,7 @@ class LinuxbridgeMechanismLocalTestCase(LinuxbridgeMechanismBaseTestCase,
     def setUp(self):
         cfg.CONF.set_override(c_experimental.EXPERIMENTAL_LINUXBRIDGE, True,
                               group=c_experimental.EXPERIMENTAL_CFG_GROUP)
-        super(LinuxbridgeMechanismLocalTestCase, self).setUp()
+        super().setUp()
 
 
 class LinuxbridgeMechanismFlatTestCase(LinuxbridgeMechanismBaseTestCase,
@@ -89,7 +89,7 @@ class LinuxbridgeMechanismFlatTestCase(LinuxbridgeMechanismBaseTestCase,
     def setUp(self):
         cfg.CONF.set_override(c_experimental.EXPERIMENTAL_LINUXBRIDGE, True,
                               group=c_experimental.EXPERIMENTAL_CFG_GROUP)
-        super(LinuxbridgeMechanismFlatTestCase, self).setUp()
+        super().setUp()
 
 
 class LinuxbridgeMechanismVlanTestCase(LinuxbridgeMechanismBaseTestCase,
@@ -98,7 +98,7 @@ class LinuxbridgeMechanismVlanTestCase(LinuxbridgeMechanismBaseTestCase,
     def setUp(self):
         cfg.CONF.set_override(c_experimental.EXPERIMENTAL_LINUXBRIDGE, True,
                               group=c_experimental.EXPERIMENTAL_CFG_GROUP)
-        super(LinuxbridgeMechanismVlanTestCase, self).setUp()
+        super().setUp()
 
 
 class LinuxbridgeMechanismGreTestCase(LinuxbridgeMechanismBaseTestCase,
@@ -107,4 +107,4 @@ class LinuxbridgeMechanismGreTestCase(LinuxbridgeMechanismBaseTestCase,
     def setUp(self):
         cfg.CONF.set_override(c_experimental.EXPERIMENTAL_LINUXBRIDGE, True,
                               group=c_experimental.EXPERIMENTAL_CFG_GROUP)
-        super(LinuxbridgeMechanismGreTestCase, self).setUp()
+        super().setUp()

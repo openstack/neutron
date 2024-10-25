@@ -47,7 +47,7 @@ PORT_DATA = {
 }
 
 
-class FakeIpLinkCommand(object):
+class FakeIpLinkCommand:
     def set_up(self):
         pass
 
@@ -55,7 +55,7 @@ class FakeIpLinkCommand(object):
         pass
 
 
-class FakeIpDevice(object):
+class FakeIpDevice:
     def __init__(self):
         self.link = FakeIpLinkCommand()
 
@@ -77,7 +77,7 @@ def get_linuxbridge_manager(bridge_mappings, interface_mappings):
 class TestLinuxBridge(base.BaseTestCase):
 
     def setUp(self):
-        super(TestLinuxBridge, self).setUp()
+        super().setUp()
         self.linux_bridge = get_linuxbridge_manager(
             BRIDGE_MAPPINGS, INTERFACE_MAPPINGS)
 
@@ -111,7 +111,7 @@ class TestLinuxBridge(base.BaseTestCase):
 
 class TestLinuxBridgeManager(base.BaseTestCase):
     def setUp(self):
-        super(TestLinuxBridgeManager, self).setUp()
+        super().setUp()
         self.lbm = get_linuxbridge_manager(
             BRIDGE_MAPPINGS, INTERFACE_MAPPINGS)
 
@@ -370,7 +370,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             vlan_dev = FakeIpDevice()
             with mock.patch.object(vlan_dev, 'disable_ipv6') as dv6_fn,\
                     mock.patch.object(self.lbm.ip, 'add_vlan',
-                            return_value=vlan_dev) as add_vlan_fn:
+                                      return_value=vlan_dev) as add_vlan_fn:
                 retval = self.lbm.ensure_vlan("eth0", "1")
                 self.assertEqual("eth0.1", retval)
                 add_vlan_fn.assert_called_with('eth0.1', 'eth0', '1')
@@ -390,9 +390,9 @@ class TestLinuxBridgeManager(base.BaseTestCase):
                     mock.patch.object(vxlan_dev.link,
                                       'set_mtu') as set_mtu_fn,\
                     mock.patch.object(ip_lib, 'get_device_mtu',
-                            return_value=physical_mtu),\
+                                      return_value=physical_mtu),\
                     mock.patch.object(self.lbm.ip, 'add_vxlan',
-                            return_value=vxlan_dev) as add_vxlan_fn:
+                                      return_value=vxlan_dev) as add_vxlan_fn:
                 retval = self.lbm.ensure_vxlan(seg_id, mtu=1450)
                 self.assertEqual("vxlan-" + seg_id, retval)
                 add_vxlan_fn.assert_called_with("vxlan-" + seg_id, seg_id,
@@ -428,7 +428,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             vxlan_dev = FakeIpDevice()
             with mock.patch.object(vxlan_dev, 'disable_ipv6') as dv6_fn,\
                     mock.patch.object(self.lbm.ip, 'add_vxlan',
-                            return_value=vxlan_dev) as add_vxlan_fn:
+                                      return_value=vxlan_dev) as add_vxlan_fn:
                 self.assertEqual("vxlan-" + seg_id,
                                  self.lbm.ensure_vxlan(seg_id))
                 add_vxlan_fn.assert_called_with("vxlan-" + seg_id, seg_id,
@@ -452,12 +452,13 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             vxlan_dev = mock.Mock()
             with mock.patch.object(vxlan_dev, 'disable_ipv6') as dv6_fn,\
                     mock.patch.object(self.lbm.ip, 'add_vxlan',
-                        return_value=vxlan_dev) as add_vxlan_fn,\
-                    mock.patch.object(vxlan_dev.link, 'set_mtu',
+                                      return_value=vxlan_dev) as add_vxlan_fn,\
+                    mock.patch.object(
+                        vxlan_dev.link, 'set_mtu',
                         side_effect=ip_lib.InvalidArgument(
                             device='device_exists', namespace='ns')),\
                     mock.patch.object(ip_lib, 'get_device_mtu',
-                        return_value=physical_mtu),\
+                                      return_value=physical_mtu),\
                     mock.patch.object(vxlan_dev.link, 'delete') as delete_dev:
 
                 self.assertFalse(
@@ -654,7 +655,7 @@ class TestLinuxBridgeManager(base.BaseTestCase):
             constants.TYPE_VLAN, "physnet-1", "1", 1777)
         with mock.patch.object(self.lbm, "add_tap_interface") as add_tap:
             self.lbm.plug_interface("123", segment, "tap234",
-                                   constants.DEVICE_OWNER_NETWORK_PREFIX)
+                                    constants.DEVICE_OWNER_NETWORK_PREFIX)
             add_tap.assert_called_with("123", constants.TYPE_VLAN, "physnet-1",
                                        "1", "tap234",
                                        constants.DEVICE_OWNER_NETWORK_PREFIX,
@@ -913,8 +914,8 @@ class TestLinuxBridgeManager(base.BaseTestCase):
         bridge_mappings = {}
         lbm = get_linuxbridge_manager(bridge_mappings, INTERFACE_MAPPINGS)
         with mock.patch.object(ip_lib.IPWrapper,
-                              'get_devices',
-                              return_value=devices_mock), \
+                               'get_devices',
+                               return_value=devices_mock), \
                 mock.patch.object(
                     ip_lib,
                     "get_device_mac",
@@ -927,9 +928,9 @@ class TestLinuxBridgeManager(base.BaseTestCase):
 
 class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
     def setUp(self):
-        super(TestLinuxBridgeRpcCallbacks, self).setUp()
+        super().setUp()
 
-        class FakeLBAgent(object):
+        class FakeLBAgent:
             def __init__(self):
                 self.agent_id = 1
                 self.mgr = get_linuxbridge_manager(
@@ -983,7 +984,7 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
     def test_port_update(self):
         port = {'id': PORT_1}
         self.lb_rpc.port_update(context=None, port=port)
-        self.assertEqual(set([DEVICE_1]), self.lb_rpc.updated_devices)
+        self.assertEqual({DEVICE_1}, self.lb_rpc.updated_devices)
 
     def test_network_update(self):
         updated_network = {'id': NETWORK_ID}
@@ -991,7 +992,7 @@ class TestLinuxBridgeRpcCallbacks(base.BaseTestCase):
             NETWORK_ID: [PORT_DATA]
         }
         self.lb_rpc.network_update(context=None, network=updated_network)
-        self.assertEqual(set([DEVICE_1]), self.lb_rpc.updated_devices)
+        self.assertEqual({DEVICE_1}, self.lb_rpc.updated_devices)
 
     def test_network_delete_with_existed_brq(self):
         mock_net = mock.Mock()

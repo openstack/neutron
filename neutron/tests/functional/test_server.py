@@ -17,7 +17,6 @@ import multiprocessing
 import os
 import queue
 import signal
-import socket
 import time
 import traceback
 from unittest import mock
@@ -48,7 +47,7 @@ TARGET_PLUGIN = 'neutron.plugins.ml2.plugin.Ml2Plugin'
 
 class TestNeutronServer(base.BaseLoggingTestCase):
     def setUp(self):
-        super(TestNeutronServer, self).setUp()
+        super().setUp()
         self.service_pid = None
         self.workers = None
         self._mp_queue = multiprocessing.Queue()
@@ -192,7 +191,7 @@ class TestWsgiServer(TestNeutronServer):
     """Tests for neutron.api.wsgi.Server."""
 
     def setUp(self):
-        super(TestWsgiServer, self).setUp()
+        super().setUp()
         self.health_checker = self._check_active
         self.port = None
 
@@ -215,7 +214,7 @@ class TestWsgiServer(TestNeutronServer):
             conn.request("GET", "/")
             resp = conn.getresponse()
             return resp.status == 200
-        except socket.error:
+        except OSError:
             return False
 
     def _run_wsgi(self, workers=1):
@@ -251,7 +250,7 @@ class TestRPCServer(TestNeutronServer):
     """Tests for neutron RPC server."""
 
     def setUp(self):
-        super(TestRPCServer, self).setUp()
+        super().setUp()
         self.setup_coreplugin('ml2', load_plugins=False)
         self._plugin_patcher = mock.patch(TARGET_PLUGIN, autospec=True)
         self.plugin = self._plugin_patcher.start()
@@ -290,7 +289,7 @@ class TestPluginWorker(TestNeutronServer):
     """Ensure that a plugin returning Workers spawns workers"""
 
     def setUp(self):
-        super(TestPluginWorker, self).setUp()
+        super().setUp()
         self.setup_coreplugin('ml2', load_plugins=False)
         self._plugin_patcher = mock.patch(TARGET_PLUGIN, autospec=True)
         self.plugin = self._plugin_patcher.start()

@@ -24,7 +24,7 @@ from neutron.tests.functional import base
 class AsyncProcessTestFramework(base.BaseLoggingTestCase):
 
     def setUp(self):
-        super(AsyncProcessTestFramework, self).setUp()
+        super().setUp()
         self.test_file_path = self.get_temp_file_path('test_async_process.tmp')
         self.data = [str(x) for x in range(4)]
         with open(self.test_file_path, 'w') as f:

@@ -32,7 +32,7 @@ CORE_PLUGIN = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 class FlatTypeTest(testlib_api.SqlTestCase):
 
     def setUp(self):
-        super(FlatTypeTest, self).setUp()
+        super().setUp()
         self.setup_coreplugin(CORE_PLUGIN)
         cfg.CONF.set_override('flat_networks', FLAT_NETWORKS,
                               group='ml2_type_flat')
@@ -159,7 +159,7 @@ class FlatTypeTest(testlib_api.SqlTestCase):
 class FlatTypeDefaultTest(base.BaseTestCase):
 
     def setUp(self):
-        super(FlatTypeDefaultTest, self).setUp()
+        super().setUp()
         self.driver = type_flat.FlatTypeDriver()
         self.driver.physnet_mtus = []
 

@@ -33,7 +33,7 @@ DSCP_VALUE = 32
 class QosLinuxbridgeAgentDriverTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(QosLinuxbridgeAgentDriverTestCase, self).setUp()
+        super().setUp()
         cfg.CONF.set_override("tbf_latency", TEST_LATENCY_VALUE, "QOS")
         self.qos_driver = qos_driver.QosLinuxbridgeAgentDriver()
         self.qos_driver.initialize()

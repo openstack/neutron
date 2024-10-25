@@ -62,7 +62,7 @@ class PlumberTestCase(base.BaseTestCase):
         self.mock_get_devices = mock.patch.object(ip_lib,
                                                   'get_devices_info').start()
         # ipwrap.return_value.netns.execute.return_value = IP_LINK_OUTPUT
-        super(PlumberTestCase, self).setUp()
+        super().setUp()
 
     def test_trunk_on_host(self):
         self.assertTrue(self.plumber.trunk_on_host(self.trunk))
@@ -70,8 +70,8 @@ class PlumberTestCase(base.BaseTestCase):
         self.assertFalse(self.plumber.trunk_on_host(self.trunk))
 
     def test_ensure_trunk_subports(self):
-        trunk_vals = set([('dev2', 23), ('dev3', 44), ('dev4', 45)])
-        existing_vals = set([('dev1', 21), ('dev2', 23), ('dev3', 45)])
+        trunk_vals = {('dev2', 23), ('dev3', 44), ('dev4', 45)}
+        existing_vals = {('dev1', 21), ('dev2', 23), ('dev3', 45)}
         mock.patch.object(self.plumber, '_get_subport_devs_and_vlans',
                           return_value=trunk_vals).start()
         mock.patch.object(self.plumber, '_get_vlan_children',
@@ -87,7 +87,7 @@ class PlumberTestCase(base.BaseTestCase):
                                 any_order=True)
 
     def test_delete_trunk_subports(self):
-        existing_vals = set([('dev1', 21), ('dev2', 23), ('dev3', 45)])
+        existing_vals = {('dev1', 21), ('dev2', 23), ('dev3', 45)}
         mock.patch.object(self.plumber, '_get_vlan_children',
                           return_value=existing_vals).start()
         delete = mock.patch.object(self.plumber, '_safe_delete_device').start()

@@ -48,7 +48,7 @@ class ResourceConsumerTrackerTest(base.BaseTestCase):
         for version in [TEST_VERSION_A, TEST_VERSION_B]:
             cv.set_versions(CONSUMER_1, {TEST_RESOURCE_TYPE: version})
 
-        self.assertEqual(set([TEST_VERSION_B]),
+        self.assertEqual({TEST_VERSION_B},
                          cv.get_resource_versions(TEST_RESOURCE_TYPE))
 
     def test_multiple_consumer_version_update(self):
@@ -58,7 +58,7 @@ class ResourceConsumerTrackerTest(base.BaseTestCase):
         cv.set_versions(CONSUMER_2, {TEST_RESOURCE_TYPE: TEST_VERSION_A})
         cv.set_versions(CONSUMER_1, {TEST_RESOURCE_TYPE: TEST_VERSION_B})
 
-        self.assertEqual(set([TEST_VERSION_A, TEST_VERSION_B]),
+        self.assertEqual({TEST_VERSION_A, TEST_VERSION_B},
                          cv.get_resource_versions(TEST_RESOURCE_TYPE))
 
     def test_consumer_downgrades_removing_resource(self):
@@ -70,7 +70,7 @@ class ResourceConsumerTrackerTest(base.BaseTestCase):
 
         self.assertEqual(set(),
                          cv.get_resource_versions(TEST_RESOURCE_TYPE_2))
-        self.assertEqual(set([TEST_VERSION_A]),
+        self.assertEqual({TEST_VERSION_A},
                          cv.get_resource_versions(TEST_RESOURCE_TYPE))
 
     def test_consumer_downgrades_stops_reporting(self):
@@ -99,7 +99,7 @@ class ResourceConsumerTrackerTest(base.BaseTestCase):
 class CachedResourceConsumerTrackerTest(base.BaseTestCase):
 
     def setUp(self):
-        super(CachedResourceConsumerTrackerTest, self).setUp()
+        super().setUp()
 
         self.refreshed = False
 

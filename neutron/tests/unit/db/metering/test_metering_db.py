@@ -38,7 +38,7 @@ _long_description_ng = 'x' * (db_const.LONG_DESCRIPTION_FIELD_SIZE + 1)
 _fake_uuid = uuidutils.generate_uuid
 
 
-class MeteringPluginDbTestCaseMixin(object):
+class MeteringPluginDbTestCaseMixin:
     def _create_metering_label(self, fmt, name, description, **kwargs):
         data = {'metering_label': {'name': name,
                                    'shared': kwargs.get('shared', False),
@@ -125,15 +125,15 @@ class MeteringPluginDbTestCase(
         MeteringPluginDbTestCaseMixin):
     fmt = 'json'
 
-    resource_prefix_map = dict(
-        (k.replace('_', '-'), "/metering")
+    resource_prefix_map = {
+        k.replace('_', '-'): "/metering"
         for k in metering_apidef.RESOURCE_ATTRIBUTE_MAP.keys()
-    )
+    }
 
     def setUp(self, plugin=None):
         service_plugins = {'metering_plugin_name': DB_METERING_PLUGIN_KLASS}
 
-        super(MeteringPluginDbTestCase, self).setUp(
+        super().setUp(
             plugin=plugin,
             service_plugins=service_plugins
         )

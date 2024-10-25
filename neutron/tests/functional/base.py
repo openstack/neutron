@@ -103,7 +103,7 @@ class BaseSudoTestCase(BaseLoggingTestCase):
     """
 
     def setUp(self):
-        super(BaseSudoTestCase, self).setUp()
+        super().setUp()
         if not base.bool_from_env('OS_SUDO_TESTING'):
             self.skipTest('Testing with sudo is not enabled')
         self.setup_rootwrap()
@@ -150,14 +150,14 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
 
     def setUp(self, maintenance_worker=False, service_plugins=None):
         ml2_config.cfg.CONF.set_override('extension_drivers',
-                                     self._extension_drivers,
-                                     group='ml2')
+                                         self._extension_drivers,
+                                         group='ml2')
         ml2_config.cfg.CONF.set_override('tenant_network_types',
-                                     ['geneve'],
-                                     group='ml2')
+                                         ['geneve'],
+                                         group='ml2')
         ml2_config.cfg.CONF.set_override('vni_ranges',
-                                     ['1:65536'],
-                                     group='ml2_type_geneve')
+                                         ['1:65536'],
+                                         group='ml2_type_geneve')
         # ensure viable minimum is set for OVN's Geneve
         ml2_config.cfg.CONF.set_override('max_header_size', 38,
                                          group='ml2_type_geneve')
@@ -170,7 +170,7 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         self.addCleanup(exts.PluginAwareExtensionManager.clear_instance)
         self.ovsdb_server_mgr = None
         self._service_plugins = service_plugins
-        super(TestOVNFunctionalBase, self).setUp()
+        super().setUp()
         self.test_log_dir = os.path.join(DEFAULT_LOG_DIR, self.id())
         base.setup_test_logging(
             cfg.CONF, self.test_log_dir, "testrun.txt")
@@ -234,7 +234,7 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
                     errno.ENOENT, os.strerror(errno.ENOENT), msg)
 
     def get_additional_service_plugins(self):
-        p = super(TestOVNFunctionalBase, self).get_additional_service_plugins()
+        p = super().get_additional_service_plugins()
         p.update({'revision_plugin_name': 'revisions',
                   'segments': 'neutron.services.segments.plugin.Plugin'})
         if self._service_plugins:
@@ -350,15 +350,15 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         timestamp = datetime.now().strftime('%y-%m-%d_%H-%M-%S')
         for database in ("nb", "sb"):
             for file_suffix in ("log", "db"):
-                src_filename = "ovn_%(db)s.%(suffix)s" % {
-                    'db': database,
-                    'suffix': file_suffix
-                }
-                dst_filename = "ovn_%(db)s-%(timestamp)s.%(suffix)s" % {
-                    'db': database,
-                    'suffix': file_suffix,
-                    'timestamp': timestamp,
-                }
+                src_filename = "ovn_{db}.{suffix}".format(
+                    db=database,
+                    suffix=file_suffix
+                )
+                dst_filename = "ovn_{db}-{timestamp}.{suffix}".format(
+                    db=database,
+                    suffix=file_suffix,
+                    timestamp=timestamp,
+                )
                 try:
                     self._copy_log_file(src_filename, dst_filename)
                 except FileNotFoundError:
@@ -369,10 +369,10 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
 
         # Copy northd logs
         northd_log = "ovn_northd"
-        dst_northd = "%(northd)s-%(timestamp)s.log" % {
-            "northd": northd_log,
-            "timestamp": timestamp,
-        }
+        dst_northd = "{northd}-{timestamp}.log".format(
+            northd=northd_log,
+            timestamp=timestamp,
+        )
         self._copy_log_file("%s.log" % northd_log, dst_northd)
 
     def _copy_log_file(self, src_filename, dst_filename):
@@ -427,7 +427,7 @@ class TestOVNFunctionalBase(test_plugin.Ml2PluginV2TestCase,
         if enable_chassis_as_extport:
             append_cms_options(other_config, 'enable-chassis-as-extport-host')
 
-        bridge_mapping = ",".join(["%s:br-provider%s" % (phys_net, i)
+        bridge_mapping = ",".join(["{}:br-provider{}".format(phys_net, i)
                                   for i, phys_net in enumerate(physical_nets)])
         if name is None:
             name = uuidutils.generate_uuid()

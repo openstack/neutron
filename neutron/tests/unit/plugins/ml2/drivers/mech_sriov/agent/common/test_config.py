@@ -36,8 +36,8 @@ class TestSriovAgentConfig(base.BaseTestCase):
     EXCLUDE_DEVICES_WITH_SPACES_ERROR = ['p7p1',
                                          'p3p1:0000:04:00.3 ']
 
-    EXCLUDE_DEVICES = {'p7p1': set(['0000:07:00.1', '0000:07:00.2']),
-                       'p3p1': set(['0000:04:00.3'])}
+    EXCLUDE_DEVICES = {'p7p1': {'0000:07:00.1', '0000:07:00.2'},
+                       'p3p1': {'0000:04:00.3'}}
 
     DEVICE_MAPPING_LIST = ['physnet7:p7p1',
                            'physnet3:p3p1']

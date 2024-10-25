@@ -34,7 +34,7 @@ class QosSRIOVAgentDriverTestCase(base.BaseTestCase):
     PCI_SLOT = '0000:06:00.1'
 
     def setUp(self):
-        super(QosSRIOVAgentDriverTestCase, self).setUp()
+        super().setUp()
         self.context = context.get_admin_context()
         self.qos_driver = qos_driver.QosSRIOVAgentDriver()
         self.qos_driver.initialize()
@@ -75,11 +75,11 @@ class QosSRIOVAgentDriverTestCase(base.BaseTestCase):
 
     def _create_qos_policy_obj(self, rules):
         policy_dict = {'id': uuidutils.generate_uuid(),
-                'project_id': uuidutils.generate_uuid(),
-                'name': 'test',
-                'description': 'test',
-                'shared': False,
-                'rules': rules}
+                       'project_id': uuidutils.generate_uuid(),
+                       'name': 'test',
+                       'description': 'test',
+                       'shared': False,
+                       'rules': rules}
         policy_obj = policy.QosPolicy(self.context, **policy_dict)
         policy_obj.obj_reset_changes()
         for policy_rule in policy_obj.rules:

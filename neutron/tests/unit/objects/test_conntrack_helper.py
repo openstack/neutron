@@ -28,6 +28,6 @@ class ConntrackHelperDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     _test_class = conntrack_helper.ConntrackHelper
 
     def setUp(self):
-        super(ConntrackHelperDbObjectTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {'router_id': lambda: self._create_test_router_id()})

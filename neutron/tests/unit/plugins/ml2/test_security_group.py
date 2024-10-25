@@ -44,7 +44,7 @@ class Ml2SecurityGroupsTestCase(test_sg.SecurityGroupDBTestCase):
         self.notifier = mock.Mock()
         notifier_cls.return_value = self.notifier
         self.useFixture(fixture.APIDefinitionFixture())
-        super(Ml2SecurityGroupsTestCase, self).setUp('ml2')
+        super().setUp('ml2')
         plugin = directory.get_plugin()
         mock.patch.object(
             plugin, 'get_default_security_group_rules',
@@ -56,7 +56,7 @@ class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,
                             test_sg.TestSecurityGroups,
                             test_sg_rpc.SGNotificationTestMixin):
     def setUp(self):
-        super(TestMl2SecurityGroups, self).setUp()
+        super().setUp()
         self.ctx = context.get_admin_context()
         plugin = directory.get_plugin()
         plugin.start_rpc_listeners()
@@ -82,9 +82,10 @@ class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,
                 ]
                 plugin = directory.get_plugin()
                 # should match full ID and starting chars
-                ports = plugin.get_ports_from_devices(self.ctx,
+                ports = plugin.get_ports_from_devices(
+                    self.ctx,
                     [orig_ports[0]['id'], orig_ports[1]['id'][0:8],
-                     orig_ports[2]['id']])
+                    orig_ports[2]['id']])
                 self.assertEqual(len(orig_ports), len(ports))
                 for port_dict in ports:
                     p = next(p for p in orig_ports
@@ -142,8 +143,9 @@ class TestMl2SecurityGroups(Ml2SecurityGroupsTestCase,
                     mock.patch(
                         'neutron.plugins.ml2.db.get_sg_ids_grouped_by_port',
                         return_value={}) as get_mock:
-                plugin.get_ports_from_devices(self.ctx,
-                    ['%s%s' % (const.TAP_DEVICE_PREFIX, i)
+                plugin.get_ports_from_devices(
+                    self.ctx,
+                    ['{}{}'.format(const.TAP_DEVICE_PREFIX, i)
                      for i in range(ports_to_query)])
                 all_call_args = [x[1][1] for x in get_mock.mock_calls]
                 last_call_args = all_call_args.pop()

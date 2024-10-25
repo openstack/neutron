@@ -27,7 +27,7 @@ from neutron.tests.functional import base
 
 class TestHelper(base.BaseSudoTestCase):
     def setUp(self):
-        super(TestHelper, self).setUp()
+        super().setUp()
         self.bridge = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
         self.namespace = self.useFixture(net_helpers.NamespaceFixture()).name
         self.iptables_firewall = (
@@ -79,8 +79,8 @@ class TestHelper(base.BaseSudoTestCase):
             self.iptables_firewall.iptables.get_rules_for_table('filter'))
         for line in iptables_rules:
             if tap_name in line:
-                raise Exception("port %s still has iptables rules in %s" % (
-                    tap_name, line))
+                raise Exception("port {} still has iptables rules "
+                                "in {}".format(tap_name, line))
 
     def test_migration(self):
         sg_rules = [{'ethertype': constants.IPv4,

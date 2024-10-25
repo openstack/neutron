@@ -35,7 +35,7 @@ class IptablesManagerTestCase(functional_base.BaseSudoTestCase):
                                 '--dport %(port)d -j DROP')
 
     def setUp(self):
-        super(IptablesManagerTestCase, self).setUp()
+        super().setUp()
 
         bridge = self.useFixture(net_helpers.VethBridgeFixture()).bridge
         self.client, self.server = self.useFixture(
@@ -85,7 +85,7 @@ class IptablesManagerTestCase(functional_base.BaseSudoTestCase):
             self.client.namespace, self.server.namespace,
             self.server.ip, self.port, protocol)
         self.addCleanup(netcat.stop_processes)
-        filter_params = 'direction %s, port %s and protocol %s' % (
+        filter_params = 'direction {}, port {} and protocol {}'.format(
             direction, port, protocol)
         self.assertTrue(netcat.test_connectivity(),
                         'Failed connectivity check before applying a filter '

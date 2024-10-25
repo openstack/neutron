@@ -29,7 +29,7 @@ class LogDBObjectTestCase(test_base.BaseDbObjectTestCase,
     _test_class = log_res.Log
 
     def setUp(self):
-        super(LogDBObjectTestCase, self).setUp()
+        super().setUp()
         self._network_id = self._create_test_network_id()
         self._port_id = self._create_test_port_id(network_id=self._network_id)
         self._security_group = self._create_test_security_group()

@@ -49,7 +49,7 @@ class FakeAgentMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
                        portbindings.VIF_DETAILS_CONNECTIVITY:
                            portbindings.CONNECTIVITY_L2,
                        }
-        super(FakeAgentMechanismDriver, self).__init__(
+        super().__init__(
             # NOTE(yamamoto): l2pop driver has a hardcoded list of
             # supported agent types.
             constants.AGENT_TYPE_OFA,
@@ -77,7 +77,7 @@ class FakeAgentMechanismDriverL3(FakeAgentMechanismDriver):
     """ML2 mechanism driver for testing, with L3 connectivity only"""
 
     def __init__(self):
-        super(FakeAgentMechanismDriverL3, self).__init__()
+        super().__init__()
         self.vif_details[portbindings.VIF_DETAILS_CONNECTIVITY] = (
             portbindings.CONNECTIVITY_L3)
 

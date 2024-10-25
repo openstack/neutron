@@ -26,7 +26,7 @@ class RecursivePermDirFixture(fixtures.Fixture):
     """Ensure at least perms permissions on directory and ancestors."""
 
     def __init__(self, directory, perms):
-        super(RecursivePermDirFixture, self).__init__()
+        super().__init__()
         self.directory = directory
         self.least_perms = perms
 
@@ -45,7 +45,7 @@ class AdminDirFixture(fixtures.Fixture):
     """Handle directory create/delete with admin permissions required"""
 
     def __init__(self, directory):
-        super(AdminDirFixture, self).__init__()
+        super().__init__()
         self.directory = directory
 
     def _setUp(self):
@@ -64,7 +64,7 @@ class SleepyProcessFixture(fixtures.Fixture):
     """Process fixture to perform time.sleep for a given number of seconds."""
 
     def __init__(self, timeout=60):
-        super(SleepyProcessFixture, self).__init__()
+        super().__init__()
         self.timeout = timeout
 
     @staticmethod

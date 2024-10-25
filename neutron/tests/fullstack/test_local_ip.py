@@ -46,7 +46,7 @@ class LocalIPTestCase(base.BaseFullStackTestCase):
             mech_drivers='openvswitch',
             local_ip_ext=True)
         env = environment.Environment(env_desc, host_desc)
-        super(LocalIPTestCase, self).setUp(env)
+        super().setUp(env)
         self.project_id = uuidutils.generate_uuid()
 
         self.network = self.safe_client.create_network(

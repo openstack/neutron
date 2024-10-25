@@ -80,12 +80,10 @@ class TestOVSAgent(base.OVSAgentTestFramework):
 
         # verify no stale drop flows
         self.assertEqual(0,
-            num_ports_with_drop_flows(
-                ofports,
-                self.agent.int_br.dump_flows(
-                    ovs_constants.LOCAL_SWITCHING
-                )
-            ))
+                         num_ports_with_drop_flows(
+                             ofports,
+                             self.agent.int_br.dump_flows(
+                                 ovs_constants.LOCAL_SWITCHING)))
 
     def _check_datapath_type_netdev(self, expected, default=False):
         if not default:
@@ -351,7 +349,7 @@ class TestOVSAgent(base.OVSAgentTestFramework):
 
 class TestOVSAgentExtensionConfig(base.OVSAgentTestFramework):
     def setUp(self):
-        super(TestOVSAgentExtensionConfig, self).setUp()
+        super().setUp()
         self.config.set_override('extensions', ['qos'], 'agent')
         self.agent = self.create_agent(create_tunnels=False)
 

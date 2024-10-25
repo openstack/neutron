@@ -28,7 +28,7 @@ _uuid = uuidutils.generate_uuid
 
 class TestRouterInfo(base.BaseTestCase):
     def setUp(self):
-        super(TestRouterInfo, self).setUp()
+        super().setUp()
 
         conf = config.setup_conf()
         l3_config.register_l3_agent_config_opts(l3_config.OPTS, conf)

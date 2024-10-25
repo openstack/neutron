@@ -54,7 +54,7 @@ def _create_log(context, project_id, resource_id=None,
 class LoggingDBApiTestCase(test_sg.SecurityGroupDBTestCase):
 
     def setUp(self):
-        super(LoggingDBApiTestCase, self).setUp()
+        super().setUp()
         self.context = context.get_admin_context()
         self.sg_id, self.port_id, self._tenant_id = self._create_sg_and_port()
         self.context.tenant_id = self._tenant_id
@@ -189,7 +189,7 @@ class LoggingDBApiTestCase(test_sg.SecurityGroupDBTestCase):
 class LoggingRpcCallbackTestCase(test_sg.SecurityGroupDBTestCase):
 
     def setUp(self):
-        super(LoggingRpcCallbackTestCase, self).setUp()
+        super().setUp()
         plugin = directory.get_plugin()
         mock.patch.object(
             plugin, 'get_default_security_group_rules',

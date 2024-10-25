@@ -36,7 +36,7 @@ FAKE_UDP_ENTRY = {'ipversion': 4, 'protocol': 'udp',
 
 class NetlinkLibTestCase(base.BaseTestCase):
     def setUp(self):
-        super(NetlinkLibTestCase, self).setUp()
+        super().setUp()
         nl_lib.nfct = mock.Mock()
         nl_lib.libc = mock.Mock()
 

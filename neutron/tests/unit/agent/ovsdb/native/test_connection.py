@@ -40,7 +40,7 @@ SCHEMA = {'tables': {'Bridge': {'columns': COLUMN_NAME},
 class ConfigureSslConnTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(ConfigureSslConnTestCase, self).setUp()
+        super().setUp()
         self._mock_cfg = mock.patch.object(native_conn, 'cfg')
         self.mock_cfg = self._mock_cfg.start()
         self._mock_os = mock.patch.object(native_conn, 'os')
@@ -75,7 +75,7 @@ class ConfigureSslConnTestCase(base.BaseTestCase):
         self.mock_cfg.CONF.OVS.ssl_ca_cert_file = SSL_CA_FILE
         ovs_idl_monitor = self._get_ovs_idl_monitor()
         conn = connection.Connection(idl=ovs_idl_monitor,
-                                 timeout=1)
+                                     timeout=1)
         with mock.patch.object(connection.Connection, 'run'):
             conn.start()
         self.mock_stream.ssl_set_private_key_file.assert_called_once_with(
@@ -105,7 +105,7 @@ class ConfigureSslConnTestCase(base.BaseTestCase):
 
 class BridgeCreateEventTestCase(base.BaseTestCase):
 
-    class MetadataAgent(object):
+    class MetadataAgent:
 
         bridges = []
 
@@ -124,7 +124,7 @@ class BridgeCreateEventTestCase(base.BaseTestCase):
 class OvsIdlMonitorTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(OvsIdlMonitorTestCase, self).setUp()
+        super().setUp()
         self._mock_get_ovsdb_helper = mock.patch.object(
             native_conn.OvsIdl, '_get_ovsdb_helper')
         self._mock_get_ovsdb_helper.start()

@@ -118,7 +118,7 @@ class TestOVNClientQosExtensionBase(base.TestOVNFunctionalBase):
 class TestOVNClientQosExtension(TestOVNClientQosExtensionBase):
 
     def setUp(self, maintenance_worker=False):
-        super(TestOVNClientQosExtension, self).setUp(
+        super().setUp(
             maintenance_worker=maintenance_worker)
         self._add_logical_switch()
         self.qos_driver = qos_extension.OVNClientQosExtension(
@@ -197,7 +197,7 @@ class TestOVNClientQosExtension(TestOVNClientQosExtensionBase):
 class TestOVNClientQosExtensionEndToEnd(TestOVNClientQosExtensionBase):
 
     def setUp(self, maintenance_worker=False):
-        super(TestOVNClientQosExtensionEndToEnd, self).setUp(
+        super().setUp(
             maintenance_worker=maintenance_worker)
         self.qos_driver = self.l3_plugin._ovn_client._qos_driver
         self._mock_qos_rules = mock.patch.object(self.qos_driver, '_qos_rules')

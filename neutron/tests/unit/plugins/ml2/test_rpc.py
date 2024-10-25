@@ -46,7 +46,7 @@ cfg.CONF.import_group('ml2', 'neutron.conf.plugins.ml2.config')
 class RpcCallbacksTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(RpcCallbacksTestCase, self).setUp()
+        super().setUp()
         self.type_manager = managers.TypeManager()
         self.notifier = plugin_rpc.AgentNotifierApi(topics.AGENT)
         self.callbacks = plugin_rpc.RpcCallbacks(self.notifier,
@@ -316,7 +316,7 @@ class RpcCallbacksTestCase(base.BaseTestCase):
 
         devices_up_side_effect = [1, Exception('testdevice'), 3]
         devices_down_side_effect = [{'device': 4, 'exists': True},
-                        Exception('testdevice')]
+                                    Exception('testdevice')]
         expected = {'devices_up': [1, 3],
                     'failed_devices_up': [2],
                     'devices_down':

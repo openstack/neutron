@@ -34,7 +34,7 @@ DB_PLUGIN_KLASS = ('neutron.tests.unit.extensions.test_address_scope.'
                    'AddressScopeTestPlugin')
 
 
-class AddressScopeTestExtensionManager(object):
+class AddressScopeTestExtensionManager:
 
     def get_resources(self):
         return ext_address_scope.Address_scope.get_resources()
@@ -125,7 +125,7 @@ class TestAddressScope(AddressScopeTestCase):
     def setUp(self):
         plugin = DB_PLUGIN_KLASS
         ext_mgr = AddressScopeTestExtensionManager()
-        super(TestAddressScope, self).setUp(plugin=plugin, ext_mgr=ext_mgr)
+        super().setUp(plugin=plugin, ext_mgr=ext_mgr)
 
     def test_create_address_scope_ipv4(self):
         expected_addr_scope = {'name': 'foo-address-scope',
@@ -262,8 +262,8 @@ class TestSubnetPoolsWithAddressScopes(AddressScopeTestCase):
     def setUp(self):
         plugin = DB_PLUGIN_KLASS
         ext_mgr = AddressScopeTestExtensionManager()
-        super(TestSubnetPoolsWithAddressScopes, self).setUp(plugin=plugin,
-                                                            ext_mgr=ext_mgr)
+        super().setUp(plugin=plugin,
+                      ext_mgr=ext_mgr)
 
     def _test_create_subnetpool(self, prefixes, expected=None,
                                 admin=False, **kwargs):

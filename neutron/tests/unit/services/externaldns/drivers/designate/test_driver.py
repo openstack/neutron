@@ -22,7 +22,7 @@ from neutron.tests import base
 
 class TestDesignateDriver(base.BaseTestCase):
     def setUp(self):
-        super(TestDesignateDriver, self).setUp()
+        super().setUp()
         self.context = mock.Mock()
         self.client = mock.Mock()
         self.admin_client = mock.Mock()

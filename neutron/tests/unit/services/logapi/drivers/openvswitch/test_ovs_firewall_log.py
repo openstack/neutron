@@ -70,13 +70,13 @@ def set_log_driver_config(ctrl_rate_limit, ctrl_burst_limit):
 
 class TestCookie(base.BaseTestCase):
     def setUp(self):
-        super(TestCookie, self).setUp()
+        super().setUp()
         self.cookie = ovsfw_log.Cookie(COOKIE_ID, PORT_ID, ACTION, PROJECT_ID)
-        self.cookie.log_object_refs = set([LOG_ID])
+        self.cookie.log_object_refs = {LOG_ID}
 
     def test_add_log_object_refs(self):
         new_log_id = uuidutils.generate_uuid()
-        expected = set([LOG_ID, new_log_id])
+        expected = {LOG_ID, new_log_id}
         self.cookie.add_log_obj_ref(new_log_id)
         self.assertEqual(expected, self.cookie.log_object_refs)
 
@@ -91,7 +91,7 @@ class TestCookie(base.BaseTestCase):
         self.assertTrue(result)
 
 
-class FakeOVSPort(object):
+class FakeOVSPort:
     def __init__(self, name, port, mac):
         self.port_name = name
         self.ofport = port
@@ -100,7 +100,7 @@ class FakeOVSPort(object):
 
 class TestOVSFirewallLoggingDriver(base.BaseTestCase):
     def setUp(self):
-        super(TestOVSFirewallLoggingDriver, self).setUp()
+        super().setUp()
         mock_int_br = mock.Mock()
         mock_int_br.br.dump_flows.return_value = []
         self._mock_initialize_bridge = mock.patch.object(
@@ -160,7 +160,7 @@ class TestOVSFirewallLoggingDriver(base.BaseTestCase):
         cookie = ovsfw_log.Cookie(cookie_id=uuidutils.generate_uuid(),
                                   port=PORT_ID, action=ACTION,
                                   project=PROJECT_ID)
-        self.log_driver.cookies_table = set([cookie])
+        self.log_driver.cookies_table = {cookie}
         self.assertRaises(log_exc.CookieNotFound,
                           self.log_driver._get_cookie_by_id,
                           cookie_id)
@@ -181,7 +181,7 @@ class TestOVSFirewallLoggingDriver(base.BaseTestCase):
                 actions='controller',
                 cookie=accept_cookie.id,
                 reg5=self.port_ofport,
-                dl_type="0x{:04x}".format(constants.ETHERTYPE_IP),
+                dl_type=f"0x{constants.ETHERTYPE_IP:04x}",
                 nw_proto=constants.PROTO_NUM_TCP,
                 priority=77,
                 table=ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE,
@@ -192,7 +192,7 @@ class TestOVSFirewallLoggingDriver(base.BaseTestCase):
                     ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE),
                 cookie=accept_cookie.id,
                 reg5=self.port_ofport,
-                dl_type="0x{:04x}".format(constants.ETHERTYPE_IPV6),
+                dl_type=f"0x{constants.ETHERTYPE_IPV6:04x}",
                 priority=70,
                 reg7=conj_id + 1,
                 table=ovs_consts.ACCEPTED_EGRESS_TRAFFIC_TABLE),
@@ -202,7 +202,7 @@ class TestOVSFirewallLoggingDriver(base.BaseTestCase):
                     ovs_consts.ACCEPTED_EGRESS_TRAFFIC_NORMAL_TABLE),
                 cookie=accept_cookie.id,
                 reg5=self.port_ofport,
-                dl_type="0x{:04x}".format(constants.ETHERTYPE_IP),
+                dl_type=f"0x{constants.ETHERTYPE_IP:04x}",
                 nw_proto=constants.PROTO_NUM_UDP,
                 priority=77,
                 table=ovs_consts.ACCEPTED_EGRESS_TRAFFIC_TABLE,
@@ -279,7 +279,7 @@ class TestOVSFirewallLoggingDriver(base.BaseTestCase):
                 actions='controller',
                 cookie=accept_cookie.id,
                 reg5=self.port_ofport,
-                dl_type="0x{:04x}".format(constants.ETHERTYPE_IP),
+                dl_type=f"0x{constants.ETHERTYPE_IP:04x}",
                 nw_proto=constants.PROTO_NUM_TCP,
                 priority=77,
                 table=ovs_consts.ACCEPTED_INGRESS_TRAFFIC_TABLE,

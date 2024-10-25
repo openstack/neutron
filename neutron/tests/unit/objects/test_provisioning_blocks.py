@@ -22,12 +22,12 @@ class ProvisioningBlockIfaceObjectTestCase(
 
 
 class ProvisioningBlockDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
-                          testlib_api.SqlTestCase):
+                                        testlib_api.SqlTestCase):
 
     _test_class = provisioning_blocks.ProvisioningBlock
 
     def setUp(self):
-        super(ProvisioningBlockDbObjectTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {
                 'standard_attr_id':

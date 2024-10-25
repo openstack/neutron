@@ -33,7 +33,7 @@ class TestL3ConntrackHelperServicePlugin(test_l3.TestL3NatServicePlugin):
     supported_extension_aliases = [l3_apidef.ALIAS, l3_ct.ALIAS]
 
 
-class ExtendL3ConntrackHelperExtensionManager(object):
+class ExtendL3ConntrackHelperExtensionManager:
 
     def get_resources(self):
         return (l3.L3.get_resources() +
@@ -60,7 +60,7 @@ class L3NConntrackHelperTestCase(test_l3.L3BaseForIntTests,
                        'TestL3ConntrackHelperServicePlugin')
         plugin = ('neutron.tests.unit.extensions.test_l3.TestL3NatIntPlugin')
         ext_mgr = ExtendL3ConntrackHelperExtensionManager()
-        super(L3NConntrackHelperTestCase, self).setUp(
+        super().setUp(
               ext_mgr=ext_mgr, service_plugins=svc_plugins, plugin=plugin)
         self.ext_api = test_extensions.setup_extensions_middleware(ext_mgr)
 

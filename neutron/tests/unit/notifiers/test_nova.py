@@ -39,11 +39,11 @@ DEVICE_OWNER_BAREMETAL = n_const.DEVICE_OWNER_BAREMETAL_PREFIX + 'fake'
 
 class TestNovaNotify(base.BaseTestCase):
     def setUp(self, plugin=None):
-        super(TestNovaNotify, self).setUp()
+        super().setUp()
         self.ctx = n_ctx.get_admin_context()
         self.port_uuid = uuidutils.generate_uuid()
 
-        class FakePlugin(object):
+        class FakePlugin:
             def get_port(self, context, port_id):
                 device_id = '32102d7b-1cf4-404d-b50a-97aae1f55f87'
                 return {'device_id': device_id,
@@ -186,7 +186,8 @@ class TestNovaNotify(base.BaseTestCase):
 
     def test_delete_floatingip_deleted_port_no_notify(self):
         port_id = 'bee50827-bcee-4cc8-91c1-a27b0ce54222'
-        with mock.patch.object(directory.get_plugin(), 'get_port',
+        with mock.patch.object(
+                directory.get_plugin(), 'get_port',
                 side_effect=n_exc.PortNotFound(port_id=port_id)):
             returned_obj = {'floatingip':
                             {'port_id': port_id}}

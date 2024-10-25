@@ -40,7 +40,7 @@ class FakePlugin(base_plugin.NeutronDbPluginV2,
 class TestDbQuotaDriverNoLock(test_driver.TestDbQuotaDriver):
 
     def setUp(self):
-        super(TestDbQuotaDriverNoLock, self).setUp()
+        super().setUp()
         self.plugin = FakePlugin()
         self.quota_driver = driver_nolock.DbQuotaNoLockDriver()
 

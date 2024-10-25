@@ -41,7 +41,7 @@ class TestPciLib(base.BaseTestCase):
     }
 
     def setUp(self):
-        super(TestPciLib, self).setUp()
+        super().setUp()
         self.pci_wrapper = pci_lib.PciDeviceIPWrapper(self.DEV_NAME)
         self.mock_ip_device = mock.Mock()
         self.mock_ip_device.link.get_vfs.return_value = self.VFS_LIST

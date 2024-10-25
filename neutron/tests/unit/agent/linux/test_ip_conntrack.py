@@ -21,7 +21,7 @@ from neutron.tests import base
 class IPConntrackTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(IPConntrackTestCase, self).setUp()
+        super().setUp()
         self.execute = mock.Mock()
         self.filtered_port = {}
         self.unfiltered_port = {}

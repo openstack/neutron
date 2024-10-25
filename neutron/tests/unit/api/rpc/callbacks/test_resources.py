@@ -69,7 +69,7 @@ class RegisterResourceClass(base.BaseTestCase):
             resources.is_valid_resource_type('DummyOVO'))
 
     def test_register_bogus_resource_class(self):
-        class DummyOVO(object):
+        class DummyOVO:
             pass
 
         self.assertRaises(ValueError,

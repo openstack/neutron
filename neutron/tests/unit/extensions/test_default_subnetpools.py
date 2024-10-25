@@ -21,7 +21,7 @@ from neutron.extensions import default_subnetpools
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
 
-class DefaultSubnetpoolsExtensionManager(object):
+class DefaultSubnetpoolsExtensionManager:
 
     def get_resources(self):
         return []
@@ -54,8 +54,7 @@ class DefaultSubnetpoolsExtensionTestCase(
         plugin = ('neutron.tests.unit.extensions.test_default_subnetpools.' +
                   'DefaultSubnetpoolsExtensionTestPlugin')
         ext_mgr = DefaultSubnetpoolsExtensionManager()
-        super(DefaultSubnetpoolsExtensionTestCase,
-              self).setUp(plugin=plugin, ext_mgr=ext_mgr)
+        super().setUp(plugin=plugin, ext_mgr=ext_mgr)
 
     def _create_subnet_using_default_subnetpool(
             self, network_id, tenant_id, ip_version=constants.IP_VERSION_4,
@@ -164,8 +163,8 @@ class DefaultSubnetpoolsExtensionTestCase(
         with self.network() as network:
             data = {'subnet': {'network_id': network['network']['id'],
                     'ip_version': constants.IP_VERSION_6,
-                    'tenant_id': network['network']['tenant_id'],
-                    'use_default_subnetpool': True}}
+                               'tenant_id': network['network']['tenant_id'],
+                               'use_default_subnetpool': True}}
             if ra_addr_mode:
                 data['subnet']['ipv6_ra_mode'] = ra_addr_mode
                 data['subnet']['ipv6_address_mode'] = ra_addr_mode

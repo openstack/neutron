@@ -24,7 +24,7 @@ from neutron.tests.unit.services.qos import base
 class TestOVSDriver(base.BaseQosTestCase):
 
     def setUp(self):
-        super(TestOVSDriver, self).setUp()
+        super().setUp()
         self.driver = driver.OVSDriver.create()
 
     def test_validate_min_bw_rule(self):

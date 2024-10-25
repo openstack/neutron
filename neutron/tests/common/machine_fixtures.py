@@ -101,14 +101,14 @@ class FakeMachineBase(fixtures.Fixture):
 class FakeMachine(FakeMachineBase):
 
     def __init__(self, bridge, ip_cidr, gateway_ip=None, ipv6_cidr=None):
-        super(FakeMachine, self).__init__()
+        super().__init__()
         self.bridge = bridge
         self._ip_cidr = ip_cidr
         self._ipv6_cidr = ipv6_cidr
         self.gateway_ip = gateway_ip
 
     def _setUp(self):
-        super(FakeMachine, self)._setUp()
+        super()._setUp()
 
         self.port = self.useFixture(
             net_helpers.PortFixture.get(self.bridge, self.namespace)).port
@@ -169,7 +169,7 @@ class PeerMachines(fixtures.Fixture):
     CIDR = '192.168.0.1/24'
 
     def __init__(self, bridge, ip_cidr=None, gateway_ip=None, amount=2):
-        super(PeerMachines, self).__init__()
+        super().__init__()
         self.bridge = bridge
         self.ip_cidr = ip_cidr or self.CIDR
         self.gateway_ip = gateway_ip

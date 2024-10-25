@@ -27,7 +27,7 @@ from neutron.extensions import data_plane_status as dps_ext
 from neutron.tests.unit.db import test_db_base_plugin_v2
 
 
-class DataPlaneStatusTestExtensionManager(object):
+class DataPlaneStatusTestExtensionManager:
 
     def get_resources(self):
         return []
@@ -56,8 +56,7 @@ class DataPlaneStatusExtensionTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
 
     def update_port(self, context, id, port):
         with db_api.CONTEXT_WRITER.using(context):
-            ret_port = super(DataPlaneStatusExtensionTestPlugin,
-                             self).update_port(context, id, port)
+            ret_port = super().update_port(context, id, port)
             if dps_lib.DATA_PLANE_STATUS in port['port']:
                 self._process_update_port_data_plane_status(context,
                                                             port['port'],
@@ -72,7 +71,7 @@ class DataPlaneStatusExtensionTestCase(
         plugin = ('neutron.tests.unit.extensions.test_data_plane_status.'
                   'DataPlaneStatusExtensionTestPlugin')
         ext_mgr = DataPlaneStatusTestExtensionManager()
-        super(DataPlaneStatusExtensionTestCase, self).setUp(
+        super().setUp(
             plugin=plugin, ext_mgr=ext_mgr)
 
     def test_update_port_data_plane_status(self):
@@ -123,14 +122,14 @@ class DataPlaneStatusExtensionTestCase(
                          web_exc.HTTPBadRequest.code)
 
     def test_port_update_event_on_data_plane_status(self):
-        expect_notify = set(['port.update.start',
-                             'port.update.end'])
+        expect_notify = {'port.update.start',
+                         'port.update.end'}
         with self.port(name='port1') as port:
             self._update(port_def.COLLECTION_NAME, port['port']['id'],
                          {'port': {dps_lib.DATA_PLANE_STATUS:
                                    constants.ACTIVE}},
                          as_admin=True)
-            notify = set(n['event_type'] for n in fake_notifier.NOTIFICATIONS)
+            notify = {n['event_type'] for n in fake_notifier.NOTIFICATIONS}
             duplicated_notify = expect_notify & notify
             self.assertEqual(expect_notify, duplicated_notify)
             fake_notifier.reset()

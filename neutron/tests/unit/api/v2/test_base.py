@@ -82,7 +82,7 @@ def _get_neutron_env(tenant_id=None, as_admin=False):
 
 class APIv2TestBase(base.BaseTestCase):
     def setUp(self):
-        super(APIv2TestBase, self).setUp()
+        super().setUp()
 
         plugin = 'neutron.neutron_plugin_base_v2.NeutronPluginBaseV2'
         # Ensure existing ExtensionManager is not used
@@ -135,7 +135,7 @@ class APIv2TestBase(base.BaseTestCase):
             extra_environ=_get_neutron_env(req_tenant_id, as_admin))
 
 
-class _ArgMatcher(object):
+class _ArgMatcher:
     """An adapter to assist mock assertions, used to custom compare."""
 
     def __init__(self, cmp, obj):
@@ -174,8 +174,8 @@ class APIv2TestCase(APIv2TestBase):
         skipargs = skipargs or []
         args_list = ['filters', 'fields', 'sorts', 'limit', 'marker',
                      'page_reverse']
-        args_dict = dict(
-            (arg, mock.ANY) for arg in set(args_list) - set(skipargs))
+        args_dict = {
+            arg: mock.ANY for arg in set(args_list) - set(skipargs)}
         args_dict.update(kwargs)
         return args_dict
 
@@ -822,7 +822,7 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
         initial_input = {'network': {'name': 'net1'}}
         full_input = {'network': {'admin_state_up': True,
                       'shared': False, 'tenant_id': tenant_id,
-                      'project_id': tenant_id}}
+                                  'project_id': tenant_id}}
         full_input['network'].update(initial_input['network'])
 
         return_value = {'id': net_id, 'status': "ACTIVE"}
@@ -1164,7 +1164,7 @@ class JSONV2TestCase(APIv2TestBase, testlib_api.WebTestCase):
 # logic, we actually get really good coverage from testing just networks.
 class V2Views(base.BaseTestCase):
     def _view(self, keys, collection, resource):
-        data = dict((key, 'value') for key in keys)
+        data = {key: 'value' for key in keys}
         data['fake'] = 'value'
         attr_info = attributes.RESOURCES[collection]
         controller = v2_base.Controller(None, collection, resource, attr_info)
@@ -1192,7 +1192,7 @@ class V2Views(base.BaseTestCase):
 class NotificationTest(APIv2TestBase):
 
     def setUp(self):
-        super(NotificationTest, self).setUp()
+        super().setUp()
         fake_notifier.reset()
         quota.QUOTAS._driver = None
         cfg.CONF.set_override('quota_driver', NULL_QUOTA_DRIVER,
@@ -1256,7 +1256,7 @@ class NotificationTest(APIv2TestBase):
 class RegistryNotificationTest(APIv2TestBase):
 
     def setUp(self):
-        super(RegistryNotificationTest, self).setUp()
+        super().setUp()
         quota.QUOTAS._driver = None
         cfg.CONF.set_override('quota_driver', NULL_QUOTA_DRIVER,
                               group='QUOTAS')
@@ -1331,7 +1331,7 @@ class QuotaTest(APIv2TestBase):
 
 class ExtensionTestCase(base.BaseTestCase):
     def setUp(self):
-        super(ExtensionTestCase, self).setUp()
+        super().setUp()
         plugin = 'neutron.neutron_plugin_base_v2.NeutronPluginBaseV2'
         # Ensure existing ExtensionManager is not used
         extensions.PluginAwareExtensionManager._instance = None
@@ -1391,7 +1391,7 @@ class ExtensionTestCase(base.BaseTestCase):
         self.assertNotIn('v2attrs:something_else', net)
 
 
-class TestSubresourcePlugin(object):
+class TestSubresourcePlugin:
     def get_network_dummies(self, context, network_id,
                             filters=None, fields=None):
         return []

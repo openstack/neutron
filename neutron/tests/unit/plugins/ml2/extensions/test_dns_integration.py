@@ -61,7 +61,7 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
         cfg.CONF.set_override('external_dns_driver', 'designate')
         mock_client.reset_mock()
         mock_admin_client.reset_mock()
-        super(DNSIntegrationTestCase, self).setUp()
+        super().setUp()
         dns_integration.DNS_DRIVER = None
         dns_integration.subscribe()
         self.plugin = directory.get_plugin()
@@ -101,7 +101,7 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
         if dns_domain_port:
             port_kwargs[dns_apidef.DNSDOMAIN] = PORTDNSDOMAIN
             port_kwargs['arg_list'] = (port_kwargs.get('arg_list', ()) +
-                (dns_apidef.DNSDOMAIN,))
+                                       (dns_apidef.DNSDOMAIN,))
         res = self._create_port('json', network['network']['id'],
                                 **port_kwargs)
         self.assertEqual(201, res.status_int)
@@ -211,8 +211,8 @@ class DNSIntegrationTestCase(test_plugin.Ml2PluginV2TestCase):
             expected_delete = []
             if ptr_zones:
                 records = records_v4 + records_v6
-                recordset_name = '%s.%s' % (current_dns_name,
-                                            current_dns_domain)
+                recordset_name = '{}.{}'.format(current_dns_name,
+                                                current_dns_domain)
                 for record in records:
                     in_addr_name = netaddr.IPAddress(record).reverse_dns
                     in_addr_zone_name = self._get_in_addr_zone_name(
@@ -491,7 +491,7 @@ class DNSIntegrationTestCaseDefaultDomain(DNSIntegrationTestCase):
         for ip in port['fixed_ips']:
             hostname = 'host-%s' % ip['ip_address'].replace(
                 '.', '-').replace(':', '-')
-            fqdn.append('%s.%s' % (hostname, self._domain))
+            fqdn.append('{}.{}'.format(hostname, self._domain))
         return set(fqdn)
 
     def _verify_port_dns(self, port, dns_data_db, dns_name=True,
@@ -500,7 +500,7 @@ class DNSIntegrationTestCaseDefaultDomain(DNSIntegrationTestCase):
                          current_dns_name=DNSNAME, previous_dns_name=''):
         self.assertEqual('', port[dns_apidef.DNSNAME])
         fqdn_set = self._generate_dns_assignment(port)
-        port_fqdn_set = set([each['fqdn'] for each in port['dns_assignment']])
+        port_fqdn_set = {each['fqdn'] for each in port['dns_assignment']}
         self.assertEqual(fqdn_set, port_fqdn_set)
         self.assertIsNone(dns_data_db, "dns data should be none")
         self.assertFalse(mock_client.recordsets.create.call_args_list)
@@ -571,7 +571,7 @@ class DNSDomainPortsTestCase(DNSIntegrationTestCase):
                                                        dns_domain_port=True,
                                                        dns_name=False)
         self._verify_port_dns(port, dns_data_db, dns_name=False,
-            dns_domain=False, dns_domain_port=True)
+                              dns_domain=False, dns_domain_port=True)
         self.assertEqual(PORTDNSDOMAIN, dns_data_db[dns_apidef.DNSDOMAIN])
         self.assertEqual(PORTDNSDOMAIN, port[dns_apidef.DNSDOMAIN])
 
@@ -776,7 +776,7 @@ class TestDesignateClientKeystoneV3(testtools.TestCase):
     TEST_CONTEXT.auth_token = uuidutils.generate_uuid(dashed=False)
 
     def setUp(self):
-        super(TestDesignateClientKeystoneV3, self).setUp()
+        super().setUp()
         # Register the Password auth plugin options,
         # so we can use CONF.set_override
         password_option = loading.get_auth_plugin_conf_options('password')
@@ -812,7 +812,7 @@ class TestDesignateClientKeystoneV3(testtools.TestCase):
             mock.patch.object(session, 'Session').start())
         self.load_auth = (
             mock.patch.object(driver.loading,
-                'load_auth_from_conf_options').start())
+                              'load_auth_from_conf_options').start())
 
     def test_insecure_client(self):
         cfg.CONF.set_override('insecure',

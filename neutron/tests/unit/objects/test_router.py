@@ -42,7 +42,7 @@ class RouterRouteDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     _test_class = router.RouterRoute
 
     def setUp(self):
-        super(RouterRouteDbObjectTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {'router_id': lambda: self._create_test_router_id()})
 
@@ -57,7 +57,7 @@ class RouterExtraAttrsDbObjTestCase(obj_test_base.BaseDbObjectTestCase,
     _test_class = router.RouterExtraAttributes
 
     def setUp(self):
-        super(RouterExtraAttrsDbObjTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {'router_id': lambda: self._create_test_router_id()})
 
@@ -83,7 +83,7 @@ class RouterDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     _test_class = router.Router
 
     def setUp(self):
-        super(RouterDbObjectTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {'gw_port_id': lambda: self._create_test_port_id(),
              'flavor_id': lambda: self._create_test_flavor_id()})
@@ -214,7 +214,7 @@ class RouterPortDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     _test_class = router.RouterPort
 
     def setUp(self):
-        super(RouterPortDbObjectTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {'router_id': lambda: self._create_test_router_id(),
              'port_id': lambda: self._create_test_port_id()})
@@ -272,7 +272,7 @@ class FloatingIPDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     _test_class = router.FloatingIP
 
     def setUp(self):
-        super(FloatingIPDbObjectTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {'floating_port_id': lambda: self._create_test_port_id(),
              'fixed_port_id': lambda: self._create_test_port_id(),

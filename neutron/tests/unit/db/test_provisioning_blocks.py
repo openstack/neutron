@@ -32,7 +32,7 @@ CORE_PLUGIN = 'neutron.db.db_base_plugin_v2.NeutronDbPluginV2'
 class TestStatusBarriers(testlib_api.SqlTestCase):
 
     def setUp(self):
-        super(TestStatusBarriers, self).setUp()
+        super().setUp()
         self.setup_coreplugin(CORE_PLUGIN)
         self.ctx = n_ctx.get_admin_context()
         self.provisioned = mock.Mock()
@@ -51,8 +51,9 @@ class TestStatusBarriers(testlib_api.SqlTestCase):
         net = self._make_net()
         mac_address = netaddr.EUI('1')
         port = port_obj.Port(self.ctx, network_id=net.id, device_owner='3',
-            project_id='1', admin_state_up=True, status='DOWN', device_id='2',
-            mac_address=mac_address)
+                             project_id='1', admin_state_up=True,
+                             status='DOWN', device_id='2',
+                             mac_address=mac_address)
         port.create()
         return port
 

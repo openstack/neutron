@@ -56,10 +56,10 @@ OPTS = [
                      },
                required=False),
     cfg.BoolOpt('parent_listen',
-               short='pl',
-               default=True,
-               help='Parent process must listen too',
-               required=False),
+                short='pl',
+                default=True,
+                help='Parent process must listen too',
+                required=False),
     cfg.BoolOpt('ignore_sigterm',
                 short='i',
                 default=False,
@@ -102,7 +102,7 @@ class ProcessSpawn(daemon.Daemon):
         self.parent_must_listen = parent_must_listen
         self.child_pids = []
 
-        super(ProcessSpawn, self).__init__(pidfile)
+        super().__init__(pidfile)
 
     def start_listening(self):
         socket_family = self.DCT_FAMILY[self.family]
@@ -126,7 +126,7 @@ class ProcessSpawn(daemon.Daemon):
                     # Pick a non privileged port
                     port = random.randint(1024, 65535)
                     self.listen_socket.bind(('', port))
-            except socket.error:
+            except OSError:
                 retries += 1
             else:
                 if n_const.PROTO_NAME_TCP in self.proto:
@@ -174,10 +174,10 @@ def main():
     cfg.CONF.register_cli_opts(OPTS)
     cfg.CONF(project='neutron', default_config_files=[])
     proc_spawn = ProcessSpawn(num_children=cfg.CONF.num_children,
-                      family=cfg.CONF.family,
-                      proto=cfg.CONF.proto,
-                      parent_must_listen=cfg.CONF.parent_listen,
-                      ignore_sigterm=cfg.CONF.ignore_sigterm)
+                              family=cfg.CONF.family,
+                              proto=cfg.CONF.proto,
+                              parent_must_listen=cfg.CONF.parent_listen,
+                              ignore_sigterm=cfg.CONF.ignore_sigterm)
     proc_spawn.start()
 
 

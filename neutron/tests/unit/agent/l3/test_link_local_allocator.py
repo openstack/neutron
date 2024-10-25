@@ -20,7 +20,7 @@ from neutron.tests import base
 
 class TestLinkLocalAddrAllocator(base.BaseTestCase):
     def setUp(self):
-        super(TestLinkLocalAddrAllocator, self).setUp()
+        super().setUp()
         self.subnet = netaddr.IPNetwork('169.254.31.0/24')
 
     def test__init__(self):

@@ -20,7 +20,7 @@ from neutron.db.migration.alembic_migrations.versions.yoga.expand import \
 from neutron.tests.functional.db import test_migrations
 
 
-class TestAddIndexesToRbacsMixin(object):
+class TestAddIndexesToRbacsMixin:
     """Validates binding_index for NetworkDhcpAgentBinding migration."""
 
     @staticmethod

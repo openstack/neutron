@@ -262,9 +262,9 @@ class SerializerTest(base.BaseTestCase):
 
 class RequestDeserializerTest(testtools.TestCase):
     def setUp(self):
-        super(RequestDeserializerTest, self).setUp()
+        super().setUp()
 
-        class JSONDeserializer(object):
+        class JSONDeserializer:
             def deserialize(self, data, action='default'):
                 return 'pew_json'
 
@@ -325,13 +325,13 @@ class RequestDeserializerTest(testtools.TestCase):
 
 class ResponseSerializerTest(testtools.TestCase):
     def setUp(self):
-        super(ResponseSerializerTest, self).setUp()
+        super().setUp()
 
-        class JSONSerializer(object):
+        class JSONSerializer:
             def serialize(self, data, action='default'):
                 return b'pew_json'
 
-        class HeadersSerializer(object):
+        class HeadersSerializer:
             def serialize(self, response, data, action):
                 response.status_int = 404
 
@@ -608,7 +608,7 @@ class ResourceTest(base.BaseTestCase):
     def my_fault_body_function():
         return 'off'
 
-    class Controller(object):
+    class Controller:
         def index(self, request, index=None):
             return index
 
@@ -655,7 +655,7 @@ class ResourceTest(base.BaseTestCase):
         self.assertEqual(500, response.status_int)
 
     def test_call_resource_class_bad_request(self):
-        class FakeRequest(object):
+        class FakeRequest:
             def __init__(self):
                 self.url = 'http://where.no'
                 self.environ = 'environ'
@@ -684,7 +684,7 @@ class ResourceTest(base.BaseTestCase):
         self.assertEqual(400, response.status_int)
 
     def test_call_resource_class_internal_error(self):
-        class FakeRequest(object):
+        class FakeRequest:
             def __init__(self):
                 self.url = 'http://where.no'
                 self.environ = 'environ'
@@ -705,7 +705,7 @@ class ResourceTest(base.BaseTestCase):
 
 class FaultTest(base.BaseTestCase):
     def test_call_fault(self):
-        class MyException(object):
+        class MyException:
             status_int = 415
             explanation = 'test'
 

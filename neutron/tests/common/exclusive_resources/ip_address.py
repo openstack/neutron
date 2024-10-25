@@ -54,9 +54,9 @@ class ExclusiveIPAddress(resource_allocator.ExclusiveResource):
     """
 
     def __init__(self, low, high):
-        super(ExclusiveIPAddress, self).__init__(
+        super().__init__(
             'ip_addresses', functools.partial(get_random_ip, low, high))
 
     def _setUp(self):
-        super(ExclusiveIPAddress, self)._setUp()
+        super()._setUp()
         self.address = netaddr.IPAddress(self.resource)

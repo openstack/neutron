@@ -99,7 +99,7 @@ RULES_TEMPLATE_FOR_DEFAULT_SG = RULES_TEMPLATE_FOR_CUSTOM_SG + [
 ]
 
 
-class SecurityGroupTestExtensionManager(object):
+class SecurityGroupTestExtensionManager:
 
     def get_resources(self):
         # The description of security_group_rules will be added by extending
@@ -285,8 +285,8 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
             port['port'][ext_sg.SECURITYGROUPS] = [default_sg]
         with db_api.CONTEXT_WRITER.using(context):
             sgs = self._get_security_groups_on_port(context, port)
-            port = super(SecurityGroupTestPlugin, self).create_port(context,
-                                                                    port)
+            port = super().create_port(context,
+                                       port)
             self._process_port_create_security_group(context, port,
                                                      sgs)
         return port
@@ -302,21 +302,21 @@ class SecurityGroupTestPlugin(db_base_plugin_v2.NeutronDbPluginV2,
                 port['port']['id'] = id
                 self._process_port_create_security_group(
                     context, port['port'], sgs)
-            port = super(SecurityGroupTestPlugin, self).update_port(
+            port = super().update_port(
                 context, id, port)
         return port
 
     def create_network(self, context, network):
         self._ensure_default_security_group(context,
                                             network['network']['tenant_id'])
-        return super(SecurityGroupTestPlugin, self).create_network(context,
-                                                                   network)
+        return super().create_network(context,
+                                      network)
 
     def get_ports(self, context, filters=None, fields=None,
                   sorts=None, limit=None, marker=None,
                   page_reverse=False):
         sorts = sorts or []
-        neutron_lports = super(SecurityGroupTestPlugin, self).get_ports(
+        neutron_lports = super().get_ports(
             context, filters, sorts=sorts, limit=limit, marker=marker,
             page_reverse=page_reverse)
         return neutron_lports
@@ -329,8 +329,7 @@ class SecurityGroupDBTestCase(SecurityGroupsTestCase,
         self.addCleanup(self._restore)
         plugin = plugin or DB_PLUGIN_KLASS
         ext_mgr = ext_mgr or SecurityGroupTestExtensionManager()
-        super(SecurityGroupDBTestCase,
-              self).setUp(plugin=plugin, ext_mgr=ext_mgr)
+        super().setUp(plugin=plugin, ext_mgr=ext_mgr)
 
     def _restore(self):
         ext_sg.RESOURCE_ATTRIBUTE_MAP = self._backup
@@ -677,7 +676,7 @@ class TestSecurityGroups(SecurityGroupDBTestCase):
                 self.assertEqual(webob.exc.HTTPCreated.code, res.status_int)
                 res_sg = self.deserialize(self.fmt, res)
                 prefix = res_sg['security_group_rule']['remote_ip_prefix']
-                self.assertEqual('%s/%s' % (ip, addr[ip]['mask']), prefix)
+                self.assertEqual('{}/{}'.format(ip, addr[ip]['mask']), prefix)
 
     def test_create_security_group_rule_tcp_protocol_as_number(self):
         name = 'webservers'
@@ -2201,7 +2200,7 @@ class TestConvertIPPrefixToCIDR(base.BaseTestCase):
     def test_convert_ip_prefix_no_netmask_to_cidr(self):
         addr = {'10.1.2.3': '32', 'fe80::2677:3ff:fe7d:4c': '128'}
         for k, v in addr.items():
-            self.assertEqual('%s/%s' % (k, v),
+            self.assertEqual('{}/{}'.format(k, v),
                              ext_sg.convert_ip_prefix_to_cidr(k))
 
     def test_convert_ip_prefix_with_netmask_to_cidr(self):

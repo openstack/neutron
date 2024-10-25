@@ -36,7 +36,7 @@ from neutron.tests import base
 class LocalIPAgentExtensionTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(LocalIPAgentExtensionTestCase, self).setUp()
+        super().setUp()
         self.context = context.get_admin_context_without_session()
         self.local_ip_ext = local_ip_ext.LocalIPAgentExtension()
 
@@ -220,10 +220,10 @@ class LocalIPAgentExtensionTestCase(base.BaseTestCase):
                 priority=10,
                 nw_dst=local_ip,
                 reg6=vlan,
-                dl_type="0x{:04x}".format(ether_types.ETH_TYPE_IP),
+                dl_type=f"0x{ether_types.ETH_TYPE_IP:04x}",
                 actions='mod_dl_dst:{:s},'
                         'ct(commit,table={:d},zone={:d},nat(dst={:s}))'.format(
-                    mac, 60, vlan, dest_ip)),
+                            mac, 60, vlan, dest_ip)),
             mock.call(
                 table=31,
                 priority=10,
@@ -231,16 +231,16 @@ class LocalIPAgentExtensionTestCase(base.BaseTestCase):
                 nw_src=dest_ip,
                 reg6=vlan,
                 ct_state="-trk",
-                dl_type="0x{:04x}".format(ether_types.ETH_TYPE_IP),
-                actions='ct(table={:d},zone={:d},nat'.format(60, vlan)),
+                dl_type=f"0x{ether_types.ETH_TYPE_IP:04x}",
+                actions=f'ct(table={60:d},zone={vlan:d},nat'),
             mock.call(
                     table=31,
                     priority=11,
                     nw_src=dest_ip,
                     nw_dst=local_ip,
                     reg6=vlan,
-                    dl_type="0x{:04x}".format(ether_types.ETH_TYPE_IP),
-                    actions='resubmit(,{:d})'.format(60))
+                    dl_type=f"0x{ether_types.ETH_TYPE_IP:04x}",
+                    actions=f'resubmit(,{60:d})')
         ]
         self.assertEqual(expected_calls, self.int_br.add_flow.mock_calls)
 
@@ -339,5 +339,5 @@ class LocalIPAgentExtensionTestCase(base.BaseTestCase):
 
         self.int_br.add_flow.assert_called_once_with(
             table=31, priority=11, nw_src=dest_ip, nw_dst=local_ip,
-            reg6=vlan, dl_type="0x{:04x}".format(ether_types.ETH_TYPE_IP),
-            actions='resubmit(,{:d})'.format(60))
+            reg6=vlan, dl_type=f"0x{ether_types.ETH_TYPE_IP:04x}",
+            actions=f'resubmit(,{60:d})')

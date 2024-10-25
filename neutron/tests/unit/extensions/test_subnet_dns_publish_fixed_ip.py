@@ -21,7 +21,7 @@ from neutron.extensions import subnet_dns_publish_fixed_ip
 from neutron.tests.unit.plugins.ml2 import test_plugin
 
 
-class SubnetDNSPublishFixedIPExtensionManager(object):
+class SubnetDNSPublishFixedIPExtensionManager:
 
     def get_resources(self):
         return []
@@ -58,8 +58,7 @@ class SubnetDNSPublishFixedIPExtensionTestCase(
         cfg.CONF.set_override('extension_drivers',
                               self._extension_drivers,
                               group='ml2')
-        super(SubnetDNSPublishFixedIPExtensionTestCase,
-              self).setUp()
+        super().setUp()
 
     def _create_subnet(
             self, network, ip_version=constants.IP_VERSION_4, cidr=None,

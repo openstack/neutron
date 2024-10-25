@@ -48,7 +48,7 @@ class PlacementStateTestCase(base.BaseTestCase):
 
     def setUp(self):
         ml2_config.register_ml2_plugin_opts()
-        super(PlacementStateTestCase, self).setUp()
+        super().setUp()
         self.client_mock = mock.Mock()
         self.driver_uuid_namespace = uuid.UUID(
             '00000000-0000-0000-0000-000000000001')
@@ -237,7 +237,8 @@ class PlacementStateTestCase(base.BaseTestCase):
             expected_calls)
 
         # NOTE(bence romsics): To avoid testing the _order_ of traits.
-        actual_traits = [set(args[1]['traits']) for args in
+        actual_traits = [
+            set(args[1]['traits']) for args in
             self.client_mock.update_resource_provider_traits.call_args_list]
         self.assertEqual(
             [{'CUSTOM_PHYSNET_PHYSNET0', 'CUSTOM_VNIC_TYPE_NORMAL'},
@@ -278,7 +279,8 @@ class PlacementStateTestCase(base.BaseTestCase):
             expected_calls)
 
         # NOTE(bence romsics): To avoid testing the _order_ of traits.
-        actual_traits = [set(args[1]['traits']) for args in
+        actual_traits = [
+            set(args[1]['traits']) for args in
             self.client_mock.update_resource_provider_traits.call_args_list]
         self.assertEqual(
             [{n_const.TRAIT_NETWORK_TUNNEL, 'CUSTOM_PHYSNET_PHYSNET0',

@@ -124,7 +124,7 @@ TEST_ROUTERS_WITH_NEW_LABEL = [
 
 class IptablesDriverTestCase(base.BaseTestCase):
     def setUp(self):
-        super(IptablesDriverTestCase, self).setUp()
+        super().setUp()
         self.utils_exec_p = mock.patch(
             'neutron.agent.linux.utils.execute')
         self.utils_exec = self.utils_exec_p.start()

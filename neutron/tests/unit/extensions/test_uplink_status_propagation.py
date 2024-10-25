@@ -36,8 +36,7 @@ class UplinkStatusPropagationExtensionTestPlugin(
 
     def create_port(self, context, port):
         with db_api.CONTEXT_WRITER.using(context):
-            new_port = super(UplinkStatusPropagationExtensionTestPlugin,
-                            self).create_port(context, port)
+            new_port = super().create_port(context, port)
             # Update the propagate_uplink_status in the database
             p = port['port']
             if 'propagate_uplink_status' not in p:
@@ -55,8 +54,7 @@ class UplinkStatusPropagationExtensionTestCase(
     def setUp(self):
         plugin = ('neutron.tests.unit.extensions.test_uplink_status_'
                   'propagation.UplinkStatusPropagationExtensionTestPlugin')
-        super(UplinkStatusPropagationExtensionTestCase,
-              self).setUp(plugin=plugin)
+        super().setUp(plugin=plugin)
 
     @ddt.data(True, False)
     def test_create_port_propagate_uplink_status(

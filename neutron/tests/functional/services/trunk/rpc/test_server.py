@@ -24,7 +24,7 @@ from neutron.tests.unit.plugins.ml2 import base as ml2_test_base
 class TrunkSkeletonTestCase(ml2_test_base.ML2TestFramework):
 
     def setUp(self):
-        super(TrunkSkeletonTestCase, self).setUp()
+        super().setUp()
         self.trunk_plugin = trunk_plugin.TrunkPlugin()
         self.trunk_plugin.start_rpc_listeners()
 

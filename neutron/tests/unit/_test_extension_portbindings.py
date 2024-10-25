@@ -149,7 +149,7 @@ class PortBindingsTestCase(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
                                         expected_code=exc.HTTPForbidden.code)
 
 
-class PortBindingsHostTestCaseMixin(object):
+class PortBindingsHostTestCaseMixin:
     fmt = 'json'
     hostname = 'testhost'
 
@@ -259,10 +259,11 @@ class PortBindingsHostTestCaseMixin(object):
                           **host_arg) as port3:
             self._test_list_resources(
                 'port', (port1, port3),
-                query_params='%s=%s' % (portbindings.HOST_ID, self.hostname))
+                query_params='{}={}'.format(
+                    portbindings.HOST_ID, self.hostname))
 
 
-class PortBindingsVnicTestCaseMixin(object):
+class PortBindingsVnicTestCaseMixin:
     fmt = 'json'
     vnic_type = portbindings.VNIC_NORMAL
 

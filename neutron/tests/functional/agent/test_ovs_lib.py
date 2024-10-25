@@ -31,7 +31,7 @@ class OVSBridgeTestBase(base.BaseOVSLinuxTestCase):
     # TODO(twilson) So far, only ovsdb-related tests are written. It would be
     # good to also add the openflow-related functions
     def setUp(self):
-        super(OVSBridgeTestBase, self).setUp()
+        super().setUp()
         self.ovs = ovs_lib.BaseOVS()
         self.br = self.useFixture(net_helpers.OVSBridgeFixture()).bridge
 
@@ -204,8 +204,8 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         br_other_config = self.ovs.ovsdb.db_find(
             'Bridge', ('name', '=', self.br.br_name), columns=['other_config']
         ).execute()[0]['other_config']
-        expected_flood_value = ('false' if
-            cfg.CONF.OVS.igmp_flood_unregistered else 'true')
+        expected_flood_value = (
+            'false' if cfg.CONF.OVS.igmp_flood_unregistered else 'true')
         self.assertEqual(
             expected_flood_value,
             br_other_config.get(
@@ -293,7 +293,7 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         # Nothing seems to use this function?
         (port_name, ofport) = self.create_ovs_port()
         stats = set(self.br.get_port_stats(port_name).keys())
-        self.assertTrue(set(['rx_packets', 'tx_packets']).issubset(stats))
+        self.assertTrue({'rx_packets', 'tx_packets'}.issubset(stats))
 
     def test_get_vif_ports(self):
         for i in range(2):
@@ -326,7 +326,7 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
             self.create_ovs_port()
         vif_ports = [self.create_ovs_vif_port() for i in range(2)]
         ports = self.br.get_vif_port_set()
-        expected = set([x.vif_id for x in vif_ports])
+        expected = {x.vif_id for x in vif_ports}
         self.assertEqual(expected, ports)
 
     def test_get_vif_port_set_with_missing_port(self):
@@ -339,7 +339,7 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
         mock.patch.object(self.br, 'get_port_name_list',
                           new=new_port_name_list).start()
         ports = self.br.get_vif_port_set()
-        expected = set([vif_ports[0].vif_id])
+        expected = {vif_ports[0].vif_id}
         self.assertEqual(expected, ports)
 
     def test_get_vif_port_set_on_empty_bridge_returns_empty_set(self):
@@ -500,7 +500,7 @@ class OVSBridgeTestCase(OVSBridgeTestBase):
 class OVSLibTestCase(base.BaseOVSLinuxTestCase):
 
     def setUp(self):
-        super(OVSLibTestCase, self).setUp()
+        super().setUp()
         self.ovs = ovs_lib.BaseOVS()
 
     def test_bridge_lifecycle_baseovs(self):

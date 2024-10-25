@@ -61,7 +61,7 @@ def _get_expected(ref):
     return expect
 
 
-class ExtendFipPortForwardingExtensionManager(object):
+class ExtendFipPortForwardingExtensionManager:
 
     def get_resources(self):
         return (l3.L3.get_resources() +
@@ -84,7 +84,7 @@ class TestExtendFipPortForwardingExtension(
         svc_plugins = (PF_PLUGIN_NAME, L3_PLUGIN,
                        'neutron.services.qos.qos_plugin.QoSPlugin')
         ext_mgr = ExtendFipPortForwardingExtensionManager()
-        super(TestExtendFipPortForwardingExtension, self).setUp(
+        super().setUp(
             plugin=CORE_PLUGIN, ext_mgr=ext_mgr, service_plugins=svc_plugins)
         self.l3_plugin = directory.get_plugin(plugin_constants.L3)
         self.pf_plugin = directory.get_plugin(plugin_constants.PORTFORWARDING)

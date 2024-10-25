@@ -28,7 +28,7 @@ from neutron.tests.unit.plugins.ml2 import test_plugin
 class OVOServerRpcInterfaceTestCase(test_plugin.Ml2PluginV2TestCase):
 
     def setUp(self):
-        super(OVOServerRpcInterfaceTestCase, self).setUp()
+        super().setUp()
         self.plugin = directory.get_plugin()
         self.ctx = context.get_admin_context()
         self.received = []
@@ -83,17 +83,18 @@ class OVOServerRpcInterfaceTestCase(test_plugin.Ml2PluginV2TestCase):
             sg = self._assert_object_received(securitygroup.SecurityGroup,
                                               event='updated')
             self.assertEqual(sg.tenant_id, n['network']['tenant_id'])
-            sgr = self.plugin.create_security_group_rule(self.ctx,
+            sgr = self.plugin.create_security_group_rule(
+                self.ctx,
                 {'security_group_rule': {'security_group_id': sg.id,
-                                         'tenant_id': sg.tenant_id,
-                                         'port_range_min': None,
-                                         'port_range_max': None,
-                                         'remote_ip_prefix': None,
-                                         'remote_group_id': None,
-                                         'remote_address_group_id': None,
-                                         'protocol': None,
-                                         'direction': None,
-                                         'ethertype': 'IPv4'}})
+                 'tenant_id': sg.tenant_id,
+                 'port_range_min': None,
+                 'port_range_max': None,
+                 'remote_ip_prefix': None,
+                 'remote_group_id': None,
+                 'remote_address_group_id': None,
+                 'protocol': None,
+                 'direction': None,
+                 'ethertype': 'IPv4'}})
             self._assert_object_received(
                 securitygroup.SecurityGroupRule, sgr['id'], 'updated')
             self.plugin.delete_security_group_rule(self.ctx, sgr['id'])
@@ -114,24 +115,26 @@ class OVOServerRpcInterfaceTestCase(test_plugin.Ml2PluginV2TestCase):
             self.assertEqual([], self.received)
 
     def test_address_group_lifecycle(self):
-        ag = self.plugin.create_address_group(self.ctx,
+        ag = self.plugin.create_address_group(
+            self.ctx,
             {'address_group': {'project_id': self._tenant_id,
-                               'name': 'an-address-group',
-                               'description': 'An address group',
-                               'addresses': ['10.0.0.1/32',
-                                             '2001:db8::/32']}})
+             'name': 'an-address-group',
+             'description': 'An address group',
+             'addresses': ['10.0.0.1/32',
+             '2001:db8::/32']}})
         self._assert_object_received(
             address_group.AddressGroup, ag['id'], 'updated', 2)
-        self.plugin.update_address_group(self.ctx, ag['id'],
+        self.plugin.update_address_group(
+            self.ctx, ag['id'],
             {'address_group': {'name': 'an-address-group-other-name'}})
         self._assert_object_received(
             address_group.AddressGroup, ag['id'], 'updated', 3)
         self.plugin.add_addresses(self.ctx, ag['id'],
-            {'addresses': ['10.0.0.2/32']})
+                                  {'addresses': ['10.0.0.2/32']})
         self._assert_object_received(
             address_group.AddressGroup, ag['id'], 'updated', 4)
         self.plugin.remove_addresses(self.ctx, ag['id'],
-            {'addresses': ['10.0.0.1/32']})
+                                     {'addresses': ['10.0.0.1/32']})
         self._assert_object_received(
             address_group.AddressGroup, ag['id'], 'updated', 5)
         self.plugin.delete_address_group(self.ctx, ag['id'])

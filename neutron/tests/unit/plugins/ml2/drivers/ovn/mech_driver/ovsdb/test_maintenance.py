@@ -143,7 +143,7 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
 
     def setUp(self):
         ovn_conf.register_opts()
-        super(TestDBInconsistenciesPeriodics, self).setUp()
+        super().setUp()
         self.net = self._make_network(
             self.fmt, name='net1', admin_state_up=True)['network']
         self.port = self._make_port(
@@ -693,7 +693,7 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
                                ovn_conf.get_fdb_removal_limit()}),
             mock.call('Logical_Switch', 'neutron-foo',
                       ('other_config',
-                      {constants.LS_OPTIONS_FDB_AGE_THRESHOLD: '5'}))])
+                       {constants.LS_OPTIONS_FDB_AGE_THRESHOLD: '5'}))])
 
     def test_check_fdb_aging_settings_with_threshold_set(self):
         cfg.CONF.set_override('fdb_age_threshold', 5, group='ovn')
@@ -873,7 +873,8 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
                      'dnat_and_snats': [lra_nat, lrb_nat]}]
         _nb_idl.get_all_logical_routers_with_rports.return_value = expected
 
-        self.assertRaises(periodics.NeverAgain,
+        self.assertRaises(
+            periodics.NeverAgain,
             self.periodic.update_nat_floating_ip_with_gateway_port_reference)
 
         _nb_idl.set_nat_rule_in_lrouter.assert_called_once_with(
@@ -894,8 +895,9 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
             self.periodic.check_network_broadcast_arps_to_all_routers)
 
         self.fake_ovn_client._nb_idl.db_set.assert_called_once_with(
-            'Logical_Switch', 'neutron-foo', ('other_config',
-            {constants.LS_OPTIONS_BROADCAST_ARPS_ROUTERS: 'true'}))
+            'Logical_Switch', 'neutron-foo',
+            ('other_config',
+             {constants.LS_OPTIONS_BROADCAST_ARPS_ROUTERS: 'true'}))
 
     def test_check_network_broadcast_arps_to_all_routers_already_set(self):
         cfg.CONF.set_override('broadcast_arps_to_all_routers', 'false',
@@ -946,7 +948,7 @@ class TestDBInconsistenciesPeriodics(testlib_api.SqlTestCaseLight,
         # Call the maintenance task and check that the value has been
         # updated in the external_ids
         self.assertRaises(periodics.NeverAgain,
-            self.periodic.update_router_static_routes)
+                          self.periodic.update_router_static_routes)
 
         # Check static routes calls to verify if the maintenance task work
         # as expected

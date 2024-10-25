@@ -45,7 +45,7 @@ class SubPortDbObjectTestCase(test_base.BaseDbObjectTestCase,
     _test_class = t_obj.SubPort
 
     def setUp(self):
-        super(SubPortDbObjectTestCase, self).setUp()
+        super().setUp()
         self._network_id = self._create_test_network_id()
         for obj in self.obj_fields:
             self._create_test_port(
@@ -83,7 +83,7 @@ class TrunkDbObjectTestCase(test_base.BaseDbObjectTestCase,
     _test_class = t_obj.Trunk
 
     def setUp(self):
-        super(TrunkDbObjectTestCase, self).setUp()
+        super().setUp()
 
         self._network_id = self._create_test_network_id()
         sub_ports = []

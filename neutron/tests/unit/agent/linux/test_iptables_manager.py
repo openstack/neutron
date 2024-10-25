@@ -192,7 +192,7 @@ class IptablesTestCase(base.BaseTestCase):
 class IptablesCommentsTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(IptablesCommentsTestCase, self).setUp()
+        super().setUp()
         cfg.CONF.set_override('comment_iptables_rules', True, 'AGENT')
         self.iptables = iptables_manager.IptablesManager()
         self.execute = mock.patch.object(linux_utils, 'execute').start()
@@ -398,7 +398,7 @@ class IptablesFixture(fixtures.Fixture):
 
 class IptablesManagerBaseTestCase(base.BaseTestCase):
     def setUp(self):
-        super(IptablesManagerBaseTestCase, self).setUp()
+        super().setUp()
         cfg.CONF.set_override('comment_iptables_rules', False, 'AGENT')
         cfg.CONF.set_override('report_interval', 30, 'AGENT')
         self.execute = mock.patch.object(linux_utils, "execute").start()
@@ -431,7 +431,7 @@ class IptablesManagerStateFulTestCase(IptablesManagerBaseTestCase):
     use_ipv6 = False
 
     def setUp(self):
-        super(IptablesManagerStateFulTestCase, self).setUp()
+        super().setUp()
         self.iptables = iptables_manager.IptablesManager(
             use_ipv6=self.use_ipv6)
 
@@ -547,8 +547,8 @@ class IptablesManagerStateFulTestCase(IptablesManagerBaseTestCase):
 
     def test_rule_with_wrap_target(self):
         name = '0123456789' * 5
-        wrap = "%s-%s" % (iptables_manager.binary_name,
-                          iptables_manager.get_chain_name(name))
+        wrap = "{}-{}".format(iptables_manager.binary_name,
+                              iptables_manager.get_chain_name(name))
 
         iptables_args = {'bn': iptables_manager.binary_name,
                          'wrap': wrap}
@@ -1220,7 +1220,7 @@ class IptablesManagerStateFulTestCaseCustomBinaryName(
     bn = ("xbcdef" * 5)
 
     def setUp(self):
-        super(IptablesManagerStateFulTestCaseCustomBinaryName, self).setUp()
+        super().setUp()
         self.iptables = iptables_manager.IptablesManager(
             binary_name=self.bn,
             use_ipv6=self.use_ipv6)
@@ -1286,8 +1286,7 @@ class IptablesManagerStateFulTestCaseEmptyCustomBinaryName(
     bn = ("xbcdef" * 5)[:16]
 
     def setUp(self):
-        super(IptablesManagerStateFulTestCaseEmptyCustomBinaryName,
-              self).setUp()
+        super().setUp()
         self.iptables = iptables_manager.IptablesManager(
             binary_name=self.bn,
             use_ipv6=self.use_ipv6)
@@ -1353,7 +1352,7 @@ class IptablesManagerStateFulTestCaseEmptyCustomBinaryNameIPv6(
 class IptablesManagerStateLessTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(IptablesManagerStateLessTestCase, self).setUp()
+        super().setUp()
         cfg.CONF.set_override('comment_iptables_rules', False, 'AGENT')
         self.iptables = (iptables_manager.IptablesManager(state_less=True))
 
@@ -1379,7 +1378,7 @@ class IptablesManagerStateLessTestCase(base.BaseTestCase):
 class IptablesManagerNoNatTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(IptablesManagerNoNatTestCase, self).setUp()
+        super().setUp()
         cfg.CONF.set_override('comment_iptables_rules', False, 'AGENT')
         self.iptables = (iptables_manager.IptablesManager(nat=False))
 
@@ -1412,7 +1411,7 @@ class IptablesRandomFullyFixture(fixtures.Fixture):
 class IptablesManagerDisableRandomFullyTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(IptablesManagerDisableRandomFullyTestCase, self).setUp()
+        super().setUp()
         self.useFixture(IptablesRandomFullyFixture())
         self.execute = mock.patch.object(linux_utils, "execute").start()
         cfg.CONF.set_override('use_random_fully', False, "AGENT")

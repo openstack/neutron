@@ -26,11 +26,11 @@ class ExclusivePort(resource_allocator.ExclusiveResource):
     """
 
     def __init__(self, protocol, start=1024, end=None):
-        super(ExclusivePort, self).__init__(
+        super().__init__(
             'ports',
             functools.partial(net_helpers.get_free_namespace_port, protocol,
                               start=start, end=end))
 
     def _setUp(self):
-        super(ExclusivePort, self)._setUp()
+        super()._setUp()
         self.port = self.resource

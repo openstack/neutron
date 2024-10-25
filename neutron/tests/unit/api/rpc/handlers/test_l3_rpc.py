@@ -27,7 +27,7 @@ from neutron.tests.unit import testlib_api
 class TestL3RpcCallback(testlib_api.SqlTestCase):
 
     def setUp(self):
-        super(TestL3RpcCallback, self).setUp()
+        super().setUp()
         self.setup_coreplugin(test_db_base_plugin_v2.DB_PLUGIN_KLASS)
         self.plugin = directory.get_plugin()
         self.ctx = context.get_admin_context()

@@ -45,7 +45,7 @@ PLUGIN_NAME = 'ml2'
 class Ml2DBTestCase(testlib_api.SqlTestCase):
 
     def setUp(self):
-        super(Ml2DBTestCase, self).setUp()
+        super().setUp()
         self.ctx = context.get_admin_context()
         self.setup_coreplugin(PLUGIN_NAME)
 
@@ -333,7 +333,7 @@ class Ml2DBTestCase(testlib_api.SqlTestCase):
 class Ml2DvrDBTestCase(testlib_api.SqlTestCase):
 
     def setUp(self):
-        super(Ml2DvrDBTestCase, self).setUp()
+        super().setUp()
         self.ctx = context.get_admin_context()
         self.setup_coreplugin(PLUGIN_NAME)
 

@@ -24,7 +24,7 @@ from neutron.services.logapi.common import validators
 from neutron.tests import base
 
 
-class FakePlugin(object):
+class FakePlugin:
 
     def __init__(self):
         self.validator_mgr = validators.ResourceValidateRequest.get_instance()
@@ -37,7 +37,7 @@ class TestSnatLogRequestValidations(base.BaseTestCase):
         self.log_plugin = FakePlugin()
         importutils.import_module('neutron.services.logapi.common.'
                                   'snat_validate')
-        super(TestSnatLogRequestValidations, self).setUp()
+        super().setUp()
 
     def test_validate_request_resource_id_not_specific(self):
         log_data = {'resource_type': 'snat'}

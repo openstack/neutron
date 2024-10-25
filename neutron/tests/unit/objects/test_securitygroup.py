@@ -30,11 +30,11 @@ class SecurityGroupRBACDbObjectTestCase(test_rbac.TestRBACObjectMixin,
     _parent_class = securitygroup.SecurityGroup
 
     def setUp(self):
-        super(SecurityGroupRBACDbObjectTestCase, self).setUp()
+        super().setUp()
         for obj in self.db_objs:
             sg_obj = securitygroup.SecurityGroup(self.context,
-                                          id=obj['object_id'],
-                                          project_id=obj['project_id'])
+                                                 id=obj['object_id'],
+                                                 project_id=obj['project_id'])
             sg_obj.create()
 
     def _create_test_security_group_rbac(self):
@@ -65,7 +65,7 @@ class SecurityGroupDbObjTestCase(test_base.BaseDbObjectTestCase,
     _test_class = securitygroup.SecurityGroup
 
     def setUp(self):
-        super(SecurityGroupDbObjTestCase, self).setUp()
+        super().setUp()
         # TODO(ihrachys): consider refactoring base test class to set None for
         # all nullable fields
         for db_obj in self.db_objs:
@@ -247,7 +247,7 @@ class DefaultSecurityGroupDbObjTestCase(test_base.BaseDbObjectTestCase,
     _test_class = securitygroup.DefaultSecurityGroup
 
     def setUp(self):
-        super(DefaultSecurityGroupDbObjTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {
                 'security_group_id':
@@ -266,7 +266,7 @@ class SecurityGroupRuleDbObjTestCase(test_base.BaseDbObjectTestCase,
     _test_class = securitygroup.SecurityGroupRule
 
     def setUp(self):
-        super(SecurityGroupRuleDbObjTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {
                 'security_group_id':

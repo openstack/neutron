@@ -18,7 +18,7 @@
 from unittest import mock
 
 
-class _Eq(object):
+class _Eq:
     def __eq__(self, other):
         return repr(self) == repr(other)
 
@@ -49,7 +49,7 @@ class _Op(_Value):
         self.b = b
 
     def __repr__(self):
-        return '%s%s%s' % (self.a, self.op, self.b)
+        return '{}{}{}'.format(self.a, self.op, self.b)
 
 
 def _mkcls(name):
@@ -66,21 +66,21 @@ def _mkcls(name):
 
         def __repr__(self):
             args = list(map(repr, self._args))
-            kwargs = sorted(['%s=%s' % (x, y) for x, y in
+            kwargs = sorted(['{}={}'.format(x, y) for x, y in
                              self._kwargs.items()])
-            return '%s(%s)' % (self._name, ', '.join(args + kwargs))
+            return '{}({})'.format(self._name, ', '.join(args + kwargs))
 
     return Cls
 
 
-class _Mod(object):
+class _Mod:
     _cls_cache = {}
 
     def __init__(self, name):
         self._name = name
 
     def __getattr__(self, name):
-        fullname = '%s.%s' % (self._name, name)
+        fullname = '{}.{}'.format(self._name, name)
         if '_' in name:  # constants are named like OFPxxx_yyy_zzz
             return _SimpleValue(fullname)
         try:
@@ -92,7 +92,7 @@ class _Mod(object):
         return cls
 
     def __repr__(self):
-        return 'Mod(%s)' % (self._name,)
+        return 'Mod({})'.format(self._name)
 
 
 def patch_fake_oflib_of():

@@ -21,7 +21,7 @@ from neutron.common.ovn import constants as ovn_const
 from neutron.scheduler import l3_ovn_scheduler
 
 
-class FakeOVNGatewaySchedulerNbOvnIdl(object):
+class FakeOVNGatewaySchedulerNbOvnIdl:
     def __init__(self, chassis_gateway_mapping, gateway):
         self.get_all_chassis_gateway_bindings = mock.Mock(
             return_value=chassis_gateway_mapping['Chassis_Bindings'])
@@ -32,7 +32,7 @@ class FakeOVNGatewaySchedulerNbOvnIdl(object):
             return_value=None)
 
 
-class FakeOVNGatewaySchedulerSbOvnIdl(object):
+class FakeOVNGatewaySchedulerSbOvnIdl:
     def __init__(self, chassis_and_azs):
         self.get_chassis_and_azs = mock.Mock(return_value=chassis_and_azs)
 
@@ -40,7 +40,7 @@ class FakeOVNGatewaySchedulerSbOvnIdl(object):
 class TestOVNGatewayScheduler(base.BaseTestCase):
 
     def setUp(self):
-        super(TestOVNGatewayScheduler, self).setUp()
+        super().setUp()
         self.mock_log = mock.patch.object(l3_ovn_scheduler, 'LOG').start()
 
         # Overwritten by derived classes
@@ -129,7 +129,7 @@ class TestOVNGatewayScheduler(base.BaseTestCase):
 class OVNGatewayChanceScheduler(TestOVNGatewayScheduler):
 
     def setUp(self):
-        super(OVNGatewayChanceScheduler, self).setUp()
+        super().setUp()
         self.l3_scheduler = l3_ovn_scheduler.OVNGatewayChanceScheduler()
 
     def test_no_chassis_available_for_existing_gateway(self):
@@ -207,7 +207,7 @@ class OVNGatewayChanceScheduler(TestOVNGatewayScheduler):
 class OVNGatewayChanceSchedulerWithAZ(OVNGatewayChanceScheduler):
 
     def setUp(self):
-        super(OVNGatewayChanceSchedulerWithAZ, self).setUp()
+        super().setUp()
 
         self.fake_chassis_and_azs = {
             'None': {},
@@ -226,7 +226,7 @@ class OVNGatewayChanceSchedulerWithAZ(OVNGatewayChanceScheduler):
 class OVNGatewayLeastLoadedScheduler(TestOVNGatewayScheduler):
 
     def setUp(self):
-        super(OVNGatewayLeastLoadedScheduler, self).setUp()
+        super().setUp()
         self.l3_scheduler = l3_ovn_scheduler.OVNGatewayLeastLoadedScheduler()
 
     def test_no_chassis_available_for_existing_gateway(self):
@@ -331,7 +331,7 @@ class OVNGatewayLeastLoadedScheduler(TestOVNGatewayScheduler):
 class OVNGatewayLeastLoadedSchedulerWithAZ(OVNGatewayLeastLoadedScheduler):
 
     def setUp(self):
-        super(OVNGatewayLeastLoadedSchedulerWithAZ, self).setUp()
+        super().setUp()
 
         self.fake_chassis_and_azs = {
             'None': {},

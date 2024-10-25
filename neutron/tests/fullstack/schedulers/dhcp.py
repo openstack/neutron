@@ -31,7 +31,7 @@ class AlwaysTheOtherAgentScheduler(base_scheduler.BaseChanceScheduler,
 
     def __init__(self):
         self.last_selected_agent_ids = []
-        super(AlwaysTheOtherAgentScheduler, self).__init__(
+        super().__init__(
             dhcp_agent_scheduler.DhcpFilter())
 
     def select(self, plugin, context, resource_hostable_agents,

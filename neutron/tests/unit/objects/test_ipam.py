@@ -26,7 +26,7 @@ class IpamSubnetDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     _test_class = ipam.IpamSubnet
 
     def setUp(self):
-        super(IpamSubnetDbObjectTestCase, self).setUp()
+        super().setUp()
         self.update_obj_fields(
             {'neutron_subnet_id': lambda: self._create_test_subnet_id()})
 
@@ -42,7 +42,7 @@ class IpamAllocationPoolDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
     _test_class = ipam.IpamAllocationPool
 
     def setUp(self):
-        super(IpamAllocationPoolDbObjectTestCase, self).setUp()
+        super().setUp()
         self._create_test_ipam_subnet()
         self.update_obj_fields({'ipam_subnet_id': self._ipam_subnet['id']})
 
@@ -58,12 +58,12 @@ class IpamAllocationObjectIfaceTestCase(obj_test_base.BaseObjectIfaceTestCase):
 
 
 class IpamAllocationDbObjectTestCase(obj_test_base.BaseDbObjectTestCase,
-                                    testlib_api.SqlTestCase):
+                                     testlib_api.SqlTestCase):
 
     _test_class = ipam.IpamAllocation
 
     def setUp(self):
-        super(IpamAllocationDbObjectTestCase, self).setUp()
+        super().setUp()
         self._create_test_ipam_subnet()
         self.update_obj_fields({'ipam_subnet_id': self._ipam_subnet['id']})
 

@@ -17,7 +17,7 @@ from neutron.db import db_base_plugin_common
 from neutron.tests import base
 
 
-class DummyObject(object):
+class DummyObject:
     def __init__(self, **kwargs):
         self.kwargs = kwargs
 

@@ -33,7 +33,7 @@ INVALID_ID = uuidutils.generate_uuid()
 class ConntrackHelperTestCase(ml2_test_base.ML2TestFramework,
                               functional_base.BaseLoggingTestCase):
     def setUp(self):
-        super(ConntrackHelperTestCase, self).setUp()
+        super().setUp()
         self.cth_plugin = cth_plugin.Plugin()
         directory.add_plugin(plugin_consts.CONNTRACKHELPER, self.cth_plugin)
         self.router = self._create_router(distributed=True)

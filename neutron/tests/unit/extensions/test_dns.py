@@ -30,7 +30,7 @@ from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.plugins.ml2 import test_plugin
 
 
-class DnsExtensionManager(object):
+class DnsExtensionManager:
 
     def get_resources(self):
         return []
@@ -62,7 +62,7 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
         cfg.CONF.set_override('extension_drivers',
                               self._extension_drivers,
                               group='ml2')
-        super(DnsExtensionTestCase, self).setUp()
+        super().setUp()
 
     def _create_network(self, fmt, name, admin_state_up,
                         arg_list=None, set_context=False, tenant_id=None,
@@ -70,12 +70,11 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
         new_arg_list = ('dns_domain',)
         if arg_list is not None:
             new_arg_list = arg_list + new_arg_list
-        return super(DnsExtensionTestCase,
-                     self)._create_network(fmt, name, admin_state_up,
-                                           arg_list=new_arg_list,
-                                           set_context=set_context,
-                                           tenant_id=tenant_id,
-                                           **kwargs)
+        return super()._create_network(fmt, name, admin_state_up,
+                                       arg_list=new_arg_list,
+                                       set_context=set_context,
+                                       tenant_id=tenant_id,
+                                       **kwargs)
 
     def _create_port(self, fmt, net_id, expected_res_status=None,
                      arg_list=None, set_context=False, tenant_id=None,
@@ -86,8 +85,8 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
 
         for arg in (('admin_state_up', 'device_id',
                     'mac_address', 'name', 'fixed_ips',
-                    'tenant_id', 'device_owner', 'security_groups',
-                    'dns_name') + (arg_list or ())):
+                     'tenant_id', 'device_owner', 'security_groups',
+                     'dns_name') + (arg_list or ())):
             # Arg must be present
             if arg in kwargs:
                 data['port'][arg] = kwargs[arg]
@@ -232,7 +231,7 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
             request_dns_name = dns_name
             request_fqdn = request_dns_name
             if not request_dns_name.endswith('.'):
-                request_fqdn = '%s.%s' % (dns_name, dns_domain)
+                request_fqdn = '{}.{}'.format(dns_name, dns_domain)
         return request_dns_name, request_fqdn
 
     def _get_hostname_and_fqdn(self, request_dns_name, request_fqdn,
@@ -246,7 +245,7 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
                 '.', '-').replace(':', '-')
             fqdn = hostname
             if dns_domain:
-                fqdn = '%s.%s' % (hostname, dns_domain)
+                fqdn = '{}.{}'.format(hostname, dns_domain)
         return hostname, fqdn
 
     def _verify_ip_in_subnet(self, ip, subnets_list):
@@ -441,12 +440,12 @@ class DnsExtensionTestCase(test_plugin.Ml2PluginV2TestCase):
         filler_len = int(
             math.floor(db_const.FQDN_FIELD_SIZE % constants.DNS_LABEL_MAX_LEN))
         dns_names = [555, '\f\n\r', '.', '-vm01', '_vm01', 'vm01-',
-                    '-vm01.test1', 'vm01.-test1', 'vm01._test1',
-                    'vm01.test1-', 'vm01.te$t1', 'vm0#1.test1.',
-                    'vm01.123.', '-' + 'a' * constants.DNS_LABEL_MAX_LEN,
-                    'a' * (constants.DNS_LABEL_MAX_LEN + 1),
-                    ('a' * (constants.DNS_LABEL_MAX_LEN - 1) + '.') *
-                    num_labels + 'a' * (filler_len + 1)]
+                     '-vm01.test1', 'vm01.-test1', 'vm01._test1',
+                     'vm01.test1-', 'vm01.te$t1', 'vm0#1.test1.',
+                     'vm01.123.', '-' + 'a' * constants.DNS_LABEL_MAX_LEN,
+                     'a' * (constants.DNS_LABEL_MAX_LEN + 1),
+                     ('a' * (constants.DNS_LABEL_MAX_LEN - 1) + '.') *
+                     num_labels + 'a' * (filler_len + 1)]
         res = self._create_network(fmt=self.fmt, name='net',
                                    admin_state_up=True)
         network = self.deserialize(self.fmt, res)
@@ -507,7 +506,7 @@ class DnsExtensionTestNetworkDnsDomain(
         plugin = ('neutron.tests.unit.extensions.test_dns.' +
                   'DnsExtensionTestPlugin')
         ext_mgr = DnsExtensionManager()
-        super(DnsExtensionTestNetworkDnsDomain, self).setUp(
+        super().setUp(
             plugin=plugin, ext_mgr=ext_mgr)
 
     def test_update_network_dns_domain(self):

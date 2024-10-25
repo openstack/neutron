@@ -64,7 +64,7 @@ class LogApiTestCaseSimple(LogApiTestCaseBase):
 
     def test_log_ovn_unsupported(self):
         with mock.patch.object(self.log_driver, 'network_logging_supported',
-                        return_value=False) as supported_mock:
+                               return_value=False) as supported_mock:
             log_data = {'log': {'resource_type': 'security_group',
                                 'enabled': True}}
             self.assertRaises(exceptions.DriverCallError,
@@ -315,9 +315,9 @@ class LogApiTestCaseComplex(LogApiTestCaseBase):
         log_data2['log']['event'] = event2
         log_obj2 = self.log_plugin.create_log(self.ctxt, log_data2)
         self._check_acl_log_drop(is_enabled=(event1 in drop_true_events or
-            event2 in drop_true_events))
+                                             event2 in drop_true_events))
         self._check_sgrs(sgrs=sgrs, is_enabled=(event1 in accept_true_events or
-            event2 in accept_true_events))
+                                                event2 in accept_true_events))
 
         # Delete second log object
         self.log_plugin.delete_log(self.ctxt, log_obj2['id'])

@@ -22,7 +22,7 @@ from neutron.extensions import l3
 from neutron.tests.unit.extensions import test_l3
 
 
-class FloatingIPPortDetailsTestExtensionManager(object):
+class FloatingIPPortDetailsTestExtensionManager:
 
     def get_resources(self):
         return l3.L3.get_resources()

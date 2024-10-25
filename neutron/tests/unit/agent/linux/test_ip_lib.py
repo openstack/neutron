@@ -112,7 +112,7 @@ VXLAN6_LOCAL_SAMPLE = "fd00::1"
 
 class TestSubProcessBase(base.BaseTestCase):
     def setUp(self):
-        super(TestSubProcessBase, self).setUp()
+        super().setUp()
         self.execute_p = mock.patch('neutron.agent.common.utils.execute')
         self.execute = self.execute_p.start()
 
@@ -172,7 +172,7 @@ class TestSubProcessBase(base.BaseTestCase):
 
 class TestIpWrapper(base.BaseTestCase):
     def setUp(self):
-        super(TestIpWrapper, self).setUp()
+        super().setUp()
         self.execute_p = mock.patch.object(ip_lib.IPWrapper, '_execute')
         self.execute = self.execute_p.start()
 
@@ -561,7 +561,7 @@ class TestIPDevice(base.BaseTestCase):
 
 class TestIPDeviceCommandBase(base.BaseTestCase):
     def setUp(self):
-        super(TestIPDeviceCommandBase, self).setUp()
+        super().setUp()
         self.ip_dev = mock.Mock()
         self.ip_dev.name = 'eth0'
         self.ip_dev._execute = mock.Mock(return_value='executed')
@@ -574,7 +574,7 @@ class TestIPDeviceCommandBase(base.BaseTestCase):
 
 class TestIPCmdBase(base.BaseTestCase):
     def setUp(self):
-        super(TestIPCmdBase, self).setUp()
+        super().setUp()
         self.parent = mock.Mock()
         self.parent.name = 'eth0'
 
@@ -585,7 +585,7 @@ class TestIPCmdBase(base.BaseTestCase):
 
 class TestIpRuleCommand(TestIPCmdBase):
     def setUp(self):
-        super(TestIpRuleCommand, self).setUp()
+        super().setUp()
         self.parent._as_root.return_value = ''
         self.ns = uuidutils.generate_uuid()
         self.parent.namespace = self.ns
@@ -656,7 +656,7 @@ class TestIpRuleCommand(TestIPCmdBase):
 
 class TestIpLinkCommand(TestIPCmdBase):
     def setUp(self):
-        super(TestIpLinkCommand, self).setUp()
+        super().setUp()
         self.command = 'link'
         self.link_cmd = ip_lib.IpLinkCommand(self.parent)
 
@@ -734,7 +734,7 @@ class TestIpLinkCommand(TestIPCmdBase):
 
 class TestIpAddrCommand(TestIPCmdBase):
     def setUp(self):
-        super(TestIpAddrCommand, self).setUp()
+        super().setUp()
         self.parent.name = 'tap0'
         self.command = 'addr'
         self.addr_cmd = ip_lib.IpAddrCommand(self.parent)
@@ -908,7 +908,7 @@ class TestIpAddrCommand(TestIPCmdBase):
 
 class TestIpNetnsCommand(TestIPCmdBase):
     def setUp(self):
-        super(TestIpNetnsCommand, self).setUp()
+        super().setUp()
         self.command = 'netns'
         self.netns_cmd = ip_lib.IpNetnsCommand(self.parent)
 
@@ -948,7 +948,7 @@ class TestIpNetnsCommand(TestIPCmdBase):
             self.netns_cmd.execute(['ip', 'link', 'list'], env)
             execute.assert_called_once_with(
                 ['ip', 'netns', 'exec', 'ns', 'env'] +
-                ['%s=%s' % (k, v) for k, v in env.items()] +
+                ['{}={}'.format(k, v) for k, v in env.items()] +
                 ['ip', 'link', 'list'],
                 run_as_root=True, check_exit_code=True, extra_ok_codes=None,
                 log_fail_as_error=True, privsep_exec=False)
@@ -996,7 +996,7 @@ class TestDeviceExists(base.BaseTestCase):
 
 class TestIpNeighCommand(TestIPCmdBase):
     def setUp(self):
-        super(TestIpNeighCommand, self).setUp()
+        super().setUp()
         self.parent.name = 'tap0'
         self.command = 'neigh'
         self.neigh_cmd = ip_lib.IpNeighCommand(self.parent)
@@ -1169,7 +1169,7 @@ class TestSetIpNonlocalBindForHaNamespace(base.BaseTestCase):
 
 class TestSysctl(base.BaseTestCase):
     def setUp(self):
-        super(TestSysctl, self).setUp()
+        super().setUp()
         self.execute_p = mock.patch.object(ip_lib.IpNetnsCommand, 'execute')
         self.execute = self.execute_p.start()
 
@@ -1209,7 +1209,7 @@ class TestGetSysctl(base.BaseTestCase):
 
 class TestConntrack(base.BaseTestCase):
     def setUp(self):
-        super(TestConntrack, self).setUp()
+        super().setUp()
         self.execute_p = mock.patch.object(ip_lib.IpNetnsCommand, 'execute')
         self.execute = self.execute_p.start()
 
@@ -1237,7 +1237,7 @@ class ParseIpRuleTestCase(base.BaseTestCase):
         'table': 255, 'action': 1, 'src_len': 0, 'event': 'RTM_NEWRULE'}
 
     def setUp(self):
-        super(ParseIpRuleTestCase, self).setUp()
+        super().setUp()
         self.rule = copy.deepcopy(self.BASE_RULE)
 
     def test_parse_priority(self):
@@ -1406,7 +1406,7 @@ class GetDevicesInfoTestCase(base.BaseTestCase):
     }
 
     def setUp(self):
-        super(GetDevicesInfoTestCase, self).setUp()
+        super().setUp()
         self.mock_getdevs = mock.patch.object(priv_lib,
                                               'get_link_devices').start()
 

@@ -373,7 +373,7 @@ class AddIpRulesTestCase(BaseIpRuleTestCase):
             rules = ip_lib.list_ip_rules(self.namespace, ip_version)
             self._check_rules(
                 rules, ['table', 'from'], [str(table), ip_address],
-                'table %s and "from" IP address %s' % (table, ip_address))
+                'table {} and "from" IP address {}'.format(table, ip_address))
 
             priv_ip_lib.delete_ip_rule(self.namespace, table=table,
                                        src=ip_address, src_len=ip_lenght,
@@ -423,7 +423,8 @@ class AddIpRulesTestCase(BaseIpRuleTestCase):
         self._check_rules(
             rules, ['priority', 'iif', 'table'],
             [str(priority), iif, str(table)],
-            'priority %s, table %s and iif name %s' % (priority, table, iif))
+            'priority {}, table {} and iif name {}'.format(
+                priority, table, iif))
 
         priv_ip_lib.delete_ip_rule(self.namespace, priority=priority,
                                    iifname=iif, table=table)
@@ -505,7 +506,7 @@ class GetIpAddressesTestCase(functional_base.BaseSudoTestCase):
 class RouteTestCase(functional_base.BaseSudoTestCase):
 
     def setUp(self):
-        super(RouteTestCase, self).setUp()
+        super().setUp()
         self.namespace = self.useFixture(net_helpers.NamespaceFixture()).name
         self.device_name = 'test_device'
         ip_lib.IPWrapper(self.namespace).add_dummy(self.device_name)
@@ -515,7 +516,7 @@ class RouteTestCase(functional_base.BaseSudoTestCase):
     def _check_gateway_or_multipath(self, route, gateway):
         if gateway is None or isinstance(gateway, str):
             self.assertEqual(gateway,
-                            linux_utils.get_attr(route, 'RTA_GATEWAY'))
+                             linux_utils.get_attr(route, 'RTA_GATEWAY'))
             return
 
         rta_multipath = linux_utils.get_attr(route, 'RTA_MULTIPATH')
@@ -715,7 +716,7 @@ class RouteTestCase(functional_base.BaseSudoTestCase):
 class GetLinkAttributesTestCase(functional_base.BaseSudoTestCase):
 
     def setUp(self):
-        super(GetLinkAttributesTestCase, self).setUp()
+        super().setUp()
         self.namespace = self.useFixture(net_helpers.NamespaceFixture()).name
         self.device_name = 'test_device'
         ip_lib.IPWrapper(self.namespace).add_dummy(self.device_name)
@@ -741,7 +742,7 @@ class GetLinkAttributesTestCase(functional_base.BaseSudoTestCase):
 class ListNamespacePids(functional_base.BaseSudoTestCase):
 
     def setUp(self):
-        super(ListNamespacePids, self).setUp()
+        super().setUp()
         self.namespace = self.useFixture(net_helpers.NamespaceFixture()).name
         self.timeout = 3
 

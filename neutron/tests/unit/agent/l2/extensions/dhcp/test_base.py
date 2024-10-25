@@ -34,7 +34,7 @@ from neutron.plugins.ml2.drivers.openvswitch.agent \
 from neutron.tests import base
 
 
-class FakeOF(object):
+class FakeOF:
     OFPR_NO_MATCH = 0
     OFPR_ACTION = 1
     FPR_INVALID_TTL = 2
@@ -42,11 +42,11 @@ class FakeOF(object):
     OFPP_CONTROLLER = 4
 
 
-class FakeDatapath(object):
+class FakeDatapath:
     ofproto = FakeOF()
 
 
-class FakeMsg(object):
+class FakeMsg:
     datapath = FakeDatapath()
     reason = datapath.ofproto.OFPR_ACTION
     match = {'in_port': 1}
@@ -106,7 +106,7 @@ PORT_INFO = {
 class DHCPResponderBaseTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(DHCPResponderBaseTestCase, self).setUp()
+        super().setUp()
         self.int_br = mock.Mock()
         self.tun_br = mock.Mock()
         self.plugin_rpc = mock.Mock()

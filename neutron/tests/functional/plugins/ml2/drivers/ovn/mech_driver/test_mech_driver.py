@@ -275,7 +275,7 @@ class TestPortBindingOverSsl(TestPortBinding):
 class TestNetworkMTUUpdate(base.TestOVNFunctionalBase):
 
     def setUp(self):
-        super(TestNetworkMTUUpdate, self).setUp()
+        super().setUp()
         self._ovn_client = self.mech_driver._ovn_client
         self.n1 = self._make_network(self.fmt, 'n1', True)
         res = self._create_subnet(self.fmt, self.n1['network']['id'],
@@ -323,7 +323,7 @@ class TestNetworkMTUUpdate(base.TestOVNFunctionalBase):
 class TestVirtualPorts(base.TestOVNFunctionalBase):
 
     def setUp(self):
-        super(TestVirtualPorts, self).setUp()
+        super().setUp()
         self._ovn_client = self.mech_driver._ovn_client
         self.n1 = self._make_network(self.fmt, 'n1', True)
         res = self._create_subnet(self.fmt, self.n1['network']['id'],
@@ -585,7 +585,7 @@ class TestVirtualPorts(base.TestOVNFunctionalBase):
 class TestExternalPorts(base.TestOVNFunctionalBase):
 
     def setUp(self):
-        super(TestExternalPorts, self).setUp()
+        super().setUp()
         self._ovn_client = self.mech_driver._ovn_client
         self.n1 = self._make_network(self.fmt, 'n1', True)
         res = self._create_subnet(self.fmt, self.n1['network']['id'],
@@ -642,7 +642,7 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
                 self.count = 0
                 table = 'Logical_Switch_Port'
                 events = (self.ROW_UPDATE,)
-                super(LogicalSwitchPortUpdateUpEventTest, self).__init__(
+                super().__init__(
                     events, table, (('up', '=', True),),
                     old_conditions=(('up', '=', False),))
 
@@ -657,7 +657,7 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
                 self.count = 0
                 table = 'Logical_Switch_Port'
                 events = (self.ROW_UPDATE,)
-                super(LogicalSwitchPortUpdateDownEventTest, self).__init__(
+                super().__init__(
                     events, table, (('up', '=', False),),
                     old_conditions=(('up', '=', True),))
 
@@ -848,7 +848,7 @@ class TestExternalPorts(base.TestOVNFunctionalBase):
 class TestSecurityGroup(base.TestOVNFunctionalBase):
 
     def setUp(self):
-        super(TestSecurityGroup, self).setUp()
+        super().setUp()
         self._ovn_client = self.mech_driver._ovn_client
         self.plugin = self.mech_driver._plugin
         self.sg_data = {
@@ -888,7 +888,7 @@ class TestSecurityGroup(base.TestOVNFunctionalBase):
         def check_acl_actions(sg_id, expected):
             self.assertEqual(
                 {expected},
-                set(a.action for a in self._find_acls_for_sg(sg_id))
+                {a.action for a in self._find_acls_for_sg(sg_id)}
             )
 
         sg = self.plugin.create_security_group(
@@ -943,7 +943,7 @@ class TestSecurityGroup(base.TestOVNFunctionalBase):
 class TestProvnetPorts(base.TestOVNFunctionalBase):
 
     def setUp(self):
-        super(TestProvnetPorts, self).setUp()
+        super().setUp()
         self._ovn_client = self.mech_driver._ovn_client
 
     def _find_port_row_by_name(self, name):
@@ -1174,7 +1174,8 @@ class TestAgentApi(base.TestOVNFunctionalBase):
         agent_event = AgentWaitEvent(self.mech_driver, [chassis_name])
         self.sb_api.idl.notify_handler.watch_event(agent_event)
 
-        self.chassis = self.add_fake_chassis(self.host, name=chassis_name,
+        self.chassis = self.add_fake_chassis(
+            self.host, name=chassis_name,
             external_ids={
                 ovn_const.OVN_AGENT_METADATA_ID_KEY: metadata_agent_id})
 
@@ -1339,18 +1340,18 @@ class TestNATRuleGatewayPort(_TestRouter):
                'provider:network_type': 'flat',
                'provider:physical_network': 'public'})['network']
         res = self._create_subnet(self.fmt, ext_net['id'],
-            '100.0.0.0/24', gateway_ip='100.0.0.254',
-            allocation_pools=[{'start': '100.0.0.2',
-                               'end': '100.0.0.253'}],
-            enable_dhcp=False)
+                                  '100.0.0.0/24', gateway_ip='100.0.0.254',
+                                  allocation_pools=[{'start': '100.0.0.2',
+                                                     'end': '100.0.0.253'}],
+                                  enable_dhcp=False)
         ext_subnet = self.deserialize(self.fmt, res)['subnet']
         net1 = self._make_network(
             self.fmt, 'network1test', True)['network']
         res = self._create_subnet(self.fmt, net1['id'],
-            '192.168.0.0/24', gateway_ip='192.168.0.1',
-            allocation_pools=[{'start': '192.168.0.2',
-                               'end': '192.168.0.253'}],
-            enable_dhcp=False)
+                                  '192.168.0.0/24', gateway_ip='192.168.0.1',
+                                  allocation_pools=[{'start': '192.168.0.2',
+                                                     'end': '192.168.0.253'}],
+                                  enable_dhcp=False)
         subnet1 = self.deserialize(self.fmt, res)['subnet']
         external_gateway_info = {
             'enable_snat': True,
@@ -1411,10 +1412,10 @@ class TestRouterGWPort(_TestRouter):
             self.fmt, 'inner_network', True)['network']
         subnet_cidr = '192.168.0.0/24'
         res = self._create_subnet(self.fmt, inner_network['id'],
-            '192.168.0.0/24', gateway_ip='192.168.0.1',
-            allocation_pools=[{'start': '192.168.0.2',
-                               'end': '192.168.0.253'}],
-            enable_dhcp=False)
+                                  '192.168.0.0/24', gateway_ip='192.168.0.1',
+                                  allocation_pools=[{'start': '192.168.0.2',
+                                                     'end': '192.168.0.253'}],
+                                  enable_dhcp=False)
         inner_subnet = self.deserialize(self.fmt, res)['subnet']
         self._add_router_interface(router['id'], inner_subnet['id'])
 

@@ -32,7 +32,7 @@ from neutron.objects import subnet as subnet_obj
 from neutron.tests.unit.extensions import test_l3
 
 
-class FloatingIPPoolsTestExtensionManager(object):
+class FloatingIPPoolsTestExtensionManager:
 
     def get_resources(self):
         return l3.L3.get_resources()

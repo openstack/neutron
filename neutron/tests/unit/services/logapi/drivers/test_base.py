@@ -37,7 +37,7 @@ class FakeDriver(log_base_driver.DriverBase):
 class TestDriverBase(base.BaseTestCase):
 
     def setUp(self):
-        super(TestDriverBase, self).setUp()
+        super().setUp()
         self.driver = FakeDriver.create()
 
     def test_is_vif_type_compatible(self):

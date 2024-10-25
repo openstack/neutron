@@ -28,7 +28,7 @@ from neutron.tests import base
 class ParseServiceProviderConfigurationTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(ParseServiceProviderConfigurationTestCase, self).setUp()
+        super().setUp()
         self.service_providers = mock.patch.object(
             provconf.NeutronModule, 'service_providers').start()
 
@@ -75,25 +75,25 @@ class ParseServiceProviderConfigurationTestCase(base.BaseTestCase):
     def test_parse_service_provider_invalid_format(self):
         self._set_override([constants.FIREWALL +
                            ':fwaas:driver_path',
-                           'svc_type:name1:path1:def'])
+                            'svc_type:name1:path1:def'])
         self.assertRaises(n_exc.Invalid, provconf.parse_service_provider_opt)
         self._set_override([constants.FIREWALL +
                            ':',
-                           'svc_type:name1:path1:def'])
+                            'svc_type:name1:path1:def'])
         self.assertRaises(n_exc.Invalid, provconf.parse_service_provider_opt)
 
     def test_parse_service_provider_name_too_long(self):
         name = 'a' * 256
         self._set_override([constants.FIREWALL +
                            ':' + name + ':driver_path',
-                           'svc_type:name1:path1:def'])
+                            'svc_type:name1:path1:def'])
         self.assertRaises(n_exc.Invalid, provconf.parse_service_provider_opt)
 
 
 class ProviderConfigurationTestCase(base.BaseTestCase):
 
     def setUp(self):
-        super(ProviderConfigurationTestCase, self).setUp()
+        super().setUp()
         self.service_providers = mock.patch.object(
             provconf.NeutronModule, 'service_providers').start()
 
@@ -234,7 +234,7 @@ class NeutronModuleMultiConfigDirTestCase(base.BaseTestCase):
         shutil.copyfile(
             os.path.join(base.ETCDIR, 'neutron_test2.conf.example'),
             os.path.join(self.tmpdir, 'neutron_test.conf'))
-        super(NeutronModuleMultiConfigDirTestCase, self).setUp()
+        super().setUp()
 
     def setup_config(self):
         self.config_parse(args=[
@@ -257,7 +257,7 @@ class NeutronModuleMultiConfigFileTestCase(base.BaseTestCase):
         shutil.copyfile(
             os.path.join(base.ETCDIR, 'neutron_test2.conf.example'),
             self.filepath1)
-        super(NeutronModuleMultiConfigFileTestCase, self).setUp()
+        super().setUp()
 
     def setup_config(self):
         self.config_parse(args=[

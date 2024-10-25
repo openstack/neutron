@@ -38,7 +38,7 @@ class FdbPopulationExtensionTestCase(base.BaseTestCase):
     DELETE_MSG = {'port_id': '17ceda02-43e1-48d8-beb6-35885b20cae6'}
 
     def setUp(self):
-        super(FdbPopulationExtensionTestCase, self).setUp()
+        super().setUp()
         cfg.CONF.set_override('shared_physical_device_mappings',
                               ['physnet1:p1p1'], 'FDB')
         self.DEVICE = self._get_existing_device()
@@ -157,7 +157,7 @@ class FdbPopulationExtensionTestCase(base.BaseTestCase):
 
     def test_multiple_devices(self):
         cfg.CONF.set_override('shared_physical_device_mappings',
-                ['physnet1:p1p1', 'physnet1:p2p2'], 'FDB')
+                              ['physnet1:p1p1', 'physnet1:p2p2'], 'FDB')
         fdb_extension = self._get_fdb_extension()
         fdb_extension.handle_port(context=None, details=self.UPDATE_MSG)
         calls = [mock.call(self.UPDATE_MSG['mac_address'], 'p1p1'),
