@@ -14,6 +14,7 @@
 from unittest import mock
 
 from neutron_lib.api.definitions import constants as api_const
+from neutron_lib.api.definitions import external_net as external_net_apidef
 from neutron_lib.callbacks import events
 from neutron_lib import constants
 from neutron_lib import context
@@ -46,15 +47,18 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
             "context": self.ctx,
             "request": {
                 "id": network_id,
-                api_const.IS_DEFAULT: True
+                api_const.IS_DEFAULT: True,
+                external_net_apidef.EXTERNAL: True,
             },
             "network": {
                 "id": network_id,
-                api_const.IS_DEFAULT: False
+                api_const.IS_DEFAULT: False,
+                external_net_apidef.EXTERNAL: False,
             },
             "original_network": {
                 "id": network_id,
-                api_const.IS_DEFAULT: False
+                api_const.IS_DEFAULT: False,
+                external_net_apidef.EXTERNAL: False,
             }
         }
         network_mock = mock.MagicMock(network_id=network_id, is_default=False)
@@ -82,11 +86,13 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
             "context": self.ctx,
             "request": {
                 "id": network_id,
-                api_const.IS_DEFAULT: None
+                api_const.IS_DEFAULT: None,
+                external_net_apidef.EXTERNAL: False,
             },
             "network": {
                 "id": network_id,
-                api_const.IS_DEFAULT: False
+                api_const.IS_DEFAULT: False,
+                external_net_apidef.EXTERNAL: False,
             },
         }
         network_mock = mock.MagicMock(network_id=network_id, is_default=False)
@@ -112,15 +118,18 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
             "context": self.ctx,
             "request": {
                 "id": network_id,
-                api_const.IS_DEFAULT: True
+                api_const.IS_DEFAULT: True,
+                external_net_apidef.EXTERNAL: True,
             },
             "network": {
                 "id": network_id,
-                api_const.IS_DEFAULT: True
+                api_const.IS_DEFAULT: True,
+                external_net_apidef.EXTERNAL: True,
             },
             "original_network": {
                 "id": network_id,
-                api_const.IS_DEFAULT: True
+                api_const.IS_DEFAULT: True,
+                external_net_apidef.EXTERNAL: True,
             }
         }
         network_mock = mock.MagicMock(network_id=network_id, is_default=True)
@@ -147,15 +156,18 @@ class AutoAllocateTestCase(testlib_api.SqlTestCase):
             "context": self.ctx,
             "request": {
                 "id": network_id,
-                api_const.IS_DEFAULT: True
+                api_const.IS_DEFAULT: True,
+                external_net_apidef.EXTERNAL: True,
             },
             "network": {
                 "id": network_id,
-                api_const.IS_DEFAULT: False
+                api_const.IS_DEFAULT: False,
+                external_net_apidef.EXTERNAL: False,
             },
             "original_network": {
                 "id": network_id,
-                api_const.IS_DEFAULT: False
+                api_const.IS_DEFAULT: False,
+                external_net_apidef.EXTERNAL: False,
             }
         }
         network_mock = mock.MagicMock(network_id='fake_id', is_default=False)
