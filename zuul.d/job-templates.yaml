@@ -136,7 +136,7 @@
         - neutron-functional-with-oslo-master
         - neutron-ovs-tempest-with-oslo-master
         - neutron-ovn-tempest-ovs-release-with-oslo-master
-        - neutron-tempest-plugin-linuxbridge
+        - neutron-tempest-plugin-linuxbridge-2024-2
         - neutron-tempest-plugin-api-ovs-wsgi
         - neutron-tempest-plugin-api-ovn-wsgi
     experimental:
