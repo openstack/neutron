@@ -37,6 +37,7 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
         res = address_group.to_dict()
         res['addresses'] = [str(addr_assoc['address'])
                             for addr_assoc in address_group['addresses']]
+        res['standard_attr_id'] = address_group.standard_attr_id
         return db_utils.resource_fields(res, fields)
 
     @staticmethod

@@ -44,6 +44,7 @@ TYPE_ROUTER_PORTS = 'router_ports'
 TYPE_SECURITY_GROUPS = 'security_groups'
 TYPE_FLOATINGIPS = 'floatingips'
 TYPE_SUBNETS = 'subnets'
+TYPE_ADDRESS_GROUPS = 'address_groups'
 
 _TYPES_PRIORITY_ORDER = (
     TYPE_NETWORKS,
@@ -53,6 +54,7 @@ _TYPES_PRIORITY_ORDER = (
     TYPE_PORTS,
     TYPE_ROUTER_PORTS,
     TYPE_FLOATINGIPS,
+    TYPE_ADDRESS_GROUPS,
     TYPE_SECURITY_GROUP_RULES)
 
 # The order in which the resources should be created or updated by the

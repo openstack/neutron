@@ -237,6 +237,12 @@ class TestOVNClient(TestOVNClientBase):
             self.ovn_client._add_router_ext_gw(mock.Mock(), router, txn))
         self.nb_idl.add_static_route.assert_not_called()
 
+    def test_checkout_ip_list(self):
+        addresses = ["192.168.2.2/32", "2001:db8::/32"]
+        add_map = self.ovn_client._checkout_ip_list(addresses)
+        self.assertEqual(["192.168.2.2/32"], add_map[const.IP_VERSION_4])
+        self.assertEqual(["2001:db8::/32"], add_map[const.IP_VERSION_6])
+
     def test_update_lsp_host_info_up(self):
         context = mock.MagicMock()
         host_id = 'fake-binding-host-id'
