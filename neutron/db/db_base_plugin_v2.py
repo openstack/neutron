@@ -90,8 +90,8 @@ def _ensure_subnet_not_used(context, subnet_id):
 
 
 def _update_subnetpool_dict(orig_pool, new_pool):
-    updated = dict((k, v) for k, v in orig_pool.to_dict().items()
-                   if k not in orig_pool.synthetic_fields or k == 'shared')
+    updated = {k: v for k, v in orig_pool.to_dict().items()
+               if k not in orig_pool.synthetic_fields or k == 'shared'}
 
     new_pool = new_pool.copy()
     new_prefixes = new_pool.pop('prefixes', constants.ATTR_NOT_SPECIFIED)
@@ -164,7 +164,7 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             query_hook=_port_query_hook,
             filter_hook=_port_filter_hook,
             result_filters=None)
-        return super(NeutronDbPluginV2, cls).__new__(cls, *args, **kwargs)
+        return super().__new__(cls, *args, **kwargs)
 
     @staticmethod
     def _validate_ipv6_pd():
@@ -905,7 +905,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
         if has_cidr:
             # turn the CIDR into a proper subnet
             net = netaddr.IPNetwork(s['cidr'])
-            subnet['subnet']['cidr'] = '%s/%s' % (net.network, net.prefixlen)
+            subnet['subnet']['cidr'] = '{}/{}'.format(
+                net.network, net.prefixlen)
 
         subnetpool_id = self._get_subnetpool_id(context, s)
         if not subnetpool_id and not has_cidr:
@@ -1264,8 +1265,8 @@ class NeutronDbPluginV2(db_base_plugin_common.DbBasePluginCommon,
             context,
             network_id=affected_source_network_ids,
             ip_version=ip_version)
-        all_affected_subnet_ids = set(
-            [subnet.id for subnet in all_network_subnets])
+        all_affected_subnet_ids = {
+            subnet.id for subnet in all_network_subnets}
 
         # Use set difference to identify the subnets that would be
         # violating address scope affinity constraints if the subnet

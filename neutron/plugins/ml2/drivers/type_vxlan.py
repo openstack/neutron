@@ -31,7 +31,7 @@ driver_type.register_ml2_drivers_vxlan_opts()
 class VxlanTypeDriver(type_tunnel.EndpointTunnelTypeDriver):
 
     def __init__(self):
-        super(VxlanTypeDriver, self).__init__(
+        super().__init__(
             vxlan_obj.VxlanAllocation, vxlan_obj.VxlanEndpoint)
         self.model_segmentation_id = (
             vxlan_alloc_model.VxlanAllocation.vxlan_vni)
@@ -59,5 +59,5 @@ class VxlanTypeDriver(type_tunnel.EndpointTunnelTypeDriver):
         return self._add_endpoint(ip, host, udp_port=udp_port)
 
     def get_mtu(self, physical_network=None):
-        mtu = super(VxlanTypeDriver, self).get_mtu()
+        mtu = super().get_mtu()
         return mtu - p_const.VXLAN_ENCAP_OVERHEAD if mtu else 0

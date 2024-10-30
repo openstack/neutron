@@ -24,7 +24,7 @@ class Network_availability_zone(extensions.APIExtensionDescriptor):
     api_definition = apidef
 
 
-class NetworkAvailabilityZonePluginBase(object, metaclass=abc.ABCMeta):
+class NetworkAvailabilityZonePluginBase(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_network_availability_zones(self, network):

@@ -894,11 +894,11 @@ class OVNMechanismDriver(api.MechanismDriver):
         # the port status from DOWN to UP in order to generate 'fake'
         # vif-interface-plugged event. This workaround is needed to
         # perform live-migration with live_migration_wait_for_vif_plug=True.
-        if ((port['status'] == const.PORT_STATUS_DOWN and
-             ovn_const.MIGRATING_ATTR in port[portbindings.PROFILE].keys() and
-             port[portbindings.VIF_TYPE] in (
+        if (port['status'] == const.PORT_STATUS_DOWN and
+            ovn_const.MIGRATING_ATTR in port[portbindings.PROFILE].keys() and
+            port[portbindings.VIF_TYPE] in (
                  portbindings.VIF_TYPE_OVS,
-                 portbindings.VIF_TYPE_VHOST_USER))):
+                 portbindings.VIF_TYPE_VHOST_USER)):
             LOG.info("Setting port %s status from DOWN to UP in order "
                      "to emit vif-interface-plugged event.",
                      port['id'])

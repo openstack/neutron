@@ -51,9 +51,9 @@ class TypeManager(stevedore.named.NamedExtensionManager):
 
         LOG.info("Configured type driver names: %s",
                  cfg.CONF.ml2.type_drivers)
-        super(TypeManager, self).__init__('neutron.ml2.type_drivers',
-                                          cfg.CONF.ml2.type_drivers,
-                                          invoke_on_load=True)
+        super().__init__('neutron.ml2.type_drivers',
+                         cfg.CONF.ml2.type_drivers,
+                         invoke_on_load=True)
         LOG.info("Loaded type driver names: %s", self.names())
         self._register_types()
         self._check_tenant_network_types(cfg.CONF.ml2.tenant_network_types)
@@ -417,7 +417,7 @@ class MechanismManager(stevedore.named.NamedExtensionManager):
 
         LOG.info("Configured mechanism driver names: %s",
                  cfg.CONF.ml2.mechanism_drivers)
-        super(MechanismManager, self).__init__(
+        super().__init__(
             'neutron.ml2.mechanism_drivers',
             cfg.CONF.ml2.mechanism_drivers,
             invoke_on_load=True,
@@ -1095,10 +1095,10 @@ class ExtensionManager(stevedore.named.NamedExtensionManager):
 
         LOG.info("Configured extension driver names: %s",
                  cfg.CONF.ml2.extension_drivers)
-        super(ExtensionManager, self).__init__('neutron.ml2.extension_drivers',
-                                               cfg.CONF.ml2.extension_drivers,
-                                               invoke_on_load=True,
-                                               name_order=True)
+        super().__init__('neutron.ml2.extension_drivers',
+                         cfg.CONF.ml2.extension_drivers,
+                         invoke_on_load=True,
+                         name_order=True)
         LOG.info("Loaded extension driver names: %s", self.names())
         self._register_drivers()
 

@@ -18,7 +18,7 @@ from neutron_lib.db import resource_extend
 
 
 @resource_extend.has_resource_extenders
-class SubnetServiceTypeMixin(object):
+class SubnetServiceTypeMixin:
     """Mixin class to extend subnet with service type attribute"""
 
     @staticmethod

@@ -32,7 +32,7 @@ from neutron.services.externaldns import driver
 LOG = logging.getLogger(__name__)
 
 
-class DNSActionsData(object):
+class DNSActionsData:
 
     def __init__(self, current_dns_name=None, current_dns_domain=None,
                  previous_dns_name=None, previous_dns_domain=None):
@@ -43,7 +43,7 @@ class DNSActionsData(object):
 
 
 @resource_extend.has_resource_extenders
-class DNSDbMixin(object):
+class DNSDbMixin:
     """Mixin class to add DNS methods to db_base_plugin_v2."""
 
     _dns_driver = None

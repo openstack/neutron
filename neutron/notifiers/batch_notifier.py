@@ -17,7 +17,7 @@ import eventlet
 from neutron.common import utils
 
 
-class BatchNotifier(object):
+class BatchNotifier:
     def __init__(self, batch_interval, callback):
         self._pending_events = eventlet.Queue()
         self.callback = callback

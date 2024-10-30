@@ -82,7 +82,7 @@ def has_lock_periodic(*args, periodic_run_limit=0, **kwargs):
     return wrapper
 
 
-class MaintenanceThread(object):
+class MaintenanceThread:
 
     def __init__(self):
         self._callables = []
@@ -124,7 +124,7 @@ class OVNNBDBReconnectionEvent(row_event.RowEvent):
         self.version = version
         table = 'Connection'
         events = (self.ROW_CREATE,)
-        super(OVNNBDBReconnectionEvent, self).__init__(events, table, None)
+        super().__init__(events, table, None)
         self.event_name = self.__class__.__name__
 
     def run(self, event, row, old):
@@ -134,7 +134,7 @@ class OVNNBDBReconnectionEvent(row_event.RowEvent):
             self.version = curr_version
 
 
-class SchemaAwarePeriodicsBase(object):
+class SchemaAwarePeriodicsBase:
 
     def __init__(self, ovn_client):
         self._nb_idl = ovn_client._nb_idl
@@ -175,7 +175,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         self._idl = self._nb_idl.idl
         self._idl.set_lock('ovn_db_inconsistencies_periodics')
         self._sync_timer = timeutils.StopWatch()
-        super(DBInconsistenciesPeriodics, self).__init__(ovn_client)
+        super().__init__(ovn_client)
 
         self._resources_func_map = {
             ovn_const.TYPE_NETWORKS: {
@@ -360,7 +360,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
                 else:
                     c[f.resource_type] += 1
 
-            fail_str = ', '.join('{}={}'.format(k, v) for k, v in c.items())
+            fail_str = ', '.join(f'{k}={v}' for k, v in c.items())
             LOG.debug('Maintenance task: Number of inconsistencies '
                       'found at %(type_)s: %(fail_str)s',
                       {'type_': type_, 'fail_str': fail_str})
@@ -533,7 +533,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
             flood = ls.other_config.get(ovn_const.MCAST_FLOOD_UNREGISTERED)
 
             if (not ls.name or (snooping == snooping_conf and
-                    flood == flood_conf)):
+                                flood == flood_conf)):
                 continue
 
             cmds.append(self._nb_idl.db_set(
@@ -950,14 +950,14 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         for fip in fip_update:
             lrouter = utils.ovn_name(fip['router_id'])
             if lrouter not in gw_port_id_cache.keys():
-                router_db = self._ovn_client._l3_plugin.get_router(context,
-                    fip['router_id'], fields=['gw_port_id'])
+                router_db = self._ovn_client._l3_plugin.get_router(
+                    context, fip['router_id'], fields=['gw_port_id'])
                 gw_port_id_cache[lrouter] = router_db.get('gw_port_id')
                 lrp_cache[lrouter] = self._nb_idl.get_lrouter_port(
                     gw_port_id_cache[lrouter])
             columns = {'gateway_port': lrp_cache[lrouter].uuid}
-            cmds.append(self._nb_idl.set_nat_rule_in_lrouter(lrouter,
-                fip['uuid'], **columns))
+            cmds.append(self._nb_idl.set_nat_rule_in_lrouter(
+                lrouter, fip['uuid'], **columns))
 
         if cmds:
             with self._nb_idl.transaction(check_error=True) as txn:
@@ -976,7 +976,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         context = n_context.get_admin_context()
         pra_list = servicetype_obj.ProviderResourceAssociation.get_objects(
             context, provider_name=provider_name)
-        pra_res_ids = set(pra.resource_id for pra in pra_list)
+        pra_res_ids = {pra.resource_id for pra in pra_list}
         with db_api.CONTEXT_WRITER.using(context):
             for lr in self._nb_idl.lr_list().execute(check_error=True):
                 router_id = lr.name.replace('neutron-', '')
@@ -1059,7 +1059,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
             ls = self._nb_idl.get_lswitch(ls_name)
             broadcast_value = ls.other_config.get(
                 ovn_const.LS_OPTIONS_BROADCAST_ARPS_ROUTERS)
-            expected_broadcast_value = ('true'
+            expected_broadcast_value = (
+                'true'
                 if ovn_conf.is_broadcast_arps_to_all_routers_enabled() else
                 'false')
             # Assert the config value is the right one
@@ -1101,8 +1102,8 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         for sroute in sroute_update:
             lrouter = utils.ovn_name(sroute['name'])
             if lrouter not in routes_cache.keys():
-                router_db = self._ovn_client._l3_plugin.get_router(context,
-                    sroute['name'], fields=['routes'])
+                router_db = self._ovn_client._l3_plugin.get_router(
+                    context, sroute['name'], fields=['routes'])
                 routes_cache[lrouter] = router_db.get('routes')
 
             ovn_route = sroute['sroute']
@@ -1135,7 +1136,7 @@ class DBInconsistenciesPeriodics(SchemaAwarePeriodicsBase):
         raise periodics.NeverAgain()
 
 
-class HashRingHealthCheckPeriodics(object):
+class HashRingHealthCheckPeriodics:
 
     def __init__(self, group):
         self._group = group

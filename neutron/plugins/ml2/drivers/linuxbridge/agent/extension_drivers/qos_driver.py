@@ -41,7 +41,7 @@ class QosLinuxbridgeAgentDriver(qos.QosLinuxAgentDriver):
                                  const.EGRESS_DIRECTION: "o"}
 
     def __init__(self):
-        super(QosLinuxbridgeAgentDriver, self).__init__()
+        super().__init__()
         self.iptables_manager = None
         self.agent_api = None
         self.tbf_latency = cfg.CONF.QOS.tbf_latency
@@ -63,8 +63,8 @@ class QosLinuxbridgeAgentDriver(qos.QosLinuxAgentDriver):
 
     def _dscp_chain_name(self, direction, device):
         return iptables_manager.get_chain_name(
-            "qos-%s%s" % (self.IPTABLES_DIRECTION_PREFIX[direction],
-                          device[3:]))
+            "qos-{}{}".format(self.IPTABLES_DIRECTION_PREFIX[direction],
+                              device[3:]))
 
     def _dscp_rule(self, direction, device):
         return ('-m physdev --%s %s --physdev-is-bridged '

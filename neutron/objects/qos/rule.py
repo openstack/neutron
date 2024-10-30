@@ -88,7 +88,7 @@ class QosRule(base.NeutronDbObject, metaclass=abc.ABCMeta):
         return True
 
     def to_dict(self):
-        dict_ = super(QosRule, self).to_dict()
+        dict_ = super().to_dict()
         dict_['type'] = self.rule_type
         return dict_
 

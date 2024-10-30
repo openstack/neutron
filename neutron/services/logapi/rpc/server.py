@@ -66,7 +66,7 @@ def get_sg_log_info_for_log_resources(context, log_resources):
     return db_api.get_sg_log_info_for_log_resources(context, log_resources)
 
 
-class LoggingApiSkeleton(object):
+class LoggingApiSkeleton:
     """Skeleton proxy code for agent->server communication."""
 
     # History

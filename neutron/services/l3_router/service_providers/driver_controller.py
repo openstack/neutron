@@ -33,7 +33,7 @@ LOG = logging.getLogger(__name__)
 
 
 @registry.has_registry_receivers
-class DriverController(object):
+class DriverController:
     """Driver controller for the L3 service plugin.
 
     This component is responsible for dispatching router requests to L3
@@ -257,7 +257,7 @@ class _LegacyPlusProviderConfiguration(
         # loads up ha, dvr, and single_node service providers automatically.
         # If an operator has setup explicit values that conflict with these,
         # the operator defined values will take priority.
-        super(_LegacyPlusProviderConfiguration, self).__init__(
+        super().__init__(
             svc_type=plugin_constants.L3)
         for name, driver in (('dvrha', 'dvrha.DvrHaDriver'),
                              ('dvr', 'dvr.DvrDriver'), ('ha', 'ha.HaDriver'),

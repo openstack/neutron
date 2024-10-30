@@ -69,7 +69,7 @@ class RpcCallbacks(type_tunnel.TunnelRpcCallbackMixin):
 
     def __init__(self, notifier, type_manager):
         self.setup_tunnel_callback_mixin(notifier, type_manager)
-        super(RpcCallbacks, self).__init__()
+        super().__init__()
 
     def _get_new_status(self, host, port_context):
         port = port_context.current

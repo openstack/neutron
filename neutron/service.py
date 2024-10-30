@@ -51,7 +51,7 @@ service.register_service_opts(service.RPC_EXTRA_OPTS)
 LOG = logging.getLogger(__name__)
 
 
-class WsgiService(object):
+class WsgiService:
     """Base class for WSGI based services.
 
     For each api you define, you must also define these flags:
@@ -75,7 +75,7 @@ class NeutronApiService(WsgiService):
     """Class for neutron-api service."""
     def __init__(self, app_name):
         profiler.setup('neutron-server', cfg.CONF.host)
-        super(NeutronApiService, self).__init__(app_name)
+        super().__init__(app_name)
 
     @classmethod
     def create(cls, app_name='neutron'):
@@ -103,7 +103,7 @@ class RpcWorker(neutron_worker.NeutronBaseWorker):
     desc = 'rpc worker'
 
     def __init__(self, plugins, worker_process_count=1):
-        super(RpcWorker, self).__init__(
+        super().__init__(
             worker_process_count=worker_process_count,
             desc=self.desc,
         )
@@ -112,7 +112,7 @@ class RpcWorker(neutron_worker.NeutronBaseWorker):
         self._servers = []
 
     def start(self):
-        super(RpcWorker, self).start(desc=self.desc)
+        super().start(desc=self.desc)
         for plugin in self._plugins:
             if hasattr(plugin, self.start_listeners_method):
                 try:
@@ -238,7 +238,7 @@ def _get_ovn_maintenance_worker():
 
 class AllServicesNeutronWorker(neutron_worker.NeutronBaseWorker):
     def __init__(self, services, worker_process_count=1):
-        super(AllServicesNeutronWorker, self).__init__(worker_process_count)
+        super().__init__(worker_process_count)
         self._services = services
         for srv in self._services:
             self._check_base_worker_service(srv)
@@ -251,7 +251,7 @@ class AllServicesNeutronWorker(neutron_worker.NeutronBaseWorker):
             # re-write the process title already defined and set by this class.
             srv.set_proctitle = 'off'
             self._launcher.launch_service(srv)
-        super(AllServicesNeutronWorker, self).start(desc="services worker")
+        super().start(desc="services worker")
 
     def stop(self):
         self._launcher.stop()
@@ -400,11 +400,11 @@ class Service(n_rpc.Service):
         self.saved_args, self.saved_kwargs = args, kwargs
         self.timers = []
         profiler.setup(binary, host)
-        super(Service, self).__init__(host, topic, manager=self.manager)
+        super().__init__(host, topic, manager=self.manager)
 
     def start(self):
         self.manager.init_host()
-        super(Service, self).start()
+        super().start()
         if self.report_interval:
             pulse = loopingcall.FixedIntervalLoopingCall(self.report_state)
             pulse.start(interval=self.report_interval,
@@ -471,7 +471,7 @@ class Service(n_rpc.Service):
         self.stop()
 
     def stop(self):
-        super(Service, self).stop()
+        super().stop()
         for x in self.timers:
             try:
                 x.stop()
@@ -481,7 +481,7 @@ class Service(n_rpc.Service):
         self.manager.stop()
 
     def wait(self):
-        super(Service, self).wait()
+        super().wait()
         for x in self.timers:
             try:
                 x.wait()

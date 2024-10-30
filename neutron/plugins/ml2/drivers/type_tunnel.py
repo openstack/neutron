@@ -56,7 +56,7 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver, metaclass=abc.ABCMeta):
     BULK_SIZE = 100
 
     def __init__(self, model):
-        super(_TunnelTypeDriverBase, self).__init__(model)
+        super().__init__(model)
         self.segmentation_key = next(iter(self.primary_keys))
 
     @abc.abstractmethod
@@ -240,7 +240,7 @@ class _TunnelTypeDriverBase(helpers.SegmentTypeDriver, metaclass=abc.ABCMeta):
                 raise exc.InvalidInput(error_message=msg)
 
     def get_mtu(self, physical_network=None):
-        seg_mtu = super(_TunnelTypeDriverBase, self).get_mtu()
+        seg_mtu = super().get_mtu()
         mtu = []
         if seg_mtu > 0:
             mtu.append(seg_mtu)
@@ -339,7 +339,7 @@ class ML2TunnelTypeDriver(_TunnelTypeDriverBase, metaclass=abc.ABCMeta):
 class EndpointTunnelTypeDriver(ML2TunnelTypeDriver):
 
     def __init__(self, segment_model, endpoint_model):
-        super(EndpointTunnelTypeDriver, self).__init__(segment_model)
+        super().__init__(segment_model)
         self.endpoint_model = endpoint_model.db_model
         self.segmentation_key = next(iter(self.primary_keys))
 
@@ -396,7 +396,7 @@ class EndpointTunnelTypeDriver(ML2TunnelTypeDriver):
         return endpoint
 
 
-class TunnelRpcCallbackMixin(object):
+class TunnelRpcCallbackMixin:
 
     def setup_tunnel_callback_mixin(self, notifier, type_manager):
         self._notifier = notifier
@@ -489,7 +489,7 @@ class TunnelRpcCallbackMixin(object):
             raise exc.InvalidInput(error_message=msg)
 
 
-class TunnelAgentRpcApiMixin(object):
+class TunnelAgentRpcApiMixin:
 
     def _get_tunnel_update_topic(self):
         return topics.get_topic_name(self.topic,

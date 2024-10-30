@@ -24,11 +24,11 @@ from neutron.ipam import exceptions as ipam_exc
 from neutron.ipam import utils as ipam_utils
 
 
-class SubnetPool(object, metaclass=abc.ABCMeta):
+class SubnetPool(metaclass=abc.ABCMeta):
     """Represents a pool of IPs available inside an address scope."""
 
 
-class SubnetRequest(object, metaclass=abc.ABCMeta):
+class SubnetRequest(metaclass=abc.ABCMeta):
     """Carries the data needed to make a subnet request
 
     The data validated and carried by an instance of this class is the data
@@ -152,7 +152,7 @@ class AnySubnetRequest(SubnetRequest):
             max allowed.
         :type prefixlen: int
         """
-        super(AnySubnetRequest, self).__init__(
+        super().__init__(
             tenant_id=tenant_id,
             subnet_id=subnet_id,
             gateway_ip=gateway_ip,
@@ -184,7 +184,7 @@ class SpecificSubnetRequest(SubnetRequest):
             the version of the address scope being used.
         :type subnet: netaddr.IPNetwork or convertible to one
         """
-        super(SpecificSubnetRequest, self).__init__(
+        super().__init__(
             tenant_id=tenant_id,
             subnet_id=subnet_id,
             gateway_ip=gateway_ip,
@@ -203,7 +203,7 @@ class SpecificSubnetRequest(SubnetRequest):
         return self._subnet_cidr.prefixlen
 
 
-class AddressRequest(object, metaclass=abc.ABCMeta):
+class AddressRequest(metaclass=abc.ABCMeta):
     """Abstract base class for address requests"""
 
 
@@ -215,7 +215,7 @@ class SpecificAddressRequest(AddressRequest):
         :param address: The address being requested
         :type address: A netaddr.IPAddress or convertible to one.
         """
-        super(SpecificAddressRequest, self).__init__()
+        super().__init__()
         self._address = netaddr.IPAddress(address)
 
     @property
@@ -230,7 +230,7 @@ class BulkAddressRequest(AddressRequest):
         :param num_addresses: The quantity of IP addresses being requested
         :type num_addresses: int
         """
-        super(BulkAddressRequest, self).__init__()
+        super().__init__()
         self._num_addresses = num_addresses
 
     @property
@@ -251,7 +251,7 @@ class AutomaticAddressRequest(SpecificAddressRequest):
     EUI64 = 'eui64'
 
     def _generate_eui64_address(self, **kwargs):
-        if set(kwargs) != set(['prefix', 'mac']):
+        if set(kwargs) != {'prefix', 'mac'}:
             raise ipam_exc.AddressCalculationFailure(
                 address_type='eui-64',
                 reason=_('must provide exactly 2 arguments - cidr and MAC'))
@@ -276,14 +276,14 @@ class AutomaticAddressRequest(SpecificAddressRequest):
         if not address_generator:
             raise ipam_exc.InvalidAddressType(address_type=address_type)
         address = address_generator(self, **kwargs)
-        super(AutomaticAddressRequest, self).__init__(address)
+        super().__init__(address)
 
 
 class RouterGatewayAddressRequest(AddressRequest):
     """Used to request allocating the special router gateway address."""
 
 
-class AddressRequestFactory(object):
+class AddressRequestFactory:
     """Builds request using ip info
 
     Additional parameters(port and context) are not used in default
@@ -315,7 +315,7 @@ class AddressRequestFactory(object):
             return AnyAddressRequest()
 
 
-class SubnetRequestFactory(object):
+class SubnetRequestFactory:
     """Builds request using subnet info"""
 
     @classmethod

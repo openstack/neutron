@@ -21,7 +21,7 @@ from os_ken.lib.packet import icmpv6
 from os_ken.lib.packet import in_proto
 
 
-class OVSDVRInterfaceMixin(object):
+class OVSDVRInterfaceMixin:
 
     def delete_arp_destination_change(self, target_mac_address,
                                       orig_mac_address):
@@ -60,7 +60,7 @@ class OVSDVRInterfaceMixin(object):
                                   instructions=instructions)
 
 
-class OVSDVRProcessMixin(object):
+class OVSDVRProcessMixin:
     """Common logic for br-tun and br-phys' DVR_PROCESS tables.
 
     Inheriters should provide self.dvr_process_table_id and

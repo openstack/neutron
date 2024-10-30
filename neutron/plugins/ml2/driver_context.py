@@ -25,7 +25,7 @@ from neutron.db import segments_db
 LOG = log.getLogger(__name__)
 
 
-class InstanceSnapshot(object):
+class InstanceSnapshot:
     """Used to avoid holding references to DB objects in PortContext."""
     def __init__(self, obj):
         self._model_class = obj.__class__
@@ -56,7 +56,7 @@ class InstanceSnapshot(object):
         return getattr(self, item)
 
 
-class MechanismDriverContext(object):
+class MechanismDriverContext:
     """MechanismDriver context base class."""
     def __init__(self, plugin, plugin_context):
         self._plugin = plugin
@@ -74,7 +74,7 @@ class NetworkContext(MechanismDriverContext, api.NetworkContext):
 
     def __init__(self, plugin, plugin_context, network,
                  original_network=None, segments=None):
-        super(NetworkContext, self).__init__(plugin, plugin_context)
+        super().__init__(plugin, plugin_context)
         self._network = network
         self._original_network = original_network
         self._segments = segments_db.get_network_segments(
@@ -97,7 +97,7 @@ class SubnetContext(MechanismDriverContext, api.SubnetContext):
 
     def __init__(self, plugin, plugin_context, subnet, network,
                  original_subnet=None):
-        super(SubnetContext, self).__init__(plugin, plugin_context)
+        super().__init__(plugin, plugin_context)
         self._subnet = subnet
         self._original_subnet = original_subnet
         self._network_context = NetworkContext(plugin, plugin_context,
@@ -125,7 +125,7 @@ class PortContext(MechanismDriverContext, api.PortContext):
 
     def __init__(self, plugin, plugin_context, port, network, binding,
                  binding_levels, original_port=None):
-        super(PortContext, self).__init__(plugin, plugin_context)
+        super().__init__(plugin, plugin_context)
         self._port = port
         self._original_port = original_port
         if isinstance(network, NetworkContext):

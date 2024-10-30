@@ -250,7 +250,7 @@ def _get_release_labels(labels):
     for label in labels:
         # release labels were introduced Liberty for a short time and dropped
         # in that same release cycle
-        result.add('%s_%s' % (migration.LIBERTY, label))
+        result.add('{}_{}'.format(migration.LIBERTY, label))
     return result
 
 
@@ -348,7 +348,7 @@ def _check_head(branch_name, head_file, head):
     try:
         with open(head_file) as file_:
             observed_head = file_.read().strip()
-    except IOError:
+    except OSError:
         pass
     else:
         if observed_head != head:

@@ -44,7 +44,7 @@ class Agent(api_extensions.APIExtensionDescriptor):
         return [ex]
 
 
-class AgentPluginBase(object, metaclass=abc.ABCMeta):
+class AgentPluginBase(metaclass=abc.ABCMeta):
     """REST API to operate the Agent.
 
     All of method must be in an admin context.

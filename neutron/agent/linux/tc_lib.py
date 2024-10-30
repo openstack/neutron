@@ -203,7 +203,7 @@ class TcCommand(ip_lib.IPDevice):
     def __init__(self, name, kernel_hz, namespace=None):
         if kernel_hz <= 0:
             raise InvalidKernelHzValue(value=kernel_hz)
-        super(TcCommand, self).__init__(name, namespace=namespace)
+        super().__init__(name, namespace=namespace)
         self.kernel_hz = kernel_hz
 
     @staticmethod

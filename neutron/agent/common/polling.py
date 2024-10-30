@@ -54,7 +54,7 @@ class InterfacePollingMinimizer(base_polling.BasePollingManager):
             ovsdb_monitor_respawn_interval=ovs_const.DEFAULT_OVSDBMON_RESPAWN,
             bridge_names=None, ovs=None):
 
-        super(InterfacePollingMinimizer, self).__init__()
+        super().__init__()
         self._monitor = ovsdb_monitor.SimpleInterfaceMonitor(
             respawn_interval=ovsdb_monitor_respawn_interval,
             ovsdb_connection=cfg.CONF.OVS.ovsdb_connection,

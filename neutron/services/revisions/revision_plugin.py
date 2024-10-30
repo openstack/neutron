@@ -37,7 +37,7 @@ class RevisionPlugin(service_base.ServicePluginBase):
     __filter_validation_support = True
 
     def __init__(self):
-        super(RevisionPlugin, self).__init__()
+        super().__init__()
         # background on these event hooks:
         # https://docs.sqlalchemy.org/en/latest/orm/session_events.html
         db_api.sqla_listen(se.Session, 'before_flush', self.bump_revisions)
@@ -328,4 +328,4 @@ class RevisionNumberConstraintFailed(webob.exc.HTTPPreconditionFailed):
     def __init__(self, expected, current):
         detail = (_("Constrained to %(exp)s, but current revision is %(cur)s")
                   % {'exp': expected, 'cur': current})
-        super(RevisionNumberConstraintFailed, self).__init__(detail=detail)
+        super().__init__(detail=detail)

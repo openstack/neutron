@@ -64,7 +64,7 @@ def main():
 
 
 def do_main(conf):
-    configuration_bridges = set([conf.OVS.integration_bridge])
+    configuration_bridges = {conf.OVS.integration_bridge}
     ovs = ovs_lib.BaseOVS()
     ovs_bridges = set(ovs.get_bridges())
     available_configuration_bridges = configuration_bridges & ovs_bridges

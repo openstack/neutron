@@ -33,7 +33,7 @@ from neutron.services.portforwarding import constants as pf_const
 LOG = log.getLogger(__name__)
 
 
-class OVNPortForwardingHandler(object):
+class OVNPortForwardingHandler:
     @staticmethod
     def _get_lb_protocol(pf_obj):
         return pf_const.LB_PROTOCOL_MAP[pf_obj.protocol]
@@ -56,10 +56,10 @@ class OVNPortForwardingHandler(object):
         lb_name = cls.lb_name(pf_obj.floatingip_id,
                               cls._get_lb_protocol(pf_obj),
                               external_port)
-        vip = "{}:{}".format(pf_obj.floating_ip_address, pf_obj.external_port)
+        vip = f"{pf_obj.floating_ip_address}:{pf_obj.external_port}"
         internal_ip = "{}:{}".format(pf_obj.internal_ip_address,
                                      pf_obj.internal_port)
-        rtr_name = 'neutron-{}'.format(pf_obj.router_id)
+        rtr_name = f'neutron-{pf_obj.router_id}'
         return lb_name, vip, [internal_ip], rtr_name
 
     def _get_lbs_and_ls(self, nb_ovn, payload):
@@ -134,7 +134,7 @@ class OVNPortForwardingHandler(object):
     def _validate_router_networks(self, nb_ovn, router_id):
         if not ovn_conf.is_ovn_distributed_floating_ip():
             return
-        rtr_name = 'neutron-{}'.format(router_id)
+        rtr_name = f'neutron-{router_id}'
         ovn_lr = nb_ovn.get_lrouter(rtr_name)
         if not ovn_lr:
             return
@@ -224,7 +224,7 @@ class OVNPortForwardingHandler(object):
 
 
 @registry.has_registry_receivers
-class OVNPortForwarding(object):
+class OVNPortForwarding:
 
     def __init__(self, l3_plugin):
         self._validate_configuration()

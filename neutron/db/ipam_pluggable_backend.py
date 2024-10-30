@@ -516,7 +516,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         port = port or self._get_port(context, id)
         ipam_driver = driver.Pool.get_instance(None, context)
 
-        super(IpamPluggableBackend, self).delete_port(context, id)
+        super().delete_port(context, id)
         # Deallocating ips via IPAM after port is deleted locally.
         # So no need to do rollback actions on remote server
         # in case of fail to delete port locally
@@ -534,7 +534,7 @@ class IpamPluggableBackend(ipam_backend_mixin.IpamBackendMixin):
         # _update_subnet_allocation_pools (ipam_backend_mixin),
         # so create unchanged copy for ipam driver
         subnet_copy = copy.deepcopy(s)
-        subnet, changes = super(IpamPluggableBackend, self).update_db_subnet(
+        subnet, changes = super().update_db_subnet(
             context, id, s, old_pools, subnet_obj=subnet_obj)
         ipam_driver = driver.Pool.get_instance(None, context)
 

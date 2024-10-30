@@ -39,7 +39,7 @@ def upgrade():
                   nullable=False, server_default='normal'),
         sa.Column('profile', sa.String(length=4095),
                   nullable=False, server_default=''),
-        sa.Column(u'status', sa.String(16), nullable=False),
+        sa.Column('status', sa.String(16), nullable=False),
         sa.ForeignKeyConstraint(['port_id'], ['ports.id'],
                                 ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('port_id', 'host')

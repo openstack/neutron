@@ -21,7 +21,7 @@ from oslo_db import exception as db_exc
 from neutron.common import utils as n_utils
 
 
-class BaseResourceFilter(object, metaclass=abc.ABCMeta):
+class BaseResourceFilter(metaclass=abc.ABCMeta):
     """Encapsulate logic that is specific to the resource type."""
     @abc.abstractmethod
     def filter_agents(self, plugin, context, resource):

@@ -83,10 +83,10 @@ class DHCPResourceUpdate(queue.ResourceUpdate):
 
     def __lt__(self, other):
         if other.obj_type == self.obj_type == 'port':
-            self_ips = set(str(fixed_ip['ip_address']) for
-                           fixed_ip in self.resource['fixed_ips'])
-            other_ips = set(str(fixed_ip['ip_address']) for
-                            fixed_ip in other.resource['fixed_ips'])
+            self_ips = {str(fixed_ip['ip_address']) for
+                        fixed_ip in self.resource['fixed_ips']}
+            other_ips = {str(fixed_ip['ip_address']) for
+                         fixed_ip in other.resource['fixed_ips']}
             if self_ips & other_ips:
                 return self.timestamp < other.timestamp
 
@@ -105,7 +105,7 @@ class DhcpAgent(manager.Manager):
     target = oslo_messaging.Target(version='1.0')
 
     def __init__(self, host=None, conf=None):
-        super(DhcpAgent, self).__init__(host=host)
+        super().__init__(host=host)
         self.needs_resync_reasons = collections.defaultdict(list)
         self.dhcp_ready_ports = set()
         self.dhcp_prio_ready_ports = set()
@@ -306,7 +306,7 @@ class DhcpAgent(manager.Manager):
             active_networks = self.plugin_rpc.get_active_networks_info(
                 enable_dhcp_filter=False)
             LOG.info('All active networks have been fetched through RPC.')
-            active_network_ids = set(network.id for network in active_networks)
+            active_network_ids = {network.id for network in active_networks}
             for deleted_id in known_network_ids - active_network_ids:
                 try:
                     self.disable_dhcp_helper(deleted_id)
@@ -919,7 +919,7 @@ class DhcpPluginApi(base_agent_rpc.BasePluginApi):
         return [dhcp.NetModel(net) for net in nets]
 
 
-class NetworkCache(object):
+class NetworkCache:
     """Agent cache of the current network state."""
     def __init__(self):
         self.cache = {}
@@ -1050,7 +1050,7 @@ class NetworkCache(object):
 
 class DhcpAgentWithStateReport(DhcpAgent):
     def __init__(self, host=None, conf=None):
-        super(DhcpAgentWithStateReport, self).__init__(host=host, conf=conf)
+        super().__init__(host=host, conf=conf)
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
         self.failed_report_state = False
         self.agent_state = {

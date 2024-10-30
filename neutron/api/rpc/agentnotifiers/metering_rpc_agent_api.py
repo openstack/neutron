@@ -26,7 +26,7 @@ from neutron.db import agentschedulers_db
 LOG = logging.getLogger(__name__)
 
 
-class MeteringAgentNotifyAPI(object):
+class MeteringAgentNotifyAPI:
     """API for plugin to notify L3 metering agent."""
 
     def __init__(self, topic=topics.METERING_AGENT):

@@ -34,7 +34,7 @@ class AsyncProcessException(Exception):
     pass
 
 
-class AsyncProcess(object):
+class AsyncProcess:
     """Manages an asynchronous process.
 
     This class spawns a new process via subprocess and uses

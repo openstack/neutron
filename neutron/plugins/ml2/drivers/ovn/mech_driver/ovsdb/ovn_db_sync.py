@@ -45,7 +45,7 @@ SYNC_MODE_LOG = 'log'
 SYNC_MODE_REPAIR = 'repair'
 
 
-class OvnDbSynchronizer(object, metaclass=abc.ABCMeta):
+class OvnDbSynchronizer(metaclass=abc.ABCMeta):
 
     def __init__(self, core_plugin, ovn_api, ovn_driver):
         self.ovn_driver = ovn_driver
@@ -71,7 +71,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
     """Synchronizer class for NB."""
 
     def __init__(self, core_plugin, ovn_api, sb_ovn, mode, ovn_driver):
-        super(OvnNbSynchronizer, self).__init__(
+        super().__init__(
             core_plugin, ovn_api, ovn_driver)
         self.mode = mode
         self.l3_plugin = directory.get_plugin(plugin_constants.L3)
@@ -91,7 +91,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         if utils.is_ovn_l3(self.l3_plugin):
             self.l3_plugin._nb_ovn.ovsdb_connection.stop()
             self.l3_plugin._sb_ovn.ovsdb_connection.stop()
-        super(OvnNbSynchronizer, self).stop()
+        super().stop()
 
     def do_sync(self):
         if self.mode == SYNC_MODE_OFF:
@@ -149,7 +149,7 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         @var   acl_list_dict: Dictionary of acl-lists based on lport as key
         @return: acl_list-dict
         """
-        lswitch_names = set([])
+        lswitch_names = set()
         for network in self.core_plugin.get_networks(context):
             lswitch_names.add(network['id'])
         acl_dict, ignore1, ignore2 = (
@@ -199,8 +199,8 @@ class OvnNbSynchronizer(OvnDbSynchronizer):
         if self.mode == SYNC_MODE_REPAIR and (add_pgs or remove_pgs):
             if add_pgs:
                 db_ports = self.core_plugin.get_ports(ctx)
-                ovn_ports = set(p.name for p in
-                                self.ovn_api.lsp_list().execute())
+                ovn_ports = {p.name for p in
+                             self.ovn_api.lsp_list().execute()}
             with self.ovn_api.transaction(check_error=True) as txn:
                 pg = ovn_const.OVN_DROP_PORT_GROUP_NAME
                 # Process default drop port group first
@@ -1336,7 +1336,7 @@ class OvnSbSynchronizer(OvnDbSynchronizer):
     """Synchronizer class for SB."""
 
     def __init__(self, core_plugin, ovn_api, ovn_driver):
-        super(OvnSbSynchronizer, self).__init__(
+        super().__init__(
             core_plugin, ovn_api, ovn_driver)
         self.l3_plugin = directory.get_plugin(plugin_constants.L3)
 

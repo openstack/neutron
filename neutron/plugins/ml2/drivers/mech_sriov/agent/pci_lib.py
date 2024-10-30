@@ -33,7 +33,7 @@ class PciDeviceIPWrapper(ip_lib.IPWrapper):
     """Wrapper class for ip link commands related to virtual functions."""
 
     def __init__(self, dev_name):
-        super(PciDeviceIPWrapper, self).__init__()
+        super().__init__()
         self.dev_name = dev_name
 
     def get_assigned_macs(self, vf_list):

@@ -80,7 +80,7 @@ CONFIG_TEMPLATE = jinja2.Template("""interface {{ interface_name }}
 """)
 
 
-class DaemonMonitor(object):
+class DaemonMonitor:
     """Manage the data and state of an radvd process."""
 
     def __init__(self, router_id, router_ns, process_monitor, dev_name_helper,

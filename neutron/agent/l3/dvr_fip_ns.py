@@ -51,7 +51,7 @@ class FipNamespace(namespaces.Namespace):
 
     def __init__(self, ext_net_id, agent_conf, driver, use_ipv6):
         name = self._get_ns_name(ext_net_id)
-        super(FipNamespace, self).__init__(
+        super().__init__(
             name, agent_conf, driver, use_ipv6)
 
         self._ext_net_id = ext_net_id
@@ -208,7 +208,7 @@ class FipNamespace(namespaces.Namespace):
     def create(self):
         LOG.debug("DVR: add fip namespace: %s", self.name)
         # parent class will ensure the namespace exists and turn-on forwarding
-        super(FipNamespace, self).create()
+        super().create()
         ip_lib.set_ip_nonlocal_bind_for_namespace(self.name, 1,
                                                   root_namespace=True)
 
@@ -239,7 +239,7 @@ class FipNamespace(namespaces.Namespace):
 
         # TODO(mrsmith): add LOG warn if fip count != 0
         LOG.debug('DVR: destroy fip namespace: %s', self.name)
-        super(FipNamespace, self).delete()
+        super().delete()
 
     def _check_for_gateway_ip_change(self, new_agent_gateway_port):
 

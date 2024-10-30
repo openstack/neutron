@@ -70,13 +70,13 @@ class SecurityGroup(rbac_db.NeutronRbacObject):
 
     extra_filter_names = {'is_default'}
 
-    lazy_fields = set(['rules'])
+    lazy_fields = {'rules'}
 
     def create(self):
         # save is_default before super() resets it to False
         is_default = self.is_default
         with self.db_context_writer(self.obj_context):
-            super(SecurityGroup, self).create()
+            super().create()
             if is_default:
                 default_group = DefaultSecurityGroup(
                     self.obj_context,
@@ -87,7 +87,7 @@ class SecurityGroup(rbac_db.NeutronRbacObject):
                 self.obj_reset_changes(['is_default'])
 
     def from_db_object(self, db_obj):
-        super(SecurityGroup, self).from_db_object(db_obj)
+        super().from_db_object(db_obj)
         if self._load_synthetic_fields:
             setattr(self, 'is_default',
                     bool(db_obj.get('default_security_group')))
@@ -95,7 +95,7 @@ class SecurityGroup(rbac_db.NeutronRbacObject):
 
     @classmethod
     def get_sg_by_id(cls, context, sg_id):
-        return super(SecurityGroup, cls).get_object(context, id=sg_id)
+        return super().get_object(context, id=sg_id)
 
     def obj_make_compatible(self, primitive, target_version):
         _target_version = versionutils.convert_version_to_tuple(target_version)
@@ -207,7 +207,7 @@ class SecurityGroupRule(base.NeutronDbObject):
     # custom types.
     @classmethod
     def modify_fields_to_db(cls, fields):
-        result = super(SecurityGroupRule, cls).modify_fields_to_db(fields)
+        result = super().modify_fields_to_db(fields)
         remote_ip_prefix = result.get('remote_ip_prefix')
         if remote_ip_prefix:
             result['remote_ip_prefix'] = cls.filter_to_str(remote_ip_prefix)
@@ -227,7 +227,7 @@ class SecurityGroupRule(base.NeutronDbObject):
         self.obj_reset_changes(['normalized_cidr'])
 
     def from_db_object(self, db_obj):
-        super(SecurityGroupRule, self).from_db_object(db_obj)
+        super().from_db_object(db_obj)
         self._load_normalized_cidr(db_obj)
         if self._load_synthetic_fields:
             setattr(self, 'belongs_to_default_sg',
@@ -237,13 +237,13 @@ class SecurityGroupRule(base.NeutronDbObject):
     def obj_load_attr(self, attrname):
         if attrname == 'normalized_cidr':
             return self._load_normalized_cidr()
-        super(SecurityGroupRule, self).obj_load_attr(attrname)
+        super().obj_load_attr(attrname)
 
     # TODO(sayalilunkad): get rid of it once we switch the db model to using
     # custom types.
     @classmethod
     def modify_fields_from_db(cls, db_obj):
-        fields = super(SecurityGroupRule, cls).modify_fields_from_db(db_obj)
+        fields = super().modify_fields_from_db(db_obj)
         if 'remote_ip_prefix' in fields:
             fields['remote_ip_prefix'] = (
                 net_utils.AuthenticIPNetwork(fields['remote_ip_prefix']))

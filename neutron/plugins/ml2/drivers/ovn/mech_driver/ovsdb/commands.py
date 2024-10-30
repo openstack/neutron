@@ -79,7 +79,7 @@ def _add_gateway_chassis(api, txn, lrp_name, val):
         prio = len(val)
         uuid_list = []
         for chassis in val:
-            gwc_name = '%s_%s' % (lrp_name, chassis)
+            gwc_name = '{}_{}'.format(lrp_name, chassis)
             try:
                 gwc = idlutils.row_by_value(api.idl,
                                             'Gateway_Chassis',
@@ -104,7 +104,7 @@ def _add_gateway_chassis(api, txn, lrp_name, val):
 
 class CheckLivenessCommand(command.BaseCommand):
     def __init__(self, api):
-        super(CheckLivenessCommand, self).__init__(api)
+        super().__init__(api)
 
     def run_idl(self, txn):
         # txn.pre_commit responsible for updating nb_global.nb_cfg, but
@@ -117,7 +117,7 @@ class CheckLivenessCommand(command.BaseCommand):
 
 class AddLSwitchPortCommand(command.BaseCommand):
     def __init__(self, api, lport, lswitch, may_exist, **columns):
-        super(AddLSwitchPortCommand, self).__init__(api)
+        super().__init__(api)
         self.lport = lport
         self.lswitch = lswitch
         self.may_exist = may_exist
@@ -171,7 +171,7 @@ class AddLSwitchPortCommand(command.BaseCommand):
 
 class SetLSwitchPortCommand(command.BaseCommand):
     def __init__(self, api, lport, external_ids_update, if_exists, **columns):
-        super(SetLSwitchPortCommand, self).__init__(api)
+        super().__init__(api)
         self.lport = lport
         self.external_ids_update = external_ids_update
         self.columns = columns
@@ -273,7 +273,7 @@ class UpdateLSwitchPortQosOptionsCommand(command.BaseCommand):
 
 class DelLSwitchPortCommand(command.BaseCommand):
     def __init__(self, api, lport, lswitch, if_exists):
-        super(DelLSwitchPortCommand, self).__init__(api)
+        super().__init__(api)
         self.lport = lport
         self.lswitch = lswitch
         self.if_exists = if_exists
@@ -302,7 +302,7 @@ class DelLSwitchPortCommand(command.BaseCommand):
 
 class UpdateLRouterCommand(command.BaseCommand):
     def __init__(self, api, name, if_exists, **columns):
-        super(UpdateLRouterCommand, self).__init__(api)
+        super().__init__(api)
         self.name = name
         self.columns = columns
         self.if_exists = if_exists
@@ -432,7 +432,7 @@ class LrDelCommand(ovn_nb_commands.LrDelCommand):
 
 class AddLRouterPortCommand(command.BaseCommand):
     def __init__(self, api, name, lrouter, may_exist, **columns):
-        super(AddLRouterPortCommand, self).__init__(api)
+        super().__init__(api)
         self.name = name
         self.lrouter = lrouter
         self.may_exist = may_exist
@@ -471,7 +471,7 @@ class AddLRouterPortCommand(command.BaseCommand):
 
 class UpdateLRouterPortCommand(command.BaseCommand):
     def __init__(self, api, name, if_exists, **columns):
-        super(UpdateLRouterPortCommand, self).__init__(api)
+        super().__init__(api)
         self.name = name
         self.columns = columns
         self.if_exists = if_exists
@@ -496,7 +496,7 @@ class UpdateLRouterPortCommand(command.BaseCommand):
 
 class DelLRouterPortCommand(command.BaseCommand):
     def __init__(self, api, name, lrouter, if_exists):
-        super(DelLRouterPortCommand, self).__init__(api)
+        super().__init__(api)
         self.name = name
         self.lrouter = lrouter
         self.if_exists = if_exists
@@ -525,7 +525,7 @@ class DelLRouterPortCommand(command.BaseCommand):
 class SetLRouterPortInLSwitchPortCommand(command.BaseCommand):
     def __init__(self, api, lswitch_port, lrouter_port, is_gw_port,
                  if_exists, lsp_address):
-        super(SetLRouterPortInLSwitchPortCommand, self).__init__(api)
+        super().__init__(api)
         self.lswitch_port = lswitch_port
         self.lrouter_port = lrouter_port
         self.is_gw_port = is_gw_port
@@ -588,7 +588,7 @@ class SetLRouterMacAgeLimitCommand(command.BaseCommand):
 
 class AddACLCommand(command.BaseCommand):
     def __init__(self, api, lswitch, lport, **columns):
-        super(AddACLCommand, self).__init__(api)
+        super().__init__(api)
         self.lswitch = lswitch
         self.lport = lport
         self.columns = columns
@@ -609,7 +609,7 @@ class AddACLCommand(command.BaseCommand):
 
 class DelACLCommand(command.BaseCommand):
     def __init__(self, api, lswitch, lport, if_exists):
-        super(DelACLCommand, self).__init__(api)
+        super().__init__(api)
         self.lswitch = lswitch
         self.lport = lport
         self.if_exists = if_exists
@@ -637,7 +637,7 @@ class DelACLCommand(command.BaseCommand):
 
 class AddStaticRouteCommand(command.BaseCommand):
     def __init__(self, api, lrouter, maintain_bfd=False, **columns):
-        super(AddStaticRouteCommand, self).__init__(api)
+        super().__init__(api)
         self.lrouter = lrouter
         self.maintain_bfd = maintain_bfd
         self.columns = columns
@@ -678,7 +678,7 @@ class AddStaticRouteCommand(command.BaseCommand):
 
 class DelStaticRoutesCommand(command.BaseCommand):
     def __init__(self, api, lrouter, routes, if_exists):
-        super(DelStaticRoutesCommand, self).__init__(api)
+        super().__init__(api)
         self.lrouter = lrouter
         self.routes = routes
         self.if_exists = if_exists
@@ -727,7 +727,7 @@ class UpdateObjectExtIdsCommand(command.BaseCommand):
     field = 'name'
 
     def __init__(self, api, record, external_ids, if_exists):
-        super(UpdateObjectExtIdsCommand, self).__init__(api)
+        super().__init__(api)
         self.record = record
         self.external_ids = external_ids
         self.if_exists = if_exists
@@ -764,7 +764,7 @@ class UpdateLbExternalIds(UpdateObjectExtIdsCommand):
 class AddDHCPOptionsCommand(command.BaseCommand):
     def __init__(self, api, subnet_id, port_id=None, may_exist=True,
                  **columns):
-        super(AddDHCPOptionsCommand, self).__init__(api)
+        super().__init__(api)
         self.columns = columns
         self.may_exist = may_exist
         self.subnet_id = subnet_id
@@ -800,7 +800,7 @@ class AddDHCPOptionsCommand(command.BaseCommand):
 
 class DelDHCPOptionsCommand(command.BaseCommand):
     def __init__(self, api, row_uuid, if_exists=True):
-        super(DelDHCPOptionsCommand, self).__init__(api)
+        super().__init__(api)
         self.if_exists = if_exists
         self.row_uuid = row_uuid
 
@@ -817,7 +817,7 @@ class DelDHCPOptionsCommand(command.BaseCommand):
 class AddNATRuleInLRouterCommand(command.BaseCommand):
     # TODO(chandrav): Add unit tests, bug #1638715.
     def __init__(self, api, lrouter, **columns):
-        super(AddNATRuleInLRouterCommand, self).__init__(api)
+        super().__init__(api)
         self.lrouter = lrouter
         self.columns = columns
 
@@ -839,7 +839,7 @@ class DeleteNATRuleInLRouterCommand(command.BaseCommand):
     # TODO(chandrav): Add unit tests, bug #1638715.
     def __init__(self, api, lrouter, type, logical_ip, external_ip,
                  if_exists):
-        super(DeleteNATRuleInLRouterCommand, self).__init__(api)
+        super().__init__(api)
         self.lrouter = lrouter
         self.type = type
         self.logical_ip = logical_ip
@@ -867,7 +867,7 @@ class DeleteNATRuleInLRouterCommand(command.BaseCommand):
 
 class SetNATRuleInLRouterCommand(command.BaseCommand):
     def __init__(self, api, lrouter, nat_rule_uuid, **columns):
-        super(SetNATRuleInLRouterCommand, self).__init__(api)
+        super().__init__(api)
         self.lrouter = lrouter
         self.nat_rule_uuid = nat_rule_uuid
         self.columns = columns
@@ -890,7 +890,7 @@ class SetNATRuleInLRouterCommand(command.BaseCommand):
 class CheckRevisionNumberCommand(command.BaseCommand):
 
     def __init__(self, api, name, resource, resource_type, if_exists):
-        super(CheckRevisionNumberCommand, self).__init__(api)
+        super().__init__(api)
         self.name = name
         self.resource = resource
         self.resource_type = resource_type
@@ -967,7 +967,7 @@ class CheckRevisionNumberCommand(command.BaseCommand):
 class DeleteLRouterExtGwCommand(command.BaseCommand):
 
     def __init__(self, api, lrouter, if_exists, maintain_bfd=True):
-        super(DeleteLRouterExtGwCommand, self).__init__(api)
+        super().__init__(api)
         self.lrouter = lrouter
         self.if_exists = if_exists
         self.maintain_bfd = maintain_bfd
@@ -1020,7 +1020,7 @@ class DeleteLRouterExtGwCommand(command.BaseCommand):
 
 class SetLSwitchPortToVirtualTypeCommand(command.BaseCommand):
     def __init__(self, api, lport, vip, parent, if_exists):
-        super(SetLSwitchPortToVirtualTypeCommand, self).__init__(api)
+        super().__init__(api)
         self.lport = lport
         self.vip = vip
         self.parent = parent
@@ -1052,7 +1052,7 @@ class SetLSwitchPortToVirtualTypeCommand(command.BaseCommand):
 
 class UnsetLSwitchPortToVirtualTypeCommand(command.BaseCommand):
     def __init__(self, api, lport, parent, if_exists):
-        super(UnsetLSwitchPortToVirtualTypeCommand, self).__init__(api)
+        super().__init__(api)
         self.lport = lport
         self.parent = parent
         self.if_exists = if_exists

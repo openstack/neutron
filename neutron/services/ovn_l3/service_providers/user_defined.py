@@ -39,7 +39,7 @@ class UserDefined(base.L3ServiceProvider):
     ha_support = base.OPTIONAL
 
     def __init__(self, l3_plugin):
-        super(UserDefined, self).__init__(l3_plugin)
+        super().__init__(l3_plugin)
         self._user_defined_provider = __name__ + "." + self.__class__.__name__
 
     @property

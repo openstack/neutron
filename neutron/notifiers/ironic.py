@@ -37,7 +37,7 @@ IRONIC_CLIENT_VERSION = 1
 
 
 @registry.has_registry_receivers
-class Notifier(object):
+class Notifier:
 
     _instance = None
 

@@ -15,7 +15,7 @@
 import abc
 
 
-class BaseChecks(object, metaclass=abc.ABCMeta):
+class BaseChecks(metaclass=abc.ABCMeta):
 
     """Base class providing upgrade checks.
 

@@ -69,7 +69,7 @@ class SriovNicSwitchRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
     target = oslo_messaging.Target(version='1.5')
 
     def __init__(self, context, agent, sg_agent):
-        super(SriovNicSwitchRpcCallbacks, self).__init__()
+        super().__init__()
         self.context = context
         self.agent = agent
         self.sg_agent = sg_agent
@@ -154,7 +154,7 @@ class SriovNicSwitchRpcCallbacks(sg_rpc.SecurityGroupAgentRpcCallbackMixin):
 
 
 @profiler.trace_cls("rpc")
-class SriovNicSwitchAgent(object):
+class SriovNicSwitchAgent:
     def __init__(self, physical_devices_mappings, exclude_devices,
                  polling_interval, rp_bandwidths, rp_inventory_defaults,
                  rp_hypervisors):
@@ -514,7 +514,7 @@ class SriovNicSwitchAgent(object):
             self.iter_num = self.iter_num + 1
 
 
-class SriovNicAgentConfigParser(object):
+class SriovNicAgentConfigParser:
     def __init__(self):
         self.device_mappings = {}
         self.exclude_devices = {}

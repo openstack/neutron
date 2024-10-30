@@ -41,7 +41,7 @@ class MacvtapMechanismDriver(mech_agent.SimpleAgentMechanismDriverBase):
         vif_details = {portbindings.CAP_PORT_FILTER: False,
                        portbindings.VIF_DETAILS_CONNECTIVITY:
                            self.connectivity}
-        super(MacvtapMechanismDriver, self).__init__(
+        super().__init__(
             constants.AGENT_TYPE_MACVTAP,
             portbindings.VIF_TYPE_MACVTAP,
             vif_details)

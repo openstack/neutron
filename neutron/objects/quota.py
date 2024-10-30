@@ -61,7 +61,7 @@ class Reservation(base.NeutronDbObject):
     def create(self):
         deltas = self.resource_deltas
         with self.db_context_writer(self.obj_context):
-            super(Reservation, self).create()
+            super().create()
             if deltas:
                 for delta in deltas:
                     delta.reservation_id = self.id
@@ -104,8 +104,8 @@ class Reservation(base.NeutronDbObject):
             exp_expr)).group_by(
                 models.ResourceDelta.resource,
                 models.Reservation.expiration)
-        return dict((resource, total_reserved)
-                    for (resource, exp, total_reserved) in resv_query)
+        return {resource: total_reserved
+                for (resource, exp, total_reserved) in resv_query}
 
 
 @base.NeutronObjectRegistry.register

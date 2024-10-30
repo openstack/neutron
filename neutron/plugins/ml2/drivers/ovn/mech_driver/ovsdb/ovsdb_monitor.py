@@ -51,7 +51,7 @@ class BaseEvent(row_event.RowEvent):
 
     def __init__(self):
         self.event_name = self.__class__.__name__
-        super(BaseEvent, self).__init__(self.events, self.table, None)
+        super().__init__(self.events, self.table, None)
 
     @abc.abstractmethod
     def match_fn(self, event, row, old=None):
@@ -75,7 +75,7 @@ class ChassisEvent(row_event.RowEvent):
         self.l3_plugin = directory.get_plugin(constants.L3)
         table = 'Chassis'
         events = (self.ROW_CREATE, self.ROW_UPDATE, self.ROW_DELETE)
-        super(ChassisEvent, self).__init__(events, table, None)
+        super().__init__(events, table, None)
         self.event_name = 'ChassisEvent'
 
     def _get_ha_chassis_groups_within_azs(self, az_hints):
@@ -258,7 +258,7 @@ class PortBindingChassisUpdateEvent(row_event.RowEvent):
         self.driver = driver
         table = 'Port_Binding'
         events = (self.ROW_UPDATE,)
-        super(PortBindingChassisUpdateEvent, self).__init__(
+        super().__init__(
             events, table, None)
         self.event_name = self.__class__.__name__
 
@@ -489,7 +489,7 @@ class LogicalSwitchPortUpdateUpEvent(row_event.RowEvent):
         self.driver = driver
         table = 'Logical_Switch_Port'
         events = (self.ROW_UPDATE,)
-        super(LogicalSwitchPortUpdateUpEvent, self).__init__(
+        super().__init__(
             events, table, None)
         self.event_name = 'LogicalSwitchPortUpdateUpEvent'
 
@@ -519,7 +519,7 @@ class LogicalSwitchPortUpdateDownEvent(row_event.RowEvent):
         self.driver = driver
         table = 'Logical_Switch_Port'
         events = (self.ROW_UPDATE,)
-        super(LogicalSwitchPortUpdateDownEvent, self).__init__(
+        super().__init__(
             events, table, None)
         self.event_name = 'LogicalSwitchPortUpdateDownEvent'
 
@@ -666,7 +666,7 @@ class FIPAddDeleteEvent(row_event.RowEvent):
         self.driver = driver
         table = 'NAT'
         events = (self.ROW_CREATE, self.ROW_DELETE)
-        super(FIPAddDeleteEvent, self).__init__(
+        super().__init__(
             events, table, (('type', '=', 'dnat_and_snat'),))
         self.event_name = 'FIPAddDeleteEvent'
 
@@ -727,7 +727,7 @@ class HAChassisGroupRouterEvent(row_event.RowEvent):
 class OvnDbNotifyHandler(row_event.RowEventHandler):
     def __init__(self, driver):
         self.driver = driver
-        super(OvnDbNotifyHandler, self).__init__()
+        super().__init__()
         try:
             self._lock = self._RowEventHandler__lock
             self._watched_events = self._RowEventHandler__watched_events
@@ -752,7 +752,7 @@ class Ml2OvnIdlBase(connection.OvsdbIdl):
     def __init__(self, remote, schema, probe_interval=(), **kwargs):
         if probe_interval == ():  # None is a valid value to pass
             probe_interval = ovn_conf.get_ovn_ovsdb_probe_interval()
-        super(Ml2OvnIdlBase, self).__init__(
+        super().__init__(
             remote, schema, probe_interval=probe_interval, **kwargs)
 
     def set_table_condition(self, table_name, condition):
@@ -768,7 +768,7 @@ class Ml2OvnIdlBase(connection.OvsdbIdl):
 class BaseOvnIdl(Ml2OvnIdlBase):
     def __init__(self, remote, schema, **kwargs):
         self.notify_handler = row_event.RowEventHandler()
-        super(BaseOvnIdl, self).__init__(remote, schema, **kwargs)
+        super().__init__(remote, schema, **kwargs)
 
     @classmethod
     def from_server(cls, connection_string, helper):
@@ -797,7 +797,7 @@ class BaseOvnSbIdl(Ml2OvnIdlBase):
 class OvnIdl(BaseOvnIdl):
 
     def __init__(self, driver, remote, schema, **kwargs):
-        super(OvnIdl, self).__init__(remote, schema, **kwargs)
+        super().__init__(remote, schema, **kwargs)
         self.driver = driver
         self.notify_handler = OvnDbNotifyHandler(driver)
 
@@ -816,7 +816,7 @@ class OvnIdl(BaseOvnIdl):
 class OvnIdlDistributedLock(BaseOvnIdl):
 
     def __init__(self, driver, remote, schema, **kwargs):
-        super(OvnIdlDistributedLock, self).__init__(remote, schema, **kwargs)
+        super().__init__(remote, schema, **kwargs)
         self.driver = driver
         self.notify_handler = OvnDbNotifyHandler(driver)
         self._node_uuid = self.driver.node_uuid
@@ -870,7 +870,7 @@ class OvnIdlDistributedLock(BaseOvnIdl):
 class OvnNbIdl(OvnIdlDistributedLock):
 
     def __init__(self, driver, remote, schema):
-        super(OvnNbIdl, self).__init__(driver, remote, schema)
+        super().__init__(driver, remote, schema)
         self._lsp_update_up_event = LogicalSwitchPortUpdateUpEvent(driver)
         self._lsp_update_down_event = LogicalSwitchPortUpdateDownEvent(driver)
         self._lsp_create_event = LogicalSwitchPortCreateEvent(driver)
@@ -912,7 +912,7 @@ class OvnNbIdl(OvnIdlDistributedLock):
 class OvnSbIdl(OvnIdlDistributedLock):
 
     def __init__(self, driver, remote, schema, **kwargs):
-        super(OvnSbIdl, self).__init__(driver, remote, schema, **kwargs)
+        super().__init__(driver, remote, schema, **kwargs)
         self.notify_handler.watch_events([
             ChassisAgentDeleteEvent(self.driver),
             ChassisAgentDownEvent(self.driver),

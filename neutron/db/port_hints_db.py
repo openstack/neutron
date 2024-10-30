@@ -18,7 +18,7 @@ from oslo_serialization import jsonutils
 from neutron.objects.port.extensions import port_hints as phints_obj
 
 
-class PortHintsMixin(object):
+class PortHintsMixin:
     """Mixin class to add hints to a port"""
 
     def _process_create_port(self, context, data, result):

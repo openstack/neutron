@@ -303,7 +303,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
 
     def get_hosts_to_notify(self, context, router_id):
         """Returns all hosts to send notification about router update"""
-        hosts = super(L3_DVRsch_db_mixin, self).get_hosts_to_notify(
+        hosts = super().get_hosts_to_notify(
             context, router_id)
         router = self.get_router(context.elevated(), router_id)
         if router.get('distributed', False):
@@ -418,8 +418,7 @@ class L3_DVRsch_db_mixin(l3agent_sch_db.L3AgentSchedulerDbMixin):
 
     def _get_router_ids_for_agent(self, context, agent_db, router_ids,
                                   with_dvr=True):
-        result_set = set(super(L3_DVRsch_db_mixin,
-                               self)._get_router_ids_for_agent(
+        result_set = set(super()._get_router_ids_for_agent(
                                    context, agent_db, router_ids, with_dvr))
         if not with_dvr:
             return result_set

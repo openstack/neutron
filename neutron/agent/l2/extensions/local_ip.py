@@ -199,7 +199,7 @@ class LocalIPAgentExtension(l2_extension.L2AgentExtension):
             priority=10,
             nw_dst=local_ip,
             reg6=vlan,
-            dl_type="0x{:04x}".format(ether_types.ETH_TYPE_IP),
+            dl_type=f"0x{ether_types.ETH_TYPE_IP:04x}",
             actions='mod_dl_dst:{:s},'
                     'ct(commit,table={:d},zone={:d},nat(dst={:s}))'.format(
                         mac, ovs_constants.TRANSIENT_TABLE, vlan, dest_ip)
@@ -211,7 +211,7 @@ class LocalIPAgentExtension(l2_extension.L2AgentExtension):
             nw_src=dest_ip,
             reg6=vlan,
             ct_state="-trk",
-            dl_type="0x{:04x}".format(ether_types.ETH_TYPE_IP),
+            dl_type=f"0x{ether_types.ETH_TYPE_IP:04x}",
             actions='ct(table={:d},zone={:d},nat'.format(
                 ovs_constants.TRANSIENT_TABLE, vlan)
         )
@@ -225,8 +225,8 @@ class LocalIPAgentExtension(l2_extension.L2AgentExtension):
             nw_src=dest_ip,
             nw_dst=local_ip,
             reg6=vlan,
-            dl_type="0x{:04x}".format(ether_types.ETH_TYPE_IP),
-            actions='resubmit(,{:d})'.format(ovs_constants.TRANSIENT_TABLE)
+            dl_type=f"0x{ether_types.ETH_TYPE_IP:04x}",
+            actions=f'resubmit(,{ovs_constants.TRANSIENT_TABLE:d})'
         )
 
     def delete_local_ip_translation(self, vlan, local_ip, dest_ip, mac):

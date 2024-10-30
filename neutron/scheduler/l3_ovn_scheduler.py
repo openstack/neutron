@@ -29,7 +29,7 @@ OVN_SCHEDULER_CHANCE = 'chance'
 OVN_SCHEDULER_LEAST_LOADED = 'leastloaded'
 
 
-class OVNGatewayScheduler(object, metaclass=abc.ABCMeta):
+class OVNGatewayScheduler(metaclass=abc.ABCMeta):
 
     def __init__(self):
         pass
@@ -142,8 +142,9 @@ class OVNGatewayChanceScheduler(OVNGatewayScheduler):
 
     def select(self, nb_idl, sb_idl, gateway_name, candidates=None,
                existing_chassis=None, target_lrouter=None):
-        return self._schedule_gateway(nb_idl, sb_idl, gateway_name,
-              candidates, existing_chassis, target_lrouter)
+        return self._schedule_gateway(
+            nb_idl, sb_idl, gateway_name,
+            candidates, existing_chassis, target_lrouter)
 
     def _select_gateway_chassis(self, nb_idl, sb_idl, candidates,
                                 priority_min, priority_max, target_lrouter):

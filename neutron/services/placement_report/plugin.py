@@ -248,7 +248,7 @@ class PlacementReportPlugin(service_base.ServicePluginBase):
                 agent['agent_type'], agent['host'])
 
 
-class PlacementReporterAgents(object):
+class PlacementReporterAgents:
 
     # Yep, this is meant to depend on ML2.
     def __init__(self, ml2_plugin):

@@ -46,7 +46,7 @@ class SubPort(base.NeutronDbObject):
     fields_no_update = ['segmentation_type', 'segmentation_id', 'trunk_id']
 
     def to_dict(self):
-        _dict = super(SubPort, self).to_dict()
+        _dict = super().to_dict()
         # trunk_id is redundant in the subport dict.
         _dict.pop('trunk_id')
         return _dict
@@ -54,7 +54,7 @@ class SubPort(base.NeutronDbObject):
     def create(self):
         try:
             with self.db_context_writer(self.obj_context):
-                super(SubPort, self).create()
+                super().create()
         except o_db_exc.DBReferenceError as ex:
             if ex.key_table is None:
                 # NOTE(ivc): 'key_table' is provided by 'oslo.db' [1]
@@ -112,7 +112,7 @@ class Trunk(base.NeutronDbObject):
                 sub_ports = self.sub_ports
 
             try:
-                super(Trunk, self).create()
+                super().create()
             except o_db_exc.DBReferenceError:
                 raise n_exc.PortNotFound(port_id=self.port_id)
 
@@ -125,10 +125,10 @@ class Trunk(base.NeutronDbObject):
 
     def update(self, **kwargs):
         self.update_fields(kwargs)
-        super(Trunk, self).update()
+        super().update()
 
     def to_dict(self):
-        _dict = super(Trunk, self).to_dict()
+        _dict = super().to_dict()
         resource_extend.apply_funcs(trunk_def.TRUNKS, _dict, self.db_obj)
         return _dict
 

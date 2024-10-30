@@ -100,7 +100,7 @@ GW_INFO = collections.namedtuple('GatewayInfo', ['network_id', 'subnet_id',
                                                  'ip_version', 'ip_prefix'])
 
 
-class OVNClient(object):
+class OVNClient:
 
     def __init__(self, nb_idl, sb_idl):
         self._nb_idl = nb_idl
@@ -207,7 +207,7 @@ class OVNClient(object):
         subnet_opt = subnet_opts.get(opt)
         if not subnet_opt:
             return port_opt
-        return '{%s, %s}' % (subnet_opt[1:-1], port_opt[1:-1])
+        return '{{{}, {}}}'.format(subnet_opt[1:-1], port_opt[1:-1])
 
     def _get_port_dhcp_options(self, port, ip_version):
         """Return dhcp options for port.
@@ -989,8 +989,8 @@ class OVNClient(object):
         ).execute(check_error=True)
         all_lswitches = self._nb_idl.db_find_rows(
             'Logical_Switch').execute(check_error=True)
-        attached_lbs = set(
-            lb for item in all_lswitches for lb in item.load_balancer)
+        attached_lbs = {
+            lb for item in all_lswitches for lb in item.load_balancer}
 
         commands = []
         for lb in lbs:
@@ -1265,8 +1265,8 @@ class OVNClient(object):
             subnet_id = fixed_ip['subnet_id']
             subnet = self._plugin.get_subnet(context, subnet_id)
             cidr = netaddr.IPNetwork(subnet['cidr'])
-            networks.add("%s/%s" % (fixed_ip['ip_address'],
-                                    str(cidr.prefixlen)))
+            networks.add("{}/{}".format(fixed_ip['ip_address'],
+                                        str(cidr.prefixlen)))
 
             if subnet.get('ipv6_address_mode') and not ipv6_ra_configs and (
                     ipv6_ra_configs_supported):
@@ -2076,9 +2076,10 @@ class OVNClient(object):
                 ovn_conf.get_fdb_age_threshold())
         if utils.is_external_network(network):
             params['other_config'][
-                ovn_const.LS_OPTIONS_BROADCAST_ARPS_ROUTERS] = ('true'
-                if ovn_conf.is_broadcast_arps_to_all_routers_enabled() else
-                'false')
+                ovn_const.LS_OPTIONS_BROADCAST_ARPS_ROUTERS] = (
+                    'true'
+                    if ovn_conf.is_broadcast_arps_to_all_routers_enabled() else
+                    'false')
         return params
 
     def create_network(self, context, network):
@@ -2127,8 +2128,8 @@ class OVNClient(object):
                                                          **options))
         self._transaction(commands, txn=txn)
 
-    def _check_network_changes_in_ha_chassis_groups(self,
-            context, lswitch, lswitch_params, txn):
+    def _check_network_changes_in_ha_chassis_groups(
+            self, context, lswitch, lswitch_params, txn):
         """Check for changes in the HA Chassis Groups.
 
         Check for changes in the HA Chassis Groups upon a network update.
@@ -2345,11 +2346,11 @@ class OVNClient(object):
 
         routes = []
         if metadata_port_ip:
-            routes.append('%s,%s' % (
+            routes.append('{},{}'.format(
                 const.METADATA_V4_CIDR, metadata_port_ip))
 
         # Add subnet host_routes to 'classless_static_route' dhcp option
-        routes.extend(['%s,%s' % (route['destination'], route['nexthop'])
+        routes.extend(['{},{}'.format(route['destination'], route['nexthop'])
                        for route in subnet['host_routes']])
 
         if routes:
@@ -2731,8 +2732,8 @@ class OVNClient(object):
                       "for network %s", network_id)
             return False
 
-        port_subnet_ids = set(ip['subnet_id'] for ip in
-                              metadata_port['fixed_ips'])
+        port_subnet_ids = {ip['subnet_id'] for ip in
+                           metadata_port['fixed_ips']}
 
         # If this method is called from "create_subnet" or "update_subnet",
         # only the fixed IP address from this subnet should be updated in the
@@ -2751,7 +2752,7 @@ class OVNClient(object):
             network_id=[network_id], ip_version=[const.IP_VERSION_4],
             enable_dhcp=[True]))
 
-        subnet_ids = set(s['id'] for s in subnets)
+        subnet_ids = {s['id'] for s in subnets}
 
         # Find all subnets where metadata port doesn't have an IP in and
         # allocate one.

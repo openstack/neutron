@@ -34,7 +34,7 @@ SUPPORTED_FILTERS = {
 SUPPORTED_FILTER_KEYS = set(SUPPORTED_FILTERS.keys())
 
 
-class IpAvailabilityMixin(object):
+class IpAvailabilityMixin:
     """Mixin class to query for IP availability."""
 
     # Columns common to all queries

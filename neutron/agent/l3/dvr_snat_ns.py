@@ -25,11 +25,11 @@ class SnatNamespace(namespaces.Namespace):
     def __init__(self, router_id, agent_conf, driver, use_ipv6):
         self.router_id = router_id
         name = self.get_snat_ns_name(router_id)
-        super(SnatNamespace, self).__init__(
+        super().__init__(
             name, agent_conf, driver, use_ipv6)
 
     def create(self):
-        super(SnatNamespace, self).create()
+        super().create()
         # Set nonlocal_bind to 1 to allow setup applications in HA mode
         # for example ipsec from VPNaaS
         ip_lib.set_ip_nonlocal_bind_for_namespace(self.name, 1)
@@ -58,4 +58,4 @@ class SnatNamespace(namespaces.Namespace):
 
         # TODO(mrsmith): delete ext-gw-port
         LOG.debug('DVR: destroy snat ns: %s', self.name)
-        super(SnatNamespace, self).delete()
+        super().delete()

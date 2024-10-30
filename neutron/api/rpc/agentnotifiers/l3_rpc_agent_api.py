@@ -35,7 +35,7 @@ LOG = logging.getLogger(__name__)
 AGENT_NOTIFY_MAX_ATTEMPTS = 2
 
 
-class L3AgentNotifyAPI(object):
+class L3AgentNotifyAPI:
     """API for plugin to notify L3 agent."""
 
     def __init__(self, topic=topics.L3_AGENT):

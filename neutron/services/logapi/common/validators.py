@@ -83,7 +83,7 @@ def validate_log_type_for_port(log_type, port):
     return False
 
 
-class ResourceValidateRequest(object):
+class ResourceValidateRequest:
 
     _instance = None
 

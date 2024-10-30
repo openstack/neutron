@@ -70,7 +70,7 @@ class AddressGroupDbMixin(ag_ext.AddressGroupPluginBase):
         normalized_addrs = set()
         for addr in req_addrs:
             addr = netaddr.IPNetwork(addr)
-            normalized_addr = "%s/%s" % (addr.network, addr.prefixlen)
+            normalized_addr = "{}/{}".format(addr.network, addr.prefixlen)
             normalized_addrs.add(normalized_addr)
         addrs_in_ag = []
         addrs_not_in_ag = []

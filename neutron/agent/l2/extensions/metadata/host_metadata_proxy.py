@@ -89,7 +89,7 @@ backend backend_{{ instance.uuid }}_{{ instance.provider_ip }}
 """)
 
 
-class ProxyInstance(object):
+class ProxyInstance:
     def __init__(self, instance_id, provider_ip, project_id):
         self.uuid = instance_id
         self.provider_ip = provider_ip
@@ -98,7 +98,7 @@ class ProxyInstance(object):
             cfg.CONF.METADATA, self.uuid)
 
 
-class HostMedataHAProxyDaemonMonitor(object):
+class HostMedataHAProxyDaemonMonitor:
     """Manage the data and state of a host metadata haproxy process."""
 
     def __init__(self, process_monitor, uuid=None,
@@ -114,7 +114,7 @@ class HostMedataHAProxyDaemonMonitor(object):
             cfg.CONF.state_path, self._host_id,
             'haproxy.conf', True)
         buf = io.StringIO()
-        meta_api = "%s:%s" % (
+        meta_api = "{}:{}".format(
             cfg.CONF.METADATA.nova_metadata_host,
             cfg.CONF.METADATA.nova_metadata_port)
 
@@ -138,7 +138,7 @@ class HostMedataHAProxyDaemonMonitor(object):
 
         buf.write('%s' % _HOST_PATH_PROXY_TEMPLATE.render(
             log_level='debug',
-            log_tag="%s-%s" % (PROXY_SERVICE_NAME, self._host_id),
+            log_tag="{}-{}".format(PROXY_SERVICE_NAME, self._host_id),
             user=username,
             group=groupname,
             maxconn=1024,

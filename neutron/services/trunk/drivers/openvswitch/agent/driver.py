@@ -36,7 +36,7 @@ class OVSTrunkSkeleton(agent.TrunkSkeleton):
     """
 
     def __init__(self, ovsdb_handler):
-        super(OVSTrunkSkeleton, self).__init__()
+        super().__init__()
         self.ovsdb_handler = ovsdb_handler
         registry.unsubscribe(self.handle_trunks, resources.TRUNK)
 

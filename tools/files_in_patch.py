@@ -47,7 +47,7 @@ def parse_input(input_file):
 def prune_unwanted_names():
     global file_names
 
-    unwanted_names = set(['/dev/null'])
+    unwanted_names = {'/dev/null'}
 
     for curr_file_name in file_names:
         # ignore files that end in '.orig' as long as non-.orig exists
@@ -70,11 +70,11 @@ if __name__ == '__main__':
     else:
         for curr_input_name in sys.argv[1:]:
             try:
-                with open(curr_input_name, 'r') as curr_input_file:
+                with open(curr_input_name) as curr_input_file:
                     parse_input(curr_input_file)
-            except IOError as e_str:
+            except OSError as e_str:
                 sys.stderr.write(
-                    "Cannot open {}: {}\n".format(curr_input_name, e_str))
+                    f"Cannot open {curr_input_name}: {e_str}\n")
                 sys.exit(255)
 
     prune_unwanted_names()

@@ -36,7 +36,7 @@ class TrafficControlClassNotFound(RuntimeError):
     def __init__(self, message=None, classid=None, namespace=None):
         message = message or self.message % {
             'classid': classid, 'namespace': namespace}
-        super(TrafficControlClassNotFound, self).__init__(message)
+        super().__init__(message)
 
 
 @privileged.default.entrypoint

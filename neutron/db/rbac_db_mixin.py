@@ -27,7 +27,7 @@ from neutron.objects import base as base_obj
 from neutron.objects import rbac as rbac_obj
 
 
-class RbacPluginMixin(object):
+class RbacPluginMixin:
     """Plugin mixin that implements the RBAC DB operations."""
 
     object_type_cache = {}

@@ -21,7 +21,7 @@ from neutron._i18n import _
 LOG = logging.getLogger(__name__)
 
 
-class ItemAllocator(object):
+class ItemAllocator:
     """Manages allocation of items from a pool
 
     Some of the allocations such as link local addresses used for routing
@@ -120,8 +120,9 @@ class ItemAllocator(object):
             self._write_allocations()
 
     def _write_allocations(self):
-        current = ["%s,%s\n" % (k, v) for k, v in self.allocations.items()]
-        remembered = ["%s,%s\n" % (k, v) for k, v in self.remembered.items()]
+        current = ["{},{}\n".format(k, v) for k, v in self.allocations.items()]
+        remembered = ["{},{}\n".format(k, v)
+                      for k, v in self.remembered.items()]
         current.extend(remembered)
         self._write(current)
 

@@ -25,7 +25,7 @@ EVENT_UPDATE = 'update'
 CORE_RESOURCES = [NETWORK, PORT]
 
 
-class CoreResourceExtension(object, metaclass=abc.ABCMeta):
+class CoreResourceExtension(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def process_fields(self, context, resource_type, event_type,

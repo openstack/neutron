@@ -81,7 +81,7 @@ class AgentSchedulerDbMixin(agents_db.AgentDbMixin):
 
     def update_agent(self, context, id, agent):
         original_agent = self.get_agent(context, id)
-        result = super(AgentSchedulerDbMixin, self).update_agent(
+        result = super().update_agent(
             context, id, agent)
         agent_data = agent['agent']
         agent_notifier = self.agent_notifiers.get(original_agent['agent_type'])

@@ -56,7 +56,7 @@ def _get_memory_cache_region(expiration_time=5):
     return _get_cache_region(conf)
 
 
-class cache_method_results(object):
+class cache_method_results:
     """This decorator is intended for object methods only."""
 
     def __init__(self, func):

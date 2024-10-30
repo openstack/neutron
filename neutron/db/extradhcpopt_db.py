@@ -23,7 +23,7 @@ from neutron.objects import ports as port_obj
 
 
 @resource_extend.has_resource_extenders
-class ExtraDhcpOptMixin(object):
+class ExtraDhcpOptMixin:
     """Mixin class to add extra options to the DHCP opts file
     and associate them to a port.
     """

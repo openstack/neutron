@@ -14,7 +14,7 @@
 #    under the License.
 
 
-class BasePollingManager(object):
+class BasePollingManager:
 
     def __init__(self):
         self._force_polling = False

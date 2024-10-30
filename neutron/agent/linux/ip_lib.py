@@ -110,7 +110,7 @@ class DADFailed(AddressNotReady):
 InvalidArgument = privileged.InvalidArgument
 
 
-class SubProcessBase(object):
+class SubProcessBase:
     def __init__(self, namespace=None,
                  log_fail_as_error=True):
         self.namespace = namespace
@@ -155,7 +155,7 @@ class SubProcessBase(object):
 
 class IPWrapper(SubProcessBase):
     def __init__(self, namespace=None):
-        super(IPWrapper, self).__init__(namespace=namespace)
+        super().__init__(namespace=namespace)
         self.netns = IpNetnsCommand(self)
 
     def device(self, name):
@@ -344,7 +344,7 @@ class IPWrapper(SubProcessBase):
 
 class IPDevice(SubProcessBase):
     def __init__(self, name, namespace=None, kind='link'):
-        super(IPDevice, self).__init__(namespace=namespace)
+        super().__init__(namespace=namespace)
         self._name = name
         self.kind = kind
         self.link = IpLinkCommand(self)
@@ -360,8 +360,8 @@ class IPDevice(SubProcessBase):
         return self.name
 
     def __repr__(self):
-        return "<IPDevice(name=%s, namespace=%s)>" % (self._name,
-                                                      self.namespace)
+        return "<IPDevice(name={}, namespace={})>".format(self._name,
+                                                          self.namespace)
 
     def exists(self):
         """Return True if the device exists in the namespace."""
@@ -441,7 +441,7 @@ class IPDevice(SubProcessBase):
         self._name = name
 
 
-class IpDeviceCommandBase(object):
+class IpDeviceCommandBase:
 
     def __init__(self, parent):
         self._parent = parent
@@ -639,7 +639,7 @@ class IpAddrCommand(IpDeviceCommandBase):
 class IpRouteCommand(IpDeviceCommandBase):
 
     def __init__(self, parent, table=None):
-        super(IpRouteCommand, self).__init__(parent)
+        super().__init__(parent)
         self._table = table
 
     def add_gateway(self, gateway, metric=None, table=None, scope='global'):
@@ -693,7 +693,7 @@ class IpRouteCommand(IpDeviceCommandBase):
 
 class IPRoute(SubProcessBase):
     def __init__(self, namespace=None, table=None):
-        super(IPRoute, self).__init__(namespace=namespace)
+        super().__init__(namespace=namespace)
         self.name = None
         self.route = IpRouteCommand(self, table=table)
 
@@ -743,7 +743,7 @@ class IpNeighCommand(IpDeviceCommandBase):
                 self.delete(entry['dst'], entry['lladdr'])
 
 
-class IpNetnsCommand(object):
+class IpNetnsCommand:
 
     def __init__(self, parent):
         self._parent = parent
@@ -1286,7 +1286,7 @@ def _parse_ip_rule(rule, ip_version):
     fwmark = rule['attrs'].get('FRA_FWMARK')
     if fwmark:
         fwmask = rule['attrs'].get('FRA_FWMASK')
-        parsed_rule['fwmark'] = '{0:#x}/{1:#x}'.format(fwmark, fwmask)
+        parsed_rule['fwmark'] = f'{fwmark:#x}/{fwmask:#x}'
     iifname = rule['attrs'].get('FRA_IIFNAME')
     if iifname:
         parsed_rule['iif'] = iifname
@@ -1615,7 +1615,7 @@ def list_ip_routes(namespace, ip_version, scope=None, via=None, table=None,
     for route in routes:
         cidr = linux_utils.get_attr(route, 'RTA_DST')
         if cidr:
-            cidr = '%s/%s' % (cidr, route['dst_len'])
+            cidr = '{}/{}'.format(cidr, route['dst_len'])
         else:
             cidr = constants.IP_ANY[ip_version]
         table = int(linux_utils.get_attr(route, 'RTA_TABLE'))

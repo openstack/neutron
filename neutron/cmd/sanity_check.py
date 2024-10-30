@@ -54,7 +54,7 @@ class BoolOptCallback(cfg.BoolOpt):
         if 'default' not in kwargs:
             kwargs['default'] = False
         self.callback = callback
-        super(BoolOptCallback, self).__init__(name, **kwargs)
+        super().__init__(name, **kwargs)
 
 
 def check_ovs_vxlan():

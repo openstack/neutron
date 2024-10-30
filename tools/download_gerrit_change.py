@@ -30,7 +30,7 @@ TIMEOUT = 10
 def fetch(change, output_patch=None, url=GERRIT_URL, timeout=TIMEOUT):
     params = {'download': None}
     r = requests.get(
-        url='{}/changes/{}/revisions/current/patch'.format(url, change),
+        url=f'{url}/changes/{change}/revisions/current/patch',
         params=params,
         timeout=timeout)
     r.raise_for_status()

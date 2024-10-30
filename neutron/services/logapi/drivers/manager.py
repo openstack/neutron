@@ -44,11 +44,11 @@ def _get_param(args, kwargs, name, index):
             raise log_exc.LogapiDriverException(exception_msg=msg)
 
 
-class ResourceCallBackBase(object):
+class ResourceCallBackBase:
 
     def __new__(cls, *args, **kwargs):
         if not hasattr(cls, '_instance'):
-            cls._instance = super(ResourceCallBackBase, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
         return cls._instance
 
     def __init__(self, resource, push_api):
@@ -62,7 +62,7 @@ class ResourceCallBackBase(object):
         pass
 
 
-class LoggingServiceDriverManager(object):
+class LoggingServiceDriverManager:
 
     def __init__(self):
         self._drivers = set()

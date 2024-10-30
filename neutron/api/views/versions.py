@@ -23,7 +23,7 @@ def get_view_builder(req):
     return ViewBuilder(base_url)
 
 
-class ViewBuilder(object):
+class ViewBuilder:
 
     def __init__(self, base_url):
         """Object initialization.

@@ -210,7 +210,7 @@ def populate_flow_common(direction, flow_template, port):
     """Initialize common flow fields."""
     if direction == n_consts.INGRESS_DIRECTION:
         flow_template['table'] = ovs_consts.RULES_INGRESS_TABLE
-        flow_template['actions'] = "output:{:d}".format(port.ofport)
+        flow_template['actions'] = f"output:{port.ofport:d}"
     elif direction == n_consts.EGRESS_DIRECTION:
         flow_template['table'] = ovs_consts.RULES_EGRESS_TABLE
         # Traffic can be both ingress and egress, check that no ingress rules
@@ -241,10 +241,10 @@ def create_port_range_flows(flow_template, rule):
     if protocol is None:
         return []
     flows = []
-    src_port_match = '{:s}_src'.format(protocol)
+    src_port_match = f'{protocol:s}_src'
     src_port_min = rule.get('source_port_range_min')
     src_port_max = rule.get('source_port_range_max')
-    dst_port_match = '{:s}_dst'.format(protocol)
+    dst_port_match = f'{protocol:s}_dst'
     dst_port_min = rule.get('port_range_min')
     dst_port_max = rule.get('port_range_max')
 

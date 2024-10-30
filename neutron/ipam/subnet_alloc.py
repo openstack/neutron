@@ -39,7 +39,7 @@ class SubnetAllocator(driver.Pool):
     """
 
     def __init__(self, subnetpool, context):
-        super(SubnetAllocator, self).__init__(subnetpool, context)
+        super().__init__(subnetpool, context)
         self._sp_helper = SubnetPoolHelper()
 
     def _lock_subnetpool(self):
@@ -240,7 +240,7 @@ class IpamSubnetGroup(driver.SubnetGroup):
         raise ipam_exc.IpAddressGenerationFailureAllSubnets()
 
 
-class SubnetPoolReader(object):
+class SubnetPoolReader:
     '''Class to assist with reading a subnetpool, loading defaults, and
        inferring IP version from prefix list. Provides a common way of
        reading a stored model or a create request with default table
@@ -369,7 +369,7 @@ class SubnetPoolReader(object):
         return [x.cidr for x in ip_set.iter_cidrs()]
 
 
-class SubnetPoolHelper(object):
+class SubnetPoolHelper:
 
     _PREFIX_VERSION_INFO = {4: {'max_prefixlen': constants.IPv4_BITS,
                                 'wildcard': '0.0.0.0',

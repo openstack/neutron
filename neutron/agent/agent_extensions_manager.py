@@ -24,7 +24,7 @@ class AgentExtensionsManager(stevedore.named.NamedExtensionManager):
     """Manage agent extensions."""
 
     def __init__(self, conf, namespace):
-        super(AgentExtensionsManager, self).__init__(
+        super().__init__(
             namespace, conf.agent.extensions,
             invoke_on_load=True, name_order=True)
         LOG.info("Loaded agent extensions: %s", self.names())

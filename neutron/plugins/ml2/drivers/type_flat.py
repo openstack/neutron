@@ -43,7 +43,7 @@ class FlatTypeDriver(helpers.BaseTypeDriver):
     """
 
     def __init__(self):
-        super(FlatTypeDriver, self).__init__()
+        super().__init__()
         self._parse_networks(cfg.CONF.ml2_type_flat.flat_networks)
 
     def _parse_networks(self, entries):
@@ -129,7 +129,7 @@ class FlatTypeDriver(helpers.BaseTypeDriver):
                     physical_network)
 
     def get_mtu(self, physical_network):
-        seg_mtu = super(FlatTypeDriver, self).get_mtu()
+        seg_mtu = super().get_mtu()
         mtu = []
         if seg_mtu > 0:
             mtu.append(seg_mtu)

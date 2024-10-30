@@ -58,7 +58,7 @@ class NetworkNamespaceNotFound(RuntimeError):
     message = _("Network namespace %(netns_name)s could not be found.")
 
     def __init__(self, netns_name):
-        super(NetworkNamespaceNotFound, self).__init__(
+        super().__init__(
             self.message % {'netns_name': netns_name})
 
 
@@ -74,7 +74,7 @@ class NetworkInterfaceNotFound(RuntimeError):
         # raised exception.
         message = message or self.message % {
             'device': device, 'namespace': namespace}
-        super(NetworkInterfaceNotFound, self).__init__(message)
+        super().__init__(message)
 
 
 class InterfaceOperationNotSupported(RuntimeError):
@@ -89,7 +89,7 @@ class InterfaceOperationNotSupported(RuntimeError):
         # raised exception.
         message = message or self.message % {
             'device': device, 'namespace': namespace}
-        super(InterfaceOperationNotSupported, self).__init__(message)
+        super().__init__(message)
 
 
 class InvalidArgument(RuntimeError):
@@ -104,7 +104,7 @@ class InvalidArgument(RuntimeError):
         # raised exception.
         message = message or self.message % {'device': device,
                                              'namespace': namespace}
-        super(InvalidArgument, self).__init__(message)
+        super().__init__(message)
 
 
 class IpAddressAlreadyExists(RuntimeError):
@@ -117,7 +117,7 @@ class IpAddressAlreadyExists(RuntimeError):
         # and will call it always with passing only message from originally
         # raised exception.
         message = message or self.message % {'ip': ip, 'device': device}
-        super(IpAddressAlreadyExists, self).__init__(message)
+        super().__init__(message)
 
 
 class InterfaceAlreadyExists(RuntimeError):
@@ -130,7 +130,7 @@ class InterfaceAlreadyExists(RuntimeError):
         # and will call it always with passing only message from originally
         # raised exception.
         message = message or self.message % {'device': device}
-        super(InterfaceAlreadyExists, self).__init__(message)
+        super().__init__(message)
 
 
 def _make_route_dict(destination, nexthop, device, scope):
@@ -689,8 +689,8 @@ def list_ip_rules(namespace, ip_version, match=None, **kwargs):
                 family=_IP_VERSION_FAMILY_MAP[ip_version],
                 match=match, **kwargs))
             for rule in rules:
-                rule['attrs'] = dict(
-                    (item[0], item[1]) for item in rule['attrs'])
+                rule['attrs'] = {
+                    item[0]: item[1] for item in rule['attrs']}
             return rules
 
     except OSError as e:

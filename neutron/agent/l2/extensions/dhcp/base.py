@@ -41,7 +41,7 @@ IPV6_STR = "v6"
 class DHCPResponderBase(base_oskenapp.BaseNeutronAgentOSKenApp):
 
     def __init__(self, agent_api, ext_api, *args, version=IPV4_STR, **kwargs):
-        super(DHCPResponderBase, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.agent_api = agent_api
         self.int_br = self.agent_api.request_int_br()
         self.ext_api = ext_api

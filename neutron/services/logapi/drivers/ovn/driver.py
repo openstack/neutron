@@ -150,7 +150,7 @@ class OVNDriver(base.DriverBase):
                 acl_changes += 1
         msg = "Cleared %d, Not found %d (out of %d visited) ACLs"
         if log_name:
-            msg += " for network log {}".format(log_name)
+            msg += f" for network log {log_name}"
         LOG.info(msg, acl_changes, acl_absents, acl_visits)
 
     def _set_acls_log(self, pgs, context, ovn_txn, actions_enabled, log_name):
@@ -158,8 +158,8 @@ class OVNDriver(base.DriverBase):
         for pg in pgs:
             meter_name = self.meter_name
             if pg["name"] != ovn_const.OVN_DROP_PORT_GROUP_NAME:
-                sg = sg_obj.SecurityGroup.get_sg_by_id(context,
-                    pg["external_ids"][ovn_const.OVN_SG_EXT_ID_KEY])
+                sg = sg_obj.SecurityGroup.get_sg_by_id(
+                    context, pg["external_ids"][ovn_const.OVN_SG_EXT_ID_KEY])
                 if not sg:
                     LOG.warning("Port Group %s is missing a corresponding "
                                 "security group, skipping its network log "
@@ -331,9 +331,9 @@ class OVNDriver(base.DriverBase):
             acls_to_remove = [{"name": pgs[0]["name"], "acls": acls_to_check}]
             self._remove_acls_log(acls_to_remove, ovn_txn)
         else:
-            all_events = set([log.event for log in other_logs
-                              if (not log.resource_id or
-                                  log.resource_id == log_obj.resource_id)])
+            all_events = {log.event for log in other_logs
+                          if (not log.resource_id or
+                              log.resource_id == log_obj.resource_id)}
             if (log_const.ALL_EVENT not in all_events and
                     log_obj.event not in all_events):
                 self._remove_acls_log(pgs, ovn_txn)

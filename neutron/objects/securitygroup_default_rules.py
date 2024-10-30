@@ -41,8 +41,7 @@ class SecurityGroupDefaultRule(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_to_db(cls, fields):
-        result = super(SecurityGroupDefaultRule,
-                       cls).modify_fields_to_db(fields)
+        result = super().modify_fields_to_db(fields)
         remote_ip_prefix = result.get('remote_ip_prefix')
         if remote_ip_prefix:
             result['remote_ip_prefix'] = cls.filter_to_str(remote_ip_prefix)
@@ -50,8 +49,7 @@ class SecurityGroupDefaultRule(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
-        fields = super(SecurityGroupDefaultRule,
-                       cls).modify_fields_from_db(db_obj)
+        fields = super().modify_fields_from_db(db_obj)
         if 'remote_ip_prefix' in fields:
             fields['remote_ip_prefix'] = (
                 net_utils.AuthenticIPNetwork(fields['remote_ip_prefix']))

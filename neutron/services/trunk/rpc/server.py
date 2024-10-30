@@ -55,7 +55,7 @@ def trunk_by_port_provider(resource, port_id, context, **kwargs):
     return trunk_objects.Trunk.get_object(context, port_id=port_id)
 
 
-class TrunkSkeleton(object):
+class TrunkSkeleton:
     """Skeleton proxy code for agent->server communication."""
 
     # API version history:
@@ -191,7 +191,7 @@ class TrunkSkeleton(object):
         return port
 
 
-class TrunkStub(object):
+class TrunkStub:
     """Stub proxy code for server->agent communication."""
 
     def __init__(self):

@@ -43,7 +43,7 @@ from neutron.privileged.agent.linux import utils as priv_utils
 LOG = logging.getLogger(__name__)
 
 
-class RootwrapDaemonHelper(object):
+class RootwrapDaemonHelper:
     __client = None
     __lock = threading.Lock()
 
@@ -237,18 +237,18 @@ def _get_conf_base(cfg_root, uuid, ensure_conf_dir):
 def get_conf_file_name(cfg_root, uuid, cfg_file, ensure_conf_dir=False):
     """Returns the file name for a given kind of config file."""
     conf_base = _get_conf_base(cfg_root, uuid, ensure_conf_dir)
-    return "%s.%s" % (conf_base, cfg_file)
+    return "{}.{}".format(conf_base, cfg_file)
 
 
 def get_value_from_file(filename, converter=None):
 
     try:
-        with open(filename, 'r') as f:
+        with open(filename) as f:
             try:
                 return converter(f.read()) if converter else f.read()
             except ValueError:
                 LOG.error('Unable to convert value in %s', filename)
-    except IOError as error:
+    except OSError as error:
         LOG.debug('Unable to access %(filename)s; Error: %(error)s',
                   {'filename': filename, 'error': error})
 
@@ -318,9 +318,9 @@ def get_cmdline_from_pid(pid):
     # NOTE(jh): Even after the above check, the process may terminate
     # before the open below happens
     try:
-        with open('/proc/%s/cmdline' % pid, 'r') as f:
+        with open('/proc/%s/cmdline' % pid) as f:
             cmdline = f.readline().split('\0')[:-1]
-    except IOError:
+    except OSError:
         return []
 
     # NOTE(slaweq): sometimes it may happen that values in
@@ -466,8 +466,8 @@ class UnixDomainWSGIServer(wsgi.Server):
         self._socket = None
         self._launcher = None
         self._server = None
-        super(UnixDomainWSGIServer, self).__init__(name, disable_ssl=True,
-                                                   num_threads=num_threads)
+        super().__init__(name, disable_ssl=True,
+                         num_threads=num_threads)
 
     def start(self, application, file_socket, workers, backlog, mode=None):
         self._socket = eventlet.listen(file_socket,

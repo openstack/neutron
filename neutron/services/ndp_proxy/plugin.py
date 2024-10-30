@@ -61,7 +61,7 @@ class NDPProxyPlugin(l3_ndp_proxy.NDPProxyBase):
     __filter_validation_support = True
 
     def __init__(self):
-        super(NDPProxyPlugin, self).__init__()
+        super().__init__()
         self.push_api = resources_rpc.ResourcesPushRpcApi()
         self.l3_plugin = directory.get_plugin(constants.L3)
         self.core_plugin = directory.get_plugin()
@@ -117,8 +117,8 @@ class NDPProxyPlugin(l3_ndp_proxy.NDPProxyBase):
                 (f.get('ip_address') and
                  netaddr.IPNetwork(f['ip_address']).version == V6)]:
             return
-        subnet_ids = set(f['subnet_id'] for f in ext_ips
-                         if f.get('subnet_id'))
+        subnet_ids = {f['subnet_id'] for f in ext_ips
+                      if f.get('subnet_id')}
         for subnet_id in subnet_ids:
             if self.core_plugin.get_subnet(
                     context, subnet_id)['ip_version'] == V6:

@@ -300,9 +300,9 @@ class ExtraGatewaysDbOnlyMixin(l3_gwmode_db.L3_NAT_dbonly_mixin):
                         'is not specified in the request') % net_id)
 
             for gw_port in gw_ports:
-                current_set = set([a.ip_address for a in gw_port['fixed_ips']])
-                target_set = set([netaddr.IPAddress(d['ip_address'])
-                                  for d in gw_info['external_fixed_ips']])
+                current_set = {a.ip_address for a in gw_port['fixed_ips']}
+                target_set = {netaddr.IPAddress(d['ip_address'])
+                              for d in gw_info['external_fixed_ips']}
                 # If there is an intersection - it's a partial match.
                 if current_set & target_set:
                     part_matched_port_ids[gw_port['id']] = gw_info

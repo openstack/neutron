@@ -21,7 +21,7 @@ from neutron_lib.callbacks import resources
 
 
 @registry.has_registry_receivers
-class DriverBase(object):
+class DriverBase:
 
     def __init__(self, name, interfaces, segmentation_types,
                  agent_type=None, can_trunk_bound_port=False):

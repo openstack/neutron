@@ -19,7 +19,7 @@ from neutron.api import extensions
 from neutron.pecan_wsgi.controllers import utils
 
 
-class ExtensionsController(object):
+class ExtensionsController:
 
     @utils.expose()
     def _lookup(self, alias, *remainder):
@@ -43,7 +43,7 @@ class ExtensionsController(object):
         pecan.abort(404)
 
 
-class ExtensionController(object):
+class ExtensionController:
 
     def __init__(self, alias):
         self.alias = alias

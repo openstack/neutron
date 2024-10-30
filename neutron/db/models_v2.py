@@ -30,7 +30,7 @@ from neutron.db import rbac_db_models
 
 
 # NOTE(ralonsoh): move to neutron_lib.db.model_base
-class HasInUse(object):
+class HasInUse:
     """NeutronBaseV2 mixin, to add the flag "in_use" to a DB model.
 
     The goal of this class is to allow users lock specific database rows with
@@ -87,7 +87,7 @@ class IPAllocationPool(model_base.BASEV2, model_base.HasId):
     last_ip = sa.Column(sa.String(64), nullable=False)
 
     def __repr__(self):
-        return "%s - %s" % (self.first_ip, self.last_ip)
+        return "{} - {}".format(self.first_ip, self.last_ip)
 
 
 class IPAllocation(model_base.BASEV2):
@@ -107,7 +107,7 @@ class IPAllocation(model_base.BASEV2):
     revises_on_change = ('port', )
 
 
-class Route(object):
+class Route:
     """mixin of a route."""
 
     destination = sa.Column(sa.String(64), nullable=False, primary_key=True)
@@ -164,7 +164,7 @@ class Port(standard_attr.HasStandardAttributes, model_base.BASEV2,
                  network_id=None, mac_address=None, admin_state_up=None,
                  status=None, device_id=None, device_owner=None,
                  fixed_ips=None, **kwargs):
-        super(Port, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.id = id
         self.project_id = project_id or tenant_id
         self.name = name

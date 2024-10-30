@@ -41,11 +41,11 @@ class MetadataAgentOvnSbIdl(ovsdb_monitor.OvnIdl):
         for table in tables:
             helper.register_table(table)
         try:
-            super(MetadataAgentOvnSbIdl, self).__init__(
+            super().__init__(
                 None, connection_string, helper, leader_only=False)
         except TypeError:
             # TODO(twilson) We can remove this when we require ovs>=2.12.0
-            super(MetadataAgentOvnSbIdl, self).__init__(
+            super().__init__(
                 None, connection_string, helper)
         if chassis:
             for table in set(tables).intersection({'Chassis',
@@ -69,7 +69,7 @@ class MetadataAgentOvnSbIdl(ovsdb_monitor.OvnIdl):
         pass
 
 
-class MetadataAgentOvsIdl(object):
+class MetadataAgentOvsIdl:
 
     def start(self):
         connection_string = config.cfg.CONF.ovs.ovsdb_connection

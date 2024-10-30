@@ -58,7 +58,7 @@ def enforce_port_deletion_rules(resource, event, trigger, payload=None):
                                                trunk_id=trunk_obj.id)
 
 
-class TrunkPortValidator(object):
+class TrunkPortValidator:
 
     def __init__(self, port_id):
         self.port_id = port_id
@@ -150,7 +150,7 @@ class TrunkPortValidator(object):
                                   device_id=self._port['device_id'])
 
 
-class SubPortsValidator(object):
+class SubPortsValidator:
 
     def __init__(self, segmentation_types, subports, trunk_port_id=None):
         self._segmentation_types = segmentation_types

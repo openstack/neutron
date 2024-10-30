@@ -104,7 +104,7 @@ class PortInfo(collections.UserDict):
                  'removed': removed or set(),
                  'updated': updated or set(),
                  're_added': re_added or set()}
-        super(PortInfo, self).__init__(_dict)
+        super().__init__(_dict)
 
 
 def has_zero_prefixlen_address(ip_addresses):
@@ -156,7 +156,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         :param bridge_classes: a dict for bridge classes.
         :param conf: an instance of ConfigOpts
         '''
-        super(OVSNeutronAgent, self).__init__()
+        super().__init__()
         self.conf = conf or cfg.CONF
         self.ovs = ovs_lib.BaseOVS()
         self.ext_manager = ext_manager
@@ -485,7 +485,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             segmentation_id = local_vlan_map.get('segmentation_id')
             if net_uuid:
                 # TODO(sahid): This key thing should be normalized.
-                key = "%s/%s" % (net_uuid, segmentation_id)
+                key = "{}/{}".format(net_uuid, segmentation_id)
                 if (key not in self._local_vlan_hints and
                         local_vlan != ovs_const.DEAD_VLAN_TAG):
                     self.available_local_vlans.remove(local_vlan)
@@ -1011,7 +1011,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         except vlanmanager.MappingNotFound:
             # TODO(sahid): This local_vlan_hints should have its own
             # datastructure and model to be manipulated.
-            key = "%s/%s" % (net_uuid, segmentation_id)
+            key = "{}/{}".format(net_uuid, segmentation_id)
             lvid = self._local_vlan_hints.pop(key, None)
             if lvid is None:
                 if not self.available_local_vlans:
@@ -1827,11 +1827,11 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             old_ports_not_ready_attrs = self.int_br.get_ports_attributes(
                 'Interface', columns=['name', 'external_ids', 'ofport'],
                 ports=old_ports_not_ready, if_exists=True)
-            now_ready_ports = set(
-                [p['name'] for p in old_ports_not_ready_attrs])
+            now_ready_ports = {
+                p['name'] for p in old_ports_not_ready_attrs}
             LOG.debug("Ports %s are now ready", now_ready_ports)
             old_ports_not_ready_yet = old_ports_not_ready - now_ready_ports
-            removed_ports = set([p['name'] for p in events['removed']])
+            removed_ports = {p['name'] for p in events['removed']}
             old_ports_not_ready_yet -= removed_ports
             LOG.debug("Ports %s were not ready at last iteration and are not "
                       "ready yet", old_ports_not_ready_yet)
@@ -2354,7 +2354,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             priority=12,
             dl_vlan=lvm.vlan,
             dl_dst=port_detail['mac_address'],
-            actions='strip_vlan,output:{:d}'.format(port.ofport))
+            actions=f'strip_vlan,output:{port.ofport:d}')
 
         # For packets from internal ports or VM ports.
         br_int.add_flow(
@@ -2362,7 +2362,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
             priority=12,
             reg6=lvm.vlan,
             dl_dst=port_detail['mac_address'],
-            actions='output:{:d}'.format(port.ofport))
+            actions=f'output:{port.ofport:d}')
 
         patch_ofport = None
         if lvm.network_type in (
@@ -2494,7 +2494,7 @@ class OVSNeutronAgent(l2population_rpc.L2populationRpcCallBackTunnelMixin,
         remote_tunnel_hash = cls.get_tunnel_hash(remote_ip, hashlen)
         if not remote_tunnel_hash:
             return None
-        return '%s-%s' % (network_type, remote_tunnel_hash)
+        return '{}-{}'.format(network_type, remote_tunnel_hash)
 
     def _agent_has_updates(self, polling_manager):
         return (polling_manager.is_polling_required or

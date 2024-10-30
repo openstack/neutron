@@ -18,7 +18,7 @@ from neutron_lib.services.qos import constants as qos_consts
 
 
 @resource_extend.has_resource_extenders
-class FloatingQoSDbMixin(object):
+class FloatingQoSDbMixin:
     """Mixin class to enable floating IP's QoS extra attributes."""
 
     @staticmethod

@@ -41,7 +41,7 @@ class AllowedAddressPair(base.NeutronDbObject):
     # custom types.
     @classmethod
     def modify_fields_to_db(cls, fields):
-        result = super(AllowedAddressPair, cls).modify_fields_to_db(fields)
+        result = super().modify_fields_to_db(fields)
         if 'ip_address' in result:
             result['ip_address'] = cls.filter_to_str(result['ip_address'])
         if 'mac_address' in result:
@@ -52,7 +52,7 @@ class AllowedAddressPair(base.NeutronDbObject):
     # custom types.
     @classmethod
     def modify_fields_from_db(cls, db_obj):
-        fields = super(AllowedAddressPair, cls).modify_fields_from_db(db_obj)
+        fields = super().modify_fields_from_db(db_obj)
         if 'ip_address' in fields:
             # retain string format as stored in the database
             fields['ip_address'] = net_utils.AuthenticIPNetwork(

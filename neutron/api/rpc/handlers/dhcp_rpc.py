@@ -43,7 +43,7 @@ from neutron.quota import resource_registry
 LOG = logging.getLogger(__name__)
 
 
-class DhcpRpcCallback(object):
+class DhcpRpcCallback:
     """DHCP agent RPC callback in plugin implementations.
 
     This class implements the server side of an rpc interface.  The client

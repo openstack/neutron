@@ -35,7 +35,7 @@ SKIPPED_VIF_TYPES = [
 ]
 
 
-class QosServiceDriverManager(object):
+class QosServiceDriverManager:
 
     def __init__(self):
         self._drivers = []

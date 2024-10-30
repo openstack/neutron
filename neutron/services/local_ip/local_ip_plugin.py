@@ -30,7 +30,7 @@ class LocalIPPlugin(local_ip_db.LocalIPDbMixin):
     __filter_validation_support = True
 
     def __init__(self):
-        super(LocalIPPlugin, self).__init__()
+        super().__init__()
         self._resource_rpc = resources_rpc.ResourcesPushRpcApi()
 
     def create_local_ip_port_association(self, context, local_ip_id,
@@ -42,7 +42,6 @@ class LocalIPPlugin(local_ip_db.LocalIPDbMixin):
 
     def delete_local_ip_port_association(self, context, fixed_port_id,
                                          local_ip_id):
-        lip_assoc = super(
-            LocalIPPlugin, self).delete_local_ip_port_association(
+        lip_assoc = super().delete_local_ip_port_association(
                 context, fixed_port_id, local_ip_id)
         self._resource_rpc.push(context, [lip_assoc], rpc_events.DELETED)

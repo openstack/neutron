@@ -40,7 +40,7 @@ def get_patch_port_names(bridge_name):
     return int_if_name, phys_if_name
 
 
-class PatchPortCleaner(object):
+class PatchPortCleaner:
     def __init__(self, config):
         LOG.debug("Get OVS bridge mappings")
         mappings = helpers.parse_mappings(config.OVS.bridge_mappings)

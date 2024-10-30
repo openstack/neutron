@@ -60,7 +60,7 @@ def _replace_register(flow_params, register_number, register_value):
     try:
         reg_port = flow_params[register_value]
         del flow_params[register_value]
-        flow_params['reg{:d}'.format(register_number)] = reg_port
+        flow_params[f'reg{register_number:d}'] = reg_port
     except KeyError:
         pass
 
@@ -126,7 +126,7 @@ def get_tag_from_other_config(bridge, port_name):
             port_name=port_name, other_config=other_config)
 
 
-class SecurityGroup(object):
+class SecurityGroup:
     def __init__(self, id_):
         self.id = id_
         self.raw_rules = []
@@ -161,7 +161,7 @@ class SecurityGroup(object):
         return self.members.get(ethertype, [])
 
 
-class OFPort(object):
+class OFPort:
     def __init__(self, port_dict, ovs_port, vlan_tag, segment_id=None,
                  network_type=None, physical_network=None):
         self.id = port_dict['device']
@@ -213,7 +213,7 @@ class OFPort(object):
         self.neutron_port_dict = port_dict.copy()
 
 
-class SGPortMap(object):
+class SGPortMap:
     def __init__(self):
         self.ports = {}
         self.sec_groups = {}
@@ -262,7 +262,7 @@ class SGPortMap(object):
         sec_group.members = members
 
 
-class ConjIdMap(object):
+class ConjIdMap:
     """Handle conjunction ID allocations and deallocations."""
 
     CONJ_ID_BLOCK_SIZE = 8
@@ -270,7 +270,7 @@ class ConjIdMap(object):
 
     def __new__(cls, int_br):
         if not hasattr(cls, '_instance'):
-            cls._instance = super(ConjIdMap, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
         return cls._instance
 
     def __init__(self, int_br):
@@ -348,7 +348,7 @@ class ConjIdMap(object):
         return a list of (remote_sg_id, conj_id), which are no longer
         in use.
         """
-        result = set([])
+        result = set()
         for k in list(self.id_map.keys()):
             if sg_id in k[0:2]:
                 conj_id = self.id_map.pop(k)
@@ -367,7 +367,7 @@ class ConjIdMap(object):
         return result
 
 
-class ConjIPFlowManager(object):
+class ConjIPFlowManager:
     """Manage conj_id allocation and remote securitygroups derived
     conjunction flows.
 
@@ -614,7 +614,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         dl_type = kwargs.get('dl_type')
         create_reg_numbers(kwargs)
         if isinstance(dl_type, int):
-            kwargs['dl_type'] = "0x{:04x}".format(dl_type)
+            kwargs['dl_type'] = f"0x{dl_type:04x}"
         if self._update_cookie:
             kwargs['cookie'] = self._update_cookie
         if self._deferred:
@@ -1279,7 +1279,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             priority=12,
             dl_dst=mac,
             reg_net=vlan_tag,
-            actions='output:{:d}'.format(dst_port)
+            actions=f'output:{dst_port:d}'
         )
         # For packets from patch ports.
         self._add_flow(
@@ -1288,7 +1288,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             priority=12,
             dl_dst=mac,
             dl_vlan=vlan_tag,
-            actions='strip_vlan,output:{:d}'.format(dst_port)
+            actions=f'strip_vlan,output:{dst_port:d}'
         )
 
         # The former flow may not match, that means the destination port is
@@ -1410,7 +1410,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 dl_type=lib_const.ETHERTYPE_IPV6,
                 nw_proto=lib_const.PROTO_NUM_IPV6_ICMP,
                 icmp_type=icmp_type,
-                actions='output:{:d}'.format(port.ofport)
+                actions=f'output:{port.ofport:d}'
             )
 
     def _initialize_ingress(self, port):
@@ -1420,7 +1420,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             priority=100,
             dl_type=lib_const.ETHERTYPE_ARP,
             reg_port=port.ofport,
-            actions='output:{:d}'.format(port.ofport)
+            actions=f'output:{port.ofport:d}'
         )
 
         # Allow custom ethertypes
@@ -1430,7 +1430,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 priority=100,
                 dl_type=permitted_ethertype,
                 reg_port=port.ofport,
-                actions='output:{:d}'.format(port.ofport))
+                actions=f'output:{port.ofport:d}')
 
         self._initialize_ingress_ipv6_icmp(port)
 
@@ -1446,7 +1446,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
                 nw_proto=lib_const.PROTO_NUM_UDP,
                 tp_src=src_port,
                 tp_dst=dst_port,
-                actions='output:{:d}'.format(port.ofport)
+                actions=f'output:{port.ofport:d}'
             )
 
         # Track untracked
@@ -1466,7 +1466,7 @@ class OVSFirewallDriver(firewall.FirewallDriver):
             ct_state=ovsfw_consts.OF_STATE_TRACKED,
             priority=80,
             reg_port=port.ofport,
-            actions='resubmit(,{:d})'.format(ovs_consts.RULES_INGRESS_TABLE)
+            actions=f'resubmit(,{ovs_consts.RULES_INGRESS_TABLE:d})'
         )
 
     def _initialize_tracked_ingress(self, port):
@@ -1495,10 +1495,10 @@ class OVSFirewallDriver(firewall.FirewallDriver):
         # offload case. In case the explicitly_egress_direct is used the
         # pipeline don't contain action NORMAL so we don't have flood rule
         # issue.
-        actions = 'output:{:d}'.format(port.ofport)
+        actions = f'output:{port.ofport:d}'
         if (self.int_br.br.is_hw_offload_enabled and
                 not cfg.CONF.AGENT.explicitly_egress_direct):
-            actions = 'mod_vlan_vid:{:d},normal'.format(port.vlan_tag)
+            actions = f'mod_vlan_vid:{port.vlan_tag:d},normal'
         # Allow established and related connections
         for state in (ovsfw_consts.OF_STATE_ESTABLISHED_REPLY,
                       ovsfw_consts.OF_STATE_RELATED):

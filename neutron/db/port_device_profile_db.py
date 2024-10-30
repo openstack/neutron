@@ -17,7 +17,7 @@ from neutron_lib.api.definitions import port_device_profile as pdp
 from neutron.objects.port.extensions import port_device_profile as pdp_obj
 
 
-class PortDeviceProfileMixin(object):
+class PortDeviceProfileMixin:
     """Mixin class to add device profile (Cyborg) to a port"""
 
     def _process_create_port(self, context, data, result):

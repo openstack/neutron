@@ -34,7 +34,7 @@ LOG = logging.getLogger(__name__)
 DEFAULT_NDP_PROXY_CHAIN = 'NDP'
 
 
-class RouterNDPProxyMapping(object):
+class RouterNDPProxyMapping:
 
     def __init__(self):
         self.managed_ndp_proxies = {}
@@ -217,7 +217,7 @@ class NDPProxyAgentExtension(l3_extension.L3AgentExtension):
             cmd = ['ip', '-6', 'neigh', 'add',
                    'proxy', v6_address, 'dev', interface_name]
             ip_wrapper.netns.execute(cmd, privsep_exec=True)
-            accept_rule = '-i %s --destination %s -j ACCEPT' % (
+            accept_rule = '-i {} --destination {} -j ACCEPT'.format(
                 interface_name, v6_address)
             iptables_manager.ipv6['filter'].add_rule(
                 DEFAULT_NDP_PROXY_CHAIN, accept_rule, top=True)
@@ -251,7 +251,7 @@ class NDPProxyAgentExtension(l3_extension.L3AgentExtension):
             cmd = ['ip', '-6', 'neigh', 'del',
                    'proxy', v6_address, 'dev', interface_name]
             ip_wrapper.netns.execute(cmd, privsep_exec=True)
-            accept_rule = '-i %s --destination %s -j ACCEPT' % (
+            accept_rule = '-i {} --destination {} -j ACCEPT'.format(
                 interface_name, v6_address)
             iptables_manager.ipv6['filter'].remove_rule(
                 DEFAULT_NDP_PROXY_CHAIN, accept_rule, top=True)

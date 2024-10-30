@@ -33,7 +33,7 @@ Migration = namedtuple('Migration', 'from_repo to_repo')
 
 def read_mapfile(mapfile):
     dirmaps = []
-    with open(mapfile, 'r') as mapfile_fd:
+    with open(mapfile) as mapfile_fd:
         for line_buffer in mapfile_fd.readlines():
             # ignore empty lines and anything after #
             line_match = re.search("^([^#]+)", line_buffer.strip())
@@ -63,10 +63,10 @@ def parse_input(dirmaps, patch_content, output_fd):
                 new_line_buffer = line_buffer.replace(old, new)
                 if new_line_buffer != line_buffer:
                     filename_replaced = True
-                    output_fd.write("{}\n".format(new_line_buffer))
+                    output_fd.write(f"{new_line_buffer}\n")
                     break
         if not filename_replaced:
-            output_fd.write("{}\n".format(line_buffer))
+            output_fd.write(f"{line_buffer}\n")
 
 
 @contextlib.contextmanager
@@ -125,7 +125,7 @@ def cli():
     if parsed_args.reverse:
         dirmaps = [Migration(two, one) for one, two in dirmaps]
     if os.path.isfile(parsed_args.input_patch):
-        with open(parsed_args.input_patch, 'r') as input_fd:
+        with open(parsed_args.input_patch) as input_fd:
             patch_content = ''.join(input_fd.readlines())
     else:
         patch_content = download_gerrit_change.fetch(parsed_args.input_patch)

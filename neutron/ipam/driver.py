@@ -18,7 +18,7 @@ from neutron.ipam import requests as ipam_req
 from neutron import manager
 
 
-class Pool(object, metaclass=abc.ABCMeta):
+class Pool(metaclass=abc.ABCMeta):
     """Interface definition for an IPAM driver.
 
     There should be an instance of the driver for every subnet pool.
@@ -126,7 +126,7 @@ class Pool(object, metaclass=abc.ABCMeta):
         return True
 
 
-class Subnet(object, metaclass=abc.ABCMeta):
+class Subnet(metaclass=abc.ABCMeta):
     """Interface definition for an IPAM subnet
 
     A subnet would typically be associated with a network but may not be.  It
@@ -164,7 +164,7 @@ class Subnet(object, metaclass=abc.ABCMeta):
         """
 
 
-class SubnetGroup(object, metaclass=abc.ABCMeta):
+class SubnetGroup(metaclass=abc.ABCMeta):
     """Interface definition for a filtered group of IPAM Subnets
 
     Allocates from a group of semantically equivalent subnets.  The list of

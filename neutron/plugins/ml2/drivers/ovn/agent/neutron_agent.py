@@ -25,7 +25,7 @@ from neutron.common.ovn import utils as ovn_utils
 from neutron.common import utils
 
 
-class DeletedChassis(object):
+class DeletedChassis:
     external_ids = {}
     hostname = '("Chassis" register deleted)'
     name = '("Chassis" register deleted)'
@@ -249,7 +249,7 @@ class OVNNeutronAgent(NeutronAgent):
 
 
 @utils.SingletonDecorator
-class AgentCache(object):
+class AgentCache:
     def __init__(self, driver=None):
         # This is just to make pylint happy because it doesn't like calls to
         # AgentCache() with no arguments, despite init only being called the

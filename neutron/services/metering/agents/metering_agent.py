@@ -41,14 +41,14 @@ from neutron.services.metering.drivers import utils as driverutils
 LOG = logging.getLogger(__name__)
 
 
-class MeteringPluginRpc(object):
+class MeteringPluginRpc:
 
     def __init__(self, host):
         # NOTE(yamamoto): super.__init__() call here is not only for
         # aesthetics.  Because of multiple inheritances in MeteringAgent,
         # it's actually necessary to initialize parent classes of
         # manager.Manager correctly.
-        super(MeteringPluginRpc, self).__init__(host)
+        super().__init__(host)
         target = oslo_messaging.Target(topic=topics.METERING_PLUGIN,
                                        version='1.0')
         self.client = n_rpc.get_client(target)
@@ -80,7 +80,7 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
         self.routers = {}
         self.metering_infos = {}
         self.metering_labels = {}
-        super(MeteringAgent, self).__init__(host=host)
+        super().__init__(host=host)
 
     def _load_drivers(self):
         """Loads plugin-driver from configuration."""
@@ -347,8 +347,8 @@ class MeteringAgent(MeteringPluginRpc, manager.Manager):
 class MeteringAgentWithStateReport(MeteringAgent):
 
     def __init__(self, host, conf=None):
-        super(MeteringAgentWithStateReport, self).__init__(host=host,
-                                                           conf=conf)
+        super().__init__(host=host,
+                         conf=conf)
         self.state_rpc = agent_rpc.PluginReportStateAPI(topics.REPORTS)
         self.failed_report_state = False
         self.agent_state = {

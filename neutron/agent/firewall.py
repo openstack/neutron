@@ -50,7 +50,7 @@ def load_firewall_driver_class(driver):
         'neutron.agent.firewall_drivers', driver)
 
 
-class FirewallDriver(object, metaclass=abc.ABCMeta):
+class FirewallDriver(metaclass=abc.ABCMeta):
     """Firewall Driver base class.
 
     Defines methods that any driver providing security groups

@@ -16,7 +16,7 @@
 from neutron.agent.linux import ip_lib
 
 
-class L3AgentExtensionAPI(object):
+class L3AgentExtensionAPI:
     '''Implements the Agent API for the L3 agent.
 
     Extensions can gain access to this API by overriding the consume_api

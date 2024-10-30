@@ -60,7 +60,7 @@ class FdbPopulationAgentExtension(
                                constants.DEVICE_OWNER_ROUTER_INTF,
                                constants.DEVICE_OWNER_DHCP}
 
-    class FdbTableTracker(object):
+    class FdbTableTracker:
         """FDB table tracker is a helper class
         intended to keep track of the existing FDB rules.
         """

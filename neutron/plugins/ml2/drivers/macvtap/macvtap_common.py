@@ -27,4 +27,4 @@ def get_vlan_device_name(src_dev, vlan):
     # Ensure that independent of the vlan len the same name prefix is used.
     src_dev = plugin_utils.get_interface_name(
         src_dev, max_len=n_const.DEVICE_NAME_MAX_LEN - MAX_VLAN_POSTFIX_LEN)
-    return "%s.%s" % (src_dev, vlan)
+    return "{}.{}".format(src_dev, vlan)

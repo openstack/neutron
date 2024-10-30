@@ -42,7 +42,7 @@ class ActiveBundleRunning(exceptions.NeutronException):
     message = _("Another active bundle 0x%(bundle_id)x is running")
 
 
-class OpenFlowSwitchMixin(object):
+class OpenFlowSwitchMixin:
     """Mixin to provide common convenient routines for an openflow switch.
 
     NOTE(yamamoto): super() points to ovs_lib.OVSBridge.
@@ -59,7 +59,7 @@ class OpenFlowSwitchMixin(object):
     def __init__(self, *args, **kwargs):
         self._app = kwargs.pop('os_ken_app')
         self.active_bundles = set()
-        super(OpenFlowSwitchMixin, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def _get_dp_by_dpid(self, dpid_int):
         """Get os-ken datapath object for the switch."""
@@ -175,7 +175,7 @@ class OpenFlowSwitchMixin(object):
         return flows
 
     def _dump_and_clean(self, table_id=None):
-        cookies = set([f.cookie for f in self.dump_flows(table_id)]) - \
+        cookies = {f.cookie for f in self.dump_flows(table_id)} - \
                       self.reserved_cookies
         for c in cookies:
             LOG.warning("Deleting flow with cookie 0x%(cookie)x",
@@ -253,7 +253,7 @@ class OpenFlowSwitchMixin(object):
         return BundledOpenFlowBridge(self, atomic, ordered)
 
 
-class BundledOpenFlowBridge(object):
+class BundledOpenFlowBridge:
     def __init__(self, br, atomic, ordered):
         self.br = br
         self.active_bundle = None

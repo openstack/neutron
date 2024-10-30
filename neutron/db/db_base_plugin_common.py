@@ -94,7 +94,7 @@ def make_result_with_fields(f):
     return inner
 
 
-class DbBasePluginCommon(object):
+class DbBasePluginCommon:
     """Stores getters and helper methods for db_base_plugin_v2
 
     All private getters and simple helpers like _make_*_dict were moved from

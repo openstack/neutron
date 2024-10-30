@@ -237,7 +237,7 @@ class PolicyHook(hooks.PecanHook):
                         context,
                         # NOTE(kevinbenton): this used to reference a
                         # _plugin_handlers dict, why?
-                        'get_%s:%s' % (resource, attr_name),
+                        'get_{}:{}'.format(resource, attr_name),
                         data,
                         might_not_exist=True,
                         pluralized=collection):

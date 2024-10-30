@@ -74,7 +74,7 @@ IPTABLES_DRIVERS = [
 
 class LinuxBridgeManager(amb.CommonAgentManagerBase):
     def __init__(self, bridge_mappings, interface_mappings):
-        super(LinuxBridgeManager, self).__init__()
+        super().__init__()
         self.bridge_mappings = bridge_mappings
         self.interface_mappings = interface_mappings
         self.validate_interface_mappings()
@@ -200,7 +200,7 @@ class LinuxBridgeManager(amb.CommonAgentManagerBase):
             physical_interface = plugin_utils.get_interface_name(
                 physical_interface, max_len=(constants.DEVICE_NAME_MAX_LEN -
                                              MAX_VLAN_POSTFIX_LEN))
-        return "%s%s" % (physical_interface, vlan_postfix)
+        return "{}{}".format(physical_interface, vlan_postfix)
 
     @staticmethod
     def get_tap_device_name(interface_id):

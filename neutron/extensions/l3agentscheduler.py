@@ -184,7 +184,7 @@ class RouterDoesntSupportScheduling(exceptions.Conflict):
     message = _("Router %(router_id)s does not support agent scheduling.")
 
 
-class L3AgentSchedulerPluginBase(object, metaclass=abc.ABCMeta):
+class L3AgentSchedulerPluginBase(metaclass=abc.ABCMeta):
     """REST API to operate the l3 agent scheduler.
 
     All of method must be in an admin context.

@@ -28,7 +28,7 @@ LOG = logging.getLogger(__name__)
 objects.register_objects()
 
 
-class RemoteResourceCache(object):
+class RemoteResourceCache:
     """Retrieves and stashes logical resources in their OVO format.
 
     This is currently only compatible with OVO objects that have an ID.
@@ -233,7 +233,7 @@ class RemoteResourceCache(object):
         return changed
 
 
-class RemoteResourceWatcher(object):
+class RemoteResourceWatcher:
     """Converts RPC callback notifications to local registry notifications.
 
     This allows a constructor to listen for RPC callbacks for a given

@@ -131,7 +131,7 @@ class L3RouterPlugin(service_base.ServicePluginBase,
         self.router_scheduler = importutils.import_object(
             cfg.CONF.router_scheduler_driver)
         self.add_periodic_l3_agent_status_check()
-        super(L3RouterPlugin, self).__init__()
+        super().__init__()
         if 'dvr' in self.supported_extension_aliases:
             l3_dvrscheduler_db.subscribe()
         if 'l3-ha' in self.supported_extension_aliases:
@@ -188,7 +188,7 @@ class L3RouterPlugin(service_base.ServicePluginBase,
         leveraging the l3 agent, the initial status for the floating
         IP object will be DOWN.
         """
-        return super(L3RouterPlugin, self).create_floatingip(
+        return super().create_floatingip(
             context, floatingip,
             initial_status=n_const.FLOATINGIP_STATUS_DOWN)
 

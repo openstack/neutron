@@ -28,7 +28,7 @@ from neutron.api.rpc.callbacks import resources
 LOG = logging.getLogger(__name__)
 
 
-class DHCPExtensionPortInfoAPI(object):
+class DHCPExtensionPortInfoAPI:
 
     def __init__(self, cache_api):
         self.cache_api = cache_api

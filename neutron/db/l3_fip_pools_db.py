@@ -24,7 +24,7 @@ from neutron.objects import network as net_obj
 from neutron.objects import subnet as subnet_obj
 
 
-class FloatingIPPoolsDbMixin(object):
+class FloatingIPPoolsDbMixin:
     """Class to support floating IP pool."""
 
     _is_v6_supported = None

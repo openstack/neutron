@@ -53,7 +53,7 @@ def _network_result_filter_hook(query, filters):
 
 @resource_extend.has_resource_extenders
 @registry.has_registry_receivers
-class External_net_db_mixin(object):
+class External_net_db_mixin:
     """Mixin class to add external network methods to db_base_plugin_v2."""
 
     def __new__(cls, *args, **kwargs):
@@ -73,7 +73,7 @@ class External_net_db_mixin(object):
             result_filters=None,
             rbac_actions=EXTERNAL_NETWORK_RBAC_ACTIONS,
         )
-        return super(External_net_db_mixin, cls).__new__(cls, *args, **kwargs)
+        return super().__new__(cls, *args, **kwargs)
 
     def _network_is_external(self, context, net_id):
         return net_obj.ExternalNetwork.objects_exist(

@@ -19,14 +19,15 @@ from neutron.agent.l3.item_allocator import ItemAllocator
 
 class LinkLocalAddressPair(netaddr.IPNetwork):
     def __init__(self, addr):
-        super(LinkLocalAddressPair, self).__init__(addr)
+        super().__init__(addr)
 
     def get_pair(self):
         """Builds an address pair from the first and last addresses. """
         # TODO(kevinbenton): the callers of this seem only interested in an IP,
         # so we should just return two IPAddresses.
-        return (netaddr.IPNetwork("%s/%s" % (self.network, self.prefixlen)),
-                netaddr.IPNetwork("%s/%s" % (self[-1], self.prefixlen)))
+        return (
+            netaddr.IPNetwork("{}/{}".format(self.network, self.prefixlen)),
+            netaddr.IPNetwork("{}/{}".format(self[-1], self.prefixlen)))
 
 
 class LinkLocalAllocator(ItemAllocator):
@@ -46,7 +47,7 @@ class LinkLocalAllocator(ItemAllocator):
             class type
         """
         subnet = netaddr.IPNetwork(subnet)
-        pool = set(LinkLocalAddressPair(s) for s in subnet.subnet(31))
-        super(LinkLocalAllocator, self).__init__(data_store_path,
-                                                 LinkLocalAddressPair,
-                                                 pool)
+        pool = {LinkLocalAddressPair(s) for s in subnet.subnet(31)}
+        super().__init__(data_store_path,
+                         LinkLocalAddressPair,
+                         pool)

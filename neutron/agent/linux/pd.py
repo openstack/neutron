@@ -32,7 +32,7 @@ from neutron.common import utils
 LOG = logging.getLogger(__name__)
 
 
-class PrefixDelegation(object):
+class PrefixDelegation:
     def __init__(self, context, pmon, intf_driver, notifier, pd_update_cb,
                  agent_conf):
         self.context = context
@@ -394,7 +394,7 @@ def update_router(resource, event, l3_agent, payload):
         router['ns_name'] = updated_router.get_gw_ns_name()
 
 
-class PDInfo(object):
+class PDInfo:
     """A class to simplify storing and passing of information relevant to
     Prefix Delegation operations for a given subnet.
     """

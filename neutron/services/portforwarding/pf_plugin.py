@@ -99,7 +99,7 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
     __filter_validation_support = True
 
     def __init__(self):
-        super(PortForwardingPlugin, self).__init__()
+        super().__init__()
         self.push_api = resources_rpc.ResourcesPushRpcApi() \
             if self._rpc_notifications_required else None
         self.l3_plugin = directory.get_plugin(constants.L3)
@@ -493,13 +493,13 @@ class PortForwardingPlugin(fip_pf.PortForwardingPluginBase):
                                protocol=None, internal_ip_address=None):
         external_range_pf_dict = pf_dict.get('external_port_range')
         if not external_range_pf_dict and 'external_port' in pf_dict:
-            external_range_pf_dict = '%(port)s:%(port)s' % {
-                'port': pf_dict.get('external_port')}
+            external_range_pf_dict = '{port}:{port}'.format(
+                port=pf_dict.get('external_port'))
 
         internal_range_pf_dict = pf_dict.get('internal_port_range')
         if not internal_range_pf_dict and 'internal_port' in pf_dict:
-            internal_range_pf_dict = '%(port)s:%(port)s' % {
-                'port': pf_dict.get('internal_port')}
+            internal_range_pf_dict = '{port}:{port}'.format(
+                port=pf_dict.get('internal_port'))
 
         internal_port_id = pf_dict.get('internal_port_id') or internal_port_id
         protocol = pf_dict.get('protocol') or protocol

@@ -38,7 +38,7 @@ Arp_entry = collections.namedtuple(
 
 class DvrLocalRouter(dvr_router_base.DvrRouterBase):
     def __init__(self, host, *args, **kwargs):
-        super(DvrLocalRouter, self).__init__(host, *args, **kwargs)
+        super().__init__(host, *args, **kwargs)
 
         self.floating_ips_dict = {}
         # Linklocal subnet for router and floating IP namespace link
@@ -132,9 +132,10 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         floating_ip = fip['floating_ip_address']
         rtr_2_fip_name = self.fip_ns.get_rtr_ext_device_name(self.router_id)
         dnat_from_floatingip_to_fixedip = (
-            'PREROUTING', '-d %s/32 -i %s -j DNAT --to-destination %s' % (
+            'PREROUTING', '-d {}/32 -i {} -j DNAT --to-destination {}'.format(
                 floating_ip, rtr_2_fip_name, fixed_ip))
-        to_source = '-s %s/32 -j SNAT --to-source %s' % (fixed_ip, floating_ip)
+        to_source = '-s {}/32 -j SNAT --to-source {}'.format(
+            fixed_ip, floating_ip)
         if self.iptables_manager.random_fully:
             to_source += ' --random-fully'
         snat_from_fixedip_to_floatingip = ('float-snat', to_source)
@@ -147,7 +148,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
 
         rtr_2_fip_name = self.fip_ns.get_rtr_ext_device_name(self.router_id)
         mark_traffic_to_floating_ip = (
-            'floatingip', '-d %s/32 -i %s -j MARK --set-xmark %s' % (
+            'floatingip', '-d {}/32 -i {} -j MARK --set-xmark {}'.format(
                 floating_ip, rtr_2_fip_name, internal_mark))
         mark_traffic_from_fixed_ip = (
             'FORWARD', '-s %s/32 -j $float-snat' % fixed_ip)
@@ -505,7 +506,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
         self._snat_redirect_modify(gateway, sn_port, sn_int, is_add=False)
 
     def internal_network_added(self, port):
-        super(DvrLocalRouter, self).internal_network_added(port)
+        super().internal_network_added(port)
 
         # NOTE: The following function _set_subnet_arp_info
         # should be called to dynamically populate the arp
@@ -576,7 +577,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
 
     def internal_network_removed(self, port):
         self._dvr_internal_network_removed(port)
-        super(DvrLocalRouter, self).internal_network_removed(port)
+        super().internal_network_removed(port)
 
     def get_floating_agent_gw_interface(self, ext_net_id):
         """Filter Floating Agent GW port for the external network."""
@@ -739,7 +740,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             if ex_gw_port:
                 self.create_dvr_external_gateway_on_agent(ex_gw_port)
                 self.connect_rtr_2_fip()
-        super(DvrLocalRouter, self).process_external()
+        super().process_external()
 
     def _check_rtr_2_fip_connect(self):
         """Checks if the rtr to fip connect exists, if not sets to false."""
@@ -866,7 +867,7 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
                 tbl_index = self._get_snat_idx(fip_2_rtr)
                 self._update_fip_route_table_with_next_hop_routes(
                     operation, route, fip_ns_name, tbl_index)
-        super(DvrLocalRouter, self).update_routing_table(operation, route)
+        super().update_routing_table(operation, route)
 
     def _update_fip_route_table_with_next_hop_routes(self, operation, route,
                                                      fip_ns_name, tbl_index):
@@ -923,4 +924,4 @@ class DvrLocalRouter(dvr_router_base.DvrRouterBase):
             self.fip_ns = self.agent.get_fip_ns(ex_gw_port['network_id'])
             self.fip_ns.scan_fip_ports(self)
 
-        super(DvrLocalRouter, self).process()
+        super().process()

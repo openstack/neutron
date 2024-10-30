@@ -17,7 +17,7 @@
 import abc
 
 
-class NetworkSegment(object):
+class NetworkSegment:
     """Represents a Neutron network segment"""
     def __init__(self, network_type, physical_network, segmentation_id,
                  mtu=None):
@@ -27,7 +27,7 @@ class NetworkSegment(object):
         self.mtu = mtu
 
 
-class CommonAgentManagerRpcCallBackBase(object, metaclass=abc.ABCMeta):
+class CommonAgentManagerRpcCallBackBase(metaclass=abc.ABCMeta):
     """Base class for managers RPC callbacks.
 
     This class must be inherited by a RPC callback class that is used
@@ -78,7 +78,7 @@ class CommonAgentManagerRpcCallBackBase(object, metaclass=abc.ABCMeta):
         return updated_devices
 
 
-class CommonAgentManagerBase(object, metaclass=abc.ABCMeta):
+class CommonAgentManagerBase(metaclass=abc.ABCMeta):
     """Base class for managers that are used with the common agent loop.
 
     This class must be inherited by a manager class that is used

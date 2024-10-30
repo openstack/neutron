@@ -19,7 +19,7 @@ from neutron.extensions import port_trusted_vif
 from neutron.objects.port.extensions import port_trusted as trusted_obj
 
 
-class PortTrustedDbMixin(object):
+class PortTrustedDbMixin:
     """Mixin class to add trusted extension to a port"""
 
     @staticmethod

@@ -40,7 +40,7 @@ class IpamAllocationPool(model_base.BASEV2, model_base.HasId):
     last_ip = sa.Column(sa.String(64), nullable=False)
 
     def __repr__(self):
-        return "%s - %s" % (self.first_ip, self.last_ip)
+        return "{} - {}".format(self.first_ip, self.last_ip)
 
 
 class IpamSubnet(model_base.BASEV2, model_base.HasId):

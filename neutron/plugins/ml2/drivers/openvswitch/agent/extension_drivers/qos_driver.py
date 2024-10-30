@@ -31,7 +31,7 @@ LOG = logging.getLogger(__name__)
 MAX_RETIES = 1000
 
 
-class MeterIDGenerator(object):
+class MeterIDGenerator:
     # This cache will be:
     #  PORT_METER_ID = {"port_id_1_ingress": 1,
     #                   "port_id_1_egress: 2,
@@ -41,7 +41,7 @@ class MeterIDGenerator(object):
     def __new__(cls, *args, **kwargs):
         # make it a singleton
         if not hasattr(cls, '_instance'):
-            cls._instance = super(MeterIDGenerator, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
             cls.PORT_METER_ID = {}
         return cls._instance
 
@@ -75,7 +75,7 @@ class MeterIDGenerator(object):
         self.PORT_METER_ID[key] = meter_id
 
 
-class MeterRuleManager(object):
+class MeterRuleManager:
 
     def __init__(self, br_int, type_=comm_consts.METER_FLAG_PPS):
         self.br_int = br_int
@@ -103,7 +103,7 @@ class MeterRuleManager(object):
                 break
 
     def get_data_key(self, port_id, direction):
-        return "%s_%s_%s" % (self.rule_type, port_id, direction)
+        return "{}_{}_{}".format(self.rule_type, port_id, direction)
 
     def load_port_meter_id(self, port_name, port_id, direction):
         key = self.get_data_key(port_id, direction)
@@ -150,7 +150,7 @@ class MeterRuleManager(object):
         return self.PORT_INFO_EGRESS.pop(port_id, (None, None, None))
 
 
-class OVSMeterQoSDriver(object):
+class OVSMeterQoSDriver:
 
     SUPPORT_METER = None
 
@@ -294,7 +294,7 @@ class QosOVSAgentDriver(qos.QosLinuxAgentDriver,
     SUPPORTED_RULES = driver.SUPPORTED_RULES
 
     def __init__(self):
-        super(QosOVSAgentDriver, self).__init__()
+        super().__init__()
         self.br_int_name = cfg.CONF.OVS.integration_bridge
         self.br_int = None
         self.agent_api = None

@@ -39,7 +39,7 @@ class Availability_zone(api_extensions.APIExtensionDescriptor):
         return [ex]
 
 
-class AvailabilityZonePluginBase(object, metaclass=abc.ABCMeta):
+class AvailabilityZonePluginBase(metaclass=abc.ABCMeta):
     """REST API to operate the Availability Zone."""
 
     @abc.abstractmethod

@@ -29,7 +29,7 @@ LOG = logging.getLogger(__name__)
 log_cfg.register_log_driver_opts()
 
 
-class L3LoggingExtensionBase(object):
+class L3LoggingExtensionBase:
     """Base class for l3 logging extension like
 
     SNATLogExtension, FWaaSV2LogExtension

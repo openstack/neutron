@@ -32,7 +32,7 @@ driver_type.register_ml2_drivers_gre_opts()
 class GreTypeDriver(type_tunnel.EndpointTunnelTypeDriver):
 
     def __init__(self):
-        super(GreTypeDriver, self).__init__(
+        super().__init__(
             gre_obj.GreAllocation, gre_obj.GreEndpoint)
         self.model_segmentation_id = gre_alloc_model.GreAllocation.gre_id
 
@@ -58,5 +58,5 @@ class GreTypeDriver(type_tunnel.EndpointTunnelTypeDriver):
         return self._add_endpoint(ip, host)
 
     def get_mtu(self, physical_network=None):
-        mtu = super(GreTypeDriver, self).get_mtu(physical_network)
+        mtu = super().get_mtu(physical_network)
         return mtu - p_const.GRE_ENCAP_OVERHEAD if mtu else 0

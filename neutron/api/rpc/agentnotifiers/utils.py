@@ -32,7 +32,7 @@ def _call_with_retry(max_attempts):
     def wrapper(f):
         def func_wrapper(*args, **kwargs):
             # (ivasilevskaya) think of a more informative data to log
-            action = '%(func)s' % {'func': getattr(f, '__name__', f)}
+            action = '{func}'.format(func=getattr(f, '__name__', f))
             for attempt in range(1, max_attempts + 1):
                 try:
                     return f(*args, **kwargs)

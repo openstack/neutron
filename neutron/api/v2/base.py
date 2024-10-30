@@ -43,7 +43,7 @@ from neutron.quota import resource_registry
 LOG = logging.getLogger(__name__)
 
 
-class Controller(object):
+class Controller:
     LIST = 'list'
     SHOW = 'show'
     CREATE = 'create'
@@ -129,12 +129,12 @@ class Controller(object):
             self._parent_id_name = None
             parent_part = ''
         self._plugin_handlers = {
-            self.LIST: 'get%s_%s' % (parent_part, self._collection),
-            self.SHOW: 'get%s_%s' % (parent_part, self._resource)
+            self.LIST: 'get{}_{}'.format(parent_part, self._collection),
+            self.SHOW: 'get{}_{}'.format(parent_part, self._resource)
         }
         for action in [self.CREATE, self.UPDATE, self.DELETE]:
-            self._plugin_handlers[action] = '%s%s_%s' % (action, parent_part,
-                                                         self._resource)
+            self._plugin_handlers[action] = '{}{}_{}'.format(
+                action, parent_part, self._resource)
 
     def _get_primary_key(self, default_primary_key='id'):
         for key, value in self._attr_info.items():
@@ -176,8 +176,8 @@ class Controller(object):
             if attr_data and attr_data['is_visible']:
                 if policy.check(
                         context,
-                        '%s:%s' % (self._plugin_handlers[self.SHOW],
-                                   attr_name),
+                        '{}:{}'.format(self._plugin_handlers[self.SHOW],
+                                       attr_name),
                         data,
                         might_not_exist=True,
                         pluralized=self._collection):
@@ -824,13 +824,14 @@ class Controller(object):
                     self.parent['member_name'] in
                     service_const.EXT_PARENT_RESOURCE_MAPPING):
                 resource_item.setdefault(
-                    "%s_%s" % (constants.EXT_PARENT_PREFIX,
-                               self._parent_id_name),
+                    "{}_{}".format(constants.EXT_PARENT_PREFIX,
+                                   self._parent_id_name),
                     parent_id)
         # If this func is called by create/update/delete, we just add.
         else:
             resource_item.setdefault(
-                "%s_%s" % (constants.EXT_PARENT_PREFIX, self._parent_id_name),
+                "{}_{}".format(constants.EXT_PARENT_PREFIX,
+                               self._parent_id_name),
                 parent_id)
 
     def _belongs_to_default_sg(self, request, resource_item):

@@ -53,7 +53,7 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
     """
 
     def __init__(self):
-        super(VlanTypeDriver, self).__init__(vlanalloc.VlanAllocation)
+        super().__init__(vlanalloc.VlanAllocation)
         self.model_segmentation_id = vlan_alloc_model.VlanAllocation.vlan_id
         self._parse_network_vlan_ranges()
 
@@ -320,7 +320,7 @@ class VlanTypeDriver(helpers.SegmentTypeDriver):
                          'physical_network': physical_network})
 
     def get_mtu(self, physical_network):
-        seg_mtu = super(VlanTypeDriver, self).get_mtu()
+        seg_mtu = super().get_mtu()
         mtu = []
         if seg_mtu > 0:
             mtu.append(seg_mtu)

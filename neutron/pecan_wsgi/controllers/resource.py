@@ -29,10 +29,10 @@ class ItemController(utils.NeutronPecanController):
 
     def __init__(self, resource, item, plugin=None, resource_info=None,
                  parent_resource=None, member_actions=None):
-        super(ItemController, self).__init__(None, resource, plugin=plugin,
-                                             resource_info=resource_info,
-                                             parent_resource=parent_resource,
-                                             member_actions=member_actions)
+        super().__init__(None, resource, plugin=plugin,
+                         resource_info=resource_info,
+                         parent_resource=parent_resource,
+                         member_actions=member_actions)
         self.item = item
 
     @utils.expose(generic=True)
@@ -199,7 +199,7 @@ class MemberActionController(ItemController):
 
     def __init__(self, resource, item, parent_controller, plugin=None,
                  resource_info=None, show_action=None, update_action=None):
-        super(MemberActionController, self).__init__(
+        super().__init__(
             resource, item, plugin=plugin, resource_info=resource_info)
         self._show_action = show_action
         self._update_action = update_action
@@ -236,4 +236,4 @@ class MemberActionController(ItemController):
     @utils.when(index, method='PATCH')
     @utils.when(index, method='DELETE')
     def not_supported(self):
-        return super(MemberActionController, self).not_supported()
+        return super().not_supported()

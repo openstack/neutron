@@ -429,8 +429,8 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
         for dev, match in ((br_dev, match_physdev), (br_dev, match_interface),
                            (port_dev, match_physdev)):
             match = match % dev
-            rule = '%s -m comment --comment "%s" -j CT %s' % (match, comment,
-                                                              conntrack)
+            rule = '{} -m comment --comment "{}" -j CT {}'.format(
+                match, comment, conntrack)
             rules.append(rule)
         return rules
 
@@ -853,7 +853,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
                     args += ['--%s' % direction, '%s' % port_range_min]
             else:
                 args += ['-m', 'multiport', '--%ss' % direction,
-                         '%s:%s' % (port_range_min, port_range_max)]
+                         '{}:{}'.format(port_range_min, port_range_max)]
         return args
 
     def _ip_prefix_arg(self, direction, ip_prefix):
@@ -872,7 +872,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _port_chain_name(self, port, direction):
         return iptables_manager.get_chain_name(
-            '%s%s' % (CHAIN_NAME_PREFIX[direction], port['device'][3:]))
+            '{}{}'.format(CHAIN_NAME_PREFIX[direction], port['device'][3:]))
 
     def filter_defer_apply_on(self):
         if not self._defer_apply:
@@ -1032,7 +1032,7 @@ class IptablesFirewallDriver(firewall.FirewallDriver):
 
     def _get_sg_members(self, sg_info, sg_id, ethertype):
         ip_mac_addresses = sg_info.get(sg_id, {}).get(ethertype, [])
-        return set([ip_mac[0] for ip_mac in ip_mac_addresses])
+        return {ip_mac[0] for ip_mac in ip_mac_addresses}
 
     def filter_defer_apply_off(self):
         if self._defer_apply:
@@ -1054,12 +1054,11 @@ class OVSHybridIptablesFirewallDriver(IptablesFirewallDriver):
 
     def _port_chain_name(self, port, direction):
         return iptables_manager.get_chain_name(
-            '%s%s' % (CHAIN_NAME_PREFIX[direction], port['device']))
+            '{}{}'.format(CHAIN_NAME_PREFIX[direction], port['device']))
 
     def _get_br_device_name(self, port):
         return ('qvb' + port['device'])[:constants.LINUX_DEV_LEN]
 
     def _get_device_name(self, port):
-        device_name = super(
-            OVSHybridIptablesFirewallDriver, self)._get_device_name(port)
+        device_name = super()._get_device_name(port)
         return get_hybrid_port_name(device_name)

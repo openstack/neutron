@@ -94,7 +94,7 @@ class QoSPlugin(qos.QoSPluginBase):
     __filter_validation_support = True
 
     def __init__(self):
-        super(QoSPlugin, self).__init__()
+        super().__init__()
         self.driver_manager = manager.QosServiceDriverManager()
         self._placement_client = pl_client.PlacementAPIClient(cfg.CONF)
 
@@ -522,8 +522,8 @@ class QoSPlugin(qos.QoSPluginBase):
         if not original_rules and not desired_rules:
             return
 
-        o_rule_types = set(r.rule_type for r in original_rules)
-        d_rule_types = set(r.rule_type for r in desired_rules)
+        o_rule_types = {r.rule_type for r in original_rules}
+        d_rule_types = {r.rule_type for r in desired_rules}
         allocation = orig_port['binding:profile'].get('allocation')
         if (not original_rules and desired_rules) or not allocation:
             LOG.warning("There was no QoS policy with minimum_bandwidth or "

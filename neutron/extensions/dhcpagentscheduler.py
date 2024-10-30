@@ -103,7 +103,7 @@ class Dhcpagentscheduler(api_extensions.APIExtensionDescriptor):
         return exts
 
 
-class DhcpAgentSchedulerPluginBase(object, metaclass=abc.ABCMeta):
+class DhcpAgentSchedulerPluginBase(metaclass=abc.ABCMeta):
     """REST API to operate the DHCP agent scheduler.
 
     All of method must be in an admin context.

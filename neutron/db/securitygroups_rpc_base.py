@@ -61,25 +61,22 @@ class SecurityGroupServerNotifierRpcMixin(sg_db.SecurityGroupDbMixin):
             self.notify_security_groups_member_updated(context, port)
 
     def create_security_group_rule(self, context, security_group_rule):
-        rule = super(SecurityGroupServerNotifierRpcMixin,
-                     self).create_security_group_rule(context,
-                                                      security_group_rule)
+        rule = super().create_security_group_rule(context,
+                                                  security_group_rule)
         sgids = [rule['security_group_id']]
         self.notifier.security_groups_rule_updated(context, sgids)
         return rule
 
     def create_security_group_rule_bulk(self, context, security_group_rules):
-        rules = super(SecurityGroupServerNotifierRpcMixin,
-                      self).create_security_group_rule_bulk_native(
+        rules = super().create_security_group_rule_bulk_native(
                           context, security_group_rules)
-        sgids = set([r['security_group_id'] for r in rules])
+        sgids = {r['security_group_id'] for r in rules}
         self.notifier.security_groups_rule_updated(context, list(sgids))
         return rules
 
     def delete_security_group_rule(self, context, sgrid):
         rule = self.get_security_group_rule(context, sgrid)
-        super(SecurityGroupServerNotifierRpcMixin,
-              self).delete_security_group_rule(context, sgrid)
+        super().delete_security_group_rule(context, sgrid)
         self.notifier.security_groups_rule_updated(context,
                                                    [rule['security_group_id']])
 
@@ -136,7 +133,7 @@ class SecurityGroupServerNotifierRpcMixin(sg_db.SecurityGroupDbMixin):
         self.notify_security_groups_member_updated_bulk(context, [port])
 
 
-class SecurityGroupInfoAPIMixin(object):
+class SecurityGroupInfoAPIMixin:
     """API for retrieving security group info for SG agent code."""
 
     def get_port_from_device(self, context, device):
@@ -346,7 +343,7 @@ class SecurityGroupInfoAPIMixin(object):
             # only allow DHCP servers to talk to the appropriate IP address
             # to avoid getting leases that don't match the Neutron IPs
             prefix = '32' if ip_version == 4 else '128'
-            dests = ['%s/%s' % (ip, prefix) for ip in port['fixed_ips']
+            dests = ['{}/{}'.format(ip, prefix) for ip in port['fixed_ips']
                      if netaddr.IPNetwork(ip).version == ip_version]
             if ip_version == 4:
                 # v4 dhcp servers can also talk to broadcast

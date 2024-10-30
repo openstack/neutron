@@ -161,7 +161,7 @@ class Plugin(db.SegmentDbMixin, segment.SegmentPluginBase):
             raise n_exc.SubnetInUse(subnet_id=subnet.id)
 
 
-class Event(object):
+class Event:
 
     def __init__(self, method, segment_ids, total=None, reserved=None,
                  segment_host_mappings=None, host=None):
@@ -177,7 +177,7 @@ class Event(object):
 
 
 @registry.has_registry_receivers
-class NovaSegmentNotifier(object):
+class NovaSegmentNotifier:
 
     def __init__(self):
         self.p_client, self.n_client = self._get_clients()
@@ -498,7 +498,7 @@ class NovaSegmentNotifier(object):
 
 
 @registry.has_registry_receivers
-class SegmentHostRoutes(object):
+class SegmentHostRoutes:
 
     def _get_subnets(self, context, network_id):
         return subnet_obj.Subnet.get_objects(context, network_id=network_id)
@@ -574,10 +574,10 @@ class SegmentHostRoutes(object):
                                  routed network
         :returns True if host_routes and calc_host_routes are not equal
         """
-        return ((set((route['destination'],
-                      route['nexthop']) for route in host_routes) !=
-                 set((route['destination'],
-                      route['nexthop']) for route in calc_host_routes)))
+        return ({(route['destination'],
+                  route['nexthop']) for route in host_routes} !=
+                {(route['destination'],
+                  route['nexthop']) for route in calc_host_routes})
 
     def _update_routed_network_host_routes(self, context, network_id,
                                            deleted_cidr=None):

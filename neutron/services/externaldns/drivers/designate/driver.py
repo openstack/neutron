@@ -76,7 +76,7 @@ class Designate(driver.ExternalDNSService):
         if not CONF.designate.allow_reverse_dns_lookup:
             return
         # Set up the PTR records
-        recordset_name = '%s.%s' % (dns_name, dns_domain)
+        recordset_name = '{}.{}'.format(dns_name, dns_domain)
         ptr_zone_email = 'admin@%s' % dns_domain[:-1]
         if CONF.designate.ptr_zone_email:
             ptr_zone_email = CONF.designate.ptr_zone_email
@@ -139,12 +139,14 @@ class Designate(driver.ExternalDNSService):
         client, admin_client = get_clients(context)
         try:
             ids_to_delete = self._get_ids_ips_to_delete(
-                dns_domain, '%s.%s' % (dns_name, dns_domain), records, client)
+                dns_domain, '{}.{}'.format(
+                    dns_name, dns_domain), records, client)
         except dns_exc.DNSDomainNotFound:
             # Try whether we have admin powers and can see all projects
             client = get_all_projects_client(context)
             ids_to_delete = self._get_ids_ips_to_delete(
-                dns_domain, '%s.%s' % (dns_name, dns_domain), records, client)
+                dns_domain, '{}.{}'.format(
+                    dns_name, dns_domain), records, client)
 
         for _id in ids_to_delete:
             client.recordsets.delete(dns_domain, _id)

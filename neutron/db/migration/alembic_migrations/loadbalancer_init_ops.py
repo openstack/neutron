@@ -133,11 +133,11 @@ def upgrade():
         sa.PrimaryKeyConstraint('pool_id'))
 
     op.create_table(
-        u'embrane_pool_port',
-        sa.Column(u'pool_id', sa.String(length=36), nullable=False),
-        sa.Column(u'port_id', sa.String(length=36), nullable=False),
-        sa.ForeignKeyConstraint(['pool_id'], [u'pools.id'],
-                                name=u'embrane_pool_port_ibfk_1'),
-        sa.ForeignKeyConstraint(['port_id'], [u'ports.id'],
-                                name=u'embrane_pool_port_ibfk_2'),
-        sa.PrimaryKeyConstraint(u'pool_id'))
+        'embrane_pool_port',
+        sa.Column('pool_id', sa.String(length=36), nullable=False),
+        sa.Column('port_id', sa.String(length=36), nullable=False),
+        sa.ForeignKeyConstraint(['pool_id'], ['pools.id'],
+                                name='embrane_pool_port_ibfk_1'),
+        sa.ForeignKeyConstraint(['port_id'], ['ports.id'],
+                                name='embrane_pool_port_ibfk_2'),
+        sa.PrimaryKeyConstraint('pool_id'))

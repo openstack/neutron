@@ -54,7 +54,7 @@ def _get_version_info():
     return _VERSION_INFO.values()
 
 
-class RootController(object):
+class RootController:
 
     @utils.expose(generic=True)
     def index(self):
@@ -77,7 +77,7 @@ class RootController(object):
         pecan.abort(405)
 
 
-class V2Controller(object):
+class V2Controller:
 
     # Same data structure as neutron.api.versions.Versions for API backward
     # compatibility

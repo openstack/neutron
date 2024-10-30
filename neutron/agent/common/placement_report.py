@@ -24,7 +24,7 @@ from neutron.common import _constants as n_const
 LOG = logging.getLogger(__name__)
 
 
-class DeferredCall(object):
+class DeferredCall:
     '''Store a callable for later calling.
 
     This is hardly more than a parameterless lambda, but this way it's much
@@ -37,17 +37,17 @@ class DeferredCall(object):
         self.kwargs = kwargs
 
     def __str__(self):
-        return '%s(%s)' % (
+        return '{}({})'.format(
             self.func.__name__,
             ', '.join([repr(x) for x in self.args] +
-                      ['%s=%s' % (k, repr(v))
+                      ['{}={}'.format(k, repr(v))
                        for k, v in self.kwargs.items()]))
 
     def execute(self):
         return self.func(*self.args, **self.kwargs)
 
 
-class PlacementState(object):
+class PlacementState:
     '''Represents the desired state of the Placement DB.
 
     This represents the state of one Neutron agent
@@ -143,7 +143,8 @@ class PlacementState(object):
         # we must create an agent RP under each hypervisor RP.
         rps = []
         for hypervisor in self._hypervisor_rps.values():
-            agent_rp_name = '%s:%s' % (hypervisor['name'], self._agent_type)
+            agent_rp_name = '{}:{}'.format(
+                hypervisor['name'], self._agent_type)
             agent_rp_uuid = place_utils.agent_resource_provider_uuid(
                 self._driver_uuid_namespace, hypervisor['name'])
             rps.append(
@@ -159,7 +160,7 @@ class PlacementState(object):
         rps = []
         for device in self._rp_bandwidths:
             hypervisor = self._hypervisor_rps[device]
-            rp_name = '%s:%s:%s' % (
+            rp_name = '{}:{}:{}'.format(
                 hypervisor['name'], self._agent_type, device)
             rp_uuid = place_utils.device_resource_provider_uuid(
                 self._driver_uuid_namespace,
@@ -192,7 +193,7 @@ class PlacementState(object):
 
         # Remove hypervisor duplicates to avoid calling placement API multiple
         # times for the same hypervisor.
-        hypervisors = set(h['name'] for h in self._hypervisor_rps.values())
+        hypervisors = {h['name'] for h in self._hypervisor_rps.values()}
         for hypervisor in hypervisors:
             agent_rp_uuid = place_utils.agent_resource_provider_uuid(
                 self._driver_uuid_namespace, hypervisor)

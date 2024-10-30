@@ -41,7 +41,7 @@ class L3(extensions.APIExtensionDescriptor):
             register_quota=True)
 
 
-class RouterPluginBase(object, metaclass=abc.ABCMeta):
+class RouterPluginBase(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def create_router(self, context, router):

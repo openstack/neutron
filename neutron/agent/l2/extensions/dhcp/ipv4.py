@@ -152,7 +152,7 @@ class DHCPIPv4Responder(dhcp_base.DHCPResponderBase):
         if is_ack:
             fqdn = 'host-%s' % ip_addr.replace('.', '-').replace(':', '-')
             if cfg.CONF.dns_domain:
-                fqdn = '%s.%s' % (fqdn, cfg.CONF.dns_domain)
+                fqdn = '{}.{}'.format(fqdn, cfg.CONF.dns_domain)
             domain_name_bin = struct.pack('!%ds' % len(fqdn),
                                           bytes(str(fqdn).encode()))
             options.option_list.append(

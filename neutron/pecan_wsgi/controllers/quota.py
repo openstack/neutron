@@ -41,7 +41,7 @@ class QuotasController(utils.NeutronPecanController):
         self._driver = importutils.import_class(
             cfg.CONF.QUOTAS.quota_driver
         )
-        super(QuotasController, self).__init__(
+        super().__init__(
             "%ss" % RESOURCE_NAME, RESOURCE_NAME)
 
     def _check_admin(self, context,
@@ -79,7 +79,7 @@ class QuotaController(utils.NeutronPecanController):
         self._driver = _driver
         self._tenant_id = tenant_id
 
-        super(QuotaController, self).__init__(
+        super().__init__(
             "%ss" % RESOURCE_NAME, RESOURCE_NAME)
 
         # Ensure limits for all registered resources are returned

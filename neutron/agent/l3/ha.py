@@ -39,7 +39,7 @@ TRANSLATION_MAP = {'primary': constants.HA_ROUTER_STATE_ACTIVE,
                    'unknown': constants.HA_ROUTER_STATE_UNKNOWN}
 
 
-class KeepalivedStateChangeHandler(object):
+class KeepalivedStateChangeHandler:
     def __init__(self, agent):
         self.agent = agent
 
@@ -56,7 +56,7 @@ class KeepalivedStateChangeHandler(object):
         self.agent.enqueue_state_change(router_id, state)
 
 
-class L3AgentKeepalivedStateChangeServer(object):
+class L3AgentKeepalivedStateChangeServer:
     def __init__(self, agent, conf):
         self.agent = agent
         self.conf = conf
@@ -80,10 +80,10 @@ class L3AgentKeepalivedStateChangeServer(object):
 
 
 @registry.has_registry_receivers
-class AgentMixin(object):
+class AgentMixin:
     def __init__(self, host):
         self._init_ha_conf_path()
-        super(AgentMixin, self).__init__(host)
+        super().__init__(host)
         # BatchNotifier queue is needed to ensure that the HA router
         # state change sequence is under the proper order.
         self.state_change_notifier = batch_notifier.BatchNotifier(
@@ -254,8 +254,8 @@ class AgentMixin(object):
             ri.disable_radvd()
 
     def notify_server(self, batched_events):
-        translated_states = dict((router_id, TRANSLATION_MAP[state]) for
-                                 router_id, state in batched_events)
+        translated_states = {router_id: TRANSLATION_MAP[state] for
+                             router_id, state in batched_events}
         LOG.debug('Updating server with HA routers states %s',
                   translated_states)
         self.plugin_rpc.update_ha_routers_states(

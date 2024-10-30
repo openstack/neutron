@@ -34,7 +34,7 @@ from neutron.scheduler import base_scheduler
 LOG = logging.getLogger(__name__)
 
 
-class AutoScheduler(object):
+class AutoScheduler:
 
     def auto_schedule_networks(self, plugin, context, host):
         """Schedule non-hosted networks to the DHCP agent on the specified
@@ -100,8 +100,8 @@ class AutoScheduler(object):
             self.resource_filter.bind(
                 context, [agent], net_id,
                 force_scheduling=is_routed_network)
-            debug_data.append('(%s, %s, %s)' % (agent['agent_type'],
-                                                agent['host'], net_id))
+            debug_data.append('({}, {}, {})'.format(agent['agent_type'],
+                                                    agent['host'], net_id))
         LOG.debug('Resources bound (agent type, host, resource id): %s',
                   ', '.join(debug_data))
         return True
@@ -110,13 +110,13 @@ class AutoScheduler(object):
 class ChanceScheduler(base_scheduler.BaseChanceScheduler, AutoScheduler):
 
     def __init__(self):
-        super(ChanceScheduler, self).__init__(DhcpFilter())
+        super().__init__(DhcpFilter())
 
 
 class WeightScheduler(base_scheduler.BaseWeightScheduler, AutoScheduler):
 
     def __init__(self):
-        super(WeightScheduler, self).__init__(DhcpFilter())
+        super().__init__(DhcpFilter())
 
 
 class AZAwareWeightScheduler(WeightScheduler):
@@ -145,7 +145,7 @@ class AZAwareWeightScheduler(WeightScheduler):
         # resource_hostable_agents should be a list with agents in the order of
         # their weight.
         resource_hostable_agents = (
-            super(AZAwareWeightScheduler, self).select(
+            super().select(
                 plugin, context, resource_hostable_agents,
                 resource_hosted_agents, len(resource_hostable_agents)))
         for agent in resource_hostable_agents:
@@ -231,7 +231,7 @@ class DhcpFilter(base_resource_filter.BaseResourceFilter):
                       {'network_id': network_id,
                        'agent_id': agent_id,
                        'binding_index': binding_index})
-        super(DhcpFilter, self).bind(context, bound_agents, network_id)
+        super().bind(context, bound_agents, network_id)
 
     def filter_agents(self, plugin, context, network):
         """Return the agents that can host the network.

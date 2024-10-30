@@ -82,13 +82,13 @@ def _ensure_external_network_default_value_callback(
 
 
 @resource_extend.has_resource_extenders
-class AutoAllocatedTopologyMixin(object):
+class AutoAllocatedTopologyMixin:
 
     def __new__(cls, *args, **kwargs):
         # NOTE(kevinbenton): we subscribe on object construction because
         # the tests blow away the callback manager for each run
-        new = super(AutoAllocatedTopologyMixin, cls).__new__(cls, *args,
-                                                             **kwargs)
+        new = super().__new__(cls, *args,
+                              **kwargs)
         registry.subscribe(_ensure_external_network_default_value_callback,
                            resources.NETWORK, events.PRECOMMIT_UPDATE)
         registry.subscribe(_ensure_external_network_default_value_callback,

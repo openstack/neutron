@@ -891,7 +891,7 @@ class SecurityGroupDbMixin(
     def _validate_sgs_for_port(security_groups):
         if not security_groups:
             return
-        if not len(set(sg.stateful for sg in security_groups)) == 1:
+        if not len({sg.stateful for sg in security_groups}) == 1:
             msg = ("Cannot apply both stateful and stateless security "
                    "groups on the same port at the same time")
             raise ext_sg.SecurityGroupConflict(reason=msg)
@@ -1192,13 +1192,13 @@ class SecurityGroupDbMixin(
 
         sg_objs = sg_obj.SecurityGroup.get_objects(context, id=port_sg)
 
-        valid_groups = set(
+        valid_groups = {
             g.id for g in sg_objs
             if (context.is_admin or not tenant_id or
                 g.tenant_id == tenant_id or
                 sg_obj.SecurityGroup.is_shared_with_project(
                     context, g.id, tenant_id))
-        )
+        }
 
         requested_groups = set(port_sg)
         port_sg_missing = requested_groups - valid_groups

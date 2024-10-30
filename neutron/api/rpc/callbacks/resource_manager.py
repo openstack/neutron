@@ -30,7 +30,7 @@ def _validate_resource_type(resource_type):
         raise exceptions.Invalid(element='resource', value=resource_type)
 
 
-class ResourceCallbacksManager(object, metaclass=abc.ABCMeta):
+class ResourceCallbacksManager(metaclass=abc.ABCMeta):
     """A callback system that allows information providers in a loose manner.
     """
 
@@ -39,10 +39,10 @@ class ResourceCallbacksManager(object, metaclass=abc.ABCMeta):
 
     def __new__(cls, *args, **kwargs):
         if not cls._singleton:
-            return super(ResourceCallbacksManager, cls).__new__(cls)
+            return super().__new__(cls)
 
         if not hasattr(cls, '_instance'):
-            cls._instance = super(ResourceCallbacksManager, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
         return cls._instance
 
     @abc.abstractmethod

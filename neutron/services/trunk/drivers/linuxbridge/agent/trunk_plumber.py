@@ -22,7 +22,7 @@ from neutron.plugins.ml2.drivers.linuxbridge.agent.common import utils as lutil
 LOG = logging.getLogger(__name__)
 
 
-class Plumber(object):
+class Plumber:
     """Object responsible for VLAN interface CRUD.
 
     This handles the creation/deletion/listing of VLAN interfaces for

@@ -70,7 +70,7 @@ HAChassisGroupInfo = collections.namedtuple(
                            'ignore_chassis', 'external_ids'])
 
 
-class OvsdbClientCommand(object):
+class OvsdbClientCommand:
     _CONNECTION = 0
     _PRIVATE_KEY = 1
     _CERTIFICATE = 2
@@ -104,12 +104,12 @@ class OvsdbClientCommand(object):
             db = command[0]
         except IndexError:
             raise KeyError(
-                _("%s or %s schema must be specified in the command %s" % (
+                _("{} or {} schema must be specified in the command {}".format(
                     cls.OVN_Northbound, cls.OVN_Southbound, command)))
 
         if db not in (cls.OVN_Northbound, cls.OVN_Southbound):
             raise KeyError(
-                _("%s or %s schema must be specified in the command %s" % (
+                _("{} or {} schema must be specified in the command {}".format(
                     cls.OVN_Northbound, cls.OVN_Southbound, command)))
 
         cmd = ['ovsdb-client',
@@ -202,7 +202,7 @@ def ovn_name(id):
     # is a UUID. If so then there will be no matches.
     # We prefix the UUID to enable us to use the Neutron UUID when
     # updating, deleting etc.
-    return "%s%s" % (constants.OVN_NAME_PREFIX, id)
+    return "{}{}".format(constants.OVN_NAME_PREFIX, id)
 
 
 def ovn_lrouter_port_name(id):
@@ -249,7 +249,7 @@ def ovn_addrset_name(sg_id, ip_version):
     #   as-<ip version>-<security group uuid>
     # with all '-' replaced with '_'. This replacement is necessary
     # because OVN doesn't support '-' in an address set name.
-    return ('as-%s-%s' % (ip_version, sg_id)).replace('-', '_')
+    return ('as-{}-{}'.format(ip_version, sg_id)).replace('-', '_')
 
 
 def ovn_pg_addrset_name(sg_id, ip_version):
@@ -258,7 +258,7 @@ def ovn_pg_addrset_name(sg_id, ip_version):
     #   pg-<security group uuid>-<ip version>
     # with all '-' replaced with '_'. This replacement is necessary
     # because OVN doesn't support '-' in an address set name.
-    return ('pg-%s-%s' % (sg_id, ip_version)).replace('-', '_')
+    return ('pg-{}-{}'.format(sg_id, ip_version)).replace('-', '_')
 
 
 def ovn_ag_addrset_name(ag_id, ip_version):
@@ -676,7 +676,7 @@ def get_system_dns_resolvers(resolver_file=DNS_RESOLVER_FILE):
     if not os.path.exists(resolver_file):
         return resolvers
 
-    with open(resolver_file, 'r') as rconf:
+    with open(resolver_file) as rconf:
         for line in rconf.readlines():
             if not line.startswith('nameserver'):
                 continue
@@ -920,7 +920,7 @@ def parse_ovn_lb_port_forwarding(ovn_rtr_lb_pfs):
         ovn_vips = ovn_lb.vips
         for vip, ips in ovn_vips.items():
             for ip in ips.split(','):
-                fip_dict_proto.add("{} {}".format(vip, ip))
+                fip_dict_proto.add(f"{vip} {ip}")
         fip_dict[protocol] = fip_dict_proto
         result[fip_id] = fip_dict
     return result
@@ -1325,8 +1325,8 @@ def validate_port_binding_and_virtual_port(
         return
 
     fixed_ips = port.get('fixed_ips', [])
-    subnet_ids = set([fixed_ip['subnet_id'] for fixed_ip in fixed_ips
-                      if 'subnet_id' in fixed_ip])
+    subnet_ids = {fixed_ip['subnet_id'] for fixed_ip in fixed_ips
+                  if 'subnet_id' in fixed_ip}
     if not subnet_ids:
         # If the port has no fixed_ips/subnets, it cannot be virtual.
         return

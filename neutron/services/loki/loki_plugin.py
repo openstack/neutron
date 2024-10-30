@@ -27,7 +27,7 @@ class LokiPlugin(service_base.ServicePluginBase):
     """Loki brings us the gift of sporadic database failures and delays."""
 
     def __init__(self):
-        super(LokiPlugin, self).__init__()
+        super().__init__()
         db_api.sqla_listen(se.Session, 'before_flush', self.random_deadlock)
         db_api.sqla_listen(se.Session, 'loaded_as_persistent',
                            self.random_delay)

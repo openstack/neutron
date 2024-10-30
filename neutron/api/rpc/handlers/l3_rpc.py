@@ -31,7 +31,7 @@ from sqlalchemy import orm
 LOG = logging.getLogger(__name__)
 
 
-class L3RpcCallback(object):
+class L3RpcCallback:
     """L3 agent RPC callback in plugin implementations."""
 
     # 1.0 L3PluginApi BASE_RPC_API_VERSION

@@ -41,7 +41,7 @@ class Floatingip_pools(api_extensions.APIExtensionDescriptor):
         return resources
 
 
-class FloatingIPPoolPluginBase(object, metaclass=abc.ABCMeta):
+class FloatingIPPoolPluginBase(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def get_floatingip_pools(self, context, filters=None, fields=None,

@@ -188,13 +188,13 @@ class LinuxInterfaceDriver(interface.LinuxInterfaceDriver,
                              on-link route list
         """
         device = ip_lib.IPDevice(device_name, namespace=namespace)
-        new_onlink_cidrs = set(s['cidr'] for s in extra_subnets or [])
+        new_onlink_cidrs = {s['cidr'] for s in extra_subnets or []}
         preserve_ips = set(preserve_ips if preserve_ips else [])
 
         onlink = device.route.list_onlink_routes(constants.IP_VERSION_4)
         if is_ipv6:
             onlink += device.route.list_onlink_routes(constants.IP_VERSION_6)
-        existing_onlink_cidrs = set(r['cidr'] for r in onlink)
+        existing_onlink_cidrs = {r['cidr'] for r in onlink}
 
         for route in new_onlink_cidrs - existing_onlink_cidrs:
             LOG.debug('Adding onlink route (%s)', route)
@@ -245,8 +245,8 @@ class LinuxInterfaceDriver(interface.LinuxInterfaceDriver,
         """Configure handling of IPv6 Router Advertisements on an
         interface. See common/constants.py for possible values.
         """
-        cmd = ['net.ipv6.conf.%(dev)s.accept_ra=%(value)s' % {'dev': dev_name,
-                                                              'value': value}]
+        cmd = ['net.ipv6.conf.{dev}.accept_ra={value}'.format(dev=dev_name,
+                                                              value=value)]
         ip_lib.sysctl(cmd, namespace=namespace)
 
     @staticmethod
@@ -314,7 +314,7 @@ class OVSInterfaceDriver(LinuxInterfaceDriver):
     DEV_NAME_PREFIX = constants.TAP_DEVICE_PREFIX
 
     def __init__(self, conf, **kwargs):
-        super(OVSInterfaceDriver, self).__init__(conf, **kwargs)
+        super().__init__(conf, **kwargs)
         ovs_conf.register_ovs_agent_opts(self.conf)
         if self.conf.ovs_use_veth:
             self.DEV_NAME_PREFIX = 'ns-'

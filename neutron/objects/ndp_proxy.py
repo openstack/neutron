@@ -49,7 +49,7 @@ class NDPProxy(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
-        result = super(NDPProxy, cls).modify_fields_from_db(db_obj)
+        result = super().modify_fields_from_db(db_obj)
         if 'ip_address' in result:
             result['ip_address'] = netaddr.IPAddress(
                 result['ip_address'])
@@ -57,7 +57,7 @@ class NDPProxy(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_to_db(cls, fields):
-        result = super(NDPProxy, cls).modify_fields_to_db(fields)
+        result = super().modify_fields_to_db(fields)
         if 'ip_address' in result:
             if result['ip_address'] is not None:
                 result['ip_address'] = cls.filter_to_str(

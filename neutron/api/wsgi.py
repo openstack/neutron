@@ -61,8 +61,8 @@ class WorkerService(neutron_worker.NeutronBaseWorker):
     """Wraps a worker to be handled by ProcessLauncher"""
     def __init__(self, service, application, set_proctitle, disable_ssl=False,
                  worker_process_count=0, desc=None):
-        super(WorkerService, self).__init__(worker_process_count,
-                                            set_proctitle)
+        super().__init__(worker_process_count,
+                         set_proctitle)
 
         self._service = service
         self._application = application
@@ -72,7 +72,7 @@ class WorkerService(neutron_worker.NeutronBaseWorker):
 
     def start(self, desc=None):
         desc = desc or self.desc
-        super(WorkerService, self).start(desc=desc)
+        super().start(desc=desc)
         # When api worker is stopped it kills the eventlet wsgi server which
         # internally closes the wsgi server socket object. This server socket
         # object becomes not usable which leads to "Bad file descriptor"
@@ -99,7 +99,7 @@ class WorkerService(neutron_worker.NeutronBaseWorker):
         config.reset_service()
 
 
-class Server(object):
+class Server:
     """Server class to manage multiple WSGI sockets and applications."""
 
     def __init__(self, name, num_threads=None, disable_ssl=False):
@@ -141,7 +141,7 @@ class Server(object):
                 sock = eventlet.listen(bind_addr,
                                        backlog=backlog,
                                        family=family)
-            except socket.error as err:
+            except OSError as err:
                 with excutils.save_and_reraise_exception() as ctxt:
                     if err.errno == errno.EADDRINUSE:
                         ctxt.reraise = False
@@ -250,7 +250,7 @@ class Request(wsgi.Request):
         if len(parts) > 1:
             _format = parts[1]
             if _format in ['json']:
-                return 'application/{0}'.format(_format)
+                return f'application/{_format}'
 
         # Then look up content header
         type_from_header = self.get_content_type()
@@ -296,7 +296,7 @@ class Request(wsgi.Request):
         return self.environ['neutron.context']
 
 
-class ActionDispatcher(object):
+class ActionDispatcher:
     """Maps method name to local methods through action name."""
 
     def dispatch(self, *args, **kwargs):
@@ -338,7 +338,7 @@ class ResponseHeaderSerializer(ActionDispatcher):
         response.status_int = 200
 
 
-class ResponseSerializer(object):
+class ResponseSerializer:
     """Encode the necessary pieces into a response object."""
 
     def __init__(self, body_serializers=None, headers_serializer=None):
@@ -411,7 +411,7 @@ class RequestHeadersDeserializer(ActionDispatcher):
         return {}
 
 
-class RequestDeserializer(object):
+class RequestDeserializer:
     """Break up a Request object into more useful pieces."""
 
     def __init__(self, body_deserializers=None, headers_deserializer=None):
@@ -498,7 +498,7 @@ class RequestDeserializer(object):
         return args
 
 
-class Application(object):
+class Application:
     """Base WSGI application wrapper. Subclasses need to implement __call__."""
 
     @classmethod
@@ -690,7 +690,7 @@ class Fault(webob.exc.HTTPException):
 
 # NOTE(salvatore-orlando): this class will go once the
 # extension API framework is updated
-class Controller(object):
+class Controller:
     """WSGI app that dispatched to methods.
 
     WSGI app that reads routing information supplied by RoutesMiddleware
@@ -763,7 +763,7 @@ class Controller(object):
 
 # NOTE(salvatore-orlando): this class will go once the
 # extension API framework is updated
-class Serializer(object):
+class Serializer:
     """Serializes and deserializes dictionaries to certain MIME types."""
 
     def __init__(self, metadata=None):

@@ -13,7 +13,7 @@
 from oslo_db.sqlalchemy import session
 
 
-class DBConnection(object):
+class DBConnection:
     """Context manager class which handles a DB connection.
 
        An existing connection can be passed as a parameter. When

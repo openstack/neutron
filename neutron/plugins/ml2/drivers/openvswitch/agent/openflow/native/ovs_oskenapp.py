@@ -53,7 +53,7 @@ def agent_main_wrapper(bridge_classes):
 class OVSNeutronAgentOSKenApp(base_oskenapp.BaseNeutronAgentOSKenApp):
     def start(self):
         # Start os-ken event loop thread
-        super(OVSNeutronAgentOSKenApp, self).start()
+        super().start()
 
         def _make_br_cls(br_cls):
             return functools.partial(br_cls, os_ken_app=self)

@@ -26,27 +26,27 @@ class EndpointBase(base.NeutronDbObject):
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
-        result = super(EndpointBase, cls).modify_fields_from_db(db_obj)
+        result = super().modify_fields_from_db(db_obj)
         if 'ip_address' in result:
             result['ip_address'] = netaddr.IPAddress(result['ip_address'])
         return result
 
     @classmethod
     def modify_fields_to_db(cls, fields):
-        result = super(EndpointBase, cls).modify_fields_to_db(fields)
+        result = super().modify_fields_to_db(fields)
         if 'ip_address' in fields:
             result['ip_address'] = cls.filter_to_str(result['ip_address'])
         return result
 
 
-class SegmentAllocation(object, metaclass=abc.ABCMeta):
+class SegmentAllocation(metaclass=abc.ABCMeta):
 
     @classmethod
     def get_random_unallocated_segment(cls, context, **filters):
         with cls.db_context_reader(context):
             columns = set(dict(cls.db_model.__table__.columns))
-            model_filters = dict((k, filters[k])
-                                 for k in columns & set(filters.keys()))
+            model_filters = {k: filters[k]
+                             for k in columns & set(filters.keys())}
             query = context.session.query(cls.db_model).filter_by(
                 allocated=False, **model_filters)
             rand_func = n_utils.get_sql_random_method(

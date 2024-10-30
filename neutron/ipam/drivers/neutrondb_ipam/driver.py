@@ -334,7 +334,7 @@ class NeutronDbPool(subnet_alloc.SubnetAllocator):
         :returns: a NeutronDbSubnet instance
         """
         if self._subnetpool:
-            subnet = super(NeutronDbPool, self).allocate_subnet(subnet_request)
+            subnet = super().allocate_subnet(subnet_request)
             subnet_request = subnet.get_details()
 
         # SubnetRequest must be an instance of SpecificSubnet

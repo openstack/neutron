@@ -115,14 +115,14 @@ class NetworkSegment(base.NeutronDbObject):
             hosts = self.hosts
             if hosts is None:
                 hosts = []
-            super(NetworkSegment, self).create()
+            super().create()
             if 'hosts' in fields:
                 self._attach_hosts(hosts)
 
     def update(self):
         fields = self.obj_get_changes()
         with self.db_context_writer(self.obj_context):
-            super(NetworkSegment, self).update()
+            super().update()
             if 'hosts' in fields:
                 self._attach_hosts(fields['hosts'])
 
@@ -140,7 +140,7 @@ class NetworkSegment(base.NeutronDbObject):
     def obj_load_attr(self, attrname):
         if attrname == 'hosts':
             return self._load_hosts()
-        super(NetworkSegment, self).obj_load_attr(attrname)
+        super().obj_load_attr(attrname)
 
     def _load_hosts(self, db_obj=None):
         if db_obj:
@@ -153,7 +153,7 @@ class NetworkSegment(base.NeutronDbObject):
         self.obj_reset_changes(['hosts'])
 
     def from_db_object(self, db_obj):
-        super(NetworkSegment, self).from_db_object(db_obj)
+        super().from_db_object(db_obj)
         self._load_hosts(db_obj)
 
     @classmethod
@@ -165,8 +165,8 @@ class NetworkSegment(base.NeutronDbObject):
             _pager.sorts = [
                 (field, True) for field in ('network_id', 'segment_index')
             ]
-        return super(NetworkSegment, cls).get_objects(context, _pager,
-                                                      **kwargs)
+        return super().get_objects(context, _pager,
+                                   **kwargs)
 
 
 @base.NeutronObjectRegistry.register
@@ -252,7 +252,7 @@ class Network(rbac_db.NeutronRbacObject):
         with self.db_context_writer(self.obj_context):
             dns_domain = self.dns_domain
             qos_policy_id = self.qos_policy_id
-            super(Network, self).create()
+            super().create()
             if 'dns_domain' in fields:
                 self._set_dns_domain(dns_domain)
             if 'qos_policy_id' in fields:
@@ -261,7 +261,7 @@ class Network(rbac_db.NeutronRbacObject):
     def update(self):
         fields = self.obj_get_changes()
         with self.db_context_writer(self.obj_context):
-            super(Network, self).update()
+            super().update()
             if 'dns_domain' in fields:
                 self._set_dns_domain(fields['dns_domain'])
             if 'qos_policy_id' in fields:
@@ -288,7 +288,7 @@ class Network(rbac_db.NeutronRbacObject):
 
     @classmethod
     def modify_fields_from_db(cls, db_obj):
-        result = super(Network, cls).modify_fields_from_db(db_obj)
+        result = super().modify_fields_from_db(db_obj)
         if az_def.AZ_HINTS in result:
             result[az_def.AZ_HINTS] = (
                 az_validator.convert_az_string_to_list(
@@ -297,7 +297,7 @@ class Network(rbac_db.NeutronRbacObject):
 
     @classmethod
     def modify_fields_to_db(cls, fields):
-        result = super(Network, cls).modify_fields_to_db(fields)
+        result = super().modify_fields_to_db(fields)
         if az_def.AZ_HINTS in result:
             result[az_def.AZ_HINTS] = (
                 az_validator.convert_az_list_to_string(
@@ -305,7 +305,7 @@ class Network(rbac_db.NeutronRbacObject):
         return result
 
     def from_db_object(self, *objs):
-        super(Network, self).from_db_object(*objs)
+        super().from_db_object(*objs)
         for db_obj in objs:
             # extract domain name
             if db_obj.get('dns_domain'):
@@ -376,4 +376,4 @@ class NetworkDNSDomain(base.NeutronDbObject):
                 id=port_id).one_or_none()
         if net_dns is None:
             return None
-        return super(NetworkDNSDomain, cls)._load_object(context, net_dns)
+        return super()._load_object(context, net_dns)

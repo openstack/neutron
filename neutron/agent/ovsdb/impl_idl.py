@@ -43,7 +43,7 @@ def api_factory():
 
 class OvsCleanup(command.BaseCommand):
     def __init__(self, api, bridge, all_ports=False):
-        super(OvsCleanup, self).__init__(api)
+        super().__init__(api)
         self.bridge = bridge
         self.all_ports = all_ports
 

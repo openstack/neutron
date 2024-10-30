@@ -34,12 +34,12 @@ OVN_QOS_DEFAULT_RULE_PRIORITY = 2002
 _MIN_RATE = ovn_const.LSP_OPTIONS_QOS_MIN_RATE
 
 
-class OVNClientQosExtension(object):
+class OVNClientQosExtension:
     """OVN client QoS extension"""
 
     def __init__(self, driver=None, nb_idl=None):
         LOG.info('Starting OVNClientQosExtension')
-        super(OVNClientQosExtension, self).__init__()
+        super().__init__()
         self._driver = driver
         self._nb_idl = nb_idl
         self._plugin_property = None
@@ -116,7 +116,7 @@ class OVNClientQosExtension(object):
             in_or_out = 'outport'
             src_or_dst = 'dst'
 
-        match = '%s == "%s"' % (in_or_out, port_id)
+        match = '{} == "{}"'.format(in_or_out, port_id)
         if ip_address and resident_port:
             match += (' && ip4.%s == %s && is_chassis_resident("%s")' %
                       (src_or_dst, ip_address, resident_port))
@@ -324,9 +324,9 @@ class OVNClientQosExtension(object):
 
     def update_network(self, txn, network, original_network, reset=False,
                        qos_rules=None):
-        updated_port_ids = set([])
-        updated_fip_ids = set([])
-        updated_router_ids = set([])
+        updated_port_ids = set()
+        updated_fip_ids = set()
+        updated_router_ids = set()
         if not reset and not original_network:
             # If there is no information about the previous QoS policy, do not
             # make any change.
@@ -459,9 +459,9 @@ class OVNClientQosExtension(object):
                 txn.add(self.nb_idl.qos_del(**ovn_rule, if_exists=True))
 
     def update_policy(self, context, policy):
-        updated_port_ids = set([])
-        updated_fip_ids = set([])
-        updated_router_ids = set([])
+        updated_port_ids = set()
+        updated_fip_ids = set()
+        updated_router_ids = set()
         bound_networks = policy.get_bound_networks()
         bound_ports = policy.get_bound_ports()
         bound_fips = policy.get_bound_floatingips()

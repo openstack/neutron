@@ -126,8 +126,8 @@ def get_previous_link(request, items, id_key):
         marker = items[0][id_key]
         params['marker'] = marker
     params['page_reverse'] = True
-    return "%s?%s" % (prepare_url(get_path_url(request)),
-                      urllib.parse.urlencode(params))
+    return "{}?{}".format(prepare_url(get_path_url(request)),
+                          urllib.parse.urlencode(params))
 
 
 def get_next_link(request, items, id_key):
@@ -137,8 +137,8 @@ def get_next_link(request, items, id_key):
         marker = items[-1][id_key]
         params['marker'] = marker
     params.pop('page_reverse', None)
-    return "%s?%s" % (prepare_url(get_path_url(request)),
-                      urllib.parse.urlencode(params))
+    return "{}?{}".format(prepare_url(get_path_url(request)),
+                          urllib.parse.urlencode(params))
 
 
 def prepare_url(orig_url):
@@ -233,8 +233,8 @@ def get_sorts(request, attr_info):
         msg = _("The number of sort_keys and sort_dirs must be same")
         raise exc.HTTPBadRequest(explanation=msg)
     valid_dirs = [constants.SORT_DIRECTION_ASC, constants.SORT_DIRECTION_DESC]
-    valid_sort_keys = set(attr for attr, schema in attr_info.items()
-                          if schema.get('is_sort_key', False))
+    valid_sort_keys = {attr for attr, schema in attr_info.items()
+                       if schema.get('is_sort_key', False)}
     absent_keys = [x for x in sort_keys if x not in valid_sort_keys]
     if absent_keys:
         msg = _("%s is invalid attribute for sort_keys") % absent_keys
@@ -291,7 +291,7 @@ def is_filter_validation_supported(plugin):
     return getattr(plugin, filter_validation_attr_name, False)
 
 
-class PaginationHelper(object):
+class PaginationHelper:
 
     def __init__(self, request, primary_key='id'):
         self.request = request
@@ -313,7 +313,7 @@ class PaginationHelper(object):
 class PaginationEmulatedHelper(PaginationHelper):
 
     def __init__(self, request, primary_key='id'):
-        super(PaginationEmulatedHelper, self).__init__(request, primary_key)
+        super().__init__(request, primary_key)
         self.limit, self.marker = get_limit_and_marker(request)
         self.page_reverse = get_page_reverse(request)
 
@@ -375,7 +375,7 @@ class NoPaginationHelper(PaginationHelper):
     pass
 
 
-class SortingHelper(object):
+class SortingHelper:
 
     def __init__(self, request, attr_info):
         pass
@@ -393,7 +393,7 @@ class SortingHelper(object):
 class SortingEmulatedHelper(SortingHelper):
 
     def __init__(self, request, attr_info):
-        super(SortingEmulatedHelper, self).__init__(request, attr_info)
+        super().__init__(request, attr_info)
         self.sort_dict = get_sorts(request, attr_info)
 
     def update_fields(self, original_fields, fields_to_add):
@@ -450,8 +450,8 @@ def convert_exception_to_http_exc(e, faults, language):
                 # all error codes are the same so we can maintain the code
                 # and just concatenate the bodies
                 joined_msg = "\n".join(
-                    (jsonutils.loads(c.body)['NeutronError']['message']
-                     for c in converted_exceptions))
+                    jsonutils.loads(c.body)['NeutronError']['message']
+                    for c in converted_exceptions)
                 new_body = jsonutils.loads(converted_exceptions[0].body)
                 new_body['NeutronError']['message'] = joined_msg
                 converted_exceptions[0].body = serializer.serialize(new_body)
@@ -463,7 +463,7 @@ def convert_exception_to_http_exc(e, faults, language):
                 inner_error_strings = []
                 for c in converted_exceptions:
                     c_body = jsonutils.loads(c.body)
-                    err = ('HTTP %s %s: %s' % (
+                    err = ('HTTP {} {}: {}'.format(
                         c.code, c_body['NeutronError']['type'],
                         c_body['NeutronError']['message']))
                     inner_error_strings.append(err)

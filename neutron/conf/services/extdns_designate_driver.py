@@ -22,11 +22,11 @@ from neutron._i18n import _
 
 class ZonePrefixIPv4(types.Integer):
     def __init__(self):
-        super(ZonePrefixIPv4, self).__init__(
+        super().__init__(
             min=8, max=24, type_name='IPv4 zone prefix')
 
     def __call__(self, value):
-        value = super(ZonePrefixIPv4, self).__call__(value)
+        value = super().__call__(value)
         if value % 8 != 0:
             raise ValueError(_('Should be multiple of 8'))
         return value
@@ -34,11 +34,11 @@ class ZonePrefixIPv4(types.Integer):
 
 class ZonePrefixIPv6(types.Integer):
     def __init__(self):
-        super(ZonePrefixIPv6, self).__init__(
+        super().__init__(
             min=4, max=124, type_name='IPv6 zone prefix')
 
     def __call__(self, value):
-        value = super(ZonePrefixIPv6, self).__call__(value)
+        value = super().__call__(value)
         if value % 4 != 0:
             raise ValueError(_('Should be multiple of 4'))
         return value

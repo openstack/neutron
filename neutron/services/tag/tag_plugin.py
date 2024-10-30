@@ -41,7 +41,7 @@ class TagPlugin(tagging.TagPluginBase):
     __filter_validation_support = True
 
     def __new__(cls, *args, **kwargs):
-        inst = super(TagPlugin, cls).__new__(cls, *args, **kwargs)
+        inst = super().__new__(cls, *args, **kwargs)
         tag_obj.register_tag_hooks()
         return inst
 

@@ -72,7 +72,7 @@ class NetworkSegmentRange(base.NeutronDbObject):
     }
 
     def to_dict(self, fields=None):
-        _dict = super(NetworkSegmentRange, self).to_dict()
+        _dict = super().to_dict()
         # extend the network segment range dict with `available` and `used`
         # fields
         _dict.update({'available': self._get_available_allocation()})
@@ -93,11 +93,11 @@ class NetworkSegmentRange(base.NeutronDbObject):
 
     def create(self):
         self._check_shared_project_id('create')
-        super(NetworkSegmentRange, self).create()
+        super().create()
 
     def update(self):
         self._check_shared_project_id('update')
-        super(NetworkSegmentRange, self).update()
+        super().update()
 
     def _get_allocation_model_details(self):
         model = models_map.get(self.network_type)
@@ -147,8 +147,8 @@ class NetworkSegmentRange(base.NeutronDbObject):
     @classmethod
     def _build_query_segments(cls, context, model, network_type, **filters):
         columns = set(dict(model.__table__.columns))
-        model_filters = dict((k, filters[k])
-                             for k in columns & set(filters.keys()))
+        model_filters = {k: filters[k]
+                         for k in columns & set(filters.keys())}
         query = (context.session.query(model)
                  .filter_by(allocated=False, **model_filters).distinct())
         _and = and_(
@@ -188,7 +188,7 @@ class NetworkSegmentRange(base.NeutronDbObject):
                     'physical_network' in _filters):
                 shared_ranges.filter(cls.db_model.physical_network ==
                                      _filters['physical_network'])
-            segment_ids = set([])
+            segment_ids = set()
             for shared_range in shared_ranges.all():
                 segment_ids.update(set(range(shared_range.minimum,
                                              shared_range.maximum + 1)))

@@ -202,7 +202,7 @@ class TestPidfile(base.BaseTestCase):
             read.return_value = 34
             self.assertTrue(p.is_running())
 
-        mock_open.assert_called_once_with('/proc/34/cmdline', 'r')
+        mock_open.assert_called_once_with('/proc/34/cmdline')
 
     def test_is_running_uuid_true(self):
         mock_open = self.useFixture(
@@ -215,7 +215,7 @@ class TestPidfile(base.BaseTestCase):
             read.return_value = 34
             self.assertTrue(p.is_running())
 
-        mock_open.assert_called_once_with('/proc/34/cmdline', 'r')
+        mock_open.assert_called_once_with('/proc/34/cmdline')
 
     def test_is_running_uuid_false(self):
         mock_open = self.useFixture(
@@ -228,7 +228,7 @@ class TestPidfile(base.BaseTestCase):
             read.return_value = 34
             self.assertFalse(p.is_running())
 
-        mock_open.assert_called_once_with('/proc/34/cmdline', 'r')
+        mock_open.assert_called_once_with('/proc/34/cmdline')
 
 
 class TestDaemon(base.BaseTestCase):

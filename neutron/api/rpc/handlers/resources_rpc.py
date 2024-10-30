@@ -72,7 +72,7 @@ def resource_type_versioned_topic(resource_type, version=None):
                                             'version': version or cls.VERSION}
 
 
-class ResourcesPullRpcApi(object):
+class ResourcesPullRpcApi:
     """Agent-side RPC (stub) for agent-to-plugin interaction.
 
     This class implements the client side of an rpc interface.  The server side
@@ -83,7 +83,7 @@ class ResourcesPullRpcApi(object):
     def __new__(cls):
         # make it a singleton
         if not hasattr(cls, '_instance'):
-            cls._instance = super(ResourcesPullRpcApi, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
             target = oslo_messaging.Target(
                 topic=topics.PLUGIN, version='1.1',
                 namespace=constants.RPC_NAMESPACE_RESOURCES)
@@ -116,7 +116,7 @@ class ResourcesPullRpcApi(object):
                 for primitive in primitives]
 
 
-class ResourcesPullRpcCallback(object):
+class ResourcesPullRpcCallback:
     """Plugin-side RPC (implementation) for agent-to-plugin interaction.
 
     This class implements the server side of an rpc interface.  The client side
@@ -148,7 +148,7 @@ class ResourcesPullRpcCallback(object):
                                                          **filter_kwargs)]
 
 
-class ResourcesPushToServersRpcApi(object):
+class ResourcesPushToServersRpcApi:
     """Publisher-side RPC (stub) for plugin-to-plugin fanout interaction.
 
     This class implements the client side of an rpc interface.  The receiver
@@ -173,7 +173,7 @@ class ResourcesPushToServersRpcApi(object):
                    version_map=version_map)
 
 
-class ResourcesPushToServerRpcCallback(object):
+class ResourcesPushToServerRpcCallback:
     """Receiver-side RPC (implementation) for plugin-to-plugin interaction.
 
     This class implements the receiver side of an rpc interface.
@@ -195,7 +195,7 @@ class ResourcesPushToServerRpcCallback(object):
         version_manager.update_versions(consumer_id, version_map)
 
 
-class ResourcesPushRpcApi(object):
+class ResourcesPushRpcApi:
     """Plugin-side RPC for plugin-to-agents interaction.
 
     This interface is designed to push versioned object updates to interested
@@ -237,7 +237,7 @@ class ResourcesPushRpcApi(object):
         LOG.debug(
             "Pushing event %s for resources: %s", event_type,
             {t:
-             ["ID=%s,revision_number=%s" % (
+             ["ID={},revision_number={}".format(
                  getattr(obj, 'id', None),
                  getattr(obj, 'revision_number', None))
               for obj in resources_by_type[t]]
@@ -262,7 +262,7 @@ class ResourcesPushRpcApi(object):
                        event_type=event_type)
 
 
-class ResourcesPushRpcCallback(object):
+class ResourcesPushRpcCallback:
     """Agent-side RPC for plugin-to-agents interaction.
 
     This class implements the receiver for notification about versioned objects

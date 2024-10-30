@@ -125,7 +125,7 @@ NFCT_CALLBACK = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_int,
                                  ctypes.c_void_p, ctypes.c_void_p)
 
 
-class ConntrackManager(object):
+class ConntrackManager:
     def __init__(self, family_socket=None):
         self.family_socket = family_socket
         self.set_functions = {
@@ -278,7 +278,7 @@ def list_entries(zone):
         with ConntrackManager(nl_constants.IPVERSION_SOCKET[ipversion]) \
                 as conntrack:
             raw_entries = [entry for entry in conntrack.list_entries() if
-                           re.search(r'\bzone={}\b'.format(zone), entry) is
+                           re.search(fr'\bzone={zone}\b', entry) is
                            not None]
 
         for raw_entry in raw_entries:
