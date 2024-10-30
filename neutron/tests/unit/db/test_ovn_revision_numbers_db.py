@@ -24,6 +24,7 @@ from oslo_db import exception as db_exc
 
 from neutron.api import extensions
 from neutron.common import config
+from neutron.common.ovn import constants as ovn_const
 from neutron.db.models import ovn as ovn_models
 from neutron.db import ovn_revision_numbers_db as ovn_rn_db
 import neutron.extensions
@@ -31,7 +32,6 @@ from neutron.services.revisions import revision_plugin
 from neutron.tests.unit.db import test_db_base_plugin_v2
 from neutron.tests.unit.extensions import test_l3
 from neutron.tests.unit.extensions import test_securitygroup
-
 
 EXTENSIONS_PATH = ':'.join(neutron.extensions.__path__)
 PLUGIN_CLASS = (
@@ -122,6 +122,24 @@ class TestRevisionNumber(test_db_base_plugin_v2.NeutronDbPluginV2TestCase):
             except db_exc.DBDuplicateEntry:
                 self.fail("create_initial_revision shouldn't raise "
                           "DBDuplicateEntry when may_exist is True")
+
+    def test_get_revision_row_ports(self):
+        res = self._create_port(self.fmt, self.net['id'])
+        port = self.deserialize(self.fmt, res)['port']
+        with db_api.CONTEXT_WRITER.using(self.ctx):
+            for resource_type in (ovn_const.TYPE_PORTS,
+                                  ovn_const.TYPE_ROUTER_PORTS):
+                self._create_initial_revision(port['id'], resource_type)
+
+        for resource_type in (ovn_const.TYPE_PORTS,
+                              ovn_const.TYPE_ROUTER_PORTS):
+            row = ovn_rn_db.get_revision_row(
+                self.ctx, port['id'], resource_type=resource_type)
+            self.assertEqual(resource_type, row.resource_type)
+            self.assertEqual(port['id'], row.resource_uuid)
+
+        self.assertRaises(ovn_rn_db.RevisionNumberNotDefined,
+                          ovn_rn_db.get_revision_row, self.ctx, port['id'])
 
 
 class TestMaintenancePlugin(test_securitygroup.SecurityGroupTestPlugin,
