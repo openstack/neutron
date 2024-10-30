@@ -266,7 +266,7 @@ TYPE_FLOATINGIPS = 'floatingips'
 TYPE_SUBNETS = 'subnets'
 TYPE_ADDRESS_GROUPS = 'address_groups'
 
-_TYPES_PRIORITY_ORDER = (
+TYPES_PRIORITY_ORDER = (
     TYPE_NETWORKS,
     TYPE_SECURITY_GROUPS,
     TYPE_SUBNETS,
@@ -280,16 +280,6 @@ _TYPES_PRIORITY_ORDER = (
 DB_CONSISTENCY_CHECK_INTERVAL = 300  # 5 minutes
 MAINTENANCE_TASK_RETRY_LIMIT = 100  # times
 MAINTENANCE_ONE_RUN_TASK_SPACING = 5  # seconds
-
-# The order in which the resources should be created or updated by the
-# maintenance task: Root ones first and leafs at the end.
-MAINTENANCE_CREATE_UPDATE_TYPE_ORDER = {
-    t: n for n, t in enumerate(_TYPES_PRIORITY_ORDER, 1)}
-
-# The order in which the resources should be deleted by the maintenance
-# task: Leaf ones first and roots at the end.
-MAINTENANCE_DELETE_TYPE_ORDER = {
-    t: n for n, t in enumerate(reversed(_TYPES_PRIORITY_ORDER), 1)}
 
 # The addresses field to set in the logical switch port which has a
 # peer router port (connecting to the logical router).
