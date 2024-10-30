@@ -380,7 +380,8 @@ class TestMaintenance(_TestMaintenanceHelper):
         # Assert the revision number no longer exists
         self.assertIsNone(db_rev.get_revision_row(
             self.context,
-            neutron_obj['id']))
+            neutron_obj['id'],
+            resource_type=ovn_const.TYPE_PORTS))
 
     def test_subnet_global_dhcp4_opts(self):
         obj_name = 'globaltestsubnet'
