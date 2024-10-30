@@ -841,7 +841,8 @@ class OVNClient:
             # to allow at least one maintenance cycle  before we delete the
             # revision number so that the port doesn't stale and eventually
             # gets deleted by the maintenance task.
-            rev_row = db_rev.get_revision_row(context, port_id)
+            rev_row = db_rev.get_revision_row(
+                context, port_id, resource_type=ovn_const.TYPE_PORTS)
             time_ = (timeutils.utcnow() - datetime.timedelta(
                 seconds=ovn_const.DB_CONSISTENCY_CHECK_INTERVAL + 30))
             if rev_row and rev_row.created_at >= time_:
