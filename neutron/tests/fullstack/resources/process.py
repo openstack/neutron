@@ -384,7 +384,7 @@ class NamespaceCleanupFixture(ServiceFixture):
         """
 
         for namespace in ip_lib.list_network_namespaces():
-            if (getattr(self, 'namespace_pattern') and
+            if (hasattr(self, 'namespace_pattern') and
                     self.namespace_pattern.match(namespace)):
                 try:
                     ip_lib.delete_network_namespace(namespace)
