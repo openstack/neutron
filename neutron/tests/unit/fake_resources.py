@@ -130,6 +130,7 @@ class FakeOvsdbNbOvnIdl:
         self.pg_acl_del = mock.Mock()
         self.pg_del = mock.Mock()
         self.pg_add = mock.Mock()
+        self.pg_get = mock.Mock()
         self.get_port_group = mock.Mock()
         self.pg_add_ports = mock.Mock()
         self.pg_del_ports = mock.Mock()

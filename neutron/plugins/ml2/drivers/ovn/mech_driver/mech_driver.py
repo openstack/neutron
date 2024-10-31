@@ -432,8 +432,8 @@ class OVNMechanismDriver(api.MechanismDriver):
     def _delete_security_group(self, resource, event, trigger, payload):
         context = payload.context
         security_group_id = payload.resource_id
-        self._ovn_client.delete_security_group(context,
-                                               security_group_id)
+        self._ovn_client.delete_security_group(
+            context, security_group_id, delete_sg_rules=True)
 
     def _update_security_group(self, resource, event, trigger, payload):
         context = payload.context

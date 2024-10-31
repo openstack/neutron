@@ -306,6 +306,10 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
 
     @mock.patch.object(ovn_revision_numbers_db, 'delete_revision')
     def test__delete_security_group(self, mock_del_rev):
+        acls = [mock.Mock(external_ids={ovn_const.OVN_SG_RULE_EXT_ID_KEY: 1}),
+                mock.Mock(external_ids={ovn_const.OVN_SG_RULE_EXT_ID_KEY: 2})]
+        pg = mock.Mock(acls=acls)
+        self.nb_ovn.pg_get.return_value.execute.return_value = pg
         self.mech_driver._delete_security_group(
             resources.SECURITY_GROUP, events.AFTER_DELETE, {},
             payload=events.DBEventPayload(
@@ -4217,6 +4221,10 @@ class TestOVNMechanismDriverSecurityGroup(
 
     def test_delete_security_group(self):
         sg = self._create_sg('sg')
+        acls = [mock.Mock(external_ids={ovn_const.OVN_SG_RULE_EXT_ID_KEY: 1}),
+                mock.Mock(external_ids={ovn_const.OVN_SG_RULE_EXT_ID_KEY: 2})]
+        pg = mock.Mock(acls=acls)
+        self.mech_driver.nb_ovn.pg_get.return_value.execute.return_value = pg
         self._delete('security-groups', sg['id'])
 
         expected_pg_name = ovn_utils.ovn_port_group_name(sg['id'])

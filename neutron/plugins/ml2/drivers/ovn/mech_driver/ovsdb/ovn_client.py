@@ -2557,12 +2557,25 @@ class OVNClient:
         if self._nb_idl.get_port_group(pg_name):
             txn.add(self._nb_idl.pg_del_ports(pg_name, port))
 
-    def delete_security_group(self, context, security_group_id):
+    def delete_security_group(self, context, security_group_id,
+                              delete_sg_rules=False):
+        """Delete the OVN port group related to a Neutron security group
+
+        The Port_Group deletion also implies the deletion of the ACLs (security
+        group rules). If the flag delete_sg_rules is enabled, it is needed to
+        remove the security rule revision numbers.
+        """
+        name = utils.ovn_port_group_name(security_group_id)
+        pg = self._nb_idl.pg_get(name).execute(check_error=True)
+        sg_rule_ids = [acl.external_ids[ovn_const.OVN_SG_RULE_EXT_ID_KEY]
+                       for acl in pg.acls]
         with self._nb_idl.transaction(check_error=True) as txn:
-            name = utils.ovn_port_group_name(security_group_id)
             txn.add(self._nb_idl.pg_del(name=name, if_exists=True))
         db_rev.delete_revision(context, security_group_id,
                                ovn_const.TYPE_SECURITY_GROUPS)
+        if delete_sg_rules:
+            db_rev.delete_revisions(context, sg_rule_ids,
+                                    ovn_const.TYPE_SECURITY_GROUP_RULES)
 
     def _process_security_group_rule(self, rule, is_add_acl=True):
         admin_context = n_context.get_admin_context()
