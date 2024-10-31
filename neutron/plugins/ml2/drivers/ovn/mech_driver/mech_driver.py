@@ -403,6 +403,11 @@ class OVNMechanismDriver(api.MechanismDriver):
             context, security_group['id'],
             ovn_const.TYPE_SECURITY_GROUPS,
             std_attr_id=security_group['standard_attr_id'])
+        for sg_rule in security_group['security_group_rules']:
+            ovn_revision_numbers_db.create_initial_revision(
+                context, sg_rule['id'],
+                ovn_const.TYPE_SECURITY_GROUP_RULES,
+                std_attr_id=sg_rule['standard_attr_id'])
 
     def _create_security_group(self, resource, event, trigger, payload):
         context = payload.context
