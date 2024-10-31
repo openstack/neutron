@@ -291,8 +291,12 @@ class TestOVNMechanismDriver(TestOVNMechanismDriverBase):
         for c in self.nb_ovn.pg_acl_add.call_args_list:
             self.assertEqual(expected, c[1]["action"])
 
-        mock_bump.assert_called_once_with(
-            mock.ANY, self.fake_sg, ovn_const.TYPE_SECURITY_GROUPS)
+        calls = [mock.call(mock.ANY, self.fake_sg,
+                           ovn_const.TYPE_SECURITY_GROUPS)]
+        for sg_rule in self.fake_sg['security_group_rules']:
+            calls.append(mock.call(mock.ANY, sg_rule,
+                                   ovn_const.TYPE_SECURITY_GROUP_RULES))
+        mock_bump.assert_has_calls(calls)
 
     def test__create_security_group_stateful(self):
         self._test__create_security_group(True)
